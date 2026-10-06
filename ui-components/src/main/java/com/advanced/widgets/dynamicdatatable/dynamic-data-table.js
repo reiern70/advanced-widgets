@@ -608,6 +608,12 @@
 				if (actionElement.matches(PAGE_CHECKBOX)) {
 					this.selectRows(actionElement.checked);
 				} else {
+					if (this.cfg.selection === 'one' && actionElement.checked) {
+						// one row at a time: the server deselects the others too
+						this.rowsBody().querySelectorAll(ROW_CHECKBOX).forEach(function (checkbox) {
+							checkbox.checked = checkbox === actionElement;
+						});
+					}
 					this.updateSelection();
 				}
 				if (!action) {

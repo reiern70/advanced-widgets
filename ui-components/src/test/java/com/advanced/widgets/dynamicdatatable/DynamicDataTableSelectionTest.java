@@ -44,8 +44,14 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 
 	private void start(int rows)
 	{
+		start(rows, SelectionMode.MANY);
+	}
+
+	private void start(int rows, SelectionMode mode)
+	{
 		provider = new RowsProvider(rows);
 		table = new TestTable(provider);
+		table.setSelectionMode(mode);
 		tester.startPage(new TablePage(table));
 	}
 
@@ -278,6 +284,80 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 		assertEquals("3", table.getRowKey(provider.rows.get(2)));
 		assertEquals(3, table.findRow("3").getId());
 		assertNull(table.findRow("x"));
+	}
+
+	@Test
+	void manyRowsCanBeSelectedByDefault()
+	{
+		start(5);
+
+		assertEquals(SelectionMode.MANY, table.getSelectionMode());
+		tester.assertContains("\"selection\":\"many\"");
+	}
+
+	@Test
+	void selectionModeNoneLeavesTheSelectionColumnOutAndIgnoresSelecting()
+	{
+		start(5, SelectionMode.NONE);
+
+		String page = tester.getLastResponseAsString();
+		assertFalse(page.contains("dynamic-data-table-select"), page);
+		assertEquals(1, table.getVisibleColumns().size());
+		assertTrue(page.contains("\"selection\":\"none\""), page);
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "2");
+		executeAction(JsonBasedDynamicDataTable.SELECT_PAGE_ACTION, null);
+
+		assertTrue(table.getSelection().isEmpty());
+		assertEquals(0, table.changes);
+	}
+
+	@Test
+	void selectionModeOneHasNoPageCheckboxAndKeepsOneRow()
+	{
+		start(5, SelectionMode.ONE);
+
+		String page = tester.getLastResponseAsString();
+		assertFalse(page.contains("dynamic-data-table-select-page"), page);
+		assertTrue(page.contains("class=\\\"dynamic-data-table-select\\\""), page);
+		assertTrue(page.contains("\"selection\":\"one\""), page);
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "2");
+
+		assertEquals(List.of(2L), table.getSelection().getKeys());
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_PAGE_ACTION, null);
+
+		assertEquals(List.of(2L), table.getSelection().getKeys(), "no page to select");
+		tester.assertInvisible(TOOLBAR);
+		assertEquals(2, table.changes);
+	}
+
+	@Test
+	void switchingTheSelectionModeTrimsTheSelection()
+	{
+		start(5);
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "2");
+
+		table.setSelectionMode(SelectionMode.ONE);
+		assertEquals(List.of(1L), table.getSelection().getKeys());
+
+		table.setSelectionMode(SelectionMode.NONE);
+		assertTrue(table.getSelection().isEmpty());
+	}
+
+	@Test
+	void switchingToOneDeselectsAllRows()
+	{
+		start(5);
+		executeAction(JsonBasedDynamicDataTable.SELECT_PAGE_ACTION, null);
+		tester.clickLink(SELECT_ALL);
+
+		table.setSelectionMode(SelectionMode.ONE);
+
+		assertTrue(table.getSelection().isEmpty());
 	}
 
 	private void executeAction(String action, String key)

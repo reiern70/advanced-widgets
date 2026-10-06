@@ -176,6 +176,43 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		assertFalse(table.isColumnExportable(table.getColumns().get(0)));
 	}
 
+	@Test
+	void selectionModeNoneRendersNoSelectionColumn()
+	{
+		provider = new PeopleProvider(5);
+		table = new TestTable(provider);
+		table.setSelectionMode(SelectionMode.NONE);
+		tester.startPage(new TablePage(table));
+
+		String page = tester.getLastResponseAsString();
+		assertFalse(page.contains("dynamic-data-table-select"), page);
+		assertFalse(page.contains("dynamic-data-table-selection"), page);
+
+		executeAction(BaseDynamicDataTable.SELECT_ACTION, "1");
+		assertTrue(table.getSelection().isEmpty());
+	}
+
+	@Test
+	void selectionModeOneRendersOneCheckedRowAndNoPageCheckbox()
+	{
+		provider = new PeopleProvider(5);
+		table = new TestTable(provider);
+		table.setSelectionMode(SelectionMode.ONE);
+		tester.startPage(new TablePage(table));
+		assertFalse(tester.getLastResponseAsString().contains("dynamic-data-table-select-page"));
+
+		executeAction(BaseDynamicDataTable.SELECT_ACTION, "1");
+		executeAction(BaseDynamicDataTable.SELECT_ACTION, "2");
+		tester.startPage(tester.getLastRenderedPage());
+
+		String page = tester.getLastResponseAsString();
+		assertEquals("even", TagTester.createTagByAttribute(page, "data-key", "1")
+			.getAttribute("class"));
+		assertEquals("odd selected", TagTester.createTagByAttribute(page, "data-key", "2")
+			.getAttribute("class"));
+		assertEquals(1, page.split(" checked>", -1).length - 1, page);
+	}
+
 	private void executeAction(String action, String key)
 	{
 		tester.getRequest().getPostParameters().setParameterValue("action", action);

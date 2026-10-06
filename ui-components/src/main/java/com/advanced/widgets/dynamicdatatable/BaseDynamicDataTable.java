@@ -324,6 +324,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	private ToolbarPosition selectionToolbarPosition = ToolbarPosition.TOP;
 
+	private SelectionMode selectionMode = SelectionMode.MANY;
+
 	private boolean allSelected;
 
 	private final LinkedHashSet<K> selectedKeys = new LinkedHashSet<>();
@@ -893,7 +895,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		List<C> visible = new ArrayList<>(columns.size());
 		for (C column : columns)
 		{
-			if (hiddenColumns.contains(column) == false)
+			if (hiddenColumns.contains(column) == false &&
+				(selectionMode != SelectionMode.NONE || isSelectionColumn(column) == false))
 			{
 				visible.add(column);
 			}
@@ -1411,6 +1414,51 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * @return how many rows the user can select, {@link SelectionMode#MANY} by default
+	 */
+	public SelectionMode getSelectionMode()
+	{
+		return selectionMode;
+	}
+
+	/**
+	 * Sets how many rows the user can select. {@link SelectionMode#NONE} deselects every row and
+	 * leaves the selection column out; {@link SelectionMode#ONE} keeps at most one of the selected
+	 * rows. The browser shows it once the table is rendered again.
+	 *
+	 * @param selectionMode
+	 *            how many rows the user can select
+	 * @return {@code this}
+	 */
+	public BaseDynamicDataTable<T, K, C> setSelectionMode(SelectionMode selectionMode)
+	{
+		this.selectionMode = Args.notNull(selectionMode, "selectionMode");
+		if (selectionMode == SelectionMode.NONE)
+		{
+			clearSelection();
+		}
+		else if (selectionMode == SelectionMode.ONE && (allSelected || selectedKeys.size() > 1))
+		{
+			K first = allSelected ? null : selectedKeys.iterator().next();
+			clearSelection();
+			if (first != null)
+			{
+				selectedKeys.add(first);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * @return whether the column selects rows, a {@link SelectionColumn} or a
+	 *         {@link BeanSelectionColumn}, which {@link SelectionMode#NONE} leaves out
+	 */
+	protected boolean isSelectionColumn(C column)
+	{
+		return column instanceof SelectionColumn || column instanceof BeanSelectionColumn;
+	}
+
+	/**
 	 * @return where the selection bar is shown, {@link ToolbarPosition#TOP} by default
 	 */
 	public ToolbarPosition getSelectionToolbarPosition()
@@ -1759,6 +1807,10 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	private void selectionAction(AjaxRequestTarget target, String action, K key)
 	{
+		if (selectionMode == SelectionMode.NONE)
+		{
+			return;
+		}
 		if (SELECT_ACTION.equals(action) || DESELECT_ACTION.equals(action))
 		{
 			if (key == null || provider.findByKey(key) == null)
@@ -1768,12 +1820,20 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			leaveAllSelected();
 			if (SELECT_ACTION.equals(action))
 			{
+				if (selectionMode == SelectionMode.ONE)
+				{
+					selectedKeys.clear();
+				}
 				selectedKeys.add(key);
 			}
 			else
 			{
 				selectedKeys.remove(key);
 			}
+		}
+		else if (selectionMode != SelectionMode.MANY)
+		{
+			return;
 		}
 		else if (SELECT_PAGE_ACTION.equals(action))
 		{
@@ -1808,6 +1868,10 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	void selectAll(AjaxRequestTarget target, boolean all)
 	{
+		if (selectionMode != SelectionMode.MANY)
+		{
+			return;
+		}
 		allSelected = all;
 		selectedKeys.clear();
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".selectRows(" +
@@ -1891,7 +1955,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 */
 	boolean isPageSelected()
 	{
-		if (selectedKeys.isEmpty())
+		if (selectionMode != SelectionMode.MANY || selectedKeys.isEmpty())
 		{
 			return false;
 		}
@@ -2169,6 +2233,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		config.put("itemCount", getItemCount());
 		config.put("currentPage", getCurrentPage());
 		config.put("filler", hasFiller());
+		config.put("selection", selectionMode.name().toLowerCase(Locale.ROOT));
 		if (bodyHeight > 0)
 		{
 			JSONObject height = new JSONObject();

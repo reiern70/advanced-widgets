@@ -74,7 +74,8 @@ public class SelectionColumn<T> extends AbstractDynamicColumn<T>
 	}
 
 	/**
-	 * Creates the checkbox selecting the page, labeled with the header text, escaped.
+	 * Creates the checkbox selecting the page, labeled with the header text, escaped; nothing when
+	 * the table's {@link SelectionMode} is not {@link SelectionMode#MANY}.
 	 */
 	@Override
 	public Component newHeader(String id)
@@ -86,6 +87,13 @@ public class SelectionColumn<T> extends AbstractDynamicColumn<T>
 			@Override
 			public void onComponentTagBody(MarkupStream markupStream, ComponentTag openTag)
 			{
+				BaseDynamicDataTable<?, ?, ?> table = findParent(BaseDynamicDataTable.class);
+				if (table != null && table.getSelectionMode() != SelectionMode.MANY)
+				{
+					// only one row can be selected: there is no page to select
+					replaceComponentTagBody(markupStream, openTag, "");
+					return;
+				}
 				replaceComponentTagBody(markupStream, openTag, "<input type=\"checkbox\" class=\"" +
 					PAGE_CHECKBOX_CLASS + "\" data-dt-action=\"" +
 					BaseDynamicDataTable.SELECT_PAGE_ACTION + "\" data-dt-action-unchecked=\"" +
