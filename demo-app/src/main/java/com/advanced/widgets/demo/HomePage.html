@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Advanced Widgets</title>
+		<link rel="stylesheet" href="style.css" type="text/css" />
+	</head>
+	<body>
+		<header class="topbar">
+			<div class="container topbar__inner">
+				<span class="brand"><span class="brand__mark">AW</span> Advanced Widgets</span>
+				<span class="ws-status" wicket:id="webSocketStatus" title="WebSocket connection">Connecting</span>
+			</div>
+		</header>
+
+		<main>
+			<section class="hero">
+				<div class="container">
+					<h1>Advanced Widgets</h1>
+					<p class="hero__lead">
+						Reusable Apache Wicket components with Ajax and real-time (websocket) support.
+					</p>
+					<p class="hero__meta">
+						<strong wicket:id="componentCount">0</strong> components in the catalog
+					</p>
+				</div>
+			</section>
+
+			<section class="container demos">
+				<h2>Demos</h2>
+				<ul class="cards">
+					<li class="card" wicket:id="demos">
+						<a class="card__link" wicket:id="link">
+							<div class="card__head">
+								<span class="card__category" wicket:id="category">Category</span>
+							</div>
+							<h3 class="card__name" wicket:id="name">Demo</h3>
+							<p class="card__description" wicket:id="description">Description</p>
+						</a>
+					</li>
+				</ul>
+			</section>
+
+			<section class="container catalog">
+				<h2>Components</h2>
+				<ul class="cards">
+					<li class="card" wicket:id="components">
+						<div class="card__head">
+							<span class="card__category" wicket:id="category">Category</span>
+							<span class="badge" wicket:id="status">Status</span>
+						</div>
+						<h3 class="card__name" wicket:id="name">Component</h3>
+						<p class="card__description" wicket:id="description">Description</p>
+					</li>
+				</ul>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<div class="container footer__inner">
+				<span>
+					&copy; <span wicket:id="year">2026</span>
+					Ernesto Reinaldo Barreiro
+					(<a href="mailto:reiern70@gmail.com">reiern70@gmail.com</a>).
+					All rights reserved.
+				</span>
+				<span>Built with Apache Wicket <span wicket:id="version">10</span></span>
+			</div>
+		</footer>
+	</body>
+</html>

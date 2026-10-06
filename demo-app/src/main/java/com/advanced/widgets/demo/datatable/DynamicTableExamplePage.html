@@ -1,0 +1,21 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+
+<p>
+ <a href="#" wicket:id="addContact">[add a contact]</a> |
+ <wicket:enclosure child="pushRows"><a href="#" wicket:id="pushRows"><wicket:message key="pushRows"/></a> |</wicket:enclosure>
+ <a href="#" wicket:id="switchLocale">[language]</a>
+</p>
+<div wicket:id="options"></div>
+<div wicket:id="themed">
+<div wicket:id="tableParent">
+ <table class="dynamic-dataview" cellspacing="0" wicket:id="table">[table]</table>
+</div>
+<p wicket:id="selection" class="dynamic-dataview-selection">[selection]</p>
+</div>
+<div wicket:id="details">[details]</div>
+<wicket:child/>
+</wicket:extend>

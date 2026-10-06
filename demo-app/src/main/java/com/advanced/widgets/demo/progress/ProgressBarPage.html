@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div class="demo__options">
+	<label><wicket:message key="theme"/> <select wicket:id="theme"></select></label>
+</div>
+<div wicket:id="themed">
+	<h3>Known progress</h3>
+	<div wicket:id="bar"></div>
+	<p><a href="#" wicket:id="toggle">[toggle]</a> | <a href="#" wicket:id="reset">Reset</a></p>
+	<h3>Unknown progress</h3>
+	<div wicket:id="indeterminate"></div>
+</div>
+</wicket:extend>
+</body>
+</html>

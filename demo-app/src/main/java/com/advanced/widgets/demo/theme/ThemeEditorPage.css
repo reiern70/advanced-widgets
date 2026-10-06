@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.theme-editor {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 2em;
+	align-items: start;
+}
+
+.theme-editor-preview {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	padding: 1em;
+	border-radius: 0.4em;
+	background: var(--wicket-theme-surface-alt);
+	color: var(--wicket-theme-text);
+}
+
+@media (max-width: 60em) {
+	.theme-editor {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

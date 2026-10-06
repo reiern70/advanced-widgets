@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+.theme-editor-properties table {
+	border-collapse: collapse;
+}
+
+.theme-editor-properties td {
+	padding: 0.25em 0.5em 0.25em 0;
+	vertical-align: middle;
+}
+
+.theme-editor-properties small {
+	color: #5f6b7a;
+}
+
+.theme-editor-css {
+	width: 100%;
+	box-sizing: border-box;
+	font-family: monospace;
+}

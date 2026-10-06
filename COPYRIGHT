@@ -1,0 +1,20 @@
+Advanced Widgets
+
+Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+All rights reserved.
+
+No part of this software may be copied, modified, distributed or used
+without the prior written permission of the copyright holder.
+
+Portions of demo-app remain under the Apache License, Version 2.0, as their headers say:
+
+  - src/test/java/com/advanced/widgets/demo/Start.java and the Jetty configuration in
+    src/test/jetty were generated from the Apache Wicket quickstart archetype;
+  - Contact.java, ContactsDatabase.java, ContactGenerator.java and ContactFilter.java in
+    src/main/java/com/advanced/widgets/demo/datatable come from the Apache Wicket examples,
+    modified for Advanced Widgets.
+
+The demo application uses Font Awesome Free (https://fontawesome.com), Copyright Fonticons,
+Inc., from the web jar org.webjars.npm:fortawesome__fontawesome-free: its icons under the
+Creative Commons Attribution 4.0 International License, its fonts under the SIL Open Font
+License 1.1 and its code under the MIT License.

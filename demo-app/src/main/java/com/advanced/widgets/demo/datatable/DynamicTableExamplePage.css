@@ -1,0 +1,165 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+table.dynamic-dataview {
+	margin-bottom: 10px;
+	border-collapse: collapse;
+}
+
+table.dynamic-dataview colgroup {
+	border: none;
+}
+
+table.dynamic-dataview thead th {
+	font-weight: bold;
+	text-align: left;
+	padding: 6px 8px;
+}
+
+table.dynamic-dataview thead th a[href]:hover {
+	text-decoration: underline;
+}
+
+table.dynamic-dataview td {
+	padding: 4px 8px;
+}
+
+table.dynamic-dataview tr.navigation td,
+table.dynamic-dataview tr.dynamic-data-table-selection-toolbar td {
+	padding: 6px 8px;
+}
+
+table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
+	font-weight: bold;
+}
+
+.dynamic-dataview-options {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0.6em 1.5em;
+	margin: 0 0 1em 0;
+}
+
+.dynamic-dataview-option {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2em;
+}
+
+.dynamic-dataview-option-title {
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	font-weight: 600;
+}
+
+.dynamic-dataview-option-reset {
+	justify-content: flex-end;
+}
+
+.dynamic-dataview-help {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 1.15em;
+	height: 1.15em;
+	border-radius: 50%;
+	background: #c2410c;
+	color: #fff;
+	font: italic bold 0.8em/1 Georgia, serif;
+	cursor: help;
+}
+
+.dynamic-dataview-help:focus-visible {
+	outline: 2px solid #c2410c;
+	outline-offset: 2px;
+}
+
+.dynamic-dataview-tooltip {
+	position: absolute;
+	z-index: 10;
+	bottom: calc(100% + 9px);
+	left: 50%;
+	width: max-content;
+	max-width: 22rem;
+	padding: 0.5em 0.7em;
+	border-radius: 0.3em;
+	background: #2b1d12;
+	color: #fff;
+	font: normal 400 0.85rem/1.35 sans-serif;
+	text-align: left;
+	box-shadow: 0 0.2em 0.8em rgba(0, 0, 0, 0.3);
+	transform: translateX(-50%);
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.15s ease-in-out, visibility 0.15s;
+}
+
+.dynamic-dataview-tooltip::after {
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	margin-left: -7px;
+	border: 7px solid transparent;
+	border-top-color: #2b1d12;
+}
+
+.dynamic-dataview-help:hover .dynamic-dataview-tooltip,
+.dynamic-dataview-help:focus .dynamic-dataview-tooltip {
+	visibility: visible;
+	opacity: 1;
+}
+
+.dynamic-dataview-sized {
+	height: 600px;
+}
+
+.dynamic-dataview-options :is(select, input) {
+	width: 100%;
+	font-weight: normal;
+}
+
+@media (max-width: 50em) {
+	.dynamic-dataview-options {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.contact-filter input {
+	width: 12em;
+}
+
+.contact-edit {
+	min-width: 22em;
+}
+
+.contact-edit label {
+	display: block;
+	margin-bottom: 0.6em;
+	font-weight: 400;
+}
+
+.contact-edit input,
+.contact-edit select {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: 0.2em;
+	padding: 0.25em 0.4em;
+	font: inherit;
+}
+
+.contact-edit [aria-invalid="true"] {
+	border-color: #c62828;
+	outline: 1px solid #c62828;
+}
+
+.contact-phones {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	column-gap: 0.4em;
+}

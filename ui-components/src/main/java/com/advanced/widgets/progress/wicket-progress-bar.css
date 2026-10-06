@@ -1,0 +1,136 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+/*
+ * Colors come from the theme properties (see wicket-theme.css), with fallbacks for pages without
+ * a theme.
+ */
+.wicket-progress-bar {
+	position: relative;
+	box-sizing: border-box;
+	min-width: 6em;
+	height: 1.4em;
+	border: 1px solid var(--wicket-theme-border, #9aa5b1);
+	border-radius: 0.6em;
+	background: var(--wicket-theme-track, #ffedd5);
+	overflow: hidden;
+}
+
+.wicket-progress-bar-value {
+	-webkit-appearance: none;
+	appearance: none;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: none;
+	background: transparent;
+	color: var(--wicket-theme-progress-dark, #c2410c);
+}
+
+.wicket-progress-bar-value::-webkit-progress-bar {
+	background: transparent;
+}
+
+.wicket-progress-bar-value::-webkit-progress-value {
+	background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.25) 25%, transparent 25%,
+			transparent 50%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.25) 75%,
+			transparent 75%, transparent),
+		linear-gradient(to bottom, var(--wicket-theme-progress, #f97316),
+			var(--wicket-theme-progress-dark, #c2410c));
+	background-size: 1em 1em, auto;
+	animation: wicket-progress-bar-stripes 1s linear infinite;
+	transition: width 0.3s ease-out;
+}
+
+.wicket-progress-bar-value::-moz-progress-bar {
+	background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.25) 25%, transparent 25%,
+			transparent 50%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.25) 75%,
+			transparent 75%, transparent),
+		linear-gradient(to bottom, var(--wicket-theme-progress, #f97316),
+			var(--wicket-theme-progress-dark, #c2410c));
+	background-size: 1em 1em, auto;
+	animation: wicket-progress-bar-stripes 1s linear infinite;
+}
+
+.wicket-progress-bar-value[value="100"]::-webkit-progress-value {
+	background-image: linear-gradient(to bottom, var(--wicket-theme-progress, #f97316),
+			var(--wicket-theme-progress-dark, #c2410c));
+	animation: none;
+}
+
+.wicket-progress-bar-value[value="100"]::-moz-progress-bar {
+	background-image: linear-gradient(to bottom, var(--wicket-theme-progress, #f97316),
+			var(--wicket-theme-progress-dark, #c2410c));
+	animation: none;
+}
+
+.wicket-progress-bar-value:indeterminate {
+	background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.3) 25%, transparent 25%,
+			transparent 50%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.3) 75%,
+			transparent 75%, transparent),
+		linear-gradient(to bottom, var(--wicket-theme-progress, #f97316),
+			var(--wicket-theme-progress-dark, #c2410c));
+	background-size: 1.5em 1.5em, auto;
+	animation: wicket-progress-bar-stripes 1s linear infinite;
+}
+
+.wicket-progress-bar-value:indeterminate::-webkit-progress-bar {
+	background: transparent;
+}
+
+.wicket-progress-bar-value:indeterminate::-moz-progress-bar {
+	background: transparent;
+}
+
+.wicket-progress-bar-label {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: fit-content;
+	margin: 0 auto;
+	display: block;
+	padding: 0 0.5em;
+	border-radius: 0.6em;
+	background: var(--wicket-theme-track, #ffedd5);
+	font-size: 0.85em;
+	font-weight: bold;
+	line-height: 0;
+	white-space: nowrap;
+	color: var(--wicket-theme-text, #2b1d12);
+}
+
+/* centers the digits (cap height) rather than the font's line box, in every browser */
+.wicket-progress-bar-label::before {
+	content: "";
+	display: inline-block;
+	height: 100%;
+	margin-bottom: calc(1cap - 1ex);
+	vertical-align: middle;
+}
+
+@keyframes wicket-progress-bar-stripes {
+	from {
+		background-position: 1em 0, 0 0;
+	}
+
+	to {
+		background-position: 0 0, 0 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wicket-progress-bar-value::-webkit-progress-value {
+		animation: none;
+	}
+
+	.wicket-progress-bar-value::-moz-progress-bar {
+		animation: none;
+	}
+
+	.wicket-progress-bar-value:indeterminate {
+		animation: none;
+	}
+}

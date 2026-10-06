@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.advanced.widgets.demo;
+
+import org.apache.wicket.csp.CSPDirective;
+import org.apache.wicket.csp.CSPDirectiveSrcValue;
+import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.protocol.http.WebApplication;
+
+import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
+import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
+import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
+import com.advanced.widgets.demo.progress.ProgressBarPage;
+import com.advanced.widgets.demo.theme.ThemeEditorPage;
+
+/**
+ * Application object for your web application.
+ * If you want to run this application without deploying, run the Start class.
+ * 
+ * @see com.advanced.widgets.demo.Start#main(String[])
+ */
+public class WicketApplication extends WebApplication
+{
+	/**
+	 * @see org.apache.wicket.Application#getHomePage()
+	 */
+	@Override
+	public Class<? extends WebPage> getHomePage()
+	{
+		return HomePage.class;
+	}
+
+	/**
+	 * @see org.apache.wicket.Application#init()
+	 */
+	@Override
+	public void init()
+	{
+		super.init();
+
+		// allow the application stylesheet (style.css) served from this origin
+		getCspSettings().blocking()
+			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF);
+
+		mountPage("dynamic-data-table", DynamicDataTablePage.class);
+		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
+		mountPage("progress-bar", ProgressBarPage.class);
+		mountPage("theme-editor", ThemeEditorPage.class);
+		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
+	}
+}
