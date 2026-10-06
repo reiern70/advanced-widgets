@@ -84,6 +84,12 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 
 	private static final String WIDTHS_PARAMETER = "widths";
 
+	/**
+	 * The extra parameter that keeps the veil of wicket-extensions off a request. Reporting the
+	 * widths runs in the background, while the user goes on resizing.
+	 */
+	private static final String NO_VEIL_PARAMETER = "wicket_nb";
+
 	private final Mode mode;
 
 	private int minColumnWidth = 30;
@@ -192,6 +198,9 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 	{
 		super.updateAjaxAttributes(attributes);
 		attributes.setMethod(Method.POST);
+		// a veil over the table while each step is saved would make Firefox lose the key
+		// presses arriving while it is put on
+		attributes.getExtraParameters().put(NO_VEIL_PARAMETER, "true");
 	}
 
 	@Override

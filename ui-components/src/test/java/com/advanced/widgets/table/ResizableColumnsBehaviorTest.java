@@ -78,6 +78,14 @@ class ResizableColumnsBehaviorTest extends WicketTestCase
 	}
 
 	@Test
+	void reportingTheWidthsIsNotVeiled()
+	{
+		tester.startPage(new WidthsPage(new WidthsTable()));
+
+		tester.assertContains("\"ep\":.*\"wicket_nb\"");
+	}
+
+	@Test
 	void onlyTablesCanBeResized()
 	{
 		assertThrows(Exception.class,

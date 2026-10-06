@@ -24,6 +24,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -153,6 +154,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 			new Actions(driver).sendKeys(Keys.ARROW_RIGHT).perform();
 		}
 		wait.until(d -> isTableWiderThanItsParentBy(300));
+		awaitAlignedColumns();
 
 		Map<String, Object> geometry = geometry();
 		assertTrue(number(geometry, "pageScrollWidth") > number(geometry, "pageWidth"),
@@ -455,6 +457,22 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 		return Stream.of(SeleniumBrowser.values())
 			.flatMap(browser -> Stream.of(Arguments.of(browser, "dynamic-data-table"),
 				Arguments.of(browser, "bean-dynamic-data-table")));
+	}
+
+	/**
+	 * Waits for the cells of the body to line up with the headers again, which they do a moment
+	 * after the last step of a resize; columns that stay misaligned fail the assertion after it.
+	 */
+	private void awaitAlignedColumns()
+	{
+		try
+		{
+			wait.until(d -> number(geometry(), "misaligned") == 0);
+		}
+		catch (TimeoutException e)
+		{
+			// the assertion reports the geometry
+		}
 	}
 
 	private boolean isTableWiderThanItsParentBy(double pixels)
