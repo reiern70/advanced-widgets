@@ -3,21 +3,78 @@
  * All rights reserved.
  */
 
-.theme-editor-properties table {
-	border-collapse: collapse;
+.theme-editor-properties {
+	font-size: 0.85em;
 }
 
-.theme-editor-properties td {
-	padding: 0.25em 0.5em 0.25em 0;
-	vertical-align: middle;
+/* the pickers, in as many columns as fit */
+.theme-editor-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15em, 1fr));
+	gap: 0.4em 1.2em;
 }
 
-.theme-editor-properties small {
-	color: #5f6b7a;
+.theme-editor-property {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6em;
+	min-width: 0;
+	padding: 0.3em 0;
+	border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.theme-editor-property-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.theme-editor-property-text code {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.theme-editor-property-text small {
+	opacity: 0.7;
+	font-size: 0.9em;
+	line-height: 1.25;
+}
+
+.theme-editor-property-input {
+	flex: none;
+}
+
+.theme-editor-property-input input[type="text"] {
+	width: 9em;
+}
+
+.theme-editor-property-input input[type="color"] {
+	width: 2.6em;
+	height: 1.8em;
+	padding: 0;
+}
+
+/* the class name, the CSS of the theme and the copy button, side by side when there is room */
+.theme-editor-output {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.8em 1.2em;
+	margin-top: 1em;
+}
+
+.theme-editor-output-css {
+	display: flex;
+	flex: 1 1 28em;
+	flex-direction: column;
+	gap: 0.2em;
 }
 
 .theme-editor-css {
 	width: 100%;
 	box-sizing: border-box;
 	font-family: monospace;
+	font-size: 0.95em;
 }

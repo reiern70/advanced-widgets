@@ -83,7 +83,8 @@ public class ThemeEditorPanel extends Panel
 			protected void populateItem(ListItem<String> item)
 			{
 				String property = item.getModelObject();
-				item.add(new Label("name", "--wicket-theme-" + property));
+				item.add(new Label("name", property).add(
+					AttributeModifier.replace("title", "--wicket-theme-" + property)));
 				item.add(new Label("description", new ResourceModel("property." + property)));
 				item.add(newInput("input", property));
 			}

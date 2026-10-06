@@ -4,18 +4,20 @@
 -->
 <wicket:panel xmlns:wicket="http://wicket.apache.org">
 <div wicket:id="editor" class="theme-editor-properties">
-	<p><label><wicket:message key="className"/> <input type="text" class="theme-editor-class" value="my-theme" pattern="-?[a-zA-Z_][a-zA-Z0-9_-]*"/></label></p>
-	<table>
-		<tr wicket:id="properties">
-			<td><code wicket:id="name"></code><br/><small wicket:id="description"></small></td>
-			<td wicket:id="input"></td>
-		</tr>
-	</table>
-	<p><wicket:message key="css"/></p>
-	<textarea class="theme-editor-css" readonly="readonly" rows="20" cols="48" aria-label="CSS"></textarea>
-	<p><button type="button" class="theme-editor-copy"><wicket:message key="copy"/></button></p>
+	<div class="theme-editor-grid">
+		<div class="theme-editor-property" wicket:id="properties">
+			<div class="theme-editor-property-text"><code wicket:id="name"></code><small wicket:id="description"></small></div>
+			<div class="theme-editor-property-input" wicket:id="input"></div>
+		</div>
+	</div>
+	<div class="theme-editor-output">
+		<label class="theme-editor-output-name"><wicket:message key="className"/> <input type="text" class="theme-editor-class" value="my-theme" pattern="-?[a-zA-Z_][a-zA-Z0-9_-]*"/></label>
+		<label class="theme-editor-output-css"><span><wicket:message key="css"/></span>
+			<textarea class="theme-editor-css" readonly="readonly" rows="6" aria-label="CSS"></textarea></label>
+		<button type="button" class="theme-editor-copy"><wicket:message key="copy"/></button>
+	</div>
 </div>
 <wicket:fragment wicket:id="color"><input type="color" wicket:id="field"/></wicket:fragment>
-<wicket:fragment wicket:id="text"><input type="text" size="24" wicket:id="field"/></wicket:fragment>
+<wicket:fragment wicket:id="text"><input type="text" size="18" wicket:id="field"/></wicket:fragment>
 <wicket:fragment wicket:id="scheme"><select wicket:id="field"><option value="light">light</option><option value="dark">dark</option></select></wicket:fragment>
 </wicket:panel>
