@@ -72,6 +72,11 @@ table.dynamic-data-table.dynamic-data-table-rows {
 	table-layout: fixed;
 }
 
+/* a cell narrower than its content clips it, rather than drawing it over the next column */
+table.dynamic-data-table.dynamic-data-table-rows > tbody > tr > td {
+	overflow: hidden;
+}
+
 .dynamic-data-table-sort-asc,
 .dynamic-data-table-sort-desc {
 	opacity: 0.35;
@@ -282,7 +287,12 @@ table.dynamic-data-table > tfoot .dynamic-data-table-column-chooser-menu {
 	cursor: default;
 }
 
+/* the bar offering to select all rows: a slim line under the headers */
 .dynamic-data-table-selection-toolbar > td {
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+	font-size: 0.85em;
+	line-height: 1.3;
 	text-align: center;
 }
 
