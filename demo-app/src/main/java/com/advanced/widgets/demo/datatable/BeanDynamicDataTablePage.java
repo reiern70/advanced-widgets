@@ -45,31 +45,31 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	protected BaseDynamicDataTable<Contact, Long, ?> newTable(String id,
-		ContactsProvider provider)
+	protected BaseDynamicDataTable<User, Long, ?> newTable(String id,
+		UsersProvider provider)
 	{
-		List<IColumn<Contact, String>> columns = new ArrayList<>();
+		List<IColumn<User, String>> columns = new ArrayList<>();
 		columns.add(new BeanSelectionColumn<>());
 		columns.add(new BeanRowNumberColumn<>(Model.of("#")));
 		columns.add(new BeanActionsColumn<>(new ResourceModel("actions"), newRowActions()));
 		columns.add(new IdColumn());
-		columns.add(new ContactColumn("firstName", "firstName", Contact::getFirstName));
-		columns.add(new ContactColumn("lastName", "lastName", Contact::getLastName));
-		columns.add(new ContactColumn("bornDate", "bornDate",
-			contact -> Objects.toString(DynamicTableExamplePage.bornOn(contact), "")));
-		columns.add(new ContactColumn("address", null,
-			contact -> contact.getAddress() + ", " + contact.getCity() + ", " +
-				contact.getCountryName()));
+		columns.add(new UserColumn("firstName", "firstName", User::getFirstName));
+		columns.add(new UserColumn("lastName", "lastName", User::getLastName));
+		columns.add(new UserColumn("bornDate", "bornDate",
+			user -> Objects.toString(DynamicTableExamplePage.bornOn(user), "")));
+		columns.add(new UserColumn("address", null,
+			user -> user.getAddress() + ", " + user.getCity() + ", " +
+				user.getCountryName()));
 		columns.add(new PhonesColumn());
 		columns.add(new ProgressColumn());
-		List<IColumn<Contact, String>> hidden = List.of(
-			new ContactColumn("homePhone", null, Contact::getHomePhone),
-			new ContactColumn("cellPhone", null, Contact::getCellPhone),
-			new ContactColumn("city", null, Contact::getCity),
-			new ContactColumn("country", null, Contact::getCountryName));
+		List<IColumn<User, String>> hidden = List.of(
+			new UserColumn("homePhone", null, User::getHomePhone),
+			new UserColumn("cellPhone", null, User::getCellPhone),
+			new UserColumn("city", null, User::getCity),
+			new UserColumn("country", null, User::getCountryName));
 		columns.addAll(hidden);
 
-		BeanBasedDynamicDataTable<Contact, Long, String> table = new BeanBasedDynamicDataTable<>(
+		BeanBasedDynamicDataTable<User, Long, String> table = new BeanBasedDynamicDataTable<>(
 			id, columns, provider, ROWS_PER_PAGE)
 		{
 			private static final long serialVersionUID = 1L;
@@ -83,9 +83,9 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 
 			@Override
 			protected void onNotFoundAction(AjaxRequestTarget target, String action, Long key,
-				Contact contact)
+				User user)
 			{
-				onContactNotFound(target);
+				onUserNotFound(target);
 			}
 
 			@Override
@@ -102,48 +102,48 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 	 * Renders the rows again via Ajax.
 	 */
 	@Override
-	protected void onContactAdded(Contact contact, AjaxRequestTarget target)
+	protected void onUserAdded(User user, AjaxRequestTarget target)
 	{
 		getTable().refresh(target);
-		info("Added " + contact.getFirstName() + " " + contact.getLastName() +
+		info("Added " + user.getFirstName() + " " + user.getLastName() +
 			"; the rows were rendered again.");
 		target.add(get("feedback"));
 	}
 
 	/**
-	 * The id of the contact, a column the user cannot resize.
+	 * The id of the user, a column the user cannot resize.
 	 */
-	private static class IdColumn extends LambdaColumn<Contact, String> implements IFixedWidthColumn
+	private static class IdColumn extends LambdaColumn<User, String> implements IFixedWidthColumn
 	{
 		private static final long serialVersionUID = 1L;
 
 		IdColumn()
 		{
-			super(new ResourceModel("id"), Contact::getId);
+			super(new ResourceModel("id"), User::getId);
 		}
 	}
 
 	/**
-	 * A value of the contact, written escaped, in a column the user can hide and move.
+	 * A value of the user, written escaped, in a column the user can hide and move.
 	 */
-	private static class ContactColumn extends LambdaColumn<Contact, String>
+	private static class UserColumn extends LambdaColumn<User, String>
 		implements
 			IHideableColumn,
 			IMovableColumn
 	{
 		private static final long serialVersionUID = 1L;
 
-		ContactColumn(String headerKey, String sortProperty,
-			SerializableFunction<Contact, ?> value)
+		UserColumn(String headerKey, String sortProperty,
+			SerializableFunction<User, ?> value)
 		{
 			super(new ResourceModel(headerKey), sortProperty, value);
 		}
 	}
 
 	/**
-	 * The phone numbers of the contact, each copied to the clipboard on a double click.
+	 * The phone numbers of the user, each copied to the clipboard on a double click.
 	 */
-	private static class PhonesColumn extends LambdaColumn<Contact, String>
+	private static class PhonesColumn extends LambdaColumn<User, String>
 		implements
 			IHeaderContributor,
 			IHideableColumn,
@@ -154,22 +154,22 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 		PhonesColumn()
 		{
 			super(new ResourceModel("phones"),
-				contact -> contact.getHomePhone() + " / " + contact.getCellPhone());
+				user -> user.getHomePhone() + " / " + user.getCellPhone());
 		}
 
 		@Override
-		public void populateItem(Item<ICellPopulator<Contact>> item, String componentId,
-			IModel<Contact> rowModel)
+		public void populateItem(Item<ICellPopulator<User>> item, String componentId,
+			IModel<User> rowModel)
 		{
-			item.add(new Label(componentId, rowModel.map(contact -> phones(contact, item)))
+			item.add(new Label(componentId, rowModel.map(user -> phones(user, item)))
 				.setEscapeModelStrings(false));
 		}
 
-		private static String phones(Contact contact, Component component)
+		private static String phones(User user, Component component)
 		{
-			return "<span class=\"contact-phones\"><b>" + component.getString("phones.home") +
-				"</b> " + phone(contact.getHomePhone()) + "<b>" +
-				component.getString("phones.cell") + "</b> " + phone(contact.getCellPhone()) +
+			return "<span class=\"user-phones\"><b>" + component.getString("phones.home") +
+				"</b> " + phone(user.getHomePhone()) + "<b>" +
+				component.getString("phones.cell") + "</b> " + phone(user.getCellPhone()) +
 				"</span>";
 		}
 
@@ -188,9 +188,9 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * The progress of the contact as a progress bar, a column the user can hide and move.
+	 * The progress of the user as a progress bar, a column the user can hide and move.
 	 */
-	private static class ProgressColumn extends LambdaColumn<Contact, String>
+	private static class ProgressColumn extends LambdaColumn<User, String>
 		implements
 			IHeaderContributor,
 			IHideableColumn,
@@ -200,15 +200,15 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 
 		ProgressColumn()
 		{
-			super(new ResourceModel("progress"), Contact::getProgress);
+			super(new ResourceModel("progress"), User::getProgress);
 		}
 
 		@Override
-		public void populateItem(Item<ICellPopulator<Contact>> item, String componentId,
-			IModel<Contact> rowModel)
+		public void populateItem(Item<ICellPopulator<User>> item, String componentId,
+			IModel<User> rowModel)
 		{
-			item.add(new Label(componentId, rowModel.map(contact -> ProgressBar.markup(
-				String.valueOf(Math.max(0, Math.min(100, contact.getProgress()))))))
+			item.add(new Label(componentId, rowModel.map(user -> ProgressBar.markup(
+				String.valueOf(Math.max(0, Math.min(100, user.getProgress()))))))
 				.setEscapeModelStrings(false));
 		}
 

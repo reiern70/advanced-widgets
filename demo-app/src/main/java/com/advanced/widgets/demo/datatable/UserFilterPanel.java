@@ -15,14 +15,14 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
 /**
- * A text field filtering contacts while the user types, shown in front of the navigation of the
+ * A text field filtering users while the user types, shown in front of the navigation of the
  * dynamic table examples.
  */
-abstract class ContactFilterPanel extends Panel
+abstract class UserFilterPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
-	ContactFilterPanel(String id, IModel<String> filter)
+	UserFilterPanel(String id, IModel<String> filter)
 	{
 		super(id);
 

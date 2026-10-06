@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Edits and adds contacts of {@link DynamicDataTablePage}, and checks its columns.
+ * Edits and adds users of {@link DynamicDataTablePage}, and checks its columns.
  */
 class DynamicDataTablePageTest
 {
@@ -46,9 +46,9 @@ class DynamicDataTablePageTest
 
 	private WicketTester tester;
 
-	private JsonBasedDynamicDataTable<Contact, Long> table;
+	private JsonBasedDynamicDataTable<User, Long> table;
 
-	private Contact contact;
+	private User user;
 
 	private String city;
 
@@ -58,25 +58,25 @@ class DynamicDataTablePageTest
 	{
 		tester = new WicketTester(new WicketApplication());
 		tester.startPage(DynamicDataTablePage.class);
-		table = (JsonBasedDynamicDataTable<Contact, Long>)tester
+		table = (JsonBasedDynamicDataTable<User, Long>)tester
 			.getComponentFromLastRenderedPage(TABLE);
-		contact = DatabaseLocator.getLargeDatabase().find(0, 1, null).get(0);
-		city = contact.getCity();
+		user = DatabaseLocator.getLargeDatabase().find(0, 1, null).get(0);
+		city = user.getCity();
 	}
 
 	@AfterEach
 	void stop()
 	{
-		contact.setCity(city);
+		user.setCity(city);
 		tester.destroy();
 	}
 
 	@Test
 	void actionsFollowTheRowNumberWithEditBeforeDeleteAndDownload()
 	{
-		List<IDynamicColumn<Contact>> columns = table.getColumns();
+		List<IDynamicColumn<User>> columns = table.getColumns();
 		assertTrue(columns.get(1) instanceof RowNumberColumn);
-		IDynamicColumn<Contact> actions = columns.get(2);
+		IDynamicColumn<User> actions = columns.get(2);
 		assertTrue(actions instanceof CompoundDynamicColumn);
 		String template = actions.getTemplate(table);
 		int edit = template.indexOf("data-dt-action=\"edit\"");
@@ -120,7 +120,7 @@ class DynamicDataTablePageTest
 	@Test
 	void theSelectionRowNumberIdAndActionsAreFixedAndTheOthersMovable()
 	{
-		List<IDynamicColumn<Contact>> columns = table.getColumns();
+		List<IDynamicColumn<User>> columns = table.getColumns();
 		for (int i = 0; i < columns.size(); i++)
 		{
 			assertEquals(i > 3, table.isMovable(columns.get(i)), String.valueOf(i));
@@ -128,9 +128,9 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
-	void anAddedContactIsSavedAndSelected()
+	void anAddedUserIsSavedAndSelected()
 	{
-		ContactsDatabase database = DatabaseLocator.getLargeDatabase();
+		UsersDatabase database = DatabaseLocator.getLargeDatabase();
 		int count = database.getCount();
 		Component add = ((MarkupContainer)table.get("topNavigation")).visitChildren(Component.class,
 			(child, visit) -> {
@@ -150,7 +150,7 @@ class DynamicDataTablePageTest
 		form.setValue("address", "1 Via Espana");
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
-		Contact added = ((DynamicDataTablePage)tester.getLastRenderedPage()).getSelected();
+		User added = ((DynamicDataTablePage)tester.getLastRenderedPage()).getSelected();
 		try
 		{
 			assertEquals(count + 1, database.getCount());
@@ -165,19 +165,19 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
-	void editShowsTheContactInAFormInTheOverlay()
+	void editShowsTheUserInAFormInTheOverlay()
 	{
 		edit();
 
 		assertTrue(table.isOverlayShown());
 		tester.assertComponentOnAjaxResponse(TABLE + ":overlay");
-		tester.assertComponent(FORM.substring(0, FORM.lastIndexOf(':')), ContactEditPanel.class);
+		tester.assertComponent(FORM.substring(0, FORM.lastIndexOf(':')), UserEditPanel.class);
 		tester.assertModelValue(FORM + ":city", city);
-		tester.assertModelValue(FORM + ":firstName", contact.getFirstName());
+		tester.assertModelValue(FORM + ":firstName", user.getFirstName());
 	}
 
 	@Test
-	void savingUpdatesTheContactAndClosesTheOverlay()
+	void savingUpdatesTheUserAndClosesTheOverlay()
 	{
 		edit();
 
@@ -185,7 +185,7 @@ class DynamicDataTablePageTest
 		form.setValue("city", "Paris");
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
-		assertEquals("Paris", DatabaseLocator.getLargeDatabase().get(contact.getId()).getCity());
+		assertEquals("Paris", DatabaseLocator.getLargeDatabase().get(user.getId()).getCity());
 		assertFalse(table.isOverlayShown());
 		tester.assertComponentOnAjaxResponse(TABLE + ":overlay");
 	}
@@ -199,7 +199,7 @@ class DynamicDataTablePageTest
 		form.setValue("city", "");
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
-		assertEquals(city, contact.getCity());
+		assertEquals(city, user.getCity());
 		assertTrue(table.isOverlayShown());
 		tester.assertComponentOnAjaxResponse(FORM);
 		assertTrue(tester.getLastResponseAsString().contains("data-dt-changed=\"true\""));
@@ -214,7 +214,7 @@ class DynamicDataTablePageTest
 		form.setValue("city", "Paris");
 		tester.clickLink(FORM + ":cancel", true);
 
-		assertEquals(city, contact.getCity());
+		assertEquals(city, user.getCity());
 		assertFalse(table.isOverlayShown());
 	}
 
@@ -226,7 +226,7 @@ class DynamicDataTablePageTest
 		executeAction(BaseDynamicDataTable.CLOSE_OVERLAY_ACTION, null);
 
 		assertFalse(table.isOverlayShown());
-		assertEquals(city, contact.getCity());
+		assertEquals(city, user.getCity());
 	}
 
 	@Test
@@ -244,7 +244,7 @@ class DynamicDataTablePageTest
 		List<String> moved = table.getColumnState().getOrder();
 
 		tester.startPage(DynamicDataTablePage.class);
-		table = (JsonBasedDynamicDataTable<Contact, Long>)tester
+		table = (JsonBasedDynamicDataTable<User, Long>)tester
 			.getComponentFromLastRenderedPage(TABLE);
 		assertEquals(moved, table.getColumnState().getOrder(), "a new page keeps the order");
 		assertEquals(50d, table.getColumnWidths()[0]);
@@ -335,7 +335,7 @@ class DynamicDataTablePageTest
 
 	private void edit()
 	{
-		executeAction("edit", String.valueOf(contact.getId()));
+		executeAction("edit", String.valueOf(user.getId()));
 	}
 
 	private void executeAction(String action, String key)

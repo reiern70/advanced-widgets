@@ -17,13 +17,13 @@ import com.advanced.widgets.dynamicdatatable.IIdentifiableDynamicDataProvider;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicDataProvider;
 
 /**
- * The contacts of the large database for the dynamic table examples. Sorts by first or last name
+ * The users of the large database for the dynamic table examples. Sorts by first or last name
  * with the database's indexes, and by born date in memory, and filters by first and last name in
- * memory. The contacts are their own keys' source, being {@link Contact#getId() identifiable}.
+ * memory. The users are their own keys' source, being {@link User#getId() identifiable}.
  */
-public class ContactsProvider extends SortableDynamicDataProvider<Contact, Long, String>
+public class UsersProvider extends SortableDynamicDataProvider<User, Long, String>
 	implements
-		IIdentifiableDynamicDataProvider<Contact, Long>
+		IIdentifiableDynamicDataProvider<User, Long>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -34,13 +34,13 @@ public class ContactsProvider extends SortableDynamicDataProvider<Contact, Long,
 	/**
 	 * Constructor.
 	 */
-	public ContactsProvider()
+	public UsersProvider()
 	{
 		super(Long.class);
 	}
 
 	/**
-	 * @return the text the first or last name of a contact has to contain, or {@code null}
+	 * @return the text the first or last name of a user has to contain, or {@code null}
 	 */
 	public String getFilter()
 	{
@@ -49,7 +49,7 @@ public class ContactsProvider extends SortableDynamicDataProvider<Contact, Long,
 
 	/**
 	 * @param filter
-	 *            the text the first or last name of a contact has to contain, or {@code null}
+	 *            the text the first or last name of a user has to contain, or {@code null}
 	 */
 	public void setFilter(String filter)
 	{
@@ -57,46 +57,46 @@ public class ContactsProvider extends SortableDynamicDataProvider<Contact, Long,
 	}
 
 	@Override
-	public Iterator<Contact> iterator(long first, long count)
+	public Iterator<User> iterator(long first, long count)
 	{
-		List<Contact> contacts = contacts();
-		return new ArrayList<>(contacts.subList((int)first,
-			(int)Math.min(contacts.size(), first + count))).iterator();
+		List<User> users = users();
+		return new ArrayList<>(users.subList((int)first,
+			(int)Math.min(users.size(), first + count))).iterator();
 	}
 
 	@Override
 	public long size()
 	{
-		return contacts().size();
+		return users().size();
 	}
 
 	/**
-	 * @return the contacts whose first or last name contains the filter, in the order of the sort
+	 * @return the users whose first or last name contains the filter, in the order of the sort
 	 */
-	private List<Contact> contacts()
+	private List<User> users()
 	{
 		SortParam<String> sort = getSort();
 		boolean byBornDate = sort != null && BORN_DATE.equals(sort.getProperty());
-		List<Contact> index = DatabaseLocator.getLargeDatabase()
+		List<User> index = DatabaseLocator.getLargeDatabase()
 			.getIndex(byBornDate ? null : sort);
-		List<Contact> contacts;
+		List<User> users;
 		synchronized (index)
 		{
-			contacts = new ArrayList<>(index);
+			users = new ArrayList<>(index);
 		}
 		if (Strings.isEmpty(filter) == false)
 		{
 			String term = filter.trim().toLowerCase(Locale.ROOT);
-			contacts.removeIf(contact -> contains(contact.getFirstName(), term) == false &&
-				contains(contact.getLastName(), term) == false);
+			users.removeIf(user -> contains(user.getFirstName(), term) == false &&
+				contains(user.getLastName(), term) == false);
 		}
 		if (byBornDate)
 		{
-			Comparator<Contact> byBorn = Comparator.comparing(Contact::getBornDate,
+			Comparator<User> byBorn = Comparator.comparing(User::getBornDate,
 				Comparator.nullsFirst(Comparator.naturalOrder()));
-			contacts.sort(sort.isAscending() ? byBorn : byBorn.reversed());
+			users.sort(sort.isAscending() ? byBorn : byBorn.reversed());
 		}
-		return contacts;
+		return users;
 	}
 
 	private static boolean contains(String name, String term)
@@ -105,7 +105,7 @@ public class ContactsProvider extends SortableDynamicDataProvider<Contact, Long,
 	}
 
 	@Override
-	public Contact findByKey(Long key)
+	public User findByKey(Long key)
 	{
 		try
 		{

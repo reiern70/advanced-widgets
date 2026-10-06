@@ -147,11 +147,12 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 		WebElement edge = driver.findElements(By.cssSelector(TABLE + " thead .wicket-col-resizer"))
 			.get(5);
 		js().executeScript("arguments[0].focus();", edge);
-		for (int i = 0; i < 40; i++)
+		// how far the column has to grow depends on how wide the page's layout lets the table be
+		for (int i = 0; i < 120 && isTableWiderThanItsParentBy(300) == false; i++)
 		{
 			new Actions(driver).sendKeys(Keys.ARROW_RIGHT).perform();
 		}
-		wait.until(d -> number(geometry(), "tableWidth") > number(geometry(), "parentWidth") + 300);
+		wait.until(d -> isTableWiderThanItsParentBy(300));
 
 		Map<String, Object> geometry = geometry();
 		assertTrue(number(geometry, "pageScrollWidth") > number(geometry, "pageWidth"),
@@ -454,6 +455,12 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 		return Stream.of(SeleniumBrowser.values())
 			.flatMap(browser -> Stream.of(Arguments.of(browser, "dynamic-data-table"),
 				Arguments.of(browser, "bean-dynamic-data-table")));
+	}
+
+	private boolean isTableWiderThanItsParentBy(double pixels)
+	{
+		Map<String, Object> geometry = geometry();
+		return number(geometry, "tableWidth") > number(geometry, "parentWidth") + pixels;
 	}
 
 	private void open(SeleniumBrowser browser, String page)

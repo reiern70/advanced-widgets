@@ -48,7 +48,7 @@ class DynamicDataTableWebSocketTest extends JettyTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void addingAContactRefreshesTheTableViaWebSockets(SeleniumBrowser browser)
+	void addingAUserRefreshesTheTableViaWebSockets(SeleniumBrowser browser)
 	{
 		driver = browser.newDriver(1280, 1024);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -61,7 +61,7 @@ class DynamicDataTableWebSocketTest extends JettyTestCase
 				"Wicket.WebSocket.INSTANCE.ws.readyState === 1);"));
 		int itemCount = itemCount();
 
-		driver.findElement(By.linkText("Add a contact and refresh the table"))
+		driver.findElement(By.linkText("Add a user and refresh the table"))
 			.click();
 
 		wait.until(d -> itemCount() == itemCount + 1);

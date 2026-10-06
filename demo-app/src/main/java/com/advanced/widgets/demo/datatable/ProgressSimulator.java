@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.advanced.widgets.dynamicdatatable.UpdateRowMessageType;
 
 /**
- * Advances the progress of random contacts among those a page shows, on a timer, and pushes the
+ * Advances the progress of random users among those a page shows, on a timer, and pushes the
  * changed rows to the page over its web socket connection, at most once per {@link #FLUSH_MILLIS}
  * however often they change. Rows the page does not show are neither advanced nor pushed: the
  * page reports which rows it shows with {@link #show(String, int, Collection)}, whenever the
@@ -42,7 +42,7 @@ final class ProgressSimulator
 
 	private static final long FLUSH_MILLIS = 500;
 
-	private static final int CONTACTS_PER_TICK = 3;
+	private static final int USERS_PER_TICK = 3;
 
 	private static final ScheduledExecutorService TIMER = Executors.newScheduledThreadPool(1,
 		runnable -> {
@@ -66,14 +66,14 @@ final class ProgressSimulator
 
 	private final String tableId;
 
-	private final ContactsDatabase database;
+	private final UsersDatabase database;
 
 	private final Set<Long> changed = ConcurrentHashMap.newKeySet();
 
 	private final List<ScheduledFuture<?>> tasks = new ArrayList<>();
 
 	private ProgressSimulator(Application application, String sessionId, int pageId, IKey key,
-		String tableId, ContactsDatabase database)
+		String tableId, UsersDatabase database)
 	{
 		this.application = application;
 		this.sessionId = sessionId;
@@ -87,7 +87,7 @@ final class ProgressSimulator
 	 * Starts simulating for a page, replacing a simulator already running for it.
 	 */
 	static void start(Application application, String sessionId, int pageId, IKey key,
-		String tableId, ContactsDatabase database)
+		String tableId, UsersDatabase database)
 	{
 		ProgressSimulator simulator = new ProgressSimulator(application, sessionId, pageId, key,
 			tableId, database);
@@ -113,7 +113,7 @@ final class ProgressSimulator
 	}
 
 	/**
-	 * Records which contacts a page shows; may be called before the simulator of the page starts.
+	 * Records which users a page shows; may be called before the simulator of the page starts.
 	 */
 	static void show(String sessionId, int pageId, Collection<Long> ids)
 	{
@@ -147,14 +147,14 @@ final class ProgressSimulator
 	private void advance()
 	{
 		List<Long> shown = shown();
-		for (int i = 0; i < CONTACTS_PER_TICK && shown.isEmpty() == false; i++)
+		for (int i = 0; i < USERS_PER_TICK && shown.isEmpty() == false; i++)
 		{
 			Long id = shown.get(ThreadLocalRandom.current().nextInt(shown.size()));
 			try
 			{
-				Contact contact = database.get(id);
-				int progress = contact.getProgress() + ThreadLocalRandom.current().nextInt(1, 8);
-				contact.setProgress(progress > 100 ? 0 : progress);
+				User user = database.get(id);
+				int progress = user.getProgress() + ThreadLocalRandom.current().nextInt(1, 8);
+				user.setProgress(progress > 100 ? 0 : progress);
 				changed.add(id);
 			}
 			catch (RuntimeException deleted)
@@ -171,10 +171,10 @@ final class ProgressSimulator
 		ids.retainAll(shown());
 		for (Long id : ids)
 		{
-			Contact contact;
+			User user;
 			try
 			{
-				contact = database.get(id);
+				user = database.get(id);
 			}
 			catch (RuntimeException deleted)
 			{
@@ -182,7 +182,7 @@ final class ProgressSimulator
 			}
 			try
 			{
-				if (UpdateRowMessageType.newMessage(tableId, String.valueOf(id), contact)
+				if (UpdateRowMessageType.newMessage(tableId, String.valueOf(id), user)
 					.send(application, sessionId, key) == false)
 				{
 					stop(sessionId, pageId);
@@ -191,7 +191,7 @@ final class ProgressSimulator
 			}
 			catch (IOException | RuntimeException e)
 			{
-				LOG.debug("Pushing the progress of contact {} failed, stopping", id, e);
+				LOG.debug("Pushing the progress of user {} failed, stopping", id, e);
 				stop(sessionId, pageId);
 				return;
 			}

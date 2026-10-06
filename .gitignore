@@ -7,3 +7,6 @@ out/
 
 # Maven
 target/
+
+# work in progress, kept out of the repository
+WIP/

@@ -5,20 +5,20 @@
 package com.advanced.widgets.demo.datatable;
 
 /**
- * Holds the contacts of the demos, shared by all sessions.
+ * Holds the users of the demos, shared by all sessions.
  */
 public final class DatabaseLocator
 {
-	private static final ContactsDatabase LARGE = new ContactsDatabase(1000);
+	private static final UsersDatabase LARGE = new UsersDatabase(1000);
 
 	private DatabaseLocator()
 	{
 	}
 
 	/**
-	 * @return the database of a thousand contacts
+	 * @return the database of a thousand users
 	 */
-	public static ContactsDatabase getLargeDatabase()
+	public static UsersDatabase getLargeDatabase()
 	{
 		return LARGE;
 	}

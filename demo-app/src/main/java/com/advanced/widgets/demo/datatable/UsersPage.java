@@ -10,40 +10,40 @@ import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import com.advanced.widgets.demo.DemoPage;
 
 /**
- * A demo page working on the contacts: shows the selected contact and the feedback messages above
+ * A demo page working on the users: shows the selected user and the feedback messages above
  * the demo.
  */
-public abstract class ContactsPage extends DemoPage
+public abstract class UsersPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
 
-	private Contact selected;
+	private User selected;
 
-	protected ContactsPage()
+	protected UsersPage()
 	{
-		add(new Label("selectedLabel", this::getSelectedContactLabel));
+		add(new Label("selectedLabel", this::getSelectedUserLabel));
 		add(new FeedbackPanel("feedback"));
 	}
 
-	private String getSelectedContactLabel()
+	private String getSelectedUserLabel()
 	{
-		return selected == null ? getString("noContactSelected")
+		return selected == null ? getString("noUserSelected")
 			: selected.getFirstName() + " " + selected.getLastName();
 	}
 
 	/**
-	 * @return the selected contact, {@code null} if there is none
+	 * @return the selected user, {@code null} if there is none
 	 */
-	public Contact getSelected()
+	public User getSelected()
 	{
 		return selected;
 	}
 
 	/**
 	 * @param selected
-	 *            the selected contact, {@code null} for none
+	 *            the selected user, {@code null} for none
 	 */
-	public void setSelected(Contact selected)
+	public void setSelected(User selected)
 	{
 		this.selected = selected;
 	}

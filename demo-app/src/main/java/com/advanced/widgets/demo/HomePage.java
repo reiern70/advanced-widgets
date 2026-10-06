@@ -34,7 +34,7 @@ public class HomePage extends WebPage {
 
 	private static final List<Demo> DEMOS = List.of(
 		new Demo("Dynamic Data Table", "Data",
-			"A thousand contacts rendered in the browser from JSON, with live updates over websockets.",
+			"A thousand users rendered in the browser from JSON, with live updates over websockets.",
 			DynamicDataTablePage.class),
 		new Demo("Bean Dynamic Data Table", "Data",
 			"The same table with its rows rendered on the server by Wicket components.",

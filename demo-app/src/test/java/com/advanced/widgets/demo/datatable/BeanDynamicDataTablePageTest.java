@@ -32,9 +32,9 @@ class BeanDynamicDataTablePageTest
 
 	private WicketTester tester;
 
-	private BeanBasedDynamicDataTable<Contact, Long, String> table;
+	private BeanBasedDynamicDataTable<User, Long, String> table;
 
-	private Contact contact;
+	private User user;
 
 	private String city;
 
@@ -44,16 +44,16 @@ class BeanDynamicDataTablePageTest
 	{
 		tester = new WicketTester(new WicketApplication());
 		tester.startPage(BeanDynamicDataTablePage.class);
-		table = (BeanBasedDynamicDataTable<Contact, Long, String>)tester
+		table = (BeanBasedDynamicDataTable<User, Long, String>)tester
 			.getComponentFromLastRenderedPage(TABLE);
-		contact = DatabaseLocator.getLargeDatabase().find(0, 1, null).get(0);
-		city = contact.getCity();
+		user = DatabaseLocator.getLargeDatabase().find(0, 1, null).get(0);
+		city = user.getCity();
 	}
 
 	@AfterEach
 	void stop()
 	{
-		contact.setCity(city);
+		user.setCity(city);
 		tester.destroy();
 	}
 
@@ -62,11 +62,11 @@ class BeanDynamicDataTablePageTest
 	{
 		String page = tester.getLastResponseAsString();
 		TagTester row = TagTester.createTagByAttribute(page, "data-key",
-			String.valueOf(contact.getId()));
+			String.valueOf(user.getId()));
 
 		assertEquals("tr", row.getName());
 		assertTrue(page.contains("\"serverRows\":true"), page);
-		assertTrue(page.contains(contact.getLastName()), page);
+		assertTrue(page.contains(user.getLastName()), page);
 		assertTrue(page.contains("data-dt-action=\"edit\""), page);
 	}
 
@@ -80,7 +80,7 @@ class BeanDynamicDataTablePageTest
 	@Test
 	void theExtraColumnsAreHiddenAtFirst()
 	{
-		List<IColumn<Contact, String>> hidden = table.getColumns()
+		List<IColumn<User, String>> hidden = table.getColumns()
 			.stream()
 			.filter(column -> table.isColumnVisible(column) == false)
 			.toList();
@@ -99,16 +99,16 @@ class BeanDynamicDataTablePageTest
 	}
 
 	@Test
-	void editingSavesTheContactAndRendersTheRowsAgain()
+	void editingSavesTheUserAndRendersTheRowsAgain()
 	{
-		executeAction("edit", String.valueOf(contact.getId()));
+		executeAction("edit", String.valueOf(user.getId()));
 		assertTrue(table.isOverlayShown());
 
 		FormTester form = tester.newFormTester(FORM);
 		form.setValue("city", "Paris");
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
-		assertEquals("Paris", DatabaseLocator.getLargeDatabase().get(contact.getId()).getCity());
+		assertEquals("Paris", DatabaseLocator.getLargeDatabase().get(user.getId()).getCity());
 		assertFalse(table.isOverlayShown());
 		tester.assertComponentOnAjaxResponse(table.get("body"));
 	}

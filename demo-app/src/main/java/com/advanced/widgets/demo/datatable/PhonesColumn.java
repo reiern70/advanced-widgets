@@ -14,10 +14,10 @@ import com.advanced.widgets.dynamicdatatable.ResourceDynamicColumn;
 import com.advanced.widgets.table.IMovableColumn;
 
 /**
- * Shows a contact's phone numbers. The template is read from {@code PhonesColumn.html}, or from
+ * Shows a user's phone numbers. The template is read from {@code PhonesColumn.html}, or from
  * {@code PhonesColumn_de.html} for German, the way a panel's markup is.
  */
-public class PhonesColumn extends ResourceDynamicColumn<Contact>
+public class PhonesColumn extends ResourceDynamicColumn<User>
 	implements
 		IHeaderContributor,
 		IHideableColumn,

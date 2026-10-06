@@ -129,22 +129,22 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	}
 }
 
-.contact-filter input {
+.user-filter input {
 	width: 12em;
 }
 
-.contact-edit {
+.user-edit {
 	min-width: 22em;
 }
 
-.contact-edit label {
+.user-edit label {
 	display: block;
 	margin-bottom: 0.6em;
 	font-weight: 400;
 }
 
-.contact-edit input,
-.contact-edit select {
+.user-edit input,
+.user-edit select {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
@@ -153,12 +153,12 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	font: inherit;
 }
 
-.contact-edit [aria-invalid="true"] {
+.user-edit [aria-invalid="true"] {
 	border-color: #c62828;
 	outline: 1px solid #c62828;
 }
 
-.contact-phones {
+.user-phones {
 	display: grid;
 	grid-template-columns: max-content max-content;
 	column-gap: 0.4em;

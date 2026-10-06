@@ -55,11 +55,11 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * What the dynamic table examples share: a thousand contacts in a table with the same settings,
+ * What the dynamic table examples share: a thousand users in a table with the same settings,
  * the same row actions and the same edit form. A subclass decides how the rows are rendered: in
  * the browser from JSON, or on the server by Wicket components.
  */
-public abstract class DynamicTableExamplePage extends ContactsPage
+public abstract class DynamicTableExamplePage extends UsersPage
 {
 	private static final long serialVersionUID = 1L;
 
@@ -68,11 +68,11 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 
 	private static final Duration SLOW_ACTION = Duration.ofSeconds(2);
 
-	private final ContactDetailsPanel details;
+	private final UserDetailsPanel details;
 
-	private final ContactsProvider provider = new ContactsProvider();
+	private final UsersProvider provider = new UsersProvider();
 
-	private final BaseDynamicDataTable<Contact, Long, ?> table;
+	private final BaseDynamicDataTable<User, Long, ?> table;
 
 	private final ResizableColumnsBehavior resizableColumns =
 		new ResizableColumnsBehavior(ResizableColumnsBehavior.Mode.STRETCH);
@@ -93,7 +93,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		get("selectedLabel").setOutputMarkupId(true);
 		get("feedback").setOutputMarkupId(true);
 
-		details = new ContactDetailsPanel("details", new PropertyModel<>(this, "selected"));
+		details = new UserDetailsPanel("details", new PropertyModel<>(this, "selected"));
 		add(details);
 
 		table = newTable("table", provider);
@@ -107,11 +107,11 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		table.setBodyHeight(DynamicTableOptionsPanel.defaultHeight(BodyHeightUnits.PIXELS),
 			BodyHeightUnits.PIXELS);
 		table.setOverlayPlacement(OverlayPlacement.BODY);
-		table.addToolbarAction(new AddContactAction());
+		table.addToolbarAction(new AddUserAction());
 		table.addToolbarAction(new SlowAction());
 		table.addToolbarAction(new ColumnChooserToolbarAction<>());
-		table.addToolbarAction(new CsvExportToolbarAction<Contact, Long>()
-			.setFileName("contacts.csv"));
+		table.addToolbarAction(new CsvExportToolbarAction<User, Long>()
+			.setFileName("users.csv"));
 
 		themed = new WebMarkupContainer("themed");
 		themed.setOutputMarkupId(true);
@@ -162,46 +162,45 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 			}
 		}.setBody(() -> isGerman() ? "English" : "Deutsch"));
 
-		add(new AjaxLink<Void>("addContact")
+		add(new AjaxLink<Void>("addUser")
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				Contact contact = ContactGenerator.getInstance().generate();
-				contact.setId(0);
-				contact.setFirstName("Aaron");
-				DatabaseLocator.getLargeDatabase().save(contact);
-				onContactAdded(contact, target);
+				User user = UserGenerator.getInstance().generate();
+				user.setFirstName("Aaron");
+				DatabaseLocator.getLargeDatabase().save(user);
+				onUserAdded(user, target);
 			}
-		}.setBody(new ResourceModel("addContact")));
+		}.setBody(new ResourceModel("addUser")));
 
 		add(newPushRowsLink("pushRows"));
 	}
 
 	/**
-	 * Creates the table of the contacts with its columns. The page adds the settings, toolbar
+	 * Creates the table of the users with its columns. The page adds the settings, toolbar
 	 * actions and behaviors the demos share.
 	 *
 	 * @param id
 	 *            the id of the table
 	 * @param provider
-	 *            the contacts
+	 *            the users
 	 * @return the table
 	 */
-	protected abstract BaseDynamicDataTable<Contact, Long, ?> newTable(String id,
-		ContactsProvider provider);
+	protected abstract BaseDynamicDataTable<User, Long, ?> newTable(String id,
+		UsersProvider provider);
 
 	/**
-	 * Called after a contact named Aaron was added to the database, to have the table show it.
+	 * Called after a user named Aaron was added to the database, to have the table show it.
 	 *
-	 * @param contact
-	 *            the contact
+	 * @param user
+	 *            the user
 	 * @param target
 	 *            the Ajax request target
 	 */
-	protected abstract void onContactAdded(Contact contact, AjaxRequestTarget target);
+	protected abstract void onUserAdded(User user, AjaxRequestTarget target);
 
 	/**
 	 * @param id
@@ -214,9 +213,9 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * @return the table of the contacts
+	 * @return the table of the users
 	 */
-	protected final BaseDynamicDataTable<Contact, Long, ?> getTable()
+	protected final BaseDynamicDataTable<User, Long, ?> getTable()
 	{
 		return table;
 	}
@@ -241,7 +240,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	/**
 	 * @return the row actions: edit, delete and download as a jCard
 	 */
-	protected final List<IAjaxActionColumnContributor<Contact>> newRowActions()
+	protected final List<IAjaxActionColumnContributor<User>> newRowActions()
 	{
 		return List.of(new EditAction(), new DeleteAction(), new JCardDownload());
 	}
@@ -251,7 +250,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	 *         navigation unless there is only a bottom one
 	 */
 	protected final AbstractDynamicToolbar newNavigationToolbar(
-		BaseDynamicDataTable<Contact, Long, ?> table, String id, ToolbarPosition position)
+		BaseDynamicDataTable<User, Long, ?> table, String id, ToolbarPosition position)
 	{
 		return new DynamicNavigationToolbar<>(id, table, position)
 		{
@@ -260,7 +259,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 			@Override
 			protected Component newPrefix(String id)
 			{
-				return new ContactFilterPanel(id, new PropertyModel<>(provider, "filter"))
+				return new UserFilterPanel(id, new PropertyModel<>(provider, "filter"))
 				{
 					private static final long serialVersionUID = 1L;
 
@@ -283,14 +282,14 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * Tells the user that a clicked contact no longer exists.
+	 * Tells the user that a clicked user no longer exists.
 	 *
 	 * @param target
 	 *            the Ajax request target
 	 */
-	protected final void onContactNotFound(AjaxRequestTarget target)
+	protected final void onUserNotFound(AjaxRequestTarget target)
 	{
-		warn("That contact no longer exists.");
+		warn("That user no longer exists.");
 		target.add(get("feedback"));
 	}
 
@@ -306,11 +305,11 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * @return the day the contact was born, or {@code null} if it is not known
+	 * @return the day the user was born, or {@code null} if it is not known
 	 */
-	static LocalDate bornOn(Contact contact)
+	static LocalDate bornOn(User user)
 	{
-		Date born = contact.getBornDate();
+		Date born = user.getBornDate();
 		return born != null ? born.toInstant().atZone(ZoneId.systemDefault()).toLocalDate() : null;
 	}
 
@@ -336,7 +335,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 
 	private String describeSelection()
 	{
-		ISelection<Contact, Long> selection = table.getSelection();
+		ISelection<User, Long> selection = table.getSelection();
 		if (selection.isEmpty())
 		{
 			return getString("selection.none");
@@ -351,9 +350,9 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * Edits the contact in the table's overlay, and selects it.
+	 * Edits the user in the table's overlay, and selects it.
 	 */
-	private class EditAction extends IconBasedRowAction<Contact>
+	private class EditAction extends IconBasedRowAction<User>
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -369,26 +368,26 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected void onRowAction(Contact contact, AjaxRequestTarget target)
+		protected void onRowAction(User user, AjaxRequestTarget target)
 		{
-			setSelected(contact);
+			setSelected(user);
 			target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
-			showContactForm(contact, new StringResourceModel("editContact",
-				DynamicTableExamplePage.this, Model.of(contact)), target);
+			showUserForm(user, new StringResourceModel("editUser",
+				DynamicTableExamplePage.this, Model.of(user)), target);
 		}
 	}
 
 	/**
-	 * Adds a contact, entered in the same form as an edited one, shown from an icon in the
+	 * Adds a user, entered in the same form as an edited one, shown from an icon in the
 	 * navigation.
 	 */
-	private class AddContactAction extends IconBasedToolbarAction<Contact, Long>
+	private class AddUserAction extends IconBasedToolbarAction<User, Long>
 	{
 		private static final long serialVersionUID = 1L;
 
-		AddContactAction()
+		AddUserAction()
 		{
-			super(IconBasedRowAction.Icon.ADD, new ResourceModel("newContact"));
+			super(IconBasedRowAction.Icon.ADD, new ResourceModel("newUser"));
 		}
 
 		@Override
@@ -399,17 +398,17 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected void onClick(BaseDynamicDataTable<Contact, Long, ?> table,
+		protected void onClick(BaseDynamicDataTable<User, Long, ?> table,
 			AjaxRequestTarget target)
 		{
-			showContactForm(new Contact(), new ResourceModel("newContact"), target);
+			showUserForm(new User(), new ResourceModel("newUser"), target);
 		}
 	}
 
 	/**
 	 * Takes a while on the server, so that the veil over the table shows its spinner.
 	 */
-	private class SlowAction extends IconBasedToolbarAction<Contact, Long>
+	private class SlowAction extends IconBasedToolbarAction<User, Long>
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -431,7 +430,7 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected void onClick(BaseDynamicDataTable<Contact, Long, ?> table,
+		protected void onClick(BaseDynamicDataTable<User, Long, ?> table,
 			AjaxRequestTarget target)
 		{
 			try
@@ -448,9 +447,9 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * Shows the form of a contact in the table's overlay; the saved contact is selected.
+	 * Shows the form of a user in the table's overlay; the saved user is selected.
 	 */
-	private void showContactForm(Contact contact, IModel<String> title, AjaxRequestTarget target)
+	private void showUserForm(User user, IModel<String> title, AjaxRequestTarget target)
 	{
 		table.showOverlay(new FloatingPanel(BaseDynamicDataTable.OVERLAY_CONTENT_ID, title)
 		{
@@ -459,12 +458,12 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 			@Override
 			protected Component newBody(String id)
 			{
-				return new ContactEditPanel(id, contact)
+				return new UserEditPanel(id, user)
 				{
 					private static final long serialVersionUID = 1L;
 
 					@Override
-					protected void onSaved(Contact saved, AjaxRequestTarget target)
+					protected void onSaved(User saved, AjaxRequestTarget target)
 					{
 						setSelected(saved);
 						table.closeOverlay(target);
@@ -489,9 +488,9 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 	}
 
 	/**
-	 * Deletes the contact once the user confirmed it in the table's overlay.
+	 * Deletes the user once the user confirmed it in the table's overlay.
 	 */
-	private class DeleteAction extends IconBasedRowAction<Contact>
+	private class DeleteAction extends IconBasedRowAction<User>
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -507,32 +506,32 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected IModel<String> getConfirmation(Contact contact)
+		protected IModel<String> getConfirmation(User user)
 		{
 			return new StringResourceModel("delete.confirm", DynamicTableExamplePage.this,
-				Model.of(contact));
+				Model.of(user));
 		}
 
 		@Override
-		protected void onRowAction(Contact contact, AjaxRequestTarget target)
+		protected void onRowAction(User user, AjaxRequestTarget target)
 		{
-			if (Objects.equals(getSelected(), contact))
+			if (Objects.equals(getSelected(), user))
 			{
 				setSelected(null);
 				target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
 			}
-			DatabaseLocator.getLargeDatabase().delete(contact);
-			info("Deleted " + contact.getFirstName() + " " + contact.getLastName() + ".");
+			DatabaseLocator.getLargeDatabase().delete(user);
+			info("Deleted " + user.getFirstName() + " " + user.getLastName() + ".");
 			target.add(DynamicTableExamplePage.this.get("feedback"));
 			table.refresh(target);
 		}
 	}
 
 	/**
-	 * Downloads the contact as a jCard (RFC 7095), the JSON form of a vCard, which address books
-	 * and contact libraries read.
+	 * Downloads the user as a jCard (RFC 7095), the JSON form of a vCard, which address books
+	 * and user libraries read.
 	 */
-	private class JCardDownload extends AjaxDownloadActionColumnContributor<Contact>
+	private class JCardDownload extends AjaxDownloadActionColumnContributor<User>
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -551,9 +550,9 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected String getFileName(Contact contact)
+		protected String getFileName(User user)
 		{
-			return "contact-" + contact.getId() + ".json";
+			return "user-" + user.getId() + ".json";
 		}
 
 		@Override
@@ -563,43 +562,43 @@ public abstract class DynamicTableExamplePage extends ContactsPage
 		}
 
 		@Override
-		protected String getContent(Contact contact)
+		protected String getContent(User user)
 		{
-			return toJCard(contact).toString(2);
+			return toJCard(user).toString(2);
 		}
 	}
 
 	/**
-	 * @return the contact as a jCard: version, formatted and structured name, birthday, phones
+	 * @return the user as a jCard: version, formatted and structured name, birthday, phones
 	 *         and address
 	 */
-	static JSONArray toJCard(Contact contact)
+	static JSONArray toJCard(User user)
 	{
 		JSONArray properties = new JSONArray();
 		properties.put(property("version", new JSONObject(), "text", "4.0"));
 		properties.put(property("fn", new JSONObject(), "text",
-			contact.getFirstName() + " " + contact.getLastName()));
+			user.getFirstName() + " " + user.getLastName()));
 		properties.put(property("n", new JSONObject(), "text",
-			new JSONArray(List.of(contact.getLastName(), contact.getFirstName(), "", "", ""))));
-		LocalDate born = bornOn(contact);
+			new JSONArray(List.of(user.getLastName(), user.getFirstName(), "", "", ""))));
+		LocalDate born = bornOn(user);
 		if (born != null)
 		{
 			properties.put(property("bday", new JSONObject(), "date", born.toString()));
 		}
-		if (contact.getHomePhone() != null)
+		if (user.getHomePhone() != null)
 		{
 			properties.put(property("tel", new JSONObject().put("type", new JSONArray(
-				List.of("home", "voice"))), "uri", "tel:" + contact.getHomePhone()));
+				List.of("home", "voice"))), "uri", "tel:" + user.getHomePhone()));
 		}
-		if (contact.getCellPhone() != null)
+		if (user.getCellPhone() != null)
 		{
 			properties.put(property("tel", new JSONObject().put("type", new JSONArray(
-				List.of("cell", "voice"))), "uri", "tel:" + contact.getCellPhone()));
+				List.of("cell", "voice"))), "uri", "tel:" + user.getCellPhone()));
 		}
 		properties.put(property("adr", new JSONObject(), "text",
-			new JSONArray(List.of("", "", Objects.toString(contact.getAddress(), ""),
-				Objects.toString(contact.getCity(), ""), "", "",
-				Objects.toString(contact.getCountryName(), "")))));
+			new JSONArray(List.of("", "", Objects.toString(user.getAddress(), ""),
+				Objects.toString(user.getCity(), ""), "", "",
+				Objects.toString(user.getCountryName(), "")))));
 		return new JSONArray().put("vcard").put(properties);
 	}
 

@@ -42,7 +42,7 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	private static final double[] PROPORTIONS = { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.2, 1.8,
 			1.3, 1.1, 1.1, 1.0, 1.0 };
 
-	private final BaseDynamicDataTable<Contact, Long, ?> table;
+	private final BaseDynamicDataTable<User, Long, ?> table;
 
 	private final ResizableColumnsBehavior resizableColumns;
 
@@ -58,7 +58,7 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	 * @param icons
 	 *            the icons of the actions
 	 */
-	public DynamicTableOptionsPanel(String id, BaseDynamicDataTable<Contact, Long, ?> table,
+	public DynamicTableOptionsPanel(String id, BaseDynamicDataTable<User, Long, ?> table,
 		ResizableColumnsBehavior resizableColumns, IModel<Theme> theme, IModel<ActionIcons> icons)
 	{
 		super(id);

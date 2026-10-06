@@ -25,16 +25,16 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.validation.validator.StringValidator;
 
 /**
- * Edits the name and the address of a contact, every field required, or enters a new contact,
+ * Edits the name and the address of a user, every field required, or enters a new user,
  * one without an id. Shown in the overlay of the dynamic table examples, it calls
- * {@link #onSaved(Contact, AjaxRequestTarget)} or {@link #onCancel(AjaxRequestTarget)} when the
+ * {@link #onSaved(User, AjaxRequestTarget)} or {@link #onCancel(AjaxRequestTarget)} when the
  * user is done.
  */
-abstract class ContactEditPanel extends Panel
+abstract class UserEditPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
-	private final long contactId;
+	private final long userId;
 
 	private String firstName;
 
@@ -46,15 +46,15 @@ abstract class ContactEditPanel extends Panel
 
 	private String address;
 
-	ContactEditPanel(String id, Contact contact)
+	UserEditPanel(String id, User user)
 	{
 		super(id);
-		contactId = contact.getId();
-		firstName = contact.getFirstName();
-		lastName = contact.getLastName();
-		country = contact.getCountry();
-		city = contact.getCity();
-		address = contact.getAddress();
+		userId = user.getId();
+		firstName = user.getFirstName();
+		lastName = user.getLastName();
+		country = user.getCountry();
+		city = user.getCity();
+		address = user.getAddress();
 
 		Form<Void> form = new Form<>("form");
 		form.add(AttributeAppender.replace("data-dt-changed", () -> form.hasError() ? "true" : null));
@@ -102,28 +102,28 @@ abstract class ContactEditPanel extends Panel
 			@Override
 			protected void onSubmit(AjaxRequestTarget target)
 			{
-				ContactsDatabase database = DatabaseLocator.getLargeDatabase();
-				Contact contact = contactId == 0 ? new Contact() : database.get(contactId);
-				if (contact == null)
+				UsersDatabase database = DatabaseLocator.getLargeDatabase();
+				User user = userId == 0 ? new User() : database.get(userId);
+				if (user == null)
 				{
-					error(getString("contactGone"));
+					error(getString("userGone"));
 					target.add(feedback);
 					return;
 				}
-				contact.setFirstName(firstName);
-				contact.setLastName(lastName);
-				contact.setCountry(country);
-				contact.setCity(city);
-				contact.setAddress(address);
-				if (contactId == 0)
+				user.setFirstName(firstName);
+				user.setLastName(lastName);
+				user.setCountry(country);
+				user.setCity(city);
+				user.setAddress(address);
+				if (userId == 0)
 				{
-					database.save(contact);
+					database.save(user);
 				}
 				else
 				{
-					database.update(contact);
+					database.update(user);
 				}
-				onSaved(contact, target);
+				onSaved(user, target);
 			}
 
 			@Override
@@ -162,14 +162,14 @@ abstract class ContactEditPanel extends Panel
 	}
 
 	/**
-	 * Called after the contact was saved.
+	 * Called after the user was saved.
 	 *
-	 * @param contact
-	 *            the saved contact
+	 * @param user
+	 *            the saved user
 	 * @param target
 	 *            the Ajax request target
 	 */
-	protected abstract void onSaved(Contact contact, AjaxRequestTarget target);
+	protected abstract void onSaved(User user, AjaxRequestTarget target);
 
 	/**
 	 * Called when the user cancels editing.

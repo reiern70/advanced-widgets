@@ -75,12 +75,12 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	@Override
-	protected BaseDynamicDataTable<Contact, Long, ?> newTable(String id,
-		ContactsProvider provider)
+	protected BaseDynamicDataTable<User, Long, ?> newTable(String id,
+		UsersProvider provider)
 	{
-		List<IDynamicColumn<Contact>> columns = new ArrayList<>();
-		columns.add(new SelectionColumn<Contact>().setId("selection"));
-		columns.add(new RowNumberColumn<Contact>(Model.of("#")).setId("number"));
+		List<IDynamicColumn<User>> columns = new ArrayList<>();
+		columns.add(new SelectionColumn<User>().setId("selection"));
+		columns.add(new RowNumberColumn<User>(Model.of("#")).setId("number"));
 		columns.add(new CompoundDynamicColumn<>(new ResourceModel("actions"), newRowActions())
 		{
 			private static final long serialVersionUID = 1L;
@@ -91,7 +91,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 				return false;
 			}
 		}.setId("actions"));
-		columns.add(new ResourceDynamicColumn<Contact>(new ResourceModel("id"),
+		columns.add(new ResourceDynamicColumn<User>(new ResourceModel("id"),
 			DynamicDataTablePage.class, "IdColumn")
 		{
 			private static final long serialVersionUID = 1L;
@@ -101,29 +101,29 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			{
 				return false;
 			}
-		}.setExportValue(Contact::getId).setId("id"));
+		}.setExportValue(User::getId).setId("id"));
 		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("firstName", "FirstNameColumn", Contact::getFirstName), "firstName"));
+			new TemplateColumn("firstName", "FirstNameColumn", User::getFirstName), "firstName"));
 		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("lastName", "LastNameColumn", Contact::getLastName), "lastName"));
+			new TemplateColumn("lastName", "LastNameColumn", User::getLastName), "lastName"));
 		columns.add(new SortableDynamicColumn<>(
 			new TemplateColumn("bornDate", "BornDateColumn", DynamicTableExamplePage::bornOn),
 			"bornDate"));
 		columns.add(new TemplateColumn("address", "AddressColumn",
-			contact -> contact.getAddress() + ", " + contact.getCity() + ", " +
-				contact.getCountryName()));
+			user -> user.getAddress() + ", " + user.getCity() + ", " +
+				user.getCountryName()));
 		columns.add(new PhonesColumn(new ResourceModel("phones"))
-			.setExportValue(contact -> contact.getHomePhone() + " / " + contact.getCellPhone())
+			.setExportValue(user -> user.getHomePhone() + " / " + user.getCellPhone())
 			.setId("phones"));
 		columns.add(new ProgressColumn());
-		List<IDynamicColumn<Contact>> hidden = List.of(
-			new ValueColumn("homePhone", "{{homePhone}}", Contact::getHomePhone),
-			new ValueColumn("cellPhone", "{{cellPhone}}", Contact::getCellPhone),
-			new ValueColumn("city", "{{city}}", Contact::getCity),
-			new ValueColumn("country", "{{countryName}}", Contact::getCountryName));
+		List<IDynamicColumn<User>> hidden = List.of(
+			new ValueColumn("homePhone", "{{homePhone}}", User::getHomePhone),
+			new ValueColumn("cellPhone", "{{cellPhone}}", User::getCellPhone),
+			new ValueColumn("city", "{{city}}", User::getCity),
+			new ValueColumn("country", "{{countryName}}", User::getCountryName));
 		columns.addAll(hidden);
 
-		JsonBasedDynamicDataTable<Contact, Long> table = new JsonBasedDynamicDataTable<>(id,
+		JsonBasedDynamicDataTable<User, Long> table = new JsonBasedDynamicDataTable<>(id,
 			columns, provider, ROWS_PER_PAGE)
 		{
 			private static final long serialVersionUID = 1L;
@@ -143,9 +143,9 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 
 			@Override
 			protected void onNotFoundAction(AjaxRequestTarget target, String action, Long key,
-				Contact contact)
+				User user)
 			{
-				onContactNotFound(target);
+				onUserNotFound(target);
 			}
 
 			@Override
@@ -159,19 +159,19 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		return table;
 	}
 
-	private JsonBasedDynamicDataTable<Contact, Long> getJsonTable()
+	private JsonBasedDynamicDataTable<User, Long> getJsonTable()
 	{
-		return (JsonBasedDynamicDataTable<Contact, Long>)getTable();
+		return (JsonBasedDynamicDataTable<User, Long>)getTable();
 	}
 
 	/**
 	 * Has the browser fetch the rows again, told so over the web socket connection.
 	 */
 	@Override
-	protected void onContactAdded(Contact contact, AjaxRequestTarget target)
+	protected void onUserAdded(User user, AjaxRequestTarget target)
 	{
-		push(target, getJsonTable().newRefreshMessage(), "Added " + contact.getFirstName() + " " +
-			contact.getLastName() + "; the table was refreshed via web sockets.");
+		push(target, getJsonTable().newRefreshMessage(), "Added " + user.getFirstName() + " " +
+			user.getLastName() + "; the table was refreshed via web sockets.");
 	}
 
 	@Override
@@ -184,7 +184,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				List<Contact> rows = currentPageRows();
+				List<User> rows = currentPageRows();
 				Collections.reverse(rows);
 
 				push(target, getJsonTable().newUpdateRowsMessage(rows),
@@ -193,12 +193,12 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		};
 	}
 
-	private List<Contact> currentPageRows()
+	private List<User> currentPageRows()
 	{
-		BaseDynamicDataTable<Contact, Long, ?> table = getTable();
+		BaseDynamicDataTable<User, Long, ?> table = getTable();
 		long first = table.getCurrentPage() * table.getItemsPerPage();
 		long count = Math.min(table.getItemsPerPage(), table.getItemCount() - first);
-		List<Contact> rows = new ArrayList<>();
+		List<User> rows = new ArrayList<>();
 		if (count > 0)
 		{
 			table.getProvider().iterator(first, count).forEachRemaining(rows::add);
@@ -231,7 +231,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	 * A column the user can hide and move, reading its template from {@code templateName.html}
 	 * next to this page.
 	 */
-	private static class TemplateColumn extends ResourceDynamicColumn<Contact>
+	private static class TemplateColumn extends ResourceDynamicColumn<User>
 		implements
 			IHideableColumn,
 			IMovableColumn
@@ -239,7 +239,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		private static final long serialVersionUID = 1L;
 
 		TemplateColumn(String headerKey, String templateName,
-			SerializableFunction<Contact, ?> exportValue)
+			SerializableFunction<User, ?> exportValue)
 		{
 			super(new ResourceModel(headerKey), DynamicDataTablePage.class, templateName);
 			setId(headerKey);
@@ -248,16 +248,16 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * A column the user can hide and move, showing one value of the contact.
+	 * A column the user can hide and move, showing one value of the user.
 	 */
-	private static class ValueColumn extends DynamicColumn<Contact>
+	private static class ValueColumn extends DynamicColumn<User>
 		implements
 			IHideableColumn,
 			IMovableColumn
 	{
 		private static final long serialVersionUID = 1L;
 
-		ValueColumn(String headerKey, String template, SerializableFunction<Contact, ?> exportValue)
+		ValueColumn(String headerKey, String template, SerializableFunction<User, ?> exportValue)
 		{
 			super(new ResourceModel(headerKey), template);
 			setId(headerKey);
@@ -266,9 +266,9 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * The progress of the contact, a column the user can hide and move.
+	 * The progress of the user, a column the user can hide and move.
 	 */
-	private static class ProgressColumn extends ProgressBarColumn<Contact>
+	private static class ProgressColumn extends ProgressBarColumn<User>
 		implements
 			IHideableColumn,
 			IMovableColumn
