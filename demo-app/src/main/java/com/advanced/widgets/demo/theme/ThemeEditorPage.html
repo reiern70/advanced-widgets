@@ -5,19 +5,9 @@
 <html xmlns:wicket="http://wicket.apache.org">
 <body>
 <wicket:extend>
-<div class="demo__options">
-	<label><wicket:message key="base"/> <select wicket:id="theme"></select></label>
-</div>
-<div class="theme-editor">
-	<div wicket:id="editor"></div>
-	<div wicket:id="preview" class="theme-editor-preview">
-		<div wicket:id="bar"></div>
-		<div wicket:id="indeterminate"></div>
-		<div wicket:id="collapsible"></div>
-		<div wicket:id="tabs"></div>
-		<p><a href="#" wicket:id="openDialog"><wicket:message key="openDialog"/></a></p>
-		<div wicket:id="dialog"></div>
-	</div>
+<div wicket:id="editor" class="theme-editor-settings"></div>
+<div wicket:id="preview" class="theme-editor-preview">
+	<div wicket:id="tabs"></div>
 </div>
 </wicket:extend>
 </body>

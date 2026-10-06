@@ -1,23 +1,8 @@
-<!DOCTYPE html>
 <!--
   Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
   All rights reserved.
 -->
-<html xmlns:wicket="http://wicket.apache.org">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Advanced Widgets</title>
-		<link rel="stylesheet" href="style.css" type="text/css" />
-	</head>
-	<body>
-		<header class="topbar">
-			<div class="container topbar__inner">
-				<span class="brand"><span class="brand__mark">AW</span> Advanced Widgets</span>
-				<span class="ws-status" wicket:id="webSocketStatus" title="WebSocket connection">Connecting</span>
-			</div>
-		</header>
-
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
 		<main>
 			<section class="hero">
 				<div class="container">
@@ -27,6 +12,7 @@
 					</p>
 					<p class="hero__meta">
 						<strong wicket:id="componentCount">0</strong> components in the catalog
+						<span class="ws-status" wicket:id="webSocketStatus" title="WebSocket connection">Connecting</span>
 					</p>
 				</div>
 			</section>
@@ -60,17 +46,4 @@
 				</ul>
 			</section>
 		</main>
-
-		<footer class="footer">
-			<div class="container footer__inner">
-				<span>
-					&copy; <span wicket:id="year">2026</span>
-					Ernesto Reinaldo Barreiro
-					(<a href="mailto:reiern70@gmail.com">reiern70@gmail.com</a>).
-					All rights reserved.
-				</span>
-				<span>Built with Apache Wicket <span wicket:id="version">10</span></span>
-			</div>
-		</footer>
-	</body>
-</html>
+</wicket:extend>

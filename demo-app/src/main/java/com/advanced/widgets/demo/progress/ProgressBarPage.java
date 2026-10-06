@@ -35,7 +35,6 @@ public class ProgressBarPage extends DemoPage
 	{
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
-		add(newThemeChoice("theme", themed));
 
 		ProgressBar bar = new ProgressBar("bar", new PropertyModel<>(this, "progress"));
 		bar.setOutputMarkupId(true);

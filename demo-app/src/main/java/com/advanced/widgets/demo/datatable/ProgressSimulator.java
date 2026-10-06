@@ -40,7 +40,7 @@ final class ProgressSimulator
 
 	private static final long TICK_MILLIS = 100;
 
-	private static final long FLUSH_MILLIS = 500;
+	private static final long FLUSH_MILLIS = 3000;
 
 	private static final int USERS_PER_TICK = 3;
 

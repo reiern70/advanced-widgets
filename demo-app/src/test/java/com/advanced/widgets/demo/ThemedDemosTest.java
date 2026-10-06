@@ -24,7 +24,7 @@ import com.advanced.widgets.theme.Theme;
 import com.advanced.widgets.theme.ThemeEditorPanel;
 
 /**
- * The demos of the components show them in a theme the user chooses.
+ * Every page is in the theme the user chooses with the floating button.
  */
 class ThemedDemosTest extends WicketTestCase
 {
@@ -35,18 +35,17 @@ class ThemedDemosTest extends WicketTestCase
 	}
 
 	@ParameterizedTest
-	@ValueSource(classes = { ProgressBarPage.class, ThemeEditorPage.class })
-	void theThemeCanBeChosen(Class<? extends Page> page)
+	@ValueSource(classes = { HomePage.class, ProgressBarPage.class, ThemeEditorPage.class })
+	void theThemeChosenAppliesToTheWholePage(Class<? extends Page> page)
 	{
 		tester.startPage(page);
-		String themed = page == ThemeEditorPage.class ? "preview" : "themed";
-		assertTrue(classOf(themed).contains(Theme.DEFAULT.getCssClass()), page.getSimpleName());
+		assertTrue(bodyClass().contains(Theme.DEFAULT.getCssClass()), page.getSimpleName());
 
-		choose("theme", Theme.DARK.ordinal());
+		choose("settings:theme", Theme.DARK.ordinal());
 
-		tester.assertComponentOnAjaxResponse(themed);
-		tester.assertComponentOnAjaxResponse("explanation");
-		assertTrue(classOf(themed).contains(Theme.DARK.getCssClass()), page.getSimpleName());
+		assertEquals(Theme.DARK, DemoSession.get().getTheme());
+		tester.startPage(page);
+		assertTrue(bodyClass().contains(Theme.DARK.getCssClass()), page.getSimpleName());
 	}
 
 	@Test
@@ -66,19 +65,9 @@ class ThemedDemosTest extends WicketTestCase
 		tester.assertContains("Wicket.ThemeEditor.init");
 	}
 
-	@Test
-	void theThemeEditorReloadsAfterTheThemeChanged()
+	private String bodyClass()
 	{
-		tester.startPage(ThemeEditorPage.class);
-
-		choose("theme", Theme.DARK.ordinal());
-
-		tester.assertContains("Wicket.ThemeEditor.load");
-	}
-
-	private String classOf(String path)
-	{
-		return tester.getTagById(tester.getComponentFromLastRenderedPage(path).getMarkupId())
+		return TagTester.createTagByName(tester.getLastResponseAsString(), "body")
 			.getAttribute("class");
 	}
 

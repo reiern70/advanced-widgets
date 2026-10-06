@@ -6,8 +6,11 @@ package com.advanced.widgets.demo;
 
 import org.apache.wicket.csp.CSPDirective;
 import org.apache.wicket.csp.CSPDirectiveSrcValue;
+import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.request.Request;
+import org.apache.wicket.request.Response;
 
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
@@ -32,6 +35,12 @@ public class WicketApplication extends WebApplication
 		return HomePage.class;
 	}
 
+	@Override
+	public Session newSession(Request request, Response response)
+	{
+		return new DemoSession(request);
+	}
+
 	/**
 	 * @see org.apache.wicket.Application#init()
 	 */
@@ -39,6 +48,9 @@ public class WicketApplication extends WebApplication
 	public void init()
 	{
 		super.init();
+
+		// leave out <wicket:child> and the like also in development, they would break the layout
+		getMarkupSettings().setStripWicketTags(true);
 
 		// allow the application stylesheet (style.css) served from this origin
 		getCspSettings().blocking()

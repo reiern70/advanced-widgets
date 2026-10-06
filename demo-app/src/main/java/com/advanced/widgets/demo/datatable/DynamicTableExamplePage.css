@@ -5,6 +5,7 @@
 table.dynamic-dataview {
 	margin-bottom: 10px;
 	border-collapse: collapse;
+	font-size: 0.875em;
 }
 
 table.dynamic-dataview colgroup {
@@ -25,9 +26,12 @@ table.dynamic-dataview td {
 	padding: 4px 8px;
 }
 
-table.dynamic-dataview tr.navigation td,
-table.dynamic-dataview tr.dynamic-data-table-selection-toolbar td {
+table.dynamic-dataview tr.navigation td {
 	padding: 6px 8px;
+}
+
+table.dynamic-dataview tr.dynamic-data-table-selection-toolbar td {
+	padding: 2px 8px;
 }
 
 table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
@@ -64,17 +68,24 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	align-items: center;
 	justify-content: center;
 	flex: none;
-	width: 1.15em;
-	height: 1.15em;
+	width: 1.2em;
+	height: 1.2em;
 	border-radius: 50%;
-	background: #c2410c;
-	color: #fff;
-	font: italic bold 0.8em/1 Georgia, serif;
-	cursor: help;
+	background: var(--wicket-theme-primary, #c2410c);
+	color: var(--wicket-theme-on-primary, #fff);
+	font: bold 0.75em/1 system-ui, sans-serif;
+	cursor: default;
+}
+
+/* the letter, centered in the circle whatever the font's line metrics */
+.dynamic-dataview-help > span[aria-hidden] {
+	display: block;
+	line-height: 1;
+	transform: translateY(0.04em);
 }
 
 .dynamic-dataview-help:focus-visible {
-	outline: 2px solid #c2410c;
+	outline: 2px solid var(--wicket-theme-accent, #c2410c);
 	outline-offset: 2px;
 }
 
@@ -160,6 +171,26 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 
 .user-phones {
 	display: grid;
-	grid-template-columns: max-content max-content;
+	grid-template-columns: max-content minmax(0, max-content);
 	column-gap: 0.4em;
+}
+
+/* a number wider than its column ends in an ellipsis */
+.user-phones > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* the tooltips of the right-most settings open to the left, staying inside the page */
+.dynamic-dataview-option:nth-child(4n) .dynamic-dataview-tooltip {
+	left: auto;
+	right: -0.5rem;
+	transform: none;
+}
+
+.dynamic-dataview-option:nth-child(4n) .dynamic-dataview-tooltip::after {
+	left: auto;
+	right: calc(0.5rem + 0.6em - 7px);
+	margin-left: 0;
 }

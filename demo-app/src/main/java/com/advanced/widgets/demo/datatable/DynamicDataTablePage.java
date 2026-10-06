@@ -74,6 +74,17 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		});
 	}
 
+	/**
+	 * The proportions of the columns: selection, number, actions, id, first and last name, born, address, phones, progress and
+	 * the hidden phones, city and country.
+	 */
+	@Override
+	protected double[] getColumnProportions()
+	{
+		return new double[] { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.0, 2.4, 1.3,
+			1.1, 1.1, 1.0, 1.0 };
+	}
+
 	@Override
 	protected BaseDynamicDataTable<User, Long, ?> newTable(String id,
 		UsersProvider provider)

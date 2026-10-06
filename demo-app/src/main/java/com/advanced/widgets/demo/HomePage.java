@@ -4,13 +4,7 @@
  */
 package com.advanced.widgets.demo;
 
-import java.io.Serializable;
-import java.time.Year;
-import java.util.List;
-
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.Page;
-import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -24,27 +18,10 @@ import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
 import org.apache.wicket.protocol.ws.api.message.IWebSocketPushMessage;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
-import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
-import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
-import com.advanced.widgets.demo.progress.ProgressBarPage;
-import com.advanced.widgets.demo.theme.ThemeEditorPage;
+import com.advanced.widgets.demo.Demos.Demo;
 
-public class HomePage extends WebPage {
+public class HomePage extends BasePage {
 	private static final long serialVersionUID = 1L;
-
-	private static final List<Demo> DEMOS = List.of(
-		new Demo("Dynamic Data Table", "Data",
-			"A thousand users rendered in the browser from JSON, with live updates over websockets.",
-			DynamicDataTablePage.class),
-		new Demo("Bean Dynamic Data Table", "Data",
-			"The same table with its rows rendered on the server by Wicket components.",
-			BeanDynamicDataTablePage.class),
-		new Demo("Progress Bar", "Feedback",
-			"Known and unknown progress, in any of the themes.",
-			ProgressBarPage.class),
-		new Demo("Theme Editor", "Themes",
-			"Generates a theme of the components, with a live preview.",
-			ThemeEditorPage.class));
 
 	public HomePage(final PageParameters parameters) {
 		super(parameters);
@@ -76,7 +53,7 @@ public class HomePage extends WebPage {
 			}
 		});
 
-		add(new ListView<>("demos", DEMOS) {
+		add(new ListView<>("demos", Demos.all()) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -106,13 +83,6 @@ public class HomePage extends WebPage {
 			}
 		});
 
-		add(new Label("year", Year.now().getValue()));
-		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
-	}
-
-	/** A demo page linked from the home page. */
-	private record Demo(String name, String category, String description, Class<? extends Page> page)
-		implements Serializable {
 	}
 
 	private static class ConnectedPushMessage implements IWebSocketPushMessage {

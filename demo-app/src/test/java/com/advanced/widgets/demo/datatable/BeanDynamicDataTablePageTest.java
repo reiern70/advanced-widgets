@@ -86,7 +86,7 @@ class BeanDynamicDataTablePageTest
 			.toList();
 
 		assertEquals(4, hidden.size());
-		assertEquals(10, table.getVisibleColumns().size());
+		assertEquals(9, table.getVisibleColumns().size());
 	}
 
 	@Test

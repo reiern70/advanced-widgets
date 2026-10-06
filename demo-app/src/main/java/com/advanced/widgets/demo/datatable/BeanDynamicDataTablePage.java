@@ -13,7 +13,6 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.LambdaColumn;
-import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.IHeaderContributor;
 import org.apache.wicket.markup.html.basic.Label;
@@ -33,7 +32,6 @@ import com.advanced.widgets.dynamicdatatable.BeanRowNumberColumn;
 import com.advanced.widgets.dynamicdatatable.BeanSelectionColumn;
 import com.advanced.widgets.dynamicdatatable.IFixedWidthColumn;
 import com.advanced.widgets.dynamicdatatable.IHideableColumn;
-import com.advanced.widgets.progress.ProgressBar;
 import com.advanced.widgets.table.IMovableColumn;
 
 /**
@@ -43,6 +41,17 @@ import com.advanced.widgets.table.IMovableColumn;
 public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The proportions of the columns: selection, number, actions, id, first and last name, born, address, phones and the hidden
+	 * phones, city and country.
+	 */
+	@Override
+	protected double[] getColumnProportions()
+	{
+		return new double[] { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.0, 2.4,
+			1.1, 1.1, 1.0, 1.0 };
+	}
 
 	@Override
 	protected BaseDynamicDataTable<User, Long, ?> newTable(String id,
@@ -61,7 +70,6 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
 		columns.add(new PhonesColumn());
-		columns.add(new ProgressColumn());
 		List<IColumn<User, String>> hidden = List.of(
 			new UserColumn("homePhone", null, User::getHomePhone),
 			new UserColumn("cellPhone", null, User::getCellPhone),
@@ -187,35 +195,4 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 		}
 	}
 
-	/**
-	 * The progress of the user as a progress bar, a column the user can hide and move.
-	 */
-	private static class ProgressColumn extends LambdaColumn<User, String>
-		implements
-			IHeaderContributor,
-			IHideableColumn,
-			IMovableColumn
-	{
-		private static final long serialVersionUID = 1L;
-
-		ProgressColumn()
-		{
-			super(new ResourceModel("progress"), User::getProgress);
-		}
-
-		@Override
-		public void populateItem(Item<ICellPopulator<User>> item, String componentId,
-			IModel<User> rowModel)
-		{
-			item.add(new Label(componentId, rowModel.map(user -> ProgressBar.markup(
-				String.valueOf(Math.max(0, Math.min(100, user.getProgress()))))))
-				.setEscapeModelStrings(false));
-		}
-
-		@Override
-		public void renderHead(IHeaderResponse response)
-		{
-			response.render(CssHeaderItem.forReference(ProgressBar.CSS));
-		}
-	}
 }

@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 import org.apache.wicket.Component;
@@ -50,7 +49,6 @@ import com.advanced.widgets.icon.IIcon;
 import com.advanced.widgets.icon.SvgIcon;
 import com.advanced.widgets.table.MovableColumnsBehavior;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
-import com.advanced.widgets.theme.ThemeBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -115,7 +113,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 
 		themed = new WebMarkupContainer("themed");
 		themed.setOutputMarkupId(true);
-		themed.add(new ThemeBehavior(getThemeModel()));
 		add(themed);
 		tableParent = new WebMarkupContainer("tableParent");
 		tableParent.setOutputMarkupId(true);
@@ -127,7 +124,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		themed.add(new Label("selection", this::describeSelection).setOutputMarkupId(true));
 
 		add(new DynamicTableOptionsPanel("options", table, resizableColumns,
-			getThemeModel(), new PropertyModel<>(this, "icons"))
+			new PropertyModel<>(this, "icons"), getColumnProportions())
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -140,27 +137,10 @@ public abstract class DynamicTableExamplePage extends UsersPage
 			@Override
 			protected void onTableChanged(AjaxRequestTarget target)
 			{
-				target.add(tableParent);
+				target.add(tableParent, themed.get("selection"));
 			}
 
-			@Override
-			protected void onThemeChanged(AjaxRequestTarget target)
-			{
-				target.add(themed, DynamicTableExamplePage.this.get("explanation"));
-			}
 		});
-
-		add(new AjaxLink<Void>("switchLocale")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				getSession().setLocale(isGerman() ? Locale.ENGLISH : Locale.GERMAN);
-				setResponsePage(getPage());
-			}
-		}.setBody(() -> isGerman() ? "English" : "Deutsch"));
 
 		add(new AjaxLink<Void>("addUser")
 		{
@@ -191,6 +171,11 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	 */
 	protected abstract BaseDynamicDataTable<User, Long, ?> newTable(String id,
 		UsersProvider provider);
+
+	/**
+	 * @return the proportions of the columns of the table offered by the settings, one per column
+	 */
+	protected abstract double[] getColumnProportions();
 
 	/**
 	 * Called after a user named Aaron was added to the database, to have the table show it.
@@ -344,10 +329,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		return new StringResourceModel(key, this).setParameters(selection.size()).getString();
 	}
 
-	private boolean isGerman()
-	{
-		return Locale.GERMAN.getLanguage().equals(getLocale().getLanguage());
-	}
 
 	/**
 	 * Edits the user in the table's overlay, and selects it.

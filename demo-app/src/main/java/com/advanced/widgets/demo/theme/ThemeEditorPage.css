@@ -2,25 +2,36 @@
  * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
  * All rights reserved.
  */
-.theme-editor {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-	gap: 2em;
-	align-items: start;
+
+/* the settings of the theme on top, the preview of the components below */
+.theme-editor-settings {
+	margin-bottom: 1.5em;
+	padding: 1em;
+	border: 1px solid var(--wicket-theme-border);
+	border-radius: 0.4em;
+	background: var(--wicket-theme-surface);
+	color: var(--wicket-theme-text);
 }
 
 .theme-editor-preview {
-	display: flex;
-	flex-direction: column;
-	gap: 1em;
 	padding: 1em;
 	border-radius: 0.4em;
 	background: var(--wicket-theme-surface-alt);
 	color: var(--wicket-theme-text);
 }
 
-@media (max-width: 60em) {
-	.theme-editor {
-		grid-template-columns: minmax(0, 1fr);
-	}
+.theme-preview-progress h3 {
+	margin: 1em 0 0.4em;
+	font-size: 0.95em;
+}
+
+.theme-preview-progress h3:first-child {
+	margin-top: 0.4em;
+}
+
+.theme-preview-panels {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	padding-top: 0.6em;
 }

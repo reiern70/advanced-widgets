@@ -25,10 +25,9 @@ import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.OverlayPlaceme
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPosition;
 import com.advanced.widgets.dynamicdatatable.ColumnState;
 import com.advanced.widgets.dynamicdatatable.IColumnStateStore;
+import com.advanced.widgets.dynamicdatatable.SelectionMode;
 import com.advanced.widgets.dynamicdatatable.SessionColumnStateStore;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
-import com.advanced.widgets.theme.Theme;
-import com.advanced.widgets.theme.ThemeChoice;
 
 /**
  * The settings of the table of a dynamic table example, the same for the JSON based and the bean
@@ -38,9 +37,6 @@ import com.advanced.widgets.theme.ThemeChoice;
 public abstract class DynamicTableOptionsPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
-
-	private static final double[] PROPORTIONS = { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.2, 1.8,
-			1.3, 1.1, 1.1, 1.0, 1.0 };
 
 	private final BaseDynamicDataTable<User, Long, ?> table;
 
@@ -53,13 +49,14 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	 *            the table the settings are of
 	 * @param resizableColumns
 	 *            the behavior resizing the columns, added to the table or not
-	 * @param theme
-	 *            the theme of the table
 	 * @param icons
 	 *            the icons of the actions
+	 * @param proportions
+	 *            the proportions of the columns offered by the setting, one per column of the
+	 *            table
 	 */
 	public DynamicTableOptionsPanel(String id, BaseDynamicDataTable<User, Long, ?> table,
-		ResizableColumnsBehavior resizableColumns, IModel<Theme> theme, IModel<ActionIcons> icons)
+		ResizableColumnsBehavior resizableColumns, IModel<ActionIcons> icons, double[] proportions)
 	{
 		super(id);
 		this.table = table;
@@ -73,11 +70,13 @@ public abstract class DynamicTableOptionsPanel extends Panel
 			this::adjustToParentWidth, parent -> parent ? "width.parent" : "width.content"));
 		add(updatingChoice("proportions", List.of(false, true),
 			() -> table.getColumnProportions() != null,
-			set -> proportions(set ? PROPORTIONS : null),
+			set -> proportions(set ? proportions : null),
 			set -> set ? "proportions.set" : "proportions.content"));
 		add(updatingChoice("navigation", List.of(ToolbarPosition.values()),
 			table::getNavigationPosition, table::setNavigationPosition,
 			position -> "navigation." + position.name()));
+		add(updatingChoice("selection", List.of(SelectionMode.values()), table::getSelectionMode,
+			table::setSelectionMode, mode -> "selection." + mode.name()));
 		add(updatingChoice("selectionBar", List.of(ToolbarPosition.values()),
 			table::getSelectionToolbarPosition, table::setSelectionToolbarPosition,
 			position -> "navigation." + position.name()));
@@ -110,16 +109,6 @@ public abstract class DynamicTableOptionsPanel extends Panel
 			() -> table.getColumnStateStore() == FileColumnStateStore.INSTANCE,
 			this::keepColumnStateInFile,
 			file -> file ? "columnState.file" : "columnState.session"));
-		add(new ThemeChoice("theme", theme)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onThemeChanged(AjaxRequestTarget target)
-			{
-				DynamicTableOptionsPanel.this.onThemeChanged(target);
-			}
-		});
 		add(new AjaxLink<Void>("resetColumns")
 		{
 			private static final long serialVersionUID = 1L;
@@ -155,14 +144,6 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	 *            the Ajax request target
 	 */
 	protected abstract void onTableChanged(AjaxRequestTarget target);
-
-	/**
-	 * Renders what takes the colors of the theme again after the theme changed.
-	 *
-	 * @param target
-	 *            the Ajax request target
-	 */
-	protected abstract void onThemeChanged(AjaxRequestTarget target);
 
 	private void resizable(boolean resizable)
 	{

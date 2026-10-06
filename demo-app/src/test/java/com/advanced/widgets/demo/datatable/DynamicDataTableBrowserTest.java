@@ -145,8 +145,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 	{
 		open(browser, page);
 
-		WebElement edge = driver.findElements(By.cssSelector(TABLE + " thead .wicket-col-resizer"))
-			.get(5);
+		WebElement edge = headerCell("Address").findElement(By.className("wicket-col-resizer"));
 		js().executeScript("arguments[0].focus();", edge);
 		// how far the column has to grow depends on how wide the page's layout lets the table be
 		for (int i = 0; i < 120 && isTableWiderThanItsParentBy(300) == false; i++)

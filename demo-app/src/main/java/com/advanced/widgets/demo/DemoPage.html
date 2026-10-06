@@ -1,25 +1,18 @@
-<!DOCTYPE html>
 <!--
   Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
   All rights reserved.
 -->
-<html xmlns:wicket="http://wicket.apache.org">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title wicket:id="pageTitle">Advanced Widgets</title>
-	</head>
-	<body>
-		<header class="topbar">
-			<div class="container topbar__inner">
-				<a class="brand" wicket:id="home"><span class="brand__mark">AW</span> Advanced Widgets</a>
-			</div>
-		</header>
-
-		<main class="container demo">
-			<h1 wicket:id="demoTitle">[demo title]</h1>
-			<div wicket:id="explanation" class="demo__explanation">[what this demo shows]</div>
-			<wicket:child/>
-		</main>
-	</body>
-</html>
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container demo">
+	<nav class="demo__nav">
+		<a class="demo__back" wicket:id="back">&larr; <wicket:message key="backToHome"/></a>
+		<span class="demo__steps">
+			<a class="demo__step" wicket:id="previous">&lsaquo; <span wicket:id="name">[previous demo]</span></a>
+			<a class="demo__step" wicket:id="next"><span wicket:id="name">[next demo]</span> &rsaquo;</a>
+		</span>
+	</nav>
+	<h1 wicket:id="demoTitle">[demo title]</h1>
+	<div wicket:id="explanation" class="demo__explanation">[what this demo shows]</div>
+	<wicket:child/>
+</main>
+</wicket:extend>

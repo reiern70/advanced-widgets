@@ -328,7 +328,9 @@ class DynamicDataTablePageTest
 	@Test
 	void theLanguageIsSwitchedViaAjax()
 	{
-		tester.clickLink("switchLocale", true);
+		FormTester form = tester.newFormTester("settings");
+		form.select("language", 1);
+		tester.executeAjaxEvent("settings:language", "change");
 
 		assertEquals("de", tester.getSession().getLocale().getLanguage());
 	}
