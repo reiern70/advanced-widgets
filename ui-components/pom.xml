@@ -100,5 +100,81 @@
 				</excludes>
 			</testResource>
 		</testResources>
+		<plugins>
+			<!--
+			  The production files: next to every script and style sheet, a minified copy named
+			  *.min.js and *.min.css, which Wicket serves instead in deployment mode. The scripts are
+			  minified and their local names mangled by the Closure Compiler (simple optimizations
+			  keep the global names, such as Wicket.Dropdown, the pages call); the style sheets lose
+			  their comments and the white space around braces, semicolons and commas.
+			-->
+			<plugin>
+				<groupId>com.github.blutorange</groupId>
+				<artifactId>closure-compiler-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>minify-js</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>minify</goal>
+						</goals>
+						<configuration>
+							<baseSourceDir>${project.basedir}/src/main/java</baseSourceDir>
+							<baseTargetDir>${project.build.outputDirectory}</baseTargetDir>
+							<sourceDir>.</sourceDir>
+							<targetDir>.</targetDir>
+							<includes>
+								<include>**/*.js</include>
+							</includes>
+							<excludes>
+								<exclude>**/*.min.js</exclude>
+							</excludes>
+							<skipMerge>true</skipMerge>
+							<outputFilename>#{path}/#{basename}.min.#{extension}</outputFilename>
+							<closureCompilationLevel>SIMPLE_OPTIMIZATIONS</closureCompilationLevel>
+							<closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>
+							<closureInjectLibraries>false</closureInjectLibraries>
+							<closureEmitUseStrict>false</closureEmitUseStrict>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>minify-css</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<copy todir="${project.build.outputDirectory}" overwrite="true" encoding="UTF-8">
+									<fileset dir="${project.basedir}/src/main/java" includes="**/*.css" excludes="**/*.min.css"/>
+									<globmapper from="*.css" to="*.min.css"/>
+								</copy>
+								<!-- comments, then runs of white space, then the white space around { } ; , > -->
+								<replaceregexp flags="gs" encoding="UTF-8" match="/\*.*?\*/" replace="">
+									<fileset dir="${project.build.outputDirectory}" includes="**/*.min.css"/>
+								</replaceregexp>
+								<replaceregexp flags="g" encoding="UTF-8" match="\s+" replace=" ">
+									<fileset dir="${project.build.outputDirectory}" includes="**/*.min.css"/>
+								</replaceregexp>
+								<replaceregexp flags="g" encoding="UTF-8" match=" ?([{};,&gt;]) ?" replace="\1">
+									<fileset dir="${project.build.outputDirectory}" includes="**/*.min.css"/>
+								</replaceregexp>
+								<replaceregexp flags="g" encoding="UTF-8" match=";}" replace="}">
+									<fileset dir="${project.build.outputDirectory}" includes="**/*.min.css"/>
+								</replaceregexp>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 </project>
