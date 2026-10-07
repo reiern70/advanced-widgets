@@ -315,10 +315,23 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
+	void infiniteScrollIsSwitchedOnViaAjax()
+	{
+		tester.getRequest().getPostParameters().setParameterValue(
+			"options:infiniteScrollOption:infiniteScroll", "1");
+		tester.executeAjaxEvent("options:infiniteScrollOption:infiniteScroll", "change");
+
+		assertTrue(table.isInfiniteScroll());
+		tester.assertComponentOnAjaxResponse(TABLE_PARENT);
+		tester.assertContains(Pattern.quote("\"infinite\":true"));
+		tester.assertContainsNot("Rows per page");
+	}
+
+	@Test
 	void everySettingHasATooltipAndIsPostedViaAjax()
 	{
 		String page = tester.getLastResponseAsString();
-		assertEquals(11, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
+		assertEquals(12, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
 			.length - 1);
 		assertTrue(page.contains("Whether the user can resize the columns"), page);
 		tester.assertContains("Resizable");

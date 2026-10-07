@@ -160,6 +160,51 @@ class DynamicDataTableTest extends WicketTestCase
 	}
 
 	@Test
+	void scrollingInfinitelyAddsTheNextPageOfRowsUntilThereAreNoMore()
+	{
+		table.setItemsPerPage(1);
+		table.setInfiniteScroll(true);
+		tester.startPage(tester.getLastRenderedPage());
+		tester.assertContains(Pattern.quote("\"infinite\":true"));
+		tester.assertContains("Showing 1 to 1 of 2");
+		assertFalse(tester.getLastResponseAsString().contains("navigator:next"),
+			"no paging links while scrolling infinitely");
+
+		tester.getRequest().getPostParameters().setParameterValue("more", "true");
+		tester.executeBehavior(dataBehavior());
+		assertEquals("{\"rows\":[{\"key\":\"2\",\"number\":2,\"selected\":false," +
+			"\"data\":{\"id\":\"2\",\"name\":\"Linus\"}}]," +
+			"\"itemCount\":2,\"currentPage\":0}", tester.getLastResponseAsString());
+
+		tester.getRequest().getPostParameters().setParameterValue("more", "true");
+		tester.executeBehavior(dataBehavior());
+		assertTrue(tester.getLastResponseAsString().startsWith("{\"rows\":[],"),
+			tester.getLastResponseAsString());
+
+		tester.executeBehavior(dataBehavior());
+		assertTrue(tester.getLastResponseAsString().contains("\"name\":\"Ada\"") &&
+			tester.getLastResponseAsString().contains("\"name\":\"Linus\""),
+			"a reload sends every row shown");
+	}
+
+	@Test
+	void settingThePageStartsInfiniteScrollingOverAtTheTop()
+	{
+		table.setItemsPerPage(1);
+		table.setInfiniteScroll(true);
+		tester.getRequest().getPostParameters().setParameterValue("more", "true");
+		tester.executeBehavior(dataBehavior());
+
+		table.setCurrentPage(3);
+		tester.executeBehavior(dataBehavior());
+
+		assertEquals(0, table.getCurrentPage());
+		assertEquals("{\"rows\":[{\"key\":\"1\",\"number\":1,\"selected\":false," +
+			"\"data\":{\"id\":\"1\",\"name\":\"Ada\"}}]," +
+			"\"itemCount\":2,\"currentPage\":0,\"top\":true}", tester.getLastResponseAsString());
+	}
+
+	@Test
 	void currentPageIsClampedToTheLastPage()
 	{
 		table.setItemsPerPage(1);

@@ -206,6 +206,114 @@
 		update : function (data) {
 			this.setPaging(data.itemCount, data.currentPage);
 			this.render(data.rows);
+			if (data.top) {
+				this.scrollToTop();
+			}
+		},
+
+		/**
+		 * Scrolls the rows back to the first one: the body, if it scrolls, or else the page to the
+		 * top of the table, if it is above the window.
+		 */
+		scrollToTop : function () {
+			if (this.body) {
+				this.body.scrollTop = 0;
+			} else if (this.table.getBoundingClientRect().top < 0) {
+				this.table.scrollIntoView();
+			}
+		},
+
+		/**
+		 * Scrolling infinitely, watches the last row, loading the next page of rows once it comes
+		 * into view, in the body, if it scrolls, or else in the window.
+		 */
+		watchEnd : function () {
+			if (!this.cfg.infinite || !window.IntersectionObserver) {
+				return;
+			}
+			if (!this.endObserver) {
+				const self = this;
+				this.endObserver = new window.IntersectionObserver(function (entries) {
+					if (entries.some(function (entry) {
+						return entry.isIntersecting;
+					})) {
+						self.loadMore();
+					}
+				}, { root: this.body || null, rootMargin: '0px 0px 40px 0px' });
+			}
+			this.endObserver.disconnect();
+			const rows = this.rowsBody().rows;
+			if (rows.length > 0 && rows.length < this.itemCount) {
+				this.endObserver.observe(rows[rows.length - 1]);
+			}
+		},
+
+		/**
+		 * Fetches the next page of rows and adds them after the last row, blocking the table with
+		 * its veil meanwhile, then has the navigation tell how many rows are shown.
+		 */
+		loadMore : function () {
+			if (this.loading) {
+				return;
+			}
+			this.loading = true;
+			this.endObserver.disconnect();
+			const self = this;
+			const veil = Wicket.Veil && this.table.id;
+			if (veil) {
+				Wicket.Veil.show(veil);
+			}
+			const url = this.cfg.dataUrl + (this.cfg.dataUrl.indexOf('?') >= 0 ? '&' : '?') +
+				'more=true';
+			window.fetch(url, {
+				credentials: 'same-origin',
+				headers: { 'Accept': 'application/json' }
+			}).then(function (response) {
+				if (!response.ok) {
+					throw new Error('HTTP ' + response.status);
+				}
+				return response.json();
+			}).then(function (json) {
+				if (Wicket.DynamicDataTable.instances[self.id] !== self) {
+					return;
+				}
+				self.append(json.rows);
+				self.itemCount = json.itemCount;
+				if (self.navigation) {
+					self.navigation();
+				}
+			}).catch(function (error) {
+				Wicket.Log.error('Wicket.DynamicDataTable: loading more rows of #' + self.id +
+					' failed', error);
+			}).finally(function () {
+				self.loading = false;
+				if (veil) {
+					Wicket.Veil.hide(veil);
+				}
+				if (Wicket.DynamicDataTable.instances[self.id] === self) {
+					self.watchEnd();
+				}
+			});
+		},
+
+		/**
+		 * Adds rows after the last one.
+		 *
+		 * @param rows [{key, number, selected, data}]
+		 */
+		append : function (rows) {
+			const self = this;
+			const body = this.rowsBody();
+			const fragment = document.createDocumentFragment();
+			(rows || []).forEach(function (row) {
+				const number = row.number !== undefined ? row.number : body.rows.length + 1;
+				if (!document.getElementById(self.rowId(row.key))) {
+					fragment.appendChild(self.buildRow(row.key, number, row.data, row.selected));
+				}
+			});
+			body.appendChild(fragment);
+			this.updateSelection();
+			this.layoutBody();
 		},
 
 		/**
@@ -236,6 +344,9 @@
 			if (!this.fitted && this.rowsBody().rows.length > 0) {
 				this.fitted = true;
 				this.fitColumns();
+			}
+			if (!this.loading) {
+				this.watchEnd();
 			}
 		},
 
@@ -487,7 +598,12 @@
 			const tr = document.getElementById(this.rowId(key));
 			if (tr && this.rowsBody().contains(tr)) {
 				const number = Number(tr.getAttribute('data-number'));
+				const last = !tr.nextElementSibling;
 				tr.replaceWith(this.buildRow(key, number, data, tr.classList.contains('selected')));
+				if (last && !this.loading) {
+					// the last row is watched for scrolling infinitely
+					this.watchEnd();
+				}
 			}
 		},
 
@@ -772,6 +888,9 @@
 			}
 			if (this.scrollbar) {
 				this.scrollbar.destroy();
+			}
+			if (this.endObserver) {
+				this.endObserver.disconnect();
 			}
 			if (this.cfg.resize && Wicket.ResizableColumns) {
 				Wicket.ResizableColumns.detach(this.id);

@@ -349,6 +349,12 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	private long currentPage;
 
+	private boolean infiniteScroll;
+
+	private long loadedPages = 1;
+
+	private boolean scrollToTop;
+
 	private transient Long itemCount;
 
 	private transient List<T> currentPageRows;
@@ -1893,14 +1899,78 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
-	 * @return the rows of the current page, queried once per request
+	 * @return whether the table shows its rows in one list that grows by a page of rows each time
+	 *         the user scrolls to its end, instead of a page at a time, {@code false} by default
+	 * @see JsonBasedDynamicDataTable#setInfiniteScroll(boolean)
+	 * @since 11.0.0
+	 */
+	public boolean isInfiniteScroll()
+	{
+		return infiniteScroll;
+	}
+
+	/**
+	 * Switches infinite scrolling on or off; either way the table shows its first page of rows
+	 * again.
+	 *
+	 * @param infiniteScroll
+	 *            whether the table shows a growing list of rows
+	 */
+	void setInfiniteScrollEnabled(boolean infiniteScroll)
+	{
+		this.infiniteScroll = infiniteScroll;
+		setCurrentPage(0);
+	}
+
+	/**
+	 * @return the number of rows the browser shows: those of the current page, or, scrolling
+	 *         infinitely, those of every page loaded so far
+	 */
+	long getShownRowCount()
+	{
+		long first = getCurrentPage() * itemsPerPage;
+		return Math.max(0, Math.min(infiniteScroll ? loadedPages * itemsPerPage : itemsPerPage,
+			getItemCount() - first));
+	}
+
+	/**
+	 * Scrolling infinitely, adds the next page of rows to those the browser shows, if there is one.
+	 *
+	 * @return the rows added, empty if there are no more
+	 */
+	List<T> loadMoreRows()
+	{
+		long shown = getShownRowCount();
+		if (infiniteScroll == false || shown >= getItemCount())
+		{
+			return List.of();
+		}
+		loadedPages = shown / itemsPerPage + 1;
+		currentPageRows = null;
+		return rows(shown, Math.min(itemsPerPage, getItemCount() - shown));
+	}
+
+	/**
+	 * @return whether the rows were set back to the first page since this was last asked, so the
+	 *         browser scrolls back to the top; scrolling infinitely only
+	 */
+	boolean takeScrollToTop()
+	{
+		boolean top = scrollToTop;
+		scrollToTop = false;
+		return top;
+	}
+
+	/**
+	 * @return the rows of the current page or, scrolling infinitely, of the pages loaded so far,
+	 *         queried once per request
 	 */
 	private List<T> getCurrentPageRows()
 	{
 		if (currentPageRows == null)
 		{
 			long first = getCurrentPage() * itemsPerPage;
-			long count = Math.min(itemsPerPage, getItemCount() - first);
+			long count = getShownRowCount();
 			currentPageRows = count > 0 ? rows(first, count) : List.of();
 		}
 		return currentPageRows;
@@ -2087,16 +2157,26 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		}
 	}
 
+	/**
+	 * @return the current page, always the first one while {@link #isInfiniteScroll() scrolling
+	 *         infinitely}
+	 */
 	@Override
 	public long getCurrentPage()
 	{
-		return Math.max(0, Math.min(currentPage, getPageCount() - 1));
+		return infiniteScroll ? 0 : Math.max(0, Math.min(currentPage, getPageCount() - 1));
 	}
 
+	/**
+	 * Sets the current page. While {@link #isInfiniteScroll() scrolling infinitely}, the browser
+	 * shows the first page of rows again instead, scrolled to the top.
+	 */
 	@Override
 	public void setCurrentPage(long page)
 	{
-		currentPage = Math.max(0, page);
+		currentPage = infiniteScroll ? 0 : Math.max(0, page);
+		loadedPages = 1;
+		scrollToTop = infiniteScroll;
 		currentPageRows = null;
 	}
 

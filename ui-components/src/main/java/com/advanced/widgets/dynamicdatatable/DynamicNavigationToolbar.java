@@ -16,6 +16,7 @@ import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
+import org.apache.wicket.markup.html.navigation.paging.IPageableItems;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
@@ -85,7 +86,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 		paging = new WebMarkupContainer("paging");
 		paging.setOutputMarkupId(true);
 		span.add(paging);
-		paging.add(new NavigatorLabel("navigatorLabel", table));
+		paging.add(new NavigatorLabel("navigatorLabel", new ShownRows(table)));
 		paging.add(new AjaxPagingNavigator("navigator", table)
 		{
 			private static final long serialVersionUID = 1L;
@@ -94,7 +95,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setVisible(table.getPageCount() > 1);
+				setVisible(table.getPageCount() > 1 && table.isInfiniteScroll() == false);
 			}
 
 			@Override
@@ -186,6 +187,59 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 		tag.append("class", "navigation", " ");
 	}
 
+	/**
+	 * The rows the browser shows, for the label: the current page, or, scrolling infinitely, all
+	 * rows loaded so far, as if they were one page.
+	 */
+	private static class ShownRows implements IPageableItems
+	{
+		private static final long serialVersionUID = 1L;
+
+		private final BaseDynamicDataTable<?, ?, ?> table;
+
+		ShownRows(BaseDynamicDataTable<?, ?, ?> table)
+		{
+			this.table = table;
+		}
+
+		@Override
+		public long getCurrentPage()
+		{
+			return table.getCurrentPage();
+		}
+
+		@Override
+		public void setCurrentPage(long page)
+		{
+			table.setCurrentPage(page);
+		}
+
+		@Override
+		public long getPageCount()
+		{
+			return table.getPageCount();
+		}
+
+		@Override
+		public long getItemsPerPage()
+		{
+			return table.isInfiniteScroll() ? Math.max(1, table.getShownRowCount())
+				: table.getItemsPerPage();
+		}
+
+		@Override
+		public void setItemsPerPage(long itemsPerPage)
+		{
+			table.setItemsPerPage(itemsPerPage);
+		}
+
+		@Override
+		public long getItemCount()
+		{
+			return table.getItemCount();
+		}
+	}
+
 	private WebMarkupContainer newItemsPerPageChoice()
 	{
 		WebMarkupContainer pageSize = new WebMarkupContainer("pageSize")
@@ -196,7 +250,9 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setVisible(table.getItemsPerPageOptions().isEmpty() == false);
+				// scrolling infinitely, the rows come as they are scrolled to, not by pages
+				setVisible(table.getItemsPerPageOptions().isEmpty() == false &&
+					table.isInfiniteScroll() == false);
 			}
 		};
 		DropDownChoice<Long> choice = new DropDownChoice<>("itemsPerPage", new IModel<Long>()

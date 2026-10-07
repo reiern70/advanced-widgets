@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.NumberTextField;
@@ -25,6 +26,7 @@ import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.OverlayPlaceme
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPosition;
 import com.advanced.widgets.dynamicdatatable.ColumnState;
 import com.advanced.widgets.dynamicdatatable.IColumnStateStore;
+import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.SelectionMode;
 import com.advanced.widgets.dynamicdatatable.SessionColumnStateStore;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
@@ -75,6 +77,19 @@ public abstract class DynamicTableOptionsPanel extends Panel
 		add(updatingChoice("navigation", List.of(ToolbarPosition.values()),
 			table::getNavigationPosition, table::setNavigationPosition,
 			position -> "navigation." + position.name()));
+		WebMarkupContainer infiniteScrollOption = new WebMarkupContainer("infiniteScrollOption");
+		add(infiniteScrollOption);
+		if (table instanceof JsonBasedDynamicDataTable<?, ?> jsonTable)
+		{
+			infiniteScrollOption.add(updatingChoice("infiniteScroll", List.of(false, true),
+				jsonTable::isInfiniteScroll, jsonTable::setInfiniteScroll,
+				infinite -> infinite ? "infiniteScroll.on" : "infiniteScroll.off"));
+		}
+		else
+		{
+			infiniteScrollOption.setVisible(false);
+			infiniteScrollOption.add(new WebMarkupContainer("infiniteScroll"));
+		}
 		add(updatingChoice("selection", List.of(SelectionMode.values()), table::getSelectionMode,
 			table::setSelectionMode, mode -> "selection." + mode.name()));
 		add(updatingChoice("selectionBar", List.of(ToolbarPosition.values()),

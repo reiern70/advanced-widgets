@@ -66,6 +66,9 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 {
 	private static final long serialVersionUID = 1L;
 
+	/** The parameter asking the data endpoint for the next page of rows, scrolling infinitely. */
+	private static final String MORE_PARAMETER = "more";
+
 	private final Map<String, IWebSocketMessageType> messageTypes = new LinkedHashMap<>();
 
 	private final DataBehavior dataBehavior;
@@ -238,8 +241,34 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		data.put("rows", toRowEntries(rows, getFirstRowNumber()));
 		data.put("itemCount", getItemCount());
 		data.put("currentPage", getCurrentPage());
+		if (takeScrollToTop())
+		{
+			data.put("top", true);
+		}
 		String json = jsonSerializer.toJson(data);
 		onRowsSent(getCurrentPageKeys());
+		return json;
+	}
+
+	/**
+	 * Scrolling infinitely, adds the next page of rows to those shown and calls
+	 * {@link #onRowsSent(List)} with all of them.
+	 *
+	 * @return the added rows as the browser reads them, with the number of rows
+	 */
+	private String moreRowsJson()
+	{
+		long first = getShownRowCount() + 1;
+		List<T> rows = loadMoreRows();
+		Map<String, Object> data = new LinkedHashMap<>();
+		data.put("rows", toRowEntries(rows, first));
+		data.put("itemCount", getItemCount());
+		data.put("currentPage", getCurrentPage());
+		String json = jsonSerializer.toJson(data);
+		if (rows.isEmpty() == false)
+		{
+			onRowsSent(getCurrentPageKeys());
+		}
 		return json;
 	}
 
@@ -356,6 +385,32 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	}
 
 	/**
+	 * Makes the table scroll infinitely: instead of a page at a time, it shows its rows in one list
+	 * that grows by the next page of rows, {@link #getItemsPerPage() rows per page} of them, each
+	 * time the user scrolls to its end, while there are more. The table blocks itself with its
+	 * {@link #newVeilBehavior() veil} while it loads them. The paging links and the choice of the
+	 * rows per page are left out of the navigation; the label tells how many of the rows are shown.
+	 * Sorting, or filtering by {@link #setCurrentPage(long) setting the current page}, starts over
+	 * from the first page of rows, scrolled to the top, while
+	 * {@link #refresh(IPartialPageRequestHandler) refreshing} the table fetches all the rows shown
+	 * again. Selecting the page selects every row shown.
+	 * <p>
+	 * The rows load as the user scrolls the {@link #setBodyHeight(int, BodyHeightUnits) body}, or,
+	 * if it has no height, the page, to the last row. The table shows its first page of rows again
+	 * after the setting changes; render it again for the change to show.
+	 *
+	 * @param infiniteScroll
+	 *            whether the table scrolls infinitely, {@code false} by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public JsonBasedDynamicDataTable<T, K> setInfiniteScroll(boolean infiniteScroll)
+	{
+		setInfiniteScrollEnabled(infiniteScroll);
+		return this;
+	}
+
+	/**
 	 * @return the serializer turning rows into JSON
 	 */
 	public IJsonSerializer getJsonSerializer()
@@ -386,6 +441,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		config.put("engine", templateEngine.getName());
 		config.put("columns", columnConfigs);
 		config.put("push", pushEnabled);
+		config.put("infinite", isInfiniteScroll());
 		if (pollInterval != null)
 		{
 			config.put("pollMillis", pollInterval.toMillis());
@@ -521,7 +577,9 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		@Override
 		public void onRequest()
 		{
-			String json = currentPageJson();
+			boolean more = getComponent().getRequest().getRequestParameters()
+				.getParameterValue(MORE_PARAMETER).toBoolean(false);
+			String json = more ? moreRowsJson() : currentPageJson();
 			getComponent().getRequestCycle().scheduleRequestHandlerAfterCurrent(
 				new TextRequestHandler("application/json", "UTF-8", json));
 		}
