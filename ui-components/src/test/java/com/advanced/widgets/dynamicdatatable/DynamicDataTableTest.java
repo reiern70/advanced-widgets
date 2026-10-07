@@ -36,6 +36,7 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.advanced.widgets.license.Licensing;
 import com.github.openjson.JSONObject;
 
 class DynamicDataTableTest extends WicketTestCase
@@ -78,6 +79,29 @@ class DynamicDataTableTest extends WicketTestCase
 		assertFalse(page.contains("\"m\":\"GET\""), "the table posts its requests");
 		assertTrue(page.contains("\"m\":\"POST\""), page);
 		assertTrue(page.contains("\"template\":\"<b>{{name}}<\\/b>\""), page);
+	}
+
+	@Test
+	void rendersWithTheLicenseKeyOfTheTests()
+	{
+		assertTrue(Licensing.get(tester.getApplication()).activates(JsonBasedDynamicDataTable.class));
+		assertFalse(tester.getLastResponseAsString().contains(Licensing.PLACEHOLDER_CSS_CLASS));
+	}
+
+	@Test
+	void rendersAPlaceholderWithoutALicenseKey()
+	{
+		Licensing.install(tester.getApplication(), null);
+		tester.startPage(new TestPage(table));
+
+		String page = tester.getLastResponseAsString();
+		TagTester placeholder = TagTester.createTagByAttribute(page, "class",
+			Licensing.PLACEHOLDER_CSS_CLASS);
+		assertEquals("div", placeholder.getName());
+		assertEquals(table.getMarkupId(), placeholder.getAttribute("id"));
+		assertEquals("TestTable", placeholder.getAttribute("data-component"));
+		assertTrue(placeholder.getValue().contains("license key"), page);
+		assertFalse(page.contains("new Wicket.DynamicDataTable("), "no script of the table: " + page);
 	}
 
 	@Test

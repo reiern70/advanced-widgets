@@ -223,3 +223,17 @@
 	border-top: 1px solid var(--wicket-theme-border);
 	background: var(--wicket-theme-toolbar);
 }
+
+/* the placeholder of a private component without a license key (see Licensing) */
+.wicket-unlicensed {
+	padding: 1em 1.2em;
+	border: 1px dashed var(--wicket-theme-border, #c9cfdb);
+	border-radius: 0.4em;
+	background: var(--wicket-theme-highlight, #f5f7fb);
+	color: var(--wicket-theme-text, #1c2333);
+}
+
+.wicket-unlicensed::before {
+	content: "\1F512";
+	margin-right: 0.5em;
+}

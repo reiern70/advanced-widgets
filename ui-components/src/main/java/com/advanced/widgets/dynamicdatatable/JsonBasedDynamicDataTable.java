@@ -16,12 +16,15 @@ import java.util.StringJoiner;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
+import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.Response;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.util.lang.Args;
 
+import com.advanced.widgets.license.Licensing;
 import com.advanced.widgets.table.IMovableColumn;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -53,6 +56,9 @@ import com.github.openjson.JSONObject;
  * The column templates are written into the page as markup and have to be authored by the
  * developer; see {@link IDynamicColumn}. Every property the {@link #setJsonSerializer serializer}
  * produces for a row is sent to the browser.
+ * <p>
+ * A private component: it renders only when the {@link Licensing license key} of the application
+ * activates it, else a placeholder telling so.
  *
  * @param <T>
  *            the type of the rows
@@ -582,6 +588,22 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 			String json = more ? moreRowsJson() : currentPageJson();
 			getComponent().getRequestCycle().scheduleRequestHandlerAfterCurrent(
 				new TextRequestHandler("application/json", "UTF-8", json));
+		}
+	}
+
+	@Override
+	protected void onConfigure()
+	{
+		super.onConfigure();
+		Licensing.configurePrivate(this);
+	}
+
+	@Override
+	protected void renderPlaceholderTag(ComponentTag tag, Response response)
+	{
+		if (!Licensing.renderPlaceholder(this, tag, response))
+		{
+			super.renderPlaceholderTag(tag, response);
 		}
 	}
 }
