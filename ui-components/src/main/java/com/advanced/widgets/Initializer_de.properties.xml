@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="DynamicDataTable.rowsPerPage">Zeilen pro Seite</entry>
+	<entry key="DynamicDataTable.selectRow">Zeile auswählen</entry>
+	<entry key="DynamicDataTable.selectPage">Alle Zeilen dieser Seite auswählen</entry>
+	<entry key="DynamicDataTable.pageSelected">Alle ${count} Zeilen dieser Seite sind ausgewählt.</entry>
+	<entry key="DynamicDataTable.selectAll">Alle ${total} Zeilen auswählen</entry>
+	<entry key="DynamicDataTable.allSelected">Alle ${total} Zeilen sind ausgewählt.</entry>
+	<entry key="DynamicDataTable.clearSelection">Auswahl aufheben</entry>
+	<entry key="DynamicDataTable.exportCsv">Als CSV exportieren</entry>
+	<entry key="DynamicDataTable.confirm">Bestätigen</entry>
+	<entry key="DynamicDataTable.cancel">Abbrechen</entry>
+	<entry key="DynamicDataTable.chooseColumns">Spalten</entry>
+	<entry key="DynamicDataTable.applyColumns">Übernehmen</entry>
+	<entry key="MovableColumnsBehavior.moveColumn">Spalte verschieben: ziehen oder mit den Pfeiltasten</entry>
+	<entry key="FloatingPanel.close">Schließen</entry>
+	<entry key="ClipboardCopyBehavior.copied">Kopiert</entry>
+</properties>

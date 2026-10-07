@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="DynamicDataTable.rowsPerPage">Rows per page</entry>
+	<entry key="DynamicDataTable.selectRow">Select row</entry>
+	<entry key="DynamicDataTable.selectPage">Select all rows on this page</entry>
+	<entry key="DynamicDataTable.pageSelected">All ${count} rows on this page are selected.</entry>
+	<entry key="DynamicDataTable.selectAll">Select all ${total} rows</entry>
+	<entry key="DynamicDataTable.allSelected">All ${total} rows are selected.</entry>
+	<entry key="DynamicDataTable.clearSelection">Clear selection</entry>
+	<entry key="DynamicDataTable.exportCsv">Export to CSV</entry>
+	<entry key="DynamicDataTable.confirm">Confirm</entry>
+	<entry key="DynamicDataTable.cancel">Cancel</entry>
+	<entry key="DynamicDataTable.chooseColumns">Columns</entry>
+	<entry key="DynamicDataTable.applyColumns">Apply</entry>
+	<entry key="MovableColumnsBehavior.moveColumn">Move the column: drag it, or use the arrow keys</entry>
+	<entry key="FloatingPanel.close">Close</entry>
+	<entry key="ClipboardCopyBehavior.copied">Copied</entry>
+</properties>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="className">Class name</entry>
+	<entry key="css">Your theme:</entry>
+	<entry key="copy">Copy to the clipboard</entry>
+	<entry key="property.primary">headers, the bar of a progress bar</entry>
+	<entry key="property.primary-dark">borders and gradients next to the primary color</entry>
+	<entry key="property.on-primary">text on the primary color</entry>
+	<entry key="property.accent">links, focus and drag indicators</entry>
+	<entry key="property.text">text</entry>
+	<entry key="property.surface">background of content, such as rows</entry>
+	<entry key="property.surface-alt">alternating background, such as every other row</entry>
+	<entry key="property.hover">background of the content under the pointer</entry>
+	<entry key="property.selected">background of selected content</entry>
+	<entry key="property.highlight">background of notices</entry>
+	<entry key="property.toolbar">background of toolbars</entry>
+	<entry key="property.border">borders</entry>
+	<entry key="property.progress">the filled part of a progress bar</entry>
+	<entry key="property.progress-dark">the gradient end of the filled part</entry>
+	<entry key="property.track">the empty part of a progress bar</entry>
+	<entry key="property.veil">the dimming over content blocked by a veil or a dialog</entry>
+	<entry key="property.color-scheme">the color scheme of form controls</entry>
+</properties>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="className">Klassenname</entry>
+	<entry key="css">Ihr Farbschema:</entry>
+	<entry key="copy">In die Zwischenablage kopieren</entry>
+	<entry key="property.primary">Überschriften, der Balken eines Fortschrittsbalkens</entry>
+	<entry key="property.primary-dark">Rahmen und Verläufe neben der Hauptfarbe</entry>
+	<entry key="property.on-primary">Text auf der Hauptfarbe</entry>
+	<entry key="property.accent">Links, Fokus und Ziehmarkierungen</entry>
+	<entry key="property.text">Text</entry>
+	<entry key="property.surface">Hintergrund von Inhalten, etwa Zeilen</entry>
+	<entry key="property.surface-alt">abwechselnder Hintergrund, etwa jede zweite Zeile</entry>
+	<entry key="property.hover">Hintergrund des Inhalts unter dem Zeiger</entry>
+	<entry key="property.selected">Hintergrund ausgewählter Inhalte</entry>
+	<entry key="property.highlight">Hintergrund von Hinweisen</entry>
+	<entry key="property.toolbar">Hintergrund von Werkzeugleisten</entry>
+	<entry key="property.border">Rahmen</entry>
+	<entry key="property.progress">der gefüllte Teil eines Fortschrittsbalkens</entry>
+	<entry key="property.progress-dark">das Verlaufsende des gefüllten Teils</entry>
+	<entry key="property.track">der leere Teil eines Fortschrittsbalkens</entry>
+	<entry key="property.veil">die Abdunkelung über Inhalten, die ein Schleier oder ein Dialog sperrt</entry>
+	<entry key="property.color-scheme">das Farbschema der Formularelemente</entry>
+</properties>
