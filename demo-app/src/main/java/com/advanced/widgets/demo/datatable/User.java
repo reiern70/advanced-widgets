@@ -4,6 +4,7 @@
  */
 package com.advanced.widgets.demo.datatable;
 
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Locale;
 
@@ -116,6 +117,16 @@ public class User implements IClusterable, IIdentifiable<Long>
 	public void setBornDate(Date bornDate)
 	{
 		this.bornDate = bornDate;
+	}
+
+	/**
+	 * @return the day the user was born as {@code yyyy-MM-dd}, {@code null} if it is not known;
+	 *         the JSON based table shows it
+	 */
+	public String getBorn()
+	{
+		return bornDate == null ? null
+			: bornDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString();
 	}
 
 	public String getAddress()
