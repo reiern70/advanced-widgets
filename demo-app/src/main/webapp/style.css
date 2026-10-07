@@ -47,7 +47,8 @@ main { flex: 1; }
 a { color: var(--accent, var(--primary)); }
 
 .container {
-	max-width: 1700px;
+	width: 100%;
+	max-width: 1800px;
 	margin: 0 auto;
 	padding: 0 16px;
 }
@@ -169,6 +170,17 @@ a { color: var(--accent, var(--primary)); }
 .badge--available { color: var(--available); }
 .badge--in-progress { color: var(--in-progress); }
 .badge--planned { color: var(--planned); }
+/* whether the component of a demo is public, or private for now */
+.badge--public { color: var(--available); }
+.badge--private { color: var(--in-progress); }
+.demo__title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+}
+.demo__title .badge { font-size: 13px; font-weight: 600; }
+.tab-badge { margin-left: 6px; font-size: 11px; }
 
 /* footer */
 .footer {

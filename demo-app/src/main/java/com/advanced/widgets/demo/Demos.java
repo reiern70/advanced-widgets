@@ -32,23 +32,26 @@ public final class Demos
 	 *            what the demo shows
 	 * @param page
 	 *            the page of the demo
+	 * @param publicComponent
+	 *            whether the component the demo shows is public, or private for now
 	 */
 	public record Demo(String name, String category, String description,
-		Class<? extends Page> page) implements Serializable
+		Class<? extends Page> page, boolean publicComponent) implements Serializable
 	{
 	}
 
 	private static final List<Demo> ALL = List.of(
-		new Demo("Dynamic Data Table", "Data",
+		new Demo("JSON Dynamic Data Table", "Data",
 			"A thousand users rendered in the browser from JSON, with live updates over websockets.",
-			DynamicDataTablePage.class),
+			DynamicDataTablePage.class, false),
 		new Demo("Bean Dynamic Data Table", "Data",
 			"The same table with its rows rendered on the server by Wicket components.",
-			BeanDynamicDataTablePage.class),
+			BeanDynamicDataTablePage.class, true),
 		new Demo("Progress Bar", "Feedback", "Known and unknown progress, in any of the themes.",
-			ProgressBarPage.class),
+			ProgressBarPage.class, true),
 		new Demo("Theme Editor", "Themes",
-			"Generates a theme of the components, with a live preview.", ThemeEditorPage.class));
+			"Generates a theme of the components, with a live preview.", ThemeEditorPage.class,
+			true));
 
 	private Demos()
 	{
@@ -60,6 +63,15 @@ public final class Demos
 	public static List<Demo> all()
 	{
 		return ALL;
+	}
+
+	/**
+	 * @return the demo of the page, if it is one
+	 */
+	public static Optional<Demo> of(Class<? extends Page> page)
+	{
+		int index = indexOf(page);
+		return index >= 0 ? Optional.of(ALL.get(index)) : Optional.empty();
 	}
 
 	/**

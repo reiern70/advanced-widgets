@@ -6,14 +6,17 @@ package com.advanced.widgets.demo.theme;
 
 import java.util.List;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.extensions.ajax.markup.html.tabs.AjaxTabbedPanel;
 import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
-import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.util.string.Strings;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.advanced.widgets.demo.DemoPage;
@@ -39,15 +42,42 @@ public class ThemeEditorPage extends DemoPage
 		add(new ThemeEditorPanel("editor", preview));
 		add(preview);
 
-		List<ITab> tabs = List.of(tab("tab.progress", ProgressPreview::new),
-			tab("tab.jsonTable", JsonTablePreview::new), tab("tab.beanTable", BeanTablePreview::new),
-			tab("tab.panels", PanelsPreview::new));
-		preview.add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.TABS)));
+		List<ITab> tabs = List.of(tab("tab.progress", ProgressPreview::new, null),
+			tab("tab.jsonTable", JsonTablePreview::new, false),
+			tab("tab.beanTable", BeanTablePreview::new, true),
+			tab("tab.panels", PanelsPreview::new, null));
+		preview.add(new AjaxTabbedPanel<>("tabs", tabs)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newTitle(String titleId, IModel<?> titleModel, int index)
+			{
+				return new Label(titleId, titleModel).setEscapeModelStrings(false);
+			}
+		}.add(new TabsStyleBehavior(TabsStyle.TABS)));
 	}
 
-	private static ITab tab(String titleKey, SerializableFunction<String, WebMarkupContainer> panel)
+	/**
+	 * @param publicComponent
+	 *            whether the component of the tab is public, false if it is private for now, or
+	 *            {@code null} for no badge
+	 */
+	private ITab tab(String titleKey, SerializableFunction<String, WebMarkupContainer> panel,
+		Boolean publicComponent)
 	{
-		return new AbstractTab(new ResourceModel(titleKey))
+		IModel<String> title = () -> {
+			String text = Strings.escapeMarkup(getString(titleKey)).toString();
+			if (publicComponent == null)
+			{
+				return text;
+			}
+			String key = publicComponent ? "component.public" : "component.private";
+			return text + "<span class=\"badge tab-badge " +
+				(publicComponent ? "badge--public" : "badge--private") + "\">" +
+				Strings.escapeMarkup(getString(key)) + "</span>";
+		};
+		return new AbstractTab(title)
 		{
 			private static final long serialVersionUID = 1L;
 

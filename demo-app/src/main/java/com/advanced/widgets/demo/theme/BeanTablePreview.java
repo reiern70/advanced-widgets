@@ -15,10 +15,11 @@ import com.advanced.widgets.demo.datatable.User;
 import com.advanced.widgets.demo.datatable.UsersProvider;
 import com.advanced.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.BeanSelectionColumn;
+import com.advanced.widgets.table.ResizableColumnsBehavior;
 
 /**
  * A plain table of users rendered on the server by Wicket components, for the theme editor's
- * preview: no progress and no updates pushed over websockets.
+ * preview: no progress and no updates pushed over websockets. The columns can be resized.
  */
 class BeanTablePreview extends Panel
 {
@@ -32,6 +33,8 @@ class BeanTablePreview extends Panel
 			new LambdaColumn<>(new ResourceModel("lastName"), "lastName", User::getLastName),
 			new LambdaColumn<>(new ResourceModel("city"), User::getCity),
 			new LambdaColumn<>(new ResourceModel("country"), User::getCountryName));
-		add(new BeanBasedDynamicDataTable<>("table", columns, new UsersProvider(), 10));
+		add(new BeanBasedDynamicDataTable<>("table", columns, new UsersProvider(), 10)
+			.setAdjustToParentWidth(true)
+			.add(new ResizableColumnsBehavior(ResizableColumnsBehavior.Mode.STRETCH)));
 	}
 }

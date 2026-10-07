@@ -6,6 +6,7 @@ package com.advanced.widgets.demo;
 
 import java.util.Optional;
 
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -32,6 +33,8 @@ public abstract class DemoPage extends BasePage
 		add(newDemoLink("previous", Demos.previous(getClass())));
 		add(newDemoLink("next", Demos.next(getClass())));
 		add(new Label("demoTitle", () -> getString("title")));
+		add(Demos.of(getClass()).<Component> map(demo -> newVisibilityBadge("visibility", demo))
+			.orElseGet(() -> new WebMarkupContainer("visibility").setVisible(false)));
 		add(newExplanation("explanation", () -> getString("explanation", null, ""))
 			.setOutputMarkupId(true));
 	}
@@ -51,6 +54,26 @@ public abstract class DemoPage extends BasePage
 		WebMarkupContainer themed = new WebMarkupContainer(id);
 		themed.setOutputMarkupId(true);
 		return themed;
+	}
+
+	/**
+	 * @return the badge telling whether the component of a demo is public or private for now
+	 */
+	static Component newVisibilityBadge(String id, Demo demo)
+	{
+		return newVisibilityBadge(id, demo.publicComponent());
+	}
+
+	/**
+	 * @return the badge telling whether a component is public or private for now
+	 */
+	public static Component newVisibilityBadge(String id, boolean publicComponent)
+	{
+		String key = publicComponent ? "component.public" : "component.private";
+		return new Label(id, new ResourceModel(key))
+			.add(AttributeModifier.append("class",
+				publicComponent ? "badge--public" : "badge--private"))
+			.add(AttributeModifier.replace("title", new ResourceModel(key + ".help")));
 	}
 
 	private static Component newDemoLink(String id, Optional<Demo> demo)

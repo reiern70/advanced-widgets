@@ -16,10 +16,11 @@ import com.advanced.widgets.dynamicdatatable.IDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.SelectionColumn;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicColumn;
+import com.advanced.widgets.table.ResizableColumnsBehavior;
 
 /**
  * A plain table of users rendered in the browser from JSON, for the theme editor's preview: no
- * progress and no updates pushed over websockets.
+ * progress and no updates pushed over websockets. The columns can be resized.
  */
 class JsonTablePreview extends Panel
 {
@@ -32,7 +33,9 @@ class JsonTablePreview extends Panel
 			new SortableDynamicColumn<>(column("firstName", "{{firstName}}"), "firstName"),
 			new SortableDynamicColumn<>(column("lastName", "{{lastName}}"), "lastName"),
 			column("city", "{{city}}"), column("country", "{{countryName}}"));
-		add(new JsonBasedDynamicDataTable<>("table", columns, new UsersProvider(), 10));
+		add(new JsonBasedDynamicDataTable<>("table", columns, new UsersProvider(), 10)
+			.setAdjustToParentWidth(true)
+			.add(new ResizableColumnsBehavior(ResizableColumnsBehavior.Mode.STRETCH)));
 	}
 
 	private static DynamicColumn<User> column(String headerKey, String template)

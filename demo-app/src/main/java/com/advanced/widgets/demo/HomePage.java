@@ -62,6 +62,7 @@ public class HomePage extends BasePage {
 				BookmarkablePageLink<Void> link = new BookmarkablePageLink<>("link", demo.page());
 				item.add(link);
 				link.add(new Label("category", demo.category()));
+				link.add(DemoPage.newVisibilityBadge("visibility", demo));
 				link.add(new Label("name", demo.name()));
 				link.add(new Label("description", demo.description()));
 			}
