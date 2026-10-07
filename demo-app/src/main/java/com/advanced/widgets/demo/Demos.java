@@ -13,6 +13,7 @@ import org.apache.wicket.Page;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
+import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
 
 /**
@@ -49,6 +50,9 @@ public final class Demos
 			BeanDynamicDataTablePage.class, true),
 		new Demo("Progress Bar", "Feedback", "Known and unknown progress, in any of the themes.",
 			ProgressBarPage.class, true),
+		new Demo("Scrollbar", "Layout",
+			"Slim scroll bars in the theme's colors that look the same in every browser.",
+			ScrollbarPage.class, true),
 		new Demo("Theme Editor", "Themes",
 			"Generates a theme of the components, with a live preview.", ThemeEditorPage.class,
 			true));

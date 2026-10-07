@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+/*
+ * The scroll bars of Wicket.Scrollbar, in the colors of the theme they are rendered in, if any.
+ * --wicket-scrollbar-size sets their thickness.
+ */
+.wicket-scrollbar {
+	--wicket-scrollbar-size: 8px;
+	--wicket-scrollbar-gap: 2px;
+	position: relative;
+	min-width: 0;
+}
+
+/* the native scroll bars are hidden, the element still scrolls */
+.wicket-scrollbar-host {
+	scrollbar-width: none;
+}
+
+.wicket-scrollbar-host::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+.wicket-scrollbar-track {
+	position: absolute;
+	z-index: 2;
+	box-sizing: border-box;
+	border-radius: var(--wicket-scrollbar-size);
+	background: var(--wicket-theme-track, rgba(0, 0, 0, 0.08));
+	touch-action: none;
+}
+
+.wicket-scrollbar-track[hidden] {
+	display: none;
+}
+
+.wicket-scrollbar-track--y {
+	top: var(--wicket-scrollbar-gap);
+	right: var(--wicket-scrollbar-gap);
+	bottom: var(--wicket-scrollbar-gap);
+	width: var(--wicket-scrollbar-size);
+}
+
+.wicket-scrollbar-track--x {
+	right: var(--wicket-scrollbar-gap);
+	bottom: var(--wicket-scrollbar-gap);
+	left: var(--wicket-scrollbar-gap);
+	height: var(--wicket-scrollbar-size);
+}
+
+/* with both bars, neither runs into the corner of the other */
+.wicket-scrollbar--both > .wicket-scrollbar-track--y {
+	bottom: calc(var(--wicket-scrollbar-size) + 2 * var(--wicket-scrollbar-gap));
+}
+
+.wicket-scrollbar--both > .wicket-scrollbar-track--x {
+	right: calc(var(--wicket-scrollbar-size) + 2 * var(--wicket-scrollbar-gap));
+}
+
+.wicket-scrollbar-thumb {
+	position: absolute;
+	top: 0;
+	left: 0;
+	box-sizing: border-box;
+	border-radius: var(--wicket-scrollbar-size);
+	background: color-mix(in srgb, var(--wicket-theme-primary, #6b7280) 65%, transparent);
+	cursor: pointer;
+	touch-action: none;
+}
+
+.wicket-scrollbar-track--y > .wicket-scrollbar-thumb {
+	width: 100%;
+}
+
+.wicket-scrollbar-track--x > .wicket-scrollbar-thumb {
+	height: 100%;
+}
+
+.wicket-scrollbar-thumb:hover,
+.wicket-scrollbar--dragging .wicket-scrollbar-thumb {
+	background: var(--wicket-theme-primary-dark, #374151);
+}
+
+.wicket-scrollbar--dragging {
+	user-select: none;
+}

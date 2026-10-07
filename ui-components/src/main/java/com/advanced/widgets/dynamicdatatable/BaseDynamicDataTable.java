@@ -62,6 +62,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.advanced.widgets.table.IMovableColumn;
 import com.advanced.widgets.table.IMovableColumnsTable;
 import com.advanced.widgets.table.IResizableColumnsTable;
@@ -2150,6 +2151,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		super.renderHead(response);
 
 		CoreLibrariesContributor.contributeAjax(getApplication(), response);
+		ScrollbarBehavior.renderHeadItems(response);
 		response.render(JavaScriptHeaderItem.forReference(JAVASCRIPT));
 		response.render(CssHeaderItem.forReference(CSS));
 		for (C column : getVisibleColumns())

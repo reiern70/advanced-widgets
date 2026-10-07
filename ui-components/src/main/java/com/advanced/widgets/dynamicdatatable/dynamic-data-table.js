@@ -279,6 +279,11 @@
 			rows.appendChild(rowsBody);
 			this.rowsTable = rows;
 			this.body = body;
+			this.bodyCell = cell;
+			if (Wicket.Scrollbar) {
+				// the same slim scroll bar in every browser, over the room the empty column leaves
+				this.scrollbar = Wicket.Scrollbar.attach(body, { axis: 'y' });
+			}
 
 			const self = this;
 			if (window.ResizeObserver) {
@@ -317,7 +322,7 @@
 				height.value + height.unit;
 
 			const headers = this.headerCells();
-			body.parentElement.colSpan = Math.max(1, headers.length);
+			this.bodyCell.colSpan = Math.max(1, headers.length);
 			const widths = headers.map(function (header) {
 				return header.getBoundingClientRect().width;
 			});
@@ -764,6 +769,9 @@
 		destroy : function () {
 			if (this.bodyObserver) {
 				this.bodyObserver.disconnect();
+			}
+			if (this.scrollbar) {
+				this.scrollbar.destroy();
 			}
 			if (this.cfg.resize && Wicket.ResizableColumns) {
 				Wicket.ResizableColumns.detach(this.id);

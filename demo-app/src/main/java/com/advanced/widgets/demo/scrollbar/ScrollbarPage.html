@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="scrollbar-demo">
+	<section>
+		<h3><wicket:message key="native"/></h3>
+		<div wicket:id="native" class="scrollbar-demo__box"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="vertical"/></h3>
+		<div wicket:id="vertical" class="scrollbar-demo__box"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="horizontal"/></h3>
+		<div wicket:id="horizontal" class="scrollbar-demo__box scrollbar-demo__box--x"><div class="scrollbar-demo__strip"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div></div>
+	</section>
+	<section>
+		<h3><wicket:message key="both"/></h3>
+		<div wicket:id="both" class="scrollbar-demo__box scrollbar-demo__box--both"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="growing"/></h3>
+		<div wicket:id="growing" class="scrollbar-demo__box scrollbar-demo__box--short"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+		<p><a href="#" wicket:id="addLines"><wicket:message key="addLines"/></a></p>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>
