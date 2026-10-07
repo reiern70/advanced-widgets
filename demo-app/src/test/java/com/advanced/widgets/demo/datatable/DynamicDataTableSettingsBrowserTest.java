@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,10 +21,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -46,6 +49,8 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 	private static final String ROWS = TABLE + " .dynamic-data-table-rows > tbody > tr, " + TABLE +
 		" > tbody > tr:not(.dynamic-data-table-body-row)";
 
+	private static final String PUSH_ROWS = "Push the rows of this page in reverse order via web sockets";
+
 	/** The settings and their values, in the order of their drop-downs. */
 	private static final Map<String, List<String>> SETTINGS = new LinkedHashMap<>();
 
@@ -58,6 +63,10 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 		SETTINGS.put("selection", List.of("NONE", "ONE", "MANY"));
 		SETTINGS.put("bodyHeightUnits", List.of("PIXELS", "PERCENT", "VIEWPORT_HEIGHT"));
 	}
+
+	/** Settings set by the scenarios only, not combined with the others. */
+	private static final Map<String, List<String>> OTHER_SETTINGS = Map.of("columnState",
+		List.of("SESSION", "FILE"));
 
 	/** Records the script errors of the page into {@code window.tableErrors}. */
 	private static final String RECORD_ERRORS = """
@@ -154,6 +163,28 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 		return problems;
 		""";
 
+	/**
+	 * The key of each of the first rows and the text of each of its cells, by the header of the
+	 * cell's column.
+	 */
+	private static final String CONTENT = """
+		var table = document.querySelector('table.dynamic-dataview');
+		var headers = Array.from(table.querySelector('tr.dynamic-data-table-headers').cells)
+			.filter(function (cell) { return !cell.classList.contains('dynamic-data-table-filler'); })
+			.map(function (cell) { return cell.textContent.replace(/[\u25b2\u25bc]/g, '').trim(); });
+		var rows = Array.from(table.querySelectorAll('.dynamic-data-table-rows > tbody > tr[data-key], ' +
+			':scope > tbody > tr[data-key]')).slice(0, 5);
+		return rows.map(function (tr) {
+			var cells = {};
+			Array.from(tr.cells).forEach(function (cell, i) {
+				if (headers[i] !== undefined) {
+					cells[headers[i]] = cell.textContent.replace(/\s+/g, ' ').trim();
+				}
+			});
+			return { key: tr.getAttribute('data-key'), cells: cells };
+		});
+		""";
+
 	private WebDriver driver;
 
 	private WebDriverWait wait;
@@ -175,6 +206,23 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 	@MethodSource("pages")
 	void everyCombinationOfTheSettingsGivesAWholeTable(SeleniumBrowser browser, String page)
 	{
+		everyCombination(browser, page, false);
+	}
+
+	/**
+	 * The same with columns moved, hidden and shown first, so that the order and the set of the
+	 * columns differ from the ones the table was created with.
+	 */
+	@ParameterizedTest
+	@MethodSource("pages")
+	void everyCombinationOfTheSettingsGivesAWholeTableWithRearrangedColumns(
+		SeleniumBrowser browser, String page)
+	{
+		everyCombination(browser, page, true);
+	}
+
+	private void everyCombination(SeleniumBrowser browser, String page, boolean rearrange)
+	{
 		driver = browser.newDriver(1400, 1100);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofMillis(20));
 		wait.ignoring(StaleElementReferenceException.class);
@@ -187,6 +235,17 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 		current.put("navigation", "BOTH");
 		current.put("selection", "MANY");
 		current.put("bodyHeightUnits", "PIXELS");
+		current.put("columnState", "SESSION");
+		if (rearrange)
+		{
+			rearrangeColumns();
+			assertTrue(mixedCells().isEmpty(), "after rearranging: " + mixedCells());
+			keepColumnStateInFileAndBack();
+			if (driver.findElements(By.linkText(PUSH_ROWS)).isEmpty() == false)
+			{
+				pushRows();
+			}
+		}
 
 		List<String> broken = new ArrayList<>();
 		for (Map<String, String> combination : combinations())
@@ -256,7 +315,173 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 			}
 		}
 		int rows = driver.findElements(By.cssSelector(ROWS)).size();
-		return rows == 25 ? problems : List.of(rows + " rows instead of 25");
+		return rows == 25 ? mixedCells() : List.of(rows + " rows instead of 25");
+	}
+
+	/**
+	 * @return the cells of the first rows that do not show their user's value for the header of
+	 *         their column
+	 */
+	@SuppressWarnings("unchecked")
+	private List<String> mixedCells()
+	{
+		List<String> mixed = new ArrayList<>();
+		List<Map<String, Object>> rows = (List<Map<String, Object>>)js().executeScript(CONTENT);
+		if (rows.size() < 5 || ((Map<String, String>)rows.get(0).get("cells"))
+			.containsKey("Last Name") == false)
+		{
+			return List.of("the cells of the rows were not found: " + rows);
+		}
+		for (Map<String, Object> row : rows)
+		{
+			User user = DatabaseLocator.getLargeDatabase()
+				.get(Long.parseLong((String)row.get("key")));
+			((Map<String, String>)row.get("cells")).forEach((header, text) -> {
+				String expected = expected(user, header);
+				boolean contains = "Address".equals(header) || "Phones".equals(header);
+				if (expected != null && (contains ? text.contains(expected)
+					: text.equals(expected)) == false)
+				{
+					mixed.add("user " + user.getId() + ": '" + header + "' shows '" + text +
+						"' instead of '" + expected + "'");
+				}
+			});
+		}
+		return mixed;
+	}
+
+	/**
+	 * @return what the cell of the user in the column of the header shows, all of it or, for the
+	 *         address and the phones, a part of it; {@code null} if it is not checked
+	 */
+	private static String expected(User user, String header)
+	{
+		return switch (header)
+		{
+			case "ID" -> String.valueOf(user.getId());
+			case "First Name" -> user.getFirstName();
+			case "Last Name" -> user.getLastName();
+			case "Born" -> Objects.toString(user.getBorn(), "");
+			case "Address" -> user.getAddress();
+			case "Phones" -> user.getCellPhone();
+			case "Home phone" -> user.getHomePhone();
+			case "Cell phone" -> user.getCellPhone();
+			case "City" -> user.getCity();
+			case "Country" -> user.getCountryName();
+			default -> null;
+		};
+	}
+
+	/**
+	 * Moves First Name two columns to the right and Phones three to the left with the keyboard,
+	 * then hides Born and shows City with the column chooser.
+	 */
+	private void rearrangeColumns()
+	{
+		move("First Name", Keys.ARROW_RIGHT, 2);
+		move("Phones", Keys.ARROW_LEFT, 3);
+
+		WebElement chooser = driver.findElement(By.cssSelector(
+			TABLE + " details.dynamic-data-table-column-chooser"));
+		chooser.findElement(By.tagName("summary")).click();
+		for (String label : List.of("Born", "City"))
+		{
+			chooser.findElements(By.cssSelector(".dynamic-data-table-column-chooser-column"))
+				.stream()
+				.filter(button -> button.getText().contains(label))
+				.findFirst()
+				.orElseThrow(() -> new AssertionError("no " + label + " in the column chooser"))
+				.click();
+		}
+		WebElement table = driver.findElement(By.cssSelector(TABLE));
+		chooser.findElement(By.cssSelector("[data-dt-apply]")).click();
+		awaitRenderedAgain(table);
+		List<String> headers = headerTexts();
+		assertTrue(headers.contains("City") && headers.contains("Born") == false,
+			"the chooser did not apply: " + headers);
+	}
+
+	/**
+	 * Keeps the column state in the file and in the session again, each switch taking the state
+	 * of the other store, and reloads the page.
+	 */
+	private void keepColumnStateInFileAndBack()
+	{
+		List<String> headers = headerTexts();
+		choose("columnState", "FILE");
+		choose("columnState", "SESSION");
+		driver.navigate().refresh();
+		wait.until(d -> d.findElements(By.cssSelector(ROWS)).size() == 25);
+		js().executeScript(RECORD_ERRORS);
+		assertTrue(headerTexts().equals(headers), "the columns changed: " + headers + " -> " +
+			headerTexts());
+		assertTrue(mixedCells().isEmpty(), "after the column state round trip: " + mixedCells());
+	}
+
+	/**
+	 * Has the rows of the page pushed over the web socket, in reverse order, and waits for a push
+	 * of the changed progress too.
+	 */
+	private void pushRows()
+	{
+		String first = (String)js().executeScript(
+			"return document.querySelector('table.dynamic-dataview tr[data-key]').getAttribute('data-key');");
+		driver.findElement(By.linkText(PUSH_ROWS)).click();
+		wait.until(d -> first.equals(js().executeScript("return document.querySelector(" +
+			"'table.dynamic-dataview tr[data-key]').getAttribute('data-key');")) == false);
+		try
+		{
+			Thread.sleep(3500);
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
+		}
+		assertTrue(mixedCells().isEmpty(), "after pushing the rows: " + mixedCells());
+	}
+
+	private void move(String header, Keys key, int times)
+	{
+		for (int i = 0; i < times; i++)
+		{
+			List<String> before = headerTexts();
+			WebElement mover = driver.findElements(By.cssSelector(TABLE +
+				" tr.dynamic-data-table-headers > th"))
+				.stream()
+				.filter(th -> th.getText().replaceAll("[\u25b2\u25bc]", "").trim().equals(header))
+				.findFirst()
+				.orElseThrow()
+				.findElement(By.className("wicket-col-mover"));
+			js().executeScript("arguments[0].focus();", mover);
+			new Actions(driver).sendKeys(key).perform();
+			wait.until(d -> headerTexts().equals(before) == false);
+			wait.until(d -> d.findElements(By.cssSelector(".wicket-veil")).isEmpty());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<String> headerTexts()
+	{
+		return (List<String>)js().executeScript("return Array.from(document.querySelectorAll(" +
+			"'table.dynamic-dataview tr.dynamic-data-table-headers > th')).map(function (th) {" +
+			" return th.textContent.replace(/[\\u25b2\\u25bc]/g, '').trim(); });");
+	}
+
+	private void awaitRenderedAgain(WebElement table)
+	{
+		wait.until(d -> {
+			try
+			{
+				table.isDisplayed();
+				return false;
+			}
+			catch (StaleElementReferenceException replaced)
+			{
+				return true;
+			}
+		});
+		wait.until(d -> d.findElements(By.cssSelector(ROWS)).size() == 25);
+		wait.until(d -> d.findElements(By.cssSelector(".wicket-veil")).isEmpty());
 	}
 
 	/**
@@ -272,7 +497,7 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 		}
 		WebElement table = driver.findElement(By.cssSelector(TABLE));
 		new Select(driver.findElement(By.name("options:" + name)))
-			.selectByIndex(SETTINGS.get(name).indexOf(value));
+			.selectByIndex(SETTINGS.getOrDefault(name, OTHER_SETTINGS.get(name)).indexOf(value));
 		wait.until(d -> {
 			try
 			{
