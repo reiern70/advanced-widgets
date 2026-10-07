@@ -26,6 +26,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
 import com.advanced.widgets.clipboard.ClipboardCopyBehavior;
+import com.advanced.widgets.dropdown.DropdownBehavior;
 import com.github.openjson.JSONObject;
 
 /**
@@ -122,6 +123,10 @@ public class ThemeEditorPanel extends Panel
 		WebMarkupContainer field = new WebMarkupContainer("field");
 		field.add(AttributeModifier.replace("data-theme-property", "--wicket-theme-" + property));
 		field.add(AttributeModifier.replace("aria-label", "--wicket-theme-" + property));
+		if ("color-scheme".equals(property))
+		{
+			field.add(new DropdownBehavior().setFilterThreshold(Integer.MAX_VALUE));
+		}
 		input.add(field);
 		return input;
 	}

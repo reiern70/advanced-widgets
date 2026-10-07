@@ -84,6 +84,11 @@
 			all.forEach(function (field) {
 				const value = style.getPropertyValue(field.getAttribute('data-theme-property')).trim();
 				field.value = field.type === 'color' ? value.replace(HEX, '#$1$1$2$2$3$3') : value;
+				// a select drawn as a drop-down shows the value set here
+				const dropdown = Wicket.Dropdown && Wicket.Dropdown.of(field);
+				if (dropdown) {
+					dropdown.update();
+				}
 			});
 			update(cfg);
 		}

@@ -1,0 +1,248 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The drop-down drawn over a <select> by wicket-dropdown.js, in the colors of the theme it is in
+ * and in neutral colors outside one.
+ */
+.wicket-dropdown {
+	position: relative;
+	display: inline-block;
+	min-width: 10em;
+	max-width: 100%;
+	vertical-align: middle;
+	font-size: inherit;
+	color: var(--wicket-theme-text, #1c2333);
+}
+
+/* the select stays in the page for forms and Ajax, out of sight */
+.wicket-dropdown > .wicket-dropdown-native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	pointer-events: none;
+}
+
+.wicket-dropdown-toggle {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	width: 100%;
+	min-height: 2.1em;
+	padding: 0.25em 0.6em;
+	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border-radius: 0.4em;
+	background: var(--wicket-theme-surface, #ffffff);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wicket-dropdown-toggle:hover {
+	border-color: var(--wicket-theme-primary, #2f5bd3);
+}
+
+.wicket-dropdown-toggle:focus-visible,
+.wicket-dropdown-open > .wicket-dropdown-toggle {
+	outline: none;
+	border-color: var(--wicket-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wicket-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+.wicket-dropdown-toggle:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.wicket-dropdown-value {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.wicket-dropdown-placeholder {
+	opacity: 0.65;
+}
+
+.wicket-dropdown-chip {
+	padding: 0 0.5em;
+	border-radius: 999px;
+	background: var(--wicket-theme-selected, #e8eefc);
+	font-size: 0.85em;
+	line-height: 1.6;
+	white-space: nowrap;
+}
+
+.wicket-dropdown-more {
+	background: transparent;
+	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+}
+
+/* the arrow: a chevron turning upwards while the list is open */
+.wicket-dropdown-arrow {
+	flex: none;
+	width: 0.5em;
+	height: 0.5em;
+	margin: 0 0.15em 0.2em;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	opacity: 0.7;
+	transform: rotate(45deg);
+	transition: transform 0.15s;
+}
+
+.wicket-dropdown-open .wicket-dropdown-arrow {
+	margin-bottom: -0.2em;
+	transform: rotate(225deg);
+}
+
+.wicket-dropdown-menu {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 1100;
+	min-width: 100%;
+	max-width: max(100%, 24em);
+	padding: 0.3em;
+	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--wicket-theme-surface, #ffffff);
+	color: var(--wicket-theme-text, #1c2333);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	color-scheme: var(--wicket-theme-color-scheme, light);
+}
+
+.wicket-dropdown-menu[hidden] {
+	display: none;
+}
+
+.wicket-dropdown-up > .wicket-dropdown-menu {
+	top: auto;
+	bottom: calc(100% + 4px);
+}
+
+.wicket-dropdown-filter {
+	box-sizing: border-box;
+	width: 100%;
+	margin-bottom: 0.3em;
+	padding: 0.3em 0.5em;
+	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--wicket-theme-surface-alt, #f5f7fb);
+	color: inherit;
+	font: inherit;
+}
+
+.wicket-dropdown-filter:focus {
+	outline: 2px solid var(--wicket-theme-accent, #2f5bd3);
+	outline-offset: -1px;
+}
+
+.wicket-dropdown-list {
+	max-height: 16em;
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+	outline: none;
+	scrollbar-width: thin;
+	scrollbar-color: var(--wicket-theme-border, #c9cfdb) transparent;
+}
+
+.wicket-dropdown-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.35em 0.6em;
+	border-radius: 0.3em;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.wicket-dropdown-option[hidden] {
+	display: none;
+}
+
+.wicket-dropdown-option.wicket-dropdown-active {
+	background: var(--wicket-theme-hover, #eef2fb);
+}
+
+.wicket-dropdown-option[aria-selected="true"] {
+	font-weight: 600;
+}
+
+/* the tick of the chosen option of a single drop-down */
+.wicket-dropdown:not(.wicket-dropdown-multiple) .wicket-dropdown-option[aria-selected="true"]::after {
+	content: "\2713";
+	margin-left: auto;
+	padding-left: 1em;
+	color: var(--wicket-theme-accent, #2f5bd3);
+}
+
+.wicket-dropdown-option[aria-disabled="true"] {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.wicket-dropdown-option-none {
+	opacity: 0.7;
+	font-style: italic;
+}
+
+/* the check box of an option of a multiple drop-down */
+.wicket-dropdown-check {
+	flex: none;
+	position: relative;
+	width: 1em;
+	height: 1em;
+	border: 1.5px solid var(--wicket-theme-border, #9aa3b5);
+	border-radius: 0.25em;
+	background: var(--wicket-theme-surface, #ffffff);
+}
+
+.wicket-dropdown-option[aria-selected="true"] > .wicket-dropdown-check {
+	border-color: var(--wicket-theme-primary, #2f5bd3);
+	background: var(--wicket-theme-primary, #2f5bd3);
+}
+
+.wicket-dropdown-option[aria-selected="true"] > .wicket-dropdown-check::after {
+	content: "";
+	position: absolute;
+	left: 0.28em;
+	top: 0.08em;
+	width: 0.28em;
+	height: 0.55em;
+	border-right: 2px solid var(--wicket-theme-on-primary, #ffffff);
+	border-bottom: 2px solid var(--wicket-theme-on-primary, #ffffff);
+	transform: rotate(45deg);
+}
+
+.wicket-dropdown-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wicket-dropdown-empty {
+	padding: 0.4em 0.6em;
+	opacity: 0.65;
+	font-style: italic;
+}
+
+.wicket-dropdown-empty[hidden] {
+	display: none;
+}

@@ -20,5 +20,9 @@
 	<entry key="MovableColumnsBehavior.moveColumn">Spalte verschieben: ziehen oder mit den Pfeiltasten</entry>
 	<entry key="FloatingPanel.close">Schließen</entry>
 	<entry key="ClipboardCopyBehavior.copied">Kopiert</entry>
+	<entry key="Dropdown.placeholder">Bitte wählen…</entry>
+	<entry key="Dropdown.filter">Filtern…</entry>
+	<entry key="Dropdown.noMatch">Keine Treffer</entry>
+	<entry key="Dropdown.more">+{0} weitere</entry>
 	<entry key="License.placeholder">Dies ist eine private Komponente von UI Advanced Widgets: Sie braucht einen Lizenzschlüssel, den Sie mit einer Registrierung erhalten.</entry>
 </properties>

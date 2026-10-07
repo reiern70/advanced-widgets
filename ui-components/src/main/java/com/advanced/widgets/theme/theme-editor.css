@@ -78,3 +78,8 @@
 	font-family: monospace;
 	font-size: 0.95em;
 }
+
+/* the drop-down of the color scheme, as narrow as the other pickers */
+.theme-editor-property-input .wicket-dropdown {
+	min-width: 6em;
+}

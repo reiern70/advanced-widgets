@@ -20,5 +20,9 @@
 	<entry key="MovableColumnsBehavior.moveColumn">Move the column: drag it, or use the arrow keys</entry>
 	<entry key="FloatingPanel.close">Close</entry>
 	<entry key="ClipboardCopyBehavior.copied">Copied</entry>
+	<entry key="Dropdown.placeholder">Choose…</entry>
+	<entry key="Dropdown.filter">Filter…</entry>
+	<entry key="Dropdown.noMatch">No matches</entry>
+	<entry key="Dropdown.more">+{0} more</entry>
 	<entry key="License.placeholder">This is a private component of UI Advanced Widgets: it needs a license key, which you get by registering.</entry>
 </properties>
