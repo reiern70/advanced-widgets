@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="resize">Resizable</entry>
+	<entry key="resize.NONE">not</entry>
+	<entry key="resize.STRETCH">stretching the table</entry>
+	<entry key="resize.help">Whether the user can resize the columns by dragging the right edge of a header. The table has a ResizableColumnsBehavior then and grows as a column does; the selection, #, Actions and ID columns cannot be resized.</entry>
+	<entry key="width">Width</entry>
+	<entry key="width.content">by the columns</entry>
+	<entry key="width.parent">full width</entry>
+	<entry key="width.help">Whether the table is as wide as its columns or takes the full width of the page, following the size of the window until a column is resized.</entry>
+	<entry key="proportions">Proportions</entry>
+	<entry key="proportions.content">by content</entry>
+	<entry key="proportions.set">set by the page</entry>
+	<entry key="proportions.help">Whether the columns share the width by their content or by proportions the page sets.</entry>
+	<entry key="navigation">Navigation</entry>
+	<entry key="navigation.TOP">top</entry>
+	<entry key="navigation.BOTTOM">bottom</entry>
+	<entry key="navigation.BOTH">both</entry>
+	<entry key="navigation.help">Where the paging links, the rows per page and the actions on the whole table are shown: above the headers, below the rows or both.</entry>
+	<entry key="selectionBar">Bulk selection toolbar position</entry>
+	<entry key="selectionBar.help">Where the bar offering to select every user is shown, once every row of the page is selected.</entry>
+	<entry key="bodyHeightUnits">Body height unit</entry>
+	<entry key="bodyHeightUnits.PIXELS">pixels</entry>
+	<entry key="bodyHeightUnits.PERCENT">percent of the parent's height</entry>
+	<entry key="bodyHeightUnits.VIEWPORT_HEIGHT">percent of the window's height</entry>
+	<entry key="bodyHeightUnits.help">The unit of the height of the body. Choosing one sets the height to 800 pixels, or to 100 percent of the parent's or the window's height. Percent of the parent gives the table a parent 600 pixels high.</entry>
+	<entry key="bodyHeight">Body height (negative: by the rows)</entry>
+	<entry key="bodyHeight.help">The height of the rows between the headers and the footer, in the unit above. Only the rows scroll; a negative height lets the body take the height of its rows.</entry>
+	<entry key="overlay">Edit form and confirmation</entry>
+	<entry key="overlay.LOCAL">over the table</entry>
+	<entry key="overlay.BODY">over the page</entry>
+	<entry key="overlay.help">Where the edit form and the delete confirmation are shown: over the table only, or over the whole page.</entry>
+	<entry key="icons">Icons</entry>
+	<entry key="icons.BUILT_IN">built in</entry>
+	<entry key="icons.SVG">SvgIcon, inline SVG</entry>
+	<entry key="icons.FONT_AWESOME">FontAwesomeIcon, font</entry>
+	<entry key="icons.help">Which icons the actions show: the ones built into ui-components, the Font Awesome icons as inline SVG, or the same icons drawn by the Font Awesome font.</entry>
+	<entry key="columnState">Column state</entry>
+	<entry key="columnState.session">in the session</entry>
+	<entry key="columnState.file">in a file</entry>
+	<entry key="columnState.help">Where the order, visibility and widths of the columns are kept: in the session, or in a file of the temporary directory that survives restarts of the server.</entry>
+	<entry key="resetColumns">Reset the columns</entry>
+	<entry key="infiniteScroll">Infinite scroll</entry>
+	<entry key="infiniteScroll.off">off, page by page</entry>
+	<entry key="infiniteScroll.on">on</entry>
+	<entry key="infiniteScroll.help">Whether the table shows its users a page at a time, or in one list that grows by the next 25 users whenever the body is scrolled to its end. The paging links and the rows per page are left out then, and the veil blocks the table while the users load.</entry>
+	<entry key="selection">Selection</entry>
+	<entry key="selection.help">How many users can be selected: none hides the selection column, one keeps a single row selected, many selects any number of rows and offers to select all of them.</entry>
+	<entry key="selection.NONE">none</entry>
+	<entry key="selection.ONE">one row</entry>
+	<entry key="selection.MANY">many rows</entry>
+</properties>

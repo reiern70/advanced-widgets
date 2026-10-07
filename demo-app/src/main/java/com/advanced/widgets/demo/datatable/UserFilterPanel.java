@@ -18,11 +18,11 @@ import org.apache.wicket.model.IModel;
  * A text field filtering users while the user types, shown in front of the navigation of the
  * dynamic table examples.
  */
-abstract class UserFilterPanel extends Panel
+public abstract class UserFilterPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
-	UserFilterPanel(String id, IModel<String> filter)
+	public UserFilterPanel(String id, IModel<String> filter)
 	{
 		super(id);
 

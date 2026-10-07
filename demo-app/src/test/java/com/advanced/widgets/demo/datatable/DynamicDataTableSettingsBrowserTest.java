@@ -27,9 +27,9 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.advanced.widgets.demo.Dropdowns;
 import com.advanced.widgets.demo.JettyTestCase;
 import com.advanced.widgets.demo.SeleniumBrowser;
 
@@ -496,8 +496,8 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 			return null;
 		}
 		WebElement table = driver.findElement(By.cssSelector(TABLE));
-		new Select(driver.findElement(By.name("options:" + name)))
-			.selectByIndex(SETTINGS.getOrDefault(name, OTHER_SETTINGS.get(name)).indexOf(value));
+		Dropdowns.choose(driver, driver.findElement(By.name("options:" + name)),
+			SETTINGS.getOrDefault(name, OTHER_SETTINGS.get(name)).indexOf(value));
 		wait.until(d -> {
 			try
 			{

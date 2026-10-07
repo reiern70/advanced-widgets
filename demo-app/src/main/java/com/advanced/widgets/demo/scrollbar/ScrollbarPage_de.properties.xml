@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Bildlaufleiste</entry>
+	<entry key="explanation">&lt;p&gt;Ein ScrollbarBehavior aus ui-components gibt einer rollenden Komponente Bildlaufleisten, die in jedem Browser gleich aussehen: die eigenen des Browsers werden ausgeblendet und schmale Leisten in den Farben des Farbschemas über ihre Ränder gezeichnet. Sie rollt weiter wie gewohnt mit Mausrad, Tasten und Touch; der Schieber lässt sich ziehen, und ein Klick auf die Leiste blättert in seine Richtung.&lt;/p&gt;&lt;p&gt;Das erste Feld behält die Leiste des Browsers zum Vergleich. Das Behavior zeichnet die Leisten in den Richtungen, in denen das CSS der Komponente sie rollen lässt, oder in den angegebenen: das dritte Feld verlangt nur die waagrechte. Die Leisten folgen dem Inhalt: „20 Zeilen hinzufügen“ zeichnet das letzte Feld per Ajax neu, und seine Leiste übernimmt die neue Größe. Wechseln Sie das Farbschema in der oberen Leiste, und die Leisten folgen ihm.&lt;/p&gt;</entry>
+	<entry key="native">Leiste des Browsers</entry>
+	<entry key="vertical">Senkrecht</entry>
+	<entry key="horizontal">Waagrecht</entry>
+	<entry key="both">Beide Richtungen</entry>
+	<entry key="growing">Per Ajax neu gezeichnet</entry>
+	<entry key="addLines">20 Zeilen hinzufügen</entry>
+	<entry key="line">Zeile {0}</entry>
+	<entry key="line.long">Zeile {0}: Franz jagt im komplett verwahrlosten Taxi quer durch Bayern, wieder und wieder und wieder.</entry>
+</properties>

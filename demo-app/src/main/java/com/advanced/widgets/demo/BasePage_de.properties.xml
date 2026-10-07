@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="theme">Farbschema</entry>
+	<entry key="language">Sprache</entry>
+	<entry key="component.public">Öffentlich</entry>
+	<entry key="component.private">Privat</entry>
+	<entry key="component.public.help">Eine öffentliche Komponente</entry>
+	<entry key="component.private.help">Eine vorerst private Komponente</entry>
+	<entry key="ajaxEngine">Ajax</entry>
+	<entry key="AjaxEngine.JQUERY">jQuery</entry>
+	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Reines JavaScript</entry>
+	<entry key="register">Registrieren</entry>
+	<entry key="rightsReserved">Alle Rechte vorbehalten.</entry>
+	<entry key="builtWith">Erstellt mit Apache Wicket</entry>
+	<entry key="category.data">Daten</entry>
+	<entry key="category.feedback">Rückmeldung</entry>
+	<entry key="category.forms">Formulare</entry>
+	<entry key="category.layout">Layout</entry>
+	<entry key="category.themes">Farbschemas</entry>
+	<entry key="category.realTime">Echtzeit</entry>
+	<entry key="demo.jsonTable">JSON-Datentabelle</entry>
+	<entry key="demo.jsonTable.description">Tausend Benutzer, im Browser aus JSON erzeugt, mit Live-Aktualisierungen über WebSockets.</entry>
+	<entry key="demo.beanTable">Bean-Datentabelle</entry>
+	<entry key="demo.beanTable.description">Dieselbe Tabelle, ihre Zeilen auf dem Server von Wicket-Komponenten erzeugt.</entry>
+	<entry key="demo.progressBar">Fortschrittsbalken</entry>
+	<entry key="demo.progressBar.description">Bekannter und unbekannter Fortschritt, in jedem Farbschema.</entry>
+	<entry key="demo.dropdown">Auswahlliste</entry>
+	<entry key="demo.dropdown.description">Einfach- und Mehrfachauswahl, im Browser geöffnet, gefiltert und gewählt.</entry>
+	<entry key="demo.scrollbar">Bildlaufleiste</entry>
+	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Farbschemas, die in jedem Browser gleich aussehen.</entry>
+	<entry key="demo.themeEditor">Farbschema-Editor</entry>
+	<entry key="demo.themeEditor.description">Erzeugt ein Farbschema der Komponenten, mit Live-Vorschau.</entry>
+</properties>

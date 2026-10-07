@@ -14,7 +14,7 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import org.apache.wicket.markup.html.form.DropDownChoice;
+import com.advanced.widgets.dropdown.Dropdown;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.form.TextField;
@@ -65,7 +65,7 @@ abstract class UserEditPanel extends Panel
 
 		form.add(text("firstName", 60));
 		form.add(text("lastName", 60));
-		form.add(markInvalid(new DropDownChoice<>("country", new PropertyModel<>(this, "country"),
+		form.add(markInvalid(new Dropdown<>("country", new PropertyModel<>(this, "country"),
 			countries(), new ChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;

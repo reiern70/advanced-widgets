@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="firstName">First name</entry>
+	<entry key="lastName">Last name</entry>
+	<entry key="country">Country</entry>
+	<entry key="city">City</entry>
+	<entry key="address">Address</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="save">Save</entry>
+	<entry key="userGone">The user no longer exists.</entry>
+</properties>

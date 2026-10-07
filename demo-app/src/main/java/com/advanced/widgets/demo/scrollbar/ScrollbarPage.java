@@ -15,6 +15,7 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.advanced.widgets.demo.DemoPage;
@@ -54,7 +55,8 @@ public class ScrollbarPage extends DemoPage
 			@Override
 			protected void populateItem(ListItem<Integer> item)
 			{
-				item.add(new Label("line", "Line " + item.getModelObject()));
+				item.add(new Label("line", new StringResourceModel("line", this)
+					.setParameters(item.getModelObject())));
 			}
 		});
 		growing.add(new ScrollbarBehavior());
@@ -81,8 +83,8 @@ public class ScrollbarPage extends DemoPage
 			@Override
 			protected void populateItem(ListItem<Integer> item)
 			{
-				item.add(new Label("line", "Line " + item.getModelObject() +
-					": the quick brown fox jumps over the lazy dog, again and again and again."));
+				item.add(new Label("line", new StringResourceModel("line.long", this)
+					.setParameters(item.getModelObject())));
 			}
 		};
 	}

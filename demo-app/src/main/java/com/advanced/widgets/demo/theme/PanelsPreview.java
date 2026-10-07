@@ -19,8 +19,8 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
+import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.advanced.widgets.collapsible.CollapsiblePanel;
 import com.advanced.widgets.floating.FloatingPanel;
@@ -28,30 +28,71 @@ import com.advanced.widgets.tabs.TabsStyle;
 import com.advanced.widgets.tabs.TabsStyleBehavior;
 
 /**
- * The panels of the theme editor's preview: a collapsible panel, a floating panel, tabs styled as
- * pills and a modal dialog.
+ * The panels of the theme editor's preview, each in a collapsible panel of its own: a collapsible
+ * panel, collapsible panels nested two levels deep, a floating panel, tabs styled as pills and a
+ * modal dialog.
  */
 class PanelsPreview extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
-	private final ModalDialog dialog;
+	private ModalDialog dialog;
 
 	PanelsPreview(String id)
 	{
 		super(id);
-		add(new CollapsiblePanel("collapsible", new ResourceModel("collapsible.title"))
+		add(collapsible("collapsible", "collapsible.title",
+			bodyId -> new Label(bodyId, new ResourceModel("collapsible.body"))).setExpanded(true));
+		add(collapsible("nested", "nested.title", this::newNested).setExpanded(true));
+		add(collapsible("floating", "floating.section", this::newFloating));
+		add(collapsible("tabs", "tabs.section", this::newTabs));
+		add(collapsible("dialog", "dialog.section", this::newDialog));
+	}
+
+	/**
+	 * @return a collapsible panel with the title from the bundle and the body of the function
+	 */
+	private static CollapsiblePanel collapsible(String id, String titleKey,
+		SerializableFunction<String, Component> body)
+	{
+		return new CollapsiblePanel(id, new ResourceModel(titleKey))
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected Component newBody(String id)
 			{
-				return new Label(id, new ResourceModel("collapsible.body"));
+				return body.apply(id);
 			}
-		}.setExpanded(true));
+		};
+	}
 
-		add(new FloatingPanel("floating", new ResourceModel("floating.title"))
+	/**
+	 * @return collapsible panels in a collapsible panel, the first holding one more level
+	 */
+	private Component newNested(String id)
+	{
+		Fragment nested = new Fragment(id, "nestedContent", this);
+		nested.add(new Label("text", new ResourceModel("nested.body")));
+		nested.add(collapsible("first", "nested.first",
+			bodyId -> {
+				Fragment first = new Fragment(bodyId, "nestedContent", this);
+				first.add(new Label("text", new ResourceModel("nested.first.body")));
+				first.add(collapsible("first", "nested.deeper",
+					deeperId -> new Label(deeperId, new ResourceModel("nested.deeper.body")))
+					.setExpanded(true));
+				first.add(new WebMarkupContainer("second").setVisible(false));
+				return first;
+			}).setExpanded(true));
+		nested.add(collapsible("second", "nested.second",
+			bodyId -> new Label(bodyId, new ResourceModel("nested.second.body"))));
+		return nested;
+	}
+
+	private Component newFloating(String id)
+	{
+		Fragment content = new Fragment(id, "floatingContent", this);
+		content.add(new FloatingPanel("floating", new ResourceModel("floating.title"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -66,39 +107,49 @@ class PanelsPreview extends Panel
 			{
 			}
 		});
+		return content;
+	}
 
+	private Component newTabs(String id)
+	{
+		Fragment content = new Fragment(id, "tabsContent", this);
 		List<ITab> tabs = new ArrayList<>();
-		for (String title : List.of("First", "Second", "Third"))
+		for (String title : List.of("tab.first", "tab.second", "tab.third"))
 		{
-			tabs.add(new AbstractTab(Model.of(title))
+			tabs.add(new AbstractTab(new ResourceModel(title))
 			{
 				private static final long serialVersionUID = 1L;
 
 				@Override
 				public WebMarkupContainer getPanel(String panelId)
 				{
-					Fragment content = new Fragment(panelId, "tabContent", PanelsPreview.this);
-					content.add(new Label("text", title));
-					return content;
+					Fragment tab = new Fragment(panelId, "tabContent", PanelsPreview.this);
+					tab.add(new Label("text", new ResourceModel(title)));
+					return tab;
 				}
 			});
 		}
-		add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.PILLS)));
+		content.add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.PILLS)));
+		return content;
+	}
 
+	private Component newDialog(String id)
+	{
+		Fragment content = new Fragment(id, "dialogSectionContent", this);
 		dialog = new ModalDialog("dialog");
 		dialog.add(new DefaultTheme());
 		dialog.closeOnEscape();
-		add(dialog);
-		add(new AjaxLink<Void>("openDialog")
+		content.add(dialog);
+		content.add(new AjaxLink<Void>("openDialog")
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				Fragment content = new Fragment(ModalDialog.CONTENT_ID, "dialogContent",
+				Fragment dialogContent = new Fragment(ModalDialog.CONTENT_ID, "dialogContent",
 					PanelsPreview.this);
-				content.add(new AjaxLink<Void>("close")
+				dialogContent.add(new AjaxLink<Void>("close")
 				{
 					private static final long serialVersionUID = 1L;
 
@@ -108,8 +159,9 @@ class PanelsPreview extends Panel
 						dialog.close(target);
 					}
 				});
-				dialog.open(content, target);
+				dialog.open(dialogContent, target);
 			}
 		});
+		return content;
 	}
 }

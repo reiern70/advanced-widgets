@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="resize">Anpassbar</entry>
+	<entry key="resize.NONE">nicht</entry>
+	<entry key="resize.STRETCH">Tabelle wächst mit</entry>
+	<entry key="resize.help">Ob die Spalten durch Ziehen am rechten Rand einer Überschrift in der Breite geändert werden können. Die Tabelle hat dann ein ResizableColumnsBehavior und wächst mit der Spalte; die Spalten Auswahl, #, Aktionen und ID bleiben fest.</entry>
+	<entry key="width">Breite</entry>
+	<entry key="width.content">nach den Spalten</entry>
+	<entry key="width.parent">volle Breite</entry>
+	<entry key="width.help">Ob die Tabelle so breit wie ihre Spalten ist oder die volle Breite der Seite einnimmt und der Fenstergröße folgt, bis eine Spalte geändert wird.</entry>
+	<entry key="proportions">Verhältnisse</entry>
+	<entry key="proportions.content">nach Inhalt</entry>
+	<entry key="proportions.set">von der Seite vorgegeben</entry>
+	<entry key="proportions.help">Ob sich die Spalten die Breite nach ihrem Inhalt oder nach von der Seite vorgegebenen Verhältnissen teilen.</entry>
+	<entry key="navigation">Navigation</entry>
+	<entry key="navigation.TOP">oben</entry>
+	<entry key="navigation.BOTTOM">unten</entry>
+	<entry key="navigation.BOTH">beide</entry>
+	<entry key="navigation.help">Wo die Seitenlinks, die Zeilen pro Seite und die Aktionen für die ganze Tabelle stehen: über den Überschriften, unter den Zeilen oder beides.</entry>
+	<entry key="selectionBar">Position der Leiste für die Mehrfachauswahl</entry>
+	<entry key="selectionBar.help">Wo die Leiste erscheint, die alle Benutzer auszuwählen anbietet, sobald alle Zeilen der Seite ausgewählt sind.</entry>
+	<entry key="bodyHeightUnits">Einheit der Höhe</entry>
+	<entry key="bodyHeightUnits.PIXELS">Pixel</entry>
+	<entry key="bodyHeightUnits.PERCENT">Prozent der Höhe des Elternelements</entry>
+	<entry key="bodyHeightUnits.VIEWPORT_HEIGHT">Prozent der Fensterhöhe</entry>
+	<entry key="bodyHeightUnits.help">Die Einheit der Höhe des Tabellenkörpers. Die Wahl setzt die Höhe auf 800 Pixel oder auf 100 Prozent der Höhe des Elternelements oder des Fensters. Bei Prozent des Elternelements ist dieses 600 Pixel hoch.</entry>
+	<entry key="bodyHeight">Höhe des Tabellenkörpers (negativ: nach den Zeilen)</entry>
+	<entry key="bodyHeight.help">Die Höhe der Zeilen zwischen den Überschriften und dem Fuß, in der Einheit darüber. Nur die Zeilen rollen; eine negative Höhe lässt den Körper so hoch wie seine Zeilen sein.</entry>
+	<entry key="overlay">Formular und Bestätigung</entry>
+	<entry key="overlay.LOCAL">über der Tabelle</entry>
+	<entry key="overlay.BODY">über der Seite</entry>
+	<entry key="overlay.help">Wo das Bearbeitungsformular und die Löschbestätigung erscheinen: nur über der Tabelle oder über der ganzen Seite.</entry>
+	<entry key="icons">Symbole</entry>
+	<entry key="icons.BUILT_IN">eingebaut</entry>
+	<entry key="icons.SVG">SvgIcon, Inline-SVG</entry>
+	<entry key="icons.FONT_AWESOME">FontAwesomeIcon, Schrift</entry>
+	<entry key="icons.help">Welche Symbole die Aktionen zeigen: die von ui-components, die Font-Awesome-Symbole als Inline-SVG oder dieselben Symbole aus der Font-Awesome-Schrift.</entry>
+	<entry key="columnState">Spaltenzustand</entry>
+	<entry key="columnState.session">in der Sitzung</entry>
+	<entry key="columnState.file">in einer Datei</entry>
+	<entry key="columnState.help">Wo Reihenfolge, Sichtbarkeit und Breiten der Spalten gespeichert werden: in der Sitzung oder in einer Datei im temporären Verzeichnis, die Neustarts des Servers überdauert.</entry>
+	<entry key="resetColumns">Spalten zurücksetzen</entry>
+	<entry key="infiniteScroll">Endloses Scrollen</entry>
+	<entry key="infiniteScroll.off">aus, seitenweise</entry>
+	<entry key="infiniteScroll.on">an</entry>
+	<entry key="infiniteScroll.help">Ob die Tabelle ihre Benutzer seitenweise zeigt oder in einer Liste, die um die nächsten 25 Benutzer wächst, sobald der Körper bis zu seinem Ende gerollt wird. Die Seitenlinks und die Zeilen pro Seite entfallen dann, und der Schleier sperrt die Tabelle, während die Benutzer geladen werden.</entry>
+	<entry key="selection">Auswahl</entry>
+	<entry key="selection.help">Wie viele Benutzer ausgewählt werden können: keine blendet die Auswahlspalte aus, eine lässt nur eine Zeile ausgewählt, mehrere wählt beliebig viele Zeilen aus und bietet an, alle auszuwählen.</entry>
+	<entry key="selection.NONE">keine</entry>
+	<entry key="selection.ONE">eine Zeile</entry>
+	<entry key="selection.MANY">mehrere Zeilen</entry>
+</properties>

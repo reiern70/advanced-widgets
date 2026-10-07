@@ -11,11 +11,16 @@ import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
+import org.apache.wicket.request.resource.ResourceReference;
+import org.apache.wicket.settings.JavaScriptLibrarySettings;
 
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
+import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
+import com.advanced.widgets.demo.register.RegisterPage;
+import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
 
 /**
@@ -52,6 +57,17 @@ public class WicketApplication extends WebApplication
 		// leave out <wicket:child> and the like also in development, they would break the layout
 		getMarkupSettings().setStripWicketTags(true);
 
+		// Wicket's Ajax runs on the engine the session chose, plain JavaScript by default
+		setJavaScriptLibrarySettings(new JavaScriptLibrarySettings()
+		{
+			@Override
+			public ResourceReference getWicketAjaxReference()
+			{
+				return (Session.exists() ? DemoSession.get().getAjaxEngine() : AjaxEngine.DEFAULT)
+					.getReference();
+			}
+		});
+
 		// allow the application stylesheet (style.css) served from this origin
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF);
@@ -60,6 +76,9 @@ public class WicketApplication extends WebApplication
 		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
+		mountPage("dropdown", DropdownPage.class);
+		mountPage("scrollbar", ScrollbarPage.class);
+		mountPage("register", RegisterPage.class);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 	}
 }

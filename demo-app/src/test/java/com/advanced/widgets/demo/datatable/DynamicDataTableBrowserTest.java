@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.advanced.widgets.demo.Dropdowns;
 import com.advanced.widgets.demo.JettyTestCase;
 import com.advanced.widgets.demo.SeleniumBrowser;
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +29,6 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
@@ -494,7 +494,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 	private void choose(String name, String value)
 	{
 		WebElement table = driver.findElement(By.cssSelector(TABLE));
-		new Select(driver.findElement(By.name(name))).selectByIndex(indexOf(name, value));
+		Dropdowns.choose(driver, driver.findElement(By.name(name)), indexOf(name, value));
 		awaitRenderedAgain(table);
 	}
 

@@ -9,9 +9,8 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
-import org.apache.wicket.model.Model;
+import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.protocol.ws.WebSocketSettings;
-import org.apache.wicket.protocol.ws.api.WebSocketBehavior;
 import org.apache.wicket.protocol.ws.api.WebSocketPushBroadcaster;
 import org.apache.wicket.protocol.ws.api.WebSocketRequestHandler;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
@@ -26,11 +25,11 @@ public class HomePage extends BasePage {
 	public HomePage(final PageParameters parameters) {
 		super(parameters);
 
-		Label webSocketStatus = new Label("webSocketStatus", Model.of("Connecting"));
+		Label webSocketStatus = new Label("webSocketStatus", new ResourceModel("connecting"));
 		webSocketStatus.setOutputMarkupId(true);
 		add(webSocketStatus);
 
-		add(new WebSocketBehavior() {
+		add(new DemoWebSocketBehavior() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -46,7 +45,7 @@ public class HomePage extends BasePage {
 			@Override
 			protected void onPush(WebSocketRequestHandler handler, IWebSocketPushMessage message) {
 				if (message instanceof ConnectedPushMessage) {
-					webSocketStatus.setDefaultModelObject("Live");
+					webSocketStatus.setDefaultModel(new ResourceModel("live"));
 					webSocketStatus.add(AttributeModifier.append("class", "ws-status--live"));
 					handler.add(webSocketStatus);
 				}
@@ -61,10 +60,10 @@ public class HomePage extends BasePage {
 				Demo demo = item.getModelObject();
 				BookmarkablePageLink<Void> link = new BookmarkablePageLink<>("link", demo.page());
 				item.add(link);
-				link.add(new Label("category", demo.category()));
+				link.add(new Label("category", new ResourceModel(demo.categoryKey())));
 				link.add(DemoPage.newVisibilityBadge("visibility", demo));
-				link.add(new Label("name", demo.name()));
-				link.add(new Label("description", demo.description()));
+				link.add(new Label("name", new ResourceModel(demo.nameKey())));
+				link.add(new Label("description", new ResourceModel(demo.descriptionKey())));
 			}
 		});
 
@@ -76,10 +75,10 @@ public class HomePage extends BasePage {
 			@Override
 			protected void populateItem(ListItem<ComponentDescriptor> item) {
 				ComponentDescriptor component = item.getModelObject();
-				item.add(new Label("category", component.category()));
-				item.add(new Label("name", component.name()));
-				item.add(new Label("description", component.description()));
-				item.add(new Label("status", component.status().getLabel())
+				item.add(new Label("category", new ResourceModel(component.categoryKey())));
+				item.add(new Label("name", new ResourceModel(component.nameKey())));
+				item.add(new Label("description", new ResourceModel(component.descriptionKey())));
+				item.add(new Label("status", new ResourceModel(component.status().labelKey()))
 					.add(AttributeModifier.append("class", component.status().cssClass())));
 			}
 		});

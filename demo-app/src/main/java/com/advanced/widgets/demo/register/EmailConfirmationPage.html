@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container register">
+	<div class="register__card register__card--done">
+		<svg class="register__mail" viewBox="0 0 24 24" width="56" height="56" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5z"/></svg>
+		<h1><wicket:message key="title"/></h1>
+		<p wicket:id="sent">[we sent a link to you@example.com]</p>
+		<p class="register__hint"><wicket:message key="hint"/></p>
+		<p><a wicket:id="backHome"><wicket:message key="home"/></a></p>
+	</div>
+</main>
+</wicket:extend>

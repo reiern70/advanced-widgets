@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Registrieren</entry>
+	<entry key="lead">Registrieren Sie sich, um von neuen Komponenten zu erfahren und einen Schlüssel für die privaten zu erhalten.</entry>
+	<entry key="firstName">Vorname</entry>
+	<entry key="lastName">Nachname</entry>
+	<entry key="email">E-Mail</entry>
+	<entry key="country">Land</entry>
+	<entry key="role">Rolle</entry>
+	<entry key="website">Webseite</entry>
+	<entry key="question">Wie viel ist {0} + {1}?</entry>
+	<entry key="answer">Die Summe</entry>
+	<entry key="submit">Registrieren</entry>
+	<entry key="robot">Das sah nicht nach einem Menschen aus, der das Formular ausfüllt. Bitte rechnen Sie die neue Summe aus und senden Sie es erneut.</entry>
+	<entry key="role.developer">Entwickler</entry>
+	<entry key="role.architect">Architekt</entry>
+	<entry key="role.designer">Designer</entry>
+	<entry key="role.manager">Manager</entry>
+	<entry key="role.student">Student</entry>
+	<entry key="role.other">Andere</entry>
+	<entry key="Required">Bitte geben Sie ${label} an.</entry>
+	<entry key="EmailAddressValidator">${label} ist keine gültige E-Mail-Adresse.</entry>
+</properties>

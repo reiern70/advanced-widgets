@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -68,13 +69,17 @@ final class ProgressSimulator
 
 	private final UsersDatabase database;
 
+	/** The language of the page, which the pushed rows show the countries in. */
+	private final Locale locale;
+
 	private final Set<Long> changed = ConcurrentHashMap.newKeySet();
 
 	private final List<ScheduledFuture<?>> tasks = new ArrayList<>();
 
 	private ProgressSimulator(Application application, String sessionId, int pageId, IKey key,
-		String tableId, UsersDatabase database)
+		String tableId, UsersDatabase database, Locale locale)
 	{
+		this.locale = locale;
 		this.application = application;
 		this.sessionId = sessionId;
 		this.pageId = pageId;
@@ -87,10 +92,10 @@ final class ProgressSimulator
 	 * Starts simulating for a page, replacing a simulator already running for it.
 	 */
 	static void start(Application application, String sessionId, int pageId, IKey key,
-		String tableId, UsersDatabase database)
+		String tableId, UsersDatabase database, Locale locale)
 	{
 		ProgressSimulator simulator = new ProgressSimulator(application, sessionId, pageId, key,
-			tableId, database);
+			tableId, database, locale);
 		ProgressSimulator previous = RUNNING.put(id(sessionId, pageId), simulator);
 		if (previous != null)
 		{
@@ -182,8 +187,10 @@ final class ProgressSimulator
 			}
 			try
 			{
-				if (UpdateRowMessageType.newMessage(tableId, String.valueOf(id), user)
-					.send(application, sessionId, key) == false)
+				boolean sent = User.inLanguage(locale,
+					() -> UpdateRowMessageType.newMessage(tableId, String.valueOf(id), user)
+						.send(application, sessionId, key));
+				if (sent == false)
 				{
 					stop(sessionId, pageId);
 					return;

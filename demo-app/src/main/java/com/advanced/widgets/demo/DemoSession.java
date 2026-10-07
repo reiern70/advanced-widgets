@@ -12,13 +12,16 @@ import org.apache.wicket.util.lang.Args;
 import com.advanced.widgets.theme.Theme;
 
 /**
- * The session of the demo application: remembers the {@link Theme} the user chose for every page.
+ * The session of the demo application: remembers the {@link Theme} and the {@link AjaxEngine} the
+ * user chose for every page.
  */
 public class DemoSession extends WebSession
 {
 	private static final long serialVersionUID = 1L;
 
 	private Theme theme = Theme.DEFAULT;
+
+	private AjaxEngine ajaxEngine = AjaxEngine.DEFAULT;
 
 	public DemoSession(Request request)
 	{
@@ -48,6 +51,24 @@ public class DemoSession extends WebSession
 	public void setTheme(Theme theme)
 	{
 		this.theme = Args.notNull(theme, "theme");
+		dirty();
+	}
+
+	/**
+	 * @return the script Wicket's Ajax runs on in the pages
+	 */
+	public AjaxEngine getAjaxEngine()
+	{
+		return ajaxEngine;
+	}
+
+	/**
+	 * @param ajaxEngine
+	 *            the script Wicket's Ajax runs on in the pages
+	 */
+	public void setAjaxEngine(AjaxEngine ajaxEngine)
+	{
+		this.ajaxEngine = Args.notNull(ajaxEngine, "ajaxEngine");
 		dirty();
 	}
 }

@@ -170,17 +170,40 @@ a { color: var(--accent, var(--primary)); }
 .badge--available { color: var(--available); }
 .badge--in-progress { color: var(--in-progress); }
 .badge--planned { color: var(--planned); }
-/* whether the component of a demo is public, or private for now */
-.badge--public { color: var(--available); }
-.badge--private { color: var(--in-progress); }
+/* whether the component of a demo is public, or private for now: an open or a closed lock */
+.visibility {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	border: 1px solid currentColor;
+	vertical-align: middle;
+	cursor: default;
+}
+.visibility--public { color: var(--available); }
+.visibility--private { color: var(--in-progress); }
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
 .demo__title {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px 12px;
 }
-.demo__title .badge { font-size: 13px; font-weight: 600; }
-.tab-badge { margin-left: 6px; font-size: 11px; }
+.tab-visibility {
+	width: 20px;
+	height: 20px;
+	margin-left: 6px;
+}
+.tab-visibility svg { width: 12px; height: 12px; }
 
 /* footer */
 .footer {
@@ -230,46 +253,150 @@ a.brand { color: inherit; text-decoration: none; }
 .demo__nav a:hover { text-decoration: underline; }
 .demo__steps { display: flex; gap: 16px; }
 
-/* the floating button choosing the theme and the language of every page */
-.settings {
-	position: fixed;
-	right: 16px;
-	bottom: 16px;
-	z-index: 1000;
+/* the drop-downs choosing the theme, the language and the Ajax engine, and the link to register */
+.topbar__inner {
+	gap: 16px;
+}
+.topbar__tools {
 	display: flex;
-	flex-direction: column-reverse;
-	align-items: flex-end;
-	gap: 8px;
+	align-items: center;
+	gap: 16px;
+	min-width: 0;
+}
+.topbar__settings {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
 	font-size: 14px;
 }
-.settings__button {
+.topbar__setting {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.topbar__setting-label {
+	color: var(--muted);
+	font-size: 13px;
+}
+.topbar__setting .wicket-dropdown {
+	min-width: 8.5em;
+}
+.topbar__register {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	padding: 8px 14px;
+	padding: 6px 14px;
 	border-radius: 999px;
 	background: var(--primary);
 	color: var(--on-primary, #fff);
-	box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
-	cursor: pointer;
-	list-style: none;
-	user-select: none;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
 }
-.settings__button::-webkit-details-marker { display: none; }
-.settings__panel {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	padding: 12px 14px;
+.topbar__register:hover {
+	background: var(--primary-dark);
+}
+
+/* on narrow screens the top bar wraps: the settings go below the logo, without their labels */
+@media (max-width: 900px) {
+	.topbar__inner {
+		flex-wrap: wrap;
+		height: auto;
+		padding-top: 8px;
+		padding-bottom: 8px;
+	}
+	.topbar__tools {
+		flex-wrap: wrap;
+		width: 100%;
+		justify-content: space-between;
+	}
+	.topbar__settings {
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.topbar__setting-label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+	.topbar__register-label {
+		display: none;
+	}
+}
+
+/* the registration and the email confirmation */
+.register {
+	display: grid;
+	place-items: start center;
+	padding-top: 40px;
+	padding-bottom: 56px;
+}
+.register__card {
+	width: 100%;
+	max-width: 640px;
+	padding: 28px 32px;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
 	background: var(--surface);
-	color: var(--text);
-	box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+	box-shadow: 0 6px 20px rgba(28, 35, 51, .06);
 }
-.settings__panel label {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
+.register__card h1 { margin: 0 0 6px; font-size: 26px; }
+.register__lead { margin: 0 0 20px; color: var(--muted); }
+.register__form {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px 18px;
+}
+.register__field {
+	display: grid;
+	gap: 4px;
+	font-size: 14px;
+}
+.register__field--wide,
+.register__actions { grid-column: 1 / -1; }
+.register__field input {
+	padding: 0.4em 0.6em;
+	border: 1px solid var(--border);
+	border-radius: 0.4em;
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-size: 15px;
+}
+.register__field input:focus {
+	outline: none;
+	border-color: var(--accent, var(--primary));
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 25%, transparent);
+}
+.register__field .wicket-dropdown { width: 100%; font-size: 15px; }
+/* the field robots fill in and people never see */
+.register__honeypot {
+	position: absolute;
+	left: -10000px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+.register__actions { margin: 6px 0 0; }
+.register__submit {
+	padding: 10px 24px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--primary);
+	color: var(--on-primary, #fff);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.register__submit:hover { background: var(--primary-dark); }
+.register__card--done { text-align: center; }
+.register__mail { color: var(--primary); }
+.register__hint { color: var(--muted); font-size: 14px; }
+@media (max-width: 600px) {
+	.register__form { grid-template-columns: 1fr; }
+	.register__card { padding: 20px; }
 }

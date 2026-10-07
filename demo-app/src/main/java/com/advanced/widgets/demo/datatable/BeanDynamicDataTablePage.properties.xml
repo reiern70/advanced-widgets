@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">BeanBasedDynamicDataTable Example</entry>
+	<entry key="description">the same table with its rows rendered on the server</entry>
+	<entry key="explanation">The same table as the JsonBasedDynamicDataTable example, a BeanBasedDynamicDataTable this time: its rows are rendered on the server by Wicket components, the way a DataTable renders them, and look and behave like the rows rendered in the browser from JSON.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;The columns are Wicket's IColumns, here LambdaColumns. BeanSelectionColumn, BeanRowNumberColumn and BeanActionsColumn select, number and act on the rows; IFixedWidthColumn marks the columns that cannot be resized, IMovableColumn and IHideableColumn those the user can move and hide&lt;/li&gt; &lt;li&gt;Paging, sorting, filtering, saving, adding and deleting render the rows again via Ajax, not the whole table, so the filter in front of the navigation keeps its focus&lt;/li&gt; &lt;li&gt;The actions of a row are the same IconBasedRowActions as in the JSON example: plain markup whose clicks the table dispatches by the row's key, so a click on a user deleted in another tab still reaches the table&lt;/li&gt; &lt;li&gt;The settings above are the same as in the JSON example, each explained by its (i). Every change is posted via Ajax&lt;/li&gt; &lt;li&gt;"Add a user" adds Aaron and renders the rows again; there is no web socket connection and no pushing of rows here&lt;/li&gt; &lt;/ul&gt;</entry>
+</properties>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container register">
+	<div class="register__card">
+		<h1><wicket:message key="title"/></h1>
+		<p class="register__lead"><wicket:message key="lead"/></p>
+		<div wicket:id="feedback"></div>
+		<form wicket:id="form" class="register__form" novalidate="novalidate">
+			<label class="register__field"><span><wicket:message key="firstName"/></span> <input type="text" wicket:id="firstName" autocomplete="given-name"/></label>
+			<label class="register__field"><span><wicket:message key="lastName"/></span> <input type="text" wicket:id="lastName" autocomplete="family-name"/></label>
+			<label class="register__field register__field--wide"><span><wicket:message key="email"/></span> <input type="email" wicket:id="email" autocomplete="email"/></label>
+			<label class="register__field"><span><wicket:message key="country"/></span> <select wicket:id="country"></select></label>
+			<label class="register__field"><span><wicket:message key="role"/></span> <select wicket:id="role"></select></label>
+			<!-- left empty by people: the style sheet hides it, robots fill it in -->
+			<label class="register__honeypot" aria-hidden="true"><wicket:message key="website"/> <input type="text" wicket:id="website" tabindex="-1" autocomplete="off"/></label>
+			<label class="register__field register__field--wide"><span wicket:id="question">[what is 3 + 4?]</span> <input type="number" wicket:id="answer" inputmode="numeric"/></label>
+			<p class="register__actions"><button type="submit" class="register__submit"><wicket:message key="submit"/></button></p>
+		</form>
+	</div>
+</main>
+</wicket:extend>

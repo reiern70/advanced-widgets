@@ -14,12 +14,12 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
-import org.apache.wicket.protocol.ws.api.WebSocketBehavior;
 import org.apache.wicket.protocol.ws.api.message.AbortedMessage;
 import org.apache.wicket.protocol.ws.api.message.ClosedMessage;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
+import com.advanced.widgets.demo.DemoWebSocketBehavior;
 import com.advanced.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.CompoundDynamicColumn;
@@ -48,7 +48,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	 */
 	public DynamicDataTablePage()
 	{
-		add(new WebSocketBehavior()
+		add(new DemoWebSocketBehavior()
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -57,7 +57,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			{
 				ProgressSimulator.start(message.getApplication(), message.getSessionId(),
 					getPageId(), message.getKey(), getTable().getMarkupId(),
-					DatabaseLocator.getLargeDatabase());
+					DatabaseLocator.getLargeDatabase(), getLocale());
 			}
 
 			@Override
@@ -181,8 +181,8 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	@Override
 	protected void onUserAdded(User user, AjaxRequestTarget target)
 	{
-		push(target, getJsonTable().newRefreshMessage(), "Added " + user.getFirstName() + " " +
-			user.getLastName() + "; the table was refreshed via web sockets.");
+		push(target, getJsonTable().newRefreshMessage(),
+			message("added.refreshed", user.getFirstName(), user.getLastName()));
 	}
 
 	@Override
@@ -199,7 +199,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 				Collections.reverse(rows);
 
 				push(target, getJsonTable().newUpdateRowsMessage(rows),
-					"Pushed the rows of this page in reverse order via web sockets.");
+					getString("pushed"));
 			}
 		};
 	}
@@ -228,12 +228,12 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			}
 			else
 			{
-				warn("The page has no open web socket connection.");
+				warn(getString("noWebSocket"));
 			}
 		}
 		catch (IOException e)
 		{
-			error("Pushing to the table via web sockets failed: " + e.getMessage());
+			error(message("pushFailed", e.getMessage()));
 		}
 		target.add(get("feedback"));
 	}

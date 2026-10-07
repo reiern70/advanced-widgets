@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="theme">Theme</entry>
+	<entry key="language">Language</entry>
+	<entry key="component.public">Public</entry>
+	<entry key="component.private">Private</entry>
+	<entry key="component.public.help">A public component</entry>
+	<entry key="component.private.help">A component that is private for now</entry>
+	<entry key="ajaxEngine">Ajax</entry>
+	<entry key="AjaxEngine.JQUERY">jQuery</entry>
+	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Plain JavaScript</entry>
+	<entry key="register">Register</entry>
+	<entry key="rightsReserved">All rights reserved.</entry>
+	<entry key="builtWith">Built with Apache Wicket</entry>
+	<entry key="category.data">Data</entry>
+	<entry key="category.feedback">Feedback</entry>
+	<entry key="category.forms">Forms</entry>
+	<entry key="category.layout">Layout</entry>
+	<entry key="category.themes">Themes</entry>
+	<entry key="category.realTime">Real-time</entry>
+	<entry key="demo.jsonTable">JSON Dynamic Data Table</entry>
+	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over websockets.</entry>
+	<entry key="demo.beanTable">Bean Dynamic Data Table</entry>
+	<entry key="demo.beanTable.description">The same table with its rows rendered on the server by Wicket components.</entry>
+	<entry key="demo.progressBar">Progress Bar</entry>
+	<entry key="demo.progressBar.description">Known and unknown progress, in any of the themes.</entry>
+	<entry key="demo.dropdown">Dropdown</entry>
+	<entry key="demo.dropdown.description">Single and multiple choices opened, filtered and chosen in the browser.</entry>
+	<entry key="demo.scrollbar">Scrollbar</entry>
+	<entry key="demo.scrollbar.description">Slim scroll bars in the theme's colors that look the same in every browser.</entry>
+	<entry key="demo.themeEditor">Theme Editor</entry>
+	<entry key="demo.themeEditor.description">Generates a theme of the components, with a live preview.</entry>
+</properties>

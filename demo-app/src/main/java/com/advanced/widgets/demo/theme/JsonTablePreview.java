@@ -11,16 +11,19 @@ import org.apache.wicket.model.ResourceModel;
 
 import com.advanced.widgets.demo.datatable.User;
 import com.advanced.widgets.demo.datatable.UsersProvider;
+import com.advanced.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.advanced.widgets.dynamicdatatable.DynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IDynamicColumn;
+import com.advanced.widgets.dynamicdatatable.IHideableColumn;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.SelectionColumn;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicColumn;
-import com.advanced.widgets.table.ResizableColumnsBehavior;
+import com.advanced.widgets.table.IMovableColumn;
 
 /**
- * A plain table of users rendered in the browser from JSON, for the theme editor's preview: no
- * progress and no updates pushed over websockets. The columns can be resized.
+ * A table of users rendered in the browser from JSON, for the theme editor's preview: no progress
+ * and no updates pushed over websockets, but the navigation on top with a filter and the rows per
+ * page, columns that are dragged, resized and hidden, and the selection of many rows.
  */
 class JsonTablePreview extends Panel
 {
@@ -29,19 +32,45 @@ class JsonTablePreview extends Panel
 	JsonTablePreview(String id)
 	{
 		super(id);
+		UsersProvider provider = new UsersProvider();
 		List<IDynamicColumn<User>> columns = List.of(new SelectionColumn<User>().setId("selection"),
 			new SortableDynamicColumn<>(column("firstName", "{{firstName}}"), "firstName"),
 			new SortableDynamicColumn<>(column("lastName", "{{lastName}}"), "lastName"),
 			column("city", "{{city}}"), column("country", "{{countryName}}"));
-		add(new JsonBasedDynamicDataTable<>("table", columns, new UsersProvider(), 10)
-			.setAdjustToParentWidth(true)
-			.add(new ResizableColumnsBehavior(ResizableColumnsBehavior.Mode.STRETCH)));
+		add(PreviewTables.configure(new JsonBasedDynamicDataTable<>("table", columns, provider,
+			PreviewTables.ROWS_PER_PAGE)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected AbstractDynamicToolbar newNavigationToolbar(String id,
+				ToolbarPosition position)
+			{
+				return PreviewTables.newNavigationToolbar(this, provider, id, position);
+			}
+		}));
 	}
 
 	private static DynamicColumn<User> column(String headerKey, String template)
 	{
-		DynamicColumn<User> column = new DynamicColumn<>(new ResourceModel(headerKey), template);
+		DynamicColumn<User> column = new ValueColumn(headerKey, template);
 		column.setId(headerKey);
 		return column;
+	}
+
+	/**
+	 * A value of the user, in a column the user can move and hide.
+	 */
+	private static class ValueColumn extends DynamicColumn<User>
+		implements
+			IHideableColumn,
+			IMovableColumn
+	{
+		private static final long serialVersionUID = 1L;
+
+		ValueColumn(String headerKey, String template)
+		{
+			super(new ResourceModel(headerKey), template);
+		}
 	}
 }

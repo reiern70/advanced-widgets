@@ -4,10 +4,12 @@
  */
 package com.advanced.widgets.demo.datatable;
 
+import java.io.IOException;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Locale;
 
+import org.apache.wicket.Session;
 import org.apache.wicket.util.io.IClusterable;
 
 import com.advanced.widgets.dynamicdatatable.IIdentifiable;
@@ -19,6 +21,9 @@ import com.advanced.widgets.dynamicdatatable.IIdentifiable;
 public class User implements IClusterable, IIdentifiable<Long>
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The language of the names of the countries outside a request. */
+	private static final ThreadLocal<Locale> LANGUAGE = new ThreadLocal<>();
 
 	private long id;
 
@@ -167,11 +172,62 @@ public class User implements IClusterable, IIdentifiable<Long>
 	}
 
 	/**
-	 * @return the English name of the country, {@code null} if it is not known
+	 * @return the name of the country in the language of the session, or of
+	 *         {@link #inLanguage(Locale, IOSupplier)}, in English outside both; {@code null} if it is
+	 *         not known
 	 */
 	public String getCountryName()
 	{
-		return country == null ? null : Locale.of("", country).getDisplayCountry(Locale.ENGLISH);
+		if (country == null)
+		{
+			return null;
+		}
+		Locale language = LANGUAGE.get();
+		if (language == null)
+		{
+			language = Session.exists() ? Session.get().getLocale() : Locale.ENGLISH;
+		}
+		return Locale.of("", country).getDisplayCountry(language);
+	}
+
+	/**
+	 * Runs code outside a request, such as pushing rows from a timer, with the names of the
+	 * countries in a language.
+	 *
+	 * @param language
+	 *            the language of the names of the countries
+	 * @param code
+	 *            the code to run
+	 * @return what the code returned
+	 * @throws IOException
+	 *             if the code threw it
+	 */
+	public static <R> R inLanguage(Locale language, IOSupplier<R> code) throws IOException
+	{
+		Locale previous = LANGUAGE.get();
+		LANGUAGE.set(language);
+		try
+		{
+			return code.get();
+		}
+		finally
+		{
+			LANGUAGE.set(previous);
+		}
+	}
+
+	/**
+	 * Supplies a value, possibly failing with an {@link IOException}.
+	 */
+	@FunctionalInterface
+	public interface IOSupplier<R>
+	{
+		/**
+		 * @return the value
+		 * @throws IOException
+		 *             if supplying failed
+		 */
+		R get() throws IOException;
 	}
 
 	public int getProgress()

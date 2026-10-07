@@ -5,12 +5,16 @@
 <wicket:panel xmlns:wicket="http://wicket.apache.org">
 <div class="theme-preview-panels">
 	<div wicket:id="collapsible"></div>
+	<div wicket:id="nested"></div>
 	<div wicket:id="floating"></div>
 	<div wicket:id="tabs"></div>
-	<p><a href="#" wicket:id="openDialog"><wicket:message key="openDialog"/></a></p>
 	<div wicket:id="dialog"></div>
 </div>
+<wicket:fragment wicket:id="nestedContent"><div class="theme-preview-nested"><p wicket:id="text"></p><div wicket:id="first"></div><div wicket:id="second"></div></div></wicket:fragment>
+<wicket:fragment wicket:id="floatingContent"><div wicket:id="floating"></div></wicket:fragment>
+<wicket:fragment wicket:id="tabsContent"><div wicket:id="tabs"></div></wicket:fragment>
 <wicket:fragment wicket:id="tabContent"><p><wicket:message key="tabContent"/> <span wicket:id="text"></span></p></wicket:fragment>
+<wicket:fragment wicket:id="dialogSectionContent"><p><a href="#" wicket:id="openDialog"><wicket:message key="openDialog"/></a></p><div wicket:id="dialog"></div></wicket:fragment>
 <wicket:fragment wicket:id="dialogContent">
 	<h1 class="modal-dialog-header"><wicket:message key="dialog.title"/></h1>
 	<div class="modal-dialog-body"><p><wicket:message key="dialog.body"/></p></div>

@@ -7,24 +7,45 @@ package com.advanced.widgets.demo;
 import java.io.Serializable;
 
 /**
- * Describes one entry of the component catalog shown on the {@link HomePage}.
+ * Describes one entry of the component catalog shown on the {@link HomePage}. Its texts are in the
+ * bundle of the home page: the name under {@code catalog.<id>}, the description under
+ * {@code catalog.<id>.description}; the category is a key under {@code category.} in the bundle of
+ * {@link BasePage}.
  */
-public record ComponentDescriptor(String name, String category, String description, Status status)
+public record ComponentDescriptor(String id, String category, Status status)
 	implements Serializable {
 
+	/**
+	 * @return the key of the name
+	 */
+	public String nameKey() {
+		return "catalog." + id;
+	}
+
+	/**
+	 * @return the key of the description
+	 */
+	public String descriptionKey() {
+		return "catalog." + id + ".description";
+	}
+
+	/**
+	 * @return the key of the category
+	 */
+	public String categoryKey() {
+		return "category." + category;
+	}
+
 	public enum Status {
-		AVAILABLE("Available"),
-		IN_PROGRESS("In progress"),
-		PLANNED("Planned");
+		AVAILABLE,
+		IN_PROGRESS,
+		PLANNED;
 
-		private final String label;
-
-		Status(String label) {
-			this.label = label;
-		}
-
-		public String getLabel() {
-			return label;
+		/**
+		 * @return the key of the label, in the bundle of the home page
+		 */
+		public String labelKey() {
+			return "status." + name();
 		}
 
 		/** CSS modifier used to color the status badge. */

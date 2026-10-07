@@ -274,7 +274,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	 */
 	protected final void onUserNotFound(AjaxRequestTarget target)
 	{
-		warn("That user no longer exists.");
+		warn(getString("userGone"));
 		target.add(get("feedback"));
 	}
 
@@ -287,6 +287,14 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	protected final void onSelectionChanged(AjaxRequestTarget target)
 	{
 		target.add(themed.get("selection"));
+	}
+
+	/**
+	 * @return the text of the page's bundle under the key, with the parameters put in
+	 */
+	protected final String message(String key, Object... parameters)
+	{
+		return new StringResourceModel(key, this).setParameters(parameters).getString();
 	}
 
 	/**
@@ -502,7 +510,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 				target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
 			}
 			DatabaseLocator.getLargeDatabase().delete(user);
-			info("Deleted " + user.getFirstName() + " " + user.getLastName() + ".");
+			info(message("deleted", user.getFirstName(), user.getLastName()));
 			target.add(DynamicTableExamplePage.this.get("feedback"));
 			table.refresh(target);
 		}

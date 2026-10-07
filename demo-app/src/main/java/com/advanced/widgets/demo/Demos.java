@@ -12,6 +12,7 @@ import org.apache.wicket.Page;
 
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
+import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
@@ -23,39 +24,54 @@ import com.advanced.widgets.demo.theme.ThemeEditorPage;
 public final class Demos
 {
 	/**
-	 * A demo page.
+	 * A demo page. Its texts are in the bundle of {@link BasePage}: the name under
+	 * {@code demo.<id>}, what it shows under {@code demo.<id>.description} and its category under
+	 * {@code category.<category>}.
 	 *
-	 * @param name
-	 *            the name shown on the home page
+	 * @param id
+	 *            the id of the demo in the keys of its texts
 	 * @param category
-	 *            the category shown on the home page
-	 * @param description
-	 *            what the demo shows
+	 *            the category shown on the home page, a key under {@code category.}
 	 * @param page
 	 *            the page of the demo
 	 * @param publicComponent
 	 *            whether the component the demo shows is public, or private for now
 	 */
-	public record Demo(String name, String category, String description,
-		Class<? extends Page> page, boolean publicComponent) implements Serializable
+	public record Demo(String id, String category, Class<? extends Page> page,
+		boolean publicComponent) implements Serializable
 	{
+		/**
+		 * @return the key of the name shown on the home page and in the links of the demos
+		 */
+		public String nameKey()
+		{
+			return "demo." + id;
+		}
+
+		/**
+		 * @return the key of what the demo shows
+		 */
+		public String descriptionKey()
+		{
+			return "demo." + id + ".description";
+		}
+
+		/**
+		 * @return the key of the category
+		 */
+		public String categoryKey()
+		{
+			return "category." + category;
+		}
 	}
 
 	private static final List<Demo> ALL = List.of(
-		new Demo("JSON Dynamic Data Table", "Data",
-			"A thousand users rendered in the browser from JSON, with live updates over websockets.",
-			DynamicDataTablePage.class, false),
-		new Demo("Bean Dynamic Data Table", "Data",
-			"The same table with its rows rendered on the server by Wicket components.",
-			BeanDynamicDataTablePage.class, true),
-		new Demo("Progress Bar", "Feedback", "Known and unknown progress, in any of the themes.",
-			ProgressBarPage.class, true),
-		new Demo("Scrollbar", "Layout",
-			"Slim scroll bars in the theme's colors that look the same in every browser.",
-			ScrollbarPage.class, true),
-		new Demo("Theme Editor", "Themes",
-			"Generates a theme of the components, with a live preview.", ThemeEditorPage.class,
-			true));
+		new Demo("jsonTable", "data", DynamicDataTablePage.class, false),
+		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true),
+		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
+		new Demo("dropdown", "forms", DropdownPage.class, true),
+		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
+		new Demo("themeEditor", "themes", ThemeEditorPage.class, true));
 
 	private Demos()
 	{

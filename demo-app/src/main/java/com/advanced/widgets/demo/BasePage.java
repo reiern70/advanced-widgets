@@ -16,21 +16,25 @@ import org.apache.wicket.markup.html.TransparentWebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import org.apache.wicket.markup.html.form.DropDownChoice;
+import org.apache.wicket.markup.html.form.EnumChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
+import com.advanced.widgets.demo.register.RegisterPage;
+import com.advanced.widgets.dropdown.Dropdown;
+import com.advanced.widgets.dropdown.DropdownBehavior;
 import com.advanced.widgets.theme.Theme;
 import com.advanced.widgets.theme.ThemeBehavior;
 import com.advanced.widgets.theme.ThemeChoice;
 
 /**
- * The layout of every page: the top bar with the logo linking to the {@link HomePage}, a floating
- * button choosing the theme and the language of the session, and the footer. The whole page is in
- * the session's {@link Theme}, its own colors included.
+ * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
+ * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
+ * its own, and the link to register; then the footer. The whole page is in the session's
+ * {@link Theme}, its own colors included.
  */
 public abstract class BasePage extends WebPage
 {
@@ -67,8 +71,11 @@ public abstract class BasePage extends WebPage
 			{
 				setResponsePage(getPage());
 			}
-		});
+		}.add(new DropdownBehavior()));
 		settings.add(newLanguageChoice("language"));
+		settings.add(newAjaxEngineChoice("ajaxEngine"));
+
+		add(new BookmarkablePageLink<>("register", RegisterPage.class));
 
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
@@ -79,7 +86,7 @@ public abstract class BasePage extends WebPage
 	 */
 	protected String getPageTitle()
 	{
-		return "Advanced Widgets";
+		return "UI Advanced Widgets";
 	}
 
 	/**
@@ -91,7 +98,33 @@ public abstract class BasePage extends WebPage
 			theme -> DemoSession.get().setTheme(theme));
 	}
 
-	private DropDownChoice<Locale> newLanguageChoice(String id)
+	private Dropdown<AjaxEngine> newAjaxEngineChoice(String id)
+	{
+		Dropdown<AjaxEngine> choice = new Dropdown<>(id,
+			LambdaModel.of(() -> DemoSession.get().getAjaxEngine(),
+				engine -> DemoSession.get().setAjaxEngine(engine)),
+			List.of(AjaxEngine.values()), new EnumChoiceRenderer<>(this));
+		choice.setRequired(true);
+		// the page is rendered anew, so that the browser loads the other script
+		choice.add(reloadOnChange());
+		return choice;
+	}
+
+	private AjaxFormComponentUpdatingBehavior reloadOnChange()
+	{
+		return new AjaxFormComponentUpdatingBehavior("change")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				setResponsePage(getPage());
+			}
+		};
+	}
+
+	private Dropdown<Locale> newLanguageChoice(String id)
 	{
 		IModel<Locale> language = LambdaModel.of(
 			() -> LANGUAGES.stream()
@@ -99,7 +132,7 @@ public abstract class BasePage extends WebPage
 				.findFirst()
 				.orElse(Locale.ENGLISH),
 			locale -> getSession().setLocale(locale));
-		DropDownChoice<Locale> choice = new DropDownChoice<>(id, language, LANGUAGES,
+		Dropdown<Locale> choice = new Dropdown<>(id, language, LANGUAGES,
 			new ChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
@@ -118,16 +151,7 @@ public abstract class BasePage extends WebPage
 				}
 			});
 		choice.setRequired(true);
-		choice.add(new AjaxFormComponentUpdatingBehavior("change")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				setResponsePage(getPage());
-			}
-		});
+		choice.add(reloadOnChange());
 		return choice;
 	}
 

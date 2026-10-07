@@ -113,8 +113,7 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 	protected void onUserAdded(User user, AjaxRequestTarget target)
 	{
 		getTable().refresh(target);
-		info("Added " + user.getFirstName() + " " + user.getLastName() +
-			"; the rows were rendered again.");
+		info(message("added.rendered", user.getFirstName(), user.getLastName()));
 		target.add(get("feedback"));
 	}
 

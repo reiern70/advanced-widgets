@@ -11,7 +11,6 @@ import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.NumberTextField;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
@@ -20,6 +19,7 @@ import org.danekja.java.util.function.serializable.SerializableConsumer;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 import org.danekja.java.util.function.serializable.SerializableSupplier;
 
+import com.advanced.widgets.dropdown.Dropdown;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.OverlayPlacement;
@@ -95,7 +95,7 @@ public abstract class DynamicTableOptionsPanel extends Panel
 		add(updatingChoice("selectionBar", List.of(ToolbarPosition.values()),
 			table::getSelectionToolbarPosition, table::setSelectionToolbarPosition,
 			position -> "navigation." + position.name()));
-		DropDownChoice<BodyHeightUnits> units = choice("bodyHeightUnits",
+		Dropdown<BodyHeightUnits> units = choice("bodyHeightUnits",
 			List.of(BodyHeightUnits.values()), table::getBodyHeightUnits,
 			unit -> table.setBodyHeight(defaultHeight(unit), unit),
 			unit -> "bodyHeightUnits." + unit.name());
@@ -216,11 +216,11 @@ public abstract class DynamicTableOptionsPanel extends Panel
 		};
 	}
 
-	private <V> DropDownChoice<V> updatingChoice(String id, List<V> values,
+	private <V> Dropdown<V> updatingChoice(String id, List<V> values,
 		SerializableSupplier<V> getter, SerializableConsumer<V> setter,
 		SerializableFunction<V, String> key)
 	{
-		DropDownChoice<V> choice = choice(id, values, getter, setter, key);
+		Dropdown<V> choice = choice(id, values, getter, setter, key);
 		choice.add(updating());
 		return choice;
 	}
@@ -228,10 +228,10 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	/**
 	 * @return a drop-down choosing one of the values of a table setting
 	 */
-	private <V> DropDownChoice<V> choice(String id, List<V> values, SerializableSupplier<V> getter,
+	private <V> Dropdown<V> choice(String id, List<V> values, SerializableSupplier<V> getter,
 		SerializableConsumer<V> setter, SerializableFunction<V, String> key)
 	{
-		DropDownChoice<V> choice = new DropDownChoice<>(id, LambdaModel.of(getter, setter), values,
+		Dropdown<V> choice = new Dropdown<>(id, LambdaModel.of(getter, setter), values,
 			new ChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;

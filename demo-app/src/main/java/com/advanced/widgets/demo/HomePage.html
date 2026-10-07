@@ -6,19 +6,17 @@
 		<main>
 			<section class="hero">
 				<div class="container">
-					<h1>Advanced Widgets</h1>
-					<p class="hero__lead">
-						Reusable Apache Wicket components with Ajax and real-time (websocket) support.
-					</p>
+					<h1>UI Advanced Widgets</h1>
+					<p class="hero__lead"><wicket:message key="lead"/></p>
 					<p class="hero__meta">
-						<strong wicket:id="componentCount">0</strong> components in the catalog
-						<span class="ws-status" wicket:id="webSocketStatus" title="WebSocket connection">Connecting</span>
+						<strong wicket:id="componentCount">0</strong> <wicket:message key="inCatalog"/>
+						<span class="ws-status" wicket:id="webSocketStatus" wicket:message="title:webSocket">Connecting</span>
 					</p>
 				</div>
 			</section>
 
 			<section class="container demos">
-				<h2>Demos</h2>
+				<h2><wicket:message key="demos"/></h2>
 				<ul class="cards">
 					<li class="card" wicket:id="demos">
 						<a class="card__link" wicket:id="link">
@@ -34,7 +32,7 @@
 			</section>
 
 			<section class="container catalog">
-				<h2>Components</h2>
+				<h2><wicket:message key="components"/></h2>
 				<ul class="cards">
 					<li class="card" wicket:id="components">
 						<div class="card__head">

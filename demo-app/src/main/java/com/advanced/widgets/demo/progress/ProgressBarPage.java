@@ -67,7 +67,7 @@ public class ProgressBarPage extends DemoPage
 				running = !running && progress < 100;
 				target.add(this);
 			}
-		}.setBody(() -> running ? "Pause" : "Start").setOutputMarkupId(true));
+		}.setBody(() -> getString(running ? "pause" : "start")).setOutputMarkupId(true));
 
 		themed.add(new AjaxLink<Void>("reset")
 		{
