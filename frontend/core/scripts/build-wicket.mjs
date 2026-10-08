@@ -28,6 +28,8 @@ const SCRIPTS = [
 	['src/wicket/clipboard.ts', 'com/advanced/widgets/clipboard/wicket-clipboard.js'],
 	['src/wicket/dropdown.ts', 'com/advanced/widgets/dropdown/wicket-dropdown.js'],
 	['src/wicket/floating-panel.ts', 'com/advanced/widgets/floating/wicket-floating-panel.js'],
+	['src/wicket/movable-columns.ts', 'com/advanced/widgets/table/wicket-movable-columns.js'],
+	['src/wicket/resizable-columns.ts', 'com/advanced/widgets/table/wicket-resizable-columns.js'],
 	['src/wicket/scrollbar.ts', 'com/advanced/widgets/scrollbar/wicket-scrollbar.js']
 ];
 
@@ -36,6 +38,8 @@ const STYLES = [
 	['styles/clipboard.css', 'com/advanced/widgets/clipboard/wicket-clipboard.css'],
 	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css'],
 	['styles/floating-panel.css', 'com/advanced/widgets/floating/wicket-floating-panel.css'],
+	['styles/movable-columns.css', 'com/advanced/widgets/table/wicket-movable-columns.css'],
+	['styles/resizable-columns.css', 'com/advanced/widgets/table/wicket-resizable-columns.css'],
 	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css']
 ];
 
