@@ -416,3 +416,12 @@ a.brand { color: inherit; text-decoration: none; }
 	font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
 	font-size: 12px;
 }
+
+/*
+ * a demo of a wide component, such as a grid, takes the whole width of the window, and so do the
+ * top bar and the footer of its page
+ */
+.container--wide,
+body:has(.container--wide) .container {
+	max-width: none;
+}

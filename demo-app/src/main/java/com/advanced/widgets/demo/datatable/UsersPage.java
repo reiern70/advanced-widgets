@@ -4,14 +4,13 @@
  */
 package com.advanced.widgets.demo.datatable;
 
-import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 
 import com.advanced.widgets.demo.DemoPage;
 
 /**
- * A demo page working on the users: shows the selected user and the feedback messages above
- * the demo.
+ * A demo page working on the users: keeps the selected user and shows the feedback messages
+ * above the demo.
  */
 public abstract class UsersPage extends DemoPage
 {
@@ -21,14 +20,7 @@ public abstract class UsersPage extends DemoPage
 
 	protected UsersPage()
 	{
-		add(new Label("selectedLabel", this::getSelectedUserLabel));
 		add(new FeedbackPanel("feedback"));
-	}
-
-	private String getSelectedUserLabel()
-	{
-		return selected == null ? getString("noUserSelected")
-			: selected.getFirstName() + " " + selected.getLastName();
 	}
 
 	/**

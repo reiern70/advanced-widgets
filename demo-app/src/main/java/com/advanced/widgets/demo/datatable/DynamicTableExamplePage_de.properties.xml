@@ -14,9 +14,6 @@
 	<entry key="progress">Fortschritt</entry>
 	<entry key="bornDate">Geboren</entry>
 	<entry key="aboutThisExample">Über dieses Beispiel</entry>
-	<entry key="selection.none">Kein Benutzer ausgewählt.</entry>
-	<entry key="selection.some">Ausgewählt: {0} Benutzer.</entry>
-	<entry key="selection.all">Ausgewählt: alle {0} Benutzer.</entry>
 	<entry key="filter">Filter</entry>
 	<entry key="filter.placeholder">Vor- oder Nachname</entry>
 	<entry key="edit">Bearbeiten</entry>
@@ -31,16 +28,17 @@
 	<entry key="country">Land</entry>
 	<entry key="slowAction">Eine langsame Aktion, sie dauert zwei Sekunden</entry>
 	<entry key="slowAction.done">Die langsame Aktion ist fertig.</entry>
-	<entry key="addUser">Einen Benutzer hinzufügen und die Tabelle aktualisieren</entry>
 	<entry key="pushRows">Die Zeilen dieser Seite in umgekehrter Reihenfolge über Web Sockets senden</entry>
 	<entry key="phones.home">Privat:</entry>
 	<entry key="phones.cell">Mobil:</entry>
 	<entry key="userGone">Diesen Benutzer gibt es nicht mehr.</entry>
 	<entry key="deleted">{0} {1} gelöscht.</entry>
-	<entry key="added.refreshed">{0} {1} hinzugefügt; die Tabelle wurde über WebSockets aktualisiert.</entry>
-	<entry key="added.rendered">{0} {1} hinzugefügt; die Zeilen wurden neu erzeugt.</entry>
 	<entry key="pushed">Die Zeilen dieser Seite wurden in umgekehrter Reihenfolge über WebSockets gesendet.</entry>
 	<entry key="noWebSocket">Die Seite hat keine offene WebSocket-Verbindung.</entry>
 	<entry key="pushFailed">Das Senden an die Tabelle über WebSockets ist fehlgeschlagen: {0}</entry>
 	<entry key="selectedUser">Ausgewählter Benutzer</entry>
+	<entry key="resetColumns">Spalten zurücksetzen</entry>
+	<entry key="added">{0} {1} hinzugefügt.</entry>
+	<entry key="saved">{0} {1} gespeichert.</entry>
+	<entry key="failed">Die Benutzer-Ressource ist fehlgeschlagen: {0}</entry>
 </properties>

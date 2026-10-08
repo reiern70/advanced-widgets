@@ -9,8 +9,8 @@
 	<entry key="description">genera un tema de los componentes, con vista previa en vivo</entry>
 	<entry key="explanation">&lt;p&gt;Los temas de los componentes son clases CSS que fijan las propiedades personalizadas --wicket-theme-*, que leen las hojas de estilo de los componentes. Los selectores del ThemeEditorPanel parten del tema elegido para la página en la barra superior o en la lista desplegable de arriba; cambie un color y los componentes de las pestañas de abajo lo siguen: barras de progreso, las tablas JSON y Bean, paneles plegables, también anidados, un panel flotante, pestañas con estilo y un diálogo modal.&lt;/p&gt;&lt;p&gt;El área de texto contiene la clase CSS que define su tema; póngala en su hoja de estilo y las clases wicket-theme y la suya en una página o un componente, y los componentes de dentro toman sus colores. Los cambios se hacen en el navegador mediante el modelo de objetos CSS, de modo que la página no necesita estilos en línea y funciona bajo una Content Security Policy estricta.&lt;/p&gt;</entry>
 	<entry key="tab.progress">Progreso</entry>
-	<entry key="tab.jsonTable">Tabla JSON</entry>
-	<entry key="tab.beanTable">Tabla Bean</entry>
+	<entry key="tab.jsonTable">Grid JSON</entry>
+	<entry key="tab.beanTable">Grid Bean</entry>
 	<entry key="tab.panels">Plegables</entry>
 	<entry key="progress.running">En curso</entry>
 	<entry key="progress.finished">Terminado</entry>

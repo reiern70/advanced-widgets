@@ -17,6 +17,7 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
+import com.advanced.widgets.button.ButtonBehavior;
 import com.advanced.widgets.demo.DemoLicense;
 import com.github.openjson.JSONObject;
 
@@ -132,6 +133,8 @@ public class FrameworkTabs extends Panel
 	{
 		super.renderHead(response);
 		renderApps(response);
+		// the buttons of the apps, such as those of their forms
+		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(JavaScriptHeaderItem.forReference(SCRIPT).setDefer(true));
 	}

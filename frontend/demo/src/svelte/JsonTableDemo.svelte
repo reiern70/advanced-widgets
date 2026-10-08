@@ -3,18 +3,20 @@
   All rights reserved.
 -->
 <!--
-  The JSON table demo in Svelte: the users in a DataTable, from the users resource, with the
-  columns of the Wicket table; the actions of a row edit, delete and download the user in the app,
-  which keeps what it changes in the browser. The progress of the users shown advances as if the
-  server pushed it.
+  The JSON grid demo in Svelte: an empty element of the Wicket page the app renders into. The users
+  are in a DataTable with the columns of the Wicket grid, its rows either a local list of JSON the
+  page gave, changed in the browser, or loaded from the users resource, which saves and deletes
+  them too. The drop-downs on top change the grid as the settings of the Wicket page do.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { DataTable, Dropdown } from '@advanced-widgets/svelte';
+	import { Button, DataTable, Dropdown } from '@advanced-widgets/svelte';
 
 	import { format, loadChoices, type Choice } from '../data.js';
 	import { interpolate, type UserFields } from '../json-list.js';
-	import { download, simulatedPushes, TableUsers, type JsonTableConfig } from '../json-table.js';
+	import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, selectedCount,
+		settingDefs, simulatedPushes, withSetting, type GridSettings,
+		type JsonTableConfig } from '../json-table.js';
 	import Dialog from './Dialog.svelte';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
@@ -26,17 +28,24 @@
 	let { config }: { config: JsonTableConfig } = $props();
 
 	const texts = $derived(config.texts);
-	const users = untrack(() => new TableUsers(config.usersUrl));
-	const subscribe = untrack(() => simulatedPushes(users, config.pushMillis));
+	const remote = untrack(() => new ResourceUsers(config.usersUrl));
+	const local = untrack(() => new LocalUsers(config.localUsers));
+	const subscribe = untrack(() => simulatedPushes(remote, config.pushMillis));
 	let table = $state<ReturnType<typeof DataTable>>();
+	let settings = $state<GridSettings>({ ...DEFAULT_SETTINGS });
+	let localRows = $state.raw(untrack(() => local.rows));
 	let typed = $state('');
 	let filter = $state('');
-	let infinite = $state('false');
 	let selected = $state<string[]>([]);
 	let countries = $state<Choice[]>([]);
 	/** What the dialog shows: the form of a user, new when its key is null, or a deletion. */
 	let shown = $state<{ form: string | null } | { deletion: string } | null>(null);
 	let messages = $state<Message[]>([]);
+
+	const fromResource = $derived(settings.rowsFrom === 'resource');
+	const users = $derived(fromResource ? remote : local);
+	const count = $derived(settings.selectionCount && settings.selection !== 'none' ?
+		selectedCount(texts, selected.length) : '');
 
 	$effect(() => {
 		loadChoices(config.choicesUrl).then((loaded) => (countries = loaded.countries),
@@ -48,6 +57,16 @@
 		const timer = window.setTimeout(() => (filter = next), FILTER_DELAY);
 		return () => window.clearTimeout(timer);
 	});
+
+	function failed(error: unknown) {
+		messages = [{ level: 'error', text: format(texts.failed,
+			error instanceof Error ? error.message : String(error)) }];
+	}
+
+	function choose(key: keyof GridSettings, value: string) {
+		settings = withSetting(settings, key, value);
+		selected = [];
+	}
 
 	function action(name: string, key: string | null) {
 		const user = users.get(key);
@@ -63,26 +82,45 @@
 		}
 	}
 
-	function save(key: string | null, fields: UserFields) {
-		const saved = users.save(key, fields, countries);
-		shown = null;
-		if (key === null) {
-			messages = [{ level: 'info', text: format(texts.added, saved.user.firstName,
-				saved.user.lastName) }];
-			table?.reload();
-		} else {
-			table?.renderRow(key, saved.user);
+	async function save(key: string | null, fields: UserFields) {
+		try {
+			const user = fromResource ? await remote.save(key, fields) :
+				local.save(key, fields, countries);
+			shown = null;
+			messages = [{ level: 'info', text: format(key === null ? texts.added : texts.saved,
+				user.firstName, user.lastName) }];
+			if (!fromResource) {
+				localRows = local.rows;
+			} else if (key === null) {
+				await table?.reload();
+			} else {
+				table?.renderRow(key, user);
+			}
+		} catch (error) {
+			failed(error);
 		}
 	}
 
-	function remove(key: string) {
+	async function remove(key: string) {
 		const user = users.get(key)!;
-		users.delete(key);
-		shown = null;
-		messages = [{ level: 'info', text: format(texts.deleted, user.firstName,
-			user.lastName) }];
-		selected = selected.filter((selectedKey) => selectedKey !== key);
-		table?.reload();
+		try {
+			if (fromResource) {
+				await remote.delete(key);
+			} else {
+				local.delete(key);
+			}
+			shown = null;
+			messages = [{ level: 'info', text: format(texts.deleted, user.firstName,
+				user.lastName) }];
+			selected = selected.filter((selectedKey) => selectedKey !== key);
+			if (fromResource) {
+				await table?.reload();
+			} else {
+				localRows = local.rows;
+			}
+		} catch (error) {
+			failed(error);
+		}
 	}
 </script>
 
@@ -104,28 +142,37 @@
 			</svg>
 		</button>
 	</span>
+	{#if count}<span class="dynamic-data-table-selection-count" role="status">{count}</span>{/if}
 {/snippet}
 
 <Feedback {messages} />
-<p class="dynamic-dataview-options">
-	<label>
-		{texts.infiniteScroll}
-		<Dropdown name="infiniteScroll" bind:value={infinite}
-			options={[{ value: 'false', label: texts['infiniteScroll.off'] },
-				{ value: 'true', label: texts['infiniteScroll.on'] }]}
-			filter={texts.filter} noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
-	</label>
-</p>
-<div>
-	<DataTable bind:this={table} columns={config.columns} loadRows={users.loadRows}
-		rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes} infinite={infinite === 'true'}
-		selection="many" onselectionchange={(keys) => (selected = keys)} onaction={action} {filter}
-		resizableColumns="stretch" bodyHeight={config.bodyHeight} adjustToParent
-		texts={texts.table} {subscribe} {toolbar} {actions} />
+<div class="dynamic-dataview-options">
+	{#each settingDefs(texts) as setting (setting.key)}
+		<div class="dynamic-dataview-option">
+			<span class="dynamic-dataview-option-title">
+				<label for={'svelte-grid-' + setting.key}>{setting.label}</label>
+			</span>
+			<Dropdown id={'svelte-grid-' + setting.key} name={setting.key}
+				value={String(settings[setting.key])} options={setting.options}
+				onchange={(value) => choose(setting.key, String(value))}
+				filter={texts.filter} noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
+		</div>
+	{/each}
 </div>
-<p class="dynamic-dataview-selection">
-	{selected.length ? format(texts['selection.some'], selected.length) : texts['selection.none']}
-</p>
+<div>
+	{#key settings.rowsFrom}
+		<DataTable bind:this={table} columns={config.columns}
+			loadRows={fromResource ? remote.loadRows : undefined}
+			rows={fromResource ? undefined : localRows}
+			filterRows={fromResource ? undefined : matchesName}
+			subscribe={fromResource ? subscribe : undefined}
+			rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes}
+			infinite={settings.infinite} selection={settings.selection}
+			onselectionchange={(keys) => (selected = keys)} onaction={action} {filter}
+			resizableColumns={settings.resizable ? 'stretch' : false} bodyHeight={config.bodyHeight}
+			adjustToParent texts={texts.table} {toolbar} {actions} />
+	{/key}
+</div>
 {#if shown && 'form' in shown}
 	{@const key = shown.form}
 	{@const user = users.get(key) ?? null}
@@ -140,11 +187,9 @@
 	{#if user}
 		<Dialog title={texts.delete} onclose={() => (shown = null)}>
 			<p>{interpolate(texts['delete.confirm'], user)}</p>
-			<div class="dynamic-data-table-overlay-buttons">
-				<button type="button" class="dynamic-data-table-button"
-					onclick={() => (shown = null)}>{texts.cancel}</button>
-				<button type="button" onclick={() => remove(key)}
-					class="dynamic-data-table-button dynamic-data-table-button-primary">{texts.delete}</button>
+			<div class="aw-button-bar dynamic-data-table-overlay-buttons">
+				<Button label={texts.cancel} onclick={() => (shown = null)} />
+				<Button label={texts.delete} variant="danger" onclick={() => remove(key)} />
 			</div>
 		</Dialog>
 	{/if}

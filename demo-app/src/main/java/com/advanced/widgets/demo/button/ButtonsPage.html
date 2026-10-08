@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="buttons-demo">
+	<p class="buttons-demo__clicked" role="status" wicket:id="clicked">[which button was clicked]</p>
+	<div class="buttons-demo__scroll">
+	<table class="buttons-demo__matrix">
+		<thead>
+			<tr>
+				<th scope="col"><wicket:message key="variant"/></th>
+				<th scope="col" wicket:id="sizes"><span wicket:id="size">[size]</span></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr wicket:id="variants">
+				<th scope="row" wicket:id="variant">[variant]</th>
+				<td wicket:id="cells">
+					<div class="aw-button-bar">
+						<button wicket:id="text">[text]</button>
+						<button wicket:id="iconText">[icon and text]</button>
+						<button wicket:id="icon">[icon]</button>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</div>
+	<h3><wicket:message key="disabled"/></h3>
+	<div class="aw-button-bar" wicket:id="disabled">
+		<wicket:container wicket:id="buttons"><button wicket:id="button">[button]</button></wicket:container>
+	</div>
+	<h3><wicket:message key="asLink"/></h3>
+	<p><a wicket:id="link">[a link drawn as a button]</a></p>
+</div>
+</wicket:extend>
+</body>
+</html>

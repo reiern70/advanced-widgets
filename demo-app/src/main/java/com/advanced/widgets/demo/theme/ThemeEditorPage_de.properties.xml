@@ -9,8 +9,8 @@
 	<entry key="description">erzeugt ein Farbschema der Komponenten, mit Live-Vorschau</entry>
 	<entry key="explanation">&lt;p&gt;Die Farbschemas der Komponenten sind CSS-Klassen, die die Custom Properties --wicket-theme-* setzen, welche die Stylesheets der Komponenten lesen. Die Farbwähler des ThemeEditorPanel beginnen mit dem Farbschema, das in der oberen Leiste oder in der Auswahlliste darüber für die Seite gewählt ist; ändern Sie eine Farbe, und die Komponenten in den Reitern darunter folgen: Fortschrittsbalken, die JSON- und die Bean-basierte Tabelle, ein aufklappbares Panel, auch verschachtelt, ein schwebendes Panel, gestaltete Reiter und ein modaler Dialog.&lt;/p&gt;&lt;p&gt;Das Textfeld enthält die CSS-Klasse, die Ihr Farbschema definiert; übernehmen Sie sie in Ihr Stylesheet und setzen Sie die Klassen wicket-theme und Ihre auf eine Seite oder eine Komponente, und die Komponenten darin übernehmen ihre Farben. Die Änderungen geschehen im Browser über das CSS-Objektmodell, sodass die Seite keinen Inline-Style braucht und unter einer strengen Content Security Policy funktioniert.&lt;/p&gt;</entry>
 	<entry key="tab.progress">Fortschritt</entry>
-	<entry key="tab.jsonTable">JSON-Tabelle</entry>
-	<entry key="tab.beanTable">Bean-Tabelle</entry>
+	<entry key="tab.jsonTable">JSON-Grid</entry>
+	<entry key="tab.beanTable">Bean-Grid</entry>
 	<entry key="tab.panels">Aufklappbar</entry>
 	<entry key="progress.running">Laufend</entry>
 	<entry key="progress.finished">Fertig</entry>

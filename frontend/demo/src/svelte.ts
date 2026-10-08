@@ -12,6 +12,7 @@ import { mount, type Component } from 'svelte';
 
 import { startApps, type Mount } from './apps.js';
 import AutocompleteDemo from './svelte/AutocompleteDemo.svelte';
+import ButtonsDemo from './svelte/ButtonsDemo.svelte';
 import DropdownDemo from './svelte/DropdownDemo.svelte';
 import JsonListDemo from './svelte/JsonListDemo.svelte';
 import JsonTableDemo from './svelte/JsonTableDemo.svelte';
@@ -35,6 +36,7 @@ startApps('svelte', {
 	overview: app(Overview),
 	dropdown: app(DropdownDemo),
 	autocomplete: app(AutocompleteDemo),
+	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),
 	tree: app(TreeDemo),

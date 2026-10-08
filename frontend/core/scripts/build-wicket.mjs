@@ -40,12 +40,14 @@ const SCRIPTS = [
 	['src/wicket/tree.ts', 'com/advanced/widgets/tree/json-tree.js']
 ];
 
-/** The style sheets: their file in styles and their path in ui-components. */
+/** The style sheets and the images they use: their file in styles and their path in ui-components. */
 const STYLES = [
 	['styles/autocomplete.css', 'com/advanced/widgets/autocomplete/wicket-autocomplete.css'],
+	['styles/button.css', 'com/advanced/widgets/button/wicket-button.css'],
 	['styles/chips.css', 'com/advanced/widgets/chips/wicket-chips.css'],
 	['styles/clipboard.css', 'com/advanced/widgets/clipboard/wicket-clipboard.css'],
 	['styles/data-table.css', 'com/advanced/widgets/dynamicdatatable/dynamic-data-table.css'],
+	['styles/data-table-check.svg', 'com/advanced/widgets/dynamicdatatable/data-table-check.svg'],
 	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css'],
 	['styles/floating-panel.css', 'com/advanced/widgets/floating/wicket-floating-panel.css'],
 	['styles/infinite-list.css', 'com/advanced/widgets/jsonlist/json-infinite-list.css'],

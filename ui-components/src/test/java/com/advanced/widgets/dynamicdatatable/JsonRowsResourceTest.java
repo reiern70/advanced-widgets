@@ -117,6 +117,8 @@ class JsonRowsResourceTest extends WicketTestCase
 
 	private JSONObject fetch(String path)
 	{
+		// as the browser fetches the rows; a POST would create one
+		tester.getRequest().setMethod("GET");
 		tester.executeUrl(path);
 		assertEquals("application/json", tester.getLastResponse().getContentType().split(";")[0]);
 		return new JSONObject(tester.getLastResponseAsString());

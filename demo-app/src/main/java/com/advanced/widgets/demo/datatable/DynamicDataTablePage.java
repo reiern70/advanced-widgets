@@ -7,12 +7,13 @@ package com.advanced.widgets.demo.datatable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -24,6 +25,8 @@ import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.resource.loader.ClassStringResourceLoader;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
+import com.advanced.widgets.button.AjaxActionButton;
+import com.advanced.widgets.button.ButtonBehavior.Size;
 import com.advanced.widgets.demo.DemoWebSocketBehavior;
 import com.advanced.widgets.demo.frameworks.ChoicesResource;
 import com.advanced.widgets.demo.frameworks.FrameworkTabs;
@@ -35,6 +38,7 @@ import com.advanced.widgets.dynamicdatatable.IDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IHideableColumn;
 import com.advanced.widgets.dynamicdatatable.ISortableDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IWebSocketLightWeightMessage;
+import com.advanced.widgets.dynamicdatatable.JacksonJsonSerializer;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.ProgressBarColumn;
 import com.advanced.widgets.dynamicdatatable.ResourceDynamicColumn;
@@ -42,6 +46,7 @@ import com.advanced.widgets.dynamicdatatable.RowNumberColumn;
 import com.advanced.widgets.dynamicdatatable.SelectionColumn;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
+import com.advanced.widgets.icon.SvgIcon;
 import com.advanced.widgets.table.IMovableColumn;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -53,6 +58,9 @@ import com.github.openjson.JSONObject;
 public class DynamicDataTablePage extends DynamicTableExamplePage
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The number of users in the local list of the apps' grids. */
+	private static final int LOCAL_USERS = 200;
 
 	/**
 	 * Constructor.
@@ -171,12 +179,6 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			}
 
 			@Override
-			protected void onSelectionChanged(AjaxRequestTarget target)
-			{
-				DynamicDataTablePage.this.onSelectionChanged(target);
-			}
-
-			@Override
 			protected void addRowsParameters(PageParameters parameters)
 			{
 				String filter = provider.getFilter();
@@ -199,19 +201,13 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * Has the browser fetch the rows again, told so over the web socket connection.
+	 * Pushes the rows of the page in reverse order over the web socket connection; the browser
+	 * repaints them in place.
 	 */
 	@Override
-	protected void onUserAdded(User user, AjaxRequestTarget target)
+	protected Component newPushRowsButton(String id)
 	{
-		push(target, getJsonTable().newRefreshMessage(),
-			message("added.refreshed", user.getFirstName(), user.getLastName()));
-	}
-
-	@Override
-	protected Component newPushRowsLink(String id)
-	{
-		return new AjaxLink<Void>(id)
+		return new AjaxActionButton(id, new ResourceModel("pushRows"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -224,7 +220,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 				push(target, getJsonTable().newUpdateRowsMessage(rows),
 					getString("pushed"));
 			}
-		};
+		}.setIcon(SvgIcon.ARROW_DOWN_UP_ACROSS_LINE).setSize(Size.SMALL);
 	}
 
 	private List<User> currentPageRows()
@@ -361,6 +357,7 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			.put("texts", texts())
 			.put("columns", columns)
 			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
+			.put("localUsers", localUsers())
 			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE))
 			.put("rowsPerPage", ROWS_PER_PAGE)
 			.put("pageSizes", new JSONArray(List.of(25, 50, 100, 500)))
@@ -368,6 +365,27 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 				.put("value", DynamicTableOptionsPanel.defaultHeight(BodyHeightUnits.PIXELS))
 				.put("unit", "px"))
 			.put("pushMillis", 3000);
+	}
+
+	/**
+	 * @return the first {@value #LOCAL_USERS} users by first name, the local list of the apps'
+	 *         grids, as JSON rows {@code [{key, number, data}]} as the users resource sends them
+	 */
+	private JSONArray localUsers()
+	{
+		UsersProvider provider = new UsersProvider();
+		List<Map<String, Object>> rows = new ArrayList<>();
+		long number = 1;
+		for (Iterator<? extends User> it = provider.iterator(0, LOCAL_USERS); it.hasNext();)
+		{
+			User user = it.next();
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("key", provider.formatKey(user.getId()));
+			row.put("number", number++);
+			row.put("data", user);
+			rows.add(row);
+		}
+		return new JSONArray(JacksonJsonSerializer.INSTANCE.toJson(rows));
 	}
 
 	/**
@@ -386,9 +404,11 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	private JSONObject texts()
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "filter.placeholder", "newUser", "editUser",
-			"delete", "delete.confirm", "deleted", "selection.none", "selection.some");
+			"delete", "delete.confirm", "deleted", "saved", "failed");
 		texts.put("filterLabel", getString("filter"));
-		texts.put("added", getString("added.rendered"));
+		texts.put("added", getString("added"));
+		texts.put("selectedCount", getString("DynamicDataTable.selectedCount", null,
+			"${count} selected"));
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));
 		for (String key : new String[] { "firstName", "lastName", "country", "city", "address",
 			"save", "cancel" })
@@ -396,7 +416,10 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			texts.put(key, string(UserEditPanel.class, key));
 		}
 		for (String key : new String[] { "infiniteScroll", "infiniteScroll.off",
-			"infiniteScroll.on" })
+			"infiniteScroll.on", "rowsSource", "rowsSource.local", "rowsSource.RESOURCE",
+			"selection", "selection.NONE", "selection.ONE", "selection.MANY", "selectionCount",
+			"selectionCount.shown", "selectionCount.hidden", "resize", "resize.NONE",
+			"resize.STRETCH" })
 		{
 			texts.put(key, string(DynamicTableOptionsPanel.class, key));
 		}

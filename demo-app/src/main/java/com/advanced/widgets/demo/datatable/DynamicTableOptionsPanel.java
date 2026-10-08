@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.NumberTextField;
@@ -29,6 +28,7 @@ import com.advanced.widgets.dynamicdatatable.IColumnStateStore;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable.RowsSource;
 import com.advanced.widgets.dynamicdatatable.SelectionMode;
+import com.advanced.widgets.dynamicdatatable.SelectionCountToolbarAction;
 import com.advanced.widgets.dynamicdatatable.SessionColumnStateStore;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
 
@@ -57,9 +57,12 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	 * @param proportions
 	 *            the proportions of the columns offered by the setting, one per column of the
 	 *            table
+	 * @param selectionCount
+	 *            the count of the selected rows among the actions of the table, shown or not
 	 */
 	public DynamicTableOptionsPanel(String id, BaseDynamicDataTable<User, Long, ?> table,
-		ResizableColumnsBehavior resizableColumns, IModel<ActionIcons> icons, double[] proportions)
+		ResizableColumnsBehavior resizableColumns, IModel<ActionIcons> icons, double[] proportions,
+		SelectionCountToolbarAction<User, Long> selectionCount)
 	{
 		super(id);
 		this.table = table;
@@ -101,6 +104,9 @@ public abstract class DynamicTableOptionsPanel extends Panel
 		}
 		add(updatingChoice("selection", List.of(SelectionMode.values()), table::getSelectionMode,
 			table::setSelectionMode, mode -> "selection." + mode.name()));
+		add(updatingChoice("selectionCount", List.of(true, false), selectionCount::isShown,
+			selectionCount::setShown,
+			shown -> shown ? "selectionCount.shown" : "selectionCount.hidden"));
 		add(updatingChoice("selectionBar", List.of(ToolbarPosition.values()),
 			table::getSelectionToolbarPosition, table::setSelectionToolbarPosition,
 			position -> "navigation." + position.name()));
@@ -133,18 +139,20 @@ public abstract class DynamicTableOptionsPanel extends Panel
 			() -> table.getColumnStateStore() == FileColumnStateStore.INSTANCE,
 			this::keepColumnStateInFile,
 			file -> file ? "columnState.file" : "columnState.session"));
-		add(new AjaxLink<Void>("resetColumns")
-		{
-			private static final long serialVersionUID = 1L;
+	}
 
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				table.setColumnState(getInitialColumnState()).setColumnWidths((double[])null);
-				table.getColumnStateStore().save(table.getColumnStateKey(), table.getColumnState());
-				onTableChanged(target);
-			}
-		});
+	/**
+	 * Gives the columns the order, visibility and widths the page starts with, keeps that in the
+	 * store of the column state and renders the table again.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 */
+	public void resetColumns(AjaxRequestTarget target)
+	{
+		table.setColumnState(getInitialColumnState()).setColumnWidths((double[])null);
+		table.getColumnStateStore().save(table.getColumnStateKey(), table.getColumnState());
+		onTableChanged(target);
 	}
 
 	/**

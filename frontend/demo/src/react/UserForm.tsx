@@ -5,7 +5,7 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { Dropdown } from '@advanced-widgets/react';
+import { Button, Dropdown } from '@advanced-widgets/react';
 
 import type { Choice, User } from '../data.js';
 import { FIELDS, fieldsOf, MAX_LENGTH, validate, type UserFields,
@@ -52,13 +52,9 @@ export function UserForm({ texts, user, countries, onSave, onCancel }: { texts: 
 			</label>
 			{input('city', 'address-level2')}
 			{input('address', 'street-address')}
-			<div className="dynamic-data-table-overlay-buttons">
-				<button type="button" className="dynamic-data-table-button" onClick={onCancel}>
-					{texts.cancel}
-				</button>
-				<button type="submit" className="dynamic-data-table-button dynamic-data-table-button-primary">
-					{texts.save}
-				</button>
+			<div className="aw-button-bar dynamic-data-table-overlay-buttons">
+				<Button label={texts.cancel} onClick={onCancel} />
+				<Button type="submit" label={texts.save} variant="primary" />
 			</div>
 		</form>
 	);

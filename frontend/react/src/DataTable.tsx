@@ -6,21 +6,33 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState,
 	type MouseEvent, type ReactNode } from 'react';
 
-import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, MovableColumns,
-	pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
-	UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData, type DataTablePush,
-	type DataTableQuery, type DataTableRow, type DataTableSort, type DataTableTexts,
-	type ResizeMode } from '@advanced-widgets/core';
+import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+	MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
+	UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData, type DataTableFilter,
+	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableSort,
+	type DataTableTexts, type ResizeMode } from '@advanced-widgets/core';
 
 import { Dropdown } from './Dropdown.js';
 
-export type { DataTableColumnDef, DataTablePush, DataTableQuery, DataTableSort, DataTableTexts };
+export type { DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableSort,
+	DataTableTexts };
 
 export interface DataTableProps {
 	/** The columns, in their first order; the user may move, hide and show them. */
 	columns: DataTableColumnDef[];
-	/** Loads the rows asked for: [{key, data}] and how many there are in all. */
-	loadRows(query: DataTableQuery): Promise<{ rows: DataTableRow[]; itemCount: number }>;
+	/**
+	 * Loads the rows asked for: [{key, data}] and how many there are in all, from a mounted
+	 * resource for example. A table given its rows instead needs none.
+	 */
+	loadRows?(query: DataTableQuery): Promise<{ rows: DataTableRow[]; itemCount: number }>;
+	/**
+	 * The rows, a local list of JSON, when the table does not load them: it filters, sorts and
+	 * pages them in the browser (see localRows of the core), and shows them again when another
+	 * list is given.
+	 */
+	rows?: readonly DataTableRow[];
+	/** Whether the data of a row matches the filter, for rows; whether a text contains it by default. */
+	filterRows?: DataTableFilter;
 	/** The rows of a page, or loaded at a time when scrolling infinitely; 25 by default. */
 	rowsPerPage?: number;
 	/** The numbers of rows per page the user chooses from. */
@@ -183,7 +195,10 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 					current.page * current.pageSize;
 				const count = more || !current.infinite ? current.pageSize :
 					Math.max(shownRows.current, current.pageSize);
-				const loaded = await latest.current.loadRows({ first, count, sort: current.sort,
+				const props = latest.current;
+				const load = props.loadRows ?? localRows(() => latest.current.rows ?? [],
+					props.filterRows);
+				const loaded = await load({ first, count, sort: current.sort,
 					filter: current.filter });
 				shownRows.current = (more ? shownRows.current : 0) + loaded.rows.length;
 				const top = startOver.current;
@@ -263,6 +278,16 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		startOver.current = true;
 		instance.current?.load();
 	}, [page, pageSize, sort, filter]);
+
+	// another list of rows is shown, on the page shown unless it has no rows any more
+	const listed = useRef(props.rows);
+	useEffect(() => {
+		if (listed.current === props.rows) {
+			return;
+		}
+		listed.current = props.rows;
+		instance.current?.load();
+	}, [props.rows]);
 
 	useEffect(() => props.subscribe?.((message) => {
 		const table = instance.current;

@@ -13,6 +13,7 @@ import { createRoot } from 'react-dom/client';
 
 import { startApps, type Mount } from './apps.js';
 import { AutocompleteDemo } from './react/AutocompleteDemo.js';
+import { ButtonsDemo } from './react/ButtonsDemo.js';
 import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
@@ -34,6 +35,7 @@ startApps('react', {
 	overview: app(Overview),
 	dropdown: app(DropdownDemo),
 	autocomplete: app(AutocompleteDemo),
+	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),
 	tree: app(TreeDemo),

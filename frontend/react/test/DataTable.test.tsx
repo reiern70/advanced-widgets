@@ -172,4 +172,25 @@ describe('DataTable', () => {
 		expect(rows(container).length).toBe(40);
 		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 40 of 60');
 	});
+
+	it('pages, sorts and filters a local list of rows, and shows another list given', async () => {
+		const list = PEOPLE.map((person) => ({ key: person.name, data: person }));
+		const { container, rerender } = render(<DataTable columns={COLUMNS} rows={list} />);
+		await waitFor(() => expect(rows(container).length).toBe(25));
+		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 25 of 60');
+
+		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
+		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
+		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 60'));
+
+		rerender(<DataTable columns={COLUMNS} rows={list} filter="city 3" />);
+		await waitFor(() => expect(rows(container).length).toBe(9));
+		expect(rows(container)[0]).toEqual(['Person 60', 'City 3']);
+
+		rerender(<DataTable columns={COLUMNS} rows={list.slice(0, 3)} filter="city 3" />);
+		await waitFor(() => expect(rows(container).length).toBe(0));
+		rerender(<DataTable columns={COLUMNS} rows={list.slice(0, 3)} />);
+		await waitFor(() => expect(rows(container).length).toBe(3));
+		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 3 of 3');
+	});
 });

@@ -1903,7 +1903,25 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	{
 		((AbstractDynamicToolbar)get("topSelection")).refresh(target);
 		((AbstractDynamicToolbar)get("bottomSelection")).refresh(target);
+		refreshSelectionViews(target);
 		onSelectionChanged(target);
+	}
+
+	/**
+	 * Re-renders the components of the table showing its selection, the {@link ISelectionView}s.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 */
+	public void refreshSelectionViews(IPartialPageRequestHandler target)
+	{
+		visitChildren(ISelectionView.class, (component, visit) -> {
+			if (component.isVisibleInHierarchy() || component.getOutputMarkupPlaceholderTag())
+			{
+				target.add(component);
+			}
+			visit.dontGoDeeper();
+		});
 	}
 
 	boolean isAllSelected()
@@ -2169,6 +2187,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		refresh(target);
 		if (selected)
 		{
+			refreshSelectionViews(target);
 			onSelectionChanged(target);
 		}
 	}

@@ -44,7 +44,6 @@
 	<entry key="columnState.session">en la sesión</entry>
 	<entry key="columnState.file">en un archivo</entry>
 	<entry key="columnState.help">Dónde se guardan el orden, la visibilidad y el ancho de las columnas: en la sesión o en un archivo del directorio temporal que sobrevive a los reinicios del servidor.</entry>
-	<entry key="resetColumns">Restablecer las columnas</entry>
 	<entry key="infiniteScroll">Desplazamiento infinito</entry>
 	<entry key="infiniteScroll.off">no, página a página</entry>
 	<entry key="infiniteScroll.on">sí</entry>
@@ -58,4 +57,9 @@
 	<entry key="selection.NONE">ninguna</entry>
 	<entry key="selection.ONE">una fila</entry>
 	<entry key="selection.MANY">varias filas</entry>
+	<entry key="selectionCount">Contador de selección</entry>
+	<entry key="selectionCount.shown">en la navegación</entry>
+	<entry key="selectionCount.hidden">oculto</entry>
+	<entry key="selectionCount.help">Si la navegación indica junto a sus acciones cuántos usuarios hay seleccionados, por ejemplo &quot;2 seleccionados&quot;: una SelectionCountToolbarAction añadida a la tabla, que aquí se activa y desactiva.</entry>
+	<entry key="rowsSource.local">una lista local de JSON</entry>
 </properties>

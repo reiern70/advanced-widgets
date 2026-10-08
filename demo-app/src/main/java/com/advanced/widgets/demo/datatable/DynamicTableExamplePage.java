@@ -13,13 +13,11 @@ import java.util.Objects;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.extensions.ajax.AjaxDownloadBehavior.Location;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
-import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -27,6 +25,8 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
+import com.advanced.widgets.button.AjaxActionButton;
+import com.advanced.widgets.button.ButtonBehavior.Size;
 import com.advanced.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.advanced.widgets.dynamicdatatable.AjaxDownloadActionColumnContributor;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
@@ -38,10 +38,9 @@ import com.advanced.widgets.dynamicdatatable.ColumnState;
 import com.advanced.widgets.dynamicdatatable.CsvExportToolbarAction;
 import com.advanced.widgets.dynamicdatatable.DynamicNavigationToolbar;
 import com.advanced.widgets.dynamicdatatable.IAjaxActionColumnContributor;
-import com.advanced.widgets.dynamicdatatable.ISelection;
-import com.advanced.widgets.dynamicdatatable.ISelection.SelectionType;
 import com.advanced.widgets.dynamicdatatable.IconBasedRowAction;
 import com.advanced.widgets.dynamicdatatable.IconBasedToolbarAction;
+import com.advanced.widgets.dynamicdatatable.SelectionCountToolbarAction;
 import com.advanced.widgets.dynamicdatatable.SessionColumnStateStore;
 import com.advanced.widgets.floating.FloatingPanel;
 import com.advanced.widgets.icon.FontAwesomeIcon;
@@ -81,6 +80,9 @@ public abstract class DynamicTableExamplePage extends UsersPage
 
 	private final ColumnState initialColumnState;
 
+	private final SelectionCountToolbarAction<User, Long> selectionCount =
+		new SelectionCountToolbarAction<>();
+
 	private ActionIcons icons = ActionIcons.BUILT_IN;
 
 	/**
@@ -88,7 +90,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	 */
 	protected DynamicTableExamplePage()
 	{
-		get("selectedLabel").setOutputMarkupId(true);
 		get("feedback").setOutputMarkupId(true);
 
 		details = new UserDetailsPanel("details", new PropertyModel<>(this, "selected"));
@@ -110,6 +111,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		table.addToolbarAction(new ColumnChooserToolbarAction<>());
 		table.addToolbarAction(new CsvExportToolbarAction<User, Long>()
 			.setFileName("users.csv"));
+		table.addToolbarAction(selectionCount);
 
 		themed = new WebMarkupContainer("themed");
 		themed.setOutputMarkupId(true);
@@ -121,10 +123,10 @@ public abstract class DynamicTableExamplePage extends UsersPage
 				: null));
 		themed.add(tableParent);
 		tableParent.add(table);
-		themed.add(new Label("selection", this::describeSelection).setOutputMarkupId(true));
 
-		add(new DynamicTableOptionsPanel("options", table, resizableColumns,
-			new PropertyModel<>(this, "icons"), getColumnProportions())
+		DynamicTableOptionsPanel options = new DynamicTableOptionsPanel("options", table,
+			resizableColumns, new PropertyModel<>(this, "icons"), getColumnProportions(),
+			selectionCount)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -137,26 +139,25 @@ public abstract class DynamicTableExamplePage extends UsersPage
 			@Override
 			protected void onTableChanged(AjaxRequestTarget target)
 			{
-				target.add(tableParent, themed.get("selection"));
+				target.add(tableParent);
 			}
 
-		});
+		};
+		add(options);
 
-		add(new AjaxLink<Void>("addUser")
+		WebMarkupContainer actions = new WebMarkupContainer("actions");
+		add(actions);
+		actions.add(new AjaxActionButton("resetColumns", new ResourceModel("resetColumns"))
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				User user = UserGenerator.getInstance().generate();
-				user.setFirstName("Aaron");
-				DatabaseLocator.getLargeDatabase().save(user);
-				onUserAdded(user, target);
+				options.resetColumns(target);
 			}
-		}.setBody(new ResourceModel("addUser")));
-
-		add(newPushRowsLink("pushRows"));
+		}.setIcon(SvgIcon.ROTATE_LEFT).setSize(Size.SMALL));
+		actions.add(newPushRowsButton("pushRows"));
 	}
 
 	/**
@@ -178,23 +179,22 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	protected abstract double[] getColumnProportions();
 
 	/**
-	 * Called after a user named Aaron was added to the database, to have the table show it.
-	 *
-	 * @param user
-	 *            the user
-	 * @param target
-	 *            the Ajax request target
-	 */
-	protected abstract void onUserAdded(User user, AjaxRequestTarget target);
-
-	/**
 	 * @param id
-	 *            the id of the link
-	 * @return the link pushing the rows of the page to the browser, invisible by default
+	 *            the id of the button, attached to a {@code <button>}
+	 * @return the button pushing the rows of the page to the browser, invisible by default
 	 */
-	protected Component newPushRowsLink(String id)
+	protected Component newPushRowsButton(String id)
 	{
 		return new WebMarkupContainer(id).setVisible(false);
+	}
+
+	/**
+	 * @return {@code true}: the grid takes the whole width of the window
+	 */
+	@Override
+	protected boolean isWide()
+	{
+		return true;
 	}
 
 	/**
@@ -279,17 +279,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	}
 
 	/**
-	 * Shows the new selection below the table.
-	 *
-	 * @param target
-	 *            the Ajax request target
-	 */
-	protected final void onSelectionChanged(AjaxRequestTarget target)
-	{
-		target.add(themed.get("selection"));
-	}
-
-	/**
 	 * @return the text of the page's bundle under the key, with the parameters put in
 	 */
 	protected final String message(String key, Object... parameters)
@@ -326,17 +315,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		response.render(FontAwesomeResourceReference.styleSheet());
 	}
 
-	private String describeSelection()
-	{
-		ISelection<User, Long> selection = table.getSelection();
-		if (selection.isEmpty())
-		{
-			return getString("selection.none");
-		}
-		String key = selection.getType() == SelectionType.ALL ? "selection.all" : "selection.some";
-		return new StringResourceModel(key, this).setParameters(selection.size()).getString();
-	}
-
 
 	/**
 	 * Edits the user in the table's overlay, and selects it.
@@ -360,7 +338,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		protected void onRowAction(User user, AjaxRequestTarget target)
 		{
 			setSelected(user);
-			target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
+			target.add(details);
 			showUserForm(user, new StringResourceModel("editUser",
 				DynamicTableExamplePage.this, Model.of(user)), target);
 		}
@@ -457,7 +435,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 						setSelected(saved);
 						table.closeOverlay(target);
 						table.refresh(target);
-						target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
+						target.add(details);
 					}
 
 					@Override
@@ -507,7 +485,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 			if (Objects.equals(getSelected(), user))
 			{
 				setSelected(null);
-				target.add(details, DynamicTableExamplePage.this.get("selectedLabel"));
+				target.add(details);
 			}
 			DatabaseLocator.getLargeDatabase().delete(user);
 			info(message("deleted", user.getFirstName(), user.getLastName()));

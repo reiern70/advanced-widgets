@@ -132,3 +132,70 @@ export function pageLinks(page: number, pages: number): number[] {
 	const start = Math.max(0, Math.min(page - Math.floor(count / 2), pages - count));
 	return Array.from({ length: count }, (_, index) => start + index);
 }
+
+/** Rows a table loaded: those asked for and how many there are in all. */
+export interface DataTableRows {
+	rows: DataTableRow[];
+	itemCount: number;
+}
+
+/**
+ * Whether the data of a row matches the filter a table was given.
+ */
+export type DataTableFilter = (data: unknown, filter: string) => boolean;
+
+/** Whether a text or number of the data contains the filter, ignoring case. */
+const containsFilter: DataTableFilter = (data, filter) => {
+	const wanted = filter.toLocaleLowerCase();
+	return data !== null && typeof data === 'object' && Object.values(data).some((value) =>
+		(typeof value === 'string' || typeof value === 'number') &&
+		String(value).toLocaleLowerCase().includes(wanted));
+};
+
+function propertyOf(data: unknown, property: string): unknown {
+	return data !== null && typeof data === 'object' ?
+		(data as Record<string, unknown>)[property] : undefined;
+}
+
+/** Compares two values of a property, numbers as numbers, the missing ones last. */
+function compare(a: unknown, b: unknown): number {
+	if (a == null || b == null) {
+		return a == null ? (b == null ? 0 : 1) : -1;
+	}
+	if (typeof a === 'number' && typeof b === 'number') {
+		return a - b;
+	}
+	return String(a).localeCompare(String(b));
+}
+
+/**
+ * The loadRows of a table showing a list it was given instead of loading its rows: the list is
+ * filtered, sorted by the property of the data the sort names, and cut into the rows asked for, in
+ * the browser. The list is read on every load, so the table shows what changed in it once it loads
+ * again.
+ *
+ * @param rows the rows, read on every load
+ * @param matches whether the data of a row matches the filter; by default whether one of its texts
+ * or numbers contains it, ignoring case
+ * @returns the loadRows of the table
+ */
+export function localRows(rows: () => readonly DataTableRow[],
+	matches: DataTableFilter = containsFilter): (query: DataTableQuery) => Promise<DataTableRows> {
+	return async (query) => {
+		const filter = query.filter?.trim() ?? '';
+		let found = filter ? rows().filter((row) => matches(row.data, filter)) : rows().slice();
+		const sort = query.sort;
+		if (sort) {
+			const direction = sort.ascending ? 1 : -1;
+			found = found.map((row, index) => ({ row, index })).sort((a, b) =>
+				direction * compare(propertyOf(a.row.data, sort.property),
+					propertyOf(b.row.data, sort.property)) || a.index - b.index)
+				.map((sorted) => sorted.row);
+		}
+		return {
+			rows: found.slice(query.first, query.first + query.count).map((row, index) => ({
+				key: row.key, data: row.data, number: query.first + index + 1 })),
+			itemCount: found.length
+		};
+	};
+}

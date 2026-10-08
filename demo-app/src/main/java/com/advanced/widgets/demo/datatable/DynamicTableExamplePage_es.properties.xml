@@ -14,9 +14,6 @@
 	<entry key="progress">Progreso</entry>
 	<entry key="bornDate">Nacimiento</entry>
 	<entry key="aboutThisExample">Acerca de este ejemplo</entry>
-	<entry key="selection.none">No hay ningún usuario seleccionado.</entry>
-	<entry key="selection.some">Seleccionados: {0} usuario(s).</entry>
-	<entry key="selection.all">Seleccionados: los {0} usuarios.</entry>
 	<entry key="filter">Filtro</entry>
 	<entry key="filter.placeholder">nombre o apellido</entry>
 	<entry key="edit">Editar</entry>
@@ -31,16 +28,17 @@
 	<entry key="cellPhone">Móvil</entry>
 	<entry key="city">Ciudad</entry>
 	<entry key="country">País</entry>
-	<entry key="addUser">Añadir un usuario y actualizar la tabla</entry>
 	<entry key="pushRows">Enviar las filas de esta página en orden inverso por WebSockets</entry>
 	<entry key="phones.home">Fijo:</entry>
 	<entry key="phones.cell">Móvil:</entry>
 	<entry key="userGone">Ese usuario ya no existe.</entry>
 	<entry key="deleted">{0} {1} borrado.</entry>
-	<entry key="added.refreshed">{0} {1} añadido; la tabla se actualizó por WebSockets.</entry>
-	<entry key="added.rendered">{0} {1} añadido; las filas se generaron de nuevo.</entry>
 	<entry key="pushed">Las filas de esta página se enviaron en orden inverso por WebSockets.</entry>
 	<entry key="noWebSocket">La página no tiene ninguna conexión WebSocket abierta.</entry>
 	<entry key="pushFailed">El envío a la tabla por WebSockets falló: {0}</entry>
 	<entry key="selectedUser">Usuario seleccionado</entry>
+	<entry key="resetColumns">Restablecer las columnas</entry>
+	<entry key="added">{0} {1} añadido.</entry>
+	<entry key="saved">{0} {1} guardado.</entry>
+	<entry key="failed">El recurso de usuarios falló: {0}</entry>
 </properties>

@@ -14,19 +14,30 @@
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, MovableColumns,
-		pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
-		UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData, type DataTablePush,
-		type DataTableQuery, type DataTableRow, type DataTableSort, type DataTableTexts,
-		type ResizeMode } from '@advanced-widgets/core';
+	import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
+		SHOW_COLUMNS, UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData,
+		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
+		type DataTableSort, type DataTableTexts, type ResizeMode } from '@advanced-widgets/core';
 
 	import Dropdown from './Dropdown.svelte';
 
 	type Props = {
 		/** The columns, in their first order; the user may move, hide and show them. */
 		columns: DataTableColumnDef[];
-		/** Loads the rows asked for: [{key, data}] and how many there are in all. */
-		loadRows: (query: DataTableQuery) => Promise<{ rows: DataTableRow[]; itemCount: number }>;
+		/**
+		 * Loads the rows asked for: [{key, data}] and how many there are in all, from a mounted
+		 * resource for example. A table given its rows instead needs none.
+		 */
+		loadRows?: (query: DataTableQuery) => Promise<{ rows: DataTableRow[]; itemCount: number }>;
+		/**
+		 * The rows, a local list of JSON, when the table does not load them: it filters, sorts and
+		 * pages them in the browser (see localRows of the core), and shows them again when another
+		 * list is given.
+		 */
+		rows?: readonly DataTableRow[];
+		/** Whether the data of a row matches the filter, for rows; whether a text contains it by default. */
+		filterRows?: DataTableFilter;
 		/** The rows of a page, or loaded at a time when scrolling infinitely; 25 by default. */
 		rowsPerPage?: number;
 		pageSizes?: number[];
@@ -66,6 +77,8 @@
 	let {
 		columns,
 		loadRows,
+		rows,
+		filterRows,
 		rowsPerPage = 25,
 		pageSizes = [25, 50, 100],
 		infinite = false,
@@ -151,7 +164,8 @@
 		const first = more ? shownRows : current.infinite ? 0 : current.page * current.pageSize;
 		const count = more || !current.infinite ? current.pageSize :
 			Math.max(shownRows, current.pageSize);
-		const loaded = await loadRows({ first, count, sort: current.sort, filter: current.filter });
+		const load = untrack(() => loadRows ?? localRows(() => untrack(() => rows) ?? [], filterRows));
+		const loaded = await load({ first, count, sort: current.sort, filter: current.filter });
 		shownRows = (more ? shownRows : 0) + loaded.rows.length;
 		const top = startOver;
 		startOver = false;
@@ -249,6 +263,19 @@
 			}
 			startOver = true;
 			instance?.load();
+		});
+	});
+
+	// another list of rows is shown, on the page shown unless it has no rows any more
+	let listed: readonly DataTableRow[] | undefined | null = null;
+	$effect(() => {
+		const now = rows;
+		untrack(() => {
+			const before = listed;
+			listed = now;
+			if (before !== null && before !== now) {
+				instance?.load();
+			}
 		});
 	});
 

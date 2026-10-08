@@ -12,6 +12,7 @@
 	<entry key="DynamicDataTable.selectAll">Select all ${total} rows</entry>
 	<entry key="DynamicDataTable.allSelected">All ${total} rows are selected.</entry>
 	<entry key="DynamicDataTable.clearSelection">Clear selection</entry>
+	<entry key="DynamicDataTable.selectedCount">${count} selected</entry>
 	<entry key="DynamicDataTable.exportCsv">Export to CSV</entry>
 	<entry key="DynamicDataTable.confirm">Confirm</entry>
 	<entry key="DynamicDataTable.cancel">Cancel</entry>

@@ -5,11 +5,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataTable, Dropdown, type DataTableHandle } from '@advanced-widgets/react';
+import { Button, DataTable, Dropdown, type DataTableHandle } from '@advanced-widgets/react';
 
 import { format, loadChoices, type Choice } from '../data.js';
 import { interpolate, type UserFields } from '../json-list.js';
-import { download, simulatedPushes, TableUsers, type JsonTableConfig } from '../json-table.js';
+import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, selectedCount,
+	settingDefs, simulatedPushes, withSetting, type JsonTableConfig } from '../json-table.js';
 import { Dialog } from './Dialog.js';
 import { Feedback, type Message } from './Feedback.js';
 import { UserForm } from './UserForm.js';
@@ -30,24 +31,28 @@ function AddIcon() {
 }
 
 /**
- * The JSON table demo in React: the users in a DataTable, from the users resource, with the
- * columns of the Wicket table; the actions of a row edit, delete and download the user in the
- * app, which keeps what it changes in the browser. The progress of the users shown advances as if
- * the server pushed it.
+ * The JSON grid demo in React: an empty element of the Wicket page the app renders into. The
+ * users are in a DataTable with the columns of the Wicket grid, its rows either a local list of
+ * JSON the page gave, changed in the browser, or loaded from the users resource, which saves and
+ * deletes them too. The drop-downs on top change the grid as the settings of the Wicket page do.
  */
 export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 	const { texts } = config;
-	const users = useMemo(() => new TableUsers(config.usersUrl), [config.usersUrl]);
-	const subscribe = useMemo(() => simulatedPushes(users, config.pushMillis),
-		[users, config.pushMillis]);
+	const remote = useMemo(() => new ResourceUsers(config.usersUrl), [config.usersUrl]);
+	const local = useMemo(() => new LocalUsers(config.localUsers), [config.localUsers]);
+	const subscribe = useMemo(() => simulatedPushes(remote, config.pushMillis),
+		[remote, config.pushMillis]);
 	const table = useRef<DataTableHandle>(null);
+	const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+	const [localRows, setLocalRows] = useState(local.rows);
 	const [typed, setTyped] = useState('');
 	const [filter, setFilter] = useState('');
-	const [infinite, setInfinite] = useState(false);
 	const [selected, setSelected] = useState<string[]>([]);
 	const [countries, setCountries] = useState<Choice[]>([]);
 	const [shown, setShown] = useState<Shown>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
+	const fromResource = settings.rowsFrom === 'resource';
+	const users = fromResource ? remote : local;
 
 	useEffect(() => {
 		loadChoices(config.choicesUrl).then((choices) => setCountries(choices.countries),
@@ -58,6 +63,14 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 		const timer = window.setTimeout(() => setFilter(typed), FILTER_DELAY);
 		return () => window.clearTimeout(timer);
 	}, [typed]);
+
+	const failed = (error: unknown) => setMessages([{ level: 'error',
+		text: format(texts.failed, error instanceof Error ? error.message : String(error)) }]);
+
+	const choose = (key: keyof typeof settings, value: string) => {
+		setSettings((current) => withSetting(current, key, value));
+		setSelected([]);
+	};
 
 	const action = (name: string, key: string | null) => {
 		const user = users.get(key);
@@ -73,51 +86,78 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 		}
 	};
 
-	const save = (key: string | null, fields: UserFields) => {
-		const saved = users.save(key, fields, countries);
-		setShown(null);
-		if (key === null) {
-			setMessages([{ level: 'info', text: format(texts.added, saved.user.firstName,
-				saved.user.lastName) }]);
-			table.current?.reload();
-		} else {
-			table.current?.renderRow(key, saved.user);
+	const save = async (key: string | null, fields: UserFields) => {
+		try {
+			const user = fromResource ? await remote.save(key, fields) :
+				local.save(key, fields, countries);
+			setShown(null);
+			setMessages([{ level: 'info', text: format(key === null ? texts.added : texts.saved,
+				user.firstName, user.lastName) }]);
+			if (!fromResource) {
+				setLocalRows(local.rows);
+			} else if (key === null) {
+				await table.current?.reload();
+			} else {
+				table.current?.renderRow(key, user);
+			}
+		} catch (error) {
+			failed(error);
 		}
 	};
 
-	const remove = (key: string) => {
+	const remove = async (key: string) => {
 		const user = users.get(key)!;
-		users.delete(key);
-		setShown(null);
-		setMessages([{ level: 'info', text: format(texts.deleted, user.firstName,
-			user.lastName) }]);
-		setSelected((current) => current.filter((selectedKey) => selectedKey !== key));
-		table.current?.reload();
+		try {
+			if (fromResource) {
+				await remote.delete(key);
+			} else {
+				local.delete(key);
+			}
+			setShown(null);
+			setMessages([{ level: 'info', text: format(texts.deleted, user.firstName,
+				user.lastName) }]);
+			setSelected((current) => current.filter((selectedKey) => selectedKey !== key));
+			if (fromResource) {
+				await table.current?.reload();
+			} else {
+				setLocalRows(local.rows);
+			}
+		} catch (error) {
+			failed(error);
+		}
 	};
 
 	const dialogUser = shown && 'form' in shown ? users.get(shown.form) ?? null : null;
 	const deletion = shown && 'deletion' in shown ? users.get(shown.deletion) : undefined;
+	const count = settings.selectionCount && settings.selection !== 'none' ?
+		selectedCount(texts, selected.length) : '';
 
 	return (
 		<>
 			<Feedback messages={messages} />
-			<p className="dynamic-dataview-options">
-				<label>
-					{texts.infiniteScroll}{' '}
-					<Dropdown name="infiniteScroll" value={String(infinite)}
-						onChange={(value) => setInfinite(value === 'true')}
-						options={[{ value: 'false', label: texts['infiniteScroll.off'] },
-							{ value: 'true', label: texts['infiniteScroll.on'] }]}
-						filter={texts.filter} noMatch={texts.noMatch} more={texts.more}
-						remove={texts.remove} />
-				</label>
-			</p>
+			<div className="dynamic-dataview-options">
+				{settingDefs(texts).map((setting) => (
+					<div className="dynamic-dataview-option" key={setting.key}>
+						<span className="dynamic-dataview-option-title">
+							<label htmlFor={'react-grid-' + setting.key}>{setting.label}</label>
+						</span>
+						<Dropdown id={'react-grid-' + setting.key} name={setting.key}
+							value={String(settings[setting.key])} options={setting.options}
+							onChange={(value) => choose(setting.key, value)}
+							filter={texts.filter} noMatch={texts.noMatch} more={texts.more}
+							remove={texts.remove} />
+					</div>
+				))}
+			</div>
 			<div>
-				<DataTable ref={table} columns={config.columns} loadRows={users.loadRows}
-					rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes} infinite={infinite}
-					selection="many" onSelectionChange={setSelected} onAction={action} filter={filter}
-					resizableColumns="stretch" bodyHeight={config.bodyHeight} adjustToParent
-					texts={texts.table} subscribe={subscribe}
+				<DataTable key={settings.rowsFrom} ref={table} columns={config.columns}
+					{...(fromResource ? { loadRows: remote.loadRows, subscribe } :
+						{ rows: localRows, filterRows: matchesName })}
+					rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes}
+					infinite={settings.infinite} selection={settings.selection}
+					onSelectionChange={setSelected} onAction={action} filter={filter}
+					resizableColumns={settings.resizable ? 'stretch' : false}
+					bodyHeight={config.bodyHeight} adjustToParent texts={texts.table}
 					toolbar={
 						<label className="user-filter">
 							{texts.filterLabel}{' '}
@@ -126,17 +166,17 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 						</label>
 					}
 					actions={
-						<span>
-							<button type="button" onClick={() => setShown({ form: null })}
-								className="dynamic-data-table-action dynamic-data-table-icon-action"
-								title={texts.newUser} aria-label={texts.newUser}><AddIcon /></button>
-						</span>
+						<>
+							<span>
+								<button type="button" onClick={() => setShown({ form: null })}
+									className="dynamic-data-table-action dynamic-data-table-icon-action"
+									title={texts.newUser} aria-label={texts.newUser}><AddIcon /></button>
+							</span>
+							{count && <span className="dynamic-data-table-selection-count"
+								role="status">{count}</span>}
+						</>
 					} />
 			</div>
-			<p className="dynamic-dataview-selection">
-				{selected.length ? format(texts['selection.some'], selected.length) :
-					texts['selection.none']}
-			</p>
 			{shown && 'form' in shown && (
 				<Dialog title={dialogUser ? interpolate(texts.editUser, dialogUser) : texts.newUser}
 					onClose={() => setShown(null)}>
@@ -147,13 +187,10 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 			{deletion && shown && 'deletion' in shown && (
 				<Dialog title={texts.delete} onClose={() => setShown(null)}>
 					<p>{interpolate(texts['delete.confirm'], deletion)}</p>
-					<div className="dynamic-data-table-overlay-buttons">
-						<button type="button" className="dynamic-data-table-button"
-							onClick={() => setShown(null)}>{texts.cancel}</button>
-						<button type="button" onClick={() => remove(shown.deletion)}
-							className="dynamic-data-table-button dynamic-data-table-button-primary">
-							{texts.delete}
-						</button>
+					<div className="aw-button-bar dynamic-data-table-overlay-buttons">
+						<Button label={texts.cancel} onClick={() => setShown(null)} />
+						<Button label={texts.delete} variant="danger"
+							onClick={() => remove(shown.deletion)} />
 					</div>
 				</Dialog>
 			)}

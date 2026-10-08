@@ -191,7 +191,27 @@ table.dynamic-data-table .dynamic-data-table-action:focus-visible {
 }
 
 .dynamic-data-table-page-size {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
 	margin-left: auto;
+	white-space: nowrap;
+}
+
+.dynamic-data-table-page-size > .wicket-dropdown {
+	min-width: 5em;
+}
+
+/* how many rows are selected, among the actions: "2 selected" */
+.dynamic-data-table-selection-count {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.1em 0.6em;
+	border-radius: 999px;
+	background: var(--wicket-theme-selected, #fff3b0);
+	color: var(--wicket-theme-text, inherit);
+	font-size: 0.85em;
+	font-weight: 600;
 	white-space: nowrap;
 }
 
@@ -314,6 +334,66 @@ table.dynamic-data-table :is(input, select, textarea, button) {
 table.dynamic-data-table {
 	color: var(--wicket-theme-text);
 	border-bottom: 2px solid var(--wicket-theme-primary);
+}
+
+/*
+ * The check boxes of the table are drawn by the table, not by the browser, so they look the same
+ * in every browser and stay visible on the color of the headers: a box in the surface color with
+ * a border, filled with the primary color and a white tick when checked, a white bar when only
+ * some rows are. The tick is a file next to this style sheet, data-table-check.svg, as a strict
+ * Content Security Policy refuses images in data: URLs.
+ */
+table.dynamic-data-table input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	display: inline-block;
+	box-sizing: border-box;
+	width: 1.05rem;
+	height: 1.05rem;
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+	border: 1.5px solid var(--wicket-theme-primary-dark, #6b7280);
+	border-radius: 0.22rem;
+	background: var(--wicket-theme-surface, #fff) no-repeat center / 0.8rem 0.8rem;
+	cursor: pointer;
+	transition: background-color 0.1s, border-color 0.1s;
+}
+
+table.dynamic-data-table input[type="checkbox"]:hover {
+	border-color: var(--wicket-theme-accent, #374151);
+}
+
+table.dynamic-data-table input[type="checkbox"]:checked {
+	border-color: var(--wicket-theme-primary-dark, #374151);
+	background-color: var(--wicket-theme-primary, #374151);
+	background-image: url("data-table-check.svg");
+}
+
+table.dynamic-data-table input[type="checkbox"]:indeterminate {
+	border-color: var(--wicket-theme-primary-dark, #374151);
+	background-color: var(--wicket-theme-primary, #374151);
+	background-image: linear-gradient(#fff, #fff);
+	background-size: 0.55rem 0.14rem;
+}
+
+/* on the primary color of the headers, a checked box keeps a ring of the color of their text */
+table.dynamic-data-table > thead > tr > th input[type="checkbox"] {
+	border-color: var(--wicket-theme-on-primary, #fff);
+}
+
+table.dynamic-data-table > thead > tr > th input[type="checkbox"]:is(:checked, :indeterminate) {
+	box-shadow: 0 0 0 1.5px var(--wicket-theme-on-primary, #fff);
+}
+
+table.dynamic-data-table input[type="checkbox"]:focus-visible {
+	outline: 2px solid var(--wicket-theme-accent, Highlight);
+	outline-offset: 2px;
+}
+
+table.dynamic-data-table input[type="checkbox"]:disabled {
+	opacity: 0.5;
+	cursor: default;
 }
 
 table.dynamic-data-table > thead > tr > th {

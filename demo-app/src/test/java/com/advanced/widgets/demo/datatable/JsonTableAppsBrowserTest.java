@@ -36,16 +36,18 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 	{
 		open(browser, framework, "dynamic-data-table");
 		wait.until(d -> rows().size() == 25);
-		assertEquals("Showing 1 to 25 of 1000", label());
+		// the users resource saves and deletes them: other tests may have deleted some
+		assertTrue(label().matches("Showing 1 to 25 of \\d+"), label());
+		String users = label().replaceAll(".* of ", "");
 		assertEquals(List.of("", "#", "Actions", "ID", "First Name", "Last Name", "Born",
 			"Address", "Phones", "Progress", ""), headers());
 
 		app().findElement(By.cssSelector("thead a.next")).click();
-		wait.until(d -> label().equals("Showing 26 to 50 of 1000"));
+		wait.until(d -> label().equals("Showing 26 to 50 of " + users));
 		assertEquals("26", cell(0, 1));
 
 		header("Last Name").findElement(By.cssSelector("a.dynamic-data-table-sort")).click();
-		wait.until(d -> label().equals("Showing 1 to 25 of 1000") &&
+		wait.until(d -> label().equals("Showing 1 to 25 of " + users) &&
 			"ascending".equals(header("Last Name").getDomAttribute("aria-sort")));
 		wait.until(d -> isSorted(column(5)));
 
@@ -72,9 +74,9 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 
 		rows().get(0).findElement(By.cssSelector(".dynamic-data-table-select")).click();
 		rows().get(2).findElement(By.cssSelector(".dynamic-data-table-select")).click();
-		wait.until(d -> selection().equals("Selected: 2 user(s)."));
+		wait.until(d -> selection().equals("2 selected"));
 		app().findElement(By.cssSelector(".dynamic-data-table-select-page")).click();
-		wait.until(d -> selection().equals("Selected: 25 user(s)."));
+		wait.until(d -> selection().equals("25 selected"));
 		assertTrue(rows().get(4).getDomAttribute("class").contains("selected"));
 	}
 
@@ -86,6 +88,8 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> rows().size() == 25);
 		String lastName = cell(1, 5);
 		String id = cell(1, 3);
+		// the users resource saves and deletes them: other tests may have deleted some
+		int users = Integer.parseInt(label().replaceAll(".* of ", ""));
 
 		rows().get(1).findElement(By.cssSelector("[data-dt-action='edit']")).click();
 		WebElement dialog = dialog();
@@ -100,12 +104,40 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 		rows().get(1).findElement(By.cssSelector("[data-dt-action='delete']")).click();
 		assertEquals("Delete Zoe " + lastName + "?", dialog().findElement(By.tagName("p"))
 			.getText());
-		dialog().findElement(By.cssSelector(".dynamic-data-table-button-primary")).click();
+		dialog().findElement(By.cssSelector(".aw-button--danger")).click();
 
 		wait.until(d -> !column(3).contains(id));
 		assertEquals("Deleted Zoe " + lastName + ".", app().findElement(
 			By.cssSelector(".feedbackPanel")).getText());
-		assertEquals("Showing 1 to 24 of 999", label());
+		wait.until(d -> label().equals("Showing 1 to 25 of " + (users - 1)));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.advanced.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
+	void showsAndChangesALocalListOfUsers(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "dynamic-data-table");
+		wait.until(d -> rows().size() == 25);
+
+		Dropdowns.choose(driver, app().findElement(By.name("rowsFrom")), 1);
+		wait.until(d -> label().equals("Showing 1 to 25 of 200"));
+		String lastName = cell(0, 5);
+
+		rows().get(0).findElement(By.cssSelector("[data-dt-action='edit']")).click();
+		WebElement firstName = dialog().findElement(By.name("firstName"));
+		firstName.sendKeys(Keys.END);
+		firstName.sendKeys(Keys.BACK_SPACE.toString().repeat(
+			firstName.getDomProperty("value").length()) + "Local");
+		dialog().findElement(By.cssSelector("button[type='submit']")).click();
+		wait.until(d -> cell(0, 4).equals("Local"));
+
+		app().findElement(By.cssSelector(".user-filter input")).sendKeys(lastName);
+		wait.until(d -> !rows().isEmpty() && column(5).stream().allMatch(lastName::equals));
+
+		Dropdowns.choose(driver, app().findElement(By.name("selectionCount")), 1);
+		rows().get(0).findElement(By.cssSelector(".dynamic-data-table-select")).click();
+		assertEquals("", selection(), "the count is hidden");
 		assertNoErrors();
 	}
 
@@ -116,7 +148,7 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 		open(browser, framework, "dynamic-data-table");
 		wait.until(d -> rows().size() == 25);
 
-		Dropdowns.choose(driver, app().findElement(By.name("infiniteScroll")), 1);
+		Dropdowns.choose(driver, app().findElement(By.name("infinite")), 1);
 		wait.until(d -> app().findElements(By.cssSelector(".navigator")).isEmpty() &&
 			rows().size() == 25);
 
@@ -124,7 +156,7 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 			"arguments[0].scrollTop = arguments[0].scrollHeight;",
 			app().findElement(By.cssSelector(".dynamic-data-table-body")));
 		wait.until(d -> rows().size() == 50);
-		wait.until(d -> label().equals("Showing 1 to 50 of 1000"));
+		wait.until(d -> label().matches("Showing 1 to 50 of \\d+"));
 		assertEquals("50", cell(49, 1));
 	}
 
@@ -165,9 +197,14 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 		return app().findElement(By.cssSelector("thead .navigatorLabel")).getText();
 	}
 
+	/**
+	 * @return how many users are selected, as the top navigation tells, or nothing
+	 */
 	private String selection()
 	{
-		return app().findElement(By.cssSelector(".dynamic-dataview-selection")).getText();
+		List<WebElement> count = app().findElements(By.cssSelector(
+			"thead .dynamic-data-table-selection-count"));
+		return count.isEmpty() ? "" : count.get(0).getText();
 	}
 
 	private WebElement dialog()

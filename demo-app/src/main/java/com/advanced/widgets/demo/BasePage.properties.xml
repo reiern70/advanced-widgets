@@ -24,10 +24,10 @@
 	<entry key="category.themes">Themes</entry>
 	<entry key="category.realTime">Real-time</entry>
 	<entry key="category.frameworks">React and Svelte</entry>
-	<entry key="demo.jsonTable">JSON Dynamic Data Table</entry>
-	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over websockets.</entry>
-	<entry key="demo.beanTable">Bean Dynamic Data Table</entry>
-	<entry key="demo.beanTable.description">The same table with its rows rendered on the server by Wicket components.</entry>
+	<entry key="demo.jsonTable">JSON Grid</entry>
+	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over web sockets, in Wicket, React and Svelte.</entry>
+	<entry key="demo.beanTable">Bean Grid</entry>
+	<entry key="demo.beanTable.description">The same grid with its rows rendered on the server by Wicket components.</entry>
 	<entry key="demo.jsonList">JSON Infinite List</entry>
 	<entry key="demo.jsonList.description">A thousand users as cards, rendered in the browser from JSON and loaded as you scroll.</entry>
 	<entry key="demo.tree">Tree</entry>
@@ -40,6 +40,8 @@
 	<entry key="demo.dropdown.description">Single and multiple choices opened, filtered and chosen in the browser.</entry>
 	<entry key="demo.autocomplete">Autocomplete</entry>
 	<entry key="demo.autocomplete.description">One or many values suggested as you type, each row from a template, the chosen ones as chips.</entry>
+	<entry key="demo.buttons">Buttons</entry>
+	<entry key="demo.buttons.description">Primary, secondary, ghost and danger buttons in three sizes, with a text, an icon or both, in the colors of the theme.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the theme's colors that look the same in every browser.</entry>
 	<entry key="demo.modalDialog">Modal Dialog</entry>

@@ -38,32 +38,44 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	font-weight: bold;
 }
 
+/* the settings: as many columns as fit, small labels over the drop-downs */
 .dynamic-dataview-options {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: 0.6em 1.5em;
-	margin: 0 0 1em 0;
+	grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+	gap: 0.45rem 1rem;
+	margin: 0 0 0.6rem 0;
+	font-size: 0.875rem;
 }
 
 .dynamic-dataview-option {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 0.2em;
+	gap: 0.15rem;
+	min-width: 0;
 }
 
 .dynamic-dataview-option-title {
 	display: flex;
 	align-items: center;
-	gap: 0.4em;
+	gap: 0.35em;
+	font-size: 0.8125rem;
 	font-weight: 600;
+	white-space: nowrap;
 }
 
-.dynamic-dataview-option-reset {
-	justify-content: flex-end;
+.dynamic-dataview-option-title > label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* the buttons acting on the grid as a whole, above it */
+.dynamic-dataview-actions {
+	margin: 0 0 0.6rem 0;
 }
 
 .dynamic-dataview-help {
-	position: relative;
+	position: static;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -92,10 +104,11 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 .dynamic-dataview-tooltip {
 	position: absolute;
 	z-index: 10;
-	bottom: calc(100% + 9px);
-	left: 50%;
-	width: max-content;
-	max-width: 22rem;
+	top: 1.6rem;
+	white-space: normal;
+	left: 0;
+	right: 0;
+	width: auto;
 	padding: 0.5em 0.7em;
 	border-radius: 0.3em;
 	background: #2b1d12;
@@ -103,20 +116,9 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	font: normal 400 0.85rem/1.35 sans-serif;
 	text-align: left;
 	box-shadow: 0 0.2em 0.8em rgba(0, 0, 0, 0.3);
-	transform: translateX(-50%);
 	visibility: hidden;
 	opacity: 0;
 	transition: opacity 0.15s ease-in-out, visibility 0.15s;
-}
-
-.dynamic-dataview-tooltip::after {
-	content: "";
-	position: absolute;
-	top: 100%;
-	left: 50%;
-	margin-left: -7px;
-	border: 7px solid transparent;
-	border-top-color: #2b1d12;
 }
 
 .dynamic-dataview-help:hover .dynamic-dataview-tooltip,
@@ -134,10 +136,16 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	font-weight: normal;
 }
 
-@media (max-width: 50em) {
-	.dynamic-dataview-options {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
+/* the height, a number field as high as the drop-downs next to it */
+.dynamic-dataview-options input[type="number"] {
+	box-sizing: border-box;
+	min-height: 2.1em;
+	padding: 0.25em 0.6em;
+	border: 1px solid var(--wicket-theme-border, #c4c9d4);
+	border-radius: 0.35em;
+	background: var(--wicket-theme-surface, #fff);
+	color: var(--wicket-theme-text, inherit);
+	font: inherit;
 }
 
 .user-filter input {
@@ -180,17 +188,4 @@ table.dynamic-dataview tr.dynamic-data-table-selection-toolbar a {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-/* the tooltips of the right-most settings open to the left, staying inside the page */
-.dynamic-dataview-option:nth-child(4n) .dynamic-dataview-tooltip {
-	left: auto;
-	right: -0.5rem;
-	transform: none;
-}
-
-.dynamic-dataview-option:nth-child(4n) .dynamic-dataview-tooltip::after {
-	left: auto;
-	right: calc(0.5rem + 0.6em - 7px);
-	margin-left: 0;
 }

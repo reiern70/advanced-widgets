@@ -19,10 +19,16 @@ as `dynamic-data-table.js`) and Handlebars as one of their template engines (`ha
 built as `handlebars-adapter.js`), the drop-down and its chips, the autocomplete, the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
 the movable and resizable columns. The style sheets of the table and the progress bar have moved
-too. React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`, `Scrollable`,
-`ProgressBar`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown` and `scrollbar` also
-work as Svelte actions, and `Clipboard.install()` and `FloatingPanel.install()` make the
-`data-wicket-copy` and floating panel markup work in any page.
+too, and the buttons' (`button.css`, built as `wicket-button.css`, which Wicket's `ButtonBehavior`
+and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`,
+`Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`
+and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
+`FloatingPanel.install()` make the `data-wicket-copy` and floating panel markup work in any page.
+
+A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
+them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
+`localRows`. The JSON grid demo does both: its rows come from `/api/users`, a `JsonRowsResource`
+that also creates, changes and deletes rows (POST, PUT and DELETE), or from a list the page gave.
 
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
@@ -54,7 +60,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
 demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
-`scrollbar`, `progressBar`, and
+`scrollbar`, `progressBar`, `buttons`, and
 `overview` for the combined page `/react-svelte`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of

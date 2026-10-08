@@ -14,9 +14,6 @@
 	<entry key="progress">Progress</entry>
 	<entry key="bornDate">Born</entry>
 	<entry key="aboutThisExample">About this example</entry>
-	<entry key="selection.none">No user is selected.</entry>
-	<entry key="selection.some">Selected: {0} user(s).</entry>
-	<entry key="selection.all">Selected: all {0} users.</entry>
 	<entry key="filter">Filter</entry>
 	<entry key="filter.placeholder">first or last name</entry>
 	<entry key="edit">Edit</entry>
@@ -31,16 +28,17 @@
 	<entry key="cellPhone">Cell phone</entry>
 	<entry key="city">City</entry>
 	<entry key="country">Country</entry>
-	<entry key="addUser">Add a user and refresh the table</entry>
 	<entry key="pushRows">Push the rows of this page in reverse order via web sockets</entry>
 	<entry key="phones.home">Home:</entry>
 	<entry key="phones.cell">Cell:</entry>
 	<entry key="userGone">That user no longer exists.</entry>
 	<entry key="deleted">Deleted {0} {1}.</entry>
-	<entry key="added.refreshed">Added {0} {1}; the table was refreshed via web sockets.</entry>
-	<entry key="added.rendered">Added {0} {1}; the rows were rendered again.</entry>
 	<entry key="pushed">Pushed the rows of this page in reverse order via web sockets.</entry>
 	<entry key="noWebSocket">The page has no open web socket connection.</entry>
 	<entry key="pushFailed">Pushing to the table via web sockets failed: {0}</entry>
 	<entry key="selectedUser">Selected user</entry>
+	<entry key="resetColumns">Reset the columns</entry>
+	<entry key="added">Added {0} {1}.</entry>
+	<entry key="saved">Saved {0} {1}.</entry>
+	<entry key="failed">The users resource failed: {0}</entry>
 </properties>

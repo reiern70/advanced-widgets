@@ -103,7 +103,7 @@ public class TestHomePage
 		tester.startPage(HomePage.class);
 
 		tester.assertLabel("components:0:name", "Cuadrícula de datos");
-		tester.assertLabel("demos:0:link:name", "Tabla de datos JSON");
+		tester.assertLabel("demos:0:link:name", "Grid JSON");
 		tester.assertContains("Todos los derechos reservados.");
 		tester.assertContains("componentes en el catálogo");
 		tester.assertContains("Español");
@@ -116,7 +116,7 @@ public class TestHomePage
 		tester.startPage(HomePage.class);
 
 		tester.assertLabel("components:0:name", "Datenraster");
-		tester.assertLabel("demos:0:link:name", "JSON-Datentabelle");
+		tester.assertLabel("demos:0:link:name", "JSON-Grid");
 		tester.assertContains("Alle Rechte vorbehalten.");
 		tester.assertContains("Komponenten im Katalog");
 	}

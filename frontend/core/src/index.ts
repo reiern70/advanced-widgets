@@ -10,10 +10,10 @@ export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,
 	DataTableRow, ResizableColumnsRegistry, Veil } from './data-table.js';
-export { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, PAGE_LINKS, pageLinks, SELECTION_ACTIONS,
-	selectionColumn, SHOW_COLUMNS } from './data-table-model.js';
-export type { DataTableColumnDef, DataTablePush, DataTableQuery, DataTableSort,
-	DataTableTexts } from './data-table-model.js';
+export { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, localRows, PAGE_LINKS, pageLinks,
+	SELECTION_ACTIONS, selectionColumn, SHOW_COLUMNS } from './data-table-model.js';
+export type { DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
+	DataTableSort, DataTableTexts } from './data-table-model.js';
 export { FloatingPanel } from './floating-panel.js';
 export { handlebarsEngine, registerHandlebars } from './handlebars.js';
 export type { HandlebarsLike } from './handlebars.js';
@@ -38,3 +38,5 @@ export { Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';
 export type { TreeCallbacks, TreeColumn, TreeConfig, TreeIcons, TreeNode, TreeTexts } from './tree.js';
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';
+export { BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses } from './button.js';
+export type { ButtonSize, ButtonVariant } from './button.js';

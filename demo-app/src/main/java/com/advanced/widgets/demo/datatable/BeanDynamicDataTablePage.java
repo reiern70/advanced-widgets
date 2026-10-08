@@ -95,26 +95,9 @@ public class BeanDynamicDataTablePage extends DynamicTableExamplePage
 			{
 				onUserNotFound(target);
 			}
-
-			@Override
-			protected void onSelectionChanged(AjaxRequestTarget target)
-			{
-				BeanDynamicDataTablePage.this.onSelectionChanged(target);
-			}
 		};
 		hidden.forEach(column -> table.setColumnVisible(column, false));
 		return table;
-	}
-
-	/**
-	 * Renders the rows again via Ajax.
-	 */
-	@Override
-	protected void onUserAdded(User user, AjaxRequestTarget target)
-	{
-		getTable().refresh(target);
-		info(message("added.rendered", user.getFirstName(), user.getLastName()));
-		target.add(get("feedback"));
 	}
 
 	/**

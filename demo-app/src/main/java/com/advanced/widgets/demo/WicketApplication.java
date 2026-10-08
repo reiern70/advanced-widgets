@@ -18,6 +18,7 @@ import org.apache.wicket.settings.JavaScriptLibrarySettings;
 import org.apache.wicket.util.string.Strings;
 
 import com.advanced.widgets.demo.autocomplete.AutocompletePage;
+import com.advanced.widgets.demo.button.ButtonsPage;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
@@ -113,6 +114,7 @@ public class WicketApplication extends WebApplication
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);
 		mountPage("autocomplete", AutocompletePage.class);
+		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);

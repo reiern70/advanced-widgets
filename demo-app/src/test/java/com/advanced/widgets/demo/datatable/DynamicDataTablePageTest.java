@@ -249,7 +249,7 @@ class DynamicDataTablePageTest
 		assertEquals(moved, table.getColumnState().getOrder(), "a new page keeps the order");
 		assertEquals(50d, table.getColumnWidths()[0]);
 
-		tester.clickLink("options:resetColumns", true);
+		tester.clickLink("actions:resetColumns", true);
 
 		assertEquals(initial, table.getColumnState().getOrder());
 		assertEquals(shown, table.getVisibleColumns().size());
@@ -336,6 +336,7 @@ class DynamicDataTablePageTest
 		tester.startPage(page);
 		tester.assertContains("\"dataUrl\":\"[^\"]*/api/users\\?first=0&count=25");
 
+		tester.getRequest().setMethod("GET");
 		tester.executeUrl("api/users?first=0&count=3&sort=lastName&ascending=true&filter=jans");
 		String json = tester.getLastResponseAsString();
 		assertTrue(json.startsWith("{\"rows\":[{\"key\":"), json);
@@ -347,7 +348,7 @@ class DynamicDataTablePageTest
 	{
 		String page = tester.getLastResponseAsString();
 		// with "Rows from", which the JSON table has besides infinite scroll
-		assertEquals(13, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
+		assertEquals(14, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
 			.length - 1);
 		assertTrue(page.contains("Whether the user can resize the columns"), page);
 		tester.assertContains("Resizable");

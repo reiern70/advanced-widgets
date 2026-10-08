@@ -8,6 +8,8 @@ import java.util.Optional;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
+import org.apache.wicket.behavior.AttributeAppender;
+import org.apache.wicket.markup.html.TransparentWebMarkupContainer;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
@@ -47,6 +49,10 @@ public abstract class DemoPage extends BasePage
 
 	protected DemoPage()
 	{
+		// its children are the page's: it only adds the class making a wide demo take the
+		// whole width of the window
+		add(new TransparentWebMarkupContainer("main").add(new AttributeAppender("class",
+			() -> isWide() ? "container--wide" : null, " ")));
 		add(new BookmarkablePageLink<>("back", HomePage.class));
 		add(newDemoLink("previous", Demos.previous(getClass())));
 		add(newDemoLink("next", Demos.next(getClass())));
@@ -64,6 +70,15 @@ public abstract class DemoPage extends BasePage
 		String demo = getFrameworkDemo();
 		add(demo != null ? new FrameworkTabs("frameworkTabs", demo, this::getFrameworkConfig)
 			: new WebMarkupContainer("frameworkTabs").setVisible(false));
+	}
+
+	/**
+	 * @return whether the demo takes the whole width of the window, for wide components such as
+	 *         the grids; {@code false}, the default, keeps it as wide as the other pages
+	 */
+	protected boolean isWide()
+	{
+		return false;
 	}
 
 	/**

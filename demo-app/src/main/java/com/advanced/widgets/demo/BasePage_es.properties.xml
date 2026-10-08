@@ -24,10 +24,10 @@
 	<entry key="category.themes">Temas</entry>
 	<entry key="category.realTime">Tiempo real</entry>
 	<entry key="category.frameworks">React y Svelte</entry>
-	<entry key="demo.jsonTable">Tabla de datos JSON</entry>
-	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets.</entry>
-	<entry key="demo.beanTable">Tabla de datos Bean</entry>
-	<entry key="demo.beanTable.description">La misma tabla, con sus filas generadas en el servidor por componentes de Wicket.</entry>
+	<entry key="demo.jsonTable">Grid JSON</entry>
+	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets, en Wicket, React y Svelte.</entry>
+	<entry key="demo.beanTable">Grid Bean</entry>
+	<entry key="demo.beanTable.description">El mismo grid, con sus filas generadas en el servidor por componentes de Wicket.</entry>
 	<entry key="demo.jsonList">Lista infinita JSON</entry>
 	<entry key="demo.jsonList.description">Mil usuarios como tarjetas, generadas en el navegador a partir de JSON y cargadas al desplazarse.</entry>
 	<entry key="demo.tree">Árbol</entry>
@@ -40,6 +40,8 @@
 	<entry key="demo.dropdown.description">Selección simple y múltiple, abierta, filtrada y elegida en el navegador.</entry>
 	<entry key="demo.autocomplete">Autocompletado</entry>
 	<entry key="demo.autocomplete.description">Uno o varios valores sugeridos mientras escribe, cada fila a partir de una plantilla, los elegidos como chips.</entry>
+	<entry key="demo.buttons">Botones</entry>
+	<entry key="demo.buttons.description">Botones principales, secundarios, discretos y de peligro en tres tamaños, con texto, icono o ambos, en los colores del tema.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
 	<entry key="demo.modalDialog">Diálogo modal</entry>

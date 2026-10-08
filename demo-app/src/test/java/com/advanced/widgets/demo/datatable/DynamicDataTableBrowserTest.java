@@ -286,8 +286,10 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 
 		@SuppressWarnings("unchecked")
 		List<Number> gaps = (List<Number>)js().executeScript("""
-			var actions = document.querySelectorAll(
-				'table.dynamic-dataview .dynamic-data-table-actions')[0].children;
+			// the actions shown: the count of the selected rows is hidden while none is
+			var actions = Array.prototype.filter.call(document.querySelectorAll(
+				'table.dynamic-dataview .dynamic-data-table-actions')[0].children,
+				function (action) { return action.getClientRects().length > 0; });
 			var gaps = [];
 			for (var i = 1; i < actions.length; i++) {
 				gaps.push(actions[i].getBoundingClientRect().left -

@@ -15,13 +15,13 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.NavigatorLab
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.navigation.paging.IPageableItems;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.util.lang.Args;
 
+import com.advanced.widgets.dropdown.Dropdown;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPosition;
 
 /**
@@ -255,7 +255,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 					table.isInfiniteScroll() == false);
 			}
 		};
-		DropDownChoice<Long> choice = new DropDownChoice<>("itemsPerPage", new IModel<Long>()
+		Dropdown<Long> choice = new Dropdown<>("itemsPerPage", new IModel<Long>()
 		{
 			private static final long serialVersionUID = 1L;
 

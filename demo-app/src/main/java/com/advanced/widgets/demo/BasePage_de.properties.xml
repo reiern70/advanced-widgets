@@ -24,10 +24,10 @@
 	<entry key="category.themes">Farbschemas</entry>
 	<entry key="category.realTime">Echtzeit</entry>
 	<entry key="category.frameworks">React und Svelte</entry>
-	<entry key="demo.jsonTable">JSON-Datentabelle</entry>
-	<entry key="demo.jsonTable.description">Tausend Benutzer, im Browser aus JSON erzeugt, mit Live-Aktualisierungen über WebSockets.</entry>
-	<entry key="demo.beanTable">Bean-Datentabelle</entry>
-	<entry key="demo.beanTable.description">Dieselbe Tabelle, ihre Zeilen auf dem Server von Wicket-Komponenten erzeugt.</entry>
+	<entry key="demo.jsonTable">JSON-Grid</entry>
+	<entry key="demo.jsonTable.description">Tausend Benutzer, im Browser aus JSON erzeugt, mit Live-Aktualisierungen über WebSockets, in Wicket, React und Svelte.</entry>
+	<entry key="demo.beanTable">Bean-Grid</entry>
+	<entry key="demo.beanTable.description">Dasselbe Grid, seine Zeilen auf dem Server von Wicket-Komponenten erzeugt.</entry>
 	<entry key="demo.jsonList">JSON-Endlosliste</entry>
 	<entry key="demo.jsonList.description">Tausend Benutzer als Karten, im Browser aus JSON erzeugt und beim Rollen geladen.</entry>
 	<entry key="demo.tree">Baum</entry>
@@ -40,6 +40,8 @@
 	<entry key="demo.dropdown.description">Einfach- und Mehrfachauswahl, im Browser geöffnet, gefiltert und gewählt.</entry>
 	<entry key="demo.autocomplete">Autovervollständigung</entry>
 	<entry key="demo.autocomplete.description">Ein oder mehrere Werte, beim Tippen vorgeschlagen, jede Zeile aus einer Vorlage, die gewählten als Chips.</entry>
+	<entry key="demo.buttons">Schaltflächen</entry>
+	<entry key="demo.buttons.description">Primäre, sekundäre, dezente und gefährliche Schaltflächen in drei Größen, mit Text, Symbol oder beidem, in den Farben des Farbschemas.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Farbschemas, die in jedem Browser gleich aussehen.</entry>
 	<entry key="demo.modalDialog">Modaler Dialog</entry>

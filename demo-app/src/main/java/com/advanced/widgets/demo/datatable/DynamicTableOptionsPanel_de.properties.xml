@@ -44,7 +44,6 @@
 	<entry key="columnState.session">in der Sitzung</entry>
 	<entry key="columnState.file">in einer Datei</entry>
 	<entry key="columnState.help">Wo Reihenfolge, Sichtbarkeit und Breiten der Spalten gespeichert werden: in der Sitzung oder in einer Datei im temporären Verzeichnis, die Neustarts des Servers überdauert.</entry>
-	<entry key="resetColumns">Spalten zurücksetzen</entry>
 	<entry key="infiniteScroll">Endloses Scrollen</entry>
 	<entry key="infiniteScroll.off">aus, seitenweise</entry>
 	<entry key="infiniteScroll.on">an</entry>
@@ -58,4 +57,9 @@
 	<entry key="selection.NONE">keine</entry>
 	<entry key="selection.ONE">eine Zeile</entry>
 	<entry key="selection.MANY">mehrere Zeilen</entry>
+	<entry key="selectionCount">Auswahlzähler</entry>
+	<entry key="selectionCount.shown">in der Navigation</entry>
+	<entry key="selectionCount.hidden">ausgeblendet</entry>
+	<entry key="selectionCount.help">Ob die Navigation neben ihren Aktionen anzeigt, wie viele Benutzer ausgewählt sind, etwa &quot;2 ausgewählt&quot;: eine SelectionCountToolbarAction der Tabelle, die hier ein- und ausgeschaltet wird.</entry>
+	<entry key="rowsSource.local">einer lokalen JSON-Liste</entry>
 </properties>

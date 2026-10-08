@@ -42,12 +42,13 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- TEST DEPENDENCIES -->
+		<!-- the container provides it; JsonRowsResource reads the method and body of a request -->
 		<dependency>
 			<groupId>jakarta.servlet</groupId>
 			<artifactId>jakarta.servlet-api</artifactId>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
+		<!-- TEST DEPENDENCIES -->
 		<dependency>
 			<groupId>org.webjars.npm</groupId>
 			<artifactId>fortawesome__fontawesome-free</artifactId>

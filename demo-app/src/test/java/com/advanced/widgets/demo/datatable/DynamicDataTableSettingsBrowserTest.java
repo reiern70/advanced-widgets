@@ -241,7 +241,7 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 			rearrangeColumns();
 			assertTrue(mixedCells().isEmpty(), "after rearranging: " + mixedCells());
 			keepColumnStateInFileAndBack();
-			if (driver.findElements(By.linkText(PUSH_ROWS)).isEmpty() == false)
+			if (driver.findElements(pushRowsButton()).isEmpty() == false)
 			{
 				pushRows();
 			}
@@ -422,11 +422,19 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 	 * Has the rows of the page pushed over the web socket, in reverse order, and waits for a push
 	 * of the changed progress too.
 	 */
+	/**
+	 * @return the button pushing the rows of the page, which only the JSON grid has
+	 */
+	private static By pushRowsButton()
+	{
+		return By.xpath("//button[normalize-space()='" + PUSH_ROWS + "']");
+	}
+
 	private void pushRows()
 	{
 		String first = (String)js().executeScript(
 			"return document.querySelector('table.dynamic-dataview tr[data-key]').getAttribute('data-key');");
-		driver.findElement(By.linkText(PUSH_ROWS)).click();
+		driver.findElement(pushRowsButton()).click();
 		wait.until(d -> first.equals(js().executeScript("return document.querySelector(" +
 			"'table.dynamic-dataview tr[data-key]').getAttribute('data-key');")) == false);
 		try

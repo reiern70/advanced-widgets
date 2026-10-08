@@ -360,6 +360,69 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 		assertTrue(table.getSelection().isEmpty());
 	}
 
+	@Test
+	void theSelectionCountTellsHowManyRowsAreSelected()
+	{
+		SelectionCountToolbarAction<Row, Long> count = startWithCount(5, SelectionMode.MANY);
+		String path = countPath();
+		tester.assertInvisible(path);
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "2");
+
+		tester.assertVisible(path);
+		tester.assertComponentOnAjaxResponse(path);
+		tester.assertLabel(path, "2 selected");
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("class=\"dynamic-data-table-selection-count\""), response);
+
+		count.setShown(false);
+		executeAction(JsonBasedDynamicDataTable.DESELECT_ACTION, "2");
+		tester.assertInvisible(path);
+	}
+
+	@Test
+	void theSelectionCountCountsAllRowsOnceAllAreSelected()
+	{
+		startWithCount(5, SelectionMode.MANY);
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_PAGE_ACTION, null);
+		tester.clickLink(SELECT_ALL);
+
+		tester.assertComponentOnAjaxResponse(countPath());
+		tester.assertLabel(countPath(), "5 selected");
+	}
+
+	@Test
+	void aTableSelectingNoRowShowsNoCount()
+	{
+		startWithCount(5, SelectionMode.NONE);
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+
+		tester.assertInvisible(countPath());
+	}
+
+	private SelectionCountToolbarAction<Row, Long> startWithCount(int rows, SelectionMode mode)
+	{
+		provider = new RowsProvider(rows);
+		table = new TestTable(provider);
+		table.setSelectionMode(mode);
+		table.setItemsPerPageOptions(2L, 4L);
+		SelectionCountToolbarAction<Row, Long> count = new SelectionCountToolbarAction<>();
+		table.addToolbarAction(count);
+		tester.startPage(new TablePage(table));
+		return count;
+	}
+
+	/**
+	 * @return the path of the count in the navigation, below the rows by default
+	 */
+	private String countPath()
+	{
+		return "table:bottomNavigation:span:actionsContainer:actions:1";
+	}
+
 	private void executeAction(String action, String key)
 	{
 		tester.getRequest().getPostParameters().setParameterValue("action", action);

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Schaltflächen</entry>
+	<entry key="explanation">&lt;p&gt;Schaltflächen in den Farben des in der oberen Leiste gewählten Farbschemas, gleich in Wicket, React und Svelte: ein Stylesheet, wicket-button.css, zeichnet sie alle.&lt;/p&gt;&lt;p&gt;In Wicket führt ein AjaxActionButton eine Aktion per Ajax aus und zeigt einen Text, ein Symbol mit Text oder nur ein Symbol, dessen Text dann sein Tooltip und der Name für Screenreader ist. Ein ButtonBehavior zeichnet jeden Link und jede Formularschaltfläche als solche. Es gibt vier Varianten, primär, sekundär, dezent und gefährlich, und drei Größen, klein, mittel und groß. React und Svelte haben eine Komponente Button mit denselben Varianten und Größen.&lt;/p&gt;</entry>
+	<entry key="variant">Variante</entry>
+	<entry key="variant.primary">Primär</entry>
+	<entry key="variant.secondary">Sekundär</entry>
+	<entry key="variant.ghost">Dezent</entry>
+	<entry key="variant.danger">Gefährlich</entry>
+	<entry key="size.small">Klein</entry>
+	<entry key="size.medium">Mittel</entry>
+	<entry key="size.large">Groß</entry>
+	<entry key="save">Speichern</entry>
+	<entry key="refresh">Aktualisieren</entry>
+	<entry key="settings">Einstellungen</entry>
+	<entry key="delete">Löschen</entry>
+	<entry key="clicked">Geklickt: {0}</entry>
+	<entry key="clicked.none">Klicken Sie auf eine Schaltfläche.</entry>
+	<entry key="disabled">Deaktiviert</entry>
+	<entry key="asLink">Ein Link als Schaltfläche</entry>
+	<entry key="asLink.text">Mehr erfahren</entry>
+</properties>

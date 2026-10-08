@@ -44,7 +44,6 @@
 	<entry key="columnState.session">in the session</entry>
 	<entry key="columnState.file">in a file</entry>
 	<entry key="columnState.help">Where the order, visibility and widths of the columns are kept: in the session, or in a file of the temporary directory that survives restarts of the server.</entry>
-	<entry key="resetColumns">Reset the columns</entry>
 	<entry key="infiniteScroll">Infinite scroll</entry>
 	<entry key="infiniteScroll.off">off, page by page</entry>
 	<entry key="infiniteScroll.on">on</entry>
@@ -58,4 +57,9 @@
 	<entry key="selection.NONE">none</entry>
 	<entry key="selection.ONE">one row</entry>
 	<entry key="selection.MANY">many rows</entry>
+	<entry key="selectionCount">Selection count</entry>
+	<entry key="selectionCount.shown">in the navigation</entry>
+	<entry key="selectionCount.hidden">hidden</entry>
+	<entry key="selectionCount.help">Whether the navigation tells how many users are selected, such as &quot;2 selected&quot;, next to its actions: a SelectionCountToolbarAction added to the table, turned on and off here.</entry>
+	<entry key="rowsSource.local">a local list of JSON</entry>
 </properties>
