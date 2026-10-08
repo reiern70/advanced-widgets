@@ -94,4 +94,18 @@ describe('license keys', () => {
 			importKey.mockRestore();
 		}
 	});
+
+	it('checks keys where the page has no Web Crypto, served over HTTP from another host', async () => {
+		vi.stubGlobal('crypto', {});
+		try {
+			expect((await verifyLicense(demoKey)).components).toEqual(['*']);
+			const key = demoKey.trim();
+			const at = key.length - 10;
+			const forged = key.substring(0, at) + (key.charAt(at) === 'A' ? 'B' : 'A') +
+				key.substring(at + 1);
+			await expect(verifyLicense(forged)).rejects.toThrow('signature');
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
 });

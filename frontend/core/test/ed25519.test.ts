@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { verifyEd25519 } from '../src/ed25519.js';
+import { sha512Of, verifyEd25519 } from '../src/ed25519.js';
 import { PUBLIC_KEY } from '../src/index.js';
 // the key of the demo application, signed by the private key of the server
 import demoKey from '../../../demo-app/src/main/resources/META-INF/advanced-widgets.license?raw';
@@ -15,6 +15,25 @@ function fromBase64(text: string): Uint8Array {
 	return Uint8Array.from(atob(base64 + '='.repeat((4 - base64.length % 4) % 4)),
 		(char) => char.charCodeAt(0));
 }
+
+describe('sha512Of, for pages without Web Crypto', () => {
+	it('hashes as Web Crypto does, over one block and more', async () => {
+		for (const length of [0, 3, 111, 112, 127, 128, 129, 300]) {
+			const data = Uint8Array.from({ length }, (_, index) => (index * 31 + 7) & 0xff);
+			const expected = new Uint8Array(await crypto.subtle.digest('SHA-512', data));
+
+			expect(sha512Of(data)).toEqual(expected);
+		}
+	});
+
+	it('gives the digest of the standard for abc', () => {
+		const hex = Array.from(sha512Of(new TextEncoder().encode('abc')),
+			(byte) => byte.toString(16).padStart(2, '0')).join('');
+
+		expect(hex).toBe('ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a' +
+			'2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f');
+	});
+});
 
 describe('verifyEd25519, for browsers without Ed25519 in Web Crypto', () => {
 	it('verifies what Web Crypto signs, and refuses what was changed', async () => {
