@@ -24,5 +24,9 @@
 	<entry key="Dropdown.filter">Filter…</entry>
 	<entry key="Dropdown.noMatch">No matches</entry>
 	<entry key="Dropdown.more">+{0} more</entry>
+	<entry key="Dropdown.remove">Remove {0}</entry>
+	<entry key="Autocomplete.placeholder">Type to search…</entry>
+	<entry key="Autocomplete.noMatch">No matches</entry>
+	<entry key="Autocomplete.searching">Searching…</entry>
 	<entry key="License.placeholder">This is a private component of UI Advanced Widgets: it needs a license key, which you get by registering.</entry>
 </properties>

@@ -79,20 +79,6 @@
 	opacity: 0.65;
 }
 
-.wicket-dropdown-chip {
-	padding: 0 0.5em;
-	border-radius: 999px;
-	background: var(--wicket-theme-selected, #e8eefc);
-	font-size: 0.85em;
-	line-height: 1.6;
-	white-space: nowrap;
-}
-
-.wicket-dropdown-more {
-	background: transparent;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
-}
-
 /* the arrow: a chevron turning upwards while the list is open */
 .wicket-dropdown-arrow {
 	flex: none;

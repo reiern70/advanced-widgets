@@ -90,9 +90,12 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 	 */
 	private static final String NO_VEIL_PARAMETER = "wicket_nb";
 
+	/** The width, in pixels, no column is resized below unless set otherwise. */
+	public static final int DEFAULT_MIN_COLUMN_WIDTH = 80;
+
 	private final Mode mode;
 
-	private int minColumnWidth = 30;
+	private int minColumnWidth = DEFAULT_MIN_COLUMN_WIDTH;
 
 	/**
 	 * Resizes in {@link Mode#FIT}.
@@ -120,7 +123,8 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 	}
 
 	/**
-	 * @return the width, in pixels, no column is resized below
+	 * @return the width, in pixels, no column is resized below,
+	 *         {@value #DEFAULT_MIN_COLUMN_WIDTH} by default
 	 */
 	public int getMinColumnWidth()
 	{

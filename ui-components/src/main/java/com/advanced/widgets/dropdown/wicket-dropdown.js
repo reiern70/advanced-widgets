@@ -209,13 +209,15 @@
 				return;
 			}
 			const self = this;
+			const removeLabel = this.select.disabled ? null : (this.options.remove || 'Remove {0}');
 			chosen.slice(0, MAX_CHIPS).forEach(function (option) {
-				self.value.appendChild(create('span', 'wicket-dropdown-chip', option.text));
+				const chip = Wicket.Chips.create(option.text, removeLabel);
+				chip.dataset.index = option.index;
+				self.value.appendChild(chip);
 			});
 			if (chosen.length > MAX_CHIPS) {
 				const more = (this.options.more || '+{0}').replace('{0}', chosen.length - MAX_CHIPS);
-				this.value.appendChild(create('span', 'wicket-dropdown-chip wicket-dropdown-more',
-					more));
+				this.value.appendChild(Wicket.Chips.more(more));
 			}
 			this.toggle.title = chosen.map(function (option) {
 				return option.text;
@@ -229,7 +231,14 @@
 				target.addEventListener(type, listener);
 				self.listeners.push([target, type, listener]);
 			};
-			listen(this.toggle, 'click', function () {
+			listen(this.toggle, 'click', function (event) {
+				// the x of a chip deselects its option, without opening the list
+				const chip = Wicket.Chips.removeTarget(event);
+				if (chip) {
+					event.preventDefault();
+					self.deselect(Number(chip.dataset.index));
+					return;
+				}
 				if (self.isOpen()) {
 					self.close(false);
 				} else {
@@ -237,6 +246,18 @@
 				}
 			});
 			listen(this.toggle, 'keydown', function (event) {
+				if (self.multiple && (event.key === 'Backspace' || event.key === 'Delete')) {
+					// removes the last chosen option, as the x of its chip does
+					event.preventDefault();
+					const chosen = Array.prototype.filter.call(self.select.options,
+						function (option) {
+							return option.selected && option.value !== '';
+						});
+					if (chosen.length) {
+						self.deselect(chosen[chosen.length - 1].index);
+					}
+					return;
+				}
 				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
 					event.preventDefault();
 					self.open();
@@ -422,6 +443,22 @@
 					this.close(false);
 					break;
 			}
+		},
+
+		/**
+		 * Deselects an option of a multiple drop-down, as the x of its chip does.
+		 *
+		 * @param index the index of the option in the select
+		 */
+		deselect : function (index) {
+			const option = this.select.options[index];
+			if (!option || !option.selected || this.select.disabled) {
+				return;
+			}
+			option.selected = false;
+			this.update();
+			this.select.dispatchEvent(new Event('input', { bubbles : true }));
+			this.select.dispatchEvent(new Event('change', { bubbles : true }));
 		},
 
 		/**

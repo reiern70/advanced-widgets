@@ -51,7 +51,7 @@ class ResizableColumnsBehaviorTest extends WicketTestCase
 	{
 		tester.startPage(new TablePage("table", new ResizableColumnsBehavior()));
 
-		tester.assertContains(Pattern.quote("{\"mode\":\"fit\",\"minWidth\":30}"));
+		tester.assertContains(Pattern.quote("{\"mode\":\"fit\",\"minWidth\":80}"));
 	}
 
 	@Test

@@ -5,7 +5,7 @@
 ;(function (undefined) {
 	'use strict';
 
-	Wicket.DynamicDataTable.engines.handlebars = {
+	Wicket.Templates.engines.handlebars = {
 		compile: function (template) {
 			const compiled = window.Handlebars.compile(template);
 			return function (data, meta) {

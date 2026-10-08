@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="Theme.DEFAULT">Predeterminado (naranja)</entry>
+	<entry key="Theme.BLUE">Azul</entry>
+	<entry key="Theme.RED">Rojo</entry>
+	<entry key="Theme.GREY">Gris</entry>
+	<entry key="Theme.GREEN">Verde</entry>
+	<entry key="Theme.NAVY">Azul marino</entry>
+	<entry key="Theme.LIGHT_BLUE">Azul claro</entry>
+	<entry key="Theme.DARK">Oscuro</entry>
+</properties>

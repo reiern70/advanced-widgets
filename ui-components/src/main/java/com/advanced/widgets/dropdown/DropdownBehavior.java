@@ -20,6 +20,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 
+import com.advanced.widgets.chips.Chips;
 import com.github.openjson.JSONObject;
 
 /**
@@ -159,6 +160,7 @@ public class DropdownBehavior extends Behavior
 		options.put("filter", component.getString("Dropdown.filter", null, "Filter…"));
 		options.put("noMatch", component.getString("Dropdown.noMatch", null, "No matches"));
 		options.put("more", component.getString("Dropdown.more", null, "+{0}"));
+		options.put("remove", component.getString("Dropdown.remove", null, "Remove {0}"));
 		return options;
 	}
 
@@ -171,6 +173,7 @@ public class DropdownBehavior extends Behavior
 	public static void renderHeadItems(IHeaderResponse response)
 	{
 		CoreLibrariesContributor.contribute(Application.get(), response);
+		Chips.renderHeadItems(response);
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 	}

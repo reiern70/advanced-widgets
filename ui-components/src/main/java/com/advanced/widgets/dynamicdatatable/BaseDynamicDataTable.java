@@ -42,6 +42,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -68,6 +69,7 @@ import com.advanced.widgets.table.IMovableColumnsTable;
 import com.advanced.widgets.table.IResizableColumnsTable;
 import com.advanced.widgets.table.MovableColumnsBehavior;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
+import com.advanced.widgets.template.Templates;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -150,7 +152,18 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	private static final long serialVersionUID = 1L;
 
 	private static final ResourceReference JAVASCRIPT = new JavaScriptResourceReference(
-		BaseDynamicDataTable.class, "dynamic-data-table.js");
+		BaseDynamicDataTable.class, "dynamic-data-table.js")
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public List<HeaderItem> getDependencies()
+		{
+			List<HeaderItem> dependencies = super.getDependencies();
+			dependencies.add(JavaScriptHeaderItem.forReference(Templates.JS));
+			return dependencies;
+		}
+	};
 
 	private static final String ACTION_PARAMETER = "action";
 
@@ -2112,8 +2125,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			() -> ARIA_SORT.get(getSortOrder(column))));
 	}
 
+	/**
+	 * @return the sort state of the provider, {@code null} if it does not sort
+	 */
 	@SuppressWarnings("unchecked")
-	private ISortState<Object> getSortState()
+	ISortState<Object> getSortState()
 	{
 		return provider instanceof ISortStateLocator<?> locator
 			? (ISortState<Object>)locator.getSortState() : null;

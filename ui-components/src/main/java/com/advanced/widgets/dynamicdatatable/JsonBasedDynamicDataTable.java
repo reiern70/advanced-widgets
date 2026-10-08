@@ -16,11 +16,16 @@ import java.util.StringJoiner;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
+import org.apache.wicket.extensions.markup.html.repeater.data.sort.ISortState;
+import org.apache.wicket.extensions.markup.html.repeater.util.SingleSortState;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.Response;
+import org.apache.wicket.request.Url;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.util.lang.Args;
 
@@ -49,6 +54,14 @@ import com.github.openjson.JSONObject;
  * the current page has changed, the browser has the toolbars re-rendered. Rows pushed by the
  * application are shown as they are.
  * <p>
+ * By default the endpoint is the page itself, an Ajax behavior of the table
+ * ({@link RowsSource#PAGE}). With {@link #setRowsSource(RowsSource) RowsSource.RESOURCE} the
+ * browser fetches the rows from a {@link JsonRowsResource} the application mounted and gave the
+ * table with {@link #setRowsResource(ResourceReference)}: a stateless request that does not touch
+ * the page, with the paging, the sort and the parameters of
+ * {@link #addRowsParameters(PageParameters)} in its URL. Paging, sorting and selecting still go
+ * through the page; scrolling infinitely loads the further rows from the page.
+ * <p>
  * With an {@link ISortableDynamicDataProvider}, the header of every {@link ISortableDynamicColumn}
  * sorts the rows. A {@link SortableDynamicColumn} is hideable and movable if the column it wraps
  * is.
@@ -75,7 +88,23 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	/** The parameter asking the data endpoint for the next page of rows, scrolling infinitely. */
 	private static final String MORE_PARAMETER = "more";
 
+	/**
+	 * Where the browser fetches the rows of the table from.
+	 */
+	public enum RowsSource
+	{
+		/** An Ajax behavior of the table, on the page: the default. */
+		PAGE,
+
+		/** A mounted {@link JsonRowsResource}, see {@link #setRowsResource(ResourceReference)}. */
+		RESOURCE
+	}
+
 	private final Map<String, IWebSocketMessageType> messageTypes = new LinkedHashMap<>();
+
+	private RowsSource rowsSource = RowsSource.PAGE;
+
+	private ResourceReference rowsResource;
 
 	private final DataBehavior dataBehavior;
 
@@ -124,6 +153,114 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		add(dataBehavior = new DataBehavior());
 	}
 
+	/**
+	 * @return where the browser fetches the rows from, {@link RowsSource#PAGE} by default
+	 */
+	public RowsSource getRowsSource()
+	{
+		return rowsSource;
+	}
+
+	/**
+	 * @param rowsSource
+	 *            where the browser fetches the rows from; {@link RowsSource#RESOURCE} needs
+	 *            {@link #setRowsResource(ResourceReference) a resource}
+	 * @return {@code this}
+	 */
+	public JsonBasedDynamicDataTable<T, K> setRowsSource(RowsSource rowsSource)
+	{
+		this.rowsSource = Args.notNull(rowsSource, "rowsSource");
+		return this;
+	}
+
+	/**
+	 * @return the mounted {@link JsonRowsResource} serving the rows with
+	 *         {@link RowsSource#RESOURCE}, {@code null} if none was given
+	 */
+	public ResourceReference getRowsResource()
+	{
+		return rowsResource;
+	}
+
+	/**
+	 * @param rowsResource
+	 *            the mounted {@link JsonRowsResource} serving the rows with
+	 *            {@link RowsSource#RESOURCE}
+	 * @return {@code this}
+	 */
+	public JsonBasedDynamicDataTable<T, K> setRowsResource(ResourceReference rowsResource)
+	{
+		this.rowsResource = rowsResource;
+		return this;
+	}
+
+	/**
+	 * Adds the parameters the {@link JsonRowsResource} needs besides the paging and the sort, for
+	 * example a filter, to the URL the browser fetches the rows from with
+	 * {@link RowsSource#RESOURCE}. Adds nothing by default.
+	 *
+	 * @param parameters
+	 *            the parameters of the URL
+	 */
+	protected void addRowsParameters(PageParameters parameters)
+	{
+	}
+
+	/**
+	 * @return whether the browser fetches the rows from the {@link #getRowsResource() resource}
+	 */
+	private boolean isFromResource()
+	{
+		if (rowsSource != RowsSource.RESOURCE)
+		{
+			return false;
+		}
+		if (rowsResource == null)
+		{
+			throw new IllegalStateException(
+				"A table whose rows come from a resource needs setRowsResource(...): " + this);
+		}
+		return true;
+	}
+
+	/**
+	 * @return the URL of the {@link #getRowsResource() resource} serving the rows of the current
+	 *         page, sorted as the table is
+	 */
+	private String rowsResourceUrl()
+	{
+		PageParameters parameters = new PageParameters();
+		parameters.set(JsonRowsResource.FIRST, getCurrentPage() * getItemsPerPage());
+		parameters.set(JsonRowsResource.COUNT, getItemsPerPage());
+		ISortState<Object> state = getSortState();
+		if (state instanceof SingleSortState<Object> single && single.getSort() != null)
+		{
+			parameters.set(JsonRowsResource.SORT, single.getSort().getProperty());
+			parameters.set(JsonRowsResource.ASCENDING, single.getSort().isAscending());
+		}
+		addRowsParameters(parameters);
+		Url url = getRequestCycle().mapUrlFor(rowsResource, parameters);
+		// a full URL, as the page and an Ajax response would resolve a relative one differently
+		return getRequestCycle().getUrlRenderer().renderFullUrl(url);
+	}
+
+	/**
+	 * @return the selected rows of the current page, which a {@link JsonRowsResource} does not
+	 *         know, by their formatted keys
+	 */
+	private JSONArray selectedKeysOfPage()
+	{
+		JSONArray keys = new JSONArray();
+		for (K key : getCurrentPageKeys())
+		{
+			if (isSelected(key))
+			{
+				keys.put(getProvider().formatKey(key));
+			}
+		}
+		return keys;
+	}
+
 	private static <T> IDynamicColumn<T> unwrap(IDynamicColumn<T> column)
 	{
 		return column instanceof SortableDynamicColumn<T, ?> sortable ? sortable.getColumn()
@@ -163,8 +300,31 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	@Override
 	protected void refreshRows(IPartialPageRequestHandler target)
 	{
+		if (isFromResource())
+		{
+			target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".reload(" +
+				resourceState() + "); }");
+			onRowsSent(getCurrentPageKeys());
+			return;
+		}
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".update(" +
 			currentPageJson() + "); }");
+	}
+
+	/**
+	 * @return what the browser needs to fetch the rows of the current page from the resource:
+	 *         its URL, the selected rows and whether to scroll back to the first row
+	 */
+	private JSONObject resourceState()
+	{
+		JSONObject state = new JSONObject();
+		state.put("dataUrl", rowsResourceUrl());
+		state.put("selectedKeys", selectedKeysOfPage());
+		if (takeScrollToTop())
+		{
+			state.put("top", true);
+		}
+		return state;
 	}
 
 	/**
@@ -443,7 +603,18 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 			columnConfig.put("cssClass", column.getCssClass());
 			columnConfigs.put(columnConfig);
 		}
-		config.put("dataUrl", dataBehavior.getCallbackUrl().toString());
+		if (isFromResource())
+		{
+			config.put("dataUrl", rowsResourceUrl());
+			config.put("selectedKeys", selectedKeysOfPage());
+			// scrolling infinitely, the further rows come from the page, which counts them
+			config.put("moreUrl", dataBehavior.getCallbackUrl().toString());
+			onRowsSent(getCurrentPageKeys());
+		}
+		else
+		{
+			config.put("dataUrl", dataBehavior.getCallbackUrl().toString());
+		}
 		config.put("engine", templateEngine.getName());
 		config.put("columns", columnConfigs);
 		config.put("push", pushEnabled);
@@ -461,7 +632,8 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	@Override
 	protected String getScriptArguments()
 	{
-		boolean partial = getRequestCycle().find(IPartialPageRequestHandler.class).isPresent();
+		boolean partial = getRequestCycle().find(IPartialPageRequestHandler.class).isPresent() &&
+			!isFromResource();
 		return ", " + buildMessageHandlers() +
 			(partial ? ", " + escapeForScript(currentPageJson()) : "");
 	}

@@ -136,7 +136,7 @@
 	function Instance(table, options) {
 		this.table = table;
 		this.mode = options.mode === 'stretch' ? 'stretch' : 'fit';
-		this.minWidth = options.minWidth !== undefined ? options.minWidth : 30;
+		this.minWidth = options.minWidth !== undefined ? options.minWidth : 80;
 		this.step = options.step !== undefined ? options.step : 10;
 		this.onResize = options.onResize;
 		this.adjustToParent = options.adjustToParent === true;

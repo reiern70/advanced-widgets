@@ -4,10 +4,15 @@
  */
 package com.advanced.widgets.dynamicdatatable;
 
+import java.util.List;
+
+import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
+
+import com.advanced.widgets.template.Templates;
 
 /**
  * Evaluates the column templates with <a href="https://handlebarsjs.com/">Handlebars</a>.
@@ -23,7 +28,18 @@ public class HandlebarsTemplateEngine implements ITemplateEngine
 	private static final long serialVersionUID = 1L;
 
 	private static final ResourceReference ADAPTER = new JavaScriptResourceReference(
-		HandlebarsTemplateEngine.class, "handlebars-adapter.js");
+		HandlebarsTemplateEngine.class, "handlebars-adapter.js")
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public List<HeaderItem> getDependencies()
+		{
+			List<HeaderItem> dependencies = super.getDependencies();
+			dependencies.add(JavaScriptHeaderItem.forReference(Templates.JS));
+			return dependencies;
+		}
+	};
 
 	@Override
 	public String getName()

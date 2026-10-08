@@ -20,19 +20,8 @@
 		return;
 	}
 
-	const HTML_ESCAPES = {
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#39;'
-	};
-
-	const escapeHtml = function (value) {
-		return String(value).replace(/[&<>"']/g, function (c) {
-			return HTML_ESCAPES[c];
-		});
-	};
+	// the escaping and the template engines are those of Wicket.Templates (wicket-templates.js)
+	const escapeHtml = Wicket.Templates.escapeHtml;
 
 	const ROW_CHECKBOX = 'input.dynamic-data-table-select';
 
@@ -61,41 +50,6 @@
 	const COLGROUP_CLASS = 'dynamic-data-table-colgroup';
 
 	const CHOOSER = '.dynamic-data-table-column-chooser';
-
-	const lookup = function (data, path) {
-		return path.split('.').reduce(function (value, name) {
-			return (value === null || value === undefined) ? undefined : value[name];
-		}, data);
-	};
-
-	const builtinEngine = {
-		compile: function (template) {
-			const placeholder = /\{\{\{\s*(@?[\w$.]+)\s*\}\}\}|\{\{\s*(@?[\w$.]+)\s*\}\}/g;
-			const parts = [];
-			let last = 0;
-			let match;
-			while ((match = placeholder.exec(template)) !== null) {
-				parts.push(template.substring(last, match.index));
-				parts.push({ path: match[1] || match[2], raw: match[1] !== undefined });
-				last = placeholder.lastIndex;
-			}
-			parts.push(template.substring(last));
-
-			return function (data, meta) {
-				return parts.map(function (part) {
-					if (typeof part === 'string') {
-						return part;
-					}
-					const value = part.path.charAt(0) === '@' ?
-						lookup(meta, part.path.substring(1)) : lookup(data, part.path);
-					if (value === null || value === undefined) {
-						return '';
-					}
-					return part.raw ? String(value) : escapeHtml(value);
-				}).join('');
-			};
-		}
-	};
 
 	/**
 	 * A dynamic data table.
@@ -130,6 +84,8 @@
 			this.messages = messages || { };
 			this.itemCount = cfg.itemCount;
 			this.currentPage = cfg.currentPage;
+			// the selected rows of the page, for rows from a resource, which does not know them
+			this.selectedKeys = new Set((cfg.selectedKeys || []).map(String));
 			this.table = Wicket.$(cfg.id);
 			if (!this.table) {
 				return;
@@ -175,8 +131,10 @@
 
 		/**
 		 * Fetches the rows from the table's data URL and renders them.
+		 *
+		 * @param done called once the rows are rendered, if given
 		 */
-		load : function () {
+		load : function (done) {
 			const self = this;
 			window.fetch(this.cfg.dataUrl, {
 				credentials: 'same-origin',
@@ -190,10 +148,30 @@
 				if (Wicket.DynamicDataTable.instances[self.id] === self) {
 					self.render(json.rows);
 					self.updatePaging(json.itemCount, json.currentPage);
+					if (done) {
+						done();
+					}
 				}
 			}).catch(function (error) {
 				Wicket.Log.error('Wicket.DynamicDataTable: loading the rows of #' + self.id +
 					' failed', error);
+			});
+		},
+
+		/**
+		 * Fetches the rows of another page, or of the same page sorted otherwise, from the resource
+		 * serving them, as the server tells after paging, sorting or refreshing.
+		 *
+		 * @param state {dataUrl, selectedKeys, top}
+		 */
+		reload : function (state) {
+			this.cfg.dataUrl = state.dataUrl;
+			this.selectedKeys = new Set((state.selectedKeys || []).map(String));
+			const self = this;
+			this.load(function () {
+				if (state.top) {
+					self.scrollToTop();
+				}
 			});
 		},
 
@@ -263,8 +241,9 @@
 			if (veil) {
 				Wicket.Veil.show(veil);
 			}
-			const url = this.cfg.dataUrl + (this.cfg.dataUrl.indexOf('?') >= 0 ? '&' : '?') +
-				'more=true';
+			// rows from a resource: the further rows come from the page, which counts them
+			const base = this.cfg.moreUrl || this.cfg.dataUrl;
+			const url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'more=true';
 			window.fetch(url, {
 				credentials: 'same-origin',
 				headers: { 'Accept': 'application/json' }
@@ -617,6 +596,10 @@
 		 */
 		buildRow : function (key, number, data, selected) {
 			const self = this;
+			if (selected === undefined) {
+				// a row from a resource: selected if the page says so
+				selected = this.selectedKeys.has(String(key));
+			}
 			const meta = { key: key, number: number, selected: !!selected };
 			const tr = document.createElement('tr');
 			tr.id = this.rowId(key);
@@ -664,11 +647,18 @@
 		updateSelection : function () {
 			let count = 0;
 			let checked = 0;
+			const selectedKeys = this.selectedKeys;
 			Array.prototype.forEach.call(this.rowsBody().rows, function (tr) {
 				const checkbox = tr.querySelector(ROW_CHECKBOX);
 				if (checkbox) {
 					count++;
 					checked += checkbox.checked ? 1 : 0;
+					// remembered for the rows a resource sends again, which it does not know
+					if (checkbox.checked) {
+						selectedKeys.add(tr.getAttribute('data-key'));
+					} else {
+						selectedKeys.delete(tr.getAttribute('data-key'));
+					}
 				}
 				tr.classList.toggle('selected', !!checkbox && checkbox.checked);
 			});
@@ -969,9 +959,7 @@
 	 * The template engines, by the name a table refers to them by. An engine is an object whose
 	 * compile(template) returns function(data) -> markup.
 	 */
-	Wicket.DynamicDataTable.engines = {
-		builtin : builtinEngine
-	};
+	Wicket.DynamicDataTable.engines = Wicket.Templates.engines;
 
 	Wicket.Event.subscribe(Wicket.Event.Topic.DOM_NODE_REMOVING, function (jqEvent, element) {
 		const instances = Wicket.DynamicDataTable.instances;
