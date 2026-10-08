@@ -1,0 +1,37 @@
+# The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
+# and passes everything, websockets included, to Jetty. Settings come from .env, see
+# .env.example.
+services:
+  app:
+    build: .
+    image: advanced-widgets:latest
+    restart: unless-stopped
+    environment:
+      JAVA_OPTIONS: ${JAVA_OPTIONS}
+      DATABASE_URL: ${DATABASE_URL:-}
+    volumes:
+      - page-store:/var/lib/advanced-widgets
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2.11
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  page-store:
+  caddy-data:
+  caddy-config:

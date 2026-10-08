@@ -4,6 +4,8 @@
  */
 package com.advanced.widgets.demo;
 
+import java.io.File;
+
 import org.apache.wicket.csp.CSPDirective;
 import org.apache.wicket.csp.CSPDirectiveSrcValue;
 import org.apache.wicket.Session;
@@ -13,6 +15,7 @@ import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
+import org.apache.wicket.util.string.Strings;
 
 import com.advanced.widgets.demo.autocomplete.AutocompletePage;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
@@ -42,6 +45,12 @@ import com.advanced.widgets.demo.tree.TreeGridPage;
  */
 public class WicketApplication extends WebApplication
 {
+	/** The system property holding the folder of the page store. */
+	public static final String PAGE_STORE_PROPERTY = "advanced-widgets.page-store";
+
+	/** The environment variable holding the folder of the page store. */
+	public static final String PAGE_STORE_ENVIRONMENT_VARIABLE = "ADVANCED_WIDGETS_PAGE_STORE";
+
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
 	 */
@@ -68,6 +77,14 @@ public class WicketApplication extends WebApplication
 		// the demo shows every private component, whatever key the system property or the
 		// environment holds: the license limits only the other applications using the library
 		Licensing.install(this, DemoLicense.key());
+
+		// the pages of the sessions go to this folder on disk, the servlet container's temporary
+		// folder by default; production puts it on a volume of its own
+		File pageStore = pageStoreFolder();
+		if (pageStore != null)
+		{
+			getStoreSettings().setFileStoreFolder(pageStore);
+		}
 
 		// leave out <wicket:child> and the like also in development, they would break the layout
 		getMarkupSettings().setStripWicketTags(true);
@@ -105,5 +122,20 @@ public class WicketApplication extends WebApplication
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 		mountResource(FilesResource.PATH, FilesResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
+	}
+
+	/**
+	 * @return the folder of the page store from the system property {@value #PAGE_STORE_PROPERTY}
+	 *         or the environment variable {@value #PAGE_STORE_ENVIRONMENT_VARIABLE}, or
+	 *         {@code null} to keep Wicket's default
+	 */
+	static File pageStoreFolder()
+	{
+		String folder = System.getProperty(PAGE_STORE_PROPERTY);
+		if (Strings.isEmpty(folder))
+		{
+			folder = System.getenv(PAGE_STORE_ENVIRONMENT_VARIABLE);
+		}
+		return Strings.isEmpty(folder) ? null : new File(folder);
 	}
 }
