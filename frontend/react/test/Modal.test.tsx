@@ -41,9 +41,10 @@ describe('Modal', () => {
 		const dialog = theme.querySelector('.modal-dialog-overlay > .modal-dialog')!;
 		expect(dialog.getAttribute('role')).toBe('dialog');
 		expect(dialog.getAttribute('aria-modal')).toBe('true');
-		const header = dialog.querySelector('.modal-dialog-content > .modal-dialog-header')!;
-		expect(header.textContent).toBe('Edit Ada');
-		expect(dialog.getAttribute('aria-labelledby')).toBe(header.id);
+		const title = dialog.querySelector(
+			'.modal-dialog-content > .modal-dialog-header > .modal-dialog-title')!;
+		expect(title.textContent).toBe('Edit Ada');
+		expect(dialog.getAttribute('aria-labelledby')).toBe(title.id);
 		expect(dialog.querySelector('.modal-dialog-footer button')!.textContent).toBe('Save');
 		expect(document.activeElement).toBe(dialog.querySelector('input'));
 
@@ -63,5 +64,30 @@ describe('Modal', () => {
 		expect(onClose).not.toHaveBeenCalled();
 		fireEvent.click(container.querySelector('.modal-dialog-overlay')!);
 		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('closes with its close button when canClose lets it', () => {
+		const onClose = vi.fn();
+		let allowed = false;
+		const { container } = render(<Modal open onClose={onClose} title="Edit"
+			closeLabel="Schließen" canClose={() => allowed}>Body</Modal>);
+
+		const close = container.querySelector<HTMLElement>('.modal-dialog-close')!;
+		expect(close.getAttribute('aria-label')).toBe('Schließen');
+		fireEvent.click(close);
+		expect(onClose).not.toHaveBeenCalled();
+		allowed = true;
+		fireEvent.click(close);
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves out the close button, dragging and folding when told to', () => {
+		const { container } = render(<Modal open onClose={() => undefined} title="Edit"
+			closeButton={false} draggable={false} foldable={false}>Body</Modal>);
+
+		expect(container.querySelector('.modal-dialog-close')).toBeNull();
+		const dialog = container.querySelector('.modal-dialog')!;
+		expect(dialog.classList.contains('modal-dialog-draggable')).toBe(false);
+		expect(dialog.classList.contains('modal-dialog-foldable')).toBe(false);
 	});
 });

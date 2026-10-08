@@ -9,8 +9,6 @@ import java.util.List;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalDialog;
-import org.apache.wicket.extensions.ajax.markup.html.modal.theme.DefaultTheme;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -18,7 +16,6 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
-import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
@@ -30,13 +27,17 @@ import com.advanced.widgets.demo.DemoPage;
 import com.advanced.widgets.demo.DemoSession;
 import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
+import com.advanced.widgets.modal.IModalButtonFactory;
+import com.advanced.widgets.modal.Modal;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * A team whose members are added, edited and deleted in Wicket's {@link ModalDialog}: Escape and a
- * click around the dialog close it, the focus stays in it while it is open and goes back to the
- * button that opened it. The React and Svelte tabs do the same with the Modal of
+ * A team whose members are added, edited and deleted in the {@link Modal} of ui-components:
+ * Cancel and Save in its footer, on the right; Escape, its close button and a click around the
+ * dialog close it, asking first when the form was modified; its header drags it and folds it on
+ * a double click; the focus stays in it while it is open and goes back to the button that opened
+ * it. The React and Svelte tabs do the same with the Modal of
  * {@code @advanced-widgets/react} and {@code @advanced-widgets/svelte}, the same markup and
  * behaviors, and edit the same team through the {@link TeamResource}.
  */
@@ -44,7 +45,7 @@ public class ModalDialogPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
 
-	private final ModalDialog dialog;
+	private final Modal dialog;
 
 	private final WebMarkupContainer team;
 
@@ -130,23 +131,20 @@ public class ModalDialogPage extends DemoPage
 			}
 		});
 
-		dialog = new ModalDialog("dialog");
-		dialog.add(new DefaultTheme());
-		dialog.closeOnEscape();
-		dialog.closeOnClick();
-		dialog.trapFocus();
+		dialog = new Modal("dialog");
+		dialog.setCloseOnClick(true);
+		dialog.confirmCloseIfModified(new ResourceModel("discard"));
 		add(dialog);
 	}
 
 	/**
-	 * Shows the form of a member in the dialog; saving it repaints the team.
+	 * Shows the form of a member in the dialog, Cancel and Save in its footer; saving it repaints
+	 * the team.
 	 */
 	private void showForm(TeamMember member, IModel<String> title, AjaxRequestTarget target)
 	{
 		boolean added = member.getId() == 0;
-		Fragment content = new Fragment(ModalDialog.CONTENT_ID, "formContent", this);
-		content.add(new Label("title", title));
-		content.add(new MemberFormPanel("form", member)
+		MemberFormPanel form = new MemberFormPanel(Modal.BODY_ID, member)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -163,14 +161,9 @@ public class ModalDialogPage extends DemoPage
 					.replace("{0}", saved.getName()));
 				target.add(team, ModalDialogPage.this.get("feedback"));
 			}
-
-			@Override
-			protected void onCancel(AjaxRequestTarget target)
-			{
-				dialog.close(target);
-			}
-		});
-		dialog.open(content, target);
+		};
+		dialog.open(title, form, target, IModalButtonFactory.close(new ResourceModel("cancel")),
+			form.saveButton());
 	}
 
 	/**
@@ -184,40 +177,22 @@ public class ModalDialogPage extends DemoPage
 			gone(target);
 			return;
 		}
-		Fragment content = new Fragment(ModalDialog.CONTENT_ID, "deleteContent", this);
-		content.add(new Label("question", new StringResourceModel("delete.confirm", this,
-			Model.of(member))));
-		content.add(new AjaxLink<Void>("cancel")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				dialog.close(target);
-			}
-		});
-		content.add(new AjaxLink<Void>("confirm")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				dialog.close(target);
+		Label question = new Label(Modal.BODY_ID, new StringResourceModel("delete.confirm", this,
+			Model.of(member)));
+		dialog.open(new ResourceModel("deleteMember"), question, target,
+			IModalButtonFactory.close(new ResourceModel("cancel")),
+			IModalButtonFactory.primary(new ResourceModel("delete"), confirmed -> {
+				dialog.close(confirmed);
 				if (DemoSession.get().getTeam().delete(id))
 				{
-					ModalDialogPage.this.info(ModalDialogPage.this.getString("deleted")
-						.replace("{0}", member.getName()));
-					target.add(team, ModalDialogPage.this.get("feedback"));
+					info(getString("deleted").replace("{0}", member.getName()));
+					confirmed.add(team, get("feedback"));
 				}
 				else
 				{
-					gone(target);
+					gone(confirmed);
 				}
-			}
-		});
-		dialog.open(content, target);
+			}));
 	}
 
 	private void gone(AjaxRequestTarget target)
@@ -240,7 +215,7 @@ public class ModalDialogPage extends DemoPage
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "team", "addMember", "newMember", "editMember",
 			"edit", "delete", "deleteMember", "delete.confirm", "save", "cancel", "name", "email",
-			"role", "actions", "added", "saved", "deleted", "gone", "empty");
+			"role", "actions", "added", "saved", "deleted", "gone", "empty", "discard", "close");
 		JSONArray roles = new JSONArray();
 		for (String role : TeamStore.ROLES)
 		{

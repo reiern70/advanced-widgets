@@ -17,6 +17,8 @@
 	<entry key="delete.confirm">Delete ${name} from the team?</entry>
 	<entry key="save">Save</entry>
 	<entry key="cancel">Cancel</entry>
+	<entry key="close">Close</entry>
+	<entry key="discard">Discard the changes?</entry>
 	<entry key="name">Name</entry>
 	<entry key="email">Email</entry>
 	<entry key="role">Role</entry>

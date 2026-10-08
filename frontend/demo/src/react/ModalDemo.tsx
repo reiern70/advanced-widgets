@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
 import { Dropdown, Modal } from '@advanced-widgets/react';
 
@@ -16,24 +16,32 @@ import { Feedback, type Message } from './Feedback.js';
 /** What the dialog shows: the form of a member, new when null, or the deletion of one. */
 type Shown = { form: Member | null } | { deletion: Member } | null;
 
+/** The id of the form of a member, which the Save button of the footer submits. */
+const FORM_ID = 'react-member-form';
+
 /**
  * The form of a member, in the markup of the Wicket one; the messages of the resource show above
- * the fields, as Wicket's feedback panel shows them.
+ * the fields, as Wicket's feedback panel shows them. Its buttons are in the footer of the dialog;
+ * it tells whether its fields differ from the member's.
  */
-function MemberForm({ config, member, errors, onSave, onCancel }: { config: ModalDemoConfig;
+function MemberForm({ config, member, errors, onSave, onModified }: { config: ModalDemoConfig;
 	member: Member | null; errors: Partial<Record<keyof MemberFields, string>>;
-	onSave(fields: MemberFields): void; onCancel(): void }) {
+	onSave(fields: MemberFields): void; onModified(modified: boolean): void }) {
 	const { texts } = config;
-	const [fields, setFields] = useState<MemberFields>(() => ({ name: member?.name ?? '',
+	const [initial] = useState<MemberFields>(() => ({ name: member?.name ?? '',
 		email: member?.email ?? '', role: member?.role ?? config.roles[0].value }));
+	const [fields, setFields] = useState<MemberFields>(initial);
 	const set = (field: keyof MemberFields) => (value: string) =>
 		setFields((current) => ({ ...current, [field]: value }));
 	const submit = (event: FormEvent) => {
 		event.preventDefault();
 		onSave(fields);
 	};
+	useEffect(() => {
+		onModified(MEMBER_FIELDS.some((field) => fields[field] !== initial[field]));
+	}, [fields, initial, onModified]);
 	return (
-		<form className="member-form" onSubmit={submit} noValidate>
+		<form id={FORM_ID} className="member-form" onSubmit={submit} noValidate>
 			<Feedback messages={MEMBER_FIELDS.filter((field) => errors[field])
 				.map((field) => ({ level: 'error', text: errors[field]! }))} />
 			<label>
@@ -54,21 +62,14 @@ function MemberForm({ config, member, errors, onSave, onCancel }: { config: Moda
 					onChange={set('role')} filter={texts.filter} noMatch={texts.noMatch}
 					more={texts.more} remove={texts.remove} />
 			</label>
-			<div className="member-form__buttons">
-				<button type="button" className="dynamic-data-table-button" onClick={onCancel}>
-					{texts.cancel}
-				</button>
-				<button type="submit" className="dynamic-data-table-button dynamic-data-table-button-primary">
-					{texts.save}
-				</button>
-			</div>
 		</form>
 	);
 }
 
 /**
  * The modal dialog demo in React: the team of the session, added to and edited in a Modal, a
- * deletion confirmed in one, all through the team resource.
+ * deletion confirmed in one, all through the team resource. Cancel and Save are in the footer;
+ * the dialog asks before it closes a form whose fields were changed.
  */
 export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 	const { texts } = config;
@@ -84,7 +85,14 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 		reload();
 	}, [reload]);
 
+	/** Whether the form shown was modified, asked before the dialog closes. */
+	const modified = useRef(false);
+	const onModified = useCallback((value: boolean) => {
+		modified.current = value;
+	}, []);
+
 	const open = (next: Shown) => {
+		modified.current = false;
 		setErrors({});
 		setShown(next);
 	};
@@ -161,20 +169,27 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 				{members.length === 0 ? <p className="team-demo__empty">{texts.empty}</p> : null}
 			</div>
 			<Modal open={formMember !== undefined} onClose={() => setShown(null)} closeOnClick
-				title={formMember ? interpolate(texts.editMember, formMember) : texts.newMember}>
+				canClose={() => !modified.current || window.confirm(texts.discard)}
+				closeLabel={texts.close}
+				title={formMember ? interpolate(texts.editMember, formMember) : texts.newMember}
+				footer={<>
+					<button type="button" className="modal-dialog-button" data-modal-close>
+						{texts.cancel}</button>
+					<button type="submit" form={FORM_ID}
+						className="modal-dialog-button modal-dialog-button-primary">{texts.save}</button>
+				</>}>
 				<MemberForm key={formMember?.id ?? 'new'} config={config} member={formMember ?? null}
-					errors={errors} onSave={save} onCancel={() => setShown(null)} />
+					errors={errors} onSave={save} onModified={onModified} />
 			</Modal>
 			<Modal open={deletion !== undefined} onClose={() => setShown(null)} closeOnClick
-				title={texts.deleteMember}>
-				<p>{deletion ? interpolate(texts['delete.confirm'], deletion) : null}</p>
-				<div className="member-form__buttons">
-					<button type="button" className="dynamic-data-table-button"
-						onClick={() => setShown(null)}>{texts.cancel}</button>
-					<button type="button"
-						className="dynamic-data-table-button dynamic-data-table-button-primary"
+				closeLabel={texts.close} title={texts.deleteMember}
+				footer={<>
+					<button type="button" className="modal-dialog-button" data-modal-close>
+						{texts.cancel}</button>
+					<button type="button" className="modal-dialog-button modal-dialog-button-primary"
 						onClick={() => deletion && remove(deletion)}>{texts.delete}</button>
-				</div>
+				</>}>
+				{deletion ? interpolate(texts['delete.confirm'], deletion) : null}
 			</Modal>
 		</>
 	);

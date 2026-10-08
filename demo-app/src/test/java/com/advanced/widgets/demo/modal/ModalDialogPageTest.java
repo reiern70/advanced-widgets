@@ -5,12 +5,14 @@
 package com.advanced.widgets.demo.modal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalDialog;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import com.advanced.widgets.demo.DemoSession;
 import com.advanced.widgets.demo.WicketApplication;
+import com.advanced.widgets.modal.Modal;
 
 /**
  * Adds, edits and deletes the members of the team of {@link ModalDialogPage} in its dialog, and
@@ -27,7 +30,10 @@ import com.advanced.widgets.demo.WicketApplication;
  */
 class ModalDialogPageTest
 {
-	private static final String FORM = "dialog:overlay:dialog:content:form:form";
+	private static final String FORM = "dialog:overlay:dialog:content:body:form";
+
+	/** The second button of the footer: Save in the form, Delete in the confirmation. */
+	private static final String SAVE = "dialog:overlay:dialog:content:footer:buttons:2";
 
 	private WicketTester tester;
 
@@ -58,7 +64,22 @@ class ModalDialogPageTest
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.contains("dialog-theme-default"), response);
 		assertTrue(response.contains(">New member<"), response);
-		assertTrue(response.contains("Wicket.trapFocus"), response);
+		assertTrue(response.contains("Wicket.Modal.attach("), response);
+		assertTrue(response.contains("\"closeOnClick\":true"), response);
+		assertTrue(response.contains("Discard the changes?"), response);
+		assertTrue(response.contains("data-modal-close=\"\">Cancel</button>"), response);
+		assertTrue(response.contains(">Save</button>"), response);
+	}
+
+	@Test
+	void closesWhenTheBrowserAsks()
+	{
+		tester.clickLink("themed:add");
+		Modal dialog = (Modal)tester.getComponentFromLastRenderedPage("dialog");
+
+		tester.executeBehavior(dialog.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+
+		assertFalse(dialog.isOpen());
 	}
 
 	@Test
@@ -68,7 +89,7 @@ class ModalDialogPageTest
 		FormTester form = tester.newFormTester(FORM);
 		form.setValue("name", "");
 		form.setValue("email", "not an address");
-		tester.executeAjaxEvent(FORM + ":save", "click");
+		tester.executeAjaxEvent(SAVE, "click");
 		Map<String, String> expected = TeamStore.validate(member("", "not an address"),
 			Locale.ENGLISH);
 		tester.assertErrorMessages(expected.values().toArray(new String[0]));
@@ -76,7 +97,7 @@ class ModalDialogPageTest
 		form = tester.newFormTester(FORM);
 		form.setValue("name", "Margaret Hamilton");
 		form.setValue("email", "margaret@example.com");
-		tester.executeAjaxEvent(FORM + ":save", "click");
+		tester.executeAjaxEvent(SAVE, "click");
 
 		tester.assertInfoMessages("Added Margaret Hamilton.");
 		assertTrue(DemoSession.get().getTeam().list().stream()
@@ -90,13 +111,13 @@ class ModalDialogPageTest
 		tester.assertContains(">Edit Ada Lovelace<");
 		FormTester form = tester.newFormTester(FORM);
 		form.setValue("name", "Ada King");
-		tester.executeAjaxEvent(FORM + ":save", "click");
+		tester.executeAjaxEvent(SAVE, "click");
 		tester.assertInfoMessages("Saved Ada King.");
 		tester.cleanupFeedbackMessages();
 
 		tester.clickLink("themed:team:members:0:delete");
 		tester.assertContains(Pattern.quote("Delete Ada King from the team?"));
-		tester.clickLink("dialog:overlay:dialog:content:confirm");
+		tester.clickLink(SAVE);
 		tester.assertInfoMessages("Deleted Ada King.");
 		assertEquals(3, DemoSession.get().getTeam().list().size());
 	}

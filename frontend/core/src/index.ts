@@ -32,7 +32,7 @@ export { activate, activates, isLicensed, LICENSE_PREFIX, PUBLIC_KEY, UNLICENSED
 	verifyLicense } from './license.js';
 export type { License } from './license.js';
 export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteListMessage } from './infinite-list.js';
-export { focusableIn, MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from './modal.js';
+export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from './modal.js';
 export type { ModalOptions } from './modal.js';
 export { Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';

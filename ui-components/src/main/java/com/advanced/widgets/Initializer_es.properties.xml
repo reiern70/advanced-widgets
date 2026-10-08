@@ -37,4 +37,5 @@
 	<entry key="Tree.collapse">Plegar</entry>
 	<entry key="Tree.loading">Cargando…</entry>
 	<entry key="Tree.empty">Nada que mostrar</entry>
+	<entry key="Modal.close">Cerrar</entry>
 </properties>

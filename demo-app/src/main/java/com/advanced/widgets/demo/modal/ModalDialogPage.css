@@ -79,10 +79,3 @@
 .member-form [aria-invalid="true"] {
 	border-color: var(--wicket-theme-accent, #c2410c);
 }
-
-.member-form__buttons {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5em;
-	margin-top: 0.5em;
-}

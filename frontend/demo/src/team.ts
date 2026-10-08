@@ -39,6 +39,10 @@ export interface ModalDemoTexts extends DropdownTexts {
 	deleteMember: string;
 	/** Whether to delete a member, ${name} standing for the name. */
 	'delete.confirm': string;
+	/** The label of the close button of the dialog. */
+	close: string;
+	/** Whether to close the form of a member with changes not saved. */
+	discard: string;
 	save: string;
 	cancel: string;
 	name: string;

@@ -82,7 +82,7 @@ class JsonListAppsBrowserTest extends FrameworkAppsTestCase
 
 		cards().get(1).findElement(By.cssSelector("[data-dt-action='edit']")).click();
 		WebElement dialog = dialog();
-		assertEquals("Edit " + name, dialog.findElement(By.cssSelector(".modal-dialog-header"))
+		assertEquals("Edit " + name, dialog.findElement(By.cssSelector(".modal-dialog-title"))
 			.getText());
 		WebElement firstName = dialog.findElement(By.name("firstName"));
 		// typed over as a user does, so that the framework sees every change
@@ -116,7 +116,7 @@ class JsonListAppsBrowserTest extends FrameworkAppsTestCase
 		app().findElement(By.cssSelector(".user-list-demo__toolbar .dynamic-data-table-button"))
 			.click();
 		WebElement dialog = dialog();
-		assertEquals("New user", dialog.findElement(By.cssSelector(".modal-dialog-header"))
+		assertEquals("New user", dialog.findElement(By.cssSelector(".modal-dialog-title"))
 			.getText());
 		dialog.findElement(By.cssSelector("button[type='submit']")).click();
 		wait.until(d -> dialog().findElements(By.cssSelector(".feedbackPanelERROR span"))

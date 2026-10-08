@@ -5,7 +5,9 @@
  * The modal dialog of React and Svelte (modal.ts) in the markup of Wicket's ModalDialog with its
  * default theme: an overlay over the page, the dialog near its top, the content scrolling within,
  * and an optional header, body and footer in the colors of the theme, as wicket-theme.css shows
- * Wicket's. Dialogs nested in another, or opened after it, are shifted a little.
+ * Wicket's. The header holds the title and the close button, drags the dialog and folds it to the
+ * header; the buttons of the footer are on the right. Dialogs nested in another, or opened after
+ * it, are shifted a little.
  */
 .dialog-theme-default .modal-dialog-overlay {
 	position: fixed;
@@ -42,25 +44,123 @@
 	min-height: 20vh;
 	max-height: 80vh;
 	overflow: auto;
+	/* the body scrolls between the header and the footer */
+	display: flex;
+	flex-direction: column;
 }
 
 .dialog-theme-default .modal-dialog-header {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: 0.5em;
 	margin: 0;
 	padding: 0.5em 1em;
 	background: var(--wicket-theme-primary, Highlight);
 	color: var(--wicket-theme-on-primary, HighlightText);
 	font-size: 1.1em;
+	font-weight: bold;
 	text-align: start;
 }
 
+.dialog-theme-default .modal-dialog-title {
+	flex: 1 1 auto;
+	margin: 0;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.dialog-theme-default .modal-dialog-close {
+	flex: none;
+	margin: -0.25em -0.5em -0.25em 0;
+	padding: 0 0.35em;
+	border: 0;
+	border-radius: 0.25em;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 1.3em;
+	line-height: 1.2;
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+.dialog-theme-default .modal-dialog-close:hover,
+.dialog-theme-default .modal-dialog-close:focus-visible {
+	background: rgba(255, 255, 255, 0.2);
+	opacity: 1;
+}
+
+.dialog-theme-default .modal-dialog-close:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+}
+
+/* the header drags the dialog, and a double click folds it */
+.dialog-theme-default .modal-dialog-draggable > .modal-dialog-content > .modal-dialog-header {
+	cursor: move;
+	touch-action: none;
+	user-select: none;
+}
+
+.dialog-theme-default .modal-dialog-dragging {
+	opacity: 0.92;
+}
+
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content {
+	min-height: 0;
+}
+
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-body,
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-footer {
+	display: none;
+}
+
 .dialog-theme-default .modal-dialog-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
 	padding: 1em;
 }
 
+/* the buttons of the footer, on the right */
 .dialog-theme-default .modal-dialog-footer {
+	display: flex;
+	flex: none;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 0.5em;
 	padding: 0.5em 1em;
 	border-top: 1px solid var(--wicket-theme-border, ButtonBorder);
 	background: var(--wicket-theme-toolbar, transparent);
+}
+
+/* the buttons of a dialog, the primary one in the color of the header */
+.dialog-theme-default .modal-dialog-button {
+	padding: 0.3em 1em;
+	border: 1px solid var(--wicket-theme-border, ButtonBorder);
+	border-radius: 0.3em;
+	background: var(--wicket-theme-surface, ButtonFace);
+	color: var(--wicket-theme-text, ButtonText);
+	font: inherit;
+	cursor: pointer;
+}
+
+.dialog-theme-default .modal-dialog-button-primary {
+	border-color: var(--wicket-theme-primary-dark, Highlight);
+	background: var(--wicket-theme-primary, Highlight);
+	color: var(--wicket-theme-on-primary, HighlightText);
+}
+
+.dialog-theme-default .modal-dialog-button:focus-visible {
+	outline: 2px solid var(--wicket-theme-accent, Highlight);
+	outline-offset: 1px;
+}
+
+.dialog-theme-default .modal-dialog-button:disabled {
+	cursor: default;
+	opacity: 0.6;
 }
 
 /* dialogs nested in another */

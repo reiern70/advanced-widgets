@@ -16,11 +16,15 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.logging.LogEntry;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.advanced.widgets.demo.SeleniumBrowser;
@@ -62,7 +66,7 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		WebElement add = panel().findElement(By.xpath(".//button[normalize-space()='Add member']"));
 		add.click();
 		WebElement dialog = dialog();
-		assertEquals("New member", dialog.findElement(By.cssSelector(".modal-dialog-header"))
+		assertEquals("New member", dialog.findElement(By.cssSelector(".modal-dialog-title"))
 			.getText());
 		wait.until(d -> "name".equals(d.switchTo().activeElement()
 			.getDomAttribute("autocomplete")));
@@ -86,7 +90,7 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		row("Margaret Hamilton").findElement(By.xpath(".//button[normalize-space()='Edit']"))
 			.click();
 		assertEquals("Edit Margaret Hamilton", dialog().findElement(
-			By.cssSelector(".modal-dialog-header")).getText());
+			By.cssSelector(".modal-dialog-title")).getText());
 		WebElement name = dialog().findElement(NAME);
 		name.sendKeys(Keys.END);
 		name.sendKeys(Keys.BACK_SPACE.toString().repeat("Hamilton".length()) + "H.");
@@ -98,6 +102,74 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		dialog().findElement(By.xpath(".//button[normalize-space()='Delete']")).click();
 		wait.until(d -> !names().contains("Margaret H."));
 		assertNoErrorsButTheInvalidMember();
+	}
+
+	@ParameterizedTest
+	@MethodSource("tabs")
+	void closesFoldsAndDragsTheDialogAskingBeforeDiscardingChanges(SeleniumBrowser browser,
+		String tab)
+	{
+		openTab(browser, tab);
+		wait.until(d -> names().contains("Ada Lovelace"));
+
+		// Cancel and the close button close a form not modified, without asking
+		addMember();
+		dialog().findElement(By.xpath(".//*[contains(@class,'modal-dialog-footer')]" +
+			"//button[normalize-space()='Cancel']")).click();
+		wait.until(d -> dialogs().isEmpty());
+		addMember();
+		WebElement close = dialog().findElement(By.cssSelector(".modal-dialog-header " +
+			".modal-dialog-close"));
+		assertEquals("Close", close.getDomAttribute("aria-label"));
+		close.click();
+		wait.until(d -> dialogs().isEmpty());
+
+		// a modified form asks first: dismissed it stays open, accepted it closes
+		addMember();
+		dialog().findElement(NAME).sendKeys("Grace");
+		dialog().findElement(By.cssSelector(".modal-dialog-close")).click();
+		Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+		assertEquals("Discard the changes?", alert.getText());
+		alert.dismiss();
+		assertEquals(1, dialogs().size());
+		driver.switchTo().activeElement().sendKeys(Keys.ESCAPE);
+		wait.until(ExpectedConditions.alertIsPresent()).accept();
+		wait.until(d -> dialogs().isEmpty());
+
+		// a double click on the title folds the dialog to its header, another unfolds it
+		addMember();
+		WebElement title = dialog().findElement(By.cssSelector(".modal-dialog-title"));
+		new Actions(driver).doubleClick(title).perform();
+		wait.until(d -> dialog().getDomAttribute("class").contains("modal-dialog-folded"));
+		assertTrue(!dialog().findElement(By.cssSelector(".modal-dialog-footer")).isDisplayed());
+		new Actions(driver).doubleClick(title).perform();
+		wait.until(d -> !dialog().getDomAttribute("class").contains("modal-dialog-folded"));
+
+		// dragging the title moves the dialog
+		Point before = dialog().getLocation();
+		new Actions(driver).dragAndDropBy(title, -60, 40).perform();
+		wait.until(d -> !dialog().getLocation().equals(before));
+		Point after = dialog().getLocation();
+		assertEquals(before.getX() - 60, after.getX(), 2);
+		assertEquals(before.getY() + 40, after.getY(), 2);
+
+		// a click on the page around the dialog closes it, in this demo
+		new Actions(driver).moveToLocation(5, 5).click().perform();
+		wait.until(d -> dialogs().isEmpty());
+		assertNoErrorsButTheInvalidMember();
+	}
+
+	private void addMember()
+	{
+		panel().findElement(By.xpath(".//button[normalize-space()='Add member']")).click();
+		wait.until(d -> "name".equals(d.switchTo().activeElement()
+			.getDomAttribute("autocomplete")));
+	}
+
+	private List<WebElement> dialogs()
+	{
+		return driver.findElements(By.cssSelector(".modal-dialog")).stream()
+			.filter(WebElement::isDisplayed).toList();
 	}
 
 	/**

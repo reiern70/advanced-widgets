@@ -4,7 +4,8 @@
 -->
 <!--
   The modal dialog demo in Svelte: the team of the session, added to and edited in a Modal, a
-  deletion confirmed in one, all through the team resource.
+  deletion confirmed in one, all through the team resource. Cancel and Save are in the footer; the
+  dialog asks before it closes a form whose fields were changed.
 -->
 <script lang="ts">
 	import { Dropdown, Modal } from '@advanced-widgets/svelte';
@@ -25,6 +26,15 @@
 	let formMember = $state<Member | null | undefined>(undefined);
 	let deletion = $state<Member | undefined>(undefined);
 	let fields = $state<MemberFields>({ name: '', email: '', role: '' });
+	/** The fields of the member when the form opened, to tell whether they were changed. */
+	let initial: MemberFields = { name: '', email: '', role: '' };
+
+	/** The id of the form of a member, which the Save button of the footer submits. */
+	const FORM_ID = 'svelte-member-form';
+
+	function modified(): boolean {
+		return MEMBER_FIELDS.some((field) => fields[field] !== initial[field]);
+	}
 	let errors = $state<Partial<Record<keyof MemberFields, string>>>({});
 	let messages = $state<Message[]>([]);
 
@@ -38,8 +48,9 @@
 
 	function openForm(member: Member | null): void {
 		errors = {};
-		fields = { name: member?.name ?? '', email: member?.email ?? '',
+		initial = { name: member?.name ?? '', email: member?.email ?? '',
 			role: member?.role ?? config.roles[0].value };
+		fields = { ...initial };
 		formMember = member;
 	}
 
@@ -118,9 +129,15 @@
 	{#if members.length === 0}<p class="team-demo__empty">{texts.empty}</p>{/if}
 </div>
 
-<Modal open={formMember !== undefined} onclose={close} closeOnClick
+<Modal open={formMember !== undefined} onclose={close} closeOnClick closeLabel={texts.close}
+	canClose={() => !modified() || window.confirm(texts.discard)}
 	title={formMember ? interpolate(texts.editMember, formMember) : texts.newMember}>
-	<form class="member-form" onsubmit={save} novalidate>
+	{#snippet footer()}
+		<button type="button" class="modal-dialog-button" data-modal-close>{texts.cancel}</button>
+		<button type="submit" form={FORM_ID} class="modal-dialog-button modal-dialog-button-primary">
+			{texts.save}</button>
+	{/snippet}
+	<form id={FORM_ID} class="member-form" onsubmit={save} novalidate>
 		<Feedback messages={MEMBER_FIELDS.filter((field) => errors[field])
 			.map((field) => ({ level: 'error' as const, text: errors[field]! }))} />
 		<label>
@@ -139,20 +156,15 @@
 				filter={texts.filter} noMatch={texts.noMatch} more={texts.more}
 				remove={texts.remove} />
 		</label>
-		<div class="member-form__buttons">
-			<button type="button" class="dynamic-data-table-button" onclick={close}>
-				{texts.cancel}</button>
-			<button type="submit" class="dynamic-data-table-button dynamic-data-table-button-primary">
-				{texts.save}</button>
-		</div>
 	</form>
 </Modal>
 
-<Modal open={deletion !== undefined} onclose={close} closeOnClick title={texts.deleteMember}>
-	<p>{deletion ? interpolate(texts['delete.confirm'], deletion) : ''}</p>
-	<div class="member-form__buttons">
-		<button type="button" class="dynamic-data-table-button" onclick={close}>{texts.cancel}</button>
-		<button type="button" class="dynamic-data-table-button dynamic-data-table-button-primary"
+<Modal open={deletion !== undefined} onclose={close} closeOnClick closeLabel={texts.close}
+	title={texts.deleteMember}>
+	{#snippet footer()}
+		<button type="button" class="modal-dialog-button" data-modal-close>{texts.cancel}</button>
+		<button type="button" class="modal-dialog-button modal-dialog-button-primary"
 			onclick={() => deletion && remove(deletion)}>{texts.delete}</button>
-	</div>
+	{/snippet}
+	{deletion ? interpolate(texts['delete.confirm'], deletion) : ''}
 </Modal>

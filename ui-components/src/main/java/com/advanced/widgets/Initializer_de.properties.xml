@@ -37,4 +37,5 @@
 	<entry key="Tree.collapse">Zuklappen</entry>
 	<entry key="Tree.loading">Wird geladen…</entry>
 	<entry key="Tree.empty">Nichts anzuzeigen</entry>
+	<entry key="Modal.close">Schließen</entry>
 </properties>

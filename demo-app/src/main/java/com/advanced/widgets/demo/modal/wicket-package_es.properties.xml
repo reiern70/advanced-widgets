@@ -15,6 +15,8 @@
 	<entry key="delete.confirm">¿Eliminar a ${name} del equipo?</entry>
 	<entry key="save">Guardar</entry>
 	<entry key="cancel">Cancelar</entry>
+	<entry key="close">Cerrar</entry>
+	<entry key="discard">¿Descartar los cambios?</entry>
 	<entry key="name">Nombre</entry>
 	<entry key="email">Correo electrónico</entry>
 	<entry key="role">Rol</entry>
