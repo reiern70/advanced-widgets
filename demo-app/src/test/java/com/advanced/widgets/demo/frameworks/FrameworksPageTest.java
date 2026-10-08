@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.advanced.widgets.demo.WicketApplication;
+import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -48,16 +49,22 @@ class FrameworksPageTest
 		tester.assertContains("react-demo.*\\.js");
 		tester.assertContains("svelte-demo.*\\.js");
 		tester.assertContains("wicket-dropdown.*\\.css");
+		tester.assertContains("wicket-autocomplete.*\\.css");
+		tester.assertContains("json-infinite-list.*\\.css");
 		for (String framework : new String[] { "react", "svelte" })
 		{
 			TagTester demo = TagTester.createTagByAttribute(tester.getLastResponseAsString(),
 				"data-framework-demo", framework);
 			assertTrue(demo.getAttribute("data-choices").endsWith(ChoicesResource.PATH),
 				demo.getAttribute("data-choices"));
+			assertTrue(demo.getAttribute("data-users").endsWith(UsersRowsResource.PATH),
+				demo.getAttribute("data-users"));
 			JSONObject texts = new JSONObject(demo.getAttribute("data-texts"));
 			assertEquals("Choose a country", texts.getString("countryNone"));
 			assertEquals("Country {0}; skills: {1}.", texts.getString("chosen"));
 			assertEquals("Filter…", texts.getString("filter"));
+			assertEquals("All ${count} users are shown.", texts.getString("listEnd"));
+			assertEquals("Picked the user with ID {0}.", texts.getString("picked"));
 		}
 	}
 

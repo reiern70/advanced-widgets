@@ -41,7 +41,7 @@
 	<entry key="demo.themeEditor">Editor de temas</entry>
 	<entry key="demo.themeEditor.description">Genera un tema de los componentes, con vista previa en vivo.</entry>
 	<entry key="demo.frameworks">React y Svelte</entry>
-	<entry key="demo.frameworks.description">La lista desplegable dibujada por React y por Svelte, con el mismo script que la de Wicket y las opciones de un recurso montado.</entry>
+	<entry key="demo.frameworks.description">Listas desplegables, un autocompletado y una lista infinita dibujados por React y por Svelte, con los mismos scripts que los de Wicket y datos de recursos montados.</entry>
 	<entry key="buildInfo">Rama {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Rama {0} · {1}, con cambios sin confirmar</entry>
 </properties>

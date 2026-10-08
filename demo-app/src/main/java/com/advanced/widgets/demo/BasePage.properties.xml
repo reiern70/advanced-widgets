@@ -43,5 +43,5 @@
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
 	<entry key="demo.frameworks">React and Svelte</entry>
-	<entry key="demo.frameworks.description">The drop-down rendered by React and by Svelte, on the same script as the Wicket one, with choices from a mounted resource.</entry>
+	<entry key="demo.frameworks.description">Drop-downs, an autocomplete and an infinite list rendered by React and by Svelte, on the same scripts as the Wicket ones, with data from mounted resources.</entry>
 </properties>

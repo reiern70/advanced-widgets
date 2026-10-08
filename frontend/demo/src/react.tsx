@@ -14,6 +14,6 @@ import { settingsOf } from './data.js';
 import { ReactDemo } from './ReactDemo.js';
 
 document.querySelectorAll<HTMLElement>('[data-framework-demo="react"]').forEach((element) => {
-	const { url, texts } = settingsOf(element);
-	createRoot(element).render(<StrictMode><ReactDemo url={url} texts={texts} /></StrictMode>);
+	const { urls, texts } = settingsOf(element);
+	createRoot(element).render(<StrictMode><ReactDemo urls={urls} texts={texts} /></StrictMode>);
 });

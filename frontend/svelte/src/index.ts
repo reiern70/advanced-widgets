@@ -3,8 +3,11 @@
  * All rights reserved.
  */
 
+export { default as Autocomplete } from './Autocomplete.svelte';
 export { default as Dropdown } from './Dropdown.svelte';
+export { default as InfiniteList } from './InfiniteList.svelte';
 export { default as Scrollable } from './Scrollable.svelte';
 export type { DropdownOption } from './types.js';
 export { dropdown, scrollbar } from '@advanced-widgets/core';
-export type { DropdownOptions, ScrollbarOptions } from '@advanced-widgets/core';
+export type { AutocompleteSuggestion, AutocompleteValue, DropdownOptions, InfiniteListData,
+	ScrollbarOptions } from '@advanced-widgets/core';

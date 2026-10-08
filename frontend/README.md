@@ -17,10 +17,10 @@ side and the pages don't change.
 Every script of `ui-components` has moved here but those of the dynamic data tables (the table
 and its Handlebars adapter), which follow: the drop-down and its chips, the autocomplete, the
 infinite list and the template engines they render with, the clipboard, the floating panel, the
-scroll bars, and the movable and resizable columns. React and Svelte have `Dropdown` and
-`Scrollable`; the core's `dropdown` and `scrollbar` also work as Svelte actions, and
-`Clipboard.install()` and `FloatingPanel.install()` make the `data-wicket-copy` and floating
-panel markup work in any page.
+scroll bars, and the movable and resizable columns. React and Svelte have `Dropdown`,
+`Autocomplete`, `InfiniteList` and `Scrollable`; the core's `dropdown` and `scrollbar` also work
+as Svelte actions, and `Clipboard.install()` and `FloatingPanel.install()` make the
+`data-wicket-copy` and floating panel markup work in any page.
 
 Some core modules are shared state in a page: the template engines (`templates()`, which
 Handlebars registers into) and, for the infinite list, the scroll bars. Each Wicket script bundles

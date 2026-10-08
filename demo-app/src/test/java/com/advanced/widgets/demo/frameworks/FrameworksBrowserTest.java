@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -94,6 +95,47 @@ class FrameworksBrowserTest extends JettyTestCase
 
 	@ParameterizedTest
 	@MethodSource("frameworks")
+	void choosesColleaguesWithTheAutocomplete(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework);
+		WebElement text = root().findElement(By.cssSelector(".wicket-autocomplete-text"));
+
+		text.sendKeys("an");
+		wait.until(d -> !suggestions().isEmpty());
+		WebElement first = suggestions().get(0);
+		String name = first.findElement(By.tagName("b")).getText();
+		first.click();
+
+		wait.until(d -> colleagues().equals(name));
+		assertEquals(List.of(name), root().findElements(
+			By.cssSelector(".wicket-autocomplete .wicket-chip-text")).stream()
+			.map(WebElement::getText)
+			.toList());
+
+		root().findElement(By.cssSelector(".wicket-autocomplete .wicket-chip-remove")).click();
+		wait.until(d -> colleagues().equals("nothing"));
+	}
+
+	@ParameterizedTest
+	@MethodSource("frameworks")
+	void listsTheUsersLoadingMoreAsTheListScrolls(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework);
+		wait.until(d -> users().size() == 20);
+
+		((JavascriptExecutor)driver).executeScript(
+			"arguments[0].scrollTop = arguments[0].scrollHeight;", list());
+
+		wait.until(d -> users().size() == 40);
+		WebElement user = users().get(1);
+		String id = user.getDomAttribute("data-key");
+		user.click();
+		wait.until(d -> root().findElement(By.cssSelector(".framework-demo__picked")).getText()
+			.equals("Picked the user with ID " + id + "."));
+	}
+
+	@ParameterizedTest
+	@MethodSource("frameworks")
 	void rendersOneDropdownPerSelect(SeleniumBrowser browser, String framework)
 	{
 		open(browser, framework);
@@ -155,6 +197,26 @@ class FrameworksBrowserTest extends JettyTestCase
 			.filter(option -> option.getText().equals(text))
 			.findFirst()
 			.orElseThrow();
+	}
+
+	private List<WebElement> suggestions()
+	{
+		return root().findElements(By.cssSelector(".wicket-autocomplete-option"));
+	}
+
+	private String colleagues()
+	{
+		return root().findElement(By.cssSelector(".framework-demo__colleagues")).getText();
+	}
+
+	private WebElement list()
+	{
+		return root().findElement(By.cssSelector(".json-infinite-list"));
+	}
+
+	private List<WebElement> users()
+	{
+		return list().findElements(By.cssSelector(".json-infinite-list-item"));
 	}
 
 	private String chosen()

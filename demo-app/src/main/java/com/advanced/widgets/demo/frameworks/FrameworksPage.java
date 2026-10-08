@@ -15,14 +15,20 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
 import com.advanced.widgets.demo.DemoPage;
+import com.advanced.widgets.demo.datatable.UsersRowsResource;
+import com.advanced.widgets.autocomplete.AbstractAutocomplete;
+import com.advanced.widgets.chips.Chips;
 import com.advanced.widgets.dropdown.DropdownBehavior;
+import com.advanced.widgets.jsonlist.JsonBasedInfiniteList;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
 /**
- * The drop-down of ui-components in React and in Svelte, next to each other: the same script and
- * style sheet as the Wicket {@code Dropdown}, from {@code frontend/core}, wrapped by
- * {@code @advanced-widgets/react} and {@code @advanced-widgets/svelte}. Both load their choices
- * from the {@link ChoicesResource} the application mounts, and take the theme of the page.
+ * Components of ui-components in React and in Svelte, next to each other: the drop-downs, an
+ * autocomplete and an infinite list, on the same scripts and style sheets as the Wicket ones, from
+ * {@code frontend/core}, wrapped by {@code @advanced-widgets/react} and
+ * {@code @advanced-widgets/svelte}. Both load their data from resources the application mounts,
+ * the {@link ChoicesResource} and the {@link UsersRowsResource}, and take the theme of the page.
  * <p>
  * The scripts, {@code react-demo.js} and {@code svelte-demo.js}, are built from
  * {@code frontend/demo} into this package; each renders into the elements marked
@@ -40,6 +46,9 @@ public class FrameworksPage extends DemoPage
 
 	private static final ResourceReference CSS = new CssResourceReference(FrameworksPage.class,
 		"FrameworksPage.css");
+
+	private static final ResourceReference LIST_CSS = new CssResourceReference(
+		JsonBasedInfiniteList.class, "json-infinite-list.css");
 
 	/**
 	 * Constructor.
@@ -63,6 +72,8 @@ public class FrameworksPage extends DemoPage
 		demo.add(AttributeModifier.replace("data-framework-demo", framework));
 		demo.add(AttributeModifier.replace("data-choices",
 			() -> urlFor(ChoicesResource.REFERENCE, new PageParameters()).toString()));
+		demo.add(AttributeModifier.replace("data-users",
+			() -> urlFor(UsersRowsResource.REFERENCE, new PageParameters()).toString()));
 		demo.add(AttributeModifier.replace("data-texts", () -> texts().toString()));
 		return demo;
 	}
@@ -71,7 +82,8 @@ public class FrameworksPage extends DemoPage
 	{
 		JSONObject texts = new JSONObject();
 		for (String key : new String[] { "country", "countryNone", "skills", "skillsNone",
-			"chosen", "nothing", "loading" })
+			"chosen", "nothing", "loading", "colleagues", "colleaguesNone", "searching", "people",
+			"listLoading", "listEnd", "listEmpty", "picked" })
 		{
 			texts.put(key, getString(key));
 		}
@@ -86,7 +98,12 @@ public class FrameworksPage extends DemoPage
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
+		// the style sheets of the components only: the scripts come with the frameworks' bundles
+		response.render(CssHeaderItem.forReference(Chips.CSS));
 		response.render(CssHeaderItem.forReference(DropdownBehavior.CSS));
+		response.render(CssHeaderItem.forReference(AbstractAutocomplete.CSS));
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
+		response.render(CssHeaderItem.forReference(LIST_CSS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(JavaScriptHeaderItem.forReference(REACT).setDefer(true));
 		response.render(JavaScriptHeaderItem.forReference(SVELTE).setDefer(true));

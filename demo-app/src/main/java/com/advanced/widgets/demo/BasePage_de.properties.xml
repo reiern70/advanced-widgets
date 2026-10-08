@@ -43,5 +43,5 @@
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, mit noch nicht eingecheckten Änderungen</entry>
 	<entry key="demo.frameworks">React und Svelte</entry>
-	<entry key="demo.frameworks.description">Die Auswahlliste, gerendert von React und von Svelte, auf demselben Skript wie die von Wicket, mit der Auswahl aus einer eingebundenen Ressource.</entry>
+	<entry key="demo.frameworks.description">Auswahllisten, eine Autovervollständigung und eine endlose Liste, gerendert von React und von Svelte, auf denselben Skripten wie die von Wicket, mit Daten aus eingebundenen Ressourcen.</entry>
 </properties>

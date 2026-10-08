@@ -6,7 +6,7 @@
 -->
 <properties>
 	<entry key="title">React und Svelte</entry>
-	<entry key="explanation">&lt;p&gt;Die Komponenten von ui-components gibt es auch für React und Svelte, gebaut auf demselben Skript und Stylesheet wie die Wicket-Komponenten, sodass eine Korrektur alle drei erreicht. Unten die Auswahlliste, gerendert von React und von Svelte: das Framework rendert das Select, das gemeinsame Skript zeichnet die Auswahlliste darüber, und der Zustand des Frameworks folgt jeder Auswahl.&lt;/p&gt;&lt;p&gt;Beide laden ihre Auswahl von einer Ressource, die diese Wicket-Anwendung einbindet und die die Länder in der Sprache der Sitzung benennt, und übernehmen die Farben des oben gewählten Farbschemas.&lt;/p&gt;</entry>
+	<entry key="explanation">&lt;p&gt;Die Komponenten von ui-components gibt es auch für React und Svelte, gebaut auf denselben Skripten und Stylesheets wie die Wicket-Komponenten, sodass eine Korrektur alle drei erreicht. Unten dasselbe Formular, gerendert von React und von Svelte: Auswahllisten, eine Autovervollständigung für Kollegen und eine Liste aller Benutzer, die beim Scrollen weitere nachlädt. Das Framework rendert die Elemente, die ihm gehören, die gemeinsamen Skripte zeichnen die Komponenten daneben, und der Zustand des Frameworks folgt jeder Auswahl.&lt;/p&gt;&lt;p&gt;Beide laden ihre Daten von Ressourcen, die diese Wicket-Anwendung einbindet: die Länder, benannt in der Sprache der Sitzung, und die Benutzer, dieselben wie in der JSON-Tabelle. Sie übernehmen die Farben des oben gewählten Farbschemas.&lt;/p&gt;</entry>
 	<entry key="react">React</entry>
 	<entry key="svelte">Svelte</entry>
 	<entry key="country">Land</entry>
@@ -16,4 +16,12 @@
 	<entry key="chosen">Land {0}; Kenntnisse: {1}.</entry>
 	<entry key="nothing">nichts</entry>
 	<entry key="loading">Die Auswahl wird geladen…</entry>
+	<entry key="colleagues">Kollegen</entry>
+	<entry key="colleaguesNone">Einen Namen eingeben</entry>
+	<entry key="searching">Suche läuft…</entry>
+	<entry key="people">Alle Benutzer</entry>
+	<entry key="listLoading">Benutzer werden geladen…</entry>
+	<entry key="listEnd">Alle ${count} Benutzer werden angezeigt.</entry>
+	<entry key="listEmpty">Keine Benutzer.</entry>
+	<entry key="picked">Gewählt: der Benutzer mit der ID {0}.</entry>
 </properties>
