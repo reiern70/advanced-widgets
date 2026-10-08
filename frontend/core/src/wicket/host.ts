@@ -39,13 +39,17 @@ export function wicket(): WicketGlobal {
 	return window.Wicket;
 }
 
-function subscription<T>(topic: string, fallback: string,
+/**
+ * @param topic the name of the topic in Wicket.Event.Topic, null for the fallback alone
+ * @param fallback the topic itself, when Wicket.Event.Topic has no such name
+ */
+function subscription<T>(topic: string | null, fallback: string,
 	listener: (payload: T) => void): Unsubscribe {
 	const events = window.Wicket?.Event;
 	if (!events?.subscribe) {
 		return () => undefined;
 	}
-	const name = events.Topic?.[topic] ?? fallback;
+	const name = (topic && events.Topic?.[topic]) || fallback;
 	const subscriber: Subscriber = (_event, payload) => listener(payload as T);
 	events.subscribe(name, subscriber);
 	return () => events.unsubscribe?.(name, subscriber);
@@ -59,8 +63,7 @@ export const wicketHost: Host = {
 		listener),
 	onNodeRemoving: (listener) => subscription<Element>('DOM_NODE_REMOVING',
 		'/dom/node/removing', listener),
-	onMessage: (listener) => subscription<unknown>('WEBSOCKET_MESSAGE', '/websocket/message',
-		listener),
+	onMessage: (listener) => subscription<unknown>(null, '/websocket/message', listener),
 	log: {
 		error(message, error) {
 			const log = window.Wicket?.Log;

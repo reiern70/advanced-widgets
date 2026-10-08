@@ -14,11 +14,18 @@ script under the name and package the Java classes load it from (`Wicket.Dropdow
 `com/advanced/widgets/dropdown/wicket-dropdown.js`, ...), with the Wicket host set. The Java
 side and the pages don't change.
 
-So far the drop-down, the clipboard, the floating panel, the scroll bars and the movable and
-resizable columns have moved here; the script of the dynamic data tables follows. React and
-Svelte have `Dropdown` and `Scrollable`; the core's `dropdown` and `scrollbar` also work as
-Svelte actions, and `Clipboard.install()` and `FloatingPanel.install()` make the
-`data-wicket-copy` and floating panel markup work in any page.
+Every script of `ui-components` has moved here but those of the dynamic data tables (the table
+and its Handlebars adapter), which follow: the drop-down and its chips, the autocomplete, the
+infinite list and the template engines they render with, the clipboard, the floating panel, the
+scroll bars, and the movable and resizable columns. React and Svelte have `Dropdown` and
+`Scrollable`; the core's `dropdown` and `scrollbar` also work as Svelte actions, and
+`Clipboard.install()` and `FloatingPanel.install()` make the `data-wicket-copy` and floating
+panel markup work in any page.
+
+Some core modules are shared state in a page: the template engines (`templates()`, which
+Handlebars registers into) and, for the infinite list, the scroll bars. Each Wicket script bundles
+its own copy of the core, so these scripts use the page's `Wicket.Templates` through
+`useTemplates()`, and the list the page's `Wicket.Scrollbar`, which keeps one registry per page.
 
 ## Building
 
