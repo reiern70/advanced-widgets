@@ -14,8 +14,10 @@ script under the name and package the Java classes load it from (`Wicket.Dropdow
 `com/advanced/widgets/dropdown/wicket-dropdown.js`, ...), with the Wicket host set. The Java
 side and the pages don't change.
 
-So far the Dropdown has moved here; the other scripts of `ui-components` follow
-(see `WIP/REACT_SVELTE.md`).
+So far the drop-down, the clipboard, the floating panel and the scroll bars have moved here;
+the scripts of the tables follow. React and Svelte have `Dropdown` and `Scrollable`; the core's
+`dropdown` and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
+`FloatingPanel.install()` make the `data-wicket-copy` and floating panel markup work in any page.
 
 ## Building
 

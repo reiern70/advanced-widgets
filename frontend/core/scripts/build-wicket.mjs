@@ -25,12 +25,18 @@ const BANNER = '/*\n * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gm
 
 /** The scripts: their entry in src/wicket and their path in ui-components. */
 const SCRIPTS = [
-	['src/wicket/dropdown.ts', 'com/advanced/widgets/dropdown/wicket-dropdown.js']
+	['src/wicket/clipboard.ts', 'com/advanced/widgets/clipboard/wicket-clipboard.js'],
+	['src/wicket/dropdown.ts', 'com/advanced/widgets/dropdown/wicket-dropdown.js'],
+	['src/wicket/floating-panel.ts', 'com/advanced/widgets/floating/wicket-floating-panel.js'],
+	['src/wicket/scrollbar.ts', 'com/advanced/widgets/scrollbar/wicket-scrollbar.js']
 ];
 
 /** The style sheets: their file in styles and their path in ui-components. */
 const STYLES = [
-	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css']
+	['styles/clipboard.css', 'com/advanced/widgets/clipboard/wicket-clipboard.css'],
+	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css'],
+	['styles/floating-panel.css', 'com/advanced/widgets/floating/wicket-floating-panel.css'],
+	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css']
 ];
 
 await rm(out, { recursive: true, force: true });
