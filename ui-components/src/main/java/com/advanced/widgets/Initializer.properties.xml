@@ -29,4 +29,7 @@
 	<entry key="Autocomplete.noMatch">No matches</entry>
 	<entry key="Autocomplete.searching">Searching…</entry>
 	<entry key="License.placeholder">This is a private component of UI Advanced Widgets: it needs a license key, which you get by registering.</entry>
+	<entry key="JsonBasedInfiniteList.loading">Loading…</entry>
+	<entry key="JsonBasedInfiniteList.end">All ${count} shown</entry>
+	<entry key="JsonBasedInfiniteList.empty">Nothing to show</entry>
 </properties>

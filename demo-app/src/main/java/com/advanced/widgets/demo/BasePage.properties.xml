@@ -27,6 +27,8 @@
 	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over websockets.</entry>
 	<entry key="demo.beanTable">Bean Dynamic Data Table</entry>
 	<entry key="demo.beanTable.description">The same table with its rows rendered on the server by Wicket components.</entry>
+	<entry key="demo.jsonList">JSON Infinite List</entry>
+	<entry key="demo.jsonList.description">A thousand users as cards, rendered in the browser from JSON and loaded as you scroll.</entry>
 	<entry key="demo.progressBar">Progress Bar</entry>
 	<entry key="demo.progressBar.description">Known and unknown progress, in any of the themes.</entry>
 	<entry key="demo.dropdown">Dropdown</entry>

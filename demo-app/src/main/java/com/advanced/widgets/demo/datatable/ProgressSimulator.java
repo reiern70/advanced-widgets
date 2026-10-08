@@ -30,12 +30,12 @@ import com.advanced.widgets.dynamicdatatable.UpdateRowMessageType;
  * changed rows to the page over its web socket connection, at most once per {@link #FLUSH_MILLIS}
  * however often they change. Rows the page does not show are neither advanced nor pushed: the
  * page reports which rows it shows with {@link #show(String, int, Collection)}, whenever the
- * table sends rows to the browser.
+ * table, or the infinite list, sends rows to the browser.
  * <p>
  * One simulator runs per page, from the opening of the page's web socket connection to its
  * closing.
  */
-final class ProgressSimulator
+public final class ProgressSimulator
 {
 	private static final Logger LOG = LoggerFactory.getLogger(ProgressSimulator.class);
 
@@ -91,7 +91,7 @@ final class ProgressSimulator
 	/**
 	 * Starts simulating for a page, replacing a simulator already running for it.
 	 */
-	static void start(Application application, String sessionId, int pageId, IKey key,
+	public static void start(Application application, String sessionId, int pageId, IKey key,
 		String tableId, UsersDatabase database, Locale locale)
 	{
 		ProgressSimulator simulator = new ProgressSimulator(application, sessionId, pageId, key,
@@ -107,7 +107,7 @@ final class ProgressSimulator
 	/**
 	 * Stops simulating for a page.
 	 */
-	static void stop(String sessionId, int pageId)
+	public static void stop(String sessionId, int pageId)
 	{
 		ProgressSimulator simulator = RUNNING.remove(id(sessionId, pageId));
 		SHOWN.remove(id(sessionId, pageId));
@@ -120,7 +120,7 @@ final class ProgressSimulator
 	/**
 	 * Records which users a page shows; may be called before the simulator of the page starts.
 	 */
-	static void show(String sessionId, int pageId, Collection<Long> ids)
+	public static void show(String sessionId, int pageId, Collection<Long> ids)
 	{
 		SHOWN.put(id(sessionId, pageId), List.copyOf(ids));
 	}

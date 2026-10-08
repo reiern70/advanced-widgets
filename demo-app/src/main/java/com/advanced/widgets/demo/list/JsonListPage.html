@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="feedback"></div>
+<div wicket:id="themed" class="user-list-demo">
+	<div class="user-list-demo__toolbar">
+		<span wicket:id="filter"></span>
+		<label class="user-list-demo__sort"><wicket:message key="sortBy"/> <select wicket:id="sort"></select></label>
+		<button type="button" wicket:id="add" class="dynamic-data-table-button dynamic-data-table-button-primary"><wicket:message key="newUser"/></button>
+	</div>
+	<div class="user-list-demo__columns">
+		<div wicket:id="users" class="user-list-demo__cards" wicket:message="aria-label:users"></div>
+		<aside class="user-list-demo__details">
+			<div wicket:id="details"></div>
+			<p wicket:id="noneSelected" class="user-list-demo__none"></p>
+		</aside>
+	</div>
+</div>
+<div wicket:id="dialog"></div>
+<wicket:fragment wicket:id="formContent">
+	<h1 class="modal-dialog-header" wicket:id="title"></h1>
+	<div class="modal-dialog-body"><div wicket:id="form"></div></div>
+</wicket:fragment>
+<wicket:fragment wicket:id="deleteContent">
+	<h1 class="modal-dialog-header"><wicket:message key="delete"/></h1>
+	<div class="modal-dialog-body">
+		<p wicket:id="question"></p>
+		<div class="dynamic-data-table-overlay-buttons">
+			<button type="button" wicket:id="cancel" class="dynamic-data-table-button"><wicket:message key="cancel"/></button>
+			<button type="button" wicket:id="confirm" class="dynamic-data-table-button dynamic-data-table-button-primary"><wicket:message key="delete"/></button>
+		</div>
+	</div>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

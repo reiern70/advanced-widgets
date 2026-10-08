@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.json-infinite-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75em;
+	color: var(--wicket-theme-text, CanvasText);
+}
+
+.json-infinite-list--scrolling {
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding-right: 0.75em;
+}
+
+.json-infinite-list-item {
+	outline-offset: 2px;
+}
+
+.json-infinite-list-item:focus-visible {
+	outline: 2px solid var(--wicket-theme-accent, Highlight);
+}
+
+.json-infinite-list-item[data-dt-action] {
+	cursor: pointer;
+}
+
+.json-infinite-list-status {
+	grid-column: 1 / -1;
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6em;
+	padding: 0.75em;
+	color: var(--wicket-theme-text, GrayText);
+	opacity: 0.8;
+	font-size: 0.95em;
+}
+
+.json-infinite-list-status[hidden] {
+	display: none;
+}
+
+.json-infinite-list-loading::before {
+	content: "";
+	width: 1em;
+	height: 1em;
+	border: 2px solid var(--wicket-theme-border, GrayText);
+	border-top-color: var(--wicket-theme-primary, Highlight);
+	border-radius: 50%;
+	animation: json-infinite-list-spin 0.8s linear infinite;
+}
+
+@keyframes json-infinite-list-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.json-infinite-list-loading::before {
+		animation-duration: 2.4s;
+	}
+}

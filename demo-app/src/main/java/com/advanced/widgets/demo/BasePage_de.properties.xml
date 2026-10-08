@@ -27,6 +27,8 @@
 	<entry key="demo.jsonTable.description">Tausend Benutzer, im Browser aus JSON erzeugt, mit Live-Aktualisierungen über WebSockets.</entry>
 	<entry key="demo.beanTable">Bean-Datentabelle</entry>
 	<entry key="demo.beanTable.description">Dieselbe Tabelle, ihre Zeilen auf dem Server von Wicket-Komponenten erzeugt.</entry>
+	<entry key="demo.jsonList">JSON-Endlosliste</entry>
+	<entry key="demo.jsonList.description">Tausend Benutzer als Karten, im Browser aus JSON erzeugt und beim Rollen geladen.</entry>
 	<entry key="demo.progressBar">Fortschrittsbalken</entry>
 	<entry key="demo.progressBar.description">Bekannter und unbekannter Fortschritt, in jedem Farbschema.</entry>
 	<entry key="demo.dropdown">Auswahlliste</entry>

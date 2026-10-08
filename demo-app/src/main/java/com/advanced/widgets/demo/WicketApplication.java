@@ -20,6 +20,7 @@ import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
+import com.advanced.widgets.demo.list.JsonListPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.register.RegisterPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
@@ -76,6 +77,7 @@ public class WicketApplication extends WebApplication
 
 		mountPage("dynamic-data-table", DynamicDataTablePage.class);
 		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
+		mountPage("json-infinite-list", JsonListPage.class);
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);

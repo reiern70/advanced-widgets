@@ -29,8 +29,13 @@ import org.apache.wicket.util.resource.ResourceStreamNotFoundException;
  * license header outside of it is left out. Comments are removed if the
  * application {@link org.apache.wicket.settings.MarkupSettings#getStripComments() strips them}
  * from markup.
+ * <p>
+ * Used by the {@link ResourceDynamicColumn columns} of the dynamic data tables and by
+ * {@link com.advanced.widgets.jsonlist.JsonBasedInfiniteList}.
+ *
+ * @since 11.0.0
  */
-final class ResourceTemplate implements IClusterable
+public final class ResourceTemplate implements IClusterable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -62,7 +67,7 @@ final class ResourceTemplate implements IClusterable
 	 *            exclusive
 	 * @return a template named after {@code scope} or, failing that, after its superclasses
 	 */
-	static ResourceTemplate forClass(Class<?> scope, Class<?> stopClass)
+	public static ResourceTemplate forClass(Class<?> scope, Class<?> stopClass)
 	{
 		return new ResourceTemplate(Args.notNull(scope, "scope"), stopClass, null);
 	}
@@ -74,18 +79,24 @@ final class ResourceTemplate implements IClusterable
 	 *            the name of the template, without the extension
 	 * @return the template {@code name.html} in the package of {@code scope}
 	 */
-	static ResourceTemplate named(Class<?> scope, String name)
+	public static ResourceTemplate named(Class<?> scope, String name)
 	{
 		return new ResourceTemplate(Args.notNull(scope, "scope"), null,
 			Args.notEmpty(name, "name"));
 	}
 
 	/**
+	 * @param style
+	 *            the style, or {@code null}
+	 * @param variation
+	 *            the variation, or {@code null}
+	 * @param locale
+	 *            the locale
 	 * @return the template for the style, variation and locale
 	 * @throws MarkupNotFoundException
 	 *             if there is no such resource
 	 */
-	String load(String style, String variation, Locale locale)
+	public String load(String style, String variation, Locale locale)
 	{
 		IResourceStreamLocator locator = Application.get()
 			.getResourceSettings()
@@ -111,9 +122,15 @@ final class ResourceTemplate implements IClusterable
 	}
 
 	/**
+	 * @param style
+	 *            the style, or {@code null}
+	 * @param variation
+	 *            the variation, or {@code null}
+	 * @param locale
+	 *            the locale
 	 * @return a key identifying the template loaded for the style, variation and locale
 	 */
-	String getCacheKey(String style, String variation, Locale locale)
+	public String getCacheKey(String style, String variation, Locale locale)
 	{
 		return scope.getName() + ':' + (name != null ? name : "") + '_' + variation + '_' +
 			style + '_' + locale;

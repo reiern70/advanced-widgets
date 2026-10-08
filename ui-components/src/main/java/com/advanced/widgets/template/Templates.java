@@ -9,8 +9,9 @@ import org.apache.wicket.request.resource.ResourceReference;
 
 /**
  * The template engines that render JSON into markup in the browser, shared by the cells of a
- * {@link com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable} and the rows of an
- * {@link com.advanced.widgets.autocomplete.Autocomplete}. {@link #JS} defines
+ * {@link com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable}, the rows of an
+ * {@link com.advanced.widgets.autocomplete.Autocomplete} and the items of a
+ * {@link com.advanced.widgets.jsonlist.JsonBasedInfiniteList}. {@link #JS} defines
  * {@code Wicket.Templates.engines}, by name: the built-in {@code builtin} engine, which replaces
  * {@code {{path}}} with the escaped value and {@code {{{path}}}} with the raw one, and the engines
  * an {@link com.advanced.widgets.dynamicdatatable.ITemplateEngine} registers, such as

@@ -134,6 +134,21 @@ public class User implements IClusterable, IIdentifiable<Long>
 			: bornDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString();
 	}
 
+	/**
+	 * @return the first letters of the first and the last name, as on the cards of the infinite
+	 *         list example
+	 */
+	public String getInitials()
+	{
+		return initial(firstName) + initial(lastName);
+	}
+
+	private static String initial(String name)
+	{
+		return name == null || name.isBlank() ? ""
+			: name.strip().substring(0, name.strip().offsetByCodePoints(0, 1)).toUpperCase();
+	}
+
 	public String getAddress()
 	{
 		return address;

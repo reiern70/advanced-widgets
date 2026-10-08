@@ -27,6 +27,8 @@
 	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets.</entry>
 	<entry key="demo.beanTable">Tabla de datos Bean</entry>
 	<entry key="demo.beanTable.description">La misma tabla, con sus filas generadas en el servidor por componentes de Wicket.</entry>
+	<entry key="demo.jsonList">Lista infinita JSON</entry>
+	<entry key="demo.jsonList.description">Mil usuarios como tarjetas, generadas en el navegador a partir de JSON y cargadas al desplazarse.</entry>
 	<entry key="demo.progressBar">Barra de progreso</entry>
 	<entry key="demo.progressBar.description">Progreso conocido y desconocido, en cualquiera de los temas.</entry>
 	<entry key="demo.dropdown">Lista desplegable</entry>

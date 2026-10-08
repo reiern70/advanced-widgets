@@ -14,6 +14,7 @@ import com.advanced.widgets.demo.autocomplete.AutocompletePage;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
+import com.advanced.widgets.demo.list.JsonListPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
@@ -69,6 +70,7 @@ public final class Demos
 	private static final List<Demo> ALL = List.of(
 		new Demo("jsonTable", "data", DynamicDataTablePage.class, false),
 		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true),
+		new Demo("jsonList", "data", JsonListPage.class, false),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true),

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">JsonBasedInfiniteList Example</entry>
+	<entry key="explanation">This is a demo of the JsonBasedInfiniteList: a thousand users, each one a card, rendered in the browser from JSON and loaded as you scroll.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;Wicket renders the list as one empty &amp;lt;div&amp;gt;: JsonBasedInfiniteList is a single component without children. The users come as JSON from the list's own endpoint, 24 at a time, and each card is the template UserCard.html, next to this page, evaluated in the browser against the JSON of a user; switching to German or Spanish picks UserCard_de.html or UserCard_es.html&lt;/li&gt; &lt;li&gt;Scroll the list to its last card and it fetches the next 24 users and adds them, telling below the cards that it is loading and, at the end, that all of them are shown. The list is 70% of the window high and scrolls on its own, with the slim scroll bar of a ScrollbarBehavior in the theme's colors&lt;/li&gt; &lt;li&gt;The cards are laid out in a grid by the CSS of this page only; the list lays its items out in a column by default&lt;/li&gt; &lt;li&gt;A click on a card shows the user next to the list, the pencil edits the user and the bin deletes it. None of them is a component: they are plain markup with a data-dt-action attribute, and a click goes to the list, which looks the user up by its key and hands it to the IItemAction registered for the action, the same way the JSON table dispatches the clicks on its rows&lt;/li&gt; &lt;li&gt;Since the list has no children, the edit form and the confirmation of a deletion are shown in a ModalDialog of the page. Saving an edited user repaints only its card, with JsonBasedInfiniteList.updateItem; adding or deleting a user has the list fetch the users it shows again, with refresh&lt;/li&gt; &lt;li&gt;Delete a user in one tab and click it in another: the click still reaches the list, which reports that the user is gone instead of failing with a missing component&lt;/li&gt; &lt;li&gt;The filter and the sort start over from the first page of users, scrolled to the top, with reset and refresh&lt;/li&gt; &lt;li&gt;While the page is open, the server advances the progress of random users among those the list shows and pushes the changed users over the page's web socket connection every 3 seconds; each push repaints only its card. The list reports the users it sends to the browser, so the others are neither advanced nor pushed. The messages are those of the JSON table&lt;/li&gt; &lt;li&gt;The list is a feed, as screen readers know it: every card is an article telling its position and the number of users. Tab to a card, press Enter to show its details, and Page Down and Page Up to move between the cards&lt;/li&gt; &lt;/ul&gt;</entry>
+	<entry key="users">Users</entry>
+	<entry key="sortBy">Sort by</entry>
+	<entry key="sort.firstName">First name</entry>
+	<entry key="sort.lastName">Last name</entry>
+	<entry key="sort.bornDate">Born</entry>
+	<entry key="filter">Filter</entry>
+	<entry key="filter.placeholder">first or last name</entry>
+	<entry key="newUser">New user</entry>
+	<entry key="editUser">Edit ${firstName} ${lastName}</entry>
+	<entry key="delete">Delete</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="delete.confirm">Delete ${firstName} ${lastName}?</entry>
+	<entry key="deleted">Deleted {0} {1}.</entry>
+	<entry key="added">Added {0} {1}.</entry>
+	<entry key="userGone">That user no longer exists.</entry>
+	<entry key="noneSelected">Click a card to see the user here.</entry>
+	<entry key="selectedUser">Selected user</entry>
+	<entry key="id">ID</entry>
+	<entry key="firstName">First name</entry>
+	<entry key="lastName">Last name</entry>
+	<entry key="homePhone">Home phone</entry>
+	<entry key="cellPhone">Cell phone</entry>
+	<entry key="bornDate">Born</entry>
+</properties>

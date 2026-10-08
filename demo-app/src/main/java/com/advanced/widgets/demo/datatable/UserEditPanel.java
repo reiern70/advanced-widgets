@@ -26,11 +26,12 @@ import org.apache.wicket.validation.validator.StringValidator;
 
 /**
  * Edits the name and the address of a user, every field required, or enters a new user,
- * one without an id. Shown in the overlay of the dynamic table examples, it calls
+ * one without an id. Shown in the overlay of the dynamic table examples and in the dialog of the
+ * infinite list example, it calls
  * {@link #onSaved(User, AjaxRequestTarget)} or {@link #onCancel(AjaxRequestTarget)} when the
  * user is done.
  */
-abstract class UserEditPanel extends Panel
+public abstract class UserEditPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
@@ -46,7 +47,13 @@ abstract class UserEditPanel extends Panel
 
 	private String address;
 
-	UserEditPanel(String id, User user)
+	/**
+	 * @param id
+	 *            component id
+	 * @param user
+	 *            the user to edit, or a new one
+	 */
+	public UserEditPanel(String id, User user)
 	{
 		super(id);
 		userId = user.getId();
