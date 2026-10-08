@@ -52,6 +52,29 @@ describe('Dropdown', () => {
 		expect(toggle(container).textContent).toBe('Apple');
 	});
 
+	it('shows the value once the options arrive after it, as when they are loaded', async () => {
+		const { container, rerender } = render(Bound, { options: [], value: 'banana' });
+
+		await rerender({ options: FRUITS });
+		flushSync();
+
+		expect(toggle(container).textContent).toBe('Banana');
+		expect(container.querySelector('select')?.value).toBe('banana');
+		expect(container.querySelector('p')?.textContent).toBe('"banana"');
+	});
+
+	it('shows the values of a multiple drop-down once its options arrive', async () => {
+		const { container, rerender } = render(Bound, { options: [], value: ['cherry'],
+			multiple: true });
+
+		await rerender({ options: FRUITS });
+		flushSync();
+
+		expect(Array.from(container.querySelectorAll('.wicket-chip-text'),
+			(chip) => chip.textContent)).toEqual(['Cherry']);
+		expect(container.querySelector('p')?.textContent).toBe('["cherry"]');
+	});
+
 	it('binds the values of a multiple drop-down and keeps its list open', () => {
 		const { container } = render(Bound, { options: FRUITS, value: [], multiple: true });
 

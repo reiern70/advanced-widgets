@@ -40,6 +40,25 @@ describe('Dropdown', () => {
 		expect(items(container).map((item) => item.textContent)).toEqual(['Apple', 'Banana', 'Cherry']);
 	});
 
+	it('shows the value once the options arrive after it, as when they are loaded', () => {
+		const { container, rerender } = render(<Dropdown options={[]} value="banana"
+			onChange={() => {}} />);
+
+		rerender(<Dropdown options={FRUITS} value="banana" onChange={() => {}} />);
+
+		expect(toggle(container).textContent).toBe('Banana');
+		expect(container.querySelector('select')?.value).toBe('banana');
+	});
+
+	it('shows the values of a multiple drop-down once its options arrive', () => {
+		const { container, rerender } = render(<Dropdown multiple options={[]} value={['cherry']}
+			onChange={() => {}} />);
+
+		rerender(<Dropdown multiple options={FRUITS} value={['cherry']} onChange={() => {}} />);
+
+		expect(chips(container)).toEqual(['Cherry']);
+	});
+
 	it('reports a choice to onChange and shows the value it gets back', () => {
 		function Controlled() {
 			const [fruit, setFruit] = useState('apple');

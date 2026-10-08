@@ -71,8 +71,25 @@
 		[option.value, option.label, Boolean(option.disabled)])));
 	$effect(() => {
 		void optionsKey;
-		untrack(() => instance?.refresh());
+		untrack(() => {
+			selectValue();
+			instance?.refresh();
+		});
 	});
+
+	/**
+	 * Selects the options of the value: options arriving after it, as when they are loaded, are
+	 * not selected by bind:value.
+	 */
+	function selectValue() {
+		if (!select || value === undefined) {
+			return;
+		}
+		const chosen = Array.isArray(value) ? value : [value];
+		for (const option of Array.from(select.options)) {
+			option.selected = chosen.includes(option.value);
+		}
+	}
 
 	$effect(() => {
 		void value;
