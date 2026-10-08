@@ -32,4 +32,8 @@
 	<entry key="JsonBasedInfiniteList.loading">Cargando…</entry>
 	<entry key="JsonBasedInfiniteList.end">Se muestran los ${count}</entry>
 	<entry key="JsonBasedInfiniteList.empty">Nada que mostrar</entry>
+	<entry key="Tree.expand">Desplegar</entry>
+	<entry key="Tree.collapse">Plegar</entry>
+	<entry key="Tree.loading">Cargando…</entry>
+	<entry key="Tree.empty">Nada que mostrar</entry>
 </properties>

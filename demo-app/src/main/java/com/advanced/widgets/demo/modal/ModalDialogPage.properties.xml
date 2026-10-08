@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Modal Dialog Example</entry>
+	<entry key="explanation">This is a demo of adding, editing and deleting in a modal dialog, the same in Wicket, React and Svelte.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;The Wicket tab uses the ModalDialog of wicket-extensions with its default theme, in the colors of the theme of the page: Add member and Edit open the form of a member in it, Delete asks to confirm. Saving repaints the team through Ajax&lt;/li&gt; &lt;li&gt;Escape closes the dialog, and so does a click on the dimmed page around it. While it is open the focus stays in it, Tab and Shift+Tab going round its fields and buttons, and when it closes the focus goes back to the button that opened it&lt;/li&gt; &lt;li&gt;The form is validated as Wicket validates it: the name and the email required, the email an address. Try saving it empty&lt;/li&gt; &lt;/ul&gt;&lt;p&gt;The React and Svelte tabs use the Modal of @advanced-widgets/react and @advanced-widgets/svelte: the markup of Wicket's ModalDialog, so the same style sheets show it, and the same behaviors, from the core's ModalDialog. They add, edit and delete the same team, kept in your session, through the mounted resource /api/team, which validates with the messages of the Wicket form: a member changed in one tab shows in the others once they load the team again.&lt;/p&gt;</entry>
+</properties>

@@ -16,9 +16,11 @@ import { AutocompleteDemo } from './react/AutocompleteDemo.js';
 import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
+import { ModalDemo } from './react/ModalDemo.js';
 import { Overview } from './react/Overview.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
+import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
 
 /**
  * @returns the mount of a React app taking the configuration as its only prop
@@ -34,6 +36,9 @@ startApps('react', {
 	autocomplete: app(AutocompleteDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),
+	tree: app(TreeDemo),
+	treeGrid: app(TreeGridDemo),
 	progressBar: app(ProgressDemo),
-	scrollbar: app(ScrollbarDemo)
+	scrollbar: app(ScrollbarDemo),
+	modalDialog: app(ModalDemo)
 });

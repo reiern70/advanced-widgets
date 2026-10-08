@@ -49,8 +49,6 @@ export interface JsonTableConfig {
 	usersUrl: string;
 	/** The choices, whose countries the form of a user offers. */
 	choicesUrl: string;
-	/** The license key of the application, activating the table in the browser. */
-	licenseKey: string;
 	rowsPerPage: number;
 	pageSizes: number[];
 	bodyHeight: { value: number; unit: string };

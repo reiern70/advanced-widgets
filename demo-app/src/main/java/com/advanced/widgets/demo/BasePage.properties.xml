@@ -30,6 +30,10 @@
 	<entry key="demo.beanTable.description">The same table with its rows rendered on the server by Wicket components.</entry>
 	<entry key="demo.jsonList">JSON Infinite List</entry>
 	<entry key="demo.jsonList.description">A thousand users as cards, rendered in the browser from JSON and loaded as you scroll.</entry>
+	<entry key="demo.tree">Tree</entry>
+	<entry key="demo.tree.description">Your files in a tree, as Wicket components or rendered in the browser from JSON.</entry>
+	<entry key="demo.treeGrid">Tree Grid</entry>
+	<entry key="demo.treeGrid.description">Your files in a tree grid, with their kinds, sizes and the days they changed.</entry>
 	<entry key="demo.progressBar">Progress Bar</entry>
 	<entry key="demo.progressBar.description">Known and unknown progress, in any of the themes.</entry>
 	<entry key="demo.dropdown">Dropdown</entry>
@@ -38,6 +42,8 @@
 	<entry key="demo.autocomplete.description">One or many values suggested as you type, each row from a template, the chosen ones as chips.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the theme's colors that look the same in every browser.</entry>
+	<entry key="demo.modalDialog">Modal Dialog</entry>
+	<entry key="demo.modalDialog.description">Add, edit and delete in a modal dialog that keeps the focus, the same in Wicket, React and Svelte.</entry>
 	<entry key="demo.themeEditor">Theme Editor</entry>
 	<entry key="demo.themeEditor.description">Generates a theme of the components, with a live preview.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>

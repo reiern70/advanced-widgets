@@ -25,6 +25,12 @@
 			<groupId>com.advancedwidgets</groupId>
 			<artifactId>ui-components</artifactId>
 		</dependency>
+		<!-- the method and the body of the requests to the team resource; Jetty provides it -->
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
 
 		<!-- WICKET DEPENDENCIES -->
 		<dependency>

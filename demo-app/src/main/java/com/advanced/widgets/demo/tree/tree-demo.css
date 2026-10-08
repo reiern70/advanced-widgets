@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ *
+ * The tree examples, in Wicket, React and Svelte: the trees side by side, or the tree grids one
+ * above the other, and the file selected next to them.
+ */
+.tree-demo {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 19em;
+	gap: 1.5em;
+	align-items: start;
+}
+
+.tree-demo--single {
+	grid-template-columns: minmax(0, 1fr) 19em;
+}
+
+.tree-demo__stack {
+	display: grid;
+	gap: 1.5em;
+	min-width: 0;
+}
+
+.tree-demo__title {
+	margin: 0 0 0.5em;
+	font-size: 1.05em;
+}
+
+.tree-demo__title code {
+	font-size: 0.95em;
+}
+
+.tree-demo__box {
+	height: 30em;
+	overflow: auto;
+	box-sizing: border-box;
+	padding: 0.4em;
+	border: 1px solid var(--wicket-theme-border, #ddd);
+	border-radius: 0.6em;
+	background: var(--wicket-theme-surface, Canvas);
+}
+
+.tree-demo__box--table {
+	height: 24em;
+	padding: 0;
+}
+
+.tree-demo__box--table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--wicket-theme-surface, Canvas);
+}
+
+.tree-demo__details {
+	position: sticky;
+	top: 1em;
+}
+
+.tree-demo-file {
+	padding: 1em;
+	border: 1px solid var(--wicket-theme-border, #ddd);
+	border-radius: 0.6em;
+	background: var(--wicket-theme-surface, Canvas);
+}
+
+.tree-demo-file__title {
+	margin: 0 0 0.75em;
+	font-size: 1.05em;
+}
+
+.tree-demo-file__facts {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 0.4em 1em;
+	margin: 0;
+}
+
+.tree-demo-file__facts dt {
+	font-weight: 600;
+	opacity: 0.8;
+}
+
+.tree-demo-file__facts dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.tree-demo-file__name {
+	font-weight: 600;
+}
+
+.tree-demo-file__path {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.9em;
+}
+
+.tree-demo-file__none {
+	margin: 0;
+	opacity: 0.8;
+}
+
+@media (max-width: 64em) {
+	.tree-demo,
+	.tree-demo--single {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.tree-demo__details {
+		position: static;
+	}
+}

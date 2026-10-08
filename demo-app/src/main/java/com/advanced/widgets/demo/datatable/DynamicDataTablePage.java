@@ -5,9 +5,6 @@
 package com.advanced.widgets.demo.datatable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +42,6 @@ import com.advanced.widgets.dynamicdatatable.RowNumberColumn;
 import com.advanced.widgets.dynamicdatatable.SelectionColumn;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
-import com.advanced.widgets.license.Licensing;
 import com.advanced.widgets.table.IMovableColumn;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -366,7 +362,6 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			.put("columns", columns)
 			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
 			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE))
-			.put("licenseKey", licenseKey())
 			.put("rowsPerPage", ROWS_PER_PAGE)
 			.put("pageSizes", new JSONArray(List.of(25, 50, 100, 500)))
 			.put("bodyHeight", new JSONObject()
@@ -430,22 +425,5 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	{
 		return new ClassStringResourceLoader(scope).loadStringResource(scope, key, getLocale(),
 			getStyle(), getVariation());
-	}
-
-	/**
-	 * @return the license key of the application, as it installs it
-	 */
-	private static String licenseKey()
-	{
-		try (InputStream key = DynamicDataTablePage.class.getClassLoader()
-			.getResourceAsStream(Licensing.RESOURCE))
-		{
-			return key != null ? new String(key.readAllBytes(), StandardCharsets.UTF_8).strip()
-				: "";
-		}
-		catch (IOException e)
-		{
-			throw new UncheckedIOException(e);
-		}
 	}
 }

@@ -8,12 +8,19 @@
  * framework (data-framework-app), the demo (data-demo) and its configuration as JSON
  * (data-config). The tabs of a demo mark the element data-mount the first time it is shown and
  * fire framework-app:mount on it; a page showing an app right away renders it marked already.
+ * Every configuration carries the license key of the demo application, which is activated before
+ * the first app mounts, so the private components show in every demo.
  */
+
+import { activate } from '@advanced-widgets/core';
 
 /** Renders the app of a demo into an element, with the configuration the page gave. */
 export type Mount = (element: HTMLElement, config: never) => void;
 
 const MOUNT_EVENT = 'framework-app:mount';
+
+/** The license key activated, which every configuration carries: the demo application's. */
+let activated: string | undefined = undefined;
 
 /**
  * Mounts the apps of a framework into the elements marked for them, now and as they get marked.
@@ -33,7 +40,13 @@ export function startApps(framework: string, apps: Record<string, Mount>): void 
 			return;
 		}
 		mounted.add(element);
-		app(element, JSON.parse(element.dataset.config ?? '{}') as never);
+		const config = JSON.parse(element.dataset.config ?? '{}') as { licenseKey?: string };
+		if (config.licenseKey && config.licenseKey !== activated) {
+			// the key of the demo: the demo shows every private component
+			activated = config.licenseKey;
+			activate(config.licenseKey);
+		}
+		app(element, config as never);
 	};
 	document.querySelectorAll<HTMLElement>(`[data-framework-app="${framework}"][data-mount]`)
 		.forEach(mount);

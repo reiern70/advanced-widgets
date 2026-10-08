@@ -36,7 +36,8 @@ const SCRIPTS = [
 	['src/wicket/movable-columns.ts', 'com/advanced/widgets/table/wicket-movable-columns.js'],
 	['src/wicket/resizable-columns.ts', 'com/advanced/widgets/table/wicket-resizable-columns.js'],
 	['src/wicket/scrollbar.ts', 'com/advanced/widgets/scrollbar/wicket-scrollbar.js'],
-	['src/wicket/templates.ts', 'com/advanced/widgets/template/wicket-templates.js']
+	['src/wicket/templates.ts', 'com/advanced/widgets/template/wicket-templates.js'],
+	['src/wicket/tree.ts', 'com/advanced/widgets/tree/json-tree.js']
 ];
 
 /** The style sheets: their file in styles and their path in ui-components. */
@@ -51,7 +52,8 @@ const STYLES = [
 	['styles/movable-columns.css', 'com/advanced/widgets/table/wicket-movable-columns.css'],
 	['styles/progress-bar.css', 'com/advanced/widgets/progress/wicket-progress-bar.css'],
 	['styles/resizable-columns.css', 'com/advanced/widgets/table/wicket-resizable-columns.css'],
-	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css']
+	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css'],
+	['styles/tree.css', 'com/advanced/widgets/tree/wicket-tree.css']
 ];
 
 await rm(out, { recursive: true, force: true });

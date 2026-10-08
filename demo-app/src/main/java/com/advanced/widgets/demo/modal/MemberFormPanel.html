@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<form wicket:id="form" class="member-form">
+	<div wicket:id="feedback"></div>
+	<label><wicket:message key="name"/> <input type="text" wicket:id="name" autocomplete="name"/></label>
+	<label><wicket:message key="email"/> <input type="email" wicket:id="email" autocomplete="email"/></label>
+	<label><wicket:message key="role"/> <select wicket:id="role"></select></label>
+	<div class="member-form__buttons">
+		<button type="button" wicket:id="cancel" class="dynamic-data-table-button"><wicket:message key="cancel"/></button>
+		<button type="submit" wicket:id="save" class="dynamic-data-table-button dynamic-data-table-button-primary"><wicket:message key="save"/></button>
+	</div>
+</form>
+</wicket:panel>

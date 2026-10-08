@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ *
+ * The modal dialog of React and Svelte (modal.ts) in the markup of Wicket's ModalDialog with its
+ * default theme: an overlay over the page, the dialog near its top, the content scrolling within,
+ * and an optional header, body and footer in the colors of the theme, as wicket-theme.css shows
+ * Wicket's. Dialogs nested in another, or opened after it, are shifted a little.
+ */
+.dialog-theme-default .modal-dialog-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
+	padding: 0;
+	background: var(--wicket-theme-veil, rgba(0, 0, 0, 0.2));
+}
+
+.dialog-theme-default .modal-dialog {
+	position: absolute;
+	top: 10%;
+	overflow: hidden;
+	border: 1px solid var(--wicket-theme-border, transparent);
+	border-radius: 0.4em;
+	background: var(--wicket-theme-surface, Canvas);
+	color: var(--wicket-theme-text, CanvasText);
+	color-scheme: var(--wicket-theme-color-scheme, normal);
+	box-shadow: 0 0 60px 10px rgba(0, 0, 0, 0.35);
+}
+
+.dialog-theme-default .modal-dialog:focus {
+	outline: none;
+}
+
+.dialog-theme-default .modal-dialog .modal-dialog-content {
+	min-width: 20vw;
+	max-width: 80vw;
+	min-height: 20vh;
+	max-height: 80vh;
+	overflow: auto;
+}
+
+.dialog-theme-default .modal-dialog-header {
+	margin: 0;
+	padding: 0.5em 1em;
+	background: var(--wicket-theme-primary, Highlight);
+	color: var(--wicket-theme-on-primary, HighlightText);
+	font-size: 1.1em;
+	text-align: start;
+}
+
+.dialog-theme-default .modal-dialog-body {
+	padding: 1em;
+}
+
+.dialog-theme-default .modal-dialog-footer {
+	padding: 0.5em 1em;
+	border-top: 1px solid var(--wicket-theme-border, ButtonBorder);
+	background: var(--wicket-theme-toolbar, transparent);
+}
+
+/* dialogs nested in another */
+.dialog-theme-default .modal-dialog .modal-dialog {
+	margin: 16px 0 0 16px;
+}
+
+.dialog-theme-default .modal-dialog .modal-dialog .modal-dialog {
+	margin: 32px 0 0 32px;
+}
+
+/* dialogs opened after another */
+.dialog-theme-default ~ .dialog-theme-default .modal-dialog {
+	margin: 16px 0 0 16px;
+}
+
+.dialog-theme-default ~ .dialog-theme-default ~ .dialog-theme-default .modal-dialog {
+	margin: 32px 0 0 32px;
+}

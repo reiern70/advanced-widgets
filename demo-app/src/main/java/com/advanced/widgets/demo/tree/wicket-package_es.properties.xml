@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="files">Archivos del proyecto</entry>
+	<entry key="section.wicket">Componentes Wicket</entry>
+	<entry key="section.json">Generado a partir de JSON</entry>
+	<entry key="selectedFile">Archivo seleccionado</entry>
+	<entry key="noneSelected">Seleccione un archivo en un árbol para verlo aquí.</entry>
+	<entry key="name">Nombre</entry>
+	<entry key="path">Ruta</entry>
+	<entry key="kind">Tipo</entry>
+	<entry key="size">Tamaño</entry>
+	<entry key="modified">Modificado</entry>
+	<entry key="items">{0,choice,0#vacía|1#1 elemento|1&lt;{0} elementos}</entry>
+	<entry key="kind.folder">Carpeta</entry>
+	<entry key="kind.java">Código Java</entry>
+	<entry key="kind.typescript">TypeScript</entry>
+	<entry key="kind.javascript">JavaScript</entry>
+	<entry key="kind.svelte">Componente Svelte</entry>
+	<entry key="kind.html">HTML</entry>
+	<entry key="kind.css">Hoja de estilos</entry>
+	<entry key="kind.xml">XML</entry>
+	<entry key="kind.json">JSON</entry>
+	<entry key="kind.markdown">Markdown</entry>
+	<entry key="kind.text">Texto</entry>
+	<entry key="kind.other">Archivo</entry>
+</properties>

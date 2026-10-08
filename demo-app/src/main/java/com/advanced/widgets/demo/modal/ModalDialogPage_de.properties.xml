@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Beispiel für einen modalen Dialog</entry>
+	<entry key="explanation">Dies ist eine Demo zum Hinzufügen, Bearbeiten und Löschen in einem modalen Dialog, gleich in Wicket, React und Svelte.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;Der Reiter Wicket nutzt den ModalDialog von wicket-extensions mit seinem Standard-Theme, in den Farben des Themes der Seite: Mitglied hinzufügen und Bearbeiten öffnen darin das Formular eines Mitglieds, Löschen fragt nach einer Bestätigung. Speichern zeichnet das Team per Ajax neu&lt;/li&gt; &lt;li&gt;Escape schließt den Dialog, ebenso ein Klick auf die abgedunkelte Seite um ihn herum. Solange er offen ist, bleibt der Fokus in ihm, Tab und Umschalt+Tab gehen reihum durch seine Felder und Schaltflächen, und beim Schließen kehrt der Fokus zur Schaltfläche zurück, die ihn geöffnet hat&lt;/li&gt; &lt;li&gt;Das Formular wird geprüft, wie Wicket es prüft: Name und E-Mail sind Pflicht, die E-Mail muss eine Adresse sein. Versuchen Sie, es leer zu speichern&lt;/li&gt; &lt;/ul&gt;&lt;p&gt;Die Reiter React und Svelte nutzen das Modal von @advanced-widgets/react und @advanced-widgets/svelte: das Markup des ModalDialog von Wicket, sodass dieselben Stylesheets es zeigen, und dasselbe Verhalten, aus dem ModalDialog des Kerns. Sie fügen dasselbe Team hinzu, bearbeiten und löschen es, in Ihrer Sitzung gespeichert, über die eingebundene Ressource /api/team, die mit den Meldungen des Wicket-Formulars prüft: Ein in einem Reiter geändertes Mitglied erscheint in den anderen, sobald sie das Team neu laden.&lt;/p&gt;</entry>
+</properties>

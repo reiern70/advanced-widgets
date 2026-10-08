@@ -15,10 +15,13 @@ import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
+import com.advanced.widgets.demo.modal.ModalDialogPage;
 import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
+import com.advanced.widgets.demo.tree.TreePage;
+import com.advanced.widgets.demo.tree.TreeGridPage;
 
 /**
  * The demo pages, in the order the home page lists them and the previous and next links of a demo
@@ -72,10 +75,13 @@ public final class Demos
 		new Demo("jsonTable", "data", DynamicDataTablePage.class, false),
 		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true),
 		new Demo("jsonList", "data", JsonListPage.class, false),
+		new Demo("tree", "data", TreePage.class, false),
+		new Demo("treeGrid", "data", TreeGridPage.class, false),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
+		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, true),
 		new Demo("frameworks", "frameworks", FrameworksPage.class, true));
 

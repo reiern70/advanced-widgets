@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+
+  The texts the modal dialog example shares: the page, the form of a member and the team resource.
+-->
+<properties>
+	<entry key="team">Team</entry>
+	<entry key="addMember">Add member</entry>
+	<entry key="newMember">New member</entry>
+	<entry key="editMember">Edit ${name}</entry>
+	<entry key="edit">Edit</entry>
+	<entry key="delete">Delete</entry>
+	<entry key="deleteMember">Delete member</entry>
+	<entry key="delete.confirm">Delete ${name} from the team?</entry>
+	<entry key="save">Save</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="name">Name</entry>
+	<entry key="email">Email</entry>
+	<entry key="role">Role</entry>
+	<entry key="actions">Actions</entry>
+	<entry key="added">Added {0}.</entry>
+	<entry key="saved">Saved {0}.</entry>
+	<entry key="deleted">Deleted {0}.</entry>
+	<entry key="gone">That member no longer exists.</entry>
+	<entry key="empty">The team has no members.</entry>
+	<entry key="role.developer">Development</entry>
+	<entry key="role.designer">Design</entry>
+	<entry key="role.tester">Testing</entry>
+	<entry key="role.manager">Management</entry>
+</properties>

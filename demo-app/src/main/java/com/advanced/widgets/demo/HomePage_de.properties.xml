@@ -17,8 +17,8 @@
 	<entry key="status.PLANNED">Geplant</entry>
 	<entry key="catalog.dataGrid">Datenraster</entry>
 	<entry key="catalog.dataGrid.description">Sortierbares, seitenweises Raster mit anpassbaren Spalten, Bearbeitung in der Zeile und Zeilenauswahl.</entry>
-	<entry key="catalog.treeTable">Baumtabelle</entry>
-	<entry key="catalog.treeTable.description">Hierarchische Zeilen, deren Kinder bei Bedarf geladen werden, mit gemerktem Auf- und Zuklappen.</entry>
+	<entry key="catalog.treeGrid">Baumraster</entry>
+	<entry key="catalog.treeGrid.description">Hierarchische Zeilen, deren Kinder bei Bedarf geladen werden, mit gemerktem Auf- und Zuklappen.</entry>
 	<entry key="catalog.liveFeed">Live-Feed</entry>
 	<entry key="catalog.liveFeed.description">Eine Liste, die neue Einträge vom Server über WebSockets empfängt.</entry>
 	<entry key="catalog.notifications">Benachrichtigungen</entry>

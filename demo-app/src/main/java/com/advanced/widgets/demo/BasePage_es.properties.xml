@@ -30,6 +30,10 @@
 	<entry key="demo.beanTable.description">La misma tabla, con sus filas generadas en el servidor por componentes de Wicket.</entry>
 	<entry key="demo.jsonList">Lista infinita JSON</entry>
 	<entry key="demo.jsonList.description">Mil usuarios como tarjetas, generadas en el navegador a partir de JSON y cargadas al desplazarse.</entry>
+	<entry key="demo.tree">Árbol</entry>
+	<entry key="demo.tree.description">Sus archivos en un árbol, como componentes Wicket o generados en el navegador a partir de JSON.</entry>
+	<entry key="demo.treeGrid">Cuadrícula en árbol</entry>
+	<entry key="demo.treeGrid.description">Sus archivos en una cuadrícula en árbol, con su tipo, tamaño y día de modificación.</entry>
 	<entry key="demo.progressBar">Barra de progreso</entry>
 	<entry key="demo.progressBar.description">Progreso conocido y desconocido, en cualquiera de los temas.</entry>
 	<entry key="demo.dropdown">Lista desplegable</entry>
@@ -38,6 +42,8 @@
 	<entry key="demo.autocomplete.description">Uno o varios valores sugeridos mientras escribe, cada fila a partir de una plantilla, los elegidos como chips.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
+	<entry key="demo.modalDialog">Diálogo modal</entry>
+	<entry key="demo.modalDialog.description">Añadir, editar y eliminar en un diálogo modal que retiene el foco, igual en Wicket, React y Svelte.</entry>
 	<entry key="demo.themeEditor">Editor de temas</entry>
 	<entry key="demo.themeEditor.description">Genera un tema de los componentes, con vista previa en vivo.</entry>
 	<entry key="demo.frameworks">React y Svelte</entry>

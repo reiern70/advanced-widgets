@@ -17,8 +17,8 @@
 	<entry key="status.PLANNED">Previsto</entry>
 	<entry key="catalog.dataGrid">Cuadrícula de datos</entry>
 	<entry key="catalog.dataGrid.description">Cuadrícula ordenable y paginada con columnas redimensionables, edición en línea y selección de filas.</entry>
-	<entry key="catalog.treeTable">Tabla en árbol</entry>
-	<entry key="catalog.treeTable.description">Filas jerárquicas con carga diferida de los hijos y estado expandido o contraído.</entry>
+	<entry key="catalog.treeGrid">Cuadrícula en árbol</entry>
+	<entry key="catalog.treeGrid.description">Filas jerárquicas con carga diferida de los hijos y estado expandido o contraído.</entry>
 	<entry key="catalog.liveFeed">Flujo en vivo</entry>
 	<entry key="catalog.liveFeed.description">Lista que recibe las entradas nuevas que el servidor envía por WebSockets.</entry>
 	<entry key="catalog.notifications">Notificaciones</entry>

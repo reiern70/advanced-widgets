@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+
+  The texts the tree examples share: the pages, the details of a file and the files resource.
+-->
+<properties>
+	<entry key="files">Project files</entry>
+	<entry key="section.wicket">Wicket components</entry>
+	<entry key="section.json">Rendered from JSON</entry>
+	<entry key="selectedFile">Selected file</entry>
+	<entry key="noneSelected">Select a file in a tree to see it here.</entry>
+	<entry key="name">Name</entry>
+	<entry key="path">Path</entry>
+	<entry key="kind">Kind</entry>
+	<entry key="size">Size</entry>
+	<entry key="modified">Modified</entry>
+	<entry key="items">{0,choice,0#empty|1#1 item|1&lt;{0} items}</entry>
+	<entry key="kind.folder">Folder</entry>
+	<entry key="kind.java">Java source</entry>
+	<entry key="kind.typescript">TypeScript</entry>
+	<entry key="kind.javascript">JavaScript</entry>
+	<entry key="kind.svelte">Svelte component</entry>
+	<entry key="kind.html">HTML</entry>
+	<entry key="kind.css">Style sheet</entry>
+	<entry key="kind.xml">XML</entry>
+	<entry key="kind.json">JSON</entry>
+	<entry key="kind.markdown">Markdown</entry>
+	<entry key="kind.text">Text</entry>
+	<entry key="kind.other">File</entry>
+</properties>

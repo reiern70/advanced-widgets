@@ -9,6 +9,7 @@ import org.apache.wicket.protocol.http.WebSession;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.util.lang.Args;
 
+import com.advanced.widgets.demo.modal.TeamStore;
 import com.advanced.widgets.theme.Theme;
 
 /**
@@ -22,6 +23,8 @@ public class DemoSession extends WebSession
 	private Theme theme = Theme.DEFAULT;
 
 	private AjaxEngine ajaxEngine = AjaxEngine.DEFAULT;
+
+	private TeamStore team;
 
 	public DemoSession(Request request)
 	{
@@ -70,5 +73,19 @@ public class DemoSession extends WebSession
 	{
 		this.ajaxEngine = Args.notNull(ajaxEngine, "ajaxEngine");
 		dirty();
+	}
+
+	/**
+	 * @return the team of the modal dialog example, which this visitor edits in Wicket, React and
+	 *         Svelte; marks the session changed, as the team may change
+	 */
+	public synchronized TeamStore getTeam()
+	{
+		if (team == null)
+		{
+			team = new TeamStore();
+		}
+		dirty();
+		return team;
 	}
 }

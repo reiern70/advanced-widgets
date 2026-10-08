@@ -21,12 +21,18 @@ import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
+import com.advanced.widgets.demo.modal.ModalDialogPage;
+import com.advanced.widgets.demo.modal.TeamResource;
 import com.advanced.widgets.demo.frameworks.ChoicesResource;
 import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.register.RegisterPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
+import com.advanced.widgets.demo.tree.FilesResource;
+import com.advanced.widgets.demo.tree.TreePage;
+import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.demo.tree.TreeGridPage;
 
 /**
  * Application object for your web application.
@@ -59,6 +65,10 @@ public class WicketApplication extends WebApplication
 	{
 		super.init();
 
+		// the demo shows every private component, whatever key the system property or the
+		// environment holds: the license limits only the other applications using the library
+		Licensing.install(this, DemoLicense.key());
+
 		// leave out <wicket:child> and the like also in development, they would break the layout
 		getMarkupSettings().setStripWicketTags(true);
 
@@ -80,15 +90,20 @@ public class WicketApplication extends WebApplication
 		mountPage("dynamic-data-table", DynamicDataTablePage.class);
 		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
 		mountPage("json-infinite-list", JsonListPage.class);
+		mountPage("tree", TreePage.class);
+		mountPage("tree-grid", TreeGridPage.class);
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);
 		mountPage("autocomplete", AutocompletePage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
+		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
 		mountPage("react-svelte", FrameworksPage.class);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
+		mountResource(FilesResource.PATH, FilesResource.REFERENCE);
+		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
 	}
 }

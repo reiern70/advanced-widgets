@@ -121,7 +121,7 @@
 		rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes} infinite={infinite === 'true'}
 		selection="many" onselectionchange={(keys) => (selected = keys)} onaction={action} {filter}
 		resizableColumns="stretch" bodyHeight={config.bodyHeight} adjustToParent
-		texts={texts.table} {subscribe} licenseKey={config.licenseKey} {toolbar} {actions} />
+		texts={texts.table} {subscribe} {toolbar} {actions} />
 </div>
 <p class="dynamic-dataview-selection">
 	{selected.length ? format(texts['selection.some'], selected.length) : texts['selection.none']}

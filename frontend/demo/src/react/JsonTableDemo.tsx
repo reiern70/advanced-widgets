@@ -117,7 +117,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 					rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes} infinite={infinite}
 					selection="many" onSelectionChange={setSelected} onAction={action} filter={filter}
 					resizableColumns="stretch" bodyHeight={config.bodyHeight} adjustToParent
-					texts={texts.table} subscribe={subscribe} licenseKey={config.licenseKey}
+					texts={texts.table} subscribe={subscribe}
 					toolbar={
 						<label className="user-filter">
 							{texts.filterLabel}{' '}

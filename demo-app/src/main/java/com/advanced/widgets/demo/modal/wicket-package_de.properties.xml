@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="team">Team</entry>
+	<entry key="addMember">Mitglied hinzufügen</entry>
+	<entry key="newMember">Neues Mitglied</entry>
+	<entry key="editMember">${name} bearbeiten</entry>
+	<entry key="edit">Bearbeiten</entry>
+	<entry key="delete">Löschen</entry>
+	<entry key="deleteMember">Mitglied löschen</entry>
+	<entry key="delete.confirm">${name} aus dem Team löschen?</entry>
+	<entry key="save">Speichern</entry>
+	<entry key="cancel">Abbrechen</entry>
+	<entry key="name">Name</entry>
+	<entry key="email">E-Mail</entry>
+	<entry key="role">Rolle</entry>
+	<entry key="actions">Aktionen</entry>
+	<entry key="added">{0} hinzugefügt.</entry>
+	<entry key="saved">{0} gespeichert.</entry>
+	<entry key="deleted">{0} gelöscht.</entry>
+	<entry key="gone">Dieses Mitglied gibt es nicht mehr.</entry>
+	<entry key="empty">Das Team hat keine Mitglieder.</entry>
+	<entry key="role.developer">Entwicklung</entry>
+	<entry key="role.designer">Design</entry>
+	<entry key="role.tester">Test</entry>
+	<entry key="role.manager">Management</entry>
+</properties>

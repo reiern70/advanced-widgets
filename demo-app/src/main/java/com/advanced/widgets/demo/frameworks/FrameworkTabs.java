@@ -17,6 +17,7 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
+import com.advanced.widgets.demo.DemoLicense;
 import com.github.openjson.JSONObject;
 
 /**
@@ -78,7 +79,9 @@ public class FrameworkTabs extends Panel
 		WebMarkupContainer app = new WebMarkupContainer(framework);
 		app.add(AttributeModifier.replace("data-framework-app", framework));
 		app.add(AttributeModifier.replace("data-demo", demo));
-		app.add(AttributeModifier.replace("data-config", () -> config.getObject().toString()));
+		// the key of the demo, which the apps activate: the demo shows every private component
+		app.add(AttributeModifier.replace("data-config", () -> config.getObject()
+			.put("licenseKey", DemoLicense.key()).toString()));
 		return app;
 	}
 

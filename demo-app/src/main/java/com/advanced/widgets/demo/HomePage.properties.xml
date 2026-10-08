@@ -17,8 +17,8 @@
 	<entry key="status.PLANNED">Planned</entry>
 	<entry key="catalog.dataGrid">Data Grid</entry>
 	<entry key="catalog.dataGrid.description">Sortable, pageable grid with resizable columns, inline editing and row selection.</entry>
-	<entry key="catalog.treeTable">Tree Table</entry>
-	<entry key="catalog.treeTable.description">Hierarchical rows with lazy loading of children and expand/collapse state.</entry>
+	<entry key="catalog.treeGrid">Tree Grid</entry>
+	<entry key="catalog.treeGrid.description">Hierarchical rows with lazy loading of children and expand/collapse state.</entry>
 	<entry key="catalog.liveFeed">Live Feed</entry>
 	<entry key="catalog.liveFeed.description">List that receives new entries pushed from the server over websockets.</entry>
 	<entry key="catalog.notifications">Notifications</entry>

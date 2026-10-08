@@ -15,7 +15,7 @@ public final class ComponentCatalog {
 
 	private static final List<ComponentDescriptor> COMPONENTS = List.of(
 		new ComponentDescriptor("dataGrid", "data", Status.PLANNED),
-		new ComponentDescriptor("treeTable", "data", Status.PLANNED),
+		new ComponentDescriptor("treeGrid", "data", Status.AVAILABLE),
 		new ComponentDescriptor("liveFeed", "realTime", Status.PLANNED),
 		new ComponentDescriptor("notifications", "realTime", Status.PLANNED),
 		new ComponentDescriptor("autocomplete", "forms", Status.AVAILABLE),

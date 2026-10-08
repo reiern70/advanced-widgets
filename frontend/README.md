@@ -20,15 +20,23 @@ built as `handlebars-adapter.js`), the drop-down and its chips, the autocomplete
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
 the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too. React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`, `Scrollable`,
-`ProgressBar` and `DataTable`; the core's `dropdown` and `scrollbar` also work as Svelte actions,
-and `Clipboard.install()` and `FloatingPanel.install()` make the `data-wicket-copy` and floating
-panel markup work in any page.
+`ProgressBar`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown` and `scrollbar` also
+work as Svelte actions, and `Clipboard.install()` and `FloatingPanel.install()` make the
+`data-wicket-copy` and floating panel markup work in any page.
 
-`DataTable` is private, as the JSON table is in Wicket: it checks a license key in the browser
-(`license.ts`), the same `AW1.` keys with the same Ed25519 signature the server checks, and shows
-the same placeholder without one. Give the key with `activate(key)` once, or to a table as
-`licenseKey`. Web Crypto verifies the signature; where it has no Ed25519 yet (Firefox before 129),
-`ed25519.ts` does.
+The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
+their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
+the children of a folder the first time it is expanded. Their style sheet, `tree.css`, built as
+`wicket-tree.css`, and their icons (`TREE_ICONS`, `TreeIcon` in Java) are those of the Wicket
+`Tree` and `TreeGrid` too, so all of them look the same.
+
+`DataTable`, `Tree` and `TreeGrid` are private, as the JSON table and the trees are in Wicket:
+they check a license key in the browser (`license.ts`), the same `AW1.` keys with the same Ed25519
+signature the server checks, and show the same placeholder without one. Give the key with
+`activate(key)` once, or to a component as `licenseKey`. Web Crypto verifies the signature; where
+it has no Ed25519 yet (Firefox before 129), `ed25519.ts` does, and where the page has no Web
+Crypto at all (served over plain HTTP from another host than `localhost`, such as
+`http://192.168.0.152:9180`), `ed25519.ts` hashes with a SHA-512 of its own too.
 
 Some core modules are shared state in a page: the template engines (`templates()`, which
 Handlebars registers into) and, for the infinite list and the table, the scroll bars and the
@@ -45,7 +53,8 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
-demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `scrollbar`, `progressBar`, and
+demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
+`scrollbar`, `progressBar`, and
 `overview` for the combined page `/react-svelte`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of

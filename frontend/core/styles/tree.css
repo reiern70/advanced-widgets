@@ -1,0 +1,270 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ *
+ * The trees and tree grids: those rendered in the browser from JSON (tree.ts) and the Wicket
+ * Tree and TreeGrid, which render the same rows, toggles and icons on the server.
+ */
+.wicket-tree,
+.wicket-tree-grid {
+	--wicket-tree-indent: 1.4em;
+	color: var(--wicket-theme-text, CanvasText);
+}
+
+.wicket-tree-group {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* a row: the toggle of a folder, the icon and the content */
+.wicket-tree-row {
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+	min-height: 2em;
+	padding: 0.1em 0.5em 0.1em calc(0.25em + (var(--wicket-tree-level, 1) - 1) * var(--wicket-tree-indent));
+	border-radius: 6px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.wicket-tree .wicket-tree-row:hover {
+	background: var(--wicket-theme-hover, rgba(0, 0, 0, 0.06));
+}
+
+.wicket-tree-toggle,
+.wicket-tree-icon {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.1em;
+	height: 1.1em;
+}
+
+.wicket-tree-toggle svg {
+	transition: transform 0.15s ease;
+}
+
+.wicket-tree-item[aria-expanded="true"] > .wicket-tree-row > .wicket-tree-toggle svg,
+.wicket-tree-item[aria-expanded="true"] > td > .wicket-tree-row > .wicket-tree-toggle svg,
+.wicket-tree-toggle--expanded svg {
+	transform: rotate(90deg);
+}
+
+html[dir="rtl"] .wicket-tree-toggle svg {
+	transform: scaleX(-1);
+}
+
+html[dir="rtl"] .wicket-tree-item[aria-expanded="true"] .wicket-tree-toggle svg,
+html[dir="rtl"] .wicket-tree-toggle--expanded svg {
+	transform: rotate(90deg);
+}
+
+.wicket-tree-toggle--loading svg {
+	display: none;
+}
+
+.wicket-tree-toggle--loading::before,
+.wicket-tree-status--loading::before {
+	content: "";
+	width: 0.85em;
+	height: 0.85em;
+	border: 2px solid var(--wicket-theme-border, GrayText);
+	border-top-color: var(--wicket-theme-primary, Highlight);
+	border-radius: 50%;
+	animation: wicket-tree-spin 0.8s linear infinite;
+}
+
+.wicket-tree-icon {
+	color: var(--wicket-theme-primary, #b45309);
+}
+
+.wicket-tree-item--leaf > .wicket-tree-row .wicket-tree-icon,
+.wicket-tree-item--leaf > .wicket-tree-grid-tree-cell .wicket-tree-icon,
+.wicket-tree-node--leaf .wicket-tree-icon {
+	color: var(--wicket-theme-text, GrayText);
+	opacity: 0.75;
+}
+
+.wicket-tree-content {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* the item of a node: focus and selection */
+.wicket-tree-item {
+	outline: none;
+}
+
+.wicket-tree-item:focus-visible > .wicket-tree-row,
+.wicket-tree-grid-row:focus-visible > td,
+.wicket-tree-node-button:focus-visible,
+.wicket-tree-junction:focus-visible {
+	outline: 2px solid var(--wicket-theme-accent, Highlight);
+	outline-offset: -2px;
+}
+
+.wicket-tree .wicket-tree-item--selected > .wicket-tree-row,
+.wicket-tree .wicket-tree-node--selected .wicket-tree-row {
+	background: var(--wicket-theme-selected, rgba(37, 99, 235, 0.14));
+	font-weight: 600;
+}
+
+.wicket-tree-status {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6em;
+	padding: 0.75em;
+	color: var(--wicket-theme-text, GrayText);
+	opacity: 0.8;
+}
+
+.wicket-tree-status[hidden] {
+	display: none;
+}
+
+/* tree grids */
+.wicket-tree-grid {
+	overflow-x: auto;
+}
+
+.wicket-tree-grid table,
+table.wicket-tree-grid-grid {
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+.wicket-tree-grid th {
+	padding: 0.55em 0.75em;
+	border-bottom: 2px solid var(--wicket-theme-border, ButtonBorder);
+	background: var(--wicket-theme-toolbar, transparent);
+	text-align: start;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.wicket-tree-grid td {
+	padding: 0.15em 0.75em;
+	border-bottom: 1px solid var(--wicket-theme-border, rgba(0, 0, 0, 0.12));
+	white-space: nowrap;
+}
+
+.wicket-tree-grid td.wicket-tree-grid-tree-cell,
+.wicket-tree-grid td.tree {
+	padding-inline-start: 0.25em;
+	width: 45%;
+}
+
+.wicket-tree-grid tbody tr {
+	cursor: pointer;
+}
+
+.wicket-tree-grid tbody tr:hover {
+	background: var(--wicket-theme-hover, rgba(0, 0, 0, 0.06));
+}
+
+.wicket-tree-grid .wicket-tree-row {
+	padding-inline-end: 0;
+	border-radius: 0;
+}
+
+.wicket-tree-grid tbody tr.wicket-tree-item--selected,
+.wicket-tree-grid tbody tr.wicket-tree-node--selected {
+	background: var(--wicket-theme-selected, rgba(37, 99, 235, 0.14));
+}
+
+.wicket-tree-grid tr.wicket-tree-item--selected > td > .wicket-tree-row,
+.wicket-tree-grid tr.wicket-tree-node--selected .wicket-tree-row {
+	background: transparent;
+}
+
+.wicket-tree-grid tr.wicket-tree-item--selected .wicket-tree-content,
+.wicket-tree-grid tr.wicket-tree-node--selected .wicket-tree-content {
+	font-weight: 600;
+}
+
+.wicket-tree-grid .wicket-tree-number {
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The Wicket Tree and TreeGrid: the nested subtrees of wicket-extensions indent by the level
+ * of their rows, the junction and the label are buttons.
+ */
+.wicket-tree .tree-branch,
+.wicket-tree-grid .tree-branch {
+	margin: 0;
+	padding: 0;
+}
+
+.wicket-tree .tree-subtree,
+.wicket-tree-grid .tree-subtree {
+	margin: 0 0 0 var(--wicket-tree-indent);
+	padding: 0;
+}
+
+html[dir="rtl"] .wicket-tree .tree-subtree,
+html[dir="rtl"] .wicket-tree-grid .tree-subtree {
+	margin: 0 var(--wicket-tree-indent) 0 0;
+}
+
+.wicket-tree-junction,
+.wicket-tree-node-button {
+	display: inline-flex;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.wicket-tree-junction {
+	justify-content: center;
+	width: 1.1em;
+	height: 1.1em;
+	border-radius: 4px;
+}
+
+.wicket-tree-junction--none {
+	visibility: hidden;
+}
+
+.wicket-tree-node-button {
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 0.35em;
+	border-radius: 4px;
+}
+
+.wicket-tree-node-button .wicket-tree-content {
+	flex: 1 1 auto;
+}
+
+@keyframes wicket-tree-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wicket-tree-toggle svg {
+		transition: none;
+	}
+
+	.wicket-tree-toggle--loading::before,
+	.wicket-tree-status--loading::before {
+		animation-duration: 2.4s;
+	}
+}
