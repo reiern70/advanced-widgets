@@ -56,15 +56,57 @@ describe('Scrollbar', () => {
 		const track = tracks()[0] as HTMLElement;
 		expect(track.hidden).toBe(true);
 
-		Object.defineProperty(track, 'clientHeight', { configurable: true, value: 100 });
+		const rail = track.firstElementChild as HTMLElement;
+		expect(rail.className).toBe('wicket-scrollbar-rail');
+		Object.defineProperty(rail, 'clientHeight', { configurable: true, value: 100 });
 		sizes(element, 100, 400);
 		element.scrollTop = 150;
 		instance.update();
 
 		expect(track.hidden).toBe(false);
-		const thumb = track.firstElementChild as HTMLElement;
+		const thumb = rail.firstElementChild as HTMLElement;
 		expect(thumb.style.height).toBe('25px');
 		expect(thumb.style.transform).toBe('translateY(37.5px)');
+	});
+
+	it('lays the bars inside the border of the element, on the background it is painted on', () => {
+		document.body.innerHTML = '<div style="background-color: rgb(1, 2, 3)"><div id="box" ' +
+			'style="overflow-y: auto; border: 3px solid; border-top-right-radius: 10px; border-bottom-right-radius: 2px"></div></div>';
+		const instance = Scrollbar.attach('box')!;
+		const style = instance.wrapper.style;
+
+		expect(style.getPropertyValue('--wicket-scrollbar-background')).toBe('rgb(1, 2, 3)');
+		expect(style.getPropertyValue('--wicket-scrollbar-inset-right')).toBe('3px');
+		expect(style.getPropertyValue('--wicket-scrollbar-radius-top-right')).toBe('7px');
+		expect(style.getPropertyValue('--wicket-scrollbar-radius-bottom-right')).toBe('0px');
+
+		instance.destroy();
+		expect(style.getPropertyValue('--wicket-scrollbar-background')).toBe('');
+	});
+
+	it('scrolls to the top, the bottom, a position and an element', () => {
+		document.body.innerHTML = '<div id="box" style="overflow: auto">' +
+			'<p data-line="1">1</p><p data-line="2">2</p></div>';
+		const element = document.getElementById('box')!;
+		sizes(element, 100, 400);
+		const instance = Scrollbar.attach('box')!;
+		expect(Scrollbar.of('box')).toBe(instance);
+		expect(Scrollbar.of(document.body)).toBeUndefined();
+
+		instance.scrollToBottom();
+		expect(element.scrollTop).toBe(300);
+		instance.scrollToTop();
+		expect(element.scrollTop).toBe(0);
+		instance.scrollTo({ top: 120, left: 7 });
+		expect([element.scrollTop, element.scrollLeft]).toEqual([120, 7]);
+
+		const line = element.querySelector('[data-line="2"]')!;
+		element.getBoundingClientRect = () => new DOMRect(0, 50, 200, 100);
+		line.getBoundingClientRect = () => new DOMRect(0, 80, 100, 20);
+		expect(instance.scrollToElement('[data-line="2"]')).toBe(true);
+		expect([element.scrollTop, element.scrollLeft]).toEqual([150, 7]);
+		expect(instance.scrollToElement('[data-line="3"]')).toBe(false);
+		expect(instance.scrollToElement(document.body)).toBe(false);
 	});
 
 	it('reuses the wrapper and replaces the bars when attached again', () => {

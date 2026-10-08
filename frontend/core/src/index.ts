@@ -26,7 +26,7 @@ export type { Host, Unsubscribe } from './host.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
 export { Scrollbar, scrollbar } from './scrollbar.js';
-export type { ScrollbarOptions } from './scrollbar.js';
+export type { ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';
 export { activate, activates, isLicensed, LICENSE_PREFIX, PUBLIC_KEY, UNLICENSED_CLASS,
 	verifyLicense } from './license.js';

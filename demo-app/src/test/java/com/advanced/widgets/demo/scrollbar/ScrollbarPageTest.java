@@ -45,12 +45,33 @@ class ScrollbarPageTest
 	}
 
 	@Test
-	void addingLinesRendersTheBoxAndItsScrollBarsAgain()
+	void addingLinesRendersTheBoxAndItsScrollBarsAgainScrolledToTheFirstAdded()
 	{
 		tester.clickLink("themed:addLines");
 
 		tester.assertComponentOnAjaxResponse("themed:growing");
 		tester.assertContains("Line 40");
+		tester.assertContains(Pattern.quote("data-line=\"40\""));
 		tester.assertContains(Pattern.quote("Wicket.Scrollbar.attach("));
+		assertScrolls("scrollToElement(\"[data-line=\\\"21\\\"]\", true)");
+	}
+
+	@Test
+	void theButtonsScrollTheGrowingBox()
+	{
+		tester.clickLink("themed:toTop");
+		assertScrolls("scrollToTop(true)");
+		tester.clickLink("themed:toBottom");
+		assertScrolls("scrollToBottom(true)");
+		tester.clickLink("themed:toPosition");
+		assertScrolls("scrollTo({\"top\":100}, true)");
+		tester.clickLink("themed:toLine");
+		assertScrolls("scrollToElement(\"[data-line=\\\"10\\\"]\", true)");
+	}
+
+	private void assertScrolls(String call)
+	{
+		String id = tester.getComponentFromLastRenderedPage("themed:growing").getMarkupId();
+		tester.assertContains(Pattern.quote("Wicket.Scrollbar.of(\"" + id + "\")?." + call + ";"));
 	}
 }

@@ -26,7 +26,13 @@
 	<section>
 		<h3><wicket:message key="growing"/></h3>
 		<div wicket:id="growing" class="scrollbar-demo__box scrollbar-demo__box--short"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
-		<p><a href="#" wicket:id="addLines"><wicket:message key="addLines"/></a></p>
+		<div class="scrollbar-demo__actions">
+			<button type="button" wicket:id="addLines" class="scrollbar-demo__add" wicket:message="title:addLines,aria-label:addLines">+</button>
+			<button type="button" wicket:id="toTop" class="scrollbar-demo__to"><wicket:message key="toTop"/></button>
+			<button type="button" wicket:id="toBottom" class="scrollbar-demo__to"><wicket:message key="toBottom"/></button>
+			<button type="button" wicket:id="toPosition" class="scrollbar-demo__to"><wicket:message key="toPosition"/></button>
+			<button type="button" wicket:id="toLine" class="scrollbar-demo__to"><wicket:message key="toLine"/></button>
+		</div>
 	</section>
 </div>
 </wicket:extend>

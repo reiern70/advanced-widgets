@@ -9,6 +9,7 @@ import java.util.Locale;
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
+import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -34,6 +35,12 @@ import com.github.openjson.JSONObject;
  * any element the bars with {@code Wicket.Scrollbar.attach(element, {axis})}, as a
  * BaseDynamicDataTable does for its body; such elements only need the header items of
  * {@link #renderHeadItems(IHeaderResponse)}.
+ * <p>
+ * During an Ajax request the behavior scrolls its component: {@link #scrollToTop},
+ * {@link #scrollToBottom}, {@link #scrollTo(IPartialPageRequestHandler, int, int) scrollTo} a
+ * position and {@link #scrollToElement(IPartialPageRequestHandler, String) scrollToElement}, also
+ * when the request renders the component again. They scroll smoothly if the behavior is
+ * {@link #setSmooth(boolean) smooth}.
  *
  * @since 11.0.0
  */
@@ -69,6 +76,10 @@ public class ScrollbarBehavior extends Behavior
 
 	private final Axis axis;
 
+	private boolean smooth;
+
+	private Component component;
+
 	/**
 	 * Draws the scroll bars in the directions in which the component scrolls.
 	 */
@@ -94,11 +105,122 @@ public class ScrollbarBehavior extends Behavior
 		return axis;
 	}
 
+	/**
+	 * @return whether the scroll methods scroll smoothly rather than at once
+	 */
+	public boolean isSmooth()
+	{
+		return smooth;
+	}
+
+	/**
+	 * @param smooth
+	 *            whether the scroll methods scroll smoothly rather than at once
+	 * @return {@code this}
+	 */
+	public ScrollbarBehavior setSmooth(boolean smooth)
+	{
+		this.smooth = smooth;
+		return this;
+	}
+
 	@Override
 	public void bind(Component component)
 	{
 		super.bind(component);
 		component.setOutputMarkupId(true);
+		this.component = component;
+	}
+
+	/**
+	 * Scrolls the component to its start.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 */
+	public void scrollToTop(IPartialPageRequestHandler target)
+	{
+		scroll(target, "scrollToTop(" + smooth + ")");
+	}
+
+	/**
+	 * Scrolls the component to its end.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 */
+	public void scrollToBottom(IPartialPageRequestHandler target)
+	{
+		scroll(target, "scrollToBottom(" + smooth + ")");
+	}
+
+	/**
+	 * Scrolls the component vertically to a position.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 * @param top
+	 *            the pixels from the top
+	 */
+	public void scrollTo(IPartialPageRequestHandler target, int top)
+	{
+		scroll(target, "scrollTo(" + new JSONObject().put("top", top) + ", " + smooth + ")");
+	}
+
+	/**
+	 * Scrolls the component to a position.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 * @param top
+	 *            the pixels from the top
+	 * @param left
+	 *            the pixels from the left
+	 */
+	public void scrollTo(IPartialPageRequestHandler target, int top, int left)
+	{
+		scroll(target, "scrollTo(" + new JSONObject().put("top", top).put("left", left) + ", " +
+			smooth + ")");
+	}
+
+	/**
+	 * Scrolls the component so that an element inside it starts at its top.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 * @param selector
+	 *            the CSS selector of the element, relative to the component, e.g.
+	 *            {@code ":scope > p:nth-child(3)"}
+	 */
+	public void scrollToElement(IPartialPageRequestHandler target, String selector)
+	{
+		Args.notEmpty(selector, "selector");
+		scroll(target, "scrollToElement(" + JSONObject.quote(selector) + ", " + smooth + ")");
+	}
+
+	/**
+	 * Scrolls the component so that a component inside it starts at its top.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 * @param child
+	 *            the component inside, which renders its markup id
+	 */
+	public void scrollToElement(IPartialPageRequestHandler target, Component child)
+	{
+		Args.notNull(child, "child");
+		scrollToElement(target, "#" + child.getMarkupId());
+	}
+
+	private void scroll(IPartialPageRequestHandler target, String call)
+	{
+		Args.notNull(target, "target");
+		if (component == null)
+		{
+			throw new IllegalStateException("The behavior is not bound to a component");
+		}
+		target.appendJavaScript("Wicket.Scrollbar.of(" +
+			JSONObject.quote(component.getMarkupId()) + ")?." + call + ";");
 	}
 
 	@Override

@@ -84,10 +84,25 @@ public abstract class FrameworkAppsTestCase extends JettyTestCase
 	}
 
 	/**
-	 * @return the element the app of the framework renders into
+	 * @return every browser with Wicket and every framework
+	 */
+	static Stream<Arguments> wicketAndFrameworks()
+	{
+		return Stream.of(SeleniumBrowser.values())
+			.flatMap(browser -> Stream.concat(Stream.of("wicket"),
+				Stream.of(FrameworkTabs.FRAMEWORKS)).map(framework -> Arguments.of(browser, framework)));
+	}
+
+	/**
+	 * @return the element the app of the framework renders into, the panel of the Wicket demo for
+	 *         {@code wicket}
 	 */
 	protected WebElement app()
 	{
+		if ("wicket".equals(framework))
+		{
+			return driver.findElement(By.id("framework-panel-wicket"));
+		}
 		return driver.findElement(By.cssSelector("[data-framework-app='" + framework + "']"));
 	}
 

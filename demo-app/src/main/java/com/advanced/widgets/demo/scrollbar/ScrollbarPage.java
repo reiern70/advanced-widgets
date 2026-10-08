@@ -7,6 +7,7 @@ package com.advanced.widgets.demo.scrollbar;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -26,12 +27,23 @@ import com.github.openjson.JSONObject;
 
 /**
  * {@link ScrollbarBehavior} on scrolling divs: vertically, horizontally and both ways, next to a
- * div with the browser's own scroll bar, and a div whose content grows via Ajax. The React and
- * Svelte tabs show the same boxes with their {@code Scrollable}, the last one growing in the app.
+ * div with the browser's own scroll bar, and a div whose content grows via Ajax, scrolled to the
+ * first of the lines added, to its top, its bottom, a position and a line by the behavior. The
+ * React and Svelte tabs show the same boxes with their {@code Scrollable}, the last one growing in
+ * the app.
  */
 public class ScrollbarPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The lines added to the growing box at a time. */
+	static final int MORE_LINES = 20;
+
+	/** The pixels from the top the growing box scrolls to. */
+	static final int POSITION = 100;
+
+	/** The line the growing box scrolls to. */
+	static final int LINE = 10;
 
 	private int lines = 20;
 
@@ -60,9 +72,11 @@ public class ScrollbarPage extends DemoPage
 			{
 				item.add(new Label("line", new StringResourceModel("line", this)
 					.setParameters(item.getModelObject())));
+				item.add(AttributeModifier.replace("data-line", item.getModelObject()));
 			}
 		});
-		growing.add(new ScrollbarBehavior());
+		ScrollbarBehavior bars = new ScrollbarBehavior().setSmooth(true);
+		growing.add(bars);
 		themed.add(growing);
 		themed.add(new AjaxLink<Void>("addLines")
 		{
@@ -71,10 +85,60 @@ public class ScrollbarPage extends DemoPage
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				lines += 20;
+				int first = lines + 1;
+				lines += MORE_LINES;
 				target.add(growing);
+				bars.scrollToElement(target, line(first));
 			}
 		});
+		themed.add(new AjaxLink<Void>("toTop")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				bars.scrollToTop(target);
+			}
+		});
+		themed.add(new AjaxLink<Void>("toBottom")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				bars.scrollToBottom(target);
+			}
+		});
+		themed.add(new AjaxLink<Void>("toPosition")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				bars.scrollTo(target, POSITION);
+			}
+		});
+		themed.add(new AjaxLink<Void>("toLine")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				bars.scrollToElement(target, line(LINE));
+			}
+		});
+	}
+
+	/**
+	 * @return the CSS selector of a line of the growing box
+	 */
+	static String line(int number)
+	{
+		return "[data-line=\"" + number + "\"]";
 	}
 
 	@Override
@@ -91,7 +155,7 @@ public class ScrollbarPage extends DemoPage
 	{
 		// the lines are patterns, {0} standing for their numbers
 		JSONObject texts = FrameworkTabs.texts(this, "native", "vertical", "horizontal", "both",
-			"growing", "addLines", "line", "line.long");
+			"growing", "addLines", "toTop", "toBottom", "toPosition", "toLine", "line", "line.long");
 		return new JSONObject().put("texts", texts).put("lines", lines);
 	}
 

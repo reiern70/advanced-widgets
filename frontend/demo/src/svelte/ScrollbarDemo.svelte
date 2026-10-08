@@ -4,29 +4,33 @@
 -->
 <!--
   The Scrollbar demo in Svelte: the boxes of the Wicket page, those with slim bars a Scrollable,
-  the last one growing in the app.
+  the last one growing in the app and scrolled through the functions of its Scrollable.
 -->
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { Scrollable } from '@advanced-widgets/svelte';
 
-	import { lines, MORE_LINES, TILES, type ScrollbarConfig } from '../scrollbar.js';
+	import { line, LINE, lines, MORE_LINES, POSITION, TILES,
+		type ScrollbarConfig } from '../scrollbar.js';
 
 	let { config }: { config: ScrollbarConfig } = $props();
 
 	const texts = $derived(config.texts);
 	// the lines start as the page shows them, then are the app's
 	let count = $state(untrack(() => config.lines));
+	let growing = $state<ReturnType<typeof Scrollable>>();
 
-	function add(event: MouseEvent) {
-		event.preventDefault();
+	async function add() {
+		const first = count + 1;
 		count += MORE_LINES;
+		await tick();
+		growing?.scrollToElement(line(first), true);
 	}
 </script>
 
 {#snippet numbered(pattern: string, count: number)}
-	{#each lines(pattern, count) as line, index (index)}
-		<p>{line}</p>
+	{#each lines(pattern, count) as text, index (index)}
+		<p data-line={index + 1}>{text}</p>
 	{/each}
 {/snippet}
 
@@ -57,9 +61,20 @@
 	</section>
 	<section>
 		<h3>{texts.growing}</h3>
-		<Scrollable class="scrollbar-demo__box scrollbar-demo__box--short">
+		<Scrollable bind:this={growing} class="scrollbar-demo__box scrollbar-demo__box--short">
 			{@render numbered(texts.line, count)}
 		</Scrollable>
-		<p><a href="#top" onclick={add}>{texts.addLines}</a></p>
+		<div class="scrollbar-demo__actions">
+			<button type="button" class="scrollbar-demo__add" title={texts.addLines}
+				aria-label={texts.addLines} onclick={add}>+</button>
+			<button type="button" class="scrollbar-demo__to"
+				onclick={() => growing?.scrollToTop(true)}>{texts.toTop}</button>
+			<button type="button" class="scrollbar-demo__to"
+				onclick={() => growing?.scrollToBottom(true)}>{texts.toBottom}</button>
+			<button type="button" class="scrollbar-demo__to"
+				onclick={() => growing?.scrollTo({ top: POSITION }, true)}>{texts.toPosition}</button>
+			<button type="button" class="scrollbar-demo__to"
+				onclick={() => growing?.scrollToElement(line(LINE), true)}>{texts.toLine}</button>
+		</div>
 	</section>
 </div>

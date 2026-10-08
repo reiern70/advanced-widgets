@@ -13,4 +13,4 @@ export type { DropdownOption } from './types.js';
 export { activate, dropdown, scrollbar } from '@advanced-widgets/core';
 export type { AutocompleteSuggestion, AutocompleteValue, DataTableColumnDef, DataTablePush,
 	DataTableQuery, DataTableSort, DataTableTexts, DropdownOptions, InfiniteListData,
-	ScrollbarOptions } from '@advanced-widgets/core';
+	ScrollbarOptions, ScrollPosition } from '@advanced-widgets/core';

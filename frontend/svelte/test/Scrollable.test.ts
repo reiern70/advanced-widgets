@@ -33,6 +33,18 @@ describe('Scrollable', () => {
 		expect(tracks(container).length).toBe(2);
 	});
 
+	it('scrolls through the functions of the component', () => {
+		const { component, container } = render(Scrollable, { axis: 'y' });
+		const element = container.querySelector<HTMLElement>('.wicket-scrollbar-host')!;
+		expect(component.getElement()).toBe(element);
+
+		component.scrollTo({ top: 40 });
+		expect(element.scrollTop).toBe(40);
+		component.scrollToTop();
+		expect(element.scrollTop).toBe(0);
+		expect(component.scrollToElement('p')).toBe(false);
+	});
+
 	it('removes the bars when unmounted', () => {
 		const { container, unmount } = render(Scrollable, { axis: 'x' });
 		unmount();

@@ -61,3 +61,43 @@
 	width: max-content;
 	white-space: nowrap;
 }
+
+.scrollbar-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 10px 0 0;
+}
+
+.scrollbar-demo__actions button {
+	border: 1px solid var(--primary);
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.scrollbar-demo__actions button:hover {
+	filter: brightness(0.92);
+}
+
+/* the button adding lines: a round + */
+.scrollbar-demo__add {
+	display: inline-grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--primary);
+	color: var(--on-primary, #fff);
+	font-size: 22px;
+	line-height: 1;
+}
+
+.scrollbar-demo__to {
+	padding: 4px 12px;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--primary);
+	font-size: 13px;
+}

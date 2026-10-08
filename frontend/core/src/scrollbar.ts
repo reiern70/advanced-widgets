@@ -5,9 +5,11 @@
 
 /*
  * Scroll bars that look the same in every browser: the native scroll bars of an element are
- * hidden and slim bars of its own, a track with a thumb in the colors of the theme, are drawn over
- * its edges. The element keeps scrolling natively, with the wheel, the keys and touch; the thumb
- * can be dragged and a click on the track pages towards the click.
+ * hidden and slim bars of its own, a rail with a thumb in the colors of the theme, are drawn over
+ * its edges, on a strip in the background of the element that hides the content scrolling below
+ * them. The element keeps scrolling natively, with the wheel, the keys and touch; the thumb can be
+ * dragged and a click on the track pages towards the click. Scripts scroll it with scrollToTop(),
+ * scrollToBottom(), scrollTo({top, left}) and scrollToElement(elementOrSelector).
  *
  * Scrollbar.attach(elementOrId, options) puts the element into a wrapper, a div.wicket-scrollbar
  * holding the bars, which do not scroll with the content. Attaching an element that is in a
@@ -25,9 +27,18 @@ export interface ScrollbarOptions {
 	axis?: 'x' | 'y' | 'both';
 }
 
+/**
+ * Where to scroll an element to, in pixels from its start; an axis left out stays where it is.
+ */
+export interface ScrollPosition {
+	top?: number;
+	left?: number;
+}
+
 interface Bar {
 	vertical: boolean;
 	track: HTMLDivElement;
+	rail: HTMLDivElement;
 	thumb: HTMLDivElement;
 	range?: { length: number; thumb: number; scroll: number };
 }
@@ -38,12 +49,45 @@ const HOST_CLASS = 'wicket-scrollbar-host';
 
 const TRACK_CLASS = 'wicket-scrollbar-track';
 
+const RAIL_CLASS = 'wicket-scrollbar-rail';
+
 const THUMB_CLASS = 'wicket-scrollbar-thumb';
 
 const MIN_THUMB = 24;
 
+/** The custom properties laying the bars inside the border of the element, on its background. */
+const FRAME = ['background', 'inset-top', 'inset-right', 'inset-bottom', 'inset-left',
+	'radius-top-right', 'radius-bottom-right', 'radius-bottom-left']
+	.map((name) => '--wicket-scrollbar-' + name);
+
 function scrolls(overflow: string): boolean {
 	return overflow === 'auto' || overflow === 'scroll';
+}
+
+function transparent(color: string): boolean {
+	return !color || color === 'transparent' || /^rgba\(.*,\s*0\)$/.test(color);
+}
+
+/**
+ * @returns the color the element is painted on: its own background color or else that of the
+ *          nearest ancestor having one
+ */
+function backgroundOf(element: Element): string {
+	for (let current: Element | null = element; current; current = current.parentElement) {
+		const color = window.getComputedStyle(current).backgroundColor;
+		if (!transparent(color)) {
+			return color;
+		}
+	}
+	return 'transparent';
+}
+
+/**
+ * @returns the size of a radius of the inner edge of a border, as CSS
+ */
+function innerRadius(radius: string, border: string): string {
+	const value = parseFloat(radius) - parseFloat(border);
+	return (value > 0 ? value : 0) + 'px';
 }
 
 /**
@@ -64,6 +108,9 @@ export class Scrollbar {
 	private destroyed = false;
 
 	private readonly scrollHandler = () => this.update();
+
+	/** The custom properties last given to the wrapper, to set them again only when they change. */
+	private frame = '';
 
 	private resizeObserver: ResizeObserver | null = null;
 
@@ -95,6 +142,15 @@ export class Scrollbar {
 		}
 		Scrollbar.detach(target);
 		return new Scrollbar(target, options);
+	}
+
+	/**
+	 * @param element the element or its id
+	 * @returns the scroll bars of the element, or undefined if it has none
+	 */
+	static of(element: Element | string): Scrollbar | undefined {
+		const target = typeof element === 'string' ? document.getElementById(element) : element;
+		return Scrollbar.instances.find((instance) => instance.element === target);
 	}
 
 	/**
@@ -172,11 +228,14 @@ export class Scrollbar {
 		const track = document.createElement('div');
 		track.className = TRACK_CLASS + ' ' + TRACK_CLASS + (vertical ? '--y' : '--x');
 		track.setAttribute('aria-hidden', 'true');
+		const rail = document.createElement('div');
+		rail.className = RAIL_CLASS;
+		track.appendChild(rail);
 		const thumb = document.createElement('div');
 		thumb.className = THUMB_CLASS;
-		track.appendChild(thumb);
+		rail.appendChild(thumb);
 		this.wrapper.appendChild(track);
-		const bar: Bar = { vertical, track, thumb };
+		const bar: Bar = { vertical, track, rail, thumb };
 		track.addEventListener('pointerdown', (event) => this.onPointerDown(bar, event));
 		return bar;
 	}
@@ -191,6 +250,7 @@ export class Scrollbar {
 			this.destroy();
 			return;
 		}
+		this.fitFrame();
 		this.bars.forEach((bar) => {
 			const client = bar.vertical ? element.clientHeight : element.clientWidth;
 			const size = bar.vertical ? element.scrollHeight : element.scrollWidth;
@@ -200,7 +260,7 @@ export class Scrollbar {
 			if (!overflows) {
 				return;
 			}
-			const length = bar.vertical ? bar.track.clientHeight : bar.track.clientWidth;
+			const length = bar.vertical ? bar.rail.clientHeight : bar.rail.clientWidth;
 			const thumb = Math.min(length, Math.max(MIN_THUMB, length * client / size));
 			const offset = (length - thumb) * position / (size - client);
 			bar.range = { length, thumb, scroll: size - client };
@@ -212,6 +272,96 @@ export class Scrollbar {
 				bar.thumb.style.transform = 'translateX(' + offset + 'px)';
 			}
 		});
+	}
+
+	/**
+	 * Lays the bars inside the border of the element, with its rounded corners, on its background,
+	 * so that the content scrolling below them does not show through.
+	 */
+	private fitFrame(): void {
+		const style = window.getComputedStyle(this.element);
+		const values = [
+			backgroundOf(this.element),
+			style.borderTopWidth || '0px',
+			style.borderRightWidth || '0px',
+			style.borderBottomWidth || '0px',
+			style.borderLeftWidth || '0px',
+			innerRadius(style.borderTopRightRadius, style.borderRightWidth),
+			innerRadius(style.borderBottomRightRadius, style.borderRightWidth),
+			innerRadius(style.borderBottomLeftRadius, style.borderLeftWidth)
+		];
+		const frame = values.join(' ');
+		if (frame === this.frame) {
+			return;
+		}
+		this.frame = frame;
+		FRAME.forEach((name, index) => this.wrapper.style.setProperty(name, values[index]));
+	}
+
+	/**
+	 * Scrolls the element to its start.
+	 *
+	 * @param smooth whether to scroll smoothly rather than at once
+	 */
+	scrollToTop(smooth = false): void {
+		this.scrollTo({ top: 0 }, smooth);
+	}
+
+	/**
+	 * Scrolls the element to its end.
+	 *
+	 * @param smooth whether to scroll smoothly rather than at once
+	 */
+	scrollToBottom(smooth = false): void {
+		this.scrollTo({ top: this.element.scrollHeight - this.element.clientHeight }, smooth);
+	}
+
+	/**
+	 * Scrolls the element to a position.
+	 *
+	 * @param position the pixels from the start of the element, along either axis or both
+	 * @param smooth whether to scroll smoothly rather than at once
+	 */
+	scrollTo(position: ScrollPosition, smooth = false): void {
+		const element = this.element;
+		if (smooth && typeof element.scrollTo === 'function') {
+			element.scrollTo({ ...position, behavior: 'smooth' });
+			return;
+		}
+		if (position.top !== undefined) {
+			element.scrollTop = position.top;
+		}
+		if (position.left !== undefined) {
+			element.scrollLeft = position.left;
+		}
+		this.update();
+	}
+
+	/**
+	 * Scrolls the element so that one inside it starts at its top, and horizontally into view.
+	 *
+	 * @param target the element, or a CSS selector of it, relative to the scrolling element:
+	 *            ':scope > p:nth-child(3)'
+	 * @param smooth whether to scroll smoothly rather than at once
+	 * @returns whether there is such an element to scroll to
+	 */
+	scrollToElement(target: Element | string, smooth = false): boolean {
+		const element = this.element;
+		const found = typeof target === 'string' ? element.querySelector(target) : target;
+		if (!found || !element.contains(found) || found === element) {
+			return false;
+		}
+		const box = element.getBoundingClientRect();
+		const rect = found.getBoundingClientRect();
+		const position: ScrollPosition = {
+			top: element.scrollTop + rect.top - box.top - element.clientTop
+		};
+		const left = rect.left - box.left - element.clientLeft;
+		if (left < 0 || left + rect.width > element.clientWidth) {
+			position.left = element.scrollLeft + left;
+		}
+		this.scrollTo(position, smooth);
+		return true;
 	}
 
 	/**
@@ -276,6 +426,7 @@ export class Scrollbar {
 		this.stopWatchingRemoval?.();
 		this.bars.forEach((bar) => bar.track.remove());
 		this.wrapper.classList.remove(WRAPPER_CLASS + '--both', WRAPPER_CLASS + '--dragging');
+		FRAME.forEach((name) => this.wrapper.style.removeProperty(name));
 		this.element.classList.remove(HOST_CLASS);
 		const index = Scrollbar.instances.indexOf(this);
 		if (index >= 0) {
