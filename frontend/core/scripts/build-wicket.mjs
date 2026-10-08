@@ -28,8 +28,10 @@ const SCRIPTS = [
 	['src/wicket/autocomplete.ts', 'com/advanced/widgets/autocomplete/wicket-autocomplete.js'],
 	['src/wicket/chips.ts', 'com/advanced/widgets/chips/wicket-chips.js'],
 	['src/wicket/clipboard.ts', 'com/advanced/widgets/clipboard/wicket-clipboard.js'],
+	['src/wicket/data-table.ts', 'com/advanced/widgets/dynamicdatatable/dynamic-data-table.js'],
 	['src/wicket/dropdown.ts', 'com/advanced/widgets/dropdown/wicket-dropdown.js'],
 	['src/wicket/floating-panel.ts', 'com/advanced/widgets/floating/wicket-floating-panel.js'],
+	['src/wicket/handlebars.ts', 'com/advanced/widgets/dynamicdatatable/handlebars-adapter.js'],
 	['src/wicket/infinite-list.ts', 'com/advanced/widgets/jsonlist/json-infinite-list.js'],
 	['src/wicket/movable-columns.ts', 'com/advanced/widgets/table/wicket-movable-columns.js'],
 	['src/wicket/resizable-columns.ts', 'com/advanced/widgets/table/wicket-resizable-columns.js'],
@@ -42,10 +44,12 @@ const STYLES = [
 	['styles/autocomplete.css', 'com/advanced/widgets/autocomplete/wicket-autocomplete.css'],
 	['styles/chips.css', 'com/advanced/widgets/chips/wicket-chips.css'],
 	['styles/clipboard.css', 'com/advanced/widgets/clipboard/wicket-clipboard.css'],
+	['styles/data-table.css', 'com/advanced/widgets/dynamicdatatable/dynamic-data-table.css'],
 	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css'],
 	['styles/floating-panel.css', 'com/advanced/widgets/floating/wicket-floating-panel.css'],
 	['styles/infinite-list.css', 'com/advanced/widgets/jsonlist/json-infinite-list.css'],
 	['styles/movable-columns.css', 'com/advanced/widgets/table/wicket-movable-columns.css'],
+	['styles/progress-bar.css', 'com/advanced/widgets/progress/wicket-progress-bar.css'],
 	['styles/resizable-columns.css', 'com/advanced/widgets/table/wicket-resizable-columns.css'],
 	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css']
 ];

@@ -466,3 +466,19 @@ caption.dynamic-data-table-overlay.dynamic-data-table-overlay-body {
 .dynamic-data-table-header > .wicket-col-mover {
 	margin-right: 0;
 }
+
+/*
+ * The veil of a table rendered by React or Svelte while it loads rows; Wicket blocks its tables
+ * with Wicket.Veil.
+ */
+.dynamic-data-table-host {
+	position: relative;
+}
+
+.dynamic-data-table-veil {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	background: color-mix(in srgb, var(--wicket-theme-surface, #fff) 50%, transparent);
+	cursor: wait;
+}
