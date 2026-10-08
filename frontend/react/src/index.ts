@@ -10,4 +10,9 @@ export type { ScrollableProps } from './Scrollable.js';
 export { Autocomplete } from './Autocomplete.js';
 export type { AutocompleteProps } from './Autocomplete.js';
 export { InfiniteList } from './InfiniteList.js';
-export type { InfiniteListProps } from './InfiniteList.js';
+export type { InfiniteListHandle, InfiniteListProps } from './InfiniteList.js';
+export { ProgressBar } from './ProgressBar.js';
+export type { ProgressBarProps } from './ProgressBar.js';
+export { DataTable } from './DataTable.js';
+export type { DataTableColumnDef, DataTableHandle, DataTableProps, DataTablePush, DataTableQuery,
+	DataTableSort, DataTableTexts } from './DataTable.js';

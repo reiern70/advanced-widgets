@@ -6,6 +6,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	// the tests read the license key of the demo application, outside the frontend
+	server: { fs: { allow: ['../..'] } },
 	test: {
 		environment: 'jsdom',
 		globals: true,

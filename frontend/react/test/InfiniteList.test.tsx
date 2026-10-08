@@ -3,13 +3,13 @@
  * All rights reserved.
  */
 
-import { StrictMode } from 'react';
+import { createRef, StrictMode } from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { JsonInfiniteList, type InfiniteListData } from '@advanced-widgets/core';
 
-import { InfiniteList } from '../src/index.js';
+import { InfiniteList, type InfiniteListHandle } from '../src/index.js';
 
 const TEXTS = { loading: 'Loading…', end: 'All ${count} shown', empty: 'None' };
 
@@ -51,6 +51,23 @@ describe('InfiniteList', () => {
 		container.querySelectorAll<HTMLElement>('.json-infinite-list-item')[1].click();
 
 		expect(onAction).toHaveBeenCalledWith('open', 'k2');
+	});
+
+	it('reloads and repaints items through its ref', async () => {
+		const ref = createRef<InfiniteListHandle>();
+		let name = 'Item';
+		const named = (more: boolean) => load(more).then((data) => ({ ...data,
+			items: data.items.map((item) => ({ ...item, data: { name: name + ' ' + item.number } })) }));
+		const { container } = render(<StrictMode><InfiniteList ref={ref} load={named}
+			template="<p>{{name}}</p>" texts={TEXTS} /></StrictMode>);
+		await waitFor(() => expect(items(container)).toEqual(['Item 1', 'Item 2']));
+
+		act(() => ref.current!.renderItem('k2', { name: 'Changed' }));
+		expect(items(container)).toEqual(['Item 1', 'Changed']);
+
+		name = 'Again';
+		await act(() => ref.current!.reload());
+		expect(items(container)).toEqual(['Again 1', 'Again 2']);
 	});
 
 	it('scrolls in the wrapper of its scroll bars when it has a height', async () => {

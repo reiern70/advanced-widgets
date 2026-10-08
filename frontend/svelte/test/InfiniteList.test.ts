@@ -48,6 +48,22 @@ describe('InfiniteList', () => {
 		expect(onaction).toHaveBeenCalledWith('open', 'k1');
 	});
 
+	it('reloads and repaints items through its instance', async () => {
+		let name = 'Item';
+		const named = (more: boolean) => load(more).then((data) => ({ ...data,
+			items: data.items.map((item) => ({ ...item, data: { name: name + ' ' + item.number } })) }));
+		const { container, component } = render(InfiniteList, { load: named,
+			template: '<p>{{name}}</p>', texts: TEXTS });
+		await waitFor(() => expect(items(container)).toEqual(['Item 1', 'Item 2']));
+
+		component.renderItem('k2', { name: 'Changed' });
+		expect(items(container)).toEqual(['Item 1', 'Changed']);
+
+		name = 'Again';
+		await component.reload();
+		expect(items(container)).toEqual(['Again 1', 'Again 2']);
+	});
+
 	it('scrolls in the wrapper of its scroll bars when it has a height, and stops on unmount',
 		async () => {
 			const { container, unmount } = render(InfiniteList, { load, texts: TEXTS,

@@ -6,7 +6,8 @@
   @component
   A list rendering its items from JSON with a template, loading the next page of them when the
   last one comes into view. The items are rendered by the core into the list Svelte renders empty;
-  another template loads them again.
+  another template loads them again. Bound with bind:this, the component reloads the items with
+  reload(), repaints one with renderItem(key, data) and scrolls to the first with scrollToTop().
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -34,13 +35,34 @@
 
 	const id = $props.id();
 
+	let instance: JsonInfiniteList | null = null;
+
 	$effect(() => {
 		const config = { id, template, engine, height: $state.snapshot(height),
 			texts: $state.snapshot(texts), locale };
 		const list = untrack(() => new JsonInfiniteList({ ...config, load: (more) => load(more) },
 			(action, key) => onaction?.(action, key)));
-		return () => list.destroy();
+		instance = list;
+		return () => {
+			list.destroy();
+			instance = null;
+		};
 	});
+
+	/** Loads the items shown again, as after a filter or a change of them. */
+	export function reload(): Promise<void> {
+		return instance?.load() ?? Promise.resolve();
+	}
+
+	/** Repaints one item with new data, in place; an item the list does not show is ignored. */
+	export function renderItem(key: string, data: unknown): void {
+		instance?.renderItem(key, data);
+	}
+
+	/** Scrolls the list back to its first item. */
+	export function scrollToTop(): void {
+		instance?.scrollToTop();
+	}
 </script>
 
 {#if height}
