@@ -1,0 +1,37 @@
+{
+	"name": "@advanced-widgets/react",
+	"version": "1.0.0-SNAPSHOT",
+	"description": "The components of UI Advanced Widgets for React",
+	"license": "UNLICENSED",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"test": "tsc --noEmit && vitest run"
+	},
+	"dependencies": {
+		"@advanced-widgets/core": "1.0.0-SNAPSHOT"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"devDependencies": {
+		"@testing-library/dom": "^10.4.2",
+		"@testing-library/react": "^16.3.3",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0"
+	}
+}

@@ -10,3 +10,9 @@ target/
 
 # work in progress, kept out of the repository
 WIP/
+
+# frontend: the Node installed by the build, the packages and the built files
+frontend/node/
+node_modules/
+frontend/*/dist/
+frontend/svelte/.svelte-kit/

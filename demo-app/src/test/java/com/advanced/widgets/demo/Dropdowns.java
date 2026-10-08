@@ -10,8 +10,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 /**
- * Chooses in the drop-downs of ui-components the way a user does: a click on the button opens
- * the list, a click on an option chooses it. The native select stays hidden.
+ * Chooses in the drop-downs of ui-components the way a user does: a click on the button's arrow
+ * opens the list, a click on an option chooses it. The native select stays hidden.
  */
 public final class Dropdowns
 {
@@ -32,8 +32,9 @@ public final class Dropdowns
 	public static void choose(WebDriver driver, WebElement select, int index)
 	{
 		WebElement wrapper = select.findElement(By.xpath(".."));
-		WebElement toggle = wrapper.findElement(By.cssSelector(".wicket-dropdown-toggle"));
-		new Actions(driver).moveToElement(toggle).click().perform();
+		// the arrow: the middle of the button may show the x of a chosen option's chip
+		WebElement arrow = wrapper.findElement(By.cssSelector(".wicket-dropdown-arrow"));
+		new Actions(driver).moveToElement(arrow).click().perform();
 		WebElement option = wrapper.findElements(By.cssSelector(".wicket-dropdown-option"))
 			.get(index);
 		new Actions(driver).moveToElement(option).click().perform();
