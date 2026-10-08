@@ -10,6 +10,7 @@
 	<entry key="explanation">&lt;p&gt;Die Komponente ProgressBar aus ui-components zeigt einen Prozentsatz als natives progress-Element und funktioniert daher auch unter einer strengen Content Security Policy. Start lässt ihn per Ajax-Timer alle 300 ms vorrücken.&lt;/p&gt;&lt;p&gt;Der gefüllte Teil ist gestreift, und die Streifen bewegen sich, es sei denn, Ihr System wünscht reduzierte Bewegung. Ein Balken, dessen Modell null enthält, ist unbestimmt: Er zeigt, dass etwas läuft, ohne zu wissen, wie weit es ist. Die Farben stammen aus dem in der oberen Leiste gewählten Farbschema, denselben Farbschemas, die auch die DynamicDataTable verwendet.&lt;/p&gt;</entry>
 	<entry key="known">Bekannter Fortschritt</entry>
 	<entry key="unknown">Unbekannter Fortschritt</entry>
+	<entry key="finished">Fertig</entry>
 	<entry key="reset">Zurücksetzen</entry>
 	<entry key="start">Starten</entry>
 	<entry key="pause">Anhalten</entry>

@@ -48,6 +48,10 @@
 	<entry key="infiniteScroll">Infinite scroll</entry>
 	<entry key="infiniteScroll.off">off, page by page</entry>
 	<entry key="infiniteScroll.on">on</entry>
+	<entry key="rowsSource">Rows from</entry>
+	<entry key="rowsSource.PAGE">the page</entry>
+	<entry key="rowsSource.RESOURCE">a mounted resource</entry>
+	<entry key="rowsSource.help">Where the browser fetches the rows from: an Ajax behavior of the table on this page, or the resource mounted at /api/users, a stateless request that does not touch the page, with the page, the sort and the filter in its URL. Paging, sorting and selecting go through the page either way.</entry>
 	<entry key="infiniteScroll.help">Whether the table shows its users a page at a time, or in one list that grows by the next 25 users whenever the body is scrolled to its end. The paging links and the rows per page are left out then, and the veil blocks the table while the users load.</entry>
 	<entry key="selection">Selection</entry>
 	<entry key="selection.help">How many users can be selected: none hides the selection column, one keeps a single row selected, many selects any number of rows and offers to select all of them.</entry>

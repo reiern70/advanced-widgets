@@ -48,6 +48,10 @@
 	<entry key="infiniteScroll">Endloses Scrollen</entry>
 	<entry key="infiniteScroll.off">aus, seitenweise</entry>
 	<entry key="infiniteScroll.on">an</entry>
+	<entry key="rowsSource">Zeilen von</entry>
+	<entry key="rowsSource.PAGE">der Seite</entry>
+	<entry key="rowsSource.RESOURCE">einer eingebundenen Ressource</entry>
+	<entry key="rowsSource.help">Woher der Browser die Zeilen holt: von einem Ajax-Verhalten der Tabelle auf dieser Seite oder von der unter /api/users eingebundenen Ressource, einer zustandslosen Anfrage, die die Seite nicht berührt, mit Seite, Sortierung und Filter in ihrer URL. Blättern, Sortieren und Auswählen laufen in beiden Fällen über die Seite.</entry>
 	<entry key="infiniteScroll.help">Ob die Tabelle ihre Benutzer seitenweise zeigt oder in einer Liste, die um die nächsten 25 Benutzer wächst, sobald der Körper bis zu seinem Ende gerollt wird. Die Seitenlinks und die Zeilen pro Seite entfallen dann, und der Schleier sperrt die Tabelle, während die Benutzer geladen werden.</entry>
 	<entry key="selection">Auswahl</entry>
 	<entry key="selection.help">Wie viele Benutzer ausgewählt werden können: keine blendet die Auswahlspalte aus, eine lässt nur eine Zeile ausgewählt, mehrere wählt beliebig viele Zeilen aus und bietet an, alle auszuwählen.</entry>

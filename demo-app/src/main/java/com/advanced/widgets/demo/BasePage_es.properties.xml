@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="theme">Tema</entry>
+	<entry key="language">Idioma</entry>
+	<entry key="component.public">Público</entry>
+	<entry key="component.private">Privado</entry>
+	<entry key="component.public.help">Un componente público</entry>
+	<entry key="component.private.help">Un componente privado por ahora</entry>
+	<entry key="ajaxEngine">Ajax</entry>
+	<entry key="AjaxEngine.JQUERY">jQuery</entry>
+	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">JavaScript puro</entry>
+	<entry key="register">Registrarse</entry>
+	<entry key="rightsReserved">Todos los derechos reservados.</entry>
+	<entry key="builtWith">Hecho con Apache Wicket</entry>
+	<entry key="category.data">Datos</entry>
+	<entry key="category.feedback">Información</entry>
+	<entry key="category.forms">Formularios</entry>
+	<entry key="category.layout">Diseño</entry>
+	<entry key="category.themes">Temas</entry>
+	<entry key="category.realTime">Tiempo real</entry>
+	<entry key="demo.jsonTable">Tabla de datos JSON</entry>
+	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets.</entry>
+	<entry key="demo.beanTable">Tabla de datos Bean</entry>
+	<entry key="demo.beanTable.description">La misma tabla, con sus filas generadas en el servidor por componentes de Wicket.</entry>
+	<entry key="demo.progressBar">Barra de progreso</entry>
+	<entry key="demo.progressBar.description">Progreso conocido y desconocido, en cualquiera de los temas.</entry>
+	<entry key="demo.dropdown">Lista desplegable</entry>
+	<entry key="demo.dropdown.description">Selección simple y múltiple, abierta, filtrada y elegida en el navegador.</entry>
+	<entry key="demo.autocomplete">Autocompletado</entry>
+	<entry key="demo.autocomplete.description">Uno o varios valores sugeridos mientras escribe, cada fila a partir de una plantilla, los elegidos como chips.</entry>
+	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
+	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
+	<entry key="demo.themeEditor">Editor de temas</entry>
+	<entry key="demo.themeEditor.description">Genera un tema de los componentes, con vista previa en vivo.</entry>
+	<entry key="buildInfo">Rama {0} · {1}</entry>
+	<entry key="buildInfo.dirty">Rama {0} · {1}, con cambios sin confirmar</entry>
+</properties>

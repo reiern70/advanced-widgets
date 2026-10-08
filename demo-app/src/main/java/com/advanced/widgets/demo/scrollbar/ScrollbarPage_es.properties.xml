@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Barra de desplazamiento</entry>
+	<entry key="explanation">&lt;p&gt;Un ScrollbarBehavior de ui-components da a un componente que se desplaza barras de desplazamiento iguales en todos los navegadores: las nativas se ocultan y se dibujan barras finas en los colores del tema sobre los bordes del componente. Sigue desplazándose de forma nativa con la rueda, las teclas y el tacto; el cursor de la barra se puede arrastrar y un clic en la pista avanza una página hacia el clic.&lt;/p&gt;&lt;p&gt;El primer cuadro conserva la barra propia del navegador, para comparar. El comportamiento dibuja las barras en las direcciones en que el CSS del componente le deja desplazarse, o en las que se le indican: el tercer cuadro pide solo la horizontal. Las barras siguen los cambios del contenido: «Añadir 20 líneas» vuelve a generar el último cuadro por Ajax y su barra toma el nuevo tamaño. Cambie el tema en la barra superior y las barras lo siguen.&lt;/p&gt;</entry>
+	<entry key="native">Barra del navegador</entry>
+	<entry key="vertical">Vertical</entry>
+	<entry key="horizontal">Horizontal</entry>
+	<entry key="both">En ambos sentidos</entry>
+	<entry key="growing">Generado de nuevo por Ajax</entry>
+	<entry key="addLines">Añadir 20 líneas</entry>
+	<entry key="line">Línea {0}</entry>
+	<entry key="line.long">Línea {0}: el veloz murciélago hindú comía feliz cardillo y kiwi, una y otra y otra vez.</entry>
+</properties>

@@ -39,6 +39,7 @@ public class ProgressBarPage extends DemoPage
 		ProgressBar bar = new ProgressBar("bar", new PropertyModel<>(this, "progress"));
 		bar.setOutputMarkupId(true);
 		themed.add(bar);
+		themed.add(new ProgressBar("finished", Model.of(100)));
 		themed.add(new ProgressBar("indeterminate", Model.of((Integer)null)));
 
 		bar.add(new AbstractAjaxTimerBehavior(Duration.ofMillis(300))

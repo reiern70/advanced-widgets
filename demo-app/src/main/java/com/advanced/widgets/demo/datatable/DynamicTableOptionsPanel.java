@@ -27,6 +27,7 @@ import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPositio
 import com.advanced.widgets.dynamicdatatable.ColumnState;
 import com.advanced.widgets.dynamicdatatable.IColumnStateStore;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
+import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable.RowsSource;
 import com.advanced.widgets.dynamicdatatable.SelectionMode;
 import com.advanced.widgets.dynamicdatatable.SessionColumnStateStore;
 import com.advanced.widgets.table.ResizableColumnsBehavior;
@@ -79,16 +80,24 @@ public abstract class DynamicTableOptionsPanel extends Panel
 			position -> "navigation." + position.name()));
 		WebMarkupContainer infiniteScrollOption = new WebMarkupContainer("infiniteScrollOption");
 		add(infiniteScrollOption);
+		WebMarkupContainer rowsSourceOption = new WebMarkupContainer("rowsSourceOption");
+		add(rowsSourceOption);
 		if (table instanceof JsonBasedDynamicDataTable<?, ?> jsonTable)
 		{
 			infiniteScrollOption.add(updatingChoice("infiniteScroll", List.of(false, true),
 				jsonTable::isInfiniteScroll, jsonTable::setInfiniteScroll,
 				infinite -> infinite ? "infiniteScroll.on" : "infiniteScroll.off"));
+			rowsSourceOption.add(updatingChoice("rowsSource", List.of(RowsSource.values()),
+				jsonTable::getRowsSource, jsonTable::setRowsSource,
+				source -> "rowsSource." + source.name()));
+			rowsSourceOption.setVisible(jsonTable.getRowsResource() != null);
 		}
 		else
 		{
 			infiniteScrollOption.setVisible(false);
 			infiniteScrollOption.add(new WebMarkupContainer("infiniteScroll"));
+			rowsSourceOption.setVisible(false);
+			rowsSourceOption.add(new WebMarkupContainer("rowsSource"));
 		}
 		add(updatingChoice("selection", List.of(SelectionMode.values()), table::getSelectionMode,
 			table::setSelectionMode, mode -> "selection." + mode.name()));

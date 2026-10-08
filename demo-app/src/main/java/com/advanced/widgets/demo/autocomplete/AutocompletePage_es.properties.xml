@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Autocompletado</entry>
+	<entry key="explanation">&lt;p&gt;Autocomplete y MultiAutocomplete de ui-components sugieren valores mientras escribe. Las sugerencias llegan del servidor por Ajax como JSON, y cada fila se genera en el navegador a partir de una plantilla, igual que las celdas de la tabla JSON: los usuarios muestran su nombre con su ciudad y país debajo, los países su bandera y su nombre. {{@label}} es la etiqueta de un valor.&lt;/p&gt;&lt;p&gt;Los valores elegidos son chips en los colores del tema con una x que los quita, como los de la lista desplegable múltiple; la tecla de retroceso en el campo vacío quita el último. Con un solo valor, el chip ocupa el lugar del campo hasta que se quita. El campo oculto guarda los ids de los valores elegidos, de modo que un formulario los envía como siempre y un comportamiento Ajax en su evento change recibe el aviso; el texto bajo el formulario sigue cada elección.&lt;/p&gt;</entry>
+	<entry key="single">Un valor</entry>
+	<entry key="multiple">Varios valores</entry>
+	<entry key="owner">Responsable (obligatorio)</entry>
+	<entry key="owner.placeholder">Escriba un nombre o un apellido</entry>
+	<entry key="team">Equipo</entry>
+	<entry key="team.placeholder">Añada usuarios por su nombre</entry>
+	<entry key="countries">Países</entry>
+	<entry key="countries.placeholder">Escriba un país o pulse la flecha hacia abajo</entry>
+	<entry key="send">Enviar</entry>
+	<entry key="nothing">nadie</entry>
+	<entry key="choices">Responsable: {0}; equipo: {1}; países: {2}.</entry>
+	<entry key="sent">Enviado: {0}</entry>
+</properties>

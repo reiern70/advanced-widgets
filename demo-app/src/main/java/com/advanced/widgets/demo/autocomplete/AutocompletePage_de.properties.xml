@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Autovervollständigung</entry>
+	<entry key="explanation">&lt;p&gt;Autocomplete und MultiAutocomplete aus ui-components schlagen beim Tippen Werte vor. Die Vorschläge kommen per Ajax als JSON vom Server, und jede Zeile wird im Browser aus einer Vorlage erzeugt, so wie die Zellen der JSON-Tabelle: Die Benutzer zeigen ihren Namen mit Stadt und Land darunter, die Länder ihre Flagge und ihren Namen. {{@label}} ist die Beschriftung eines Werts.&lt;/p&gt;&lt;p&gt;Die gewählten Werte sind Chips in den Farben des Farbschemas mit einem x, das sie entfernt, wie bei der Mehrfachauswahl; die Rücktaste im leeren Feld entfernt den letzten. Bei einem Wert vertritt der Chip das Feld, bis er entfernt wird. Das verborgene Eingabefeld hält die IDs der gewählten Werte, sodass ein Formular sie wie gewohnt sendet und ein Ajax-Verhalten an seinem change-Ereignis benachrichtigt wird; der Text unter dem Formular folgt jeder Auswahl.&lt;/p&gt;</entry>
+	<entry key="single">Ein Wert</entry>
+	<entry key="multiple">Mehrere Werte</entry>
+	<entry key="owner">Verantwortlich (Pflicht)</entry>
+	<entry key="owner.placeholder">Vor- oder Nachnamen eingeben</entry>
+	<entry key="team">Team</entry>
+	<entry key="team.placeholder">Benutzer nach Namen hinzufügen</entry>
+	<entry key="countries">Länder</entry>
+	<entry key="countries.placeholder">Land eingeben oder Pfeil nach unten drücken</entry>
+	<entry key="send">Senden</entry>
+	<entry key="nothing">niemand</entry>
+	<entry key="choices">Verantwortlich: {0}; Team: {1}; Länder: {2}.</entry>
+	<entry key="sent">Gesendet: {0}</entry>
+</properties>

@@ -11,7 +11,7 @@
 	<entry key="tab.progress">Progress</entry>
 	<entry key="tab.jsonTable">JSON table</entry>
 	<entry key="tab.beanTable">Bean table</entry>
-	<entry key="tab.panels">Panels</entry>
+	<entry key="tab.panels">Collapsible</entry>
 	<entry key="progress.running">Running</entry>
 	<entry key="progress.finished">Finished</entry>
 	<entry key="progress.unknown">Unknown progress</entry>

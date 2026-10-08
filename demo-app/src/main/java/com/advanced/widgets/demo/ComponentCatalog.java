@@ -18,7 +18,7 @@ public final class ComponentCatalog {
 		new ComponentDescriptor("treeTable", "data", Status.PLANNED),
 		new ComponentDescriptor("liveFeed", "realTime", Status.PLANNED),
 		new ComponentDescriptor("notifications", "realTime", Status.PLANNED),
-		new ComponentDescriptor("autocomplete", "forms", Status.PLANNED),
+		new ComponentDescriptor("autocomplete", "forms", Status.AVAILABLE),
 		new ComponentDescriptor("dateRangePicker", "forms", Status.PLANNED),
 		new ComponentDescriptor("fileUpload", "forms", Status.PLANNED),
 		new ComponentDescriptor("modalDialog", "layout", Status.PLANNED),

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="autocomplete-demo">
+	<form wicket:id="form" class="autocomplete-demo__form">
+		<section>
+			<h3><wicket:message key="single"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="owner"/> <input type="hidden" wicket:id="owner"/></label>
+		</section>
+		<section>
+			<h3><wicket:message key="multiple"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="team"/> <input type="hidden" wicket:id="team"/></label>
+			<label class="autocomplete-demo__field"><wicket:message key="countries"/> <input type="hidden" wicket:id="countries"/></label>
+		</section>
+		<p><button type="submit" class="autocomplete-demo__send"><wicket:message key="send"/></button></p>
+	</form>
+	<p wicket:id="choices" class="autocomplete-demo__choices">[choices]</p>
+	<div wicket:id="feedback"></div>
+</div>
+</wicket:extend>
+</body>
+</html>

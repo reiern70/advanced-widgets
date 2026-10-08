@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import org.apache.wicket.Page;
 
+import com.advanced.widgets.demo.autocomplete.AutocompletePage;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
@@ -70,6 +71,7 @@ public final class Demos
 		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true),
+		new Demo("autocomplete", "forms", AutocompletePage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, true));
 

@@ -14,9 +14,11 @@ import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
 
+import com.advanced.widgets.demo.autocomplete.AutocompletePage;
 import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
+import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.register.RegisterPage;
@@ -77,8 +79,10 @@ public class WicketApplication extends WebApplication
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);
+		mountPage("autocomplete", AutocompletePage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("register", RegisterPage.class);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
+		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 	}
 }

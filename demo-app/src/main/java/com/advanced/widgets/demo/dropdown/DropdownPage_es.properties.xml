@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Lista desplegable</entry>
+	<entry key="explanation">&lt;p&gt;Dropdown y MultiDropdown de ui-components son listas desplegables que se ven igual en todos los navegadores y toman los colores del tema. Todo ocurre en el navegador: la lista se abre, se filtra y se recorre con el teclado sin ninguna petición al servidor. El select nativo sigue en la página, oculto, y guarda la elección, de modo que un formulario la envía como siempre y un comportamiento Ajax en su evento change recibe el aviso como con un select nativo.&lt;/p&gt;&lt;p&gt;Use las teclas de flecha para recorrer las opciones, Intro o Espacio para elegir y Escape para cerrar; escriba en el filtro, que una lista tiene a partir de ocho opciones, o siempre si se le pide. Una lista múltiple sigue abierta mientras se marcan opciones y muestra las elegidas como chips con una x que las quita. El texto bajo el formulario sigue cada elección por Ajax.&lt;/p&gt;</entry>
+	<entry key="single">Una elección</entry>
+	<entry key="multiple">Varias elecciones</entry>
+	<entry key="disabledTitle">Desactivada</entry>
+	<entry key="size">Talla</entry>
+	<entry key="country">País</entry>
+	<entry key="country.none">Elija un país</entry>
+	<entry key="skills">Conocimientos</entry>
+	<entry key="languages">Idiomas</entry>
+	<entry key="languages.none">Elija idiomas</entry>
+	<entry key="send">Enviar</entry>
+	<entry key="nothing">nada</entry>
+	<entry key="choices">Talla {0}, país {1}; conocimientos: {2}; idiomas: {3}.</entry>
+	<entry key="sent">Enviado: {0}</entry>
+	<entry key="skill.java">Java</entry>
+	<entry key="skill.wicket">Apache Wicket</entry>
+	<entry key="skill.javascript">JavaScript</entry>
+	<entry key="skill.css">CSS</entry>
+	<entry key="skill.sql">SQL</entry>
+	<entry key="skill.react">React</entry>
+	<entry key="skill.svelte">Svelte</entry>
+	<entry key="skill.docker">Docker</entry>
+</properties>

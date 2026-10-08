@@ -31,8 +31,12 @@
 	<entry key="demo.progressBar.description">Known and unknown progress, in any of the themes.</entry>
 	<entry key="demo.dropdown">Dropdown</entry>
 	<entry key="demo.dropdown.description">Single and multiple choices opened, filtered and chosen in the browser.</entry>
+	<entry key="demo.autocomplete">Autocomplete</entry>
+	<entry key="demo.autocomplete.description">One or many values suggested as you type, each row from a template, the chosen ones as chips.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the theme's colors that look the same in every browser.</entry>
 	<entry key="demo.themeEditor">Theme Editor</entry>
 	<entry key="demo.themeEditor.description">Generates a theme of the components, with a live preview.</entry>
+	<entry key="buildInfo">Branch {0} · {1}</entry>
+	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
 </properties>

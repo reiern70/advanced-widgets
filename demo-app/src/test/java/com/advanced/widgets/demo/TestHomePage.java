@@ -6,8 +6,10 @@ package com.advanced.widgets.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.util.tester.WicketTester;
@@ -70,6 +72,41 @@ public class TestHomePage
 
 		tester.assertContains("jquery/jquery-4");
 		tester.assertContains("res/js/wicket-ajax-jquery-ver-");
+	}
+
+	@Test
+	public void showsTheBranchOnlyInDemoMode()
+	{
+		BuildInfo build = BuildInfo.get();
+		assertTrue(build.isKnown(), "the build writes build-info.properties");
+
+		tester.startPage(HomePage.class);
+		tester.assertInvisible("buildInfo");
+
+		System.setProperty(BuildInfo.DEMO_PROPERTY, "true");
+		try
+		{
+			tester.startPage(HomePage.class);
+			tester.assertVisible("buildInfo");
+			tester.assertContains("Branch " + Pattern.quote(build.branch() + " · " + build.commit()));
+		}
+		finally
+		{
+			System.clearProperty(BuildInfo.DEMO_PROPERTY);
+		}
+	}
+
+	@Test
+	public void homepageIsInSpanishWhenSpanishIsChosen()
+	{
+		tester.getSession().setLocale(Locale.of("es"));
+		tester.startPage(HomePage.class);
+
+		tester.assertLabel("components:0:name", "Cuadrícula de datos");
+		tester.assertLabel("demos:0:link:name", "Tabla de datos JSON");
+		tester.assertContains("Todos los derechos reservados.");
+		tester.assertContains("componentes en el catálogo");
+		tester.assertContains("Español");
 	}
 
 	@Test

@@ -12,7 +12,7 @@
 	<parent>
 		<groupId>com.advancedwidgets</groupId>
 		<artifactId>advanced-widgets-parent</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>${revision}</version>
 	</parent>
 
 	<artifactId>demo-app</artifactId>
@@ -144,6 +144,55 @@
 			</testResource>
 		</testResources>
 		<plugins>
+			<!--
+			  The branch and commit the application is built from, in build-info.properties on the
+			  class path; the footer shows them when the demo runs with -Dwicket.demo=true. Plain
+			  git commands in the directory being built, so a linked worktree reports its own
+			  branch; without git the values stay empty and the footer shows nothing.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>build-info</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<exec executable="git" dir="${project.basedir}" outputproperty="build.branch" errorproperty="build.branch.error" failifexecutionfails="false" failonerror="false">
+									<arg value="rev-parse"/>
+									<arg value="--abbrev-ref"/>
+									<arg value="HEAD"/>
+								</exec>
+								<exec executable="git" dir="${project.basedir}" outputproperty="build.commit" errorproperty="build.commit.error" failifexecutionfails="false" failonerror="false">
+									<arg value="rev-parse"/>
+									<arg value="--short"/>
+									<arg value="HEAD"/>
+								</exec>
+								<exec executable="git" dir="${project.basedir}" outputproperty="build.changes" errorproperty="build.changes.error" failifexecutionfails="false" failonerror="false">
+									<arg value="status"/>
+									<arg value="--porcelain"/>
+									<arg value="--untracked-files=no"/>
+								</exec>
+								<condition property="build.dirty" value="true" else="false">
+									<length string="${build.changes}" when="greater" length="0"/>
+								</condition>
+								<property name="build.branch" value=""/>
+								<property name="build.commit" value=""/>
+								<propertyfile file="${project.build.outputDirectory}/build-info.properties" comment="The branch and commit the demo is built from">
+									<entry key="branch" value="${build.branch}"/>
+									<entry key="commit" value="${build.commit}"/>
+									<entry key="dirty" value="${build.dirty}"/>
+								</propertyfile>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>

@@ -328,10 +328,26 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
+	void theRowsComeFromTheMountedResourceWhenChosen()
+	{
+		DynamicDataTablePage page = (DynamicDataTablePage)tester.getLastRenderedPage();
+		JsonBasedDynamicDataTable<?, ?> table = (JsonBasedDynamicDataTable<?, ?>)page.getTable();
+		table.setRowsSource(JsonBasedDynamicDataTable.RowsSource.RESOURCE);
+		tester.startPage(page);
+		tester.assertContains("\"dataUrl\":\"[^\"]*/api/users\\?first=0&count=25");
+
+		tester.executeUrl("api/users?first=0&count=3&sort=lastName&ascending=true&filter=jans");
+		String json = tester.getLastResponseAsString();
+		assertTrue(json.startsWith("{\"rows\":[{\"key\":"), json);
+		assertTrue(json.contains("\"lastName\":\"Jansen\""), json);
+	}
+
+	@Test
 	void everySettingHasATooltipAndIsPostedViaAjax()
 	{
 		String page = tester.getLastResponseAsString();
-		assertEquals(12, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
+		// with "Rows from", which the JSON table has besides infinite scroll
+		assertEquals(13, page.split("class=\"dynamic-dataview-tooltip\" role=\"tooltip\"", -1)
 			.length - 1);
 		assertTrue(page.contains("Whether the user can resize the columns"), page);
 		tester.assertContains("Resizable");

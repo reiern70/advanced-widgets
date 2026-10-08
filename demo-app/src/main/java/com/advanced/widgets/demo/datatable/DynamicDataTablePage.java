@@ -17,6 +17,7 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.protocol.ws.api.message.AbortedMessage;
 import org.apache.wicket.protocol.ws.api.message.ClosedMessage;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.advanced.widgets.demo.DemoWebSocketBehavior;
@@ -164,7 +165,19 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			{
 				DynamicDataTablePage.this.onSelectionChanged(target);
 			}
+
+			@Override
+			protected void addRowsParameters(PageParameters parameters)
+			{
+				String filter = provider.getFilter();
+				if (filter != null && !filter.isBlank())
+				{
+					parameters.set(UsersRowsResource.FILTER, filter);
+				}
+			}
 		};
+		// the rows can come from the mounted resource too, see the setting "Rows from"
+		table.setRowsResource(UsersRowsResource.REFERENCE);
 		hidden.forEach(column -> table.setColumnVisible(column, false));
 		table.setPushEnabled(true);
 		return table;

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="phones">Teléfonos</entry>
+	<entry key="id">ID</entry>
+	<entry key="firstName">Nombre</entry>
+	<entry key="lastName">Apellido</entry>
+	<entry key="actions">Acciones</entry>
+	<entry key="download">Descargar como jCard</entry>
+	<entry key="progress">Progreso</entry>
+	<entry key="bornDate">Nacimiento</entry>
+	<entry key="aboutThisExample">Acerca de este ejemplo</entry>
+	<entry key="selection.none">No hay ningún usuario seleccionado.</entry>
+	<entry key="selection.some">Seleccionados: {0} usuario(s).</entry>
+	<entry key="selection.all">Seleccionados: los {0} usuarios.</entry>
+	<entry key="filter">Filtro</entry>
+	<entry key="filter.placeholder">nombre o apellido</entry>
+	<entry key="edit">Editar</entry>
+	<entry key="delete">Borrar</entry>
+	<entry key="delete.confirm">¿Borrar a ${firstName} ${lastName}?</entry>
+	<entry key="address">Dirección</entry>
+	<entry key="editUser">Editar a ${firstName} ${lastName}</entry>
+	<entry key="newUser">Usuario nuevo</entry>
+	<entry key="slowAction">Una acción lenta, que tarda dos segundos</entry>
+	<entry key="slowAction.done">La acción lenta ha terminado.</entry>
+	<entry key="homePhone">Teléfono fijo</entry>
+	<entry key="cellPhone">Móvil</entry>
+	<entry key="city">Ciudad</entry>
+	<entry key="country">País</entry>
+	<entry key="addUser">Añadir un usuario y actualizar la tabla</entry>
+	<entry key="pushRows">Enviar las filas de esta página en orden inverso por WebSockets</entry>
+	<entry key="phones.home">Fijo:</entry>
+	<entry key="phones.cell">Móvil:</entry>
+	<entry key="userGone">Ese usuario ya no existe.</entry>
+	<entry key="deleted">{0} {1} borrado.</entry>
+	<entry key="added.refreshed">{0} {1} añadido; la tabla se actualizó por WebSockets.</entry>
+	<entry key="added.rendered">{0} {1} añadido; las filas se generaron de nuevo.</entry>
+	<entry key="pushed">Las filas de esta página se enviaron en orden inverso por WebSockets.</entry>
+	<entry key="noWebSocket">La página no tiene ninguna conexión WebSocket abierta.</entry>
+	<entry key="pushFailed">El envío a la tabla por WebSockets falló: {0}</entry>
+	<entry key="selectedUser">Usuario seleccionado</entry>
+</properties>

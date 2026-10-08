@@ -8,6 +8,7 @@ import java.time.Year;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -21,6 +22,7 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.advanced.widgets.demo.register.RegisterPage;
@@ -41,7 +43,8 @@ public abstract class BasePage extends WebPage
 	private static final long serialVersionUID = 1L;
 
 	/** The languages the demos have texts in. */
-	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN);
+	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
+		Locale.of("es"));
 
 	protected BasePage()
 	{
@@ -79,6 +82,7 @@ public abstract class BasePage extends WebPage
 
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
+		add(newBuildInfo("buildInfo"));
 	}
 
 	/**
@@ -153,6 +157,27 @@ public abstract class BasePage extends WebPage
 		choice.setRequired(true);
 		choice.add(reloadOnChange());
 		return choice;
+	}
+
+	/**
+	 * @return the branch and commit the demo was built from, shown only in demo mode
+	 */
+	private Component newBuildInfo(String id)
+	{
+		BuildInfo build = BuildInfo.get();
+		String key = build.dirty() ? "buildInfo.dirty" : "buildInfo";
+		return new Label(id, new StringResourceModel(key, this).setParameters(build.branch(),
+			build.commit()))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(BuildInfo.isDemoMode() && build.isKnown());
+			}
+		};
 	}
 
 	@Override

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Confirme su correo</entry>
+	<entry key="sent">Hemos enviado un enlace de confirmación a {0}. Ábralo para terminar el registro.</entry>
+	<entry key="hint">¿No le ha llegado? Mire en la carpeta de correo no deseado o regístrese de nuevo dentro de unos minutos. (Por ahora es una simulación: no se envía ningún correo).</entry>
+	<entry key="home">Volver a las demos</entry>
+</properties>
