@@ -15,6 +15,7 @@ import com.advanced.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
+import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
@@ -75,7 +76,8 @@ public final class Demos
 		new Demo("dropdown", "forms", DropdownPage.class, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
-		new Demo("themeEditor", "themes", ThemeEditorPage.class, true));
+		new Demo("themeEditor", "themes", ThemeEditorPage.class, true),
+		new Demo("frameworks", "frameworks", FrameworksPage.class, true));
 
 	private Demos()
 	{

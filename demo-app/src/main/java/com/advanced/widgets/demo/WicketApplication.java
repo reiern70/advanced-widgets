@@ -21,6 +21,8 @@ import com.advanced.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
+import com.advanced.widgets.demo.frameworks.ChoicesResource;
+import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.register.RegisterPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
@@ -84,6 +86,8 @@ public class WicketApplication extends WebApplication
 		mountPage("autocomplete", AutocompletePage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("register", RegisterPage.class);
+		mountPage("react-svelte", FrameworksPage.class);
+		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 	}

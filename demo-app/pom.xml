@@ -110,6 +110,10 @@
 		</dependency>
 	</dependencies>
 
+	<properties>
+		<frontend.directory>${project.basedir}/../frontend</frontend.directory>
+	</properties>
+
 	<build>
 		<resources>
 			<resource>
@@ -125,6 +129,11 @@
 				<excludes>
 					<exclude>**/*.java</exclude>
 				</excludes>
+			</resource>
+			<!-- react-demo.js and svelte-demo.js of the FrameworksPage, built from frontend/demo -->
+			<resource>
+				<filtering>false</filtering>
+				<directory>${frontend.directory}/demo/dist</directory>
 			</resource>
 		</resources>
 		<testResources>
@@ -144,6 +153,43 @@
 			</testResource>
 		</testResources>
 		<plugins>
+			<!--
+			  Builds the React and Svelte demos of the FrameworksPage from frontend/demo, with the Node
+			  and the packages ui-components installed and built; so build demo-app together with
+			  ui-components (-am).
+			-->
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>2.0.2</version>
+				<configuration>
+					<workingDirectory>${frontend.directory}</workingDirectory>
+					<installDirectory>${frontend.directory}</installDirectory>
+				</configuration>
+				<executions>
+					<execution>
+						<id>install-node-and-npm</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+						<configuration>
+							<nodeVersion>v24.15.0</nodeVersion>
+							<npmVersion>11.12.1</npmVersion>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-build-demo</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build:demo</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<!--
 			  The branch and commit the application is built from, in build-info.properties on the
 			  class path; the footer shows them when the demo runs with -Dwicket.demo=true. Plain

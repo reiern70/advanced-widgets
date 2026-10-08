@@ -6,10 +6,12 @@
 	"workspaces": [
 		"core",
 		"react",
-		"svelte"
+		"svelte",
+		"demo"
 	],
 	"scripts": {
 		"build": "npm run build -w core -w react -w svelte",
+		"build:demo": "npm run build -w demo",
 		"test": "npm run test --workspaces"
 	}
 }

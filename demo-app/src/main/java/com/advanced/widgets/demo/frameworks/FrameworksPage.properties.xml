@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">React and Svelte</entry>
+	<entry key="explanation">&lt;p&gt;The components of ui-components also come for React and Svelte, built on the same script and style sheet as the Wicket ones, so a fix reaches all three. Below, the drop-down rendered by React and by Svelte: the framework renders the select, the shared script draws the drop-down over it, and the framework's state follows each choice.&lt;/p&gt;&lt;p&gt;Both load their choices from a resource this Wicket application mounts, which names the countries in the language of the session, and take the colors of the theme chosen above.&lt;/p&gt;</entry>
+	<entry key="react">React</entry>
+	<entry key="svelte">Svelte</entry>
+	<entry key="country">Country</entry>
+	<entry key="countryNone">Choose a country</entry>
+	<entry key="skills">Skills</entry>
+	<entry key="skillsNone">Choose your skills</entry>
+	<entry key="chosen">Country {0}; skills: {1}.</entry>
+	<entry key="nothing">nothing</entry>
+	<entry key="loading">Loading the choices…</entry>
+</properties>

@@ -23,6 +23,7 @@
 	<entry key="category.layout">Diseño</entry>
 	<entry key="category.themes">Temas</entry>
 	<entry key="category.realTime">Tiempo real</entry>
+	<entry key="category.frameworks">React y Svelte</entry>
 	<entry key="demo.jsonTable">Tabla de datos JSON</entry>
 	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets.</entry>
 	<entry key="demo.beanTable">Tabla de datos Bean</entry>
@@ -39,6 +40,8 @@
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
 	<entry key="demo.themeEditor">Editor de temas</entry>
 	<entry key="demo.themeEditor.description">Genera un tema de los componentes, con vista previa en vivo.</entry>
+	<entry key="demo.frameworks">React y Svelte</entry>
+	<entry key="demo.frameworks.description">La lista desplegable dibujada por React y por Svelte, con el mismo script que la de Wicket y las opciones de un recurso montado.</entry>
 	<entry key="buildInfo">Rama {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Rama {0} · {1}, con cambios sin confirmar</entry>
 </properties>

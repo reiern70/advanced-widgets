@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">React y Svelte</entry>
+	<entry key="explanation">&lt;p&gt;Los componentes de ui-components también existen para React y Svelte, construidos sobre el mismo script y la misma hoja de estilos que los de Wicket, de modo que una corrección llega a los tres. Abajo, la lista desplegable dibujada por React y por Svelte: el framework dibuja el select, el script compartido dibuja la lista desplegable sobre él y el estado del framework sigue cada elección.&lt;/p&gt;&lt;p&gt;Ambos cargan sus opciones de un recurso que monta esta aplicación Wicket, que nombra los países en el idioma de la sesión, y toman los colores del tema elegido arriba.&lt;/p&gt;</entry>
+	<entry key="react">React</entry>
+	<entry key="svelte">Svelte</entry>
+	<entry key="country">País</entry>
+	<entry key="countryNone">Elija un país</entry>
+	<entry key="skills">Conocimientos</entry>
+	<entry key="skillsNone">Elija sus conocimientos</entry>
+	<entry key="chosen">País {0}; conocimientos: {1}.</entry>
+	<entry key="nothing">nada</entry>
+	<entry key="loading">Cargando las opciones…</entry>
+</properties>

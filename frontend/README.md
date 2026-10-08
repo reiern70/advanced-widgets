@@ -7,6 +7,7 @@ The browser side of the components, written once and offered to three frameworks
 | `core` (`@advanced-widgets/core`) | The components in plain TypeScript, without a framework, and their style sheets. |
 | `react` (`@advanced-widgets/react`) | React 18 and 19 components wrapping the core. |
 | `svelte` (`@advanced-widgets/svelte`) | Svelte 5 components wrapping the core; the core's functions also work as Svelte actions. |
+| `demo` | The React and Svelte pages of the demo application (not published). |
 
 Wicket uses the core too: `core/scripts/build-wicket.mjs` builds each component into an IIFE
 script under the name and package the Java classes load it from (`Wicket.Dropdown` in
@@ -23,6 +24,12 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `core/dist/wicket` as a resource directory and minifies its scripts and style sheets into
 `*.min.js` and `*.min.css`, like those in `src/main/java`.
 
+`demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
+`demo/dist`, a resource directory of `demo-app`, for its `FrameworksPage`
+(`/react-svelte`). That page gives them the URL of the `ChoicesResource` the application mounts
+(`/api/choices`), which serves their data as JSON. `demo-app` uses the packages
+`ui-components` installed and built, so build it with `-am`.
+
 To work on the frontend alone, with the Node Maven installed:
 
 ```bash
@@ -30,6 +37,7 @@ cd frontend
 export PATH=$PWD/node:$PATH
 npm ci
 npm run build    # core first: react and svelte import its build
+npm run build:demo
 npm test         # type checks, then Vitest with jsdom
 ```
 
