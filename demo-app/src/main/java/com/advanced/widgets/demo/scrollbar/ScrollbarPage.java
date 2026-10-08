@@ -19,12 +19,15 @@ import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.advanced.widgets.demo.DemoPage;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.advanced.widgets.scrollbar.ScrollbarBehavior.Axis;
+import com.github.openjson.JSONObject;
 
 /**
  * {@link ScrollbarBehavior} on scrolling divs: vertically, horizontally and both ways, next to a
- * div with the browser's own scroll bar, and a div whose content grows via Ajax.
+ * div with the browser's own scroll bar, and a div whose content grows via Ajax. The React and
+ * Svelte tabs show the same boxes with their {@code Scrollable}, the last one growing in the app.
  */
 public class ScrollbarPage extends DemoPage
 {
@@ -72,6 +75,24 @@ public class ScrollbarPage extends DemoPage
 				target.add(growing);
 			}
 		});
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "scrollbar";
+	}
+
+	/**
+	 * @return the texts, a line's with {0} for its number, and the lines of the growing box
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		// the lines are patterns, {0} standing for their numbers
+		JSONObject texts = FrameworkTabs.texts(this, "native", "vertical", "horizontal", "both",
+			"growing", "addLines", "line", "line.long");
+		return new JSONObject().put("texts", texts).put("lines", lines);
 	}
 
 	private static ListView<Integer> lines(String id, int count)

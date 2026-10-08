@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.wicket.Session;
@@ -22,6 +23,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
+import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -35,12 +37,19 @@ import com.advanced.widgets.demo.DemoPage;
 import com.advanced.widgets.demo.datatable.DatabaseLocator;
 import com.advanced.widgets.demo.datatable.User;
 import com.advanced.widgets.demo.datatable.UsersProvider;
+import com.advanced.widgets.demo.datatable.UsersRowsResource;
+import com.advanced.widgets.demo.frameworks.ChoicesResource;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONObject;
 
 /**
  * {@link Autocomplete} and {@link MultiAutocomplete}: the users of the table demos and the
  * countries suggested as the user types, each row rendered in the browser from a template, the
  * chosen values shown as chips with an x. The choices are shown below the form as Ajax reports
- * them, and again when the form is sent.
+ * them, and again when the form is sent. The React and Svelte tabs show the same form in those
+ * frameworks, the users searched through the {@link UsersRowsResource}, the countries filtered in
+ * the browser from the {@link ChoicesResource}.
  */
 public class AutocompletePage extends DemoPage
 {
@@ -147,6 +156,51 @@ public class AutocompletePage extends DemoPage
 	private static String name(User user)
 	{
 		return user.getFirstName() + " " + user.getLastName();
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "autocomplete";
+	}
+
+	/**
+	 * @return the texts, the templates of the rows, the URLs of the users and of the countries,
+	 *         and the values as the page has them
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "owner",
+			"owner.placeholder", "team", "team.placeholder", "countries", "countries.placeholder",
+			"send", "nothing", "choices", "sent");
+		texts.put("required", getString("Required", Model.ofMap(Map.of("label",
+			getString("owner")))));
+		texts.put("noMatch", getString("Autocomplete.noMatch", null, "No matches"));
+		texts.put("searching", getString("Autocomplete.searching", null, "Searching…"));
+		texts.put("remove", getString("Dropdown.remove", null, "Remove {0}"));
+		JSONArray teamValues = new JSONArray();
+		team.forEach(user -> teamValues.put(value(String.valueOf(user.getId()), name(user))));
+		JSONArray countryValues = new JSONArray();
+		countries.forEach(country -> countryValues.put(value(country.getCode(),
+			country.getName())));
+		JSONObject values = new JSONObject()
+			.put("owner", owner != null ? new JSONArray().put(value(
+				String.valueOf(owner.getId()), name(owner))) : new JSONArray())
+			.put("team", teamValues)
+			.put("countries", countryValues);
+		return new JSONObject()
+			.put("texts", texts)
+			.put("userTemplate", USER_TEMPLATE)
+			.put("countryTemplate", COUNTRY_TEMPLATE)
+			.put("values", values)
+			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
+			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE));
+	}
+
+	private static JSONObject value(String id, String label)
+	{
+		return new JSONObject().put("id", id).put("label", label);
 	}
 
 	@Override

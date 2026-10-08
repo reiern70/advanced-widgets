@@ -22,7 +22,7 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * Renders {@link FrameworksPage} and requests the {@link ChoicesResource} its React and Svelte
+ * Renders {@link FrameworksPage}, without tabs, and requests the {@link ChoicesResource} its React and Svelte
  * demos load.
  */
 class FrameworksPageTest
@@ -46,20 +46,24 @@ class FrameworksPageTest
 	{
 		tester.startPage(FrameworksPage.class);
 
+		tester.assertContainsNot("framework-tabs.js");
 		tester.assertContains("react-demo.*\\.js");
 		tester.assertContains("svelte-demo.*\\.js");
 		tester.assertContains("wicket-dropdown.*\\.css");
 		tester.assertContains("wicket-autocomplete.*\\.css");
 		tester.assertContains("json-infinite-list.*\\.css");
-		for (String framework : new String[] { "react", "svelte" })
+		for (String framework : FrameworkTabs.FRAMEWORKS)
 		{
 			TagTester demo = TagTester.createTagByAttribute(tester.getLastResponseAsString(),
-				"data-framework-demo", framework);
-			assertTrue(demo.getAttribute("data-choices").endsWith(ChoicesResource.PATH),
-				demo.getAttribute("data-choices"));
-			assertTrue(demo.getAttribute("data-users").endsWith(UsersRowsResource.PATH),
-				demo.getAttribute("data-users"));
-			JSONObject texts = new JSONObject(demo.getAttribute("data-texts"));
+				"data-framework-app", framework);
+			assertEquals("overview", demo.getAttribute("data-demo"));
+			assertEquals("true", demo.getAttribute("data-mount"), "shown right away");
+			JSONObject config = new JSONObject(demo.getAttribute("data-config"));
+			assertTrue(config.getString("choicesUrl").endsWith(ChoicesResource.PATH),
+				config.getString("choicesUrl"));
+			assertTrue(config.getString("usersUrl").endsWith(UsersRowsResource.PATH),
+				config.getString("usersUrl"));
+			JSONObject texts = config.getJSONObject("texts");
 			assertEquals("Choose a country", texts.getString("countryNone"));
 			assertEquals("Country {0}; skills: {1}.", texts.getString("chosen"));
 			assertEquals("Filter…", texts.getString("filter"));

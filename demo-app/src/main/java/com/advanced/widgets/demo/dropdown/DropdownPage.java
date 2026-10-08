@@ -28,14 +28,19 @@ import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.advanced.widgets.demo.Countries;
 import com.advanced.widgets.demo.DemoPage;
+import com.advanced.widgets.demo.frameworks.ChoicesResource;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.dropdown.Dropdown;
 import com.advanced.widgets.dropdown.DropdownBehavior;
 import com.advanced.widgets.dropdown.MultiDropdown;
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONObject;
 
 /**
  * {@link Dropdown} and {@link MultiDropdown}: drop-downs opened, filtered and chosen from in the
  * browser, which post their choice like native selects. The choices are shown below the form as
- * Ajax reports them, and again when the form is sent.
+ * Ajax reports them, and again when the form is sent. The React and Svelte tabs show the same form
+ * in those frameworks, the countries loaded from the {@link ChoicesResource}.
  */
 public class DropdownPage extends DemoPage
 {
@@ -153,6 +158,48 @@ public class DropdownPage extends DemoPage
 	{
 		return List.of("en", "de", "es", "fr", "it", "pt", "nl", "sv", "pl", "cs", "el", "tr",
 			"ja", "zh", "ko", "ar");
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "dropdown";
+	}
+
+	/**
+	 * @return the texts, the options but the countries, which come from the
+	 *         {@link ChoicesResource}, and the choices as the page has them
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "disabledTitle",
+			"size", "country", "country.none", "skills", "languages", "languages.none", "send",
+			"nothing", "choices", "sent");
+		JSONArray skillChoices = new JSONArray();
+		SKILLS.forEach(skill -> skillChoices.put(choice(skill, skillName(skill))));
+		JSONArray languageChoices = new JSONArray();
+		LanguageRenderer languageRenderer = new LanguageRenderer();
+		languages().forEach(language -> languageChoices.put(choice(language,
+			languageRenderer.getDisplayValue(language).toString())));
+		JSONObject values = new JSONObject()
+			.put("size", size)
+			.put("country", country != null ? country : "")
+			.put("skills", new JSONArray(skills))
+			.put("languages", new JSONArray(languages))
+			.put("disabled", disabled);
+		return new JSONObject()
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
+			.put("sizes", new JSONArray(SIZES))
+			.put("skills", skillChoices)
+			.put("languages", languageChoices)
+			.put("values", values)
+			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE));
+	}
+
+	private static JSONObject choice(String value, String label)
+	{
+		return new JSONObject().put("value", value).put("label", label);
 	}
 
 	@Override

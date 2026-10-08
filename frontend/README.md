@@ -14,18 +14,27 @@ script under the name and package the Java classes load it from (`Wicket.Dropdow
 `com/advanced/widgets/dropdown/wicket-dropdown.js`, ...), with the Wicket host set. The Java
 side and the pages don't change.
 
-Every script of `ui-components` has moved here but those of the dynamic data tables (the table
-and its Handlebars adapter), which follow: the drop-down and its chips, the autocomplete, the
-infinite list and the template engines they render with, the clipboard, the floating panel, the
-scroll bars, and the movable and resizable columns. React and Svelte have `Dropdown`,
-`Autocomplete`, `InfiniteList` and `Scrollable`; the core's `dropdown` and `scrollbar` also work
-as Svelte actions, and `Clipboard.install()` and `FloatingPanel.install()` make the
-`data-wicket-copy` and floating panel markup work in any page.
+Every script of `ui-components` has moved here: the dynamic data tables (`data-table.ts`, built
+as `dynamic-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
+built as `handlebars-adapter.js`), the drop-down and its chips, the autocomplete, the infinite list
+and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
+the movable and resizable columns. The style sheets of the table and the progress bar have moved
+too. React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`, `Scrollable`,
+`ProgressBar` and `DataTable`; the core's `dropdown` and `scrollbar` also work as Svelte actions,
+and `Clipboard.install()` and `FloatingPanel.install()` make the `data-wicket-copy` and floating
+panel markup work in any page.
+
+`DataTable` is private, as the JSON table is in Wicket: it checks a license key in the browser
+(`license.ts`), the same `AW1.` keys with the same Ed25519 signature the server checks, and shows
+the same placeholder without one. Give the key with `activate(key)` once, or to a table as
+`licenseKey`. Web Crypto verifies the signature; where it has no Ed25519 yet (Firefox before 129),
+`ed25519.ts` does.
 
 Some core modules are shared state in a page: the template engines (`templates()`, which
-Handlebars registers into) and, for the infinite list, the scroll bars. Each Wicket script bundles
-its own copy of the core, so these scripts use the page's `Wicket.Templates` through
-`useTemplates()`, and the list the page's `Wicket.Scrollbar`, which keeps one registry per page.
+Handlebars registers into) and, for the infinite list and the table, the scroll bars and the
+resizable columns. Each Wicket script bundles its own copy of the core, so these scripts use the
+page's `Wicket.Templates` through `useTemplates()`, and the list and the table the page's
+`Wicket.Scrollbar`, `Wicket.ResizableColumns` and `Wicket.Veil`, which keep one registry per page.
 
 ## Building
 
@@ -35,10 +44,14 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `*.min.js` and `*.min.css`, like those in `src/main/java`.
 
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
-`demo/dist`, a resource directory of `demo-app`, for its `FrameworksPage`
-(`/react-svelte`). That page gives them the URL of the `ChoicesResource` the application mounts
-(`/api/choices`), which serves their data as JSON. `demo-app` uses the packages
-`ui-components` installed and built, so build it with `-am`.
+`demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
+demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `scrollbar`, `progressBar`, and
+`overview` for the combined page `/react-svelte`). A demo page shows them in its Wicket, React and
+Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
+configuration as JSON, texts in the session's language, options, initial values and the URLs of
+the resources the application mounts (`/api/choices`, `/api/users`); the app is mounted the first
+time its tab is shown (`demo/src/apps.ts`). `demo-app` uses the packages `ui-components` installed
+and built, so build it with `-am`.
 
 To work on the frontend alone, with the Node Maven installed:
 
@@ -72,3 +85,9 @@ and the select:
 The core adds the button and the list to the wrapper. The component creates the core's object
 once it's mounted, calls `configure()` when the texts change, `refresh()` when the options
 change and `update()` when the value changes, and calls `destroy()` on unmount.
+
+The table goes the same way: the framework renders the table in the markup of the Wicket one, its
+navigation, headers and column chooser, and leaves the body empty; the core's `DynamicDataTable`
+renders the rows into it from the columns' templates, loading them through the `load` the
+component gives, and reports clicks, the selection and the column chooser as actions. Another
+order or set of columns starts the core's table again.

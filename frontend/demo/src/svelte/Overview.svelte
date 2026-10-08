@@ -10,21 +10,23 @@
 	import { Autocomplete, Dropdown, InfiniteList,
 		type AutocompleteValue } from '@advanced-widgets/svelte';
 
-	import { describe, loadChoices, pagesOfUsers, searchUsers, SUGGESTION_TEMPLATE, USER_TEMPLATE,
-		type Choices, type Texts, type Urls } from './data.js';
+	import { loadChoices, pagesOfUsers, searchUsers, type Choices } from '../data.js';
+	import { describe, SUGGESTION_TEMPLATE, USER_TEMPLATE,
+		type OverviewConfig } from '../overview.js';
 
-	let { urls, texts }: { urls: Urls; texts: Texts } = $props();
+	let { config }: { config: OverviewConfig } = $props();
+	const texts = $derived(config.texts);
 
 	let choices = $state<Choices | null>(null);
 	let country = $state('');
 	let skills = $state<string[]>([]);
 	let colleagues = $state<AutocompleteValue[]>([]);
 	let picked = $state<string | null>(null);
-	const search = $derived(searchUsers(urls.users));
-	const load = $derived(pagesOfUsers(urls.users));
+	const search = $derived(searchUsers(config.usersUrl));
+	const load = $derived(pagesOfUsers(config.usersUrl));
 
 	$effect(() => {
-		loadChoices(urls.choices).then((loaded) => (choices = loaded),
+		loadChoices(config.choicesUrl).then((loaded) => (choices = loaded),
 			(error) => console.error(error));
 	});
 </script>

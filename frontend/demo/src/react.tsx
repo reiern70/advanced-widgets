@@ -4,16 +4,36 @@
  */
 
 /*
- * react-demo.js: renders the React demo into every element with data-framework-demo="react".
+ * react-demo.js: the React apps of the demos, by the names of the demos, rendered into the
+ * elements of the pages marked for React.
  */
 
-import { StrictMode } from 'react';
+import { StrictMode, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { settingsOf } from './data.js';
-import { ReactDemo } from './ReactDemo.js';
+import { startApps, type Mount } from './apps.js';
+import { AutocompleteDemo } from './react/AutocompleteDemo.js';
+import { DropdownDemo } from './react/DropdownDemo.js';
+import { JsonListDemo } from './react/JsonListDemo.js';
+import { JsonTableDemo } from './react/JsonTableDemo.js';
+import { Overview } from './react/Overview.js';
+import { ProgressDemo } from './react/ProgressDemo.js';
+import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 
-document.querySelectorAll<HTMLElement>('[data-framework-demo="react"]').forEach((element) => {
-	const { urls, texts } = settingsOf(element);
-	createRoot(element).render(<StrictMode><ReactDemo urls={urls} texts={texts} /></StrictMode>);
+/**
+ * @returns the mount of a React app taking the configuration as its only prop
+ */
+function app<C>(App: ComponentType<{ config: C }>): Mount {
+	return (element, config: C) => createRoot(element).render(
+		<StrictMode><App config={config} /></StrictMode>);
+}
+
+startApps('react', {
+	overview: app(Overview),
+	dropdown: app(DropdownDemo),
+	autocomplete: app(AutocompleteDemo),
+	jsonList: app(JsonListDemo),
+	jsonTable: app(JsonTableDemo),
+	progressBar: app(ProgressDemo),
+	scrollbar: app(ScrollbarDemo)
 });

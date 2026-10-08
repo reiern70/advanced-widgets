@@ -173,7 +173,7 @@ class FrameworksBrowserTest extends JettyTestCase
 
 	private WebElement root()
 	{
-		return driver.findElement(By.cssSelector("[data-framework-demo='" + framework + "']"));
+		return driver.findElement(By.cssSelector("[data-framework-app='" + framework + "']"));
 	}
 
 	private WebElement select(String name)

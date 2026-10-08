@@ -17,12 +17,18 @@ import org.apache.wicket.util.string.Strings;
 
 import com.advanced.widgets.collapsible.CollapsiblePanel;
 import com.advanced.widgets.demo.Demos.Demo;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
+import com.github.openjson.JSONObject;
 
 /**
  * The layout of a demo page: links back to the {@link HomePage} and to the previous and next demo,
  * the demo's title and its explanation in a collapsible panel. Both come from the page's own
  * bundle, under the keys {@code title} and {@code explanation}; the explanation is markup authored
  * with the demo and is written as is.
+ * <p>
+ * A demo that has React and Svelte apps too names them with {@link #getFrameworkDemo()} and gives
+ * them their configuration with {@link #getFrameworkConfig()}: the page then shows the
+ * {@link FrameworkTabs} below the explanation, its own components in the Wicket tab.
  */
 public abstract class DemoPage extends BasePage
 {
@@ -49,6 +55,34 @@ public abstract class DemoPage extends BasePage
 			.orElseGet(() -> new WebMarkupContainer("visibility").setVisible(false)));
 		add(newExplanation("explanation", () -> getString("explanation", null, ""))
 			.setOutputMarkupId(true));
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		String demo = getFrameworkDemo();
+		add(demo != null ? new FrameworkTabs("frameworkTabs", demo, this::getFrameworkConfig)
+			: new WebMarkupContainer("frameworkTabs").setVisible(false));
+	}
+
+	/**
+	 * @return the name of the demo's React and Svelte apps, the key of the apps in the bundles
+	 *         built from {@code frontend/demo}; {@code null}, the default, when there are none
+	 */
+	protected String getFrameworkDemo()
+	{
+		return null;
+	}
+
+	/**
+	 * @return the configuration of the demo's React and Svelte apps, read when the page renders:
+	 *         texts in the language of the session, options, initial values and the URLs of
+	 *         mounted resources
+	 */
+	protected JSONObject getFrameworkConfig()
+	{
+		return new JSONObject();
 	}
 
 	@Override

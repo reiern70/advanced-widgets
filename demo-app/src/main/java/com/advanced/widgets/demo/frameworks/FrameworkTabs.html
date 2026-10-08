@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:panel>
+<div class="framework-tabs" role="tablist" wicket:message="aria-label:frameworkTabs.label">
+	<button type="button" role="tab" class="framework-tabs__tab" id="framework-tab-wicket" aria-controls="framework-panel-wicket" data-framework="wicket" aria-selected="true">Wicket</button>
+	<button type="button" role="tab" class="framework-tabs__tab" id="framework-tab-react" aria-controls="framework-panel-react" data-framework="react" aria-selected="false" tabindex="-1">React</button>
+	<button type="button" role="tab" class="framework-tabs__tab" id="framework-tab-svelte" aria-controls="framework-panel-svelte" data-framework="svelte" aria-selected="false" tabindex="-1">Svelte</button>
+</div>
+<div wicket:id="react" id="framework-panel-react" class="framework-tabs__panel" role="tabpanel" aria-labelledby="framework-tab-react" data-framework-panel="react" hidden="hidden"></div>
+<div wicket:id="svelte" id="framework-panel-svelte" class="framework-tabs__panel" role="tabpanel" aria-labelledby="framework-tab-svelte" data-framework-panel="svelte" hidden="hidden"></div>
+</wicket:panel>
+</body>
+</html>

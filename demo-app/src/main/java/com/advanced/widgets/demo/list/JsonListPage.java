@@ -5,6 +5,7 @@
 package com.advanced.widgets.demo.list;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.wicket.Component;
@@ -30,6 +31,7 @@ import org.apache.wicket.protocol.ws.api.message.AbortedMessage;
 import org.apache.wicket.protocol.ws.api.message.ClosedMessage;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.resource.loader.ClassStringResourceLoader;
 
 import com.advanced.widgets.demo.DemoPage;
 import com.advanced.widgets.demo.DemoWebSocketBehavior;
@@ -40,18 +42,27 @@ import com.advanced.widgets.demo.datatable.UserDetailsPanel;
 import com.advanced.widgets.demo.datatable.UserEditPanel;
 import com.advanced.widgets.demo.datatable.UserFilterPanel;
 import com.advanced.widgets.demo.datatable.UsersProvider;
+import com.advanced.widgets.demo.datatable.UsersRowsResource;
+import com.advanced.widgets.demo.frameworks.ChoicesResource;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.dropdown.Dropdown;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.jsonlist.IItemAction;
 import com.advanced.widgets.jsonlist.JsonBasedInfiniteList;
 import com.advanced.widgets.progress.ProgressBar;
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONObject;
 
 /**
  * A {@link JsonBasedInfiniteList} of the thousand users of the table examples, each one a card,
  * whose buttons are handled by the list itself. The edit form and the confirmation of a deletion
  * are shown in a dialog of the page, and the user clicked on next to the list. The server pushes
  * the progress of the users shown over the page's web socket connection.
+ * <p>
+ * The React and Svelte tabs show the same cards, from the same template, the users loaded from
+ * the {@link UsersRowsResource}; the actions of a card are handled by the app, which keeps what it
+ * changes in the browser.
  */
 public class JsonListPage extends DemoPage
 {
@@ -59,6 +70,9 @@ public class JsonListPage extends DemoPage
 
 	/** The number of users fetched at a time. */
 	static final int USERS_PER_PAGE = 24;
+
+	/** The properties the users can be sorted by. */
+	private static final List<String> SORTS = List.of("firstName", "lastName", "bornDate");
 
 	private final UsersProvider provider = new UsersProvider();
 
@@ -219,7 +233,7 @@ public class JsonListPage extends DemoPage
 	private Component newSortChoice(String id)
 	{
 		Dropdown<String> choice = new Dropdown<>(id, new PropertyModel<>(this, "sort"),
-			List.of("firstName", "lastName", "bornDate"), new ChoiceRenderer<>()
+			SORTS, new ChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
 
@@ -358,6 +372,48 @@ public class JsonListPage extends DemoPage
 			}
 		});
 		dialog.open(content, target);
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "jsonList";
+	}
+
+	/**
+	 * @return the texts, the template of the cards in the language of the session, the URLs of the
+	 *         users and of the countries, and how the list loads and sorts them
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		JSONObject texts = FrameworkTabs.texts(this, "users", "sortBy", "sort.firstName",
+			"sort.lastName", "sort.bornDate", "filter.placeholder", "newUser",
+			"editUser", "delete", "cancel", "delete.confirm", "deleted", "added", "noneSelected",
+			"selectedUser", "id", "firstName", "lastName", "homePhone", "cellPhone", "bornDate");
+		// the form's labels, from the bundles of the Wicket form
+		ClassStringResourceLoader form = new ClassStringResourceLoader(UserEditPanel.class);
+		for (String key : new String[] { "country", "city", "address", "save" })
+		{
+			texts.put(key, form.loadStringResource(UserEditPanel.class, key, getLocale(),
+				getStyle(), getVariation()));
+		}
+		// the label of the filter; the drop-downs' filter is theirs
+		texts.put("filterLabel", getString("filter"));
+		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));
+		texts.put("loading", getString("JsonBasedInfiniteList.loading"));
+		texts.put("end", getString("JsonBasedInfiniteList.end"));
+		texts.put("empty", getString("JsonBasedInfiniteList.empty"));
+		return new JSONObject()
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
+			.put("template", list.getItemTemplate())
+			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
+			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE))
+			.put("perPage", USERS_PER_PAGE)
+			.put("sort", sort)
+			.put("sorts", new JSONArray(SORTS))
+			.put("height", new JSONObject().put("value", 70).put("unit", "vh"))
+			.put("locale", getLocale().toLanguageTag());
 	}
 
 	private String message(String key, Object... parameters)

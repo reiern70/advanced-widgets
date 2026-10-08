@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.framework-tabs {
+	display: flex;
+	gap: 4px;
+	margin: 16px 0;
+	border-bottom: 1px solid var(--border);
+}
+
+.framework-tabs__tab {
+	margin-bottom: -1px;
+	padding: 8px 18px;
+	border: 1px solid transparent;
+	border-radius: var(--radius) var(--radius) 0 0;
+	background: transparent;
+	color: var(--muted);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.framework-tabs__tab:hover {
+	color: var(--text);
+}
+
+.framework-tabs__tab[aria-selected="true"] {
+	border-color: var(--border);
+	border-bottom-color: var(--bg);
+	background: var(--bg);
+	color: var(--accent, var(--primary));
+}
+
+.framework-tabs__tab:focus-visible {
+	outline: 2px solid var(--accent, var(--primary));
+	outline-offset: -2px;
+}
+
+.framework-tabs__panel[hidden] {
+	display: none;
+}

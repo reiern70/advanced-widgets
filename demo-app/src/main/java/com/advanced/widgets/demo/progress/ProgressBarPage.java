@@ -14,11 +14,14 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 
 import com.advanced.widgets.demo.DemoPage;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.progress.ProgressBar;
+import com.github.openjson.JSONObject;
 
 /**
  * {@link ProgressBar}s on their own: one advanced by an Ajax timer, and an indeterminate one, in a
- * theme the user chooses.
+ * theme the user chooses. The React and Svelte tabs show the same bars with their
+ * {@code ProgressBar}, the first one advanced by a timer of the app.
  */
 public class ProgressBarPage extends DemoPage
 {
@@ -82,5 +85,23 @@ public class ProgressBarPage extends DemoPage
 				target.add(bar, themed.get("toggle"));
 			}
 		});
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "progressBar";
+	}
+
+	/**
+	 * @return the texts and the progress as the page has it
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		return new JSONObject()
+			.put("texts", FrameworkTabs.texts(this, "known", "unknown", "finished", "reset",
+				"start", "pause"))
+			.put("progress", progress);
 	}
 }

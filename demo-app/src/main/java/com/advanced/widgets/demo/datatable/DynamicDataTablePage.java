@@ -5,28 +5,38 @@
 package com.advanced.widgets.demo.datatable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.model.IComponentAssignedModel;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.protocol.ws.api.message.AbortedMessage;
 import org.apache.wicket.protocol.ws.api.message.ClosedMessage;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.resource.loader.ClassStringResourceLoader;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.advanced.widgets.demo.DemoWebSocketBehavior;
+import com.advanced.widgets.demo.frameworks.ChoicesResource;
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.CompoundDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.DynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IHideableColumn;
+import com.advanced.widgets.dynamicdatatable.ISortableDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.IWebSocketLightWeightMessage;
 import com.advanced.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.ProgressBarColumn;
@@ -34,7 +44,11 @@ import com.advanced.widgets.dynamicdatatable.ResourceDynamicColumn;
 import com.advanced.widgets.dynamicdatatable.RowNumberColumn;
 import com.advanced.widgets.dynamicdatatable.SelectionColumn;
 import com.advanced.widgets.dynamicdatatable.SortableDynamicColumn;
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
+import com.advanced.widgets.license.Licensing;
 import com.advanced.widgets.table.IMovableColumn;
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONObject;
 
 /**
  * A table rendered in the browser from JSON, whose links are handled by the table itself, and
@@ -303,6 +317,135 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		{
 			super(new ResourceModel("progress"), "progress");
 			setId("progress");
+		}
+	}
+
+	@Override
+	protected String getFrameworkDemo()
+	{
+		return "jsonTable";
+	}
+
+	/**
+	 * @return the columns of the table but its selection column, which the apps' tables have of
+	 *         their own, with their templates; the texts of the table and of the page in the
+	 *         language of the session; the URLs of the users and of the countries; and the
+	 *         license key of the application, which activates the private table in the browser too
+	 */
+	@Override
+	protected JSONObject getFrameworkConfig()
+	{
+		JsonBasedDynamicDataTable<User, Long> table = getJsonTable();
+		JSONArray columns = new JSONArray();
+		for (IDynamicColumn<User> column : table.getColumns())
+		{
+			if ("selection".equals(column.getId()))
+			{
+				continue;
+			}
+			JSONObject json = new JSONObject()
+				.put("id", column.getId() != null ? column.getId() : "column" + columns.length())
+				.put("header", header(column))
+				.put("template", column.getTemplate(table))
+				.put("movable", table.isMovable(column))
+				.put("resizable", column.isResizable())
+				.put("hideable", table.isHideable(column))
+				.put("visible", table.isColumnVisible(column));
+			if (column.getCssClass() != null)
+			{
+				json.put("cssClass", column.getCssClass());
+			}
+			if (column instanceof ISortableDynamicColumn<?, ?> sortable && sortable.isSortable())
+			{
+				json.put("sort", String.valueOf(sortable.getSortProperty()));
+			}
+			columns.put(json);
+		}
+		return new JSONObject()
+			.put("texts", texts())
+			.put("columns", columns)
+			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
+			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE))
+			.put("licenseKey", licenseKey())
+			.put("rowsPerPage", ROWS_PER_PAGE)
+			.put("pageSizes", new JSONArray(List.of(25, 50, 100, 500)))
+			.put("bodyHeight", new JSONObject()
+				.put("value", DynamicTableOptionsPanel.defaultHeight(BodyHeightUnits.PIXELS))
+				.put("unit", "px"))
+			.put("pushMillis", 3000);
+	}
+
+	/**
+	 * @return the header of a column, read as the header component reads it
+	 */
+	private String header(IDynamicColumn<User> column)
+	{
+		IModel<String> header = column.getHeader();
+		if (header instanceof IComponentAssignedModel<String> assigned)
+		{
+			header = assigned.wrapOnAssignment(this);
+		}
+		return header.getObject();
+	}
+
+	private JSONObject texts()
+	{
+		JSONObject texts = FrameworkTabs.texts(this, "filter.placeholder", "newUser", "editUser",
+			"delete", "delete.confirm", "deleted", "selection.none", "selection.some");
+		texts.put("filterLabel", getString("filter"));
+		texts.put("added", getString("added.rendered"));
+		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));
+		for (String key : new String[] { "firstName", "lastName", "country", "city", "address",
+			"save", "cancel" })
+		{
+			texts.put(key, string(UserEditPanel.class, key));
+		}
+		for (String key : new String[] { "infiniteScroll", "infiniteScroll.off",
+			"infiniteScroll.on" })
+		{
+			texts.put(key, string(DynamicTableOptionsPanel.class, key));
+		}
+		JSONObject table = new JSONObject()
+			.put("showing", getString("NavigatorLabel", Model.ofMap(Map.of("from", "{0}", "to",
+				"{1}", "of", "{2}"))))
+			.put("first", getString("PagingNavigator.first"))
+			.put("previous", getString("PagingNavigator.previous"))
+			.put("next", getString("PagingNavigator.next"))
+			.put("last", getString("PagingNavigator.last"))
+			.put("page", getString("PagingNavigation.page", Model.ofMap(Map.of("page", "{0}"))))
+			.put("rowsPerPage", getString("DynamicDataTable.rowsPerPage"))
+			.put("columns", getString("DynamicDataTable.chooseColumns"))
+			.put("apply", getString("DynamicDataTable.applyColumns"))
+			.put("selectPage", getString("DynamicDataTable.selectPage"))
+			.put("selectRow", getString("DynamicDataTable.selectRow"))
+			.put("moveColumn", getString("MovableColumnsBehavior.moveColumn"))
+			.put("unlicensed", getString("License.placeholder"));
+		return FrameworkTabs.withDropdownTexts(this, texts).put("table", table);
+	}
+
+	/**
+	 * @return a text of the bundles of a class, in the language of the session
+	 */
+	private String string(Class<?> scope, String key)
+	{
+		return new ClassStringResourceLoader(scope).loadStringResource(scope, key, getLocale(),
+			getStyle(), getVariation());
+	}
+
+	/**
+	 * @return the license key of the application, as it installs it
+	 */
+	private static String licenseKey()
+	{
+		try (InputStream key = DynamicDataTablePage.class.getClassLoader()
+			.getResourceAsStream(Licensing.RESOURCE))
+		{
+			return key != null ? new String(key.readAllBytes(), StandardCharsets.UTF_8).strip()
+				: "";
+		}
+		catch (IOException e)
+		{
+			throw new UncheckedIOException(e);
 		}
 	}
 }

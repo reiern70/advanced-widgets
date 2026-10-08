@@ -8,25 +8,26 @@ import { useEffect, useMemo, useState } from 'react';
 import type { AutocompleteValue } from '@advanced-widgets/core';
 import { Autocomplete, Dropdown, InfiniteList } from '@advanced-widgets/react';
 
-import { describe, loadChoices, pagesOfUsers, searchUsers, SUGGESTION_TEMPLATE, USER_TEMPLATE,
-	type Choices, type Texts, type Urls } from './data.js';
+import { loadChoices, pagesOfUsers, searchUsers, type Choices } from '../data.js';
+import { describe, SUGGESTION_TEMPLATE, USER_TEMPLATE, type OverviewConfig } from '../overview.js';
 
 /**
  * A country, skills and colleagues chosen with the React components, from data the server sends,
  * and a list of all users scrolling infinitely.
  */
-export function ReactDemo({ urls, texts }: { urls: Urls; texts: Texts }) {
+export function Overview({ config }: { config: OverviewConfig }) {
+	const { texts } = config;
 	const [choices, setChoices] = useState<Choices | null>(null);
 	const [country, setCountry] = useState('');
 	const [skills, setSkills] = useState<string[]>([]);
 	const [colleagues, setColleagues] = useState<AutocompleteValue[]>([]);
 	const [picked, setPicked] = useState<string | null>(null);
-	const search = useMemo(() => searchUsers(urls.users), [urls.users]);
-	const load = useMemo(() => pagesOfUsers(urls.users), [urls.users]);
+	const search = useMemo(() => searchUsers(config.usersUrl), [config.usersUrl]);
+	const load = useMemo(() => pagesOfUsers(config.usersUrl), [config.usersUrl]);
 
 	useEffect(() => {
-		loadChoices(urls.choices).then(setChoices, (error) => console.error(error));
-	}, [urls.choices]);
+		loadChoices(config.choicesUrl).then(setChoices, (error) => console.error(error));
+	}, [config.choicesUrl]);
 
 	if (!choices) {
 		return <p className="framework-demo__loading">{texts.loading}</p>;
