@@ -19,6 +19,7 @@
 	<entry key="edit">Edit</entry>
 	<entry key="delete">Delete</entry>
 	<entry key="delete.confirm">Delete ${firstName} ${lastName}?</entry>
+	<entry key="discard">Discard the changes?</entry>
 	<entry key="address">Address</entry>
 	<entry key="editUser">Edit ${firstName} ${lastName}</entry>
 	<entry key="newUser">New user</entry>

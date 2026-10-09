@@ -78,6 +78,12 @@ npm run build:demo
 npm test         # type checks, then Vitest with jsdom
 ```
 
+Every test run measures the coverage of `src` with `@vitest/coverage-v8`: a summary on the
+console, the report in `<package>/coverage` (`index.html`, and `lcov.info`). The run fails when
+the coverage drops below the thresholds in the package's `vitest.config.ts`. The Java modules
+have theirs from JaCoCo: `mvn verify` writes `target/site/jacoco` and checks the module's
+`jacoco.minimum.*` properties.
+
 ## The host
 
 The core never calls Wicket. What it needs from the page goes through a `Host`

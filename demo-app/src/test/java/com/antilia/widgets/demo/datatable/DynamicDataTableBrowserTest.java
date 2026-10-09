@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -35,7 +36,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  * Drives {@link DynamicDataTablePage} and {@link BeanDynamicDataTablePage} in Chrome and in
  * Firefox: the height of the body, the empty
  * column at the end, the toolbar's buttons and links, the veil over the table while it pages,
- * selects or runs a slow action, and where the edit form is shown. Runs with
+ * selects or runs a slow action, and where the edit form is shown: in the bean based table's
+ * overlay, in the {@link com.antilia.widgets.modal.Modal Modal} of the JSON based one. Runs with
  * {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -359,10 +361,10 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 	}
 
 	@ParameterizedTest
-	@MethodSource("pages")
-	void theEditFormCoversThePageOrTheTable(SeleniumBrowser browser, String page)
+	@EnumSource(SeleniumBrowser.class)
+	void theEditFormCoversThePageOrTheTable(SeleniumBrowser browser)
 	{
-		open(browser, page);
+		open(browser, "bean-dynamic-data-table");
 		js().executeScript(
 			"document.querySelector('.ant-data-table-body').scrollTop = 600;");
 
@@ -377,13 +379,51 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 		wait.until(d -> driver.findElements(By.cssSelector(TABLE + " " + OVERLAY_WINDOW))
 			.isEmpty());
 
-		choose("options:overlay", "LOCAL");
+		choose("options:overlayOption:overlay", "LOCAL");
 
 		overlay = editFirstVisibleRow();
 		assertAbout(number(overlay, "tableTop"), number(overlay, "top"),
 			"the veil covers the table " + overlay);
 		assertAbout(number(overlay, "tableHeight"), number(overlay, "height"),
 			"the veil covers the table " + overlay);
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theJsonTableEditsAndDeletesInTheModal(SeleniumBrowser browser)
+	{
+		open(browser, "dynamic-data-table");
+
+		click(By.cssSelector(rows(" button[title='Edit']")));
+		WebElement dialog = awaitDialog();
+		assertTrue(dialog.findElement(By.cssSelector(".modal-dialog-title")).getText()
+			.startsWith("Edit "), dialog.getText());
+		assertTrue(driver.findElements(By.cssSelector(TABLE + " " + OVERLAY_WINDOW)).isEmpty(),
+			"the table's own overlay is not used");
+		closeDialog(dialog);
+
+		click(By.cssSelector(rows(" button[title='Delete']")));
+		dialog = awaitDialog();
+		assertEquals("Delete", dialog.findElement(By.cssSelector(".modal-dialog-title"))
+			.getText());
+		assertTrue(dialog.findElement(By.cssSelector(".modal-dialog-body")).getText()
+			.matches("Delete .+\\?"), dialog.getText());
+		closeDialog(dialog);
+	}
+
+	private WebElement awaitDialog()
+	{
+		return wait.until(d -> driver.findElements(By.cssSelector(".modal-dialog")).stream()
+			.filter(WebElement::isDisplayed)
+			.findFirst()
+			.orElse(null));
+	}
+
+	private void closeDialog(WebElement dialog)
+	{
+		dialog.findElement(By.cssSelector(".modal-dialog-close")).click();
+		wait.until(d -> driver.findElements(By.cssSelector(".modal-dialog")).isEmpty());
+		awaitNoVeil();
 	}
 
 	private Map<String, Object> editFirstVisibleRow()
@@ -507,7 +547,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 			case "options:bodyHeightUnits" -> List.of("PIXELS", "PERCENT", "VIEWPORT_HEIGHT")
 				.indexOf(value);
 			case "options:resize" -> List.of("NONE", "STRETCH").indexOf(value);
-			case "options:overlay" -> List.of("LOCAL", "BODY").indexOf(value);
+			case "options:overlayOption:overlay" -> List.of("LOCAL", "BODY").indexOf(value);
 			default -> throw new IllegalArgumentException(name);
 		};
 	}

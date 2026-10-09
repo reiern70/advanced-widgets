@@ -74,6 +74,8 @@
 	<properties>
 		<frontend.directory>${project.basedir}/../frontend</frontend.directory>
 		<skipTests>false</skipTests>
+		<jacoco.minimum.lines>0.90</jacoco.minimum.lines>
+		<jacoco.minimum.branches>0.80</jacoco.minimum.branches>
 	</properties>
 
 	<build>

@@ -312,6 +312,16 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		}
 	}
 
+	/**
+	 * The edit form and the confirmation of a deletion show in the
+	 * {@link com.antilia.widgets.modal.Modal Modal} the React and Svelte tabs use too.
+	 */
+	@Override
+	protected boolean isModal()
+	{
+		return true;
+	}
+
 	@Override
 	protected String getFrameworkDemo()
 	{

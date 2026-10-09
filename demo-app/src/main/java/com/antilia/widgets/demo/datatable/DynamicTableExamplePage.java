@@ -18,6 +18,7 @@ import org.apache.wicket.extensions.ajax.AjaxDownloadBehavior.Location;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -46,6 +47,8 @@ import com.antilia.widgets.floating.FloatingPanel;
 import com.antilia.widgets.icon.FontAwesomeIcon;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
+import com.antilia.widgets.modal.IModalButtonFactory;
+import com.antilia.widgets.modal.Modal;
 import com.antilia.widgets.table.MovableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
 import com.github.openjson.JSONArray;
@@ -54,7 +57,8 @@ import com.github.openjson.JSONObject;
 /**
  * What the dynamic table examples share: a thousand users in a table with the same settings,
  * the same row actions and the same edit form. A subclass decides how the rows are rendered: in
- * the browser from JSON, or on the server by Wicket components.
+ * the browser from JSON, or on the server by Wicket components, and whether the edit form and
+ * the confirmation of a deletion show in the table's overlay or in a {@link Modal}.
  */
 public abstract class DynamicTableExamplePage extends UsersPage
 {
@@ -79,6 +83,9 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	private final WebMarkupContainer tableParent;
 
 	private final ColumnState initialColumnState;
+
+	/** The dialog of the edit form and of the confirmation, when the page uses a {@link Modal}. */
+	private final Modal dialog;
 
 	private final SelectionCountToolbarAction<User, Long> selectionCount =
 		new SelectionCountToolbarAction<>();
@@ -113,6 +120,18 @@ public abstract class DynamicTableExamplePage extends UsersPage
 			.setFileName("users.csv"));
 		table.addToolbarAction(selectionCount);
 
+		if (isModal())
+		{
+			dialog = new Modal("dialog");
+			dialog.confirmCloseIfModified(new ResourceModel("discard"));
+			add(dialog);
+		}
+		else
+		{
+			dialog = null;
+			add(new WebMarkupContainer("dialog").setVisible(false));
+		}
+
 		themed = new WebMarkupContainer("themed");
 		themed.setOutputMarkupId(true);
 		add(themed);
@@ -140,6 +159,12 @@ public abstract class DynamicTableExamplePage extends UsersPage
 			protected void onTableChanged(AjaxRequestTarget target)
 			{
 				target.add(tableParent);
+			}
+
+			@Override
+			protected boolean isOverlayUsed()
+			{
+				return !isModal();
 			}
 
 		};
@@ -172,6 +197,15 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	 */
 	protected abstract BaseDynamicDataTable<User, Long, ?> newTable(String id,
 		UsersProvider provider);
+
+	/**
+	 * @return whether the edit form and the confirmation of a deletion show in a {@link Modal}
+	 *         instead of the table's overlay; {@code false} by default
+	 */
+	protected boolean isModal()
+	{
+		return false;
+	}
 
 	/**
 	 * @return the proportions of the columns of the table offered by the settings, one per column
@@ -308,7 +342,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 
 
 	/**
-	 * Edits the user in the table's overlay, and selects it.
+	 * Edits the user in the table's overlay or the dialog, and selects it.
 	 */
 	private class EditAction extends IconBasedRowAction<User>
 	{
@@ -405,10 +439,33 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	}
 
 	/**
-	 * Shows the form of a user in the table's overlay; the saved user is selected.
+	 * Shows the form of a user in the table's overlay or the dialog; the saved user is selected.
 	 */
 	private void showUserForm(User user, IModel<String> title, AjaxRequestTarget target)
 	{
+		if (dialog != null)
+		{
+			dialog.open(title, new UserEditPanel(Modal.BODY_ID, user)
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected void onSaved(User saved, AjaxRequestTarget target)
+				{
+					setSelected(saved);
+					dialog.close(target);
+					table.refresh(target);
+					target.add(details);
+				}
+
+				@Override
+				protected void onCancel(AjaxRequestTarget target)
+				{
+					dialog.close(target);
+				}
+			}, target);
+			return;
+		}
 		table.showOverlay(new FloatingPanel(BaseDynamicDataTable.OVERLAY_CONTENT_ID, title)
 		{
 			private static final long serialVersionUID = 1L;
@@ -446,7 +503,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	}
 
 	/**
-	 * Deletes the user once the user confirmed it in the table's overlay.
+	 * Deletes the user once the user confirmed it in the table's overlay or the dialog.
 	 */
 	private class DeleteAction extends IconBasedRowAction<User>
 	{
@@ -466,23 +523,62 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		@Override
 		protected IModel<String> getConfirmation(User user)
 		{
-			return new StringResourceModel("delete.confirm", DynamicTableExamplePage.this,
-				Model.of(user));
+			// the dialog asks itself, see onRowAction
+			return dialog != null ? null : confirmation(user);
 		}
 
 		@Override
 		protected void onRowAction(User user, AjaxRequestTarget target)
 		{
-			if (Objects.equals(getSelected(), user))
+			if (dialog != null)
 			{
-				setSelected(null);
-				target.add(details);
+				confirmDeletion(user, target);
 			}
-			DatabaseLocator.getLargeDatabase().delete(user);
-			info(message("deleted", user.getFirstName(), user.getLastName()));
-			target.add(DynamicTableExamplePage.this.get("feedback"));
-			table.refresh(target);
+			else
+			{
+				delete(user, target);
+			}
 		}
+	}
+
+	private IModel<String> confirmation(User user)
+	{
+		return new StringResourceModel("delete.confirm", this, Model.of(user));
+	}
+
+	/**
+	 * Asks in the dialog to confirm the deletion of a user, then deletes it if it still exists.
+	 */
+	private void confirmDeletion(User user, AjaxRequestTarget target)
+	{
+		String key = table.getRowKey(user);
+		dialog.open(new ResourceModel("delete"), new Label(Modal.BODY_ID, confirmation(user)),
+			target, IModalButtonFactory.close(new ResourceModel("DynamicDataTable.cancel")),
+			IModalButtonFactory.primary(new ResourceModel("delete"), confirmed -> {
+				dialog.close(confirmed);
+				User current = table.findRow(key);
+				if (current == null)
+				{
+					onUserNotFound(confirmed);
+				}
+				else
+				{
+					delete(current, confirmed);
+				}
+			}));
+	}
+
+	private void delete(User user, AjaxRequestTarget target)
+	{
+		if (Objects.equals(getSelected(), user))
+		{
+			setSelected(null);
+			target.add(details);
+		}
+		DatabaseLocator.getLargeDatabase().delete(user);
+		info(message("deleted", user.getFirstName(), user.getLastName()));
+		target.add(get("feedback"));
+		table.refresh(target);
 	}
 
 	/**

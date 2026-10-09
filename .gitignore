@@ -16,3 +16,4 @@ frontend/node/
 node_modules/
 frontend/*/dist/
 frontend/svelte/.svelte-kit/
+frontend/*/coverage/

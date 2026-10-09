@@ -17,12 +17,11 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import com.antilia.widgets.dynamicdatatable.CompoundDynamicColumn;
-import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
-import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.OverlayPlacement;
 import com.antilia.widgets.dynamicdatatable.IDynamicColumn;
 import com.antilia.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.antilia.widgets.dynamicdatatable.RowNumberColumn;
+import com.antilia.widgets.modal.Modal;
 import com.antilia.widgets.table.MovableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
 import org.apache.wicket.util.tester.FormTester;
@@ -42,11 +41,18 @@ class DynamicDataTablePageTest
 
 	private static final String TABLE = TABLE_PARENT + ":table";
 
-	private static final String FORM = TABLE + ":overlay:window:content:body:form";
+	private static final String DIALOG = "dialog";
+
+	private static final String FORM = DIALOG + ":overlay:dialog:content:body:form";
+
+	/** The second button of the dialog's footer, after Cancel. */
+	private static final String CONFIRM = DIALOG + ":overlay:dialog:content:footer:buttons:2";
 
 	private WicketTester tester;
 
 	private JsonBasedDynamicDataTable<User, Long> table;
+
+	private Modal dialog;
 
 	private User user;
 
@@ -60,6 +66,7 @@ class DynamicDataTablePageTest
 		tester.startPage(DynamicDataTablePage.class);
 		table = (JsonBasedDynamicDataTable<User, Long>)tester
 			.getComponentFromLastRenderedPage(TABLE);
+		dialog = (Modal)tester.getComponentFromLastRenderedPage(DIALOG);
 		user = DatabaseLocator.getLargeDatabase().find(0, 1, null).get(0);
 		city = user.getCity();
 	}
@@ -141,7 +148,8 @@ class DynamicDataTablePageTest
 			});
 		tester.clickLink(add);
 
-		assertTrue(table.isOverlayShown());
+		assertTrue(dialog.isOpen());
+		assertFalse(table.isOverlayShown());
 		FormTester form = tester.newFormTester(FORM);
 		form.setValue("firstName", "Zoe");
 		form.setValue("lastName", "Quintana");
@@ -156,7 +164,7 @@ class DynamicDataTablePageTest
 			assertEquals(count + 1, database.getCount());
 			assertEquals("Quintana", added.getLastName());
 			assertEquals(added, database.get(added.getId()));
-			assertFalse(table.isOverlayShown());
+			assertFalse(dialog.isOpen());
 		}
 		finally
 		{
@@ -165,19 +173,25 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
-	void editShowsTheUserInAFormInTheOverlay()
+	void editShowsTheUserInAFormInTheDialog()
 	{
 		edit();
 
-		assertTrue(table.isOverlayShown());
-		tester.assertComponentOnAjaxResponse(TABLE + ":overlay");
+		assertTrue(dialog.isOpen());
+		assertFalse(table.isOverlayShown(), "the table's own overlay is not used");
+		tester.assertComponentOnAjaxResponse(DIALOG);
 		tester.assertComponent(FORM.substring(0, FORM.lastIndexOf(':')), UserEditPanel.class);
 		tester.assertModelValue(FORM + ":city", city);
 		tester.assertModelValue(FORM + ":firstName", user.getFirstName());
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Wicket.Modal.attach("), response);
+		assertTrue(response.contains("Edit " + user.getFirstName() + " " + user.getLastName()),
+			response);
+		assertTrue(response.contains("Discard the changes?"), response);
 	}
 
 	@Test
-	void savingUpdatesTheUserAndClosesTheOverlay()
+	void savingUpdatesTheUserAndClosesTheDialog()
 	{
 		edit();
 
@@ -186,12 +200,12 @@ class DynamicDataTablePageTest
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
 		assertEquals("Paris", DatabaseLocator.getLargeDatabase().get(user.getId()).getCity());
-		assertFalse(table.isOverlayShown());
-		tester.assertComponentOnAjaxResponse(TABLE + ":overlay");
+		assertFalse(dialog.isOpen());
+		assertEquals(user, ((DynamicDataTablePage)tester.getLastRenderedPage()).getSelected());
 	}
 
 	@Test
-	void anEmptyRequiredFieldKeepsTheOverlayOpen()
+	void anEmptyRequiredFieldKeepsTheDialogOpen()
 	{
 		edit();
 
@@ -200,13 +214,12 @@ class DynamicDataTablePageTest
 		tester.executeAjaxEvent(FORM + ":save", "click");
 
 		assertEquals(city, user.getCity());
-		assertTrue(table.isOverlayShown());
+		assertTrue(dialog.isOpen());
 		tester.assertComponentOnAjaxResponse(FORM);
-		assertTrue(tester.getLastResponseAsString().contains("data-dt-changed=\"true\""));
 	}
 
 	@Test
-	void cancellingClosesTheOverlayWithoutSaving()
+	void cancellingClosesTheDialogWithoutSaving()
 	{
 		edit();
 
@@ -215,18 +228,63 @@ class DynamicDataTablePageTest
 		tester.clickLink(FORM + ":cancel", true);
 
 		assertEquals(city, user.getCity());
-		assertFalse(table.isOverlayShown());
+		assertFalse(dialog.isOpen());
 	}
 
 	@Test
-	void escapeClosesTheOverlay()
+	void theDialogClosesWhenTheBrowserAsks()
 	{
 		edit();
 
-		executeAction(BaseDynamicDataTable.CLOSE_OVERLAY_ACTION, null);
+		tester.executeBehavior(dialog.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
 
-		assertFalse(table.isOverlayShown());
+		assertFalse(dialog.isOpen());
 		assertEquals(city, user.getCity());
+	}
+
+	@Test
+	void deletingAsksInTheDialogFirst()
+	{
+		UsersDatabase database = DatabaseLocator.getLargeDatabase();
+		User added = new User("Zelda", "Zuse");
+		database.save(added);
+		try
+		{
+			executeAction("delete", String.valueOf(added.getId()));
+
+			assertTrue(dialog.isOpen());
+			assertFalse(table.isOverlayShown());
+			tester.assertContains(Pattern.quote("Delete Zelda Zuse?"));
+			assertTrue(isSaved(added));
+
+			tester.clickLink(CONFIRM);
+
+			assertFalse(dialog.isOpen());
+			assertFalse(isSaved(added));
+			tester.assertContains(Pattern.quote("Deleted Zelda Zuse."));
+		}
+		finally
+		{
+			if (isSaved(added))
+			{
+				database.delete(added);
+			}
+		}
+	}
+
+	@Test
+	void aUserDeletedWhileTheDialogAskedIsReported()
+	{
+		UsersDatabase database = DatabaseLocator.getLargeDatabase();
+		User added = new User("Zelda", "Zuse");
+		database.save(added);
+		executeAction("delete", String.valueOf(added.getId()));
+		database.delete(added);
+
+		tester.clickLink(CONFIRM);
+
+		assertFalse(dialog.isOpen());
+		tester.assertContains(Pattern.quote("That user no longer exists."));
 	}
 
 	@Test
@@ -263,14 +321,10 @@ class DynamicDataTablePageTest
 	}
 
 	@Test
-	void theEditFormIsShownOverThePage()
+	void thePlacementOfTheOverlayIsNotOffered()
 	{
-		assertEquals(OverlayPlacement.BODY, table.getOverlayPlacement());
-
-		edit();
-
-		TagTester overlay = tester.getTagById(table.get("overlay").getMarkupId());
-		assertTrue(overlay.getAttribute("class").contains("ant-data-table-overlay-body"));
+		tester.assertInvisible("options:overlayOption");
+		tester.assertContainsNot("Edit form and confirmation");
 	}
 
 	@Test
@@ -347,8 +401,9 @@ class DynamicDataTablePageTest
 	void everySettingHasATooltipAndIsPostedViaAjax()
 	{
 		String page = tester.getLastResponseAsString();
-		// with "Rows from", which the JSON table has besides infinite scroll
-		assertEquals(14, page.split("class=\"ant-dataview-tooltip\" role=\"tooltip\"", -1)
+		// with "Rows from", which the JSON table has besides infinite scroll, and without the
+		// placement of the overlay, which it does not use
+		assertEquals(13, page.split("class=\"ant-dataview-tooltip\" role=\"tooltip\"", -1)
 			.length - 1);
 		assertTrue(page.contains("Whether the user can resize the columns"), page);
 		tester.assertContains("Resizable");
@@ -363,6 +418,11 @@ class DynamicDataTablePageTest
 		tester.executeAjaxEvent("settings:language", "change");
 
 		assertEquals("de", tester.getSession().getLocale().getLanguage());
+	}
+
+	private static boolean isSaved(User user)
+	{
+		return DatabaseLocator.getLargeDatabase().find(0, Integer.MAX_VALUE, null).contains(user);
 	}
 
 	private void edit()

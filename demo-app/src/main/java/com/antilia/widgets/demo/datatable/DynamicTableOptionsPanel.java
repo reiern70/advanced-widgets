@@ -130,7 +130,19 @@ public abstract class DynamicTableOptionsPanel extends Panel
 				onTableChanged(target);
 			}
 		});
-		add(updatingChoice("overlay", List.of(OverlayPlacement.values()),
+		WebMarkupContainer overlayOption = new WebMarkupContainer("overlayOption")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(isOverlayUsed());
+			}
+		};
+		add(overlayOption);
+		overlayOption.add(updatingChoice("overlay", List.of(OverlayPlacement.values()),
 			table::getOverlayPlacement, table::setOverlayPlacement,
 			placement -> "overlay." + placement.name()));
 		add(updatingChoice("icons", List.of(ActionIcons.values()), icons::getObject,
@@ -176,6 +188,15 @@ public abstract class DynamicTableOptionsPanel extends Panel
 	 *            the Ajax request target
 	 */
 	protected abstract void onTableChanged(AjaxRequestTarget target);
+
+	/**
+	 * @return whether the page shows the edit form and the confirmation in the table's overlay,
+	 *         so that the setting of its placement applies; {@code true} by default
+	 */
+	protected boolean isOverlayUsed()
+	{
+		return true;
+	}
 
 	private void resizable(boolean resizable)
 	{
