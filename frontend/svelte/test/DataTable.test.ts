@@ -40,6 +40,11 @@ function loadRows(query: DataTableQuery) {
 		.map((person) => ({ key: person.name, data: person })) });
 }
 
+/** @returns the label of the navigation, which may follow the rows a moment later */
+function label(container: HTMLElement): string | null | undefined {
+	return container.querySelector('.navigatorLabel')?.textContent;
+}
+
 function rows(container: HTMLElement): string[][] {
 	return Array.from(container.querySelectorAll('tbody tr'), (tr) =>
 		Array.from(tr.querySelectorAll('td'), (td) => td.textContent ?? ''));
@@ -73,7 +78,7 @@ describe('DataTable', () => {
 		expect(container.querySelector('table')?.className).toBe('dynamic-dataview dynamic-data-table');
 		expect(headers(container)).toEqual(['Name▲▼', 'City']);
 		expect(rows(container)[0]).toEqual(['Person 01', 'City 0']);
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 25 of 60');
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
 		expect(load).toHaveBeenCalledTimes(1);
 		expect(load).toHaveBeenLastCalledWith({ first: 0, count: 25, sort: null,
 			filter: undefined });
@@ -86,7 +91,7 @@ describe('DataTable', () => {
 
 		await fireEvent.click(container.querySelector('thead a.next')!);
 		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 26'));
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 26 to 50 of 60');
+		await waitFor(() => expect(label(container)).toBe('Showing 26 to 50 of 60'));
 
 		await fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
 		await waitFor(() => expect(load).toHaveBeenLastCalledWith({ first: 0, count: 25,
@@ -97,7 +102,7 @@ describe('DataTable', () => {
 
 		await rerender({ filter: 'Person 1' });
 		await waitFor(() => expect(rows(container).length).toBe(10));
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 10 of 10');
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 10 of 10'));
 	});
 
 	it('reports the actions of the rows and the selection', async () => {
@@ -164,14 +169,14 @@ describe('DataTable', () => {
 		expect(load).toHaveBeenLastCalledWith({ first: 20, count: 20, sort: null,
 			filter: undefined });
 		expect(rows(container).length).toBe(40);
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 40 of 60');
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 40 of 60'));
 	});
 
 	it('pages, sorts and filters a local list of rows, and shows another list given', async () => {
 		const list = PEOPLE.map((person) => ({ key: person.name, data: person }));
 		const { container, rerender } = render(DataTable, { columns: COLUMNS, rows: list });
 		await waitFor(() => expect(rows(container).length).toBe(25));
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 25 of 60');
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
 
 		await fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
 		await fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
@@ -183,6 +188,6 @@ describe('DataTable', () => {
 
 		await rerender({ rows: list.slice(0, 3), filter: undefined });
 		await waitFor(() => expect(rows(container).length).toBe(3));
-		expect(container.querySelector('.navigatorLabel')?.textContent).toBe('Showing 1 to 3 of 3');
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 3 of 3'));
 	});
 });

@@ -19,11 +19,9 @@
 </script>
 
 <div class="tree-demo tree-demo--single">
-	<div class="tree-demo__box">
-		<Tree {load} template={config.template} label={config.texts.files}
-			expanded={config.expanded} texts={config.texts.tree}
-			onselect={(_key, data) => (file = data as FileData)} />
-	</div>
+	<Tree {load} template={config.template} label={config.texts.files}
+		expanded={config.expanded} texts={config.texts.tree} height={config.height}
+		class="tree-demo__box" onselect={(_key, data) => (file = data as FileData)} />
 	<aside class="tree-demo__details">
 		<FileDetails {file} texts={config.texts} />
 	</aside>

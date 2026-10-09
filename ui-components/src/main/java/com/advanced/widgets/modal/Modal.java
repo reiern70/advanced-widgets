@@ -27,6 +27,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
 /**
@@ -492,7 +493,8 @@ public class Modal extends ModalDialog
 	}
 
 	/**
-	 * Renders what the dialog needs in the browser: {@link #JS} and {@link #CSS}.
+	 * Renders what the dialog needs in the browser: {@link #JS} and {@link #CSS}, and the scroll
+	 * bars of its body, those of {@link ScrollbarBehavior}.
 	 *
 	 * @param response
 	 *            the header response
@@ -500,6 +502,7 @@ public class Modal extends ModalDialog
 	public static void renderHeadItems(IHeaderResponse response)
 	{
 		CoreLibrariesContributor.contributeAjax(Application.get(), response);
+		ScrollbarBehavior.renderHeadItems(response);
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 	}

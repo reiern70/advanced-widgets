@@ -7,12 +7,18 @@ package com.advanced.widgets.tree;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
+import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
 
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.table.ResizableColumnsBehavior;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -26,7 +32,9 @@ import com.github.openjson.JSONObject;
  * arrow of a folder, the icon and the node template, indented by the level of the node. The
  * other columns, added with {@link #addColumn(IModel, String, String)}, each render a template
  * of their own from the same JSON of the node. The children of a folder follow its row; the arrow
- * keys move between the rows as in the tree, and the rest is as in the tree.
+ * keys move between the rows as in the tree, and the rest is as in the tree. Given a
+ * {@link #setHeight height}, the head stays in place above the rows scrolling. The columns can be
+ * made {@link #setResizableColumns(Mode) resizable}.
  * <p>
  * The table carries the CSS classes {@value JsonBasedTree#CSS_CLASS} and
  * {@value TreeGrid#CSS_CLASS}.
@@ -47,6 +55,8 @@ public class JsonBasedTreeGrid<T, K extends Serializable> extends JsonBasedTree<
 	private final List<Column> columns = new ArrayList<>();
 
 	private IModel<String> treeHeader;
+
+	private Mode resizableColumns;
 
 	/**
 	 * @param id
@@ -105,10 +115,47 @@ public class JsonBasedTreeGrid<T, K extends Serializable> extends JsonBasedTree<
 		return this;
 	}
 
+	/**
+	 * @return how the user resizes the columns, {@code null}, as by default, when they cannot be
+	 *         resized
+	 */
+	public Mode getResizableColumns()
+	{
+		return resizableColumns;
+	}
+
+	/**
+	 * Lets the user resize the columns by dragging the edges of their headers, or with the arrow
+	 * keys on them, as the columns of a table with a {@link ResizableColumnsBehavior}. The widths
+	 * the columns start with are those of their content; those the user gives them last until the
+	 * tree grid is rendered again.
+	 *
+	 * @param mode
+	 *            how the table's width follows its columns, {@code null} for columns that cannot
+	 *            be resized
+	 * @return {@code this}
+	 */
+	public JsonBasedTreeGrid<T, K> setResizableColumns(Mode mode)
+	{
+		resizableColumns = mode;
+		return this;
+	}
+
 	@Override
 	String getTreeCssClass()
 	{
 		return TreeGrid.CSS_CLASS;
+	}
+
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		super.renderHead(response);
+		if (resizableColumns != null)
+		{
+			response.render(JavaScriptHeaderItem.forReference(ResizableColumnsBehavior.JS));
+			response.render(CssHeaderItem.forReference(ResizableColumnsBehavior.CSS));
+		}
 	}
 
 	@Override
@@ -125,9 +172,14 @@ public class JsonBasedTreeGrid<T, K extends Serializable> extends JsonBasedTree<
 			}
 			json.put(entry);
 		}
-		return super.buildConfig().put("table", new JSONObject()
+		JSONObject config = super.buildConfig().put("table", new JSONObject()
 			.put("header", treeHeader != null ? treeHeader.getObject() : "")
 			.put("columns", json));
+		if (resizableColumns != null)
+		{
+			config.put("resizableColumns", resizableColumns.name().toLowerCase(Locale.ROOT));
+		}
+		return config;
 	}
 
 	@Override

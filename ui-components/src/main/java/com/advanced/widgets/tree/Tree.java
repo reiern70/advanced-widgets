@@ -19,8 +19,10 @@ import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.icon.IIcon;
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 
 /**
  * A tree of Wicket components: a {@link NestedTree} of wicket-extensions, whose nodes render the
@@ -38,6 +40,9 @@ import com.advanced.widgets.license.Licensing;
  * unless {@link #getIcon(Object, boolean, boolean)} says otherwise, or the application gives
  * icons of its own with {@link #setIcon(TreeIcon, IIcon)}. The tooltips of the arrows are the
  * texts {@code Tree.expand} and {@code Tree.collapse} of the bundle of ui-components.
+ * <p>
+ * Given a {@link #setHeight(int, BodyHeightUnits) height}, the tree scrolls itself, with slim
+ * scroll bars in the colors of the theme; else the page scrolls.
  * <p>
  * The tree carries the CSS class {@value #CSS_CLASS} and takes its colors from the
  * {@link com.advanced.widgets.theme.Theme theme} it is rendered in, if any.
@@ -245,11 +250,47 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 		}
 	}
 
+	/**
+	 * @return the height of the tree in {@link #getHeightUnits()}, or a negative number,
+	 *         {@code -1} by default, when the tree is as high as its nodes
+	 */
+	public int getHeight()
+	{
+		return support.getHeight();
+	}
+
+	/**
+	 * @return the unit of {@link #getHeight()}, {@link BodyHeightUnits#PIXELS} by default
+	 */
+	public BodyHeightUnits getHeightUnits()
+	{
+		return support.getHeightUnits();
+	}
+
+	/**
+	 * Gives the tree a fixed height, within which it scrolls, with the slim scroll bars of a
+	 * {@link ScrollbarBehavior} in the colors of the theme. Without a height, the tree is as high
+	 * as its nodes.
+	 *
+	 * @param height
+	 *            the height of the tree in the given units; any negative number, such as
+	 *            {@code -1}, to let the tree take the height of its nodes, as by default
+	 * @param units
+	 *            the units of the height
+	 * @return {@code this}
+	 */
+	public Tree<T> setHeight(int height, BodyHeightUnits units)
+	{
+		support.setHeight(this, height, units, null);
+		return this;
+	}
+
 	@Override
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
 		tag.append("class", CSS_CLASS, " ");
+		support.onComponentTag(tag);
 	}
 
 	@Override
@@ -257,6 +298,7 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	{
 		super.renderHead(response);
 		response.render(CssHeaderItem.forReference(CSS));
+		support.renderHead(this, response);
 	}
 
 	@Override

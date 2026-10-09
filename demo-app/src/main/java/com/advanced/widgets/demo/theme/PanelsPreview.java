@@ -10,8 +10,6 @@ import java.util.List;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalDialog;
-import org.apache.wicket.extensions.ajax.markup.html.modal.theme.DefaultTheme;
 import org.apache.wicket.extensions.ajax.markup.html.tabs.AjaxTabbedPanel;
 import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
@@ -24,6 +22,8 @@ import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.advanced.widgets.collapsible.CollapsiblePanel;
 import com.advanced.widgets.floating.FloatingPanel;
+import com.advanced.widgets.modal.IModalButtonFactory;
+import com.advanced.widgets.modal.Modal;
 import com.advanced.widgets.tabs.TabsStyle;
 import com.advanced.widgets.tabs.TabsStyleBehavior;
 
@@ -36,7 +36,7 @@ class PanelsPreview extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
-	private ModalDialog dialog;
+	private Modal dialog;
 
 	PanelsPreview(String id)
 	{
@@ -136,9 +136,7 @@ class PanelsPreview extends Panel
 	private Component newDialog(String id)
 	{
 		Fragment content = new Fragment(id, "dialogSectionContent", this);
-		dialog = new ModalDialog("dialog");
-		dialog.add(new DefaultTheme());
-		dialog.closeOnEscape();
+		dialog = new Modal("dialog");
 		content.add(dialog);
 		content.add(new AjaxLink<Void>("openDialog")
 		{
@@ -147,19 +145,9 @@ class PanelsPreview extends Panel
 			@Override
 			public void onClick(AjaxRequestTarget target)
 			{
-				Fragment dialogContent = new Fragment(ModalDialog.CONTENT_ID, "dialogContent",
-					PanelsPreview.this);
-				dialogContent.add(new AjaxLink<Void>("close")
-				{
-					private static final long serialVersionUID = 1L;
-
-					@Override
-					public void onClick(AjaxRequestTarget target)
-					{
-						dialog.close(target);
-					}
-				});
-				dialog.open(dialogContent, target);
+				dialog.open(new ResourceModel("dialog.title"),
+					new Label(Modal.BODY_ID, new ResourceModel("dialog.body")), target,
+					IModalButtonFactory.close(new ResourceModel("dialog.close")));
 			}
 		});
 		return content;

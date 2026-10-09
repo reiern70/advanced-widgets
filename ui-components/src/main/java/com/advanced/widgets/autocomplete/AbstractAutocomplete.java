@@ -33,6 +33,7 @@ import com.advanced.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.advanced.widgets.dynamicdatatable.IJsonSerializer;
 import com.advanced.widgets.dynamicdatatable.ITemplateEngine;
 import com.advanced.widgets.dynamicdatatable.JacksonJsonSerializer;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.advanced.widgets.template.Templates;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
@@ -313,6 +314,8 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		super.renderHead(response);
 		CoreLibrariesContributor.contribute(Application.get(), response);
 		Chips.renderHeadItems(response);
+		// the scroll bars of the list of suggestions
+		ScrollbarBehavior.renderHeadItems(response);
 		response.render(JavaScriptHeaderItem.forReference(Templates.JS));
 		templateEngine.renderHead(response);
 		response.render(JavaScriptHeaderItem.forReference(JS));

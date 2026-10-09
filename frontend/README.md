@@ -60,8 +60,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
 demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
-`scrollbar`, `progressBar`, `buttons`, and
-`overview` for the combined page `/react-svelte`). A demo page shows them in its Wicket, React and
+`scrollbar`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of
 the resources the application mounts (`/api/choices`, `/api/users`); the app is mounted the first

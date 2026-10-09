@@ -5,7 +5,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { JsonTree, setHost, TREE_ICONS, type TreeConfig, type TreeNode } from '../src/index.js';
+import { JsonTree, ResizableColumns, Scrollbar, setHost, TREE_ICONS, type TreeConfig,
+	type TreeNode } from '../src/index.js';
 
 const TEXTS = { loading: 'Loading…', empty: 'Nothing here' };
 
@@ -245,5 +246,41 @@ describe('JsonTree', () => {
 		expect(fetch.mock.calls.map((call) => call[0])).toEqual(['/tree?x=1',
 			'/tree?x=1&parent=docs']);
 		fetch.mockRestore();
+	});
+
+	it('scrolls itself with the scroll bars of the core when it has a height', () => {
+		const tree = new JsonTree(config({ height: { value: 20, unit: 'em' } }), null, ROOTS);
+		const element = document.getElementById('tree')!;
+
+		expect(element.style.height).toBe('20em');
+		expect(element.classList.contains('wicket-tree--scrolling')).toBe(true);
+		expect(Scrollbar.of(element)?.options).toEqual({});
+		expect(element.parentElement!.classList.contains('wicket-scrollbar')).toBe(true);
+
+		tree.destroy();
+		expect(Scrollbar.of(element)).toBeUndefined();
+		expect(element.style.height).toBe('');
+		expect(element.classList.contains('wicket-tree--scrolling')).toBe(false);
+	});
+
+	it('keeps the head of a tree grid of a height above its scroll bar', () => {
+		new JsonTree(config({ height: { value: 300, unit: 'px' },
+			table: { header: 'Name', columns: [] } }), null, ROOTS);
+
+		expect(Scrollbar.of('tree')?.options.header).toBe(':scope > table > thead');
+	});
+
+	it('makes the columns of a tree grid resizable once its rows are shown', () => {
+		const tree = new JsonTree(config({ resizableColumns: 'fit',
+			table: { header: 'Name', columns: [{ header: 'Size', template: '{{size}}' }] } }),
+		null, ROOTS);
+
+		const resizable = ResizableColumns.instances['tree-grid'];
+		expect(resizable.table).toBe(document.querySelector('table.wicket-tree-grid-grid'));
+		expect(resizable.mode).toBe('fit');
+		expect(document.querySelectorAll('#tree-grid th .wicket-col-resizer').length).toBe(1);
+
+		tree.destroy();
+		expect(ResizableColumns.instances['tree-grid']).toBeUndefined();
 	});
 });

@@ -16,6 +16,11 @@
 	grid-template-columns: minmax(0, 1fr) 19em;
 }
 
+/* a tree grid whose columns stretch it widens its column, the details moving aside */
+.tree-demo--single:has(.wicket-resizable-columns-stretch) {
+	grid-template-columns: minmax(min-content, 1fr) 19em;
+}
+
 .tree-demo__stack {
 	display: grid;
 	gap: 1.5em;
@@ -31,9 +36,20 @@
 	font-size: 0.95em;
 }
 
+/* the drop-down choosing how the columns of the tree grids are resized */
+.tree-demo__options {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em 0.75em;
+}
+
+.tree-demo__options > label {
+	font-weight: 600;
+}
+
+/* a tree: it has a height of its own, within which it scrolls with the slim scroll bars */
 .tree-demo__box {
-	height: 30em;
-	overflow: auto;
 	box-sizing: border-box;
 	padding: 0.4em;
 	border: 1px solid var(--wicket-theme-border, #ddd);
@@ -42,15 +58,7 @@
 }
 
 .tree-demo__box--table {
-	height: 24em;
 	padding: 0;
-}
-
-.tree-demo__box--table thead th {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	background: var(--wicket-theme-surface, Canvas);
 }
 
 .tree-demo__details {

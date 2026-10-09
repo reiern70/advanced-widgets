@@ -13,7 +13,8 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from '@advanced-widgets/core';
+	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
+		SCROLLBAR_WRAPPER_CLASS } from '@advanced-widgets/core';
 
 	type Props = {
 		/** Whether the dialog is open; nothing is rendered while it is closed. */
@@ -84,7 +85,9 @@
 							{/if}
 						</div>
 					{/if}
-					<div class={MODAL_CLASSES.body}>{@render children?.()}</div>
+					<div class={SCROLLBAR_WRAPPER_CLASS}>
+						<div class={MODAL_CLASSES.body}>{@render children?.()}</div>
+					</div>
 					{#if footer}<div class={MODAL_CLASSES.footer}>{@render footer()}</div>{/if}
 				</div>
 			</div>

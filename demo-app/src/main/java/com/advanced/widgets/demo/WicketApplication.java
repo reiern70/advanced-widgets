@@ -28,7 +28,6 @@ import com.advanced.widgets.demo.list.JsonListPage;
 import com.advanced.widgets.demo.modal.ModalDialogPage;
 import com.advanced.widgets.demo.modal.TeamResource;
 import com.advanced.widgets.demo.frameworks.ChoicesResource;
-import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.register.RegisterPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
@@ -118,7 +117,6 @@ public class WicketApplication extends WebApplication
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
-		mountPage("react-svelte", FrameworksPage.class);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);

@@ -23,7 +23,6 @@
 	<entry key="category.layout">Layout</entry>
 	<entry key="category.themes">Themes</entry>
 	<entry key="category.realTime">Real-time</entry>
-	<entry key="category.frameworks">React and Svelte</entry>
 	<entry key="demo.jsonTable">JSON Grid</entry>
 	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over web sockets, in Wicket, React and Svelte.</entry>
 	<entry key="demo.beanTable">Bean Grid</entry>
@@ -50,6 +49,4 @@
 	<entry key="demo.themeEditor.description">Generates a theme of the components, with a live preview.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
-	<entry key="demo.frameworks">React and Svelte</entry>
-	<entry key="demo.frameworks.description">Drop-downs, an autocomplete and an infinite list rendered by React and by Svelte, on the same scripts as the Wicket ones, with data from mounted resources.</entry>
 </properties>

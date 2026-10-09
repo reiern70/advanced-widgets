@@ -17,7 +17,6 @@ import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
 import com.advanced.widgets.demo.modal.ModalDialogPage;
-import com.advanced.widgets.demo.frameworks.FrameworksPage;
 import com.advanced.widgets.demo.progress.ProgressBarPage;
 import com.advanced.widgets.demo.scrollbar.ScrollbarPage;
 import com.advanced.widgets.demo.theme.ThemeEditorPage;
@@ -84,8 +83,7 @@ public final class Demos
 		new Demo("buttons", "forms", ButtonsPage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
-		new Demo("themeEditor", "themes", ThemeEditorPage.class, true),
-		new Demo("frameworks", "frameworks", FrameworksPage.class, true));
+		new Demo("themeEditor", "themes", ThemeEditorPage.class, true));
 
 	private Demos()
 	{

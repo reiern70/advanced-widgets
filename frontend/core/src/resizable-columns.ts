@@ -142,6 +142,9 @@ export class ResizableColumns {
 
 	private onWindowResize: (() => void) | undefined = undefined;
 
+	/** Waits for a hidden table to be shown, to lay its columns out by their content then. */
+	private whenShown: ResizeObserver | undefined = undefined;
+
 	/**
 	 * @param table the table
 	 * @param options how the columns are resized
@@ -160,16 +163,19 @@ export class ResizableColumns {
 
 		this.table.classList.add('wicket-resizable-columns', 'wicket-resizable-columns-' + this.mode);
 		this.ensureHandles();
-		this.table.style.tableLayout = 'fixed';
 		const count = this.headerCells().length;
 		this.sized = positiveWidths(options.widths, count);
 		this.proportions = positiveWidths(options.proportions, count) ?
 			options.proportions.slice() : undefined;
 		if (this.sized) {
+			this.table.style.tableLayout = 'fixed';
 			this.apply(options.widths!);
-		} else {
-			this.base = this.proportions || this.measureFit();
+		} else if (this.proportions) {
+			this.base = this.proportions;
+			this.table.style.tableLayout = 'fixed';
 			this.apply(this.layout(this.base));
+		} else {
+			this.layOutWhenShown(() => this.layOutByContent());
 		}
 
 		if (this.adjustToParent && !this.sized) {
@@ -204,11 +210,16 @@ export class ResizableColumns {
 	 * Stops resizing the columns of a table, taking their handles away.
 	 *
 	 * @param id the id of the table
+	 * @param restore whether the widths go too, the table being laid out as it was rendered,
+	 *        rather than staying
 	 */
-	static detach(id: string): void {
+	static detach(id: string, restore = false): void {
 		const instance = ResizableColumns.instances[id];
 		if (instance) {
 			instance.destroy();
+			if (restore) {
+				instance.restore();
+			}
 			delete ResizableColumns.instances[id];
 		}
 	}
@@ -351,14 +362,46 @@ export class ResizableColumns {
 		if (this.sized || this.proportions) {
 			return;
 		}
-		this.cols().forEach((col) => {
-			col.style.width = '';
+		this.layOutWhenShown(() => {
+			this.cols().forEach((col) => {
+				col.style.width = '';
+			});
+			this.table.style.width = '';
+			this.layOutByContent();
 		});
-		this.table.style.width = '';
+	}
+
+	/**
+	 * Lays the columns out by their content, measured as the table is laid out automatically,
+	 * before its layout is fixed.
+	 */
+	private layOutByContent(): void {
 		this.table.style.tableLayout = 'auto';
 		this.base = this.measureFit();
 		this.table.style.tableLayout = 'fixed';
 		this.apply(this.layout(this.base));
+	}
+
+	/**
+	 * Lays the columns out now, or, while the table is hidden, in a tab not shown for example, as
+	 * soon as it is shown: a hidden table has no widths to measure, and would keep columns of none.
+	 */
+	private layOutWhenShown(layOut: () => void): void {
+		this.whenShown?.disconnect();
+		this.whenShown = undefined;
+		if (this.table.getClientRects().length > 0 || typeof ResizeObserver === 'undefined') {
+			layOut();
+			return;
+		}
+		const observer = new ResizeObserver(() => {
+			if (this.table.getClientRects().length > 0) {
+				observer.disconnect();
+				this.whenShown = undefined;
+				layOut();
+			}
+		});
+		this.whenShown = observer;
+		observer.observe(this.table);
 	}
 
 	/**
@@ -524,14 +567,23 @@ export class ResizableColumns {
 
 	/**
 	 * @returns the vertical extent of the header row and the body, leaving out navigation rows and
-	 *          the footer
+	 *          the footer, and the rows scrolled out of a box the table scrolls in
 	 */
 	private extent(cell: HTMLTableCellElement): { top: number; height: number } {
-		const top = (cell.parentElement ?? cell).getBoundingClientRect().top;
+		let top = (cell.parentElement ?? cell).getBoundingClientRect().top;
 		const bodies = this.table.tBodies;
-		const bottom = bodies.length > 0 ?
+		let bottom = bodies.length > 0 ?
 			bodies[bodies.length - 1].getBoundingClientRect().bottom :
 			this.table.getBoundingClientRect().bottom;
+		for (let box = this.table.parentElement; box && box !== document.body;
+			box = box.parentElement) {
+			if (getComputedStyle(box).overflowY !== 'visible') {
+				const rect = box.getBoundingClientRect();
+				const inner = rect.top + box.clientTop;
+				top = Math.max(top, inner);
+				bottom = Math.min(bottom, inner + box.clientHeight);
+			}
+		}
 		return { top, height: Math.max(0, bottom - top) };
 	}
 
@@ -673,11 +725,26 @@ export class ResizableColumns {
 	 */
 	destroy(): void {
 		this.endDrag(false);
+		this.whenShown?.disconnect();
+		this.whenShown = undefined;
 		if (this.onWindowResize) {
 			window.removeEventListener('resize', this.onWindowResize);
 		}
 		this.table.removeEventListener('pointerdown', this.onPointerDown);
 		this.table.removeEventListener('keydown', this.onKeyDown);
 		this.table.querySelectorAll('.' + HANDLE_CLASS).forEach((handle) => handle.remove());
+	}
+
+	/**
+	 * Takes the widths of the columns and the classes the table got away, so that the table is
+	 * laid out as it was rendered, for example by a framework starting it again without resizable
+	 * columns.
+	 */
+	restore(): void {
+		this.table.querySelector(':scope > colgroup.' + COLGROUP_CLASS)?.remove();
+		this.table.classList.remove('wicket-resizable-columns',
+			'wicket-resizable-columns-' + this.mode);
+		this.table.style.width = '';
+		this.table.style.tableLayout = '';
 	}
 }

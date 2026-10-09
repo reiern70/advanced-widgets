@@ -15,8 +15,12 @@
  * as any element of it marked data-modal-close does, a Cancel button of the footer for example;
  * a function asked before the user closes it may keep it open (canClose), when a form in it was
  * modified for example; the header drags the dialog around (draggable) and a double click on it
- * folds the dialog to its header and unfolds it again (foldable), in the browser alone.
+ * folds the dialog to its header and unfolds it again (foldable), in the browser alone. A body in
+ * the wrapper of the scroll bars, <div class="wicket-scrollbar"><div class="modal-dialog-body">,
+ * scrolls with the slim scroll bars of the core.
  */
+
+import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
 
 /** The class of the element wrapping a dialog in the default theme of Wicket's ModalDialog. */
 export const MODAL_THEME_CLASS = 'dialog-theme-default';
@@ -158,6 +162,15 @@ export class ModalDialog {
 
 	private destroyed = false;
 
+	private scrollbar: ScrollbarHandle | undefined = undefined;
+
+	/**
+	 * Gives the body of a dialog, in the wrapper of the scroll bars, its scroll bars; Wicket gives
+	 * those of Wicket.Scrollbar, if any.
+	 */
+	static attachScrollbar: (body: HTMLElement) => ScrollbarHandle | undefined = (body) =>
+		Scrollbar.attach(body);
+
 	/**
 	 * @param overlay the overlay, the element of the class modal-dialog-overlay
 	 * @param options how the dialog behaves
@@ -180,9 +193,21 @@ export class ModalDialog {
 			document.addEventListener('focusin', this.focusHandler);
 		}
 		ModalDialog.open.push(this);
+		const body = this.body();
+		if (body?.parentElement?.classList.contains(SCROLLBAR_WRAPPER_CLASS)) {
+			this.scrollbar = ModalDialog.attachScrollbar(body);
+		}
 		if (this.trapsFocus()) {
 			this.firstFocusable().focus();
 		}
+	}
+
+	/**
+	 * @returns the body of this dialog, not of one nested in it, if it has one
+	 */
+	private body(): HTMLElement | undefined {
+		return Array.from(this.dialog.querySelectorAll<HTMLElement>('.' + MODAL_CLASSES.body))
+			.find((body) => body.closest('.' + MODAL_CLASSES.dialog) === this.dialog);
 	}
 
 	private trapsFocus(): boolean {
@@ -399,6 +424,7 @@ export class ModalDialog {
 			return;
 		}
 		this.destroyed = true;
+		this.scrollbar?.destroy();
 		this.overlay.removeEventListener('keydown', this.keyHandler);
 		this.overlay.removeEventListener('click', this.clickHandler);
 		this.dialog.removeEventListener('pointerdown', this.pointerHandler);

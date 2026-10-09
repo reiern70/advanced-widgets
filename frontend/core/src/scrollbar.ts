@@ -25,6 +25,11 @@ import { onRemoving, type Unsubscribe } from './host.js';
  */
 export interface ScrollbarOptions {
 	axis?: 'x' | 'y' | 'both';
+	/**
+	 * A CSS selector of an element at the top of the scrolling one that stays in place while the
+	 * rest scrolls, such as the sticky head of a table: the vertical bar runs below it.
+	 */
+	header?: string;
 }
 
 /**
@@ -35,6 +40,15 @@ export interface ScrollPosition {
 	left?: number;
 }
 
+/** What a script keeps of the scroll bars it gave an element. */
+export interface ScrollbarHandle {
+	update(): void;
+	destroy(): void;
+}
+
+/** The CSS class of the wrapper of an element with scroll bars. */
+export const SCROLLBAR_WRAPPER_CLASS = 'wicket-scrollbar';
+
 interface Bar {
 	vertical: boolean;
 	track: HTMLDivElement;
@@ -43,7 +57,7 @@ interface Bar {
 	range?: { length: number; thumb: number; scroll: number };
 }
 
-const WRAPPER_CLASS = 'wicket-scrollbar';
+const WRAPPER_CLASS = SCROLLBAR_WRAPPER_CLASS;
 
 const HOST_CLASS = 'wicket-scrollbar-host';
 
@@ -276,17 +290,20 @@ export class Scrollbar {
 
 	/**
 	 * Lays the bars inside the border of the element, with its rounded corners, on its background,
-	 * so that the content scrolling below them does not show through.
+	 * so that the content scrolling below them does not show through; the vertical bar starts below
+	 * the header, if any.
 	 */
 	private fitFrame(): void {
 		const style = window.getComputedStyle(this.element);
+		const header = this.headerHeight();
 		const values = [
 			backgroundOf(this.element),
-			style.borderTopWidth || '0px',
+			header ? (parseFloat(style.borderTopWidth) || 0) + header + 'px' :
+				style.borderTopWidth || '0px',
 			style.borderRightWidth || '0px',
 			style.borderBottomWidth || '0px',
 			style.borderLeftWidth || '0px',
-			innerRadius(style.borderTopRightRadius, style.borderRightWidth),
+			header ? '0px' : innerRadius(style.borderTopRightRadius, style.borderRightWidth),
 			innerRadius(style.borderBottomRightRadius, style.borderRightWidth),
 			innerRadius(style.borderBottomLeftRadius, style.borderLeftWidth)
 		];
@@ -296,6 +313,15 @@ export class Scrollbar {
 		}
 		this.frame = frame;
 		FRAME.forEach((name, index) => this.wrapper.style.setProperty(name, values[index]));
+	}
+
+	/**
+	 * @returns the height of the header staying at the top of the element, 0 if it has none
+	 */
+	private headerHeight(): number {
+		const header = this.options.header ?
+			this.element.querySelector<HTMLElement>(this.options.header) : null;
+		return header ? header.offsetHeight : 0;
 	}
 
 	/**
@@ -377,7 +403,8 @@ export class Scrollbar {
 		if (event.target !== bar.thumb) {
 			const rect = bar.thumb.getBoundingClientRect();
 			const before = vertical ? event.clientY < rect.top : event.clientX < rect.left;
-			const page = (vertical ? element.clientHeight : element.clientWidth) * 0.9;
+			const page = (vertical ? element.clientHeight - this.headerHeight() :
+				element.clientWidth) * 0.9;
 			element.scrollBy({
 				top: vertical ? (before ? -page : page) : 0,
 				left: vertical ? 0 : (before ? -page : page),

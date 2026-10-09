@@ -5,7 +5,8 @@
 
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 
-import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from '@advanced-widgets/core';
+import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
+	SCROLLBAR_WRAPPER_CLASS } from '@advanced-widgets/core';
 
 export interface ModalProps {
 	/** Whether the dialog is open; nothing is rendered while it is closed. */
@@ -88,7 +89,9 @@ export function Modal({ open, onClose, canClose, title, footer, closeButton = tr
 								) : null}
 							</div>
 						) : null}
-						<div className={MODAL_CLASSES.body}>{children}</div>
+						<div className={SCROLLBAR_WRAPPER_CLASS}>
+							<div className={MODAL_CLASSES.body}>{children}</div>
+						</div>
 						{footer ? <div className={MODAL_CLASSES.footer}>{footer}</div> : null}
 					</div>
 				</div>

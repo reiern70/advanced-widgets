@@ -7,6 +7,7 @@ package com.advanced.widgets.tree;
 import static com.advanced.widgets.tree.TestNodes.node;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,7 +31,10 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.apache.wicket.util.visit.IVisit;
 import org.junit.jupiter.api.Test;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.table.IResizableColumnsTable;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 import com.advanced.widgets.tree.TestNodes.FileNode;
 
 class TreeTest extends WicketTestCase
@@ -137,6 +141,66 @@ class TreeTest extends WicketTestCase
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.contains("wicket-tree-node--selected"), response);
 		assertTrue(table.isSelected(node("readme")));
+	}
+
+	@Test
+	void aTreeOfAHeightScrollsWithTheScrollBars()
+	{
+		TestTree tree = new TestTree();
+		tree.setHeight(300, BodyHeightUnits.PIXELS);
+		tester.startPage(new TestPage(tree));
+
+		TagTester tag = tester.getTagByWicketId("tree");
+		assertTrue(tag.getAttributeContains("class", TreeSupport.SCROLLING_CSS_CLASS));
+		assertNull(tag.getAttribute("style"), "a Content Security Policy may not let it in");
+		tester.assertContains(Pattern.quote("tree.style.height = \"300px\";"));
+		tester.assertContains("wicket-scrollbar.*\\.js");
+		tester.assertContains(Pattern.quote("Wicket.Scrollbar.attach(\"" + tree.getMarkupId() +
+			"\", {});"));
+
+		tree.setHeight(-1, BodyHeightUnits.PIXELS);
+		tester.startPage(tester.getLastRenderedPage());
+		tester.assertContainsNot("Wicket.Scrollbar.attach");
+		assertFalse(tester.getTagByWicketId("tree").getAttributeContains("class",
+			TreeSupport.SCROLLING_CSS_CLASS));
+	}
+
+	@Test
+	void aTreeGridOfAHeightKeepsItsHeadAboveTheRowsAndRepaintsOnlyItsTable()
+	{
+		TreeGrid<FileNode, String> table = new TreeGrid<>("tree", gridColumns(),
+			new TestNodes.Provider());
+		table.setHeight(20, BodyHeightUnits.VIEWPORT_HEIGHT);
+		table.setResizableColumns(Mode.FIT);
+		tester.startPage(new TestPage(table));
+
+		tester.assertContains(Pattern.quote("tree.style.height = \"20vh\";"));
+		tester.assertContains(Pattern.quote("\"header\":\":scope > table > thead\""));
+		tester.assertContains(Pattern.quote("Wicket.ResizableColumns.attach(\"" +
+			table.getTable().getMarkupId() + "\""));
+		assertEquals(Mode.FIT, table.getResizableColumns());
+
+		click(table, "docs");
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("<component id=\"" + table.getTable().getMarkupId() + "\""),
+			response);
+		assertFalse(response.contains("<component id=\"" + table.getMarkupId() + "\""), response);
+
+		IResizableColumnsTable grid = (IResizableColumnsTable)table.getTable();
+		grid.columnsResized(null, new double[] { 200, 100 });
+		tester.startPage(tester.getLastRenderedPage());
+		tester.assertContains(Pattern.quote("options.widths = [200,100];"));
+
+		table.setResizableColumns(null);
+		assertNull(table.getResizableColumns());
+	}
+
+	private static List<IColumn<FileNode, String>> gridColumns()
+	{
+		List<IColumn<FileNode, String>> columns = new ArrayList<>();
+		columns.add(new TreeColumn<>(Model.of("Name")));
+		columns.add(new PropertyColumn<>(Model.of("Id"), "id"));
+		return columns;
 	}
 
 	/**

@@ -23,7 +23,6 @@
 	<entry key="category.layout">Layout</entry>
 	<entry key="category.themes">Farbschemas</entry>
 	<entry key="category.realTime">Echtzeit</entry>
-	<entry key="category.frameworks">React und Svelte</entry>
 	<entry key="demo.jsonTable">JSON-Grid</entry>
 	<entry key="demo.jsonTable.description">Tausend Benutzer, im Browser aus JSON erzeugt, mit Live-Aktualisierungen über WebSockets, in Wicket, React und Svelte.</entry>
 	<entry key="demo.beanTable">Bean-Grid</entry>
@@ -50,6 +49,4 @@
 	<entry key="demo.themeEditor.description">Erzeugt ein Farbschema der Komponenten, mit Live-Vorschau.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, mit noch nicht eingecheckten Änderungen</entry>
-	<entry key="demo.frameworks">React und Svelte</entry>
-	<entry key="demo.frameworks.description">Auswahllisten, eine Autovervollständigung und eine endlose Liste, gerendert von React und von Svelte, auf denselben Skripten wie die von Wicket, mit Daten aus eingebundenen Ressourcen.</entry>
 </properties>

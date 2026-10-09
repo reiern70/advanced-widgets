@@ -19,6 +19,7 @@
 
 import { Chips } from './chips.js';
 import { onRemoving, type Unsubscribe } from './host.js';
+import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
 
 /**
  * The texts of a drop-down and when it shows a filter.
@@ -92,6 +93,9 @@ export class Dropdown {
 
 	list!: HTMLUListElement;
 
+	/** The wrapper of the scroll bars of the list. */
+	listBox!: HTMLDivElement;
+
 	empty!: HTMLDivElement;
 
 	items: HTMLLIElement[] = [];
@@ -104,6 +108,12 @@ export class Dropdown {
 	private listeners: Array<[EventTarget, string, EventListener]> = [];
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
+
+	private scrollbar: ScrollbarHandle | undefined = undefined;
+
+	/** Gives the list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
+	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
+		Scrollbar.attach(list, { axis: 'y' });
 
 	/**
 	 * @param select the select
@@ -182,7 +192,10 @@ export class Dropdown {
 		if (this.multiple) {
 			this.list.setAttribute('aria-multiselectable', 'true');
 		}
-		this.menu.appendChild(this.list);
+		// the list scrolls in the wrapper of the slim scroll bars of the core
+		this.listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
+		this.listBox.appendChild(this.list);
+		this.menu.appendChild(this.listBox);
 		this.empty = create('div', 'wicket-dropdown-empty');
 		this.empty.hidden = true;
 		this.menu.appendChild(this.empty);
@@ -190,6 +203,9 @@ export class Dropdown {
 
 		this.renderOptions();
 		this.bind();
+		if (this.list.isConnected) {
+			this.scrollbar = Dropdown.attachScrollbar(this.list);
+		}
 		this.stopWatchingRemoval = onRemoving(wrapper, () => this.detach());
 	}
 
@@ -282,7 +298,7 @@ export class Dropdown {
 			this.filter.autocomplete = 'off';
 			this.filter.setAttribute('aria-controls', this.id + '-list');
 			this.listen(this.filter, 'input', () => this.applyFilter());
-			this.menu.insertBefore(this.filter, this.list);
+			this.menu.insertBefore(this.filter, this.listBox);
 		} else if (!withFilter && this.filter) {
 			this.filter.remove();
 			this.filter = null;
@@ -434,6 +450,8 @@ export class Dropdown {
 			target.removeEventListener(type, listener);
 		});
 		this.listeners = [];
+		this.scrollbar?.destroy();
+		this.scrollbar = undefined;
 		this.stopWatchingRemoval?.();
 		this.stopWatchingRemoval = null;
 	}

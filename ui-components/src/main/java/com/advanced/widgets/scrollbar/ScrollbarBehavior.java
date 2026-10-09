@@ -78,6 +78,8 @@ public class ScrollbarBehavior extends Behavior
 
 	private boolean smooth;
 
+	private String header;
+
 	private Component component;
 
 	/**
@@ -121,6 +123,30 @@ public class ScrollbarBehavior extends Behavior
 	public ScrollbarBehavior setSmooth(boolean smooth)
 	{
 		this.smooth = smooth;
+		return this;
+	}
+
+	/**
+	 * @return the CSS selector of the header staying at the top of the component, {@code null}
+	 *         for none, as by default
+	 */
+	public String getHeader()
+	{
+		return header;
+	}
+
+	/**
+	 * Lets the vertical scroll bar run below an element at the top of the component that stays in
+	 * place while the rest scrolls, such as the sticky head of a table.
+	 *
+	 * @param header
+	 *            the CSS selector of that element, relative to the component, e.g.
+	 *            {@code ":scope > table > thead"}; {@code null} for none
+	 * @return {@code this}
+	 */
+	public ScrollbarBehavior setHeader(String header)
+	{
+		this.header = header;
 		return this;
 	}
 
@@ -232,6 +258,10 @@ public class ScrollbarBehavior extends Behavior
 		if (axis != Axis.AUTO)
 		{
 			options.put("axis", axis.name().toLowerCase(Locale.ROOT));
+		}
+		if (header != null)
+		{
+			options.put("header", header);
 		}
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Scrollbar.attach(" +
 			JSONObject.quote(component.getMarkupId()) + ", " + options + ");"));

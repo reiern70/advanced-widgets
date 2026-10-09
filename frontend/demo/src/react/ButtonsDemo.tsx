@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 
-import { Button } from '@advanced-widgets/react';
+import { Button, Scrollable } from '@advanced-widgets/react';
 
 import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, sizeName,
 	type ButtonsConfig } from '../buttons.js';
@@ -26,7 +26,7 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 	return (
 		<div className="buttons-demo">
 			<p className="buttons-demo__clicked" role="status">{clicked ?? texts['clicked.none']}</p>
-			<div className="buttons-demo__scroll">
+			<Scrollable axis="x" className="buttons-demo__scroll">
 				<table className="buttons-demo__matrix">
 					<thead>
 						<tr>
@@ -58,7 +58,7 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 						))}
 					</tbody>
 				</table>
-			</div>
+			</Scrollable>
 			<h3>{texts.disabled}</h3>
 			<div className="aw-button-bar">
 				{BUTTON_VARIANTS.map((variant) => (

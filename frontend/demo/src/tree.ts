@@ -8,7 +8,7 @@
  * resource folder by folder, the file selected shown next to them.
  */
 
-import type { TreeColumn, TreeNode, TreeTexts } from '@advanced-widgets/core';
+import type { ResizeMode, TreeColumn, TreeNode, TreeTexts } from '@advanced-widgets/core';
 
 import { fetchJson } from './data.js';
 
@@ -49,14 +49,51 @@ export interface TreeDemoConfig {
 	template: string;
 	/** The keys of the folders expanded at first. */
 	expanded: string[];
+	/** The height of the trees, within which they scroll. */
+	height: { value: number; unit: string };
+}
+
+/** How the columns of a tree grid are resized, as the drop-down of the demo chooses it. */
+export type Resizing = 'none' | ResizeMode;
+
+/** The texts of the tree grid demo besides, those of its drop-down too. */
+export interface TreeGridDemoTexts extends TreeDemoTexts {
+	resize: string;
+	'resize.none': string;
+	'resize.fit': string;
+	'resize.stretch': string;
+	filter: string;
+	noMatch: string;
+	more: string;
+	remove: string;
 }
 
 /** What the page gives the tree grid demo besides. */
 export interface TreeGridDemoConfig extends TreeDemoConfig {
+	texts: TreeGridDemoTexts;
 	/** The header of the tree column. */
 	header: string;
 	/** The other columns, as the JSON tree grid of the page has them. */
 	columns: TreeColumn[];
+	/** How the columns are resized at first. */
+	resizableColumns: Resizing;
+}
+
+/** The choices of the drop-down of the tree grid demo, in their order. */
+export const RESIZINGS: Resizing[] = ['none', 'fit', 'stretch'];
+
+/**
+ * @returns the options of the drop-down choosing how the columns of the tree grid are resized
+ */
+export function resizingOptions(texts: TreeGridDemoTexts): { value: string; label: string }[] {
+	return RESIZINGS.map((value) => ({ value, label: texts[`resize.${value}`] }));
+}
+
+/**
+ * @returns how the tree grid resizes its columns, false when it does not
+ */
+export function resizeMode(resizing: Resizing): ResizeMode | false {
+	return resizing === 'none' ? false : resizing;
 }
 
 /** The facts of a file the details show, by the keys of their labels. */

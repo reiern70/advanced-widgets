@@ -104,7 +104,7 @@ export interface ResizableColumnsRegistry {
 	instances: Record<string, { table: HTMLTableElement }>;
 	tableOptions: Record<string, ResizableColumnsOptions>;
 	fit(id: string): void;
-	detach(id: string): void;
+	detach(id: string, restore?: boolean): void;
 }
 
 /** A veil blocking an element while it loads, as Wicket.Veil. */
@@ -1048,12 +1048,24 @@ export class DynamicDataTable {
 		this.bodyCell = undefined;
 	}
 
+	/**
+	 * Takes away the widths the columns were laid out with, so that the table can be started
+	 * again with another layout, as a framework does when its columns stop being resizable.
+	 */
+	private restoreLayout(): void {
+		if (this.table) {
+			this.table.querySelector(':scope > colgroup.' + COLGROUP_CLASS)?.remove();
+			this.table.style.width = '';
+			this.table.style.tableLayout = '';
+		}
+	}
+
 	destroy(): void {
 		this.bodyObserver?.disconnect();
 		this.scrollbar?.destroy();
 		this.endObserver?.disconnect();
 		if (this.cfg.resize) {
-			DynamicDataTable.resizableColumns()?.detach(this.id);
+			DynamicDataTable.resizableColumns()?.detach(this.id, true);
 		}
 		if (this.timer) {
 			window.clearInterval(this.timer);
@@ -1061,6 +1073,7 @@ export class DynamicDataTable {
 		this.stops.forEach((stop) => stop());
 		this.stops = [];
 		this.restoreBody();
+		this.restoreLayout();
 		if (this.table) {
 			this.table.removeEventListener('click', this.clickHandler);
 			this.table.removeEventListener('keydown', this.keyHandler);

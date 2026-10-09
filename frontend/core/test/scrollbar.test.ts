@@ -84,6 +84,17 @@ describe('Scrollbar', () => {
 		expect(style.getPropertyValue('--wicket-scrollbar-background')).toBe('');
 	});
 
+	it('runs the vertical bar below a header staying in place', () => {
+		document.body.innerHTML = '<div id="box" style="overflow-y: auto; border: 3px solid; ' +
+			'border-top-right-radius: 10px"><table><thead><tr><th>A</th></tr></thead></table></div>';
+		const head = document.querySelector('thead')!;
+		Object.defineProperty(head, 'offsetHeight', { configurable: true, value: 30 });
+		const style = Scrollbar.attach('box', { header: ':scope > table > thead' })!.wrapper.style;
+
+		expect(style.getPropertyValue('--wicket-scrollbar-inset-top')).toBe('33px');
+		expect(style.getPropertyValue('--wicket-scrollbar-radius-top-right')).toBe('0px');
+	});
+
 	it('scrolls to the top, the bottom, a position and an element', () => {
 		document.body.innerHTML = '<div id="box" style="overflow: auto">' +
 			'<p data-line="1">1</p><p data-line="2">2</p></div>';

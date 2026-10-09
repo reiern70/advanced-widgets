@@ -21,6 +21,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 
 import com.advanced.widgets.chips.Chips;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
 /**
@@ -165,7 +166,8 @@ public class DropdownBehavior extends Behavior
 	}
 
 	/**
-	 * Renders what the drop-down needs in the browser: {@link #JS} and {@link #CSS}.
+	 * Renders what the drop-down needs in the browser: {@link #JS} and {@link #CSS}, and the
+	 * scroll bars of its list, those of {@link ScrollbarBehavior}.
 	 *
 	 * @param response
 	 *            the header response
@@ -174,6 +176,8 @@ public class DropdownBehavior extends Behavior
 	{
 		CoreLibrariesContributor.contribute(Application.get(), response);
 		Chips.renderHeadItems(response);
+		response.render(JavaScriptHeaderItem.forReference(ScrollbarBehavior.JS));
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 	}

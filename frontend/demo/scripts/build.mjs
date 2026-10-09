@@ -5,7 +5,7 @@
 
 /*
  * Builds react-demo.js and svelte-demo.js, each a script with its framework inside, into the
- * package of the demo application's FrameworksPage: dist is a resource directory of demo-app.
+ * package of the demo application's FrameworkTabs: dist is a resource directory of demo-app.
  */
 
 import react from '@vitejs/plugin-react';

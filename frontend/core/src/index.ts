@@ -25,8 +25,8 @@ export { getHost, onRemoving, setHost, standaloneHost } from './host.js';
 export type { Host, Unsubscribe } from './host.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
-export { Scrollbar, scrollbar } from './scrollbar.js';
-export type { ScrollbarOptions, ScrollPosition } from './scrollbar.js';
+export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
+export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';
 export { activate, activates, isLicensed, LICENSE_PREFIX, PUBLIC_KEY, UNLICENSED_CLASS,
 	verifyLicense } from './license.js';
@@ -36,7 +36,8 @@ export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_THEME_CL
 export type { ModalOptions } from './modal.js';
 export { Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';
-export type { TreeCallbacks, TreeColumn, TreeConfig, TreeIcons, TreeNode, TreeTexts } from './tree.js';
+export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,
+	TreeTexts } from './tree.js';
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';
 export { BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';

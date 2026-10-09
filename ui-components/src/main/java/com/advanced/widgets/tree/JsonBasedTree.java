@@ -39,6 +39,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.advanced.widgets.dynamicdatatable.IJsonSerializer;
 import com.advanced.widgets.dynamicdatatable.ITemplateEngine;
@@ -47,6 +48,7 @@ import com.advanced.widgets.dynamicdatatable.ResourceTemplate;
 import com.advanced.widgets.icon.IIcon;
 import com.advanced.widgets.jsonlist.IItemAction;
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.advanced.widgets.template.Templates;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -87,6 +89,9 @@ import com.github.openjson.JSONObject;
  * nodes with {@link #setIcon(TreeIcon, IIcon)} and for one with {@link #getIcon(Object)}. While
  * the roots load and when there are none the tree says so, in the texts {@code Tree.loading} and
  * {@code Tree.empty} of the bundle of ui-components.
+ * <p>
+ * Given a {@link #setHeight(int, BodyHeightUnits) height}, the tree scrolls itself, with slim
+ * scroll bars in the colors of the theme; else the page scrolls.
  * <p>
  * The tree carries the CSS classes {@value #CSS_CLASS} and {@value Tree#CSS_CLASS}, and takes its
  * colors from the {@link com.advanced.widgets.theme.Theme theme} it is rendered in, if any.
@@ -154,6 +159,10 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
 
 	private IModel<String> label;
+
+	private int height = -1;
+
+	private BodyHeightUnits heightUnits = BodyHeightUnits.PIXELS;
 
 	private transient Map<String, String> templates;
 
@@ -401,6 +410,43 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
+	 * @return the height of the tree in {@link #getHeightUnits()}, or a negative number,
+	 *         {@code -1} by default, when the tree is as high as its nodes
+	 */
+	public int getHeight()
+	{
+		return height;
+	}
+
+	/**
+	 * @return the unit of {@link #getHeight()}, {@link BodyHeightUnits#PIXELS} by default
+	 */
+	public BodyHeightUnits getHeightUnits()
+	{
+		return heightUnits;
+	}
+
+	/**
+	 * Gives the tree a fixed height, within which it scrolls, with slim scroll bars in the colors
+	 * of the theme, drawn by a {@link ScrollbarBehavior} script; the head of a tree grid stays in
+	 * place above the rows. Without a height, the tree is as high as its nodes.
+	 *
+	 * @param height
+	 *            the height of the tree in the given units; any negative number, such as
+	 *            {@code -1}, to let the tree take the height of its nodes, as by default
+	 * @param units
+	 *            the units of the height
+	 * @return {@code this}
+	 */
+	public JsonBasedTree<T, K> setHeight(int height, BodyHeightUnits units)
+	{
+		Args.isTrue(height != 0, "the height has to be positive, or negative for none");
+		heightUnits = Args.notNull(units, "units");
+		this.height = height;
+		return this;
+	}
+
+	/**
 	 * Sets the template of the nodes, trusted markup written into the page as is. Without one,
 	 * the template is read from an {@code .html} file named after the class of the tree, or one of
 	 * its superclasses, as the markup of a panel is.
@@ -529,6 +575,10 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	{
 		super.renderHead(response);
 		CoreLibrariesContributor.contributeAjax(getApplication(), response);
+		if (height > 0)
+		{
+			ScrollbarBehavior.renderHeadItems(response);
+		}
 		response.render(JavaScriptHeaderItem.forReference(Templates.JS));
 		response.render(JavaScriptHeaderItem.forReference(JAVASCRIPT));
 		response.render(CssHeaderItem.forReference(Tree.CSS));
@@ -570,6 +620,11 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 		if (selected != null)
 		{
 			config.put("selected", provider.formatKey(selected));
+		}
+		if (height > 0)
+		{
+			config.put("height", new JSONObject().put("value", height)
+				.put("unit", heightUnits.getCssUnit()));
 		}
 		if (!icons.isEmpty())
 		{

@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Dropdown, dropdown, setHost, standaloneHost, type Host } from '../src/index.js';
+import { Dropdown, dropdown, Scrollbar, setHost, standaloneHost, type Host } from '../src/index.js';
 
 const FRUITS = ['Apple', 'Banana', 'Cherry'];
 
@@ -245,5 +245,17 @@ describe('Dropdown', () => {
 
 		action.destroy();
 		expect(Dropdown.of(element)).toBeNull();
+	});
+
+	it('scrolls its list with the slim scroll bars, the filter above them', () => {
+		const instance = new Dropdown(select(), { filterThreshold: 0 });
+
+		expect(instance.list.parentElement).toBe(instance.listBox);
+		expect(instance.listBox.className).toBe('wicket-scrollbar');
+		expect(instance.filter?.nextElementSibling).toBe(instance.listBox);
+		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
+
+		instance.destroy();
+		expect(Scrollbar.of(instance.list)).toBeUndefined();
 	});
 });

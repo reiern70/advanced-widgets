@@ -112,6 +112,7 @@
 }
 
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-body,
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .wicket-scrollbar,
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-footer {
 	display: none;
 }
@@ -121,6 +122,14 @@
 	min-height: 0;
 	overflow: auto;
 	padding: 1em;
+}
+
+/* a body in the wrapper of the slim scroll bars of the core: the wrapper takes its place */
+.dialog-theme-default .modal-dialog-content > .wicket-scrollbar {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
 }
 
 /* the buttons of the footer, on the right */

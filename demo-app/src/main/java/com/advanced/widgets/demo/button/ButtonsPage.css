@@ -3,9 +3,10 @@
  * All rights reserved.
  */
 
-/* the buttons of a variant in a row, a column per size */
+/* the buttons of a variant in a row, a column per size; room below for the slim scroll bar */
 .buttons-demo__scroll {
 	overflow-x: auto;
+	padding-bottom: 0.75em;
 }
 
 .buttons-demo__matrix {

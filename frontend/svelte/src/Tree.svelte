@@ -6,17 +6,17 @@
   @component
   A tree rendering its nodes from JSON with a template, loading the children of a folder the first
   time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are selected;
-  a click on a folder expands or collapses it. Given columns and a header, it is a tree grid, as
-  TreeGrid is. A private component: without a license key activating it, it shows the placeholder
-  Wicket shows. Bound with bind:this, the component reloads the nodes with reload(), repaints one
-  with renderNode(key, data), and expands and collapses a folder with expand(key) and
-  collapse(key).
+  a click on a folder expands or collapses it. Given a height, it scrolls itself with slim scroll
+  bars. Given columns and a header, it is a tree grid, as TreeGrid is. A private component:
+  without a license key activating it, it shows the placeholder Wicket shows. Bound with
+  bind:this, the component reloads the nodes with reload(), repaints one with
+  renderNode(key, data), and expands and collapses a folder with expand(key) and collapse(key).
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
-		UNLICENSED_CLASS, type TreeColumn, type TreeIcons, type TreeNode,
-		type TreeTexts } from '@advanced-widgets/core';
+		UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
+		type TreeNode, type TreeTexts } from '@advanced-widgets/core';
 
 	type Props = {
 		/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -34,10 +34,14 @@
 		icons?: Partial<TreeIcons>;
 		/** What the tree says, English by default. */
 		texts?: Partial<TreeTexts>;
+		/** The height of the tree, which then scrolls itself with slim scroll bars. */
+		height?: TreeConfig['height'];
 		/** The header of the tree column of a tree grid. */
 		header?: string;
 		/** The columns of a tree grid after the tree column; a tree when left out. */
 		columns?: TreeColumn[];
+		/** How the columns of a tree grid are resized, or false, as by default, when they are not. */
+		resizableColumns?: ResizeMode | false;
 		/** Called when the user selects a leaf. */
 		onselect?: (key: string, data: unknown) => void;
 		/** Called with the action of a clicked [data-dt-action] element of a node. */
@@ -49,9 +53,9 @@
 		class?: string;
 	};
 
-	let { load, template, engine, label, expanded, selected, icons, texts: givenTexts, header,
-		columns, onselect, onaction, ontoggle, licenseKey, class: className = '' }:
-		Props = $props();
+	let { load, template, engine, label, expanded, selected, icons, texts: givenTexts, height,
+		header, columns, resizableColumns = false, onselect, onaction, ontoggle, licenseKey,
+		class: className = '' }: Props = $props();
 
 	const generatedId = $props.id();
 	const id = 'json-tree-' + generatedId.replace(/[^\w-]/g, '');
@@ -80,8 +84,9 @@
 			return;
 		}
 		const config = { id, template, engine, label, icons: $state.snapshot(icons),
-			texts: $state.snapshot(texts),
-			table: columns ? { header: header ?? '', columns: $state.snapshot(columns) } : undefined };
+			texts: $state.snapshot(texts), height: $state.snapshot(height),
+			table: columns ? { header: header ?? '', columns: $state.snapshot(columns) } : undefined,
+			resizableColumns: columns && resizableColumns ? resizableColumns : undefined };
 		const tree = untrack(() => new JsonTree({ ...config, expanded: $state.snapshot(expanded),
 			selected, load: (parent) => load(parent) }, {
 			select: (key, data) => onselect?.(key, data),
@@ -128,6 +133,11 @@
 {#if licensed === false}
 	<div class={UNLICENSED_CLASS} role="note" data-component={table ? 'TreeGrid' : 'Tree'}>
 		{texts.unlicensed}</div>
+{:else if licensed && height}
+	<!-- a tree of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
+	<div class="wicket-scrollbar">
+		<div {id} class={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree', className]}></div>
+	</div>
 {:else if licensed}
 	<div {id} class={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree', className]}></div>
 {/if}

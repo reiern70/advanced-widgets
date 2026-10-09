@@ -12,8 +12,6 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalDialog;
-import org.apache.wicket.extensions.ajax.markup.html.modal.theme.DefaultTheme;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -21,7 +19,6 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
-import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -50,6 +47,8 @@ import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.jsonlist.IItemAction;
 import com.advanced.widgets.jsonlist.JsonBasedInfiniteList;
+import com.advanced.widgets.modal.IModalButtonFactory;
+import com.advanced.widgets.modal.Modal;
 import com.advanced.widgets.progress.ProgressBar;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -80,7 +79,7 @@ public class JsonListPage extends DemoPage
 
 	private final UserDetailsPanel details;
 
-	private final ModalDialog dialog;
+	private final Modal dialog;
 
 	private String sort = "firstName";
 
@@ -164,10 +163,7 @@ public class JsonListPage extends DemoPage
 			}
 		}.setOutputMarkupPlaceholderTag(true));
 
-		dialog = new ModalDialog("dialog");
-		dialog.add(new DefaultTheme());
-		dialog.closeOnEscape();
-		dialog.trapFocus();
+		dialog = new Modal("dialog");
 		add(dialog);
 
 		add(new DemoWebSocketBehavior()
@@ -290,9 +286,7 @@ public class JsonListPage extends DemoPage
 	 */
 	private void showUserForm(User user, IModel<String> title, AjaxRequestTarget target)
 	{
-		Fragment content = new Fragment(ModalDialog.CONTENT_ID, "formContent", this);
-		content.add(new Label("title", title));
-		content.add(new UserEditPanel("form", user)
+		UserEditPanel form = new UserEditPanel(Modal.BODY_ID, user)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -319,8 +313,8 @@ public class JsonListPage extends DemoPage
 			{
 				dialog.close(target);
 			}
-		});
-		dialog.open(content, target);
+		};
+		dialog.open(title, form, target);
 	}
 
 	/**
@@ -330,48 +324,30 @@ public class JsonListPage extends DemoPage
 	private void confirmDeletion(User user, AjaxRequestTarget target)
 	{
 		long id = user.getId();
-		Fragment content = new Fragment(ModalDialog.CONTENT_ID, "deleteContent", this);
-		content.add(new Label("question", new StringResourceModel("delete.confirm", this,
-			Model.of(user))));
-		content.add(new AjaxLink<Void>("cancel")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				dialog.close(target);
-			}
-		});
-		content.add(new AjaxLink<Void>("confirm")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				dialog.close(target);
+		Label question = new Label(Modal.BODY_ID, new StringResourceModel("delete.confirm", this,
+			Model.of(user)));
+		dialog.open(new ResourceModel("delete"), question, target,
+			IModalButtonFactory.close(new ResourceModel("cancel")),
+			IModalButtonFactory.primary(new ResourceModel("delete"), confirmed -> {
+				dialog.close(confirmed);
 				User current = list.findItem(String.valueOf(id));
 				if (current == null)
 				{
-					JsonListPage.this.warn(getString("userGone"));
+					warn(getString("userGone"));
 				}
 				else
 				{
 					DatabaseLocator.getLargeDatabase().delete(current);
-					JsonListPage.this.info(message("deleted", current.getFirstName(),
-						current.getLastName()));
+					info(message("deleted", current.getFirstName(), current.getLastName()));
 					if (Objects.equals(selected, current))
 					{
 						selected = null;
-						target.add(details, getThemed().get("noneSelected"));
+						confirmed.add(details, getThemed().get("noneSelected"));
 					}
 				}
-				target.add(JsonListPage.this.get("feedback"));
-				list.refresh(target);
-			}
-		});
-		dialog.open(content, target);
+				confirmed.add(get("feedback"));
+				list.refresh(confirmed);
+			}));
 	}
 
 	@Override

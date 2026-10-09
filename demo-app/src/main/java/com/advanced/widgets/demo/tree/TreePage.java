@@ -7,6 +7,7 @@ package com.advanced.widgets.demo.tree;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.model.ResourceModel;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.tree.JsonBasedTree;
 import com.advanced.widgets.tree.Tree;
 
@@ -38,6 +39,7 @@ public class TreePage extends FilesDemoPage
 			}
 		};
 		tree.expand(expanded());
+		tree.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		getThemed().add(tree);
 
 		JsonBasedTree<ProjectFile, Integer> jsonTree = new JsonBasedTree<>("jsonTree", provider)
@@ -59,6 +61,7 @@ public class TreePage extends FilesDemoPage
 		jsonTree.setNodeTemplate(TEMPLATE);
 		jsonTree.setLabel(new ResourceModel("files"));
 		jsonTree.expand(expanded());
+		jsonTree.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		getThemed().add(jsonTree);
 	}
 

@@ -21,7 +21,7 @@ function key(target: Element, name: string): void {
 
 afterEach(() => {
 	Object.keys(MovableColumns.instances).forEach(MovableColumns.detach);
-	Object.keys(ResizableColumns.instances).forEach(ResizableColumns.detach);
+	Object.keys(ResizableColumns.instances).forEach((id) => ResizableColumns.detach(id));
 	MovableColumns.focusAfterMove = undefined;
 	vi.restoreAllMocks();
 	setHost();
@@ -156,5 +156,81 @@ describe('ResizableColumns', () => {
 
 		expect(document.querySelectorAll('.wicket-col-resizer').length).toBe(0);
 		expect(ResizableColumns.instances.t).toBeUndefined();
+	});
+
+	it('keeps the widths when detached, unless told to restore the table', () => {
+		const element = table(['A', 'B']);
+		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
+		ResizableColumns.detach('t');
+
+		expect(element.querySelectorAll('colgroup.wicket-resizable-colgroup').length).toBe(1);
+		expect(element.style.width).toBe('400px');
+
+		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
+		ResizableColumns.detach('t', true);
+
+		expect(element.querySelectorAll('colgroup').length).toBe(0);
+		expect(element.className).toBe('');
+		expect(element.style.width).toBe('');
+		expect(element.style.tableLayout).toBe('');
+	});
+
+	it('lays a hidden table out when it is shown, not with the no widths it has while hidden', () => {
+		const element = table(['A', 'B']);
+		let shown = false;
+		vi.spyOn(element, 'getClientRects').mockImplementation(() =>
+			(shown ? [{}] : []) as unknown as DOMRectList);
+		const cells = Array.from(element.tHead!.rows[0].cells);
+		cells.forEach((cell, i) => vi.spyOn(cell, 'getBoundingClientRect').mockImplementation(() =>
+			({ width: shown ? 100 * (i + 1) : 0 }) as DOMRect));
+		let observed: (() => void) | undefined;
+		const disconnect = vi.fn();
+		vi.stubGlobal('ResizeObserver', class {
+			constructor(callback: () => void) {
+				observed = callback;
+			}
+
+			observe(): void {}
+
+			disconnect = disconnect;
+		});
+		try {
+			ResizableColumns.attach('t', { mode: 'stretch' });
+
+			expect(element.querySelector('colgroup')).toBeNull();
+			expect(element.style.width).toBe('');
+
+			shown = true;
+			observed!();
+
+			expect(Array.from(element.querySelectorAll('col')).map((col) => col.style.width))
+				.toEqual(['100px', '200px']);
+			expect(element.style.width).toBe('300px');
+			expect(disconnect).toHaveBeenCalled();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('keeps the guide inside the box the table scrolls in', () => {
+		const element = table(['A', 'B']);
+		const box = document.createElement('div');
+		box.style.overflowY = 'auto';
+		document.body.appendChild(box);
+		box.appendChild(element);
+		const rect = (top: number, bottom: number) =>
+			({ top, bottom, left: 0, right: 100, width: 100, height: bottom - top }) as DOMRect;
+		vi.spyOn(element.tHead!.rows[0], 'getBoundingClientRect').mockReturnValue(rect(100, 130));
+		vi.spyOn(element.tBodies[0], 'getBoundingClientRect').mockReturnValue(rect(130, 2000));
+		vi.spyOn(box, 'getBoundingClientRect').mockReturnValue(rect(100, 500));
+		vi.spyOn(box, 'clientHeight', 'get').mockReturnValue(400);
+		ResizableColumns.attach('t');
+
+		ResizableColumns.instances.t.startDrag(0, 1, 50);
+
+		const guide = document.querySelector<HTMLElement>('.wicket-col-resize-guide')!;
+		expect(guide.style.top).toBe('100px');
+		expect(guide.style.height).toBe('400px');
+		ResizableColumns.instances.t.endDrag(false);
 	});
 });

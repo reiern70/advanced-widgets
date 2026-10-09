@@ -77,9 +77,17 @@ public abstract class FilesDemoPage extends DemoPage
 	}
 
 	/**
+	 * @return the height of the trees, in pixels, within which they scroll
+	 */
+	protected int getTreeHeight()
+	{
+		return 480;
+	}
+
+	/**
 	 * @return the configuration the React and Svelte apps share: the texts in the language of the
 	 *         session, those of the trees too, the URL of the files, the template of a node, the
-	 *         folder expanded at first
+	 *         folder expanded at first and the height of the trees
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
@@ -94,7 +102,8 @@ public abstract class FilesDemoPage extends DemoPage
 			.put("texts", texts.put("tree", tree))
 			.put("filesUrl", FrameworkTabs.urlOf(this, FilesResource.REFERENCE))
 			.put("template", TEMPLATE)
-			.put("expanded", new JSONArray().put(String.valueOf(expanded().id())));
+			.put("expanded", new JSONArray().put(String.valueOf(expanded().id())))
+			.put("height", new JSONObject().put("value", getTreeHeight()).put("unit", "px"));
 	}
 
 	@Override

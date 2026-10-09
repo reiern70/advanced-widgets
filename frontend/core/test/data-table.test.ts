@@ -5,8 +5,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DynamicDataTable, registerHandlebars, setHost, standaloneHost, Templates,
-	type DataTableConfig, type DataTableData } from '../src/index.js';
+import { DynamicDataTable, registerHandlebars, ResizableColumns, setHost, standaloneHost,
+	Templates, type DataTableConfig, type DataTableData } from '../src/index.js';
 
 const HEAD = '<thead><tr class="dynamic-data-table-headers"><th>Name</th><th>City</th></tr></thead>';
 
@@ -184,6 +184,28 @@ describe('DynamicDataTable', () => {
 		expect(table2.querySelector('.dynamic-data-table-body')).toBeNull();
 		expect(table2.querySelectorAll(':scope > tbody').length).toBe(1);
 		expect(table2.querySelectorAll(':scope > tbody > tr').length).toBe(2);
+	});
+
+	it('starts again without the widths of its resizable columns when they stop being resizable', () => {
+		const first = config({ bodyHeight: { value: 200, unit: 'px' }, resize: {},
+			layout: { adjustToParent: true } });
+		const resizable = new DynamicDataTable(first, () => undefined, null, null,
+			{ rows: rows(1, 2), itemCount: 2 });
+		ResizableColumns.attach('table', { mode: 'stretch', widths: [100, 300] });
+		const element = document.querySelector<HTMLTableElement>('#table')!;
+		expect(element.classList.contains('wicket-resizable-columns')).toBe(true);
+
+		resizable.destroy();
+		expect(ResizableColumns.instances.table).toBeUndefined();
+		expect(element.querySelectorAll(':scope > colgroup').length).toBe(0);
+		expect(element.classList.contains('wicket-resizable-columns')).toBe(false);
+		expect(element.style.width).toBe('');
+
+		new DynamicDataTable({ ...first, resize: undefined,
+			layout: { adjustToParent: true, proportions: [1, 3] } }, () => undefined, null, null,
+			{ rows: rows(1, 2), itemCount: 2 });
+		expect(Array.from(element.querySelectorAll<HTMLElement>(':scope > colgroup col'),
+			(col) => col.style.width)).toEqual(['25%', '75%']);
 	});
 
 	it('tells when the user changed a field of an element', () => {

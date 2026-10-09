@@ -4,18 +4,22 @@
  */
 package com.advanced.widgets.demo.tree;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.advanced.widgets.demo.WicketApplication;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 import com.advanced.widgets.tree.JsonBasedTree;
 import com.advanced.widgets.tree.JsonBasedTreeGrid;
 import com.advanced.widgets.tree.TreeGrid;
@@ -70,6 +74,36 @@ class TreeGridPageTest
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.contains("frontend/package.json"), response);
 		assertTrue(response.contains(">JSON<"), response);
+	}
+
+	@Test
+	void theDropdownChoosesHowTheColumnsOfBothTreeGridsAreResized()
+	{
+		TreeGrid<?, ?> treeGrid = (TreeGrid<?, ?>)tester.getComponentFromLastRenderedPage(
+			"themed:treeGrid");
+		JsonBasedTreeGrid<?, ?> jsonTreeGrid = (JsonBasedTreeGrid<?, ?>)tester
+			.getComponentFromLastRenderedPage("themed:jsonTreeGrid");
+		assertEquals(Mode.FIT, treeGrid.getResizableColumns());
+		tester.assertContains(Pattern.quote(">keeping the table&#039;s width<"));
+
+		tester.getRequest().getPostParameters().setParameterValue(
+			((FormComponent<?>)tester.getComponentFromLastRenderedPage("themed:resize"))
+				.getInputName(), "stretch");
+		tester.executeAjaxEvent("themed:resize", "change");
+
+		assertEquals(Mode.STRETCH, treeGrid.getResizableColumns());
+		assertEquals(Mode.STRETCH, jsonTreeGrid.getResizableColumns());
+		tester.assertComponentOnAjaxResponse("themed:treeGrid");
+		tester.assertComponentOnAjaxResponse("themed:jsonTreeGrid");
+		tester.assertContains(Pattern.quote("\"resizableColumns\":\"stretch\""));
+
+		tester.getRequest().getPostParameters().setParameterValue(
+			((FormComponent<?>)tester.getComponentFromLastRenderedPage("themed:resize"))
+				.getInputName(), "none");
+		tester.executeAjaxEvent("themed:resize", "change");
+
+		assertNull(treeGrid.getResizableColumns());
+		assertNull(jsonTreeGrid.getResizableColumns());
 	}
 
 	@Test

@@ -7,8 +7,8 @@ import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, use
 	useState } from 'react';
 
 import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
-	UNLICENSED_CLASS, type TreeColumn, type TreeIcons, type TreeNode,
-	type TreeTexts } from '@advanced-widgets/core';
+	UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
+	type TreeNode, type TreeTexts } from '@advanced-widgets/core';
 
 export interface TreeProps {
 	/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -27,6 +27,8 @@ export interface TreeProps {
 	icons?: Partial<TreeIcons>;
 	/** What the tree says, English by default. */
 	texts?: Partial<TreeTexts>;
+	/** The height of the tree, which then scrolls itself with slim scroll bars. */
+	height?: TreeConfig['height'];
 	/** Called when the user selects a leaf. */
 	onSelect?(key: string, data: unknown): void;
 	/** Called with the action of a clicked [data-dt-action] element of a node. */
@@ -44,6 +46,8 @@ export interface TreeGridProps extends TreeProps {
 	header: string;
 	/** The columns after the tree column. */
 	columns: TreeColumn[];
+	/** How the columns are resized, or false, as by default, when they are not. */
+	resizableColumns?: ResizeMode | false;
 }
 
 /**
@@ -63,9 +67,10 @@ export interface TreeHandle {
 /**
  * The tree or the tree grid: the core renders the nodes into the element React renders empty.
  */
-const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps['columns'];
-	header?: string }>(function JsonTreeView(props, ref) {
-	const { template, engine, label, icons, licenseKey, className, table, header } = props;
+const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps['columns'] } &
+	Partial<Pick<TreeGridProps, 'header' | 'resizableColumns'>>>(function JsonTreeView(props, ref) {
+	const { template, engine, label, icons, height, licenseKey, className, table, header,
+		resizableColumns } = props;
 	const texts = { ...TREE_TEXTS, ...props.texts };
 	const id = 'json-tree-' + useId().replace(/[^\w-]/g, '');
 	const [licensed, setLicensed] = useState<boolean | null>(null);
@@ -92,13 +97,15 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 	const tableKey = table ? JSON.stringify({ header, table }) : '';
 	const iconsKey = JSON.stringify(icons ?? {});
 	const textsKey = JSON.stringify(texts);
+	const heightKey = height ? height.value + height.unit : '';
 	useLayoutEffect(() => {
 		if (!licensed) {
 			return;
 		}
 		const tree = new JsonTree({
-			id, template, engine, label, icons, texts,
+			id, template, engine, label, icons, texts, height,
 			table: table ? { header: header ?? '', columns: table } : undefined,
+			resizableColumns: table && resizableColumns ? resizableColumns : undefined,
 			expanded: latest.current.expanded,
 			selected: latest.current.selected,
 			load: (parent) => latest.current.load(parent)
@@ -112,7 +119,8 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			tree.destroy();
 			instance.current = null;
 		};
-	}, [licensed, id, template, engine, label, tableKey, iconsKey, textsKey]);
+	}, [licensed, id, template, engine, label, tableKey, iconsKey, textsKey, heightKey,
+		resizableColumns]);
 
 	useEffect(() => {
 		if (props.selected !== undefined && instance.current &&
@@ -128,8 +136,10 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 		return <div className={UNLICENSED_CLASS} role="note"
 			data-component={table ? 'TreeGrid' : 'Tree'}>{texts.unlicensed}</div>;
 	}
-	return <div id={id} className={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree',
+	const tree = <div id={id} className={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree',
 		className].filter(Boolean).join(' ')} />;
+	// a tree of a height scrolls in the wrapper of its scroll bars, which React renders
+	return height ? <div className="wicket-scrollbar">{tree}</div> : tree;
 });
 
 /**
@@ -144,9 +154,12 @@ export const Tree = forwardRef<TreeHandle, TreeProps>(function Tree(props, ref) 
 
 /**
  * A tree grid: a {@link Tree} shown as a treegrid, its first column the tree, the others
- * rendered from the same data by the templates of the columns. A private component, as the tree.
+ * rendered from the same data by the templates of the columns. Given a height, its head stays in
+ * place above the rows scrolling; its columns can be made resizable. A private component, as the
+ * tree.
  */
 export const TreeGrid = forwardRef<TreeHandle, TreeGridProps>(function TreeGrid(
-	{ columns, header, ...props }, ref) {
-	return <JsonTreeView ref={ref} {...props} table={columns} header={header} />;
+	{ columns, header, resizableColumns, ...props }, ref) {
+	return <JsonTreeView ref={ref} {...props} table={columns} header={header}
+		resizableColumns={resizableColumns} />;
 });

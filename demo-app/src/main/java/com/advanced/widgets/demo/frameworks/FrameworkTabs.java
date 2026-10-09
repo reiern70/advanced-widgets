@@ -19,6 +19,8 @@ import org.apache.wicket.request.resource.ResourceReference;
 
 import com.advanced.widgets.button.ButtonBehavior;
 import com.advanced.widgets.demo.DemoLicense;
+import com.advanced.widgets.modal.Modal;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
 /**
@@ -43,11 +45,11 @@ public class FrameworkTabs extends Panel
 
 	/** The bundle of the React apps. */
 	public static final ResourceReference REACT = new JavaScriptResourceReference(
-		FrameworksPage.class, "react-demo.js");
+		FrameworkTabs.class, "react-demo.js");
 
 	/** The bundle of the Svelte apps. */
 	public static final ResourceReference SVELTE = new JavaScriptResourceReference(
-		FrameworksPage.class, "svelte-demo.js");
+		FrameworkTabs.class, "svelte-demo.js");
 
 	private static final ResourceReference SCRIPT = new JavaScriptResourceReference(
 		FrameworkTabs.class, "framework-tabs.js");
@@ -135,6 +137,9 @@ public class FrameworkTabs extends Panel
 		renderApps(response);
 		// the buttons of the apps, such as those of their forms
 		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
+		// the dialogs of the apps, and the scroll bars of their bodies, on pages without a Modal
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
+		response.render(CssHeaderItem.forReference(Modal.CSS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(JavaScriptHeaderItem.forReference(SCRIPT).setDefer(true));
 	}

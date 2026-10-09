@@ -7,7 +7,7 @@
   @advanced-widgets/svelte.
 -->
 <script lang="ts">
-	import { Button } from '@advanced-widgets/svelte';
+	import { Button, Scrollable } from '@advanced-widgets/svelte';
 
 	import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, sizeName,
 		type ButtonsConfig } from '../buttons.js';
@@ -21,7 +21,7 @@
 
 <div class="buttons-demo">
 	<p class="buttons-demo__clicked" role="status">{clicked ?? texts['clicked.none']}</p>
-	<div class="buttons-demo__scroll">
+	<Scrollable axis="x" class="buttons-demo__scroll">
 		<table class="buttons-demo__matrix">
 			<thead>
 				<tr>
@@ -52,7 +52,7 @@
 				{/each}
 			</tbody>
 		</table>
-	</div>
+	</Scrollable>
 	<h3>{texts.disabled}</h3>
 	<div class="aw-button-bar">
 		{#each BUTTON_VARIANTS as variant (variant)}

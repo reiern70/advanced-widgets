@@ -7,7 +7,7 @@ import { createRef, StrictMode } from 'react';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { activate } from '@advanced-widgets/core';
+import { activate, ResizableColumns, Scrollbar } from '@advanced-widgets/core';
 
 import { Tree, TreeGrid, type TreeHandle, type TreeNode } from '../src/index.js';
 // the key of the demo application, activating every component
@@ -100,5 +100,23 @@ describe('TreeGrid', () => {
 		expect(Array.from(container.querySelectorAll('th'), (th) => th.textContent))
 			.toEqual(['Name', 'Size']);
 		expect(item(container, 'readme').querySelector('td.size')!.textContent).toBe('2 KB');
+	});
+
+	it('scrolls in the wrapper of its scroll bars, its columns resizable', async () => {
+		const { container, unmount } = render(<StrictMode><TreeGrid load={load}
+			template="{{name}}" header="Name" columns={[{ header: 'Size', template: '{{size}}' }]}
+			height={{ value: 20, unit: 'em' }} resizableColumns="fit" /></StrictMode>);
+
+		await waitFor(() => expect(shown(container)).toEqual(['docs', 'notes.txt']));
+		const tree = container.querySelector<HTMLElement>('.json-tree')!;
+		expect(tree.parentElement).toBe(container.firstElementChild);
+		expect(tree.parentElement!.classList.contains('wicket-scrollbar')).toBe(true);
+		expect(tree.style.height).toBe('20em');
+		expect(Scrollbar.of(tree)?.options.header).toBe(':scope > table > thead');
+		expect(ResizableColumns.instances[tree.id + '-grid']?.mode).toBe('fit');
+
+		unmount();
+		expect(Scrollbar.of(tree)).toBeUndefined();
+		expect(ResizableColumns.instances[tree.id + '-grid']).toBeUndefined();
 	});
 });

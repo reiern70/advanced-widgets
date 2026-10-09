@@ -10,11 +10,17 @@
  * Home and End, and Enter or Space selects a leaf or expands and collapses a folder. Only leaves
  * are selected: a click on a folder opens or closes it.
  *
+ * Given a height, the tree scrolls itself, with the slim scroll bars of the core; a tree grid keeps
+ * its head in place above the rows scrolling. The columns of a tree grid can be made resizable.
+ *
  * In Wicket it is the client side of JsonBasedTree and JsonBasedTreeGrid; the children come from
  * cfg.dataUrl, or from cfg.load in React and Svelte.
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
+import { ResizableColumns, type ResizableColumnsOptions,
+	type ResizeMode } from './resizable-columns.js';
+import { Scrollbar, type ScrollbarHandle, type ScrollbarOptions } from './scrollbar.js';
 import { templates, type CompiledTemplate } from './templates.js';
 
 /** A node: its key, unique in the tree, whether it is a leaf, and the data its template renders. */
@@ -77,7 +83,17 @@ export interface TreeConfig {
 	selected?: string | null;
 	/** Icons of the application's own, in place of those of the tree. */
 	icons?: Partial<TreeIcons>;
+	/** The height of the tree, which then scrolls itself; the page scrolls when left out. */
+	height?: { value: number; unit: string };
+	/** How the columns of a tree grid are resized; they are not when left out. */
+	resizableColumns?: ResizeMode;
 	texts: TreeTexts;
+}
+
+/** What a tree grid needs of the resizable columns. */
+export interface TreeColumnsRegistry {
+	attach(table: HTMLTableElement, options?: ResizableColumnsOptions): unknown;
+	detach(id: string): void;
 }
 
 /**
@@ -128,6 +144,8 @@ const SELECTED_CLASS = 'wicket-tree-item--selected';
 
 const LOADING_CLASS = 'wicket-tree-toggle--loading';
 
+const SCROLLING_CLASS = 'wicket-tree--scrolling';
+
 /** A node the tree knows of, shown or not. */
 interface Entry {
 	node: TreeNode;
@@ -147,6 +165,13 @@ interface Entry {
 export class JsonTree {
 	/** The live trees, by the id of their element. */
 	static readonly instances: Record<string, JsonTree> = {};
+
+	/** Gives a tree of a height its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
+	static attachScrollbar: (element: HTMLElement, options: ScrollbarOptions) =>
+		ScrollbarHandle | undefined = (element, options) => Scrollbar.attach(element, options);
+
+	/** The resizable columns of the page; Wicket gives Wicket.ResizableColumns, if any. */
+	static resizableColumns: () => TreeColumnsRegistry | undefined = () => ResizableColumns;
 
 	readonly id: string;
 
@@ -174,6 +199,11 @@ export class JsonTree {
 	private status!: HTMLDivElement;
 
 	private busy = 0;
+
+	private scrollbar: ScrollbarHandle | undefined = undefined;
+
+	/** The table of a tree grid whose columns are resizable, once they are. */
+	private resizable: HTMLTableElement | null = null;
 
 	private readonly clickHandler = (event: MouseEvent) => this.onClick(event);
 
@@ -222,6 +252,12 @@ export class JsonTree {
 			}
 			this.element.replaceChildren(this.container, this.status);
 		}
+		if (cfg.height) {
+			this.element.classList.add(SCROLLING_CLASS);
+			this.element.style.height = cfg.height.value + cfg.height.unit;
+			this.scrollbar = JsonTree.attachScrollbar(this.element,
+				cfg.table ? { header: ':scope > table > thead' } : {});
+		}
 
 		this.element.addEventListener('click', this.clickHandler);
 		this.element.addEventListener('keydown', this.keyHandler);
@@ -245,6 +281,7 @@ export class JsonTree {
 	 */
 	private buildTable(table: NonNullable<TreeConfig['table']>): HTMLTableElement {
 		const element = document.createElement('table');
+		element.id = this.id + '-grid';
 		element.className = 'wicket-tree-grid-grid';
 		element.setAttribute('role', 'treegrid');
 		if (this.cfg.label) {
@@ -335,6 +372,21 @@ export class JsonTree {
 			[this.build(key), ...this.rows(key)] : [this.build(key)]));
 		this.resetTabStop();
 		this.updateStatus();
+		this.makeResizable();
+	}
+
+	/**
+	 * Makes the columns of a tree grid resizable, once the first rows are shown, which the widths
+	 * the columns start with are measured by.
+	 */
+	private makeResizable(): void {
+		const mode = this.cfg.resizableColumns;
+		const table = this.container.parentElement;
+		if (!mode || this.resizable || !(table instanceof HTMLTableElement)) {
+			return;
+		}
+		this.resizable = table;
+		JsonTree.resizableColumns()?.attach(table, { mode });
 	}
 
 	/**
@@ -843,6 +895,16 @@ export class JsonTree {
 		this.element?.removeEventListener('click', this.clickHandler);
 		this.element?.removeEventListener('keydown', this.keyHandler);
 		this.element?.removeEventListener('focusin', this.focusHandler);
+		if (this.resizable) {
+			JsonTree.resizableColumns()?.detach(this.resizable.id);
+			this.resizable = null;
+		}
+		if (this.cfg.height && this.element) {
+			this.scrollbar?.destroy();
+			this.scrollbar = undefined;
+			this.element.classList.remove(SCROLLING_CLASS);
+			this.element.style.height = '';
+		}
 		this.stops.forEach((stop) => stop());
 		this.stops = [];
 		if (this.isLive()) {

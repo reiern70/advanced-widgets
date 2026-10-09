@@ -129,9 +129,43 @@ html[dir="rtl"] .wicket-tree-toggle--expanded svg {
 	display: none;
 }
 
+/* a tree or a tree grid of a height scrolls itself, with the slim scroll bars of the core */
+.wicket-tree--scrolling {
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+/*
+ * columns stretching the table widen a tree grid of a height, its scroll bars too, as they widen
+ * any table: it scrolls its rows, never sideways
+ */
+.wicket-tree--scrolling:has(> table.wicket-resizable-columns-stretch) {
+	overflow-x: hidden;
+	width: max-content;
+	min-width: 100%;
+}
+
+.wicket-scrollbar:has(> .wicket-tree--scrolling > table.wicket-resizable-columns-stretch) {
+	width: max-content;
+	min-width: 100%;
+}
+
+/* the table fills the width it is given, as the JSON grid does, and grows beyond it */
+.wicket-tree--scrolling > table.wicket-resizable-columns-stretch {
+	min-width: 100%;
+}
+
 /* tree grids */
 .wicket-tree-grid {
 	overflow-x: auto;
+}
+
+/* the head of a tree grid of a height stays in place above the rows scrolling */
+.wicket-tree-grid.wicket-tree--scrolling thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--wicket-theme-toolbar, Canvas);
 }
 
 .wicket-tree-grid table,

@@ -6,15 +6,23 @@ package com.advanced.widgets.demo.tree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.LambdaColumn;
 import org.apache.wicket.extensions.markup.html.repeater.tree.table.TreeColumn;
+import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.ResourceModel;
 
+import com.advanced.widgets.demo.frameworks.FrameworkTabs;
+import com.advanced.widgets.dropdown.Dropdown;
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 import com.advanced.widgets.tree.JsonBasedTreeGrid;
 import com.advanced.widgets.tree.TreeGrid;
 import com.github.openjson.JSONArray;
@@ -24,7 +32,7 @@ import com.github.openjson.JSONObject;
  * The files of advanced-widgets in a {@link TreeGrid} of Wicket components and in a
  * {@link JsonBasedTreeGrid} rendered in the browser from JSON, one above the other, with their
  * kinds, sizes and the days they were changed; the file selected in either is shown next to them.
- * The React and Svelte tabs show the same files in the TreeGrid of
+ * A drop-down above them chooses whether and how their columns are resized. The React and Svelte tabs show the same files in the TreeGrid of
  * {@code @advanced-widgets/react} and {@code @advanced-widgets/svelte}.
  */
 public class TreeGridPage extends FilesDemoPage
@@ -37,6 +45,16 @@ public class TreeGridPage extends FilesDemoPage
 	/** The columns after the tree column, by the key of their header and of the data they show. */
 	private static final List<String> COLUMNS = List.of("kind", "size", "modified");
 
+	/** How the columns are resized, by the keys of the choices of the drop-down. */
+	private static final List<String> RESIZING = List.of("none", "fit", "stretch");
+
+	/** How the columns are resized at first. */
+	private static final Mode RESIZED = Mode.FIT;
+
+	private final TreeGrid<ProjectFile, String> treeGrid;
+
+	private final JsonBasedTreeGrid<ProjectFile, Integer> jsonTreeGrid;
+
 	/**
 	 * Constructor.
 	 */
@@ -44,7 +62,7 @@ public class TreeGridPage extends FilesDemoPage
 	{
 		ProjectFilesProvider provider = new ProjectFilesProvider();
 
-		TreeGrid<ProjectFile, String> treeGrid = new TreeGrid<>("treeGrid", columns(),
+		treeGrid = new TreeGrid<>("treeGrid", columns(),
 			provider)
 		{
 			private static final long serialVersionUID = 1L;
@@ -56,9 +74,12 @@ public class TreeGridPage extends FilesDemoPage
 			}
 		};
 		treeGrid.expand(expanded());
+		treeGrid.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
+		treeGrid.setResizableColumns(RESIZED);
+		treeGrid.setOutputMarkupId(true);
 		getThemed().add(treeGrid);
 
-		JsonBasedTreeGrid<ProjectFile, Integer> jsonTreeGrid = new JsonBasedTreeGrid<>(
+		jsonTreeGrid = new JsonBasedTreeGrid<>(
 			"jsonTreeGrid", provider)
 		{
 			private static final long serialVersionUID = 1L;
@@ -84,7 +105,62 @@ public class TreeGridPage extends FilesDemoPage
 				cssClassOf(column));
 		}
 		jsonTreeGrid.expand(expanded());
+		jsonTreeGrid.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
+		jsonTreeGrid.setResizableColumns(RESIZED);
+		jsonTreeGrid.setOutputMarkupId(true);
 		getThemed().add(jsonTreeGrid);
+
+		getThemed().add(resizing("resize"));
+	}
+
+	/**
+	 * @return the drop-down choosing whether and how the columns of both tree grids are resized,
+	 *         repainting them
+	 */
+	private Dropdown<String> resizing(String id)
+	{
+		Dropdown<String> resizing = new Dropdown<>(id, LambdaModel.of(
+			() -> keyOf(treeGrid.getResizableColumns()), this::resize), RESIZING,
+			new ChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(String key)
+				{
+					return getString("resize." + key);
+				}
+
+				@Override
+				public String getIdValue(String key, int index)
+				{
+					return key;
+				}
+			});
+		resizing.setRequired(true);
+		resizing.add(new AjaxFormComponentUpdatingBehavior("change")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				target.add(treeGrid, jsonTreeGrid);
+			}
+		});
+		return resizing;
+	}
+
+	private void resize(String key)
+	{
+		Mode mode = "none".equals(key) ? null : Mode.valueOf(key.toUpperCase(Locale.ROOT));
+		treeGrid.setResizableColumns(mode);
+		jsonTreeGrid.setResizableColumns(mode);
+	}
+
+	private static String keyOf(Mode mode)
+	{
+		return mode != null ? mode.name().toLowerCase(Locale.ROOT) : "none";
 	}
 
 	/**
@@ -130,8 +206,19 @@ public class TreeGridPage extends FilesDemoPage
 	}
 
 	/**
+	 * @return the height of the tree grids, lower than that of the trees, as two are shown one
+	 *         above the other
+	 */
+	@Override
+	protected int getTreeHeight()
+	{
+		return 384;
+	}
+
+	/**
 	 * @return the configuration of the trees, with the header of the tree column and the other
-	 *         columns, as the JSON tree grid has them
+	 *         columns, as the JSON tree grid has them, how their columns are resized at first and
+	 *         the texts of the drop-down choosing it
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
@@ -147,6 +234,14 @@ public class TreeGridPage extends FilesDemoPage
 			}
 			columns.put(json);
 		}
-		return super.getFrameworkConfig().put("header", getString("name")).put("columns", columns);
+		JSONObject config = super.getFrameworkConfig().put("header", getString("name"))
+			.put("columns", columns).put("resizableColumns", keyOf(RESIZED));
+		JSONObject texts = config.getJSONObject("texts").put("resize", getString("resize"));
+		for (String key : RESIZING)
+		{
+			texts.put("resize." + key, getString("resize." + key));
+		}
+		FrameworkTabs.withDropdownTexts(this, texts);
+		return config;
 	}
 }

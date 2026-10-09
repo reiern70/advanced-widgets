@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.advanced.widgets.demo.WicketApplication;
 import com.advanced.widgets.demo.autocomplete.AutocompletePage;
+import com.advanced.widgets.demo.datatable.DynamicDataTablePage;
 import com.advanced.widgets.demo.datatable.UsersRowsResource;
 import com.advanced.widgets.demo.dropdown.DropdownPage;
 import com.advanced.widgets.demo.list.JsonListPage;
@@ -76,6 +77,15 @@ class FrameworkTabsTest
 			assertEquals("hidden", app.getAttribute("hidden"));
 			assertNull(app.getAttribute("data-mount"), "mounted when its tab is first shown");
 		}
+	}
+
+	@Test
+	void stylesTheDialogsOfTheAppsOnPagesWithoutAModal()
+	{
+		tester.startPage(DynamicDataTablePage.class);
+
+		tester.assertContains("wicket-modal.*\\.css");
+		tester.assertContains("wicket-scrollbar.*\\.css");
 	}
 
 	@Test

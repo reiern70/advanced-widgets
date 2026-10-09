@@ -17,6 +17,7 @@
 
 import { Chips } from './chips.js';
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
+import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
 import { templates, type CompiledTemplate } from './templates.js';
 
 /** A chosen value. */
@@ -122,6 +123,12 @@ export class Autocomplete {
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
 
+	private scrollbar: ScrollbarHandle | undefined = undefined;
+
+	/** Gives the list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
+	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
+		Scrollbar.attach(list, { axis: 'y' });
+
 	/**
 	 * @param input the hidden input
 	 * @param options where the suggestions come from, how they are shown, and the texts
@@ -200,7 +207,10 @@ export class Autocomplete {
 		this.list = create('ul', 'wicket-autocomplete-list');
 		this.list.id = this.id + '-list';
 		this.list.setAttribute('role', 'listbox');
-		this.menu.appendChild(this.list);
+		// the list scrolls in the wrapper of the slim scroll bars of the core
+		const listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
+		listBox.appendChild(this.list);
+		this.menu.appendChild(listBox);
 		this.status = create('div', 'wicket-autocomplete-status');
 		this.status.hidden = true;
 		this.menu.appendChild(this.status);
@@ -208,6 +218,9 @@ export class Autocomplete {
 
 		this.configure(this.options);
 		this.bind();
+		if (this.list.isConnected) {
+			this.scrollbar = Autocomplete.attachScrollbar(this.list);
+		}
 		this.stopWatchingRemoval = onRemoving(wrapper, () => this.detach());
 	}
 
@@ -351,6 +364,8 @@ export class Autocomplete {
 		});
 		this.listeners = [];
 		window.clearTimeout(this.timer);
+		this.scrollbar?.destroy();
+		this.scrollbar = undefined;
 		this.stopWatchingRemoval?.();
 		this.stopWatchingRemoval = null;
 	}

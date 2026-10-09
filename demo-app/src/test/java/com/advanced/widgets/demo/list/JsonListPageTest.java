@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalDialog;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
@@ -28,6 +27,7 @@ import com.advanced.widgets.demo.datatable.DatabaseLocator;
 import com.advanced.widgets.demo.datatable.User;
 import com.advanced.widgets.demo.datatable.UsersDatabase;
 import com.advanced.widgets.jsonlist.JsonBasedInfiniteList;
+import com.advanced.widgets.modal.Modal;
 
 /**
  * Shows, edits and deletes the users of {@link JsonListPage} through the actions of its list.
@@ -36,7 +36,7 @@ class JsonListPageTest
 {
 	private static final String LIST = "themed:users";
 
-	private static final String FORM = "dialog:overlay:dialog:content:form:form";
+	private static final String FORM = "dialog:overlay:dialog:content:body:form";
 
 	private WicketTester tester;
 
@@ -108,7 +108,7 @@ class JsonListPageTest
 	void editingRepaintsOnlyTheCardOfTheUser()
 	{
 		act("edit", user);
-		assertTrue(((ModalDialog)tester.getComponentFromLastRenderedPage("dialog")).isOpen());
+		assertTrue(((Modal)tester.getComponentFromLastRenderedPage("dialog")).isOpen());
 
 		FormTester form = tester.newFormTester(FORM);
 		form.setValue("city", "Springfield");
@@ -118,7 +118,7 @@ class JsonListPageTest
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.contains(".renderItem(\"" + user.getId() + "\""), response);
 		assertFalse(response.contains(".update({"), "the other cards are left alone");
-		assertFalse(((ModalDialog)tester.getComponentFromLastRenderedPage("dialog")).isOpen());
+		assertFalse(((Modal)tester.getComponentFromLastRenderedPage("dialog")).isOpen());
 	}
 
 	@Test
@@ -133,7 +133,7 @@ class JsonListPageTest
 			tester.assertContains(Pattern.quote("Delete Zelda Zuse?"));
 			assertTrue(database.find(0, Integer.MAX_VALUE, null).contains(added));
 
-			tester.clickLink("dialog:overlay:dialog:content:confirm");
+			tester.clickLink("dialog:overlay:dialog:content:footer:buttons:2");
 
 			assertFalse(database.find(0, Integer.MAX_VALUE, null).contains(added));
 			tester.assertContains(Pattern.quote(".update({\"items\":["));

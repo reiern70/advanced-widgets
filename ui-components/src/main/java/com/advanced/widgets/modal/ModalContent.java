@@ -19,9 +19,10 @@ import org.apache.wicket.util.lang.Args;
 /**
  * The content of a {@link Modal} opened with a title, a body and buttons: a header
  * ({@code modal-dialog-header}) holding the title ({@code modal-dialog-title}) and the close
- * button ({@code modal-dialog-close}), the body ({@code modal-dialog-body}) and a footer
- * ({@code modal-dialog-footer}) with the buttons, on the right. Contents of their own follow the
- * same markup, so the dialog drags, folds and closes the same.
+ * button ({@code modal-dialog-close}), the body ({@code modal-dialog-body}), in the wrapper of
+ * its slim scroll bars ({@code wicket-scrollbar}), and a footer ({@code modal-dialog-footer}) with
+ * the buttons, on the right. Contents of their own follow the same markup, so the dialog drags,
+ * folds, scrolls and closes the same.
  *
  * @since 11.0.0
  */

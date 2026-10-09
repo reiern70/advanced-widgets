@@ -5,7 +5,7 @@
 
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { isModified, ModalDialog } from '../src/index.js';
+import { isModified, ModalDialog, Scrollbar } from '../src/index.js';
 
 beforeAll(() => {
 	// jsdom lays nothing out: every element counts as shown
@@ -227,5 +227,18 @@ describe('ModalDialog', () => {
 
 		expect(document.activeElement!.id).toBe('opener');
 		modal.destroy();
+	});
+
+	it('scrolls a body in the wrapper of the scroll bars with them', () => {
+		const overlay = dialog('m');
+		overlay.querySelector('.modal-dialog-content')!.insertAdjacentHTML('beforeend',
+			'<div class="wicket-scrollbar"><div class="modal-dialog-body">Body</div></div>');
+		const body = overlay.querySelector<HTMLElement>('.modal-dialog-body')!;
+		const modal = new ModalDialog(overlay);
+
+		expect(Scrollbar.of(body)).toBeDefined();
+
+		modal.destroy();
+		expect(Scrollbar.of(body)).toBeUndefined();
 	});
 });

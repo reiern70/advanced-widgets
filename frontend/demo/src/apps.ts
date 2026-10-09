@@ -7,7 +7,7 @@
  * How the Wicket pages start the apps of a framework. An element an app renders into carries the
  * framework (data-framework-app), the demo (data-demo) and its configuration as JSON
  * (data-config). The tabs of a demo mark the element data-mount the first time it is shown and
- * fire framework-app:mount on it; a page showing an app right away renders it marked already.
+ * fire framework-app:mount on it.
  * Every configuration carries the license key of the demo application, which is activated before
  * the first app mounts, so the private components show in every demo.
  */

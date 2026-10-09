@@ -9,7 +9,9 @@ import java.util.Set;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.ISortStateLocator;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.HeadersToolbar;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.NoRecordsToolbar;
@@ -21,11 +23,17 @@ import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.repeater.Item;
+import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.Response;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.icon.IIcon;
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
+import com.advanced.widgets.table.IResizableColumnsTable;
+import com.advanced.widgets.table.ResizableColumnsBehavior;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 
 /**
  * A tree grid of Wicket components: a {@link TableTree} of wicket-extensions whose tree column,
@@ -37,6 +45,10 @@ import com.advanced.widgets.license.Licensing;
  * Ajax; a click on a leaf selects it, repaints its row and the row of the leaf selected before,
  * and calls {@link #onSelect(AjaxRequestTarget, Object)}. Only leaves are selected; the row of the
  * leaf selected carries the CSS class {@code wicket-tree-node--selected}.
+ * <p>
+ * Given a {@link #setHeight(int, BodyHeightUnits) height}, the rows scroll below the row of
+ * headers, which stays in place, with slim scroll bars in the colors of the theme. The columns
+ * can be made {@link #setResizableColumns(Mode) resizable}.
  * <p>
  * The table carries the CSS class {@value #CSS_CLASS} and takes its colors from the
  * {@link com.advanced.widgets.theme.Theme theme} it is rendered in, if any.
@@ -58,6 +70,8 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	public static final String CSS_CLASS = "wicket-tree-grid";
 
 	private final TreeSupport<T> support = new TreeSupport<>();
+
+	private ResizableColumnsBehavior resizableColumns;
 
 	/**
 	 * A tree grid showing all its rows.
@@ -99,9 +113,103 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 		getTable().addBottomToolbar(new NoRecordsToolbar(getTable()));
 	}
 
+	/**
+	 * @return a table keeping the widths the user resized its columns to, whose rows render
+	 *         their markup ids, as {@link #updateNode(Object, IPartialPageRequestHandler)} needs
+	 */
+	@Override
+	protected DataTable<T, S> newDataTable(String id, List<? extends IColumn<T, S>> columns,
+		IDataProvider<T> dataProvider, long rowsPerPage)
+	{
+		return new Grid(id, columns, dataProvider, rowsPerPage);
+	}
+
+	/**
+	 * Repaints the table, the rows of a folder expanded or collapsed following its row, but not
+	 * the element around it, which keeps where it is scrolled to.
+	 */
+	@Override
+	public void updateBranch(T node, IPartialPageRequestHandler target)
+	{
+		target.add(getTable());
+	}
+
 	@Override
 	public AbstractTree<T> asTree()
 	{
+		return this;
+	}
+
+	/**
+	 * @return the height of the table in {@link #getHeightUnits()}, or a negative number,
+	 *         {@code -1} by default, when the table is as high as its rows
+	 */
+	public int getHeight()
+	{
+		return support.getHeight();
+	}
+
+	/**
+	 * @return the unit of {@link #getHeight()}, {@link BodyHeightUnits#PIXELS} by default
+	 */
+	public BodyHeightUnits getHeightUnits()
+	{
+		return support.getHeightUnits();
+	}
+
+	/**
+	 * Gives the tree grid a fixed height, within which its rows scroll below the row of headers,
+	 * which stays in place, with the slim scroll bars of a {@link ScrollbarBehavior} in the colors
+	 * of the theme. Without a height, the tree grid is as high as its rows.
+	 *
+	 * @param height
+	 *            the height in the given units; any negative number, such as {@code -1}, to let
+	 *            the tree grid take the height of its rows, as by default
+	 * @param units
+	 *            the units of the height
+	 * @return {@code this}
+	 */
+	public TreeGrid<T, S> setHeight(int height, BodyHeightUnits units)
+	{
+		support.setHeight(this, height, units, ":scope > table > thead");
+		return this;
+	}
+
+	/**
+	 * @return how the user resizes the columns, {@code null}, as by default, when they cannot be
+	 *         resized
+	 */
+	public Mode getResizableColumns()
+	{
+		return resizableColumns != null ? resizableColumns.getMode() : null;
+	}
+
+	/**
+	 * Lets the user resize the columns by dragging the edges of their headers, or with the arrow
+	 * keys on them, with a {@link ResizableColumnsBehavior} on the table, which keeps the widths
+	 * when it is rendered again. A change of the mode forgets the widths the user gave the
+	 * columns; the table is to be rendered again.
+	 *
+	 * @param mode
+	 *            how the table's width follows its columns, {@code null} for columns that cannot
+	 *            be resized
+	 * @return {@code this}
+	 */
+	public TreeGrid<T, S> setResizableColumns(Mode mode)
+	{
+		if (resizableColumns != null)
+		{
+			getTable().remove(resizableColumns);
+			resizableColumns = null;
+		}
+		if (getTable() instanceof TreeGrid<?, ?>.Grid grid)
+		{
+			grid.widths = null;
+		}
+		if (mode != null)
+		{
+			getTable().add(resizableColumns = new ResizableColumnsBehavior(mode));
+		}
 		return this;
 	}
 
@@ -283,6 +391,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	{
 		super.onComponentTag(tag);
 		tag.append("class", CSS_CLASS, " ");
+		support.onComponentTag(tag);
 	}
 
 	@Override
@@ -290,6 +399,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	{
 		super.renderHead(response);
 		response.render(CssHeaderItem.forReference(Tree.CSS));
+		support.renderHead(this, response);
 	}
 
 	@Override
@@ -297,5 +407,43 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	{
 		support.detach();
 		super.onDetach();
+	}
+
+	/**
+	 * The table of the tree grid: its rows render their markup ids, and it keeps the widths the
+	 * user resized its columns to.
+	 */
+	private class Grid extends DataTable<T, S> implements IResizableColumnsTable
+	{
+		private static final long serialVersionUID = 1L;
+
+		private double[] widths;
+
+		Grid(String id, List<? extends IColumn<T, S>> columns, IDataProvider<T> dataProvider,
+			long rowsPerPage)
+		{
+			super(id, columns, dataProvider, rowsPerPage);
+			setOutputMarkupId(true);
+		}
+
+		@Override
+		protected Item<T> newRowItem(String id, int index, IModel<T> model)
+		{
+			Item<T> item = TreeGrid.this.newRowItem(id, index, model);
+			item.setOutputMarkupId(true);
+			return item;
+		}
+
+		@Override
+		public double[] getShownColumnWidths()
+		{
+			return widths;
+		}
+
+		@Override
+		public void columnsResized(AjaxRequestTarget target, double[] widths)
+		{
+			this.widths = widths;
+		}
 	}
 }

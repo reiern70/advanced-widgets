@@ -21,7 +21,7 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * The choices of the React and Svelte demos of {@link FrameworksPage} as JSON, mounted by the
+ * The choices of the React and Svelte demos of {@link FrameworkTabs} as JSON, mounted by the
  * application at {@value #PATH}: the countries named in the language of the session, sorted by
  * their names, and some skills.
  *

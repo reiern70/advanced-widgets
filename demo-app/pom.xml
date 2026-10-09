@@ -136,7 +136,7 @@
 					<exclude>**/*.java</exclude>
 				</excludes>
 			</resource>
-			<!-- react-demo.js and svelte-demo.js of the FrameworksPage, built from frontend/demo -->
+			<!-- react-demo.js and svelte-demo.js of the FrameworkTabs, built from frontend/demo -->
 			<resource>
 				<filtering>false</filtering>
 				<directory>${frontend.directory}/demo/dist</directory>
@@ -160,7 +160,7 @@
 		</testResources>
 		<plugins>
 			<!--
-			  Builds the React and Svelte demos of the FrameworksPage from frontend/demo, with the Node
+			  Builds the React and Svelte demos of the FrameworkTabs from frontend/demo, with the Node
 			  and the packages ui-components installed and built; so build demo-app together with
 			  ui-components (-am).
 			-->

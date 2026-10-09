@@ -28,6 +28,8 @@ import com.advanced.widgets.demo.DemoPage;
 import com.advanced.widgets.demo.frameworks.FrameworkTabs;
 import com.advanced.widgets.icon.IIcon;
 import com.advanced.widgets.icon.SvgIcon;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior;
+import com.advanced.widgets.scrollbar.ScrollbarBehavior.Axis;
 import com.github.openjson.JSONObject;
 
 /**
@@ -61,7 +63,12 @@ public class ButtonsPage extends DemoPage
 			? getString("clicked").replace("{0}", clicked) : getString("clicked.none"));
 		themed.add(clickedLabel.setOutputMarkupId(true));
 
-		themed.add(new ListView<>("sizes", List.of(Size.values()))
+		// the table of the buttons scrolls sideways when the page is narrow
+		WebMarkupContainer scroll = new WebMarkupContainer("scroll");
+		scroll.add(new ScrollbarBehavior(Axis.X));
+		themed.add(scroll);
+
+		scroll.add(new ListView<>("sizes", List.of(Size.values()))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -71,7 +78,7 @@ public class ButtonsPage extends DemoPage
 				item.add(new Label("size", new ResourceModel(sizeKey(item.getModelObject()))));
 			}
 		});
-		themed.add(new ListView<>("variants", SAMPLES)
+		scroll.add(new ListView<>("variants", SAMPLES)
 		{
 			private static final long serialVersionUID = 1L;
 

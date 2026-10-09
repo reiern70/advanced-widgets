@@ -6,12 +6,18 @@
 /*
  * wicket-modal.js: registers Wicket.Modal for the Modal of ui-components, which calls
  * Wicket.Modal.attach(overlayId, options) each time it renders open. The behaviors stop, and the
- * focus goes back, when an update of the page removes the overlay, as closing the dialog does.
+ * focus goes back, when an update of the page removes the overlay, as closing the dialog does. The
+ * body gets the scroll bars of Wicket.Scrollbar, when the page loaded them.
  */
 
 import { onRemoving } from '../host.js';
 import { isModified, MODAL_CLASSES, ModalDialog, type ModalOptions } from '../modal.js';
+import type { ScrollbarHandle } from '../scrollbar.js';
 import { useWicketHost, wicket } from './host.js';
+
+interface ScrollbarGlobal {
+	attach(element: HTMLElement): ScrollbarHandle | undefined;
+}
 
 const dialogs = new Map<string, ModalDialog>();
 
@@ -78,5 +84,7 @@ const WicketModal = {
 const Wicket = wicket();
 if (Wicket.Modal === undefined) {
 	useWicketHost();
+	ModalDialog.attachScrollbar = (body) =>
+		(window.Wicket?.Scrollbar as ScrollbarGlobal | undefined)?.attach(body);
 	Wicket.Modal = WicketModal;
 }

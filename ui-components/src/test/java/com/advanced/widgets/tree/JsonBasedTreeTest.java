@@ -22,8 +22,10 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.advanced.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.advanced.widgets.jsonlist.IItemAction;
 import com.advanced.widgets.license.Licensing;
+import com.advanced.widgets.table.ResizableColumnsBehavior.Mode;
 import com.advanced.widgets.tree.TestNodes.FileNode;
 import com.advanced.widgets.tree.TreeTest.TestPage;
 
@@ -191,6 +193,35 @@ class JsonBasedTreeTest extends WicketTestCase
 			TreeGrid.CSS_CLASS));
 		tester.assertContains(Pattern.quote("\"table\":{\"header\":\"Name\",\"columns\":" +
 			"[{\"header\":\"Id\",\"template\":\"{{id}}\",\"cssClass\":\"id-column\"}]}"));
+		tester.assertContainsNot(Pattern.quote("\"resizableColumns\""));
+		tester.assertContainsNot("wicket-resizable-columns.*\\.js");
+	}
+
+	@Test
+	void aTreeGridOfAHeightWithResizableColumnsLoadsTheirScripts()
+	{
+		JsonBasedTreeGrid<FileNode, String> table = new JsonBasedTreeGrid<>("tree",
+			new TestNodes.Provider());
+		table.setNodeTemplate("{{name}}");
+		table.setHeight(40, BodyHeightUnits.PERCENT);
+		table.setResizableColumns(Mode.STRETCH);
+		tester.startPage(new TestPage(table));
+
+		assertEquals(40, table.getHeight());
+		assertEquals(BodyHeightUnits.PERCENT, table.getHeightUnits());
+		assertEquals(Mode.STRETCH, table.getResizableColumns());
+		tester.assertContains(Pattern.quote("\"height\":{\"value\":40,\"unit\":\"%\"}"));
+		tester.assertContains(Pattern.quote("\"resizableColumns\":\"stretch\""));
+		tester.assertContains("wicket-scrollbar.*\\.js");
+		tester.assertContains("wicket-resizable-columns.*\\.js");
+	}
+
+	@Test
+	void aTreeWithoutAHeightLeavesTheScrollBarsOut()
+	{
+		assertEquals(-1, tree.getHeight());
+		tester.assertContainsNot(Pattern.quote("\"height\""));
+		tester.assertContainsNot("wicket-scrollbar.*\\.js");
 	}
 
 	@Test

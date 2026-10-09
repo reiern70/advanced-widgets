@@ -5,7 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Autocomplete, type AutocompleteSuggestion } from '../src/index.js';
+import { Autocomplete, Scrollbar, type AutocompleteSuggestion } from '../src/index.js';
 
 const FRUITS: AutocompleteSuggestion[] = ['Apple', 'Apricot', 'Banana'].map((label) => ({
 	id: label.toLowerCase(), label, data: { name: label }
@@ -132,5 +132,15 @@ describe('Autocomplete', () => {
 		instance.destroy();
 		expect(element.parentElement).toBe(document.body);
 		expect(Autocomplete.of('f')).toBeNull();
+	});
+
+	it('scrolls its list of suggestions with the slim scroll bars', () => {
+		const instance = new Autocomplete(input(), { search });
+
+		expect(instance.list.parentElement?.className).toBe('wicket-scrollbar');
+		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
+
+		instance.destroy();
+		expect(Scrollbar.of(instance.list)).toBeUndefined();
 	});
 });
