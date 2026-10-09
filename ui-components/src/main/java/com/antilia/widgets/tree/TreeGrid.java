@@ -187,8 +187,9 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	/**
 	 * Lets the user resize the columns by dragging the edges of their headers, or with the arrow
 	 * keys on them, with a {@link ResizableColumnsBehavior} on the table, which keeps the widths
-	 * when it is rendered again. A change of the mode forgets the widths the user gave the
-	 * columns; the table is to be rendered again.
+	 * when it is rendered again: those the user gave the columns, and those they took by their
+	 * content, so expanding a folder does not change them. A change of the mode forgets the
+	 * widths; the table is to be rendered again.
 	 *
 	 * @param mode
 	 *            how the table's width follows its columns, {@code null} for columns that cannot
@@ -208,7 +209,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 		}
 		if (mode != null)
 		{
-			getTable().add(resizableColumns = new ResizableColumnsBehavior(mode));
+			getTable().add(resizableColumns = new ResizableColumnsBehavior(mode).setKeepWidths(true));
 		}
 		return this;
 	}

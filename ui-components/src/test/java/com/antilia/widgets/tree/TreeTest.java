@@ -176,6 +176,7 @@ class TreeTest extends WicketTestCase
 
 		tester.assertContains(Pattern.quote("tree.style.height = \"20vh\";"));
 		tester.assertContains(Pattern.quote("\"header\":\":scope > table > thead\""));
+		tester.assertContains(Pattern.quote("\"keepWidths\":true"));
 		tester.assertContains(Pattern.quote("Wicket.ResizableColumns.attach(\"" +
 			table.getTable().getMarkupId() + "\""));
 		assertEquals(Mode.FIT, table.getResizableColumns());

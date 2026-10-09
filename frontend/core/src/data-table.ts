@@ -1019,8 +1019,9 @@ export class DynamicDataTable {
 			proportions.forEach((proportion) => {
 				const col = document.createElement('col');
 				const share = proportion / total;
-				col.style.width = filler ? 'calc((100% - ' + FILLER_WIDTH + ') * ' + share + ')' :
-					(share * 100) + '%';
+				// browsers shrink the shares to leave the filler its width; they would lay out
+				// shares written as calc(100% - FILLER_WIDTH) as if they had no width
+				col.style.width = (share * 100) + '%';
 				colgroup!.appendChild(col);
 			});
 			if (filler) {

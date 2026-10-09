@@ -206,6 +206,13 @@ describe('DynamicDataTable', () => {
 			{ rows: rows(1, 2), itemCount: 2 });
 		expect(Array.from(element.querySelectorAll<HTMLElement>(':scope > colgroup col'),
 			(col) => col.style.width)).toEqual(['25%', '75%']);
+
+		// the shares leave the filler its width: browsers lay out calc() in a col as no width
+		new DynamicDataTable({ ...first, resize: undefined, filler: true,
+			layout: { adjustToParent: true, proportions: [1, 3] } }, () => undefined, null, null,
+			{ rows: rows(1, 2), itemCount: 2 });
+		expect(Array.from(element.querySelectorAll<HTMLElement>(':scope > colgroup col'),
+			(col) => col.style.width)).toEqual(['25%', '75%', '3em']);
 	});
 
 	it('tells when the user changed a field of an element', () => {

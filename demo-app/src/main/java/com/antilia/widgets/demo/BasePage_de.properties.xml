@@ -33,6 +33,8 @@
 	<entry key="demo.tree.description">Ihre Dateien in einem Baum, als Wicket-Komponenten oder im Browser aus JSON erzeugt.</entry>
 	<entry key="demo.treeGrid">Baumraster</entry>
 	<entry key="demo.treeGrid.description">Ihre Dateien in einem Baumraster, mit Art, Größe und Änderungstag.</entry>
+	<entry key="demo.masterDetail">Master und Detail</entry>
+	<entry key="demo.masterDetail.description">Die Länder der Benutzer und die Benutzer des gewählten Landes, in zwei Tabellen.</entry>
 	<entry key="demo.progressBar">Fortschrittsbalken</entry>
 	<entry key="demo.progressBar.description">Bekannter und unbekannter Fortschritt, in jedem Farbschema.</entry>
 	<entry key="demo.dropdown">Auswahlliste</entry>

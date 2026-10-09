@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Master and Detail Tables</entry>
+	<entry key="explanation">Two tables on one page, master and detail: the countries the users live in, in a JsonBasedDynamicDataTable whose rows are rendered in the browser from JSON, and the users of the country selected there, in a BeanBasedDynamicDataTable whose rows are rendered on the server by Wicket components.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;Select a country, with the check box of its row, and the table below shows its users; deselect it and it shows all of them. The master selects one row at most, setSelectionMode(SelectionMode.ONE), and onSelectionChanged refreshes the detail via Ajax&lt;/li&gt; &lt;li&gt;The drop-downs above set both tables: whether their columns are resized, keeping the width of the table (ResizableColumnsBehavior with Mode.FIT) or stretching it (Mode.STRETCH); whether they take the full width (setAdjustToParentWidth(true)) or the width of their content; and whether they are stacked or side by side&lt;/li&gt; &lt;li&gt;Resizing the columns of one table leaves the other alone. Stacked, the page grows with the wider table and scrolls sideways; side by side, each table scrolls sideways in its own column&lt;/li&gt; &lt;/ul&gt;</entry>
+	<entry key="resize">Resizable columns</entry>
+	<entry key="resize.none">not</entry>
+	<entry key="resize.fit">keeping the table&apos;s width</entry>
+	<entry key="resize.stretch">stretching the table</entry>
+	<entry key="width">Width</entry>
+	<entry key="width.parent">full width</entry>
+	<entry key="width.content">by content</entry>
+	<entry key="layout">Layout</entry>
+	<entry key="layout.stacked">stacked</entry>
+	<entry key="layout.sideBySide">side by side</entry>
+	<entry key="countries">Countries</entry>
+	<entry key="country">Country</entry>
+	<entry key="code">Code</entry>
+	<entry key="count">Users</entry>
+	<entry key="users.all">All users</entry>
+	<entry key="users.of">Users in {0}</entry>
+	<entry key="firstName">First name</entry>
+	<entry key="lastName">Last name</entry>
+	<entry key="bornDate">Born</entry>
+	<entry key="city">City</entry>
+	<entry key="phones">Phones</entry>
+</properties>

@@ -14,6 +14,7 @@ import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
+import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
@@ -77,6 +78,7 @@ public final class Demos
 		new Demo("jsonList", "data", JsonListPage.class, false),
 		new Demo("tree", "data", TreePage.class, false),
 		new Demo("treeGrid", "data", TreeGridPage.class, false),
+		new Demo("masterDetail", "data", MasterDetailPage.class, false),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true),

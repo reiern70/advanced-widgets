@@ -1,0 +1,26 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="themed" class="master-detail">
+	<div class="master-detail__options">
+		<label wicket:for="resize"><wicket:message key="resize"/></label>
+		<select wicket:id="resize"></select>
+		<label wicket:for="width"><wicket:message key="width"/></label>
+		<select wicket:id="width"></select>
+		<label wicket:for="layout"><wicket:message key="layout"/></label>
+		<select wicket:id="layout"></select>
+	</div>
+	<div wicket:id="tables" class="master-detail__tables">
+		<section class="master-detail__table">
+			<h2 class="master-detail__title"><wicket:message key="countries"/></h2>
+			<table class="ant-dataview" cellspacing="0" wicket:id="countries">[countries]</table>
+		</section>
+		<section class="master-detail__table">
+			<h2 class="master-detail__title" wicket:id="usersTitle">[users of the country]</h2>
+			<table class="ant-dataview" cellspacing="0" wicket:id="users">[users]</table>
+		</section>
+	</div>
+</div>
+</wicket:extend>

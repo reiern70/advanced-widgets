@@ -33,6 +33,8 @@
 	<entry key="demo.tree.description">Sus archivos en un árbol, como componentes Wicket o generados en el navegador a partir de JSON.</entry>
 	<entry key="demo.treeGrid">Cuadrícula en árbol</entry>
 	<entry key="demo.treeGrid.description">Sus archivos en una cuadrícula en árbol, con su tipo, tamaño y día de modificación.</entry>
+	<entry key="demo.masterDetail">Maestra y detalle</entry>
+	<entry key="demo.masterDetail.description">Los países de los usuarios y los usuarios del que elija, en dos tablas.</entry>
 	<entry key="demo.progressBar">Barra de progreso</entry>
 	<entry key="demo.progressBar.description">Progreso conocido y desconocido, en cualquiera de los temas.</entry>
 	<entry key="demo.dropdown">Lista desplegable</entry>

@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ *
+ * The master and the detail table: stacked, or side by side.
+ */
+.master-detail__options {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em 0.75em;
+	margin-bottom: 1em;
+}
+
+.master-detail__options label {
+	font-weight: 600;
+}
+
+.master-detail__tables {
+	display: grid;
+	gap: 1.5em;
+}
+
+/* stacked: the column of both grows with the wider table, the page scrolling sideways */
+.master-detail--stacked {
+	grid-template-columns: minmax(min-content, 1fr);
+}
+
+/* side by side: each table scrolls sideways in its own column */
+.master-detail--sideBySide {
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	align-items: start;
+}
+
+.master-detail--sideBySide > .master-detail__table {
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.master-detail__title {
+	margin: 0 0 0.5em 0;
+	font-size: 1.1em;
+}

@@ -18,8 +18,9 @@ import com.antilia.widgets.dynamicdatatable.SortableDynamicDataProvider;
 
 /**
  * The users of the large database for the dynamic table examples. Sorts by first or last name
- * with the database's indexes, and by born date in memory, and filters by first and last name in
- * memory. The users are their own keys' source, being {@link User#getId() identifiable}.
+ * with the database's indexes, and by born date in memory, and filters in memory by first and
+ * last name and by country. The users are their own keys' source, being
+ * {@link User#getId() identifiable}.
  */
 public class UsersProvider extends SortableDynamicDataProvider<User, Long, String>
 	implements
@@ -30,6 +31,8 @@ public class UsersProvider extends SortableDynamicDataProvider<User, Long, Strin
 	private static final String BORN_DATE = "bornDate";
 
 	private String filter;
+
+	private String country;
 
 	/**
 	 * Constructor.
@@ -54,6 +57,23 @@ public class UsersProvider extends SortableDynamicDataProvider<User, Long, Strin
 	public void setFilter(String filter)
 	{
 		this.filter = filter;
+	}
+
+	/**
+	 * @return the ISO 3166 code of the country the users live in, or {@code null} for all
+	 */
+	public String getCountry()
+	{
+		return country;
+	}
+
+	/**
+	 * @param country
+	 *            the ISO 3166 code of the country the users live in, or {@code null} for all
+	 */
+	public void setCountry(String country)
+	{
+		this.country = country;
 	}
 
 	@Override
@@ -89,6 +109,10 @@ public class UsersProvider extends SortableDynamicDataProvider<User, Long, Strin
 			String term = filter.trim().toLowerCase(Locale.ROOT);
 			users.removeIf(user -> contains(user.getFirstName(), term) == false &&
 				contains(user.getLastName(), term) == false);
+		}
+		if (country != null)
+		{
+			users.removeIf(user -> country.equals(user.getCountry()) == false);
 		}
 		if (byBornDate)
 		{

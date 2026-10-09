@@ -36,6 +36,12 @@ export interface ResizableColumnsOptions {
 	/** Called with the widths after the user resized a column. */
 	onResize?: (widths: number[]) => void;
 	/**
+	 * Whether a table rendered again with the same id, by an Ajax update for example, keeps the
+	 * widths its columns had, rather than being laid out by its content again; unless it is given
+	 * widths or proportions, its mode changed or its header cells did.
+	 */
+	keepWidths?: boolean;
+	/**
 	 * The widths the columns of the given header cells take by their content, where the header
 	 * cells alone do not tell.
 	 */
@@ -64,6 +70,17 @@ const BAND_CLASS = 'antilia-col-resize-band';
 const LABEL_CLASS = 'antilia-col-resize-label';
 const RESIZING_CLASS = 'antilia-resizing';
 const COLGROUP_CLASS = 'antilia-resizable-colgroup';
+/** Marks a header cell that is not a column of its own, and its col. */
+const SKIP_ATTRIBUTE = 'data-resizable-skip';
+/** Marks a table whose columns were laid out, which no longer follows the width of its parent. */
+const LAID_OUT_CLASS = 'antilia-resizable-columns-laid-out';
+
+/** The widths a table keeping them had when it was detached, with its mode and header cells. */
+interface KeptWidths {
+	mode: ResizeMode;
+	headers: string;
+	widths: number[];
+}
 
 function sum(widths: number[]): number {
 	return widths.reduce((total, width) => total + width, 0);
@@ -103,6 +120,9 @@ export class ResizableColumns {
 	 */
 	static readonly tableOptions: Record<string, ResizableColumnsOptions> = {};
 
+	/** The widths of the tables keeping them, by their ids, until they are attached again. */
+	private static readonly kept: Record<string, KeptWidths> = {};
+
 	private static stopWatchingAdditions: Unsubscribe | null = null;
 
 	/** The host whose additions are watched, which changes when another one is set. */
@@ -121,6 +141,8 @@ export class ResizableColumns {
 	readonly adjustToParent: boolean;
 
 	private readonly measureContent: ResizableColumnsOptions['measure'];
+
+	private readonly keepWidths: boolean;
 
 	/** Whether the widths were given or set by the user, rather than laid out. */
 	sized: boolean;
@@ -157,6 +179,7 @@ export class ResizableColumns {
 		this.onResize = options.onResize;
 		this.adjustToParent = options.adjustToParent === true;
 		this.measureContent = options.measure;
+		this.keepWidths = options.keepWidths === true;
 
 		this.table.addEventListener('pointerdown', this.onPointerDown);
 		this.table.addEventListener('keydown', this.onKeyDown);
@@ -167,6 +190,8 @@ export class ResizableColumns {
 		this.sized = positiveWidths(options.widths, count);
 		this.proportions = positiveWidths(options.proportions, count) ?
 			options.proportions.slice() : undefined;
+		const kept = this.sized || this.proportions ? undefined : this.keptWidths();
+		delete ResizableColumns.kept[this.table.id];
 		if (this.sized) {
 			this.table.style.tableLayout = 'fixed';
 			this.apply(options.widths!);
@@ -174,6 +199,10 @@ export class ResizableColumns {
 			this.base = this.proportions;
 			this.table.style.tableLayout = 'fixed';
 			this.apply(this.layout(this.base));
+		} else if (kept) {
+			this.base = kept;
+			this.table.style.tableLayout = 'fixed';
+			this.apply(this.base);
 		} else {
 			this.layOutWhenShown(() => this.layOutByContent());
 		}
@@ -219,6 +248,9 @@ export class ResizableColumns {
 			instance.destroy();
 			if (restore) {
 				instance.restore();
+			} else if (instance.keepWidths && instance.widths) {
+				ResizableColumns.kept[id] = { mode: instance.mode,
+					headers: instance.headerTexts(), widths: instance.widths.slice() };
 			}
 			delete ResizableColumns.instances[id];
 		}
@@ -301,7 +333,25 @@ export class ResizableColumns {
 	 *          carrying data-resizable-skip
 	 */
 	headerCells(): HTMLTableCellElement[] {
-		return this.headerRowCells().filter((cell) => !cell.hasAttribute('data-resizable-skip'));
+		return this.headerRowCells().filter((cell) => !cell.hasAttribute(SKIP_ATTRIBUTE));
+	}
+
+	/**
+	 * @returns the texts of the header cells, telling whether a table rendered again has the same
+	 *          columns
+	 */
+	headerTexts(): string {
+		return this.headerCells().map((cell) => (cell.textContent || '').trim()).join('\n');
+	}
+
+	/**
+	 * @returns the widths this table kept when it was detached, if it keeps them and has the same
+	 *          mode and columns
+	 */
+	private keptWidths(): number[] | undefined {
+		const kept = ResizableColumns.kept[this.table.id];
+		return kept && this.keepWidths && kept.mode === this.mode &&
+			kept.headers === this.headerTexts() ? kept.widths : undefined;
 	}
 
 	/**
@@ -309,7 +359,7 @@ export class ResizableColumns {
 	 *          of their own but keep their width, such as an empty column at the end
 	 */
 	skippedCells(): HTMLTableCellElement[] {
-		return this.headerRowCells().filter((cell) => cell.hasAttribute('data-resizable-skip'));
+		return this.headerRowCells().filter((cell) => cell.hasAttribute(SKIP_ATTRIBUTE));
 	}
 
 	/**
@@ -367,6 +417,7 @@ export class ResizableColumns {
 				col.style.width = '';
 			});
 			this.table.style.width = '';
+			this.table.classList.remove(LAID_OUT_CLASS);
 			this.layOutByContent();
 		});
 	}
@@ -449,19 +500,50 @@ export class ResizableColumns {
 		}
 	}
 
+	/**
+	 * @returns the cols of the columns, one for each header cell not carrying
+	 *          data-resizable-skip; the colgroup has one for those too, marked with the attribute
+	 */
 	cols(): HTMLTableColElement[] {
+		return this.allCols().filter((col) => !col.hasAttribute(SKIP_ATTRIBUTE));
+	}
+
+	/**
+	 * @returns the cols of all header cells, in their order, those of the cells carrying
+	 *          data-resizable-skip marked with it
+	 */
+	private allCols(): HTMLTableColElement[] {
 		let colgroup = this.table.querySelector('colgroup.' + COLGROUP_CLASS);
-		const count = this.headerCells().length;
-		if (!colgroup || colgroup.children.length !== count) {
+		const cells = this.headerRowCells();
+		const skips = cells.map((cell) => cell.hasAttribute(SKIP_ATTRIBUTE));
+		if (!colgroup || colgroup.children.length !== cells.length ||
+			Array.from(colgroup.children).some((col, i) => col.hasAttribute(SKIP_ATTRIBUTE) !== skips[i])) {
 			colgroup?.remove();
 			colgroup = document.createElement('colgroup');
 			colgroup.className = COLGROUP_CLASS;
-			for (let i = 0; i < count; i++) {
-				colgroup.appendChild(document.createElement('col'));
-			}
+			skips.forEach((skip) => {
+				const col = document.createElement('col');
+				if (skip) {
+					col.setAttribute(SKIP_ATTRIBUTE, '');
+				}
+				colgroup!.appendChild(col);
+			});
 			this.table.insertBefore(colgroup, this.table.firstChild);
 		}
 		return Array.from(colgroup.children) as HTMLTableColElement[];
+	}
+
+	/**
+	 * Keeps the cells carrying data-resizable-skip as wide as they are, in pixels.
+	 */
+	private fixSkippedCols(): void {
+		const cells = this.skippedCells();
+		this.allCols().filter((col) => col.hasAttribute(SKIP_ATTRIBUTE)).forEach((col, i) => {
+			const width = cells[i] ? ResizableColumns.measure(cells[i]) : 0;
+			if (width > 0) {
+				col.style.width = width + 'px';
+			}
+		});
 	}
 
 	/**
@@ -470,23 +552,25 @@ export class ResizableColumns {
 	 */
 	apply(widths: number[]): void {
 		this.widths = widths.slice();
+		this.fixSkippedCols();
 		const cols = this.cols();
 		const total = sum(widths);
 		const fit = this.mode === 'fit';
 		const skipped = this.skipped();
+		// in 'fit' mode, browsers shrink the shares of the columns to leave the skipped cols their
+		// pixels; they would lay out shares written as calc(100% - pixels) as if they had no width
 		cols.forEach((col, index) => {
 			const width = widths[index] || 0;
 			if (!fit) {
 				col.style.width = width + 'px';
 			} else if (total <= 0) {
 				col.style.width = '';
-			} else if (skipped > 0) {
-				col.style.width = 'calc((100% - ' + skipped + 'px) * ' + (width / total) + ')';
 			} else {
 				col.style.width = (width / total * 100) + '%';
 			}
 		});
 		this.table.style.width = fit ? '100%' : (total + skipped) + 'px';
+		this.table.classList.add(LAID_OUT_CLASS);
 	}
 
 	/**
@@ -743,7 +827,7 @@ export class ResizableColumns {
 	restore(): void {
 		this.table.querySelector(':scope > colgroup.' + COLGROUP_CLASS)?.remove();
 		this.table.classList.remove('antilia-resizable-columns',
-			'antilia-resizable-columns-' + this.mode);
+			'antilia-resizable-columns-' + this.mode, LAID_OUT_CLASS);
 		this.table.style.width = '';
 		this.table.style.tableLayout = '';
 	}

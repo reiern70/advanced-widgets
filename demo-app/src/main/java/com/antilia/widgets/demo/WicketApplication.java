@@ -21,6 +21,7 @@ import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
+import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antilia.widgets.demo.datatable.UsersRowsResource;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
@@ -109,6 +110,7 @@ public class WicketApplication extends WebApplication
 		mountPage("json-infinite-list", JsonListPage.class);
 		mountPage("tree", TreePage.class);
 		mountPage("tree-grid", TreeGridPage.class);
+		mountPage("master-detail", MasterDetailPage.class);
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);

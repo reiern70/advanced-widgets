@@ -142,16 +142,19 @@ html[dir="rtl"] .antilia-tree-toggle--expanded > * {
 .antilia-tree--scrolling:has(> table.antilia-resizable-columns-stretch) {
 	overflow-x: hidden;
 	width: max-content;
-	min-width: 100%;
 }
 
 .antilia-scrollbar:has(> .antilia-tree--scrolling > table.antilia-resizable-columns-stretch) {
 	width: max-content;
-	min-width: 100%;
 }
 
-/* the table fills the width it is given, as the JSON grid does, and grows beyond it */
-.antilia-tree--scrolling > table.antilia-resizable-columns-stretch {
+/*
+ * the table fills the width it is given while its columns are laid out, as the JSON grid does,
+ * then keeps the widths of its columns: a tree grid next to it widening the page does not widen it
+ */
+.antilia-tree--scrolling:has(> table.antilia-resizable-columns-stretch:not(.antilia-resizable-columns-laid-out)),
+.antilia-scrollbar:has(> .antilia-tree--scrolling > table.antilia-resizable-columns-stretch:not(.antilia-resizable-columns-laid-out)),
+.antilia-tree--scrolling > table.antilia-resizable-columns-stretch:not(.antilia-resizable-columns-laid-out) {
 	min-width: 100%;
 }
 

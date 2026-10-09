@@ -97,6 +97,8 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 
 	private int minColumnWidth = DEFAULT_MIN_COLUMN_WIDTH;
 
+	private boolean keepWidths;
+
 	/**
 	 * Resizes in {@link Mode#FIT}.
 	 */
@@ -143,6 +145,31 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		return this;
 	}
 
+	/**
+	 * @return whether the table, rendered again by Ajax, keeps the widths its columns had in the
+	 *         browser, {@code false} by default
+	 */
+	public boolean isKeepWidths()
+	{
+		return keepWidths;
+	}
+
+	/**
+	 * Lets the table, rendered again by Ajax, keep the widths its columns had in the browser,
+	 * rather than be laid out by its content again: unless it hands the behavior widths of its
+	 * own, the mode changed or its header cells did. Rows added to or taken from the table then
+	 * no longer change the widths of its columns.
+	 *
+	 * @param keepWidths
+	 *            whether the table keeps the widths of its columns
+	 * @return {@code this}
+	 */
+	public ResizableColumnsBehavior setKeepWidths(boolean keepWidths)
+	{
+		this.keepWidths = keepWidths;
+		return this;
+	}
+
 	@Override
 	protected void onBind()
 	{
@@ -173,6 +200,10 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		JSONObject options = new JSONObject();
 		options.put("mode", mode.name().toLowerCase(Locale.ROOT));
 		options.put("minWidth", minColumnWidth);
+		if (keepWidths)
+		{
+			options.put("keepWidths", true);
+		}
 		StringBuilder script = new StringBuilder("var options = ").append(options).append(";");
 		if (component instanceof IResizableColumnsTable table)
 		{

@@ -212,6 +212,55 @@ describe('ResizableColumns', () => {
 		}
 	});
 
+	it('gives a skipped cell a col of its pixels, and the columns shares without calc()', () => {
+		const element = table(['A', 'B', ''], ['', '', 'data-resizable-skip']);
+		vi.spyOn(ResizableColumns, 'measure').mockImplementation((cell) =>
+			(cell.hasAttribute('data-resizable-skip') ? 42 : 100));
+		ResizableColumns.attach('t', { mode: 'fit', widths: [100, 300] });
+
+		const cols = Array.from(element.querySelectorAll('col'));
+		expect(cols.map((col) => col.style.width)).toEqual(['25%', '75%', '42px']);
+		expect(cols[2].hasAttribute('data-resizable-skip')).toBe(true);
+		expect(ResizableColumns.instances.t.cols()).toEqual(cols.slice(0, 2));
+
+		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
+		expect(Array.from(element.querySelectorAll('col'), (col) => col.style.width))
+			.toEqual(['100px', '300px', '42px']);
+		expect(element.style.width).toBe('442px');
+	});
+
+	it('marks a table whose columns were laid out, until it is restored', () => {
+		const element = table(['A', 'B']);
+		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
+
+		expect(element.classList.contains('antilia-resizable-columns-laid-out')).toBe(true);
+		ResizableColumns.detach('t', true);
+		expect(element.classList.contains('antilia-resizable-columns-laid-out')).toBe(false);
+	});
+
+	it('keeps the widths of a table rendered again, if asked and its columns are the same', () => {
+		table(['A', 'B']);
+		vi.spyOn(ResizableColumns, 'measure').mockReturnValue(100);
+		ResizableColumns.attach('t', { mode: 'stretch', step: 10, keepWidths: true });
+		key(document.querySelector('.antilia-col-resizer')!, 'ArrowRight');
+		const widths = () => Array.from(document.querySelectorAll('col'), (col) => col.style.width);
+		expect(widths()).toEqual(['110px', '100px']);
+
+		table(['A', 'B']);
+		ResizableColumns.attach('t', { mode: 'stretch', keepWidths: true });
+		expect(widths()).toEqual(['110px', '100px']);
+		expect(ResizableColumns.instances.t.sized).toBe(false);
+
+		table(['A', 'C']);
+		ResizableColumns.attach('t', { mode: 'stretch', keepWidths: true });
+		expect(widths()).toEqual(['100px', '100px']);
+
+		ResizableColumns.attach('t', { mode: 'stretch' });
+		table(['A', 'C']);
+		ResizableColumns.attach('t', { mode: 'stretch' });
+		expect(widths()).toEqual(['100px', '100px']);
+	});
+
 	it('keeps the guide inside the box the table scrolls in', () => {
 		const element = table(['A', 'B']);
 		const box = document.createElement('div');
