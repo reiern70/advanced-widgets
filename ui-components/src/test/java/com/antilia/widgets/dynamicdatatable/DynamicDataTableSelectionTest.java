@@ -21,6 +21,7 @@ import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import com.antilia.widgets.dynamicdatatable.ISelection.SelectionType;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
@@ -372,7 +373,7 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 
 		tester.assertVisible(path);
 		tester.assertComponentOnAjaxResponse(path);
-		tester.assertLabel(path, "2 selected");
+		tester.assertLabel(path + ":count", "2 selected");
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.contains("class=\"ant-data-table-selection-count\""), response);
 
@@ -390,7 +391,80 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 		tester.clickLink(SELECT_ALL);
 
 		tester.assertComponentOnAjaxResponse(countPath());
-		tester.assertLabel(countPath(), "5 selected");
+		tester.assertLabel(countPath() + ":count", "5 selected");
+	}
+
+	@Test
+	void theBinOfTheCountDeselectsEveryRow()
+	{
+		startWithCount(5, SelectionMode.MANY);
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "2");
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("class=\"ant-data-table-selection-clear\""), response);
+		assertTrue(response.contains("title=\"Clear selection\" aria-label=\"Clear selection\""),
+			response);
+
+		tester.clickLink(countPath() + ":clear");
+
+		assertTrue(table.getSelection().isEmpty());
+		assertEquals(3, table.changes);
+		tester.assertInvisible(countPath());
+		tester.assertComponentOnAjaxResponse(countPath());
+		response = tester.getLastResponseAsString();
+		assertTrue(response.contains(".selectRows(false);"), response);
+	}
+
+	@Test
+	void theBinOfTheCountDeselectsAllRowsOnceAllAreSelected()
+	{
+		startWithCount(5, SelectionMode.MANY);
+		executeAction(JsonBasedDynamicDataTable.SELECT_PAGE_ACTION, null);
+		tester.clickLink(SELECT_ALL);
+
+		tester.clickLink(countPath() + ":clear");
+
+		assertTrue(table.getSelection().isEmpty());
+		assertEquals(SelectionType.RANGE, table.getSelection().getType());
+		tester.assertInvisible(TOOLBAR);
+	}
+
+	@Test
+	void pagingKeepsTheSelectionByDefault()
+	{
+		startWithCount(5, SelectionMode.MANY);
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+
+		tester.clickLink("table:topNavigation:span:paging:navigator:next");
+
+		assertFalse(table.isClearSelectionOnNavigation());
+		assertEquals(List.of(1L), table.getSelection().getKeys());
+		assertEquals(1, table.changes);
+	}
+
+	@Test
+	void pagingDeselectsEveryRowWhenTheTableSaysSo()
+	{
+		startWithCount(5, SelectionMode.MANY);
+		table.setClearSelectionOnNavigation(true);
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+
+		tester.clickLink("table:topNavigation:span:paging:navigator:next");
+
+		assertTrue(table.getSelection().isEmpty());
+		assertEquals(2, table.changes);
+		assertEquals(1, table.getCurrentPage());
+		tester.assertInvisible(countPath());
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "3");
+		DropDownChoice<?> choice = (DropDownChoice<?>)tester.getComponentFromLastRenderedPage(
+			"table:topNavigation:span:pageSize:itemsPerPage");
+		tester.getRequest().getPostParameters().setParameterValue(choice.getInputName(), "1");
+		tester.executeAjaxEvent(choice, "change");
+
+		assertEquals(4, table.getItemsPerPage());
+		assertTrue(table.getSelection().isEmpty());
+		assertEquals(4, table.changes);
 	}
 
 	@Test
@@ -420,7 +494,7 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 	 */
 	private String countPath()
 	{
-		return "table:bottomNavigation:span:actionsContainer:actions:1";
+		return "table:topNavigation:span:actionsContainer:actions:1";
 	}
 
 	private void executeAction(String action, String key)

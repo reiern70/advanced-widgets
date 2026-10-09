@@ -135,22 +135,22 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 	}
 
 	@Test
-	void navigationIsAtTheBottomByDefault()
+	void navigationIsOnTopByDefault()
 	{
 		startTable(new PeopleProvider(), 1);
 
-		tester.assertVisible("table:bottomNavigation");
-		tester.assertInvisible("table:topNavigation");
+		tester.assertVisible("table:topNavigation");
+		tester.assertInvisible("table:bottomNavigation");
 	}
 
 	@Test
-	void navigationCanBeOnTopOrOnBothEnds()
+	void navigationCanBeAtTheBottomOrOnBothEnds()
 	{
 		JsonBasedDynamicDataTable<Person, String> table = table(new PeopleProvider(), 1);
-		table.setNavigationPosition(ToolbarPosition.TOP);
+		table.setNavigationPosition(ToolbarPosition.BOTTOM);
 		tester.startPage(new TablePage(table));
-		tester.assertVisible("table:topNavigation");
-		tester.assertInvisible("table:bottomNavigation");
+		tester.assertVisible("table:bottomNavigation");
+		tester.assertInvisible("table:topNavigation");
 
 		table.setNavigationPosition(ToolbarPosition.BOTH);
 		tester.startPage(tester.getLastRenderedPage());
@@ -355,16 +355,16 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 		JsonBasedDynamicDataTable<Person, String> table = table(new PeopleProvider(), 10);
 		table.setItemsPerPageOptions(1L, 2L, 10L);
 		tester.startPage(new TablePage(table));
-		tester.assertVisible("table:bottomNavigation:span:pageSize");
-		tester.assertInvisible("table:bottomNavigation:span:paging:navigator");
+		tester.assertVisible("table:topNavigation:span:pageSize");
+		tester.assertInvisible("table:topNavigation:span:paging:navigator");
 
 		DropDownChoice<?> choice = (DropDownChoice<?>)tester.getComponentFromLastRenderedPage(
-			"table:bottomNavigation:span:pageSize:itemsPerPage");
+			"table:topNavigation:span:pageSize:itemsPerPage");
 		tester.getRequest().getPostParameters().setParameterValue(choice.getInputName(), "0");
 		tester.executeAjaxEvent(choice, "change");
 
 		assertEquals(1, table.getItemsPerPage());
-		tester.assertComponentOnAjaxResponse("table:bottomNavigation");
+		tester.assertComponentOnAjaxResponse("table:topNavigation");
 		assertThrows(IllegalArgumentException.class, () -> table.setItemsPerPageOptions(0L));
 	}
 
@@ -373,7 +373,7 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 	{
 		startTable(new PeopleProvider(), 10);
 
-		tester.assertInvisible("table:bottomNavigation");
+		tester.assertInvisible("table:topNavigation");
 	}
 
 	private void assertHeaderClass(int index, String cssClass)

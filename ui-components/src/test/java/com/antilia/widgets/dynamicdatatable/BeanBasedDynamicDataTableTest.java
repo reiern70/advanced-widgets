@@ -101,7 +101,7 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 	{
 		start(5);
 
-		tester.clickLink("table:bottomNavigation:span:paging:navigator:next");
+		tester.clickLink("table:topNavigation:span:paging:navigator:next");
 
 		tester.assertComponentOnAjaxResponse(table.getRowsBody());
 		String response = tester.getLastResponseAsString();

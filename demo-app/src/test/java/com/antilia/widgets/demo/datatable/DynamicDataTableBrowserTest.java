@@ -346,6 +346,39 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 
 	@ParameterizedTest
 	@MethodSource("pages")
+	void theBinOfTheCountAndPagingWhenChosenDeselectEveryRow(SeleniumBrowser browser,
+		String page)
+	{
+		open(browser, page);
+		By count = By.cssSelector(TABLE + " > thead .ant-data-table-selection-count");
+		By checked = By.cssSelector(rows(" input.ant-data-table-select:checked"));
+		assertTrue(driver.findElements(By.cssSelector(TABLE + " > tfoot .ant-data-table-navigation"))
+			.isEmpty(), "only the top navigation by default");
+
+		click(By.cssSelector(rows(":first-child input[type=checkbox]")));
+		click(By.cssSelector(rows(":nth-child(3) input[type=checkbox]")));
+		wait.until(d -> d.findElements(count).size() == 1 &&
+			d.findElement(count).getText().equals("2 selected"));
+		awaitNoVeil();
+		driver.findElement(By.cssSelector(TABLE + " .ant-data-table-selection-clear")).click();
+		wait.until(d -> d.findElements(count).isEmpty() && d.findElements(checked).isEmpty());
+		awaitNoVeil();
+
+		click(By.cssSelector(rows(":first-child input[type=checkbox]")));
+		wait.until(d -> d.findElements(count).size() == 1);
+		awaitNoVeil();
+		navigatorLink("Go to page 2").click();
+		awaitNoVeil();
+		wait.until(d -> d.findElements(count).size() == 1);
+
+		choose("options:clearSelectionOnNavigation", "true");
+		navigatorLink("Go to page 1").click();
+		awaitNoVeil();
+		wait.until(d -> d.findElements(count).isEmpty() && d.findElements(checked).isEmpty());
+	}
+
+	@ParameterizedTest
+	@MethodSource("pages")
 	void theSlowActionShowsTheSpinner(SeleniumBrowser browser, String page)
 	{
 		open(browser, page);
@@ -548,6 +581,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 				.indexOf(value);
 			case "options:resize" -> List.of("NONE", "STRETCH").indexOf(value);
 			case "options:overlayOption:overlay" -> List.of("LOCAL", "BODY").indexOf(value);
+			case "options:clearSelectionOnNavigation" -> List.of("false", "true").indexOf(value);
 			default -> throw new IllegalArgumentException(name);
 		};
 	}

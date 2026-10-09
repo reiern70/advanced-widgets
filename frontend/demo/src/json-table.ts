@@ -6,8 +6,9 @@
 /*
  * The JSON grid demo: the users in a DataTable whose rows are either a local list of JSON the page
  * gave, filtered, sorted and paged in the browser, or loaded from the users resource, which
- * creates, changes and deletes them too. Settings on top choose where the rows come from, paging
- * or infinite scrolling, the selection, its count and resizable columns. The actions of a row
+ * creates, changes and deletes them too. Settings on top choose where the rows come from, where the
+ * navigation is, paging or infinite scrolling, the selection, its count, whether paging clears it
+ * and resizable columns. The actions of a row
  * edit, delete and download the user; the progress of the users loaded from the resource
  * advances as if the server pushed it.
  */
@@ -23,6 +24,9 @@ export type RowsFrom = 'local' | 'resource';
 
 /** How many rows can be selected. */
 export type Selection = 'none' | 'one' | 'many';
+
+/** Where the navigation is shown. */
+export type NavigationPosition = 'top' | 'bottom' | 'both';
 
 /** The texts of the demo, by the keys of the page's bundles. */
 export interface JsonTableTexts extends UserFormTexts {
@@ -40,8 +44,6 @@ export interface JsonTableTexts extends UserFormTexts {
 	saved: string;
 	/** That the users resource failed, {0} standing for why. */
 	failed: string;
-	/** How many users are selected, ${count} standing for the number, as the Wicket grid says. */
-	selectedCount: string;
 	/** The settings, named and offered as the settings of the Wicket page. */
 	rowsSource: string;
 	'rowsSource.local': string;
@@ -56,6 +58,13 @@ export interface JsonTableTexts extends UserFormTexts {
 	selectionCount: string;
 	'selectionCount.shown': string;
 	'selectionCount.hidden': string;
+	clearSelectionOnNavigation: string;
+	'clearSelectionOnNavigation.off': string;
+	'clearSelectionOnNavigation.on': string;
+	navigation: string;
+	'navigation.TOP': string;
+	'navigation.BOTTOM': string;
+	'navigation.BOTH': string;
 	resize: string;
 	'resize.NONE': string;
 	'resize.STRETCH': string;
@@ -84,15 +93,18 @@ export interface JsonTableConfig {
 /** The settings of the grid, as the drop-downs on top choose them. */
 export interface GridSettings {
 	rowsFrom: RowsFrom;
+	navigation: NavigationPosition;
 	infinite: boolean;
 	selection: Selection;
 	selectionCount: boolean;
+	clearSelectionOnNavigation: boolean;
 	resizable: boolean;
 }
 
 /** The settings the demo starts with, those the Wicket grid starts with. */
 export const DEFAULT_SETTINGS: GridSettings = {
-	rowsFrom: 'resource', infinite: false, selection: 'many', selectionCount: true, resizable: true
+	rowsFrom: 'resource', navigation: 'top', infinite: false, selection: 'many',
+	selectionCount: true, clearSelectionOnNavigation: false, resizable: true
 };
 
 /** A setting: its key in the settings, its label and its choices, values as text. */
@@ -110,6 +122,10 @@ export function settingDefs(texts: JsonTableTexts): SettingDef[] {
 		{ key: 'rowsFrom', label: texts.rowsSource, options: [
 			{ value: 'resource', label: texts['rowsSource.RESOURCE'] },
 			{ value: 'local', label: texts['rowsSource.local'] }] },
+		{ key: 'navigation', label: texts.navigation, options: [
+			{ value: 'top', label: texts['navigation.TOP'] },
+			{ value: 'bottom', label: texts['navigation.BOTTOM'] },
+			{ value: 'both', label: texts['navigation.BOTH'] }] },
 		{ key: 'infinite', label: texts.infiniteScroll, options: [
 			{ value: 'false', label: texts['infiniteScroll.off'] },
 			{ value: 'true', label: texts['infiniteScroll.on'] }] },
@@ -120,6 +136,9 @@ export function settingDefs(texts: JsonTableTexts): SettingDef[] {
 		{ key: 'selectionCount', label: texts.selectionCount, options: [
 			{ value: 'true', label: texts['selectionCount.shown'] },
 			{ value: 'false', label: texts['selectionCount.hidden'] }] },
+		{ key: 'clearSelectionOnNavigation', label: texts.clearSelectionOnNavigation, options: [
+			{ value: 'false', label: texts['clearSelectionOnNavigation.off'] },
+			{ value: 'true', label: texts['clearSelectionOnNavigation.on'] }] },
 		{ key: 'resizable', label: texts.resize, options: [
 			{ value: 'true', label: texts['resize.STRETCH'] },
 			{ value: 'false', label: texts['resize.NONE'] }] }
@@ -133,13 +152,6 @@ export function withSetting(settings: GridSettings, key: keyof GridSettings,
 	value: string): GridSettings {
 	const typed = typeof DEFAULT_SETTINGS[key] === 'boolean' ? value === 'true' : value;
 	return { ...settings, [key]: typed };
-}
-
-/**
- * @returns how many users are selected, as the navigation shows it, or nothing for none
- */
-export function selectedCount(texts: JsonTableTexts, count: number): string {
-	return count ? texts.selectedCount.replace('${count}', String(count)) : '';
 }
 
 /**

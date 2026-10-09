@@ -121,7 +121,7 @@ class DynamicDataTablePageTest
 		assertEquals(List.of("{{homePhone}}", "{{cellPhone}}", "{{city}}", "{{countryName}}"),
 			hidden);
 		String page = tester.getLastResponseAsString();
-		assertEquals(2 * 4, page.split("aria-pressed=\"false\"", -1).length - 1, page);
+		assertEquals(4, page.split("aria-pressed=\"false\"", -1).length - 1, page);
 	}
 
 	@Test
@@ -403,7 +403,7 @@ class DynamicDataTablePageTest
 		String page = tester.getLastResponseAsString();
 		// with "Rows from", which the JSON table has besides infinite scroll, and without the
 		// placement of the overlay, which it does not use
-		assertEquals(13, page.split("class=\"ant-dataview-tooltip\" role=\"tooltip\"", -1)
+		assertEquals(14, page.split("class=\"ant-dataview-tooltip\" role=\"tooltip\"", -1)
 			.length - 1);
 		assertTrue(page.contains("Whether the user can resize the columns"), page);
 		tester.assertContains("Resizable");

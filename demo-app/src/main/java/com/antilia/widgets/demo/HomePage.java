@@ -66,23 +66,6 @@ public class HomePage extends BasePage {
 				link.add(new Label("description", new ResourceModel(demo.descriptionKey())));
 			}
 		});
-
-		add(new Label("componentCount", ComponentCatalog.components().size()));
-
-		add(new ListView<>("components", ComponentCatalog.components()) {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void populateItem(ListItem<ComponentDescriptor> item) {
-				ComponentDescriptor component = item.getModelObject();
-				item.add(new Label("category", new ResourceModel(component.categoryKey())));
-				item.add(new Label("name", new ResourceModel(component.nameKey())));
-				item.add(new Label("description", new ResourceModel(component.descriptionKey())));
-				item.add(new Label("status", new ResourceModel(component.status().labelKey()))
-					.add(AttributeModifier.append("class", component.status().cssClass())));
-			}
-		});
-
 	}
 
 	private static class ConnectedPushMessage implements IWebSocketPushMessage {

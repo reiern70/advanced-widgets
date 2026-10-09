@@ -107,6 +107,9 @@ public abstract class DynamicTableOptionsPanel extends Panel
 		add(updatingChoice("selectionCount", List.of(true, false), selectionCount::isShown,
 			selectionCount::setShown,
 			shown -> shown ? "selectionCount.shown" : "selectionCount.hidden"));
+		add(updatingChoice("clearSelectionOnNavigation", List.of(false, true),
+			table::isClearSelectionOnNavigation, table::setClearSelectionOnNavigation,
+			clear -> clear ? "clearSelectionOnNavigation.on" : "clearSelectionOnNavigation.off"));
 		add(updatingChoice("selectionBar", List.of(ToolbarPosition.values()),
 			table::getSelectionToolbarPosition, table::setSelectionToolbarPosition,
 			position -> "navigation." + position.name()));

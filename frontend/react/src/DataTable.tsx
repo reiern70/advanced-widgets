@@ -6,7 +6,7 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState,
 	type MouseEvent, type ReactNode } from 'react';
 
-import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
 	MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
 	UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData, type DataTableFilter,
 	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableSort,
@@ -43,6 +43,18 @@ export interface DataTableProps {
 	selection?: 'none' | 'one' | 'many';
 	/** Called with the keys of the selected rows after every change. */
 	onSelectionChange?(keys: string[]): void;
+	/**
+	 * Whether going to another page, or choosing another page size, deselects every row; false by
+	 * default, the selection surviving paging.
+	 */
+	clearSelectionOnNavigation?: boolean;
+	/**
+	 * Whether the navigation shows how many rows are selected, while any are, with a button that
+	 * deselects every row; true by default.
+	 */
+	selectionCount?: boolean;
+	/** Where the navigation is shown: above the headers, the default, below the rows or both. */
+	navigationPosition?: 'top' | 'bottom' | 'both';
 	/** Called with the action of a clicked [data-dt-action] element and the key of its row. */
 	onAction?(action: string, key: string | null): void;
 	/** The text the rows are filtered by, handed to loadRows; another one starts over. */
@@ -89,6 +101,8 @@ export interface DataTableHandle {
 	renderRow(key: string, data: unknown): void;
 	/** The keys of the selected rows. */
 	selectedKeys(): string[];
+	/** Deselects every row. */
+	clearSelection(): void;
 }
 
 /** The time a load may take before the veil shows, as Wicket's veil of the table waits. */
@@ -100,6 +114,16 @@ function Grip() {
 	return (
 		<svg aria-hidden="true" focusable="false" viewBox="0 0 10 16" width="8" height="13">
 			<path fill="currentColor" d={GRIP} />
+		</svg>
+	);
+}
+
+function ClearIcon() {
+	return (
+		<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18"
+			fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+			strokeLinejoin="round">
+			<path d={CLEAR_SELECTION_ICON} />
 		</svg>
 	);
 }
@@ -124,9 +148,10 @@ function ColumnsIcon() {
 export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable(props,
 	ref) {
 	const { columns, rowsPerPage = 25, pageSizes = [25, 50, 100], infinite = false,
-		selection = 'none', filter, movableColumns = true, resizableColumns = false,
-		columnChooser = true, bodyHeight, adjustToParent, engine, toolbar, actions, licenseKey,
-		className } = props;
+		selection = 'none', selectionCount = true, clearSelectionOnNavigation = false,
+		navigationPosition = 'top', filter,
+		movableColumns = true, resizableColumns = false, columnChooser = true, bodyHeight,
+		adjustToParent, engine, toolbar, actions, licenseKey, className } = props;
 	const texts: DataTableTexts = { ...DATA_TABLE_TEXTS, ...props.texts };
 	const generatedId = useId();
 	const id = props.id ?? 'data-table-' + generatedId.replace(/[^\w-]/g, '');
@@ -141,6 +166,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	const [itemCount, setItemCount] = useState(0);
 	const [range, setRange] = useState({ first: 0, count: 0 });
 	const [busy, setBusy] = useState(false);
+	const [selected, setSelected] = useState(0);
 
 	const instance = useRef<DynamicDataTable | null>(null);
 	const shownRows = useRef(0);
@@ -168,8 +194,20 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	const filler = Boolean(bodyHeight);
 	const heightKey = bodyHeight ? bodyHeight.value + bodyHeight.unit : '';
 
-	const reportSelection = (table: DynamicDataTable) =>
+	const reportSelection = (table: DynamicDataTable) => {
+		setSelected(table.selectedKeys.size);
 		latest.current.onSelectionChange?.(Array.from(table.selectedKeys));
+	};
+
+	// deselects every row, unchecking those shown; the rows loaded next come unchecked
+	const clearSelection = () => {
+		const table = instance.current;
+		if (table && table.selectedKeys.size > 0) {
+			table.selectedKeys = new Set();
+			table.selectRows(false);
+			reportSelection(table);
+		}
+	};
 
 	useLayoutEffect(() => {
 		if (!licensed) {
@@ -229,6 +267,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 			}
 		}, () => setItemCount(table.itemCount ?? 0));
 		instance.current = table;
+		setSelected(table.selectedKeys.size);
 
 		const offset = withSelection ? 1 : 0;
 		const ids = visible.map((column) => column.id);
@@ -303,7 +342,8 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	useImperativeHandle(ref, () => ({
 		reload: () => instance.current?.load() ?? Promise.resolve(),
 		renderRow: (key, data) => instance.current?.renderRow(key, data),
-		selectedKeys: () => Array.from(instance.current?.selectedKeys ?? [])
+		selectedKeys: () => Array.from(instance.current?.selectedKeys ?? []),
+		clearSelection
 	}), []);
 
 	const [veiled, setVeiled] = useState(false);
@@ -328,8 +368,17 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	const go = (target: number) => (event: MouseEvent) => {
 		event.preventDefault();
 		if (target >= 0 && target < pages && target !== page) {
+			if (clearSelectionOnNavigation) {
+				clearSelection();
+			}
 			setPage(target);
 		}
+	};
+	const choosePageSize = (value: string) => {
+		if (clearSelectionOnNavigation && Number(value) !== pageSize) {
+			clearSelection();
+		}
+		setPageSize(Number(value));
 	};
 	const sortBy = (property: string) => (event: MouseEvent) => {
 		event.preventDefault();
@@ -370,6 +419,15 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 					</div>
 					<div className="ant-data-table-actions">
 						{actions}
+						{withSelection && selectionCount && selected > 0 && (
+							<span className="ant-data-table-selection-count">
+								<span role="status">{texts.selectedCount.replace('{0}',
+									String(selected))}</span>
+								<button type="button" className="ant-data-table-selection-clear"
+									title={texts.clearSelection} aria-label={texts.clearSelection}
+									onClick={clearSelection}><ClearIcon /></button>
+							</span>
+						)}
 						{columnChooser && hideable.length > 0 && (
 							<span>
 								<details className="ant-data-table-column-chooser">
@@ -403,7 +461,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 							<span>{texts.rowsPerPage}</span>{' '}
 							<Dropdown options={pageSizes.map((size) => ({ value: String(size),
 								label: String(size) }))} value={String(pageSize)}
-								onChange={(value) => setPageSize(Number(value))} />
+								onChange={choosePageSize} />
 						</label>
 					)}
 				</div>
@@ -416,7 +474,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 			<table id={id} className={['ant-dataview ant-data-table', className]
 				.filter(Boolean).join(' ')} cellSpacing={0}>
 				<thead>
-					{navigation}
+					{navigationPosition !== 'bottom' && navigation}
 					<tr className="ant-data-table-headers">
 						{withSelection && (
 							<th className="ant-data-table-selection" data-resizable="false">
@@ -468,7 +526,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 					</tr>
 				</thead>
 				<tbody></tbody>
-				<tfoot>{navigation}</tfoot>
+				{navigationPosition !== 'top' && <tfoot>{navigation}</tfoot>}
 			</table>
 			{veiled && <div className="ant-data-table-veil" aria-hidden="true" />}
 		</div>

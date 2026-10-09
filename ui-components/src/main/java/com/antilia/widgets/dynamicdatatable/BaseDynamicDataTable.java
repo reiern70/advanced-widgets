@@ -90,7 +90,7 @@ import com.github.openjson.JSONObject;
  * {@link #onNotFoundAction(AjaxRequestTarget, String, Serializable, Object)}.
  * <p>
  * The table is paged like a {@link DataTable}: a {@link DynamicNavigationToolbar navigation}, in
- * the footer, above the headers or both ({@link #setNavigationPosition(ToolbarPosition)}),
+ * the footer, above the headers (the default) or both ({@link #setNavigationPosition(ToolbarPosition)}),
  * switches pages via Ajax.
  * <p>
  * Above and below the rows, the table renders toolbars: its navigation, its
@@ -119,11 +119,12 @@ import com.github.openjson.JSONObject;
  * shows its columns as the user left them.
  * <p>
  * With a selection column, the user selects rows with checkboxes. The selection is kept on the
- * server, by key, and survives paging and refreshing; see {@link #getSelection()}. Once every row
- * of a page is selected, a bar below the top navigation, above the bottom one or both
- * ({@link #setSelectionToolbarPosition(ToolbarPosition)}) offers to select every row of the
- * provider; checking or unchecking a row afterwards turns the selection back into the rows the
- * page shows checked.
+ * server, by key, and survives paging and refreshing, unless the table
+ * {@link #setClearSelectionOnNavigation(boolean) clears it on navigation}; see
+ * {@link #getSelection()}. Once every row of a page is selected, a bar below the top navigation,
+ * above the bottom one or both ({@link #setSelectionToolbarPosition(ToolbarPosition)}) offers to
+ * select every row of the provider; checking or unchecking a row afterwards turns the selection
+ * back into the rows the page shows checked.
  * <p>
  * The table carries the CSS class {@value #CSS_CLASS}, and takes its colors from the
  * {@link com.antilia.widgets.theme.Theme theme} it is rendered in, if any.
@@ -342,9 +343,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	private boolean allSelected;
 
+	private boolean clearSelectionOnNavigation;
+
 	private final LinkedHashSet<K> selectedKeys = new LinkedHashSet<>();
 
-	private ToolbarPosition navigationPosition = ToolbarPosition.BOTTOM;
+	private ToolbarPosition navigationPosition = ToolbarPosition.TOP;
 
 	private List<Long> itemsPerPageOptions = new ArrayList<>();
 
@@ -1500,7 +1503,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
-	 * @return where the navigation is shown, {@link ToolbarPosition#BOTTOM} by default
+	 * @return where the navigation is shown, {@link ToolbarPosition#TOP} by default
 	 */
 	public ToolbarPosition getNavigationPosition()
 	{
@@ -1779,6 +1782,73 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		allSelected = false;
 		selectedKeys.clear();
 		return this;
+	}
+
+	/**
+	 * Deselects every row and has the browser show it: the checkboxes of the rows shown are
+	 * unchecked, the selection bars and the {@link ISelectionView}s, such as the
+	 * {@link SelectionCountToolbarAction count}, are rendered again and
+	 * {@link #onSelectionChanged(AjaxRequestTarget)} is called. Does nothing when no row is
+	 * selected.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @since 11.0.0
+	 */
+	public void clearSelection(AjaxRequestTarget target)
+	{
+		if (getSelection().isEmpty())
+		{
+			return;
+		}
+		clearSelection();
+		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() +
+			".selectRows(false); }");
+		selectionChanged(target);
+	}
+
+	/**
+	 * @return whether going to another page, or choosing another number of rows per page,
+	 *         deselects every row; {@code false} by default, the selection surviving paging
+	 * @since 11.0.0
+	 */
+	public boolean isClearSelectionOnNavigation()
+	{
+		return clearSelectionOnNavigation;
+	}
+
+	/**
+	 * Sets whether going to another page, or choosing another number of rows per page,
+	 * deselects every row, so that the selection is always part of the page shown. Sorting
+	 * deselects every row anyway.
+	 *
+	 * @param clearSelectionOnNavigation
+	 *            whether the navigation deselects every row
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public BaseDynamicDataTable<T, K, C> setClearSelectionOnNavigation(
+		boolean clearSelectionOnNavigation)
+	{
+		this.clearSelectionOnNavigation = clearSelectionOnNavigation;
+		return this;
+	}
+
+	/**
+	 * Called by the navigation when the user went to another page or chose another number of
+	 * rows per page, before the rows are rendered again: deselects every row when the table
+	 * {@link #isClearSelectionOnNavigation() clears its selection on navigation}.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 */
+	protected void onNavigation(AjaxRequestTarget target)
+	{
+		if (clearSelectionOnNavigation && getSelection().isEmpty() == false)
+		{
+			clearSelection();
+			selectionChanged(target);
+		}
 	}
 
 	/**

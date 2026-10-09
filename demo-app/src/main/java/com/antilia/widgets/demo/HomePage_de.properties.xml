@@ -6,31 +6,8 @@
 -->
 <properties>
 	<entry key="lead">Wiederverwendbare Komponenten für Apache Wicket, React und Svelte, mit Ajax und Echtzeit-Unterstützung (WebSocket).</entry>
-	<entry key="inCatalog">Komponenten im Katalog</entry>
 	<entry key="webSocket">WebSocket-Verbindung</entry>
 	<entry key="connecting">Verbinde</entry>
 	<entry key="live">Live</entry>
 	<entry key="demos">Demos</entry>
-	<entry key="components">Komponenten</entry>
-	<entry key="status.AVAILABLE">Verfügbar</entry>
-	<entry key="status.IN_PROGRESS">In Arbeit</entry>
-	<entry key="status.PLANNED">Geplant</entry>
-	<entry key="catalog.dataGrid">Datenraster</entry>
-	<entry key="catalog.dataGrid.description">Sortierbares, seitenweises Raster mit anpassbaren Spalten, Bearbeitung in der Zeile und Zeilenauswahl.</entry>
-	<entry key="catalog.treeGrid">Baumraster</entry>
-	<entry key="catalog.treeGrid.description">Hierarchische Zeilen, deren Kinder bei Bedarf geladen werden, mit gemerktem Auf- und Zuklappen.</entry>
-	<entry key="catalog.liveFeed">Live-Feed</entry>
-	<entry key="catalog.liveFeed.description">Eine Liste, die neue Einträge vom Server über WebSockets empfängt.</entry>
-	<entry key="catalog.notifications">Benachrichtigungen</entry>
-	<entry key="catalog.notifications.description">Toast-Benachrichtigungen an einen Benutzer oder an alle verbundenen Sitzungen.</entry>
-	<entry key="catalog.autocomplete">Autovervollständigung</entry>
-	<entry key="catalog.autocomplete.description">Eingabe mit Vorschlägen vom Server, Tastaturbedienung und Mehrfachauswahl.</entry>
-	<entry key="catalog.dateRangePicker">Zeitraumauswahl</entry>
-	<entry key="catalog.dateRangePicker.description">Start- und Enddatum wählen, mit Vorgaben wie „letzte 7 Tage“ oder „dieser Monat“.</entry>
-	<entry key="catalog.fileUpload">Datei-Upload</entry>
-	<entry key="catalog.fileUpload.description">Hochladen per Drag-and-drop mit Fortschritt je Datei, gemeldet über WebSockets.</entry>
-	<entry key="catalog.modalDialog">Modaler Dialog</entry>
-	<entry key="catalog.modalDialog.description">Barrierefreier Dialog mit Fokusfalle, Stapelung und Ajax-Inhalt.</entry>
-	<entry key="catalog.splitPanel">Geteiltes Panel</entry>
-	<entry key="catalog.splitPanel.description">Anpassbare waagrechte oder senkrechte Bereiche, die sich ihre Größe merken.</entry>
 </properties>

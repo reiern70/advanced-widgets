@@ -121,10 +121,6 @@ a { color: var(--accent, var(--primary)); }
 	opacity: .8;
 }
 
-/* catalog */
-.catalog { padding-top: 40px; padding-bottom: 56px; }
-.catalog h2 { margin: 0 0 20px; font-size: 22px; }
-
 .cards {
 	list-style: none;
 	margin: 0;
@@ -167,9 +163,6 @@ a { color: var(--accent, var(--primary)); }
 	border: 1px solid currentColor;
 	white-space: nowrap;
 }
-.badge--available { color: var(--available); }
-.badge--in-progress { color: var(--in-progress); }
-.badge--planned { color: var(--planned); }
 /* whether the component of a demo is public, or private for now: an open or a closed lock */
 .visibility {
 	display: inline-grid;
@@ -233,11 +226,11 @@ a { color: var(--accent, var(--primary)); }
 }
 a.brand { color: inherit; text-decoration: none; }
 
-.demos { padding-top: 40px; }
+.demos { padding-top: 40px; padding-bottom: 56px; }
 .demos h2 { margin: 0 0 20px; font-size: 22px; }
 .card__link { color: inherit; text-decoration: none; display: block; }
 
-.hero .ws-status { margin-left: 12px; color: inherit; }
+.hero .ws-status { color: inherit; }
 
 /* links of a demo page to the home page and to the previous and next demo */
 .demo__nav {

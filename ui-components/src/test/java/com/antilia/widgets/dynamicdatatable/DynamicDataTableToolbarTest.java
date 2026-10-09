@@ -87,7 +87,7 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 		table.addTopToolbar(toolbar);
 		tester.startPage(new TablePage(table));
 
-		tester.executeAjaxEvent("table:bottomNavigation:span:paging:navigator:next", "click");
+		tester.executeAjaxEvent("table:topNavigation:span:paging:navigator:next", "click");
 
 		tester.assertComponentOnAjaxResponse(toolbar);
 	}
@@ -164,7 +164,7 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 			columns(), new RowsProvider(2), 2);
 		tester.startPage(new TablePage(plain));
 
-		tester.assertInvisible("table:bottomNavigation");
+		tester.assertInvisible("table:topNavigation");
 	}
 
 	@Test

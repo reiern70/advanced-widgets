@@ -9,8 +9,8 @@ import { Button, DataTable, Dropdown, type DataTableHandle } from '@antilia/reac
 
 import { format, loadChoices, type Choice } from '../data.js';
 import { interpolate, type UserFields } from '../json-list.js';
-import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, selectedCount,
-	settingDefs, simulatedPushes, withSetting, type JsonTableConfig } from '../json-table.js';
+import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, settingDefs,
+	simulatedPushes, withSetting, type JsonTableConfig } from '../json-table.js';
 import { Dialog } from './Dialog.js';
 import { Feedback, type Message } from './Feedback.js';
 import { UserForm } from './UserForm.js';
@@ -47,7 +47,6 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 	const [localRows, setLocalRows] = useState(local.rows);
 	const [typed, setTyped] = useState('');
 	const [filter, setFilter] = useState('');
-	const [selected, setSelected] = useState<string[]>([]);
 	const [countries, setCountries] = useState<Choice[]>([]);
 	const [shown, setShown] = useState<Shown>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
@@ -67,10 +66,8 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 	const failed = (error: unknown) => setMessages([{ level: 'error',
 		text: format(texts.failed, error instanceof Error ? error.message : String(error)) }]);
 
-	const choose = (key: keyof typeof settings, value: string) => {
+	const choose = (key: keyof typeof settings, value: string) =>
 		setSettings((current) => withSetting(current, key, value));
-		setSelected([]);
-	};
 
 	const action = (name: string, key: string | null) => {
 		const user = users.get(key);
@@ -116,7 +113,6 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 			setShown(null);
 			setMessages([{ level: 'info', text: format(texts.deleted, user.firstName,
 				user.lastName) }]);
-			setSelected((current) => current.filter((selectedKey) => selectedKey !== key));
 			if (fromResource) {
 				await table.current?.reload();
 			} else {
@@ -129,8 +125,6 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 
 	const dialogUser = shown && 'form' in shown ? users.get(shown.form) ?? null : null;
 	const deletion = shown && 'deletion' in shown ? users.get(shown.deletion) : undefined;
-	const count = settings.selectionCount && settings.selection !== 'none' ?
-		selectedCount(texts, selected.length) : '';
 
 	return (
 		<>
@@ -155,7 +149,9 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 						{ rows: localRows, filterRows: matchesName })}
 					rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes}
 					infinite={settings.infinite} selection={settings.selection}
-					onSelectionChange={setSelected} onAction={action} filter={filter}
+					selectionCount={settings.selectionCount} navigationPosition={settings.navigation}
+					clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
+					onAction={action} filter={filter}
 					resizableColumns={settings.resizable ? 'stretch' : false}
 					bodyHeight={config.bodyHeight} adjustToParent texts={texts.table}
 					toolbar={
@@ -166,15 +162,11 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 						</label>
 					}
 					actions={
-						<>
-							<span>
-								<button type="button" onClick={() => setShown({ form: null })}
-									className="ant-data-table-action ant-data-table-icon-action"
-									title={texts.newUser} aria-label={texts.newUser}><AddIcon /></button>
-							</span>
-							{count && <span className="ant-data-table-selection-count"
-								role="status">{count}</span>}
-						</>
+						<span>
+							<button type="button" onClick={() => setShown({ form: null })}
+								className="ant-data-table-action ant-data-table-icon-action"
+								title={texts.newUser} aria-label={texts.newUser}><AddIcon /></button>
+						</span>
 					} />
 			</div>
 			{shown && 'form' in shown && (

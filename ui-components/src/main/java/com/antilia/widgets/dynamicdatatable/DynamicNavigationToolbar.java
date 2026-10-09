@@ -101,6 +101,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			@Override
 			protected void onAjaxEvent(AjaxRequestTarget target)
 			{
+				table.onNavigation(target);
 				table.refresh(target);
 			}
 		});
@@ -281,6 +282,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			@Override
 			protected void onUpdate(AjaxRequestTarget target)
 			{
+				table.onNavigation(target);
 				table.refresh(target);
 			}
 		});

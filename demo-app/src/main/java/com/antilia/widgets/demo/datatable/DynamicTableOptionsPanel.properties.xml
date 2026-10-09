@@ -60,6 +60,10 @@
 	<entry key="selectionCount">Selection count</entry>
 	<entry key="selectionCount.shown">in the navigation</entry>
 	<entry key="selectionCount.hidden">hidden</entry>
-	<entry key="selectionCount.help">Whether the navigation tells how many users are selected, such as &quot;2 selected&quot;, next to its actions: a SelectionCountToolbarAction added to the table, turned on and off here.</entry>
+	<entry key="selectionCount.help">Whether the navigation tells how many users are selected, such as &quot;2 selected&quot;, next to its actions, with a waste bin that deselects them all: a SelectionCountToolbarAction added to the table, turned on and off here.</entry>
 	<entry key="rowsSource.local">a local list of JSON</entry>
+	<entry key="clearSelectionOnNavigation">Selection on navigation</entry>
+	<entry key="clearSelectionOnNavigation.off">kept</entry>
+	<entry key="clearSelectionOnNavigation.on">cleared</entry>
+	<entry key="clearSelectionOnNavigation.help">Whether going to another page or choosing another number of rows per page deselects every user (setClearSelectionOnNavigation of the table), or the selection is kept while paging. Sorting deselects every user either way.</entry>
 </properties>

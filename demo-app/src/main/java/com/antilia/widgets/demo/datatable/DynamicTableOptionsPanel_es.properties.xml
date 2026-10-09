@@ -60,6 +60,10 @@
 	<entry key="selectionCount">Contador de selección</entry>
 	<entry key="selectionCount.shown">en la navegación</entry>
 	<entry key="selectionCount.hidden">oculto</entry>
-	<entry key="selectionCount.help">Si la navegación indica junto a sus acciones cuántos usuarios hay seleccionados, por ejemplo &quot;2 seleccionados&quot;: una SelectionCountToolbarAction añadida a la tabla, que aquí se activa y desactiva.</entry>
+	<entry key="selectionCount.help">Si la navegación indica junto a sus acciones cuántos usuarios hay seleccionados, por ejemplo &quot;2 seleccionados&quot;, con una papelera que los deselecciona todos: una SelectionCountToolbarAction añadida a la tabla, que aquí se activa y desactiva.</entry>
 	<entry key="rowsSource.local">una lista local de JSON</entry>
+	<entry key="clearSelectionOnNavigation">Selección al navegar</entry>
+	<entry key="clearSelectionOnNavigation.off">se conserva</entry>
+	<entry key="clearSelectionOnNavigation.on">se borra</entry>
+	<entry key="clearSelectionOnNavigation.help">Si ir a otra página o elegir otro número de filas por página deselecciona todos los usuarios (setClearSelectionOnNavigation de la tabla), o la selección se conserva al paginar. Ordenar deselecciona a todos de todos modos.</entry>
 </properties>

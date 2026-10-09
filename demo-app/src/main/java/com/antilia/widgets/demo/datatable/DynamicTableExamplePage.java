@@ -88,7 +88,17 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	private final Modal dialog;
 
 	private final SelectionCountToolbarAction<User, Long> selectionCount =
-		new SelectionCountToolbarAction<>();
+		new SelectionCountToolbarAction<>()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public IIcon getClearIcon()
+			{
+				return icons.pick(IconBasedRowAction.Icon.DELETE, SvgIcon.TRASH_CAN,
+					FontAwesomeIcon.TRASH_CAN);
+			}
+		};
 
 	private ActionIcons icons = ActionIcons.BUILT_IN;
 
@@ -105,7 +115,7 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		table = newTable("table", provider);
 		initialColumnState = table.getColumnState();
 		table.setColumnStateStore(SessionColumnStateStore.INSTANCE);
-		table.setNavigationPosition(ToolbarPosition.BOTH);
+		table.setNavigationPosition(ToolbarPosition.TOP);
 		table.setItemsPerPageOptions(25L, 50L, 100L, 500L);
 		table.setAdjustToParentWidth(true);
 		table.add(resizableColumns);

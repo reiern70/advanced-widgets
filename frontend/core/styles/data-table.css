@@ -215,6 +215,33 @@ table.ant-data-table .ant-data-table-action:focus-visible {
 	white-space: nowrap;
 }
 
+/* the waste bin in the count, deselecting every row */
+.ant-data-table-selection-clear {
+	display: inline-flex;
+	align-items: center;
+	margin: 0 -0.3em 0 0.35em;
+	padding: 0.1em;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0.75;
+}
+
+.ant-data-table-selection-clear:hover,
+.ant-data-table-selection-clear:focus-visible {
+	opacity: 1;
+	background: rgba(0, 0, 0, 0.08);
+}
+
+.ant-data-table-selection-clear > svg {
+	width: 1.15em;
+	height: 1.15em;
+}
+
 table.ant-data-table > thead > tr > td,
 table.ant-data-table > tfoot > tr > td {
 	overflow: visible;

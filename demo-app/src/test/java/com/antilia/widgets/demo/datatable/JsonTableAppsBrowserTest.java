@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.datatable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -78,6 +79,41 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 		app().findElement(By.cssSelector(".ant-data-table-select-page")).click();
 		wait.until(d -> selection().equals("25 selected"));
 		assertTrue(rows().get(4).getDomAttribute("class").contains("selected"));
+
+		app().findElement(By.cssSelector("thead .ant-data-table-selection-clear")).click();
+		wait.until(d -> selection().isEmpty());
+		assertFalse(rows().get(4).getDomAttribute("class").contains("selected"));
+		assertFalse(app().findElement(By.cssSelector(".ant-data-table-select-page")).isSelected());
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
+	void showsTheNavigationOnTopAndClearsTheSelectionOnPagingWhenChosen(
+		SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "dynamic-data-table");
+		wait.until(d -> rows().size() == 25);
+		assertTrue(app().findElements(By.cssSelector("tfoot .ant-data-table-navigation")).isEmpty(),
+			"only the top navigation by default");
+
+		rows().get(0).findElement(By.cssSelector(".ant-data-table-select")).click();
+		wait.until(d -> selection().equals("1 selected"));
+		app().findElement(By.cssSelector("thead a.next")).click();
+		wait.until(d -> label().startsWith("Showing 26 to 50"));
+		assertEquals("1 selected", selection(), "paging keeps the selection by default");
+
+		Dropdowns.choose(driver, app().findElement(By.name("clearSelectionOnNavigation")), 1);
+		app().findElement(By.cssSelector("thead a.prev")).click();
+		wait.until(d -> label().startsWith("Showing 1 to 25"));
+		wait.until(d -> selection().isEmpty());
+		assertFalse(rows().get(0).findElement(By.cssSelector(".ant-data-table-select"))
+			.isSelected());
+
+		Dropdowns.choose(driver, app().findElement(By.name("navigation")), 2);
+		wait.until(d -> app().findElements(By.cssSelector("tfoot .ant-data-table-navigation"))
+			.size() == 1);
+		assertNoErrors();
 	}
 
 	@ParameterizedTest

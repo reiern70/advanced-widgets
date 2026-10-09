@@ -9,12 +9,14 @@
   templates of the columns into the body Svelte leaves empty. Sorting, paging or scrolling
   infinitely, the filter and the page size reload the rows through loadRows; the columns can be
   moved, resized, hidden and shown. Bound with bind:this, the component reloads the rows with
-  reload(), repaints one with renderRow(key, data) and tells the selected rows with selectedKeys().
+  reload(), repaints one with renderRow(key, data), tells the selected rows with selectedKeys()
+  and deselects them all with clearSelection(), as the button of the count of the selected rows
+  in the navigation does.
   A private component: without a license key activating it, it shows the placeholder Wicket shows.
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+	import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
 		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
 		SHOW_COLUMNS, UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData,
 		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
@@ -45,6 +47,18 @@
 		infinite?: boolean;
 		selection?: 'none' | 'one' | 'many';
 		onselectionchange?: (keys: string[]) => void;
+		/**
+		 * Whether going to another page, or choosing another page size, deselects every row; false
+		 * by default, the selection surviving paging.
+		 */
+		clearSelectionOnNavigation?: boolean;
+		/**
+		 * Whether the navigation shows how many rows are selected, while any are, with a button
+		 * that deselects every row; true by default.
+		 */
+		selectionCount?: boolean;
+		/** Where the navigation is shown: above the headers, the default, below the rows or both. */
+		navigationPosition?: 'top' | 'bottom' | 'both';
 		/** Called with the action of a clicked [data-dt-action] element and the key of its row. */
 		onaction?: (action: string, key: string | null) => void;
 		/** The text the rows are filtered by, handed to loadRows; another one starts over. */
@@ -84,6 +98,9 @@
 		infinite = false,
 		selection = 'none',
 		onselectionchange,
+		selectionCount = true,
+		clearSelectionOnNavigation = false,
+		navigationPosition = 'top',
 		onaction,
 		filter,
 		sort: initialSort = null,
@@ -123,6 +140,7 @@
 	let range = $state({ first: 0, count: 0 });
 	let busy = $state(false);
 	let veiled = $state(false);
+	let selected = $state(0);
 
 	let instance: DynamicDataTable | null = null;
 	let shownRows = 0;
@@ -180,12 +198,17 @@
 		};
 	}
 
+	function reportSelection(table: DynamicDataTable) {
+		selected = table.selectedKeys.size;
+		onselectionchange?.(Array.from(table.selectedKeys));
+	}
+
 	function act(table: DynamicDataTable, action: string, key: string | null) {
 		if (SELECTION_ACTIONS.includes(action)) {
 			if (selection === 'one' && action === SELECTION_ACTIONS[0] && key !== null) {
 				table.selectedKeys = new Set([key]);
 			}
-			onselectionchange?.(Array.from(table.selectedKeys));
+			reportSelection(table);
 		} else if (action === SHOW_COLUMNS) {
 			const chosen = new Set((key ?? '').split(',').filter(Boolean));
 			shown = columns.filter((column) => !column.hideable || chosen.has(column.id))
@@ -195,27 +218,42 @@
 		}
 	}
 
+	// what the instance renders with, as text: props given again with the same values keep it
+	const setup = $derived(JSON.stringify({
+		config: { id, columns: JSON.parse(columnsKey), engine, filler,
+			bodyHeight: $state.snapshot(bodyHeight), selection, infinite,
+			layout: adjustToParent ? { adjustToParent } : undefined,
+			resize: resizableColumns ? {} : undefined },
+		mode: resizableColumns,
+		movable: movableColumns,
+		ids: visible.map((column) => column.id),
+		movableIndexes: visible.flatMap((column, index) => column.movable ?
+			[index + (withSelection ? 1 : 0)] : []),
+		offset: withSelection ? 1 : 0,
+		moveLabel: texts.moveColumn
+	}));
+
 	// the instance starts over when what it renders with changes
 	$effect(() => {
 		if (!licensed) {
 			return;
 		}
-		const config = { id, columns: JSON.parse(columnsKey), engine, filler,
-			bodyHeight: $state.snapshot(bodyHeight), selection, infinite,
-			layout: adjustToParent ? { adjustToParent } : undefined,
-			resize: resizableColumns ? {} : undefined };
-		const mode = resizableColumns;
-		const movable = movableColumns;
-		const ids = visible.map((column) => column.id);
-		const movableIndexes = visible.flatMap((column, index) => column.movable ?
-			[index + (withSelection ? 1 : 0)] : []);
-		const offset = withSelection ? 1 : 0;
-		const moveLabel = texts.moveColumn;
+		const { config, mode, movable, ids, movableIndexes, offset, moveLabel } =
+			JSON.parse(setup) as {
+				config: ConstructorParameters<typeof DynamicDataTable>[0];
+				mode: ResizeMode | false;
+				movable: boolean;
+				ids: string[];
+				movableIndexes: number[];
+				offset: number;
+				moveLabel: string;
+			};
 		return untrack(() => {
 			const table: DynamicDataTable = new DynamicDataTable({ ...config,
 				onBusy: (value) => (busy = value), load },
 				(action, key) => act(table, action, key), () => (itemCount = table.itemCount ?? 0));
 			instance = table;
+			selected = table.selectedKeys.size;
 			if (mode) {
 				ResizableColumns.attach(config.id, { mode });
 			}
@@ -313,9 +351,28 @@
 		return Array.from(instance?.selectedKeys ?? []);
 	}
 
+	/** Deselects every row, unchecking those shown; the rows loaded next come unchecked. */
+	export function clearSelection(): void {
+		if (instance && instance.selectedKeys.size > 0) {
+			instance.selectedKeys = new Set();
+			instance.selectRows(false);
+			reportSelection(instance);
+		}
+	}
+
+	function choosePageSize(value: string) {
+		if (clearSelectionOnNavigation && Number(value) !== pageSize) {
+			clearSelection();
+		}
+		pageSize = Number(value);
+	}
+
 	function go(target: number, event: MouseEvent) {
 		event.preventDefault();
 		if (target >= 0 && target < pages && target !== page) {
+			if (clearSelectionOnNavigation) {
+				clearSelection();
+			}
 			page = target;
 		}
 	}
@@ -378,6 +435,19 @@
 				</div>
 				<div class="ant-data-table-actions">
 					{@render actions?.()}
+					{#if withSelection && selectionCount && selected > 0}
+						<span class="ant-data-table-selection-count">
+							<span role="status">{texts.selectedCount.replace('{0}', String(selected))}</span>
+							<button type="button" class="ant-data-table-selection-clear"
+								title={texts.clearSelection} aria-label={texts.clearSelection}
+								onclick={clearSelection}>
+								<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18"
+									height="18" fill="none" stroke="currentColor" stroke-width="2"
+									stroke-linecap="round" stroke-linejoin="round"><path
+									d={CLEAR_SELECTION_ICON} /></svg>
+							</button>
+						</span>
+					{/if}
 					{#if columnChooser && hideable.length > 0}
 						<span>
 							<details class="ant-data-table-column-chooser">
@@ -415,7 +485,7 @@
 						<span>{texts.rowsPerPage}</span>
 						<Dropdown options={pageSizes.map((size) => ({ value: String(size),
 							label: String(size) }))} value={String(pageSize)}
-							onchange={(value) => (pageSize = Number(value))} />
+							onchange={(value) => choosePageSize(String(value))} />
 					</label>
 				{/if}
 			</div>
@@ -429,7 +499,7 @@
 	<div class="ant-data-table-host">
 		<table {id} class={['ant-dataview ant-data-table', className]} cellspacing="0">
 			<thead>
-				{@render navigation()}
+				{#if navigationPosition !== 'bottom'}{@render navigation()}{/if}
 				<tr class="ant-data-table-headers">
 					{#if withSelection}
 						<th class="ant-data-table-selection" data-resizable="false">
@@ -481,7 +551,7 @@
 				</tr>
 			</thead>
 			<tbody></tbody>
-			<tfoot>{@render navigation()}</tfoot>
+			{#if navigationPosition !== 'top'}<tfoot>{@render navigation()}</tfoot>{/if}
 		</table>
 		{#if veiled}
 			<div class="ant-data-table-veil" aria-hidden="true"></div>

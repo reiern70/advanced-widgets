@@ -232,7 +232,7 @@ class DynamicDataTableSettingsBrowserTest extends JettyTestCase
 		current.put("resize", "STRETCH");
 		current.put("width", "PARENT");
 		current.put("proportions", "CONTENT");
-		current.put("navigation", "BOTH");
+		current.put("navigation", "TOP");
 		current.put("selection", "MANY");
 		current.put("bodyHeightUnits", "PIXELS");
 		current.put("columnState", "SESSION");

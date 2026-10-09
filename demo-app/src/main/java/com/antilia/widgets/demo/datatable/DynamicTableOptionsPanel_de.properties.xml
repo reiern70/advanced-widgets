@@ -60,6 +60,10 @@
 	<entry key="selectionCount">Auswahlzähler</entry>
 	<entry key="selectionCount.shown">in der Navigation</entry>
 	<entry key="selectionCount.hidden">ausgeblendet</entry>
-	<entry key="selectionCount.help">Ob die Navigation neben ihren Aktionen anzeigt, wie viele Benutzer ausgewählt sind, etwa &quot;2 ausgewählt&quot;: eine SelectionCountToolbarAction der Tabelle, die hier ein- und ausgeschaltet wird.</entry>
+	<entry key="selectionCount.help">Ob die Navigation neben ihren Aktionen anzeigt, wie viele Benutzer ausgewählt sind, etwa &quot;2 ausgewählt&quot;, mit einem Papierkorb, der alle abwählt: eine SelectionCountToolbarAction der Tabelle, die hier ein- und ausgeschaltet wird.</entry>
 	<entry key="rowsSource.local">einer lokalen JSON-Liste</entry>
+	<entry key="clearSelectionOnNavigation">Auswahl beim Blättern</entry>
+	<entry key="clearSelectionOnNavigation.off">bleibt</entry>
+	<entry key="clearSelectionOnNavigation.on">wird aufgehoben</entry>
+	<entry key="clearSelectionOnNavigation.help">Ob der Wechsel auf eine andere Seite oder eine andere Zahl von Zeilen pro Seite alle Benutzer abwählt (setClearSelectionOnNavigation der Tabelle) oder die Auswahl beim Blättern erhalten bleibt. Sortieren hebt die Auswahl ohnehin auf.</entry>
 </properties>

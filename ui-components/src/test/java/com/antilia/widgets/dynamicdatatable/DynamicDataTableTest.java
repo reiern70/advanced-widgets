@@ -245,7 +245,7 @@ class DynamicDataTableTest extends WicketTestCase
 		tester.startPage(tester.getLastRenderedPage());
 		tester.assertContains("Showing 1 to 1 of 2");
 
-		tester.clickLink("table:bottomNavigation:span:paging:navigator:next");
+		tester.clickLink("table:topNavigation:span:paging:navigator:next");
 
 		assertEquals(1, table.getCurrentPage());
 		String response = tester.getLastResponseAsString();
@@ -309,7 +309,7 @@ class DynamicDataTableTest extends WicketTestCase
 	@Test
 	void navigationCallbackReRendersTheNavigation()
 	{
-		String navigationId = table.get("bottomNavigation").getMarkupId();
+		String navigationId = table.get("topNavigation").getMarkupId();
 
 		tester.executeBehavior(table.getBehaviors(AbstractDefaultAjaxBehavior.class).get(1));
 

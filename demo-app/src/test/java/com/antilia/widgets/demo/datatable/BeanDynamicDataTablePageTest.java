@@ -92,7 +92,7 @@ class BeanDynamicDataTablePageTest
 	@Test
 	void pagingRendersTheRowsAgain()
 	{
-		tester.clickLink(TABLE + ":bottomNavigation:span:paging:navigator:next");
+		tester.clickLink(TABLE + ":topNavigation:span:paging:navigator:next");
 
 		tester.assertComponentOnAjaxResponse(table.get("body"));
 		assertTrue(tester.getLastResponseAsString().contains(".rowsReplaced();"));

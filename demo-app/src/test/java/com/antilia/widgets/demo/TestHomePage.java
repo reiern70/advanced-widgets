@@ -6,6 +6,7 @@ package com.antilia.widgets.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
@@ -40,13 +41,14 @@ public class TestHomePage
 	}
 
 	@Test
-	public void homepageListsTheComponentCatalog()
+	public void homepageListsTheDemosOnly()
 	{
 		tester.startPage(HomePage.class);
 
-		ListView<?> components = (ListView<?>) tester.getComponentFromLastRenderedPage("components");
-		assertEquals(ComponentCatalog.components().size(), components.size());
-		tester.assertLabel("components:0:name", "Data Grid");
+		ListView<?> demos = (ListView<?>) tester.getComponentFromLastRenderedPage("demos");
+		assertEquals(Demos.all().size(), demos.size());
+		assertNull(tester.getLastRenderedPage().get("components"));
+		tester.assertContainsNot("components in the catalog");
 		tester.assertContains("Ernesto Reinaldo Barreiro");
 		tester.assertContains("All rights reserved.");
 	}
@@ -102,10 +104,8 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("components:0:name", "Cuadrícula de datos");
 		tester.assertLabel("demos:0:link:name", "Grid JSON");
 		tester.assertContains("Todos los derechos reservados.");
-		tester.assertContains("componentes en el catálogo");
 		tester.assertContains("Español");
 	}
 
@@ -115,9 +115,7 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.GERMAN);
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("components:0:name", "Datenraster");
 		tester.assertLabel("demos:0:link:name", "JSON-Grid");
 		tester.assertContains("Alle Rechte vorbehalten.");
-		tester.assertContains("Komponenten im Katalog");
 	}
 }

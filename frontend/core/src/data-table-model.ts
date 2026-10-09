@@ -69,6 +69,10 @@ export interface DataTableTexts {
 	selectPage: string;
 	selectRow: string;
 	moveColumn: string;
+	/** How many rows are selected, {0} standing for the number. */
+	selectedCount: string;
+	/** The title of the button of the count that deselects every row. */
+	clearSelection: string;
 	/** The placeholder shown without a license key activating the table. */
 	unlicensed: string;
 }
@@ -87,6 +91,8 @@ export const DATA_TABLE_TEXTS: DataTableTexts = {
 	selectPage: 'Select all rows on this page',
 	selectRow: 'Select row',
 	moveColumn: 'Move the column: drag it, or use the arrow keys',
+	selectedCount: '{0} selected',
+	clearSelection: 'Clear selection',
 	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
 		'which you get by registering.'
 };
@@ -101,6 +107,9 @@ export const DATA_TABLE_COMPONENTS = ['DataTable', 'JsonBasedDynamicDataTable',
 /** The actions the core reports for the checkboxes: select, deselect, select and deselect the page. */
 export const SELECTION_ACTIONS = ['_antilia-select', '_antilia-deselect', '_antilia-select-page',
 	'_antilia-deselect-page'];
+
+/** A waste bin, the icon of the button of the count that deselects every row (24 by 24, stroked). */
+export const CLEAR_SELECTION_ICON = 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13 M10 11v6 M14 11v6';
 
 /** The action the core reports when the column chooser applies, the ids of the columns as key. */
 export const SHOW_COLUMNS = '_antilia-show-columns';

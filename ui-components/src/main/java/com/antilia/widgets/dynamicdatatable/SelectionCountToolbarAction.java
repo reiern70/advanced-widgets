@@ -5,19 +5,21 @@
 package com.antilia.widgets.dynamicdatatable;
 
 import java.io.Serializable;
-import java.util.Map;
 
 import org.apache.wicket.Component;
-import org.apache.wicket.markup.ComponentTag;
-import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.model.Model;
+import org.apache.wicket.util.lang.Args;
+
+import com.antilia.widgets.icon.IIcon;
 
 /**
  * Shows how many rows are selected, such as "2 selected", in the navigation of the table, among
- * its {@link IDynamicToolbarAction actions}. Nothing is shown while no row is selected or the
- * table selects none. The text is the {@code DynamicDataTable.selectedCount} resource, with
- * {@code ${count}} standing for the number; it is re-rendered whenever the user changes the
- * selection.
+ * its {@link IDynamicToolbarAction actions}, with a button that deselects every row
+ * ({@link BaseDynamicDataTable#clearSelection(org.apache.wicket.ajax.AjaxRequestTarget)}), a waste
+ * bin unless {@link #setClearIcon(IIcon) another icon} is given. Nothing is shown while no row is
+ * selected or the table selects none. The text is the {@code DynamicDataTable.selectedCount}
+ * resource, with {@code ${count}} standing for the number, and the tooltip of the button the
+ * {@code DynamicDataTable.clearSelection} resource; the count is re-rendered whenever the user
+ * changes the selection.
  * <p>
  * The count can be turned off and on again without changing the actions of the table, with
  * {@link #setShown(boolean)}; the table has to be rendered again after that.
@@ -44,6 +46,8 @@ public class SelectionCountToolbarAction<T, K extends Serializable>
 
 	private boolean shown = true;
 
+	private IIcon clearIcon = IconBasedRowAction.Icon.DELETE;
+
 	/**
 	 * @return whether the count is shown
 	 */
@@ -63,48 +67,29 @@ public class SelectionCountToolbarAction<T, K extends Serializable>
 		return this;
 	}
 
-	@Override
-	public Component newComponent(String id, BaseDynamicDataTable<T, K, ?> table)
+	/**
+	 * @return the icon of the button next to the count that deselects every row, a waste bin
+	 *         by default
+	 */
+	public IIcon getClearIcon()
 	{
-		return new Count(id, table, this);
+		return clearIcon;
 	}
 
 	/**
-	 * The count, a component showing the selection of the table, which re-renders it when the
-	 * selection changes.
+	 * @param clearIcon
+	 *            the icon of the button next to the count that deselects every row
+	 * @return this
 	 */
-	private static class Count extends Label implements ISelectionView
+	public SelectionCountToolbarAction<T, K> setClearIcon(IIcon clearIcon)
 	{
-		private static final long serialVersionUID = 1L;
+		this.clearIcon = Args.notNull(clearIcon, "clearIcon");
+		return this;
+	}
 
-		private final BaseDynamicDataTable<?, ?, ?> table;
-
-		private final SelectionCountToolbarAction<?, ?> action;
-
-		Count(String id, BaseDynamicDataTable<?, ?, ?> table, SelectionCountToolbarAction<?, ?> action)
-		{
-			super(id);
-			this.table = table;
-			this.action = action;
-			setDefaultModel(() -> getString("DynamicDataTable.selectedCount",
-				Model.ofMap(Map.of("count", table.getSelection().size())), "${count} selected"));
-			setOutputMarkupPlaceholderTag(true);
-		}
-
-		@Override
-		protected void onConfigure()
-		{
-			super.onConfigure();
-			setVisible(action.isShown() && table.getSelectionMode() != SelectionMode.NONE &&
-				table.getSelection().isEmpty() == false);
-		}
-
-		@Override
-		protected void onComponentTag(ComponentTag tag)
-		{
-			super.onComponentTag(tag);
-			tag.append("class", CSS_CLASS, " ");
-			tag.put("role", "status");
-		}
+	@Override
+	public Component newComponent(String id, BaseDynamicDataTable<T, K, ?> table)
+	{
+		return new SelectionCount(id, table, this);
 	}
 }

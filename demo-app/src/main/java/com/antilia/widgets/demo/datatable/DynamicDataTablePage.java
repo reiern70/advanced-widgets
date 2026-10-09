@@ -417,8 +417,6 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			"delete", "delete.confirm", "deleted", "saved", "failed");
 		texts.put("filterLabel", getString("filter"));
 		texts.put("added", getString("added"));
-		texts.put("selectedCount", getString("DynamicDataTable.selectedCount", null,
-			"${count} selected"));
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));
 		for (String key : new String[] { "firstName", "lastName", "country", "city", "address",
 			"save", "cancel" })
@@ -428,7 +426,9 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		for (String key : new String[] { "infiniteScroll", "infiniteScroll.off",
 			"infiniteScroll.on", "rowsSource", "rowsSource.local", "rowsSource.RESOURCE",
 			"selection", "selection.NONE", "selection.ONE", "selection.MANY", "selectionCount",
-			"selectionCount.shown", "selectionCount.hidden", "resize", "resize.NONE",
+			"selectionCount.shown", "selectionCount.hidden", "clearSelectionOnNavigation",
+			"clearSelectionOnNavigation.off", "clearSelectionOnNavigation.on", "navigation",
+			"navigation.TOP", "navigation.BOTTOM", "navigation.BOTH", "resize", "resize.NONE",
 			"resize.STRETCH" })
 		{
 			texts.put(key, string(DynamicTableOptionsPanel.class, key));
@@ -447,6 +447,9 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 			.put("selectPage", getString("DynamicDataTable.selectPage"))
 			.put("selectRow", getString("DynamicDataTable.selectRow"))
 			.put("moveColumn", getString("MovableColumnsBehavior.moveColumn"))
+			.put("selectedCount", getString("DynamicDataTable.selectedCount",
+				Model.ofMap(Map.of("count", "{0}"))))
+			.put("clearSelection", getString("DynamicDataTable.clearSelection"))
 			.put("unlicensed", getString("License.placeholder"));
 		return FrameworkTabs.withDropdownTexts(this, texts).put("table", table);
 	}

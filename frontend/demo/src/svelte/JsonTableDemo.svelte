@@ -14,9 +14,8 @@
 
 	import { format, loadChoices, type Choice } from '../data.js';
 	import { interpolate, type UserFields } from '../json-list.js';
-	import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, selectedCount,
-		settingDefs, simulatedPushes, withSetting, type GridSettings,
-		type JsonTableConfig } from '../json-table.js';
+	import { DEFAULT_SETTINGS, download, LocalUsers, matchesName, ResourceUsers, settingDefs,
+		simulatedPushes, withSetting, type GridSettings, type JsonTableConfig } from '../json-table.js';
 	import Dialog from './Dialog.svelte';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
@@ -36,7 +35,6 @@
 	let localRows = $state.raw(untrack(() => local.rows));
 	let typed = $state('');
 	let filter = $state('');
-	let selected = $state<string[]>([]);
 	let countries = $state<Choice[]>([]);
 	/** What the dialog shows: the form of a user, new when its key is null, or a deletion. */
 	let shown = $state<{ form: string | null } | { deletion: string } | null>(null);
@@ -44,8 +42,6 @@
 
 	const fromResource = $derived(settings.rowsFrom === 'resource');
 	const users = $derived(fromResource ? remote : local);
-	const count = $derived(settings.selectionCount && settings.selection !== 'none' ?
-		selectedCount(texts, selected.length) : '');
 
 	$effect(() => {
 		loadChoices(config.choicesUrl).then((loaded) => (countries = loaded.countries),
@@ -65,7 +61,6 @@
 
 	function choose(key: keyof GridSettings, value: string) {
 		settings = withSetting(settings, key, value);
-		selected = [];
 	}
 
 	function action(name: string, key: string | null) {
@@ -112,7 +107,6 @@
 			shown = null;
 			messages = [{ level: 'info', text: format(texts.deleted, user.firstName,
 				user.lastName) }];
-			selected = selected.filter((selectedKey) => selectedKey !== key);
 			if (fromResource) {
 				await table?.reload();
 			} else {
@@ -142,7 +136,6 @@
 			</svg>
 		</button>
 	</span>
-	{#if count}<span class="ant-data-table-selection-count" role="status">{count}</span>{/if}
 {/snippet}
 
 <Feedback {messages} />
@@ -168,7 +161,9 @@
 			subscribe={fromResource ? subscribe : undefined}
 			rowsPerPage={config.rowsPerPage} pageSizes={config.pageSizes}
 			infinite={settings.infinite} selection={settings.selection}
-			onselectionchange={(keys) => (selected = keys)} onaction={action} {filter}
+			selectionCount={settings.selectionCount} navigationPosition={settings.navigation}
+			clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
+			onaction={action} {filter}
 			resizableColumns={settings.resizable ? 'stretch' : false} bodyHeight={config.bodyHeight}
 			adjustToParent texts={texts.table} {toolbar} {actions} />
 	{/key}

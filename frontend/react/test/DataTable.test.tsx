@@ -130,6 +130,85 @@ describe('DataTable', () => {
 		expect(onAction).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps the selection while paging, unless told to clear it, and clears it through its ref',
+		async () => {
+			const ref = createRef<DataTableHandle>();
+			const onSelectionChange = vi.fn();
+			const { container, rerender } = render(<DataTable ref={ref} columns={COLUMNS}
+				loadRows={loadRows} selection="many" onSelectionChange={onSelectionChange} />);
+			await waitFor(() => expect(rows(container).length).toBe(25));
+			const checkboxes = () => container.querySelectorAll<HTMLInputElement>(
+				'tbody .ant-data-table-select');
+
+			fireEvent.click(checkboxes()[1]);
+			fireEvent.click(container.querySelector('thead a.next')!);
+			await waitFor(() => expect(rows(container)[0][1]).toBe('Person 26'));
+			fireEvent.click(container.querySelector('thead a.prev')!);
+			await waitFor(() => expect(rows(container)[0][1]).toBe('Person 01'));
+			expect(checkboxes()[1].checked).toBe(true);
+			expect(ref.current!.selectedKeys()).toEqual(['Person 02']);
+
+			rerender(<DataTable ref={ref} columns={COLUMNS} loadRows={loadRows} selection="many"
+				onSelectionChange={onSelectionChange} clearSelectionOnNavigation />);
+			fireEvent.click(container.querySelector('thead a.next')!);
+			await waitFor(() => expect(rows(container)[0][1]).toBe('Person 26'));
+			expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+			fireEvent.click(container.querySelector('thead a.prev')!);
+			await waitFor(() => expect(rows(container)[0][1]).toBe('Person 01'));
+			expect(checkboxes()[1].checked).toBe(false);
+
+			fireEvent.click(checkboxes()[3]);
+			expect(onSelectionChange).toHaveBeenLastCalledWith(['Person 04']);
+			act(() => ref.current!.clearSelection());
+			expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+			expect(checkboxes()[3].checked).toBe(false);
+			expect(ref.current!.selectedKeys()).toEqual([]);
+		});
+
+	it('counts the selected rows in the navigation, with a bin deselecting them all', async () => {
+		const onSelectionChange = vi.fn();
+		const { container, rerender } = render(<DataTable columns={COLUMNS} loadRows={loadRows}
+			selection="many" onSelectionChange={onSelectionChange}
+			texts={{ selectedCount: '{0} chosen' }} />);
+		await waitFor(() => expect(rows(container).length).toBe(25));
+		const checkboxes = () => container.querySelectorAll<HTMLInputElement>(
+			'tbody .ant-data-table-select');
+		const count = () => container.querySelector('thead .ant-data-table-selection-count');
+		expect(count()).toBeNull();
+
+		fireEvent.click(checkboxes()[1]);
+		fireEvent.click(checkboxes()[2]);
+		expect(count()!.querySelector('[role="status"]')!.textContent).toBe('2 chosen');
+		const bin = count()!.querySelector<HTMLButtonElement>('.ant-data-table-selection-clear')!;
+		expect(bin.getAttribute('aria-label')).toBe('Clear selection');
+
+		fireEvent.click(bin);
+		expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+		expect(checkboxes()[1].checked).toBe(false);
+		expect(count()).toBeNull();
+
+		rerender(<DataTable columns={COLUMNS} loadRows={loadRows} selection="many"
+			onSelectionChange={onSelectionChange} selectionCount={false} />);
+		fireEvent.click(checkboxes()[1]);
+		expect(onSelectionChange).toHaveBeenLastCalledWith(['Person 02']);
+		expect(count()).toBeNull();
+	});
+
+	it('shows the navigation above the rows, below them or both', async () => {
+		const { container, rerender } = render(<DataTable columns={COLUMNS} loadRows={loadRows} />);
+		await waitFor(() => expect(rows(container).length).toBe(25));
+		expect(container.querySelector('thead tr.navigation')).not.toBeNull();
+		expect(container.querySelector('tfoot')).toBeNull();
+
+		rerender(<DataTable columns={COLUMNS} loadRows={loadRows} navigationPosition="both" />);
+		expect(container.querySelectorAll('thead tr.navigation, tfoot tr.navigation').length)
+			.toBe(2);
+
+		rerender(<DataTable columns={COLUMNS} loadRows={loadRows} navigationPosition="bottom" />);
+		expect(container.querySelector('thead tr.navigation')).toBeNull();
+		expect(container.querySelector('tfoot tr.navigation')).not.toBeNull();
+	});
+
 	it('shows and hides the hideable columns with the column chooser', async () => {
 		const { container } = render(<DataTable columns={COLUMNS} loadRows={loadRows} />);
 		await waitFor(() => expect(rows(container).length).toBe(25));
