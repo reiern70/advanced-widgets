@@ -5,7 +5,7 @@
 
 import { useEffect, useState, type MouseEvent } from 'react';
 
-import { ProgressBar } from '@advanced-widgets/react';
+import { ProgressBar } from '@antilia/react';
 
 import { advance, TICK_MILLIS, type ProgressConfig } from '../progress.js';
 

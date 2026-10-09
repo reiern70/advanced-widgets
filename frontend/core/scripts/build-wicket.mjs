@@ -25,39 +25,39 @@ const BANNER = '/*\n * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gm
 
 /** The scripts: their entry in src/wicket and their path in ui-components. */
 const SCRIPTS = [
-	['src/wicket/autocomplete.ts', 'com/advanced/widgets/autocomplete/wicket-autocomplete.js'],
-	['src/wicket/chips.ts', 'com/advanced/widgets/chips/wicket-chips.js'],
-	['src/wicket/clipboard.ts', 'com/advanced/widgets/clipboard/wicket-clipboard.js'],
-	['src/wicket/data-table.ts', 'com/advanced/widgets/dynamicdatatable/dynamic-data-table.js'],
-	['src/wicket/dropdown.ts', 'com/advanced/widgets/dropdown/wicket-dropdown.js'],
-	['src/wicket/floating-panel.ts', 'com/advanced/widgets/floating/wicket-floating-panel.js'],
-	['src/wicket/handlebars.ts', 'com/advanced/widgets/dynamicdatatable/handlebars-adapter.js'],
-	['src/wicket/infinite-list.ts', 'com/advanced/widgets/jsonlist/json-infinite-list.js'],
-	['src/wicket/modal.ts', 'com/advanced/widgets/modal/wicket-modal.js'],
-	['src/wicket/movable-columns.ts', 'com/advanced/widgets/table/wicket-movable-columns.js'],
-	['src/wicket/resizable-columns.ts', 'com/advanced/widgets/table/wicket-resizable-columns.js'],
-	['src/wicket/scrollbar.ts', 'com/advanced/widgets/scrollbar/wicket-scrollbar.js'],
-	['src/wicket/templates.ts', 'com/advanced/widgets/template/wicket-templates.js'],
-	['src/wicket/tree.ts', 'com/advanced/widgets/tree/json-tree.js']
+	['src/wicket/autocomplete.ts', 'com/antilia/widgets/autocomplete/antilia-autocomplete.js'],
+	['src/wicket/chips.ts', 'com/antilia/widgets/chips/antilia-chips.js'],
+	['src/wicket/clipboard.ts', 'com/antilia/widgets/clipboard/antilia-clipboard.js'],
+	['src/wicket/data-table.ts', 'com/antilia/widgets/dynamicdatatable/ant-data-table.js'],
+	['src/wicket/dropdown.ts', 'com/antilia/widgets/dropdown/antilia-dropdown.js'],
+	['src/wicket/floating-panel.ts', 'com/antilia/widgets/floating/antilia-floating-panel.js'],
+	['src/wicket/handlebars.ts', 'com/antilia/widgets/dynamicdatatable/handlebars-adapter.js'],
+	['src/wicket/infinite-list.ts', 'com/antilia/widgets/jsonlist/json-infinite-list.js'],
+	['src/wicket/modal.ts', 'com/antilia/widgets/modal/antilia-modal.js'],
+	['src/wicket/movable-columns.ts', 'com/antilia/widgets/table/antilia-movable-columns.js'],
+	['src/wicket/resizable-columns.ts', 'com/antilia/widgets/table/antilia-resizable-columns.js'],
+	['src/wicket/scrollbar.ts', 'com/antilia/widgets/scrollbar/antilia-scrollbar.js'],
+	['src/wicket/templates.ts', 'com/antilia/widgets/template/antilia-templates.js'],
+	['src/wicket/tree.ts', 'com/antilia/widgets/tree/json-tree.js']
 ];
 
 /** The style sheets and the images they use: their file in styles and their path in ui-components. */
 const STYLES = [
-	['styles/autocomplete.css', 'com/advanced/widgets/autocomplete/wicket-autocomplete.css'],
-	['styles/button.css', 'com/advanced/widgets/button/wicket-button.css'],
-	['styles/chips.css', 'com/advanced/widgets/chips/wicket-chips.css'],
-	['styles/clipboard.css', 'com/advanced/widgets/clipboard/wicket-clipboard.css'],
-	['styles/data-table.css', 'com/advanced/widgets/dynamicdatatable/dynamic-data-table.css'],
-	['styles/data-table-check.svg', 'com/advanced/widgets/dynamicdatatable/data-table-check.svg'],
-	['styles/dropdown.css', 'com/advanced/widgets/dropdown/wicket-dropdown.css'],
-	['styles/floating-panel.css', 'com/advanced/widgets/floating/wicket-floating-panel.css'],
-	['styles/infinite-list.css', 'com/advanced/widgets/jsonlist/json-infinite-list.css'],
-	['styles/modal.css', 'com/advanced/widgets/modal/wicket-modal.css'],
-	['styles/movable-columns.css', 'com/advanced/widgets/table/wicket-movable-columns.css'],
-	['styles/progress-bar.css', 'com/advanced/widgets/progress/wicket-progress-bar.css'],
-	['styles/resizable-columns.css', 'com/advanced/widgets/table/wicket-resizable-columns.css'],
-	['styles/scrollbar.css', 'com/advanced/widgets/scrollbar/wicket-scrollbar.css'],
-	['styles/tree.css', 'com/advanced/widgets/tree/wicket-tree.css']
+	['styles/autocomplete.css', 'com/antilia/widgets/autocomplete/antilia-autocomplete.css'],
+	['styles/button.css', 'com/antilia/widgets/button/antilia-button.css'],
+	['styles/chips.css', 'com/antilia/widgets/chips/antilia-chips.css'],
+	['styles/clipboard.css', 'com/antilia/widgets/clipboard/antilia-clipboard.css'],
+	['styles/data-table.css', 'com/antilia/widgets/dynamicdatatable/ant-data-table.css'],
+	['styles/data-table-check.svg', 'com/antilia/widgets/dynamicdatatable/data-table-check.svg'],
+	['styles/dropdown.css', 'com/antilia/widgets/dropdown/antilia-dropdown.css'],
+	['styles/floating-panel.css', 'com/antilia/widgets/floating/antilia-floating-panel.css'],
+	['styles/infinite-list.css', 'com/antilia/widgets/jsonlist/json-infinite-list.css'],
+	['styles/modal.css', 'com/antilia/widgets/modal/antilia-modal.css'],
+	['styles/movable-columns.css', 'com/antilia/widgets/table/antilia-movable-columns.css'],
+	['styles/progress-bar.css', 'com/antilia/widgets/progress/antilia-progress-bar.css'],
+	['styles/resizable-columns.css', 'com/antilia/widgets/table/antilia-resizable-columns.css'],
+	['styles/scrollbar.css', 'com/antilia/widgets/scrollbar/antilia-scrollbar.css'],
+	['styles/tree.css', 'com/antilia/widgets/tree/antilia-tree.css']
 ];
 
 await rm(out, { recursive: true, force: true });

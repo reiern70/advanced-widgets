@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-dropdown.js: registers Wicket.Dropdown for DropdownBehavior, which calls
+ * antilia-dropdown.js: registers Wicket.Dropdown for DropdownBehavior, which calls
  * Wicket.Dropdown.attach(id, options); the theme editor calls Wicket.Dropdown.of(select). The list
  * gets the scroll bars of Wicket.Scrollbar, when the page loaded them.
  */

@@ -4,13 +4,13 @@
 services:
   app:
     build: .
-    image: advanced-widgets:latest
+    image: antilia-widgets:latest
     restart: unless-stopped
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
       DATABASE_URL: ${DATABASE_URL:-}
     volumes:
-      - page-store:/var/lib/advanced-widgets
+      - page-store:/var/lib/antilia-widgets
     expose:
       - "8080"
 

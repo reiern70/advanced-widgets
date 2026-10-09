@@ -5,7 +5,7 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-import { buttonClasses, type ButtonSize, type ButtonVariant } from '@advanced-widgets/core';
+import { buttonClasses, type ButtonSize, type ButtonVariant } from '@antilia/core';
 
 export type { ButtonSize, ButtonVariant };
 
@@ -32,8 +32,8 @@ export function Button({ label, icon, iconOnly = false, variant, size, className
 	return (
 		<button {...rest} type={type} className={buttonClasses({ variant, size, iconOnly, className })}
 			title={title ?? (iconOnly ? label : undefined)} aria-label={iconOnly ? label : undefined}>
-			{icon != null && <span className="aw-button__icon" aria-hidden="true">{icon}</span>}
-			{!iconOnly && <span className="aw-button__label">{label}</span>}
+			{icon != null && <span className="ant-button__icon" aria-hidden="true">{icon}</span>}
+			{!iconOnly && <span className="ant-button__label">{label}</span>}
 		</button>
 	);
 }

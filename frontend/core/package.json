@@ -1,7 +1,7 @@
 {
-	"name": "@advanced-widgets/core",
+	"name": "@antilia/core",
 	"version": "1.0.0-SNAPSHOT",
-	"description": "The components of UI Advanced Widgets in plain TypeScript, without a framework",
+	"description": "The components of Antilia's Advanced Widgets in plain TypeScript, without a framework",
 	"license": "UNLICENSED",
 	"type": "module",
 	"main": "./dist/index.js",

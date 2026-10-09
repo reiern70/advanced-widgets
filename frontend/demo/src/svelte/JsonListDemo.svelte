@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Dropdown, InfiniteList } from '@advanced-widgets/svelte';
+	import { Dropdown, InfiniteList } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice, type User } from '../data.js';
 	import { interpolate, Users, type JsonListConfig, type UserFields } from '../json-list.js';
@@ -111,7 +111,7 @@
 				noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
 		</label>
 		<button type="button" onclick={() => (shown = { form: null })}
-			class="dynamic-data-table-button dynamic-data-table-button-primary">{texts.newUser}</button>
+			class="ant-data-table-button ant-data-table-button-primary">{texts.newUser}</button>
 	</div>
 	<div class="user-list-demo__columns">
 		<InfiniteList bind:this={list} load={users.load} template={config.template}
@@ -152,11 +152,11 @@
 	{#if user}
 		<Dialog title={texts.delete} onclose={() => (shown = null)}>
 			<p>{interpolate(texts['delete.confirm'], user)}</p>
-			<div class="dynamic-data-table-overlay-buttons">
-				<button type="button" class="dynamic-data-table-button"
+			<div class="ant-data-table-overlay-buttons">
+				<button type="button" class="ant-data-table-button"
 					onclick={() => (shown = null)}>{texts.cancel}</button>
 				<button type="button" onclick={() => remove(key)}
-					class="dynamic-data-table-button dynamic-data-table-button-primary">{texts.delete}</button>
+					class="ant-data-table-button ant-data-table-button-primary">{texts.delete}</button>
 			</div>
 		</Dialog>
 	{/if}

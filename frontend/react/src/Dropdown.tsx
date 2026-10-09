@@ -5,7 +5,7 @@
 
 import { useLayoutEffect, useRef, type ChangeEvent, type SelectHTMLAttributes } from 'react';
 
-import { Dropdown as CoreDropdown, type DropdownOptions } from '@advanced-widgets/core';
+import { Dropdown as CoreDropdown, type DropdownOptions } from '@antilia/core';
 
 /**
  * An option of a {@link Dropdown}.
@@ -22,7 +22,7 @@ type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>,
 interface CommonProps extends SelectProps, DropdownOptions {
 	/** The options, in their order. */
 	options: DropdownOption[];
-	/** CSS classes of the div wrapping the select, next to wicket-dropdown. */
+	/** CSS classes of the div wrapping the select, next to antilia-dropdown. */
 	wrapperClassName?: string;
 }
 
@@ -92,9 +92,9 @@ export function Dropdown(props: DropdownProps) {
 
 	const controlled = value === undefined ? {} : { value };
 	return (
-		<div className={['wicket-dropdown', wrapperClassName].filter(Boolean).join(' ')}>
+		<div className={['antilia-dropdown', wrapperClassName].filter(Boolean).join(' ')}>
 			<select {...rest} {...controlled} ref={select} multiple={multiple} onChange={change}
-				className={['wicket-dropdown-native', className].filter(Boolean).join(' ')}
+				className={['antilia-dropdown-native', className].filter(Boolean).join(' ')}
 				tabIndex={-1} aria-hidden="true">
 				{options.map((option) => (
 					<option key={option.value} value={option.value} disabled={option.disabled}>

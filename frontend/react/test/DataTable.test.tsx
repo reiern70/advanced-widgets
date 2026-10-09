@@ -7,11 +7,11 @@ import { createRef, StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { activate, DynamicDataTable, type DataTableQuery } from '@advanced-widgets/core';
+import { activate, DynamicDataTable, type DataTableQuery } from '@antilia/core';
 
 import { DataTable, type DataTableColumnDef, type DataTableHandle } from '../src/index.js';
 // the key of the demo application, activating every component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/advanced-widgets.license?raw';
+import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 interface Person {
 	name: string;
@@ -51,7 +51,7 @@ function rows(container: HTMLElement): string[][] {
 }
 
 function headers(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('tr.dynamic-data-table-headers th'),
+	return Array.from(container.querySelectorAll('tr.ant-data-table-headers th'),
 		(th) => th.textContent ?? '');
 }
 
@@ -66,7 +66,7 @@ describe('DataTable', () => {
 		const { container } = render(<DataTable columns={COLUMNS} loadRows={loadRows}
 			licenseKey="AW1.not.valid" />);
 
-		await waitFor(() => expect(container.querySelector('.wicket-unlicensed')).not.toBeNull());
+		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')).not.toBeNull());
 		expect(container.querySelector('table')).toBeNull();
 	});
 
@@ -77,7 +77,7 @@ describe('DataTable', () => {
 
 		await waitFor(() => expect(rows(container).length).toBe(25));
 		const table = container.querySelector('table')!;
-		expect(table.className).toBe('dynamic-dataview dynamic-data-table');
+		expect(table.className).toBe('ant-dataview ant-data-table');
 		expect(headers(container)).toEqual(['Name▲▼', 'City']);
 		expect(rows(container)[0]).toEqual(['Person 01', 'City 0']);
 		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
@@ -97,10 +97,10 @@ describe('DataTable', () => {
 		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 26'));
 		await waitFor(() => expect(label(container)).toBe('Showing 26 to 50 of 60'));
 
-		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
+		fireEvent.click(container.querySelector('a.ant-data-table-sort')!);
 		await waitFor(() => expect(load).toHaveBeenLastCalledWith({ first: 0, count: 25,
 			sort: { property: 'name', ascending: true }, filter: undefined }));
-		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
+		fireEvent.click(container.querySelector('a.ant-data-table-sort')!);
 		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 60'));
 		expect(container.querySelector('th[aria-sort]')?.getAttribute('aria-sort'))
 			.toBe('descending');
@@ -122,10 +122,10 @@ describe('DataTable', () => {
 		expect(onAction).toHaveBeenCalledWith('open', 'Person 03');
 
 		fireEvent.click(container.querySelectorAll<HTMLInputElement>(
-			'tbody .dynamic-data-table-select')[1]);
+			'tbody .ant-data-table-select')[1]);
 		expect(onSelectionChange).toHaveBeenLastCalledWith(['Person 02']);
 
-		fireEvent.click(container.querySelector<HTMLInputElement>('.dynamic-data-table-select-page')!);
+		fireEvent.click(container.querySelector<HTMLInputElement>('.ant-data-table-select-page')!);
 		expect(onSelectionChange.mock.lastCall![0].length).toBe(25);
 		expect(onAction).toHaveBeenCalledTimes(1);
 	});
@@ -133,7 +133,7 @@ describe('DataTable', () => {
 	it('shows and hides the hideable columns with the column chooser', async () => {
 		const { container } = render(<DataTable columns={COLUMNS} loadRows={loadRows} />);
 		await waitFor(() => expect(rows(container).length).toBe(25));
-		const chooser = container.querySelector('thead .dynamic-data-table-column-chooser')!;
+		const chooser = container.querySelector('thead .ant-data-table-column-chooser')!;
 
 		fireEvent.click(chooser.querySelector('[data-dt-column="number"]')!);
 		fireEvent.click(chooser.querySelector('[data-dt-column="city"]')!);
@@ -184,8 +184,8 @@ describe('DataTable', () => {
 		await waitFor(() => expect(rows(container).length).toBe(25));
 		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
 
-		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
-		fireEvent.click(container.querySelector('a.dynamic-data-table-sort')!);
+		fireEvent.click(container.querySelector('a.ant-data-table-sort')!);
+		fireEvent.click(container.querySelector('a.ant-data-table-sort')!);
 		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 60'));
 
 		rerender(<DataTable columns={COLUMNS} rows={list} filter="city 3" />);

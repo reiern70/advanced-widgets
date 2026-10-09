@@ -58,12 +58,12 @@ interface Drag {
 	key(event: KeyboardEvent): void;
 }
 
-const HANDLE_CLASS = 'wicket-col-resizer';
-const GUIDE_CLASS = 'wicket-col-resize-guide';
-const BAND_CLASS = 'wicket-col-resize-band';
-const LABEL_CLASS = 'wicket-col-resize-label';
-const RESIZING_CLASS = 'wicket-resizing';
-const COLGROUP_CLASS = 'wicket-resizable-colgroup';
+const HANDLE_CLASS = 'antilia-col-resizer';
+const GUIDE_CLASS = 'antilia-col-resize-guide';
+const BAND_CLASS = 'antilia-col-resize-band';
+const LABEL_CLASS = 'antilia-col-resize-label';
+const RESIZING_CLASS = 'antilia-resizing';
+const COLGROUP_CLASS = 'antilia-resizable-colgroup';
 
 function sum(widths: number[]): number {
 	return widths.reduce((total, width) => total + width, 0);
@@ -161,7 +161,7 @@ export class ResizableColumns {
 		this.table.addEventListener('pointerdown', this.onPointerDown);
 		this.table.addEventListener('keydown', this.onKeyDown);
 
-		this.table.classList.add('wicket-resizable-columns', 'wicket-resizable-columns-' + this.mode);
+		this.table.classList.add('antilia-resizable-columns', 'antilia-resizable-columns-' + this.mode);
 		this.ensureHandles();
 		const count = this.headerCells().length;
 		this.sized = positiveWidths(options.widths, count);
@@ -669,7 +669,7 @@ export class ResizableColumns {
 	 */
 	private copyTheme(element: HTMLElement): void {
 		const style = window.getComputedStyle(this.table);
-		['--wicket-theme-accent', '--wicket-theme-on-primary'].forEach((name) => {
+		['--antilia-theme-accent', '--antilia-theme-on-primary'].forEach((name) => {
 			const value = style.getPropertyValue(name);
 			if (value) {
 				element.style.setProperty(name, value.trim());
@@ -742,8 +742,8 @@ export class ResizableColumns {
 	 */
 	restore(): void {
 		this.table.querySelector(':scope > colgroup.' + COLGROUP_CLASS)?.remove();
-		this.table.classList.remove('wicket-resizable-columns',
-			'wicket-resizable-columns-' + this.mode);
+		this.table.classList.remove('antilia-resizable-columns',
+			'antilia-resizable-columns-' + this.mode);
 		this.table.style.width = '';
 		this.table.style.tableLayout = '';
 	}

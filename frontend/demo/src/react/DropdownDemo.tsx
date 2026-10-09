@@ -5,7 +5,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 
-import { Dropdown } from '@advanced-widgets/react';
+import { Dropdown } from '@antilia/react';
 
 import { format, loadChoices, type Choice } from '../data.js';
 import { describe, type DropdownConfig, type DropdownValues } from '../dropdown.js';

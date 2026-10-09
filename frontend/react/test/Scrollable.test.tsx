@@ -7,14 +7,14 @@ import { createRef, StrictMode } from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Scrollbar } from '@advanced-widgets/core';
+import { Scrollbar } from '@antilia/core';
 
 import { Scrollable, type ScrollableHandle } from '../src/index.js';
 
 afterEach(cleanup);
 
 function tracks(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('.wicket-scrollbar-track'),
+	return Array.from(container.querySelectorAll('.antilia-scrollbar-track'),
 		(track) => track.className);
 }
 
@@ -24,12 +24,12 @@ describe('Scrollable', () => {
 			<p>content</p></Scrollable></StrictMode>);
 
 		const wrapper = container.firstElementChild!;
-		expect(wrapper.className).toBe('wicket-scrollbar');
+		expect(wrapper.className).toBe('antilia-scrollbar');
 		const element = wrapper.firstElementChild!;
-		expect(element.classList.contains('wicket-scrollbar-host')).toBe(true);
+		expect(element.classList.contains('antilia-scrollbar-host')).toBe(true);
 		expect(element.classList.contains('list')).toBe(true);
 		expect(wrapper.querySelector('p')?.textContent).toBe('content');
-		expect(tracks(container)).toEqual(['wicket-scrollbar-track wicket-scrollbar-track--y']);
+		expect(tracks(container)).toEqual(['antilia-scrollbar-track antilia-scrollbar-track--y']);
 	});
 
 	it('draws other bars when the axis changes', () => {
@@ -37,14 +37,14 @@ describe('Scrollable', () => {
 		rerender(<Scrollable axis="both" />);
 
 		expect(tracks(container).length).toBe(2);
-		expect(container.firstElementChild?.classList.contains('wicket-scrollbar--both')).toBe(true);
+		expect(container.firstElementChild?.classList.contains('antilia-scrollbar--both')).toBe(true);
 	});
 
 	it('scrolls through its ref', () => {
 		const ref = createRef<ScrollableHandle>();
 		render(<Scrollable ref={ref} axis="y"><p data-line="1">1</p></Scrollable>);
 		const element = ref.current!.element!;
-		expect(element.classList.contains('wicket-scrollbar-host')).toBe(true);
+		expect(element.classList.contains('antilia-scrollbar-host')).toBe(true);
 
 		ref.current!.scrollTo({ top: 40 });
 		expect(element.scrollTop).toBe(40);

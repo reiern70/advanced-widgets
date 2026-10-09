@@ -2,19 +2,19 @@
  * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
  * All rights reserved.
  */
-.dynamic-data-table-header {
+.ant-data-table-header {
 	display: flex;
 	align-items: center;
 	gap: 0.3em;
 }
 
-.dynamic-data-table-header > .dynamic-data-table-sort,
-.dynamic-data-table-header > .dynamic-data-table-sort-title {
+.ant-data-table-header > .ant-data-table-sort,
+.ant-data-table-header > .ant-data-table-sort-title {
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
-a.dynamic-data-table-sort[href] {
+a.ant-data-table-sort[href] {
 	display: flex;
 	align-items: center;
 	color: inherit;
@@ -23,14 +23,14 @@ a.dynamic-data-table-sort[href] {
 	white-space: nowrap;
 }
 
-.dynamic-data-table-sort-title {
+.ant-data-table-sort-title {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.dynamic-data-table-sort-arrows {
+.ant-data-table-sort-arrows {
 	display: inline-flex;
 	flex: none;
 	flex-direction: column;
@@ -41,24 +41,24 @@ a.dynamic-data-table-sort[href] {
 	cursor: pointer;
 }
 
-table.dynamic-data-table th.dynamic-data-table-filler,
-table.dynamic-data-table td.dynamic-data-table-filler {
+table.ant-data-table th.ant-data-table-filler,
+table.ant-data-table td.ant-data-table-filler {
 	width: 3em;
 	min-width: 3em;
 	padding: 0;
 }
 
-table.dynamic-data-table > tbody > tr.dynamic-data-table-body-row,
-table.dynamic-data-table > tbody > tr.dynamic-data-table-body-row:hover {
+table.ant-data-table > tbody > tr.ant-data-table-body-row,
+table.ant-data-table > tbody > tr.ant-data-table-body-row:hover {
 	background: transparent;
 }
 
-table.dynamic-data-table > tbody > tr > td.dynamic-data-table-body-cell {
+table.ant-data-table > tbody > tr > td.ant-data-table-body-cell {
 	padding: 0;
 	border: 0;
 }
 
-.dynamic-data-table-body {
+.ant-data-table-body {
 	position: relative;
 	width: 100%;
 	contain: inline-size;
@@ -66,29 +66,29 @@ table.dynamic-data-table > tbody > tr > td.dynamic-data-table-body-cell {
 	overflow-y: auto;
 }
 
-table.dynamic-data-table.dynamic-data-table-rows {
+table.ant-data-table.ant-data-table-rows {
 	margin: 0;
 	border: 0;
 	table-layout: fixed;
 }
 
 /* a cell narrower than its content clips it, rather than drawing it over the next column */
-table.dynamic-data-table.dynamic-data-table-rows > tbody > tr > td {
+table.ant-data-table.ant-data-table-rows > tbody > tr > td {
 	overflow: hidden;
 }
 
-.dynamic-data-table-sort-asc,
-.dynamic-data-table-sort-desc {
+.ant-data-table-sort-asc,
+.ant-data-table-sort-desc {
 	opacity: 0.35;
 }
 
-.wicket_orderUp .dynamic-data-table-sort-asc,
-.wicket_orderDown .dynamic-data-table-sort-desc {
+.wicket_orderUp .ant-data-table-sort-asc,
+.wicket_orderDown .ant-data-table-sort-desc {
 	opacity: 1;
 	font-weight: bold;
 }
 
-.dynamic-data-table-navigation {
+.ant-data-table-navigation {
 	font-weight: 600;
 	display: flex;
 	flex-wrap: wrap;
@@ -96,82 +96,82 @@ table.dynamic-data-table.dynamic-data-table-rows > tbody > tr > td {
 	gap: 0.5em 1.5em;
 }
 
-.dynamic-data-table-navigation > div {
+.ant-data-table-navigation > div {
 	display: inline-block;
 }
 
-.dynamic-data-table-navigation > .dynamic-data-table-paging {
+.ant-data-table-navigation > .ant-data-table-paging {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5em 1.5em;
 }
 
-.dynamic-data-table-paging .navigator > div {
+.ant-data-table-paging .navigator > div {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 2px;
 }
 
-.dynamic-data-table-paging .navigator .goto {
+.ant-data-table-paging .navigator .goto {
 	display: contents;
 }
 
-.dynamic-data-table-paging .navigator a {
+.ant-data-table-paging .navigator a {
 	min-width: 1em;
 	padding: 0 0.25em;
 	border: 1px solid transparent;
 	border-radius: 0.3em;
-	color: var(--wicket-theme-accent, LinkText);
+	color: var(--antilia-theme-accent, LinkText);
 	text-align: center;
 	text-decoration: none;
 }
 
-.dynamic-data-table-paging .navigator a[href]:hover {
-	border-color: var(--wicket-theme-primary-dark, ButtonBorder);
-	background: var(--wicket-theme-primary, Highlight);
-	color: var(--wicket-theme-on-primary, HighlightText);
+.ant-data-table-paging .navigator a[href]:hover {
+	border-color: var(--antilia-theme-primary-dark, ButtonBorder);
+	background: var(--antilia-theme-primary, Highlight);
+	color: var(--antilia-theme-on-primary, HighlightText);
 }
 
-.dynamic-data-table-paging .navigator a[href]:focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+.ant-data-table-paging .navigator a[href]:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: 1px;
 }
 
-.dynamic-data-table-paging .navigator .goto a:not([href]) {
-	border-color: var(--wicket-theme-border, ButtonBorder);
-	background: var(--wicket-theme-surface, Canvas);
-	color: var(--wicket-theme-text, CanvasText);
+.ant-data-table-paging .navigator .goto a:not([href]) {
+	border-color: var(--antilia-theme-border, ButtonBorder);
+	background: var(--antilia-theme-surface, Canvas);
+	color: var(--antilia-theme-text, CanvasText);
 }
 
-.dynamic-data-table-paging .navigator a:not([href]):not(.goto a) {
+.ant-data-table-paging .navigator a:not([href]):not(.goto a) {
 	opacity: 0.4;
 }
 
-.dynamic-data-table-navigation :is(input[type="text"], input[type="search"], select) {
+.ant-data-table-navigation :is(input[type="text"], input[type="search"], select) {
 	padding: 0.15em 0.4em;
-	border: 1px solid var(--wicket-theme-border, ButtonBorder);
+	border: 1px solid var(--antilia-theme-border, ButtonBorder);
 	border-radius: 0.3em;
-	background: var(--wicket-theme-surface, Field);
-	color: var(--wicket-theme-text, FieldText);
+	background: var(--antilia-theme-surface, Field);
+	color: var(--antilia-theme-text, FieldText);
 	font: inherit;
 	font-weight: normal;
 }
 
-.dynamic-data-table-navigation :is(input, select):focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+.ant-data-table-navigation :is(input, select):focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: -1px;
 }
 
-.dynamic-data-table-navigation > .dynamic-data-table-actions {
+.ant-data-table-navigation > .ant-data-table-actions {
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
 	white-space: nowrap;
 }
 
-.dynamic-data-table-action {
+.ant-data-table-action {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -184,13 +184,13 @@ table.dynamic-data-table.dynamic-data-table-rows > tbody > tr > td {
 	vertical-align: middle;
 }
 
-table.dynamic-data-table .dynamic-data-table-action:hover,
-table.dynamic-data-table .dynamic-data-table-action:focus-visible {
-	background: var(--wicket-theme-accent, #c2410c);
-	color: var(--wicket-theme-on-primary, #ffffff);
+table.ant-data-table .ant-data-table-action:hover,
+table.ant-data-table .ant-data-table-action:focus-visible {
+	background: var(--antilia-theme-accent, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
 }
 
-.dynamic-data-table-page-size {
+.ant-data-table-page-size {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.4em;
@@ -198,71 +198,71 @@ table.dynamic-data-table .dynamic-data-table-action:focus-visible {
 	white-space: nowrap;
 }
 
-.dynamic-data-table-page-size > .wicket-dropdown {
+.ant-data-table-page-size > .antilia-dropdown {
 	min-width: 5em;
 }
 
 /* how many rows are selected, among the actions: "2 selected" */
-.dynamic-data-table-selection-count {
+.ant-data-table-selection-count {
 	display: inline-flex;
 	align-items: center;
 	padding: 0.1em 0.6em;
 	border-radius: 999px;
-	background: var(--wicket-theme-selected, #fff3b0);
-	color: var(--wicket-theme-text, inherit);
+	background: var(--antilia-theme-selected, #fff3b0);
+	color: var(--antilia-theme-text, inherit);
 	font-size: 0.85em;
 	font-weight: 600;
 	white-space: nowrap;
 }
 
-table.dynamic-data-table > thead > tr > td,
-table.dynamic-data-table > tfoot > tr > td {
+table.ant-data-table > thead > tr > td,
+table.ant-data-table > tfoot > tr > td {
 	overflow: visible;
 }
 
-.dynamic-data-table-column-chooser {
+.ant-data-table-column-chooser {
 	position: relative;
 	display: inline-block;
 	vertical-align: middle;
 }
 
-.dynamic-data-table-column-chooser > summary {
+.ant-data-table-column-chooser > summary {
 	list-style: none;
 	cursor: pointer;
 }
 
-.dynamic-data-table-column-chooser > summary::-webkit-details-marker {
+.ant-data-table-column-chooser > summary::-webkit-details-marker {
 	display: none;
 }
 
-.dynamic-data-table-column-chooser-menu {
+.ant-data-table-column-chooser-menu {
 	position: absolute;
 	top: calc(100% + 0.3em);
 	right: 0;
 	z-index: 20;
 	min-width: 12em;
 	padding: 0.4em;
-	border: 1px solid var(--wicket-theme-border, #f2b98d);
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
 	border-radius: 0.3em;
-	background: var(--wicket-theme-surface, #ffffff);
-	color: var(--wicket-theme-text, #2b1d12);
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #2b1d12);
 	box-shadow: 0 0.3em 1em rgba(0, 0, 0, 0.2);
 	font-weight: normal;
 	text-align: left;
 }
 
-table.dynamic-data-table > tfoot .dynamic-data-table-column-chooser-menu {
+table.ant-data-table > tfoot .ant-data-table-column-chooser-menu {
 	top: auto;
 	bottom: calc(100% + 0.3em);
 }
 
-.dynamic-data-table-column-chooser-menu > ul {
+.ant-data-table-column-chooser-menu > ul {
 	margin: 0 0 0.4em 0;
 	padding: 0;
 	list-style: none;
 }
 
-.dynamic-data-table-column-chooser-column {
+.ant-data-table-column-chooser-column {
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
@@ -279,36 +279,36 @@ table.dynamic-data-table > tfoot .dynamic-data-table-column-chooser-menu {
 	cursor: pointer;
 }
 
-.dynamic-data-table-column-chooser-column:hover,
-.dynamic-data-table-column-chooser-column:focus-visible {
-	background: var(--wicket-theme-hover, rgba(0, 0, 0, 0.06));
+.ant-data-table-column-chooser-column:hover,
+.ant-data-table-column-chooser-column:focus-visible {
+	background: var(--antilia-theme-hover, rgba(0, 0, 0, 0.06));
 	outline: none;
 }
 
-.dynamic-data-table-column-chooser-tick {
+.ant-data-table-column-chooser-tick {
 	flex: none;
 	width: 1em;
-	color: var(--wicket-theme-accent, inherit);
+	color: var(--antilia-theme-accent, inherit);
 	font-weight: bold;
 	visibility: hidden;
 }
 
-.dynamic-data-table-column-chooser-column[aria-pressed="true"]
-	> .dynamic-data-table-column-chooser-tick {
+.ant-data-table-column-chooser-column[aria-pressed="true"]
+	> .ant-data-table-column-chooser-tick {
 	visibility: visible;
 }
 
-.dynamic-data-table-column-chooser-menu > .dynamic-data-table-button {
+.ant-data-table-column-chooser-menu > .ant-data-table-button {
 	width: 100%;
 }
 
-.dynamic-data-table-column-chooser-menu > .dynamic-data-table-button:disabled {
+.ant-data-table-column-chooser-menu > .ant-data-table-button:disabled {
 	opacity: 0.5;
 	cursor: default;
 }
 
 /* the bar offering to select all rows: a slim line under the headers */
-.dynamic-data-table-selection-toolbar > td {
+.ant-data-table-selection-toolbar > td {
 	padding-top: 0.2em;
 	padding-bottom: 0.2em;
 	font-size: 0.85em;
@@ -316,24 +316,24 @@ table.dynamic-data-table > tfoot .dynamic-data-table-column-chooser-menu {
 	text-align: center;
 }
 
-th.dynamic-data-table-selection,
-td.dynamic-data-table-selection {
+th.ant-data-table-selection,
+td.ant-data-table-selection {
 	width: 2em;
 	text-align: center;
 }
 
 /*
- * Colors come from the theme properties (see wicket-theme.css); without a theme the table keeps
+ * Colors come from the theme properties (see antilia-theme.css); without a theme the table keeps
  * the colors of the page.
  */
-table.dynamic-data-table :is(input, select, textarea, button) {
-	color-scheme: var(--wicket-theme-color-scheme);
-	accent-color: var(--wicket-theme-accent);
+table.ant-data-table :is(input, select, textarea, button) {
+	color-scheme: var(--antilia-theme-color-scheme);
+	accent-color: var(--antilia-theme-accent);
 }
 
-table.dynamic-data-table {
-	color: var(--wicket-theme-text);
-	border-bottom: 2px solid var(--wicket-theme-primary);
+table.ant-data-table {
+	color: var(--antilia-theme-text);
+	border-bottom: 2px solid var(--antilia-theme-primary);
 }
 
 /*
@@ -343,7 +343,7 @@ table.dynamic-data-table {
  * some rows are. The tick is a file next to this style sheet, data-table-check.svg, as a strict
  * Content Security Policy refuses images in data: URLs.
  */
-table.dynamic-data-table input[type="checkbox"] {
+table.ant-data-table input[type="checkbox"] {
 	-webkit-appearance: none;
 	appearance: none;
 	display: inline-block;
@@ -353,121 +353,121 @@ table.dynamic-data-table input[type="checkbox"] {
 	margin: 0;
 	padding: 0;
 	vertical-align: middle;
-	border: 1.5px solid var(--wicket-theme-primary-dark, #6b7280);
+	border: 1.5px solid var(--antilia-theme-primary-dark, #6b7280);
 	border-radius: 0.22rem;
-	background: var(--wicket-theme-surface, #fff) no-repeat center / 0.8rem 0.8rem;
+	background: var(--antilia-theme-surface, #fff) no-repeat center / 0.8rem 0.8rem;
 	cursor: pointer;
 	transition: background-color 0.1s, border-color 0.1s;
 }
 
-table.dynamic-data-table input[type="checkbox"]:hover {
-	border-color: var(--wicket-theme-accent, #374151);
+table.ant-data-table input[type="checkbox"]:hover {
+	border-color: var(--antilia-theme-accent, #374151);
 }
 
-table.dynamic-data-table input[type="checkbox"]:checked {
-	border-color: var(--wicket-theme-primary-dark, #374151);
-	background-color: var(--wicket-theme-primary, #374151);
+table.ant-data-table input[type="checkbox"]:checked {
+	border-color: var(--antilia-theme-primary-dark, #374151);
+	background-color: var(--antilia-theme-primary, #374151);
 	background-image: url("data-table-check.svg");
 }
 
-table.dynamic-data-table input[type="checkbox"]:indeterminate {
-	border-color: var(--wicket-theme-primary-dark, #374151);
-	background-color: var(--wicket-theme-primary, #374151);
+table.ant-data-table input[type="checkbox"]:indeterminate {
+	border-color: var(--antilia-theme-primary-dark, #374151);
+	background-color: var(--antilia-theme-primary, #374151);
 	background-image: linear-gradient(#fff, #fff);
 	background-size: 0.55rem 0.14rem;
 }
 
-/* on the primary color of the headers, a checked box keeps a ring of the color of their text */
-table.dynamic-data-table > thead > tr > th input[type="checkbox"] {
-	border-color: var(--wicket-theme-on-primary, #fff);
+/*
+ * On the primary color of the headers, a box keeps a single border of the color of their text,
+ * checked or not: the darker border of a checked box would show as a second ring there.
+ */
+table.ant-data-table > thead > tr > th input[type="checkbox"],
+table.ant-data-table > thead > tr > th input[type="checkbox"]:is(:hover, :checked, :indeterminate) {
+	border-color: var(--antilia-theme-on-primary, #fff);
 }
 
-table.dynamic-data-table > thead > tr > th input[type="checkbox"]:is(:checked, :indeterminate) {
-	box-shadow: 0 0 0 1.5px var(--wicket-theme-on-primary, #fff);
-}
-
-table.dynamic-data-table input[type="checkbox"]:focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+table.ant-data-table input[type="checkbox"]:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: 2px;
 }
 
-table.dynamic-data-table input[type="checkbox"]:disabled {
+table.ant-data-table input[type="checkbox"]:disabled {
 	opacity: 0.5;
 	cursor: default;
 }
 
-table.dynamic-data-table > thead > tr > th {
-	background: var(--wicket-theme-primary);
-	color: var(--wicket-theme-on-primary);
+table.ant-data-table > thead > tr > th {
+	background: var(--antilia-theme-primary);
+	color: var(--antilia-theme-on-primary);
 }
 
-table.dynamic-data-table > thead > tr > th a,
-table.dynamic-data-table > thead > tr > th a:visited {
+table.ant-data-table > thead > tr > th a,
+table.ant-data-table > thead > tr > th a:visited {
 	color: inherit;
 }
 
-table.dynamic-data-table > tbody > tr.even {
-	background: var(--wicket-theme-surface);
+table.ant-data-table > tbody > tr.even {
+	background: var(--antilia-theme-surface);
 }
 
-table.dynamic-data-table > tbody > tr.odd {
-	background: var(--wicket-theme-surface-alt);
+table.ant-data-table > tbody > tr.odd {
+	background: var(--antilia-theme-surface-alt);
 }
 
-table.dynamic-data-table > tbody > tr:hover {
-	background: var(--wicket-theme-hover);
+table.ant-data-table > tbody > tr:hover {
+	background: var(--antilia-theme-hover);
 }
 
-table.dynamic-data-table > tbody > tr.selected {
-	background: var(--wicket-theme-selected);
+table.ant-data-table > tbody > tr.selected {
+	background: var(--antilia-theme-selected);
 }
 
-table.dynamic-data-table > tbody a,
-table.dynamic-data-table > tbody a:visited {
-	color: var(--wicket-theme-accent);
+table.ant-data-table > tbody a,
+table.ant-data-table > tbody a:visited {
+	color: var(--antilia-theme-accent);
 }
 
-table.dynamic-data-table > thead > tr > td,
-table.dynamic-data-table > tfoot > tr > td {
-	background: var(--wicket-theme-toolbar);
-	color: var(--wicket-theme-text);
+table.ant-data-table > thead > tr > td,
+table.ant-data-table > tfoot > tr > td {
+	background: var(--antilia-theme-toolbar);
+	color: var(--antilia-theme-text);
 }
 
-table.dynamic-data-table > thead > tr.dynamic-data-table-selection-toolbar > td,
-table.dynamic-data-table > tfoot > tr.dynamic-data-table-selection-toolbar > td {
-	background: var(--wicket-theme-highlight);
+table.ant-data-table > thead > tr.ant-data-table-selection-toolbar > td,
+table.ant-data-table > tfoot > tr.ant-data-table-selection-toolbar > td {
+	background: var(--antilia-theme-highlight);
 }
 
-table.dynamic-data-table tr.dynamic-data-table-selection-toolbar a,
-table.dynamic-data-table .dynamic-data-table-action {
-	color: var(--wicket-theme-accent);
+table.ant-data-table tr.ant-data-table-selection-toolbar a,
+table.ant-data-table .ant-data-table-action {
+	color: var(--antilia-theme-accent);
 }
 
-table.dynamic-data-table {
+table.ant-data-table {
 	position: relative;
 }
 
-table.dynamic-data-table > tbody > tr > td {
+table.ant-data-table > tbody > tr > td {
 	vertical-align: middle;
 }
 
-.dynamic-data-table-icon-action {
+.ant-data-table-icon-action {
 	padding: 0.1em;
 	background: transparent;
-	color: var(--wicket-theme-accent, inherit);
+	color: var(--antilia-theme-accent, inherit);
 	font: inherit;
 	cursor: pointer;
 }
 
-.dynamic-data-table-icon-action + .dynamic-data-table-icon-action {
+.ant-data-table-icon-action + .ant-data-table-icon-action {
 	margin-left: 0.3em;
 }
 
-table.dynamic-data-table > tbody > tr > td:has(> .dynamic-data-table-icon-action) {
+table.ant-data-table > tbody > tr > td:has(> .ant-data-table-icon-action) {
 	white-space: nowrap;
 }
 
-caption.dynamic-data-table-overlay {
+caption.ant-data-table-overlay {
 	position: absolute;
 	inset: 0;
 	z-index: 10;
@@ -477,29 +477,29 @@ caption.dynamic-data-table-overlay {
 	text-align: left;
 }
 
-caption.dynamic-data-table-overlay[hidden] {
+caption.ant-data-table-overlay[hidden] {
 	display: none;
 }
 
-caption.dynamic-data-table-overlay.dynamic-data-table-overlay-body {
+caption.ant-data-table-overlay.ant-data-table-overlay-body {
 	position: fixed;
 	z-index: 1000;
 }
 
-.dynamic-data-table-overlay-body > .dynamic-data-table-overlay-window {
+.ant-data-table-overlay-body > .ant-data-table-overlay-window {
 	top: 50%;
 	transform: translate(-50%, -50%);
 	max-height: calc(100vh - 2em);
 	overflow: auto;
 }
 
-.dynamic-data-table-overlay-veil {
+.ant-data-table-overlay-veil {
 	position: absolute;
 	inset: 0;
-	background: var(--wicket-theme-veil, rgba(31, 41, 51, 0.45));
+	background: var(--antilia-theme-veil, rgba(31, 41, 51, 0.45));
 }
 
-.dynamic-data-table-overlay-window {
+.ant-data-table-overlay-window {
 	position: absolute;
 	top: 1em;
 	left: 50%;
@@ -510,40 +510,40 @@ caption.dynamic-data-table-overlay.dynamic-data-table-overlay-body {
 	max-width: calc(100% - 2em);
 }
 
-.dynamic-data-table-confirmation-question {
+.ant-data-table-confirmation-question {
 	margin: 0 0 1em 0;
 	font-weight: bold;
 }
 
-.dynamic-data-table-overlay-buttons {
+.ant-data-table-overlay-buttons {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5em;
 }
 
-.dynamic-data-table-button {
+.ant-data-table-button {
 	padding: 0.3em 1em;
-	border: 1px solid var(--wicket-theme-border, #9aa5b1);
+	border: 1px solid var(--antilia-theme-border, #9aa5b1);
 	border-radius: 0.3em;
-	background: var(--wicket-theme-toolbar, #fff8f1);
-	color: var(--wicket-theme-text, #2b1d12);
+	background: var(--antilia-theme-toolbar, #fff8f1);
+	color: var(--antilia-theme-text, #2b1d12);
 	font: inherit;
 	cursor: pointer;
 }
 
-.dynamic-data-table-button-primary {
-	border-color: var(--wicket-theme-primary-dark, #9a3412);
-	background: var(--wicket-theme-primary, #c2410c);
-	color: var(--wicket-theme-on-primary, #ffffff);
+.ant-data-table-button-primary {
+	border-color: var(--antilia-theme-primary-dark, #9a3412);
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
 }
 
-.dynamic-data-table-button:focus-visible,
-.dynamic-data-table-icon-action:focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+.ant-data-table-button:focus-visible,
+.ant-data-table-icon-action:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: 1px;
 }
 
-.dynamic-data-table-header > .wicket-col-mover {
+.ant-data-table-header > .antilia-col-mover {
 	margin-right: 0;
 }
 
@@ -551,14 +551,14 @@ caption.dynamic-data-table-overlay.dynamic-data-table-overlay-body {
  * The veil of a table rendered by React or Svelte while it loads rows; Wicket blocks its tables
  * with Wicket.Veil.
  */
-.dynamic-data-table-host {
+.ant-data-table-host {
 	position: relative;
 }
 
-.dynamic-data-table-veil {
+.ant-data-table-veil {
 	position: absolute;
 	inset: 0;
 	z-index: 5;
-	background: color-mix(in srgb, var(--wicket-theme-surface, #fff) 50%, transparent);
+	background: color-mix(in srgb, var(--antilia-theme-surface, #fff) 50%, transparent);
 	cursor: wait;
 }

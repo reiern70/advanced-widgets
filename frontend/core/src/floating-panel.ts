@@ -5,15 +5,15 @@
 
 /*
  * Lets the user move a floating panel by dragging its title bar, with the mouse, a pen or a finger.
- * Once FloatingPanel.install() ran, a panel inside an element marked data-wicket-floating-draggable
+ * Once FloatingPanel.install() ran, a panel inside an element marked data-antilia-floating-draggable
  * can be moved; it is shifted by the CSS translate property, its title bar kept inside the browser
  * window. A panel shown in a dialog, such as the overlay window of a dynamic data table, moves the
  * dialog, so the dialog does not clip it.
  */
 
-const HEADER = '[data-wicket-floating-draggable] .wicket-floating-panel-header';
+const HEADER = '[data-antilia-floating-draggable] .antilia-floating-panel-header';
 
-const DRAGGING_CLASS = 'wicket-floating-panel-dragging';
+const DRAGGING_CLASS = 'antilia-floating-panel-dragging';
 
 function offsetOf(element: HTMLElement): { x: number; y: number } {
 	const parts = (element.style.translate || '').split(' ');
@@ -32,7 +32,7 @@ let installed = 0;
 export const FloatingPanel = {
 
 	/**
-	 * @param panel the element with the class wicket-floating-panel
+	 * @param panel the element with the class antilia-floating-panel
 	 * @returns the element moved when the panel is dragged: the dialog the panel is shown in, if
 	 *          any, else the panel
 	 */
@@ -44,7 +44,7 @@ export const FloatingPanel = {
 	 * Moves a panel by a distance from where it is, keeping its title bar inside the browser
 	 * window.
 	 *
-	 * @param panel the element with the class wicket-floating-panel
+	 * @param panel the element with the class antilia-floating-panel
 	 * @param dx the horizontal distance, in pixels
 	 * @param dy the vertical distance, in pixels
 	 */
@@ -52,7 +52,7 @@ export const FloatingPanel = {
 		const moved = FloatingPanel.movedElement(panel);
 		const offset = offsetOf(moved);
 		const rect = moved.getBoundingClientRect();
-		const header = panel.querySelector('.wicket-floating-panel-header');
+		const header = panel.querySelector('.antilia-floating-panel-header');
 		const headerHeight = header ? header.getBoundingClientRect().bottom - rect.top :
 			rect.height;
 		const root = document.compatMode === 'BackCompat' ? document.body :
@@ -67,7 +67,7 @@ export const FloatingPanel = {
 		if (!header || event.button !== 0) {
 			return;
 		}
-		const panel = header.closest<HTMLElement>('.wicket-floating-panel');
+		const panel = header.closest<HTMLElement>('.antilia-floating-panel');
 		if (!panel) {
 			return;
 		}
@@ -96,7 +96,7 @@ export const FloatingPanel = {
 	},
 
 	/**
-	 * Makes the floating panels in elements marked data-wicket-floating-draggable movable.
+	 * Makes the floating panels in elements marked data-antilia-floating-draggable movable.
 	 * Installing again only counts; the listener is removed when every installation was undone.
 	 *
 	 * @returns undoes this installation

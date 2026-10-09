@@ -23,7 +23,7 @@ export const LICENSE_PREFIX = 'AW1.';
 export const PUBLIC_KEY = 'MCowBQYDK2VwAyEACHyUV4LF2hZ0mpwS4Z90Oi5oXDKmPVwQHxRAFu757F4=';
 
 /** The CSS class of the placeholder of a private component, as on the server. */
-export const UNLICENSED_CLASS = 'wicket-unlicensed';
+export const UNLICENSED_CLASS = 'antilia-unlicensed';
 
 /** A checked license key. */
 export interface License {
@@ -52,7 +52,7 @@ function decode(base64: string, url: boolean): Uint8Array<ArrayBuffer> {
 export async function verifyLicense(key: string, publicKey = PUBLIC_KEY): Promise<License> {
 	const text = (key ?? '').trim();
 	if (!text.startsWith(LICENSE_PREFIX)) {
-		throw new Error('Not a license key of UI Advanced Widgets');
+		throw new Error('Not a license key of Antilia\'s Advanced Widgets');
 	}
 	const parts = text.substring(LICENSE_PREFIX.length).split('.');
 	if (parts.length !== 2) {
@@ -134,7 +134,7 @@ let activation: Promise<License | null> = Promise.resolve(null);
  */
 export function activate(key: string): Promise<License | null> {
 	activation = verifyLicense(key).catch((error: unknown) => {
-		console.error('UI Advanced Widgets: the license key is wrong', error);
+		console.error('Antilia\'s Advanced Widgets: the license key is wrong', error);
 		return null;
 	});
 	return activation;

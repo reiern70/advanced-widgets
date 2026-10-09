@@ -14,12 +14,12 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { Scrollbar, scrollbar, type ScrollbarOptions,
-		type ScrollPosition } from '@advanced-widgets/core';
+		type ScrollPosition } from '@antilia/core';
 
 	type Props = HTMLAttributes<HTMLDivElement> & {
 		/** The axes of the bars: by default those along which the CSS of the element scrolls. */
 		axis?: ScrollbarOptions['axis'];
-		/** CSS classes of the div wrapping the scrolling one, next to wicket-scrollbar. */
+		/** CSS classes of the div wrapping the scrolling one, next to antilia-scrollbar. */
 		wrapperClass?: string;
 		children?: Snippet;
 	};
@@ -61,8 +61,8 @@
 	}
 </script>
 
-<div class={['wicket-scrollbar', wrapperClass]}>
-	<div {...rest} class={['wicket-scrollbar-host', className]} bind:this={element}
+<div class={['antilia-scrollbar', wrapperClass]}>
+	<div {...rest} class={['antilia-scrollbar-host', className]} bind:this={element}
 		use:scrollbar={{ axis }}>
 		{@render children?.()}
 	</div>

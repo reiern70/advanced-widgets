@@ -6,7 +6,7 @@
 /*
  * A drop-down drawn over a <select>, single or multiple, that looks the same in every browser.
  *
- * new Dropdown(select, options) puts the select into a div.wicket-dropdown, or uses the one it is
+ * new Dropdown(select, options) puts the select into a div.antilia-dropdown, or uses the one it is
  * in already, and adds a button and a list of the select's options to it; the select itself is
  * hidden but stays in the page, holds the choice and fires its 'input' and 'change' events when
  * the user chooses, so forms, Ajax behaviors and the bindings of a framework work as with a native
@@ -14,7 +14,7 @@
  * the previous one, rebuilds the button and the list.
  *
  * A framework rendering the select renders the wrapper too, so that the drop-down never moves an
- * element the framework owns: <div class="wicket-dropdown"><select>...</select></div>.
+ * element the framework owns: <div class="antilia-dropdown"><select>...</select></div>.
  */
 
 import { Chips } from './chips.js';
@@ -39,7 +39,7 @@ export interface DropdownOptions {
 	filterThreshold?: number;
 }
 
-const WRAPPER_CLASS = 'wicket-dropdown';
+const WRAPPER_CLASS = 'antilia-dropdown';
 
 /** The chosen options a multiple drop-down shows in its button before it shows '+n'. */
 const MAX_CHIPS = 3;
@@ -165,27 +165,27 @@ export class Dropdown {
 			}
 		});
 		instances.set(wrapper, this);
-		wrapper.classList.toggle('wicket-dropdown-multiple', this.multiple);
+		wrapper.classList.toggle('antilia-dropdown-multiple', this.multiple);
 		this.wrapper = wrapper;
-		this.id = select.id || ('wicket-dropdown-' + (++counter));
-		select.classList.add('wicket-dropdown-native');
+		this.id = select.id || ('antilia-dropdown-' + (++counter));
+		select.classList.add('antilia-dropdown-native');
 		select.tabIndex = -1;
 		select.setAttribute('aria-hidden', 'true');
 
-		this.toggle = create('button', 'wicket-dropdown-toggle');
+		this.toggle = create('button', 'antilia-dropdown-toggle');
 		this.toggle.type = 'button';
 		this.toggle.id = this.id + '-toggle';
 		this.toggle.setAttribute('aria-haspopup', 'listbox');
 		this.toggle.setAttribute('aria-expanded', 'false');
 		this.toggle.setAttribute('aria-controls', this.id + '-list');
-		this.value = create('span', 'wicket-dropdown-value');
+		this.value = create('span', 'antilia-dropdown-value');
 		this.toggle.appendChild(this.value);
-		this.toggle.appendChild(create('span', 'wicket-dropdown-arrow'));
+		this.toggle.appendChild(create('span', 'antilia-dropdown-arrow'));
 		wrapper.appendChild(this.toggle);
 
-		this.menu = create('div', 'wicket-dropdown-menu');
+		this.menu = create('div', 'antilia-dropdown-menu');
 		this.menu.hidden = true;
-		this.list = create('ul', 'wicket-dropdown-list');
+		this.list = create('ul', 'antilia-dropdown-list');
 		this.list.id = this.id + '-list';
 		this.list.tabIndex = -1;
 		this.list.setAttribute('role', 'listbox');
@@ -196,7 +196,7 @@ export class Dropdown {
 		this.listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
 		this.listBox.appendChild(this.list);
 		this.menu.appendChild(this.listBox);
-		this.empty = create('div', 'wicket-dropdown-empty');
+		this.empty = create('div', 'antilia-dropdown-empty');
 		this.empty.hidden = true;
 		this.menu.appendChild(this.empty);
 		wrapper.appendChild(this.menu);
@@ -241,14 +241,14 @@ export class Dropdown {
 		const select = this.select;
 		this.toggle.remove();
 		this.menu.remove();
-		select.classList.remove('wicket-dropdown-native');
+		select.classList.remove('antilia-dropdown-native');
 		if (!select.classList.length) {
 			select.removeAttribute('class');
 		}
 		select.removeAttribute('tabindex');
 		select.removeAttribute('aria-hidden');
-		this.wrapper.classList.remove('wicket-dropdown-multiple', 'wicket-dropdown-disabled',
-			'wicket-dropdown-open', 'wicket-dropdown-up');
+		this.wrapper.classList.remove('antilia-dropdown-multiple', 'antilia-dropdown-disabled',
+			'antilia-dropdown-open', 'antilia-dropdown-up');
 		if (instances.get(this.wrapper) === this) {
 			instances.delete(this.wrapper);
 		}
@@ -293,7 +293,7 @@ export class Dropdown {
 		}
 		const withFilter = this.select.options.length >= this.threshold();
 		if (withFilter && !this.filter) {
-			this.filter = create('input', 'wicket-dropdown-filter');
+			this.filter = create('input', 'antilia-dropdown-filter');
 			this.filter.type = 'search';
 			this.filter.autocomplete = 'off';
 			this.filter.setAttribute('aria-controls', this.id + '-list');
@@ -312,19 +312,19 @@ export class Dropdown {
 		this.items = [];
 		this.active = null;
 		Array.from(this.select.options).forEach((option, index) => {
-			const item = create('li', 'wicket-dropdown-option');
+			const item = create('li', 'antilia-dropdown-option');
 			item.id = this.id + '-option-' + index;
 			item.setAttribute('role', 'option');
 			item.dataset.index = String(index);
 			if (this.multiple) {
-				item.appendChild(create('span', 'wicket-dropdown-check'));
+				item.appendChild(create('span', 'antilia-dropdown-check'));
 			}
-			item.appendChild(create('span', 'wicket-dropdown-text', option.text));
+			item.appendChild(create('span', 'antilia-dropdown-text', option.text));
 			if (option.disabled) {
 				item.setAttribute('aria-disabled', 'true');
 			}
 			if (option.value === '' && !this.multiple) {
-				item.classList.add('wicket-dropdown-option-none');
+				item.classList.add('antilia-dropdown-option-none');
 			}
 			this.list.appendChild(item);
 			this.items.push(item);
@@ -345,7 +345,7 @@ export class Dropdown {
 			item.setAttribute('aria-selected', String(Boolean(this.optionOf(item)?.selected)));
 		});
 		this.toggle.disabled = select.disabled;
-		this.wrapper.classList.toggle('wicket-dropdown-disabled', select.disabled);
+		this.wrapper.classList.toggle('antilia-dropdown-disabled', select.disabled);
 
 		this.value.textContent = '';
 		this.toggle.removeAttribute('title');
@@ -355,10 +355,10 @@ export class Dropdown {
 			const none = !this.multiple && select.selectedIndex >= 0 ?
 				select.options[select.selectedIndex].text : '';
 			this.value.textContent = none || this.options.placeholder || '';
-			this.value.classList.add('wicket-dropdown-placeholder');
+			this.value.classList.add('antilia-dropdown-placeholder');
 			return;
 		}
-		this.value.classList.remove('wicket-dropdown-placeholder');
+		this.value.classList.remove('antilia-dropdown-placeholder');
 		if (!this.multiple) {
 			this.value.textContent = chosen[0].text;
 			return;
@@ -415,7 +415,7 @@ export class Dropdown {
 			}
 		});
 		const itemOf = (event: Event) => (event.target as Element).closest<HTMLLIElement>(
-			'.wicket-dropdown-option');
+			'.antilia-dropdown-option');
 		this.listen(this.list, 'click', (event) => {
 			const item = itemOf(event);
 			if (item) {
@@ -466,13 +466,13 @@ export class Dropdown {
 		}
 		this.menu.hidden = false;
 		this.toggle.setAttribute('aria-expanded', 'true');
-		this.wrapper.classList.add('wicket-dropdown-open');
+		this.wrapper.classList.add('antilia-dropdown-open');
 		// open upwards when there is no room below but there is above
-		this.wrapper.classList.remove('wicket-dropdown-up');
+		this.wrapper.classList.remove('antilia-dropdown-up');
 		const box = this.menu.getBoundingClientRect();
 		const toggle = this.toggle.getBoundingClientRect();
 		if (box.bottom > window.innerHeight && toggle.top > box.height) {
-			this.wrapper.classList.add('wicket-dropdown-up');
+			this.wrapper.classList.add('antilia-dropdown-up');
 		}
 		if (this.filter) {
 			this.filter.value = '';
@@ -492,7 +492,7 @@ export class Dropdown {
 		}
 		this.menu.hidden = true;
 		this.toggle.setAttribute('aria-expanded', 'false');
-		this.wrapper.classList.remove('wicket-dropdown-open', 'wicket-dropdown-up');
+		this.wrapper.classList.remove('antilia-dropdown-open', 'antilia-dropdown-up');
 		if (focus) {
 			this.toggle.focus();
 		}
@@ -507,14 +507,14 @@ export class Dropdown {
 	 * Marks an option as the one the keyboard acts on.
 	 */
 	activate(item: HTMLLIElement | null, scroll: boolean): void {
-		this.active?.classList.remove('wicket-dropdown-active');
+		this.active?.classList.remove('antilia-dropdown-active');
 		this.active = item;
 		const owner = this.filter || this.list;
 		if (!item) {
 			owner.removeAttribute('aria-activedescendant');
 			return;
 		}
-		item.classList.add('wicket-dropdown-active');
+		item.classList.add('antilia-dropdown-active');
 		owner.setAttribute('aria-activedescendant', item.id);
 		if (scroll) {
 			const list = this.list;

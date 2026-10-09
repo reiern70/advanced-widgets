@@ -8,7 +8,7 @@ import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, use
 
 import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
 	UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
-	type TreeNode, type TreeTexts } from '@advanced-widgets/core';
+	type TreeNode, type TreeTexts } from '@antilia/core';
 
 export interface TreeProps {
 	/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -136,10 +136,10 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 		return <div className={UNLICENSED_CLASS} role="note"
 			data-component={table ? 'TreeGrid' : 'Tree'}>{texts.unlicensed}</div>;
 	}
-	const tree = <div id={id} className={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree',
+	const tree = <div id={id} className={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree',
 		className].filter(Boolean).join(' ')} />;
 	// a tree of a height scrolls in the wrapper of its scroll bars, which React renders
-	return height ? <div className="wicket-scrollbar">{tree}</div> : tree;
+	return height ? <div className="antilia-scrollbar">{tree}</div> : tree;
 });
 
 /**

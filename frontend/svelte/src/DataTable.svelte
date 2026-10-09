@@ -18,7 +18,7 @@
 		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
 		SHOW_COLUMNS, UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData,
 		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
-		type DataTableSort, type DataTableTexts, type ResizeMode } from '@advanced-widgets/core';
+		type DataTableSort, type DataTableTexts, type ResizeMode } from '@antilia/core';
 
 	import Dropdown from './Dropdown.svelte';
 
@@ -350,11 +350,11 @@
 {#snippet navigation()}
 	<tr class="navigation">
 		<td colspan={colSpan}>
-			<div class="dynamic-data-table-navigation">
+			<div class="ant-data-table-navigation">
 				{#if toolbar}
-					<div class="dynamic-data-table-navigation-prefix">{@render toolbar()}</div>
+					<div class="ant-data-table-navigation-prefix">{@render toolbar()}</div>
 				{/if}
-				<div class="dynamic-data-table-paging">
+				<div class="ant-data-table-paging">
 					<div class="navigatorLabel"><div>{label}</div></div>
 					{#if !infinite}
 						<div class="navigator"><div>
@@ -376,25 +376,25 @@
 						</div></div>
 					{/if}
 				</div>
-				<div class="dynamic-data-table-actions">
+				<div class="ant-data-table-actions">
 					{@render actions?.()}
 					{#if columnChooser && hideable.length > 0}
 						<span>
-							<details class="dynamic-data-table-column-chooser">
-								<summary class="dynamic-data-table-action" title={texts.columns}
+							<details class="ant-data-table-column-chooser">
+								<summary class="ant-data-table-action" title={texts.columns}
 									aria-label={texts.columns}>
 									<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18"
 										height="18" fill="none" stroke="currentColor" stroke-width="2"
 										stroke-linecap="round"><path d="M4 5h16v14H4z M10 5v14 M15 5v14" /></svg>
 								</summary>
-								<div class="dynamic-data-table-column-chooser-menu" role="group"
+								<div class="ant-data-table-column-chooser-menu" role="group"
 									aria-label={texts.columns}>
 									<ul>
 										{#each hideable as column (column.id)}
 											<li>
-												<button type="button" class="dynamic-data-table-column-chooser-column"
+												<button type="button" class="ant-data-table-column-chooser-column"
 													data-dt-column={column.id} aria-pressed={shown.includes(column.id)}>
-													<span class="dynamic-data-table-column-chooser-tick"
+													<span class="ant-data-table-column-chooser-tick"
 														aria-hidden="true">✓</span>
 													<span>{column.header}</span>
 												</button>
@@ -402,7 +402,7 @@
 										{/each}
 									</ul>
 									<button type="button" data-dt-apply="true"
-										class="dynamic-data-table-button dynamic-data-table-button-primary">
+										class="ant-data-table-button ant-data-table-button-primary">
 										{texts.apply}
 									</button>
 								</div>
@@ -411,7 +411,7 @@
 					{/if}
 				</div>
 				{#if !infinite}
-					<label class="dynamic-data-table-page-size">
+					<label class="ant-data-table-page-size">
 						<span>{texts.rowsPerPage}</span>
 						<Dropdown options={pageSizes.map((size) => ({ value: String(size),
 							label: String(size) }))} value={String(pageSize)}
@@ -426,17 +426,17 @@
 {#if licensed === false}
 	<div class={UNLICENSED_CLASS} role="note" data-component="DataTable">{texts.unlicensed}</div>
 {:else if licensed}
-	<div class="dynamic-data-table-host">
-		<table {id} class={['dynamic-dataview dynamic-data-table', className]} cellspacing="0">
+	<div class="ant-data-table-host">
+		<table {id} class={['ant-dataview ant-data-table', className]} cellspacing="0">
 			<thead>
 				{@render navigation()}
-				<tr class="dynamic-data-table-headers">
+				<tr class="ant-data-table-headers">
 					{#if withSelection}
-						<th class="dynamic-data-table-selection" data-resizable="false">
-							<div class="dynamic-data-table-header">
-								<span class="dynamic-data-table-sort-title">
+						<th class="ant-data-table-selection" data-resizable="false">
+							<div class="ant-data-table-header">
+								<span class="ant-data-table-sort-title">
 									{#if selection === 'many'}
-										<input type="checkbox" class="dynamic-data-table-select-page"
+										<input type="checkbox" class="ant-data-table-select-page"
 											data-dt-action={SELECTION_ACTIONS[2]}
 											data-dt-action-unchecked={SELECTION_ACTIONS[3]}
 											aria-label={texts.selectPage} />
@@ -450,9 +450,9 @@
 						<th data-movable={movableColumns && column.movable ? 'true' : undefined}
 							data-resizable={column.resizable === false ? 'false' : undefined}
 							aria-sort={sorting} class={sorting ? ORDER_CLASSES[sorting] : undefined}>
-							<div class="dynamic-data-table-header">
+							<div class="ant-data-table-header">
 								{#if movableColumns && column.movable}
-									<button type="button" class="wicket-col-mover" title={texts.moveColumn}
+									<button type="button" class="antilia-col-mover" title={texts.moveColumn}
 										aria-label={texts.moveColumn}>
 										<svg aria-hidden="true" focusable="false" viewBox="0 0 10 16" width="8"
 											height="13"><path fill="currentColor" d={GRIP} /></svg>
@@ -460,23 +460,23 @@
 								{/if}
 								{#if column.sort}
 									{@const property = column.sort}
-									<a class="dynamic-data-table-sort" href="#top"
+									<a class="ant-data-table-sort" href="#top"
 										onclick={(event) => sortBy(property, event)}>
-										<span class="dynamic-data-table-sort-title">{column.header}</span>
+										<span class="ant-data-table-sort-title">{column.header}</span>
 									</a>
-									<a class="dynamic-data-table-sort-arrows" aria-hidden="true" tabindex="-1"
+									<a class="ant-data-table-sort-arrows" aria-hidden="true" tabindex="-1"
 										href="#top" onclick={(event) => sortBy(property, event)}>
-										<span class="dynamic-data-table-sort-asc">▲</span>
-										<span class="dynamic-data-table-sort-desc">▼</span>
+										<span class="ant-data-table-sort-asc">▲</span>
+										<span class="ant-data-table-sort-desc">▼</span>
 									</a>
 								{:else}
-									<span class="dynamic-data-table-sort-title">{column.header}</span>
+									<span class="ant-data-table-sort-title">{column.header}</span>
 								{/if}
 							</div>
 						</th>
 					{/each}
 					{#if filler}
-						<th class="dynamic-data-table-filler" data-resizable-skip="true" aria-hidden="true"></th>
+						<th class="ant-data-table-filler" data-resizable-skip="true" aria-hidden="true"></th>
 					{/if}
 				</tr>
 			</thead>
@@ -484,7 +484,7 @@
 			<tfoot>{@render navigation()}</tfoot>
 		</table>
 		{#if veiled}
-			<div class="dynamic-data-table-veil" aria-hidden="true"></div>
+			<div class="ant-data-table-veil" aria-hidden="true"></div>
 		{/if}
 	</div>
 {/if}

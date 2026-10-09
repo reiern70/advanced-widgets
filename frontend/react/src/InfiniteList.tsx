@@ -6,7 +6,7 @@
 import { forwardRef, useId, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
 import { JsonInfiniteList, type InfiniteListConfig,
-	type InfiniteListData } from '@advanced-widgets/core';
+	type InfiniteListData } from '@antilia/core';
 
 export interface InfiniteListProps {
 	/** Loads the items shown, or the next page of them when more is true. */
@@ -74,5 +74,5 @@ export const InfiniteList = forwardRef<InfiniteListHandle, InfiniteListProps>(fu
 	const list = <div id={id} className={['json-infinite-list', className].filter(Boolean)
 		.join(' ')} />;
 	// a list of a height scrolls in the wrapper of its scroll bars, which React renders
-	return height ? <div className="wicket-scrollbar">{list}</div> : list;
+	return height ? <div className="antilia-scrollbar">{list}</div> : list;
 });

@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Dropdown } from '@advanced-widgets/svelte';
+	import { Dropdown } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice } from '../data.js';
 	import { describe, type DropdownConfig } from '../dropdown.js';

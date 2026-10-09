@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ProgressBar } from '@advanced-widgets/svelte';
+	import { ProgressBar } from '@antilia/svelte';
 
 	import { advance, TICK_MILLIS, type ProgressConfig } from '../progress.js';
 

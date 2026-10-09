@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-chips.js: registers Wicket.Chips, the chips of the chosen values of the drop-downs and
+ * antilia-chips.js: registers Wicket.Chips, the chips of the chosen values of the drop-downs and
  * the autocompletes, for the scripts still outside the core.
  */
 

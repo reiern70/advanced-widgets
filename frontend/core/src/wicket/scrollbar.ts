@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-scrollbar.js: registers Wicket.Scrollbar for ScrollbarBehavior, which calls
+ * antilia-scrollbar.js: registers Wicket.Scrollbar for ScrollbarBehavior, which calls
  * Wicket.Scrollbar.attach(id, {axis}), and for the dynamic data tables' scrolling bodies.
  */
 

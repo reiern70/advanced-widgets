@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Dropdown, InfiniteList, type InfiniteListHandle } from '@advanced-widgets/react';
+import { Dropdown, InfiniteList, type InfiniteListHandle } from '@antilia/react';
 
 import { format, loadChoices, type Choice, type User } from '../data.js';
 import { interpolate, Users, type JsonListConfig, type JsonListTexts,
@@ -138,7 +138,7 @@ export function JsonListDemo({ config }: { config: JsonListConfig }) {
 							remove={texts.remove} />
 					</label>
 					<button type="button" onClick={() => setShown({ form: null })}
-						className="dynamic-data-table-button dynamic-data-table-button-primary">
+						className="ant-data-table-button ant-data-table-button-primary">
 						{texts.newUser}
 					</button>
 				</div>
@@ -162,11 +162,11 @@ export function JsonListDemo({ config }: { config: JsonListConfig }) {
 			{deletion && shown && 'deletion' in shown && (
 				<Dialog title={texts.delete} onClose={() => setShown(null)}>
 					<p>{interpolate(texts['delete.confirm'], deletion)}</p>
-					<div className="dynamic-data-table-overlay-buttons">
-						<button type="button" className="dynamic-data-table-button"
+					<div className="ant-data-table-overlay-buttons">
+						<button type="button" className="ant-data-table-button"
 							onClick={() => setShown(null)}>{texts.cancel}</button>
 						<button type="button" onClick={() => remove(shown.deletion)}
-							className="dynamic-data-table-button dynamic-data-table-button-primary">
+							className="ant-data-table-button ant-data-table-button-primary">
 							{texts.delete}
 						</button>
 					</div>

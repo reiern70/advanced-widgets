@@ -13,7 +13,7 @@
  */
 
 import type { DataTableColumnDef, DataTablePush, DataTableQuery, DataTableRow,
-	DataTableTexts } from '@advanced-widgets/core';
+	DataTableTexts } from '@antilia/core';
 
 import { loadUsers, type Choice, type User, type UserRow } from './data.js';
 import type { UserFields, UserFormTexts } from './json-list.js';

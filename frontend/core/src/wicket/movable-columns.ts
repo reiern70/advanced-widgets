@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-movable-columns.js: registers Wicket.MovableColumns for MovableColumnsBehavior, which
+ * antilia-movable-columns.js: registers Wicket.MovableColumns for MovableColumnsBehavior, which
  * calls Wicket.MovableColumns.attach(id, {movable, label, onMove}) with onMove calling back the
  * server.
  */

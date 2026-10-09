@@ -4,22 +4,32 @@
 -->
 <!--
   The Buttons demo in Svelte: the buttons of the Wicket page with the Button of
-  @advanced-widgets/svelte.
+  @antilia/svelte, the drop-down above them choosing their icons.
 -->
 <script lang="ts">
-	import { Button, Scrollable } from '@advanced-widgets/svelte';
+	import { untrack } from 'svelte';
 
-	import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, sizeName,
-		type ButtonsConfig } from '../buttons.js';
+	import { Button, Dropdown, Scrollable } from '@antilia/svelte';
+
+	import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, iconSetOptions, sizeName,
+		type ButtonIconSet, type ButtonsConfig } from '../buttons.js';
 
 	let { config }: { config: ButtonsConfig } = $props();
 
 	const texts = $derived(config.texts);
 	const variants = $derived(config.variants);
 	let clicked = $state<string | null>(null);
+	let icons = $state<ButtonIconSet>(untrack(() => config.icons));
 </script>
 
 <div class="buttons-demo">
+	<div class="buttons-demo__options">
+		<label for="svelte-buttons-icons">{texts.icons}</label>
+		<Dropdown id="svelte-buttons-icons" name="icons" value={icons}
+			options={iconSetOptions(texts)}
+			onchange={(value) => (icons = String(value) as ButtonIconSet)}
+			filter={texts.filter} noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
+	</div>
 	<p class="buttons-demo__clicked" role="status">{clicked ?? texts['clicked.none']}</p>
 	<Scrollable axis="x" class="buttons-demo__scroll">
 		<table class="buttons-demo__matrix">
@@ -37,13 +47,13 @@
 						{#each BUTTON_SIZES as size (size)}
 							{@const click = () => (clicked = clickedText(config, variant, size))}
 							<td>
-								<div class="aw-button-bar">
+								<div class="ant-button-bar">
 									<Button label={sample.text} {variant} {size} onclick={click} />
 									<Button label={sample.text} {variant} {size} onclick={click}>
-										{#snippet icon()}{@html sample.icon}{/snippet}
+										{#snippet icon()}{@html sample.icons[icons]}{/snippet}
 									</Button>
 									<Button label={sample.text} {variant} {size} iconOnly onclick={click}>
-										{#snippet icon()}{@html sample.icon}{/snippet}
+										{#snippet icon()}{@html sample.icons[icons]}{/snippet}
 									</Button>
 								</div>
 							</td>
@@ -54,15 +64,15 @@
 		</table>
 	</Scrollable>
 	<h3>{texts.disabled}</h3>
-	<div class="aw-button-bar">
+	<div class="ant-button-bar">
 		{#each BUTTON_VARIANTS as variant (variant)}
 			<Button label={variants[variant].text} {variant} disabled>
-				{#snippet icon()}{@html variants[variant].icon}{/snippet}
+				{#snippet icon()}{@html variants[variant].icons[icons]}{/snippet}
 			</Button>
 		{/each}
 	</div>
 	<h3>{texts.asLink}</h3>
 	<p>
-		<a href="#buttons-as-links" class="aw-button aw-button--ghost aw-button--small">{texts['asLink.text']}</a>
+		<a href="#buttons-as-links" class="ant-button ant-button--ghost ant-button--small">{texts['asLink.text']}</a>
 	</p>
 </div>

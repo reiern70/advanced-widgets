@@ -22,12 +22,12 @@ export const BUTTON_VARIANTS: readonly ButtonVariant[] = ['primary', 'secondary'
 export const BUTTON_SIZES: readonly ButtonSize[] = ['small', 'medium', 'large'];
 
 /**
- * @returns the CSS classes of a button: aw-button, its variant's and its size's, and
- * aw-button--icon-only for a button showing its icon only; secondary and medium by default
+ * @returns the CSS classes of a button: ant-button, its variant's and its size's, and
+ * ant-button--icon-only for a button showing its icon only; secondary and medium by default
  */
 export function buttonClasses(options: { variant?: ButtonVariant; size?: ButtonSize;
 	iconOnly?: boolean; className?: string } = {}): string {
 	const { variant = 'secondary', size = 'medium', iconOnly = false, className } = options;
-	return ['aw-button', 'aw-button--' + variant, 'aw-button--' + size,
-		iconOnly ? 'aw-button--icon-only' : '', className ?? ''].filter(Boolean).join(' ');
+	return ['ant-button', 'ant-button--' + variant, 'ant-button--' + size,
+		iconOnly ? 'ant-button--icon-only' : '', className ?? ''].filter(Boolean).join(' ');
 }

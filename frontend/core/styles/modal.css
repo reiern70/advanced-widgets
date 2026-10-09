@@ -4,7 +4,7 @@
  *
  * The modal dialog of React and Svelte (modal.ts) in the markup of Wicket's ModalDialog with its
  * default theme: an overlay over the page, the dialog near its top, the content scrolling within,
- * and an optional header, body and footer in the colors of the theme, as wicket-theme.css shows
+ * and an optional header, body and footer in the colors of the theme, as antilia-theme.css shows
  * Wicket's. The header holds the title and the close button, drags the dialog and folds it to the
  * header; the buttons of the footer are on the right. Dialogs nested in another, or opened after
  * it, are shifted a little.
@@ -19,18 +19,18 @@
 	justify-content: center;
 	margin: 0;
 	padding: 0;
-	background: var(--wicket-theme-veil, rgba(0, 0, 0, 0.2));
+	background: var(--antilia-theme-veil, rgba(0, 0, 0, 0.2));
 }
 
 .dialog-theme-default .modal-dialog {
 	position: absolute;
 	top: 10%;
 	overflow: hidden;
-	border: 1px solid var(--wicket-theme-border, transparent);
+	border: 1px solid var(--antilia-theme-border, transparent);
 	border-radius: 0.4em;
-	background: var(--wicket-theme-surface, Canvas);
-	color: var(--wicket-theme-text, CanvasText);
-	color-scheme: var(--wicket-theme-color-scheme, normal);
+	background: var(--antilia-theme-surface, Canvas);
+	color: var(--antilia-theme-text, CanvasText);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
 	box-shadow: 0 0 60px 10px rgba(0, 0, 0, 0.35);
 }
 
@@ -55,10 +55,10 @@
 	align-items: center;
 	gap: 0.5em;
 	margin: 0;
-	padding: 0.5em 1em;
-	background: var(--wicket-theme-primary, Highlight);
-	color: var(--wicket-theme-on-primary, HighlightText);
-	font-size: 1.1em;
+	padding: 0.3em 0.75em;
+	background: var(--antilia-theme-primary, Highlight);
+	color: var(--antilia-theme-on-primary, HighlightText);
+	font-size: 1em;
 	font-weight: bold;
 	text-align: start;
 }
@@ -72,15 +72,15 @@
 
 .dialog-theme-default .modal-dialog-close {
 	flex: none;
-	margin: -0.25em -0.5em -0.25em 0;
-	padding: 0 0.35em;
+	margin: -0.2em -0.4em -0.2em 0;
+	padding: 0 0.3em;
 	border: 0;
 	border-radius: 0.25em;
 	background: transparent;
 	color: inherit;
 	font: inherit;
-	font-size: 1.3em;
-	line-height: 1.2;
+	font-size: 1.2em;
+	line-height: 1.1;
 	cursor: pointer;
 	opacity: 0.8;
 }
@@ -112,7 +112,7 @@
 }
 
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-body,
-.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .wicket-scrollbar,
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .antilia-scrollbar,
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-footer {
 	display: none;
 }
@@ -125,7 +125,7 @@
 }
 
 /* a body in the wrapper of the slim scroll bars of the core: the wrapper takes its place */
-.dialog-theme-default .modal-dialog-content > .wicket-scrollbar {
+.dialog-theme-default .modal-dialog-content > .antilia-scrollbar {
 	display: flex;
 	flex: 1 1 auto;
 	flex-direction: column;
@@ -139,31 +139,31 @@
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	align-items: center;
-	gap: 0.5em;
-	padding: 0.5em 1em;
-	border-top: 1px solid var(--wicket-theme-border, ButtonBorder);
-	background: var(--wicket-theme-toolbar, transparent);
+	gap: 0.4em;
+	padding: 0.35em 0.75em;
+	border-top: 1px solid var(--antilia-theme-border, ButtonBorder);
+	background: var(--antilia-theme-toolbar, transparent);
 }
 
 /* the buttons of a dialog, the primary one in the color of the header */
 .dialog-theme-default .modal-dialog-button {
-	padding: 0.3em 1em;
-	border: 1px solid var(--wicket-theme-border, ButtonBorder);
+	padding: 0.2em 0.85em;
+	border: 1px solid var(--antilia-theme-border, ButtonBorder);
 	border-radius: 0.3em;
-	background: var(--wicket-theme-surface, ButtonFace);
-	color: var(--wicket-theme-text, ButtonText);
+	background: var(--antilia-theme-surface, ButtonFace);
+	color: var(--antilia-theme-text, ButtonText);
 	font: inherit;
 	cursor: pointer;
 }
 
 .dialog-theme-default .modal-dialog-button-primary {
-	border-color: var(--wicket-theme-primary-dark, Highlight);
-	background: var(--wicket-theme-primary, Highlight);
-	color: var(--wicket-theme-on-primary, HighlightText);
+	border-color: var(--antilia-theme-primary-dark, Highlight);
+	background: var(--antilia-theme-primary, Highlight);
+	color: var(--antilia-theme-on-primary, HighlightText);
 }
 
 .dialog-theme-default .modal-dialog-button:focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: 1px;
 }
 

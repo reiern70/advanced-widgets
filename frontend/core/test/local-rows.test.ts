@@ -60,9 +60,9 @@ describe('localRows', () => {
 
 describe('buttonClasses', () => {
 	it('names the variant and the size, secondary and medium by default', () => {
-		expect(buttonClasses()).toBe('aw-button aw-button--secondary aw-button--medium');
+		expect(buttonClasses()).toBe('ant-button ant-button--secondary ant-button--medium');
 		expect(buttonClasses({ variant: 'danger', size: 'small', iconOnly: true,
 			className: 'mine' })).toBe(
-			'aw-button aw-button--danger aw-button--small aw-button--icon-only mine');
+			'ant-button ant-button--danger ant-button--small ant-button--icon-only mine');
 	});
 });

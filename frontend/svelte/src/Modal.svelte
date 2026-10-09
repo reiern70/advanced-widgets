@@ -14,7 +14,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
-		SCROLLBAR_WRAPPER_CLASS } from '@advanced-widgets/core';
+		SCROLLBAR_WRAPPER_CLASS } from '@antilia/core';
 
 	type Props = {
 		/** Whether the dialog is open; nothing is rendered while it is closed. */

@@ -12,7 +12,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	import { buttonClasses, type ButtonSize, type ButtonVariant } from '@advanced-widgets/core';
+	import { buttonClasses, type ButtonSize, type ButtonVariant } from '@antilia/core';
 
 	type Props = Omit<HTMLButtonAttributes, 'children'> & {
 		/** The text of the button; with only the icon shown, its tooltip and accessible name. */
@@ -34,6 +34,6 @@
 <button {...rest} {type} class={buttonClasses({ variant, size, iconOnly,
 	className: typeof className === 'string' ? className : undefined })}
 	title={title ?? (iconOnly ? label : undefined)} aria-label={iconOnly ? label : undefined}>
-	{#if icon}<span class="aw-button__icon" aria-hidden="true">{@render icon()}</span>{/if}
-	{#if !iconOnly}<span class="aw-button__label">{label}</span>{/if}
+	{#if icon}<span class="ant-button__icon" aria-hidden="true">{@render icon()}</span>{/if}
+	{#if !iconOnly}<span class="ant-button__label">{label}</span>{/if}
 </button>

@@ -2,13 +2,13 @@
 # Builds the demo application here and puts it online:
 #   deploy/deploy.sh ubuntu@<static-ip>
 # The WAR is built on this machine (Wicket 11 is a snapshot built here), copied with the files
-# of this folder to /opt/advanced-widgets on the instance, and started there with Docker Compose.
+# of this folder to /opt/antilia-widgets on the instance, and started there with Docker Compose.
 set -eu
 
 TARGET=${1:?usage: deploy/deploy.sh user@host}
 DEPLOY=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(dirname "$DEPLOY")
-REMOTE=/opt/advanced-widgets
+REMOTE=/opt/antilia-widgets
 
 cd "$ROOT"
 mvn -q -pl demo-app -am clean package -DskipTests

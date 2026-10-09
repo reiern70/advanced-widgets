@@ -22,7 +22,7 @@ fi
 sudo apt-get update
 sudo apt-get install -y unattended-upgrades rsync
 
-sudo mkdir -p /opt/advanced-widgets
-sudo chown "$USER:$USER" /opt/advanced-widgets
+sudo mkdir -p /opt/antilia-widgets
+sudo chown "$USER:$USER" /opt/antilia-widgets
 
 echo "Done. Log out and in again, so the user can run docker."

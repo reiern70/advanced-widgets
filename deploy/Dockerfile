@@ -7,9 +7,9 @@ RUN java -jar "$JETTY_HOME/start.jar" --add-modules=websocket-jakarta,http-forwa
 
 # the Wicket page store, a volume of its own on the instance's SSD (see compose.yaml)
 USER root
-RUN mkdir -p /var/lib/advanced-widgets/page-store \
-	&& chown -R jetty:jetty /var/lib/advanced-widgets
+RUN mkdir -p /var/lib/antilia-widgets/page-store \
+	&& chown -R jetty:jetty /var/lib/antilia-widgets
 USER jetty
-ENV ADVANCED_WIDGETS_PAGE_STORE=/var/lib/advanced-widgets/page-store
+ENV ANTILIA_WIDGETS_PAGE_STORE=/var/lib/antilia-widgets/page-store
 
 COPY --chown=jetty:jetty ROOT.war /var/lib/jetty/webapps/ROOT.war

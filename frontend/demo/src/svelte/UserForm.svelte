@@ -5,7 +5,7 @@
 <!-- The form of a user, every field required, in the markup of the Wicket one. -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, Dropdown } from '@advanced-widgets/svelte';
+	import { Button, Dropdown } from '@antilia/svelte';
 
 	import type { Choice, User } from '../data.js';
 	import { FIELDS, fieldsOf, MAX_LENGTH, validate, type UserFields,
@@ -50,7 +50,7 @@
 	</label>
 	{@render input('city', 'address-level2')}
 	{@render input('address', 'street-address')}
-	<div class="aw-button-bar dynamic-data-table-overlay-buttons">
+	<div class="ant-button-bar ant-data-table-overlay-buttons">
 		<Button label={texts.cancel} onclick={oncancel} />
 		<Button type="submit" label={texts.save} variant="primary" />
 	</div>

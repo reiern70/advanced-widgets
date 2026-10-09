@@ -37,18 +37,18 @@ describe('Clipboard', () => {
 		await Clipboard.copy(42, cell);
 
 		expect(written).toEqual(['42']);
-		expect(cell.classList.contains('wicket-clipboard-host')).toBe(true);
-		expect(cell.querySelectorAll('.wicket-clipboard-copied').length).toBe(1);
-		expect(document.getElementById('wicket-clipboard-status')?.textContent).toBe('Copied');
+		expect(cell.classList.contains('antilia-clipboard-host')).toBe(true);
+		expect(cell.querySelectorAll('.antilia-clipboard-copied').length).toBe(1);
+		expect(document.getElementById('antilia-clipboard-status')?.textContent).toBe('Copied');
 
 		vi.advanceTimersByTime(Clipboard.iconMillis);
-		expect(cell.querySelector('.wicket-clipboard-copied')).toBeNull();
-		expect(cell.classList.contains('wicket-clipboard-host')).toBe(false);
+		expect(cell.querySelector('.antilia-clipboard-copied')).toBeNull();
+		expect(cell.classList.contains('antilia-clipboard-host')).toBe(false);
 	});
 
-	it('copies the data-wicket-copy of a clicked element once installed', async () => {
-		document.body.innerHTML = '<p data-wicket-copy="one"><b>click</b></p>' +
-			'<p data-wicket-copy="two" data-wicket-copy-on="dblclick">twice</p>';
+	it('copies the data-antilia-copy of a clicked element once installed', async () => {
+		document.body.innerHTML = '<p data-antilia-copy="one"><b>click</b></p>' +
+			'<p data-antilia-copy="two" data-antilia-copy-on="dblclick">twice</p>';
 		const uninstall = Clipboard.install();
 		const again = Clipboard.install();
 
@@ -76,7 +76,7 @@ describe('Clipboard', () => {
 		});
 		const error = vi.fn();
 		setHost({ ...standaloneHost, log: { error } });
-		document.body.innerHTML = '<p data-wicket-copy="x">x</p>';
+		document.body.innerHTML = '<p data-antilia-copy="x">x</p>';
 		const uninstall = Clipboard.install();
 
 		document.querySelector('p')!.click();

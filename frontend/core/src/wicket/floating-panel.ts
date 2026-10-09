@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-floating-panel.js: registers Wicket.FloatingPanel, which makes the panels of
+ * antilia-floating-panel.js: registers Wicket.FloatingPanel, which makes the panels of
  * FloatingPanel movable.
  */
 

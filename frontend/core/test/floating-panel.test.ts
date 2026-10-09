@@ -26,11 +26,11 @@ function pointer(target: Element, type: string, x: number, y: number): void {
 }
 
 function panel(draggable = true): { panel: HTMLElement; header: HTMLElement } {
-	document.body.innerHTML = `<div ${draggable ? 'data-wicket-floating-draggable' : ''}>` +
-		'<div class="wicket-floating-panel"><div class="wicket-floating-panel-header">Title</div>' +
+	document.body.innerHTML = `<div ${draggable ? 'data-antilia-floating-draggable' : ''}>` +
+		'<div class="antilia-floating-panel"><div class="antilia-floating-panel-header">Title</div>' +
 		'</div></div>';
-	const element = document.querySelector<HTMLElement>('.wicket-floating-panel')!;
-	const header = element.querySelector<HTMLElement>('.wicket-floating-panel-header')!;
+	const element = document.querySelector<HTMLElement>('.antilia-floating-panel')!;
+	const header = element.querySelector<HTMLElement>('.antilia-floating-panel-header')!;
 	box(element, { left: 100, top: 100, width: 200, height: 150 });
 	box(header, { bottom: 130 });
 	return { panel: element, header };
@@ -54,8 +54,8 @@ describe('FloatingPanel', () => {
 	});
 
 	it('moves the dialog it is shown in', () => {
-		document.body.innerHTML = '<div role="dialog"><div class="wicket-floating-panel"></div></div>';
-		const element = document.querySelector<HTMLElement>('.wicket-floating-panel')!;
+		document.body.innerHTML = '<div role="dialog"><div class="antilia-floating-panel"></div></div>';
+		const element = document.querySelector<HTMLElement>('.antilia-floating-panel')!;
 
 		expect(FloatingPanel.movedElement(element)).toBe(document.querySelector('[role="dialog"]'));
 	});
@@ -67,13 +67,13 @@ describe('FloatingPanel', () => {
 		const uninstall = FloatingPanel.install();
 
 		pointer(header, 'pointerdown', 10, 10);
-		expect(element.classList.contains('wicket-floating-panel-dragging')).toBe(true);
+		expect(element.classList.contains('antilia-floating-panel-dragging')).toBe(true);
 		pointer(header, 'pointermove', 40, 30);
 		pointer(header, 'pointerup', 40, 30);
 		uninstall();
 
 		expect(element.style.translate).toBe('30px 20px');
-		expect(element.classList.contains('wicket-floating-panel-dragging')).toBe(false);
+		expect(element.classList.contains('antilia-floating-panel-dragging')).toBe(false);
 	});
 
 	it('stays put when not in a draggable element', () => {

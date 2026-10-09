@@ -4,21 +4,21 @@
  */
 /*
  * The scroll bars of Wicket.Scrollbar, in the colors of the theme they are rendered in, if any.
- * --wicket-scrollbar-size sets their thickness, --wicket-scrollbar-gap the space around them.
+ * --antilia-scrollbar-size sets their thickness, --antilia-scrollbar-gap the space around them.
  */
-.wicket-scrollbar {
-	--wicket-scrollbar-size: 6px;
-	--wicket-scrollbar-gap: 2px;
+.antilia-scrollbar {
+	--antilia-scrollbar-size: 6px;
+	--antilia-scrollbar-gap: 2px;
 	position: relative;
 	min-width: 0;
 }
 
 /* the native scroll bars are hidden, the element still scrolls */
-.wicket-scrollbar-host {
+.antilia-scrollbar-host {
 	scrollbar-width: none;
 }
 
-.wicket-scrollbar-host::-webkit-scrollbar {
+.antilia-scrollbar-host::-webkit-scrollbar {
 	display: none;
 	width: 0;
 	height: 0;
@@ -29,81 +29,81 @@
  * Wicket.Scrollbar sets in the custom properties of the wrapper: the content scrolling below the
  * bar does not show through.
  */
-.wicket-scrollbar-track {
+.antilia-scrollbar-track {
 	position: absolute;
 	z-index: 2;
 	box-sizing: border-box;
-	padding: var(--wicket-scrollbar-gap);
-	background: var(--wicket-scrollbar-background, transparent);
+	padding: var(--antilia-scrollbar-gap);
+	background: var(--antilia-scrollbar-background, transparent);
 	touch-action: none;
 }
 
-.wicket-scrollbar-track[hidden] {
+.antilia-scrollbar-track[hidden] {
 	display: none;
 }
 
-.wicket-scrollbar-track--y {
-	top: var(--wicket-scrollbar-inset-top, 0px);
-	right: var(--wicket-scrollbar-inset-right, 0px);
-	bottom: var(--wicket-scrollbar-inset-bottom, 0px);
-	width: calc(var(--wicket-scrollbar-size) + 2 * var(--wicket-scrollbar-gap));
-	border-radius: 0 var(--wicket-scrollbar-radius-top-right, 0px)
-		var(--wicket-scrollbar-radius-bottom-right, 0px) 0;
+.antilia-scrollbar-track--y {
+	top: var(--antilia-scrollbar-inset-top, 0px);
+	right: var(--antilia-scrollbar-inset-right, 0px);
+	bottom: var(--antilia-scrollbar-inset-bottom, 0px);
+	width: calc(var(--antilia-scrollbar-size) + 2 * var(--antilia-scrollbar-gap));
+	border-radius: 0 var(--antilia-scrollbar-radius-top-right, 0px)
+		var(--antilia-scrollbar-radius-bottom-right, 0px) 0;
 }
 
-.wicket-scrollbar-track--x {
-	right: var(--wicket-scrollbar-inset-right, 0px);
-	bottom: var(--wicket-scrollbar-inset-bottom, 0px);
-	left: var(--wicket-scrollbar-inset-left, 0px);
-	height: calc(var(--wicket-scrollbar-size) + 2 * var(--wicket-scrollbar-gap));
-	border-radius: 0 0 var(--wicket-scrollbar-radius-bottom-right, 0px)
-		var(--wicket-scrollbar-radius-bottom-left, 0px);
+.antilia-scrollbar-track--x {
+	right: var(--antilia-scrollbar-inset-right, 0px);
+	bottom: var(--antilia-scrollbar-inset-bottom, 0px);
+	left: var(--antilia-scrollbar-inset-left, 0px);
+	height: calc(var(--antilia-scrollbar-size) + 2 * var(--antilia-scrollbar-gap));
+	border-radius: 0 0 var(--antilia-scrollbar-radius-bottom-right, 0px)
+		var(--antilia-scrollbar-radius-bottom-left, 0px);
 }
 
 /* with both bars, the vertical strip covers the corner and neither rail runs into the other */
-.wicket-scrollbar--both > .wicket-scrollbar-track--y {
-	padding-bottom: calc(var(--wicket-scrollbar-size) + 3 * var(--wicket-scrollbar-gap));
+.antilia-scrollbar--both > .antilia-scrollbar-track--y {
+	padding-bottom: calc(var(--antilia-scrollbar-size) + 3 * var(--antilia-scrollbar-gap));
 }
 
-.wicket-scrollbar--both > .wicket-scrollbar-track--x {
-	right: calc(var(--wicket-scrollbar-inset-right, 0px) + var(--wicket-scrollbar-size) +
-		2 * var(--wicket-scrollbar-gap));
+.antilia-scrollbar--both > .antilia-scrollbar-track--x {
+	right: calc(var(--antilia-scrollbar-inset-right, 0px) + var(--antilia-scrollbar-size) +
+		2 * var(--antilia-scrollbar-gap));
 	border-bottom-right-radius: 0;
 }
 
 /* the rail the thumb runs along */
-.wicket-scrollbar-rail {
+.antilia-scrollbar-rail {
 	position: relative;
 	width: 100%;
 	height: 100%;
-	border-radius: var(--wicket-scrollbar-size);
-	background: var(--wicket-theme-track, rgba(0, 0, 0, 0.08));
+	border-radius: var(--antilia-scrollbar-size);
+	background: var(--antilia-theme-track, rgba(0, 0, 0, 0.08));
 }
 
-.wicket-scrollbar-thumb {
+.antilia-scrollbar-thumb {
 	position: absolute;
 	top: 0;
 	left: 0;
 	box-sizing: border-box;
-	border-radius: var(--wicket-scrollbar-size);
-	background: color-mix(in srgb, var(--wicket-theme-primary, #6b7280) 65%, transparent);
+	border-radius: var(--antilia-scrollbar-size);
+	background: color-mix(in srgb, var(--antilia-theme-primary, #6b7280) 65%, transparent);
 	cursor: pointer;
 	touch-action: none;
 }
 
-.wicket-scrollbar-track--y .wicket-scrollbar-thumb {
+.antilia-scrollbar-track--y .antilia-scrollbar-thumb {
 	width: 100%;
 }
 
-.wicket-scrollbar-track--x .wicket-scrollbar-thumb {
+.antilia-scrollbar-track--x .antilia-scrollbar-thumb {
 	height: 100%;
 }
 
-.wicket-scrollbar-thumb:hover,
-.wicket-scrollbar--dragging .wicket-scrollbar-thumb {
-	background: var(--wicket-theme-primary-dark, #374151);
+.antilia-scrollbar-thumb:hover,
+.antilia-scrollbar--dragging .antilia-scrollbar-thumb {
+	background: var(--antilia-theme-primary-dark, #374151);
 }
 
-.wicket-scrollbar--dragging {
+.antilia-scrollbar--dragging {
 	user-select: none;
 }

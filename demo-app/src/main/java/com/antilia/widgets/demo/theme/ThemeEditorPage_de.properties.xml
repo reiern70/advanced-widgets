@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Farbschema-Editor</entry>
+	<entry key="description">erzeugt ein Farbschema der Komponenten, mit Live-Vorschau</entry>
+	<entry key="explanation">&lt;p&gt;Die Farbschemas der Komponenten sind CSS-Klassen, die die Custom Properties --antilia-theme-* setzen, welche die Stylesheets der Komponenten lesen. Die Farbwähler des ThemeEditorPanel beginnen mit dem Farbschema, das in der oberen Leiste oder in der Auswahlliste darüber für die Seite gewählt ist; ändern Sie eine Farbe, und die Komponenten in den Reitern darunter folgen: Fortschrittsbalken, die JSON- und die Bean-basierte Tabelle, ein aufklappbares Panel, auch verschachtelt, ein schwebendes Panel, gestaltete Reiter und ein modaler Dialog.&lt;/p&gt;&lt;p&gt;Das Textfeld enthält die CSS-Klasse, die Ihr Farbschema definiert; übernehmen Sie sie in Ihr Stylesheet und setzen Sie die Klassen antilia-theme und Ihre auf eine Seite oder eine Komponente, und die Komponenten darin übernehmen ihre Farben. Die Änderungen geschehen im Browser über das CSS-Objektmodell, sodass die Seite keinen Inline-Style braucht und unter einer strengen Content Security Policy funktioniert.&lt;/p&gt;</entry>
+	<entry key="tab.progress">Fortschritt</entry>
+	<entry key="tab.jsonTable">JSON-Grid</entry>
+	<entry key="tab.beanTable">Bean-Grid</entry>
+	<entry key="tab.panels">Aufklappbar</entry>
+	<entry key="progress.running">Laufend</entry>
+	<entry key="progress.finished">Fertig</entry>
+	<entry key="progress.unknown">Unbekannter Fortschritt</entry>
+	<entry key="firstName">Vorname</entry>
+	<entry key="lastName">Nachname</entry>
+	<entry key="city">Stadt</entry>
+	<entry key="country">Land</entry>
+	<entry key="collapsible.title">Ein aufklappbares Panel</entry>
+	<entry key="collapsible.body">Sein Titel übernimmt die Hauptfarben des Farbschemas, wie die Überschriften einer Tabelle.</entry>
+	<entry key="floating.title">Ein schwebendes Panel</entry>
+	<entry key="floating.body">Ein Fenster mit Titelleiste, wie die Tabellen ihre Formulare darin zeigen.</entry>
+	<entry key="tabContent">Inhalt des Reiters</entry>
+	<entry key="openDialog">Einen modalen Dialog öffnen</entry>
+	<entry key="dialog.title">Ein Dialog im Farbschema</entry>
+	<entry key="dialog.body">Der Dialog folgt den Farben der Vorschau.</entry>
+	<entry key="dialog.close">Schließen</entry>
+	<entry key="startFrom">Mit dem Farbschema beginnen</entry>
+	<entry key="filter">Filter</entry>
+	<entry key="filter.placeholder">Vor- oder Nachname</entry>
+	<entry key="nested.title">Verschachtelte aufklappbare Panels</entry>
+	<entry key="nested.body">Aufklappbare Panels ineinander, jedes für sich auf- und zuklappbar.</entry>
+	<entry key="nested.first">Das erste innere Panel</entry>
+	<entry key="nested.first.body">Es enthält eine weitere Ebene.</entry>
+	<entry key="nested.deeper">Ein Panel zwei Ebenen tief</entry>
+	<entry key="nested.deeper.body">Das innerste Panel, weiterhin in den Farben des Farbschemas.</entry>
+	<entry key="nested.second">Das zweite innere Panel</entry>
+	<entry key="nested.second.body">Anfangs zugeklappt; klappen Sie es auf, um seinen Text zu sehen.</entry>
+	<entry key="floating.section">Schwebendes Panel</entry>
+	<entry key="tabs.section">Reiter</entry>
+	<entry key="dialog.section">Modaler Dialog</entry>
+	<entry key="tab.first">Erster</entry>
+	<entry key="tab.second">Zweiter</entry>
+	<entry key="tab.third">Dritter</entry>
+</properties>

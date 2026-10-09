@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-clipboard.js: registers Wicket.Clipboard for ClipboardCopyBehavior, which sets its
+ * antilia-clipboard.js: registers Wicket.Clipboard for ClipboardCopyBehavior, which sets its
  * copiedMessage, and for the theme editor, which calls Wicket.Clipboard.copy(text, element).
  */
 

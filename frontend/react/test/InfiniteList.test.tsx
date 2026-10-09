@@ -7,7 +7,7 @@ import { createRef, StrictMode } from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { JsonInfiniteList, type InfiniteListData } from '@advanced-widgets/core';
+import { JsonInfiniteList, type InfiniteListData } from '@antilia/core';
 
 import { InfiniteList, type InfiniteListHandle } from '../src/index.js';
 
@@ -76,8 +76,8 @@ describe('InfiniteList', () => {
 		await waitFor(() => expect(items(container).length).toBe(2));
 
 		const wrapper = container.firstElementChild!;
-		expect(wrapper.className).toContain('wicket-scrollbar');
-		expect(wrapper.querySelectorAll('.wicket-scrollbar-track').length).toBe(1);
+		expect(wrapper.className).toContain('antilia-scrollbar');
+		expect(wrapper.querySelectorAll('.antilia-scrollbar-track').length).toBe(1);
 
 		unmount();
 		expect(JsonInfiniteList.instances).toEqual({});

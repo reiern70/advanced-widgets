@@ -12,7 +12,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { JsonInfiniteList, type InfiniteListConfig,
-		type InfiniteListData } from '@advanced-widgets/core';
+		type InfiniteListData } from '@antilia/core';
 
 	type Props = {
 		/** Loads the items shown, or the next page of them when more is true. */
@@ -67,7 +67,7 @@
 
 {#if height}
 	<!-- a list of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
-	<div class="wicket-scrollbar">
+	<div class="antilia-scrollbar">
 		<div {id} class={['json-infinite-list', className]}></div>
 	</div>
 {:else}

@@ -5,26 +5,34 @@
 
 import { useState } from 'react';
 
-import { Button, Scrollable } from '@advanced-widgets/react';
+import { Button, Dropdown, Scrollable } from '@antilia/react';
 
-import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, sizeName,
-	type ButtonsConfig } from '../buttons.js';
+import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, iconSetOptions, sizeName,
+	type ButtonIconSet, type ButtonsConfig } from '../buttons.js';
 
-/** An icon the server wrote, an inline SVG. */
+/** An icon the server wrote, an inline SVG or the element of an icon font. */
 function Icon({ markup }: { markup: string }) {
 	return <span style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: markup }} />;
 }
 
 /**
  * The Buttons demo in React: the buttons of the Wicket page with the Button of
- * @advanced-widgets/react.
+ * @antilia/react, the drop-down above them choosing their icons.
  */
 export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 	const { texts, variants } = config;
 	const [clicked, setClicked] = useState<string | null>(null);
+	const [icons, setIcons] = useState<ButtonIconSet>(config.icons);
 
 	return (
 		<div className="buttons-demo">
+			<div className="buttons-demo__options">
+				<label htmlFor="react-buttons-icons">{texts.icons}</label>
+				<Dropdown id="react-buttons-icons" name="icons" value={icons}
+					options={iconSetOptions(texts)}
+					onChange={(value) => setIcons(value as ButtonIconSet)} filter={texts.filter}
+					noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
+			</div>
 			<p className="buttons-demo__clicked" role="status">{clicked ?? texts['clicked.none']}</p>
 			<Scrollable axis="x" className="buttons-demo__scroll">
 				<table className="buttons-demo__matrix">
@@ -43,13 +51,13 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 									const click = () => setClicked(clickedText(config, variant, size));
 									return (
 										<td key={size}>
-											<div className="aw-button-bar">
+											<div className="ant-button-bar">
 												<Button label={sample.text} variant={variant} size={size}
 													onClick={click} />
 												<Button label={sample.text} variant={variant} size={size}
-													icon={<Icon markup={sample.icon} />} onClick={click} />
+													icon={<Icon markup={sample.icons[icons]} />} onClick={click} />
 												<Button label={sample.text} variant={variant} size={size}
-													icon={<Icon markup={sample.icon} />} iconOnly onClick={click} />
+													icon={<Icon markup={sample.icons[icons]} />} iconOnly onClick={click} />
 											</div>
 										</td>
 									);
@@ -60,15 +68,15 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 				</table>
 			</Scrollable>
 			<h3>{texts.disabled}</h3>
-			<div className="aw-button-bar">
+			<div className="ant-button-bar">
 				{BUTTON_VARIANTS.map((variant) => (
 					<Button key={variant} label={variants[variant].text} variant={variant} disabled
-						icon={<Icon markup={variants[variant].icon} />} />
+						icon={<Icon markup={variants[variant].icons[icons]} />} />
 				))}
 			</div>
 			<h3>{texts.asLink}</h3>
 			<p>
-				<a href="#buttons-as-links" className="aw-button aw-button--ghost aw-button--small">
+				<a href="#buttons-as-links" className="ant-button ant-button--ghost ant-button--small">
 					{texts['asLink.text']}
 				</a>
 			</p>

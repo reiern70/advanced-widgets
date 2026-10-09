@@ -112,7 +112,7 @@ const svg = (paths: string, width = '2') => '<svg viewBox="0 0 24 24" width="1em
 	'aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="' + width +
 	'" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
 
-/** The icons of UI Advanced Widgets' trees, the same the Wicket trees render. */
+/** The icons of the trees of Antilia's Advanced Widgets, the same the Wicket trees render. */
 export const TREE_ICONS: TreeIcons = {
 	toggle: svg('<path d="M9 6l6 6-6 6"/>', '2.5'),
 	folder: svg('<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v8.5a1.5 1.5 ' +
@@ -128,7 +128,7 @@ export const TREE_ICONS: TreeIcons = {
 export const TREE_TEXTS: Required<TreeTexts> = {
 	loading: 'Loading…',
 	empty: 'Nothing to show',
-	unlicensed: 'This is a private component of UI Advanced Widgets: it needs a license key, ' +
+	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
 		'which you get by registering.'
 };
 
@@ -138,13 +138,13 @@ export const TREE_COMPONENTS = ['Tree', 'JsonBasedTree'];
 /** The names a license key activates the tree grids by. */
 export const TREE_GRID_COMPONENTS = ['TreeGrid', 'JsonBasedTreeGrid', 'JsonBasedTree'];
 
-const ITEM_CLASS = 'wicket-tree-item';
+const ITEM_CLASS = 'antilia-tree-item';
 
-const SELECTED_CLASS = 'wicket-tree-item--selected';
+const SELECTED_CLASS = 'antilia-tree-item--selected';
 
-const LOADING_CLASS = 'wicket-tree-toggle--loading';
+const LOADING_CLASS = 'antilia-tree-toggle--loading';
 
-const SCROLLING_CLASS = 'wicket-tree--scrolling';
+const SCROLLING_CLASS = 'antilia-tree--scrolling';
 
 /** A node the tree knows of, shown or not. */
 interface Entry {
@@ -239,13 +239,13 @@ export class JsonTree {
 		this.cells = (cfg.table?.columns ?? []).map((column) => engine.compile(column.template));
 
 		this.status = document.createElement('div');
-		this.status.className = 'wicket-tree-status';
+		this.status.className = 'antilia-tree-status';
 		this.status.setAttribute('role', 'status');
 		if (cfg.table) {
 			this.element.replaceChildren(this.buildTable(cfg.table), this.status);
 		} else {
 			this.container = document.createElement('ul');
-			this.container.className = 'wicket-tree-group wicket-tree-roots';
+			this.container.className = 'antilia-tree-group antilia-tree-roots';
 			this.container.setAttribute('role', 'tree');
 			if (cfg.label) {
 				this.container.setAttribute('aria-label', cfg.label);
@@ -282,7 +282,7 @@ export class JsonTree {
 	private buildTable(table: NonNullable<TreeConfig['table']>): HTMLTableElement {
 		const element = document.createElement('table');
 		element.id = this.id + '-grid';
-		element.className = 'wicket-tree-grid-grid';
+		element.className = 'antilia-tree-grid-grid';
 		element.setAttribute('role', 'treegrid');
 		if (this.cfg.label) {
 			element.setAttribute('aria-label', this.cfg.label);
@@ -292,7 +292,7 @@ export class JsonTree {
 			const th = document.createElement('th');
 			th.scope = 'col';
 			th.textContent = text;
-			const cssClass = index === 0 ? 'wicket-tree-grid-tree-cell' :
+			const cssClass = index === 0 ? 'antilia-tree-grid-tree-cell' :
 				table.columns[index - 1].cssClass;
 			if (cssClass) {
 				th.className = cssClass;
@@ -417,7 +417,7 @@ export class JsonTree {
 		const entry = this.entries.get(key)!;
 		const table = Boolean(this.cfg.table);
 		const item = document.createElement(table ? 'tr' : 'li');
-		item.className = ITEM_CLASS + (table ? ' wicket-tree-grid-row' : '');
+		item.className = ITEM_CLASS + (table ? ' antilia-tree-grid-row' : '');
 		item.setAttribute('role', table ? 'row' : 'treeitem');
 		item.setAttribute('data-key', key);
 		item.setAttribute('aria-level', String(entry.level));
@@ -436,7 +436,7 @@ export class JsonTree {
 	private fill(entry: Entry): void {
 		const item = entry.element!;
 		const node = entry.node;
-		item.classList.toggle('wicket-tree-item--leaf', node.leaf);
+		item.classList.toggle('antilia-tree-item--leaf', node.leaf);
 		if (node.leaf) {
 			item.removeAttribute('aria-expanded');
 			item.setAttribute('aria-selected', String(node.key === this.selected));
@@ -447,22 +447,22 @@ export class JsonTree {
 		item.classList.toggle(SELECTED_CLASS, node.leaf && node.key === this.selected);
 
 		const row = document.createElement('div');
-		row.className = 'wicket-tree-row';
-		row.style.setProperty('--wicket-tree-level', String(entry.level));
+		row.className = 'antilia-tree-row';
+		row.style.setProperty('--antilia-tree-level', String(entry.level));
 		const toggle = document.createElement('span');
-		toggle.className = 'wicket-tree-toggle';
+		toggle.className = 'antilia-tree-toggle';
 		toggle.setAttribute('aria-hidden', 'true');
 		if (!node.leaf) {
 			toggle.innerHTML = this.icons.toggle;
 			toggle.classList.toggle(LOADING_CLASS, entry.loading !== null);
 		}
 		const icon = document.createElement('span');
-		icon.className = 'wicket-tree-icon';
+		icon.className = 'antilia-tree-icon';
 		icon.setAttribute('aria-hidden', 'true');
 		icon.innerHTML = node.icon ?? (node.leaf ? this.icons.leaf : entry.expanded ?
 			this.icons.folderOpen : this.icons.folder);
 		const content = document.createElement('span');
-		content.className = 'wicket-tree-content';
+		content.className = 'antilia-tree-content';
 		content.innerHTML = this.node(node.data, { key: node.key, level: entry.level });
 		row.append(toggle, icon, content);
 
@@ -474,7 +474,7 @@ export class JsonTree {
 			})].map((child, index) => {
 				const td = document.createElement('td');
 				td.setAttribute('role', 'gridcell');
-				const cssClass = index === 0 ? 'wicket-tree-grid-tree-cell' :
+				const cssClass = index === 0 ? 'antilia-tree-grid-tree-cell' :
 					this.cfg.table!.columns[index - 1].cssClass;
 				if (cssClass) {
 					td.className = cssClass;
@@ -485,7 +485,7 @@ export class JsonTree {
 			item.replaceChildren(...cells);
 		} else {
 			const group = Array.from(item.children).find((child) =>
-				child.classList.contains('wicket-tree-group'));
+				child.classList.contains('antilia-tree-group'));
 			item.replaceChildren(row, ...(group ? [group] : []));
 		}
 	}
@@ -495,7 +495,7 @@ export class JsonTree {
 	 */
 	private group(keys: string[]): HTMLElement {
 		const group = document.createElement('ul');
-		group.className = 'wicket-tree-group';
+		group.className = 'antilia-tree-group';
 		group.setAttribute('role', 'group');
 		group.append(...keys.map((key) => this.build(key)));
 		return group;
@@ -635,7 +635,7 @@ export class JsonTree {
 		} else {
 			const moveFocus = item !== focused && Boolean(item?.contains(focused));
 			entry.expanded = false;
-			item?.querySelector(':scope > .wicket-tree-group')?.remove();
+			item?.querySelector(':scope > .antilia-tree-group')?.remove();
 			this.refill(entry);
 			if (moveFocus) {
 				this.focus(key);
@@ -776,7 +776,7 @@ export class JsonTree {
 		const loadingRoots = this.busy > 0 && this.roots.length === 0;
 		const text = loadingRoots ? this.cfg.texts.loading :
 			this.busy === 0 && this.roots.length === 0 ? this.cfg.texts.empty : '';
-		this.status.classList.toggle('wicket-tree-status--loading', loadingRoots);
+		this.status.classList.toggle('antilia-tree-status--loading', loadingRoots);
 		this.status.textContent = text;
 		this.status.hidden = !text;
 	}

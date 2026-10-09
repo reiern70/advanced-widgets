@@ -7,7 +7,7 @@ import { StrictMode, useState } from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AutocompleteSuggestion, AutocompleteValue } from '@advanced-widgets/core';
+import type { AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
 
 import { Autocomplete } from '../src/index.js';
 
@@ -21,7 +21,7 @@ function search(term: string): Promise<AutocompleteSuggestion[]> {
 }
 
 async function type(container: HTMLElement, text: string): Promise<void> {
-	const field = container.querySelector<HTMLInputElement>('.wicket-autocomplete-text')!;
+	const field = container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')!;
 	await act(async () => {
 		field.value = text;
 		field.dispatchEvent(new Event('input'));
@@ -30,11 +30,11 @@ async function type(container: HTMLElement, text: string): Promise<void> {
 }
 
 function options(container: HTMLElement): HTMLElement[] {
-	return Array.from(container.querySelectorAll('.wicket-autocomplete-option'));
+	return Array.from(container.querySelectorAll('.antilia-autocomplete-option'));
 }
 
 function chips(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('.wicket-chip-text'),
+	return Array.from(container.querySelectorAll('.antilia-chip-text'),
 		(chip) => chip.textContent ?? '');
 }
 
@@ -68,7 +68,7 @@ describe('Autocomplete', () => {
 		expect(chips(container)).toEqual(['Apricot', 'Banana']);
 		expect(container.querySelector<HTMLInputElement>('input[name="fruits"]')?.value)
 			.toBe('["apricot","banana"]');
-		expect(container.querySelectorAll('.wicket-autocomplete-field').length).toBe(1);
+		expect(container.querySelectorAll('.antilia-autocomplete-field').length).toBe(1);
 	});
 
 	it('shows the values the parent gives', () => {
@@ -85,7 +85,7 @@ describe('Autocomplete', () => {
 		const { container } = render(<Autocomplete multiple search={search} onChange={onChange}
 			value={[{ id: 1, label: 'One' }, { id: 2, label: 'Two' }]} remove="Drop {0}" />);
 
-		const remove = container.querySelector<HTMLElement>('.wicket-chip-remove')!;
+		const remove = container.querySelector<HTMLElement>('.antilia-chip-remove')!;
 		expect(remove.getAttribute('aria-label')).toBe('Drop One');
 		act(() => remove.click());
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="aboutThisDemo">About this demo</entry>
+	<entry key="backToHome">All demos</entry>
+	<entry key="icons">Icons</entry>
+	<entry key="ActionIcons.BUILT_IN">built in</entry>
+	<entry key="ActionIcons.SVG">SvgIcon, inline SVG</entry>
+	<entry key="ActionIcons.FONT_AWESOME">FontAwesomeIcon, font</entry>
+</properties>

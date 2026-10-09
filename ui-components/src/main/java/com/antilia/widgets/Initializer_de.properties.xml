@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="DynamicDataTable.rowsPerPage">Zeilen pro Seite</entry>
+	<entry key="DynamicDataTable.selectRow">Zeile auswählen</entry>
+	<entry key="DynamicDataTable.selectPage">Alle Zeilen dieser Seite auswählen</entry>
+	<entry key="DynamicDataTable.pageSelected">Alle ${count} Zeilen dieser Seite sind ausgewählt.</entry>
+	<entry key="DynamicDataTable.selectAll">Alle ${total} Zeilen auswählen</entry>
+	<entry key="DynamicDataTable.allSelected">Alle ${total} Zeilen sind ausgewählt.</entry>
+	<entry key="DynamicDataTable.clearSelection">Auswahl aufheben</entry>
+	<entry key="DynamicDataTable.selectedCount">${count} ausgewählt</entry>
+	<entry key="DynamicDataTable.exportCsv">Als CSV exportieren</entry>
+	<entry key="DynamicDataTable.confirm">Bestätigen</entry>
+	<entry key="DynamicDataTable.cancel">Abbrechen</entry>
+	<entry key="DynamicDataTable.chooseColumns">Spalten</entry>
+	<entry key="DynamicDataTable.applyColumns">Übernehmen</entry>
+	<entry key="MovableColumnsBehavior.moveColumn">Spalte verschieben: ziehen oder mit den Pfeiltasten</entry>
+	<entry key="FloatingPanel.close">Schließen</entry>
+	<entry key="ClipboardCopyBehavior.copied">Kopiert</entry>
+	<entry key="Dropdown.placeholder">Bitte wählen…</entry>
+	<entry key="Dropdown.filter">Filtern…</entry>
+	<entry key="Dropdown.noMatch">Keine Treffer</entry>
+	<entry key="Dropdown.more">+{0} weitere</entry>
+	<entry key="Dropdown.remove">{0} entfernen</entry>
+	<entry key="Autocomplete.placeholder">Tippen zum Suchen…</entry>
+	<entry key="Autocomplete.noMatch">Keine Treffer</entry>
+	<entry key="Autocomplete.searching">Suche…</entry>
+	<entry key="License.placeholder">Dies ist eine private Komponente von Antilia's Advanced Widgets: Sie braucht einen Lizenzschlüssel, den Sie mit einer Registrierung erhalten.</entry>
+	<entry key="JsonBasedInfiniteList.loading">Wird geladen…</entry>
+	<entry key="JsonBasedInfiniteList.end">Alle ${count} werden angezeigt</entry>
+	<entry key="JsonBasedInfiniteList.empty">Nichts anzuzeigen</entry>
+	<entry key="Tree.expand">Aufklappen</entry>
+	<entry key="Tree.collapse">Zuklappen</entry>
+	<entry key="Tree.loading">Wird geladen…</entry>
+	<entry key="Tree.empty">Nichts anzuzeigen</entry>
+	<entry key="Modal.close">Schließen</entry>
+</properties>

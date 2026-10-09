@@ -4,26 +4,26 @@ The browser side of the components, written once and offered to three frameworks
 
 | Package | What it is |
 |---|---|
-| `core` (`@advanced-widgets/core`) | The components in plain TypeScript, without a framework, and their style sheets. |
-| `react` (`@advanced-widgets/react`) | React 18 and 19 components wrapping the core. |
-| `svelte` (`@advanced-widgets/svelte`) | Svelte 5 components wrapping the core; the core's functions also work as Svelte actions. |
+| `core` (`@antilia/core`) | The components in plain TypeScript, without a framework, and their style sheets. |
+| `react` (`@antilia/react`) | React 18 and 19 components wrapping the core. |
+| `svelte` (`@antilia/svelte`) | Svelte 5 components wrapping the core; the core's functions also work as Svelte actions. |
 | `demo` | The React and Svelte pages of the demo application (not published). |
 
 Wicket uses the core too: `core/scripts/build-wicket.mjs` builds each component into an IIFE
 script under the name and package the Java classes load it from (`Wicket.Dropdown` in
-`com/advanced/widgets/dropdown/wicket-dropdown.js`, ...), with the Wicket host set. The Java
+`com/antilia/widgets/dropdown/antilia-dropdown.js`, ...), with the Wicket host set. The Java
 side and the pages don't change.
 
 Every script of `ui-components` has moved here: the dynamic data tables (`data-table.ts`, built
-as `dynamic-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
+as `ant-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
 built as `handlebars-adapter.js`), the drop-down and its chips, the autocomplete, the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
 the movable and resizable columns. The style sheets of the table and the progress bar have moved
-too, and the buttons' (`button.css`, built as `wicket-button.css`, which Wicket's `ButtonBehavior`
+too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`,
 `Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`
 and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
-`FloatingPanel.install()` make the `data-wicket-copy` and floating panel markup work in any page.
+`FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
@@ -33,7 +33,7 @@ that also creates, changes and deletes rows (POST, PUT and DELETE), or from a li
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
 the children of a folder the first time it is expanded. Their style sheet, `tree.css`, built as
-`wicket-tree.css`, and their icons (`TREE_ICONS`, `TreeIcon` in Java) are those of the Wicket
+`antilia-tree.css`, and their icons (`TREE_ICONS`, `TreeIcon` in Java) are those of the Wicket
 `Tree` and `TreeGrid` too, so all of them look the same.
 
 `DataTable`, `Tree` and `TreeGrid` are private, as the JSON table and the trees are in Wicket:
@@ -93,7 +93,7 @@ changing an element the framework owns. For the drop-down, the framework renders
 and the select:
 
 ```html
-<div class="wicket-dropdown"><select class="wicket-dropdown-native">...</select></div>
+<div class="antilia-dropdown"><select class="antilia-dropdown-native">...</select></div>
 ```
 
 The core adds the button and the list to the wrapper. The component creates the core's object

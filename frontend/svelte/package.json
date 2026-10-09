@@ -1,7 +1,7 @@
 {
-	"name": "@advanced-widgets/svelte",
+	"name": "@antilia/svelte",
 	"version": "1.0.0-SNAPSHOT",
-	"description": "The components of UI Advanced Widgets for Svelte",
+	"description": "The components of Antilia's Advanced Widgets for Svelte",
 	"license": "UNLICENSED",
 	"type": "module",
 	"svelte": "./dist/index.js",
@@ -20,7 +20,7 @@
 		"test": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && vitest run"
 	},
 	"dependencies": {
-		"@advanced-widgets/core": "1.0.0-SNAPSHOT"
+		"@antilia/core": "1.0.0-SNAPSHOT"
 	},
 	"peerDependencies": {
 		"svelte": "^5.0.0"

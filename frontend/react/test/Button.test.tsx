@@ -17,9 +17,9 @@ describe('Button', () => {
 			size="large" onClick={click} />);
 
 		expect(container.innerHTML).toBe('<button type="button" ' +
-			'class="aw-button aw-button--primary aw-button--large">' +
-			'<span class="aw-button__icon" aria-hidden="true"><svg></svg></span>' +
-			'<span class="aw-button__label">Save</span></button>');
+			'class="ant-button ant-button--primary ant-button--large">' +
+			'<span class="ant-button__icon" aria-hidden="true"><svg></svg></span>' +
+			'<span class="ant-button__label">Save</span></button>');
 		fireEvent.click(container.querySelector('button')!);
 		expect(click).toHaveBeenCalledTimes(1);
 	});
@@ -29,11 +29,11 @@ describe('Button', () => {
 			<Button type="submit" label="Send" disabled /></>);
 
 		const [icon, submit] = Array.from(container.querySelectorAll('button'));
-		expect(icon.className).toBe('aw-button aw-button--secondary aw-button--medium ' +
-			'aw-button--icon-only');
+		expect(icon.className).toBe('ant-button ant-button--secondary ant-button--medium ' +
+			'ant-button--icon-only');
 		expect(icon.title).toBe('Delete');
 		expect(icon.getAttribute('aria-label')).toBe('Delete');
-		expect(icon.querySelector('.aw-button__label')).toBeNull();
+		expect(icon.querySelector('.ant-button__label')).toBeNull();
 		expect(submit.type).toBe('submit');
 		expect(submit.disabled).toBe(true);
 	});

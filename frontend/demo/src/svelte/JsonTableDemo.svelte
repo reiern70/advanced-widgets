@@ -10,7 +10,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, DataTable, Dropdown } from '@advanced-widgets/svelte';
+	import { Button, DataTable, Dropdown } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice } from '../data.js';
 	import { interpolate, type UserFields } from '../json-list.js';
@@ -134,7 +134,7 @@
 {#snippet actions()}
 	<span>
 		<button type="button" onclick={() => (shown = { form: null })}
-			class="dynamic-data-table-action dynamic-data-table-icon-action" title={texts.newUser}
+			class="ant-data-table-action ant-data-table-icon-action" title={texts.newUser}
 			aria-label={texts.newUser}>
 			<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18"
 				fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -142,14 +142,14 @@
 			</svg>
 		</button>
 	</span>
-	{#if count}<span class="dynamic-data-table-selection-count" role="status">{count}</span>{/if}
+	{#if count}<span class="ant-data-table-selection-count" role="status">{count}</span>{/if}
 {/snippet}
 
 <Feedback {messages} />
-<div class="dynamic-dataview-options">
+<div class="ant-dataview-options">
 	{#each settingDefs(texts) as setting (setting.key)}
-		<div class="dynamic-dataview-option">
-			<span class="dynamic-dataview-option-title">
+		<div class="ant-dataview-option">
+			<span class="ant-dataview-option-title">
 				<label for={'svelte-grid-' + setting.key}>{setting.label}</label>
 			</span>
 			<Dropdown id={'svelte-grid-' + setting.key} name={setting.key}
@@ -187,7 +187,7 @@
 	{#if user}
 		<Dialog title={texts.delete} onclose={() => (shown = null)}>
 			<p>{interpolate(texts['delete.confirm'], user)}</p>
-			<div class="aw-button-bar dynamic-data-table-overlay-buttons">
+			<div class="ant-button-bar ant-data-table-overlay-buttons">
 				<Button label={texts.cancel} onclick={() => (shown = null)} />
 				<Button label={texts.delete} variant="danger" onclick={() => remove(key)} />
 			</div>

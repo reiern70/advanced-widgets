@@ -5,7 +5,7 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { Button, Dropdown } from '@advanced-widgets/react';
+import { Button, Dropdown } from '@antilia/react';
 
 import type { Choice, User } from '../data.js';
 import { FIELDS, fieldsOf, MAX_LENGTH, validate, type UserFields,
@@ -52,7 +52,7 @@ export function UserForm({ texts, user, countries, onSave, onCancel }: { texts: 
 			</label>
 			{input('city', 'address-level2')}
 			{input('address', 'street-address')}
-			<div className="aw-button-bar dynamic-data-table-overlay-buttons">
+			<div className="ant-button-bar ant-data-table-overlay-buttons">
 				<Button label={texts.cancel} onClick={onCancel} />
 				<Button type="submit" label={texts.save} variant="primary" />
 			</div>

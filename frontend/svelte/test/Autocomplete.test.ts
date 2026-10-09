@@ -7,7 +7,7 @@ import { cleanup, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AutocompleteSuggestion } from '@advanced-widgets/core';
+import type { AutocompleteSuggestion } from '@antilia/core';
 
 import { Autocomplete } from '../src/index.js';
 import BoundAutocomplete from './BoundAutocomplete.svelte';
@@ -22,7 +22,7 @@ function search(term: string): Promise<AutocompleteSuggestion[]> {
 }
 
 async function type(container: HTMLElement, text: string): Promise<void> {
-	const field = container.querySelector<HTMLInputElement>('.wicket-autocomplete-text')!;
+	const field = container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')!;
 	field.value = text;
 	field.dispatchEvent(new Event('input'));
 	await vi.advanceTimersByTimeAsync(250);
@@ -34,11 +34,11 @@ function click(element: HTMLElement): void {
 }
 
 function options(container: HTMLElement): HTMLElement[] {
-	return Array.from(container.querySelectorAll('.wicket-autocomplete-option'));
+	return Array.from(container.querySelectorAll('.antilia-autocomplete-option'));
 }
 
 function chips(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('.wicket-chip-text'),
+	return Array.from(container.querySelectorAll('.antilia-chip-text'),
 		(chip) => chip.textContent ?? '');
 }
 
@@ -76,7 +76,7 @@ describe('Autocomplete', () => {
 		const { container } = render(Autocomplete, { search, multiple: true, onchange,
 			value: [{ id: 1, label: 'One' }, { id: 2, label: 'Two' }] });
 
-		click(container.querySelector<HTMLElement>('.wicket-chip-remove')!);
+		click(container.querySelector<HTMLElement>('.antilia-chip-remove')!);
 
 		expect(onchange).toHaveBeenCalledWith([{ id: 2, label: 'Two' }]);
 	});
@@ -85,6 +85,6 @@ describe('Autocomplete', () => {
 		const { container, unmount } = render(Autocomplete, { search });
 		unmount();
 
-		expect(container.querySelector('.wicket-autocomplete')).toBeNull();
+		expect(container.querySelector('.antilia-autocomplete')).toBeNull();
 	});
 });

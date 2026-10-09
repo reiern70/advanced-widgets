@@ -44,7 +44,7 @@ describe('MovableColumns', () => {
 		table(['Name', 'City', 'Born']);
 		MovableColumns.attach('t', { movable: [0, 2], label: 'Move {0}' });
 
-		const handles = Array.from(document.querySelectorAll('.wicket-col-mover'));
+		const handles = Array.from(document.querySelectorAll('.antilia-col-mover'));
 		expect(handles.map((handle) => handle.getAttribute('aria-label')))
 			.toEqual(['Move Name', 'Move Born']);
 		expect(handles[0].querySelector('svg')).not.toBeNull();
@@ -56,7 +56,7 @@ describe('MovableColumns', () => {
 		const onMove = vi.fn();
 		MovableColumns.attach(element, { onMove });
 
-		key(document.querySelectorAll('.wicket-col-mover')[0], 'ArrowRight');
+		key(document.querySelectorAll('.antilia-col-mover')[0], 'ArrowRight');
 		expect(onMove).toHaveBeenCalledWith(0, 2);
 		expect(MovableColumns.focusAfterMove).toEqual({ id: 't', index: 1 });
 
@@ -64,10 +64,10 @@ describe('MovableColumns', () => {
 		table(['City', 'Name', 'Born'], ['data-movable="true"', 'data-movable="true"',
 			'data-movable="true"']);
 		MovableColumns.attach('t', { onMove });
-		expect(document.activeElement).toBe(document.querySelectorAll('.wicket-col-mover')[1]);
+		expect(document.activeElement).toBe(document.querySelectorAll('.antilia-col-mover')[1]);
 		expect(MovableColumns.focusAfterMove).toBeUndefined();
 
-		key(document.querySelectorAll('.wicket-col-mover')[0], 'ArrowLeft');
+		key(document.querySelectorAll('.antilia-col-mover')[0], 'ArrowLeft');
 		expect(onMove).toHaveBeenCalledTimes(1);
 	});
 
@@ -80,7 +80,7 @@ describe('MovableColumns', () => {
 
 		added!(element.tHead!.rows[0]);
 
-		expect(document.querySelectorAll('.wicket-col-mover').length).toBe(1);
+		expect(document.querySelectorAll('.antilia-col-mover').length).toBe(1);
 	});
 });
 
@@ -97,10 +97,10 @@ describe('ResizableColumns', () => {
 		table(['Name', 'City', 'Born'], ['', 'data-resizable="false"', '']);
 		ResizableColumns.attach('t', { mode: 'fit' });
 
-		const handles = Array.from(document.querySelectorAll('.wicket-col-resizer'));
+		const handles = Array.from(document.querySelectorAll('.antilia-col-resizer'));
 		expect(handles.map((handle) => [handle.getAttribute('data-index'),
 			handle.getAttribute('data-neighbour')])).toEqual([['0', '2']]);
-		expect(document.querySelectorAll('colgroup.wicket-resizable-colgroup col').length).toBe(3);
+		expect(document.querySelectorAll('colgroup.antilia-resizable-colgroup col').length).toBe(3);
 	});
 
 	it('lays given widths out as shares in fit mode and in pixels in stretch mode', () => {
@@ -121,7 +121,7 @@ describe('ResizableColumns', () => {
 		const onResize = vi.fn();
 		ResizableColumns.attach('t', { mode: 'fit', step: 10, onResize });
 
-		key(document.querySelector('.wicket-col-resizer')!, 'ArrowRight');
+		key(document.querySelector('.antilia-col-resizer')!, 'ArrowRight');
 
 		expect(onResize).toHaveBeenCalledWith([110, 90]);
 		expect(ResizableColumns.instances.t.sized).toBe(true);
@@ -133,7 +133,7 @@ describe('ResizableColumns', () => {
 		const onResize = vi.fn();
 		ResizableColumns.attach('t', { mode: 'fit', step: 50, onResize });
 
-		key(document.querySelector('.wicket-col-resizer')!, 'ArrowRight');
+		key(document.querySelector('.antilia-col-resizer')!, 'ArrowRight');
 
 		expect(onResize).toHaveBeenCalledWith([120, 80]);
 	});
@@ -146,7 +146,7 @@ describe('ResizableColumns', () => {
 
 		expect(ResizableColumns.instances.t.mode).toBe('stretch');
 		expect(ResizableColumns.instances.t.proportions).toEqual([1, 3]);
-		expect(element.classList.contains('wicket-resizable-columns-stretch')).toBe(true);
+		expect(element.classList.contains('antilia-resizable-columns-stretch')).toBe(true);
 	});
 
 	it('takes the handles away when detached', () => {
@@ -154,7 +154,7 @@ describe('ResizableColumns', () => {
 		ResizableColumns.attach('t');
 		ResizableColumns.detach('t');
 
-		expect(document.querySelectorAll('.wicket-col-resizer').length).toBe(0);
+		expect(document.querySelectorAll('.antilia-col-resizer').length).toBe(0);
 		expect(ResizableColumns.instances.t).toBeUndefined();
 	});
 
@@ -163,7 +163,7 @@ describe('ResizableColumns', () => {
 		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
 		ResizableColumns.detach('t');
 
-		expect(element.querySelectorAll('colgroup.wicket-resizable-colgroup').length).toBe(1);
+		expect(element.querySelectorAll('colgroup.antilia-resizable-colgroup').length).toBe(1);
 		expect(element.style.width).toBe('400px');
 
 		ResizableColumns.attach('t', { mode: 'stretch', widths: [100, 300] });
@@ -228,7 +228,7 @@ describe('ResizableColumns', () => {
 
 		ResizableColumns.instances.t.startDrag(0, 1, 50);
 
-		const guide = document.querySelector<HTMLElement>('.wicket-col-resize-guide')!;
+		const guide = document.querySelector<HTMLElement>('.antilia-col-resize-guide')!;
 		expect(guide.style.top).toBe('100px');
 		expect(guide.style.height).toBe('400px');
 		ResizableColumns.instances.t.endDrag(false);

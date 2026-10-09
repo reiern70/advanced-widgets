@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/* the buttons of a variant in a row, a column per size; room below for the slim scroll bar */
+.buttons-demo__scroll {
+	overflow-x: auto;
+	padding-bottom: 0.75em;
+}
+
+.buttons-demo__matrix {
+	border-collapse: collapse;
+}
+
+.buttons-demo__matrix :is(th, td) {
+	padding: 0.6rem 1rem 0.6rem 0;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.buttons-demo__matrix thead th {
+	color: var(--muted, inherit);
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.buttons-demo__matrix tbody th {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* the drop-down choosing the icons of the buttons */
+.buttons-demo__options {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em 0.75em;
+}
+
+.buttons-demo__options > label {
+	font-weight: 600;
+}
+
+.buttons-demo__clicked {
+	min-height: 1.5em;
+	font-weight: 600;
+}

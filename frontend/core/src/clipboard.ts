@@ -8,8 +8,8 @@
  *
  * Clipboard.copy(text, iconTarget) copies the text and briefly shows a check icon over the end of
  * iconTarget, inside its box, so a cell clipping its content does not hide it. Once
- * Clipboard.install() ran, every element carrying a data-wicket-copy attribute copies its value
- * when it is clicked, or double clicked if data-wicket-copy-on="dblclick", showing the icon in
+ * Clipboard.install() ran, every element carrying a data-antilia-copy attribute copies its value
+ * when it is clicked, or double clicked if data-antilia-copy-on="dblclick", showing the icon in
  * itself.
  */
 
@@ -17,9 +17,9 @@ import { getHost } from './host.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
-const ICON_CLASS = 'wicket-clipboard-copied';
+const ICON_CLASS = 'antilia-clipboard-copied';
 
-const HOST_CLASS = 'wicket-clipboard-host';
+const HOST_CLASS = 'antilia-clipboard-host';
 
 function writeText(text: string): Promise<void> {
 	if (navigator.clipboard?.writeText) {
@@ -29,7 +29,7 @@ function writeText(text: string): Promise<void> {
 		const area = document.createElement('textarea');
 		area.value = text;
 		area.setAttribute('readonly', '');
-		area.className = 'wicket-clipboard-buffer';
+		area.className = 'antilia-clipboard-buffer';
 		document.body.appendChild(area);
 		area.select();
 		const copied = typeof document.execCommand === 'function' && document.execCommand('copy');
@@ -43,11 +43,11 @@ function writeText(text: string): Promise<void> {
 }
 
 function announce(message: string): void {
-	let region = document.getElementById('wicket-clipboard-status');
+	let region = document.getElementById('antilia-clipboard-status');
 	if (!region) {
 		region = document.createElement('span');
-		region.id = 'wicket-clipboard-status';
-		region.className = 'wicket-clipboard-status';
+		region.id = 'antilia-clipboard-status';
+		region.className = 'antilia-clipboard-status';
 		region.setAttribute('role', 'status');
 		document.body.appendChild(region);
 	}
@@ -113,27 +113,27 @@ export const Clipboard = {
 	},
 
 	/**
-	 * Copies the value of the data-wicket-copy attribute of the element an event happened in, if
+	 * Copies the value of the data-antilia-copy attribute of the element an event happened in, if
 	 * the event is the one the element copies on.
 	 */
 	onEvent(event: Event): void {
-		const element = (event.target as Element | null)?.closest?.('[data-wicket-copy]');
+		const element = (event.target as Element | null)?.closest?.('[data-antilia-copy]');
 		if (!element) {
 			return;
 		}
-		const on = element.getAttribute('data-wicket-copy-on') || 'click';
+		const on = element.getAttribute('data-antilia-copy-on') || 'click';
 		if (on !== event.type) {
 			return;
 		}
 		if (event.type === 'dblclick') {
 			window.getSelection?.()?.removeAllRanges();
 		}
-		Clipboard.copy(element.getAttribute('data-wicket-copy'), element)
+		Clipboard.copy(element.getAttribute('data-antilia-copy'), element)
 			.catch((error) => getHost().log.error('Wicket.Clipboard: copying failed', error));
 	},
 
 	/**
-	 * Makes the elements with a data-wicket-copy attribute copy on a click or a double click.
+	 * Makes the elements with a data-antilia-copy attribute copy on a click or a double click.
 	 * Installing again only counts; the listeners are removed when every installation was undone.
 	 *
 	 * @returns undoes this installation

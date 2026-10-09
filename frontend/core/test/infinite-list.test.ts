@@ -115,6 +115,6 @@ describe('JsonInfiniteList', () => {
 
 		const element = document.getElementById('list')!;
 		expect(element.style.height).toBe('200px');
-		expect(element.parentElement?.classList.contains('wicket-scrollbar')).toBe(true);
+		expect(element.parentElement?.classList.contains('antilia-scrollbar')).toBe(true);
 	});
 });

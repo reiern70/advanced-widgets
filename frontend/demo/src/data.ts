@@ -7,7 +7,7 @@
  * The data the apps load from the resources the demo application mounts, and what they share.
  */
 
-import type { AutocompleteSuggestion, InfiniteListData } from '@advanced-widgets/core';
+import type { AutocompleteSuggestion, InfiniteListData } from '@antilia/core';
 
 export interface Choice {
 	value: string;

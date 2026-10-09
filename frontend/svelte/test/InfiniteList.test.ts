@@ -6,7 +6,7 @@
 import { cleanup, render, waitFor } from '@testing-library/svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { JsonInfiniteList, type InfiniteListData } from '@advanced-widgets/core';
+import { JsonInfiniteList, type InfiniteListData } from '@antilia/core';
 
 import { InfiniteList } from '../src/index.js';
 
@@ -70,7 +70,7 @@ describe('InfiniteList', () => {
 				template: '<p>{{name}}</p>', height: { value: 300, unit: 'px' } });
 			await waitFor(() => expect(items(container).length).toBe(2));
 
-			expect(container.querySelectorAll('.wicket-scrollbar .wicket-scrollbar-track').length)
+			expect(container.querySelectorAll('.antilia-scrollbar .antilia-scrollbar-track').length)
 				.toBe(1);
 			unmount();
 			expect(JsonInfiniteList.instances).toEqual({});

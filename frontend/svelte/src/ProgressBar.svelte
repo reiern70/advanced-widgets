@@ -21,11 +21,11 @@
 		Math.round(value))));
 </script>
 
-<div class={['wicket-progress-bar', className]}>
+<div class={['antilia-progress-bar', className]}>
 	{#if percentage === null}
-		<progress class="wicket-progress-bar-value" max="100"></progress>
+		<progress class="antilia-progress-bar-value" max="100"></progress>
 	{:else}
-		<progress class="wicket-progress-bar-value" max="100" value={percentage}>{percentage}%</progress>
-		<span class="wicket-progress-bar-label" aria-hidden="true">{percentage}%</span>
+		<progress class="antilia-progress-bar-value" max="100" value={percentage}>{percentage}%</progress>
+		<span class="antilia-progress-bar-label" aria-hidden="true">{percentage}%</span>
 	{/if}
 </div>

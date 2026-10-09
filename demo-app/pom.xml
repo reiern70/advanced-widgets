@@ -10,8 +10,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.advancedwidgets</groupId>
-		<artifactId>advanced-widgets-parent</artifactId>
+		<groupId>com.antilia.widgets</groupId>
+		<artifactId>antilia-widgets-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
 
@@ -22,7 +22,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.advancedwidgets</groupId>
+			<groupId>com.antilia.widgets</groupId>
 			<artifactId>ui-components</artifactId>
 		</dependency>
 		<!-- the method and the body of the requests to the team resource; Jetty provides it -->

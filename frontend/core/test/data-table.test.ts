@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DynamicDataTable, registerHandlebars, ResizableColumns, setHost, standaloneHost,
 	Templates, type DataTableConfig, type DataTableData } from '../src/index.js';
 
-const HEAD = '<thead><tr class="dynamic-data-table-headers"><th>Name</th><th>City</th></tr></thead>';
+const HEAD = '<thead><tr class="ant-data-table-headers"><th>Name</th><th>City</th></tr></thead>';
 
 function rows(from: number, count: number): DataTableData['rows'] {
 	return Array.from({ length: count }, (_value, i) => ({
@@ -117,10 +117,10 @@ describe('DynamicDataTable', () => {
 	it('selects rows with their checkboxes and shows it in the header checkbox', () => {
 		const action = vi.fn();
 		const cfg = config({ columns: [{ template: '<input type="checkbox" ' +
-			'class="dynamic-data-table-select" data-dt-action="select" ' +
+			'class="ant-data-table-select" data-dt-action="select" ' +
 			'data-dt-action-unchecked="deselect">' }] });
 		document.querySelector('#table thead tr th')!.innerHTML =
-			'<input type="checkbox" class="dynamic-data-table-select-page" data-dt-action="all">';
+			'<input type="checkbox" class="ant-data-table-select-page" data-dt-action="all">';
 		const table = new DynamicDataTable(cfg, action, null, null,
 			{ rows: rows(1, 2), itemCount: 2 });
 		const boxes = document.querySelectorAll<HTMLInputElement>('#table tbody input');
@@ -174,14 +174,14 @@ describe('DynamicDataTable', () => {
 	it('scrolls the rows in a body of a height, and puts them back when it stops', () => {
 		const table = new DynamicDataTable(config({ bodyHeight: { value: 200, unit: 'px' },
 			filler: true }), () => undefined, null, null, { rows: rows(1, 2), itemCount: 2 });
-		const body = document.querySelector<HTMLElement>('#table .dynamic-data-table-body')!;
+		const body = document.querySelector<HTMLElement>('#table .ant-data-table-body')!;
 		expect(body.style.height).toBe('200px');
 		expect(body.querySelectorAll('tr').length).toBe(2);
 
 		table.destroy();
 
 		const table2 = document.querySelector('#table')!;
-		expect(table2.querySelector('.dynamic-data-table-body')).toBeNull();
+		expect(table2.querySelector('.ant-data-table-body')).toBeNull();
 		expect(table2.querySelectorAll(':scope > tbody').length).toBe(1);
 		expect(table2.querySelectorAll(':scope > tbody > tr').length).toBe(2);
 	});
@@ -193,12 +193,12 @@ describe('DynamicDataTable', () => {
 			{ rows: rows(1, 2), itemCount: 2 });
 		ResizableColumns.attach('table', { mode: 'stretch', widths: [100, 300] });
 		const element = document.querySelector<HTMLTableElement>('#table')!;
-		expect(element.classList.contains('wicket-resizable-columns')).toBe(true);
+		expect(element.classList.contains('antilia-resizable-columns')).toBe(true);
 
 		resizable.destroy();
 		expect(ResizableColumns.instances.table).toBeUndefined();
 		expect(element.querySelectorAll(':scope > colgroup').length).toBe(0);
-		expect(element.classList.contains('wicket-resizable-columns')).toBe(false);
+		expect(element.classList.contains('antilia-resizable-columns')).toBe(false);
 		expect(element.style.width).toBe('');
 
 		new DynamicDataTable({ ...first, resize: undefined,

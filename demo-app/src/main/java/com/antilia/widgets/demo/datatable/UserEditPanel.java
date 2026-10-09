@@ -1,0 +1,188 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.antilia.widgets.demo.datatable;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.behavior.AttributeAppender;
+import org.apache.wicket.markup.html.form.ChoiceRenderer;
+import com.antilia.widgets.dropdown.Dropdown;
+import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.FormComponent;
+import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.markup.html.panel.FeedbackPanel;
+import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.validation.validator.StringValidator;
+
+/**
+ * Edits the name and the address of a user, every field required, or enters a new user,
+ * one without an id. Shown in the overlay of the dynamic table examples and in the dialog of the
+ * infinite list example, it calls
+ * {@link #onSaved(User, AjaxRequestTarget)} or {@link #onCancel(AjaxRequestTarget)} when the
+ * user is done.
+ */
+public abstract class UserEditPanel extends Panel
+{
+	private static final long serialVersionUID = 1L;
+
+	private final long userId;
+
+	private String firstName;
+
+	private String lastName;
+
+	private String country;
+
+	private String city;
+
+	private String address;
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param user
+	 *            the user to edit, or a new one
+	 */
+	public UserEditPanel(String id, User user)
+	{
+		super(id);
+		userId = user.getId();
+		firstName = user.getFirstName();
+		lastName = user.getLastName();
+		country = user.getCountry();
+		city = user.getCity();
+		address = user.getAddress();
+
+		Form<Void> form = new Form<>("form");
+		form.add(AttributeAppender.replace("data-dt-changed", () -> form.hasError() ? "true" : null));
+		add(form);
+		FeedbackPanel feedback = new FeedbackPanel("feedback");
+		feedback.setOutputMarkupId(true);
+		form.add(feedback);
+
+		form.add(text("firstName", 60));
+		form.add(text("lastName", 60));
+		form.add(markInvalid(new Dropdown<>("country", new PropertyModel<>(this, "country"),
+			countries(), new ChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(String code)
+				{
+					return countryName(code);
+				}
+
+				@Override
+				public String getIdValue(String code, int index)
+				{
+					return code;
+				}
+			}).setRequired(true).setLabel(new ResourceModel("country"))));
+		form.add(text("city", 60));
+		form.add(text("address", 120));
+
+		form.add(new AjaxLink<Void>("cancel")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				onCancel(target);
+			}
+		});
+		form.add(new AjaxButton("save")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSubmit(AjaxRequestTarget target)
+			{
+				UsersDatabase database = DatabaseLocator.getLargeDatabase();
+				User user = userId == 0 ? new User() : database.get(userId);
+				if (user == null)
+				{
+					error(getString("userGone"));
+					target.add(feedback);
+					return;
+				}
+				user.setFirstName(firstName);
+				user.setLastName(lastName);
+				user.setCountry(country);
+				user.setCity(city);
+				user.setAddress(address);
+				if (userId == 0)
+				{
+					database.save(user);
+				}
+				else
+				{
+					database.update(user);
+				}
+				onSaved(user, target);
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target)
+			{
+				target.add(form);
+			}
+		});
+	}
+
+	private FormComponent<String> text(String property, int maximumLength)
+	{
+		TextField<String> field = new TextField<>(property, new PropertyModel<>(this, property));
+		field.setRequired(true);
+		field.setLabel(new ResourceModel(property));
+		field.add(StringValidator.maximumLength(maximumLength));
+		return markInvalid(field);
+	}
+
+	private static <F extends FormComponent<?>> F markInvalid(F field)
+	{
+		field.add(AttributeAppender.replace("aria-invalid", () -> field.isValid() ? null : "true"));
+		return field;
+	}
+
+	private List<String> countries()
+	{
+		return Arrays.stream(Locale.getISOCountries())
+			.sorted(Comparator.comparing(this::countryName))
+			.toList();
+	}
+
+	private String countryName(String code)
+	{
+		return Locale.of("", code).getDisplayCountry(getLocale());
+	}
+
+	/**
+	 * Called after the user was saved.
+	 *
+	 * @param user
+	 *            the saved user
+	 * @param target
+	 *            the Ajax request target
+	 */
+	protected abstract void onSaved(User user, AjaxRequestTarget target);
+
+	/**
+	 * Called when the user cancels editing.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 */
+	protected abstract void onCancel(AjaxRequestTarget target);
+}

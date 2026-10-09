@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { Scrollable, type ScrollableHandle } from '@advanced-widgets/react';
+import { Scrollable, type ScrollableHandle } from '@antilia/react';
 
 import { line, LINE, lines, MORE_LINES, POSITION, TILES,
 	type ScrollbarConfig } from '../scrollbar.js';

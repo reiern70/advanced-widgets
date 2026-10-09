@@ -10,8 +10,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.advancedwidgets</groupId>
-		<artifactId>advanced-widgets-parent</artifactId>
+		<groupId>com.antilia.widgets</groupId>
+		<artifactId>antilia-widgets-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
 

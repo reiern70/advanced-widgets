@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import { tick, untrack } from 'svelte';
-	import { Scrollable } from '@advanced-widgets/svelte';
+	import { Scrollable } from '@antilia/svelte';
 
 	import { line, LINE, lines, MORE_LINES, POSITION, TILES,
 		type ScrollbarConfig } from '../scrollbar.js';

@@ -6,7 +6,7 @@
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 
 import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
-	SCROLLBAR_WRAPPER_CLASS } from '@advanced-widgets/core';
+	SCROLLBAR_WRAPPER_CLASS } from '@antilia/core';
 
 export interface ModalProps {
 	/** Whether the dialog is open; nothing is rendered while it is closed. */

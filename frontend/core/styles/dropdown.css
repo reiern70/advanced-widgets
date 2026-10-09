@@ -4,21 +4,21 @@
  */
 
 /*
- * The drop-down drawn over a <select> by wicket-dropdown.js, in the colors of the theme it is in
+ * The drop-down drawn over a <select> by antilia-dropdown.js, in the colors of the theme it is in
  * and in neutral colors outside one.
  */
-.wicket-dropdown {
+.antilia-dropdown {
 	position: relative;
 	display: inline-block;
 	min-width: 10em;
 	max-width: 100%;
 	vertical-align: middle;
 	font-size: inherit;
-	color: var(--wicket-theme-text, #1c2333);
+	color: var(--antilia-theme-text, #1c2333);
 }
 
 /* the select stays in the page for forms and Ajax, out of sight */
-.wicket-dropdown > .wicket-dropdown-native {
+.antilia-dropdown > .antilia-dropdown-native {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -31,16 +31,16 @@
 	pointer-events: none;
 }
 
-.wicket-dropdown-toggle {
+.antilia-dropdown-toggle {
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
 	width: 100%;
 	min-height: 2.1em;
 	padding: 0.25em 0.6em;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: 0.4em;
-	background: var(--wicket-theme-surface, #ffffff);
+	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
 	text-align: left;
@@ -48,23 +48,23 @@
 	transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.wicket-dropdown-toggle:hover {
-	border-color: var(--wicket-theme-primary, #2f5bd3);
+.antilia-dropdown-toggle:hover {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
 }
 
-.wicket-dropdown-toggle:focus-visible,
-.wicket-dropdown-open > .wicket-dropdown-toggle {
+.antilia-dropdown-toggle:focus-visible,
+.antilia-dropdown-open > .antilia-dropdown-toggle {
 	outline: none;
-	border-color: var(--wicket-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wicket-theme-accent, #2f5bd3) 25%, transparent);
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
 }
 
-.wicket-dropdown-toggle:disabled {
+.antilia-dropdown-toggle:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
 
-.wicket-dropdown-value {
+.antilia-dropdown-value {
 	flex: 1;
 	display: flex;
 	flex-wrap: wrap;
@@ -75,12 +75,12 @@
 	text-overflow: ellipsis;
 }
 
-.wicket-dropdown-placeholder {
+.antilia-dropdown-placeholder {
 	opacity: 0.65;
 }
 
 /* the arrow: a chevron turning upwards while the list is open */
-.wicket-dropdown-arrow {
+.antilia-dropdown-arrow {
 	flex: none;
 	width: 0.5em;
 	height: 0.5em;
@@ -92,12 +92,12 @@
 	transition: transform 0.15s;
 }
 
-.wicket-dropdown-open .wicket-dropdown-arrow {
+.antilia-dropdown-open .antilia-dropdown-arrow {
 	margin-bottom: -0.2em;
 	transform: rotate(225deg);
 }
 
-.wicket-dropdown-menu {
+.antilia-dropdown-menu {
 	position: absolute;
 	top: calc(100% + 4px);
 	left: 0;
@@ -105,41 +105,41 @@
 	min-width: 100%;
 	max-width: max(100%, 24em);
 	padding: 0.3em;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: 0.5em;
-	background: var(--wicket-theme-surface, #ffffff);
-	color: var(--wicket-theme-text, #1c2333);
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-	color-scheme: var(--wicket-theme-color-scheme, light);
+	color-scheme: var(--antilia-theme-color-scheme, light);
 }
 
-.wicket-dropdown-menu[hidden] {
+.antilia-dropdown-menu[hidden] {
 	display: none;
 }
 
-.wicket-dropdown-up > .wicket-dropdown-menu {
+.antilia-dropdown-up > .antilia-dropdown-menu {
 	top: auto;
 	bottom: calc(100% + 4px);
 }
 
-.wicket-dropdown-filter {
+.antilia-dropdown-filter {
 	box-sizing: border-box;
 	width: 100%;
 	margin-bottom: 0.3em;
 	padding: 0.3em 0.5em;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: 0.35em;
-	background: var(--wicket-theme-surface-alt, #f5f7fb);
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
 	color: inherit;
 	font: inherit;
 }
 
-.wicket-dropdown-filter:focus {
-	outline: 2px solid var(--wicket-theme-accent, #2f5bd3);
+.antilia-dropdown-filter:focus {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
 	outline-offset: -1px;
 }
 
-.wicket-dropdown-list {
+.antilia-dropdown-list {
 	max-height: 16em;
 	margin: 0;
 	padding: 0;
@@ -147,10 +147,10 @@
 	list-style: none;
 	outline: none;
 	scrollbar-width: thin;
-	scrollbar-color: var(--wicket-theme-border, #c9cfdb) transparent;
+	scrollbar-color: var(--antilia-theme-border, #c9cfdb) transparent;
 }
 
-.wicket-dropdown-option {
+.antilia-dropdown-option {
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
@@ -160,75 +160,75 @@
 	white-space: nowrap;
 }
 
-.wicket-dropdown-option[hidden] {
+.antilia-dropdown-option[hidden] {
 	display: none;
 }
 
-.wicket-dropdown-option.wicket-dropdown-active {
-	background: var(--wicket-theme-hover, #eef2fb);
+.antilia-dropdown-option.antilia-dropdown-active {
+	background: var(--antilia-theme-hover, #eef2fb);
 }
 
-.wicket-dropdown-option[aria-selected="true"] {
+.antilia-dropdown-option[aria-selected="true"] {
 	font-weight: 600;
 }
 
 /* the tick of the chosen option of a single drop-down */
-.wicket-dropdown:not(.wicket-dropdown-multiple) .wicket-dropdown-option[aria-selected="true"]::after {
+.antilia-dropdown:not(.antilia-dropdown-multiple) .antilia-dropdown-option[aria-selected="true"]::after {
 	content: "\2713";
 	margin-left: auto;
 	padding-left: 1em;
-	color: var(--wicket-theme-accent, #2f5bd3);
+	color: var(--antilia-theme-accent, #2f5bd3);
 }
 
-.wicket-dropdown-option[aria-disabled="true"] {
+.antilia-dropdown-option[aria-disabled="true"] {
 	opacity: 0.45;
 	cursor: default;
 }
 
-.wicket-dropdown-option-none {
+.antilia-dropdown-option-none {
 	opacity: 0.7;
 	font-style: italic;
 }
 
 /* the check box of an option of a multiple drop-down */
-.wicket-dropdown-check {
+.antilia-dropdown-check {
 	flex: none;
 	position: relative;
 	width: 1em;
 	height: 1em;
-	border: 1.5px solid var(--wicket-theme-border, #9aa3b5);
+	border: 1.5px solid var(--antilia-theme-border, #9aa3b5);
 	border-radius: 0.25em;
-	background: var(--wicket-theme-surface, #ffffff);
+	background: var(--antilia-theme-surface, #ffffff);
 }
 
-.wicket-dropdown-option[aria-selected="true"] > .wicket-dropdown-check {
-	border-color: var(--wicket-theme-primary, #2f5bd3);
-	background: var(--wicket-theme-primary, #2f5bd3);
+.antilia-dropdown-option[aria-selected="true"] > .antilia-dropdown-check {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
+	background: var(--antilia-theme-primary, #2f5bd3);
 }
 
-.wicket-dropdown-option[aria-selected="true"] > .wicket-dropdown-check::after {
+.antilia-dropdown-option[aria-selected="true"] > .antilia-dropdown-check::after {
 	content: "";
 	position: absolute;
 	left: 0.28em;
 	top: 0.08em;
 	width: 0.28em;
 	height: 0.55em;
-	border-right: 2px solid var(--wicket-theme-on-primary, #ffffff);
-	border-bottom: 2px solid var(--wicket-theme-on-primary, #ffffff);
+	border-right: 2px solid var(--antilia-theme-on-primary, #ffffff);
+	border-bottom: 2px solid var(--antilia-theme-on-primary, #ffffff);
 	transform: rotate(45deg);
 }
 
-.wicket-dropdown-text {
+.antilia-dropdown-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.wicket-dropdown-empty {
+.antilia-dropdown-empty {
 	padding: 0.4em 0.6em;
 	opacity: 0.65;
 	font-style: italic;
 }
 
-.wicket-dropdown-empty[hidden] {
+.antilia-dropdown-empty[hidden] {
 	display: none;
 }

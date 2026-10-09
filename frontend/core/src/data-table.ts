@@ -113,33 +113,33 @@ export interface Veil {
 	hide(id: string): void;
 }
 
-const ROW_CHECKBOX = 'input.dynamic-data-table-select';
+const ROW_CHECKBOX = 'input.ant-data-table-select';
 
-const PAGE_CHECKBOX = 'input.dynamic-data-table-select-page';
+const PAGE_CHECKBOX = 'input.ant-data-table-select-page';
 
-const OVERLAY_CLASS = 'dynamic-data-table-overlay';
+const OVERLAY_CLASS = 'ant-data-table-overlay';
 
-const CLOSE_OVERLAY_ACTION = '_wicket-close-overlay';
+const CLOSE_OVERLAY_ACTION = '_antilia-close-overlay';
 
-const SHOW_COLUMNS_ACTION = '_wicket-show-columns';
+const SHOW_COLUMNS_ACTION = '_antilia-show-columns';
 
-const HEADERS_CLASS = 'dynamic-data-table-headers';
+const HEADERS_CLASS = 'ant-data-table-headers';
 
-const FILLER_CLASS = 'dynamic-data-table-filler';
+const FILLER_CLASS = 'ant-data-table-filler';
 
 const FILLER_WIDTH = '3em';
 
-const BODY_ROW_CLASS = 'dynamic-data-table-body-row';
+const BODY_ROW_CLASS = 'ant-data-table-body-row';
 
-const BODY_CELL_CLASS = 'dynamic-data-table-body-cell';
+const BODY_CELL_CLASS = 'ant-data-table-body-cell';
 
-const BODY_CLASS = 'dynamic-data-table-body';
+const BODY_CLASS = 'ant-data-table-body';
 
-const ROWS_CLASS = 'dynamic-data-table-rows';
+const ROWS_CLASS = 'ant-data-table-rows';
 
-const COLGROUP_CLASS = 'dynamic-data-table-colgroup';
+const COLGROUP_CLASS = 'ant-data-table-colgroup';
 
-const CHOOSER = '.dynamic-data-table-column-chooser';
+const CHOOSER = '.ant-data-table-column-chooser';
 
 /**
  * A dynamic data table.

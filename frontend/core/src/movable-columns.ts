@@ -44,12 +44,12 @@ interface Move {
 	key(event: KeyboardEvent): void;
 }
 
-const HANDLE_CLASS = 'wicket-col-mover';
-const DRAGGING_CLASS = 'wicket-col-dragging';
-const NO_DROP_CLASS = 'wicket-col-no-drop';
-const MOVING_CLASS = 'wicket-col-moving';
-const GHOST_CLASS = 'wicket-col-move-ghost';
-const MARKER_CLASS = 'wicket-col-drop-marker';
+const HANDLE_CLASS = 'antilia-col-mover';
+const DRAGGING_CLASS = 'antilia-col-dragging';
+const NO_DROP_CLASS = 'antilia-col-no-drop';
+const MOVING_CLASS = 'antilia-col-moving';
+const GHOST_CLASS = 'antilia-col-move-ghost';
+const MARKER_CLASS = 'antilia-col-drop-marker';
 
 /** How far, in pixels, the pointer has to travel on a column's handle before it drags the column. */
 const DRAG_THRESHOLD = 4;
@@ -323,7 +323,7 @@ export class MovableColumns {
 	 */
 	private copyTheme(element: HTMLElement): void {
 		const style = window.getComputedStyle(this.table);
-		['--wicket-theme-primary', '--wicket-theme-on-primary', '--wicket-theme-accent']
+		['--antilia-theme-primary', '--antilia-theme-on-primary', '--antilia-theme-accent']
 			.forEach((name) => {
 				const value = style.getPropertyValue(name);
 				if (value) {

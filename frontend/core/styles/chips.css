@@ -7,29 +7,29 @@
  * The chips of the chosen values, in a light shade of the theme's primary color, with an x
  * removing the value.
  */
-.wicket-chip {
+.antilia-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.25em;
 	max-width: 100%;
 	padding: 0 0.2em 0 0.55em;
-	border: 1px solid color-mix(in srgb, var(--wicket-theme-primary, #2f5bd3) 40%, transparent);
+	border: 1px solid color-mix(in srgb, var(--antilia-theme-primary, #2f5bd3) 40%, transparent);
 	border-radius: 999px;
-	background: color-mix(in srgb, var(--wicket-theme-primary, #2f5bd3) 14%,
-		var(--wicket-theme-surface, #ffffff));
-	color: var(--wicket-theme-primary-dark, #1d3d99);
+	background: color-mix(in srgb, var(--antilia-theme-primary, #2f5bd3) 14%,
+		var(--antilia-theme-surface, #ffffff));
+	color: var(--antilia-theme-primary-dark, #1d3d99);
 	font-size: 0.85em;
 	line-height: 1.6;
 	white-space: nowrap;
 }
 
-.wicket-chip-text {
+.antilia-chip-text {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 /* the x: two crossed lines, drawn without an icon font */
-.wicket-chip-remove {
+.antilia-chip-remove {
 	position: relative;
 	flex: none;
 	width: 1.2em;
@@ -38,8 +38,8 @@
 	cursor: pointer;
 }
 
-.wicket-chip-remove::before,
-.wicket-chip-remove::after {
+.antilia-chip-remove::before,
+.antilia-chip-remove::after {
 	content: "";
 	position: absolute;
 	top: 50%;
@@ -50,17 +50,17 @@
 	transform: translate(-50%, -50%) rotate(45deg);
 }
 
-.wicket-chip-remove::after {
+.antilia-chip-remove::after {
 	transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-.wicket-chip-remove:hover {
-	background: var(--wicket-theme-primary, #2f5bd3);
-	color: var(--wicket-theme-on-primary, #ffffff);
+.antilia-chip-remove:hover {
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
 }
 
 /* the chip counting the chosen values that have no room */
-.wicket-chip-more {
+.antilia-chip-more {
 	padding-right: 0.55em;
 	border-style: dashed;
 	background: transparent;

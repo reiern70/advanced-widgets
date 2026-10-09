@@ -232,7 +232,7 @@ describe('ModalDialog', () => {
 	it('scrolls a body in the wrapper of the scroll bars with them', () => {
 		const overlay = dialog('m');
 		overlay.querySelector('.modal-dialog-content')!.insertAdjacentHTML('beforeend',
-			'<div class="wicket-scrollbar"><div class="modal-dialog-body">Body</div></div>');
+			'<div class="antilia-scrollbar"><div class="modal-dialog-body">Body</div></div>');
 		const body = overlay.querySelector<HTMLElement>('.modal-dialog-body')!;
 		const modal = new ModalDialog(overlay);
 

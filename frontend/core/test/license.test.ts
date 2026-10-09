@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { activate, activates, isLicensed, verifyLicense } from '../src/index.js';
 // the key of the demo application, signed by the private key of the server
-import demoKey from '../../../demo-app/src/main/resources/META-INF/advanced-widgets.license?raw';
+import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 let keys: CryptoKeyPair;
 let publicKey: string;

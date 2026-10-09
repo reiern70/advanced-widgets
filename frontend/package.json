@@ -1,5 +1,5 @@
 {
-	"name": "advanced-widgets-frontend",
+	"name": "antilia-widgets-frontend",
 	"version": "1.0.0-SNAPSHOT",
 	"private": true,
 	"description": "The browser side of the components: framework-free in core, wrapped for React and Svelte",

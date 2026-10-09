@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { sha512Of, verifyEd25519 } from '../src/ed25519.js';
 import { PUBLIC_KEY } from '../src/index.js';
 // the key of the demo application, signed by the private key of the server
-import demoKey from '../../../demo-app/src/main/resources/META-INF/advanced-widgets.license?raw';
+import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 function fromBase64(text: string): Uint8Array {
 	const base64 = text.replace(/-/g, '+').replace(/_/g, '/');

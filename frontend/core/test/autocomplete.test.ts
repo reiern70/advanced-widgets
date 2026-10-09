@@ -32,7 +32,7 @@ function key(target: Element, name: string): void {
 }
 
 function chips(instance: Autocomplete): string[] {
-	return Array.from(instance.chips.querySelectorAll('.wicket-chip-text'),
+	return Array.from(instance.chips.querySelectorAll('.antilia-chip-text'),
 		(chip) => chip.textContent ?? '');
 }
 
@@ -92,7 +92,7 @@ describe('Autocomplete', () => {
 		expect(instance.text.hidden).toBe(true);
 		expect(element.value).toBe('[1]');
 
-		instance.chips.querySelector<HTMLElement>('.wicket-chip-remove')!.click();
+		instance.chips.querySelector<HTMLElement>('.antilia-chip-remove')!.click();
 
 		expect(instance.text.hidden).toBe(false);
 		expect(element.value).toBe('');
@@ -137,7 +137,7 @@ describe('Autocomplete', () => {
 	it('scrolls its list of suggestions with the slim scroll bars', () => {
 		const instance = new Autocomplete(input(), { search });
 
-		expect(instance.list.parentElement?.className).toBe('wicket-scrollbar');
+		expect(instance.list.parentElement?.className).toBe('antilia-scrollbar');
 		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
 
 		instance.destroy();

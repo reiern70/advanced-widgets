@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Autocomplete } from '@advanced-widgets/svelte';
+	import { Autocomplete } from '@antilia/svelte';
 
 	import { describe, MAX_SUGGESTIONS, searchCountries,
 		type AutocompleteConfig } from '../autocomplete.js';

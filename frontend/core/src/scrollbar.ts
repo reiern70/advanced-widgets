@@ -11,10 +11,10 @@
  * dragged and a click on the track pages towards the click. Scripts scroll it with scrollToTop(),
  * scrollToBottom(), scrollTo({top, left}) and scrollToElement(elementOrSelector).
  *
- * Scrollbar.attach(elementOrId, options) puts the element into a wrapper, a div.wicket-scrollbar
+ * Scrollbar.attach(elementOrId, options) puts the element into a wrapper, a div.antilia-scrollbar
  * holding the bars, which do not scroll with the content. Attaching an element that is in a
  * wrapper already, for example one Ajax put in place of the previous one, reuses it; a framework
- * renders the wrapper itself: <div class="wicket-scrollbar"><div>...</div></div>.
+ * renders the wrapper itself: <div class="antilia-scrollbar"><div>...</div></div>.
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
@@ -47,7 +47,7 @@ export interface ScrollbarHandle {
 }
 
 /** The CSS class of the wrapper of an element with scroll bars. */
-export const SCROLLBAR_WRAPPER_CLASS = 'wicket-scrollbar';
+export const SCROLLBAR_WRAPPER_CLASS = 'antilia-scrollbar';
 
 interface Bar {
 	vertical: boolean;
@@ -59,20 +59,20 @@ interface Bar {
 
 const WRAPPER_CLASS = SCROLLBAR_WRAPPER_CLASS;
 
-const HOST_CLASS = 'wicket-scrollbar-host';
+const HOST_CLASS = 'antilia-scrollbar-host';
 
-const TRACK_CLASS = 'wicket-scrollbar-track';
+const TRACK_CLASS = 'antilia-scrollbar-track';
 
-const RAIL_CLASS = 'wicket-scrollbar-rail';
+const RAIL_CLASS = 'antilia-scrollbar-rail';
 
-const THUMB_CLASS = 'wicket-scrollbar-thumb';
+const THUMB_CLASS = 'antilia-scrollbar-thumb';
 
 const MIN_THUMB = 24;
 
 /** The custom properties laying the bars inside the border of the element, on its background. */
 const FRAME = ['background', 'inset-top', 'inset-right', 'inset-bottom', 'inset-left',
 	'radius-top-right', 'radius-bottom-right', 'radius-bottom-left']
-	.map((name) => '--wicket-scrollbar-' + name);
+	.map((name) => '--antilia-scrollbar-' + name);
 
 function scrolls(overflow: string): boolean {
 	return overflow === 'auto' || overflow === 'scroll';

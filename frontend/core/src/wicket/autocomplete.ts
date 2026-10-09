@@ -4,9 +4,9 @@
  */
 
 /*
- * wicket-autocomplete.js: registers Wicket.Autocomplete for Autocomplete and MultiAutocomplete,
+ * antilia-autocomplete.js: registers Wicket.Autocomplete for Autocomplete and MultiAutocomplete,
  * which call Wicket.Autocomplete.attach(id, options). The rows are rendered with the engines of the
- * page's Wicket.Templates, which wicket-templates.js registered before. The list of suggestions
+ * page's Wicket.Templates, which antilia-templates.js registered before. The list of suggestions
  * gets the scroll bars of Wicket.Scrollbar, when the page loaded them.
  */
 

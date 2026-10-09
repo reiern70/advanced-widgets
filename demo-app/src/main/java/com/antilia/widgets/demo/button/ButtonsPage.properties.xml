@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Buttons</entry>
+	<entry key="explanation">&lt;p&gt;Buttons in the colors of the theme chosen in the top bar, the same in Wicket, React and Svelte: one style sheet, antilia-button.css, draws them all.&lt;/p&gt;&lt;p&gt;In Wicket, an AjaxActionButton runs an action via Ajax and shows a text, an icon and a text, or only an icon, whose text is then its tooltip and the name screen readers say. A ButtonBehavior draws any link or form button as one. Each comes in four variants, primary, secondary, ghost and danger, and three sizes, small, medium and large. React and Svelte have a Button component taking the same variants and sizes.&lt;/p&gt;&lt;p&gt;"Icons" chooses the icons of the buttons: the Font Awesome icons as inline SVG (SvgIcon), or the same drawn by the Font Awesome font (FontAwesomeIcon). A button takes any IIcon, and the React and Svelte Button any markup.&lt;/p&gt;</entry>
+	<entry key="variant">Variant</entry>
+	<entry key="variant.primary">Primary</entry>
+	<entry key="variant.secondary">Secondary</entry>
+	<entry key="variant.ghost">Ghost</entry>
+	<entry key="variant.danger">Danger</entry>
+	<entry key="size.small">Small</entry>
+	<entry key="size.medium">Medium</entry>
+	<entry key="size.large">Large</entry>
+	<entry key="save">Save</entry>
+	<entry key="refresh">Refresh</entry>
+	<entry key="settings">Settings</entry>
+	<entry key="delete">Delete</entry>
+	<entry key="clicked">Clicked: {0}</entry>
+	<entry key="clicked.none">Click a button.</entry>
+	<entry key="disabled">Disabled</entry>
+	<entry key="asLink">A link drawn as a button</entry>
+	<entry key="asLink.text">Read more</entry>
+</properties>

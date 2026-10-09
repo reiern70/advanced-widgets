@@ -8,7 +8,7 @@
   dialog asks before it closes a form whose fields were changed.
 -->
 <script lang="ts">
-	import { Dropdown, Modal } from '@advanced-widgets/svelte';
+	import { Dropdown, Modal } from '@antilia/svelte';
 
 	import { format } from '../data.js';
 	import { interpolate } from '../json-list.js';
@@ -96,7 +96,7 @@
 <div class="team-demo">
 	<div class="team-demo__toolbar">
 		<h2 class="team-demo__title">{texts.team}</h2>
-		<button type="button" class="dynamic-data-table-button dynamic-data-table-button-primary"
+		<button type="button" class="ant-data-table-button ant-data-table-button-primary"
 			onclick={() => openForm(null)}>{texts.addMember}</button>
 	</div>
 	<table class="team-demo__table">
@@ -114,13 +114,15 @@
 					<td class="team-demo__name">{member.name}</td>
 					<td>{member.email}</td>
 					<td>{member.roleName}</td>
-					<td class="team-demo__actions">
-						<button type="button" class="dynamic-data-table-button"
-							aria-label={texts.edit + ' ' + member.name}
-							onclick={() => openForm(member)}>{texts.edit}</button>
-						<button type="button" class="dynamic-data-table-button"
-							aria-label={texts.delete + ' ' + member.name}
-							onclick={() => (deletion = member)}>{texts.delete}</button>
+					<td>
+						<div class="team-demo__actions">
+							<button type="button" class="ant-data-table-button"
+								aria-label={texts.edit + ' ' + member.name}
+								onclick={() => openForm(member)}>{texts.edit}</button>
+							<button type="button" class="ant-data-table-button"
+								aria-label={texts.delete + ' ' + member.name}
+								onclick={() => (deletion = member)}>{texts.delete}</button>
+						</div>
 					</td>
 				</tr>
 			{/each}

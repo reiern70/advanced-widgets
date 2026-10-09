@@ -6,11 +6,11 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { ResizableColumns, Scrollbar } from '@advanced-widgets/core';
+import { ResizableColumns, Scrollbar } from '@antilia/core';
 
 import { activate, Tree, TreeGrid, type TreeNode } from '../src/index.js';
 // the key of the demo application, activating every component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/advanced-widgets.license?raw';
+import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 const NODES: Record<string, TreeNode[]> = {
 	'': [
@@ -23,7 +23,7 @@ const NODES: Record<string, TreeNode[]> = {
 const load = (parent: string | null) => Promise.resolve(NODES[parent ?? ''] ?? []);
 
 function shown(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('.wicket-tree-content'),
+	return Array.from(container.querySelectorAll('.antilia-tree-content'),
 		(content) => content.textContent ?? '');
 }
 
@@ -42,7 +42,7 @@ describe('Tree', () => {
 		const { container } = render(Tree, { load, template: '{{name}}',
 			licenseKey: 'AW1.not.valid', texts: { unlicensed: 'Needs a key' } });
 
-		await waitFor(() => expect(container.querySelector('.wicket-unlicensed')?.textContent
+		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent
 			?.trim()).toBe('Needs a key'));
 		expect(container.querySelector('[role="tree"]')).toBeNull();
 	});
@@ -83,7 +83,7 @@ describe('TreeGrid', () => {
 			expanded: ['docs'] });
 
 		await waitFor(() => expect(shown(container)).toEqual(['docs', 'readme.md', 'notes.txt']));
-		expect(container.querySelector('.json-tree')!.classList.contains('wicket-tree-grid'))
+		expect(container.querySelector('.json-tree')!.classList.contains('antilia-tree-grid'))
 			.toBe(true);
 		expect(Array.from(container.querySelectorAll('th'), (th) => th.textContent))
 			.toEqual(['Name', 'Size']);
@@ -97,7 +97,7 @@ describe('TreeGrid', () => {
 
 		await waitFor(() => expect(shown(container)).toEqual(['docs', 'notes.txt']));
 		const tree = container.querySelector<HTMLElement>('.json-tree')!;
-		expect(tree.parentElement!.classList.contains('wicket-scrollbar')).toBe(true);
+		expect(tree.parentElement!.classList.contains('antilia-scrollbar')).toBe(true);
 		expect(tree.style.height).toBe('20em');
 		expect(Scrollbar.of(tree)?.options.header).toBe(':scope > table > thead');
 		expect(ResizableColumns.instances[tree.id + '-grid']?.mode).toBe('fit');

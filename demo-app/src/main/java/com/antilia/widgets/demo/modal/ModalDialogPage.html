@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="feedback"></div>
+<div wicket:id="themed" class="team-demo">
+	<div class="team-demo__toolbar">
+		<h2 class="team-demo__title"><wicket:message key="team"/></h2>
+		<button type="button" wicket:id="add" class="ant-data-table-button ant-data-table-button-primary"><wicket:message key="addMember"/></button>
+	</div>
+	<div wicket:id="team">
+		<table class="team-demo__table">
+			<thead>
+				<tr>
+					<th scope="col"><wicket:message key="name"/></th>
+					<th scope="col"><wicket:message key="email"/></th>
+					<th scope="col"><wicket:message key="role"/></th>
+					<th scope="col"><wicket:message key="actions"/></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr wicket:id="members">
+					<td wicket:id="name" class="team-demo__name"></td>
+					<td wicket:id="email"></td>
+					<td wicket:id="role"></td>
+					<td>
+						<div class="team-demo__actions">
+							<button type="button" wicket:id="edit" class="ant-data-table-button"><wicket:message key="edit"/></button>
+							<button type="button" wicket:id="delete" class="ant-data-table-button"><wicket:message key="delete"/></button>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p wicket:id="empty" class="team-demo__empty"><wicket:message key="empty"/></p>
+	</div>
+</div>
+<div wicket:id="dialog"></div>
+</wicket:extend>
+</body>
+</html>

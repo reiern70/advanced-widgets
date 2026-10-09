@@ -9,7 +9,7 @@
  */
 
 import { BUTTON_SIZES, BUTTON_VARIANTS, type ButtonSize,
-	type ButtonVariant } from '@advanced-widgets/core';
+	type ButtonVariant } from '@antilia/core';
 
 import { format } from './data.js';
 
@@ -25,20 +25,40 @@ export interface ButtonsTexts {
 	'size.small': string;
 	'size.medium': string;
 	'size.large': string;
+	/** The label of the drop-down choosing the icons, and those of its choices. */
+	icons: string;
+	'icons.SVG': string;
+	'icons.FONT_AWESOME': string;
+	/** What the drop-down says. */
+	filter: string;
+	noMatch: string;
+	more: string;
+	remove: string;
 }
+
+/**
+ * The icons of the buttons, as the drop-down of the demo chooses them: the Font Awesome icons as
+ * inline SVG, or the same drawn by the Font Awesome font.
+ */
+export type ButtonIconSet = 'SVG' | 'FONT_AWESOME';
+
+/** The choices of the drop-down choosing the icons, in their order. */
+export const BUTTON_ICON_SETS: ButtonIconSet[] = ['SVG', 'FONT_AWESOME'];
 
 /** A variant as the page shows it: its name, the text of its buttons and their icon. */
 export interface VariantSample {
 	name: string;
 	text: string;
-	/** The markup of the icon, an inline SVG the server wrote. */
-	icon: string;
+	/** The markup of the icon in each set, as the server wrote it. */
+	icons: Record<ButtonIconSet, string>;
 }
 
 /** What the page gives the demo. */
 export interface ButtonsConfig {
 	texts: ButtonsTexts;
 	variants: Record<ButtonVariant, VariantSample>;
+	/** The icons chosen at first, those the Wicket buttons of the page show. */
+	icons: ButtonIconSet;
 }
 
 export { BUTTON_SIZES, BUTTON_VARIANTS };
@@ -51,6 +71,13 @@ export function clickedText(config: ButtonsConfig, variant: ButtonVariant,
 	const sample = config.variants[variant];
 	return format(config.texts.clicked, sample.name + ' · ' + sizeName(config, size) + ' · ' +
 		sample.text);
+}
+
+/**
+ * @returns the options of the drop-down choosing the icons of the buttons
+ */
+export function iconSetOptions(texts: ButtonsTexts): { value: string; label: string }[] {
+	return BUTTON_ICON_SETS.map((value) => ({ value, label: texts[`icons.${value}`] }));
 }
 
 /**

@@ -14,9 +14,9 @@ export { default as Scrollable } from './Scrollable.svelte';
 export { default as Tree } from './Tree.svelte';
 export { default as TreeGrid } from './TreeGrid.svelte';
 export type { DropdownOption } from './types.js';
-export { activate, dropdown, localRows, scrollbar } from '@advanced-widgets/core';
+export { activate, dropdown, localRows, scrollbar } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts, DropdownOptions, InfiniteListData, ModalOptions,
 	ScrollbarOptions, ScrollPosition, TreeColumn, TreeIcons, TreeNode,
-	TreeTexts } from '@advanced-widgets/core';
+	TreeTexts } from '@antilia/core';

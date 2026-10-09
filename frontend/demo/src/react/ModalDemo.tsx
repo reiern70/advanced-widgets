@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
-import { Dropdown, Modal } from '@advanced-widgets/react';
+import { Dropdown, Modal } from '@antilia/react';
 
 import { format } from '../data.js';
 import { interpolate } from '../json-list.js';
@@ -136,7 +136,7 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 				<div className="team-demo__toolbar">
 					<h2 className="team-demo__title">{texts.team}</h2>
 					<button type="button"
-						className="dynamic-data-table-button dynamic-data-table-button-primary"
+						className="ant-data-table-button ant-data-table-button-primary"
 						onClick={() => open({ form: null })}>{texts.addMember}</button>
 				</div>
 				<table className="team-demo__table">
@@ -154,13 +154,15 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 								<td className="team-demo__name">{member.name}</td>
 								<td>{member.email}</td>
 								<td>{member.roleName}</td>
-								<td className="team-demo__actions">
-									<button type="button" className="dynamic-data-table-button"
-										aria-label={texts.edit + ' ' + member.name}
-										onClick={() => open({ form: member })}>{texts.edit}</button>
-									<button type="button" className="dynamic-data-table-button"
-										aria-label={texts.delete + ' ' + member.name}
-										onClick={() => open({ deletion: member })}>{texts.delete}</button>
+								<td>
+									<div className="team-demo__actions">
+										<button type="button" className="ant-data-table-button"
+											aria-label={texts.edit + ' ' + member.name}
+											onClick={() => open({ form: member })}>{texts.edit}</button>
+										<button type="button" className="ant-data-table-button"
+											aria-label={texts.delete + ' ' + member.name}
+											onClick={() => open({ deletion: member })}>{texts.delete}</button>
+									</div>
 								</td>
 							</tr>
 						))}

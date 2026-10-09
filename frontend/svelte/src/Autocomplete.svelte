@@ -11,7 +11,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { Autocomplete, type AutocompleteSuggestion,
-		type AutocompleteValue } from '@advanced-widgets/core';
+		type AutocompleteValue } from '@antilia/core';
 
 	type Props = {
 		/** Finds the suggestions for a text: [{id, label, data}]. */
@@ -107,7 +107,7 @@
 	});
 </script>
 
-<div class={['wicket-autocomplete', className]}>
+<div class={['antilia-autocomplete', className]}>
 	{#key multiple}
 		<input bind:this={input} type="hidden" {name} {id} />
 	{/key}

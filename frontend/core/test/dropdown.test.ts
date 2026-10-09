@@ -37,8 +37,8 @@ describe('Dropdown', () => {
 		const element = select();
 		const instance = new Dropdown(element);
 
-		expect(element.parentElement?.className).toBe('wicket-dropdown');
-		expect(element.classList.contains('wicket-dropdown-native')).toBe(true);
+		expect(element.parentElement?.className).toBe('antilia-dropdown');
+		expect(element.classList.contains('antilia-dropdown-native')).toBe(true);
 		expect(element.getAttribute('aria-hidden')).toBe('true');
 		expect(element.tabIndex).toBe(-1);
 		expect(instance.toggle.textContent).toBe('Apple');
@@ -48,7 +48,7 @@ describe('Dropdown', () => {
 	});
 
 	it('uses the wrapper the select is in already, and leaves it on destroy', () => {
-		page('<div class="wicket-dropdown" id="w"><select id="s"><option>A</option></select></div>');
+		page('<div class="antilia-dropdown" id="w"><select id="s"><option>A</option></select></div>');
 		const element = document.getElementById('s') as HTMLSelectElement;
 		const instance = new Dropdown(element);
 
@@ -66,7 +66,7 @@ describe('Dropdown', () => {
 		new Dropdown(element).destroy();
 
 		expect(element.parentElement).toBe(document.body);
-		expect(document.querySelector('.wicket-dropdown')).toBeNull();
+		expect(document.querySelector('.antilia-dropdown')).toBeNull();
 		expect(element.hasAttribute('class')).toBe(false);
 	});
 
@@ -144,14 +144,14 @@ describe('Dropdown', () => {
 		element.addEventListener('change', () => changes.push(Array.from(element.selectedOptions,
 			(option) => option.value)));
 
-		const remove = instance.value.querySelector<HTMLElement>('.wicket-chip-remove')!;
+		const remove = instance.value.querySelector<HTMLElement>('.antilia-chip-remove')!;
 		expect(remove.getAttribute('aria-label')).toBe('Drop A');
 		remove.click();
 		expect(instance.isOpen()).toBe(false);
 		key(instance.toggle, 'Backspace');
 
 		expect(changes).toEqual([['C'], []]);
-		expect(instance.value.querySelector('.wicket-chip')).toBeNull();
+		expect(instance.value.querySelector('.antilia-chip')).toBeNull();
 	});
 
 	it('shows chips without an x while the select is disabled', () => {
@@ -159,8 +159,8 @@ describe('Dropdown', () => {
 		element.options[1].selected = true;
 		const instance = new Dropdown(element);
 
-		expect(instance.value.querySelector('.wicket-chip-text')?.textContent).toBe('B');
-		expect(instance.value.querySelector('.wicket-chip-remove')).toBeNull();
+		expect(instance.value.querySelector('.antilia-chip-text')?.textContent).toBe('B');
+		expect(instance.value.querySelector('.antilia-chip-remove')).toBeNull();
 	});
 
 	it('shows a choice made by someone else on change and on update()', () => {
@@ -194,7 +194,7 @@ describe('Dropdown', () => {
 
 		expect(instance.isOpen()).toBe(false);
 		expect(instance.toggle.disabled).toBe(true);
-		expect(instance.wrapper.classList.contains('wicket-dropdown-disabled')).toBe(true);
+		expect(instance.wrapper.classList.contains('antilia-dropdown-disabled')).toBe(true);
 	});
 
 	it('closes on a click outside', () => {
@@ -212,7 +212,7 @@ describe('Dropdown', () => {
 
 		expect(Dropdown.of('s')).toBe(second);
 		expect(second.wrapper).toBe(first.wrapper);
-		expect(first.wrapper.querySelectorAll('.wicket-dropdown-toggle').length).toBe(1);
+		expect(first.wrapper.querySelectorAll('.antilia-dropdown-toggle').length).toBe(1);
 	});
 
 	it('stops listening when the host removes the element', () => {
@@ -251,7 +251,7 @@ describe('Dropdown', () => {
 		const instance = new Dropdown(select(), { filterThreshold: 0 });
 
 		expect(instance.list.parentElement).toBe(instance.listBox);
-		expect(instance.listBox.className).toBe('wicket-scrollbar');
+		expect(instance.listBox.className).toBe('antilia-scrollbar');
 		expect(instance.filter?.nextElementSibling).toBe(instance.listBox);
 		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
 

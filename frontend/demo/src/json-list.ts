@@ -9,7 +9,7 @@
  * resource; what the apps change stays in the browser.
  */
 
-import type { InfiniteListData } from '@advanced-widgets/core';
+import type { InfiniteListData } from '@antilia/core';
 
 import { loadUsers, type Choice, type DropdownTexts, type User, type UserRow } from './data.js';
 

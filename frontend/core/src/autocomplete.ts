@@ -7,7 +7,7 @@
  * An autocomplete drawn next to an <input type="hidden">, which holds the ids of the chosen values
  * as a JSON array and fires 'input' and 'change' when they change.
  *
- * new Autocomplete(input, options) puts the input into a div.wicket-autocomplete, or uses the one
+ * new Autocomplete(input, options) puts the input into a div.antilia-autocomplete, or uses the one
  * it is in already, with the chips of the chosen values, a text field and the list of
  * suggestions. Typing asks options.search, or else options.url, for the suggestions matching the
  * text ([{id, label, data}]); each row is options.template evaluated against its data by the
@@ -57,7 +57,7 @@ export interface AutocompleteOptions {
 	remove?: string;
 }
 
-const WRAPPER_CLASS = 'wicket-autocomplete';
+const WRAPPER_CLASS = 'antilia-autocomplete';
 
 /** How long typing pauses before the suggestions are asked for, in milliseconds. */
 const DELAY = 200;
@@ -182,13 +182,13 @@ export class Autocomplete {
 		});
 		instances.set(wrapper, this);
 		this.wrapper = wrapper;
-		this.id = input.id || ('wicket-autocomplete-' + (++counter));
-		wrapper.classList.toggle('wicket-autocomplete-multiple', this.multiple);
+		this.id = input.id || ('antilia-autocomplete-' + (++counter));
+		wrapper.classList.toggle('antilia-autocomplete-multiple', this.multiple);
 
-		this.field = create('div', 'wicket-autocomplete-field');
-		this.chips = create('span', 'wicket-autocomplete-chips');
+		this.field = create('div', 'antilia-autocomplete-field');
+		this.chips = create('span', 'antilia-autocomplete-chips');
 		this.field.appendChild(this.chips);
-		this.text = create('input', 'wicket-autocomplete-text');
+		this.text = create('input', 'antilia-autocomplete-text');
 		this.text.type = 'text';
 		this.text.autocomplete = 'off';
 		this.text.setAttribute('role', 'combobox');
@@ -202,16 +202,16 @@ export class Autocomplete {
 		this.field.appendChild(this.text);
 		wrapper.appendChild(this.field);
 
-		this.menu = create('div', 'wicket-autocomplete-menu');
+		this.menu = create('div', 'antilia-autocomplete-menu');
 		this.menu.hidden = true;
-		this.list = create('ul', 'wicket-autocomplete-list');
+		this.list = create('ul', 'antilia-autocomplete-list');
 		this.list.id = this.id + '-list';
 		this.list.setAttribute('role', 'listbox');
 		// the list scrolls in the wrapper of the slim scroll bars of the core
 		const listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
 		listBox.appendChild(this.list);
 		this.menu.appendChild(listBox);
-		this.status = create('div', 'wicket-autocomplete-status');
+		this.status = create('div', 'antilia-autocomplete-status');
 		this.status.hidden = true;
 		this.menu.appendChild(this.status);
 		wrapper.appendChild(this.menu);
@@ -234,7 +234,7 @@ export class Autocomplete {
 		const engine = templates().engine(this.options.engine);
 		this.row = engine ? engine.compile(this.options.template || '{{@label}}') :
 			(_data, meta) => templates().escapeHtml(meta?.label);
-		this.wrapper.classList.toggle('wicket-autocomplete-disabled', !!this.options.disabled);
+		this.wrapper.classList.toggle('antilia-autocomplete-disabled', !!this.options.disabled);
 		this.text.disabled = !!this.options.disabled;
 		this.close();
 		this.renderChosen();
@@ -258,8 +258,8 @@ export class Autocomplete {
 		this.detach();
 		this.field.remove();
 		this.menu.remove();
-		this.wrapper.classList.remove('wicket-autocomplete-multiple', 'wicket-autocomplete-disabled',
-			'wicket-autocomplete-open');
+		this.wrapper.classList.remove('antilia-autocomplete-multiple', 'antilia-autocomplete-disabled',
+			'antilia-autocomplete-open');
 		if (instances.get(this.wrapper) === this) {
 			instances.delete(this.wrapper);
 		}
@@ -331,7 +331,7 @@ export class Autocomplete {
 		// keeps the focus in the text field
 		this.listen(this.list, 'mousedown', (event) => event.preventDefault());
 		const itemOf = (event: Event) => (event.target as Element).closest<HTMLElement>(
-			'.wicket-autocomplete-option');
+			'.antilia-autocomplete-option');
 		this.listen(this.list, 'click', (event) => {
 			const item = itemOf(event);
 			if (item) {
@@ -427,7 +427,7 @@ export class Autocomplete {
 		this.list.textContent = '';
 		this.active = null;
 		this.suggestions.forEach((suggestion, index) => {
-			const item = create('li', 'wicket-autocomplete-option');
+			const item = create('li', 'antilia-autocomplete-option');
 			item.id = this.id + '-option-' + index;
 			item.dataset.index = String(index);
 			item.setAttribute('role', 'option');
@@ -459,7 +459,7 @@ export class Autocomplete {
 
 	private open(): void {
 		this.menu.hidden = false;
-		this.wrapper.classList.add('wicket-autocomplete-open');
+		this.wrapper.classList.add('antilia-autocomplete-open');
 		this.text.setAttribute('aria-expanded', 'true');
 	}
 
@@ -467,20 +467,20 @@ export class Autocomplete {
 		window.clearTimeout(this.timer);
 		this.request++;
 		this.menu.hidden = true;
-		this.wrapper.classList.remove('wicket-autocomplete-open');
+		this.wrapper.classList.remove('antilia-autocomplete-open');
 		this.text.setAttribute('aria-expanded', 'false');
 		this.text.removeAttribute('aria-activedescendant');
 		this.active = null;
 	}
 
 	private activate(item: HTMLElement | null, scroll: boolean): void {
-		this.active?.classList.remove('wicket-autocomplete-active');
+		this.active?.classList.remove('antilia-autocomplete-active');
 		this.active = item;
 		if (!item) {
 			this.text.removeAttribute('aria-activedescendant');
 			return;
 		}
-		item.classList.add('wicket-autocomplete-active');
+		item.classList.add('antilia-autocomplete-active');
 		this.text.setAttribute('aria-activedescendant', item.id);
 		if (scroll) {
 			item.scrollIntoView?.({ block: 'nearest' });

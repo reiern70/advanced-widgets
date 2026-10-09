@@ -1,5 +1,5 @@
 {
-	"name": "@advanced-widgets/demo",
+	"name": "@antilia/demo",
 	"version": "1.0.0-SNAPSHOT",
 	"description": "The React and Svelte pages of the demo application, served by its Wicket pages",
 	"private": true,
@@ -9,9 +9,9 @@
 		"test": "tsc --noEmit && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
 	},
 	"dependencies": {
-		"@advanced-widgets/core": "1.0.0-SNAPSHOT",
-		"@advanced-widgets/react": "1.0.0-SNAPSHOT",
-		"@advanced-widgets/svelte": "1.0.0-SNAPSHOT",
+		"@antilia/core": "1.0.0-SNAPSHOT",
+		"@antilia/react": "1.0.0-SNAPSHOT",
+		"@antilia/svelte": "1.0.0-SNAPSHOT",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
 		"svelte": "^5.57.2"

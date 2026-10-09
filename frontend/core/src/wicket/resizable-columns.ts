@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-resizable-columns.js: registers Wicket.ResizableColumns for ResizableColumnsBehavior,
+ * antilia-resizable-columns.js: registers Wicket.ResizableColumns for ResizableColumnsBehavior,
  * which calls Wicket.ResizableColumns.attach(id, options) with onResize calling back the server,
  * and for the dynamic data tables, which use its instances, tableOptions, fit and detach.
  */

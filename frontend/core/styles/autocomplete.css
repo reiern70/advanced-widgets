@@ -4,52 +4,52 @@
  */
 
 /*
- * The autocomplete drawn by wicket-autocomplete.js: a field like the button of a drop-down, holding
+ * The autocomplete drawn by antilia-autocomplete.js: a field like the button of a drop-down, holding
  * the chips of the chosen values and the text field, and the list of suggestions below it.
  */
-.wicket-autocomplete {
+.antilia-autocomplete {
 	position: relative;
 	display: inline-block;
 	min-width: 12em;
 	max-width: 100%;
 	vertical-align: middle;
-	color: var(--wicket-theme-text, #1c2333);
+	color: var(--antilia-theme-text, #1c2333);
 }
 
-.wicket-autocomplete-field {
+.antilia-autocomplete-field {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.25em;
 	min-height: 2.1em;
 	padding: 0.2em 0.5em;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: 0.4em;
-	background: var(--wicket-theme-surface, #ffffff);
+	background: var(--antilia-theme-surface, #ffffff);
 	cursor: text;
 	transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.wicket-autocomplete-field:hover {
-	border-color: var(--wicket-theme-primary, #2f5bd3);
+.antilia-autocomplete-field:hover {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
 }
 
-.wicket-autocomplete-field:focus-within,
-.wicket-autocomplete-open > .wicket-autocomplete-field {
-	border-color: var(--wicket-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wicket-theme-accent, #2f5bd3) 25%, transparent);
+.antilia-autocomplete-field:focus-within,
+.antilia-autocomplete-open > .antilia-autocomplete-field {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
 }
 
-.wicket-autocomplete-disabled > .wicket-autocomplete-field {
+.antilia-autocomplete-disabled > .antilia-autocomplete-field {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
 
-.wicket-autocomplete-chips {
+.antilia-autocomplete-chips {
 	display: contents;
 }
 
-.wicket-autocomplete-text {
+.antilia-autocomplete-text {
 	flex: 1;
 	min-width: 6em;
 	padding: 0.15em 0;
@@ -58,14 +58,14 @@
 	background: transparent;
 	color: inherit;
 	font: inherit;
-	color-scheme: var(--wicket-theme-color-scheme, light);
+	color-scheme: var(--antilia-theme-color-scheme, light);
 }
 
-.wicket-autocomplete-text[hidden] {
+.antilia-autocomplete-text[hidden] {
 	display: none;
 }
 
-.wicket-autocomplete-menu {
+.antilia-autocomplete-menu {
 	position: absolute;
 	top: calc(100% + 4px);
 	left: 0;
@@ -73,43 +73,43 @@
 	min-width: 100%;
 	max-width: max(100%, 28em);
 	padding: 0.3em;
-	border: 1px solid var(--wicket-theme-border, #c9cfdb);
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: 0.5em;
-	background: var(--wicket-theme-surface, #ffffff);
-	color: var(--wicket-theme-text, #1c2333);
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
-.wicket-autocomplete-menu[hidden] {
+.antilia-autocomplete-menu[hidden] {
 	display: none;
 }
 
-.wicket-autocomplete-list {
+.antilia-autocomplete-list {
 	max-height: 18em;
 	margin: 0;
 	padding: 0;
 	overflow-y: auto;
 	list-style: none;
 	scrollbar-width: thin;
-	scrollbar-color: var(--wicket-theme-border, #c9cfdb) transparent;
+	scrollbar-color: var(--antilia-theme-border, #c9cfdb) transparent;
 }
 
-.wicket-autocomplete-option {
+.antilia-autocomplete-option {
 	padding: 0.35em 0.6em;
 	border-radius: 0.3em;
 	cursor: pointer;
 }
 
-.wicket-autocomplete-option.wicket-autocomplete-active {
-	background: var(--wicket-theme-hover, #eef2fb);
+.antilia-autocomplete-option.antilia-autocomplete-active {
+	background: var(--antilia-theme-hover, #eef2fb);
 }
 
-.wicket-autocomplete-status {
+.antilia-autocomplete-status {
 	padding: 0.4em 0.6em;
 	opacity: 0.65;
 	font-style: italic;
 }
 
-.wicket-autocomplete-status[hidden] {
+.antilia-autocomplete-status[hidden] {
 	display: none;
 }

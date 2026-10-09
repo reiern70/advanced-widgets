@@ -1,0 +1,310 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.antilia.widgets.tree;
+
+import java.util.Set;
+
+import org.apache.wicket.Component;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.ITreeProvider;
+import org.apache.wicket.extensions.markup.html.repeater.tree.NestedTree;
+import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.Response;
+import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.request.resource.ResourceReference;
+
+import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
+import com.antilia.widgets.icon.IIcon;
+import com.antilia.widgets.license.Licensing;
+import com.antilia.widgets.scrollbar.ScrollbarBehavior;
+
+/**
+ * A tree of Wicket components: a {@link NestedTree} of wicket-extensions, whose nodes render the
+ * rows of the trees rendered in the browser ({@link JsonBasedTree}), with icons of their own
+ * ({@link TreeIcon}) in place of the images of the extensions' themes.
+ * <p>
+ * A node is a button holding its icon and its text: a click on a folder, or on its arrow, expands
+ * or collapses it, through Ajax; a click on a leaf selects it, repaints the leaf selected before
+ * and the new one, and calls {@link #onSelect(AjaxRequestTarget, Object)}, where the application
+ * updates what shows the leaf. Only leaves are selected. The folders tell screen readers whether
+ * they are expanded, the leaf selected that it is the current one.
+ * <p>
+ * The text of a node is the node itself, as a string, unless
+ * {@link #newLabelModel(IModel)} says otherwise; its icon is a folder, open or closed, or a leaf,
+ * unless {@link #getIcon(Object, boolean, boolean)} says otherwise, or the application gives
+ * icons of its own with {@link #setIcon(TreeIcon, IIcon)}. The tooltips of the arrows are the
+ * texts {@code Tree.expand} and {@code Tree.collapse} of the bundle of ui-components.
+ * <p>
+ * Given a {@link #setHeight(int, BodyHeightUnits) height}, the tree scrolls itself, with slim
+ * scroll bars in the colors of the theme; else the page scrolls.
+ * <p>
+ * The tree carries the CSS class {@value #CSS_CLASS} and takes its colors from the
+ * {@link com.antilia.widgets.theme.Theme theme} it is rendered in, if any.
+ * <p>
+ * A private component: it renders only when the {@link Licensing license key} of the application
+ * activates it, else a placeholder telling so.
+ *
+ * @param <T>
+ *            the type of the nodes
+ * @since 11.0.0
+ */
+public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
+{
+	private static final long serialVersionUID = 1L;
+
+	/** The CSS class of the tree. */
+	public static final String CSS_CLASS = "antilia-tree";
+
+	/** The style sheet of the trees and the tree grids, of Wicket components and of JSON. */
+	public static final ResourceReference CSS = new CssResourceReference(Tree.class,
+		"antilia-tree.css");
+
+	private final TreeSupport<T> support = new TreeSupport<>();
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param provider
+	 *            the provider of the nodes
+	 */
+	public Tree(String id, ITreeProvider<T> provider)
+	{
+		this(id, provider, null);
+	}
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param provider
+	 *            the provider of the nodes
+	 * @param state
+	 *            the folders expanded, {@code null} for a set of the tree's own
+	 */
+	public Tree(String id, ITreeProvider<T> provider, IModel<? extends Set<T>> state)
+	{
+		super(id, provider, state);
+		setOutputMarkupId(true);
+	}
+
+	@Override
+	public AbstractTree<T> asTree()
+	{
+		return this;
+	}
+
+	@Override
+	public Component newNodeComponent(String id, IModel<T> model)
+	{
+		return new TreeNode<>(id, this, model);
+	}
+
+	@Override
+	protected Component newContentComponent(String id, IModel<T> model)
+	{
+		return new TreeNodeContent<>(id, this, model);
+	}
+
+	/**
+	 * @param node
+	 *            a node
+	 * @param leaf
+	 *            whether it is a leaf
+	 * @param expanded
+	 *            whether it is an expanded folder
+	 * @return the icon of the node: by default a leaf, or a folder, open or closed
+	 */
+	@Override
+	public IIcon getIcon(T node, boolean leaf, boolean expanded)
+	{
+		return support.getIcon(leaf, expanded);
+	}
+
+	@Override
+	public IIcon getIcon(TreeIcon slot)
+	{
+		return support.getIcon(slot);
+	}
+
+	/**
+	 * Gives the tree an icon of the application's own.
+	 *
+	 * @param slot
+	 *            the icon replaced
+	 * @param icon
+	 *            the icon, {@code null} for the tree's own again
+	 * @return {@code this}
+	 */
+	public Tree<T> setIcon(TreeIcon slot, IIcon icon)
+	{
+		support.setIcon(slot, icon);
+		return this;
+	}
+
+	/**
+	 * @param node
+	 *            the model of a node
+	 * @return the model of its text, by default the node itself, written as a string
+	 */
+	@Override
+	public IModel<?> newLabelModel(IModel<T> node)
+	{
+		return node;
+	}
+
+	@Override
+	public boolean isSelected(T node)
+	{
+		return support.isSelected(this, node);
+	}
+
+	/**
+	 * @return the leaf selected, {@code null} if none is
+	 */
+	public T getSelected()
+	{
+		return support.getSelected();
+	}
+
+	/**
+	 * Selects a leaf without telling {@link #onSelect(AjaxRequestTarget, Object)}, for example
+	 * before the tree is rendered.
+	 *
+	 * @param node
+	 *            the leaf, {@code null} for none
+	 * @return {@code this}
+	 */
+	public Tree<T> setSelected(T node)
+	{
+		support.select(getProvider(), node);
+		return this;
+	}
+
+	/**
+	 * Selects a leaf, as a click on it does: repaints it and the leaf selected before, and calls
+	 * {@link #onSelect(AjaxRequestTarget, Object)}.
+	 *
+	 * @param node
+	 *            the leaf
+	 * @param target
+	 *            the Ajax request target
+	 */
+	public void select(T node, AjaxRequestTarget target)
+	{
+		T previous = support.select(getProvider(), node);
+		if (previous != null)
+		{
+			updateNode(previous, target);
+		}
+		updateNode(node, target);
+		onSelect(target, node);
+	}
+
+	/**
+	 * Called when the user selects a leaf. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param node
+	 *            the leaf
+	 */
+	protected void onSelect(AjaxRequestTarget target, T node)
+	{
+	}
+
+	@Override
+	public void onNodeClick(AjaxRequestTarget target, T node)
+	{
+		if (isLeaf(node))
+		{
+			select(node, target);
+		}
+		else if (getState(node) == State.EXPANDED)
+		{
+			collapse(node);
+		}
+		else
+		{
+			expand(node);
+		}
+	}
+
+	@Override
+	protected void onConfigure()
+	{
+		super.onConfigure();
+		Licensing.configurePrivate(this);
+	}
+
+	@Override
+	protected void renderPlaceholderTag(ComponentTag tag, Response response)
+	{
+		if (!Licensing.renderPlaceholder(this, tag, response))
+		{
+			super.renderPlaceholderTag(tag, response);
+		}
+	}
+
+	/**
+	 * @return the height of the tree in {@link #getHeightUnits()}, or a negative number,
+	 *         {@code -1} by default, when the tree is as high as its nodes
+	 */
+	public int getHeight()
+	{
+		return support.getHeight();
+	}
+
+	/**
+	 * @return the unit of {@link #getHeight()}, {@link BodyHeightUnits#PIXELS} by default
+	 */
+	public BodyHeightUnits getHeightUnits()
+	{
+		return support.getHeightUnits();
+	}
+
+	/**
+	 * Gives the tree a fixed height, within which it scrolls, with the slim scroll bars of a
+	 * {@link ScrollbarBehavior} in the colors of the theme. Without a height, the tree is as high
+	 * as its nodes.
+	 *
+	 * @param height
+	 *            the height of the tree in the given units; any negative number, such as
+	 *            {@code -1}, to let the tree take the height of its nodes, as by default
+	 * @param units
+	 *            the units of the height
+	 * @return {@code this}
+	 */
+	public Tree<T> setHeight(int height, BodyHeightUnits units)
+	{
+		support.setHeight(this, height, units, null);
+		return this;
+	}
+
+	@Override
+	protected void onComponentTag(ComponentTag tag)
+	{
+		super.onComponentTag(tag);
+		tag.append("class", CSS_CLASS, " ");
+		support.onComponentTag(tag);
+	}
+
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		super.renderHead(response);
+		response.render(CssHeaderItem.forReference(CSS));
+		support.renderHead(this, response);
+	}
+
+	@Override
+	protected void onDetach()
+	{
+		support.detach();
+		super.onDetach();
+	}
+}

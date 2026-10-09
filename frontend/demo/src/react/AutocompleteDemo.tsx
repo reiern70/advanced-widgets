@@ -5,7 +5,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
-import { Autocomplete } from '@advanced-widgets/react';
+import { Autocomplete } from '@antilia/react';
 
 import { describe, MAX_SUGGESTIONS, searchCountries, type AutocompleteConfig,
 	type AutocompleteValues } from '../autocomplete.js';

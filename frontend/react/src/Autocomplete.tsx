@@ -6,7 +6,7 @@
 import { useLayoutEffect, useRef } from 'react';
 
 import { Autocomplete as CoreAutocomplete, type AutocompleteSuggestion,
-	type AutocompleteValue } from '@advanced-widgets/core';
+	type AutocompleteValue } from '@antilia/core';
 
 export interface AutocompleteProps {
 	/** Finds the suggestions for a text: [{id, label, data}]. */
@@ -34,7 +34,7 @@ export interface AutocompleteProps {
 	/** The name and id of the hidden input holding the ids of the chosen values as JSON. */
 	name?: string;
 	id?: string;
-	/** CSS classes of the div wrapping the autocomplete, next to wicket-autocomplete. */
+	/** CSS classes of the div wrapping the autocomplete, next to antilia-autocomplete. */
 	className?: string;
 }
 
@@ -89,7 +89,7 @@ export function Autocomplete({ search, url, multiple = false, value, onChange, t
 	}, [valueKey]);
 
 	return (
-		<div className={['wicket-autocomplete', className].filter(Boolean).join(' ')}>
+		<div className={['antilia-autocomplete', className].filter(Boolean).join(' ')}>
 			<input ref={input} type="hidden" name={name} id={id} />
 		</div>
 	);

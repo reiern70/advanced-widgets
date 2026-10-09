@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.antilia-collapsible {
+	border: 1px solid var(--antilia-theme-border);
+	border-radius: 0.3em;
+	overflow: hidden;
+	background: var(--antilia-theme-surface);
+	color: var(--antilia-theme-text);
+}
+
+.antilia-collapsible-title {
+	padding: 0.3em 0.5em;
+	background: var(--antilia-theme-primary);
+	color: var(--antilia-theme-on-primary);
+	display: list-item;
+	list-style: none;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.antilia-collapsible-title::-webkit-details-marker {
+	display: none;
+}
+
+.antilia-collapsible-title::before {
+	content: "\25B8";
+	display: inline-block;
+	width: 1em;
+	margin-right: 0.25em;
+	text-align: center;
+	transition: transform 0.15s ease-in-out;
+}
+
+.antilia-collapsible[open] > .antilia-collapsible-title::before {
+	transform: rotate(90deg);
+}
+
+.antilia-collapsible :is(input, select, textarea, button) {
+	color-scheme: var(--antilia-theme-color-scheme);
+	accent-color: var(--antilia-theme-accent);
+}
+
+.antilia-collapsible-body {
+	padding: 0.5em 0.5em 0.5em 1.5em;
+	color: var(--antilia-collapsible-text, var(--antilia-theme-text));
+}

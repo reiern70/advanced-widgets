@@ -16,7 +16,7 @@
  * a function asked before the user closes it may keep it open (canClose), when a form in it was
  * modified for example; the header drags the dialog around (draggable) and a double click on it
  * folds the dialog to its header and unfolds it again (foldable), in the browser alone. A body in
- * the wrapper of the scroll bars, <div class="wicket-scrollbar"><div class="modal-dialog-body">,
+ * the wrapper of the scroll bars, <div class="antilia-scrollbar"><div class="modal-dialog-body">,
  * scrolls with the slim scroll bars of the core.
  */
 

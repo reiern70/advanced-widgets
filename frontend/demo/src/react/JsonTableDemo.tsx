@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Button, DataTable, Dropdown, type DataTableHandle } from '@advanced-widgets/react';
+import { Button, DataTable, Dropdown, type DataTableHandle } from '@antilia/react';
 
 import { format, loadChoices, type Choice } from '../data.js';
 import { interpolate, type UserFields } from '../json-list.js';
@@ -135,10 +135,10 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 	return (
 		<>
 			<Feedback messages={messages} />
-			<div className="dynamic-dataview-options">
+			<div className="ant-dataview-options">
 				{settingDefs(texts).map((setting) => (
-					<div className="dynamic-dataview-option" key={setting.key}>
-						<span className="dynamic-dataview-option-title">
+					<div className="ant-dataview-option" key={setting.key}>
+						<span className="ant-dataview-option-title">
 							<label htmlFor={'react-grid-' + setting.key}>{setting.label}</label>
 						</span>
 						<Dropdown id={'react-grid-' + setting.key} name={setting.key}
@@ -169,10 +169,10 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 						<>
 							<span>
 								<button type="button" onClick={() => setShown({ form: null })}
-									className="dynamic-data-table-action dynamic-data-table-icon-action"
+									className="ant-data-table-action ant-data-table-icon-action"
 									title={texts.newUser} aria-label={texts.newUser}><AddIcon /></button>
 							</span>
-							{count && <span className="dynamic-data-table-selection-count"
+							{count && <span className="ant-data-table-selection-count"
 								role="status">{count}</span>}
 						</>
 					} />
@@ -187,7 +187,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 			{deletion && shown && 'deletion' in shown && (
 				<Dialog title={texts.delete} onClose={() => setShown(null)}>
 					<p>{interpolate(texts['delete.confirm'], deletion)}</p>
-					<div className="aw-button-bar dynamic-data-table-overlay-buttons">
+					<div className="ant-button-bar ant-data-table-overlay-buttons">
 						<Button label={texts.cancel} onClick={() => setShown(null)} />
 						<Button label={texts.delete} variant="danger"
 							onClick={() => remove(shown.deletion)} />

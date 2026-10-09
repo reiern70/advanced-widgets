@@ -14,11 +14,11 @@ describe('ProgressBar', () => {
 	it('renders the markup of the Wicket bar, the value clamped and rounded', async () => {
 		const { container, rerender } = render(ProgressBar, { value: 42.4 });
 
-		const bar = container.querySelector('.wicket-progress-bar')!;
+		const bar = container.querySelector('.antilia-progress-bar')!;
 		expect(bar.querySelector('progress')?.getAttribute('value')).toBe('42');
 		expect(bar.querySelector('progress')?.textContent).toBe('42%');
-		expect(bar.querySelector('.wicket-progress-bar-label')?.textContent).toBe('42%');
-		expect(bar.querySelector('.wicket-progress-bar-label')?.getAttribute('aria-hidden'))
+		expect(bar.querySelector('.antilia-progress-bar-label')?.textContent).toBe('42%');
+		expect(bar.querySelector('.antilia-progress-bar-label')?.getAttribute('aria-hidden'))
 			.toBe('true');
 
 		await rerender({ value: -5 });
@@ -28,9 +28,9 @@ describe('ProgressBar', () => {
 	it('is indeterminate without a value', () => {
 		const { container } = render(ProgressBar, { value: null, class: 'big' });
 
-		const bar = container.querySelector('.wicket-progress-bar')!;
-		expect(bar.className).toBe('wicket-progress-bar big');
+		const bar = container.querySelector('.antilia-progress-bar')!;
+		expect(bar.className).toBe('antilia-progress-bar big');
 		expect(bar.querySelector('progress')?.hasAttribute('value')).toBe(false);
-		expect(bar.querySelector('.wicket-progress-bar-label')).toBeNull();
+		expect(bar.querySelector('.antilia-progress-bar-label')).toBeNull();
 	});
 });

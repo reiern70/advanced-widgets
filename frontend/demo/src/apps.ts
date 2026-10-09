@@ -12,7 +12,7 @@
  * the first app mounts, so the private components show in every demo.
  */
 
-import { activate } from '@advanced-widgets/core';
+import { activate } from '@antilia/core';
 
 /** Renders the app of a demo into an element, with the configuration the page gave. */
 export type Mount = (element: HTMLElement, config: never) => void;

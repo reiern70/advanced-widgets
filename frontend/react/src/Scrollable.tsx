@@ -6,12 +6,12 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef,
 	type HTMLAttributes } from 'react';
 
-import { Scrollbar, type ScrollbarOptions, type ScrollPosition } from '@advanced-widgets/core';
+import { Scrollbar, type ScrollbarOptions, type ScrollPosition } from '@antilia/core';
 
 export interface ScrollableProps extends HTMLAttributes<HTMLDivElement> {
 	/** The axes of the bars: by default those along which the CSS of the element scrolls. */
 	axis?: ScrollbarOptions['axis'];
-	/** CSS classes of the div wrapping the scrolling one, next to wicket-scrollbar. */
+	/** CSS classes of the div wrapping the scrolling one, next to antilia-scrollbar. */
 	wrapperClassName?: string;
 }
 
@@ -64,9 +64,9 @@ export const Scrollable = forwardRef<ScrollableHandle, ScrollableProps>(function
 	}, [axis]);
 
 	return (
-		<div className={['wicket-scrollbar', wrapperClassName].filter(Boolean).join(' ')}>
+		<div className={['antilia-scrollbar', wrapperClassName].filter(Boolean).join(' ')}>
 			<div {...rest} ref={element}
-				className={['wicket-scrollbar-host', className].filter(Boolean).join(' ')}>
+				className={['antilia-scrollbar-host', className].filter(Boolean).join(' ')}>
 				{children}
 			</div>
 		</div>

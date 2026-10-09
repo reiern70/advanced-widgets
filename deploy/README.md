@@ -11,7 +11,7 @@ needs one.
 | `compose.yaml` | Jetty and Caddy, the page store and the certificates on volumes |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain |
 | `.env.example` | The settings; copied to `.env` on the server, never committed |
-| `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/advanced-widgets` |
+| `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |
 
 The WAR is built on the developer's machine, not on the server, because Wicket 11 is a snapshot
@@ -54,7 +54,7 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 
 1. *Create instance*: region **Frankfurt** (or Virginia/Ohio for American users), platform
    *Linux*, blueprint *OS Only → Ubuntu 24.04 LTS*, plan **$7 (1 GB)**, name
-   `advanced-widgets`. Download or upload an SSH key.
+   `antilia-widgets`. Download or upload an SSH key.
 2. *Networking*: attach a **static IP**; in the IPv4 firewall add **HTTPS (443)** next to SSH
    (22) and HTTP (80). Restrict SSH to your own IP if it is fixed.
 3. *Snapshots*: turn on **automatic snapshots** (daily, about $2/month).
@@ -64,14 +64,14 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
    ```sh
    ssh ubuntu@<static-ip> 'sh -s' < deploy/setup-server.sh
    deploy/deploy.sh ubuntu@<static-ip>      # the first time it stops: fill in .env
-   ssh ubuntu@<static-ip> nano /opt/advanced-widgets/.env
+   ssh ubuntu@<static-ip> nano /opt/antilia-widgets/.env
    deploy/deploy.sh ubuntu@<static-ip>
    ```
 
 6. Open `https://<domain>`: the certificate is there within a minute, the home page shows the
    websocket status *Live*.
 
-Logs: `ssh ubuntu@<ip> 'cd /opt/advanced-widgets && docker compose logs -f app'`.
+Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
 ## 4. PostgreSQL, once the application uses it
 

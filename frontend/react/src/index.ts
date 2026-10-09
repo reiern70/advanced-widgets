@@ -17,10 +17,10 @@ export { Modal } from './Modal.js';
 export type { ModalProps } from './Modal.js';
 export { Tree, TreeGrid } from './Tree.js';
 export type { TreeHandle, TreeProps, TreeGridProps } from './Tree.js';
-export type { TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@advanced-widgets/core';
+export type { TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';
 export { DataTable } from './DataTable.js';
 export type { DataTableColumnDef, DataTableFilter, DataTableHandle, DataTableProps, DataTablePush,
 	DataTableQuery, DataTableSort, DataTableTexts } from './DataTable.js';
 export { Button } from './Button.js';
-export { localRows } from '@advanced-widgets/core';
+export { localRows } from '@antilia/core';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button.js';

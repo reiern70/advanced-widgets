@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-modal.js: registers Wicket.Modal for the Modal of ui-components, which calls
+ * antilia-modal.js: registers Wicket.Modal for the Modal of ui-components, which calls
  * Wicket.Modal.attach(overlayId, options) each time it renders open. The behaviors stop, and the
  * focus goes back, when an update of the page removes the overlay, as closing the dialog does. The
  * body gets the scroll bars of Wicket.Scrollbar, when the page loaded them.

@@ -5,36 +5,36 @@
  * The trees and tree grids: those rendered in the browser from JSON (tree.ts) and the Wicket
  * Tree and TreeGrid, which render the same rows, toggles and icons on the server.
  */
-.wicket-tree,
-.wicket-tree-grid {
-	--wicket-tree-indent: 1.4em;
-	color: var(--wicket-theme-text, CanvasText);
+.antilia-tree,
+.antilia-tree-grid {
+	--antilia-tree-indent: 1.4em;
+	color: var(--antilia-theme-text, CanvasText);
 }
 
-.wicket-tree-group {
+.antilia-tree-group {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
 /* a row: the toggle of a folder, the icon and the content */
-.wicket-tree-row {
+.antilia-tree-row {
 	display: flex;
 	align-items: center;
 	gap: 0.35em;
 	min-height: 2em;
-	padding: 0.1em 0.5em 0.1em calc(0.25em + (var(--wicket-tree-level, 1) - 1) * var(--wicket-tree-indent));
+	padding: 0.1em 0.5em 0.1em calc(0.25em + (var(--antilia-tree-level, 1) - 1) * var(--antilia-tree-indent));
 	border-radius: 6px;
 	cursor: pointer;
 	user-select: none;
 }
 
-.wicket-tree .wicket-tree-row:hover {
-	background: var(--wicket-theme-hover, rgba(0, 0, 0, 0.06));
+.antilia-tree .antilia-tree-row:hover {
+	background: var(--antilia-theme-hover, rgba(0, 0, 0, 0.06));
 }
 
-.wicket-tree-toggle,
-.wicket-tree-icon {
+.antilia-tree-toggle,
+.antilia-tree-icon {
 	flex: none;
 	display: inline-flex;
 	align-items: center;
@@ -43,52 +43,52 @@
 	height: 1.1em;
 }
 
-.wicket-tree-toggle svg {
+.antilia-tree-toggle > * {
 	transition: transform 0.15s ease;
 }
 
-.wicket-tree-item[aria-expanded="true"] > .wicket-tree-row > .wicket-tree-toggle svg,
-.wicket-tree-item[aria-expanded="true"] > td > .wicket-tree-row > .wicket-tree-toggle svg,
-.wicket-tree-toggle--expanded svg {
+.antilia-tree-item[aria-expanded="true"] > .antilia-tree-row > .antilia-tree-toggle > *,
+.antilia-tree-item[aria-expanded="true"] > td > .antilia-tree-row > .antilia-tree-toggle > *,
+.antilia-tree-toggle--expanded > * {
 	transform: rotate(90deg);
 }
 
-html[dir="rtl"] .wicket-tree-toggle svg {
+html[dir="rtl"] .antilia-tree-toggle > * {
 	transform: scaleX(-1);
 }
 
-html[dir="rtl"] .wicket-tree-item[aria-expanded="true"] .wicket-tree-toggle svg,
-html[dir="rtl"] .wicket-tree-toggle--expanded svg {
+html[dir="rtl"] .antilia-tree-item[aria-expanded="true"] .antilia-tree-toggle > *,
+html[dir="rtl"] .antilia-tree-toggle--expanded > * {
 	transform: rotate(90deg);
 }
 
-.wicket-tree-toggle--loading svg {
+.antilia-tree-toggle--loading > * {
 	display: none;
 }
 
-.wicket-tree-toggle--loading::before,
-.wicket-tree-status--loading::before {
+.antilia-tree-toggle--loading::before,
+.antilia-tree-status--loading::before {
 	content: "";
 	width: 0.85em;
 	height: 0.85em;
-	border: 2px solid var(--wicket-theme-border, GrayText);
-	border-top-color: var(--wicket-theme-primary, Highlight);
+	border: 2px solid var(--antilia-theme-border, GrayText);
+	border-top-color: var(--antilia-theme-primary, Highlight);
 	border-radius: 50%;
-	animation: wicket-tree-spin 0.8s linear infinite;
+	animation: antilia-tree-spin 0.8s linear infinite;
 }
 
-.wicket-tree-icon {
-	color: var(--wicket-theme-primary, #b45309);
+.antilia-tree-icon {
+	color: var(--antilia-theme-primary, #b45309);
 }
 
-.wicket-tree-item--leaf > .wicket-tree-row .wicket-tree-icon,
-.wicket-tree-item--leaf > .wicket-tree-grid-tree-cell .wicket-tree-icon,
-.wicket-tree-node--leaf .wicket-tree-icon {
-	color: var(--wicket-theme-text, GrayText);
+.antilia-tree-item--leaf > .antilia-tree-row .antilia-tree-icon,
+.antilia-tree-item--leaf > .antilia-tree-grid-tree-cell .antilia-tree-icon,
+.antilia-tree-node--leaf .antilia-tree-icon {
+	color: var(--antilia-theme-text, GrayText);
 	opacity: 0.75;
 }
 
-.wicket-tree-content {
+.antilia-tree-content {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
@@ -97,40 +97,40 @@ html[dir="rtl"] .wicket-tree-toggle--expanded svg {
 }
 
 /* the item of a node: focus and selection */
-.wicket-tree-item {
+.antilia-tree-item {
 	outline: none;
 }
 
-.wicket-tree-item:focus-visible > .wicket-tree-row,
-.wicket-tree-grid-row:focus-visible > td,
-.wicket-tree-node-button:focus-visible,
-.wicket-tree-junction:focus-visible {
-	outline: 2px solid var(--wicket-theme-accent, Highlight);
+.antilia-tree-item:focus-visible > .antilia-tree-row,
+.antilia-tree-grid-row:focus-visible > td,
+.antilia-tree-node-button:focus-visible,
+.antilia-tree-junction:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: -2px;
 }
 
-.wicket-tree .wicket-tree-item--selected > .wicket-tree-row,
-.wicket-tree .wicket-tree-node--selected .wicket-tree-row {
-	background: var(--wicket-theme-selected, rgba(37, 99, 235, 0.14));
+.antilia-tree .antilia-tree-item--selected > .antilia-tree-row,
+.antilia-tree .antilia-tree-node--selected .antilia-tree-row {
+	background: var(--antilia-theme-selected, rgba(37, 99, 235, 0.14));
 	font-weight: 600;
 }
 
-.wicket-tree-status {
+.antilia-tree-status {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.6em;
 	padding: 0.75em;
-	color: var(--wicket-theme-text, GrayText);
+	color: var(--antilia-theme-text, GrayText);
 	opacity: 0.8;
 }
 
-.wicket-tree-status[hidden] {
+.antilia-tree-status[hidden] {
 	display: none;
 }
 
 /* a tree or a tree grid of a height scrolls itself, with the slim scroll bars of the core */
-.wicket-tree--scrolling {
+.antilia-tree--scrolling {
 	overflow: auto;
 	overscroll-behavior: contain;
 }
@@ -139,92 +139,92 @@ html[dir="rtl"] .wicket-tree-toggle--expanded svg {
  * columns stretching the table widen a tree grid of a height, its scroll bars too, as they widen
  * any table: it scrolls its rows, never sideways
  */
-.wicket-tree--scrolling:has(> table.wicket-resizable-columns-stretch) {
+.antilia-tree--scrolling:has(> table.antilia-resizable-columns-stretch) {
 	overflow-x: hidden;
 	width: max-content;
 	min-width: 100%;
 }
 
-.wicket-scrollbar:has(> .wicket-tree--scrolling > table.wicket-resizable-columns-stretch) {
+.antilia-scrollbar:has(> .antilia-tree--scrolling > table.antilia-resizable-columns-stretch) {
 	width: max-content;
 	min-width: 100%;
 }
 
 /* the table fills the width it is given, as the JSON grid does, and grows beyond it */
-.wicket-tree--scrolling > table.wicket-resizable-columns-stretch {
+.antilia-tree--scrolling > table.antilia-resizable-columns-stretch {
 	min-width: 100%;
 }
 
 /* tree grids */
-.wicket-tree-grid {
+.antilia-tree-grid {
 	overflow-x: auto;
 }
 
 /* the head of a tree grid of a height stays in place above the rows scrolling */
-.wicket-tree-grid.wicket-tree--scrolling thead th {
+.antilia-tree-grid.antilia-tree--scrolling thead th {
 	position: sticky;
 	top: 0;
 	z-index: 1;
-	background: var(--wicket-theme-toolbar, Canvas);
+	background: var(--antilia-theme-toolbar, Canvas);
 }
 
-.wicket-tree-grid table,
-table.wicket-tree-grid-grid {
+.antilia-tree-grid table,
+table.antilia-tree-grid-grid {
 	width: 100%;
 	border-collapse: collapse;
 	border-spacing: 0;
 }
 
-.wicket-tree-grid th {
+.antilia-tree-grid th {
 	padding: 0.55em 0.75em;
-	border-bottom: 2px solid var(--wicket-theme-border, ButtonBorder);
-	background: var(--wicket-theme-toolbar, transparent);
+	border-bottom: 2px solid var(--antilia-theme-border, ButtonBorder);
+	background: var(--antilia-theme-toolbar, transparent);
 	text-align: start;
 	font-weight: 600;
 	white-space: nowrap;
 }
 
-.wicket-tree-grid td {
+.antilia-tree-grid td {
 	padding: 0.15em 0.75em;
-	border-bottom: 1px solid var(--wicket-theme-border, rgba(0, 0, 0, 0.12));
+	border-bottom: 1px solid var(--antilia-theme-border, rgba(0, 0, 0, 0.12));
 	white-space: nowrap;
 }
 
-.wicket-tree-grid td.wicket-tree-grid-tree-cell,
-.wicket-tree-grid td.tree {
+.antilia-tree-grid td.antilia-tree-grid-tree-cell,
+.antilia-tree-grid td.tree {
 	padding-inline-start: 0.25em;
 	width: 45%;
 }
 
-.wicket-tree-grid tbody tr {
+.antilia-tree-grid tbody tr {
 	cursor: pointer;
 }
 
-.wicket-tree-grid tbody tr:hover {
-	background: var(--wicket-theme-hover, rgba(0, 0, 0, 0.06));
+.antilia-tree-grid tbody tr:hover {
+	background: var(--antilia-theme-hover, rgba(0, 0, 0, 0.06));
 }
 
-.wicket-tree-grid .wicket-tree-row {
+.antilia-tree-grid .antilia-tree-row {
 	padding-inline-end: 0;
 	border-radius: 0;
 }
 
-.wicket-tree-grid tbody tr.wicket-tree-item--selected,
-.wicket-tree-grid tbody tr.wicket-tree-node--selected {
-	background: var(--wicket-theme-selected, rgba(37, 99, 235, 0.14));
+.antilia-tree-grid tbody tr.antilia-tree-item--selected,
+.antilia-tree-grid tbody tr.antilia-tree-node--selected {
+	background: var(--antilia-theme-selected, rgba(37, 99, 235, 0.14));
 }
 
-.wicket-tree-grid tr.wicket-tree-item--selected > td > .wicket-tree-row,
-.wicket-tree-grid tr.wicket-tree-node--selected .wicket-tree-row {
+.antilia-tree-grid tr.antilia-tree-item--selected > td > .antilia-tree-row,
+.antilia-tree-grid tr.antilia-tree-node--selected .antilia-tree-row {
 	background: transparent;
 }
 
-.wicket-tree-grid tr.wicket-tree-item--selected .wicket-tree-content,
-.wicket-tree-grid tr.wicket-tree-node--selected .wicket-tree-content {
+.antilia-tree-grid tr.antilia-tree-item--selected .antilia-tree-content,
+.antilia-tree-grid tr.antilia-tree-node--selected .antilia-tree-content {
 	font-weight: 600;
 }
 
-.wicket-tree-grid .wicket-tree-number {
+.antilia-tree-grid .antilia-tree-number {
 	text-align: end;
 	font-variant-numeric: tabular-nums;
 }
@@ -233,25 +233,25 @@ table.wicket-tree-grid-grid {
  * The Wicket Tree and TreeGrid: the nested subtrees of wicket-extensions indent by the level
  * of their rows, the junction and the label are buttons.
  */
-.wicket-tree .tree-branch,
-.wicket-tree-grid .tree-branch {
+.antilia-tree .tree-branch,
+.antilia-tree-grid .tree-branch {
 	margin: 0;
 	padding: 0;
 }
 
-.wicket-tree .tree-subtree,
-.wicket-tree-grid .tree-subtree {
-	margin: 0 0 0 var(--wicket-tree-indent);
+.antilia-tree .tree-subtree,
+.antilia-tree-grid .tree-subtree {
+	margin: 0 0 0 var(--antilia-tree-indent);
 	padding: 0;
 }
 
-html[dir="rtl"] .wicket-tree .tree-subtree,
-html[dir="rtl"] .wicket-tree-grid .tree-subtree {
-	margin: 0 var(--wicket-tree-indent) 0 0;
+html[dir="rtl"] .antilia-tree .tree-subtree,
+html[dir="rtl"] .antilia-tree-grid .tree-subtree {
+	margin: 0 var(--antilia-tree-indent) 0 0;
 }
 
-.wicket-tree-junction,
-.wicket-tree-node-button {
+.antilia-tree-junction,
+.antilia-tree-node-button {
 	display: inline-flex;
 	align-items: center;
 	margin: 0;
@@ -264,41 +264,41 @@ html[dir="rtl"] .wicket-tree-grid .tree-subtree {
 	cursor: pointer;
 }
 
-.wicket-tree-junction {
+.antilia-tree-junction {
 	justify-content: center;
 	width: 1.1em;
 	height: 1.1em;
 	border-radius: 4px;
 }
 
-.wicket-tree-junction--none {
+.antilia-tree-junction--none {
 	visibility: hidden;
 }
 
-.wicket-tree-node-button {
+.antilia-tree-node-button {
 	flex: 1 1 auto;
 	min-width: 0;
 	gap: 0.35em;
 	border-radius: 4px;
 }
 
-.wicket-tree-node-button .wicket-tree-content {
+.antilia-tree-node-button .antilia-tree-content {
 	flex: 1 1 auto;
 }
 
-@keyframes wicket-tree-spin {
+@keyframes antilia-tree-spin {
 	to {
 		transform: rotate(360deg);
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.wicket-tree-toggle svg {
+	.antilia-tree-toggle > * {
 		transition: none;
 	}
 
-	.wicket-tree-toggle--loading::before,
-	.wicket-tree-status--loading::before {
+	.antilia-tree-toggle--loading::before,
+	.antilia-tree-status--loading::before {
 		animation-duration: 2.4s;
 	}
 }

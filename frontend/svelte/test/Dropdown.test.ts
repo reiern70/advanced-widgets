@@ -16,11 +16,11 @@ const FRUITS: DropdownOption[] = ['Apple', 'Banana', 'Cherry'].map((name) => ({
 }));
 
 function toggle(container: HTMLElement): HTMLButtonElement {
-	return container.querySelector('.wicket-dropdown-toggle')!;
+	return container.querySelector('.antilia-dropdown-toggle')!;
 }
 
 function items(container: HTMLElement): HTMLLIElement[] {
-	return Array.from(container.querySelectorAll('.wicket-dropdown-option'));
+	return Array.from(container.querySelectorAll('.antilia-dropdown-option'));
 }
 
 function click(element: HTMLElement): void {
@@ -34,7 +34,7 @@ describe('Dropdown', () => {
 	it('draws the core drop-down inside the wrapper Svelte renders', () => {
 		const { container } = render(Dropdown, { options: FRUITS, value: 'banana' });
 
-		const wrapper = container.querySelector('.wicket-dropdown')!;
+		const wrapper = container.querySelector('.antilia-dropdown')!;
 		expect(wrapper.firstElementChild?.tagName).toBe('SELECT');
 		expect(toggle(container).textContent).toBe('Banana');
 		expect(items(container).map((item) => item.textContent)).toEqual(['Apple', 'Banana', 'Cherry']);
@@ -70,7 +70,7 @@ describe('Dropdown', () => {
 		await rerender({ options: FRUITS });
 		flushSync();
 
-		expect(Array.from(container.querySelectorAll('.wicket-chip-text'),
+		expect(Array.from(container.querySelectorAll('.antilia-chip-text'),
 			(chip) => chip.textContent)).toEqual(['Cherry']);
 		expect(container.querySelector('p')?.textContent).toBe('["cherry"]');
 	});
@@ -83,18 +83,18 @@ describe('Dropdown', () => {
 		click(items(container)[2]);
 
 		expect(container.querySelector('p')?.textContent).toBe('["apple","cherry"]');
-		expect(Array.from(container.querySelectorAll('.wicket-chip'),
+		expect(Array.from(container.querySelectorAll('.antilia-chip'),
 			(chip) => chip.textContent)).toEqual(['Apple', 'Cherry']);
-		expect(container.querySelector('.wicket-dropdown-open')).not.toBeNull();
+		expect(container.querySelector('.antilia-dropdown-open')).not.toBeNull();
 
 		click(container.querySelector<HTMLButtonElement>('.reset')!);
-		expect(container.querySelectorAll('.wicket-chip').length).toBe(0);
+		expect(container.querySelectorAll('.antilia-chip').length).toBe(0);
 	});
 
 	it('removes a value with the x of its chip, labelled with the text given', () => {
 		const { container } = render(Bound, { options: FRUITS, value: ['apple', 'cherry'],
 			multiple: true });
-		const remove = container.querySelector<HTMLElement>('.wicket-chip-remove')!;
+		const remove = container.querySelector<HTMLElement>('.antilia-chip-remove')!;
 		expect(remove.getAttribute('aria-label')).toBe('Remove Apple');
 
 		click(remove);
@@ -113,13 +113,13 @@ describe('Dropdown', () => {
 
 	it('draws options and texts that change', async () => {
 		const { container, rerender } = render(Dropdown, { options: FRUITS, filterThreshold: 10 });
-		expect(container.querySelector('.wicket-dropdown-filter')).toBeNull();
+		expect(container.querySelector('.antilia-dropdown-filter')).toBeNull();
 
 		await rerender({ options: [...FRUITS, { value: 'date', label: 'Date' }], filterThreshold: 0,
 			filter: 'Search' });
 
 		expect(items(container).map((item) => item.textContent)).toContain('Date');
-		expect(container.querySelector<HTMLInputElement>('.wicket-dropdown-filter')?.placeholder)
+		expect(container.querySelector<HTMLInputElement>('.antilia-dropdown-filter')?.placeholder)
 			.toBe('Search');
 	});
 
@@ -133,9 +133,9 @@ describe('Dropdown', () => {
 	it('closes on Escape with the keyboard', async () => {
 		const { container } = render(Dropdown, { options: FRUITS });
 		await fireEvent.keyDown(toggle(container), { key: 'ArrowDown' });
-		await fireEvent.keyDown(container.querySelector('.wicket-dropdown-list')!, { key: 'Escape' });
+		await fireEvent.keyDown(container.querySelector('.antilia-dropdown-list')!, { key: 'Escape' });
 
-		expect(container.querySelector('.wicket-dropdown-open')).toBeNull();
+		expect(container.querySelector('.antilia-dropdown-open')).toBeNull();
 		expect(document.activeElement).toBe(toggle(container));
 	});
 
@@ -144,7 +144,7 @@ describe('Dropdown', () => {
 		const listeners = vi.spyOn(document, 'removeEventListener');
 		unmount();
 
-		expect(container.querySelector('.wicket-dropdown')).toBeNull();
+		expect(container.querySelector('.antilia-dropdown')).toBeNull();
 		expect(listeners).toHaveBeenCalledWith('mousedown', expect.any(Function));
 	});
 });

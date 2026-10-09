@@ -87,7 +87,7 @@ export const DATA_TABLE_TEXTS: DataTableTexts = {
 	selectPage: 'Select all rows on this page',
 	selectRow: 'Select row',
 	moveColumn: 'Move the column: drag it, or use the arrow keys',
-	unlicensed: 'This is a private component of UI Advanced Widgets: it needs a license key, ' +
+	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
 		'which you get by registering.'
 };
 
@@ -99,11 +99,11 @@ export const DATA_TABLE_COMPONENTS = ['DataTable', 'JsonBasedDynamicDataTable',
 	'BaseDynamicDataTable'];
 
 /** The actions the core reports for the checkboxes: select, deselect, select and deselect the page. */
-export const SELECTION_ACTIONS = ['_wicket-select', '_wicket-deselect', '_wicket-select-page',
-	'_wicket-deselect-page'];
+export const SELECTION_ACTIONS = ['_antilia-select', '_antilia-deselect', '_antilia-select-page',
+	'_antilia-deselect-page'];
 
 /** The action the core reports when the column chooser applies, the ids of the columns as key. */
-export const SHOW_COLUMNS = '_wicket-show-columns';
+export const SHOW_COLUMNS = '_antilia-show-columns';
 
 /** The number of links to pages the navigation shows at most, as Wicket's. */
 export const PAGE_LINKS = 10;
@@ -115,10 +115,10 @@ export function selectionColumn(texts: Pick<DataTableTexts, 'selectRow'>): DataT
 	const label = texts.selectRow.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 		.replace(/</g, '&lt;');
 	return {
-		template: '<input type="checkbox" class="dynamic-data-table-select" data-dt-action="' +
+		template: '<input type="checkbox" class="ant-data-table-select" data-dt-action="' +
 			SELECTION_ACTIONS[0] + '" data-dt-action-unchecked="' + SELECTION_ACTIONS[1] +
 			'" aria-label="' + label + '">',
-		cssClass: 'dynamic-data-table-selection'
+		cssClass: 'ant-data-table-selection'
 	};
 }
 

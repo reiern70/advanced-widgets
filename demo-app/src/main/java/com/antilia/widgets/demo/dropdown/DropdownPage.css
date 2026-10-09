@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.dropdown-demo__form {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 16px 24px;
+}
+
+.dropdown-demo__form section {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.dropdown-demo__form h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+}
+
+.dropdown-demo__field {
+	display: grid;
+	gap: 4px;
+	margin-bottom: 12px;
+	font-size: 14px;
+}
+
+.dropdown-demo__field .antilia-dropdown {
+	width: 100%;
+}
+
+.dropdown-demo__form > p {
+	grid-column: 1 / -1;
+	margin: 0;
+}
+
+.dropdown-demo__send {
+	padding: 8px 18px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--primary);
+	color: var(--on-primary, #fff);
+	font: inherit;
+	cursor: pointer;
+}
+
+.dropdown-demo__choices {
+	padding: 12px 16px;
+	border-left: 4px solid var(--accent, var(--primary));
+	background: var(--surface);
+}

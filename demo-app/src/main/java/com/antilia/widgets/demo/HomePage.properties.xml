@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="lead">Reusable components for Apache Wicket, React and Svelte, with Ajax and real-time (websocket) support.</entry>
+	<entry key="inCatalog">components in the catalog</entry>
+	<entry key="webSocket">WebSocket connection</entry>
+	<entry key="connecting">Connecting</entry>
+	<entry key="live">Live</entry>
+	<entry key="demos">Demos</entry>
+	<entry key="components">Components</entry>
+	<entry key="status.AVAILABLE">Available</entry>
+	<entry key="status.IN_PROGRESS">In progress</entry>
+	<entry key="status.PLANNED">Planned</entry>
+	<entry key="catalog.dataGrid">Data Grid</entry>
+	<entry key="catalog.dataGrid.description">Sortable, pageable grid with resizable columns, inline editing and row selection.</entry>
+	<entry key="catalog.treeGrid">Tree Grid</entry>
+	<entry key="catalog.treeGrid.description">Hierarchical rows with lazy loading of children and expand/collapse state.</entry>
+	<entry key="catalog.liveFeed">Live Feed</entry>
+	<entry key="catalog.liveFeed.description">List that receives new entries pushed from the server over websockets.</entry>
+	<entry key="catalog.notifications">Notifications</entry>
+	<entry key="catalog.notifications.description">Toast notifications broadcast to one user or all connected sessions.</entry>
+	<entry key="catalog.autocomplete">Autocomplete</entry>
+	<entry key="catalog.autocomplete.description">Type-ahead input with remote suggestions, keyboard navigation and multi-select.</entry>
+	<entry key="catalog.dateRangePicker">Date Range Picker</entry>
+	<entry key="catalog.dateRangePicker.description">Pick a start and end date with presets such as last 7 days or this month.</entry>
+	<entry key="catalog.fileUpload">File Upload</entry>
+	<entry key="catalog.fileUpload.description">Drag and drop upload with per-file progress reported through websockets.</entry>
+	<entry key="catalog.modalDialog">Modal Dialog</entry>
+	<entry key="catalog.modalDialog.description">Accessible dialog with focus trapping, stacking and Ajax content.</entry>
+	<entry key="catalog.splitPanel">Split Panel</entry>
+	<entry key="catalog.splitPanel.description">Resizable horizontal or vertical panes that remember their sizes.</entry>
+</properties>

@@ -17,17 +17,17 @@
 }
 
 /* the page takes the colors of the theme the session chose, put on <body> */
-.wicket-theme {
-	--bg: var(--wicket-theme-surface-alt);
-	--surface: var(--wicket-theme-surface);
-	--text: var(--wicket-theme-text);
-	--muted: color-mix(in srgb, var(--wicket-theme-text) 68%, transparent);
-	--border: var(--wicket-theme-border);
-	--primary: var(--wicket-theme-primary);
-	--primary-dark: var(--wicket-theme-primary-dark);
-	--on-primary: var(--wicket-theme-on-primary);
-	--accent: var(--wicket-theme-accent);
-	color-scheme: var(--wicket-theme-color-scheme);
+.antilia-theme {
+	--bg: var(--antilia-theme-surface-alt);
+	--surface: var(--antilia-theme-surface);
+	--text: var(--antilia-theme-text);
+	--muted: color-mix(in srgb, var(--antilia-theme-text) 68%, transparent);
+	--border: var(--antilia-theme-border);
+	--primary: var(--antilia-theme-primary);
+	--primary-dark: var(--antilia-theme-primary-dark);
+	--on-primary: var(--antilia-theme-on-primary);
+	--accent: var(--antilia-theme-accent);
+	color-scheme: var(--antilia-theme-color-scheme);
 }
 
 * { box-sizing: border-box; }
@@ -279,7 +279,7 @@ a.brand { color: inherit; text-decoration: none; }
 	color: var(--muted);
 	font-size: 13px;
 }
-.topbar__setting .wicket-dropdown {
+.topbar__setting .antilia-dropdown {
 	min-width: 8.5em;
 }
 .topbar__register {
@@ -372,7 +372,7 @@ a.brand { color: inherit; text-decoration: none; }
 	border-color: var(--accent, var(--primary));
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 25%, transparent);
 }
-.register__field .wicket-dropdown { width: 100%; font-size: 15px; }
+.register__field .antilia-dropdown { width: 100%; font-size: 15px; }
 /* the field robots fill in and people never see */
 .register__honeypot {
 	position: absolute;
@@ -415,13 +415,4 @@ a.brand { color: inherit; text-decoration: none; }
 	color: var(--accent, var(--primary));
 	font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
 	font-size: 12px;
-}
-
-/*
- * a demo of a wide component, such as a grid, takes the whole width of the window, and so do the
- * top bar and the footer of its page
- */
-.container--wide,
-body:has(.container--wide) .container {
-	max-width: none;
 }

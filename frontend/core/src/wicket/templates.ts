@@ -4,7 +4,7 @@
  */
 
 /*
- * wicket-templates.js: registers Wicket.Templates, the registry of the template engines that the
+ * antilia-templates.js: registers Wicket.Templates, the registry of the template engines that the
  * dynamic data tables, the infinite lists and the autocompletes render with, and that
  * handlebars-adapter.js adds Handlebars to.
  */

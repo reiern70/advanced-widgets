@@ -11,7 +11,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLSelectAttributes } from 'svelte/elements';
-	import { Dropdown, type DropdownOptions } from '@advanced-widgets/core';
+	import { Dropdown, type DropdownOptions } from '@antilia/core';
 	import type { DropdownOption } from './types.js';
 
 	type Props = Omit<HTMLSelectAttributes, 'value' | 'multiple' | 'children' | 'onchange'> &
@@ -21,7 +21,7 @@
 			/** The chosen value, or values of a multiple drop-down. */
 			value?: string | string[];
 			multiple?: boolean;
-			/** CSS classes of the div wrapping the select, next to wicket-dropdown. */
+			/** CSS classes of the div wrapping the select, next to antilia-dropdown. */
 			wrapperClass?: string;
 			onchange?: (value: string | string[]) => void;
 		};
@@ -104,17 +104,17 @@
 	}
 </script>
 
-<div class={['wicket-dropdown', wrapperClass]}>
+<div class={['antilia-dropdown', wrapperClass]}>
 	{#if multiple}
 		<select {...rest} multiple bind:value bind:this={select} onchange={changed}
-			class={['wicket-dropdown-native', className]} tabindex="-1" aria-hidden="true">
+			class={['antilia-dropdown-native', className]} tabindex="-1" aria-hidden="true">
 			{#each options as option (option.value)}
 				<option value={option.value} disabled={option.disabled}>{option.label}</option>
 			{/each}
 		</select>
 	{:else}
 		<select {...rest} bind:value bind:this={select} onchange={changed}
-			class={['wicket-dropdown-native', className]} tabindex="-1" aria-hidden="true">
+			class={['antilia-dropdown-native', className]} tabindex="-1" aria-hidden="true">
 			{#each options as option (option.value)}
 				<option value={option.value} disabled={option.disabled}>{option.label}</option>
 			{/each}

@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ *
+ * The modal dialog example, in Wicket, React and Svelte: the team in a table, and the form of a
+ * member in the dialog.
+ */
+.team-demo {
+	max-width: 56em;
+}
+
+.team-demo__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1em;
+	margin-bottom: 0.75em;
+}
+
+.team-demo__title {
+	margin: 0;
+	font-size: 1.15em;
+}
+
+.team-demo__table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--antilia-theme-surface, Canvas);
+}
+
+.team-demo__table th,
+.team-demo__table td {
+	padding: 0.5em 0.75em;
+	border-bottom: 1px solid var(--antilia-theme-border, #ddd);
+	text-align: start;
+}
+
+.team-demo__table th {
+	border-bottom-width: 2px;
+}
+
+.team-demo__name {
+	font-weight: 600;
+}
+
+.team-demo__actions {
+	display: flex;
+	gap: 0.5em;
+	white-space: nowrap;
+}
+
+.team-demo__empty {
+	padding: 1em;
+	opacity: 0.8;
+}
+
+.member-form {
+	display: grid;
+	gap: 0.75em;
+	min-width: min(26em, 80vw);
+}
+
+.member-form label {
+	display: grid;
+	gap: 0.3em;
+	font-weight: 600;
+}
+
+.member-form input {
+	padding: 0.45em 0.6em;
+	border: 1px solid var(--antilia-theme-border, #bbb);
+	border-radius: 0.3em;
+	background: var(--antilia-theme-surface, Field);
+	color: var(--antilia-theme-text, FieldText);
+	font: inherit;
+	font-weight: normal;
+}
+
+.member-form [aria-invalid="true"] {
+	border-color: var(--antilia-theme-accent, #c2410c);
+}

@@ -7,7 +7,7 @@
  * The Autocomplete demo: an owner, a team and countries.
  */
 
-import type { AutocompleteSuggestion, AutocompleteValue } from '@advanced-widgets/core';
+import type { AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
 
 import { format, loadChoices, type Choice } from './data.js';
 

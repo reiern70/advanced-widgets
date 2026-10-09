@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react';
 
-import { Modal } from '@advanced-widgets/react';
+import { Modal } from '@antilia/react';
 
 /**
  * The dialog of the demos: an open Modal, which behaves and looks like Wicket's ModalDialog with

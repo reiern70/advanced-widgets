@@ -16,7 +16,7 @@
 	import { untrack } from 'svelte';
 	import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
 		UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
-		type TreeNode, type TreeTexts } from '@advanced-widgets/core';
+		type TreeNode, type TreeTexts } from '@antilia/core';
 
 	type Props = {
 		/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -135,9 +135,9 @@
 		{texts.unlicensed}</div>
 {:else if licensed && height}
 	<!-- a tree of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
-	<div class="wicket-scrollbar">
-		<div {id} class={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree', className]}></div>
+	<div class="antilia-scrollbar">
+		<div {id} class={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree', className]}></div>
 	</div>
 {:else if licensed}
-	<div {id} class={['json-tree', table ? 'wicket-tree-grid' : 'wicket-tree', className]}></div>
+	<div {id} class={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree', className]}></div>
 {/if}

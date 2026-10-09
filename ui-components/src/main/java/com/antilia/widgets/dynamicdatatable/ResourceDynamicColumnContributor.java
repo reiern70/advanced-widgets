@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.antilia.widgets.dynamicdatatable;
+
+import org.apache.wicket.Session;
+
+/**
+ * A contributor to a {@link CompoundDynamicColumn} whose template is read from an {@code .html}
+ * resource, found the way a component's markup is: for the table's style, variation and locale,
+ * so a {@code MyContributor_de.html} next to {@code MyContributor.html} serves German users. As
+ * with a panel, the template is the content of the file's {@code <wicket:panel>}, or the whole file
+ * if it has none.
+ * <p>
+ * A subclass reads the template named after itself, {@code MyContributor.html} next to
+ * {@code MyContributor.java}, or after its superclasses; an instance of this class reads a named
+ * template from a given package. A subclass can also implement
+ * {@link IAjaxActionColumnContributor} to handle the action its template carries. The
+ * {@link JsonBasedDynamicDataTable} caches the templates it reads.
+ * <p>
+ * The template is written into the page as markup, so the resource has to be authored by the
+ * developer; see {@link IDynamicColumn}.
+ *
+ * @param <T>
+ *            the type of the rows
+ * @since 11.0.0
+ */
+public class ResourceDynamicColumnContributor<T> implements IDynamicColumnContributor<T>
+{
+	private static final long serialVersionUID = 1L;
+
+	private final ResourceTemplate template;
+
+	/**
+	 * Reads the template named after this contributor's class.
+	 */
+	protected ResourceDynamicColumnContributor()
+	{
+		template = ResourceTemplate.forClass(getClass(), ResourceDynamicColumnContributor.class);
+	}
+
+	/**
+	 * Reads the template {@code name.html} in the package of {@code scope}.
+	 *
+	 * @param scope
+	 *            the class whose package holds the template
+	 * @param name
+	 *            the name of the template, without the extension
+	 */
+	public ResourceDynamicColumnContributor(Class<?> scope, String name)
+	{
+		template = ResourceTemplate.named(scope, name);
+	}
+
+	/**
+	 * Reads the template for the session's style and locale, uncached.
+	 */
+	@Override
+	public String getTemplate()
+	{
+		Session session = Session.get();
+		return template.load(session.getStyle(), null, session.getLocale());
+	}
+
+	/**
+	 * Reads the template for the table's style, variation and locale, through the table's
+	 * cache.
+	 */
+	@Override
+	public String getTemplate(BaseDynamicDataTable<T, ?, ?> table)
+	{
+		return table.getTemplate(template);
+	}
+}

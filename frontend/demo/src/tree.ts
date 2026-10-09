@@ -4,11 +4,11 @@
  */
 
 /*
- * The tree demos: the files of advanced-widgets in a Tree or a TreeGrid, loaded from the files
+ * The tree demos: the files of antilia-widgets in a Tree or a TreeGrid, loaded from the files
  * resource folder by folder, the file selected shown next to them.
  */
 
-import type { ResizeMode, TreeColumn, TreeNode, TreeTexts } from '@advanced-widgets/core';
+import type { ResizeMode, TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';
 
 import { fetchJson } from './data.js';
 
@@ -36,9 +36,28 @@ export interface TreeDemoTexts {
 	kind: string;
 	size: string;
 	modified: string;
+	/** The label of the drop-down choosing the icons, and those of its choices. */
+	icons: string;
+	'icons.BUILT_IN': string;
+	'icons.SVG': string;
+	'icons.FONT_AWESOME': string;
+	/** What the drop-downs say. */
+	filter: string;
+	noMatch: string;
+	more: string;
+	remove: string;
 	/** What the trees say, as the Wicket trees say it. */
 	tree: Required<TreeTexts>;
 }
+
+/**
+ * The icons of the trees, as the drop-down of the demos chooses them: those of the trees, the
+ * Font Awesome icons as inline SVG, or the same drawn by the Font Awesome font.
+ */
+export type IconSet = 'BUILT_IN' | 'SVG' | 'FONT_AWESOME';
+
+/** The choices of the drop-down choosing the icons, in their order. */
+export const ICON_SETS: IconSet[] = ['BUILT_IN', 'SVG', 'FONT_AWESOME'];
 
 /** What the page gives the demos. */
 export interface TreeDemoConfig {
@@ -51,6 +70,10 @@ export interface TreeDemoConfig {
 	expanded: string[];
 	/** The height of the trees, within which they scroll. */
 	height: { value: number; unit: string };
+	/** The markup of the icons of each set, none for the trees' own. */
+	iconSets: Record<IconSet, Partial<TreeIcons>>;
+	/** The icons chosen at first, those the Wicket trees of the page show. */
+	icons: IconSet;
 }
 
 /** How the columns of a tree grid are resized, as the drop-down of the demo chooses it. */
@@ -62,10 +85,6 @@ export interface TreeGridDemoTexts extends TreeDemoTexts {
 	'resize.none': string;
 	'resize.fit': string;
 	'resize.stretch': string;
-	filter: string;
-	noMatch: string;
-	more: string;
-	remove: string;
 }
 
 /** What the page gives the tree grid demo besides. */
@@ -94,6 +113,13 @@ export function resizingOptions(texts: TreeGridDemoTexts): { value: string; labe
  */
 export function resizeMode(resizing: Resizing): ResizeMode | false {
 	return resizing === 'none' ? false : resizing;
+}
+
+/**
+ * @returns the options of the drop-down choosing the icons of the trees
+ */
+export function iconSetOptions(texts: TreeDemoTexts): { value: string; label: string }[] {
+	return ICON_SETS.map((value) => ({ value, label: texts[`icons.${value}`] }));
 }
 
 /** The facts of a file the details show, by the keys of their labels. */

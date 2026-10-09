@@ -18,7 +18,7 @@ function sizes(element: HTMLElement, client: number, scroll: number): void {
 }
 
 function tracks(): Element[] {
-	return Array.from(document.querySelectorAll('.wicket-scrollbar-track'));
+	return Array.from(document.querySelectorAll('.antilia-scrollbar-track'));
 }
 
 afterEach(() => {
@@ -32,11 +32,11 @@ describe('Scrollbar', () => {
 		const element = box();
 		const instance = Scrollbar.attach('box')!;
 
-		expect(element.parentElement?.className).toBe('wicket-scrollbar wicket-scrollbar--both');
-		expect(element.classList.contains('wicket-scrollbar-host')).toBe(true);
+		expect(element.parentElement?.className).toBe('antilia-scrollbar antilia-scrollbar--both');
+		expect(element.classList.contains('antilia-scrollbar-host')).toBe(true);
 		expect(tracks().map((track) => track.className)).toEqual([
-			'wicket-scrollbar-track wicket-scrollbar-track--y',
-			'wicket-scrollbar-track wicket-scrollbar-track--x'
+			'antilia-scrollbar-track antilia-scrollbar-track--y',
+			'antilia-scrollbar-track antilia-scrollbar-track--x'
 		]);
 		expect(Scrollbar.instances).toEqual([instance]);
 	});
@@ -46,7 +46,7 @@ describe('Scrollbar', () => {
 		Scrollbar.attach('box', { axis: 'y' });
 
 		expect(tracks().length).toBe(1);
-		expect(document.querySelector('.wicket-scrollbar--both')).toBeNull();
+		expect(document.querySelector('.antilia-scrollbar--both')).toBeNull();
 	});
 
 	it('hides a bar while nothing overflows, sizes its thumb when something does', () => {
@@ -57,7 +57,7 @@ describe('Scrollbar', () => {
 		expect(track.hidden).toBe(true);
 
 		const rail = track.firstElementChild as HTMLElement;
-		expect(rail.className).toBe('wicket-scrollbar-rail');
+		expect(rail.className).toBe('antilia-scrollbar-rail');
 		Object.defineProperty(rail, 'clientHeight', { configurable: true, value: 100 });
 		sizes(element, 100, 400);
 		element.scrollTop = 150;
@@ -75,13 +75,13 @@ describe('Scrollbar', () => {
 		const instance = Scrollbar.attach('box')!;
 		const style = instance.wrapper.style;
 
-		expect(style.getPropertyValue('--wicket-scrollbar-background')).toBe('rgb(1, 2, 3)');
-		expect(style.getPropertyValue('--wicket-scrollbar-inset-right')).toBe('3px');
-		expect(style.getPropertyValue('--wicket-scrollbar-radius-top-right')).toBe('7px');
-		expect(style.getPropertyValue('--wicket-scrollbar-radius-bottom-right')).toBe('0px');
+		expect(style.getPropertyValue('--antilia-scrollbar-background')).toBe('rgb(1, 2, 3)');
+		expect(style.getPropertyValue('--antilia-scrollbar-inset-right')).toBe('3px');
+		expect(style.getPropertyValue('--antilia-scrollbar-radius-top-right')).toBe('7px');
+		expect(style.getPropertyValue('--antilia-scrollbar-radius-bottom-right')).toBe('0px');
 
 		instance.destroy();
-		expect(style.getPropertyValue('--wicket-scrollbar-background')).toBe('');
+		expect(style.getPropertyValue('--antilia-scrollbar-background')).toBe('');
 	});
 
 	it('runs the vertical bar below a header staying in place', () => {
@@ -91,8 +91,8 @@ describe('Scrollbar', () => {
 		Object.defineProperty(head, 'offsetHeight', { configurable: true, value: 30 });
 		const style = Scrollbar.attach('box', { header: ':scope > table > thead' })!.wrapper.style;
 
-		expect(style.getPropertyValue('--wicket-scrollbar-inset-top')).toBe('33px');
-		expect(style.getPropertyValue('--wicket-scrollbar-radius-top-right')).toBe('0px');
+		expect(style.getPropertyValue('--antilia-scrollbar-inset-top')).toBe('33px');
+		expect(style.getPropertyValue('--antilia-scrollbar-radius-top-right')).toBe('0px');
 	});
 
 	it('scrolls to the top, the bottom, a position and an element', () => {
@@ -135,8 +135,8 @@ describe('Scrollbar', () => {
 		Scrollbar.attach(element)!.destroy();
 
 		expect(tracks().length).toBe(0);
-		expect(element.classList.contains('wicket-scrollbar-host')).toBe(false);
-		expect(element.parentElement?.className).toBe('wicket-scrollbar');
+		expect(element.classList.contains('antilia-scrollbar-host')).toBe(false);
+		expect(element.parentElement?.className).toBe('antilia-scrollbar');
 		expect(Scrollbar.instances).toEqual([]);
 	});
 

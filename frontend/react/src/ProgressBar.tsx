@@ -6,7 +6,7 @@
 export interface ProgressBarProps {
 	/** The percentage, clamped to 0..100; null or left out for an indeterminate bar. */
 	value?: number | null;
-	/** CSS classes of the bar, next to wicket-progress-bar. */
+	/** CSS classes of the bar, next to antilia-progress-bar. */
 	className?: string;
 }
 
@@ -18,13 +18,13 @@ export interface ProgressBarProps {
 export function ProgressBar({ value, className }: ProgressBarProps) {
 	const percentage = value == null ? null : Math.max(0, Math.min(100, Math.round(value)));
 	return (
-		<div className={['wicket-progress-bar', className].filter(Boolean).join(' ')}>
-			{percentage === null ? <progress className="wicket-progress-bar-value" max={100} /> : (
+		<div className={['antilia-progress-bar', className].filter(Boolean).join(' ')}>
+			{percentage === null ? <progress className="antilia-progress-bar-value" max={100} /> : (
 				<>
-					<progress className="wicket-progress-bar-value" max={100} value={percentage}>
+					<progress className="antilia-progress-bar-value" max={100} value={percentage}>
 						{percentage}%
 					</progress>
-					<span className="wicket-progress-bar-label" aria-hidden="true">{percentage}%</span>
+					<span className="antilia-progress-bar-label" aria-hidden="true">{percentage}%</span>
 				</>
 			)}
 		</div>

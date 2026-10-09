@@ -4,7 +4,7 @@
  */
 
 /*
- * dynamic-data-table.js: registers Wicket.DynamicDataTable for the dynamic data tables, which call
+ * ant-data-table.js: registers Wicket.DynamicDataTable for the dynamic data tables, which call
  * new Wicket.DynamicDataTable(cfg, action, navigation, messages, data) and find a table in its
  * instances. The rows are rendered with the engines of the page's Wicket.Templates; the table uses
  * the page's Wicket.Scrollbar, Wicket.ResizableColumns and Wicket.Veil when the page loaded them,

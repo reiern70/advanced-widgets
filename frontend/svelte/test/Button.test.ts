@@ -18,9 +18,9 @@ describe('Button', () => {
 
 		const button = container.querySelector('button')!;
 		expect(button.type).toBe('button');
-		expect(button.className).toBe('aw-button aw-button--primary aw-button--large');
-		expect(button.querySelector('.aw-button__label')?.textContent).toBe('Save');
-		expect(button.querySelector('.aw-button__icon')).toBeNull();
+		expect(button.className).toBe('ant-button ant-button--primary ant-button--large');
+		expect(button.querySelector('.ant-button__label')?.textContent).toBe('Save');
+		expect(button.querySelector('.ant-button__icon')).toBeNull();
 		await fireEvent.click(button);
 		expect(click).toHaveBeenCalledTimes(1);
 	});
@@ -30,11 +30,11 @@ describe('Button', () => {
 			disabled: true });
 
 		const button = container.querySelector('button')!;
-		expect(button.className).toBe('aw-button aw-button--secondary aw-button--medium ' +
-			'aw-button--icon-only');
+		expect(button.className).toBe('ant-button ant-button--secondary ant-button--medium ' +
+			'ant-button--icon-only');
 		expect(button.title).toBe('Delete');
 		expect(button.getAttribute('aria-label')).toBe('Delete');
-		expect(button.querySelector('.aw-button__label')).toBeNull();
+		expect(button.querySelector('.ant-button__label')).toBeNull();
 		expect(button.type).toBe('submit');
 		expect(button.disabled).toBe(true);
 	});

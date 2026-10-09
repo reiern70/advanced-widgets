@@ -11,7 +11,7 @@
 -->
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
-	import type { TreeColumn } from '@advanced-widgets/core';
+	import type { TreeColumn } from '@antilia/core';
 
 	import Tree from './Tree.svelte';
 

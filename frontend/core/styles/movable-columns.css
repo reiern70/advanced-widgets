@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
  * All rights reserved.
  */
-.wicket-col-mover {
+.antilia-col-mover {
 	display: inline-flex;
 	flex: none;
 	align-items: center;
@@ -20,38 +20,38 @@
 	touch-action: none;
 }
 
-.wicket-col-mover:hover,
-.wicket-col-mover:focus-visible {
+.antilia-col-mover:hover,
+.antilia-col-mover:focus-visible {
 	opacity: 1;
 }
 
-.wicket-col-mover:focus-visible {
+.antilia-col-mover:focus-visible {
 	outline: 2px solid currentColor;
 	outline-offset: 1px;
 }
 
-table.wicket-col-dragging,
-table.wicket-col-dragging .wicket-col-mover {
+table.antilia-col-dragging,
+table.antilia-col-dragging .antilia-col-mover {
 	cursor: grabbing;
 	user-select: none;
 }
 
-table.wicket-col-dragging.wicket-col-no-drop,
-table.wicket-col-dragging.wicket-col-no-drop .wicket-col-mover {
+table.antilia-col-dragging.antilia-col-no-drop,
+table.antilia-col-dragging.antilia-col-no-drop .antilia-col-mover {
 	cursor: no-drop;
 }
 
-table .wicket-col-moving {
+table .antilia-col-moving {
 	opacity: 0.4;
 }
 
-.wicket-col-move-ghost {
+.antilia-col-move-ghost {
 	position: absolute;
 	z-index: 1001;
 	padding: 0.3em 0.6em;
 	border-radius: 0.2em;
-	background: var(--wicket-theme-primary, #c2410c);
-	color: var(--wicket-theme-on-primary, #fff);
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #fff);
 	font-weight: 600;
 	white-space: nowrap;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -59,17 +59,17 @@ table .wicket-col-moving {
 	pointer-events: none;
 }
 
-.wicket-col-drop-marker {
+.antilia-col-drop-marker {
 	position: absolute;
 	z-index: 1000;
 	width: 3px;
 	margin-left: -1.5px;
-	background: var(--wicket-theme-accent, #c2410c);
+	background: var(--antilia-theme-accent, #c2410c);
 	pointer-events: none;
 }
 
-.wicket-col-drop-marker::before,
-.wicket-col-drop-marker::after {
+.antilia-col-drop-marker::before,
+.antilia-col-drop-marker::after {
 	content: "";
 	position: absolute;
 	left: 50%;
@@ -77,12 +77,12 @@ table .wicket-col-moving {
 	border: 7px solid transparent;
 }
 
-.wicket-col-drop-marker::before {
+.antilia-col-drop-marker::before {
 	top: -14px;
-	border-top-color: var(--wicket-theme-accent, #c2410c);
+	border-top-color: var(--antilia-theme-accent, #c2410c);
 }
 
-.wicket-col-drop-marker::after {
+.antilia-col-drop-marker::after {
 	bottom: -14px;
-	border-bottom-color: var(--wicket-theme-accent, #c2410c);
+	border-bottom-color: var(--antilia-theme-accent, #c2410c);
 }

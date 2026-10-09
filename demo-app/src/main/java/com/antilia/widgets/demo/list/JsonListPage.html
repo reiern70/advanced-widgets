@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="feedback"></div>
+<div wicket:id="themed" class="user-list-demo">
+	<div class="user-list-demo__toolbar">
+		<span wicket:id="filter"></span>
+		<label class="user-list-demo__sort"><wicket:message key="sortBy"/> <select wicket:id="sort"></select></label>
+		<button type="button" wicket:id="add" class="ant-data-table-button ant-data-table-button-primary"><wicket:message key="newUser"/></button>
+	</div>
+	<div class="user-list-demo__columns">
+		<div wicket:id="users" class="user-list-demo__cards" wicket:message="aria-label:users"></div>
+		<aside class="user-list-demo__details">
+			<div wicket:id="details"></div>
+			<p wicket:id="noneSelected" class="user-list-demo__none"></p>
+		</aside>
+	</div>
+</div>
+<div wicket:id="dialog"></div>
+</wicket:extend>
+</body>
+</html>

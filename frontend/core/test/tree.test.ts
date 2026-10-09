@@ -36,9 +36,9 @@ const load = vi.fn((parent: string | null) => Promise.resolve(parent === null ? 
 	CHILDREN[parent] ?? []));
 
 function shown(): string[] {
-	return Array.from(document.querySelectorAll('.wicket-tree-item'), (item) =>
+	return Array.from(document.querySelectorAll('.antilia-tree-item'), (item) =>
 		item.getAttribute('aria-level') + ':' +
-		item.querySelector('.wicket-tree-content')!.textContent);
+		item.querySelector('.antilia-tree-content')!.textContent);
 }
 
 function item(key: string): HTMLElement {
@@ -78,9 +78,9 @@ describe('JsonTree', () => {
 		expect(item('docs').hasAttribute('aria-selected')).toBe(false);
 		expect(item('notes').getAttribute('aria-selected')).toBe('false');
 		expect(item('notes').hasAttribute('aria-expanded')).toBe(false);
-		expect(item('docs').querySelector('.wicket-tree-icon')!.innerHTML)
+		expect(item('docs').querySelector('.antilia-tree-icon')!.innerHTML)
 			.toBe(markup(TREE_ICONS.folder));
-		expect(item('notes').querySelector('.wicket-tree-icon')!.innerHTML)
+		expect(item('notes').querySelector('.antilia-tree-icon')!.innerHTML)
 			.toBe(markup(TREE_ICONS.leaf));
 		expect(item('docs').tabIndex).toBe(0);
 		expect(item('notes').tabIndex).toBe(-1);
@@ -89,15 +89,15 @@ describe('JsonTree', () => {
 	it('loads the roots, and the children of a folder the first time it is expanded', async () => {
 		const toggle = vi.fn();
 		const tree = new JsonTree(config({ load }), { toggle });
-		expect(document.querySelector('.wicket-tree-status')!.textContent).toBe('Loading…');
+		expect(document.querySelector('.antilia-tree-status')!.textContent).toBe('Loading…');
 		await vi.waitFor(() => expect(shown()).toEqual(['1:docs', '1:notes.txt']));
-		expect(document.querySelector<HTMLElement>('.wicket-tree-status')!.hidden).toBe(true);
+		expect(document.querySelector<HTMLElement>('.antilia-tree-status')!.hidden).toBe(true);
 
 		await tree.expand('docs');
 
 		expect(shown()).toEqual(['1:docs', '2:src', '2:readme.md', '1:notes.txt']);
 		expect(item('docs').getAttribute('aria-expanded')).toBe('true');
-		expect(item('docs').querySelector('.wicket-tree-icon')!.innerHTML)
+		expect(item('docs').querySelector('.antilia-tree-icon')!.innerHTML)
 			.toBe(markup(TREE_ICONS.folderOpen));
 		expect(item('docs').querySelector('[role="group"]')).not.toBeNull();
 		expect(toggle).toHaveBeenCalledWith('docs', true);
@@ -128,12 +128,12 @@ describe('JsonTree', () => {
 		const select = vi.fn();
 		new JsonTree(config({ load }), { select }, ROOTS);
 
-		item('notes').querySelector<HTMLElement>('.wicket-tree-content')!.click();
+		item('notes').querySelector<HTMLElement>('.antilia-tree-content')!.click();
 		expect(select).toHaveBeenCalledWith('notes', { name: 'notes.txt' });
 		expect(item('notes').getAttribute('aria-selected')).toBe('true');
-		expect(item('notes').classList.contains('wicket-tree-item--selected')).toBe(true);
+		expect(item('notes').classList.contains('antilia-tree-item--selected')).toBe(true);
 
-		item('docs').querySelector<HTMLElement>('.wicket-tree-toggle')!.click();
+		item('docs').querySelector<HTMLElement>('.antilia-tree-toggle')!.click();
 		await vi.waitFor(() => expect(shown().length).toBe(4));
 		expect(select).toHaveBeenCalledTimes(1);
 
@@ -194,8 +194,8 @@ describe('JsonTree', () => {
 		await tree.expand('src');
 		expect(shown()).toEqual(['1:docs', '2:src', '3:a.ts', '3:b.ts', '2:readme.md',
 			'1:notes.txt']);
-		expect(item('a').querySelector<HTMLElement>('.wicket-tree-row')!.style
-			.getPropertyValue('--wicket-tree-level')).toBe('3');
+		expect(item('a').querySelector<HTMLElement>('.antilia-tree-row')!.style
+			.getPropertyValue('--antilia-tree-level')).toBe('3');
 
 		item('src').focus();
 		tree.collapse('docs');
@@ -224,15 +224,15 @@ describe('JsonTree', () => {
 		expect(shown()).toEqual(['1:docs', '1:todo.txt']);
 
 		new JsonTree(config(), null, []);
-		expect(document.querySelector('.wicket-tree-status')!.textContent).toBe('Nothing here');
+		expect(document.querySelector('.antilia-tree-status')!.textContent).toBe('Nothing here');
 	});
 
 	it('takes icons of the application and of a node', () => {
 		new JsonTree(config({ icons: { leaf: '<i>leaf</i>' } }), null,
 			[...ROOTS, { key: 'img', leaf: true, data: { name: 'logo.svg' }, icon: '<b>img</b>' }]);
 
-		expect(item('notes').querySelector('.wicket-tree-icon')!.innerHTML).toBe('<i>leaf</i>');
-		expect(item('img').querySelector('.wicket-tree-icon')!.innerHTML).toBe('<b>img</b>');
+		expect(item('notes').querySelector('.antilia-tree-icon')!.innerHTML).toBe('<i>leaf</i>');
+		expect(item('img').querySelector('.antilia-tree-icon')!.innerHTML).toBe('<b>img</b>');
 	});
 
 	it('loads from its URL, the children by ?parent=', async () => {
@@ -253,14 +253,14 @@ describe('JsonTree', () => {
 		const element = document.getElementById('tree')!;
 
 		expect(element.style.height).toBe('20em');
-		expect(element.classList.contains('wicket-tree--scrolling')).toBe(true);
+		expect(element.classList.contains('antilia-tree--scrolling')).toBe(true);
 		expect(Scrollbar.of(element)?.options).toEqual({});
-		expect(element.parentElement!.classList.contains('wicket-scrollbar')).toBe(true);
+		expect(element.parentElement!.classList.contains('antilia-scrollbar')).toBe(true);
 
 		tree.destroy();
 		expect(Scrollbar.of(element)).toBeUndefined();
 		expect(element.style.height).toBe('');
-		expect(element.classList.contains('wicket-tree--scrolling')).toBe(false);
+		expect(element.classList.contains('antilia-tree--scrolling')).toBe(false);
 	});
 
 	it('keeps the head of a tree grid of a height above its scroll bar', () => {
@@ -276,9 +276,9 @@ describe('JsonTree', () => {
 		null, ROOTS);
 
 		const resizable = ResizableColumns.instances['tree-grid'];
-		expect(resizable.table).toBe(document.querySelector('table.wicket-tree-grid-grid'));
+		expect(resizable.table).toBe(document.querySelector('table.antilia-tree-grid-grid'));
 		expect(resizable.mode).toBe('fit');
-		expect(document.querySelectorAll('#tree-grid th .wicket-col-resizer').length).toBe(1);
+		expect(document.querySelectorAll('#tree-grid th .antilia-col-resizer').length).toBe(1);
 
 		tree.destroy();
 		expect(ResizableColumns.instances['tree-grid']).toBeUndefined();

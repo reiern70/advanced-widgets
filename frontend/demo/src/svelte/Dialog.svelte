@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Modal } from '@advanced-widgets/svelte';
+	import { Modal } from '@antilia/svelte';
 
 	let { title, onclose, children }: { title: string; onclose: () => void; children: Snippet } =
 		$props();

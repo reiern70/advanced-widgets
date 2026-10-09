@@ -1,0 +1,19 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container demo">
+	<nav class="demo__nav">
+		<a class="demo__back" wicket:id="back">&larr; <wicket:message key="backToHome"/></a>
+		<span class="demo__steps">
+			<a class="demo__step" wicket:id="previous">&lsaquo; <span wicket:id="name">[previous demo]</span></a>
+			<a class="demo__step" wicket:id="next"><span wicket:id="name">[next demo]</span> &rsaquo;</a>
+		</span>
+	</nav>
+	<h1 class="demo__title"><span wicket:id="demoTitle">[demo title]</span> <span class="badge" wicket:id="visibility">Public</span></h1>
+	<div wicket:id="explanation" class="demo__explanation">[what this demo shows]</div>
+	<div wicket:id="frameworkTabs">[the Wicket, React and Svelte tabs]</div>
+	<div id="framework-panel-wicket" class="framework-tabs__panel" data-framework-panel="wicket"><wicket:child/></div>
+</main>
+</wicket:extend>

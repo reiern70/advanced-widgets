@@ -15,15 +15,15 @@ const FRUITS: DropdownOption[] = ['Apple', 'Banana', 'Cherry'].map((name) => ({
 }));
 
 function toggle(container: HTMLElement): HTMLButtonElement {
-	return container.querySelector('.wicket-dropdown-toggle')!;
+	return container.querySelector('.antilia-dropdown-toggle')!;
 }
 
 function items(container: HTMLElement): HTMLLIElement[] {
-	return Array.from(container.querySelectorAll('.wicket-dropdown-option'));
+	return Array.from(container.querySelectorAll('.antilia-dropdown-option'));
 }
 
 function chips(container: HTMLElement): string[] {
-	return Array.from(container.querySelectorAll('.wicket-chip'),
+	return Array.from(container.querySelectorAll('.antilia-chip'),
 		(chip) => chip.textContent ?? '');
 }
 
@@ -34,7 +34,7 @@ describe('Dropdown', () => {
 		const { container } = render(<Dropdown options={FRUITS} value="banana" onChange={() => {}} />);
 
 		const wrapper = container.firstElementChild!;
-		expect(wrapper.className).toBe('wicket-dropdown');
+		expect(wrapper.className).toBe('antilia-dropdown');
 		expect(wrapper.firstElementChild?.tagName).toBe('SELECT');
 		expect(toggle(container).textContent).toBe('Banana');
 		expect(items(container).map((item) => item.textContent)).toEqual(['Apple', 'Banana', 'Cherry']);
@@ -110,7 +110,7 @@ describe('Dropdown', () => {
 		});
 
 		expect(chips(container)).toEqual(['Apple', 'Cherry']);
-		expect(container.querySelector('.wicket-dropdown-menu')?.hasAttribute('hidden')).toBe(false);
+		expect(container.querySelector('.antilia-dropdown-menu')?.hasAttribute('hidden')).toBe(false);
 		expect(Array.from(container.querySelector('select')!.selectedOptions, (o) => o.value))
 			.toEqual(['apple', 'cherry']);
 	});
@@ -120,7 +120,7 @@ describe('Dropdown', () => {
 		const { container } = render(<Dropdown multiple options={FRUITS} value={['apple', 'cherry']}
 			onChange={onChange} remove="Drop {0}" />);
 
-		const remove = container.querySelector<HTMLElement>('.wicket-chip-remove')!;
+		const remove = container.querySelector<HTMLElement>('.antilia-chip-remove')!;
 		expect(remove.getAttribute('aria-label')).toBe('Drop Apple');
 		act(() => {
 			remove.click();
@@ -144,13 +144,13 @@ describe('Dropdown', () => {
 
 	it('draws options and texts that change', () => {
 		const { container, rerender } = render(<Dropdown options={FRUITS} filterThreshold={10} />);
-		expect(container.querySelector('.wicket-dropdown-filter')).toBeNull();
+		expect(container.querySelector('.antilia-dropdown-filter')).toBeNull();
 
 		rerender(<Dropdown options={[...FRUITS, { value: 'date', label: 'Date' }]}
 			filterThreshold={0} filter="Search" />);
 
 		expect(items(container).map((item) => item.textContent)).toContain('Date');
-		expect(container.querySelector<HTMLInputElement>('.wicket-dropdown-filter')?.placeholder)
+		expect(container.querySelector<HTMLInputElement>('.antilia-dropdown-filter')?.placeholder)
 			.toBe('Search');
 	});
 
@@ -164,11 +164,11 @@ describe('Dropdown', () => {
 	it('survives the double effects of StrictMode with one button', () => {
 		const { container } = render(<StrictMode><Dropdown options={FRUITS} /></StrictMode>);
 
-		expect(container.querySelectorAll('.wicket-dropdown-toggle').length).toBe(1);
+		expect(container.querySelectorAll('.antilia-dropdown-toggle').length).toBe(1);
 		act(() => {
 			toggle(container).click();
 		});
-		expect(container.querySelector('.wicket-dropdown-open')).not.toBeNull();
+		expect(container.querySelector('.antilia-dropdown-open')).not.toBeNull();
 	});
 
 	it('leaves nothing behind when unmounted', () => {
@@ -185,12 +185,12 @@ describe('Dropdown', () => {
 		act(() => {
 			fireEvent.keyDown(toggle(container), { key: 'ArrowDown' });
 		});
-		const list = container.querySelector('.wicket-dropdown-list')!;
+		const list = container.querySelector('.antilia-dropdown-list')!;
 		act(() => {
 			fireEvent.keyDown(list, { key: 'Escape' });
 		});
 
-		expect(container.querySelector('.wicket-dropdown-open')).toBeNull();
+		expect(container.querySelector('.antilia-dropdown-open')).toBeNull();
 		expect(document.activeElement).toBe(toggle(container));
 	});
 });
