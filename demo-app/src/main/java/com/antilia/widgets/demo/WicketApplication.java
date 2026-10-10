@@ -113,7 +113,7 @@ public class WicketApplication extends WebApplication
 			}
 		});
 
-		// allow the application stylesheet (style.css) served from this origin
+		// allow the application stylesheet (BasePage.css) served from this origin
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF);
 

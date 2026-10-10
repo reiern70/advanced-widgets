@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,25 @@ public class TestHomePage
 	public void setUp()
 	{
 		tester = new WicketTester(new WicketApplication());
+	}
+
+	@Test
+	public void theStyleSheetsUrlChangesWithItsContentsInDeployment()
+	{
+		tester.destroy();
+		tester = new WicketTester(new WicketApplication()
+		{
+			@Override
+			public RuntimeConfigurationType getConfigurationType()
+			{
+				return RuntimeConfigurationType.DEPLOYMENT;
+			}
+		});
+		tester.startPage(HomePage.class);
+
+		// a hash of the contents in the name, so that browsers do not keep an old copy
+		tester.assertContains("BasePage-ver-[0-9A-F]+\\.css");
+		assertFalse(tester.getLastResponseAsString().contains("href=\"style.css\""));
 	}
 
 	@Test

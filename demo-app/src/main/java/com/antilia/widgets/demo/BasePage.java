@@ -24,6 +24,7 @@ import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.StringResourceModel;
+import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antilia.widgets.demo.account.SignInPage;
@@ -44,6 +45,14 @@ import com.antilia.widgets.theme.ThemeChoice;
 public abstract class BasePage extends WebPage
 {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The style sheet of the application. As a resource of the package its URL carries a hash of
+	 * its contents in deployment, so browsers fetch it anew after a deployment changes it, instead
+	 * of the copy they cached.
+	 */
+	private static final CssResourceReference STYLE = new CssResourceReference(BasePage.class,
+		"BasePage.css");
 
 	/** The languages the demos have texts in. */
 	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
@@ -237,6 +246,6 @@ public abstract class BasePage extends WebPage
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		response.render(CssHeaderItem.forUrl("style.css"));
+		response.render(CssHeaderItem.forReference(STYLE));
 	}
 }
