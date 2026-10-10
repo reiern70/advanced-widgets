@@ -1,0 +1,265 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The split panel of antilia-split-panel.js: two panes and the divider between them, in the colors
+ * of the theme it is in and in neutral colors outside one. The panes share the space the divider
+ * leaves by the custom properties --antilia-split-first and --antilia-split-second, which the
+ * script sets; before it runs they share it equally. With the position in pixels the first pane
+ * takes --antilia-split-first-size and the second the rest. The limits the script gives in
+ * --antilia-split-first-min, --antilia-split-first-max and --antilia-split-second-min hold when
+ * the split panel grows or shrinks. Give the split panel a height, or put it in a box that has
+ * one, for the vertical one.
+ */
+.antilia-split {
+	--antilia-split-divider-size: 8px;
+	display: flex;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	overflow: hidden;
+}
+
+.antilia-split-horizontal {
+	flex-direction: row;
+}
+
+.antilia-split-vertical {
+	flex-direction: column;
+}
+
+/* a split panel in a pane of another fills it, without a border of its own */
+.antilia-split-pane > .antilia-split:only-child {
+	height: 100%;
+	border: 0;
+	border-radius: 0;
+}
+
+.antilia-split > .antilia-split-pane {
+	box-sizing: border-box;
+	flex: 1 1 0;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+}
+
+.antilia-split > .antilia-split-first {
+	flex-grow: var(--antilia-split-first, 50);
+}
+
+.antilia-split > .antilia-split-second {
+	flex-grow: var(--antilia-split-second, 50);
+}
+
+/* the position in pixels: the first pane keeps its size, shrinking only when there is no room */
+.antilia-split-pixels > .antilia-split-first {
+	flex: 0 1 var(--antilia-split-first-size, 50%);
+}
+
+.antilia-split-pixels > .antilia-split-second {
+	flex: 1 1 0;
+}
+
+.antilia-split-horizontal > .antilia-split-first {
+	min-width: var(--antilia-split-first-min, 0);
+	max-width: var(--antilia-split-first-max, none);
+}
+
+.antilia-split-horizontal > .antilia-split-second {
+	min-width: var(--antilia-split-second-min, 0);
+}
+
+.antilia-split-vertical > .antilia-split-first {
+	min-height: var(--antilia-split-first-min, 0);
+	max-height: var(--antilia-split-first-max, none);
+}
+
+.antilia-split-vertical > .antilia-split-second {
+	min-height: var(--antilia-split-second-min, 0);
+}
+
+/* a collapsed pane gives the other all the space, whatever the limits */
+.antilia-split.antilia-split-collapsed-first > .antilia-split-first,
+.antilia-split.antilia-split-collapsed-second > .antilia-split-second {
+	flex: 0 0 0;
+	min-width: 0;
+	min-height: 0;
+	visibility: hidden;
+}
+
+.antilia-split.antilia-split-collapsed-first > .antilia-split-second,
+.antilia-split.antilia-split-collapsed-second > .antilia-split-first {
+	flex: 1 1 0;
+	max-width: none;
+	max-height: none;
+}
+
+.antilia-split > .antilia-split-divider {
+	position: relative;
+	flex: 0 0 var(--antilia-split-divider-size);
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+	touch-action: none;
+	transition: background-color 0.15s;
+}
+
+.antilia-split-horizontal > .antilia-split-divider {
+	border-inline: 1px solid var(--antilia-theme-border, #c9cfdb);
+	cursor: col-resize;
+}
+
+.antilia-split-vertical > .antilia-split-divider {
+	border-block: 1px solid var(--antilia-theme-border, #c9cfdb);
+	cursor: row-resize;
+}
+
+/* the grip: three dots across the middle of the divider */
+.antilia-split > .antilia-split-divider::after {
+	content: '';
+	position: absolute;
+	inset: 50% auto auto 50%;
+	translate: -50% -50%;
+	background: radial-gradient(circle, currentColor 1.2px, transparent 1.6px);
+	opacity: 0.45;
+}
+
+.antilia-split-horizontal > .antilia-split-divider::after {
+	width: 4px;
+	height: 16px;
+	background-size: 4px 5.33px;
+}
+
+.antilia-split-vertical > .antilia-split-divider::after {
+	width: 16px;
+	height: 4px;
+	background-size: 5.33px 4px;
+}
+
+.antilia-split > .antilia-split-divider:hover,
+.antilia-split-dragging > .antilia-split-divider {
+	background: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+.antilia-split > .antilia-split-divider:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: -2px;
+	background: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+/* while the divider is dragged, nothing else reacts to the pointer or gets selected */
+.antilia-split-dragging {
+	user-select: none;
+}
+
+.antilia-split-dragging > .antilia-split-pane {
+	pointer-events: none;
+}
+
+.antilia-split-horizontal.antilia-split-dragging {
+	cursor: col-resize;
+}
+
+.antilia-split-vertical.antilia-split-dragging {
+	cursor: row-resize;
+}
+
+.antilia-split-fixed > .antilia-split-divider {
+	cursor: default;
+}
+
+.antilia-split-fixed > .antilia-split-divider::after {
+	display: none;
+}
+
+.antilia-split-fixed > .antilia-split-divider:hover {
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+}
+
+/* the collapse buttons: one on each side of the grip, an arrow towards the pane it collapses */
+.antilia-split-divider > .antilia-split-collapse {
+	position: absolute;
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.antilia-split-divider > .antilia-split-collapse[hidden] {
+	display: none;
+}
+
+.antilia-split-divider > .antilia-split-collapse:hover {
+	color: var(--antilia-theme-accent, #2f5bd3);
+	opacity: 1;
+}
+
+.antilia-split-divider > .antilia-split-collapse::before {
+	content: '';
+	position: absolute;
+	inset: 50% auto auto 50%;
+	translate: -50% -50%;
+	background: currentColor;
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse {
+	left: 0;
+	width: 100%;
+	height: 18px;
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse-first {
+	top: calc(50% - 30px);
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse-second {
+	top: calc(50% + 12px);
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse::before {
+	width: 5px;
+	height: 8px;
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse-first::before {
+	clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+.antilia-split-horizontal > .antilia-split-divider > .antilia-split-collapse-second::before {
+	clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse {
+	top: 0;
+	width: 18px;
+	height: 100%;
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse-first {
+	left: calc(50% - 30px);
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse-second {
+	left: calc(50% + 12px);
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse::before {
+	width: 8px;
+	height: 5px;
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse-first::before {
+	clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+
+.antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse-second::before {
+	clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-split > .antilia-split-divider {
+		transition: none;
+	}
+}

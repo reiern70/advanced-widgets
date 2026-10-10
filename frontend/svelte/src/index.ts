@@ -14,13 +14,15 @@ export { default as Modal } from './Modal.svelte';
 export { default as Palette } from './Palette.svelte';
 export { default as ProgressBar } from './ProgressBar.svelte';
 export { default as Scrollable } from './Scrollable.svelte';
+export { default as SplitPanel } from './SplitPanel.svelte';
 export { default as Tree } from './Tree.svelte';
 export { default as TreeGrid } from './TreeGrid.svelte';
 export type { DropdownOption } from './types.js';
-export { activate, datePicker, dropdown, localRows, palette, scrollbar } from '@antilia/core';
+export { activate, datePicker, dropdown, localRows, palette, scrollbar,
+	splitPanel } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts, DatePickerOptions, DropdownOptions, InfiniteListData, ModalOptions,
 	PaletteChoice, PaletteOptions, PaletteTexts,
-	ScrollbarOptions, ScrollPosition, TreeColumn, TreeIcons, TreeNode,
-	TreeTexts } from '@antilia/core';
+	ScrollbarOptions, ScrollPosition, SplitOrientation, SplitPane, SplitPanelOptions, SplitSize,
+	TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';

@@ -21,6 +21,7 @@ import ModalDemo from './svelte/ModalDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
+import SplitPanelDemo from './svelte/SplitPanelDemo.svelte';
 import TreeDemo from './svelte/TreeDemo.svelte';
 import TreeGridDemo from './svelte/TreeGridDemo.svelte';
 
@@ -38,6 +39,7 @@ startApps('svelte', {
 	autocomplete: app(AutocompleteDemo),
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
+	splitPanel: app(SplitPanelDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),

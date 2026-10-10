@@ -51,6 +51,8 @@
 	<entry key="demo.buttons.description">Botones principales, secundarios, discretos y de peligro en tres tamaños, con texto, icono o ambos, en los colores del tema.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
+	<entry key="demo.splitPanel">Panel dividido</entry>
+	<entry key="demo.splitPanel.description">Dos paneles uno al lado del otro o uno encima del otro, que se reparten el espacio según el usuario arrastra el divisor entre ellos o lo mueve con el teclado.</entry>
 	<entry key="demo.modalDialog">Diálogo modal</entry>
 	<entry key="demo.modalDialog.description">Añadir, editar y eliminar en un diálogo modal que retiene el foco, igual en Wicket, React y Svelte.</entry>
 	<entry key="demo.themeEditor">Editor de temas</entry>

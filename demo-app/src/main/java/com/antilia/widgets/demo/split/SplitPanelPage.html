@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="split-demo">
+	<section>
+		<h3><wicket:message key="layoutTitle"/></h3>
+		<div wicket:id="layout" class="split-demo__layout"></div>
+		<p wicket:id="sizes" class="split-demo__sizes">[sizes]</p>
+	</section>
+	<section>
+		<h3><wicket:message key="settingsTitle"/></h3>
+		<form wicket:id="form" class="split-demo__checks">
+			<label class="split-demo__check"><input type="checkbox" wicket:id="vertical"/> <wicket:message key="vertical"/></label>
+			<label class="split-demo__check"><input type="checkbox" wicket:id="resizable"/> <wicket:message key="resizable"/></label>
+			<label class="split-demo__check"><input type="checkbox" wicket:id="collapsible"/> <wicket:message key="collapsible"/></label>
+		</form>
+		<div wicket:id="settings" class="split-demo__settings"></div>
+	</section>
+</div>
+
+<wicket:fragment wicket:id="files">
+<div class="split-demo__pane">
+	<div class="split-demo__title"><wicket:message key="files"/></div>
+	<div class="split-demo__body" wicket:id="body">
+		<ul class="split-demo__files"><li wicket:id="file"><wicket:container wicket:id="name">[file]</wicket:container></li></ul>
+	</div>
+</div>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="editor">
+<div class="split-demo__pane">
+	<div class="split-demo__title"><wicket:message key="editor"/></div>
+	<div class="split-demo__body" wicket:id="body"><pre class="split-demo__code" wicket:id="code">[code]</pre></div>
+</div>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="console">
+<div class="split-demo__pane">
+	<div class="split-demo__title"><wicket:message key="console"/></div>
+	<div class="split-demo__body" wicket:id="body"><pre class="split-demo__console" wicket:id="output">[output]</pre></div>
+</div>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="text">
+<div class="split-demo__pane">
+	<div class="split-demo__body" wicket:id="body"><p class="split-demo__text" wicket:id="text">[text]</p></div>
+</div>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

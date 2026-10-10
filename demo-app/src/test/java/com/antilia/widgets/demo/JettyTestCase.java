@@ -53,5 +53,9 @@ public abstract class JettyTestCase
 	{
 		server.stop();
 		server.join();
+		// the tests run after this one in the same JVM start as without it: in development, and
+		// with the demos kept for the visitors who signed in, unless development opens them
+		System.clearProperty("wicket.configuration");
+		System.clearProperty("antilia-widgets.open-demos");
 	}
 }

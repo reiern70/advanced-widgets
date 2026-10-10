@@ -22,6 +22,7 @@ import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
+import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
 import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.demo.tree.TreeGridPage;
@@ -98,6 +99,7 @@ public final class Demos
 		new Demo("datePicker", "forms", DatePickerPage.class, true, true),
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
+		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, true, false));
 

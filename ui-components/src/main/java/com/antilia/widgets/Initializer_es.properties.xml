@@ -57,6 +57,12 @@
 	<entry key="DatePicker.close">Cerrar</entry>
 	<entry key="DatePicker.hour">Hora</entry>
 	<entry key="DatePicker.minute">Minuto</entry>
+	<entry key="SplitPanel.divider">Arrastre o use las flechas para cambiar el tamaño de los paneles</entry>
+	<entry key="SplitPanel.collapseLeft">Ocultar el panel izquierdo</entry>
+	<entry key="SplitPanel.collapseRight">Ocultar el panel derecho</entry>
+	<entry key="SplitPanel.collapseTop">Ocultar el panel superior</entry>
+	<entry key="SplitPanel.collapseBottom">Ocultar el panel inferior</entry>
+	<entry key="SplitPanel.restore">Mostrar ambos paneles</entry>
 	<entry key="Autocomplete.placeholder">Escriba para buscar…</entry>
 	<entry key="Autocomplete.noMatch">Sin resultados</entry>
 	<entry key="Autocomplete.searching">Buscando…</entry>

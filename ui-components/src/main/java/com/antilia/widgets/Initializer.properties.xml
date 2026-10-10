@@ -57,6 +57,12 @@
 	<entry key="DatePicker.close">Close</entry>
 	<entry key="DatePicker.hour">Hour</entry>
 	<entry key="DatePicker.minute">Minute</entry>
+	<entry key="SplitPanel.divider">Drag, or use the arrow keys, to resize the panes</entry>
+	<entry key="SplitPanel.collapseLeft">Hide the left pane</entry>
+	<entry key="SplitPanel.collapseRight">Hide the right pane</entry>
+	<entry key="SplitPanel.collapseTop">Hide the top pane</entry>
+	<entry key="SplitPanel.collapseBottom">Hide the bottom pane</entry>
+	<entry key="SplitPanel.restore">Show both panes</entry>
 	<entry key="Autocomplete.placeholder">Type to search…</entry>
 	<entry key="Autocomplete.noMatch">No matches</entry>
 	<entry key="Autocomplete.searching">Searching…</entry>

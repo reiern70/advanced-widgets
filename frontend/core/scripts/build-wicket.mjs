@@ -39,6 +39,7 @@ const SCRIPTS = [
 	['src/wicket/palette.ts', 'com/antilia/widgets/palette/antilia-palette.js'],
 	['src/wicket/resizable-columns.ts', 'com/antilia/widgets/table/antilia-resizable-columns.js'],
 	['src/wicket/scrollbar.ts', 'com/antilia/widgets/scrollbar/antilia-scrollbar.js'],
+	['src/wicket/split-panel.ts', 'com/antilia/widgets/split/antilia-split-panel.js'],
 	['src/wicket/templates.ts', 'com/antilia/widgets/template/antilia-templates.js'],
 	['src/wicket/tree.ts', 'com/antilia/widgets/tree/json-tree.js']
 ];
@@ -61,6 +62,7 @@ const STYLES = [
 	['styles/progress-bar.css', 'com/antilia/widgets/progress/antilia-progress-bar.css'],
 	['styles/resizable-columns.css', 'com/antilia/widgets/table/antilia-resizable-columns.css'],
 	['styles/scrollbar.css', 'com/antilia/widgets/scrollbar/antilia-scrollbar.css'],
+	['styles/split-panel.css', 'com/antilia/widgets/split/antilia-split-panel.css'],
 	['styles/tree.css', 'com/antilia/widgets/tree/antilia-tree.css']
 ];
 

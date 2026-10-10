@@ -39,6 +39,10 @@ export type { License } from './license.js';
 export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteListMessage } from './infinite-list.js';
 export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from './modal.js';
 export type { ModalOptions } from './modal.js';
+export { parseSplitSize, SPLIT_FIRST_MAX_PROPERTY, SPLIT_FIRST_MIN_PROPERTY, SPLIT_FIRST_PROPERTY,
+	SPLIT_FIRST_SIZE_PROPERTY, SPLIT_SECOND_MIN_PROPERTY, SPLIT_SECOND_PROPERTY, SplitPanel,
+	splitPanel } from './split-panel.js';
+export type { SplitOrientation, SplitPane, SplitPanelOptions, SplitSize } from './split-panel.js';
 export { Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,

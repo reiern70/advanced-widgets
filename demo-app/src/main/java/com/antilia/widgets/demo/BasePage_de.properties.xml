@@ -51,6 +51,8 @@
 	<entry key="demo.buttons.description">Primäre, sekundäre, dezente und gefährliche Schaltflächen in drei Größen, mit Text, Symbol oder beidem, in den Farben des Farbschemas.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Farbschemas, die in jedem Browser gleich aussehen.</entry>
+	<entry key="demo.splitPanel">Geteiltes Panel</entry>
+	<entry key="demo.splitPanel.description">Zwei Bereiche nebeneinander oder übereinander, die sich den Platz teilen, wie der Benutzer den Trenner dazwischen zieht oder mit der Tastatur verschiebt.</entry>
 	<entry key="demo.modalDialog">Modaler Dialog</entry>
 	<entry key="demo.modalDialog.description">Hinzufügen, Bearbeiten und Löschen in einem modalen Dialog, der den Fokus hält, gleich in Wicket, React und Svelte.</entry>
 	<entry key="demo.themeEditor">Farbschema-Editor</entry>

@@ -39,6 +39,7 @@ import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.modal.TeamResource;
 import com.antilia.widgets.demo.palette.PalettePage;
+import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.register.RegisterPage;
@@ -166,6 +167,7 @@ public class WicketApplication extends WebApplication
 		mountPage("date-picker", DatePickerPage.class);
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
+		mountPage("split-panel", SplitPanelPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
 		mountPage("sign-in", SignInPage.class);

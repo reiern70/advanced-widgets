@@ -22,6 +22,7 @@ import { ModalDemo } from './react/ModalDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
+import { SplitPanelDemo } from './react/SplitPanelDemo.js';
 import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
 
 /**
@@ -37,6 +38,7 @@ startApps('react', {
 	autocomplete: app(AutocompleteDemo),
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
+	splitPanel: app(SplitPanelDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),

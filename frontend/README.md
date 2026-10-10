@@ -18,12 +18,13 @@ Every script of `ui-components` has moved here: the dynamic data tables (`data-t
 as `ant-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
-and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
-the movable and resizable columns. The style sheets of the table and the progress bar have moved
+and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
+split panel, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and
-`TreeGrid`; the core's `dropdown`, `palette`, `datePicker` and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `ProgressBar`, `Button`, `DataTable`,
+`Tree` and `TreeGrid`; the core's `dropdown`, `palette`, `datePicker`, `scrollbar` and `splitPanel`
+also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
@@ -42,6 +43,23 @@ many more each time they are scrolled to their end, 0 for all; the filter, the k
 all" reach the rows not drawn yet. Over a select, as in
 Wicket, it writes the choice into the select's options in that order, which a form then posts; in
 React and Svelte it reports it with `onChange`, and posts it in hidden fields when given a `name`.
+
+The split panel (`split-panel.ts`, built as `antilia-split-panel.js` for Wicket's `SplitPanel`)
+shows two panes, side by side (`horizontal`) or one above the other (`vertical`), with a divider
+between them the user drags, or moves as a WAI-ARIA separator with the arrow keys, Home and End; a
+double click takes it back to where it started. Sizes are numbers in percent or strings such as
+`'30%'` or `'250px'`. The `position` is the size of the first pane: in percent the panes keep
+their shares when the split panel resizes, in pixels the first pane keeps its size. `min` and
+`max` limit the first pane and `minSecond` the second, in either unit. With `collapsible`, two
+buttons on the divider collapse a pane, giving the other all the space, and restore it; Enter does
+so from the keyboard. `onResize` follows the divider, `onResized` reports where it was left and
+`onCollapse` the collapsed pane. React and Svelte take `collapsed` too, which Svelte binds. In
+Wicket the position and the collapsed pane are the panel's model, a `SplitState`, kept in the page
+by default; with `setSendToServer(true)` the browser sends each change via Ajax and the panel
+gives its model the new state, so a model of one's own can keep it in the session or with the
+user's preferences. The core works on markup with both panes and the divider, which React, Svelte
+and Wicket all render, and sets the sizes as CSS custom properties through the CSSOM, so it needs
+no inline style. Split panels go in each other's panes.
 
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
@@ -73,7 +91,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
 demo's name (`dropdown`, `autocomplete`, `palette`, `datePicker`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
-`scrollbar`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
+`scrollbar`, `splitPanel`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of
 the resources the application mounts (`/api/choices`, `/api/users`); the app is mounted the first

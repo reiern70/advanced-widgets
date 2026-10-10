@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Geteiltes Panel</entry>
+	<entry key="explanation">&lt;p&gt;SplitPanel aus ui-components zeigt zwei Bereiche, nebeneinander oder übereinander, mit einem Trenner dazwischen. Ziehen Sie den Trenner mit der Maus, einem Stift oder dem Finger, um den Platz anders aufzuteilen; oder geben Sie ihm mit Tab den Fokus und verschieben Sie ihn mit den Pfeiltasten, mit Pos1 und Ende bis an seine Grenzen. Ein Doppelklick bringt ihn dorthin zurück, wo er anfing. Die Knöpfe eines einklappbaren Trenners blenden einen Bereich aus, sodass der andere den ganzen Platz bekommt, und zeigen ihn wieder; mit der Tastatur tut das Enter. Geteilte Panels lassen sich ineinander setzen: Das Layout unten besteht aus zweien, die Dateien neben einem Editor über seiner Konsole.&lt;/p&gt;&lt;p&gt;Größen gibt es in Prozent oder in Pixeln. Die Dateien sind 220 Pixel breit, von 140 Pixeln bis zur halben Breite, und behalten ihre Breite, wenn sich das Fenster ändert; der Editor nimmt 65 Prozent der Höhe ein und lässt der Konsole mindestens 60 Pixel. Der Trenner bewegt sich im Browser, innerhalb dieser Grenzen. Mit setSendToServer schickt der Browser jede Änderung per Ajax, und der Satz unter dem Layout folgt. Wo das Panel sie aufbewahrt, ist sein Model: Das Panel der Dateien bewahrt sie in der Session auf, sodass die Seite sie wieder zeigt, wenn Sie sie neu öffnen; das des Editors in der Seite, wie standardmäßig. Die Kästchen rendern das dritte geteilte Panel per Ajax neu. Alles funktioniert unter einer strengen Content Security Policy, ohne Inline-Stil.&lt;/p&gt;</entry>
+	<entry key="layoutTitle">Das Layout eines Editors</entry>
+	<entry key="settingsTitle">Nebeneinander oder übereinander</entry>
+	<entry key="files">Dateien</entry>
+	<entry key="editor">HomePage.java</entry>
+	<entry key="console">Konsole</entry>
+	<entry key="vertical">Übereinander</entry>
+	<entry key="resizable">Der Trenner bewegt sich</entry>
+	<entry key="sizes">Die Dateien nehmen {0} der Breite ein, der Editor {1} der Höhe.</entry>
+	<entry key="first">Der erste Bereich: links oder oben.</entry>
+	<entry key="second">Der zweite Bereich: rechts oder unten.</entry>
+	<entry key="collapsible">Knöpfe blenden die Bereiche aus</entry>
+	<entry key="none">nichts</entry>
+	<entry key="all">alles</entry>
+</properties>
