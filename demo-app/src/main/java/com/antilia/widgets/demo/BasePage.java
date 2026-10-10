@@ -20,11 +20,13 @@ import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.EnumChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
+import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
+import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dropdown.DropdownBehavior;
@@ -35,7 +37,8 @@ import com.antilia.widgets.theme.ThemeChoice;
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
  * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
- * its own, and the link to register; then the footer. The whole page is in the session's
+ * its own, and the links to sign in and to register, or the account signed in with and the link to
+ * sign out; then the footer. The whole page is in the session's
  * {@link Theme}, its own colors included.
  */
 public abstract class BasePage extends WebPage
@@ -78,7 +81,29 @@ public abstract class BasePage extends WebPage
 		settings.add(newLanguageChoice("language"));
 		settings.add(newAjaxEngineChoice("ajaxEngine"));
 
-		add(new BookmarkablePageLink<>("register", RegisterPage.class));
+		add(new BookmarkablePageLink<>("register", RegisterPage.class)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!DemoSession.get().isSignedIn());
+			}
+		});
+		add(new BookmarkablePageLink<>("signIn", SignInPage.class)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!DemoSession.get().isSignedIn());
+			}
+		});
+		add(newSignOut("signOut"));
 
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
@@ -157,6 +182,34 @@ public abstract class BasePage extends WebPage
 		choice.setRequired(true);
 		choice.add(reloadOnChange());
 		return choice;
+	}
+
+	/**
+	 * @return the name of the account the visitor signed in with and the link signing out, back to
+	 *         the {@link HomePage}; only shown to visitors who signed in
+	 */
+	private Component newSignOut(String id)
+	{
+		Link<Void> signOut = new Link<>(id)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick()
+			{
+				DemoSession.get().signOut();
+				setResponsePage(HomePage.class);
+			}
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(DemoSession.get().isSignedIn());
+			}
+		};
+		signOut.add(new Label("account", () -> DemoSession.get().getAccount()));
+		return signOut;
 	}
 
 	/**

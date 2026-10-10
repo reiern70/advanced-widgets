@@ -12,28 +12,34 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.validation.EqualPasswordInputValidator;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.EmailTextField;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.NumberTextField;
+import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.CompoundPropertyModel;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.validation.validator.StringValidator;
 
 import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.demo.Countries;
+import com.antilia.widgets.demo.DemoSession;
+import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.dropdown.Dropdown;
 
 /**
- * Lets a visitor register: first and last name, email, country and role. On success the visitor
- * is sent to the {@link EmailConfirmationPage}.
+ * Lets a visitor register: first and last name, email, country, role and a password. On success
+ * the account is made, the visitor signed in and sent on to the demo they wanted to see, or else
+ * to the {@link EmailConfirmationPage}.
  * <p>
- * A mock for now: nothing is stored and no email is sent. It keeps robots out in three ways,
+ * Only the account is kept, the other details are not, and no email is sent yet. It keeps robots out in three ways,
  * none needing an outside service: a field hidden from people that robots fill in (a honeypot),
  * a minimum time between showing the form and sending it, and a small sum to work out.
  */
@@ -43,6 +49,9 @@ public class RegisterPage extends BasePage
 
 	/** People take longer than this to fill in the form; robots sending it at once do not. */
 	static final Duration MINIMUM_FILL_TIME = Duration.ofSeconds(3);
+
+	/** The fewest characters of a password. */
+	static final int MINIMUM_PASSWORD_LENGTH = 8;
 
 	/** The roles offered, keys of the page's bundle. */
 	static final List<String> ROLES = List.of("developer", "architect", "designer", "manager",
@@ -89,7 +98,19 @@ public class RegisterPage extends BasePage
 					registration.setAnswer(null);
 					return;
 				}
-				setResponsePage(new EmailConfirmationPage(registration.getEmail()));
+				String email = registration.getEmail();
+				boolean made = Accounts.get().register(email, registration.getPassword());
+				registration.setPassword(null);
+				if (!made)
+				{
+					error(getString("taken"));
+					newChallenge();
+					registration.setAnswer(null);
+					return;
+				}
+				DemoSession.get().signIn(Accounts.accountName(email));
+				continueToOriginalDestination();
+				setResponsePage(new EmailConfirmationPage(email));
 			}
 
 			@Override
@@ -109,6 +130,14 @@ public class RegisterPage extends BasePage
 		form.add(new EmailTextField("email")
 			.setRequired(true)
 			.setLabel(new ResourceModel("email")));
+		PasswordTextField password = new PasswordTextField("password");
+		password.add(StringValidator.minimumLength(MINIMUM_PASSWORD_LENGTH))
+			.setLabel(new ResourceModel("password"));
+		form.add(password);
+		PasswordTextField repeated = new PasswordTextField("repeatedPassword", Model.of());
+		repeated.setLabel(new ResourceModel("repeatedPassword"));
+		form.add(repeated);
+		form.add(new EqualPasswordInputValidator(password, repeated));
 		form.add(new Dropdown<>("country", Countries.codes(), Countries.renderer())
 			.setRequired(true)
 			.setLabel(new ResourceModel("country")));
@@ -205,6 +234,8 @@ public class RegisterPage extends BasePage
 
 		private String role;
 
+		private String password;
+
 		private String website;
 
 		private Integer answer;
@@ -257,6 +288,16 @@ public class RegisterPage extends BasePage
 		public void setRole(String role)
 		{
 			this.role = role;
+		}
+
+		public String getPassword()
+		{
+			return password;
+		}
+
+		public void setPassword(String password)
+		{
+			this.password = password;
 		}
 
 		public String getWebsite()

@@ -5,8 +5,8 @@
   All rights reserved.
 -->
 <properties>
-	<entry key="title">Bestätigen Sie Ihre E-Mail</entry>
+	<entry key="title">Willkommen</entry>
 	<entry key="sent">Wir haben einen Bestätigungslink an {0} gesendet. Öffnen Sie ihn, um die Registrierung abzuschließen.</entry>
-	<entry key="hint">Keine E-Mail erhalten? Sehen Sie im Spam-Ordner nach oder registrieren Sie sich in einigen Minuten erneut. (Vorerst nur eine Attrappe: Es wird keine E-Mail gesendet.)</entry>
-	<entry key="home">Zurück zu den Demos</entry>
+	<entry key="hint">Sie sind angemeldet und können die Demos jetzt ausprobieren. (Die E-Mail ist vorerst eine Attrappe: Es wird keine gesendet.)</entry>
+	<entry key="home">Zu den Demos</entry>
 </properties>

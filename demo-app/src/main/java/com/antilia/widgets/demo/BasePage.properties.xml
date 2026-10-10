@@ -15,6 +15,8 @@
 	<entry key="AjaxEngine.JQUERY">jQuery</entry>
 	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Plain JavaScript</entry>
 	<entry key="register">Register</entry>
+	<entry key="signIn">Sign in</entry>
+	<entry key="signOut">Sign out</entry>
 	<entry key="rightsReserved">All rights reserved.</entry>
 	<entry key="builtWith">Built with Apache Wicket</entry>
 	<entry key="category.data">Data</entry>

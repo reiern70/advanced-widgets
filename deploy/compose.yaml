@@ -9,6 +9,7 @@ services:
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
       DATABASE_URL: ${DATABASE_URL:-}
+      ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
     volumes:
       - page-store:/var/lib/antilia-widgets
     expose:

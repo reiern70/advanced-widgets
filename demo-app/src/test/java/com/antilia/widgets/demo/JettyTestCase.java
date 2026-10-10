@@ -27,6 +27,8 @@ public abstract class JettyTestCase
 	public void before() throws Exception
 	{
 		System.setProperty("wicket.configuration", "deployment");
+		// the browser tests open the demos without signing in
+		System.setProperty("antilia-widgets.open-demos", "true");
 
 		server = new Server();
 		ServerConnector http = new ServerConnector(server);

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Sign in</entry>
+	<entry key="lead">Sign in to try the demos of the components.</entry>
+	<entry key="name">Email or account</entry>
+	<entry key="password">Password</entry>
+	<entry key="submit">Sign in</entry>
+	<entry key="wrong">The account or the password is wrong.</entry>
+	<entry key="noAccount">No account yet?</entry>
+	<entry key="register">Register</entry>
+	<entry key="Required">Please enter ${label}.</entry>
+</properties>

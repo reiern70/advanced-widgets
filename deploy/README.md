@@ -73,6 +73,11 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
+The demos are private: visitors register or sign in to open them, the home page is public. The
+accounts registered are kept in `/var/lib/antilia-widgets/accounts` on the `page-store` volume;
+accounts for people who should not need to register, a client for example, go into `.env` as
+`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again.
+
 ## 4. PostgreSQL, once the application uses it
 
 1. *Databases → Create database*: the same region, **PostgreSQL 17**, *Standard* $15, name

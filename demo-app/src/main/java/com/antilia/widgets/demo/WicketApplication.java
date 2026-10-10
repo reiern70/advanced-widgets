@@ -17,6 +17,9 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
 import org.apache.wicket.util.string.Strings;
 
+import com.antilia.widgets.demo.account.Accounts;
+import com.antilia.widgets.demo.account.DemosAuthorization;
+import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
@@ -52,6 +55,8 @@ public class WicketApplication extends WebApplication
 	/** The environment variable holding the folder of the page store. */
 	public static final String PAGE_STORE_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_PAGE_STORE";
 
+	private Accounts accounts;
+
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
 	 */
@@ -78,6 +83,13 @@ public class WicketApplication extends WebApplication
 		// the demo shows every private component, whatever key the system property or the
 		// environment holds: the license limits only the other applications using the library
 		Licensing.install(this, DemoLicense.key());
+
+		accounts = newAccounts();
+
+		// the demos are the private part: only visitors who signed in see them
+		DemosAuthorization authorization = new DemosAuthorization();
+		getSecuritySettings().setAuthorizationStrategy(authorization);
+		getSecuritySettings().setUnauthorizedComponentInstantiationListener(authorization);
 
 		// the pages of the sessions go to this folder on disk, the servlet container's temporary
 		// folder by default; production puts it on a volume of its own
@@ -119,11 +131,29 @@ public class WicketApplication extends WebApplication
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
+		mountPage("sign-in", SignInPage.class);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
+	}
+
+	/**
+	 * @return the accounts that may open the demos
+	 */
+	public Accounts getAccounts()
+	{
+		return accounts;
+	}
+
+	/**
+	 * @return the accounts that may open the demos, set by the system properties or the
+	 *         environment
+	 */
+	protected Accounts newAccounts()
+	{
+		return Accounts.fromSettings();
 	}
 
 	/**

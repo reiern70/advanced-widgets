@@ -43,10 +43,20 @@ public final class Demos
 	 *            the page of the demo
 	 * @param publicComponent
 	 *            whether the component the demo shows is public, or private for now
+	 * @param frameworkApps
+	 *            whether the demo shows the component in React and Svelte too, not only in Wicket
 	 */
 	public record Demo(String id, String category, Class<? extends Page> page,
-		boolean publicComponent) implements Serializable
+		boolean publicComponent, boolean frameworkApps) implements Serializable
 	{
+		/**
+		 * @return the path of the screenshot of the demo, in the web application
+		 */
+		public String imagePath()
+		{
+			return "images/demos/" + id + ".png";
+		}
+
 		/**
 		 * @return the key of the name shown on the home page and in the links of the demos
 		 */
@@ -73,19 +83,19 @@ public final class Demos
 	}
 
 	private static final List<Demo> ALL = List.of(
-		new Demo("jsonTable", "data", DynamicDataTablePage.class, false),
-		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true),
-		new Demo("jsonList", "data", JsonListPage.class, false),
-		new Demo("tree", "data", TreePage.class, false),
-		new Demo("treeGrid", "data", TreeGridPage.class, false),
-		new Demo("masterDetail", "data", MasterDetailPage.class, false),
-		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
-		new Demo("dropdown", "forms", DropdownPage.class, true),
-		new Demo("autocomplete", "forms", AutocompletePage.class, true),
-		new Demo("buttons", "forms", ButtonsPage.class, true),
-		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
-		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
-		new Demo("themeEditor", "themes", ThemeEditorPage.class, true));
+		new Demo("jsonTable", "data", DynamicDataTablePage.class, false, true),
+		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true, false),
+		new Demo("jsonList", "data", JsonListPage.class, false, true),
+		new Demo("tree", "data", TreePage.class, false, true),
+		new Demo("treeGrid", "data", TreeGridPage.class, false, true),
+		new Demo("masterDetail", "data", MasterDetailPage.class, false, false),
+		new Demo("progressBar", "feedback", ProgressBarPage.class, true, true),
+		new Demo("dropdown", "forms", DropdownPage.class, true, true),
+		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
+		new Demo("buttons", "forms", ButtonsPage.class, true, true),
+		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
+		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
+		new Demo("themeEditor", "themes", ThemeEditorPage.class, true, false));
 
 	private Demos()
 	{

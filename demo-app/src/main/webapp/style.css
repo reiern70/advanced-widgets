@@ -156,6 +156,79 @@ a { color: var(--accent, var(--primary)); }
 .card__name { margin: 12px 0 6px; font-size: 18px; }
 .card__description { margin: 0; color: var(--muted); font-size: 14px; }
 
+/* a demo on the home page: its screenshot on top, the frameworks it runs in below */
+.card--shot { padding: 0; overflow: hidden; }
+.card--shot .card__link { display: block; padding: 0 20px 20px; }
+.card__shot {
+	display: block;
+	width: calc(100% + 40px);
+	height: auto;
+	aspect-ratio: 16 / 10;
+	margin: 0 -20px 16px;
+	object-fit: cover;
+	object-position: top left;
+	background: var(--bg);
+	border-bottom: 1px solid var(--border);
+}
+.card__frameworks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 12px 0 0;
+}
+.framework {
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--primary) 12%, transparent);
+	color: var(--primary);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+/* the invitation to sign in to try the demos */
+.sign-in-hint {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 20px;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--in-progress);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+.sign-in-hint svg { flex: none; color: var(--in-progress); }
+.sign-in-hint p { margin: 0; }
+
+/* which framework each component runs in */
+.support-matrix { padding-top: 40px; }
+.support-matrix h2 { margin: 0 0 6px; font-size: 22px; }
+.support-matrix__lead { margin: 0 0 16px; color: var(--muted); }
+.support-matrix__scroll { overflow-x: auto; }
+.support-matrix__table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 14px;
+}
+.support-matrix__table th,
+.support-matrix__table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--border);
+	text-align: center;
+	white-space: nowrap;
+}
+.support-matrix__table th[scope="row"],
+.support-matrix__table th:first-child,
+.support-matrix__table td:nth-child(2) { text-align: left; }
+.support-matrix__table thead th { color: var(--muted); font-weight: 600; }
+.support-matrix__table tbody tr:last-child > * { border-bottom: none; }
+.support { font-weight: 600; }
+.support--yes { color: var(--available); }
+.support--no { color: var(--muted); }
+
 .badge {
 	font-size: 12px;
 	padding: 2px 8px;
@@ -292,6 +365,28 @@ a.brand { color: inherit; text-decoration: none; }
 	background: var(--primary-dark);
 }
 
+/* the link to sign in, and the account signed in with, which signs out */
+.topbar__sign-in,
+.topbar__sign-out {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.topbar__sign-in:hover,
+.topbar__sign-out:hover { color: var(--primary); }
+.topbar__account {
+	max-width: 14em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--muted);
+	font-weight: 400;
+}
+
 /* on narrow screens the top bar wraps: the settings go below the logo, without their labels */
 @media (max-width: 900px) {
 	.topbar__inner {
@@ -316,7 +411,8 @@ a.brand { color: inherit; text-decoration: none; }
 		overflow: hidden;
 		clip-path: inset(50%);
 	}
-	.topbar__register-label {
+	.topbar__register-label,
+	.topbar__account {
 		display: none;
 	}
 }
@@ -337,6 +433,8 @@ a.brand { color: inherit; text-decoration: none; }
 	background: var(--surface);
 	box-shadow: 0 6px 20px rgba(28, 35, 51, .06);
 }
+.register__card--narrow { max-width: 420px; }
+.register__form--single { grid-template-columns: 1fr; }
 .register__card h1 { margin: 0 0 6px; font-size: 26px; }
 .register__lead { margin: 0 0 20px; color: var(--muted); }
 .register__form {

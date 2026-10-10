@@ -10,4 +10,16 @@
 	<entry key="connecting">Conectando</entry>
 	<entry key="live">En vivo</entry>
 	<entry key="demos">Demos</entry>
+	<entry key="signInHint">Las demos son para visitantes registrados.</entry>
+	<entry key="hint.signIn">Inicie sesión</entry>
+	<entry key="hint.or">o</entry>
+	<entry key="hint.register">regístrese</entry>
+	<entry key="supportTitle">Qué funciona dónde</entry>
+	<entry key="supportLead">Cada componente en Wicket, y muchos también en React y Svelte, todos en cada uno de los temas.</entry>
+	<entry key="supportComponent">Componente</entry>
+	<entry key="supportCategory">Categoría</entry>
+	<entry key="supportVisibility">Público o privado</entry>
+	<entry key="supportThemes">Temas</entry>
+	<entry key="supported">Sí</entry>
+	<entry key="notSupported">No</entry>
 </properties>

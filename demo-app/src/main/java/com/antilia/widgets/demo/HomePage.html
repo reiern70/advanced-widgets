@@ -16,18 +16,56 @@
 
 			<section class="container demos">
 				<h2><wicket:message key="demos"/></h2>
+				<div class="sign-in-hint" wicket:id="signInHint">
+					<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+					<p><wicket:message key="signInHint"/> <a wicket:id="signIn"><wicket:message key="hint.signIn"/></a> <wicket:message key="hint.or"/> <a wicket:id="register"><wicket:message key="hint.register"/></a>.</p>
+				</div>
 				<ul class="cards">
-					<li class="card" wicket:id="demos">
+					<li class="card card--shot" wicket:id="demos">
 						<a class="card__link" wicket:id="link">
+							<img class="card__shot" wicket:id="image" src="images/demos/jsonTable.png" alt="" loading="lazy" width="640" height="400"/>
 							<div class="card__head">
 								<span class="card__category" wicket:id="category">Category</span>
 								<span class="badge" wicket:id="visibility">Public</span>
 							</div>
 							<h3 class="card__name" wicket:id="name">Demo</h3>
 							<p class="card__description" wicket:id="description">Description</p>
+							<p class="card__frameworks"><span class="framework">Wicket</span> <span class="framework" wicket:id="react">React</span> <span class="framework" wicket:id="svelte">Svelte</span></p>
 						</a>
 					</li>
 				</ul>
 			</section>
+
+			<section class="container support-matrix">
+				<h2><wicket:message key="supportTitle"/></h2>
+				<p class="support-matrix__lead"><wicket:message key="supportLead"/></p>
+				<div class="support-matrix__scroll">
+					<table class="support-matrix__table">
+						<thead>
+							<tr>
+								<th scope="col"><wicket:message key="supportComponent"/></th>
+								<th scope="col"><wicket:message key="supportCategory"/></th>
+								<th scope="col"><wicket:message key="supportVisibility"/></th>
+								<th scope="col">Wicket</th>
+								<th scope="col">React</th>
+								<th scope="col">Svelte</th>
+								<th scope="col"><wicket:message key="supportThemes"/></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr wicket:id="support">
+								<th scope="row" wicket:id="name">JSON Grid</th>
+								<td wicket:id="category">Data</td>
+								<td><span wicket:id="visibility">Private</span></td>
+								<td><span wicket:id="wicket">Yes</span></td>
+								<td><span wicket:id="react">Yes</span></td>
+								<td><span wicket:id="svelte">Yes</span></td>
+								<td><span wicket:id="themes">Yes</span></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
 		</main>
 </wicket:extend>

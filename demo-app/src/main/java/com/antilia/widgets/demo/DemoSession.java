@@ -14,7 +14,7 @@ import com.antilia.widgets.theme.Theme;
 
 /**
  * The session of the demo application: remembers the {@link Theme} and the {@link AjaxEngine} the
- * user chose for every page.
+ * user chose for every page, and the account the user signed in with.
  */
 public class DemoSession extends WebSession
 {
@@ -25,6 +25,8 @@ public class DemoSession extends WebSession
 	private AjaxEngine ajaxEngine = AjaxEngine.DEFAULT;
 
 	private TeamStore team;
+
+	private String account;
 
 	public DemoSession(Request request)
 	{
@@ -87,5 +89,44 @@ public class DemoSession extends WebSession
 		}
 		dirty();
 		return team;
+	}
+
+	/**
+	 * @return the name of the account the user signed in with, {@code null} if not signed in
+	 */
+	public String getAccount()
+	{
+		return account;
+	}
+
+	/**
+	 * @return whether the user signed in
+	 */
+	public boolean isSignedIn()
+	{
+		return account != null;
+	}
+
+	/**
+	 * Signs the user in, under a new session id so that the old one is of no use; the demo the
+	 * user was going to stays in the session.
+	 *
+	 * @param account
+	 *            the name of the account
+	 */
+	public void signIn(String account)
+	{
+		changeSessionId();
+		this.account = Args.notEmpty(account, "account");
+		dirty();
+	}
+
+	/**
+	 * Signs the user out, keeping the theme and the other choices.
+	 */
+	public void signOut()
+	{
+		account = null;
+		dirty();
 	}
 }

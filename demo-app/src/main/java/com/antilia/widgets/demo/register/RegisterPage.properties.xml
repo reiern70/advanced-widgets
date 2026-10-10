@@ -6,7 +6,7 @@
 -->
 <properties>
 	<entry key="title">Register</entry>
-	<entry key="lead">Register to hear about new components and to get a key for the private ones.</entry>
+	<entry key="lead">Register to try the demos of the components, and to hear about new ones.</entry>
 	<entry key="firstName">First name</entry>
 	<entry key="lastName">Last name</entry>
 	<entry key="email">Email</entry>
@@ -25,4 +25,9 @@
 	<entry key="role.other">Other</entry>
 	<entry key="Required">Please enter ${label}.</entry>
 	<entry key="EmailAddressValidator">${label} is not a valid email address.</entry>
+	<entry key="password">Password</entry>
+	<entry key="repeatedPassword">Password again</entry>
+	<entry key="taken">There is an account with this email already. Sign in with it, or register with another email.</entry>
+	<entry key="StringValidator.minimum">${label} needs at least ${minimum} characters.</entry>
+	<entry key="EqualPasswordInputValidator">The passwords are not the same.</entry>
 </properties>
