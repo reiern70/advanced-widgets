@@ -21,15 +21,17 @@ export interface TreeProps {
 	label?: string;
 	/** The keys of the folders expanded at first. */
 	expanded?: string[];
-	/** The key of the leaf selected; the tree follows when it changes. */
+	/** The key of the node selected; the tree follows when it changes. */
 	selected?: string | null;
+	/** Whether folders are selected too, not only leaves: a click on one selects it. */
+	selectBranches?: boolean;
 	/** Icons of the application's own, in place of those of the tree. */
 	icons?: Partial<TreeIcons>;
 	/** What the tree says, English by default. */
 	texts?: Partial<TreeTexts>;
 	/** The height of the tree, which then scrolls itself with slim scroll bars. */
 	height?: TreeConfig['height'];
-	/** Called when the user selects a leaf. */
+	/** Called when the user selects a leaf, or a folder with selectBranches. */
 	onSelect?(key: string, data: unknown): void;
 	/** Called with the action of a clicked [data-dt-action] element of a node. */
 	onAction?(action: string, key: string, data: unknown): void;
@@ -70,7 +72,7 @@ export interface TreeHandle {
 const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps['columns'] } &
 	Partial<Pick<TreeGridProps, 'header' | 'resizableColumns'>>>(function JsonTreeView(props, ref) {
 	const { template, engine, label, icons, height, licenseKey, className, table, header,
-		resizableColumns } = props;
+		resizableColumns, selectBranches } = props;
 	const texts = { ...TREE_TEXTS, ...props.texts };
 	const id = 'json-tree-' + useId().replace(/[^\w-]/g, '');
 	const [licensed, setLicensed] = useState<boolean | null>(null);
@@ -103,7 +105,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			return;
 		}
 		const tree = new JsonTree({
-			id, template, engine, label, icons, texts, height,
+			id, template, engine, label, icons, texts, height, selectBranches,
 			table: table ? { header: header ?? '', columns: table } : undefined,
 			resizableColumns: table && resizableColumns ? resizableColumns : undefined,
 			expanded: latest.current.expanded,
@@ -120,7 +122,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			instance.current = null;
 		};
 	}, [licensed, id, template, engine, label, tableKey, iconsKey, textsKey, heightKey,
-		resizableColumns]);
+		resizableColumns, selectBranches]);
 
 	useEffect(() => {
 		if (props.selected !== undefined && instance.current &&
@@ -145,7 +147,8 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 /**
  * A tree rendering its nodes from JSON with a template, loading the children of a folder the
  * first time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are
- * selected; a click on a folder expands or collapses it. A private component: without a license
+ * selected, a click on a folder expanding or collapsing it, unless selectBranches has a click on
+ * a folder select it, and expand it if it is collapsed. A private component: without a license
  * key activating it, it shows the placeholder Wicket shows. A ref gets a {@link TreeHandle}.
  */
 export const Tree = forwardRef<TreeHandle, TreeProps>(function Tree(props, ref) {

@@ -31,45 +31,46 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * What the tree examples share: the {@link ProjectFiles} shown in a tree of Wicket components and
- * in one rendered from JSON, the folder {@code frontend} expanded, and the file selected in either
- * shown next to them, repainted through Ajax. A drop-down above the trees chooses their icons:
- * the trees' own, Font Awesome's as inline SVG, or the same drawn by the Font Awesome font. Their
- * React and Svelte apps load the files from the {@link FilesResource}, show the file selected
- * themselves and choose the icons with a drop-down of their own.
+ * What the tree examples share: the {@link TreeOfLife} shown in a tree of Wicket components and
+ * in one rendered from JSON, the way from the animals to the dinosaurs expanded, groups and
+ * species selected alike, and the cards of the group or the species selected in either shown next
+ * to them, repainted through Ajax. A drop-down above the trees chooses their icons: the trees'
+ * own, Font Awesome's as inline SVG, or the same drawn by the Font Awesome font. Their React and
+ * Svelte apps load the tree from the {@link TreeOfLifeResource}, show the cards of what is
+ * selected themselves and choose the icons with a drop-down of their own.
  */
-public abstract class FilesDemoPage extends DemoPage
+public abstract class TreeOfLifeDemoPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The template of a node of the trees rendered from JSON: the name of the file. */
+	/** The template of a node of the trees rendered from JSON: the name of the taxon. */
 	static final String TEMPLATE = "{{name}}";
 
-	/** The folder expanded at first. */
-	static final String EXPANDED = "frontend";
+	/** The groups expanded at first: the way from the animals to the dinosaurs. */
+	static final List<String> EXPANDED = List.of("animals", "vertebrates", "reptiles",
+		"dinosaurs");
 
-	private static final ResourceReference CSS = new CssResourceReference(FilesDemoPage.class,
-		"tree-demo.css");
+	private static final ResourceReference CSS = new CssResourceReference(
+		TreeOfLifeDemoPage.class, "tree-demo.css");
 
 	private final WebMarkupContainer themed;
 
-	private final FileDetailsPanel details;
+	private final TaxonDetailsPanel details;
 
 	/** The trees, given the icons chosen. */
 	private final List<IconTarget> trees = new ArrayList<>();
 
-	/** The id of the file selected, {@code null} while none is. */
-	private Integer selected;
+	/** The id of the taxon selected, {@code null} while none is. */
+	private String selected;
 
 	/** The icons of the trees. */
 	private ActionIcons icons = ActionIcons.BUILT_IN;
 
-	protected FilesDemoPage()
+	protected TreeOfLifeDemoPage()
 	{
 		themed = newThemedContainer("themed");
 		add(themed);
-		details = new FileDetailsPanel("details",
-			() -> selected != null ? ProjectFiles.get().byId(selected) : null);
+		details = new TaxonDetailsPanel("details", () -> TreeOfLife.get().byId(selected));
 		themed.add(details);
 		themed.add(iconsChoice("icons"));
 	}
@@ -114,7 +115,7 @@ public abstract class FilesDemoPage extends DemoPage
 			case TOGGLE -> "CHEVRON_RIGHT";
 			case FOLDER -> "FOLDER";
 			case FOLDER_OPEN -> "FOLDER_OPEN";
-			case LEAF -> "FILE_LINES";
+			case LEAF -> "DNA";
 		};
 		return set.pick(null, SvgIcon.valueOf(name), FontAwesomeIcon.valueOf(name));
 	}
@@ -151,20 +152,21 @@ public abstract class FilesDemoPage extends DemoPage
 	}
 
 	/**
-	 * Shows a file next to the trees, as when the user selects it in one of them.
+	 * Shows the cards of a group or a species next to the trees, as when the user selects it in
+	 * one of them.
 	 */
-	protected void show(ProjectFile file, AjaxRequestTarget target)
+	protected void show(Taxon taxon, AjaxRequestTarget target)
 	{
-		selected = file.id();
+		selected = taxon.id();
 		target.add(details);
 	}
 
 	/**
-	 * @return the folder expanded at first
+	 * @return the groups expanded at first
 	 */
-	protected static ProjectFile expanded()
+	protected static List<Taxon> expanded()
 	{
-		return ProjectFiles.get().byPath(EXPANDED);
+		return EXPANDED.stream().map(TreeOfLife.get()::byId).toList();
 	}
 
 	/**
@@ -177,15 +179,15 @@ public abstract class FilesDemoPage extends DemoPage
 
 	/**
 	 * @return the configuration the React and Svelte apps share: the texts in the language of the
-	 *         session, those of the trees and of the drop-downs too, the URL of the files, the
-	 *         template of a node, the folder expanded at first, the height of the trees, and the
-	 *         markup of the icons of each set, by the name of the set, with the set chosen
+	 *         session, those of the trees and of the drop-downs too, the URL of the tree of life,
+	 *         the template of a node, the groups expanded at first, the height of the trees, and
+	 *         the markup of the icons of each set, by the name of the set, with the set chosen
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JSONObject texts = FrameworkTabs.texts(this, "files", "selectedFile", "noneSelected", "name",
-			"path", "kind", "size", "modified");
+		JSONObject texts = FrameworkTabs.texts(this, "treeOfLife", "selected", "noneSelected",
+			"lineage", "period", "lived");
 		JSONObject tree = new JSONObject()
 			.put("loading", getString("Tree.loading"))
 			.put("empty", getString("Tree.empty"))
@@ -210,9 +212,9 @@ public abstract class FilesDemoPage extends DemoPage
 		FrameworkTabs.withDropdownTexts(this, texts);
 		return new JSONObject()
 			.put("texts", texts.put("tree", tree))
-			.put("filesUrl", FrameworkTabs.urlOf(this, FilesResource.REFERENCE))
+			.put("dataUrl", FrameworkTabs.urlOf(this, TreeOfLifeResource.REFERENCE))
 			.put("template", TEMPLATE)
-			.put("expanded", new JSONArray().put(String.valueOf(expanded().id())))
+			.put("expanded", new JSONArray(EXPANDED))
 			.put("height", new JSONObject().put("value", getTreeHeight()).put("unit", "px"))
 			.put("iconSets", iconSets)
 			.put("icons", icons.name());

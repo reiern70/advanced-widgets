@@ -142,6 +142,38 @@ describe('JsonTree', () => {
 		expect(item('readme').getAttribute('aria-selected')).toBe('true');
 	});
 
+	it('selects a folder too when told to, expanding it, its arrow only toggling it', async () => {
+		const select = vi.fn();
+		const toggle = vi.fn();
+		new JsonTree(config({ load, selectBranches: true }), { select, toggle }, ROOTS);
+		expect(item('docs').getAttribute('aria-selected')).toBe('false');
+
+		item('docs').querySelector<HTMLElement>('.antilia-tree-content')!.click();
+		await vi.waitFor(() => expect(shown().length).toBe(4));
+		expect(select).toHaveBeenCalledWith('docs', { name: 'docs' });
+		expect(toggle).toHaveBeenCalledWith('docs', true);
+		expect(item('docs').getAttribute('aria-selected')).toBe('true');
+		expect(item('docs').classList.contains('antilia-tree-item--selected')).toBe(true);
+
+		item('docs').querySelector<HTMLElement>('.antilia-tree-content')!.click();
+		expect(shown().length).toBe(4);
+		expect(select).toHaveBeenCalledTimes(2);
+
+		item('docs').querySelector<HTMLElement>('.antilia-tree-toggle')!.click();
+		expect(shown()).toEqual(['1:docs', '1:notes.txt']);
+		expect(select).toHaveBeenCalledTimes(2);
+		expect(item('docs').getAttribute('aria-selected')).toBe('true');
+
+		item('docs').focus();
+		press('Enter');
+		await vi.waitFor(() => expect(shown().length).toBe(4));
+		press('ArrowDown');
+		press(' ');
+		await vi.waitFor(() => expect(shown().length).toBe(6));
+		expect(select).toHaveBeenLastCalledWith('src', { name: 'src' });
+		expect(item('docs').getAttribute('aria-selected')).toBe('false');
+	});
+
 	it('sends the actions of the elements of a node', () => {
 		const action = vi.fn();
 		const select = vi.fn();

@@ -6,6 +6,7 @@ package com.antilia.widgets.tree;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree.State;
 import org.apache.wicket.model.IModel;
 
 import com.antilia.widgets.icon.IIcon;
@@ -48,12 +49,43 @@ interface INodeRenderer<T>
 	IModel<?> newLabelModel(IModel<T> node);
 
 	/**
-	 * @return whether the node is the leaf selected
+	 * @return whether the node is the one selected
 	 */
 	boolean isSelected(T node);
 
 	/**
-	 * Called when the user clicks a node: a leaf is selected, a folder expanded or collapsed.
+	 * @return whether the node is selected when the user clicks it: a leaf, or a folder when the
+	 *         tree selects folders too
 	 */
-	void onNodeClick(AjaxRequestTarget target, T node);
+	boolean isSelectable(T node);
+
+	/**
+	 * Selects a node, as a click on it does.
+	 */
+	void select(T node, AjaxRequestTarget target);
+
+	/**
+	 * Called when the user clicks a node: a node that can be selected is, a folder expanded if it
+	 * is collapsed; a folder that cannot be selected is expanded or collapsed.
+	 */
+	default void onNodeClick(AjaxRequestTarget target, T node)
+	{
+		AbstractTree<T> tree = asTree();
+		if (isSelectable(node))
+		{
+			select(node, target);
+			if (!isLeaf(node) && tree.getState(node) != State.EXPANDED)
+			{
+				tree.expand(node);
+			}
+		}
+		else if (tree.getState(node) == State.EXPANDED)
+		{
+			tree.collapse(node);
+		}
+		else
+		{
+			tree.expand(node);
+		}
+	}
 }

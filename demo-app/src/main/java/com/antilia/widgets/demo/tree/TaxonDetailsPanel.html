@@ -1,0 +1,17 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<section class="tree-demo-taxon" aria-live="polite">
+	<h2 class="tree-demo-taxon__title"><wicket:message key="selected"/></h2>
+	<wicket:container wicket:id="selection">
+		<ol class="tree-demo-taxon__lineage" wicket:message="aria-label:lineage">
+			<li wicket:id="lineage"><span wicket:id="name"></span></li>
+		</ol>
+		<div wicket:id="group"></div>
+		<div wicket:id="species"></div>
+	</wicket:container>
+	<p wicket:id="none" class="tree-demo-taxon__none"><wicket:message key="noneSelected"/></p>
+</section>
+</wicket:panel>

@@ -43,8 +43,10 @@ import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
  * <p>
  * A click on a folder, or on its arrow, expands or collapses it, repainting the table through
  * Ajax; a click on a leaf selects it, repaints its row and the row of the leaf selected before,
- * and calls {@link #onSelect(AjaxRequestTarget, Object)}. Only leaves are selected; the row of the
- * leaf selected carries the CSS class {@code antilia-tree-node--selected}.
+ * and calls {@link #onSelect(AjaxRequestTarget, Object)}. Only leaves are selected, unless
+ * {@link #setSelectBranches(boolean)} has folders selected too: then a click on a folder selects
+ * it, and expands it if it is collapsed, its arrow still expanding and collapsing it. The row of
+ * the node selected carries the CSS class {@code antilia-tree-node--selected}.
  * <p>
  * Given a {@link #setHeight(int, BodyHeightUnits) height}, the rows scroll below the row of
  * headers, which stays in place, with slim scroll bars in the colors of the theme. The columns
@@ -238,7 +240,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 			{
 				super.onComponentTag(tag);
 				T node = getModelObject();
-				if (isLeaf(node) && isSelected(node))
+				if (isSelectable(node) && isSelected(node))
 				{
 					tag.append("class", "antilia-tree-node--selected", " ");
 				}
@@ -301,7 +303,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	}
 
 	/**
-	 * @return the leaf selected, {@code null} if none is
+	 * @return the node selected, {@code null} if none is
 	 */
 	public T getSelected()
 	{
@@ -309,11 +311,11 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Selects a leaf without telling {@link #onSelect(AjaxRequestTarget, Object)}, for example
+	 * Selects a node without telling {@link #onSelect(AjaxRequestTarget, Object)}, for example
 	 * before the table is rendered.
 	 *
 	 * @param node
-	 *            the leaf, {@code null} for none
+	 *            the leaf, or a folder when they are selected too, {@code null} for none
 	 * @return {@code this}
 	 */
 	public TreeGrid<T, S> setSelected(T node)
@@ -323,14 +325,15 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Selects a leaf, as a click on it does: repaints its row and the row of the leaf selected
+	 * Selects a node, as a click on it does: repaints its row and the row of the node selected
 	 * before, and calls {@link #onSelect(AjaxRequestTarget, Object)}.
 	 *
 	 * @param node
-	 *            the leaf
+	 *            the leaf, or a folder when they are selected too
 	 * @param target
 	 *            the Ajax request target
 	 */
+	@Override
 	public void select(T node, AjaxRequestTarget target)
 	{
 		T previous = support.select(getProvider(), node);
@@ -343,32 +346,44 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Called when the user selects a leaf. Does nothing by default.
+	 * Called when the user selects a leaf, or a folder when they are selected too. Does nothing by
+	 * default.
 	 *
 	 * @param target
 	 *            the Ajax request target
 	 * @param node
-	 *            the leaf
+	 *            the node
 	 */
 	protected void onSelect(AjaxRequestTarget target, T node)
 	{
 	}
 
 	@Override
-	public void onNodeClick(AjaxRequestTarget target, T node)
+	public boolean isSelectable(T node)
 	{
-		if (isLeaf(node))
-		{
-			select(node, target);
-		}
-		else if (getState(node) == State.EXPANDED)
-		{
-			collapse(node);
-		}
-		else
-		{
-			expand(node);
-		}
+		return isLeaf(node) || support.isSelectBranches();
+	}
+
+	/**
+	 * @return whether folders are selected too, not only leaves
+	 */
+	public boolean isSelectBranches()
+	{
+		return support.isSelectBranches();
+	}
+
+	/**
+	 * Has folders selected too, not only leaves: a click on a folder selects it, and expands it
+	 * if it is collapsed; a click on its arrow still expands or collapses it.
+	 *
+	 * @param selectBranches
+	 *            whether folders are selected too
+	 * @return {@code this}
+	 */
+	public TreeGrid<T, S> setSelectBranches(boolean selectBranches)
+	{
+		support.setSelectBranches(selectBranches);
+		return this;
 	}
 
 	@Override

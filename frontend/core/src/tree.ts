@@ -8,7 +8,9 @@
  * a node the first time it is expanded. As a tree it is a WAI-ARIA tree of nested lists, as a tree
  * table a treegrid whose first column holds the tree; both are moved through with the arrow keys,
  * Home and End, and Enter or Space selects a leaf or expands and collapses a folder. Only leaves
- * are selected: a click on a folder opens or closes it.
+ * are selected, unless cfg.selectBranches has folders selected too: a click on a folder opens or
+ * closes it, or, with cfg.selectBranches, selects it and opens it if it is closed, its arrow still
+ * opening and closing it.
  *
  * Given a height, the tree scrolls itself, with the slim scroll bars of the core; a tree grid keeps
  * its head in place above the rows scrolling. The columns of a tree grid can be made resizable.
@@ -81,6 +83,8 @@ export interface TreeConfig {
 	expanded?: string[];
 	/** The key of the leaf selected at first. */
 	selected?: string | null;
+	/** Whether folders are selected too, not only leaves. */
+	selectBranches?: boolean;
 	/** Icons of the application's own, in place of those of the tree. */
 	icons?: Partial<TreeIcons>;
 	/** The height of the tree, which then scrolls itself; the page scrolls when left out. */
@@ -100,7 +104,7 @@ export interface TreeColumnsRegistry {
  * What a tree reports.
  */
 export interface TreeCallbacks {
-	/** A leaf was selected by the user. */
+	/** A leaf, or a folder when they are selected too, was selected by the user. */
 	select?(key: string, data: unknown): void;
 	/** An element of a node with a data-dt-action attribute was clicked. */
 	action?(action: string, key: string, data: unknown): void;
@@ -439,12 +443,15 @@ export class JsonTree {
 		item.classList.toggle('antilia-tree-item--leaf', node.leaf);
 		if (node.leaf) {
 			item.removeAttribute('aria-expanded');
-			item.setAttribute('aria-selected', String(node.key === this.selected));
 		} else {
 			item.setAttribute('aria-expanded', String(entry.expanded));
+		}
+		if (this.isSelectable(node)) {
+			item.setAttribute('aria-selected', String(node.key === this.selected));
+		} else {
 			item.removeAttribute('aria-selected');
 		}
-		item.classList.toggle(SELECTED_CLASS, node.leaf && node.key === this.selected);
+		item.classList.toggle(SELECTED_CLASS, this.isSelectable(node) && node.key === this.selected);
 
 		const row = document.createElement('div');
 		row.className = 'antilia-tree-row';
@@ -670,14 +677,22 @@ export class JsonTree {
 	}
 
 	/**
-	 * Selects a leaf, unselecting the one selected before.
+	 * @returns whether a node is selected when the user clicks it: a leaf, or a folder when they
+	 *          are selected too
+	 */
+	private isSelectable(node: TreeNode): boolean {
+		return node.leaf || this.cfg.selectBranches === true;
+	}
+
+	/**
+	 * Selects a leaf, or a folder when they are selected too, unselecting the node selected before.
 	 *
-	 * @param key the key of the leaf, null to select none
+	 * @param key the key of the node, null to select none
 	 * @param report whether to report it, as when the user selects it
 	 */
 	select(key: string | null, report = false): void {
 		const entry = key === null ? null : this.entries.get(key);
-		if (entry && !entry.node.leaf) {
+		if (entry && !this.isSelectable(entry.node)) {
 			return;
 		}
 		const previous = this.selected === null ? undefined : this.entries.get(this.selected);
@@ -792,7 +807,9 @@ export class JsonTree {
 
 	/**
 	 * A click on an element with a data-dt-action attribute sends the action; on the arrow of a
-	 * folder, or anywhere else on it, expands or collapses it; anywhere on a leaf selects it.
+	 * folder expands or collapses it, as anywhere else on it does, unless folders are selected
+	 * too: then it selects the folder, expanding it if it is collapsed. A click anywhere on a leaf
+	 * selects it.
 	 */
 	private onClick(event: MouseEvent): void {
 		const target = event.target as Element;
@@ -814,10 +831,21 @@ export class JsonTree {
 			return;
 		}
 		this.setTabStop(item);
-		if (entry.node.leaf) {
-			this.select(entry.node.key, true);
+		const onToggle = target.closest('.antilia-tree-toggle') !== null;
+		if (this.isSelectable(entry.node) && !(onToggle && !entry.node.leaf)) {
+			this.choose(entry);
 		} else {
 			this.toggle(entry.node.key);
+		}
+	}
+
+	/**
+	 * Selects a node, as the user does, expanding a folder that is collapsed.
+	 */
+	private choose(entry: Entry): void {
+		this.select(entry.node.key, true);
+		if (!entry.node.leaf && !entry.expanded) {
+			this.expand(entry.node.key);
 		}
 	}
 
@@ -832,7 +860,7 @@ export class JsonTree {
 	 * Moves through the tree as WAI-ARIA has it: Up and Down to the item before and after, Right
 	 * expands a folder or moves to its first child, Left collapses it or moves to the parent,
 	 * Home and End to the first and the last item; Enter and Space select a leaf, or expand and
-	 * collapse a folder.
+	 * collapse a folder, or, when folders are selected too, select it, expanding it if collapsed.
 	 */
 	private onKeyDown(event: KeyboardEvent): void {
 		const item = this.itemOf(event.target);
@@ -876,8 +904,8 @@ export class JsonTree {
 				break;
 			case 'Enter':
 			case ' ':
-				if (entry.node.leaf) {
-					this.select(key, true);
+				if (this.isSelectable(entry.node)) {
+					this.choose(entry);
 				} else {
 					this.toggle(key);
 				}

@@ -25,8 +25,8 @@ import com.antilia.widgets.tree.JsonBasedTreeGrid;
 import com.antilia.widgets.tree.TreeGrid;
 
 /**
- * Shows the files of antilia-widgets in the tree grids of {@link TreeGridPage}, with their
- * kinds, sizes and the days they were changed, and the file selected next to them.
+ * Shows the tree of life in the tree grids of {@link TreeGridPage}, with the scientific names,
+ * the ranks, the periods and the times, and the cards of what is selected next to them.
  */
 class TreeGridPageTest
 {
@@ -46,34 +46,34 @@ class TreeGridPageTest
 	}
 
 	@Test
-	void showsTheFilesInBothTreeGridsWithTheirColumns()
+	void showsTheTreeOfLifeInBothTreeGridsWithTheirColumns()
 	{
 		tester.assertComponent("themed:treeGrid", TreeGrid.class);
 		tester.assertComponent("themed:jsonTreeGrid", JsonBasedTreeGrid.class);
-		tester.assertContains(">Kind<");
-		tester.assertContains(">Modified<");
-		tester.assertContains(">package.json<");
+		tester.assertContains(">Scientific name<");
+		tester.assertContains(">Period<");
+		tester.assertContains(">Theropods<");
+		tester.assertContains(">Dinosauria<");
 		tester.assertContains(Pattern.quote("\"table\":{\"header\":\"Name\",\"columns\":" +
-			"[{\"header\":\"Kind\",\"template\":\"{{kind}}\"},{\"header\":\"Size\"," +
-			"\"template\":\"{{size}}\",\"cssClass\":\"antilia-tree-number\"}"));
+			"[{\"header\":\"Scientific name\",\"template\":\"{{scientific}}\"," +
+			"\"cssClass\":\"tree-demo-scientific\"},{\"header\":\"Rank\"," +
+			"\"template\":\"{{rank}}\"}"));
 	}
 
 	@Test
-	void aFileSelectedInTheJsonTreeGridIsShownNextToIt()
+	void aSpeciesSelectedInTheJsonTreeGridIsShownNextToIt()
 	{
 		JsonBasedTree<?, ?> table = (JsonBasedTree<?, ?>)tester.getComponentFromLastRenderedPage(
 			"themed:jsonTreeGrid");
-		ProjectFile file = ProjectFiles.get().byPath("frontend/package.json");
 		tester.getRequest().getPostParameters().setParameterValue("action",
 			JsonBasedTree.SELECT_ACTION);
-		tester.getRequest().getPostParameters().setParameterValue("key",
-			String.valueOf(file.id()));
+		tester.getRequest().getPostParameters().setParameterValue("key", "triceratops");
 		tester.executeBehavior(table.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
 
 		tester.assertComponentOnAjaxResponse("themed:details");
 		String response = tester.getLastResponseAsString();
-		assertTrue(response.contains("frontend/package.json"), response);
-		assertTrue(response.contains(">JSON<"), response);
+		assertTrue(response.contains(">Triceratops horridus<"), response);
+		assertTrue(response.contains(">Ornithischia<"), "the card of its group: " + response);
 	}
 
 	@Test
@@ -112,9 +112,9 @@ class TreeGridPageTest
 		tester.getSession().setLocale(Locale.GERMAN);
 		tester.startPage(TreeGridPage.class);
 
-		tester.assertContains(">Art<");
-		tester.assertContains(">Geändert<");
-		tester.assertContains(">Ordner<");
-		tester.assertContains(Pattern.quote("\"header\":\"Größe\""));
+		tester.assertContains(">Wissenschaftlicher Name<");
+		tester.assertContains(">Rang<");
+		tester.assertContains(">Trias – heute<");
+		tester.assertContains(Pattern.quote("\"header\":\"Periode\""));
 	}
 }

@@ -4,38 +4,47 @@
  */
 
 /*
- * The tree demos: the files of antilia-widgets in a Tree or a TreeGrid, loaded from the files
- * resource folder by folder, the file selected shown next to them.
+ * The tree demos: a tree of life in a Tree or a TreeGrid, loaded from the tree of life resource
+ * group by group, groups and species selected alike, the cards of what is selected shown next to
+ * them.
  */
 
 import type { ResizeMode, TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';
 
 import { fetchJson } from './data.js';
 
-/** A file or a folder as the files resource sends it, its texts in the language of the session. */
-export interface FileData {
-	id: number;
+/** The card of a group or a species, its texts in the language of the session. */
+export interface TaxonCard {
+	id: string;
 	name: string;
-	path: string;
-	folder: boolean;
-	kind: string;
-	size: string;
-	bytes: number;
-	items: string;
-	modified: string;
+	/** The scientific name, empty for an informal group. */
+	scientific: string;
+	rank: string;
+	/** The periods it lived in. */
+	period: string;
+	/** When it lived. */
+	lived: string;
+	description: string;
+}
+
+/** A group or a species as the tree of life resource sends it. */
+export interface TaxonData extends TaxonCard {
+	group: boolean;
+	/** The names of the groups it belongs to, the kingdom first, and its own last. */
+	lineage: string[];
+	/** The card of the group of a species. */
+	parent?: TaxonCard;
 }
 
 /** The texts of the demos, by the keys of the pages' bundles. */
 export interface TreeDemoTexts {
 	/** The name of the trees for screen readers. */
-	files: string;
-	selectedFile: string;
+	treeOfLife: string;
+	selected: string;
 	noneSelected: string;
-	name: string;
-	path: string;
-	kind: string;
-	size: string;
-	modified: string;
+	lineage: string;
+	period: string;
+	lived: string;
 	/** The label of the drop-down choosing the icons, and those of its choices. */
 	icons: string;
 	'icons.BUILT_IN': string;
@@ -62,11 +71,11 @@ export const ICON_SETS: IconSet[] = ['BUILT_IN', 'SVG', 'FONT_AWESOME'];
 /** What the page gives the demos. */
 export interface TreeDemoConfig {
 	texts: TreeDemoTexts;
-	/** The files: the roots, or the children of ?parent=id. */
-	filesUrl: string;
+	/** The tree of life: the kingdoms, or the children of ?parent=id. */
+	dataUrl: string;
 	/** The template of a node. */
 	template: string;
-	/** The keys of the folders expanded at first. */
+	/** The keys of the groups expanded at first. */
 	expanded: string[];
 	/** The height of the trees, within which they scroll. */
 	height: { value: number; unit: string };
@@ -122,14 +131,21 @@ export function iconSetOptions(texts: TreeDemoTexts): { value: string; label: st
 	return ICON_SETS.map((value) => ({ value, label: texts[`icons.${value}`] }));
 }
 
-/** The facts of a file the details show, by the keys of their labels. */
-export const FACTS = ['name', 'path', 'kind', 'size', 'modified'] as const;
+/** The facts of a card below its description, by the keys of their labels. */
+export const FACTS = ['period', 'lived'] as const;
 
 /**
- * @param url the URL of the files resource
- * @returns the load of a tree: the roots, or the children of a folder
+ * @returns the card of the group of what is selected, the group itself or that of a species
  */
-export function loadFiles(url: string): (parent: string | null) => Promise<TreeNode[]> {
+export function groupCard(taxon: TaxonData): TaxonCard | null {
+	return taxon.group ? taxon : taxon.parent ?? null;
+}
+
+/**
+ * @param url the URL of the tree of life resource
+ * @returns the load of a tree: the kingdoms, or the children of a group
+ */
+export function loadTaxa(url: string): (parent: string | null) => Promise<TreeNode[]> {
 	return async (parent) => (await fetchJson<{ nodes: TreeNode[] }>(parent === null ? url :
 		url + (url.indexOf('?') >= 0 ? '&' : '?') + 'parent=' + encodeURIComponent(parent))).nodes;
 }

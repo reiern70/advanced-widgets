@@ -120,6 +120,18 @@ class JsonBasedTreeTest extends WicketTestCase
 	}
 
 	@Test
+	void aFolderIsSelectedWhenFoldersAreSelectedToo()
+	{
+		tree.setSelectBranches(true);
+		tester.startPage(new TestPage(tree));
+		tester.assertContains(Pattern.quote("\"selectBranches\":true"));
+
+		act(JsonBasedTree.SELECT_ACTION, "docs");
+		assertSame(node("docs"), tree.selected);
+		assertNull(tree.notFoundAction);
+	}
+
+	@Test
 	void theTreeRemembersTheFoldersTheUserExpands()
 	{
 		act(JsonBasedTree.EXPAND_ACTION, "docs");

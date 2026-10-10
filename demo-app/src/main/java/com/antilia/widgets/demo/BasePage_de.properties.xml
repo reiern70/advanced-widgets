@@ -30,9 +30,9 @@
 	<entry key="demo.jsonList">JSON-Endlosliste</entry>
 	<entry key="demo.jsonList.description">Tausend Benutzer als Karten, im Browser aus JSON erzeugt und beim Rollen geladen.</entry>
 	<entry key="demo.tree">Baum</entry>
-	<entry key="demo.tree.description">Ihre Dateien in einem Baum, als Wicket-Komponenten oder im Browser aus JSON erzeugt.</entry>
+	<entry key="demo.tree.description">Der Stammbaum des Lebens, von den Pilzen bis zu den Dinosauriern, als Wicket-Komponenten oder im Browser aus JSON erzeugt.</entry>
 	<entry key="demo.treeGrid">Baumraster</entry>
-	<entry key="demo.treeGrid.description">Ihre Dateien in einem Baumraster, mit Art, Größe und Änderungstag.</entry>
+	<entry key="demo.treeGrid.description">Der Stammbaum des Lebens in einem Baumraster, mit wissenschaftlichen Namen, Rängen und den Perioden, in denen sie lebten.</entry>
 	<entry key="demo.masterDetail">Master und Detail</entry>
 	<entry key="demo.masterDetail.description">Die Länder der Benutzer und die Benutzer des gewählten Landes, in zwei Tabellen.</entry>
 	<entry key="demo.progressBar">Fortschrittsbalken</entry>

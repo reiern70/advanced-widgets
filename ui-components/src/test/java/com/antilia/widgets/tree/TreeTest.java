@@ -20,6 +20,7 @@ import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree.State;
 import org.apache.wicket.extensions.markup.html.repeater.tree.table.TreeColumn;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
@@ -82,6 +83,29 @@ class TreeTest extends WicketTestCase
 		assertFalse(tree.isSelected(node("readme")));
 		assertEquals(2, countOf(tester.getLastResponseAsString(), "<component id="),
 			"the leaf selected before and the new one are repainted");
+	}
+
+	@Test
+	void aClickOnAFolderSelectsItWhenFoldersAreSelectedToo()
+	{
+		TestTree tree = new TestTree();
+		tree.setSelectBranches(true);
+		tester.startPage(new TestPage(tree));
+
+		click(tree, "docs");
+		assertSame(node("docs"), tree.selected);
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains(">readme.md<"), "the folder selected is expanded");
+		assertTrue(response.contains("aria-current=\"true\""), response);
+		assertTrue(response.contains("antilia-tree-node--selected"), response);
+
+		click(tree, "docs");
+		assertEquals(State.EXPANDED, tree.getState(node("docs")),
+			"a click on the folder selected leaves it expanded");
+
+		click(tree, "readme");
+		assertSame(node("readme"), tree.selected);
+		assertFalse(tree.isSelected(node("docs")));
 	}
 
 	@Test

@@ -5,8 +5,9 @@
 <!--
   @component
   A tree rendering its nodes from JSON with a template, loading the children of a folder the first
-  time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are selected;
-  a click on a folder expands or collapses it. Given a height, it scrolls itself with slim scroll
+  time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are selected,
+  a click on a folder expanding or collapsing it, unless selectBranches has a click on a folder
+  select it, and expand it if it is collapsed. Given a height, it scrolls itself with slim scroll
   bars. Given columns and a header, it is a tree grid, as TreeGrid is. A private component:
   without a license key activating it, it shows the placeholder Wicket shows. Bound with
   bind:this, the component reloads the nodes with reload(), repaints one with
@@ -28,8 +29,10 @@
 		label?: string;
 		/** The keys of the folders expanded at first. */
 		expanded?: string[];
-		/** The key of the leaf selected; the tree follows when it changes. */
+		/** The key of the node selected; the tree follows when it changes. */
 		selected?: string | null;
+		/** Whether folders are selected too, not only leaves: a click on one selects it. */
+		selectBranches?: boolean;
 		/** Icons of the application's own, in place of those of the tree. */
 		icons?: Partial<TreeIcons>;
 		/** What the tree says, English by default. */
@@ -42,7 +45,7 @@
 		columns?: TreeColumn[];
 		/** How the columns of a tree grid are resized, or false, as by default, when they are not. */
 		resizableColumns?: ResizeMode | false;
-		/** Called when the user selects a leaf. */
+		/** Called when the user selects a leaf, or a folder with selectBranches. */
 		onselect?: (key: string, data: unknown) => void;
 		/** Called with the action of a clicked [data-dt-action] element of a node. */
 		onaction?: (action: string, key: string, data: unknown) => void;
@@ -53,7 +56,8 @@
 		class?: string;
 	};
 
-	let { load, template, engine, label, expanded, selected, icons, texts: givenTexts, height,
+	let { load, template, engine, label, expanded, selected, selectBranches, icons,
+		texts: givenTexts, height,
 		header, columns, resizableColumns = false, onselect, onaction, ontoggle, licenseKey,
 		class: className = '' }: Props = $props();
 
@@ -83,7 +87,7 @@
 		if (!licensed) {
 			return;
 		}
-		const config = { id, template, engine, label, icons: $state.snapshot(icons),
+		const config = { id, template, engine, label, selectBranches, icons: $state.snapshot(icons),
 			texts: $state.snapshot(texts), height: $state.snapshot(height),
 			table: columns ? { header: header ?? '', columns: $state.snapshot(columns) } : undefined,
 			resizableColumns: columns && resizableColumns ? resizableColumns : undefined };

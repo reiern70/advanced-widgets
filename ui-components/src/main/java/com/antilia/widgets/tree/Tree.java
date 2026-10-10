@@ -32,8 +32,10 @@ import com.antilia.widgets.scrollbar.ScrollbarBehavior;
  * A node is a button holding its icon and its text: a click on a folder, or on its arrow, expands
  * or collapses it, through Ajax; a click on a leaf selects it, repaints the leaf selected before
  * and the new one, and calls {@link #onSelect(AjaxRequestTarget, Object)}, where the application
- * updates what shows the leaf. Only leaves are selected. The folders tell screen readers whether
- * they are expanded, the leaf selected that it is the current one.
+ * updates what shows the leaf. Only leaves are selected, unless
+ * {@link #setSelectBranches(boolean)} has folders selected too: then a click on a folder selects
+ * it, and expands it if it is collapsed, its arrow still expanding and collapsing it. The folders
+ * tell screen readers whether they are expanded, the node selected that it is the current one.
  * <p>
  * The text of a node is the node itself, as a string, unless
  * {@link #newLabelModel(IModel)} says otherwise; its icon is a folder, open or closed, or a leaf,
@@ -164,7 +166,7 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	}
 
 	/**
-	 * @return the leaf selected, {@code null} if none is
+	 * @return the node selected, {@code null} if none is
 	 */
 	public T getSelected()
 	{
@@ -172,11 +174,11 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Selects a leaf without telling {@link #onSelect(AjaxRequestTarget, Object)}, for example
+	 * Selects a node without telling {@link #onSelect(AjaxRequestTarget, Object)}, for example
 	 * before the tree is rendered.
 	 *
 	 * @param node
-	 *            the leaf, {@code null} for none
+	 *            the leaf, or a folder when they are selected too, {@code null} for none
 	 * @return {@code this}
 	 */
 	public Tree<T> setSelected(T node)
@@ -186,14 +188,15 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Selects a leaf, as a click on it does: repaints it and the leaf selected before, and calls
+	 * Selects a node, as a click on it does: repaints it and the node selected before, and calls
 	 * {@link #onSelect(AjaxRequestTarget, Object)}.
 	 *
 	 * @param node
-	 *            the leaf
+	 *            the leaf, or a folder when they are selected too
 	 * @param target
 	 *            the Ajax request target
 	 */
+	@Override
 	public void select(T node, AjaxRequestTarget target)
 	{
 		T previous = support.select(getProvider(), node);
@@ -206,32 +209,44 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	}
 
 	/**
-	 * Called when the user selects a leaf. Does nothing by default.
+	 * Called when the user selects a leaf, or a folder when they are selected too. Does nothing by
+	 * default.
 	 *
 	 * @param target
 	 *            the Ajax request target
 	 * @param node
-	 *            the leaf
+	 *            the node
 	 */
 	protected void onSelect(AjaxRequestTarget target, T node)
 	{
 	}
 
 	@Override
-	public void onNodeClick(AjaxRequestTarget target, T node)
+	public boolean isSelectable(T node)
 	{
-		if (isLeaf(node))
-		{
-			select(node, target);
-		}
-		else if (getState(node) == State.EXPANDED)
-		{
-			collapse(node);
-		}
-		else
-		{
-			expand(node);
-		}
+		return isLeaf(node) || support.isSelectBranches();
+	}
+
+	/**
+	 * @return whether folders are selected too, not only leaves
+	 */
+	public boolean isSelectBranches()
+	{
+		return support.isSelectBranches();
+	}
+
+	/**
+	 * Has folders selected too, not only leaves: a click on a folder selects it, and expands it
+	 * if it is collapsed; a click on its arrow still expands or collapses it.
+	 *
+	 * @param selectBranches
+	 *            whether folders are selected too
+	 * @return {@code this}
+	 */
+	public Tree<T> setSelectBranches(boolean selectBranches)
+	{
+		support.setSelectBranches(selectBranches);
+		return this;
 	}
 
 	@Override

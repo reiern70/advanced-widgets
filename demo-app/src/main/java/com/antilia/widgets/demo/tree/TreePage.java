@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.tree;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
@@ -12,12 +13,12 @@ import com.antilia.widgets.tree.JsonBasedTree;
 import com.antilia.widgets.tree.Tree;
 
 /**
- * The files of antilia-widgets in a {@link Tree} of Wicket components and in a
- * {@link JsonBasedTree} rendered in the browser from JSON, side by side; the file selected in
- * either is shown next to them. The React and Svelte tabs show the same files in the Tree of
- * {@code @antilia/react} and {@code @antilia/svelte}.
+ * The {@link TreeOfLife} in a {@link Tree} of Wicket components and in a {@link JsonBasedTree}
+ * rendered in the browser from JSON, side by side, both selecting groups as well as species; the
+ * cards of what is selected in either are shown next to them. The React and Svelte tabs show the
+ * same tree in the Tree of {@code @antilia/react} and {@code @antilia/svelte}.
  */
-public class TreePage extends FilesDemoPage
+public class TreePage extends TreeOfLifeDemoPage
 {
 	private static final long serialVersionUID = 1L;
 
@@ -26,42 +27,50 @@ public class TreePage extends FilesDemoPage
 	 */
 	public TreePage()
 	{
-		ProjectFilesProvider provider = new ProjectFilesProvider();
+		TreeOfLifeProvider provider = new TreeOfLifeProvider();
 
-		Tree<ProjectFile> tree = new Tree<>("tree", provider)
+		Tree<Taxon> tree = new Tree<>("tree", provider)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void onSelect(AjaxRequestTarget target, ProjectFile file)
+			public IModel<?> newLabelModel(IModel<Taxon> taxon)
 			{
-				show(file, target);
+				return () -> TreeOfLife.name(taxon.getObject(), getLocale());
+			}
+
+			@Override
+			protected void onSelect(AjaxRequestTarget target, Taxon taxon)
+			{
+				show(taxon, target);
 			}
 		};
-		tree.expand(expanded());
+		tree.setSelectBranches(true);
+		expanded().forEach(tree::expand);
 		tree.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		withIcons(tree::setIcon);
 		getThemed().add(tree);
 
-		JsonBasedTree<ProjectFile, Integer> jsonTree = new JsonBasedTree<>("jsonTree", provider)
+		JsonBasedTree<Taxon, String> jsonTree = new JsonBasedTree<>("jsonTree", provider)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getNodeData(ProjectFile file)
+			protected Object getNodeData(Taxon taxon)
 			{
-				return ProjectFiles.toJson(file, getLocale());
+				return TreeOfLife.get().toJson(taxon, getLocale());
 			}
 
 			@Override
-			protected void onSelect(AjaxRequestTarget target, ProjectFile file)
+			protected void onSelect(AjaxRequestTarget target, Taxon taxon)
 			{
-				show(file, target);
+				show(taxon, target);
 			}
 		};
 		jsonTree.setNodeTemplate(TEMPLATE);
-		jsonTree.setLabel(new ResourceModel("files"));
-		jsonTree.expand(expanded());
+		jsonTree.setLabel(new ResourceModel("treeOfLife"));
+		jsonTree.setSelectBranches(true);
+		expanded().forEach(jsonTree::expand);
 		jsonTree.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		withIcons(jsonTree::setIcon);
 		getThemed().add(jsonTree);

@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.tree;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 
@@ -24,65 +25,68 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
  * Drives the trees of {@link TreePage} and {@link TreeGridPage}: those of Wicket components and
- * of JSON in the Wicket tab, and the React and Svelte apps in theirs. A click on a folder expands
- * it, a click on a file, or Enter on it, shows the file next to the tree. Runs with
- * {@code -Pselenium}, see {@link SeleniumBrowser}.
+ * of JSON in the Wicket tab, and the React and Svelte apps in theirs. A click on a group selects
+ * and expands it, showing its card; a click on a species, or Enter on it, shows its lineage, the
+ * card of its group and its own. Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class TreeAppsBrowserTest extends FrameworkAppsTestCase
 {
 	@ParameterizedTest
 	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
-	void theTreeOfAnAppExpandsAFolderAndShowsTheFileSelected(SeleniumBrowser browser,
-		String framework)
+	void theTreeOfAnAppSelectsAGroupAndASpecies(SeleniumBrowser browser, String framework)
 	{
 		open(browser, framework, "tree");
-		wait.until(d -> node(app(), "package.json") != null);
+		wait.until(d -> node(app(), "Theropods") != null);
 
-		node(app(), "ui-components").click();
-		wait.until(d -> node(app(), "pom.xml", 2) != null);
+		node(app(), "Theropods").findElement(By.cssSelector(".antilia-tree-content")).click();
+		wait.until(d -> details(app()).contains("Theropoda"));
+		wait.until(d -> node(app(), "Tyrannosaurus rex") != null);
+		assertEquals("true", node(app(), "Theropods").getAttribute("aria-selected"));
 
-		node(app(), "package.json").click();
-		wait.until(d -> details(app()).contains("frontend/package.json"));
-		assertEquals("true", node(app(), "package.json").getAttribute("aria-selected"));
+		node(app(), "Tyrannosaurus rex").click();
+		wait.until(d -> details(app()).contains("Tyrannosaurus rex"));
+		assertTrue(details(app()).contains("Animals"), details(app()));
+		assertTrue(details(app()).contains("Theropoda"), details(app()));
+		assertEquals("true", node(app(), "Tyrannosaurus rex").getAttribute("aria-selected"));
 
-		// the keyboard: Down to the next file, Enter selects it
-		node(app(), "package.json").sendKeys(Keys.ARROW_DOWN);
+		// the keyboard: Down to the next species, Enter selects it
+		node(app(), "Tyrannosaurus rex").sendKeys(Keys.ARROW_DOWN);
 		driver.switchTo().activeElement().sendKeys(Keys.ENTER);
-		wait.until(d -> !details(app()).contains("frontend/package.json"));
+		wait.until(d -> details(app()).contains("Allosaurus fragilis"));
 		assertNoErrors();
 	}
 
 	@ParameterizedTest
 	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
-	void theTreeGridOfAnAppShowsTheColumnsAndTheFileSelected(SeleniumBrowser browser,
+	void theTreeGridOfAnAppShowsTheColumnsAndWhatIsSelected(SeleniumBrowser browser,
 		String framework)
 	{
 		open(browser, framework, "tree-grid");
-		wait.until(d -> node(app(), "package.json") != null);
+		wait.until(d -> node(app(), "Theropods") != null);
 
-		WebElement row = node(app(), "package.json");
-		assertEquals("JSON", row.findElements(By.tagName("td")).get(1).getText());
+		WebElement row = node(app(), "Theropods");
+		assertEquals("Theropoda", row.findElements(By.tagName("td")).get(1).getText());
 		// a cell, as the user clicks: geckodriver does not scroll to a row
 		row.findElement(By.cssSelector(".antilia-tree-content")).click();
-		wait.until(d -> details(app()).contains("frontend/package.json"));
+		wait.until(d -> details(app()).contains("Theropoda"));
 		assertNoErrors();
 	}
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void bothTreesOfTheWicketTabShowTheFileSelected(SeleniumBrowser browser)
+	void bothTreesOfTheWicketTabShowWhatIsSelected(SeleniumBrowser browser)
 	{
 		openWicketTab(browser, "tree");
-		bothTreesShowTheFileSelected(".antilia-tree:not(.json-tree)");
+		bothTreesShowWhatIsSelected(".antilia-tree:not(.json-tree)");
 	}
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void bothTreeGridsOfTheWicketTabShowTheFileSelected(SeleniumBrowser browser)
+	void bothTreeGridsOfTheWicketTabShowWhatIsSelected(SeleniumBrowser browser)
 	{
 		openWicketTab(browser, "tree-grid");
-		bothTreesShowTheFileSelected(".antilia-tree-grid:not(.json-tree)");
+		bothTreesShowWhatIsSelected(".antilia-tree-grid:not(.json-tree)");
 	}
 
 	private void openWicketTab(SeleniumBrowser browser, String path)
@@ -95,24 +99,28 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 	}
 
 	/**
-	 * Selects a file in the tree of components, then one in the JSON tree, the folder frontend
-	 * expanded in both.
+	 * Selects a group in the tree of components, then a species in the JSON tree, the way to the
+	 * dinosaurs expanded in both.
 	 */
-	private void bothTreesShowTheFileSelected(String componentsTree)
+	private void bothTreesShowWhatIsSelected(String componentsTree)
 	{
 		WebElement wicket = driver.findElement(By.cssSelector("[data-framework-panel='wicket']"));
 		WebElement tree = wicket.findElement(By.cssSelector(componentsTree));
 		wait.until(d -> tree.findElements(By.cssSelector(".antilia-tree-node-button")).stream()
-			.anyMatch(button -> button.getText().equals("package.json")));
+			.anyMatch(button -> button.getText().equals("Dinosaurs")));
 		tree.findElements(By.cssSelector(".antilia-tree-node-button")).stream()
-			.filter(button -> button.getText().equals("package.json")).findFirst().orElseThrow()
+			.filter(button -> button.getText().equals("Dinosaurs")).findFirst().orElseThrow()
 			.click();
-		wait.until(d -> details(wicket).contains("frontend/package.json"));
+		wait.until(d -> details(wicket).contains("Dinosauria"));
 
 		WebElement jsonTree = wicket.findElement(By.cssSelector(".json-tree"));
-		wait.until(d -> node(jsonTree, "README.md") != null);
-		node(jsonTree, "README.md").findElement(By.cssSelector(".antilia-tree-content")).click();
-		wait.until(d -> details(wicket).contains("frontend/README.md"));
+		wait.until(d -> node(jsonTree, "Ornithischians") != null);
+		node(jsonTree, "Ornithischians").findElement(By.cssSelector(".antilia-tree-content"))
+			.click();
+		wait.until(d -> node(jsonTree, "Triceratops") != null);
+		node(jsonTree, "Triceratops").findElement(By.cssSelector(".antilia-tree-content")).click();
+		wait.until(d -> details(wicket).contains("Triceratops horridus"));
+		assertTrue(details(wicket).contains("Ornithischia"), details(wicket));
 		assertNoErrors();
 	}
 
@@ -139,6 +147,6 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 
 	private static String details(SearchContext context)
 	{
-		return context.findElement(By.cssSelector(".tree-demo-file")).getText();
+		return context.findElement(By.cssSelector(".tree-demo-taxon")).getText();
 	}
 }

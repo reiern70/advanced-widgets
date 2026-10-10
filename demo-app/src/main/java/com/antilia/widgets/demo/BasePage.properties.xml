@@ -30,9 +30,9 @@
 	<entry key="demo.jsonList">JSON Infinite List</entry>
 	<entry key="demo.jsonList.description">A thousand users as cards, rendered in the browser from JSON and loaded as you scroll.</entry>
 	<entry key="demo.tree">Tree</entry>
-	<entry key="demo.tree.description">Your files in a tree, as Wicket components or rendered in the browser from JSON.</entry>
+	<entry key="demo.tree.description">The tree of life, from fungi to dinosaurs, as Wicket components or rendered in the browser from JSON.</entry>
 	<entry key="demo.treeGrid">Tree Grid</entry>
-	<entry key="demo.treeGrid.description">Your files in a tree grid, with their kinds, sizes and the days they changed.</entry>
+	<entry key="demo.treeGrid.description">The tree of life in a tree grid, with scientific names, ranks and the periods they lived in.</entry>
 	<entry key="demo.masterDetail">Master and Detail</entry>
 	<entry key="demo.masterDetail.description">The countries of the users and the users of the one you choose, in two tables.</entry>
 	<entry key="demo.progressBar">Progress Bar</entry>

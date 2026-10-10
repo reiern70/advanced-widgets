@@ -7,10 +7,10 @@ import { useMemo, useState } from 'react';
 
 import { Dropdown, Tree, TreeGrid } from '@antilia/react';
 
-import { iconSetOptions, loadFiles, resizeMode, resizingOptions, type FileData, type IconSet,
-	type Resizing, type TreeDemoConfig, type TreeDemoTexts, type TreeGridDemoConfig }
+import { iconSetOptions, loadTaxa, resizeMode, resizingOptions, type IconSet, type Resizing,
+	type TaxonData, type TreeDemoConfig, type TreeDemoTexts, type TreeGridDemoConfig }
 	from '../tree.js';
-import { FileDetails } from './FileDetails.js';
+import { TaxonDetails } from './TaxonDetails.js';
 
 /** The drop-down choosing the icons of the trees, as that of the Wicket page does. */
 function IconsChoice({ id, value, texts, onChange }: { id: string; value: IconSet;
@@ -26,13 +26,13 @@ function IconsChoice({ id, value, texts, onChange }: { id: string; value: IconSe
 }
 
 /**
- * The tree demo in React: the files of antilia-widgets in a Tree, loaded from the files resource
- * folder by folder; the file selected is shown next to it. The drop-down above it chooses its
- * icons.
+ * The tree demo in React: the tree of life in a Tree, loaded from the tree of life resource group
+ * by group, groups selected as well as species; the cards of what is selected are shown next to
+ * it. The drop-down above it chooses its icons.
  */
 export function TreeDemo({ config }: { config: TreeDemoConfig }) {
-	const load = useMemo(() => loadFiles(config.filesUrl), [config.filesUrl]);
-	const [file, setFile] = useState<FileData | null>(null);
+	const load = useMemo(() => loadTaxa(config.dataUrl), [config.dataUrl]);
+	const [taxon, setTaxon] = useState<TaxonData | null>(null);
 	const [icons, setIcons] = useState<IconSet>(config.icons);
 	return (
 		<div className="tree-demo tree-demo--single">
@@ -41,26 +41,26 @@ export function TreeDemo({ config }: { config: TreeDemoConfig }) {
 					<IconsChoice id="react-tree-icons" value={icons} texts={config.texts}
 						onChange={setIcons} />
 				</div>
-				<Tree load={load} template={config.template} label={config.texts.files}
+				<Tree load={load} template={config.template} label={config.texts.treeOfLife} selectBranches
 					expanded={config.expanded} texts={config.texts.tree} height={config.height}
 					icons={config.iconSets[icons]} className="tree-demo__box"
-					onSelect={(_key, data) => setFile(data as FileData)} />
+					onSelect={(_key, data) => setTaxon(data as TaxonData)} />
 			</div>
 			<aside className="tree-demo__details">
-				<FileDetails file={file} texts={config.texts} />
+				<TaxonDetails taxon={taxon} texts={config.texts} />
 			</aside>
 		</div>
 	);
 }
 
 /**
- * The tree grid demo in React: the files of antilia-widgets in a TreeGrid with the columns of
- * the Wicket one; the file selected is shown next to it. The drop-downs above it choose how its
+ * The tree grid demo in React: the tree of life in a TreeGrid with the columns of the Wicket
+ * one, groups selected as well as species; the cards of what is selected are shown next to it. The drop-downs above it choose how its
  * columns are resized and its icons, as those of the Wicket page do.
  */
 export function TreeGridDemo({ config }: { config: TreeGridDemoConfig }) {
-	const load = useMemo(() => loadFiles(config.filesUrl), [config.filesUrl]);
-	const [file, setFile] = useState<FileData | null>(null);
+	const load = useMemo(() => loadTaxa(config.dataUrl), [config.dataUrl]);
+	const [taxon, setTaxon] = useState<TaxonData | null>(null);
 	const [resizing, setResizing] = useState<Resizing>(config.resizableColumns);
 	const [icons, setIcons] = useState<IconSet>(config.icons);
 	const texts = config.texts;
@@ -77,15 +77,15 @@ export function TreeGridDemo({ config }: { config: TreeGridDemoConfig }) {
 					<IconsChoice id="react-tree-grid-icons" value={icons} texts={texts}
 						onChange={setIcons} />
 				</div>
-				<TreeGrid load={load} template={config.template} label={texts.files}
+				<TreeGrid load={load} template={config.template} label={texts.treeOfLife} selectBranches
 					header={config.header} columns={config.columns} expanded={config.expanded}
 					texts={texts.tree} height={config.height} icons={config.iconSets[icons]}
 					resizableColumns={resizeMode(resizing)}
 					className="tree-demo__box tree-demo__box--table"
-					onSelect={(_key, data) => setFile(data as FileData)} />
+					onSelect={(_key, data) => setTaxon(data as TaxonData)} />
 			</div>
 			<aside className="tree-demo__details">
-				<FileDetails file={file} texts={config.texts} />
+				<TaxonDetails taxon={taxon} texts={config.texts} />
 			</aside>
 		</div>
 	);

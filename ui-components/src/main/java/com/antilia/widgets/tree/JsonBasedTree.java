@@ -69,9 +69,11 @@ import com.github.openjson.JSONObject;
  * The tree is a WAI-ARIA tree: Up and Down move to the node before and after, Right expands a
  * folder or moves to its first child, Left collapses it or moves to its parent, Home and End move
  * to the first and the last node, Enter and Space select a leaf or expand and collapse a folder.
- * A click does the same. Only leaves are selected: the browser marks the leaf selected right away
- * and tells the tree, which calls {@link #onSelect(AjaxRequestTarget, Object)}, where the
- * application updates what shows the leaf. Expanding and collapsing is done in the browser; the
+ * A click does the same. Only leaves are selected, unless {@link #setSelectBranches(boolean)} has
+ * folders selected too: then a click, Enter or Space selects a folder, and expands it if it is
+ * collapsed, its arrow still expanding and collapsing it. The browser marks the node selected
+ * right away and tells the tree, which calls {@link #onSelect(AjaxRequestTarget, Object)}, where
+ * the application updates what shows the node. Expanding and collapsing is done in the browser; the
  * tree is told, so it renders the same folders expanded when it is rendered again.
  * <p>
  * The {@link IJsonTreeProvider provider} knows the key of every node, which ties a node in the
@@ -117,7 +119,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	/** The CSS class of the trees rendered from JSON. */
 	public static final String CSS_CLASS = "json-tree";
 
-	/** The action the browser sends when the user selects a leaf. */
+	/** The action the browser sends when the user selects a node. */
 	public static final String SELECT_ACTION = "_antilia-select";
 
 	/** The action the browser sends when the user expands a folder. */
@@ -149,6 +151,8 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	private final DataBehavior dataBehavior;
 
 	private K selected;
+
+	private boolean selectBranches;
 
 	private String nodeTemplate;
 
@@ -206,13 +210,13 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
-	 * Called when the user selects a leaf, which the browser shows selected already. Does
-	 * nothing by default.
+	 * Called when the user selects a leaf, or a folder when they are selected too, which the
+	 * browser shows selected already. Does nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target
 	 * @param node
-	 *            the leaf
+	 *            the node
 	 */
 	protected void onSelect(AjaxRequestTarget target, T node)
 	{
@@ -275,11 +279,33 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
-	 * Selects a leaf when the tree is rendered next, without telling
+	 * @return whether folders are selected too, not only leaves
+	 */
+	public boolean isSelectBranches()
+	{
+		return selectBranches;
+	}
+
+	/**
+	 * Has folders selected too, not only leaves: a click on a folder, Enter or Space selects it,
+	 * and expands it if it is collapsed; a click on its arrow still expands or collapses it.
+	 *
+	 * @param selectBranches
+	 *            whether folders are selected too
+	 * @return {@code this}
+	 */
+	public JsonBasedTree<T, K> setSelectBranches(boolean selectBranches)
+	{
+		this.selectBranches = selectBranches;
+		return this;
+	}
+
+	/**
+	 * Selects a node when the tree is rendered next, without telling
 	 * {@link #onSelect(AjaxRequestTarget, Object)}.
 	 *
 	 * @param node
-	 *            the leaf, {@code null} for none
+	 *            the leaf, or a folder when they are selected too, {@code null} for none
 	 * @return {@code this}
 	 */
 	public JsonBasedTree<T, K> setSelected(T node)
@@ -289,7 +315,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
-	 * @return the leaf selected, {@code null} if none is, or it no longer exists
+	 * @return the node selected, {@code null} if none is, or it no longer exists
 	 */
 	public T getSelected()
 	{
@@ -621,6 +647,10 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 		{
 			config.put("selected", provider.formatKey(selected));
 		}
+		if (selectBranches)
+		{
+			config.put("selectBranches", true);
+		}
 		if (height > 0)
 		{
 			config.put("height", new JSONObject().put("value", height)
@@ -735,7 +765,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 		}
 		else if (SELECT_ACTION.equals(action))
 		{
-			if (provider.hasChildren(node))
+			if (!selectBranches && provider.hasChildren(node))
 			{
 				onNotFoundAction(target, action, key, node);
 			}

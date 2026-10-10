@@ -23,8 +23,8 @@ import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
 /**
- * What a {@link Tree} and a {@link TreeGrid} share: the leaf selected, kept as the model the
- * provider gives it, the icons of the application's own and the height within which the tree
+ * What a {@link Tree} and a {@link TreeGrid} share: the node selected, kept as the model the
+ * provider gives it, whether folders are selected too, the icons of the application's own and the height within which the tree
  * scrolls.
  *
  * @param <T>
@@ -40,6 +40,8 @@ final class TreeSupport<T> implements IDetachable
 	private final Map<TreeIcon, IIcon> icons = new EnumMap<>(TreeIcon.class);
 
 	private IModel<T> selected;
+
+	private boolean selectBranches;
 
 	private int height = -1;
 
@@ -138,6 +140,16 @@ final class TreeSupport<T> implements IDetachable
 	IIcon getIcon(boolean leaf, boolean expanded)
 	{
 		return getIcon(leaf ? TreeIcon.LEAF : expanded ? TreeIcon.FOLDER_OPEN : TreeIcon.FOLDER);
+	}
+
+	boolean isSelectBranches()
+	{
+		return selectBranches;
+	}
+
+	void setSelectBranches(boolean selectBranches)
+	{
+		this.selectBranches = selectBranches;
 	}
 
 	T getSelected()

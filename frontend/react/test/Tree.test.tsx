@@ -77,6 +77,18 @@ describe('Tree', () => {
 		expect(onSelect).toHaveBeenCalledTimes(1);
 	});
 
+	it('selects a folder too with selectBranches, expanding it', async () => {
+		const onSelect = vi.fn();
+		const { container } = render(<Tree load={load} template="{{name}}" selectBranches
+			onSelect={onSelect} />);
+		await waitFor(() => expect(shown(container).length).toBe(2));
+
+		fireEvent.click(item(container, 'docs'));
+		expect(onSelect).toHaveBeenCalledWith('docs', { name: 'docs', size: '' });
+		expect(item(container, 'docs').getAttribute('aria-selected')).toBe('true');
+		await waitFor(() => expect(shown(container)).toEqual(['docs', 'readme.md', 'notes.txt']));
+	});
+
 	it('expands and repaints through its ref', async () => {
 		const ref = createRef<TreeHandle>();
 		const { container } = render(<Tree ref={ref} load={load} template="{{name}}" />);

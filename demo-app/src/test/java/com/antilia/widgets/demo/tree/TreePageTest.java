@@ -4,6 +4,7 @@
  */
 package com.antilia.widgets.demo.tree;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
@@ -22,8 +23,8 @@ import com.antilia.widgets.tree.JsonBasedTree;
 import com.antilia.widgets.tree.Tree;
 
 /**
- * Shows the files of antilia-widgets in the trees of {@link TreePage}, and the file selected in
- * either next to them.
+ * Shows the tree of life in the trees of {@link TreePage}, and the cards of the group or the
+ * species selected in either next to them.
  */
 class TreePageTest
 {
@@ -43,66 +44,81 @@ class TreePageTest
 	}
 
 	@Test
-	void showsTheFilesInBothTreesTheFolderFrontendExpanded()
+	void showsTheTreeOfLifeInBothTreesTheWayToTheDinosaursExpanded()
 	{
 		tester.assertComponent("themed:tree", Tree.class);
 		tester.assertComponent("themed:jsonTree", JsonBasedTree.class);
-		// the children of frontend, in the tree of components and in the JSON
-		tester.assertContains(">package.json<");
-		tester.assertContains(Pattern.quote("\"expanded\":[\"" + FilesDemoPage.expanded().id() +
-			"\"]"));
-		tester.assertContains(Pattern.quote("\"name\":\"package.json\""));
-		tester.assertContains(Pattern.quote("\"label\":\"Project files\""));
-		tester.assertContains(Pattern.quote("Select a file in a tree to see it here."));
+		// the children of the dinosaurs, in the tree of components and in the JSON
+		tester.assertContains(">Theropods<");
+		tester.assertContains(Pattern.quote("\"expanded\":[\"animals\",\"vertebrates\"," +
+			"\"reptiles\",\"dinosaurs\"]"));
+		tester.assertContains(Pattern.quote("\"name\":\"Theropods\""));
+		tester.assertContains(Pattern.quote("\"selectBranches\":true"));
+		tester.assertContains(Pattern.quote("\"label\":\"Tree of life\""));
+		tester.assertContains(Pattern.quote("Select a group or a species in a tree"));
 	}
 
 	@Test
-	void aFileSelectedInTheTreeOfComponentsIsShownNextToIt()
+	void aGroupSelectedInTheTreeOfComponentsShowsItsCardAndExpands()
 	{
-		ProjectFile readme = ProjectFiles.get().byPath("frontend/README.md");
-		Component link = linkOf(readme);
-		tester.executeAjaxEvent(link, "click");
+		tester.executeAjaxEvent(linkOf(TreeOfLife.get().byId("theropods")), "click");
 
 		tester.assertComponentOnAjaxResponse("themed:details");
 		String response = tester.getLastResponseAsString();
-		assertTrue(response.contains("frontend/README.md"), response);
-		assertTrue(response.contains(">Markdown<"), response);
+		assertTrue(response.contains("tree-demo-card--group"), response);
+		assertTrue(response.contains(">Theropoda<"), response);
+		assertTrue(response.contains(">Tyrannosaurus rex<"), "the theropods are expanded");
+		assertFalse(response.contains("tree-demo-card--species"), response);
 	}
 
 	@Test
-	void aFileSelectedInTheJsonTreeIsShownNextToIt()
+	void aSpeciesSelectedShowsItsLineageTheCardOfItsGroupAndItsOwn()
+	{
+		tester.executeAjaxEvent(linkOf(TreeOfLife.get().byId("theropods")), "click");
+		tester.executeAjaxEvent(linkOf(TreeOfLife.get().byId("tyrannosaurus")), "click");
+
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("<span>Animals</span>"), response);
+		assertTrue(response.contains("aria-current=\"true\"><span>Tyrannosaurus rex</span>"),
+			response);
+		assertTrue(response.contains(">Theropoda<"), "the card of its group: " + response);
+		assertTrue(response.contains("tree-demo-card--species"), response);
+		assertTrue(response.contains(">68–66 Ma<"), response);
+		assertTrue(response.contains(">Cretaceous<"), response);
+	}
+
+	@Test
+	void aGroupSelectedInTheJsonTreeIsShownNextToIt()
 	{
 		JsonBasedTree<?, ?> tree = (JsonBasedTree<?, ?>)tester.getComponentFromLastRenderedPage(
 			"themed:jsonTree");
-		ProjectFile pom = ProjectFiles.get().byPath("pom.xml");
 		tester.getRequest().getPostParameters().setParameterValue("action",
 			JsonBasedTree.SELECT_ACTION);
-		tester.getRequest().getPostParameters().setParameterValue("key",
-			String.valueOf(pom.id()));
+		tester.getRequest().getPostParameters().setParameterValue("key", "fungi");
 		tester.executeBehavior(tree.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
 
 		tester.assertComponentOnAjaxResponse("themed:details");
-		assertTrue(tester.getLastResponseAsString().contains(">pom.xml<"));
+		assertTrue(tester.getLastResponseAsString().contains(">Fungi<"));
 	}
 
 	@Test
-	void theTextsAndTheFilesAreInSpanishToo()
+	void theTextsAndTheTreeAreInSpanishToo()
 	{
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(TreePage.class);
 
 		tester.assertContains(Pattern.quote("Ejemplo de Tree y JsonBasedTree"));
-		tester.assertContains(Pattern.quote("\"kind\":\"Carpeta\""));
+		tester.assertContains(Pattern.quote("\"name\":\"Terópodos\""));
 		tester.assertContains(Pattern.quote("\"loading\":\"Cargando…\""));
-		tester.assertContains(Pattern.quote("Archivos del proyecto"));
+		tester.assertContains(Pattern.quote("Árbol de la vida"));
 	}
 
 	@Test
-	void theAppsGetTheFilesTheTextsAndTheLicenseKey()
+	void theAppsGetTheTreeTheTextsAndTheLicenseKey()
 	{
 		String page = tester.getLastResponseAsString();
 		assertTrue(page.contains("data-demo=\"tree\""), page);
-		assertTrue(page.contains("api/files"), page);
+		assertTrue(page.contains("api/tree-of-life"), page);
 		assertTrue(page.contains("&quot;licenseKey&quot;:&quot;AW1."), page);
 		assertTrue(page.contains("&quot;unlicensed&quot;"), page);
 	}
@@ -110,12 +126,12 @@ class TreePageTest
 	/**
 	 * @return the button of a node of the tree of components
 	 */
-	private Component linkOf(ProjectFile file)
+	private Component linkOf(Taxon taxon)
 	{
 		Tree<?> tree = (Tree<?>)tester.getComponentFromLastRenderedPage("themed:tree");
 		return tree.visitChildren(Component.class, (Component component,
 			IVisit<Component> visit) -> {
-			if ("link".equals(component.getId()) && file.equals(component.getParent()
+			if ("link".equals(component.getId()) && taxon.equals(component.getParent()
 				.getDefaultModelObject()))
 			{
 				visit.stop(component);

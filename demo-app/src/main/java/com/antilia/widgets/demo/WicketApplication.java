@@ -33,10 +33,10 @@ import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
-import com.antilia.widgets.demo.tree.FilesResource;
 import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.demo.tree.TreeGridPage;
+import com.antilia.widgets.demo.tree.TreeOfLifeResource;
 
 /**
  * Application object for your web application.
@@ -122,7 +122,7 @@ public class WicketApplication extends WebApplication
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
-		mountResource(FilesResource.PATH, FilesResource.REFERENCE);
+		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
 	}
 

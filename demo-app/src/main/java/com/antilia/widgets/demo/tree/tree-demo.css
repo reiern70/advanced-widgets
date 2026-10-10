@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * The tree examples, in Wicket, React and Svelte: the trees side by side, or the tree grids one
- * above the other, and the file selected next to them.
+ * above the other, and the cards of the group or the species selected next to them.
  */
 .tree-demo {
 	display: grid;
@@ -71,47 +71,105 @@
 	top: 1em;
 }
 
-.tree-demo-file {
+/* the group or the species selected: its lineage, the card of its group and that of the species */
+.tree-demo-taxon {
+	display: grid;
+	gap: 0.75em;
+}
+
+.tree-demo-taxon__title {
+	margin: 0;
+	font-size: 1.05em;
+}
+
+.tree-demo-taxon__lineage {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2em 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.9em;
+}
+
+.tree-demo-taxon__lineage li + li::before {
+	content: "›";
+	margin: 0 0.4em;
+	opacity: 0.6;
+}
+
+.tree-demo-taxon__lineage [aria-current] {
+	font-weight: 600;
+}
+
+.tree-demo-taxon__none {
+	margin: 0;
+	padding: 1em;
+	border: 1px dashed var(--antilia-theme-border, #ddd);
+	border-radius: 0.6em;
+	opacity: 0.8;
+}
+
+.tree-demo-card {
 	padding: 1em;
 	border: 1px solid var(--antilia-theme-border, #ddd);
 	border-radius: 0.6em;
 	background: var(--antilia-theme-surface, Canvas);
 }
 
-.tree-demo-file__title {
-	margin: 0 0 0.75em;
-	font-size: 1.05em;
+/* the card of a species, below that of its group */
+.tree-demo-card--species {
+	border-left: 0.3em solid var(--antilia-theme-accent, #2f6fdf);
 }
 
-.tree-demo-file__facts {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	gap: 0.4em 1em;
+.tree-demo-card > p,
+.tree-demo-card > h3 {
 	margin: 0;
 }
 
-.tree-demo-file__facts dt {
+.tree-demo-card__rank {
+	font-size: 0.8em;
 	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	opacity: 0.7;
+}
+
+.tree-demo-card__name {
+	margin-top: 0.15em;
+	font-size: 1.2em;
+}
+
+/* the scientific names, in the cards and in the cells of the tree grids, not in their headers */
+.tree-demo-card__scientific,
+:not(th).tree-demo-scientific {
+	font-style: italic;
+}
+
+.tree-demo-card__scientific {
 	opacity: 0.8;
 }
 
-.tree-demo-file__facts dd {
+.tree-demo-card > .tree-demo-card__description {
+	margin: 0.6em 0 0.75em;
+	line-height: 1.45;
+}
+
+.tree-demo-card__facts {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 0.3em 1em;
 	margin: 0;
-	overflow-wrap: anywhere;
-}
-
-.tree-demo-file__name {
-	font-weight: 600;
-}
-
-.tree-demo-file__path {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.9em;
 }
 
-.tree-demo-file__none {
-	margin: 0;
+.tree-demo-card__facts dt {
+	font-weight: 600;
 	opacity: 0.8;
+}
+
+.tree-demo-card__facts dd {
+	margin: 0;
 }
 
 @media (max-width: 64em) {

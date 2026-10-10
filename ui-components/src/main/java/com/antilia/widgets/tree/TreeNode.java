@@ -115,10 +115,10 @@ class TreeNode<T> extends Node<T>
 		if (renderer.isLeaf(node))
 		{
 			tag.append("class", "antilia-tree-node--leaf", " ");
-			if (renderer.isSelected(node))
-			{
-				tag.append("class", "antilia-tree-node--selected", " ");
-			}
+		}
+		if (renderer.isSelectable(node) && renderer.isSelected(node))
+		{
+			tag.append("class", "antilia-tree-node--selected", " ");
 		}
 	}
 }

@@ -28,21 +28,23 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * The files of antilia-widgets in a {@link TreeGrid} of Wicket components and in a
- * {@link JsonBasedTreeGrid} rendered in the browser from JSON, one above the other, with their
- * kinds, sizes and the days they were changed; the file selected in either is shown next to them.
- * A drop-down above them chooses whether and how their columns are resized. The React and Svelte tabs show the same files in the TreeGrid of
- * {@code @antilia/react} and {@code @antilia/svelte}.
+ * The {@link TreeOfLife} in a {@link TreeGrid} of Wicket components and in a
+ * {@link JsonBasedTreeGrid} rendered in the browser from JSON, one above the other, with the
+ * scientific names, the ranks, the periods and the times of the groups and the species, both
+ * selecting groups as well as species; the cards of what is selected in either are shown next to
+ * them. A drop-down above them chooses whether and how their columns are resized. The React and
+ * Svelte tabs show the same tree in the TreeGrid of {@code @antilia/react} and
+ * {@code @antilia/svelte}.
  */
-public class TreeGridPage extends FilesDemoPage
+public class TreeGridPage extends TreeOfLifeDemoPage
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The CSS class of the columns of numbers. */
-	private static final String NUMBER = "antilia-tree-number";
+	/** The CSS class of the column of the scientific names, written in italics. */
+	private static final String SCIENTIFIC = "tree-demo-scientific";
 
 	/** The columns after the tree column, by the key of their header and of the data they show. */
-	private static final List<String> COLUMNS = List.of("kind", "size", "modified");
+	private static final List<String> COLUMNS = List.of("scientific", "rank", "period", "lived");
 
 	/** How the columns are resized, by the keys of the choices of the drop-down. */
 	private static final List<String> RESIZING = List.of("none", "fit", "stretch");
@@ -50,29 +52,35 @@ public class TreeGridPage extends FilesDemoPage
 	/** How the columns are resized at first. */
 	private static final Mode RESIZED = Mode.FIT;
 
-	private final TreeGrid<ProjectFile, String> treeGrid;
+	private final TreeGrid<Taxon, String> treeGrid;
 
-	private final JsonBasedTreeGrid<ProjectFile, Integer> jsonTreeGrid;
+	private final JsonBasedTreeGrid<Taxon, String> jsonTreeGrid;
 
 	/**
 	 * Constructor.
 	 */
 	public TreeGridPage()
 	{
-		ProjectFilesProvider provider = new ProjectFilesProvider();
+		TreeOfLifeProvider provider = new TreeOfLifeProvider();
 
-		treeGrid = new TreeGrid<>("treeGrid", columns(),
-			provider)
+		treeGrid = new TreeGrid<>("treeGrid", columns(), provider)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void onSelect(AjaxRequestTarget target, ProjectFile file)
+			public IModel<?> newLabelModel(IModel<Taxon> taxon)
 			{
-				show(file, target);
+				return () -> TreeOfLife.name(taxon.getObject(), getLocale());
+			}
+
+			@Override
+			protected void onSelect(AjaxRequestTarget target, Taxon taxon)
+			{
+				show(taxon, target);
 			}
 		};
-		treeGrid.expand(expanded());
+		treeGrid.setSelectBranches(true);
+		expanded().forEach(treeGrid::expand);
 		treeGrid.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		treeGrid.setResizableColumns(RESIZED);
 		treeGrid.setOutputMarkupId(true);
@@ -85,26 +93,27 @@ public class TreeGridPage extends FilesDemoPage
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getNodeData(ProjectFile file)
+			protected Object getNodeData(Taxon taxon)
 			{
-				return ProjectFiles.toJson(file, getLocale());
+				return TreeOfLife.get().toJson(taxon, getLocale());
 			}
 
 			@Override
-			protected void onSelect(AjaxRequestTarget target, ProjectFile file)
+			protected void onSelect(AjaxRequestTarget target, Taxon taxon)
 			{
-				show(file, target);
+				show(taxon, target);
 			}
 		};
 		jsonTreeGrid.setNodeTemplate(TEMPLATE);
-		jsonTreeGrid.setLabel(new ResourceModel("files"));
+		jsonTreeGrid.setLabel(new ResourceModel("treeOfLife"));
+		jsonTreeGrid.setSelectBranches(true);
 		jsonTreeGrid.setTreeHeader(new ResourceModel("name"));
 		for (String column : COLUMNS)
 		{
 			jsonTreeGrid.addColumn(new ResourceModel(column), "{{" + column + "}}",
 				cssClassOf(column));
 		}
-		jsonTreeGrid.expand(expanded());
+		expanded().forEach(jsonTreeGrid::expand);
 		jsonTreeGrid.setHeight(getTreeHeight(), BodyHeightUnits.PIXELS);
 		jsonTreeGrid.setResizableColumns(RESIZED);
 		jsonTreeGrid.setOutputMarkupId(true);
@@ -165,12 +174,12 @@ public class TreeGridPage extends FilesDemoPage
 	}
 
 	/**
-	 * @return the columns of the tree grid of Wicket components: the tree, then the kind, the
-	 *         size and the day changed, as the details of a file show them
+	 * @return the columns of the tree grid of Wicket components: the tree, then the scientific
+	 *         name, the rank, the periods and the times, as the cards show them
 	 */
-	private static List<IColumn<ProjectFile, String>> columns()
+	private static List<IColumn<Taxon, String>> columns()
 	{
-		List<IColumn<ProjectFile, String>> columns = new ArrayList<>();
+		List<IColumn<Taxon, String>> columns = new ArrayList<>();
 		columns.add(new TreeColumn<>(new ResourceModel("name")));
 		for (String column : COLUMNS)
 		{
@@ -179,11 +188,11 @@ public class TreeGridPage extends FilesDemoPage
 		return columns;
 	}
 
-	private static IColumn<ProjectFile, String> newColumn(IModel<String> header, String property)
+	private static IColumn<Taxon, String> newColumn(IModel<String> header, String property)
 	{
 		String cssClass = cssClassOf(property);
 		return new LambdaColumn<>(header,
-			file -> ProjectFiles.toJson(file, Session.get().getLocale()).get(property))
+			taxon -> TreeOfLife.card(taxon, Session.get().getLocale()).get(property))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -197,7 +206,7 @@ public class TreeGridPage extends FilesDemoPage
 
 	private static String cssClassOf(String column)
 	{
-		return "size".equals(column) ? NUMBER : null;
+		return "scientific".equals(column) ? SCIENTIFIC : null;
 	}
 
 	@Override

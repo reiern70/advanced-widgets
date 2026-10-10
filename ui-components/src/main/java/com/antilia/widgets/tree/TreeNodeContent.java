@@ -14,7 +14,8 @@ import org.apache.wicket.model.IModel;
 
 /**
  * The content of a node of a {@link Tree} or a {@link TreeGrid}: a button holding its icon and
- * its text, which selects a leaf and expands or collapses a folder.
+ * its text, which selects a leaf and expands or collapses a folder, or selects it when the tree
+ * selects folders too.
  *
  * @param <T>
  *            the type of the nodes
@@ -45,14 +46,11 @@ class TreeNodeContent<T> extends Panel
 			{
 				super.onComponentTag(tag);
 				T node = getNode();
-				if (renderer.isLeaf(node))
+				if (renderer.isSelectable(node) && renderer.isSelected(node))
 				{
-					if (renderer.isSelected(node))
-					{
-						tag.put("aria-current", "true");
-					}
+					tag.put("aria-current", "true");
 				}
-				else
+				if (!renderer.isLeaf(node))
 				{
 					tag.put("aria-expanded", String.valueOf(isExpanded()));
 				}

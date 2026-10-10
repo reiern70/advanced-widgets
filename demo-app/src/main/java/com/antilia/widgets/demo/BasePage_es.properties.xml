@@ -30,9 +30,9 @@
 	<entry key="demo.jsonList">Lista infinita JSON</entry>
 	<entry key="demo.jsonList.description">Mil usuarios como tarjetas, generadas en el navegador a partir de JSON y cargadas al desplazarse.</entry>
 	<entry key="demo.tree">Árbol</entry>
-	<entry key="demo.tree.description">Sus archivos en un árbol, como componentes Wicket o generados en el navegador a partir de JSON.</entry>
+	<entry key="demo.tree.description">El árbol de la vida, de los hongos a los dinosaurios, como componentes Wicket o generado en el navegador a partir de JSON.</entry>
 	<entry key="demo.treeGrid">Cuadrícula en árbol</entry>
-	<entry key="demo.treeGrid.description">Sus archivos en una cuadrícula en árbol, con su tipo, tamaño y día de modificación.</entry>
+	<entry key="demo.treeGrid.description">El árbol de la vida en una cuadrícula en árbol, con nombres científicos, rangos y los periodos en que vivieron.</entry>
 	<entry key="demo.masterDetail">Maestra y detalle</entry>
 	<entry key="demo.masterDetail.description">Los países de los usuarios y los usuarios del que elija, en dos tablas.</entry>
 	<entry key="demo.progressBar">Barra de progreso</entry>

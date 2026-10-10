@@ -65,6 +65,18 @@ describe('Tree', () => {
 		expect(item(container, 'readme').getAttribute('aria-selected')).toBe('true');
 	});
 
+	it('selects a folder too with selectBranches, expanding it', async () => {
+		const onselect = vi.fn();
+		const { container } = render(Tree, { load, template: '{{name}}', selectBranches: true,
+			onselect });
+		await waitFor(() => expect(shown(container).length).toBe(2));
+
+		await fireEvent.click(item(container, 'docs'));
+		expect(onselect).toHaveBeenCalledWith('docs', { name: 'docs', size: '' });
+		expect(item(container, 'docs').getAttribute('aria-selected')).toBe('true');
+		await waitFor(() => expect(shown(container)).toEqual(['docs', 'readme.md', 'notes.txt']));
+	});
+
 	it('follows the selected prop', async () => {
 		const { container, rerender } = render(Tree, { load, template: '{{name}}',
 			selected: 'notes' });
