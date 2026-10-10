@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="palette-demo">
+	<form wicket:id="form" class="palette-demo__form">
+		<section>
+			<h3><wicket:message key="unordered"/></h3>
+			<label class="palette-demo__check"><input type="checkbox" wicket:id="filterable"/> <wicket:message key="filterable"/></label>
+			<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="skills"></select></div>
+		</section>
+		<section>
+			<h3><wicket:message key="orderedTitle"/></h3>
+			<div class="palette-demo__checks">
+				<label class="palette-demo__check"><input type="checkbox" wicket:id="ordered"/> <wicket:message key="ordered"/></label>
+				<label class="palette-demo__check"><input type="checkbox" wicket:id="numbered"/> <wicket:message key="numbered"/></label>
+			</div>
+			<div class="palette-demo__field"><span><wicket:message key="columns"/></span> <select wicket:id="columns"></select></div>
+		</section>
+		<section>
+			<h3><wicket:message key="disabledTitle"/></h3>
+			<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="disabled"></select></div>
+		</section>
+		<p><button type="submit" class="palette-demo__send"><wicket:message key="send"/></button></p>
+	</form>
+	<p wicket:id="choices" class="palette-demo__choices">[choices]</p>
+	<div wicket:id="feedback"></div>
+</div>
+</wicket:extend>
+</body>
+</html>

@@ -18,6 +18,7 @@ import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
 import { ModalDemo } from './react/ModalDemo.js';
+import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
@@ -33,6 +34,7 @@ function app<C>(App: ComponentType<{ config: C }>): Mount {
 startApps('react', {
 	dropdown: app(DropdownDemo),
 	autocomplete: app(AutocompleteDemo),
+	palette: app(PaletteDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),

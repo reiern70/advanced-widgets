@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Paleta</entry>
+	<entry key="explanation">&lt;p&gt;Palette de ui-components elige varios valores entre muchos: los disponibles a la izquierda, los elegidos a la derecha y entre ellos flechas que llevan los resaltados, o todos, de un lado al otro. Un clic resalta una opción, con Ctrl o Mayús varias; un doble clic, Intro o arrastrarla a la otra lista también la mueve. Los disponibles tienen un filtro a partir de ocho opciones. Todo ocurre en el navegador: el select nativo permanece oculto en la página y guarda la elección, de modo que un formulario la envía como siempre y un comportamiento Ajax en su evento change recibe el aviso como con un select nativo.&lt;/p&gt;&lt;p&gt;Cuando el orden importa, los elegidos conservan el orden en que se eligieron y se suben y bajan con los botones de al lado, con Alt y las flechas o arrastrándolos a su sitio; el formulario los envía en ese orden y el modelo lo conserva. Sin la marca, las columnas vuelven a mostrarse en el orden de las opciones. Sin la marca de las habilidades no tienen filtro: filtra en el navegador, sobre las opciones que la página generó, sin preguntar al servidor. La paleta de las columnas tiene títulos propios, y la otra casilla numera sus filas o no. El texto bajo el formulario sigue cada cambio por Ajax.&lt;/p&gt;</entry>
+	<entry key="unordered">En cualquier orden</entry>
+	<entry key="orderedTitle">El orden importa</entry>
+	<entry key="disabledTitle">Desactivada</entry>
+	<entry key="skills">Conocimientos</entry>
+	<entry key="columns">Columnas del informe</entry>
+	<entry key="ordered">El orden importa</entry>
+	<entry key="filterable">Con filtro</entry>
+	<entry key="numbered">Numerar las filas</entry>
+	<entry key="columnsAvailable">Columnas omitidas</entry>
+	<entry key="columnsSelected">En el informe</entry>
+	<entry key="send">Enviar</entry>
+	<entry key="nothing">nada</entry>
+	<entry key="choices">Conocimientos: {0}; columnas: {1}.</entry>
+	<entry key="sent">Enviado: {0}</entry>
+	<entry key="skill.java">Java</entry>
+	<entry key="skill.wicket">Apache Wicket</entry>
+	<entry key="skill.javascript">JavaScript</entry>
+	<entry key="skill.css">CSS</entry>
+	<entry key="skill.sql">SQL</entry>
+	<entry key="skill.react">React</entry>
+	<entry key="skill.svelte">Svelte</entry>
+	<entry key="skill.docker">Docker</entry>
+	<entry key="column.name">Nombre</entry>
+	<entry key="column.email">Correo</entry>
+	<entry key="column.phone">Teléfono</entry>
+	<entry key="column.city">Ciudad</entry>
+	<entry key="column.country">País</entry>
+	<entry key="column.born">Nacimiento</entry>
+	<entry key="column.company">Empresa</entry>
+</properties>

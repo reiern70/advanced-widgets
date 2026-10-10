@@ -16,19 +16,29 @@ side and the pages don't change.
 
 Every script of `ui-components` has moved here: the dynamic data tables (`data-table.ts`, built
 as `ant-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
-built as `handlebars-adapter.js`), the drop-down and its chips, the autocomplete, the infinite list
+built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
 the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
-and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Autocomplete`, `InfiniteList`,
-`Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`
-and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
+and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `InfiniteList`,
+`Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`,
+`palette` and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
 `localRows`. The JSON grid demo does both: its rows come from `/api/users`, a `JsonRowsResource`
 that also creates, changes and deletes rows (POST, PUT and DELETE), or from a list the page gave.
+
+The palette (`palette.ts`, built as `antilia-palette.js` for Wicket's `Palette`) shows the
+available choices on the left and the chosen ones on the right, with arrows between them; a double
+click, Enter or dragging moves a choice too. With `ordered`, the chosen ones keep their own order
+and move up and down with buttons, Alt and the arrow keys or by dragging. With `numbered`, the rows
+show their numbers; `availableTitle` and `selectedTitle` name the lists. The available list gets
+a filter from `filterThreshold` choices on (8), unless `filterable` is false; it filters in the
+browser, over the choices the palette has. Over a select, as in
+Wicket, it writes the choice into the select's options in that order, which a form then posts; in
+React and Svelte it reports it with `onChange`, and posts it in hidden fields when given a `name`.
 
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
@@ -59,7 +69,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
-demo's name (`dropdown`, `autocomplete`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
+demo's name (`dropdown`, `autocomplete`, `palette`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
 `scrollbar`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of

@@ -1,0 +1,202 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.antilia.widgets.demo.palette;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Duration;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.antilia.widgets.demo.JettyTestCase;
+import com.antilia.widgets.demo.SeleniumBrowser;
+
+/**
+ * Drives {@link PalettePage} in Chrome and in Firefox, in deployment mode, so through the
+ * minified script built from frontend/core: the arrows, a double click, the keyboard, dragging,
+ * the order of the columns and the Ajax reporting each change. Runs with {@code -Pselenium}, see
+ * {@link SeleniumBrowser}.
+ */
+@EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
+class PaletteBrowserTest extends JettyTestCase
+{
+	private WebDriver driver;
+
+	private WebDriverWait wait;
+
+	@Override
+	@AfterEach
+	public void after() throws Exception
+	{
+		if (driver != null)
+		{
+			driver.quit();
+		}
+		super.after();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void movesTheSkillsWithTheArrowsAndADoubleClick(SeleniumBrowser browser)
+	{
+		open(browser);
+		assertEquals("Java\nApache Wicket", Palettes.selected(palette("skills")));
+
+		Palettes.item(palette("skills"), "CSS").click();
+		Palettes.button(palette("skills"), "add").click();
+		wait.until(d -> choices().startsWith("Skills: Java, Apache Wicket, CSS;"));
+
+		Palettes.doubleClick(driver, Palettes.item(palette("skills"), "Java"));
+		wait.until(d -> choices().startsWith("Skills: Apache Wicket, CSS;"));
+
+		Palettes.button(palette("skills"), "add-all").click();
+		wait.until(d -> choices().startsWith("Skills: Java, Apache Wicket, JavaScript, CSS, SQL, " +
+			"React, Svelte, Docker;"));
+		assertFalse(Palettes.button(palette("skills"), "add-all").isEnabled());
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void filtersTheSkillsAndAddsWithTheKeyboard(SeleniumBrowser browser)
+	{
+		open(browser);
+
+		WebElement filter = palette("skills").findElement(By.cssSelector(".antilia-palette-filter"));
+		filter.sendKeys("script");
+		assertEquals("JavaScript", Palettes.available(palette("skills")));
+
+		WebElement list = Palettes.list(palette("skills"), "available");
+		list.sendKeys(Keys.ARROW_DOWN);
+		list.sendKeys(Keys.ENTER);
+		wait.until(d -> choices().startsWith("Skills: Java, Apache Wicket, JavaScript;"));
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void ordersTheColumnsWithTheButtonsAndByDragging(SeleniumBrowser browser)
+	{
+		open(browser);
+		assertEquals("Name\nCountry\nEmail", Palettes.selected(palette("columns")));
+
+		Palettes.item(palette("columns"), "Email").click();
+		Palettes.button(palette("columns"), "up").click();
+		wait.until(d -> choices().endsWith("columns: Name, Email, Country."));
+
+		// Name dragged below Country
+		Palettes.drag(driver, Palettes.item(palette("columns"), "Name"),
+			Palettes.item(palette("columns"), "Country"), 0.9);
+		wait.until(d -> choices().endsWith("columns: Email, Country, Name."));
+
+		// City dragged from the available ones to the top
+		Palettes.drag(driver, Palettes.item(palette("columns"), "City"),
+			Palettes.item(palette("columns"), "Email"), 0.1);
+		wait.until(d -> choices().endsWith("columns: City, Email, Country, Name."));
+
+		driver.findElement(By.cssSelector(".palette-demo__send")).click();
+		wait.until(d -> d.findElement(By.cssSelector(".feedbackPanel")).getText()
+			.equals("Sent: Skills: Java, Apache Wicket; columns: City, Email, Country, Name."));
+		assertEquals("City\nEmail\nCountry\nName", Palettes.selected(palette("columns")),
+			"the order the form posted");
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theCheckBoxSwitchesTheOrderOff(SeleniumBrowser browser)
+	{
+		open(browser);
+		assertTrue(palette("columns").findElement(By.cssSelector(".antilia-palette-order"))
+			.isDisplayed());
+
+		driver.findElement(By.name("ordered")).click();
+
+		wait.until(d -> choices().endsWith("columns: Name, Email, Country."));
+		wait.until(d -> !palette("columns").findElement(By.cssSelector(".antilia-palette-order"))
+			.isDisplayed());
+		assertEquals("Name\nEmail\nCountry", Palettes.selected(palette("columns")));
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void numbersTheRowsOfTheColumnsUnderTheirOwnTitles(SeleniumBrowser browser)
+	{
+		open(browser);
+		WebElement columns = palette("columns");
+		assertEquals("Columns left out\nIn the report", Palettes.titles(columns));
+		assertEquals("Available\nSelected", Palettes.titles(palette("skills")));
+		assertEquals("1.\n2.\n3.", Palettes.numbers(columns, "selected"));
+		assertEquals("1.\n2.\n3.\n4.", Palettes.numbers(columns, "available"));
+		assertEquals("", Palettes.numbers(palette("skills"), "selected"));
+
+		Palettes.doubleClick(driver, Palettes.item(columns, "Born"));
+		wait.until(d -> Palettes.numbers(palette("columns"), "selected").equals("1.\n2.\n3.\n4."));
+		assertEquals("Name\nCountry\nEmail\nBorn", Palettes.selected(palette("columns")));
+
+		driver.findElement(By.name("numbered")).click();
+		wait.until(d -> Palettes.numbers(palette("columns"), "selected").isEmpty());
+		assertEquals("Name\nCountry\nEmail\nBorn", Palettes.selected(palette("columns")));
+		assertEquals("Columns left out\nIn the report", Palettes.titles(palette("columns")));
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theCheckBoxTakesTheFilterAway(SeleniumBrowser browser)
+	{
+		open(browser);
+		WebElement filter = palette("skills").findElement(By.cssSelector(".antilia-palette-filter"));
+		filter.sendKeys("sv");
+		assertEquals("Svelte", Palettes.available(palette("skills")));
+
+		driver.findElement(By.name("filterable")).click();
+
+		wait.until(d -> palette("skills").findElements(By.cssSelector(".antilia-palette-filter"))
+			.isEmpty());
+		assertEquals("JavaScript\nCSS\nSQL\nReact\nSvelte\nDocker",
+			Palettes.available(palette("skills")));
+		assertEquals("Skills: Java, Apache Wicket; columns: Name, Country, Email.", choices(),
+			"filtering changes nothing");
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void doesNothingWhenDisabled(SeleniumBrowser browser)
+	{
+		open(browser);
+
+		WebElement disabled = palette("disabled");
+		assertTrue(disabled.getDomAttribute("class").contains("antilia-palette-disabled"));
+		assertFalse(Palettes.button(disabled, "add-all").isEnabled());
+		assertFalse(Palettes.button(disabled, "remove-all").isEnabled());
+	}
+
+	private void open(SeleniumBrowser browser)
+	{
+		driver = browser.newDriver(1200, 1000);
+		wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofMillis(20));
+		wait.ignoring(StaleElementReferenceException.class);
+		driver.get("http://localhost:" + localPort + "/palette");
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 6);
+	}
+
+	private WebElement palette(String name)
+	{
+		return driver.findElement(By.name(name)).findElement(By.xpath(".."));
+	}
+
+	private String choices()
+	{
+		return driver.findElement(By.cssSelector(".palette-demo__choices")).getText();
+	}
+}

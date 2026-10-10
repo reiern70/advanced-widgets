@@ -18,6 +18,7 @@ import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
+import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
@@ -92,6 +93,7 @@ public final class Demos
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
+		new Demo("palette", "forms", PalettePage.class, true, true),
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),

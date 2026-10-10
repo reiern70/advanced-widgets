@@ -1,0 +1,273 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The palette of antilia-palette.js: the available choices, the arrow buttons and the chosen ones
+ * side by side, in the colors of the theme it is in and in neutral colors outside one.
+ */
+.antilia-palette {
+	--antilia-palette-height: 14em;
+	position: relative;
+	display: inline-grid;
+	grid-template-columns: minmax(8em, 1fr) auto minmax(8em, 1fr) auto;
+	align-items: center;
+	gap: 0.5em;
+	max-width: 100%;
+	vertical-align: middle;
+	color: var(--antilia-theme-text, #1c2333);
+}
+
+/* the select stays in the page for forms and Ajax, out of sight */
+.antilia-palette > .antilia-palette-native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	pointer-events: none;
+}
+
+.antilia-palette-side {
+	display: flex;
+	flex-direction: column;
+	align-self: stretch;
+	min-width: 0;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	overflow: hidden;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.antilia-palette-side:focus-within,
+.antilia-palette-side.antilia-palette-over {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+.antilia-palette-title {
+	padding: 0.35em 0.6em;
+	border-bottom: 1px solid var(--antilia-theme-border, #c9cfdb);
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+	font-weight: 600;
+	font-size: 0.9em;
+}
+
+.antilia-palette-filter {
+	box-sizing: border-box;
+	width: calc(100% - 0.6em);
+	margin: 0.3em;
+	padding: 0.3em 0.5em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+	color: inherit;
+	font: inherit;
+}
+
+.antilia-palette-filter:focus {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: -1px;
+}
+
+.antilia-palette-side > .antilia-scrollbar {
+	flex: 1;
+	min-height: 0;
+}
+
+.antilia-palette-list {
+	box-sizing: border-box;
+	height: var(--antilia-palette-height);
+	margin: 0;
+	padding: 0.3em;
+	overflow-y: auto;
+	list-style: none;
+	outline: none;
+	scrollbar-width: thin;
+	scrollbar-color: var(--antilia-theme-border, #c9cfdb) transparent;
+}
+
+.antilia-palette-item {
+	display: flex;
+	align-items: center;
+	padding: 0.3em 0.6em;
+	border-radius: 0.3em;
+	cursor: pointer;
+	white-space: nowrap;
+	user-select: none;
+}
+
+.antilia-palette-item:hover {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-palette-item[aria-selected="true"] {
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+/* the item the keyboard is on, while its list has the focus */
+.antilia-palette-list:focus-visible .antilia-palette-active {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: -2px;
+}
+
+.antilia-palette-item[aria-disabled="true"] {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.antilia-palette-ordered .antilia-palette-selected .antilia-palette-item:not([aria-disabled="true"]) {
+	cursor: grab;
+}
+
+.antilia-palette-dragging,
+.antilia-palette-dragging .antilia-palette-item {
+	cursor: grabbing;
+}
+
+.antilia-palette-number {
+	flex: none;
+	min-width: 1.6em;
+	margin-right: 0.4em;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.6;
+}
+
+.antilia-palette-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.antilia-palette-empty {
+	position: absolute;
+	padding: 0.6em;
+	opacity: 0.65;
+	font-style: italic;
+	pointer-events: none;
+}
+
+/* the scroller of the list holds the text of an empty list too */
+.antilia-palette-side .antilia-scrollbar {
+	position: relative;
+}
+
+.antilia-palette-empty {
+	top: 0;
+	left: 0;
+}
+
+.antilia-palette-empty[hidden] {
+	display: none;
+}
+
+.antilia-palette-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35em;
+}
+
+.antilia-palette-buttons[hidden] {
+	display: none;
+}
+
+.antilia-palette-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.2em;
+	height: 2.1em;
+	padding: 0 0.5em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.4em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: inherit;
+	font: inherit;
+	font-size: 1.05em;
+	line-height: 1;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.antilia-palette-button:hover:not(:disabled) {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+.antilia-palette-button:focus-visible {
+	outline: none;
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+.antilia-palette-button:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.antilia-palette-disabled .antilia-palette-side {
+	opacity: 0.6;
+}
+
+.antilia-palette-disabled .antilia-palette-item {
+	cursor: not-allowed;
+}
+
+/* where the dragged choices land among the chosen ones */
+.antilia-palette-marker {
+	height: 2px;
+	margin: -1px 0.2em;
+	border-radius: 1px;
+	background: var(--antilia-theme-accent, #2f5bd3);
+	list-style: none;
+}
+
+/* the dragged choices, following the pointer */
+.antilia-palette-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1200;
+	max-width: 20em;
+	padding: 0.3em 0.6em;
+	border-radius: 0.3em;
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	pointer-events: none;
+}
+
+/* narrow screens: the lists one above the other, the buttons in a row between them */
+@media (max-width: 36em) {
+	.antilia-palette {
+		grid-template-columns: 1fr auto;
+	}
+
+	.antilia-palette-available {
+		grid-column: 1 / -1;
+	}
+
+	.antilia-palette > .antilia-palette-buttons:not(.antilia-palette-order) {
+		grid-column: 1 / -1;
+		flex-direction: row;
+		justify-content: center;
+	}
+
+	.antilia-palette-add .antilia-palette-arrow,
+	.antilia-palette-add-all .antilia-palette-arrow,
+	.antilia-palette-remove .antilia-palette-arrow,
+	.antilia-palette-remove-all .antilia-palette-arrow {
+		transform: rotate(90deg);
+	}
+}

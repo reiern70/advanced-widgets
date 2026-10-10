@@ -31,6 +31,7 @@ import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.modal.TeamResource;
+import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.register.RegisterPage;
@@ -127,6 +128,7 @@ public class WicketApplication extends WebApplication
 		mountPage("theme-editor", ThemeEditorPage.class);
 		mountPage("dropdown", DropdownPage.class);
 		mountPage("autocomplete", AutocompletePage.class);
+		mountPage("palette", PalettePage.class);
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);

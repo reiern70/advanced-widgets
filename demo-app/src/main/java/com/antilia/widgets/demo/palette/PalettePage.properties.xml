@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Palette</entry>
+	<entry key="explanation">&lt;p&gt;Palette from ui-components chooses several values out of many: the available ones on the left, the chosen ones on the right and arrows between them moving the highlighted ones, or all of them, from one side to the other. Click to highlight a choice, Ctrl or Shift with the click for several; a double click, Enter or dragging a choice to the other list moves it too. The available ones get a filter from eight choices on. Everything happens in the browser: the native select stays in the page, hidden, and holds the choice, so a form posts it as always and an Ajax behavior on its change event is notified as with a native select.&lt;/p&gt;&lt;p&gt;When the order matters, the chosen ones keep the order they were chosen in and are moved up and down with the buttons next to them, with Alt and the arrow keys or by dragging them to their place; the form posts them in that order and the model keeps it. Untick the check box and the columns show in the order of the choices again. Untick the check box of the skills and they have no filter: it filters in the browser, over the choices the page rendered, without asking the server. The columns' palette has titles of its own, and the other check box numbers its rows or not. The text below the form follows every change via Ajax.&lt;/p&gt;</entry>
+	<entry key="unordered">Any order</entry>
+	<entry key="orderedTitle">The order matters</entry>
+	<entry key="disabledTitle">Disabled</entry>
+	<entry key="skills">Skills</entry>
+	<entry key="columns">Columns of the report</entry>
+	<entry key="ordered">Order matters</entry>
+	<entry key="filterable">Show a filter</entry>
+	<entry key="numbered">Number the rows</entry>
+	<entry key="columnsAvailable">Columns left out</entry>
+	<entry key="columnsSelected">In the report</entry>
+	<entry key="send">Send</entry>
+	<entry key="nothing">nothing</entry>
+	<entry key="choices">Skills: {0}; columns: {1}.</entry>
+	<entry key="sent">Sent: {0}</entry>
+	<entry key="skill.java">Java</entry>
+	<entry key="skill.wicket">Apache Wicket</entry>
+	<entry key="skill.javascript">JavaScript</entry>
+	<entry key="skill.css">CSS</entry>
+	<entry key="skill.sql">SQL</entry>
+	<entry key="skill.react">React</entry>
+	<entry key="skill.svelte">Svelte</entry>
+	<entry key="skill.docker">Docker</entry>
+	<entry key="column.name">Name</entry>
+	<entry key="column.email">Email</entry>
+	<entry key="column.phone">Phone</entry>
+	<entry key="column.city">City</entry>
+	<entry key="column.country">Country</entry>
+	<entry key="column.born">Born</entry>
+	<entry key="column.company">Company</entry>
+</properties>

@@ -26,6 +26,16 @@
 	<entry key="Dropdown.noMatch">Sin resultados</entry>
 	<entry key="Dropdown.more">+{0} más</entry>
 	<entry key="Dropdown.remove">Quitar {0}</entry>
+	<entry key="Palette.availableTitle">Disponibles</entry>
+	<entry key="Palette.selectedTitle">Seleccionados</entry>
+	<entry key="Palette.add">Añadir</entry>
+	<entry key="Palette.addAll">Añadir todos</entry>
+	<entry key="Palette.remove">Quitar</entry>
+	<entry key="Palette.removeAll">Quitar todos</entry>
+	<entry key="Palette.up">Subir</entry>
+	<entry key="Palette.down">Bajar</entry>
+	<entry key="Palette.filter">Filtrar…</entry>
+	<entry key="Palette.empty">Nada aquí</entry>
 	<entry key="Autocomplete.placeholder">Escriba para buscar…</entry>
 	<entry key="Autocomplete.noMatch">Sin resultados</entry>
 	<entry key="Autocomplete.searching">Buscando…</entry>

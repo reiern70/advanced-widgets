@@ -1,0 +1,171 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+package com.antilia.widgets.palette;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.apache.wicket.markup.html.form.IChoiceRenderer;
+import org.apache.wicket.markup.html.form.ListMultipleChoice;
+import org.apache.wicket.model.IModel;
+
+/**
+ * A {@link ListMultipleChoice} shown as a {@link PaletteBehavior palette}: the available choices
+ * on the left, the chosen ones on the right and arrows between them, all in the browser. When the
+ * {@link #setOrdered(boolean) order matters} the chosen ones can be moved up and down, also by
+ * dragging them, and the model keeps them in that order; give it a {@code List} then. The rows
+ * can {@link #setNumbered(boolean) show their numbers}, and the titles over the lists can be set
+ * for each palette. Attach it to a {@code <select>}; the {@code multiple} attribute is added.
+ *
+ * @param <T>
+ *            the type of the choices
+ * @since 11.0.0
+ */
+public class Palette<T> extends ListMultipleChoice<T>
+{
+	private static final long serialVersionUID = 1L;
+
+	private final PaletteBehavior palette = new PaletteBehavior();
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param model
+	 *            the chosen values
+	 * @param choices
+	 *            the choices
+	 */
+	public Palette(String id, IModel<? extends Collection<T>> model, List<? extends T> choices)
+	{
+		super(id, model, choices);
+		add(palette);
+	}
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param model
+	 *            the chosen values
+	 * @param choices
+	 *            the choices
+	 * @param renderer
+	 *            renders the choices
+	 */
+	public Palette(String id, IModel<? extends Collection<T>> model, List<? extends T> choices,
+		IChoiceRenderer<? super T> renderer)
+	{
+		super(id, model, choices, renderer);
+		add(palette);
+	}
+
+	/**
+	 * @param id
+	 *            component id
+	 * @param model
+	 *            the chosen values
+	 * @param choices
+	 *            the choices
+	 * @param renderer
+	 *            renders the choices
+	 */
+	public Palette(String id, IModel<? extends Collection<T>> model,
+		IModel<? extends List<? extends T>> choices, IChoiceRenderer<? super T> renderer)
+	{
+		super(id, model, choices, renderer);
+		add(palette);
+	}
+
+	/**
+	 * @param ordered
+	 *            whether the order of the chosen ones matters: they keep the order they were chosen
+	 *            in and can be moved up and down
+	 * @return {@code this}
+	 */
+	public Palette<T> setOrdered(boolean ordered)
+	{
+		palette.setOrdered(ordered);
+		return this;
+	}
+
+	/**
+	 * @return whether the order of the chosen ones matters
+	 */
+	public boolean isOrdered()
+	{
+		return palette.isOrdered();
+	}
+
+	/**
+	 * @param numbered
+	 *            whether the rows of both lists show their number, from 1, before their text
+	 * @return {@code this}
+	 */
+	public Palette<T> setNumbered(boolean numbered)
+	{
+		palette.setNumbered(numbered);
+		return this;
+	}
+
+	/**
+	 * @return whether the rows of both lists show their number
+	 */
+	public boolean isNumbered()
+	{
+		return palette.isNumbered();
+	}
+
+	/**
+	 * @param availableTitle
+	 *            the title of the list of the available choices, {@code null} for that of the
+	 *            bundles, {@code Palette.availableTitle}
+	 * @return {@code this}
+	 */
+	public Palette<T> setAvailableTitle(IModel<String> availableTitle)
+	{
+		palette.setAvailableTitle(availableTitle);
+		return this;
+	}
+
+	/**
+	 * @param selectedTitle
+	 *            the title of the list of the chosen ones, {@code null} for that of the bundles,
+	 *            {@code Palette.selectedTitle}
+	 * @return {@code this}
+	 */
+	public Palette<T> setSelectedTitle(IModel<String> selectedTitle)
+	{
+		palette.setSelectedTitle(selectedTitle);
+		return this;
+	}
+
+	/**
+	 * @param filterable
+	 *            whether the available ones can have a filter, shown from the
+	 *            {@link PaletteBehavior#setFilterThreshold(int) threshold} on; {@code true} unless
+	 *            set otherwise
+	 * @return {@code this}
+	 */
+	public Palette<T> setFilterable(boolean filterable)
+	{
+		palette.setFilterable(filterable);
+		return this;
+	}
+
+	/**
+	 * @return whether the available ones can have a filter
+	 */
+	public boolean isFilterable()
+	{
+		return palette.isFilterable();
+	}
+
+	/**
+	 * @return the behavior drawing the palette, to set its filter
+	 */
+	public PaletteBehavior getPaletteBehavior()
+	{
+		return palette;
+	}
+}

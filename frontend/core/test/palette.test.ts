@@ -1,0 +1,471 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { insertAt, moveBy, Palette, palette, setHost, type Host, type PaletteChoice,
+	standaloneHost } from '../src/index.js';
+
+const FRUITS: PaletteChoice[] = ['Apple', 'Banana', 'Cherry', 'Date'].map((label) => ({
+	value: label.toLowerCase(),
+	label
+}));
+
+function element(): HTMLDivElement {
+	document.body.innerHTML = '<div id="p"></div>';
+	return document.getElementById('p') as HTMLDivElement;
+}
+
+function select(selected: string[] = [], attributes = ''): HTMLSelectElement {
+	document.body.innerHTML = `<form><select id="s" name="fruits" multiple ${attributes}>` +
+		FRUITS.map((fruit) => `<option value="${fruit.value}"` +
+			(selected.includes(fruit.value) ? ' selected' : '') + `>${fruit.label}</option>`)
+			.join('') + '</select></form>';
+	return document.getElementById('s') as HTMLSelectElement;
+}
+
+function label(item: HTMLLIElement): string {
+	return item.querySelector('.antilia-palette-text')?.textContent ?? '';
+}
+
+function texts(list: { items: HTMLLIElement[] }): string[] {
+	return list.items.map(label);
+}
+
+function item(list: { items: HTMLLIElement[] }, text: string): HTMLLIElement {
+	return list.items.find((each) => label(each) === text)!;
+}
+
+function numbers(list: { items: HTMLLIElement[] }): string[] {
+	return list.items.map((each) =>
+		each.querySelector('.antilia-palette-number')?.textContent ?? '');
+}
+
+function click(target: Element, init: MouseEventInit = {}): void {
+	target.dispatchEvent(new MouseEvent('click', { bubbles: true, ...init }));
+}
+
+function key(target: Element, name: string, init: KeyboardEventInit = {}): void {
+	target.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, ...init }));
+}
+
+function pointer(target: EventTarget, type: string, x: number, y: number): void {
+	const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0 });
+	Object.defineProperty(event, 'pointerId', { value: 1 });
+	target.dispatchEvent(event);
+}
+
+function rect(target: Element, top: number, height: number, left = 0, width = 100): void {
+	target.getBoundingClientRect = () => ({ top, bottom: top + height, left, right: left + width,
+		height, width, x: left, y: top, toJSON: () => ({}) });
+}
+
+afterEach(() => {
+	setHost();
+	document.body.innerHTML = '';
+});
+
+describe('moveBy', () => {
+	it('moves values up and down, a block as a whole, stopping at the edges', () => {
+		const list = ['a', 'b', 'c', 'd', 'e'];
+		expect(moveBy(list, new Set(['c']), false)).toEqual(['a', 'c', 'b', 'd', 'e']);
+		expect(moveBy(list, new Set(['b', 'c']), true)).toEqual(['a', 'd', 'b', 'c', 'e']);
+		expect(moveBy(list, new Set(['a', 'c']), false)).toEqual(['a', 'c', 'b', 'd', 'e']);
+		expect(moveBy(list, new Set(['d', 'e']), true)).toEqual(list);
+	});
+});
+
+describe('insertAt', () => {
+	it('puts values in front of an index, taking them from where they were', () => {
+		expect(insertAt(['a', 'b', 'c'], ['x'], 1)).toEqual(['a', 'x', 'b', 'c']);
+		expect(insertAt(['a', 'b', 'c'], ['a'], 3)).toEqual(['b', 'c', 'a']);
+		expect(insertAt(['a', 'b', 'c'], ['c', 'b'], 0)).toEqual(['c', 'b', 'a']);
+	});
+});
+
+describe('Palette', () => {
+	it('draws the available and the chosen ones with the arrows between them', () => {
+		const onChange = vi.fn();
+		const instance = new Palette(element(), { choices: FRUITS, selected: ['cherry'], onChange });
+
+		expect(instance.element.classList.contains('antilia-palette')).toBe(true);
+		expect(texts(instance.available)).toEqual(['Apple', 'Banana', 'Date']);
+		expect(texts(instance.chosen)).toEqual(['Cherry']);
+		expect(instance.available.title.textContent).toBe('Available');
+		expect(instance.chosen.title.textContent).toBe('Selected');
+		expect(instance.available.list.getAttribute('role')).toBe('listbox');
+		expect(instance.buttons.add.getAttribute('aria-label')).toBe('Add');
+		expect(instance.buttons.add.disabled).toBe(true);
+		expect(instance.buttons.addAll.disabled).toBe(false);
+		expect(instance.order.hidden).toBe(true);
+		expect(Palette.of('p')).toBe(instance);
+		expect(onChange).not.toHaveBeenCalled();
+	});
+
+	it('moves the highlighted ones with the arrows', () => {
+		const onChange = vi.fn();
+		const instance = new Palette(element(), { choices: FRUITS, onChange });
+
+		click(item(instance.available, 'Banana'));
+		click(item(instance.available, 'Date'), { ctrlKey: true });
+		expect(instance.buttons.add.disabled).toBe(false);
+		click(instance.buttons.add);
+
+		expect(onChange).toHaveBeenLastCalledWith(['banana', 'date']);
+		expect(texts(instance.available)).toEqual(['Apple', 'Cherry']);
+		expect(texts(instance.chosen)).toEqual(['Banana', 'Date']);
+		// what moved stays highlighted on its new side
+		expect(item(instance.chosen, 'Banana').getAttribute('aria-selected')).toBe('true');
+
+		click(instance.buttons.remove);
+		expect(onChange).toHaveBeenLastCalledWith([]);
+
+		click(instance.buttons.addAll);
+		expect(onChange).toHaveBeenLastCalledWith(['apple', 'banana', 'cherry', 'date']);
+		click(instance.buttons.removeAll);
+		expect(instance.value()).toEqual([]);
+	});
+
+	it('highlights a range with Shift and moves an item with a double click', () => {
+		const instance = new Palette(element(), { choices: FRUITS });
+
+		click(item(instance.available, 'Apple'));
+		click(item(instance.available, 'Cherry'), { shiftKey: true });
+		expect(Array.from(instance.available.highlighted)).toEqual(['apple', 'banana', 'cherry']);
+
+		item(instance.available, 'Date').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+		expect(instance.value()).toEqual(['date']);
+	});
+
+	it('keeps the order of the choices unless the order matters', () => {
+		const unordered = new Palette(element(), { choices: FRUITS, selected: ['date', 'apple'] });
+		expect(unordered.value()).toEqual(['apple', 'date']);
+		click(item(unordered.available, 'Banana'));
+		click(unordered.buttons.add);
+		expect(unordered.value()).toEqual(['apple', 'banana', 'date']);
+
+		const ordered = new Palette(element(), { choices: FRUITS, selected: ['date', 'apple'],
+			ordered: true });
+		expect(ordered.value()).toEqual(['date', 'apple']);
+		expect(ordered.order.hidden).toBe(false);
+		click(item(ordered.available, 'Banana'));
+		click(ordered.buttons.add);
+		expect(ordered.value()).toEqual(['date', 'apple', 'banana']);
+	});
+
+	it('moves the chosen ones up and down while the order matters', () => {
+		const onChange = vi.fn();
+		const instance = new Palette(element(), { choices: FRUITS, ordered: true,
+			selected: ['apple', 'banana', 'cherry'], onChange });
+
+		expect(instance.buttons.up.disabled).toBe(true);
+		click(item(instance.chosen, 'Cherry'));
+		expect(instance.buttons.down.disabled).toBe(true);
+		click(instance.buttons.up);
+		expect(onChange).toHaveBeenLastCalledWith(['apple', 'cherry', 'banana']);
+		click(instance.buttons.up);
+		expect(instance.value()).toEqual(['cherry', 'apple', 'banana']);
+		expect(instance.buttons.up.disabled).toBe(true);
+
+		key(instance.chosen.list, 'ArrowDown', { altKey: true });
+		expect(instance.value()).toEqual(['apple', 'cherry', 'banana']);
+	});
+
+	it('works with the keyboard', () => {
+		const instance = new Palette(element(), { choices: FRUITS });
+		const list = instance.available.list;
+
+		key(list, 'ArrowDown');
+		expect(instance.available.active).toBe('apple');
+		key(list, 'ArrowDown');
+		key(list, 'ArrowDown', { shiftKey: true });
+		expect(Array.from(instance.available.highlighted)).toEqual(['banana', 'cherry']);
+		key(list, 'Enter');
+		expect(instance.value()).toEqual(['banana', 'cherry']);
+		// the keyboard stays on the list, on the next item
+		expect(instance.available.active).toBe('date');
+
+		key(list, 'Home');
+		key(list, ' ');
+		expect(Array.from(instance.available.highlighted)).toEqual(['apple']);
+		key(list, 'End');
+		key(list, 'a', { ctrlKey: true });
+		expect(Array.from(instance.available.highlighted)).toEqual(['apple', 'date']);
+
+		document.body.focus();
+		key(list, 'ArrowRight');
+		expect(document.activeElement).toBe(instance.chosen.list);
+		// what moved stays highlighted there: Space takes banana out of it
+		key(instance.chosen.list, ' ');
+		key(instance.chosen.list, 'Enter');
+		expect(instance.value()).toEqual(['banana']);
+		key(instance.chosen.list, 'ArrowLeft');
+		expect(document.activeElement).toBe(list);
+	});
+
+	it('leaves disabled choices where they are', () => {
+		const choices = FRUITS.map((fruit) => ({ ...fruit, disabled: fruit.value === 'banana' }));
+		const instance = new Palette(element(), { choices, selected: ['apple'] });
+
+		click(item(instance.available, 'Banana'));
+		expect(instance.available.highlighted.size).toBe(0);
+		click(instance.buttons.addAll);
+		expect(instance.value()).toEqual(['apple', 'cherry', 'date']);
+		expect(texts(instance.available)).toEqual(['Banana']);
+		expect(instance.buttons.addAll.disabled).toBe(true);
+	});
+
+	it('does nothing while disabled', () => {
+		const onChange = vi.fn();
+		const instance = new Palette(element(), { choices: FRUITS, disabled: true, onChange });
+
+		expect(instance.element.classList.contains('antilia-palette-disabled')).toBe(true);
+		expect(instance.buttons.addAll.disabled).toBe(true);
+		expect(instance.available.list.tabIndex).toBe(-1);
+		click(item(instance.available, 'Apple'));
+		key(instance.available.list, 'Enter');
+		instance.transfer(instance.available, ['apple']);
+		expect(onChange).not.toHaveBeenCalled();
+
+		instance.setDisabled(false);
+		click(instance.buttons.addAll);
+		expect(onChange).toHaveBeenCalled();
+	});
+
+	it('filters the available ones from the threshold on', () => {
+		const instance = new Palette(element(), { choices: FRUITS, filterThreshold: 4,
+			filter: 'Find' });
+
+		expect(instance.filter?.placeholder).toBe('Find');
+		instance.filter!.value = 'an';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(texts(instance.available)).toEqual(['Banana']);
+		// add all adds those shown
+		click(instance.buttons.addAll);
+		expect(instance.value()).toEqual(['banana']);
+		instance.filter!.value = 'xyz';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(instance.available.empty.hidden).toBe(false);
+
+		instance.configure({ filterThreshold: 10 });
+		expect(instance.filter).toBeNull();
+		instance.configure({ filterThreshold: 0, filterable: false });
+		expect(instance.filter).toBeNull();
+		instance.configure({ filterable: true });
+		expect(instance.filter).not.toBeNull();
+	});
+
+	it('takes other texts, choices and chosen ones', () => {
+		const instance = new Palette(element(), { choices: FRUITS, selected: ['apple'] });
+
+		instance.configure({ availableTitle: 'Frei', selectedTitle: 'Gewählt', add: 'Hinzufügen' });
+		expect(instance.available.title.textContent).toBe('Frei');
+		expect(instance.buttons.add.title).toBe('Hinzufügen');
+		expect(instance.value()).toEqual(['apple']);
+
+		instance.refresh(FRUITS.slice(1));
+		expect(instance.value()).toEqual([]);
+		expect(texts(instance.available)).toEqual(['Banana', 'Cherry', 'Date']);
+
+		instance.update(['date', 'banana', 'unknown']);
+		expect(instance.value()).toEqual(['banana', 'date']);
+		instance.configure({ ordered: true });
+		instance.update(['date', 'banana']);
+		expect(instance.value()).toEqual(['date', 'banana']);
+		instance.configure({ ordered: false });
+		expect(instance.value()).toEqual(['banana', 'date']);
+	});
+
+	it('shows the numbers of the rows when asked to', () => {
+		const instance = new Palette(element(), { choices: FRUITS, selected: ['cherry', 'apple'],
+			ordered: true, numbered: true });
+		expect(instance.element.classList.contains('antilia-palette-numbered')).toBe(true);
+		expect(numbers(instance.available)).toEqual(['1.', '2.']);
+		expect(numbers(instance.chosen)).toEqual(['1.', '2.']);
+		expect(texts(instance.chosen)).toEqual(['Cherry', 'Apple']);
+		expect(item(instance.chosen, 'Apple').querySelector('.antilia-palette-number')!
+			.getAttribute('aria-hidden')).toBe('true');
+
+		click(item(instance.chosen, 'Apple'));
+		click(instance.buttons.up);
+		expect(texts(instance.chosen)).toEqual(['Apple', 'Cherry']);
+		expect(numbers(instance.chosen)).toEqual(['1.', '2.']);
+		click(item(instance.available, 'Date'));
+		click(instance.buttons.add);
+		expect(numbers(instance.chosen)).toEqual(['1.', '2.', '3.']);
+
+		instance.configure({ numbered: false });
+		expect(instance.element.classList.contains('antilia-palette-numbered')).toBe(false);
+		expect(instance.chosen.items[0].querySelector('.antilia-palette-number')).toBeNull();
+		instance.destroy();
+		expect(instance.element.hasAttribute('class')).toBe(false);
+	});
+
+	it('reorders the chosen ones by dragging them', () => {
+		const onChange = vi.fn();
+		const instance = new Palette(element(), { choices: FRUITS, ordered: true,
+			selected: ['apple', 'banana', 'cherry'], onChange });
+		rect(instance.available.box, 0, 200, 0, 100);
+		rect(instance.chosen.box, 0, 200, 200, 100);
+		instance.chosen.items.forEach((each, index) => rect(each, 30 + index * 20, 20, 200, 100));
+
+		pointer(item(instance.chosen, 'Cherry'), 'pointerdown', 250, 75);
+		pointer(document, 'pointermove', 250, 72);
+		expect(document.querySelector('.antilia-palette-ghost')).toBeNull();
+		pointer(document, 'pointermove', 250, 35);
+		expect(document.querySelector('.antilia-palette-ghost')?.textContent).toBe('Cherry');
+		expect(instance.chosen.list.firstElementChild?.className).toBe('antilia-palette-marker');
+		expect(instance.chosen.box.classList.contains('antilia-palette-over')).toBe(true);
+		pointer(document, 'pointerup', 250, 35);
+
+		expect(onChange).toHaveBeenLastCalledWith(['cherry', 'apple', 'banana']);
+		expect(document.querySelector('.antilia-palette-ghost')).toBeNull();
+		expect(document.querySelector('.antilia-palette-marker')).toBeNull();
+	});
+
+	it('adds and removes by dragging to the other list', () => {
+		const instance = new Palette(element(), { choices: FRUITS, ordered: true,
+			selected: ['apple', 'banana'] });
+		rect(instance.available.box, 0, 200, 0, 100);
+		rect(instance.chosen.box, 0, 200, 200, 100);
+		instance.chosen.items.forEach((each, index) => rect(each, 30 + index * 20, 20, 200, 100));
+
+		// dropped between apple and banana
+		pointer(item(instance.available, 'Date'), 'pointerdown', 50, 50);
+		pointer(document, 'pointermove', 250, 52);
+		pointer(document, 'pointerup', 250, 52);
+		expect(instance.value()).toEqual(['apple', 'date', 'banana']);
+
+		pointer(item(instance.chosen, 'Apple'), 'pointerdown', 250, 40);
+		pointer(document, 'pointermove', 50, 40);
+		pointer(document, 'pointerup', 50, 40);
+		expect(instance.value()).toEqual(['date', 'banana']);
+
+		// dropped outside both lists, nothing happens
+		pointer(item(instance.chosen, 'Date'), 'pointerdown', 250, 40);
+		pointer(document, 'pointermove', 150, 400);
+		pointer(document, 'pointerup', 150, 400);
+		expect(instance.value()).toEqual(['date', 'banana']);
+	});
+
+	it('takes the palette away on destroy', () => {
+		const instance = new Palette(element(), { choices: FRUITS });
+
+		instance.destroy();
+		expect(document.getElementById('p')?.children.length).toBe(0);
+		expect(document.getElementById('p')?.hasAttribute('class')).toBe(false);
+		expect(Palette.of('p')).toBeNull();
+	});
+});
+
+describe('Palette over a select', () => {
+	it('hides the select and takes its options and its choice', () => {
+		const element = select(['banana']);
+		const instance = Palette.attach('s')!;
+
+		expect(element.parentElement?.className).toBe('antilia-palette');
+		expect(element.classList.contains('antilia-palette-native')).toBe(true);
+		expect(element.getAttribute('aria-hidden')).toBe('true');
+		expect(texts(instance.chosen)).toEqual(['Banana']);
+		expect(Palette.of(element)).toBe(instance);
+		expect(Palette.attach('nothing')).toBeNull();
+	});
+
+	it('writes the choice into the select, in its order, and fires its events', () => {
+		const element = select(['banana']);
+		const instance = Palette.attach(element, { ordered: true, selected: ['banana'] })!;
+		const events: string[] = [];
+		element.addEventListener('input', () => events.push('input'));
+		element.addEventListener('change', () => events.push('change'));
+
+		click(item(instance.available, 'Date'));
+		click(instance.buttons.add);
+		click(item(instance.available, 'Apple'));
+		click(instance.buttons.add);
+		click(instance.buttons.up);
+
+		expect(events).toEqual(['input', 'change', 'input', 'change', 'input', 'change']);
+		const posted = new FormData(element.form!).getAll('fruits');
+		expect(posted).toEqual(['banana', 'apple', 'date']);
+		// the available ones keep the order of the choices
+		expect(texts(instance.available)).toEqual(['Cherry']);
+	});
+
+	it('takes the order of the chosen ones from the options', () => {
+		select(['apple', 'cherry']);
+		const instance = Palette.attach('s', { ordered: true, selected: ['cherry', 'apple'] })!;
+
+		expect(texts(instance.chosen)).toEqual(['Cherry', 'Apple']);
+	});
+
+	it('follows the select changed by someone else, and its options', () => {
+		const element = select(['apple']);
+		const instance = Palette.attach(element, { ordered: true })!;
+
+		element.options[2].selected = true;
+		element.dispatchEvent(new Event('change'));
+		expect(instance.value()).toEqual(['apple', 'cherry']);
+
+		element.options[0].remove();
+		const option = new Option('Elderberry', 'elderberry', true, true);
+		element.add(option);
+		instance.refresh();
+		expect(instance.value()).toEqual(['cherry', 'elderberry']);
+		expect(texts(instance.available)).toEqual(['Banana', 'Date']);
+	});
+
+	it('follows the disabled select', () => {
+		const element = select([], 'disabled');
+		const instance = Palette.attach(element)!;
+
+		expect(instance.isDisabled()).toBe(true);
+		element.disabled = false;
+		instance.update();
+		expect(instance.buttons.addAll.disabled).toBe(false);
+	});
+
+	it('takes over the wrapper of the select Ajax replaced, and shows the select on destroy', () => {
+		const element = select();
+		Palette.attach(element);
+		const replacement = element.cloneNode(true) as HTMLSelectElement;
+		element.replaceWith(replacement);
+		replacement.className = '';
+		const instance = Palette.attach(replacement)!;
+
+		expect(replacement.parentElement?.querySelectorAll('.antilia-palette-side').length).toBe(2);
+		instance.destroy();
+		expect(replacement.parentElement?.tagName).toBe('FORM');
+		expect(document.querySelector('.antilia-palette')).toBeNull();
+		expect(replacement.hasAttribute('aria-hidden')).toBe(false);
+	});
+
+	it('works as a Svelte action', () => {
+		const element = select();
+		const action = palette(element, { availableTitle: 'Left' });
+
+		expect(document.querySelector('.antilia-palette-title')?.textContent).toBe('Left');
+		action.update({ availableTitle: 'Links' });
+		expect(document.querySelector('.antilia-palette-title')?.textContent).toBe('Links');
+		action.destroy();
+		expect(document.querySelector('.antilia-palette')).toBeNull();
+	});
+
+	it('stops listening when an update of the page removes it', () => {
+		let removing: ((element: Element) => void) | undefined;
+		const host: Host = { ...standaloneHost, onNodeRemoving: (listener) => {
+			removing = listener;
+			return () => undefined;
+		} };
+		setHost(host);
+		const element = select();
+		const instance = Palette.attach(element)!;
+		const onChange = vi.fn();
+		instance.options.onChange = onChange;
+
+		removing!(document.body.firstElementChild!);
+		click(instance.buttons.addAll);
+		expect(onChange).not.toHaveBeenCalled();
+	});
+});
