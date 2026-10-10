@@ -4,11 +4,8 @@
   All rights reserved.
 -->
 <wicket:extend xmlns:wicket="http://wicket.apache.org">
-<main class="container accesses">
+<main class="container admin">
 	<h1><wicket:message key="title"/></h1>
-	<p class="accesses__lead"><wicket:message key="lead"/> <span wicket:id="count">0</span></p>
-	<div class="accesses__scroll">
-		<table wicket:id="table" class="accesses__table"></table>
-	</div>
+	<div wicket:id="tabs" class="admin__tabs"></div>
 </main>
 </wicket:extend>

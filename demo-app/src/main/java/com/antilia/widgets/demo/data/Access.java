@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
+import com.antilia.widgets.dynamicdatatable.IIdentifiable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,7 +23,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "accesses")
-public class Access implements Serializable
+public class Access implements Serializable, IIdentifiable<Long>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -78,6 +80,7 @@ public class Access implements Serializable
 		this.accessed = accessed;
 	}
 
+	@Override
 	public Long getId()
 	{
 		return id;

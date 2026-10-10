@@ -19,4 +19,5 @@
 	<entry key="captchaImage">Letters to type</entry>
 	<entry key="another">Show other letters</entry>
 	<entry key="captchaWrong">The letters are not those of the image. Try the new ones.</entry>
+	<entry key="notValidated">Please confirm your email first: open the link we sent to {0}. No email? Look in the spam folder; signing in again after a few minutes sends a new one.</entry>
 </properties>

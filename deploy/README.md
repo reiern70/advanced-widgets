@@ -143,3 +143,21 @@ Then start the demo against it:
 export DATABASE_URL=jdbc:postgresql://localhost:5432/widgets DATABASE_USER=widgets DATABASE_PASSWORD=widgets
 mvn -pl demo-app jetty:run -Dwicket.configuration=deployment -Dwicket.demo=true
 ```
+
+## 5. Email
+
+Visitors who register get an email with a link confirming their address, and open the demos only
+after following it. The emails go over SMTP; without an SMTP server registering stays closed,
+unless `-Dantilia-widgets.open-registration=true` opens it (locally `jetty:run` does, and the
+emails go to the log, where the link is taken from). Set in `.env`:
+
+| Environment variable | System property | |
+|---|---|---|
+| `SMTP_HOST` | `antilia-widgets.smtp.host` | The SMTP server, e.g. `email-smtp.eu-central-1.amazonaws.com` (Amazon SES) |
+| `SMTP_PORT` | `antilia-widgets.smtp.port` | 587 (STARTTLS) if not set, or 465 (TLS) |
+| `SMTP_USER` | `antilia-widgets.smtp.user` | The SMTP user, if the server asks for one |
+| `SMTP_PASSWORD` | `antilia-widgets.smtp.password` | Its password |
+| `MAIL_FROM` | `antilia-widgets.mail.from` | The sender, e.g. `Antilia Widgets <no-reply@antiliacode.com>`; the user if not set |
+| `SITE_URL` | `antilia-widgets.site-url` | The address the links point at; `compose.yaml` sets `https://${DOMAIN}` |
+
+`-Dantilia-widgets.open-registration=false` closes registering even with a server.

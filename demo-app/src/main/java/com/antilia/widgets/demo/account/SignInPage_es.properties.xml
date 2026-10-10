@@ -19,4 +19,5 @@
 	<entry key="captchaImage">Letras a escribir</entry>
 	<entry key="another">Mostrar otras letras</entry>
 	<entry key="captchaWrong">Las letras no son las de la imagen. Pruebe con las nuevas.</entry>
+	<entry key="notValidated">Primero confirme su correo: abra el enlace que enviamos a {0}. ¿No le llega? Mire en la carpeta de spam; si vuelve a iniciar sesión en unos minutos le enviaremos otro.</entry>
 </properties>

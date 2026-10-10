@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">E-Mail-Adresse bestätigen</entry>
+	<entry key="validated.title">Ihre E-Mail-Adresse ist bestätigt</entry>
+	<entry key="validated.text">Danke: {0} ist bestätigt. Melden Sie sich damit und Ihrem Passwort an, um die Demos auszuprobieren.</entry>
+	<entry key="invalid.title">Dieser Link funktioniert nicht</entry>
+	<entry key="invalid.text">Er wurde schon benutzt oder ist älter als 48 Stunden. Wenn Sie Ihre E-Mail-Adresse schon bestätigt haben, melden Sie sich an; sonst sendet Ihnen die Anmeldung einen neuen Link.</entry>
+	<entry key="toSignIn">Anmelden</entry>
+	<entry key="home">Zur Startseite</entry>
+</properties>

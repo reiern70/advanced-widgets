@@ -23,7 +23,7 @@ import com.antilia.widgets.demo.account.DemosAuthorization;
 import com.antilia.widgets.demo.account.SignInAttempts;
 import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.admin.AccessTimeResource;
-import com.antilia.widgets.demo.admin.AccessesPage;
+import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
@@ -36,12 +36,14 @@ import com.antilia.widgets.demo.data.Database;
 import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
+import com.antilia.widgets.demo.mail.IMailer;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.modal.TeamResource;
 import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
+import com.antilia.widgets.demo.register.EmailValidationPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
@@ -76,6 +78,8 @@ public class WicketApplication extends WebApplication
 	private Accesses accesses;
 
 	private final SignInAttempts signInAttempts = new SignInAttempts();
+
+	private IMailer mailer = IMailer.fromSettings();
 
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
@@ -171,7 +175,8 @@ public class WicketApplication extends WebApplication
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
 		mountPage("sign-in", SignInPage.class);
-		mountPage("accesses", AccessesPage.class);
+		mountPage("validate-email", EmailValidationPage.class);
+		mountPage("admin", AdminPage.class);
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
@@ -194,6 +199,23 @@ public class WicketApplication extends WebApplication
 	public Accesses getAccesses()
 	{
 		return accesses;
+	}
+
+	/**
+	 * @return what sends the emails confirming a registration
+	 */
+	public IMailer getMailer()
+	{
+		return mailer;
+	}
+
+	/**
+	 * @param mailer
+	 *            what sends the emails confirming a registration, for tests
+	 */
+	public void setMailer(IMailer mailer)
+	{
+		this.mailer = mailer;
 	}
 
 	/**

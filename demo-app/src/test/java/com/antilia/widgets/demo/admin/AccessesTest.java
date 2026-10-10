@@ -31,7 +31,7 @@ import com.antilia.widgets.demo.dropdown.DropdownPage;
 
 /**
  * Records one {@link Access} per session, with the visitor's clock from the browser, and shows
- * them on the {@link AccessesPage}.
+ * them on the {@link AdminPage}.
  */
 class AccessesTest
 {
@@ -132,10 +132,11 @@ class AccessesTest
 		postTime("Europe/Berlin", "2026-10-10T09:00:00");
 		DemoSession.get().signIn("admin", Role.ADMIN);
 
-		tester.startPage(AccessesPage.class);
+		tester.startPage(AdminPage.class);
+		tester.clickLink("tabs:tabs-container:tabs:1:link");
 
-		tester.assertRenderedPage(AccessesPage.class);
-		tester.assertLabel("count", "1");
+		tester.assertRenderedPage(AdminPage.class);
+		tester.assertLabel("tabs:panel:count", "1");
 		tester.assertContains("Europe/Berlin");
 		tester.assertContains("2026-10-10 09:00:00");
 		tester.assertContains(">admin<");

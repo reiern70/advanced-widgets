@@ -84,6 +84,12 @@
 			<artifactId>h2</artifactId>
 		</dependency>
 
+		<!-- MAIL: the email confirming a registration, over SMTP when it is configured (see SmtpMailer) -->
+		<dependency>
+			<groupId>org.eclipse.angus</groupId>
+			<artifactId>angus-mail</artifactId>
+		</dependency>
+
 		<!-- JSON: the rows of a JsonBasedDynamicDataTable are serialized by JacksonJsonSerializer -->
 		<dependency>
 			<groupId>tools.jackson.core</groupId>
@@ -310,6 +316,8 @@
 						<maven.project.build.directory.test-classes>${project.build.directory}/test-classes</maven.project.build.directory.test-classes>
 						<!-- locally nobody signs in: every session is the administrator's, see WicketApplication -->
 						<antilia-widgets.sign-in-as>${antilia-widgets.sign-in-as}</antilia-widgets.sign-in-as>
+						<!-- locally registering is open, and the emails go to the log, see RegisterPage -->
+						<antilia-widgets.open-registration>true</antilia-widgets.open-registration>
 					</systemProperties>
 					<!-- jetty-ssl.xml resolves the keystore against jetty.base: make it work from the parent directory too -->
 					<jettyProperties>

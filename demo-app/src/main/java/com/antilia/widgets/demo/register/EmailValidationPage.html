@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container register">
+	<div wicket:id="validated" class="register__card register__card--done">
+		<svg class="register__mail" viewBox="0 0 24 24" width="56" height="56" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+		<h1><wicket:message key="validated.title"/></h1>
+		<p wicket:id="email">[ada@example.com is confirmed]</p>
+		<p><a wicket:id="signIn" class="register__submit"><wicket:message key="toSignIn"/></a></p>
+	</div>
+	<div wicket:id="invalid" class="register__card register__card--done">
+		<h1><wicket:message key="invalid.title"/></h1>
+		<p><wicket:message key="invalid.text"/></p>
+		<p><a wicket:id="signIn"><wicket:message key="toSignIn"/></a> · <a wicket:id="home"><wicket:message key="home"/></a></p>
+	</div>
+</main>
+</wicket:extend>

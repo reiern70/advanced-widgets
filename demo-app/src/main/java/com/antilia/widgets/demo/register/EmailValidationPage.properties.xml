@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Confirm your email</entry>
+	<entry key="validated.title">Your email is confirmed</entry>
+	<entry key="validated.text">Thank you: {0} is confirmed. Sign in with it and your password to try the demos.</entry>
+	<entry key="invalid.title">This link does not work</entry>
+	<entry key="invalid.text">It was used already, or it is older than 48 hours. If you confirmed your email already, sign in; else signing in sends you a new link.</entry>
+	<entry key="toSignIn">Sign in</entry>
+	<entry key="home">Back home</entry>
+</properties>

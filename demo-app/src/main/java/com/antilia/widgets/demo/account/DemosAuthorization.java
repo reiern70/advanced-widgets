@@ -15,13 +15,13 @@ import org.apache.wicket.request.component.IRequestableComponent;
 
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.DemoSession;
-import com.antilia.widgets.demo.admin.AccessesPage;
+import com.antilia.widgets.demo.admin.AdminPage;
 
 /**
  * Keeps the demos, the private part of the application, for the visitors who signed in: anybody
  * else opening one is sent to the {@link SignInPage} and back to the demo after signing in. The
  * other pages, the home page with what the components are and do among them, are public, but
- * for the {@link AccessesPage}, which only administrators see, also in development.
+ * for the {@link AdminPage}, which only administrators see, also in development.
  * <p>
  * The demos are open to everybody in development, and when the server is started with
  * {@code -D}{@value #OPEN_PROPERTY}{@code =true}, as the browser tests are.
@@ -36,7 +36,7 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 	public <T extends IRequestableComponent> boolean isInstantiationAuthorized(
 		Class<T> componentClass)
 	{
-		if (AccessesPage.class.isAssignableFrom(componentClass))
+		if (AdminPage.class.isAssignableFrom(componentClass))
 		{
 			return DemoSession.get().isAdmin();
 		}

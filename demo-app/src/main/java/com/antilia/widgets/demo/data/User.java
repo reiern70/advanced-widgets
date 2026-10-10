@@ -7,7 +7,10 @@ package com.antilia.widgets.demo.data;
 import java.io.Serializable;
 import java.time.Instant;
 
+import com.antilia.widgets.dynamicdatatable.IIdentifiable;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -18,11 +21,13 @@ import jakarta.persistence.Table;
 
 /**
  * An account that may open the demos: its name, a salted hash of its password and its
- * {@link Role}.
+ * {@link Role}. A visitor who registered has the email as name, tells the first and last name,
+ * the country, the {@link JobRole} and the {@link Language} of the emails, and opens the demos
+ * once the email is {@link #isValidated() validated}.
  */
 @Entity
 @Table(name = "users")
-public class User implements Serializable
+public class User implements Serializable, IIdentifiable<Long>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -42,6 +47,38 @@ public class User implements Serializable
 
 	@Column(nullable = false)
 	private Instant created;
+
+	@Column(name = "first_name", length = 60)
+	private String firstName;
+
+	@Column(name = "last_name", length = 60)
+	private String lastName;
+
+	/** ISO 3166 code. */
+	@Column(length = 2)
+	private String country;
+
+	@Convert(converter = LanguageConverter.class)
+	@Column(length = 5)
+	private Language language;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "job_role", length = 20)
+	private JobRole jobRole;
+
+	/** What the visitor does, in words, with {@link JobRole#OTHER}. */
+	@Column(name = "job_role_other", length = 100)
+	private String jobRoleOther;
+
+	@Column(nullable = false)
+	private boolean validated;
+
+	/** The SHA-256 of the token in the link of the confirmation email, in hex. */
+	@Column(name = "validation_token", length = 64)
+	private String validationToken;
+
+	@Column(name = "validation_expires")
+	private Instant validationExpires;
 
 	protected User()
 	{
@@ -63,6 +100,7 @@ public class User implements Serializable
 		this.created = Instant.now();
 	}
 
+	@Override
 	public Long getId()
 	{
 		return id;
@@ -86,5 +124,114 @@ public class User implements Serializable
 	public Instant getCreated()
 	{
 		return created;
+	}
+
+	public String getFirstName()
+	{
+		return firstName;
+	}
+
+	public void setFirstName(String firstName)
+	{
+		this.firstName = firstName;
+	}
+
+	public String getLastName()
+	{
+		return lastName;
+	}
+
+	public void setLastName(String lastName)
+	{
+		this.lastName = lastName;
+	}
+
+	/**
+	 * @return the ISO 3166 code of the country, {@code null} for an account that was not
+	 *         registered
+	 */
+	public String getCountry()
+	{
+		return country;
+	}
+
+	public void setCountry(String country)
+	{
+		this.country = country;
+	}
+
+	/**
+	 * @return the language of the emails, {@code null} for an account that was not registered
+	 */
+	public Language getLanguage()
+	{
+		return language;
+	}
+
+	public void setLanguage(Language language)
+	{
+		this.language = language;
+	}
+
+	/**
+	 * @return what the visitor does, {@code null} for an account that was not registered
+	 */
+	public JobRole getJobRole()
+	{
+		return jobRole;
+	}
+
+	public void setJobRole(JobRole jobRole)
+	{
+		this.jobRole = jobRole;
+	}
+
+	/**
+	 * @return what the visitor does, in words, with {@link JobRole#OTHER}; else {@code null}
+	 */
+	public String getJobRoleOther()
+	{
+		return jobRoleOther;
+	}
+
+	public void setJobRoleOther(String jobRoleOther)
+	{
+		this.jobRoleOther = jobRoleOther;
+	}
+
+	/**
+	 * @return whether the email was confirmed, or the account was not registered by a visitor
+	 */
+	public boolean isValidated()
+	{
+		return validated;
+	}
+
+	public void setValidated(boolean validated)
+	{
+		this.validated = validated;
+	}
+
+	public String getValidationToken()
+	{
+		return validationToken;
+	}
+
+	public Instant getValidationExpires()
+	{
+		return validationExpires;
+	}
+
+	/**
+	 * @param validationToken
+	 *            the SHA-256 of the token in the link of the confirmation email, in hex;
+	 *            {@code null} once there is none
+	 * @param validationExpires
+	 *            until when the link works
+	 */
+	public void setValidation(String validationToken, Instant validationExpires)
+	{
+		this.validationToken = validationToken;
+		this.validationExpires = validationExpires;
 	}
 }

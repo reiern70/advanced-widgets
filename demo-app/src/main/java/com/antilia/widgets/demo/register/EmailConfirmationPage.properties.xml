@@ -5,8 +5,8 @@
   All rights reserved.
 -->
 <properties>
-	<entry key="title">Welcome</entry>
-	<entry key="sent">We sent a confirmation link to {0}. Open it to finish registering.</entry>
-	<entry key="hint">You are signed in and can try the demos now. (The email is a mock for now: none is sent.)</entry>
-	<entry key="home">To the demos</entry>
+	<entry key="title">Check your email</entry>
+	<entry key="sent">We sent a link to {0}. Open it to confirm your email; then sign in to try the demos.</entry>
+	<entry key="hint">No email? Look in the spam folder. Signing in sends another link after a few minutes.</entry>
+	<entry key="home">Back home</entry>
 </properties>

@@ -30,7 +30,7 @@ import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.admin.AccessTimeResource;
-import com.antilia.widgets.demo.admin.AccessesPage;
+import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dropdown.DropdownBehavior;
@@ -42,7 +42,7 @@ import com.antilia.widgets.theme.ThemeChoice;
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
  * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
  * its own, and the links to sign in and to register, or the account signed in with and the link to
- * sign out, and for an administrator the link to the accesses; then the footer. Nothing of it
+ * sign out, and for an administrator the link to the administration; then the footer. Nothing of it
  * keeps a page, so the public pages are stateless. The whole page is in the session's
  * {@link Theme}, its own colors included.
  */
@@ -109,7 +109,7 @@ public abstract class BasePage extends WebPage
 			}
 		});
 		add(newSignOut("signOut"));
-		add(new BookmarkablePageLink<>("accesses", AccessesPage.class)
+		add(new BookmarkablePageLink<>("admin", AdminPage.class)
 		{
 			private static final long serialVersionUID = 1L;
 

@@ -23,16 +23,26 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.antilia.widgets.demo.Countries;
 import com.antilia.widgets.demo.DemoSession;
+import com.antilia.widgets.demo.RecordingMailer;
 import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.account.Accounts;
+import com.antilia.widgets.demo.data.JobRole;
+import com.antilia.widgets.demo.data.Language;
+import com.antilia.widgets.demo.data.User;
+import com.antilia.widgets.demo.mail.LogMailer;
+import com.antilia.widgets.demo.mail.Mail;
 
 /**
  * Registers on {@link RegisterPage}, as a person and as robots.
  */
 class RegisterPageTest
 {
+	/** A strong password. */
+	private static final String PASSWORD = "Analytical-Engine-1843";
+
 	private final MutableClock clock = new MutableClock();
 
 	private WicketTester tester;
@@ -41,12 +51,16 @@ class RegisterPageTest
 
 	private Accounts accounts;
 
+	private RecordingMailer mailer;
+
 	@BeforeEach
 	void startPage()
 	{
 		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
 		TestDatabase.clear();
-		tester = new WicketTester(new WicketApplication());
+		WicketApplication application = new WicketApplication();
+		tester = new WicketTester(application);
+		mailer = RecordingMailer.install(application);
 		accounts = Accounts.get();
 		page = tester.startPage(new RegisterPage(clock));
 	}
@@ -59,13 +73,14 @@ class RegisterPageTest
 	}
 
 	@Test
-	void registeringIsNotSupportedYet()
+	void registeringIsClosedWhenNoEmailIsDelivered()
 	{
 		System.clearProperty(RegisterPage.OPEN_PROPERTY);
+		((WicketApplication)tester.getApplication()).setMailer(new LogMailer());
 		page = tester.startPage(new RegisterPage(clock));
 
 		tester.assertVisible("closed");
-		tester.assertContains("Registering is not supported yet.");
+		tester.assertContains("Registering is closed for now.");
 		tester.assertDisabled("form:submit");
 		tester.assertDisabled("form:email");
 
@@ -74,7 +89,26 @@ class RegisterPageTest
 		FormTester form = fillIn(page.getExpectedAnswer());
 		assertThrows(ListenerInvocationNotAllowedException.class, form::submit);
 		assertFalse(DemoSession.get().isSignedIn());
-		assertFalse(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		assertFalse(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
+	}
+
+	@Test
+	void registeringIsOpenWhenTheEmailsAreDelivered()
+	{
+		System.clearProperty(RegisterPage.OPEN_PROPERTY);
+		page = tester.startPage(new RegisterPage(clock));
+
+		tester.assertInvisible("closed");
+		tester.assertEnabled("form:submit");
+	}
+
+	@Test
+	void theSystemPropertyClosesRegistering()
+	{
+		System.setProperty(RegisterPage.OPEN_PROPERTY, "false");
+		page = tester.startPage(new RegisterPage(clock));
+
+		tester.assertVisible("closed");
 	}
 
 	@Test
@@ -92,22 +126,95 @@ class RegisterPageTest
 
 		tester.assertRenderedPage(EmailConfirmationPage.class);
 		tester.assertContains("ada@example.com");
+
+		Mail mail = mailer.last();
+		assertEquals("ada@example.com", mail.to());
+		assertEquals("Confirm your email for Antilia Widgets", mail.subject());
+		assertTrue(mail.text().contains("Hello Ada,"), mail.text());
+		assertTrue(mail.text().contains("validate-email?token=" + mailer.lastToken()));
+		assertTrue(mail.html().contains("href=\"http://localhost/context/servlet/validate-email?token=" +
+			mailer.lastToken() + "\""), mail.html());
 	}
 
 	@Test
-	void aPersonGetsAnAccountAndIsSignedIn()
+	void aPersonGetsAnAccountWhoseEmailIsNotConfirmedYet()
 	{
 		clock.advance(Duration.ofSeconds(20));
 		fillIn(page.getExpectedAnswer()).submit();
 
-		assertEquals("ada@example.com", DemoSession.get().getAccount());
-		assertTrue(accounts.authenticate("Ada@Example.com", "analytical-engine").isPresent());
+		assertFalse(DemoSession.get().isSignedIn());
+		User ada = accounts.authenticate("Ada@Example.com", PASSWORD).orElseThrow();
+		assertFalse(ada.isValidated());
+		assertEquals("Ada", ada.getFirstName());
+		assertEquals("Lovelace", ada.getLastName());
+		assertEquals("ES", ada.getCountry());
+		assertEquals(Language.ENGLISH, ada.getLanguage());
+		assertEquals(JobRole.DEVELOPER, ada.getJobRole());
+		assertNull(ada.getJobRoleOther());
+		// only salted hashes are kept: of the password and of the token of the link
+		assertFalse(ada.getPasswordHash().contains(PASSWORD));
+		assertFalse(mailer.lastToken().equals(ada.getValidationToken()));
+	}
+
+	@Test
+	void otherAsksTheRoleInWords()
+	{
+		tester.assertInvisible("form:other");
+		FormTester form = tester.newFormTester("form");
+		form.select("jobRole", JobRole.OTHER.ordinal());
+		tester.executeAjaxEvent("form:jobRole", "change");
+		tester.assertVisible("form:other");
+
+		// required then
+		clock.advance(Duration.ofSeconds(20));
+		form = fillIn(page.getExpectedAnswer());
+		form.select("jobRole", JobRole.OTHER.ordinal());
+		form.submit();
+		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertErrorMessages("Please enter Your role.");
+
+		clock.advance(Duration.ofSeconds(20));
+		form = fillIn(page.getExpectedAnswer());
+		form.select("jobRole", JobRole.OTHER.ordinal());
+		form.setValue("other:jobRoleOther", " Mathematician ");
+		form.submit();
+
+		tester.assertRenderedPage(EmailConfirmationPage.class);
+		User ada = accounts.find("ada@example.com").orElseThrow();
+		assertEquals(JobRole.OTHER, ada.getJobRole());
+		assertEquals("Mathematician", ada.getJobRoleOther());
+	}
+
+	@Test
+	void theRoleIsRequired()
+	{
+		clock.advance(Duration.ofSeconds(20));
+		FormTester form = fillIn(page.getExpectedAnswer());
+		form.setValue("jobRole", "");
+		form.submit();
+
+		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertErrorMessages("Please enter Role.");
+	}
+
+	@Test
+	void theEmailIsInTheLanguageChosen()
+	{
+		clock.advance(Duration.ofSeconds(20));
+		FormTester form = fillIn(page.getExpectedAnswer());
+		form.select("language", Language.GERMAN.ordinal());
+		form.submit();
+
+		assertEquals(Language.GERMAN, accounts.find("ada@example.com").orElseThrow().getLanguage());
+		Mail mail = mailer.last();
+		assertEquals("Bestätigen Sie Ihre E-Mail-Adresse für Antilia Widgets", mail.subject());
+		assertTrue(mail.text().contains("Hallo Ada,"), mail.text());
 	}
 
 	@Test
 	void anEmailRegisteredAlreadyIsTurnedAway()
 	{
-		accounts.register("ada@example.com", "another-password");
+		accounts.register("ada@example.com", "another-password", user -> {});
 		clock.advance(Duration.ofSeconds(20));
 		fillIn(page.getExpectedAnswer()).submit();
 
@@ -115,6 +222,7 @@ class RegisterPageTest
 		tester.assertErrorMessages(page.getString("taken"));
 		assertFalse(DemoSession.get().isSignedIn());
 		assertTrue(accounts.authenticate("ada@example.com", "another-password").isPresent());
+		assertTrue(mailer.getMails().isEmpty());
 	}
 
 	@Test
@@ -122,7 +230,7 @@ class RegisterPageTest
 	{
 		clock.advance(Duration.ofSeconds(20));
 		FormTester form = fillIn(page.getExpectedAnswer());
-		form.setValue("repeatedPassword", "analytical-engines");
+		form.setValue("repeatedPassword", PASSWORD + "s");
 		form.submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
@@ -131,16 +239,36 @@ class RegisterPageTest
 	}
 
 	@Test
-	void thePasswordMustNotBeShort()
+	void thePasswordMustBeStrong()
+	{
+		for (String weak : new String[] { "Sh0rt!", "analytical-engine-1843",
+			"ANALYTICAL-ENGINE-1843", "Analytical-Engine", "AnalyticalEngine1843" })
+		{
+			clock.advance(Duration.ofSeconds(20));
+			FormTester form = fillIn(page.getExpectedAnswer());
+			form.setValue("password", weak);
+			form.setValue("repeatedPassword", weak);
+			form.submit();
+
+			tester.assertRenderedPage(RegisterPage.class);
+			tester.assertErrorMessages("Password needs 10 to 128 characters, with an upper and " +
+				"a lower case letter, a digit and a symbol.");
+			tester.clearFeedbackMessages();
+		}
+		assertTrue(mailer.getMails().isEmpty());
+	}
+
+	@Test
+	void thePasswordMustNotContainTheEmail()
 	{
 		clock.advance(Duration.ofSeconds(20));
 		FormTester form = fillIn(page.getExpectedAnswer());
-		form.setValue("password", "short");
-		form.setValue("repeatedPassword", "short");
+		form.setValue("password", "Ada@example.com-1");
+		form.setValue("repeatedPassword", "Ada@example.com-1");
 		form.submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertErrorMessages("Password needs at least 8 characters.");
+		tester.assertErrorMessages("The password must not contain your email.");
 	}
 
 	@Test
@@ -192,12 +320,18 @@ class RegisterPageTest
 		form.setValue("firstName", "Ada");
 		form.setValue("lastName", "Lovelace");
 		form.setValue("email", "ada@example.com");
-		form.setValue("password", "analytical-engine");
-		form.setValue("repeatedPassword", "analytical-engine");
-		form.select("country", 0);
-		form.select("role", 0);
+		form.setValue("password", PASSWORD);
+		form.setValue("repeatedPassword", PASSWORD);
+		form.select("country", countryIndex("ES"));
+		form.select("language", Language.ENGLISH.ordinal());
+		form.select("jobRole", JobRole.DEVELOPER.ordinal());
 		form.setValue("answer", String.valueOf(answer));
 		return form;
+	}
+
+	private static int countryIndex(String code)
+	{
+		return Countries.codes().getObject().indexOf(code);
 	}
 
 	private static class MutableClock extends Clock

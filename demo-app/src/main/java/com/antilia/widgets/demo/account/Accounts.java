@@ -10,11 +10,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -23,10 +29,13 @@ import org.apache.wicket.Application;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.util.string.Strings;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.data.Role;
 import com.antilia.widgets.demo.data.User;
+import com.antilia.widgets.demo.data.UserFilter;
 import com.antilia.widgets.demo.data.IUserRepository;
 
 /**
@@ -34,6 +43,9 @@ import com.antilia.widgets.demo.data.IUserRepository;
  * (see {@link #addDefaults()}), the ones the server is started with, for the people the demos are
  * shown to (see {@link #ACCOUNTS_ENVIRONMENT_VARIABLE}), and the ones visitors register, once
  * registering is open. Only salted hashes of the passwords are kept.
+ * <p>
+ * A visitor who registers opens the demos only after following the link of the confirmation
+ * email, which works for {@link #VALIDATION_TIME}; only the SHA-256 of its token is kept.
  */
 public class Accounts
 {
@@ -70,9 +82,17 @@ public class Accounts
 
 	private static final int KEY_BITS = 256;
 
+	/** How long the link of a confirmation email works. */
+	public static final Duration VALIDATION_TIME = Duration.ofHours(48);
+
+	/** How long after sending a confirmation email signing in sends another one. */
+	public static final Duration RESEND_AFTER = Duration.ofMinutes(10);
+
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final IUserRepository users;
+
+	private final Clock clock;
 
 	/**
 	 * @param users
@@ -80,7 +100,19 @@ public class Accounts
 	 */
 	public Accounts(IUserRepository users)
 	{
+		this(users, Clock.systemUTC());
+	}
+
+	/**
+	 * @param users
+	 *            the table of the accounts
+	 * @param clock
+	 *            the clock of the links of the confirmation emails
+	 */
+	Accounts(IUserRepository users, Clock clock)
+	{
 		this.users = users;
+		this.clock = clock;
 	}
 
 	/**
@@ -119,17 +151,148 @@ public class Accounts
 	}
 
 	/**
-	 * Registers a visitor.
+	 * @param id
+	 *            the id of an account
+	 * @return the account, {@code null} if there is none by that id
+	 */
+	public User find(Long id)
+	{
+		return id == null ? null : users.findById(id).orElse(null);
+	}
+
+	/**
+	 * @param filter
+	 *            which accounts
+	 * @param pageable
+	 *            the page and the order
+	 * @return a page of the accounts the filter lets through
+	 */
+	public Page<User> page(UserFilter filter, Pageable pageable)
+	{
+		return users.findAll(filter.toSpecification(), pageable);
+	}
+
+	/**
+	 * @param filter
+	 *            which accounts
+	 * @return how many accounts the filter lets through
+	 */
+	public long count(UserFilter filter)
+	{
+		return users.count(filter.toSpecification());
+	}
+
+	/**
+	 * Registers a visitor, whose email is not validated yet.
 	 *
 	 * @param email
 	 *            the email, the name of the account
 	 * @param password
 	 *            the password
-	 * @return whether the account was made; {@code false} if there is one by that name already
+	 * @param details
+	 *            puts the other details of the visitor in the account
+	 * @return the token of the link of the confirmation email; empty if there is an account by
+	 *         that name already
 	 */
-	public boolean register(String email, String password)
+	public Optional<String> register(String email, String password, Consumer<User> details)
 	{
-		return add(email, hash(password), Role.USER);
+		String key = accountName(email);
+		if (users.existsByName(key))
+		{
+			return Optional.empty();
+		}
+		User user = new User(key, hash(password), Role.USER);
+		details.accept(user);
+		String token = newValidation(user);
+		try
+		{
+			users.save(user);
+			return Optional.of(token);
+		}
+		catch (DataIntegrityViolationException e)
+		{
+			// another request added it in between
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Gives the account a new link for its confirmation email; the one before stops working.
+	 *
+	 * @param user
+	 *            an account whose email is not validated
+	 * @return the token of the new link
+	 */
+	public String renewValidation(User user)
+	{
+		String token = newValidation(user);
+		users.save(user);
+		return token;
+	}
+
+	/**
+	 * @param user
+	 *            an account whose email is not validated
+	 * @return whether signing in should send another confirmation email: the link of the last
+	 *         one stopped working, or it was sent {@link #RESEND_AFTER} ago
+	 */
+	public boolean isValidationResent(User user)
+	{
+		Instant expires = user.getValidationExpires();
+		return expires == null ||
+			clock.instant().isAfter(expires.minus(VALIDATION_TIME).plus(RESEND_AFTER));
+	}
+
+	/**
+	 * Validates the email of the account whose confirmation email has the token in its link,
+	 * when the link still works. The link works once.
+	 *
+	 * @param token
+	 *            the token of the link, as the visitor sent it
+	 * @return the account validated, empty if the link does not work
+	 */
+	public Optional<User> validate(String token)
+	{
+		if (Strings.isEmpty(token) || token.length() > 100)
+		{
+			return Optional.empty();
+		}
+		Optional<User> user = users.findByValidationToken(sha256(token))
+			.filter(found -> found.getValidationExpires() != null &&
+				clock.instant().isBefore(found.getValidationExpires()));
+		user.ifPresent(found -> {
+			found.setValidated(true);
+			found.setValidation(null, null);
+			users.save(found);
+		});
+		return user;
+	}
+
+	/**
+	 * Gives the account a new token for the link of its confirmation email, kept as its SHA-256.
+	 *
+	 * @return the token
+	 */
+	private String newValidation(User user)
+	{
+		byte[] bytes = new byte[32];
+		RANDOM.nextBytes(bytes);
+		String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+		user.setValidation(sha256(token), clock.instant().plus(VALIDATION_TIME));
+		return token;
+	}
+
+	private static String sha256(String token)
+	{
+		try
+		{
+			return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+				.digest(token.getBytes(StandardCharsets.UTF_8)));
+		}
+		catch (GeneralSecurityException e)
+		{
+			throw new WicketRuntimeException(e);
+		}
 	}
 
 	/**
@@ -216,9 +379,12 @@ public class Accounts
 		{
 			return false;
 		}
+		User user = new User(key, hash, role);
+		// configured accounts have no email to confirm
+		user.setValidated(true);
 		try
 		{
-			users.save(new User(key, hash, role));
+			users.save(user);
 			return true;
 		}
 		catch (DataIntegrityViolationException e)

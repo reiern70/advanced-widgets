@@ -7,11 +7,12 @@ package com.antilia.widgets.demo.data;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * The {@link User}s in the table {@code users}.
+ * The {@link User}s in the table {@code users}, also filtered, see {@link UserFilter}.
  */
-public interface IUserRepository extends JpaRepository<User, Long>
+public interface IUserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User>
 {
 	/**
 	 * @param name
@@ -26,4 +27,11 @@ public interface IUserRepository extends JpaRepository<User, Long>
 	 * @return whether there is an account of that name
 	 */
 	boolean existsByName(String name);
+
+	/**
+	 * @param validationToken
+	 *            the SHA-256 of the token in the link of a confirmation email, in hex
+	 * @return the account the link confirms
+	 */
+	Optional<User> findByValidationToken(String validationToken);
 }

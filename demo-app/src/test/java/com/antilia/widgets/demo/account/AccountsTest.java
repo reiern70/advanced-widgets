@@ -68,7 +68,7 @@ class AccountsTest
 	@Test
 	void registeredAccountsAreKeptHashed()
 	{
-		assertTrue(accounts.register("Ada@Example.com", "analytical-engine"));
+		assertTrue(accounts.register("Ada@Example.com", "analytical-engine", user -> {}).isPresent());
 
 		User ada = TestDatabase.users().stream()
 			.filter(user -> user.getName().equals("ada@example.com"))
@@ -85,10 +85,10 @@ class AccountsTest
 	{
 		accounts.addConfigured("client:secret-one");
 
-		assertTrue(accounts.register("ada@example.com", "analytical-engine"));
-		assertFalse(accounts.register(" ADA@example.com", "difference-engine"));
-		assertFalse(accounts.register("client", "taken-over"));
-		assertFalse(accounts.register("admin", "taken-over"));
+		assertTrue(accounts.register("ada@example.com", "analytical-engine", user -> {}).isPresent());
+		assertFalse(accounts.register(" ADA@example.com", "difference-engine", user -> {}).isPresent());
+		assertFalse(accounts.register("client", "taken-over", user -> {}).isPresent());
+		assertFalse(accounts.register("admin", "taken-over", user -> {}).isPresent());
 		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
 		assertFalse(accounts.authenticate("client", "taken-over").isPresent());
 	}

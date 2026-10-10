@@ -13,8 +13,8 @@ import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.demo.HomePage;
 
 /**
- * Tells a visitor who registered on the {@link RegisterPage} to confirm the email address. A mock
- * for now: no email is sent.
+ * Tells a visitor who registered on the {@link RegisterPage} to open the link of the
+ * {@link ConfirmationMail}, which leads to the {@link EmailValidationPage}.
  */
 public class EmailConfirmationPage extends BasePage
 {
@@ -22,7 +22,7 @@ public class EmailConfirmationPage extends BasePage
 
 	/**
 	 * @param email
-	 *            the address the confirmation would be sent to
+	 *            the address the confirmation was sent to
 	 */
 	public EmailConfirmationPage(String email)
 	{

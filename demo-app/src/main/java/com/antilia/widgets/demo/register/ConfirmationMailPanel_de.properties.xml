@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="subject">Bestätigen Sie Ihre E-Mail-Adresse für Antilia Widgets</entry>
+	<entry key="title">Bestätigen Sie Ihre E-Mail-Adresse</entry>
+	<entry key="greeting">Hallo {0},</entry>
+	<entry key="thanks">danke für Ihre Registrierung, um die Demos von Antilia Widgets auszuprobieren. Bitte bestätigen Sie, dass dies Ihre E-Mail-Adresse ist.</entry>
+	<entry key="confirm">E-Mail-Adresse bestätigen</entry>
+	<entry key="orCopy">Falls die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:</entry>
+	<entry key="validity">Der Link funktioniert {0} Stunden lang. Melden Sie sich danach mit dieser E-Mail-Adresse und Ihrem Passwort an.</entry>
+	<entry key="ignore">Falls Sie sich nicht registriert haben, können Sie diese E-Mail ignorieren.</entry>
+</properties>

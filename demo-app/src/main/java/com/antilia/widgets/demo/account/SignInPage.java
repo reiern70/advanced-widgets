@@ -19,18 +19,22 @@ import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.model.StringResourceModel;
 
 import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.demo.DemoSession;
 import com.antilia.widgets.demo.HomePage;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.data.User;
+import com.antilia.widgets.demo.register.ConfirmationMail;
 import com.antilia.widgets.demo.register.RegisterPage;
 
 /**
  * Signs a visitor in with the name of an account and its password; then goes on to the demo the
  * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA}
  * failed attempts in the session, or on the account, it asks for the letters of a captcha too.
+ * A visitor who registered signs in only once the email is confirmed; until then signing in
+ * sends a new {@link ConfirmationMail} when the last one is {@link Accounts#RESEND_AFTER} old.
  */
 public class SignInPage extends BasePage
 {
@@ -79,9 +83,29 @@ public class SignInPage extends BasePage
 					return;
 				}
 				attempts.succeeded(typed);
+				if (!user.get().isValidated())
+				{
+					notValidated(user.get());
+					return;
+				}
 				session.signIn(user.get().getName(), user.get().getRole());
 				continueToOriginalDestination();
 				setResponsePage(HomePage.class);
+			}
+
+			/**
+			 * Turns away an account whose email is not confirmed, sending a new link if the
+			 * last one is old enough.
+			 */
+			private void notValidated(User user)
+			{
+				Accounts accounts = Accounts.get();
+				if (accounts.isValidationResent(user))
+				{
+					ConfirmationMail.send(user, accounts.renewValidation(user));
+				}
+				error(new StringResourceModel("notValidated", SignInPage.this)
+					.setParameters(user.getName()).getString());
 			}
 
 			private void fail(String typed, String key)

@@ -46,6 +46,8 @@
 		<flyway.version>13.10.0</flyway.version>
 		<postgresql.version>42.7.14</postgresql.version>
 		<h2.version>2.5.252</h2.version>
+		<!-- the emails confirming a registration, sent over SMTP -->
+		<angus-mail.version>2.0.5</angus-mail.version>
 		<!-- the least test coverage `mvn verify` accepts, see jacoco-maven-plugin; set per module -->
 		<jacoco.minimum.lines>0.00</jacoco.minimum.lines>
 		<jacoco.minimum.branches>0.00</jacoco.minimum.branches>
@@ -149,6 +151,11 @@
 				<groupId>com.h2database</groupId>
 				<artifactId>h2</artifactId>
 				<version>${h2.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.eclipse.angus</groupId>
+				<artifactId>angus-mail</artifactId>
+				<version>${angus-mail.version}</version>
 			</dependency>
 
 			<!-- LOGGING DEPENDENCIES -->

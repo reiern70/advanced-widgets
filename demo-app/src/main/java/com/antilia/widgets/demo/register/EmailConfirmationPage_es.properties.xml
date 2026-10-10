@@ -5,8 +5,8 @@
   All rights reserved.
 -->
 <properties>
-	<entry key="title">Bienvenido</entry>
-	<entry key="sent">Hemos enviado un enlace de confirmación a {0}. Ábralo para terminar el registro.</entry>
-	<entry key="hint">Ya ha iniciado sesión y puede probar las demos. (Por ahora el correo es una simulación: no se envía ninguno).</entry>
-	<entry key="home">A las demos</entry>
+	<entry key="title">Revise su correo</entry>
+	<entry key="sent">Hemos enviado un enlace a {0}. Ábralo para confirmar su correo; después inicie sesión para probar las demos.</entry>
+	<entry key="hint">¿No le llega? Mire en la carpeta de spam. Al iniciar sesión se envía otro enlace pasados unos minutos.</entry>
+	<entry key="home">Volver al inicio</entry>
 </properties>

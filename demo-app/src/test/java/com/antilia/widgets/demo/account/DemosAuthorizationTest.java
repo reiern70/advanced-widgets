@@ -20,7 +20,7 @@ import com.antilia.widgets.demo.DemoSession;
 import com.antilia.widgets.demo.HomePage;
 import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
-import com.antilia.widgets.demo.admin.AccessesPage;
+import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 
@@ -233,25 +233,25 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void onlyAnAdministratorSeesTheAccesses()
+	void onlyAnAdministratorSeesTheAdministration()
 	{
 		start(RuntimeConfigurationType.DEVELOPMENT);
 
 		// not even in development, where the demos are open
-		tester.startPage(AccessesPage.class);
+		tester.startPage(AdminPage.class);
 		tester.assertRenderedPage(SignInPage.class);
 
 		// a user who is not an administrator is turned away
 		signIn("wicket", "mellon4321");
 		tester.assertRenderedPage(AccessDeniedPage.class);
 		tester.startPage(HomePage.class);
-		tester.assertInvisible("accesses");
+		tester.assertInvisible("admin");
 
 		DemoSession.get().signOut();
-		tester.startPage(AccessesPage.class);
+		tester.startPage(AdminPage.class);
 		signIn("admin", "$Macarena_4321");
-		tester.assertRenderedPage(AccessesPage.class);
-		tester.assertVisible("accesses");
+		tester.assertRenderedPage(AdminPage.class);
+		tester.assertVisible("admin");
 		tester.assertContains("admin");
 	}
 
@@ -263,10 +263,10 @@ class DemosAuthorizationTest
 
 		tester.startPage(HomePage.class);
 		tester.assertLabel("signOut:account", "admin");
-		tester.assertVisible("accesses");
+		tester.assertVisible("admin");
 		assertTrue(tester.getLastRenderedPage().isPageStateless());
-		tester.startPage(AccessesPage.class);
-		tester.assertRenderedPage(AccessesPage.class);
+		tester.startPage(AdminPage.class);
+		tester.assertRenderedPage(AdminPage.class);
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 	}
