@@ -6,6 +6,7 @@ package com.antilia.widgets.theme;
 
 import java.util.List;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.html.form.DropDownChoice;
@@ -16,7 +17,8 @@ import com.antilia.widgets.theme.Theme;
 
 /**
  * A drop-down choosing the {@link Theme} of the extensions components of an example, applied via
- * Ajax by {@link #onThemeChanged(AjaxRequestTarget)}.
+ * Ajax by {@link #onThemeChanged(AjaxRequestTarget)}. The Ajax is stateless: on a stateless page
+ * the choice works on the page made anew from its URL.
  */
 public abstract class ThemeChoice extends DropDownChoice<Theme>
 {
@@ -41,6 +43,13 @@ public abstract class ThemeChoice extends DropDownChoice<Theme>
 			protected void onUpdate(AjaxRequestTarget target)
 			{
 				onThemeChanged(target);
+			}
+
+			@Override
+			public boolean getStatelessHint(Component component)
+			{
+				// keeps a stateless page stateless: the choice works on the page made anew
+				return true;
 			}
 		});
 	}
