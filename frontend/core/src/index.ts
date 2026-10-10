@@ -23,6 +23,9 @@ export { ResizableColumns } from './resizable-columns.js';
 export type { ResizableColumnsOptions, ResizeMode } from './resizable-columns.js';
 export { getHost, onRemoving, setHost, standaloneHost } from './host.js';
 export type { Host, Unsubscribe } from './host.js';
+export { DateFormat, DatePicker, datePicker, daysInMonth, firstDayOfWeek, formatIso,
+	parseIso } from './date-picker.js';
+export type { DateParts, DatePickerOptions } from './date-picker.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
 export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD } from './palette.js';

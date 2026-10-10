@@ -45,6 +45,8 @@
 	<entry key="demo.autocomplete.description">Ein oder mehrere Werte, beim Tippen vorgeschlagen, jede Zeile aus einer Vorlage, die gewählten als Chips.</entry>
 	<entry key="demo.palette">Palette</entry>
 	<entry key="demo.palette.description">Mehrere aus vielen: links die verfügbaren, rechts die gewählten, mit Pfeilen oder durch Ziehen verschoben; in eigener Reihenfolge, wenn sie zählt.</entry>
+	<entry key="demo.datePicker">Datums- und Zeitauswahl</entry>
+	<entry key="demo.datePicker.description">Datum und Uhrzeit aus einem Kalender oder getippt, im Format und Kalender jedes Gebietsschemas.</entry>
 	<entry key="demo.buttons">Schaltflächen</entry>
 	<entry key="demo.buttons.description">Primäre, sekundäre, dezente und gefährliche Schaltflächen in drei Größen, mit Text, Symbol oder beidem, in den Farben des Farbschemas.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>

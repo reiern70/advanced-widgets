@@ -15,6 +15,7 @@ import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
+import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
@@ -94,6 +95,7 @@ public final class Demos
 		new Demo("dropdown", "forms", DropdownPage.class, true, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
 		new Demo("palette", "forms", PalettePage.class, true, true),
+		new Demo("datePicker", "forms", DatePickerPage.class, true, true),
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),

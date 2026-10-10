@@ -16,13 +16,14 @@ side and the pages don't change.
 
 Every script of `ui-components` has moved here: the dynamic data tables (`data-table.ts`, built
 as `ant-data-table.js`) and Handlebars as one of their template engines (`handlebars.ts`,
-built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the infinite list
+built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
+picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, and
 the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
-and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `InfiniteList`,
-`Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`,
-`palette` and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
+and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `ProgressBar`, `Button`, `DataTable`, `Tree` and
+`TreeGrid`; the core's `dropdown`, `palette`, `datePicker` and `scrollbar` also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
@@ -69,7 +70,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
-demo's name (`dropdown`, `autocomplete`, `palette`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
+demo's name (`dropdown`, `autocomplete`, `palette`, `datePicker`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
 `scrollbar`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of
@@ -115,6 +116,17 @@ and the select:
 The core adds the button and the list to the wrapper. The component creates the core's object
 once it's mounted, calls `configure()` when the texts change, `refresh()` when the options
 change and `update()` when the value changes, and calls `destroy()` on unmount.
+
+The date picker goes the same way, over an input that holds its value as ISO text:
+
+```html
+<div class="antilia-datepicker"><input class="antilia-datepicker-native" value="2026-10-09"></div>
+```
+
+The core adds a text field showing the value the way the locale writes it, the button and the
+calendar; it sets the input's value through the native setter and fires `input` and `change`, so
+a React `onChange` and a Svelte `bind:value` see every change. The wrappers pass the locale, the
+bounds and the texts as options (`configure()`) and call `update()` when the value changes.
 
 The table goes the same way: the framework renders the table in the markup of the Wicket one, its
 navigation, headers and column chooser, and leaves the body empty; the core's `DynamicDataTable`

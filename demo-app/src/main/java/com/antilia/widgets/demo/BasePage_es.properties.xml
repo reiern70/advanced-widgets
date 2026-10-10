@@ -45,6 +45,8 @@
 	<entry key="demo.autocomplete.description">Uno o varios valores sugeridos mientras escribe, cada fila a partir de una plantilla, los elegidos como chips.</entry>
 	<entry key="demo.palette">Paleta</entry>
 	<entry key="demo.palette.description">Varias opciones entre muchas: las disponibles a la izquierda, las elegidas a la derecha, movidas con flechas o arrastrando; en su propio orden cuando importa.</entry>
+	<entry key="demo.datePicker">Selectores de fecha y hora</entry>
+	<entry key="demo.datePicker.description">Fechas y horas de un calendario o escritas, en el formato y el calendario de cualquier configuración regional.</entry>
 	<entry key="demo.buttons">Botones</entry>
 	<entry key="demo.buttons.description">Botones principales, secundarios, discretos y de peligro en tres tamaños, con texto, icono o ambos, en los colores del tema.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>

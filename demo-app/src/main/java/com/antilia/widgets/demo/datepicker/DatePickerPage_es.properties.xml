@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Selectores de fecha y hora</entry>
+	<entry key="explanation">&lt;p&gt;DatePicker y DateTimePicker de ui-components toman una fecha, o una fecha con hora, de un calendario o escrita en su campo. Todo lo que muestran sigue a la configuración regional: el campo escribe la fecha en su orden y con sus separadores, 09.10.2026 en Alemania y 10/09/2026 en los Estados Unidos, y la lee escrita así, con o sin separadores y con un año de dos cifras; el calendario nombra los meses y los días en su idioma y empieza la semana por su primer día; la hora tiene su reloj, de 24 horas o de 12 con a. m. y p. m. Los textos de los botones vienen de los recursos, en el idioma de la página. El campo guarda el valor como texto ISO, que el formulario envía y el servidor convierte en un LocalDate o LocalDateTime, comprobando los límites que el calendario respeta.&lt;/p&gt;&lt;p&gt;Abra el calendario con su botón, o con Alt+Flecha abajo en el campo. Las flechas mueven un día o una semana, Re Pág y Av Pág un mes, con Mayús un año, Intro elige y Escape cierra; el título muestra los meses del año, y luego los años. Elija otra configuración regional abajo para ver cambiar los calendarios: el idioma de la página se mantiene. El texto que no es una fecha lo indica el servidor bajo el formulario, que sigue cada cambio por Ajax.&lt;/p&gt;</entry>
+	<entry key="dates">Una fecha</entry>
+	<entry key="datesAndTimes">Fecha y hora</entry>
+	<entry key="localeTitle">Configuración regional</entry>
+	<entry key="born">Nacimiento</entry>
+	<entry key="start">Inicio del contrato</entry>
+	<entry key="appointment">Cita</entry>
+	<entry key="departure">Salida</entry>
+	<entry key="calendarLocale">Calendarios en</entry>
+	<entry key="calendarLocale.page">El idioma de la página</entry>
+	<entry key="disabledTitle">Deshabilitado</entry>
+	<entry key="send">Enviar</entry>
+	<entry key="nothing">nada</entry>
+	<entry key="choices">Nacimiento {0}; contrato desde {1}; cita {2}; salida {3}.</entry>
+	<entry key="sent">Enviado: {0}</entry>
+</properties>

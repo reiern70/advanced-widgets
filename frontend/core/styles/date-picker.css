@@ -1,0 +1,402 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The date picker drawn over an <input> by antilia-date-picker.js, in the colors of the theme it is
+ * in and in neutral colors outside one.
+ */
+.antilia-datepicker {
+	position: relative;
+	display: inline-block;
+	min-width: 11em;
+	max-width: 100%;
+	vertical-align: middle;
+	font-size: inherit;
+	color: var(--antilia-theme-text, #1c2333);
+}
+
+.antilia-datepicker-time {
+	min-width: 15em;
+}
+
+/* the input stays in the page for forms and Ajax, out of sight */
+.antilia-datepicker > .antilia-datepicker-native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	pointer-events: none;
+}
+
+.antilia-datepicker-field {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-height: 2.1em;
+	box-sizing: border-box;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.4em;
+	background: var(--antilia-theme-surface, #ffffff);
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.antilia-datepicker-field:hover {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
+}
+
+.antilia-datepicker-field:focus-within,
+.antilia-datepicker-open > .antilia-datepicker-field {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+}
+
+.antilia-datepicker-invalid > .antilia-datepicker-field {
+	border-color: var(--antilia-theme-danger, #c62828);
+}
+
+.antilia-datepicker-invalid > .antilia-datepicker-field:focus-within {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-danger, #c62828) 25%, transparent);
+}
+
+.antilia-datepicker-disabled > .antilia-datepicker-field {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.antilia-datepicker-text {
+	flex: 1;
+	min-width: 0;
+	padding: 0.25em 0.6em;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	outline: none;
+}
+
+.antilia-datepicker-text::placeholder {
+	color: inherit;
+	opacity: 0.55;
+}
+
+.antilia-datepicker-text:disabled {
+	cursor: not-allowed;
+}
+
+.antilia-datepicker-toggle {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.2em;
+	padding: 0;
+	border: 0;
+	border-left: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0 0.4em 0.4em 0;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.antilia-datepicker-toggle:hover:not(:disabled),
+.antilia-datepicker-open .antilia-datepicker-toggle {
+	background: var(--antilia-theme-hover, #eef2fb);
+	color: var(--antilia-theme-primary, #2f5bd3);
+}
+
+.antilia-datepicker-toggle:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: -2px;
+}
+
+.antilia-datepicker-toggle:disabled {
+	cursor: not-allowed;
+}
+
+/* the calendar icon: a page with two rings, drawn without an image */
+.antilia-datepicker-icon {
+	position: relative;
+	width: 0.95em;
+	height: 0.8em;
+	margin-top: 0.15em;
+	box-sizing: border-box;
+	border: 2px solid currentColor;
+	border-top-width: 0.25em;
+	border-radius: 0.15em;
+	opacity: 0.8;
+}
+
+.antilia-datepicker-icon::before,
+.antilia-datepicker-icon::after {
+	content: "";
+	position: absolute;
+	top: -0.4em;
+	width: 2px;
+	height: 0.3em;
+	border-radius: 1px;
+	background: currentColor;
+}
+
+.antilia-datepicker-icon::before {
+	left: 0.12em;
+}
+
+.antilia-datepicker-icon::after {
+	right: 0.12em;
+}
+
+.antilia-datepicker-popup {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 1100;
+	width: max-content;
+	padding: 0.5em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	color-scheme: var(--antilia-theme-color-scheme, light);
+	font-variant-numeric: tabular-nums;
+}
+
+.antilia-datepicker-popup[hidden] {
+	display: none;
+}
+
+.antilia-datepicker-up > .antilia-datepicker-popup {
+	top: auto;
+	bottom: calc(100% + 4px);
+}
+
+.antilia-datepicker-end > .antilia-datepicker-popup {
+	left: auto;
+	right: 0;
+}
+
+.antilia-datepicker-popup button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.antilia-datepicker-popup button:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: 1px;
+}
+
+.antilia-datepicker-header {
+	display: flex;
+	align-items: center;
+	gap: 0.25em;
+	margin-bottom: 0.4em;
+}
+
+.antilia-datepicker-title {
+	flex: 1;
+	padding: 0.3em 0.5em;
+	border: 0;
+	border-radius: 0.3em;
+	background: transparent;
+	font-weight: 600 !important;
+	text-transform: capitalize;
+}
+
+.antilia-datepicker-title:hover:not(:disabled),
+.antilia-datepicker-previous:hover,
+.antilia-datepicker-next:hover {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-datepicker-title:disabled {
+	cursor: default !important;
+}
+
+.antilia-datepicker-previous,
+.antilia-datepicker-next {
+	position: relative;
+	flex: none;
+	width: 2em;
+	height: 2em;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+}
+
+/* the chevrons, turned for right-to-left pages */
+.antilia-datepicker-previous::before,
+.antilia-datepicker-next::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0.45em;
+	height: 0.45em;
+	border-left: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: translate(-30%, -50%) rotate(45deg);
+}
+
+.antilia-datepicker-next::before,
+[dir="rtl"] .antilia-datepicker-previous::before {
+	transform: translate(-70%, -50%) rotate(-135deg);
+}
+
+[dir="rtl"] .antilia-datepicker-next::before {
+	transform: translate(-30%, -50%) rotate(45deg);
+}
+
+.antilia-datepicker-days {
+	border-collapse: collapse;
+	margin: 0 auto;
+}
+
+.antilia-datepicker-days th {
+	padding: 0 0 0.3em;
+	font-size: 0.8em;
+	font-weight: 600;
+	opacity: 0.7;
+	text-align: center;
+}
+
+.antilia-datepicker-days td {
+	padding: 1px;
+}
+
+.antilia-datepicker-day,
+.antilia-datepicker-month,
+.antilia-datepicker-year {
+	border: 1px solid transparent;
+	border-radius: 0.35em;
+	background: transparent;
+}
+
+.antilia-datepicker-day {
+	width: 2.2em;
+	height: 2.1em;
+	padding: 0;
+}
+
+.antilia-datepicker-day:hover,
+.antilia-datepicker-month:hover,
+.antilia-datepicker-year:hover {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-datepicker-outside {
+	opacity: 0.45;
+}
+
+.antilia-datepicker-popup [aria-current="date"] {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	font-weight: 600 !important;
+}
+
+.antilia-datepicker-popup [aria-pressed="true"],
+.antilia-datepicker-popup [aria-pressed="true"]:hover {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff) !important;
+	opacity: 1;
+}
+
+.antilia-datepicker-popup [aria-disabled="true"],
+.antilia-datepicker-popup [aria-disabled="true"]:hover {
+	background: transparent;
+	opacity: 0.3;
+	text-decoration: line-through;
+	cursor: not-allowed !important;
+}
+
+.antilia-datepicker-months,
+.antilia-datepicker-years {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.3em;
+	min-width: 15.6em;
+}
+
+.antilia-datepicker-month,
+.antilia-datepicker-year {
+	padding: 0.7em 0.3em;
+	text-transform: capitalize;
+}
+
+.antilia-datepicker-clock {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.3em;
+	margin-top: 0.5em;
+	padding-top: 0.5em;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-datepicker-hour,
+.antilia-datepicker-minute {
+	width: 3.6em;
+	padding: 0.3em 0.4em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+	color: inherit;
+	font: inherit;
+	text-align: center;
+}
+
+.antilia-datepicker-hour:focus,
+.antilia-datepicker-minute:focus {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: -1px;
+}
+
+.antilia-datepicker-colon {
+	font-weight: 600;
+}
+
+.antilia-datepicker-period {
+	min-width: 3em;
+	margin-left: 0.3em;
+	padding: 0.3em 0.5em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+}
+
+.antilia-datepicker-footer {
+	display: flex;
+	gap: 0.4em;
+	margin-top: 0.5em;
+	padding-top: 0.5em;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-datepicker-footer button {
+	padding: 0.3em 0.7em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 999px;
+	background: transparent;
+	font-size: 0.9em;
+}
+
+.antilia-datepicker-footer button:hover {
+	border-color: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-primary, #2f5bd3);
+}
+
+.antilia-datepicker-close {
+	margin-left: auto;
+	border-color: var(--antilia-theme-primary, #2f5bd3) !important;
+	background: var(--antilia-theme-primary, #2f5bd3) !important;
+	color: var(--antilia-theme-on-primary, #ffffff) !important;
+}

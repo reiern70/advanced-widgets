@@ -45,6 +45,8 @@
 	<entry key="demo.autocomplete.description">One or many values suggested as you type, each row from a template, the chosen ones as chips.</entry>
 	<entry key="demo.palette">Palette</entry>
 	<entry key="demo.palette.description">Several choices out of many: the available ones on the left, the chosen ones on the right, moved with arrows or by dragging; in their own order when it matters.</entry>
+	<entry key="demo.datePicker">Date and time pickers</entry>
+	<entry key="demo.datePicker.description">Dates and times from a calendar or typed, in the format and calendar of any locale.</entry>
 	<entry key="demo.buttons">Buttons</entry>
 	<entry key="demo.buttons.description">Primary, secondary, ghost and danger buttons in three sizes, with a text, an icon or both, in the colors of the theme.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>

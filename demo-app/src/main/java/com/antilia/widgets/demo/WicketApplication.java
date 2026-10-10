@@ -27,6 +27,7 @@ import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antilia.widgets.demo.datatable.UsersRowsResource;
+import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
@@ -129,6 +130,7 @@ public class WicketApplication extends WebApplication
 		mountPage("dropdown", DropdownPage.class);
 		mountPage("autocomplete", AutocompletePage.class);
 		mountPage("palette", PalettePage.class);
+		mountPage("date-picker", DatePickerPage.class);
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);

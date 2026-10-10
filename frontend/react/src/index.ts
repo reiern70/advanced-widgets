@@ -3,6 +3,8 @@
  * All rights reserved.
  */
 
+export { DatePicker, DateTimePicker } from './DatePicker.js';
+export type { DatePickerProps, DateTimePickerProps } from './DatePicker.js';
 export { Dropdown } from './Dropdown.js';
 export type { DropdownOption, DropdownProps } from './Dropdown.js';
 export { Scrollable } from './Scrollable.js';
