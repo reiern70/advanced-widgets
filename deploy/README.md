@@ -74,9 +74,8 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
 The demos are private: visitors sign in to open them, the home page is public. Registering is
-not open yet: the page says so and its form is disabled (`-Dantilia-widgets.open-registration=true`
-opens it). The accounts are in the table `users`: the demo always adds `semedy`, `wicket` and
-`admin` (the administrator, who sees the accesses on `/accesses`) when they are missing, never
+open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`: the demo always adds `semedy`, `wicket` and
+`admin` (the administrator, who sees the users and the accesses on `/admin`) when they are missing, never
 changing them; accounts for people such as a client go into `.env` as
 `ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again. The
 accounts registered with earlier versions, in `/var/lib/antilia-widgets/accounts`, are copied into
@@ -101,19 +100,41 @@ runs without installing anything; the tests use H2 in memory.
 ### In production
 
 `compose.yaml` runs **PostgreSQL 17 in a container** next to Jetty, on a volume of the instance's
-SSD, reachable only by the application. It costs nothing more and takes about 100 MB of the
-2 GB. Before the first deployment with it, add a password to `.env` on the server:
+SSD, reachable only by the application (no port is published). It costs nothing more. Its
+settings are sized for the 2 GB instance next to a JVM of 1 GB: `shared_buffers` 192 MB,
+`effective_cache_size` 512 MB, at most 20 connections (the application's pool uses 5); queries
+slower than a second are logged. The logs of every container are rotated, 3 files of 10 MB.
+
+Before the first deployment with it, add a password to `.env` on the server:
 
 ```sh
 ssh ubuntu@<static-ip> "echo DATABASE_PASSWORD=$(openssl rand -hex 24) >> /opt/antilia-widgets/.env"
 deploy/deploy.sh ubuntu@<static-ip>
 ```
 
-Backups: the automatic snapshots of the instance hold the volume; for a copy outside AWS, dump it
-now and then:
+Flyway makes the tables at the first start; the demo adds `semedy`, `wicket` and `admin`.
+
+**Backups.** `deploy.sh` installs `/etc/cron.d/antilia-widgets`: every night at 03:30 (the
+server's clock, UTC) `backup.sh` dumps the database to `/var/backups/antilia-widgets`, keeps it
+once `pg_restore` reads it, and deletes dumps older than 14 days; it logs to `backup.log` there.
+Those dumps are on the instance's disk: the **automatic snapshots** of the instance (Lightsail
+console → the instance → *Snapshots* → *Automatic snapshots*, about $2/month) keep the disk too,
+for 7 days. For a copy outside AWS, now and then:
 
 ```sh
-ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db pg_dump -U widgets widgets' > widgets-$(date +%F).sql
+scp 'ubuntu@<static-ip>:/var/backups/antilia-widgets/widgets-*.dump' .
+```
+
+To restore a dump:
+
+```sh
+ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'' < /var/backups/antilia-widgets/widgets-<date>.dump'
+```
+
+**Going back.** Every deployment keeps the image that ran before as `antilia-widgets:previous`:
+
+```sh
+ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker tag antilia-widgets:previous antilia-widgets:latest && docker compose up -d --no-build app'
 ```
 
 **Later, a managed database** ($15/month: daily backups and 7 days of point-in-time restore,

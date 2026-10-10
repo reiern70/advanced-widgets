@@ -3,6 +3,7 @@
 #   deploy/deploy.sh ubuntu@<static-ip>
 # The WAR is built on this machine (Wicket 11 is a snapshot built here), copied with the files
 # of this folder to /opt/antilia-widgets on the instance, and started there with Docker Compose.
+# The image running before is kept as antilia-widgets:previous, to go back to (see README.md).
 set -eu
 
 TARGET=${1:?usage: deploy/deploy.sh user@host}
@@ -16,10 +17,17 @@ WAR=$(ls -t demo-app/target/demo-app-*.war | head -n 1)
 
 rsync -az --checksum "$WAR" "$TARGET:$REMOTE/ROOT.war"
 rsync -az "$DEPLOY/Dockerfile" "$DEPLOY/compose.yaml" "$DEPLOY/Caddyfile" \
-	"$DEPLOY/.env.example" "$TARGET:$REMOTE/"
+	"$DEPLOY/.env.example" "$DEPLOY/backup.sh" "$TARGET:$REMOTE/"
+
+# the nightly backup of the database, see backup.sh
+ssh "$TARGET" "sudo install -d -o \$USER -g \$USER -m 700 /var/backups/antilia-widgets \
+	&& echo \"30 3 * * * \$USER $REMOTE/backup.sh >> /var/backups/antilia-widgets/backup.log 2>&1\" \
+		| sudo tee /etc/cron.d/antilia-widgets > /dev/null \
+	&& { chmod 600 $REMOTE/.env 2>/dev/null || true; }"
 
 ssh "$TARGET" "cd $REMOTE \
 	&& if [ ! -f .env ]; then cp .env.example .env; echo 'Fill in $REMOTE/.env, then deploy again.'; exit 1; fi \
+	&& if docker image inspect antilia-widgets:latest >/dev/null 2>&1; then docker tag antilia-widgets:latest antilia-widgets:previous; fi \
 	&& docker compose up -d --build \
 	&& docker image prune -f >/dev/null \
 	&& docker compose ps"

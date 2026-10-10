@@ -1,6 +1,14 @@
 # The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
 # and passes everything, websockets included, to Jetty; PostgreSQL keeps the users and the
 # accesses. Settings come from .env, see .env.example.
+
+# the logs of every container: at most 3 files of 10 MB, so they never fill the disk
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build: .
@@ -25,14 +33,36 @@ services:
       - page-store:/var/lib/antilia-widgets
     expose:
       - "8080"
+    logging: *logging
     depends_on:
       db:
         condition: service_healthy
 
-  # PostgreSQL on the instance's SSD; only the app reaches it, no port is published
+  # PostgreSQL on the instance's SSD; only the app reaches it, no port is published. Sized for
+  # the 2 GB instance next to a JVM of 1 GB: the pool of the app uses 5 connections at most.
+  # Backed up every night by backup.sh, see README.md.
   db:
     image: postgres:17
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=192MB
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=20
+      - -c
+      - wal_compression=on
+      # queries slower than a second go to the log
+      - -c
+      - log_min_duration_statement=1000
+    shm_size: 256mb
+    logging: *logging
     environment:
       POSTGRES_DB: widgets
       POSTGRES_USER: ${DATABASE_USER:-widgets}
@@ -48,6 +78,7 @@ services:
   caddy:
     image: caddy:2.11
     restart: unless-stopped
+    logging: *logging
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
