@@ -350,6 +350,73 @@ describe('Palette', () => {
 		expect(instance.value()).toEqual(['date', 'banana']);
 	});
 
+	it('draws long lists a page at a time, more as they scroll to their end', () => {
+		const many: PaletteChoice[] = Array.from({ length: 75 }, (_value, index) => ({
+			value: 'c' + index,
+			label: 'Choice ' + index
+		}));
+		const instance = new Palette(element(), { choices: many });
+		const list = instance.available.list;
+
+		expect(instance.available.items.length).toBe(30);
+		expect(instance.more('available')).toBe(true);
+		expect(instance.available.items.length).toBe(60);
+		expect(label(instance.available.items[59])).toBe('Choice 59');
+
+		// scrolled near the end, the rest is drawn
+		Object.defineProperty(list, 'clientHeight', { configurable: true, value: 200 });
+		Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 1200 });
+		list.scrollTop = 1000;
+		list.dispatchEvent(new Event('scroll'));
+		expect(instance.available.items.length).toBe(75);
+		expect(instance.more('available')).toBe(false);
+		Object.defineProperty(list, 'clientHeight', { configurable: true, value: 0 });
+
+		// the filter searches all choices, drawn or not, and draws its matches from the first
+		instance.filter!.value = 'Choice 7';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(texts(instance.available)).toEqual(['Choice 7', 'Choice 70', 'Choice 71',
+			'Choice 72', 'Choice 73', 'Choice 74']);
+		instance.filter!.value = '';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(instance.available.items.length).toBe(30);
+
+		// the keyboard draws the rows it goes to
+		key(list, 'End');
+		expect(instance.available.items.length).toBe(75);
+		expect(instance.available.active).toBe('c74');
+
+		// add all adds them all, drawn or not
+		instance.filter!.dispatchEvent(new Event('input'));
+		click(instance.buttons.addAll);
+		expect(instance.value().length).toBe(75);
+		expect(instance.chosen.items.length).toBeGreaterThanOrEqual(30);
+		expect(instance.available.items.length).toBe(0);
+	});
+
+	it('draws a page of the size asked for, or all rows for 0', () => {
+		const many: PaletteChoice[] = Array.from({ length: 12 }, (_value, index) => ({
+			value: 'c' + index,
+			label: 'Choice ' + index
+		}));
+		const instance = new Palette(element(), { choices: many, pageSize: 5, numbered: true });
+
+		expect(instance.available.items.length).toBe(5);
+		instance.more('available');
+		expect(numbers(instance.available).slice(-2)).toEqual(['9.', '10.']);
+		// Shift with the arrows highlights past the rows drawn
+		click(instance.available.items[9]);
+		key(instance.available.list, 'ArrowDown', { shiftKey: true });
+		key(instance.available.list, 'ArrowDown', { shiftKey: true });
+		expect(instance.available.items.length).toBe(12);
+		expect(Array.from(instance.available.highlighted)).toEqual(['c9', 'c10', 'c11']);
+
+		instance.configure({ pageSize: 0 });
+		expect(instance.chosen.items.length).toBe(0);
+		instance.update(many.map((choice) => choice.value));
+		expect(instance.chosen.items.length).toBe(12);
+	});
+
 	it('takes the palette away on destroy', () => {
 		const instance = new Palette(element(), { choices: FRUITS });
 

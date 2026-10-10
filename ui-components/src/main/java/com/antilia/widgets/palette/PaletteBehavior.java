@@ -61,6 +61,9 @@ public class PaletteBehavior extends Behavior
 	/** The number of choices from which on the available ones have a filter, unless set otherwise. */
 	public static final int DEFAULT_FILTER_THRESHOLD = 8;
 
+	/** How many rows a list draws at first and adds at a time, unless set otherwise. */
+	public static final int DEFAULT_PAGE_SIZE = 30;
+
 	/** The keys of the texts, under {@code Palette.} in the bundles. */
 	private static final String[] TEXTS = { "availableTitle", "selectedTitle", "add", "addAll",
 			"remove", "removeAll", "up", "down", "filter", "empty" };
@@ -72,6 +75,8 @@ public class PaletteBehavior extends Behavior
 	private int filterThreshold = DEFAULT_FILTER_THRESHOLD;
 
 	private boolean numbered;
+
+	private int pageSize = DEFAULT_PAGE_SIZE;
 
 	private IModel<String> availableTitle;
 
@@ -157,6 +162,29 @@ public class PaletteBehavior extends Behavior
 	}
 
 	/**
+	 * @return how many rows a list draws at first, and adds each time it is scrolled to its end
+	 */
+	public int getPageSize()
+	{
+		return pageSize;
+	}
+
+	/**
+	 * Long lists are drawn a page at a time: the first rows, more as the list is scrolled to its
+	 * end. The filter searches all choices, drawn or not, and "add all" adds them all.
+	 *
+	 * @param pageSize
+	 *            how many rows a list draws at first, and adds each time it is scrolled to its
+	 *            end, {@link #DEFAULT_PAGE_SIZE} unless set otherwise; 0 draws them all
+	 * @return {@code this}
+	 */
+	public PaletteBehavior setPageSize(int pageSize)
+	{
+		this.pageSize = Math.max(0, pageSize);
+		return this;
+	}
+
+	/**
 	 * @return the title of the list of the available choices, {@code null} for that of the
 	 *         bundles, {@code Palette.availableTitle}
 	 */
@@ -229,7 +257,7 @@ public class PaletteBehavior extends Behavior
 
 	/**
 	 * @return the options of the script: the texts, whether the order matters, whether the rows
-	 *         show their numbers, when to show the filter and, while the order matters, the ids of the chosen ones in their order, which
+	 *         show their numbers, when to show the filter, how many rows to draw at a time and, while the order matters, the ids of the chosen ones in their order, which
 	 *         the options of the select, in the order of the choices, do not have
 	 */
 	protected JSONObject newOptions(Component component)
@@ -239,6 +267,7 @@ public class PaletteBehavior extends Behavior
 		options.put("numbered", numbered);
 		options.put("filterable", filterable);
 		options.put("filterThreshold", filterThreshold);
+		options.put("pageSize", pageSize);
 		for (String text : TEXTS)
 		{
 			options.put(text, component.getString("Palette." + text));

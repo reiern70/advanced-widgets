@@ -15,6 +15,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -181,13 +182,44 @@ class PaletteBrowserTest extends JettyTestCase
 		assertFalse(Palettes.button(disabled, "remove-all").isEnabled());
 	}
 
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void drawsTheCountriesAPageAtATimeAndFiltersThemAll(SeleniumBrowser browser)
+	{
+		open(browser);
+		WebElement countries = palette("countries");
+		WebElement list = Palettes.list(countries, "available");
+		assertEquals(30, rows(list));
+
+		((JavascriptExecutor)driver).executeScript(
+			"arguments[0].scrollTop = arguments[0].scrollHeight;", list);
+		wait.until(d -> rows(list) == 60);
+
+		WebElement filter = countries.findElement(By.cssSelector(".antilia-palette-filter"));
+		filter.sendKeys("urug");
+		assertEquals("", Palettes.available(countries), "Uruguay is chosen already");
+		filter.clear();
+		filter.sendKeys("zimb");
+		wait.until(d -> Palettes.available(countries).equals("Zimbabwe"));
+		Palettes.doubleClick(driver, Palettes.item(countries, "Zimbabwe"));
+
+		wait.until(d -> driver.findElement(By.cssSelector(".palette-demo__count")).getText()
+			.equals("4 chosen: Germany, Spain, Uruguay, Zimbabwe."));
+		assertEquals("Germany\nSpain\nUruguay\nZimbabwe", Palettes.selected(countries));
+	}
+
+	private static int rows(WebElement list)
+	{
+		return list.findElements(By.cssSelector(".antilia-palette-item")).size();
+	}
+
 	private void open(SeleniumBrowser browser)
 	{
 		driver = browser.newDriver(1200, 1000);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofMillis(20));
 		wait.ignoring(StaleElementReferenceException.class);
 		driver.get("http://localhost:" + localPort + "/palette");
-		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 6);
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 8);
 	}
 
 	private WebElement palette(String name)

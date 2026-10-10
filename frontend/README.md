@@ -37,7 +37,9 @@ click, Enter or dragging moves a choice too. With `ordered`, the chosen ones kee
 and move up and down with buttons, Alt and the arrow keys or by dragging. With `numbered`, the rows
 show their numbers; `availableTitle` and `selectedTitle` name the lists. The available list gets
 a filter from `filterThreshold` choices on (8), unless `filterable` is false; it filters in the
-browser, over the choices the palette has. Over a select, as in
+browser, over the choices the palette has. Long lists draw `pageSize` rows at first (30) and as
+many more each time they are scrolled to their end, 0 for all; the filter, the keyboard and "add
+all" reach the rows not drawn yet. Over a select, as in
 Wicket, it writes the choice into the select's options in that order, which a form then posts; in
 React and Svelte it reports it with `onChange`, and posts it in hidden fields when given a `name`.
 

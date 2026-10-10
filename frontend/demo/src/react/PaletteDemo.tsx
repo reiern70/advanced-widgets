@@ -8,7 +8,7 @@ import { useState, type FormEvent } from 'react';
 import { Palette } from '@antilia/react';
 
 import { format } from '../data.js';
-import { describe, type PaletteConfig, type PaletteValues } from '../palette.js';
+import { describe, describeCountries, type PaletteConfig, type PaletteValues } from '../palette.js';
 import { Feedback, type Message } from './Feedback.js';
 
 /**
@@ -71,6 +71,18 @@ export function PaletteDemo({ config }: { config: PaletteConfig }) {
 							availableTitle={texts.columnsAvailable}
 							selectedTitle={texts.columnsSelected} />
 					</div>
+				</section>
+				<section>
+					<h3>{texts.manyTitle}</h3>
+					<div className="palette-demo__field">
+						<span>{texts.countries}</span>
+						<Palette name="countries" options={config.countries}
+							value={values.countries} onChange={set('countries')}
+							{...config.palette} />
+					</div>
+					<p className="palette-demo__count">
+						{describeCountries(config, values.countries)}
+					</p>
 				</section>
 				<section>
 					<h3>{texts.disabledTitle}</h3>

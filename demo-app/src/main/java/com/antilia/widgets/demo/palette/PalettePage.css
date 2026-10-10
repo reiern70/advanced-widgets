@@ -4,7 +4,19 @@
  */
 .palette-demo__form {
 	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 16px;
+}
+
+/* two examples in a row, one on narrow screens */
+@media (max-width: 900px) {
+	.palette-demo__form {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.palette-demo__form > p {
+	grid-column: 1 / -1;
 }
 
 .palette-demo__form section {
@@ -29,6 +41,12 @@
 	display: grid;
 	width: 100%;
 	max-width: 720px;
+}
+
+.palette-demo__count {
+	margin: 10px 0 0;
+	font-size: 13px;
+	color: var(--muted, inherit);
 }
 
 .palette-demo__checks {

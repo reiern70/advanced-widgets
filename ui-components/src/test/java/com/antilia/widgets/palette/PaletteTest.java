@@ -44,6 +44,7 @@ class PaletteTest extends WicketTestCase
 		tester.assertContains("\"ordered\":false");
 		tester.assertContains("\"availableTitle\":\"Available\"");
 		tester.assertContains("\"filterThreshold\":8");
+		tester.assertContains("\"pageSize\":30");
 		tester.assertContains("\"numbered\":false");
 		tester.assertContains("\"filterable\":true");
 		assertEquals("multiple", tester.getTagByWicketId("palette").getAttribute("multiple"));
@@ -68,11 +69,12 @@ class PaletteTest extends WicketTestCase
 	{
 		TestPage page = new TestPage();
 		page.palette.setModelObject(new ArrayList<>(List.of("Cherry", "Apple")));
-		page.palette.setOrdered(true).getPaletteBehavior().setFilterThreshold(0);
+		page.palette.setOrdered(true).setPageSize(5).getPaletteBehavior().setFilterThreshold(0);
 		tester.startPage(page);
 
 		tester.assertContains("\"ordered\":true");
 		tester.assertContains("\"filterThreshold\":0");
+		tester.assertContains("\"pageSize\":5");
 		tester.assertContains("\"selected\":\\[\"2\",\"0\"\\]");
 	}
 
@@ -162,6 +164,10 @@ class PaletteTest extends WicketTestCase
 		assertEquals(null, behavior.getAvailableTitle());
 		assertEquals(null, behavior.getSelectedTitle());
 		assertEquals(0, behavior.setFilterThreshold(-3).getFilterThreshold());
+		assertEquals(30, behavior.getPageSize());
+		assertEquals(0, behavior.setPageSize(-1).getPageSize());
+		assertEquals(50, new Palette<>("p", Model.ofList(new ArrayList<String>()), List.of("A"))
+			.setPageSize(50).getPageSize());
 		assertTrue(behavior.setOrdered(true).isOrdered());
 		assertFalse(new Palette<>("p", Model.ofList(new ArrayList<String>()), List.of("A"))
 			.isOrdered());

@@ -5,7 +5,8 @@
 
 /*
  * The Palette demo: skills in any order, the columns of a report in their own order while it
- * matters, under titles of their own and with numbered rows, and a disabled palette.
+ * matters, under titles of their own and with numbered rows, some 250 countries drawn 30 rows at a
+ * time, and a disabled palette.
  */
 
 import type { PaletteTexts } from '@antilia/core';
@@ -17,6 +18,10 @@ export interface PaletteDemoTexts {
 	unordered: string;
 	orderedTitle: string;
 	disabledTitle: string;
+	manyTitle: string;
+	countries: string;
+	/** How many countries are chosen, {0}, and which, {1}. */
+	countriesChosen: string;
 	skills: string;
 	columns: string;
 	ordered: string;
@@ -40,6 +45,7 @@ export interface PaletteValues {
 	ordered: boolean;
 	numbered: boolean;
 	filterable: boolean;
+	countries: string[];
 	disabled: string[];
 }
 
@@ -50,6 +56,8 @@ export interface PaletteConfig {
 	palette: PaletteTexts;
 	skills: Choice[];
 	columns: Choice[];
+	/** The countries, in the order of their names. */
+	countries: Choice[];
 	values: PaletteValues;
 }
 
@@ -62,4 +70,13 @@ export function describe(config: PaletteConfig, values: PaletteValues): string {
 		chosen.map((value) => labelOf(choices, value)).join(', ') : texts.nothing;
 	return format(texts.choices, list(values.skills, config.skills),
 		list(values.columns, config.columns));
+}
+
+/**
+ * @returns how many countries are chosen, and which, as the Wicket page says it
+ */
+export function describeCountries(config: PaletteConfig, countries: string[]): string {
+	return format(config.texts.countriesChosen, String(countries.length), countries.length ?
+		countries.map((value) => labelOf(config.countries, value)).join(', ') :
+		config.texts.nothing);
 }

@@ -4,9 +4,12 @@
  */
 package com.antilia.widgets.demo.palette;
 
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -18,6 +21,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
+import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
@@ -37,7 +41,8 @@ import com.github.openjson.JSONObject;
  * a filter a check box takes away by Ajax; the
  * columns of a report keep the order they are chosen in, and are moved up and down, while the
  * order matters, which a check box switches by Ajax; their palette has titles of its own and
- * another check box numbers its rows. The choices are shown below the form as Ajax
+ * another check box numbers its rows. The countries, some 250 of them, are many choices: their
+ * lists draw 30 rows at a time, more as they scroll, and the filter searches them all. The choices are shown below the form as Ajax
  * reports them, and again when the form is sent. The React and Svelte tabs show the same form in
  * those frameworks.
  */
@@ -54,6 +59,8 @@ public class PalettePage extends DemoPage
 		"country", "born", "company");
 
 	private List<String> skills = new ArrayList<>(List.of("java", "wicket"));
+
+	private List<String> countries = new ArrayList<>(List.of("DE", "ES", "UY"));
 
 	private List<String> columns = new ArrayList<>(List.of("name", "country", "email"));
 
@@ -166,6 +173,22 @@ public class PalettePage extends DemoPage
 		});
 		form.add(numberedChoice);
 
+		IModel<List<String>> countryChoices = new LoadableDetachableModel<>()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected List<String> load()
+			{
+				return countryCodes(getLocale());
+			}
+		};
+		Label countriesChosen = new Label("countriesChosen", this::describeCountries);
+		countriesChosen.setOutputMarkupId(true);
+		form.add(countriesChosen);
+		form.add(reportChanges(new Palette<>("countries", new PropertyModel<>(this, "countries"),
+			countryChoices, new CountryRenderer()), countriesChosen));
+
 		form.add(new Palette<>("disabled", new PropertyModel<>(this, "disabled"), SKILLS,
 			new NameRenderer("skill.")).setEnabled(false));
 
@@ -185,6 +208,35 @@ public class PalettePage extends DemoPage
 			}
 		});
 		return choice;
+	}
+
+	/**
+	 * @param locale
+	 *            the locale of the names
+	 * @return the codes of the countries, in the order of their names in the locale
+	 */
+	static List<String> countryCodes(Locale locale)
+	{
+		Collator collator = Collator.getInstance(locale);
+		return Arrays.stream(Locale.getISOCountries())
+			.sorted(Comparator.comparing(code -> countryName(code, locale), collator))
+			.toList();
+	}
+
+	private static String countryName(String code, Locale locale)
+	{
+		return Locale.of("", code).getDisplayCountry(locale);
+	}
+
+	/**
+	 * @return how many countries are chosen, and which
+	 */
+	private String describeCountries()
+	{
+		return new StringResourceModel("countriesChosen", this).setParameters(countries.size(),
+			countries.isEmpty() ? getString("nothing") : countries.stream()
+				.map(code -> countryName(code, getLocale())).collect(Collectors.joining(", ")))
+			.getString();
 	}
 
 	/**
@@ -214,7 +266,7 @@ public class PalettePage extends DemoPage
 	protected JSONObject getFrameworkConfig()
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "unordered", "orderedTitle", "disabledTitle",
-			"skills", "columns", "ordered", "numbered", "filterable", "columnsAvailable", "columnsSelected", "send",
+			"manyTitle", "countries", "countriesChosen", "skills", "columns", "ordered", "numbered", "filterable", "columnsAvailable", "columnsSelected", "send",
 			"nothing", "choices", "sent");
 		JSONObject palette = new JSONObject();
 		for (String text : List.of("availableTitle", "selectedTitle", "add", "addAll", "remove",
@@ -228,12 +280,17 @@ public class PalettePage extends DemoPage
 			.put("ordered", ordered)
 			.put("numbered", numbered)
 			.put("filterable", filterable)
+			.put("countries", new JSONArray(countries))
 			.put("disabled", new JSONArray(disabled));
+		JSONArray countryChoices = new JSONArray();
+		countryCodes(getLocale()).forEach(code -> countryChoices.put(new JSONObject()
+			.put("value", code).put("label", countryName(code, getLocale()))));
 		return new JSONObject()
 			.put("texts", texts)
 			.put("palette", palette)
 			.put("skills", choices(SKILLS, "skill."))
 			.put("columns", choices(COLUMNS, "column."))
+			.put("countries", countryChoices)
 			.put("values", values);
 	}
 
@@ -285,6 +342,49 @@ public class PalettePage extends DemoPage
 		{
 			return choices.getObject().contains(id) ? id : null;
 		}
+	}
+
+	/**
+	 * Shows a country by its name in the locale of the page.
+	 */
+	private class CountryRenderer implements IChoiceRenderer<String>
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public Object getDisplayValue(String code)
+		{
+			return countryName(code, getLocale());
+		}
+
+		@Override
+		public String getIdValue(String code, int index)
+		{
+			return code;
+		}
+
+		@Override
+		public String getObject(String id, IModel<? extends List<? extends String>> choices)
+		{
+			return choices.getObject().contains(id) ? id : null;
+		}
+	}
+
+	/**
+	 * @return the countries, for the property model
+	 */
+	public List<String> getCountries()
+	{
+		return countries;
+	}
+
+	/**
+	 * @param countries
+	 *            the codes of the countries
+	 */
+	public void setCountries(List<String> countries)
+	{
+		this.countries = new ArrayList<>(countries);
 	}
 
 	/**

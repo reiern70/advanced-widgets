@@ -25,6 +25,11 @@ export interface PaletteProps extends PaletteTexts {
 	filterable?: boolean;
 	/** The number of choices from which on the available ones have a filter, 8 when left out. */
 	filterThreshold?: number;
+	/**
+	 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
+	 * left out; 0 draws them all.
+	 */
+	pageSize?: number;
 	/** The name a form posts the chosen ones under, one hidden field each, in their order. */
 	name?: string;
 	id?: string;
@@ -38,7 +43,7 @@ export interface PaletteProps extends PaletteTexts {
  */
 export function Palette(props: PaletteProps) {
 	const { options, value, defaultValue, ordered, numbered, disabled, filterable,
-		filterThreshold, name, id, className, availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down,
+		filterThreshold, pageSize, name, id, className, availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down,
 		filter, empty } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CorePalette | null>(null);
@@ -48,7 +53,7 @@ export function Palette(props: PaletteProps) {
 	// a change the parent of a controlled palette did not take renders again, which sets it back
 	const [changes, setChanges] = useState(0);
 	const current = value ?? own;
-	const settings = { ordered, numbered, filterable, filterThreshold, availableTitle,
+	const settings = { ordered, numbered, filterable, filterThreshold, pageSize, availableTitle,
 		selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty };
 
 	useLayoutEffect(() => {
@@ -74,8 +79,8 @@ export function Palette(props: PaletteProps) {
 
 	useLayoutEffect(() => {
 		instance.current?.configure(settings);
-	}, [ordered, numbered, filterable, filterThreshold, availableTitle, selectedTitle, add, addAll,
-		remove, removeAll, up, down, filter, empty]);
+	}, [ordered, numbered, filterable, filterThreshold, pageSize, availableTitle, selectedTitle,
+		add, addAll, remove, removeAll, up, down, filter, empty]);
 
 	// compared by content, so that options made anew on every render leave the lists alone
 	const optionsKey = JSON.stringify(options.map((option) =>

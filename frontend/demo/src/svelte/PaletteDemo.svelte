@@ -11,7 +11,7 @@
 	import { Palette } from '@antilia/svelte';
 
 	import { format } from '../data.js';
-	import { describe, type PaletteConfig } from '../palette.js';
+	import { describe, describeCountries, type PaletteConfig } from '../palette.js';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
 
@@ -25,10 +25,11 @@
 	let ordered = $state(initial.ordered);
 	let numbered = $state(initial.numbered);
 	let filterable = $state(initial.filterable);
+	let countries = $state(initial.countries);
 	let messages = $state<Message[]>([]);
 
 	const choices = $derived(describe(config, { skills, columns, ordered, numbered, filterable,
-		disabled: config.values.disabled }));
+		countries, disabled: config.values.disabled }));
 
 	// without an order of their own, the columns take that of the choices again
 	function order(event: Event & { currentTarget: HTMLInputElement }) {
@@ -77,6 +78,15 @@
 					{numbered} {...config.palette} availableTitle={texts.columnsAvailable}
 					selectedTitle={texts.columnsSelected} />
 			</div>
+		</section>
+		<section>
+			<h3>{texts.manyTitle}</h3>
+			<div class="palette-demo__field">
+				<span>{texts.countries}</span>
+				<Palette name="countries" options={config.countries} bind:value={countries}
+					{...config.palette} />
+			</div>
+			<p class="palette-demo__count">{describeCountries(config, countries)}</p>
 		</section>
 		<section>
 			<h3>{texts.disabledTitle}</h3>

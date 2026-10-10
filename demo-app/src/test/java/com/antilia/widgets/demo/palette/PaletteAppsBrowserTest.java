@@ -37,8 +37,13 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> choices().equals(START));
 		assertEquals("Java\nApache Wicket", Palettes.selected(palette(0)));
 		assertEquals("Name\nCountry\nEmail", Palettes.selected(palette(1)));
-		assertEquals("SQL", Palettes.selected(palette(2)));
-		assertFalse(Palettes.button(palette(2), "add-all").isEnabled());
+		assertEquals("Germany\nSpain\nUruguay", Palettes.selected(palette(2)));
+		assertEquals(30, palette(2).findElements(By.cssSelector(
+			".antilia-palette-available .antilia-palette-item")).size(), "a page of countries");
+		assertEquals("3 chosen: Germany, Spain, Uruguay.", app().findElement(
+			By.cssSelector(".palette-demo__count")).getText());
+		assertEquals("SQL", Palettes.selected(palette(3)));
+		assertFalse(Palettes.button(palette(3), "add-all").isEnabled());
 		assertEquals("Available", palette(0).findElement(By.cssSelector(".antilia-palette-title"))
 			.getText());
 		assertEquals("Columns left out\nIn the report", Palettes.titles(palette(1)));

@@ -82,6 +82,15 @@ describe('Palette', () => {
 		expect(texts(container, 'selected')).toEqual(['Cherry']);
 	});
 
+	it('draws a page of rows at a time, of the size given', async () => {
+		const { container, rerender } = render(Palette, { options: FRUITS, pageSize: 1 });
+		expect(texts(container, 'available')).toEqual(['Apple']);
+
+		await rerender({ pageSize: 0 });
+		flushSync();
+		expect(texts(container, 'available')).toEqual(['Apple', 'Banana', 'Cherry']);
+	});
+
 	it('shows the value once the options arrive after it, and follows disabled', async () => {
 		const { container, rerender } = render(Palette, { options: [], value: ['cherry'] });
 

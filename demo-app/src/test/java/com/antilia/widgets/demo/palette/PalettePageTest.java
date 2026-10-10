@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.wicket.util.string.StringValue;
 import org.apache.wicket.util.tester.FormTester;
@@ -76,6 +77,27 @@ class PalettePageTest
 	}
 
 	@Test
+	void drawsTheCountriesByNameAPageAtATimeAndReportsThemByAjax()
+	{
+		tester.assertContains("Wicket.Palette.attach\\(\"" + palette("countries").getMarkupId() +
+			"\", \\{[^}]*\"pageSize\":30");
+		tester.assertLabel(FORM + ":countriesChosen", "3 chosen: Germany, Spain, Uruguay.");
+		List<String> codes = PalettePage.countryCodes(Locale.ENGLISH);
+		assertTrue(codes.size() > 200, "many choices");
+		assertEquals("AF", codes.get(0), "Afghanistan first");
+		assertTrue(codes.indexOf("DE") < codes.indexOf("ES"));
+
+		tester.newFormTester(FORM, false);
+		tester.getRequest().getPostParameters().setParameterValues(palette("countries")
+			.getInputName(), List.of(StringValue.valueOf("FR"), StringValue.valueOf("UY")));
+		tester.executeAjaxEvent(palette("countries"), "change");
+
+		assertEquals(List.of("FR", "UY"), page.getCountries());
+		tester.assertComponentOnAjaxResponse(FORM + ":countriesChosen");
+		tester.assertContains("2 chosen: France, Uruguay\\.");
+	}
+
+	@Test
 	void theCheckBoxSwitchesTheOrderOfTheColumns()
 	{
 		FormTester form = tester.newFormTester(FORM, false);
@@ -132,5 +154,8 @@ class PalettePageTest
 		assertTrue(config.contains("\"orderedTitle\":\"The order matters\""), config);
 		assertTrue(config.contains("\"columnsSelected\":\"In the report\""), config);
 		assertTrue(config.contains("\"numbered\":true"), config);
+		assertTrue(config.contains("{\"value\":\"UY\",\"label\":\"Uruguay\"}"), config);
+		assertTrue(config.contains("\"countries\":[\"DE\",\"ES\",\"UY\"]"), config);
+		assertTrue(config.contains("\"countriesChosen\":\"{0} chosen: {1}.\""), config);
 	}
 }

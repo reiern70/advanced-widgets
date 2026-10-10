@@ -110,6 +110,14 @@ describe('Palette', () => {
 		expect(container.querySelector<HTMLElement>('.antilia-palette-order')?.hidden).toBe(false);
 	});
 
+	it('draws a page of rows at a time, of the size given', () => {
+		const { container, rerender } = render(<Palette options={FRUITS} pageSize={1} />);
+		expect(texts(container, 'available')).toEqual(['Apple']);
+
+		rerender(<Palette options={FRUITS} pageSize={0} />);
+		expect(texts(container, 'available')).toEqual(['Apple', 'Banana', 'Cherry']);
+	});
+
 	it('takes the palette away on unmount', () => {
 		const { container, unmount } = render(<Palette options={FRUITS} />);
 		const element = container.firstElementChild!;

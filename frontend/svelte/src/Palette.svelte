@@ -27,6 +27,11 @@
 		filterable?: boolean;
 		/** The number of choices from which on the available ones have a filter, 8 when left out. */
 		filterThreshold?: number;
+		/**
+		 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
+		 * left out; 0 draws them all.
+		 */
+		pageSize?: number;
 		/** The name a form posts the chosen ones under, one hidden field each, in their order. */
 		name?: string;
 		id?: string;
@@ -43,6 +48,7 @@
 		disabled = false,
 		filterable = true,
 		filterThreshold,
+		pageSize,
 		name,
 		id,
 		class: className = '',
@@ -62,8 +68,8 @@
 	let element = $state<HTMLDivElement>();
 	let instance: Palette | null = null;
 
-	const settings = () => ({ ordered, numbered, filterable, filterThreshold, availableTitle,
-		selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty });
+	const settings = () => ({ ordered, numbered, filterable, filterThreshold, pageSize,
+		availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty });
 
 	$effect(() => {
 		if (!element) {

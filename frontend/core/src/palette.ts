@@ -70,6 +70,11 @@ export interface PaletteOptions extends PaletteTexts {
 	filterable?: boolean;
 	/** The number of choices from which on the available ones have a filter, 8 when left out. */
 	filterThreshold?: number;
+	/**
+	 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
+	 * left out; 0 draws them all. A filter searches all choices, drawn or not.
+	 */
+	pageSize?: number;
 	/** Called with the values of the chosen ones, in their order, after the user changed them. */
 	onChange?: (selected: string[]) => void;
 }
@@ -83,6 +88,9 @@ interface List {
 	list: HTMLUListElement;
 	scroller: HTMLDivElement;
 	empty: HTMLDivElement;
+	/** The choices of the list, those the filter lets through, drawn or not. */
+	choices: PaletteChoice[];
+	/** The items drawn, those of the first choices; more are drawn as the list scrolls. */
 	items: HTMLLIElement[];
 	/** The values highlighted, which the buttons move. */
 	highlighted: Set<string>;
@@ -115,6 +123,12 @@ const NATIVE_CLASS = 'antilia-palette-native';
 
 /** The number of choices from which on the available ones have a filter, unless set otherwise. */
 export const PALETTE_FILTER_THRESHOLD = 8;
+
+/** How many rows a list draws at first and adds at a time, unless set otherwise. */
+export const PALETTE_PAGE_SIZE = 30;
+
+/** How close, in pixels, a list has to be scrolled to its end to draw more rows. */
+const MORE_DISTANCE = 48;
 
 /** How far, in pixels, the pointer has to travel on a choice before it drags it. */
 const DRAG_THRESHOLD = 4;
@@ -378,6 +392,21 @@ export class Palette {
 		return typeof threshold === 'number' ? threshold : PALETTE_FILTER_THRESHOLD;
 	}
 
+	/**
+	 * @returns how many rows a list draws at a time, Infinity for all
+	 */
+	private pageSize(): number {
+		const size = this.options.pageSize;
+		if (typeof size !== 'number' || size < 0) {
+			return PALETTE_PAGE_SIZE;
+		}
+		return size === 0 ? Infinity : Math.max(1, Math.floor(size));
+	}
+
+	private values(list: List): string[] {
+		return list.choices.map((choice) => choice.value);
+	}
+
 	private newList(side: Side): List {
 		const box = create('div', 'antilia-palette-side antilia-palette-' + side);
 		const title = create('div', 'antilia-palette-title');
@@ -395,7 +424,8 @@ export class Palette {
 		box.appendChild(scroller);
 		const empty = create('div', 'antilia-palette-empty');
 		scroller.appendChild(empty);
-		return { side, box, title, list, scroller, empty, items: [], highlighted: new Set(),
+		return { side, box, title, list, scroller, empty, choices: [], items: [],
+			highlighted: new Set(),
 			active: null, anchor: null };
 	}
 
@@ -459,7 +489,12 @@ export class Palette {
 			this.filter.type = 'search';
 			this.filter.autocomplete = 'off';
 			this.filter.setAttribute('aria-controls', this.available.list.id);
-			this.listen(this.filter, 'input', () => this.renderItems());
+			this.listen(this.filter, 'input', () => {
+				// the matches are drawn from the first one again
+				this.available.items = [];
+				this.available.list.scrollTop = 0;
+				this.renderItems();
+			});
 			this.available.box.insertBefore(this.filter, this.available.scroller);
 		} else if (!withFilter && this.filter) {
 			this.filter.remove();
@@ -488,8 +523,14 @@ export class Palette {
 		this.fill(this.available, available);
 		this.fill(this.chosen, selected);
 		this.updateState();
+		this.fillView(this.available);
+		this.fillView(this.chosen);
 	}
 
+	/**
+	 * Draws the items of a list: as many as were drawn before, at least a page of them, and the
+	 * one the keyboard is on.
+	 */
 	private fill(list: List, choices: PaletteChoice[]): void {
 		const values = new Set(choices.map((choice) => choice.value));
 		list.highlighted.forEach((value) => {
@@ -500,8 +541,29 @@ export class Palette {
 		if (list.active !== null && !values.has(list.active)) {
 			list.active = null;
 		}
+		const active = list.active === null ? -1 :
+			choices.findIndex((choice) => choice.value === list.active);
+		const count = Math.max(list.items.length, this.pageSize(), active + 1);
+		list.choices = choices;
 		list.list.textContent = '';
-		list.items = choices.map((choice, index) => {
+		list.items = [];
+		this.draw(list, count);
+		list.empty.hidden = choices.length > 0;
+		this.paint(list);
+		list.scrollbar?.update();
+	}
+
+	/**
+	 * Draws the items of a list up to a number of them, after those drawn already.
+	 */
+	private draw(list: List, count: number): void {
+		const end = Math.min(count, list.choices.length);
+		const start = list.items.length;
+		if (end <= start) {
+			return;
+		}
+		list.choices.slice(start, end).forEach((choice, offset) => {
+			const index = start + offset;
 			const item = create('li', ITEM_CLASS);
 			item.id = list.list.id + '-' + index;
 			item.setAttribute('role', 'option');
@@ -515,11 +577,36 @@ export class Palette {
 				item.setAttribute('aria-disabled', 'true');
 			}
 			list.list.appendChild(item);
-			return item;
+			list.items.push(item);
 		});
-		list.empty.hidden = choices.length > 0;
 		this.paint(list);
 		list.scrollbar?.update();
+	}
+
+	/**
+	 * Draws the next page of a list's items, if some are not drawn yet.
+	 *
+	 * @param side the list
+	 * @returns whether it drew any
+	 */
+	more(side: Side): boolean {
+		const list = side === 'available' ? this.available : this.chosen;
+		const before = list.items.length;
+		this.draw(list, before + this.pageSize());
+		return list.items.length > before;
+	}
+
+	/**
+	 * Draws more items of a list while it is scrolled near its end, or too short to scroll.
+	 */
+	private fillView(list: List): void {
+		const box = list.list;
+		while (box.clientHeight > 0 && list.items.length < list.choices.length &&
+			box.scrollTop + box.clientHeight >= box.scrollHeight - MORE_DISTANCE) {
+			if (!this.more(list.side)) {
+				break;
+			}
+		}
 	}
 
 	/**
@@ -545,8 +632,7 @@ export class Palette {
 	private updateState(): void {
 		const disabled = this.isDisabled();
 		this.element.classList.toggle('antilia-palette-disabled', disabled);
-		const movable = (list: List) => list.items.some((item) =>
-			this.movable(item.dataset.value!));
+		const movable = (list: List) => list.choices.some((choice) => !choice.disabled);
 		const highlighted = (list: List) => Array.from(list.highlighted).some((value) =>
 			this.movable(value));
 		this.buttons.add.disabled = disabled || !highlighted(this.available);
@@ -721,11 +807,12 @@ export class Palette {
 			this.listen<KeyboardEvent>(list.list, 'keydown', (event) => this.onKey(list, event));
 			this.listen<PointerEvent>(list.list, 'pointerdown', (event) => this.pointerDown(list,
 				event));
+			this.listen(list.list, 'scroll', () => this.fillView(list));
 		}
 		this.listen(this.buttons.add, 'click', () => this.transfer(this.available,
 			Array.from(this.available.highlighted)));
 		this.listen(this.buttons.addAll, 'click', () => this.transfer(this.available,
-			this.available.items.map((item) => item.dataset.value!)));
+			this.values(this.available)));
 		this.listen(this.buttons.remove, 'click', () => this.transfer(this.chosen,
 			Array.from(this.chosen.highlighted)));
 		this.listen(this.buttons.removeAll, 'click', () => this.transfer(this.chosen,
@@ -756,7 +843,7 @@ export class Palette {
 			return;
 		}
 		if (range && list.anchor !== null) {
-			const values = list.items.map((item) => item.dataset.value!);
+			const values = this.values(list);
 			const from = values.indexOf(list.anchor);
 			const to = values.indexOf(value);
 			if (from >= 0 && to >= 0) {
@@ -793,7 +880,7 @@ export class Palette {
 	transfer(from: List, values: string[], index?: number): void {
 		// in the order they have in their list
 		const wanted = new Set(values);
-		const moving = from.items.map((item) => item.dataset.value!).filter((value) =>
+		const moving = this.values(from).filter((value) =>
 			wanted.has(value) && this.movable(value));
 		if (!moving.length || this.isDisabled()) {
 			return;
@@ -862,6 +949,9 @@ export class Palette {
 	}
 
 	private scrollToActive(list: List): void {
+		if (list.active !== null) {
+			this.draw(list, this.values(list).indexOf(list.active) + 1);
+		}
 		const item = list.items.find((each) => each.dataset.value === list.active);
 		if (!item) {
 			return;
@@ -878,13 +968,14 @@ export class Palette {
 		if (this.isDisabled()) {
 			return;
 		}
-		const values = list.items.map((item) => item.dataset.value!);
+		const values = this.values(list);
 		const index = list.active !== null ? values.indexOf(list.active) : -1;
 		const go = (next: number) => {
 			const value = values[Math.max(0, Math.min(values.length - 1, next))];
 			if (value === undefined) {
 				return;
 			}
+			this.draw(list, values.indexOf(value) + 1);
 			if (event.shiftKey) {
 				if (list.anchor === null) {
 					list.anchor = list.active ?? value;
@@ -928,7 +1019,7 @@ export class Palette {
 					(list.active !== null ? [list.active] : []);
 				this.transfer(list, moving);
 				// the keyboard stays on the list, on the next item there
-				const rest = list.items.map((item) => item.dataset.value!);
+				const rest = this.values(list);
 				list.active = rest[Math.min(Math.max(index, 0), rest.length - 1)] ?? null;
 				this.paint(list);
 				break;
@@ -959,8 +1050,8 @@ export class Palette {
 		const value = item.dataset.value!;
 		// dragging a highlighted item drags all highlighted ones
 		const values = list.highlighted.has(value) ?
-			list.items.map((each) => each.dataset.value!).filter((each) =>
-				list.highlighted.has(each) && this.movable(each)) : [value];
+			this.values(list).filter((each) => list.highlighted.has(each) && this.movable(each)) :
+			[value];
 		this.drag = { from: list.side, values, pointerId: event.pointerId, startX: event.clientX,
 			startY: event.clientY, started: false };
 	}

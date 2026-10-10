@@ -162,6 +162,28 @@ public class Palette<T> extends ListMultipleChoice<T>
 	}
 
 	/**
+	 * @param pageSize
+	 *            how many rows a list draws at first, and adds each time it is scrolled to its
+	 *            end, {@link PaletteBehavior#DEFAULT_PAGE_SIZE} unless set otherwise; 0 draws
+	 *            them all
+	 * @return {@code this}
+	 * @see PaletteBehavior#setPageSize(int)
+	 */
+	public Palette<T> setPageSize(int pageSize)
+	{
+		palette.setPageSize(pageSize);
+		return this;
+	}
+
+	/**
+	 * @return how many rows a list draws at first, and adds each time it is scrolled to its end
+	 */
+	public int getPageSize()
+	{
+		return palette.getPageSize();
+	}
+
+	/**
 	 * @return the behavior drawing the palette, to set its filter
 	 */
 	public PaletteBehavior getPaletteBehavior()
