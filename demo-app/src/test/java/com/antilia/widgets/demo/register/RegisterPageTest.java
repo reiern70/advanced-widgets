@@ -4,27 +4,27 @@
  */
 package com.antilia.widgets.demo.register;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 
+import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.antilia.widgets.demo.DemoSession;
+import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.account.Accounts;
 
@@ -42,17 +42,12 @@ class RegisterPageTest
 	private Accounts accounts;
 
 	@BeforeEach
-	void startPage(@TempDir Path folder)
+	void startPage()
 	{
-		accounts = new Accounts(new File(folder.toFile(), "accounts.properties"), "");
-		tester = new WicketTester(new WicketApplication()
-		{
-			@Override
-			protected Accounts newAccounts()
-			{
-				return accounts;
-			}
-		});
+		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
+		TestDatabase.clear();
+		tester = new WicketTester(new WicketApplication());
+		accounts = Accounts.get();
 		page = tester.startPage(new RegisterPage(clock));
 	}
 
@@ -60,6 +55,33 @@ class RegisterPageTest
 	void stop()
 	{
 		tester.destroy();
+		System.clearProperty(RegisterPage.OPEN_PROPERTY);
+	}
+
+	@Test
+	void registeringIsNotSupportedYet()
+	{
+		System.clearProperty(RegisterPage.OPEN_PROPERTY);
+		page = tester.startPage(new RegisterPage(clock));
+
+		tester.assertVisible("closed");
+		tester.assertContains("Registering is not supported yet.");
+		tester.assertDisabled("form:submit");
+		tester.assertDisabled("form:email");
+
+		// a request sent all the same is rejected, and makes no account
+		clock.advance(Duration.ofSeconds(20));
+		FormTester form = fillIn(page.getExpectedAnswer());
+		assertThrows(ListenerInvocationNotAllowedException.class, form::submit);
+		assertFalse(DemoSession.get().isSignedIn());
+		assertFalse(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+	}
+
+	@Test
+	void anOpenRegistrationSaysNothingOfIt()
+	{
+		tester.assertInvisible("closed");
+		tester.assertEnabled("form:submit");
 	}
 
 	@Test

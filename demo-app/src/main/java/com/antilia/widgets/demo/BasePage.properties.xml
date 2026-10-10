@@ -57,4 +57,5 @@
 	<entry key="demo.themeEditor.description">Generates a theme of the components, with a live preview.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
+	<entry key="accesses">Accesses</entry>
 </properties>

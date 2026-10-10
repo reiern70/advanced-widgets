@@ -30,4 +30,5 @@
 	<entry key="taken">Ya hay una cuenta con este correo. Inicie sesión con ella o regístrese con otro correo.</entry>
 	<entry key="StringValidator.minimum">${label} necesita al menos ${minimum} caracteres.</entry>
 	<entry key="EqualPasswordInputValidator">Las contraseñas no coinciden.</entry>
+	<entry key="closed">El registro aún no está disponible. Vuelva más tarde, o inicie sesión si ya tiene una cuenta.</entry>
 </properties>

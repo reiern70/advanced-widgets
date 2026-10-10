@@ -7,15 +7,12 @@ package com.antilia.widgets.demo.account;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -25,23 +22,21 @@ import javax.crypto.spec.PBEKeySpec;
 import org.apache.wicket.Application;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.util.string.Strings;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.antilia.widgets.demo.WicketApplication;
+import com.antilia.widgets.demo.data.Role;
+import com.antilia.widgets.demo.data.User;
+import com.antilia.widgets.demo.data.IUserRepository;
 
 /**
- * The accounts that may open the demos: the ones visitors register, kept in a properties file so
- * they survive restarts, and the ones the server is started with, for the people the demos are
- * shown to before they register (see {@link #ACCOUNTS_ENVIRONMENT_VARIABLE}). Only salted hashes of
- * the passwords are kept.
+ * The accounts that may open the demos, in the table {@code users}: the ones the demo always has
+ * (see {@link #addDefaults()}), the ones the server is started with, for the people the demos are
+ * shown to (see {@link #ACCOUNTS_ENVIRONMENT_VARIABLE}), and the ones visitors register, once
+ * registering is open. Only salted hashes of the passwords are kept.
  */
 public class Accounts
 {
-	/** The system property holding the folder of the registered accounts. */
-	public static final String FOLDER_PROPERTY = "antilia-widgets.accounts-folder";
-
-	/** The environment variable holding the folder of the registered accounts. */
-	public static final String FOLDER_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_ACCOUNTS_FOLDER";
-
 	/**
 	 * The system property holding the accounts the server is started with, as
 	 * {@code name:password} separated by commas.
@@ -51,6 +46,24 @@ public class Accounts
 	/** The environment variable holding the accounts the server is started with, like the property. */
 	public static final String ACCOUNTS_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_ACCOUNTS";
 
+	/**
+	 * The system property holding the folder where earlier versions kept the registered accounts,
+	 * in a properties file that {@link #importFile(File)} reads into the table.
+	 */
+	public static final String FOLDER_PROPERTY = "antilia-widgets.accounts-folder";
+
+	/** The environment variable holding the folder of the accounts of earlier versions. */
+	public static final String FOLDER_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_ACCOUNTS_FOLDER";
+
+	/**
+	 * The accounts the demo always has, with the salted hashes of their passwords: name, hash,
+	 * role. They are added when missing at every start, and never changed.
+	 */
+	private static final String[][] DEFAULTS = {
+		{ "semedy", "hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=", "USER" },
+		{ "wicket", "zabicgAmDuftSxuCXCT8aQ==:7k9JpQBWu3u+lPkJ59dmmO7NMkhLm81FpIshwiwVrwM=", "USER" },
+		{ "admin", "92vMz986hJZpF/zSqJnPkg==:H0C0YwBH63MAfeF6K87wDjiuUmLe7qlehEdEdmWJMxA=", "ADMIN" } };
+
 	private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
 
 	private static final int ITERATIONS = 210_000;
@@ -59,32 +72,15 @@ public class Accounts
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 
-	private final File file;
-
-	/** The hashes of the configured accounts, by name. */
-	private final Map<String, String> configured = new LinkedHashMap<>();
+	private final IUserRepository users;
 
 	/**
-	 * @param file
-	 *            the properties file of the registered accounts
-	 * @param accounts
-	 *            the configured accounts, {@code name:password} separated by commas; may be empty
+	 * @param users
+	 *            the table of the accounts
 	 */
-	public Accounts(File file, String accounts)
+	public Accounts(IUserRepository users)
 	{
-		this.file = file;
-		if (!Strings.isEmpty(accounts))
-		{
-			for (String account : accounts.split(","))
-			{
-				int colon = account.indexOf(':');
-				if (colon > 0 && colon < account.length() - 1)
-				{
-					configured.put(accountName(account.substring(0, colon)),
-						hash(account.substring(colon + 1).strip()));
-				}
-			}
-		}
+		this.users = users;
 	}
 
 	/**
@@ -96,34 +92,30 @@ public class Accounts
 	}
 
 	/**
-	 * @return the accounts set by the system properties or the environment: the registered ones in
-	 *         the folder of {@value #FOLDER_PROPERTY} or {@value #FOLDER_ENVIRONMENT_VARIABLE}, the
-	 *         temporary folder by default, and the configured ones of {@value #ACCOUNTS_PROPERTY}
-	 *         or {@value #ACCOUNTS_ENVIRONMENT_VARIABLE}
-	 */
-	public static Accounts fromSettings()
-	{
-		return new Accounts(new File(setting(FOLDER_PROPERTY, FOLDER_ENVIRONMENT_VARIABLE,
-			System.getProperty("java.io.tmpdir")), "antilia-widgets-accounts.properties"),
-			setting(ACCOUNTS_PROPERTY, ACCOUNTS_ENVIRONMENT_VARIABLE, ""));
-	}
-
-	/**
 	 * @param name
-	 *            the name of a configured account or the email a visitor registered with
+	 *            the name of an account or the email a visitor registered with
 	 * @param password
 	 *            the password
-	 * @return the name of the account, as kept, if the password is the account's
+	 * @return the account, if the password is the account's
 	 */
-	public synchronized Optional<String> authenticate(String name, String password)
+	public Optional<User> authenticate(String name, String password)
 	{
 		if (Strings.isEmpty(name) || Strings.isEmpty(password))
 		{
 			return Optional.empty();
 		}
-		String key = accountName(name);
-		String hash = configured.containsKey(key) ? configured.get(key) : read().getProperty(key);
-		return hash != null && matches(password, hash) ? Optional.of(key) : Optional.empty();
+		return users.findByName(accountName(name))
+			.filter(user -> matches(password, user.getPasswordHash()));
+	}
+
+	/**
+	 * @param name
+	 *            the name of an account
+	 * @return the account of that name, without checking any password
+	 */
+	public Optional<User> find(String name)
+	{
+		return Strings.isEmpty(name) ? Optional.empty() : users.findByName(accountName(name));
 	}
 
 	/**
@@ -135,42 +127,105 @@ public class Accounts
 	 *            the password
 	 * @return whether the account was made; {@code false} if there is one by that name already
 	 */
-	public synchronized boolean register(String email, String password)
+	public boolean register(String email, String password)
 	{
-		String key = accountName(email);
-		Properties accounts = read();
-		if (configured.containsKey(key) || accounts.containsKey(key))
+		return add(email, hash(password), Role.USER);
+	}
+
+	/**
+	 * Adds the accounts the demo always has, those that are missing.
+	 */
+	public void addDefaults()
+	{
+		for (String[] account : DEFAULTS)
 		{
-			return false;
+			add(account[0], account[1], Role.valueOf(account[2]));
 		}
-		accounts.setProperty(key, hash(password));
-		file.getParentFile().mkdirs();
-		try (OutputStream out = Files.newOutputStream(file.toPath()))
+	}
+
+	/**
+	 * Adds the accounts the server is started with and those of earlier versions, those that are
+	 * missing.
+	 */
+	public void addFromSettings()
+	{
+		addConfigured(setting(ACCOUNTS_PROPERTY, ACCOUNTS_ENVIRONMENT_VARIABLE, ""));
+		String folder = setting(FOLDER_PROPERTY, FOLDER_ENVIRONMENT_VARIABLE, "");
+		if (!Strings.isEmpty(folder))
 		{
-			accounts.store(out, "Accounts registered to the Advanced Widgets demos");
+			importFile(new File(folder, "antilia-widgets-accounts.properties"));
+		}
+	}
+
+	/**
+	 * Adds the accounts the server is started with, those that are missing.
+	 *
+	 * @param accounts
+	 *            {@code name:password} separated by commas; may be empty
+	 */
+	public void addConfigured(String accounts)
+	{
+		if (Strings.isEmpty(accounts))
+		{
+			return;
+		}
+		for (String account : accounts.split(","))
+		{
+			int colon = account.indexOf(':');
+			if (colon > 0 && colon < account.length() - 1)
+			{
+				add(account.substring(0, colon), hash(account.substring(colon + 1).strip()),
+					Role.USER);
+			}
+		}
+	}
+
+	/**
+	 * Adds the accounts of the properties file where earlier versions kept the registered ones,
+	 * those that are missing; the hashes are the same.
+	 *
+	 * @param file
+	 *            the properties file, which need not exist
+	 */
+	public void importFile(File file)
+	{
+		if (!file.exists())
+		{
+			return;
+		}
+		Properties accounts = new Properties();
+		try (InputStream in = Files.newInputStream(file.toPath()))
+		{
+			accounts.load(in);
 		}
 		catch (IOException e)
 		{
-			throw new WicketRuntimeException("Cannot write " + file, e);
+			throw new WicketRuntimeException("Cannot read " + file, e);
 		}
-		return true;
+		accounts.stringPropertyNames()
+			.forEach(name -> add(name, accounts.getProperty(name), Role.USER));
 	}
 
-	private Properties read()
+	/**
+	 * @return whether the account was added; {@code false} if there is one by that name already
+	 */
+	private boolean add(String name, String hash, Role role)
 	{
-		Properties properties = new Properties();
-		if (file.exists())
+		String key = accountName(name);
+		if (users.existsByName(key))
 		{
-			try (InputStream in = Files.newInputStream(file.toPath()))
-			{
-				properties.load(in);
-			}
-			catch (IOException e)
-			{
-				throw new WicketRuntimeException("Cannot read " + file, e);
-			}
+			return false;
 		}
-		return properties;
+		try
+		{
+			users.save(new User(key, hash, role));
+			return true;
+		}
+		catch (DataIntegrityViolationException e)
+		{
+			// another request added it in between
+			return false;
+		}
 	}
 
 	/**
@@ -185,7 +240,7 @@ public class Accounts
 	/**
 	 * @return the salt and the hash of the password, in Base64 separated by a colon
 	 */
-	static String hash(String password)
+	public static String hash(String password)
 	{
 		byte[] salt = new byte[16];
 		RANDOM.nextBytes(salt);

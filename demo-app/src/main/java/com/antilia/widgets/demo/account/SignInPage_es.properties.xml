@@ -14,4 +14,9 @@
 	<entry key="noAccount">¿Aún no tiene cuenta?</entry>
 	<entry key="register">Regístrese</entry>
 	<entry key="Required">Indique ${label}.</entry>
+	<entry key="captchaLead">Demasiados intentos fallidos: escriba también las letras de la imagen.</entry>
+	<entry key="captcha">Las letras de la imagen</entry>
+	<entry key="captchaImage">Letras a escribir</entry>
+	<entry key="another">Mostrar otras letras</entry>
+	<entry key="captchaWrong">Las letras no son las de la imagen. Pruebe con las nuevas.</entry>
 </properties>

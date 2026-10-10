@@ -1,22 +1,22 @@
 # Production deployment
 
 The demo site runs on **Amazon Lightsail**: one Linux instance with Docker, where Caddy serves
-HTTPS and passes the requests, websockets included, to Jetty 11 with the WAR. The domain is
-registered in Lightsail too, and PostgreSQL is a Lightsail managed database once the application
-needs one.
+HTTPS and passes the requests, websockets included, to Jetty 11 with the WAR, and PostgreSQL
+keeps the users and the accesses. The domain is registered in Lightsail too.
 
 | File | What it does |
 |---|---|
 | `Dockerfile` | Jetty 11 on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on |
-| `compose.yaml` | Jetty and Caddy, the page store and the certificates on volumes |
+| `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
+| `postgres-local.yaml` | PostgreSQL on a development machine, see below |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain |
 | `.env.example` | The settings; copied to `.env` on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |
 
 The WAR is built on the developer's machine, not on the server, because Wicket 11 is a snapshot
-built locally. Each deployment uploads the WAR (about 17 MB) and rebuilds the small image on the
-instance.
+built locally. Each deployment uploads the WAR (about 55 MB, Hibernate and the JDBC drivers
+included) and rebuilds the small image on the instance; `rsync` only sends what changed.
 
 ## Why Lightsail
 
@@ -73,22 +73,73 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
-The demos are private: visitors register or sign in to open them, the home page is public. The
-accounts registered are kept in `/var/lib/antilia-widgets/accounts` on the `page-store` volume;
-accounts for people who should not need to register, a client for example, go into `.env` as
-`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again.
+The demos are private: visitors sign in to open them, the home page is public. Registering is
+not open yet: the page says so and its form is disabled (`-Dantilia-widgets.open-registration=true`
+opens it). The accounts are in the table `users`: the demo always adds `semedy`, `wicket` and
+`admin` (the administrator, who sees the accesses on `/accesses`) when they are missing, never
+changing them; accounts for people such as a client go into `.env` as
+`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again. The
+accounts registered with earlier versions, in `/var/lib/antilia-widgets/accounts`, are copied into
+the table at start.
 
-## 4. PostgreSQL, once the application uses it
+## 4. PostgreSQL
 
-1. *Databases → Create database*: the same region, **PostgreSQL 17**, *Standard* $15, name
-   `widgets`, master user `widgets`; keep the generated password.
-2. Leave *public mode* off: only the instances of the account reach it.
-3. Put its endpoint into `.env` as `DATABASE_URL` and deploy again.
-4. Backups are on by themselves (daily, point-in-time for 7 days). A weekly `pg_dump` kept
-   outside AWS protects against losing the account.
+The application keeps its data with Spring Data JPA on Hibernate; Flyway makes the tables from
+`demo-app/src/main/resources/db/migration` at start, and Hibernate only checks them. Three
+settings, environment variables or system properties of the same meaning, choose the database:
 
-## 5. Showing the demo only after registering
+| Variable | System property | Meaning |
+|---|---|---|
+| `DATABASE_URL` | `antilia-widgets.database.url` | JDBC URL, or `postgres://user:password@host:5432/db` |
+| `DATABASE_USER` | `antilia-widgets.database.user` | The user, unless the URL has it |
+| `DATABASE_PASSWORD` | `antilia-widgets.database.password` | The password, unless the URL has it |
 
-Today every page is public. Hiding them until a visitor registers is application work (a login
-or a confirmed registration in the session, checked by the pages); it needs the database, so it
-comes with step 4.
+Without them the demo keeps its data in an H2 file (PostgreSQL mode) in
+`$ANTILIA_WIDGETS_DATA_FOLDER/antilia-widgets-db`, the temporary folder by default, so that it
+runs without installing anything; the tests use H2 in memory.
+
+### In production
+
+`compose.yaml` runs **PostgreSQL 17 in a container** next to Jetty, on a volume of the instance's
+SSD, reachable only by the application. It costs nothing more and takes about 100 MB of the
+2 GB. Before the first deployment with it, add a password to `.env` on the server:
+
+```sh
+ssh ubuntu@<static-ip> "echo DATABASE_PASSWORD=$(openssl rand -hex 24) >> /opt/antilia-widgets/.env"
+deploy/deploy.sh ubuntu@<static-ip>
+```
+
+Backups: the automatic snapshots of the instance hold the volume; for a copy outside AWS, dump it
+now and then:
+
+```sh
+ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db pg_dump -U widgets widgets' > widgets-$(date +%F).sql
+```
+
+**Later, a managed database** ($15/month: daily backups and 7 days of point-in-time restore,
+updates done by AWS): *Databases → Create database*, the same region, PostgreSQL 17, *Standard*,
+name `widgets`, master user `widgets`, public mode off. Put its endpoint into `.env` as
+`DATABASE_URL` (with `DATABASE_USER` and `DATABASE_PASSWORD`), move the data over with
+`pg_dump | psql`, and deploy again; the `db` container may then be removed from `compose.yaml`.
+
+### On a development machine
+
+With Docker (the user in the `docker` group):
+
+```sh
+docker compose -f deploy/postgres-local.yaml up -d
+```
+
+or from Ubuntu's packages:
+
+```sh
+sudo apt install postgresql
+sudo -u postgres psql -c "CREATE USER widgets PASSWORD 'widgets'" -c "CREATE DATABASE widgets OWNER widgets"
+```
+
+Then start the demo against it:
+
+```sh
+export DATABASE_URL=jdbc:postgresql://localhost:5432/widgets DATABASE_USER=widgets DATABASE_PASSWORD=widgets
+mvn -pl demo-app jetty:run -Dwicket.configuration=deployment -Dwicket.demo=true
+```

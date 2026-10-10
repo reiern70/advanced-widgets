@@ -1,0 +1,19 @@
+# PostgreSQL for development, the same version as in production, on localhost:5432:
+#   docker compose -f deploy/postgres-local.yaml up -d
+# then start the demo against it, see README.md ("PostgreSQL on a development machine").
+# Without it the demo keeps its data in an H2 file in the temporary folder.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: widgets
+      POSTGRES_USER: widgets
+      POSTGRES_PASSWORD: widgets
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - database-local:/var/lib/postgresql/data
+
+volumes:
+  database-local:

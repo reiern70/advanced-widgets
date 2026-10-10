@@ -14,9 +14,12 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.antilia.widgets.theme.Theme;
 
 /**
  * Simple test using the WicketTester
@@ -137,5 +140,30 @@ public class TestHomePage
 
 		tester.assertLabel("demos:0:link:name", "JSON-Grid");
 		tester.assertContains("Alle Rechte vorbehalten.");
+	}
+
+	@Test
+	public void homepageIsStateless()
+	{
+		tester.startPage(HomePage.class);
+
+		assertTrue(tester.getLastRenderedPage().isPageStateless());
+		// nothing to keep, so no session either
+		assertTrue(tester.getSession().isTemporary());
+		// the websocket of the status goes to the shared resource, not to the page
+		tester.assertContains("resourceName: 'live'");
+	}
+
+	@Test
+	public void choosingAThemeOnTheStatelessHomePageKeepsIt()
+	{
+		tester.startPage(HomePage.class);
+
+		FormTester form = tester.newFormTester("settings");
+		form.select("theme", 1);
+		tester.executeAjaxEvent("settings:theme", "change");
+
+		assertEquals(Theme.BLUE, DemoSession.get().getTheme());
+		assertFalse(tester.getSession().isTemporary());
 	}
 }

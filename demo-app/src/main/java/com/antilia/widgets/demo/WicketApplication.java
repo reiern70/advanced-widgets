@@ -16,10 +16,14 @@ import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
 import org.apache.wicket.util.string.Strings;
+import org.springframework.context.ApplicationContext;
 
 import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.demo.account.DemosAuthorization;
+import com.antilia.widgets.demo.account.SignInAttempts;
 import com.antilia.widgets.demo.account.SignInPage;
+import com.antilia.widgets.demo.admin.AccessTimeResource;
+import com.antilia.widgets.demo.admin.AccessesPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
@@ -27,6 +31,8 @@ import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antilia.widgets.demo.datatable.UsersRowsResource;
+import com.antilia.widgets.demo.data.Accesses;
+import com.antilia.widgets.demo.data.Database;
 import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
@@ -57,7 +63,18 @@ public class WicketApplication extends WebApplication
 	/** The environment variable holding the folder of the page store. */
 	public static final String PAGE_STORE_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_PAGE_STORE";
 
+	/**
+	 * The system property naming the account every new session is signed in with, so that nobody
+	 * signs in on a development machine; {@code jetty:run} sets it to {@code admin}. Never set in
+	 * production.
+	 */
+	public static final String SIGN_IN_AS_PROPERTY = "antilia-widgets.sign-in-as";
+
 	private Accounts accounts;
+
+	private Accesses accesses;
+
+	private final SignInAttempts signInAttempts = new SignInAttempts();
 
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
@@ -71,7 +88,14 @@ public class WicketApplication extends WebApplication
 	@Override
 	public Session newSession(Request request, Response response)
 	{
-		return new DemoSession(request);
+		DemoSession session = new DemoSession(request);
+		String account = System.getProperty(SIGN_IN_AS_PROPERTY);
+		if (!Strings.isEmpty(account))
+		{
+			accounts.find(account)
+				.ifPresent(user -> session.signedInLocally(user.getName(), user.getRole()));
+		}
+		return session;
 	}
 
 	/**
@@ -86,7 +110,16 @@ public class WicketApplication extends WebApplication
 		// environment holds: the license limits only the other applications using the library
 		Licensing.install(this, DemoLicense.key());
 
-		accounts = newAccounts();
+		// the users and the accesses are in the database; the accounts the demo always has and
+		// those the server is started with are added when missing
+		ApplicationContext database = newDatabase();
+		accounts = database.getBean(Accounts.class);
+		accesses = database.getBean(Accesses.class);
+		accounts.addDefaults();
+		accounts.addFromSettings();
+
+		// the status of the home page's websocket, which keeps the home page stateless
+		getSharedResources().add(LiveResource.NAME, new LiveResource());
 
 		// the demos are the private part: only visitors who signed in see them
 		DemosAuthorization authorization = new DemosAuthorization();
@@ -136,6 +169,8 @@ public class WicketApplication extends WebApplication
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("register", RegisterPage.class);
 		mountPage("sign-in", SignInPage.class);
+		mountPage("accesses", AccessesPage.class);
+		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
@@ -152,12 +187,28 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return the accounts that may open the demos, set by the system properties or the
-	 *         environment
+	 * @return who accessed the site
 	 */
-	protected Accounts newAccounts()
+	public Accesses getAccesses()
 	{
-		return Accounts.fromSettings();
+		return accesses;
+	}
+
+	/**
+	 * @return the failed attempts to sign in, by account
+	 */
+	public SignInAttempts getSignInAttempts()
+	{
+		return signInAttempts;
+	}
+
+	/**
+	 * @return the Spring context of the database set by the system properties or the environment
+	 * @see Database#fromSettings()
+	 */
+	protected ApplicationContext newDatabase()
+	{
+		return Database.context(Database.fromSettings());
 	}
 
 	/**

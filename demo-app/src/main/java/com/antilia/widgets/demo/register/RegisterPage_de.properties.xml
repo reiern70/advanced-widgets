@@ -30,4 +30,5 @@
 	<entry key="taken">Es gibt schon ein Konto mit dieser E-Mail. Melden Sie sich damit an oder registrieren Sie sich mit einer anderen E-Mail.</entry>
 	<entry key="StringValidator.minimum">${label} braucht mindestens ${minimum} Zeichen.</entry>
 	<entry key="EqualPasswordInputValidator">Die Passwörter stimmen nicht überein.</entry>
+	<entry key="closed">Die Registrierung wird noch nicht unterstützt. Bitte schauen Sie später wieder vorbei, oder melden Sie sich an, wenn Sie schon ein Konto haben.</entry>
 </properties>

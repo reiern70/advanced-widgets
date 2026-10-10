@@ -61,6 +61,8 @@ public abstract class DemoPage extends BasePage
 	protected void onInitialize()
 	{
 		super.onInitialize();
+		// the session opened the private part
+		DemoSession.get().recordPrivatePart();
 		String demo = getFrameworkDemo();
 		add(demo != null ? new FrameworkTabs("frameworkTabs", demo, this::getFrameworkConfig)
 			: new WebMarkupContainer("frameworkTabs").setVisible(false));

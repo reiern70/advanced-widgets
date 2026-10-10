@@ -1,6 +1,6 @@
 # The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
-# and passes everything, websockets included, to Jetty. Settings come from .env, see
-# .env.example.
+# and passes everything, websockets included, to Jetty; PostgreSQL keeps the users and the
+# accesses. Settings come from .env, see .env.example.
 services:
   app:
     build: .
@@ -8,12 +8,34 @@ services:
     restart: unless-stopped
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
-      DATABASE_URL: ${DATABASE_URL:-}
+      # the PostgreSQL of this file, unless .env names another one (a managed database)
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/widgets}
+      DATABASE_USER: ${DATABASE_USER:-widgets}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
       ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
     volumes:
       - page-store:/var/lib/antilia-widgets
     expose:
       - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # PostgreSQL on the instance's SSD; only the app reaches it, no port is published
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: widgets
+      POSTGRES_USER: ${DATABASE_USER:-widgets}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d widgets"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   caddy:
     image: caddy:2.11
@@ -33,6 +55,7 @@ services:
       - app
 
 volumes:
+  database:
   page-store:
   caddy-data:
   caddy-config:

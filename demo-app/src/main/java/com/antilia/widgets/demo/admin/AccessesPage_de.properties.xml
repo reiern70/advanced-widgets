@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Zugriffe</entry>
+	<entry key="lead">Wer die Seite besucht hat, eine Zeile je Sitzung, die neuesten zuerst. Sitzungen:</entry>
+	<entry key="accessed">Zugriff (Server)</entry>
+	<entry key="user">Benutzer</entry>
+	<entry key="part">Bereich</entry>
+	<entry key="part.private">Privat</entry>
+	<entry key="part.public">Öffentlich</entry>
+	<entry key="address">Von</entry>
+	<entry key="localTime">Ortszeit des Besuchers</entry>
+	<entry key="timeZone">Zeitzone</entry>
+	<entry key="browser">Browser</entry>
+</properties>

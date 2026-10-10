@@ -11,31 +11,54 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.antilia.widgets.demo.TestDatabase;
+import com.antilia.widgets.demo.data.Role;
+import com.antilia.widgets.demo.data.User;
+
 /**
- * Registers and authenticates {@link Accounts}.
+ * Registers and authenticates {@link Accounts}, kept in the table {@code users}.
  */
 class AccountsTest
 {
-	@TempDir
-	Path folder;
+	private Accounts accounts;
 
-	private File file()
+	@BeforeEach
+	void clear()
 	{
-		return new File(folder.toFile(), "accounts.properties");
+		TestDatabase.clear();
+		accounts = TestDatabase.accounts();
+	}
+
+	@Test
+	void theDemoAlwaysHasItsAccounts()
+	{
+		assertEquals(Role.USER, accounts.authenticate("semedy", "semady4321").map(User::getRole)
+			.orElseThrow());
+		assertEquals(Role.USER, accounts.authenticate("wicket", "mellon4321").map(User::getRole)
+			.orElseThrow());
+		assertEquals(Role.ADMIN, accounts.authenticate("admin", "$Macarena_4321")
+			.map(User::getRole).orElseThrow());
+		assertFalse(accounts.authenticate("admin", "mellon4321").isPresent());
+
+		// adding them again changes nothing
+		accounts.addDefaults();
+		assertEquals(3, TestDatabase.users().size());
 	}
 
 	@Test
 	void configuredAccountsSignInWithTheirPasswords()
 	{
-		Accounts accounts = new Accounts(file(), "client:secret-one, other:secret-two");
+		accounts.addConfigured("client:secret-one, other:secret-two");
 
-		assertEquals(Optional.of("client"), accounts.authenticate("Client ", "secret-one"));
-		assertEquals(Optional.of("other"), accounts.authenticate("other", "secret-two"));
+		assertEquals("client", accounts.authenticate("Client ", "secret-one").orElseThrow()
+			.getName());
+		assertEquals("other", accounts.authenticate("other", "secret-two").orElseThrow()
+			.getName());
 		assertFalse(accounts.authenticate("client", "secret-two").isPresent());
 		assertFalse(accounts.authenticate("nobody", "secret-one").isPresent());
 		assertFalse(accounts.authenticate("client", "").isPresent());
@@ -43,32 +66,44 @@ class AccountsTest
 	}
 
 	@Test
-	void registeredAccountsAreKeptHashed() throws Exception
+	void registeredAccountsAreKeptHashed()
 	{
-		Accounts accounts = new Accounts(file(), "");
-
 		assertTrue(accounts.register("Ada@Example.com", "analytical-engine"));
 
-		String kept = Files.readString(file().toPath());
-		assertTrue(kept.contains("ada@example.com"), kept);
-		assertFalse(kept.contains("analytical-engine"), kept);
-		// another server reading the same file knows the account
-		Accounts restarted = new Accounts(file(), "");
-		assertEquals(Optional.of("ada@example.com"),
-			restarted.authenticate("ada@example.com", "analytical-engine"));
-		assertFalse(restarted.authenticate("ada@example.com", "difference-engine").isPresent());
+		User ada = TestDatabase.users().stream()
+			.filter(user -> user.getName().equals("ada@example.com"))
+			.findFirst()
+			.orElseThrow();
+		assertFalse(ada.getPasswordHash().contains("analytical-engine"));
+		assertEquals(Role.USER, ada.getRole());
+		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		assertFalse(accounts.authenticate("ada@example.com", "difference-engine").isPresent());
 	}
 
 	@Test
 	void anAccountIsRegisteredOnlyOnce()
 	{
-		Accounts accounts = new Accounts(file(), "client:secret-one");
+		accounts.addConfigured("client:secret-one");
 
 		assertTrue(accounts.register("ada@example.com", "analytical-engine"));
 		assertFalse(accounts.register(" ADA@example.com", "difference-engine"));
 		assertFalse(accounts.register("client", "taken-over"));
+		assertFalse(accounts.register("admin", "taken-over"));
 		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
 		assertFalse(accounts.authenticate("client", "taken-over").isPresent());
+	}
+
+	@Test
+	void theAccountsOfEarlierVersionsAreImported(@TempDir Path folder) throws Exception
+	{
+		File file = new File(folder.toFile(), "antilia-widgets-accounts.properties");
+		Files.writeString(file.toPath(), "grace@example.com=" +
+			Accounts.hash("compiler").replace(":", "\\:").replace("=", "\\=") + "\n");
+
+		accounts.importFile(file);
+		accounts.importFile(new File(folder.toFile(), "missing.properties"));
+
+		assertTrue(accounts.authenticate("grace@example.com", "compiler").isPresent());
 	}
 
 	@Test

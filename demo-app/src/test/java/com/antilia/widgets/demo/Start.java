@@ -50,6 +50,8 @@ public class Start
 	public static void main(String[] args) throws Exception
 	{
 		System.setProperty("wicket.configuration", "development");
+		// locally nobody signs in: every session is the administrator's
+		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
 
 		Server server = new Server();
 

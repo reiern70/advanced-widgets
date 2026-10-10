@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.wicket.Component;
+import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -18,9 +19,9 @@ import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.EnumChoiceRenderer;
-import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.StatelessForm;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
-import org.apache.wicket.markup.html.link.Link;
+import org.apache.wicket.markup.html.link.StatelessLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -28,6 +29,8 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antilia.widgets.demo.account.SignInPage;
+import com.antilia.widgets.demo.admin.AccessTimeResource;
+import com.antilia.widgets.demo.admin.AccessesPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dropdown.DropdownBehavior;
@@ -39,7 +42,8 @@ import com.antilia.widgets.theme.ThemeChoice;
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
  * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
  * its own, and the links to sign in and to register, or the account signed in with and the link to
- * sign out; then the footer. The whole page is in the session's
+ * sign out, and for an administrator the link to the accesses; then the footer. Nothing of it
+ * keeps a page, so the public pages are stateless. The whole page is in the session's
  * {@link Theme}, its own colors included.
  */
 public abstract class BasePage extends WebPage
@@ -75,18 +79,10 @@ public abstract class BasePage extends WebPage
 
 		add(new BookmarkablePageLink<>("home", HomePage.class));
 
-		Form<Void> settings = new Form<>("settings");
+		// stateless, like the Ajax of the drop-downs, so that the public pages are
+		StatelessForm<Void> settings = new StatelessForm<>("settings");
 		add(settings);
-		settings.add(new ThemeChoice("theme", getThemeModel())
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onThemeChanged(AjaxRequestTarget target)
-			{
-				setResponsePage(getPage());
-			}
-		}.add(new DropdownBehavior()));
+		settings.add(newThemeChoice("theme"));
 		settings.add(newLanguageChoice("language"));
 		settings.add(newAjaxEngineChoice("ajaxEngine"));
 
@@ -113,6 +109,17 @@ public abstract class BasePage extends WebPage
 			}
 		});
 		add(newSignOut("signOut"));
+		add(new BookmarkablePageLink<>("accesses", AccessesPage.class)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(DemoSession.get().isAdmin());
+			}
+		});
 
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
@@ -136,6 +143,22 @@ public abstract class BasePage extends WebPage
 			theme -> DemoSession.get().setTheme(theme));
 	}
 
+	private ThemeChoice newThemeChoice(String id)
+	{
+		ThemeChoice choice = new ThemeChoice(id, getThemeModel())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onThemeChanged(AjaxRequestTarget target)
+			{
+				reload();
+			}
+		};
+		choice.add(new DropdownBehavior());
+		return choice;
+	}
+
 	private Dropdown<AjaxEngine> newAjaxEngineChoice(String id)
 	{
 		Dropdown<AjaxEngine> choice = new Dropdown<>(id,
@@ -143,11 +166,14 @@ public abstract class BasePage extends WebPage
 				engine -> DemoSession.get().setAjaxEngine(engine)),
 			List.of(AjaxEngine.values()), new EnumChoiceRenderer<>(this));
 		choice.setRequired(true);
-		// the page is rendered anew, so that the browser loads the other script
 		choice.add(reloadOnChange());
 		return choice;
 	}
 
+	/**
+	 * @return the behavior rendering the page anew after a choice, in the new theme, language or
+	 *         with the other script; stateless, the page is made anew from its URL to run it
+	 */
 	private AjaxFormComponentUpdatingBehavior reloadOnChange()
 	{
 		return new AjaxFormComponentUpdatingBehavior("change")
@@ -157,9 +183,31 @@ public abstract class BasePage extends WebPage
 			@Override
 			protected void onUpdate(AjaxRequestTarget target)
 			{
-				setResponsePage(getPage());
+				reload();
+			}
+
+			@Override
+			public boolean getStatelessHint(Component component)
+			{
+				return true;
 			}
 		};
+	}
+
+	/**
+	 * Renders the page anew: a stateless one from its URL, as a stateful one may be gone.
+	 */
+	private void reload()
+	{
+		Page page = getPage();
+		if (page.isPageStateless() && page.isBookmarkable())
+		{
+			setResponsePage(page.getPageClass(), page.getPageParameters());
+		}
+		else
+		{
+			setResponsePage(page);
+		}
 	}
 
 	private Dropdown<Locale> newLanguageChoice(String id)
@@ -169,7 +217,11 @@ public abstract class BasePage extends WebPage
 				.filter(locale -> locale.getLanguage().equals(getSession().getLocale().getLanguage()))
 				.findFirst()
 				.orElse(Locale.ENGLISH),
-			locale -> getSession().setLocale(locale));
+			locale -> {
+				getSession().setLocale(locale);
+				// kept beyond the stateless page
+				getSession().bind();
+			});
 		Dropdown<Locale> choice = new Dropdown<>(id, language, LANGUAGES,
 			new ChoiceRenderer<>()
 			{
@@ -199,7 +251,7 @@ public abstract class BasePage extends WebPage
 	 */
 	private Component newSignOut(String id)
 	{
-		Link<Void> signOut = new Link<>(id)
+		StatelessLink<Void> signOut = new StatelessLink<>(id)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -247,5 +299,6 @@ public abstract class BasePage extends WebPage
 	{
 		super.renderHead(response);
 		response.render(CssHeaderItem.forReference(STYLE));
+		AccessTimeResource.renderHead(response);
 	}
 }

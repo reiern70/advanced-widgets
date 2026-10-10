@@ -6,20 +6,21 @@ package com.antilia.widgets.demo.account;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-
-import java.io.File;
-import java.nio.file.Path;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.wicket.RuntimeConfigurationType;
+import org.apache.wicket.markup.html.pages.AccessDeniedPage;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import com.antilia.widgets.demo.DemoSession;
 import com.antilia.widgets.demo.HomePage;
+import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
+import com.antilia.widgets.demo.admin.AccessesPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 
@@ -28,9 +29,6 @@ import com.antilia.widgets.demo.register.RegisterPage;
  */
 class DemosAuthorizationTest
 {
-	@TempDir
-	Path folder;
-
 	private WicketTester tester;
 
 	@AfterEach
@@ -38,12 +36,12 @@ class DemosAuthorizationTest
 	{
 		tester.destroy();
 		System.clearProperty(DemosAuthorization.OPEN_PROPERTY);
+		System.clearProperty(WicketApplication.SIGN_IN_AS_PROPERTY);
 	}
 
 	private void start(RuntimeConfigurationType configuration)
 	{
-		Accounts accounts = new Accounts(new File(folder.toFile(), "accounts.properties"),
-			"client:secret-one");
+		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -51,13 +49,8 @@ class DemosAuthorizationTest
 			{
 				return configuration;
 			}
-
-			@Override
-			protected Accounts newAccounts()
-			{
-				return accounts;
-			}
 		});
+		Accounts.get().addConfigured("client:secret-one");
 	}
 
 	@Test
@@ -163,5 +156,126 @@ class DemosAuthorizationTest
 
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
+	}
+
+	@Test
+	void aCaptchaIsAskedAfterThreeFailedAttempts()
+	{
+		start(RuntimeConfigurationType.DEPLOYMENT);
+
+		tester.startPage(SignInPage.class);
+		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
+		{
+			tester.assertInvisible("form:captcha");
+			signIn("client", "wrong-" + attempt);
+			tester.assertErrorMessages("The account or the password is wrong.");
+		}
+		tester.assertVisible("form:captcha");
+
+		// the right password alone is not enough any more
+		signIn("client", "secret-one");
+		tester.assertRenderedPage(SignInPage.class);
+		assertFalse(DemoSession.get().isSignedIn());
+
+		// wrong letters neither
+		FormTester form = tester.newFormTester("form");
+		form.setValue("name", "client");
+		form.setValue("password", "secret-one");
+		form.setValue("captcha:answer", "nope");
+		form.submit();
+		tester.assertErrorMessages(tester.getLastRenderedPage().getString("captchaWrong"));
+		assertFalse(DemoSession.get().isSignedIn());
+
+		SignInPage page = (SignInPage)tester.getLastRenderedPage();
+		form = tester.newFormTester("form");
+		form.setValue("name", "client");
+		form.setValue("password", "secret-one");
+		form.setValue("captcha:answer", page.getChallenge().toLowerCase());
+		form.submit();
+		tester.assertRenderedPage(HomePage.class);
+		assertEquals("client", DemoSession.get().getAccount());
+	}
+
+	@Test
+	void aCaptchaIsAskedForAnAccountGuessedFromNewSessions()
+	{
+		start(RuntimeConfigurationType.DEPLOYMENT);
+
+		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
+		{
+			tester.startPage(SignInPage.class);
+			signIn("client", "wrong-" + attempt);
+			// a robot starts each attempt in a new session
+			tester.getSession().invalidateNow();
+		}
+		tester.startPage(SignInPage.class);
+		signIn("client", "secret-one");
+		assertFalse(DemoSession.get().isSignedIn());
+		tester.assertVisible("form:captcha");
+	}
+
+	@Test
+	void theCaptchaShowsOtherLetters()
+	{
+		start(RuntimeConfigurationType.DEPLOYMENT);
+		tester.startPage(SignInPage.class);
+		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
+		{
+			signIn("nobody", "wrong");
+		}
+		SignInPage page = (SignInPage)tester.getLastRenderedPage();
+		String first = page.getChallenge();
+
+		tester.clickLink("form:captcha:another");
+
+		tester.assertVisible("form:captcha");
+		assertNotEquals(first, ((SignInPage)tester.getLastRenderedPage()).getChallenge());
+	}
+
+	@Test
+	void onlyAnAdministratorSeesTheAccesses()
+	{
+		start(RuntimeConfigurationType.DEVELOPMENT);
+
+		// not even in development, where the demos are open
+		tester.startPage(AccessesPage.class);
+		tester.assertRenderedPage(SignInPage.class);
+
+		// a user who is not an administrator is turned away
+		signIn("wicket", "mellon4321");
+		tester.assertRenderedPage(AccessDeniedPage.class);
+		tester.startPage(HomePage.class);
+		tester.assertInvisible("accesses");
+
+		DemoSession.get().signOut();
+		tester.startPage(AccessesPage.class);
+		signIn("admin", "$Macarena_4321");
+		tester.assertRenderedPage(AccessesPage.class);
+		tester.assertVisible("accesses");
+		tester.assertContains("admin");
+	}
+
+	@Test
+	void locallyEverySessionIsTheAdministrators()
+	{
+		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
+		start(RuntimeConfigurationType.DEPLOYMENT);
+
+		tester.startPage(HomePage.class);
+		tester.assertLabel("signOut:account", "admin");
+		tester.assertVisible("accesses");
+		assertTrue(tester.getLastRenderedPage().isPageStateless());
+		tester.startPage(AccessesPage.class);
+		tester.assertRenderedPage(AccessesPage.class);
+		tester.startPage(DropdownPage.class);
+		tester.assertRenderedPage(DropdownPage.class);
+	}
+
+	private void signIn(String name, String password)
+	{
+		FormTester form = tester.newFormTester("form");
+		form.setValue("name", name);
+		form.setValue("password", password);
+		form.submit();
 	}
 }

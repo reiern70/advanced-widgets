@@ -31,12 +31,21 @@
 		<revision>1.0.0-SNAPSHOT</revision>
 		<wicket.version>11.0.0-SNAPSHOT</wicket.version>
 		<slf4j.version>2.0.17</slf4j.version>
-		<jetty.version>11.0.24</jetty.version>
+		<!-- as in deploy/Dockerfile; its ASM reads the Java 24 classes of Spring 7 -->
+		<jetty.version>11.0.26</jetty.version>
 		<jackson.version>3.2.3</jackson.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
 		<junit.version>5.13.4</junit.version>
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
 		<selenium.version>4.50.0</selenium.version>
+		<!-- the database of the demo: Spring Data JPA on Hibernate, PostgreSQL in production -->
+		<spring.version>7.0.9</spring.version>
+		<spring-data-jpa.version>4.0.7</spring-data-jpa.version>
+		<hibernate.version>7.2.25.Final</hibernate.version>
+		<hikaricp.version>7.1.0</hikaricp.version>
+		<flyway.version>13.10.0</flyway.version>
+		<postgresql.version>42.7.14</postgresql.version>
+		<h2.version>2.5.252</h2.version>
 		<!-- the least test coverage `mvn verify` accepts, see jacoco-maven-plugin; set per module -->
 		<jacoco.minimum.lines>0.00</jacoco.minimum.lines>
 		<jacoco.minimum.branches>0.00</jacoco.minimum.branches>
@@ -96,6 +105,50 @@
 				<groupId>org.webjars.npm</groupId>
 				<artifactId>fortawesome__fontawesome-free</artifactId>
 				<version>${fontawesome-free.version}</version>
+			</dependency>
+
+			<!-- DATABASE DEPENDENCIES -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-framework-bom</artifactId>
+				<version>${spring.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-jpa</artifactId>
+				<version>${spring-data-jpa.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.hibernate.orm</groupId>
+				<artifactId>hibernate-core</artifactId>
+				<version>${hibernate.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.zaxxer</groupId>
+				<artifactId>HikariCP</artifactId>
+				<version>${hikaricp.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-core</artifactId>
+				<version>${flyway.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-database-postgresql</artifactId>
+				<version>${flyway.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.h2database</groupId>
+				<artifactId>h2</artifactId>
+				<version>${h2.version}</version>
 			</dependency>
 
 			<!-- LOGGING DEPENDENCIES -->

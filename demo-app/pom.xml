@@ -47,6 +47,43 @@
 			<artifactId>wicket-native-websocket-javax</artifactId>
 		</dependency>
 
+		<!--
+		  DATABASE: the users and the accesses, with Spring Data JPA on Hibernate; PostgreSQL in
+		  production, H2 when no database is configured (see Database); Flyway makes the tables
+		-->
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-orm</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+
 		<!-- JSON: the rows of a JsonBasedDynamicDataTable are serialized by JacksonJsonSerializer -->
 		<dependency>
 			<groupId>tools.jackson.core</groupId>
@@ -117,6 +154,8 @@
 	</dependencies>
 
 	<properties>
+		<!-- the account every session of jetty:run is signed in with; -Dantilia-widgets.sign-in-as= to sign in yourself -->
+		<antilia-widgets.sign-in-as>admin</antilia-widgets.sign-in-as>
 		<frontend.directory>${project.basedir}/../frontend</frontend.directory>
 		<!-- without -Pselenium the browser tests are skipped, so these hold for the plain build -->
 		<jacoco.minimum.lines>0.75</jacoco.minimum.lines>
@@ -252,15 +291,25 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 			</plugin>
+			<!-- the tests share an H2 database in memory, in PostgreSQL mode, see Database -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<antilia-widgets.database.url>jdbc:h2:mem:widgets;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1</antilia-widgets.database.url>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
 				<configuration>
+					<!-- a map: the plugin of Jetty 11 ignores nested <systemProperty> elements -->
 					<systemProperties>
-						<systemProperty>
-							<name>maven.project.build.directory.test-classes</name>
-							<value>${project.build.directory}/test-classes</value>
-						</systemProperty>
+						<maven.project.build.directory.test-classes>${project.build.directory}/test-classes</maven.project.build.directory.test-classes>
+						<!-- locally nobody signs in: every session is the administrator's, see WicketApplication -->
+						<antilia-widgets.sign-in-as>${antilia-widgets.sign-in-as}</antilia-widgets.sign-in-as>
 					</systemProperties>
 					<!-- jetty-ssl.xml resolves the keystore against jetty.base: make it work from the parent directory too -->
 					<jettyProperties>

@@ -11,7 +11,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.validation.EqualPasswordInputValidator;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.EmailTextField;
@@ -35,7 +37,8 @@ import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.dropdown.Dropdown;
 
 /**
- * Lets a visitor register: first and last name, email, country, role and a password. On success
+ * Lets a visitor register, once registering is open (see {@link #isOpen()}); until then it says
+ * that registering is not supported yet and the form is disabled. A visitor registers with: first and last name, email, country, role and a password. On success
  * the account is made, the visitor signed in and sent on to the demo they wanted to see, or else
  * to the {@link EmailConfirmationPage}.
  * <p>
@@ -46,6 +49,12 @@ import com.antilia.widgets.dropdown.Dropdown;
 public class RegisterPage extends BasePage
 {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The system property opening the registration; it is closed for now: the page says so and
+	 * its form is disabled.
+	 */
+	public static final String OPEN_PROPERTY = "antilia-widgets.open-registration";
 
 	/** People take longer than this to fill in the form; robots sending it at once do not. */
 	static final Duration MINIMUM_FILL_TIME = Duration.ofSeconds(3);
@@ -91,6 +100,10 @@ public class RegisterPage extends BasePage
 			@Override
 			protected void onSubmit()
 			{
+				if (!isOpen())
+				{
+					return;
+				}
 				if (isRobot())
 				{
 					error(getString("robot"));
@@ -119,7 +132,9 @@ public class RegisterPage extends BasePage
 				newChallenge();
 			}
 		};
+		form.setEnabled(isOpen());
 		add(form);
+		add(new WebMarkupContainer("closed").setVisible(!isOpen()));
 
 		form.add(new RequiredTextField<String>("firstName")
 			.add(StringValidator.maximumLength(60))
@@ -153,6 +168,7 @@ public class RegisterPage extends BasePage
 		form.add(new NumberTextField<Integer>("answer", Integer.class)
 			.setRequired(true)
 			.setLabel(new ResourceModel("answer")));
+		form.add(new Button("submit"));
 
 		add(new FeedbackPanel("feedback"));
 	}
@@ -161,6 +177,15 @@ public class RegisterPage extends BasePage
 	protected String getPageTitle()
 	{
 		return getString("title") + " · " + super.getPageTitle();
+	}
+
+	/**
+	 * @return whether visitors may register; not yet, unless the system property
+	 *         {@value #OPEN_PROPERTY} is {@code true}
+	 */
+	public static boolean isOpen()
+	{
+		return Boolean.getBoolean(OPEN_PROPERTY);
 	}
 
 	/**
