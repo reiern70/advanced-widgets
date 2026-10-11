@@ -12,6 +12,7 @@
 
 .antilia-collapsible-title {
 	padding: 0.3em 0.5em;
+	line-height: 1.4em;
 	background: var(--antilia-theme-primary);
 	color: var(--antilia-theme-on-primary);
 	display: list-item;
@@ -45,4 +46,41 @@
 .antilia-collapsible-body {
 	padding: 0.5em 0.5em 0.5em 1.5em;
 	color: var(--antilia-collapsible-text, var(--antilia-theme-text));
+}
+
+/*
+ * The actions of the header: buttons over the right end of the title, outside the <summary>, so a
+ * click on one neither expands nor collapses the panel. The title is 2em high, 1.4em of line and
+ * 0.3em of padding above and below; the actions are as high and centered in it.
+ */
+.antilia-collapsible-frame {
+	position: relative;
+}
+
+.antilia-collapsible-actions {
+	position: absolute;
+	top: 1px;
+	right: 0.3em;
+	display: flex;
+	align-items: center;
+	gap: 0.15em;
+	height: 2em;
+}
+
+.antilia-collapsible-frame:has(> .antilia-collapsible-actions) > .antilia-collapsible > .antilia-collapsible-title {
+	padding-right: 4em;
+}
+
+.antilia-collapsible-actions .ant-button {
+	--ant-button-bg: transparent;
+	--ant-button-fg: var(--antilia-theme-on-primary);
+	--ant-button-border: transparent;
+	--ant-button-hover: color-mix(in srgb, var(--antilia-theme-on-primary) 20%, transparent);
+	min-height: 1.6em;
+	padding: 0.2em 0.35em;
+}
+
+.antilia-collapsible-actions .ant-button:focus-visible {
+	outline-color: var(--antilia-theme-on-primary);
+	outline-offset: 0;
 }

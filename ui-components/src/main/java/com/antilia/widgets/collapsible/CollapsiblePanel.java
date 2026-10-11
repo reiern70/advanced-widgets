@@ -14,9 +14,15 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
+import org.danekja.java.util.function.serializable.SerializableConsumer;
+
+import com.antilia.widgets.button.AjaxActionButton;
+import com.antilia.widgets.button.ButtonBehavior.Size;
+import com.antilia.widgets.icon.IIcon;
 
 /**
  * A title and a body the user can expand and collapse, collapsed by default.
@@ -36,6 +42,17 @@ import org.apache.wicket.request.resource.ResourceReference;
  * <p>
  * The title is escaped. The body is the component returned by {@link #newBody(String)}, for
  * example a label or a panel.
+ * <p>
+ * The header can hold actions, buttons on its right, such as one clearing what the body holds:
+ *
+ * <pre>
+ * panel.addAction(new ResourceModel("clear"), SvgIcon.ERASER, target -&gt; {...});
+ * </pre>
+ *
+ * They are not in the {@code <summary>}, which is a button itself, but over its right end: a
+ * click on one runs its action without expanding or collapsing the panel, and they are reached
+ * with the Tab key after the title. {@link #updateHeader(AjaxRequestTarget)} renders the title and
+ * the actions again, for example when an action shows only while there is something to clear.
  *
  * @since 11.0.0
  */
@@ -50,6 +67,12 @@ public abstract class CollapsiblePanel extends Panel
 	private static final String OPEN_PARAMETER = "open";
 
 	private final WebMarkupContainer details;
+
+	private final Label title;
+
+	private final WebMarkupContainer actions;
+
+	private final RepeatingView action;
 
 	private boolean expanded;
 
@@ -69,7 +92,25 @@ public abstract class CollapsiblePanel extends Panel
 		details.setOutputMarkupId(true);
 		details.add(AttributeModifier.replace("open", () -> expanded ? "open" : null));
 		add(details);
-		details.add(new Label("title", title));
+		this.title = new Label("title", title);
+		this.title.setOutputMarkupId(true);
+		details.add(this.title);
+
+		actions = new WebMarkupContainer("actions")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(action.size() > 0);
+			}
+		};
+		actions.setOutputMarkupPlaceholderTag(true);
+		add(actions);
+		action = new RepeatingView("action");
+		actions.add(action);
 	}
 
 	@Override
@@ -88,6 +129,69 @@ public abstract class CollapsiblePanel extends Panel
 	 * @return the body
 	 */
 	protected abstract Component newBody(String id);
+
+	/**
+	 * @return the id the next action has to have, see {@link #addAction(Component)}
+	 */
+	public String newActionId()
+	{
+		return action.newChildId();
+	}
+
+	/**
+	 * Adds an action to the header, on its right, after those added before.
+	 *
+	 * @param component
+	 *            the action, with an id from {@link #newActionId()}, attached to a
+	 *            {@code <button type="button">}: an {@link AjaxActionButton}, for example
+	 * @return {@code this}
+	 */
+	public CollapsiblePanel addAction(Component component)
+	{
+		action.add(component);
+		return this;
+	}
+
+	/**
+	 * Adds a small button to the header, on its right, showing only its icon.
+	 *
+	 * @param label
+	 *            the tooltip of the button and the name screen readers say
+	 * @param icon
+	 *            the icon of the button
+	 * @param onClick
+	 *            what a click on the button does, in an Ajax request
+	 * @return the button, to set more of it, or to hide it while it has nothing to do
+	 */
+	public AjaxActionButton addAction(IModel<String> label, IIcon icon,
+		SerializableConsumer<AjaxRequestTarget> onClick)
+	{
+		AjaxActionButton button = new AjaxActionButton(newActionId(), label)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				onClick.accept(target);
+			}
+		};
+		button.setIcon(icon).setIconOnly(true).setSize(Size.SMALL);
+		addAction(button);
+		return button;
+	}
+
+	/**
+	 * Renders the title and the actions again, leaving the body and whether the panel is expanded
+	 * alone.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 */
+	public void updateHeader(AjaxRequestTarget target)
+	{
+		target.add(title, actions);
+	}
 
 	/**
 	 * @return whether the panel is rendered expanded, {@code false} by default

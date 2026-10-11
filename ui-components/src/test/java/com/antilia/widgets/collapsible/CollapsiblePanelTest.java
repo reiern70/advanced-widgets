@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -21,6 +24,9 @@ import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
+
+import com.antilia.widgets.button.AjaxActionButton;
+import com.antilia.widgets.icon.SvgIcon;
 
 class CollapsiblePanelTest extends WicketTestCase
 {
@@ -78,6 +84,41 @@ class CollapsiblePanelTest extends WicketTestCase
 
 		assertFalse(panel.isExpanded());
 		assertEquals(2, panel.toggles);
+	}
+
+	@Test
+	void hasNoActionsByDefault()
+	{
+		tester.startPage(new TestPage(new TestPanel()));
+
+		tester.assertInvisible("panel:actions");
+	}
+
+	@Test
+	void runsAnActionOfTheHeaderWithoutTogglingThePanel()
+	{
+		TestPanel panel = new TestPanel();
+		List<String> clicks = new ArrayList<>();
+		AjaxActionButton clear = panel.addAction(Model.of("Clear"), SvgIcon.ERASER,
+			target -> {
+				clicks.add("clear");
+				panel.updateHeader(target);
+			});
+		tester.startPage(new TestPage(panel));
+
+		TagTester button = tester.getTagByWicketId("action");
+		assertEquals("button", button.getName());
+		assertEquals("Clear", button.getAttribute("aria-label"));
+		assertTrue(button.getAttributeContains("class", "ant-button--icon-only"));
+		assertNull(TagTester.createTagByName(tester.getLastResponseAsString(), "summary")
+			.getChild("wicket:id", "action"), "the action is not in the summary");
+
+		tester.clickLink(clear);
+
+		assertEquals(List.of("clear"), clicks);
+		assertFalse(panel.isExpanded());
+		tester.assertComponentOnAjaxResponse(panel.get("details:title"));
+		tester.assertComponentOnAjaxResponse(panel.get("actions"));
 	}
 
 	private static class TestPanel extends CollapsiblePanel

@@ -19,12 +19,15 @@
 	<entry key="signOut">Sign out</entry>
 	<entry key="rightsReserved">All rights reserved.</entry>
 	<entry key="builtWith">Built with Apache Wicket</entry>
+	<entry key="category.examples">Examples</entry>
 	<entry key="category.data">Data</entry>
 	<entry key="category.feedback">Feedback</entry>
 	<entry key="category.forms">Forms</entry>
 	<entry key="category.layout">Layout</entry>
 	<entry key="category.themes">Themes</entry>
 	<entry key="category.realTime">Real-time</entry>
+	<entry key="demo.contacts">Address Book</entry>
+	<entry key="demo.contacts.description">2,500 contacts filtered by facets in collapsible panels, next to a JSON table with every option.</entry>
 	<entry key="demo.jsonTable">JSON Grid</entry>
 	<entry key="demo.jsonTable.description">A thousand users rendered in the browser from JSON, with live updates over web sockets, in Wicket, React and Svelte.</entry>
 	<entry key="demo.beanTable">Bean Grid</entry>

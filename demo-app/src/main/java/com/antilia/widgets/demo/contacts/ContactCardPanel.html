@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div class="contact-card">
+	<div class="contact-card__head">
+		<span wicket:id="initials" class="contacts-avatar contacts-avatar--large" aria-hidden="true">[AB]</span>
+		<div>
+			<div wicket:id="name" class="contact-card__name">[name]</div>
+			<div wicket:id="profession" class="contacts-muted">[profession]</div>
+		</div>
+	</div>
+	<dl class="contact-card__details">
+		<dt><wicket:message key="email"/></dt>
+		<dd><a wicket:id="email"><wicket:container wicket:id="address">[email]</wicket:container></a></dd>
+		<dt><wicket:message key="phone"/></dt>
+		<dd><a wicket:id="phone"><wicket:container wicket:id="number">[phone]</wicket:container></a></dd>
+		<dt><wicket:message key="livesIn"/></dt>
+		<dd wicket:id="lives">[city, country]</dd>
+		<dt><wicket:message key="born"/></dt>
+		<dd><wicket:container wicket:id="born">[day]</wicket:container> (<wicket:message key="age"/> <wicket:container wicket:id="age">[age]</wicket:container>)</dd>
+	</dl>
+</div>
+</wicket:panel>

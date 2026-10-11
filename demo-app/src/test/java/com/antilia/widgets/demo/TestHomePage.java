@@ -127,7 +127,7 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("demos:0:link:name", "Grid JSON");
+		tester.assertLabel("demos:0:link:name", "Agenda de contactos");
 		tester.assertContains("Todos los derechos reservados.");
 		tester.assertContains("Español");
 	}
@@ -138,7 +138,7 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.GERMAN);
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("demos:0:link:name", "JSON-Grid");
+		tester.assertLabel("demos:0:link:name", "Adressbuch");
 		tester.assertContains("Alle Rechte vorbehalten.");
 	}
 

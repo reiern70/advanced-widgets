@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Adressbuch</entry>
+	<entry key="explanation">Eine realistische Seite aus den Komponenten der anderen Demos: ein Adressbuch mit 2.500 Kontakten, durchsucht nach Facetten.&lt;ul&gt;&lt;li&gt;Ein SplitPanel zeigt links die Filter und rechts die Kontakte. Ziehen Sie den Trenner, um den Platz anders aufzuteilen, oder klappen Sie die Filter mit seinen Pfeilen ein&lt;/li&gt;&lt;li&gt;Jede Kategorie der Filter, Land, Geburtsjahr und Beruf, ist ein CollapsiblePanel: Ein Klick auf den Titel klappt sie zu. Ihr Kopf hat eine Aktion, rechts einen Radiergummi, der die Filter der Kategorie löscht; er erscheint nur, solange es etwas zu löschen gibt. Die Aktionen eines CollapsiblePanel sind neu: addAction fügt sie hinzu, außerhalb des summary, sodass ein Klick darauf das Panel weder auf- noch zuklappt&lt;/li&gt;&lt;li&gt;Oben in jeder Kategorie findet ein MultiAutocomplete beim Tippen jeden ihrer Werte, mit der Zahl der Kontakte, die ihn haben, und zeigt die gewählten als Chips; das x eines Chips entfernt ihn. Darunter sind die häufigsten Werte Kontrollkästchen. Beide wählen dieselben Filter, und beide entfernen sie&lt;/li&gt;&lt;li&gt;Die Zahlen sind die der Facettensuche: Eine Kategorie zählt die Kontakte, die die anderen übrig lassen. Wer Spanien wählt, behält die Zahlen der anderen Länder, während Jahre und Berufe nur die Kontakte in Spanien zählen&lt;/li&gt;&lt;li&gt;Über der Tabelle sind die gewählten Filter ebenfalls Chips mit einem x, und „Alle entfernen“ links löscht jede Kategorie&lt;/li&gt;&lt;li&gt;Die Tabelle ist eine JsonBasedDynamicDataTable, deren Zeilen der Browser aus JSON zeichnet: auswählbare Zeilen, sortierbare Spalten, Seiten mit 25, 50 oder 100 Zeilen, eine Suche nach Name oder E-Mail in der Navigation, Spalten zum Ändern der Breite, zum Verschieben am Griff und zum Aus- und Einblenden mit der Spaltenauswahl (Stadt ist zuerst ausgeblendet) und ein Export der ausgewählten Kontakte, oder aller, als CSV&lt;/li&gt;&lt;li&gt;Die Karte in jeder Zeile zeigt den Kontakt in einem Modal; der Pfeil speichert ihn als vCard, die Datei, die Adressbücher importieren&lt;/li&gt;&lt;/ul&gt;</entry>
+	<entry key="filters">Filter</entry>
+	<entry key="clearAll">Alle entfernen</entry>
+	<entry key="facet.country">Land</entry>
+	<entry key="facet.birthYear">Geburtsjahr</entry>
+	<entry key="facet.profession">Beruf</entry>
+	<entry key="facet.country.find">Ein Land suchen…</entry>
+	<entry key="facet.birthYear.find">Ein Jahr suchen…</entry>
+	<entry key="facet.profession.find">Einen Beruf suchen…</entry>
+	<entry key="facet.clear">Filter von {0} entfernen</entry>
+	<entry key="facet.more">{0} weitere: oben suchen</entry>
+	<entry key="count">{0} von {1} Kontakten</entry>
+	<entry key="chip.remove">{0} entfernen</entry>
+	<entry key="search">Suchen</entry>
+	<entry key="search.placeholder">Name oder E-Mail</entry>
+	<entry key="actions">Aktionen</entry>
+	<entry key="name">Name</entry>
+	<entry key="email">E-Mail</entry>
+	<entry key="phone">Telefon</entry>
+	<entry key="profession">Beruf</entry>
+	<entry key="country">Land</entry>
+	<entry key="born">Geboren</entry>
+	<entry key="city">Stadt</entry>
+	<entry key="card">Karte zeigen</entry>
+	<entry key="vcard">Als vCard speichern</entry>
+	<entry key="close">Schließen</entry>
+	<entry key="gone">Den Kontakt gibt es nicht mehr.</entry>
+	<entry key="livesIn">Wohnt in</entry>
+	<entry key="age">Alter</entry>
+</properties>

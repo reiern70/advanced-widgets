@@ -4,8 +4,11 @@
   All rights reserved.
 -->
 <wicket:panel xmlns:wicket="http://wicket.apache.org">
-<details wicket:id="details" class="antilia-collapsible">
-	<summary wicket:id="title" class="antilia-collapsible-title">[title]</summary>
-	<div class="antilia-collapsible-body"><wicket:container wicket:id="body">[body]</wicket:container></div>
-</details>
+<div class="antilia-collapsible-frame">
+	<details wicket:id="details" class="antilia-collapsible">
+		<summary wicket:id="title" class="antilia-collapsible-title">[title]</summary>
+		<div class="antilia-collapsible-body"><wicket:container wicket:id="body">[body]</wicket:container></div>
+	</details>
+	<div wicket:id="actions" class="antilia-collapsible-actions"><button type="button" wicket:id="action"></button></div>
+</div>
 </wicket:panel>

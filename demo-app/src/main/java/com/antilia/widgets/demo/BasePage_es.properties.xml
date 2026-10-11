@@ -19,12 +19,15 @@
 	<entry key="signOut">Cerrar sesión</entry>
 	<entry key="rightsReserved">Todos los derechos reservados.</entry>
 	<entry key="builtWith">Hecho con Apache Wicket</entry>
+	<entry key="category.examples">Ejemplos</entry>
 	<entry key="category.data">Datos</entry>
 	<entry key="category.feedback">Información</entry>
 	<entry key="category.forms">Formularios</entry>
 	<entry key="category.layout">Diseño</entry>
 	<entry key="category.themes">Temas</entry>
 	<entry key="category.realTime">Tiempo real</entry>
+	<entry key="demo.contacts">Agenda de contactos</entry>
+	<entry key="demo.contacts.description">2.500 contactos filtrados por facetas en paneles plegables, junto a una tabla JSON con todas sus opciones.</entry>
 	<entry key="demo.jsonTable">Grid JSON</entry>
 	<entry key="demo.jsonTable.description">Mil usuarios generados en el navegador a partir de JSON, con actualizaciones en vivo por WebSockets, en Wicket, React y Svelte.</entry>
 	<entry key="demo.beanTable">Grid Bean</entry>

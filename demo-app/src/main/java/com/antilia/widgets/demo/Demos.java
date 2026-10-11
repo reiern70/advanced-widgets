@@ -12,6 +12,7 @@ import org.apache.wicket.Page;
 
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
+import com.antilia.widgets.demo.contacts.ContactsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
@@ -86,6 +87,7 @@ public final class Demos
 	}
 
 	private static final List<Demo> ALL = List.of(
+		new Demo("contacts", "examples", ContactsPage.class, false, false),
 		new Demo("jsonTable", "data", DynamicDataTablePage.class, false, true),
 		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true, false),
 		new Demo("jsonList", "data", JsonListPage.class, false, true),

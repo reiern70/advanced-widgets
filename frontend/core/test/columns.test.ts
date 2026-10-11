@@ -212,6 +212,42 @@ describe('ResizableColumns', () => {
 		}
 	});
 
+	it('fits the columns to the parent again when the parent changes width, not only the window', () => {
+		const element = table(['A', 'B']);
+		const parent = element.parentElement!;
+		let width = 400;
+		vi.spyOn(parent, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+		const observers: (() => void)[] = [];
+		const disconnect = vi.fn();
+		vi.stubGlobal('ResizeObserver', class {
+			constructor(callback: () => void) {
+				observers.push(callback);
+			}
+
+			observe(): void {}
+
+			disconnect = disconnect;
+		});
+		try {
+			ResizableColumns.attach('t', { mode: 'stretch', adjustToParent: true,
+				proportions: [1, 3] });
+			const widths = () => Array.from(element.querySelectorAll('col'), (col) => col.style.width);
+			expect(widths()).toEqual(['100px', '300px']);
+
+			// a split panel gives the pane its width, and the window stays as it was
+			width = 800;
+			observers.forEach((observer) => observer());
+
+			expect(widths()).toEqual(['200px', '600px']);
+			expect(element.style.width).toBe('800px');
+
+			ResizableColumns.detach('t');
+			expect(disconnect).toHaveBeenCalled();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
 	it('gives a skipped cell a col of its pixels, and the columns shares without calc()', () => {
 		const element = table(['A', 'B', ''], ['', '', 'data-resizable-skip']);
 		vi.spyOn(ResizableColumns, 'measure').mockImplementation((cell) =>

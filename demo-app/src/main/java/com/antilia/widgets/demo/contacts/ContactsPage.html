@@ -1,0 +1,36 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="themed" class="contacts">
+	<div wicket:id="split" class="contacts__split"></div>
+</div>
+<div wicket:id="dialog"></div>
+
+<wicket:fragment wicket:id="filtersPane">
+<aside class="contacts__filters">
+	<div wicket:id="head" class="contacts__filters-head">
+		<h2 class="contacts__heading"><wicket:message key="filters"/></h2>
+		<button type="button" wicket:id="clearAll"></button>
+	</div>
+	<form wicket:id="form" class="contacts__facets">
+		<div wicket:id="facet"></div>
+	</form>
+</aside>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="resultsPane">
+<section class="contacts__results">
+	<div wicket:id="summary" class="contacts__summary">
+		<strong wicket:id="count" class="contacts__count">[2,500 contacts]</strong>
+		<span wicket:id="chip" class="antilia-chip contacts__chip"><span class="antilia-chip-text"><span wicket:id="facet" class="contacts-muted">[facet]</span>: <span wicket:id="text">[value]</span></span><button type="button" wicket:id="remove" class="antilia-chip-remove"></button></span>
+	</div>
+	<table class="ant-dataview" cellspacing="0" wicket:id="table">[contacts]</table>
+</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="search">
+<label class="contacts__search"><wicket:message key="search"/> <input type="search" wicket:id="text" wicket:message="placeholder:search.placeholder"/></label>
+</wicket:fragment>
+</wicket:extend>

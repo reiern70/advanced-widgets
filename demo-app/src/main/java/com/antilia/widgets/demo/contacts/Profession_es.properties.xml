@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="ACCOUNTANT">Contable</entry>
+	<entry key="ARCHITECT">Arquitecto/a</entry>
+	<entry key="CHEF">Cocinero/a</entry>
+	<entry key="DESIGNER">Diseñador/a</entry>
+	<entry key="ELECTRICIAN">Electricista</entry>
+	<entry key="ENGINEER">Ingeniero/a</entry>
+	<entry key="JOURNALIST">Periodista</entry>
+	<entry key="LAWYER">Abogado/a</entry>
+	<entry key="MARKETING_SPECIALIST">Especialista en marketing</entry>
+	<entry key="NURSE">Enfermero/a</entry>
+	<entry key="PHARMACIST">Farmacéutico/a</entry>
+	<entry key="PHOTOGRAPHER">Fotógrafo/a</entry>
+	<entry key="PHYSICIAN">Médico/a</entry>
+	<entry key="PILOT">Piloto</entry>
+	<entry key="RESEARCHER">Investigador/a</entry>
+	<entry key="SALES_MANAGER">Jefe/a de ventas</entry>
+	<entry key="SOFTWARE_DEVELOPER">Desarrollador/a de software</entry>
+	<entry key="TEACHER">Profesor/a</entry>
+</properties>

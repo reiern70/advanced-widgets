@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="collapsible" class="contacts-facet"></div>
+
+<wicket:fragment wicket:id="filters">
+	<input type="hidden" wicket:id="search"/>
+	<div wicket:id="list" class="contacts-facet__list">
+		<label wicket:id="value" class="contacts-facet__value">
+			<input type="checkbox" wicket:id="chosen"/>
+			<span wicket:id="label" class="contacts-facet__label">[value]</span>
+			<span wicket:id="count" class="contacts-facet__count">[count]</span>
+		</label>
+		<p wicket:id="more" class="contacts-facet__more">[and more]</p>
+	</div>
+</wicket:fragment>
+</wicket:panel>

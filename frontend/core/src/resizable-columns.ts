@@ -164,6 +164,9 @@ export class ResizableColumns {
 
 	private onWindowResize: (() => void) | undefined = undefined;
 
+	/** Lays the columns out again when the parent changes width, the window or not. */
+	private parentObserver: ResizeObserver | undefined = undefined;
+
 	/** Waits for a hidden table to be shown, to lay its columns out by their content then. */
 	private whenShown: ResizeObserver | undefined = undefined;
 
@@ -210,7 +213,29 @@ export class ResizableColumns {
 		if (this.adjustToParent && !this.sized) {
 			this.onWindowResize = () => this.refit();
 			window.addEventListener('resize', this.onWindowResize);
+			this.followParent();
 		}
+	}
+
+	/**
+	 * Refits the columns whenever the width of the parent changes, not only with the window: a
+	 * table in a pane of a split panel, for example, which takes its width from the divider, or
+	 * gets it only once the split panel's script has run.
+	 */
+	private followParent(): void {
+		const parent = this.table.parentElement;
+		if (!parent || typeof ResizeObserver === 'undefined') {
+			return;
+		}
+		let width = Math.round(parent.getBoundingClientRect().width);
+		this.parentObserver = new ResizeObserver(() => {
+			const now = Math.round(parent.getBoundingClientRect().width);
+			if (now !== width && now > 0) {
+				width = now;
+				this.refit();
+			}
+		});
+		this.parentObserver.observe(parent);
 	}
 
 	/**
@@ -814,6 +839,8 @@ export class ResizableColumns {
 		if (this.onWindowResize) {
 			window.removeEventListener('resize', this.onWindowResize);
 		}
+		this.parentObserver?.disconnect();
+		this.parentObserver = undefined;
 		this.table.removeEventListener('pointerdown', this.onPointerDown);
 		this.table.removeEventListener('keydown', this.onKeyDown);
 		this.table.querySelectorAll('.' + HANDLE_CLASS).forEach((handle) => handle.remove());

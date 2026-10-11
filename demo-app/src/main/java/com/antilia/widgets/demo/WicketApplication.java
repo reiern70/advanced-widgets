@@ -26,6 +26,7 @@ import com.antilia.widgets.demo.admin.AccessTimeResource;
 import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
+import com.antilia.widgets.demo.contacts.ContactsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
@@ -157,6 +158,7 @@ public class WicketApplication extends WebApplication
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF);
 
+		mountPage("address-book", ContactsPage.class);
 		mountPage("dynamic-data-table", DynamicDataTablePage.class);
 		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
 		mountPage("json-infinite-list", JsonListPage.class);
