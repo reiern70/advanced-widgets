@@ -76,4 +76,15 @@ describe('Modal', () => {
 		expect(dialog.classList.contains('modal-dialog-draggable')).toBe(false);
 		expect(dialog.classList.contains('modal-dialog-foldable')).toBe(false);
 	});
+
+	it('comes in a size, or as wide as told', () => {
+		const { container } = render(Modal, { open: true, onclose: () => undefined,
+			size: 'medium', width: '30em' });
+		flushSync();
+
+		const dialog = container.querySelector<HTMLElement>('.modal-dialog')!;
+		expect(dialog.classList.contains('modal-dialog-medium')).toBe(true);
+		expect(dialog.classList.contains('modal-dialog-sized')).toBe(true);
+		expect(dialog.style.width).toBe('30em');
+	});
 });

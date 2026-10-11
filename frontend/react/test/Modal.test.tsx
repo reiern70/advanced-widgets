@@ -90,4 +90,44 @@ describe('Modal', () => {
 		expect(dialog.classList.contains('modal-dialog-draggable')).toBe(false);
 		expect(dialog.classList.contains('modal-dialog-foldable')).toBe(false);
 	});
+
+	it('comes in a size, or as wide as told', () => {
+		const { container, rerender } = render(<Modal open onClose={() => undefined}
+			size="small">Body</Modal>);
+		const dialog = container.querySelector<HTMLElement>('.modal-dialog')!;
+		expect(dialog.classList.contains('modal-dialog-small')).toBe(true);
+
+		rerender(<Modal open onClose={() => undefined} size="large" width="40em">Body</Modal>);
+		const resized = container.querySelector<HTMLElement>('.modal-dialog')!;
+		expect(resized.classList.contains('modal-dialog-small')).toBe(false);
+		expect(resized.classList.contains('modal-dialog-large')).toBe(true);
+		expect(resized.style.width).toBe('40em');
+	});
+
+	it('opens a dialog nested in another over it, Escape closing the one on top', () => {
+		function Nested() {
+			const [inner, setInner] = useState(false);
+			const [outer, setOuter] = useState(true);
+			return (
+				<Modal open={outer} onClose={() => setOuter(false)} title="Outer">
+					<button type="button" onClick={() => setInner(true)}>More</button>
+					<Modal open={inner} onClose={() => setInner(false)} title="Inner">
+						<input name="inner" />
+					</Modal>
+				</Modal>
+			);
+		}
+		const { container, getByText } = render(<Nested />);
+		const more = getByText('More');
+		fireEvent.click(more);
+		expect(container.querySelectorAll('.modal-dialog')).toHaveLength(2);
+		expect(document.activeElement).toBe(container.querySelector('input[name="inner"]'));
+
+		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+		expect(container.querySelectorAll('.modal-dialog')).toHaveLength(1);
+		expect(document.activeElement).toBe(more);
+
+		fireEvent.keyDown(more, { key: 'Escape' });
+		expect(container.querySelector('.modal-dialog')).toBeNull();
+	});
 });

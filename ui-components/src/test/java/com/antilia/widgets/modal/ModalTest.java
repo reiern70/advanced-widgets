@@ -64,10 +64,16 @@ class ModalTest extends WicketTestCase
 			.contains("modal-dialog-body"));
 
 		String response = tester.getLastResponseAsString();
-		int cancel = response.indexOf("data-modal-close=\"\">Cancel</button>");
-		int save = response.indexOf(">Save</button>");
+		int cancel = response.indexOf("<span class=\"ant-button__label\">Cancel</span></button>");
+		int save = response.indexOf("<span class=\"ant-button__label\">Save</span></button>");
 		assertTrue(cancel > 0 && save > cancel, "Cancel, then Save");
-		assertTrue(response.contains("modal-dialog-button modal-dialog-button-primary"));
+		TagTester cancelTag = tester.getTagByWicketId("buttons");
+		assertEquals("", cancelTag.getAttribute(ModalCloseButton.CLOSE_ATTRIBUTE));
+		assertTrue(cancelTag.getAttributeContains("class", "ant-button--small"));
+		assertTrue(response.contains("ant-button ant-button--primary ant-button--small"));
+		tester.assertContains("antilia-button.*\\.css");
+		assertFalse(response.contains("\"size\""));
+		assertFalse(response.contains("\"width\""));
 
 		assertTrue(response.contains("Wicket.Modal.attach(\"" +
 			page.modal.getOverlayMarkupId() + "\""));
@@ -98,6 +104,59 @@ class ModalTest extends WicketTestCase
 		assertTrue(response.contains("\"closeOnClick\":true"));
 		assertTrue(response.contains("\"draggable\":false"));
 		assertTrue(response.contains("\"foldable\":false"));
+	}
+
+	@Test
+	void showsIconsInTheButtons()
+	{
+		TestPage page = tester.startPage(new TestPage());
+		page.modal.open(Model.of("Edit"), new Label(Modal.BODY_ID, "The body"), null,
+			IModalButtonFactory.close(Model.of("Cancel"), () -> "<svg class=\"x\"></svg>"),
+			IModalButtonFactory.button(Model.of("Help"), () -> "<svg class=\"q\"></svg>",
+				target -> page.clicks++));
+		tester.startPage(page);
+
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("<span class=\"ant-button__icon\" aria-hidden=\"true\">" +
+			"<svg class=\"x\"></svg></span><span class=\"ant-button__label\">Cancel</span>"));
+		assertTrue(response.contains("<svg class=\"q\"></svg></span>" +
+			"<span class=\"ant-button__label\">Help</span>"));
+		assertTrue(response.contains("ant-button ant-button--secondary ant-button--small"));
+	}
+
+	@Test
+	void comesInASizeOrAWidth()
+	{
+		TestPage page = tester.startPage(new TestPage());
+		page.modal.setSize(Modal.Size.LARGE).setWidth("40em");
+		page.modal.open(Model.of("Edit"), new Label(Modal.BODY_ID, "The body"), null);
+		tester.startPage(page);
+
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("\"size\":\"large\""));
+		assertTrue(response.contains("\"width\":\"40em\""));
+		assertEquals(Modal.Size.LARGE, page.modal.getSize());
+		assertEquals("40em", page.modal.getWidth());
+	}
+
+	@Test
+	void opensADialogNestedInAnother()
+	{
+		NestingPage page = tester.startPage(new NestingPage());
+		page.outer.open(Model.of("Outer"), new NestedBody(Modal.BODY_ID, page), null);
+		tester.startPage(page);
+
+		tester.clickLink("outer:overlay:dialog:content:body:more");
+		assertTrue(page.inner.isOpen());
+		tester.assertComponentOnAjaxResponse(page.inner);
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Wicket.Modal.attach(\"" +
+			page.inner.getOverlayMarkupId() + "\""));
+		assertTrue(response.contains("\"closeOnEscape\":false"));
+
+		tester.executeBehavior(page.inner.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		assertFalse(page.inner.isOpen());
+		assertTrue(page.outer.isOpen());
 	}
 
 	@Test
@@ -212,6 +271,61 @@ class ModalTest extends WicketTestCase
 		{
 			return new StringResourceStream("<html><head></head><body>" +
 				"<div wicket:id=\"modal\"></div></body></html>");
+		}
+	}
+
+	public static class NestingPage extends WebPage implements IMarkupResourceStreamProvider
+	{
+		private static final long serialVersionUID = 1L;
+
+		final Modal outer = new Modal("outer");
+
+		Modal inner;
+
+		NestingPage()
+		{
+			add(outer);
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream("<html><head></head><body>" +
+				"<div wicket:id=\"outer\"></div></body></html>");
+		}
+	}
+
+	/** The body of the outer dialog: a link opening the inner one, nested in it. */
+	public static class NestedBody extends org.apache.wicket.markup.html.panel.Panel
+		implements IMarkupResourceStreamProvider
+	{
+		private static final long serialVersionUID = 1L;
+
+		NestedBody(String id, NestingPage page)
+		{
+			super(id);
+			Modal inner = new Modal("inner").setCloseOnEscape(false);
+			page.inner = inner;
+			add(inner);
+			add(new org.apache.wicket.ajax.markup.html.AjaxLink<Void>("more")
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void onClick(AjaxRequestTarget target)
+				{
+					inner.open(Model.of("Inner"), new Label(Modal.BODY_ID, "Nested"), target);
+				}
+			});
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream("<wicket:panel><a wicket:id=\"more\">More</a>" +
+				"<div wicket:id=\"inner\"></div></wicket:panel>");
 		}
 	}
 }

@@ -8,27 +8,41 @@ import java.util.List;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.ajax.form.AjaxFormChoiceComponentUpdatingBehavior;
+import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.AbstractChoice.LabelPosition;
+import org.apache.wicket.markup.html.form.CheckBox;
+import org.apache.wicket.markup.html.form.ChoiceRenderer;
+import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.FormComponent;
+import org.apache.wicket.markup.html.form.RadioChoice;
+import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.CompoundPropertyModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.validation.validator.PatternValidator;
 
+import com.antilia.widgets.button.AjaxActionButton;
+import com.antilia.widgets.button.ButtonBehavior.Size;
+import com.antilia.widgets.button.ButtonBehavior.Variant;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.DemoSession;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
-import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable;
+import com.antilia.widgets.icon.SvgIcon;
 import com.antilia.widgets.modal.IModalButtonFactory;
 import com.antilia.widgets.modal.Modal;
+import com.antilia.widgets.modal.ModalButton;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -37,8 +51,10 @@ import com.github.openjson.JSONObject;
  * Cancel and Save in its footer, on the right; Escape, its close button and a click around the
  * dialog close it, asking first when the form was modified; its header drags it and folds it on
  * a double click; the focus stays in it while it is open and goes back to the button that opened
- * it. The React and Svelte tabs do the same with the Modal of
- * {@code @antilia/react} and {@code @antilia/svelte}, the same markup and
+ * it. Below the team, a form sets the {@link DialogOptions options} of a dialog, what closes it,
+ * dragging, folding and its size, and opens it; dialogs nest in it, three deep. The buttons of
+ * the footers are those of the theme, small, with icons. The React and Svelte tabs do the same
+ * with the Modal of {@code @antilia/react} and {@code @antilia/svelte}, the same markup and
  * behaviors, and edit the same team through the {@link TeamResource}.
  */
 public class ModalDialogPage extends DemoPage
@@ -49,6 +65,8 @@ public class ModalDialogPage extends DemoPage
 
 	private final WebMarkupContainer team;
 
+	private final DialogOptions options = new DialogOptions();
+
 	/**
 	 * Constructor.
 	 */
@@ -58,7 +76,7 @@ public class ModalDialogPage extends DemoPage
 
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
-		themed.add(new AjaxLink<Void>("add")
+		themed.add(new AjaxActionButton("add", new ResourceModel("addMember"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -67,7 +85,7 @@ public class ModalDialogPage extends DemoPage
 			{
 				showForm(new TeamMember(), new ResourceModel("newMember"), target);
 			}
-		});
+		}.setIcon(SvgIcon.USER_PLUS).setVariant(Variant.PRIMARY).setSize(Size.SMALL));
 
 		team = new WebMarkupContainer("team");
 		team.setOutputMarkupId(true);
@@ -86,7 +104,7 @@ public class ModalDialogPage extends DemoPage
 				item.add(new Label("name", member.getName()));
 				item.add(new Label("email", member.getEmail()));
 				item.add(new Label("role", getString("role." + member.getRole())));
-				item.add(new AjaxLink<Void>("edit")
+				item.add(new AjaxActionButton("edit", new ResourceModel("edit"))
 				{
 					private static final long serialVersionUID = 1L;
 
@@ -104,9 +122,9 @@ public class ModalDialogPage extends DemoPage
 								Model.of(current)), target);
 						}
 					}
-				}.add(AttributeModifier.replace("aria-label",
-					getString("edit") + " " + member.getName())));
-				item.add(new AjaxLink<Void>("delete")
+				}.setIcon(SvgIcon.PEN).setSize(Size.SMALL).add(AttributeModifier.replace(
+					"aria-label", getString("edit") + " " + member.getName())));
+				item.add(new AjaxActionButton("delete", new ResourceModel("delete"))
 				{
 					private static final long serialVersionUID = 1L;
 
@@ -115,8 +133,8 @@ public class ModalDialogPage extends DemoPage
 					{
 						confirmDeletion(id, target);
 					}
-				}.add(AttributeModifier.replace("aria-label",
-					getString("delete") + " " + member.getName())));
+				}.setIcon(SvgIcon.TRASH_CAN).setSize(Size.SMALL).add(AttributeModifier.replace(
+					"aria-label", getString("delete") + " " + member.getName())));
 			}
 		});
 		team.add(new WebMarkupContainer("empty")
@@ -135,6 +153,91 @@ public class ModalDialogPage extends DemoPage
 		dialog.setCloseOnClick(true);
 		dialog.confirmCloseIfModified(new ResourceModel("discard"));
 		add(dialog);
+
+		Modal optionsDialog = new Modal("optionsDialog");
+		add(optionsDialog);
+		themed.add(newOptionsForm("options", optionsDialog));
+	}
+
+	/**
+	 * @return the form setting the options of a dialog, each change kept at once, and the button
+	 *         opening it
+	 */
+	private Form<DialogOptions> newOptionsForm(String id, Modal optionsDialog)
+	{
+		Form<DialogOptions> form = new Form<>(id, new CompoundPropertyModel<>(options));
+		for (String option : List.of("closeOnEscape", "closeButton", "closeOnClick", "draggable",
+			"foldable"))
+		{
+			form.add(keptOnChange(new CheckBox(option)));
+		}
+		RadioChoice<String> size = new RadioChoice<>("size", DialogOptions.SIZES,
+			new ChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(String value)
+				{
+					return getString("size." + value);
+				}
+
+				@Override
+				public String getIdValue(String value, int index)
+				{
+					return value;
+				}
+			});
+		size.setLabelPosition(LabelPosition.WRAP_AFTER);
+		size.add(new AjaxFormChoiceComponentUpdatingBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+			}
+		});
+		form.add(size);
+		form.add(keptOnChange(new TextField<String>("width")
+			.add(new PatternValidator(DialogOptions.WIDTH_PATTERN))
+			.setLabel(new ResourceModel("width"))));
+		form.add(new AjaxActionButton("open", new ResourceModel("open"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				NestedDialogPanel.open(optionsDialog, options, 1, target);
+			}
+		}.setIcon(SvgIcon.WINDOW_RESTORE).setVariant(Variant.PRIMARY));
+		return form;
+	}
+
+	/**
+	 * @return the field, its value kept in the options as soon as it changes; a width not valid
+	 *         shows its message
+	 */
+	private FormComponent<?> keptOnChange(FormComponent<?> field)
+	{
+		field.add(new AjaxFormComponentUpdatingBehavior("change")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				target.add(get("feedback"));
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target, RuntimeException e)
+			{
+				target.add(get("feedback"));
+			}
+		});
+		return field;
 	}
 
 	/**
@@ -162,7 +265,9 @@ public class ModalDialogPage extends DemoPage
 				target.add(team, ModalDialogPage.this.get("feedback"));
 			}
 		};
-		dialog.open(title, form, target, IModalButtonFactory.close(new ResourceModel("cancel")),
+		dialog.setSize(Modal.Size.MEDIUM);
+		dialog.open(title, form, target,
+			IModalButtonFactory.close(new ResourceModel("cancel"), SvgIcon.XMARK),
 			form.saveButton());
 	}
 
@@ -179,20 +284,33 @@ public class ModalDialogPage extends DemoPage
 		}
 		Label question = new Label(Modal.BODY_ID, new StringResourceModel("delete.confirm", this,
 			Model.of(member)));
+		dialog.setSize(Modal.Size.SMALL);
 		dialog.open(new ResourceModel("deleteMember"), question, target,
-			IModalButtonFactory.close(new ResourceModel("cancel")),
-			IModalButtonFactory.primary(new ResourceModel("delete"), confirmed -> {
-				dialog.close(confirmed);
-				if (DemoSession.get().getTeam().delete(id))
+			IModalButtonFactory.close(new ResourceModel("cancel"), SvgIcon.XMARK),
+			buttonId -> new ModalButton(buttonId, new ResourceModel("delete"))
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void onClick(AjaxRequestTarget confirmed)
 				{
-					info(getString("deleted").replace("{0}", member.getName()));
-					confirmed.add(team, get("feedback"));
+					delete(id, member, confirmed);
 				}
-				else
-				{
-					gone(confirmed);
-				}
-			}));
+			}.setIcon(SvgIcon.TRASH_CAN).setVariant(Variant.DANGER));
+	}
+
+	private void delete(long id, TeamMember member, AjaxRequestTarget target)
+	{
+		dialog.close(target);
+		if (DemoSession.get().getTeam().delete(id))
+		{
+			info(getString("deleted").replace("{0}", member.getName()));
+			target.add(team, get("feedback"));
+		}
+		else
+		{
+			gone(target);
+		}
 	}
 
 	private void gone(AjaxRequestTarget target)
@@ -208,14 +326,28 @@ public class ModalDialogPage extends DemoPage
 	}
 
 	/**
-	 * @return the texts, the roles named in the language of the session and the URL of the team
+	 * @return the texts, the roles named in the language of the session, the URL of the team and
+	 *         the icons of the buttons, as inline SVG
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "team", "addMember", "newMember", "editMember",
 			"edit", "delete", "deleteMember", "delete.confirm", "save", "cancel", "name", "email",
-			"role", "actions", "added", "saved", "deleted", "gone", "empty", "discard", "close");
+			"role", "actions", "added", "saved", "deleted", "gone", "empty", "discard", "close",
+			"options", "options.behavior", "option.closeOnEscape", "option.closeButton",
+			"option.closeOnClick", "option.draggable", "option.foldable", "size", "size.fit",
+			"size.small", "size.medium", "size.large", "width", "open", "dialog.title",
+			"dialog.text", "dialog.deepest", "dialog.nested", "dialog.ok");
+		JSONObject icons = new JSONObject()
+			.put("add", SvgIcon.USER_PLUS.getMarkup())
+			.put("edit", SvgIcon.PEN.getMarkup())
+			.put("delete", SvgIcon.TRASH_CAN.getMarkup())
+			.put("cancel", SvgIcon.XMARK.getMarkup())
+			.put("save", SvgIcon.FLOPPY_DISK.getMarkup())
+			.put("open", SvgIcon.WINDOW_RESTORE.getMarkup())
+			.put("nested", SvgIcon.LAYER_GROUP.getMarkup())
+			.put("ok", SvgIcon.CHECK.getMarkup());
 		JSONArray roles = new JSONArray();
 		for (String role : TeamStore.ROLES)
 		{
@@ -224,16 +356,15 @@ public class ModalDialogPage extends DemoPage
 		return new JSONObject()
 			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
 			.put("roles", roles)
-			.put("teamUrl", FrameworkTabs.urlOf(this, TeamResource.REFERENCE));
+			.put("teamUrl", FrameworkTabs.urlOf(this, TeamResource.REFERENCE))
+			.put("icons", icons)
+			.put("maxLevel", DialogOptions.MAX_LEVEL);
 	}
 
 	@Override
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		// the buttons
-		response.render(CssHeaderItem.forReference(
-			new CssResourceReference(BaseDynamicDataTable.class, "ant-data-table.css")));
 		response.render(CssHeaderItem.forReference(
 			new CssResourceReference(ModalDialogPage.class, "ModalDialogPage.css")));
 	}

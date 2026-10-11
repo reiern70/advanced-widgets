@@ -79,3 +79,61 @@
 .member-form [aria-invalid="true"] {
 	border-color: var(--antilia-theme-accent, #c2410c);
 }
+
+/* the options of a dialog: what closes it, dragging and folding, its size; and dialogs in it */
+.dialog-options {
+	margin-top: 2em;
+	max-width: 56em;
+}
+
+.dialog-options__groups {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
+	margin: 0.75em 0 1em;
+}
+
+.dialog-options fieldset {
+	display: grid;
+	flex: 1 1 16em;
+	align-content: start;
+	gap: 0.4em;
+	margin: 0;
+	padding: 0.6em 0.9em 0.8em;
+	border: 1px solid var(--antilia-theme-border, #ddd);
+	border-radius: 0.4em;
+}
+
+.dialog-options legend {
+	padding: 0 0.3em;
+	font-weight: 600;
+}
+
+.dialog-options label {
+	display: flex;
+	align-items: center;
+	gap: 0.45em;
+}
+
+.dialog-options__sizes {
+	display: grid;
+	gap: 0.4em;
+}
+
+.dialog-options__width {
+	margin-top: 0.4em;
+}
+
+.dialog-options__width input {
+	padding: 0.3em 0.5em;
+	border: 1px solid var(--antilia-theme-border, #bbb);
+	border-radius: 0.3em;
+	background: var(--antilia-theme-surface, Field);
+	color: var(--antilia-theme-text, FieldText);
+	font: inherit;
+}
+
+.dialog-options__text {
+	margin: 0;
+	max-width: 40em;
+}

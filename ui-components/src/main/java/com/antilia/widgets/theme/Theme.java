@@ -47,6 +47,12 @@ public enum Theme
 	/** Light blue, softer than {@link #BLUE}. */
 	LIGHT_BLUE("antilia-theme-light-blue"),
 
+	/** Magenta headers on white and light pink-violet rows. */
+	MAGENTA("antilia-theme-magenta"),
+
+	/** Rose: dusty pink headers on white and blush rows, softer than {@link #MAGENTA}. */
+	ROSE("antilia-theme-rose"),
+
 	/** Light text on dark surfaces, with dark form controls. */
 	DARK("antilia-theme-dark");
 

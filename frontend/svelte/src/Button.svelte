@@ -28,12 +28,13 @@
 	};
 
 	let { label, icon, iconOnly = false, variant, size, class: className, type = 'button', title,
-		...rest }: Props = $props();
+		'aria-label': ariaLabel, ...rest }: Props = $props();
 </script>
 
 <button {...rest} {type} class={buttonClasses({ variant, size, iconOnly,
 	className: typeof className === 'string' ? className : undefined })}
-	title={title ?? (iconOnly ? label : undefined)} aria-label={iconOnly ? label : undefined}>
+	title={title ?? (iconOnly ? label : undefined)}
+	aria-label={ariaLabel ?? (iconOnly ? label : undefined)}>
 	{#if icon}<span class="ant-button__icon" aria-hidden="true">{@render icon()}</span>{/if}
 	{#if !iconOnly}<span class="ant-button__label">{label}</span>{/if}
 </button>

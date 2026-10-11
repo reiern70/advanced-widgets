@@ -22,7 +22,7 @@ export { activate, datePicker, dropdown, localRows, palette, scrollbar,
 	splitPanel } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
-	DataTableSort, DataTableTexts, DatePickerOptions, DropdownOptions, InfiniteListData, ModalOptions,
+	DataTableSort, DataTableTexts, DatePickerOptions, DropdownOptions, InfiniteListData, ModalOptions, ModalSize,
 	PaletteChoice, PaletteOptions, PaletteTexts,
 	ScrollbarOptions, ScrollPosition, SplitOrientation, SplitPane, SplitPanelOptions, SplitSize,
 	TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';

@@ -4,24 +4,22 @@
  */
 package com.antilia.widgets.modal;
 
-import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.model.IModel;
+
+import com.antilia.widgets.button.AjaxActionButton;
+import com.antilia.widgets.button.ButtonBehavior.Size;
+import com.antilia.widgets.button.ButtonBehavior.Variant;
 
 /**
  * A button of the footer of a {@link Modal} doing something in an Ajax request; see
- * {@link IModalButtonFactory}.
+ * {@link IModalButtonFactory}. It is an {@link AjaxActionButton}, small by default: a text, an
+ * icon and a text, or an icon only, in a variant.
  *
  * @since 11.0.0
  */
-public abstract class ModalButton extends AjaxLink<Void>
+public abstract class ModalButton extends AjaxActionButton
 {
 	private static final long serialVersionUID = 1L;
-
-	/** The class of the primary button of a dialog. */
-	public static final String PRIMARY_CLASS = "modal-dialog-button-primary";
-
-	private boolean primary;
 
 	/**
 	 * @param id
@@ -31,36 +29,26 @@ public abstract class ModalButton extends AjaxLink<Void>
 	 */
 	public ModalButton(String id, IModel<String> label)
 	{
-		super(id);
-		setBody(label);
+		super(id, label);
+		setSize(Size.SMALL);
 	}
 
 	/**
 	 * @param primary
-	 *            whether this is the primary button, in the color of the header
+	 *            whether this is the primary button, in the primary color of the theme
 	 * @return {@code this}
 	 */
 	public ModalButton setPrimary(boolean primary)
 	{
-		this.primary = primary;
+		setVariant(primary ? Variant.PRIMARY : Variant.SECONDARY);
 		return this;
 	}
 
 	/**
-	 * @return whether this is the primary button, in the color of the header
+	 * @return whether this is the primary button, in the primary color of the theme
 	 */
 	public boolean isPrimary()
 	{
-		return primary;
-	}
-
-	@Override
-	protected void onComponentTag(ComponentTag tag)
-	{
-		super.onComponentTag(tag);
-		if (primary)
-		{
-			tag.append("class", PRIMARY_CLASS, " ");
-		}
+		return getButtonBehavior().getVariant() == Variant.PRIMARY;
 	}
 }

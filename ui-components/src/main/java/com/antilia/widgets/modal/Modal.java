@@ -27,6 +27,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
 
@@ -47,7 +48,11 @@ import com.github.openjson.JSONObject;
  * on it folds the dialog to the header and back ({@link #setFoldable(boolean)}), in the browser
  * alone;</li>
  * <li>the dialog keeps the focus while it is open ({@link #setTrapFocus(boolean)}) and gives it
- * back when it closes.</li>
+ * back when it closes;</li>
+ * <li>the dialog fits its content, or comes in a {@link Size} ({@link #setSize(Size)}) or a width
+ * of its own ({@link #setWidth(String)});</li>
+ * <li>a {@link Modal} in the body of another opens over it, nested, and takes the keys and the
+ * focus until it closes.</li>
  * </ul>
  * Unlike in {@link ModalDialog}, Escape, the close button, the focus trap, dragging and folding
  * are on by default; a click around the dialog closes it only when told to. The user closing the
@@ -83,6 +88,27 @@ public class Modal extends ModalDialog
 	/** The id of the overlay in the markup of {@link ModalDialog}. */
 	private static final String OVERLAY_ID = "overlay";
 
+	/**
+	 * How wide a dialog is, never wider than the browser window.
+	 */
+	public enum Size
+	{
+		/** For a question or a message: 22em. */
+		SMALL,
+		/** For a form: 34em. */
+		MEDIUM,
+		/** For a table or a long text: 52em. */
+		LARGE;
+
+		/**
+		 * @return the name of the size in the browser, {@code small} for example
+		 */
+		public String key()
+		{
+			return name().toLowerCase();
+		}
+	}
+
 	private boolean closeOnEscape = true;
 
 	private boolean closeOnClick;
@@ -94,6 +120,10 @@ public class Modal extends ModalDialog
 	private boolean draggable = true;
 
 	private boolean foldable = true;
+
+	private Size size;
+
+	private String width;
 
 	private String canClose;
 
@@ -387,6 +417,48 @@ public class Modal extends ModalDialog
 	}
 
 	/**
+	 * @param size
+	 *            how wide the dialog is; {@code null}, the default, to fit its content
+	 * @return {@code this}
+	 */
+	public Modal setSize(Size size)
+	{
+		this.size = size;
+		return this;
+	}
+
+	/**
+	 * @return how wide the dialog is, {@code null} when it fits its content
+	 */
+	public Size getSize()
+	{
+		return size;
+	}
+
+	/**
+	 * Gives the dialog a width of its own, set in the browser by the script, so it needs no inline
+	 * style under a Content Security Policy.
+	 *
+	 * @param width
+	 *            a CSS length, such as {@code 40em} or {@code 600px}, overriding the width of the
+	 *            {@link #setSize(Size) size}; {@code null} for none
+	 * @return {@code this}
+	 */
+	public Modal setWidth(String width)
+	{
+		this.width = width;
+		return this;
+	}
+
+	/**
+	 * @return the width of the dialog, if it has one of its own
+	 */
+	public String getWidth()
+	{
+		return width;
+	}
+
+	/**
 	 * Sets the JavaScript function asked in the browser before the user closes the dialog;
 	 * returning {@code false} keeps it open. It is given the element of the dialog, and
 	 * {@code Wicket.Modal.isModified(element)} tells whether the user changed a field in it, e.g.
@@ -465,6 +537,14 @@ public class Modal extends ModalDialog
 			.put("trapFocus", trapFocus)
 			.put("draggable", draggable)
 			.put("foldable", foldable);
+		if (size != null)
+		{
+			options.put("size", size.key());
+		}
+		if (width != null)
+		{
+			options.put("width", width);
+		}
 		String json = options.toString();
 		StringBuilder script = new StringBuilder(json.substring(0, json.length() - 1));
 		script.append(",\"onClose\":function(){")
@@ -493,8 +573,9 @@ public class Modal extends ModalDialog
 	}
 
 	/**
-	 * Renders what the dialog needs in the browser: {@link #JS} and {@link #CSS}, and the scroll
-	 * bars of its body, those of {@link ScrollbarBehavior}.
+	 * Renders what the dialog needs in the browser: {@link #JS} and {@link #CSS}, the scroll bars
+	 * of its body, those of {@link ScrollbarBehavior}, and the buttons of its footer, those of
+	 * {@link ButtonBehavior}.
 	 *
 	 * @param response
 	 *            the header response
@@ -504,6 +585,7 @@ public class Modal extends ModalDialog
 		CoreLibrariesContributor.contributeAjax(Application.get(), response);
 		ScrollbarBehavior.renderHeadItems(response);
 		response.render(JavaScriptHeaderItem.forReference(JS));
+		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
 		response.render(CssHeaderItem.forReference(CSS));
 	}
 }

@@ -9,6 +9,7 @@
  */
 
 import type { Choice, DropdownTexts } from './data.js';
+import type { DialogOptionsTexts, ModalDemoIcons } from './dialog-options.js';
 
 /** A member of the team, as the team resource sends it. */
 export interface Member {
@@ -28,7 +29,7 @@ export interface MemberFields {
 }
 
 /** The texts of the demo, by the keys of the page's bundles. */
-export interface ModalDemoTexts extends DropdownTexts {
+export interface ModalDemoTexts extends DropdownTexts, DialogOptionsTexts {
 	team: string;
 	addMember: string;
 	newMember: string;
@@ -64,6 +65,10 @@ export interface ModalDemoConfig {
 	roles: Choice[];
 	/** The team resource. */
 	teamUrl: string;
+	/** The icons of the buttons. */
+	icons: ModalDemoIcons;
+	/** How deep the dialogs of the options example nest. */
+	maxLevel: number;
 }
 
 /** The answer of the team resource to a save: the member saved, or the messages of the fields. */

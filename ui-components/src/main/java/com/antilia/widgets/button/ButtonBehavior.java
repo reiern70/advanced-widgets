@@ -13,6 +13,9 @@ import org.apache.wicket.markup.html.form.IFormSubmittingComponent;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
+import org.apache.wicket.util.string.Strings;
+
+import com.antilia.widgets.icon.IIcon;
 
 /**
  * Draws the element of a component as a button in the colors of the theme: a {@code <button>},
@@ -173,6 +176,36 @@ public class ButtonBehavior extends Behavior
 	{
 		return CSS_CLASS + " " + variant.cssClass() + " " + size.cssClass() +
 			(iconOnly ? " " + CSS_CLASS + "--icon-only" : "");
+	}
+
+	/**
+	 * The body of a button, as {@link AjaxActionButton} writes it: the icon, if any, then the
+	 * text, unless the button shows only its icon.
+	 *
+	 * @param icon
+	 *            the icon shown before the text, {@code null} for none
+	 * @param text
+	 *            the text, escaped here
+	 * @param iconOnly
+	 *            whether only the icon is shown
+	 * @return the markup of the body
+	 */
+	public static CharSequence body(IIcon icon, String text, boolean iconOnly)
+	{
+		StringBuilder body = new StringBuilder();
+		if (icon != null)
+		{
+			body.append("<span class=\"ant-button__icon\" aria-hidden=\"true\">")
+				.append(icon.getMarkup())
+				.append("</span>");
+		}
+		if (iconOnly == false)
+		{
+			body.append("<span class=\"ant-button__label\">")
+				.append(Strings.escapeMarkup(text != null ? text : ""))
+				.append("</span>");
+		}
+		return body;
 	}
 
 	@Override

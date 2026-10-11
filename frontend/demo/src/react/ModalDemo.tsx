@@ -5,12 +5,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
-import { Dropdown, Modal } from '@antilia/react';
+import { Button, Dropdown, Modal } from '@antilia/react';
 
 import { format } from '../data.js';
 import { interpolate } from '../json-list.js';
 import { MEMBER_FIELDS, TeamApi, type Member, type MemberFields,
 	type ModalDemoConfig } from '../team.js';
+import { DialogOptionsDemo, Icon } from './DialogOptionsDemo.js';
 import { Feedback, type Message } from './Feedback.js';
 
 /** What the dialog shows: the form of a member, new when null, or the deletion of one. */
@@ -69,10 +70,11 @@ function MemberForm({ config, member, errors, onSave, onModified }: { config: Mo
 /**
  * The modal dialog demo in React: the team of the session, added to and edited in a Modal, a
  * deletion confirmed in one, all through the team resource. Cancel and Save are in the footer;
- * the dialog asks before it closes a form whose fields were changed.
+ * the dialog asks before it closes a form whose fields were changed. Below the team, the options
+ * example opens dialogs with the options chosen, nested three deep.
  */
 export function ModalDemo({ config }: { config: ModalDemoConfig }) {
-	const { texts } = config;
+	const { texts, icons } = config;
 	const api = useMemo(() => new TeamApi(config.teamUrl), [config.teamUrl]);
 	const [members, setMembers] = useState<Member[]>([]);
 	const [shown, setShown] = useState<Shown>(null);
@@ -135,9 +137,8 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 			<div className="team-demo">
 				<div className="team-demo__toolbar">
 					<h2 className="team-demo__title">{texts.team}</h2>
-					<button type="button"
-						className="ant-data-table-button ant-data-table-button-primary"
-						onClick={() => open({ form: null })}>{texts.addMember}</button>
+					<Button variant="primary" size="small" label={texts.addMember}
+						icon={<Icon markup={icons.add} />} onClick={() => open({ form: null })} />
 				</div>
 				<table className="team-demo__table">
 					<thead>
@@ -156,12 +157,14 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 								<td>{member.roleName}</td>
 								<td>
 									<div className="team-demo__actions">
-										<button type="button" className="ant-data-table-button"
+										<Button size="small" label={texts.edit}
+											icon={<Icon markup={icons.edit} />}
 											aria-label={texts.edit + ' ' + member.name}
-											onClick={() => open({ form: member })}>{texts.edit}</button>
-										<button type="button" className="ant-data-table-button"
+											onClick={() => open({ form: member })} />
+										<Button size="small" label={texts.delete}
+											icon={<Icon markup={icons.delete} />}
 											aria-label={texts.delete + ' ' + member.name}
-											onClick={() => open({ deletion: member })}>{texts.delete}</button>
+											onClick={() => open({ deletion: member })} />
 									</div>
 								</td>
 							</tr>
@@ -172,27 +175,29 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 			</div>
 			<Modal open={formMember !== undefined} onClose={() => setShown(null)} closeOnClick
 				canClose={() => !modified.current || window.confirm(texts.discard)}
-				closeLabel={texts.close}
+				size="medium" closeLabel={texts.close}
 				title={formMember ? interpolate(texts.editMember, formMember) : texts.newMember}
 				footer={<>
-					<button type="button" className="modal-dialog-button" data-modal-close>
-						{texts.cancel}</button>
-					<button type="submit" form={FORM_ID}
-						className="modal-dialog-button modal-dialog-button-primary">{texts.save}</button>
+					<Button size="small" label={texts.cancel} icon={<Icon markup={icons.cancel} />}
+						data-modal-close />
+					<Button type="submit" form={FORM_ID} size="small" variant="primary"
+						label={texts.save} icon={<Icon markup={icons.save} />} />
 				</>}>
 				<MemberForm key={formMember?.id ?? 'new'} config={config} member={formMember ?? null}
 					errors={errors} onSave={save} onModified={onModified} />
 			</Modal>
 			<Modal open={deletion !== undefined} onClose={() => setShown(null)} closeOnClick
-				closeLabel={texts.close} title={texts.deleteMember}
+				size="small" closeLabel={texts.close} title={texts.deleteMember}
 				footer={<>
-					<button type="button" className="modal-dialog-button" data-modal-close>
-						{texts.cancel}</button>
-					<button type="button" className="modal-dialog-button modal-dialog-button-primary"
-						onClick={() => deletion && remove(deletion)}>{texts.delete}</button>
+					<Button size="small" label={texts.cancel} icon={<Icon markup={icons.cancel} />}
+						data-modal-close />
+					<Button size="small" variant="danger" label={texts.delete}
+						icon={<Icon markup={icons.delete} />}
+						onClick={() => deletion && remove(deletion)} />
 				</>}>
 				{deletion ? interpolate(texts['delete.confirm'], deletion) : null}
 			</Modal>
+			<DialogOptionsDemo config={config} />
 		</>
 	);
 }

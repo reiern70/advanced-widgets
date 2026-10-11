@@ -9,12 +9,13 @@
   theme's in a Wicket page), Escape and a click on the overlay closing it, and the focus kept in it
   while it is open and given back when it closes. A dialog rendered in another one, or after it,
   opens over it. Its header holds the title and a close button, drags the dialog around and folds
-  it on a double click; canClose may keep it open.
+  it on a double click; canClose may keep it open. It fits its content, or comes in a size or a
+  width.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
-		SCROLLBAR_WRAPPER_CLASS } from '@antilia/core';
+	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog, SCROLLBAR_WRAPPER_CLASS,
+		type ModalSize } from '@antilia/core';
 
 	type Props = {
 		/** Whether the dialog is open; nothing is rendered while it is closed. */
@@ -47,6 +48,10 @@
 		draggable?: boolean;
 		/** Whether a double click on the header folds the dialog to it, and back; true by default. */
 		foldable?: boolean;
+		/** The size of the dialog, small, medium or large; it fits its content when left out. */
+		size?: ModalSize;
+		/** The width of the dialog, a CSS length such as '40em'; it overrides the size's. */
+		width?: string;
 		/** CSS classes next to dialog-theme-default. */
 		class?: string;
 		/** The body of the dialog. */
@@ -55,7 +60,7 @@
 
 	let { open, onclose, canClose, title, footer, closeButton = true, closeLabel = 'Close',
 		closeOnEscape = true, closeOnClick = false, trapFocus = true, draggable = true,
-		foldable = true, class: className = '', children }: Props = $props();
+		foldable = true, size, width, class: className = '', children }: Props = $props();
 
 	const titleId = $props.id();
 	let overlay = $state<HTMLDivElement>();
@@ -65,7 +70,7 @@
 			return;
 		}
 		const modal = new ModalDialog(overlay, { closeOnEscape, closeOnClick, trapFocus, draggable,
-			foldable, onClose: () => onclose(), canClose: () => canClose?.() ?? true });
+			foldable, size, width, onClose: () => onclose(), canClose: () => canClose?.() ?? true });
 		return () => modal.destroy();
 	});
 </script>

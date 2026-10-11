@@ -12,5 +12,7 @@
 	<entry key="Theme.GREEN">Grün</entry>
 	<entry key="Theme.NAVY">Marineblau</entry>
 	<entry key="Theme.LIGHT_BLUE">Hellblau</entry>
+	<entry key="Theme.MAGENTA">Magenta</entry>
+	<entry key="Theme.ROSE">Rosé</entry>
 	<entry key="Theme.DARK">Dunkel</entry>
 </properties>

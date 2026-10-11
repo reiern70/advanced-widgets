@@ -67,8 +67,10 @@ class ModalDialogPageTest
 		assertTrue(response.contains("Wicket.Modal.attach("), response);
 		assertTrue(response.contains("\"closeOnClick\":true"), response);
 		assertTrue(response.contains("Discard the changes?"), response);
-		assertTrue(response.contains("data-modal-close=\"\">Cancel</button>"), response);
-		assertTrue(response.contains(">Save</button>"), response);
+		assertTrue(response.contains("data-modal-close=\"\""), response);
+		assertTrue(response.contains("<span class=\"ant-button__label\">Cancel</span>"), response);
+		assertTrue(response.contains("<span class=\"ant-button__label\">Save</span>"), response);
+		assertTrue(response.contains("\"size\":\"medium\""), response);
 	}
 
 	@Test
@@ -120,6 +122,53 @@ class ModalDialogPageTest
 		tester.clickLink(SAVE);
 		tester.assertInfoMessages("Deleted Ada King.");
 		assertEquals(3, DemoSession.get().getTeam().list().size());
+	}
+
+	@Test
+	void opensADialogWithTheOptionsChosenAndNestsDialogsInIt()
+	{
+		String options = "themed:options:";
+		tester.newFormTester("themed:options", false).setValue("closeOnEscape", false);
+		tester.executeAjaxEvent(options + "closeOnEscape", "change");
+		tester.newFormTester("themed:options", false).setValue("closeButton", false);
+		tester.executeAjaxEvent(options + "closeButton", "change");
+		tester.newFormTester("themed:options", false).select("size", 3);
+		tester.executeAjaxEvent(options + "size", "change");
+		tester.newFormTester("themed:options", false).setValue("width", "wide");
+		tester.executeAjaxEvent(options + "width", "change");
+		tester.assertErrorMessages(
+			"Width of its own takes a number and a CSS unit, such as 40em or 600px.");
+		tester.clearFeedbackMessages();
+		tester.newFormTester("themed:options", false).setValue("width", "45em");
+		tester.executeAjaxEvent(options + "width", "change");
+		tester.assertNoErrorMessage();
+
+		tester.clickLink(options + "open");
+		Modal first = (Modal)tester.getComponentFromLastRenderedPage("optionsDialog");
+		assertTrue(first.isOpen());
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("\"closeOnEscape\":false"), response);
+		assertTrue(response.contains("\"size\":\"large\""), response);
+		assertTrue(response.contains("\"width\":\"45em\""), response);
+		assertTrue(response.contains(">Dialog 1<"), response);
+		assertFalse(first.isCloseButton());
+
+		String nested = "optionsDialog:overlay:dialog:content:";
+		tester.clickLink(nested + "footer:buttons:2");
+		Modal second = (Modal)tester.getComponentFromLastRenderedPage(nested + "body:nested");
+		assertTrue(second.isOpen());
+		assertTrue(tester.getLastResponseAsString().contains(">Dialog 2<"));
+
+		nested += "body:nested:overlay:dialog:content:";
+		tester.clickLink(nested + "footer:buttons:2");
+		assertTrue(tester.getLastResponseAsString().contains(">Dialog 3<"));
+		assertTrue(tester.getLastResponseAsString().contains("as deep as this demo goes"));
+
+		// the deepest has no button opening another, its OK closes it
+		nested += "body:nested:overlay:dialog:content:";
+		tester.clickLink(nested + "footer:buttons:2");
+		assertTrue(second.isOpen());
+		assertTrue(first.isOpen());
 	}
 
 	@Test

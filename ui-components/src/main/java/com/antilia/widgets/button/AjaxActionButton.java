@@ -9,7 +9,6 @@ import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.button.ButtonBehavior.Size;
 import com.antilia.widgets.button.ButtonBehavior.Variant;
@@ -134,21 +133,8 @@ public abstract class AjaxActionButton extends AjaxLink<Void>
 	@Override
 	public void onComponentTagBody(MarkupStream markupStream, ComponentTag openTag)
 	{
-		StringBuilder body = new StringBuilder();
-		IIcon shown = getIcon();
-		if (shown != null)
-		{
-			body.append("<span class=\"ant-button__icon\" aria-hidden=\"true\">")
-				.append(shown.getMarkup())
-				.append("</span>");
-		}
-		if (button.isIconOnly() == false)
-		{
-			body.append("<span class=\"ant-button__label\">")
-				.append(Strings.escapeMarkup(text()))
-				.append("</span>");
-		}
-		replaceComponentTagBody(markupStream, openTag, body);
+		replaceComponentTagBody(markupStream, openTag,
+			ButtonBehavior.body(getIcon(), text(), button.isIconOnly()));
 	}
 
 	private String text()

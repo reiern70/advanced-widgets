@@ -30,4 +30,24 @@
 	<entry key="role.designer">Design</entry>
 	<entry key="role.tester">Test</entry>
 	<entry key="role.manager">Management</entry>
+	<entry key="options">Optionen eines Dialogs</entry>
+	<entry key="options.behavior">Was ihn schließt und bewegt</entry>
+	<entry key="option.closeOnEscape">Escape schließt ihn</entry>
+	<entry key="option.closeButton">Ein × in der Ecke schließt ihn</entry>
+	<entry key="option.closeOnClick">Ein Klick daneben schließt ihn</entry>
+	<entry key="option.draggable">Sein Titel verschiebt ihn</entry>
+	<entry key="option.foldable">Ein Doppelklick auf den Titel klappt ihn zu</entry>
+	<entry key="size">Größe</entry>
+	<entry key="size.fit">Passt sich dem Inhalt an</entry>
+	<entry key="size.small">Klein</entry>
+	<entry key="size.medium">Mittel</entry>
+	<entry key="size.large">Groß</entry>
+	<entry key="width">Eigene Breite</entry>
+	<entry key="width.PatternValidator">${label} nimmt eine Zahl und eine CSS-Einheit, etwa 40em oder 600px.</entry>
+	<entry key="open">Dialog öffnen</entry>
+	<entry key="dialog.title">Dialog {0}</entry>
+	<entry key="dialog.text">Dieser Dialog hat die oben gewählten Optionen. Öffnen Sie einen weiteren, darin verschachtelt: Er öffnet sich über diesem und nimmt Escape und den Fokus, bis er sich schließt. Ohne Escape und das × schließt ihn Schließen in der Fußzeile weiterhin.</entry>
+	<entry key="dialog.deepest">Drei Dialoge tief, so tief geht diese Demo. Schließen Sie sie einen nach dem anderen.</entry>
+	<entry key="dialog.nested">Verschachtelten Dialog öffnen</entry>
+	<entry key="dialog.ok">OK</entry>
 </properties>

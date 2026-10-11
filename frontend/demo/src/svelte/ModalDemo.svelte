@@ -5,20 +5,23 @@
 <!--
   The modal dialog demo in Svelte: the team of the session, added to and edited in a Modal, a
   deletion confirmed in one, all through the team resource. Cancel and Save are in the footer; the
-  dialog asks before it closes a form whose fields were changed.
+  dialog asks before it closes a form whose fields were changed. Below the team, the options
+  example opens dialogs with the options chosen, nested three deep.
 -->
 <script lang="ts">
-	import { Dropdown, Modal } from '@antilia/svelte';
+	import { Button, Dropdown, Modal } from '@antilia/svelte';
 
 	import { format } from '../data.js';
 	import { interpolate } from '../json-list.js';
 	import { MEMBER_FIELDS, TeamApi, type Member, type MemberFields,
 		type ModalDemoConfig } from '../team.js';
+	import DialogOptionsDemo from './DialogOptionsDemo.svelte';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
 
 	let { config }: { config: ModalDemoConfig } = $props();
 	const texts = $derived(config.texts);
+	const icons = $derived(config.icons);
 	const api = $derived(new TeamApi(config.teamUrl));
 
 	let members = $state<Member[]>([]);
@@ -96,8 +99,9 @@
 <div class="team-demo">
 	<div class="team-demo__toolbar">
 		<h2 class="team-demo__title">{texts.team}</h2>
-		<button type="button" class="ant-data-table-button ant-data-table-button-primary"
-			onclick={() => openForm(null)}>{texts.addMember}</button>
+		<Button variant="primary" size="small" label={texts.addMember} onclick={() => openForm(null)}>
+			{#snippet icon()}{@html icons.add}{/snippet}
+		</Button>
 	</div>
 	<table class="team-demo__table">
 		<thead>
@@ -116,12 +120,15 @@
 					<td>{member.roleName}</td>
 					<td>
 						<div class="team-demo__actions">
-							<button type="button" class="ant-data-table-button"
-								aria-label={texts.edit + ' ' + member.name}
-								onclick={() => openForm(member)}>{texts.edit}</button>
-							<button type="button" class="ant-data-table-button"
+							<Button size="small" label={texts.edit} aria-label={texts.edit + ' ' + member.name}
+								onclick={() => openForm(member)}>
+								{#snippet icon()}{@html icons.edit}{/snippet}
+							</Button>
+							<Button size="small" label={texts.delete}
 								aria-label={texts.delete + ' ' + member.name}
-								onclick={() => (deletion = member)}>{texts.delete}</button>
+								onclick={() => (deletion = member)}>
+								{#snippet icon()}{@html icons.delete}{/snippet}
+							</Button>
 						</div>
 					</td>
 				</tr>
@@ -132,12 +139,15 @@
 </div>
 
 <Modal open={formMember !== undefined} onclose={close} closeOnClick closeLabel={texts.close}
-	canClose={() => !modified() || window.confirm(texts.discard)}
+	size="medium" canClose={() => !modified() || window.confirm(texts.discard)}
 	title={formMember ? interpolate(texts.editMember, formMember) : texts.newMember}>
 	{#snippet footer()}
-		<button type="button" class="modal-dialog-button" data-modal-close>{texts.cancel}</button>
-		<button type="submit" form={FORM_ID} class="modal-dialog-button modal-dialog-button-primary">
-			{texts.save}</button>
+		<Button size="small" label={texts.cancel} data-modal-close>
+			{#snippet icon()}{@html icons.cancel}{/snippet}
+		</Button>
+		<Button type="submit" form={FORM_ID} size="small" variant="primary" label={texts.save}>
+			{#snippet icon()}{@html icons.save}{/snippet}
+		</Button>
 	{/snippet}
 	<form id={FORM_ID} class="member-form" onsubmit={save} novalidate>
 		<Feedback messages={MEMBER_FIELDS.filter((field) => errors[field])
@@ -162,11 +172,17 @@
 </Modal>
 
 <Modal open={deletion !== undefined} onclose={close} closeOnClick closeLabel={texts.close}
-	title={texts.deleteMember}>
+	size="small" title={texts.deleteMember}>
 	{#snippet footer()}
-		<button type="button" class="modal-dialog-button" data-modal-close>{texts.cancel}</button>
-		<button type="button" class="modal-dialog-button modal-dialog-button-primary"
-			onclick={() => deletion && remove(deletion)}>{texts.delete}</button>
+		<Button size="small" label={texts.cancel} data-modal-close>
+			{#snippet icon()}{@html icons.cancel}{/snippet}
+		</Button>
+		<Button size="small" variant="danger" label={texts.delete}
+			onclick={() => deletion && remove(deletion)}>
+			{#snippet icon()}{@html icons.delete}{/snippet}
+		</Button>
 	{/snippet}
 	{deletion ? interpolate(texts['delete.confirm'], deletion) : ''}
 </Modal>
+
+<DialogOptionsDemo {config} />

@@ -30,4 +30,24 @@
 	<entry key="role.designer">Diseño</entry>
 	<entry key="role.tester">Pruebas</entry>
 	<entry key="role.manager">Gestión</entry>
+	<entry key="options">Opciones de un diálogo</entry>
+	<entry key="options.behavior">Qué lo cierra y lo mueve</entry>
+	<entry key="option.closeOnEscape">Escape lo cierra</entry>
+	<entry key="option.closeButton">Una × en la esquina lo cierra</entry>
+	<entry key="option.closeOnClick">Un clic fuera lo cierra</entry>
+	<entry key="option.draggable">Su título lo arrastra</entry>
+	<entry key="option.foldable">Un doble clic en su título lo pliega</entry>
+	<entry key="size">Tamaño</entry>
+	<entry key="size.fit">Se ajusta al contenido</entry>
+	<entry key="size.small">Pequeño</entry>
+	<entry key="size.medium">Mediano</entry>
+	<entry key="size.large">Grande</entry>
+	<entry key="width">Ancho propio</entry>
+	<entry key="width.PatternValidator">${label} lleva un número y una unidad CSS, como 40em o 600px.</entry>
+	<entry key="open">Abrir un diálogo</entry>
+	<entry key="dialog.title">Diálogo {0}</entry>
+	<entry key="dialog.text">Este diálogo tiene las opciones elegidas arriba. Abra otro anidado en él: se abre sobre este y toma Escape y el foco hasta que se cierra. Sin Escape ni la ×, Cerrar en el pie lo sigue cerrando.</entry>
+	<entry key="dialog.deepest">Tres diálogos de profundidad, hasta donde llega esta demo. Ciérrelos uno a uno.</entry>
+	<entry key="dialog.nested">Abrir un diálogo anidado</entry>
+	<entry key="dialog.ok">Aceptar</entry>
 </properties>

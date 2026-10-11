@@ -37,8 +37,9 @@ export { activate, activates, isLicensed, LICENSE_PREFIX, PUBLIC_KEY, UNLICENSED
 	verifyLicense } from './license.js';
 export type { License } from './license.js';
 export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteListMessage } from './infinite-list.js';
-export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog } from './modal.js';
-export type { ModalOptions } from './modal.js';
+export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_SIZES, MODAL_THEME_CLASS, ModalDialog,
+	modalSizeClass } from './modal.js';
+export type { ModalOptions, ModalSize } from './modal.js';
 export { parseSplitSize, SPLIT_FIRST_MAX_PROPERTY, SPLIT_FIRST_MIN_PROPERTY, SPLIT_FIRST_PROPERTY,
 	SPLIT_FIRST_SIZE_PROPERTY, SPLIT_SECOND_MIN_PROPERTY, SPLIT_SECOND_PROPERTY, SplitPanel,
 	splitPanel } from './split-panel.js';

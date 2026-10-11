@@ -98,6 +98,19 @@ describe('ModalDialog', () => {
 		outerModal.destroy();
 	});
 
+	it('keeps the dialog below open on Escape when the one on top ignores it', () => {
+		const outerClose = vi.fn();
+		const innerClose = vi.fn();
+		const outer = dialog('outer');
+		new ModalDialog(outer, { onClose: outerClose });
+		const inner = dialog('inner', outer.querySelector<HTMLElement>('.modal-dialog-content')!);
+		new ModalDialog(inner, { onClose: innerClose, closeOnEscape: false });
+
+		key(document.activeElement!, 'Escape');
+		expect(innerClose).not.toHaveBeenCalled();
+		expect(outerClose).not.toHaveBeenCalled();
+	});
+
 	it('closes with its close button, focusing the body first', () => {
 		const onClose = vi.fn();
 		const overlay = dialog('a');
@@ -196,12 +209,34 @@ describe('ModalDialog', () => {
 		pointer('pointermove', 40, 30);
 		pointer('pointerup', 40, 30);
 		pointer('pointermove', 90, 90);
-		expect(element.style.translate).toBe('30px 20px');
+		expect([element.style.left, element.style.top]).toEqual(['130px', '120px']);
+		// placed, not transformed: a transform would hold the fixed overlay of a nested dialog
+		expect(element.style.translate).toBe('');
 
 		modal.moveBy(5000, 5000);
-		// its box did not move in jsdom: from 100,100 at most by 1000 - 200 - 100 and
-		// 800 - 30 - 100, on top of the 30px 20px dragged
-		expect(element.style.translate).toBe('730px 690px');
+		// its box did not move in jsdom: from 100,100 to at most 1000 - 200 and 800 - 30
+		expect([element.style.left, element.style.top]).toEqual(['800px', '770px']);
+	});
+
+	it('comes in a size, or as wide as told', () => {
+		const overlay = dialog('a');
+		const element = overlay.querySelector<HTMLElement>('.modal-dialog')!;
+		const small = new ModalDialog(overlay, { size: 'small' });
+		expect(element.classList.contains('modal-dialog-small')).toBe(true);
+		expect(element.classList.contains('modal-dialog-sized')).toBe(true);
+		expect(element.style.width).toBe('');
+		small.destroy();
+
+		const wide = new ModalDialog(overlay, { size: 'large', width: '40em' });
+		expect(element.classList.contains('modal-dialog-small')).toBe(false);
+		expect(element.classList.contains('modal-dialog-large')).toBe(true);
+		expect(element.style.width).toBe('40em');
+		wide.destroy();
+
+		new ModalDialog(overlay);
+		expect(element.classList.contains('modal-dialog-large')).toBe(false);
+		expect(element.classList.contains('modal-dialog-sized')).toBe(false);
+		expect(element.style.width).toBe('');
 	});
 
 	it('tells whether the fields were modified', () => {

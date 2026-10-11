@@ -9,7 +9,8 @@
  * closes the dialog (closeOnEscape), as a click on the overlay around it may (closeOnClick); the
  * dialog takes the focus while open, keeps it, Tab and Shift+Tab going round its controls
  * (trapFocus), and gives it back to the element that had it when it closes. Dialogs opened over
- * another, nested or stacked, take over until they close, as in Wicket.
+ * another, nested or stacked, take over until they close, as in Wicket. A dialog fits its content,
+ * or comes in one of three sizes (size), or as wide as told (width).
  *
  * Beyond Wicket's: a button of the class modal-dialog-close in the header closes the dialog too,
  * as any element of it marked data-modal-close does, a Cancel button of the footer for example;
@@ -38,8 +39,22 @@ export const MODAL_CLASSES = {
 	draggable: 'modal-dialog-draggable',
 	dragging: 'modal-dialog-dragging',
 	foldable: 'modal-dialog-foldable',
-	folded: 'modal-dialog-folded'
+	folded: 'modal-dialog-folded',
+	sized: 'modal-dialog-sized'
 } as const;
+
+/** The sizes of a dialog, from the smallest. */
+export type ModalSize = 'small' | 'medium' | 'large';
+
+/** The sizes of a dialog, from the smallest. */
+export const MODAL_SIZES: readonly ModalSize[] = ['small', 'medium', 'large'];
+
+/**
+ * @returns the class giving a dialog a size, modal-dialog-small for example
+ */
+export function modalSizeClass(size: ModalSize): string {
+	return MODAL_CLASSES.dialog + '-' + size;
+}
 
 /**
  * The attribute marking the other elements of a dialog that close it as its close button does,
@@ -85,6 +100,13 @@ export interface ModalOptions {
 	draggable?: boolean;
 	/** Whether a double click on the header folds the dialog to it; true by default. */
 	foldable?: boolean;
+	/** The size of the dialog; it fits its content when left out. */
+	size?: ModalSize;
+	/**
+	 * The width of the dialog, a CSS length such as '40em' or '600px', never wider than the
+	 * browser window; it overrides the width of the size.
+	 */
+	width?: string;
 }
 
 /**
@@ -186,6 +208,7 @@ export class ModalDialog {
 		this.dialog.addEventListener('dblclick', this.doubleClickHandler);
 		this.dialog.classList.toggle(MODAL_CLASSES.draggable, options.draggable !== false);
 		this.dialog.classList.toggle(MODAL_CLASSES.foldable, options.foldable !== false);
+		this.resize();
 		if (this.trapsFocus()) {
 			this.dialog.setAttribute('tabindex', '0');
 			ModalDialog.open.forEach((other) => other.dialog.classList.remove(TRAP_CLASS));
@@ -200,6 +223,17 @@ export class ModalDialog {
 		if (this.trapsFocus()) {
 			this.firstFocusable().focus();
 		}
+	}
+
+	/**
+	 * Gives the dialog the class of its size, and its width.
+	 */
+	private resize(): void {
+		const { size, width } = this.options;
+		MODAL_SIZES.forEach((each) => this.dialog.classList.toggle(modalSizeClass(each),
+			each === size));
+		this.dialog.classList.toggle(MODAL_CLASSES.sized, size !== undefined || !!width);
+		this.dialog.style.width = width ?? '';
 	}
 
 	/**
@@ -292,24 +326,26 @@ export class ModalDialog {
 
 	/**
 	 * Moves the dialog by a distance from where it is, keeping its header inside the browser
-	 * window.
+	 * window. The dialog is placed by its left and top, not transformed, so the fixed overlay of
+	 * a dialog nested in it still covers the whole window.
 	 *
 	 * @param dx the horizontal distance, in pixels
 	 * @param dy the vertical distance, in pixels
 	 */
 	moveBy(dx: number, dy: number): void {
-		const parts = (this.dialog.style.translate || '').split(' ');
-		const offsetX = parseFloat(parts[0]) || 0;
-		const offsetY = parseFloat(parts[1]) || 0;
 		const rect = this.dialog.getBoundingClientRect();
 		const header = this.dialog.querySelector('.' + MODAL_CLASSES.header);
 		const headerHeight = header ? header.getBoundingClientRect().bottom - rect.top :
 			rect.height;
 		const root = document.compatMode === 'BackCompat' ? document.body :
 			document.documentElement;
-		const x = clamp(rect.left + dx, 0, root.clientWidth - rect.width) - rect.left;
-		const y = clamp(rect.top + dy, 0, root.clientHeight - headerHeight) - rect.top;
-		this.dialog.style.translate = (offsetX + x) + 'px ' + (offsetY + y) + 'px';
+		const x = clamp(rect.left + dx, 0, root.clientWidth - rect.width);
+		const y = clamp(rect.top + dy, 0, root.clientHeight - headerHeight);
+		// left and top place the margin box, inside the overlay
+		const origin = this.dialog.offsetParent?.getBoundingClientRect() ?? { left: 0, top: 0 };
+		const style = getComputedStyle(this.dialog);
+		this.dialog.style.left = (x - origin.left - (parseFloat(style.marginLeft) || 0)) + 'px';
+		this.dialog.style.top = (y - origin.top - (parseFloat(style.marginTop) || 0)) + 'px';
 	}
 
 	/**

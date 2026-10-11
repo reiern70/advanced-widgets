@@ -5,8 +5,10 @@
 
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 
-import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
-	SCROLLBAR_WRAPPER_CLASS } from '@antilia/core';
+import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog, SCROLLBAR_WRAPPER_CLASS,
+	type ModalSize } from '@antilia/core';
+
+export type { ModalSize };
 
 export interface ModalProps {
 	/** Whether the dialog is open; nothing is rendered while it is closed. */
@@ -39,6 +41,10 @@ export interface ModalProps {
 	draggable?: boolean;
 	/** Whether a double click on the header folds the dialog to it, and back; true by default. */
 	foldable?: boolean;
+	/** The size of the dialog, small, medium or large; it fits its content when left out. */
+	size?: ModalSize;
+	/** The width of the dialog, a CSS length such as '40em'; it overrides the size's. */
+	width?: string;
 	/** CSS classes next to dialog-theme-default, of another theme for example. */
 	className?: string;
 	/** The body of the dialog. */
@@ -51,11 +57,12 @@ export interface ModalProps {
  * the theme's in a Wicket page), Escape and a click on the overlay closing it, and the focus kept
  * in it while it is open and given back when it closes. A dialog rendered in another one, or
  * after it, opens over it. Its header holds the title and a close button, drags the dialog
- * around and folds it on a double click; canClose may keep it open.
+ * around and folds it on a double click; canClose may keep it open. It fits its content, or comes
+ * in a size or a width.
  */
 export function Modal({ open, onClose, canClose, title, footer, closeButton = true,
 	closeLabel = 'Close', closeOnEscape = true, closeOnClick = false, trapFocus = true,
-	draggable = true, foldable = true, className, children }: ModalProps) {
+	draggable = true, foldable = true, size, width, className, children }: ModalProps) {
 	const overlay = useRef<HTMLDivElement>(null);
 	const titleId = useId();
 	const latest = useRef({ onClose, canClose });
@@ -66,10 +73,10 @@ export function Modal({ open, onClose, canClose, title, footer, closeButton = tr
 			return;
 		}
 		const modal = new ModalDialog(overlay.current, { closeOnEscape, closeOnClick, trapFocus,
-			draggable, foldable, onClose: () => latest.current.onClose(),
+			draggable, foldable, size, width, onClose: () => latest.current.onClose(),
 			canClose: () => latest.current.canClose?.() ?? true });
 		return () => modal.destroy();
-	}, [open, closeOnEscape, closeOnClick, trapFocus, draggable, foldable]);
+	}, [open, closeOnEscape, closeOnClick, trapFocus, draggable, foldable, size, width]);
 
 	if (!open) {
 		return null;

@@ -10,7 +10,7 @@
 <div wicket:id="themed" class="team-demo">
 	<div class="team-demo__toolbar">
 		<h2 class="team-demo__title"><wicket:message key="team"/></h2>
-		<button type="button" wicket:id="add" class="ant-data-table-button ant-data-table-button-primary"><wicket:message key="addMember"/></button>
+		<button type="button" wicket:id="add"></button>
 	</div>
 	<div wicket:id="team">
 		<table class="team-demo__table">
@@ -29,8 +29,8 @@
 					<td wicket:id="role"></td>
 					<td>
 						<div class="team-demo__actions">
-							<button type="button" wicket:id="edit" class="ant-data-table-button"><wicket:message key="edit"/></button>
-							<button type="button" wicket:id="delete" class="ant-data-table-button"><wicket:message key="delete"/></button>
+							<button type="button" wicket:id="edit"></button>
+							<button type="button" wicket:id="delete"></button>
 						</div>
 					</td>
 				</tr>
@@ -38,8 +38,28 @@
 		</table>
 		<p wicket:id="empty" class="team-demo__empty"><wicket:message key="empty"/></p>
 	</div>
+	<form wicket:id="options" class="dialog-options">
+		<h2 class="team-demo__title"><wicket:message key="options"/></h2>
+		<div class="dialog-options__groups">
+			<fieldset>
+				<legend><wicket:message key="options.behavior"/></legend>
+				<label><input type="checkbox" wicket:id="closeOnEscape"/> <wicket:message key="option.closeOnEscape"/></label>
+				<label><input type="checkbox" wicket:id="closeButton"/> <wicket:message key="option.closeButton"/></label>
+				<label><input type="checkbox" wicket:id="closeOnClick"/> <wicket:message key="option.closeOnClick"/></label>
+				<label><input type="checkbox" wicket:id="draggable"/> <wicket:message key="option.draggable"/></label>
+				<label><input type="checkbox" wicket:id="foldable"/> <wicket:message key="option.foldable"/></label>
+			</fieldset>
+			<fieldset>
+				<legend><wicket:message key="size"/></legend>
+				<div wicket:id="size" class="dialog-options__sizes"></div>
+				<label class="dialog-options__width"><wicket:message key="width"/> <input type="text" wicket:id="width" placeholder="40em" size="8"/></label>
+			</fieldset>
+		</div>
+		<button type="button" wicket:id="open"></button>
+	</form>
 </div>
 <div wicket:id="dialog"></div>
+<div wicket:id="optionsDialog"></div>
 </wicket:extend>
 </body>
 </html>

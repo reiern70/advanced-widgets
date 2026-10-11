@@ -28,10 +28,11 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
  * button of type button unless told otherwise, so it never submits a form by accident.
  */
 export function Button({ label, icon, iconOnly = false, variant, size, className, type = 'button',
-	title, ...rest }: ButtonProps) {
+	title, 'aria-label': ariaLabel, ...rest }: ButtonProps) {
 	return (
 		<button {...rest} type={type} className={buttonClasses({ variant, size, iconOnly, className })}
-			title={title ?? (iconOnly ? label : undefined)} aria-label={iconOnly ? label : undefined}>
+			title={title ?? (iconOnly ? label : undefined)}
+			aria-label={ariaLabel ?? (iconOnly ? label : undefined)}>
 			{icon != null && <span className="ant-button__icon" aria-hidden="true">{icon}</span>}
 			{!iconOnly && <span className="ant-button__label">{label}</span>}
 		</button>

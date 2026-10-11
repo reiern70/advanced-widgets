@@ -165,6 +165,46 @@
 	--antilia-theme-color-scheme: light;
 }
 
+.antilia-theme-magenta {
+	--antilia-theme-primary: #a21caf;
+	--antilia-theme-primary-dark: #86198f;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #a21caf;
+	--antilia-theme-text: #2e1330;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fdf4ff;
+	--antilia-theme-hover: #fae8ff;
+	--antilia-theme-selected: #fff3b0;
+	--antilia-theme-highlight: #fdf4ff;
+	--antilia-theme-toolbar: #fdf7fe;
+	--antilia-theme-border: #e9a8f2;
+	--antilia-theme-progress: #c026d3;
+	--antilia-theme-progress-dark: #a21caf;
+	--antilia-theme-track: #fae8ff;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+}
+
+.antilia-theme-rose {
+	--antilia-theme-primary: #be4a6a;
+	--antilia-theme-primary-dark: #9f3654;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #b03a5b;
+	--antilia-theme-text: #3a1e26;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fff4f6;
+	--antilia-theme-hover: #fde4ea;
+	--antilia-theme-selected: #fff3c4;
+	--antilia-theme-highlight: #fff1f4;
+	--antilia-theme-toolbar: #fff8f9;
+	--antilia-theme-border: #f2b8c6;
+	--antilia-theme-progress: #e8798f;
+	--antilia-theme-progress-dark: #be4a6a;
+	--antilia-theme-track: #fde4ea;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+}
+
 .antilia-theme-dark {
 	--antilia-theme-primary: #34557a;
 	--antilia-theme-primary-dark: #24405f;
@@ -206,11 +246,11 @@
 
 .antilia-theme .dialog-theme-default .modal-dialog-header {
 	margin: 0;
-	padding: 0.5em 1em;
+	padding: 0.2em 0.6em;
 	border-radius: 0;
 	background: var(--antilia-theme-primary);
 	color: var(--antilia-theme-on-primary);
-	font-size: 1.1em;
+	font-size: 0.9em;
 	text-align: left;
 }
 
@@ -219,7 +259,7 @@
 }
 
 .antilia-theme .dialog-theme-default .modal-dialog-footer {
-	padding: 0.5em 1em;
+	padding: 0.3em 0.6em;
 	border-top: 1px solid var(--antilia-theme-border);
 	background: var(--antilia-theme-toolbar);
 }

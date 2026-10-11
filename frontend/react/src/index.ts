@@ -19,7 +19,7 @@ export type { PaletteChoice, PaletteTexts } from '@antilia/core';
 export { ProgressBar } from './ProgressBar.js';
 export type { ProgressBarProps } from './ProgressBar.js';
 export { Modal } from './Modal.js';
-export type { ModalProps } from './Modal.js';
+export type { ModalProps, ModalSize } from './Modal.js';
 export { SplitPanel } from './SplitPanel.js';
 export type { SplitPanelProps } from './SplitPanel.js';
 export type { SplitOrientation, SplitPane, SplitSize } from '@antilia/core';

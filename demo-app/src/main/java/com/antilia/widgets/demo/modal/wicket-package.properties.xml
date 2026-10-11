@@ -32,4 +32,24 @@
 	<entry key="role.designer">Design</entry>
 	<entry key="role.tester">Testing</entry>
 	<entry key="role.manager">Management</entry>
+	<entry key="options">Options of a dialog</entry>
+	<entry key="options.behavior">What closes and moves it</entry>
+	<entry key="option.closeOnEscape">Escape closes it</entry>
+	<entry key="option.closeButton">An × in the corner closes it</entry>
+	<entry key="option.closeOnClick">A click around it closes it</entry>
+	<entry key="option.draggable">Its title drags it</entry>
+	<entry key="option.foldable">A double click on its title folds it</entry>
+	<entry key="size">Size</entry>
+	<entry key="size.fit">Fits its content</entry>
+	<entry key="size.small">Small</entry>
+	<entry key="size.medium">Medium</entry>
+	<entry key="size.large">Large</entry>
+	<entry key="width">Width of its own</entry>
+	<entry key="width.PatternValidator">${label} takes a number and a CSS unit, such as 40em or 600px.</entry>
+	<entry key="open">Open a dialog</entry>
+	<entry key="dialog.title">Dialog {0}</entry>
+	<entry key="dialog.text">This dialog has the options chosen above. Open another one nested in it: it opens over this one and takes Escape and the focus until it closes. Without Escape and the ×, Close in the footer still closes it.</entry>
+	<entry key="dialog.deepest">Three dialogs deep, as deep as this demo goes. Close them one by one.</entry>
+	<entry key="dialog.nested">Open a nested dialog</entry>
+	<entry key="dialog.ok">OK</entry>
 </properties>

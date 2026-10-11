@@ -5,9 +5,10 @@
  * The modal dialog of React and Svelte (modal.ts) in the markup of Wicket's ModalDialog with its
  * default theme: an overlay over the page, the dialog near its top, the content scrolling within,
  * and an optional header, body and footer in the colors of the theme, as antilia-theme.css shows
- * Wicket's. The header holds the title and the close button, drags the dialog and folds it to the
- * header; the buttons of the footer are on the right. Dialogs nested in another, or opened after
- * it, are shifted a little.
+ * Wicket's. The header, slim, holds the title and the close button, drags the dialog and folds it
+ * to the header; the buttons of the footer, those of button.css and small, are on the right. A
+ * dialog fits its content or comes in a size, small, medium or large, or a width of its own.
+ * Dialogs nested in another, or opened after it, are shifted a little.
  */
 .dialog-theme-default .modal-dialog-overlay {
 	position: fixed;
@@ -55,11 +56,12 @@
 	align-items: center;
 	gap: 0.5em;
 	margin: 0;
-	padding: 0.3em 0.75em;
+	padding: 0.2em 0.6em;
 	background: var(--antilia-theme-primary, Highlight);
 	color: var(--antilia-theme-on-primary, HighlightText);
-	font-size: 1em;
+	font-size: 0.9em;
 	font-weight: bold;
+	line-height: 1.4;
 	text-align: start;
 }
 
@@ -72,15 +74,15 @@
 
 .dialog-theme-default .modal-dialog-close {
 	flex: none;
-	margin: -0.2em -0.4em -0.2em 0;
+	margin: -0.1em -0.35em -0.1em 0;
 	padding: 0 0.3em;
 	border: 0;
 	border-radius: 0.25em;
 	background: transparent;
 	color: inherit;
 	font: inherit;
-	font-size: 1.2em;
-	line-height: 1.1;
+	font-size: 1.15em;
+	line-height: 1.2;
 	cursor: pointer;
 	opacity: 0.8;
 }
@@ -139,37 +141,32 @@
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	align-items: center;
-	gap: 0.4em;
-	padding: 0.35em 0.75em;
+	gap: 0.35em;
+	padding: 0.3em 0.6em;
 	border-top: 1px solid var(--antilia-theme-border, ButtonBorder);
 	background: var(--antilia-theme-toolbar, transparent);
 }
 
-/* the buttons of a dialog, the primary one in the color of the header */
-.dialog-theme-default .modal-dialog-button {
-	padding: 0.2em 0.85em;
-	border: 1px solid var(--antilia-theme-border, ButtonBorder);
-	border-radius: 0.3em;
-	background: var(--antilia-theme-surface, ButtonFace);
-	color: var(--antilia-theme-text, ButtonText);
-	font: inherit;
-	cursor: pointer;
+/* the sizes of a dialog, and a width of its own, never wider than the window */
+.dialog-theme-default .modal-dialog-sized {
+	max-width: 95vw;
 }
 
-.dialog-theme-default .modal-dialog-button-primary {
-	border-color: var(--antilia-theme-primary-dark, Highlight);
-	background: var(--antilia-theme-primary, Highlight);
-	color: var(--antilia-theme-on-primary, HighlightText);
+.dialog-theme-default .modal-dialog-sized > .modal-dialog-content {
+	min-width: 0;
+	max-width: none;
 }
 
-.dialog-theme-default .modal-dialog-button:focus-visible {
-	outline: 2px solid var(--antilia-theme-accent, Highlight);
-	outline-offset: 1px;
+.dialog-theme-default .modal-dialog-small {
+	width: 22em;
 }
 
-.dialog-theme-default .modal-dialog-button:disabled {
-	cursor: default;
-	opacity: 0.6;
+.dialog-theme-default .modal-dialog-medium {
+	width: 34em;
+}
+
+.dialog-theme-default .modal-dialog-large {
+	width: 52em;
 }
 
 /* dialogs nested in another */

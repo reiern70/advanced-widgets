@@ -159,6 +159,65 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		assertNoErrorsButTheInvalidMember();
 	}
 
+	@ParameterizedTest
+	@MethodSource("tabs")
+	void opensADialogWithTheOptionsChosenAndNestsDialogsInIt(SeleniumBrowser browser, String tab)
+	{
+		openTab(browser, tab);
+		wait.until(d -> names().contains("Ada Lovelace"));
+
+		// Escape off, a large dialog
+		WebElement options = panel().findElement(By.cssSelector(".dialog-options"));
+		options.findElement(By.xpath(".//label[normalize-space()='Escape closes it']/input"))
+			.click();
+		options.findElement(By.xpath(".//label[normalize-space()='Large']/input")).click();
+		options.findElement(By.xpath(".//button[normalize-space()='Open a dialog']")).click();
+		WebElement first = dialogTitled("Dialog 1");
+		assertTrue(first.getDomAttribute("class").contains("modal-dialog-large"));
+		assertEquals(1, dialogs().size());
+
+		// Escape leaves it open; dragged, the dialog nested in it still covers the window
+		driver.switchTo().activeElement().sendKeys(Keys.ESCAPE);
+		new Actions(driver).dragAndDropBy(first.findElement(By.cssSelector(".modal-dialog-title")),
+			-80, 30).perform();
+		first.findElement(By.xpath(".//button[normalize-space()='Open a nested dialog']")).click();
+		WebElement second = dialogTitled("Dialog 2");
+		assertEquals(2, dialogs().size());
+		WebElement overlay = second.findElement(By.xpath(
+			"./ancestor::*[contains(@class,'modal-dialog-overlay')][1]"));
+		assertEquals(0, overlay.getRect().getX());
+		assertEquals(0, overlay.getRect().getY());
+		Number width = (Number)((org.openqa.selenium.JavascriptExecutor)driver).executeScript(
+			"return document.documentElement.clientWidth;");
+		assertEquals(width.intValue(), overlay.getRect().getWidth(), 1);
+
+		// and another in that one; Close and OK close the one on top only
+		second.findElement(By.xpath(".//button[normalize-space()='Open a nested dialog']"))
+			.click();
+		WebElement third = dialogTitled("Dialog 3");
+		assertTrue(third.getText().contains("as deep as this demo goes"));
+		third.findElement(By.xpath("./*/*[contains(@class,'modal-dialog-footer')]" +
+			"//button[normalize-space()='Close']")).click();
+		wait.until(d -> dialogs().size() == 2);
+		dialogTitled("Dialog 2").findElement(By.xpath("./*/*[contains(@class," +
+			"'modal-dialog-footer')]//button[normalize-space()='OK']")).click();
+		wait.until(d -> dialogs().size() == 1);
+		dialogTitled("Dialog 1").findElement(By.xpath("./*/*[contains(@class," +
+			"'modal-dialog-footer')]//button[normalize-space()='OK']")).click();
+		wait.until(d -> dialogs().isEmpty());
+		assertNoErrorsButTheInvalidMember();
+	}
+
+	/**
+	 * @return the dialog shown with a title
+	 */
+	private WebElement dialogTitled(String title)
+	{
+		return wait.until(d -> d.findElements(By.xpath("//*[contains(@class,'modal-dialog-title')]" +
+			"[normalize-space()='" + title + "']/ancestor::*[@role='dialog'][1]")).stream()
+			.filter(WebElement::isDisplayed).findFirst().orElse(null));
+	}
+
 	private void addMember()
 	{
 		panel().findElement(By.xpath(".//button[normalize-space()='Add member']")).click();
