@@ -4,7 +4,8 @@
  */
 
 /*
- * The Autocomplete demo: an owner, a team, countries, and countries to visit found with a find bar.
+ * The Autocomplete demo: an owner, a team, countries, a disabled reviewer and markets, and
+ * countries to visit found with a find bar.
  */
 
 import type { AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
@@ -21,6 +22,9 @@ export interface AutocompleteDemoTexts {
 	'team.placeholder': string;
 	countries: string;
 	'countries.placeholder': string;
+	disabledTitle: string;
+	reviewer: string;
+	markets: string;
 	find: string;
 	visits: string;
 	'visits.placeholder': string;
@@ -45,6 +49,10 @@ export interface AutocompleteValues {
 	owner: AutocompleteValue[];
 	team: AutocompleteValue[];
 	countries: AutocompleteValue[];
+	/** The reviewer of the disabled autocomplete. */
+	reviewer: AutocompleteValue[];
+	/** The markets of the disabled autocomplete. */
+	markets: AutocompleteValue[];
 	/** The countries found with the find bar, listed below it. */
 	visits: AutocompleteValue[];
 }

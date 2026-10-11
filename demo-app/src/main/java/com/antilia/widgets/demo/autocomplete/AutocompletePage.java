@@ -76,6 +76,13 @@ public class AutocompletePage extends DemoPage
 
 	private List<Country> countries = new ArrayList<>();
 
+	/** The reviewer of the disabled autocomplete, which cannot be changed. */
+	private User reviewer = DatabaseLocator.getLargeDatabase().get(1L);
+
+	/** The markets of the disabled autocomplete, which cannot be changed. */
+	private List<Country> markets = new ArrayList<>(List.of(Country.of("ES"), Country.of("JP"),
+		Country.of("BR")));
+
 	/** The countries found with the find bar, in the order they were found. */
 	private final List<Country> visits = new ArrayList<>();
 
@@ -123,6 +130,12 @@ public class AutocompletePage extends DemoPage
 			.setMinLength(0)
 			.setPlaceholder(new ResourceModel("countries.placeholder"));
 		form.add(reportChanges(countriesChoice, choices));
+
+		// disabled: the values show, greyed out, but cannot be changed
+		form.add(new Autocomplete<>("reviewer", new PropertyModel<>(this, "reviewer"),
+			new UsersAutocompleteProvider()).setTemplate(USER_TEMPLATE).setEnabled(false));
+		form.add(new MultiAutocomplete<>("markets", new PropertyModel<>(this, "markets"),
+			new CountriesProvider()).setTemplate(COUNTRY_TEMPLATE).setEnabled(false));
 
 		WebMarkupContainer visitList = new WebMarkupContainer("visits");
 		visitList.setOutputMarkupId(true);
@@ -241,8 +254,8 @@ public class AutocompletePage extends DemoPage
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "owner",
 			"owner.placeholder", "team", "team.placeholder", "countries", "countries.placeholder",
-			"find", "visits", "visits.placeholder", "visits.none", "send", "nothing", "choices",
-			"sent");
+			"find", "visits", "visits.placeholder", "visits.none", "disabledTitle", "reviewer",
+			"markets", "send", "nothing", "choices", "sent");
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label",
 			getString("owner")))));
 		texts.put("noMatch", getString("Autocomplete.noMatch", null, "No matches"));
@@ -253,6 +266,8 @@ public class AutocompletePage extends DemoPage
 		JSONArray countryValues = new JSONArray();
 		countries.forEach(country -> countryValues.put(value(country.getCode(),
 			country.getName())));
+		JSONArray marketValues = new JSONArray();
+		markets.forEach(country -> marketValues.put(value(country.getCode(), country.getName())));
 		JSONArray visitValues = new JSONArray();
 		visits.forEach(country -> visitValues.put(value(country.getCode(), country.getName())));
 		JSONObject values = new JSONObject()
@@ -260,6 +275,9 @@ public class AutocompletePage extends DemoPage
 				String.valueOf(owner.getId()), name(owner))) : new JSONArray())
 			.put("team", teamValues)
 			.put("countries", countryValues)
+			.put("reviewer", new JSONArray().put(value(String.valueOf(reviewer.getId()),
+				name(reviewer))))
+			.put("markets", marketValues)
 			.put("visits", visitValues);
 		return new JSONObject()
 			.put("texts", texts)
@@ -460,6 +478,26 @@ public class AutocompletePage extends DemoPage
 	public void setTeam(Collection<User> team)
 	{
 		this.team = new ArrayList<>(team);
+	}
+
+	public User getReviewer()
+	{
+		return reviewer;
+	}
+
+	public void setReviewer(User reviewer)
+	{
+		this.reviewer = reviewer;
+	}
+
+	public List<Country> getMarkets()
+	{
+		return markets;
+	}
+
+	public void setMarkets(Collection<Country> markets)
+	{
+		this.markets = new ArrayList<>(markets);
 	}
 
 	public List<Country> getCountries()

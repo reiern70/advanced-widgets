@@ -27,13 +27,14 @@ import com.antilia.widgets.autocomplete.IAutocompleteProvider;
 import com.antilia.widgets.button.AjaxActionButton;
 import com.antilia.widgets.collapsible.CollapsiblePanel;
 import com.antilia.widgets.icon.SvgIcon;
+import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 
 /**
  * The filters of a {@link Facet}, in a {@link CollapsiblePanel}: on top a find bar, a
  * {@link FindAutocomplete}, finding any value of the facet not chosen yet; below, as check boxes,
  * the values chosen, those found among them, then the most common others with how many contacts
- * have each. A value is deselected with its check box. The header counts the values chosen, and
- * its action, an eraser, deselects them all.
+ * have each, scrolling when they are higher than the panel allows. A value is deselected with its
+ * check box. The header counts the values chosen, and its action, an eraser, deselects them all.
  */
 public abstract class FacetPanel extends Panel
 {
@@ -176,8 +177,9 @@ public abstract class FacetPanel extends Panel
 		search.setLabel(this::getName);
 		filters.add(search);
 
+		// at most as high as the style sheet says, with the slim scroll bars when they are needed
 		list = new WebMarkupContainer("list");
-		list.setOutputMarkupId(true);
+		list.add(new ScrollbarBehavior(ScrollbarBehavior.Axis.Y));
 		filters.add(list);
 		list.add(new ListView<>("value", this::getListed)
 		{

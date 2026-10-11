@@ -68,6 +68,19 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 					</label>
 				</section>
 				<section>
+					<h3>{texts.disabledTitle}</h3>
+					<label className="autocomplete-demo__field">
+						{texts.reviewer}{' '}
+						<Autocomplete name="reviewer" search={users} value={values.reviewer} disabled
+							template={config.userTemplate} {...common} />
+					</label>
+					<label className="autocomplete-demo__field">
+						{texts.markets}{' '}
+						<Autocomplete name="markets" multiple search={countries} value={values.markets}
+							disabled template={config.countryTemplate} {...common} />
+					</label>
+				</section>
+				<section>
 					<h3>{texts.find}</h3>
 					<label className="autocomplete-demo__field">
 						{texts.visits}{' '}

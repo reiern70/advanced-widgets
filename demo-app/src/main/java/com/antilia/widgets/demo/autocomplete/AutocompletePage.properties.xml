@@ -6,7 +6,7 @@
 -->
 <properties>
 	<entry key="title">Autocomplete</entry>
-	<entry key="explanation">&lt;p&gt;Autocomplete and MultiAutocomplete from ui-components suggest values as you type. The suggestions come from the server via Ajax as JSON, and each row is rendered in the browser from a template, the same way the cells of the JSON table are: the users show their name with their city and country below, the countries their flag and name. {{@label}} is the label of a value.&lt;/p&gt;&lt;p&gt;The chosen values are chips in the theme's colors with an x removing them, like those of the multiple drop-down; Backspace in the empty field removes the last one. One value: the chip stands in for the field until it is removed. The hidden input holds the ids of the chosen values, so a form posts them as always and an Ajax behavior on its change event is notified; the text below the form follows every choice.&lt;/p&gt;&lt;p&gt;FindAutocomplete is a find bar: what you pick is not kept as a chip but handed to the page, and the field is empty again for the next one. Here the countries you find are added to the list below it, each with an x removing it, and the bar no longer suggests those already listed. The Address Book example filters its contacts the same way.&lt;/p&gt;</entry>
+	<entry key="explanation">&lt;p&gt;Autocomplete and MultiAutocomplete from ui-components suggest values as you type. The suggestions come from the server via Ajax as JSON, and each row is rendered in the browser from a template, the same way the cells of the JSON table are: the users show their name with their city and country below, the countries their flag and name. {{@label}} is the label of a value.&lt;/p&gt;&lt;p&gt;The chosen values are chips in the theme's colors with an x removing them, like those of the multiple drop-down; Backspace in the empty field removes the last one. One value: the chip stands in for the field until it is removed. The hidden input holds the ids of the chosen values, so a form posts them as always and an Ajax behavior on its change event is notified; the text below the form follows every choice.&lt;/p&gt;&lt;p&gt;FindAutocomplete is a find bar: what you pick is not kept as a chip but handed to the page, and the field is empty again for the next one. Here the countries you find are added to the list below it, each with an x removing it, and the bar no longer suggests those already listed. The Address Book example filters its contacts the same way.&lt;/p&gt;&lt;p&gt;Disabled, an autocomplete shows its values greyed out, without the x of the chips, and cannot be typed in; a form sending it leaves its values as they were.&lt;/p&gt;</entry>
 	<entry key="single">One value</entry>
 	<entry key="multiple">Many values</entry>
 	<entry key="owner">Owner (required)</entry>
@@ -23,4 +23,7 @@
 	<entry key="visits">Countries to visit</entry>
 	<entry key="visits.placeholder">Find a country to add it to the list</entry>
 	<entry key="visits.none">No countries yet: those you find are listed here.</entry>
+	<entry key="disabledTitle">Disabled</entry>
+	<entry key="reviewer">Reviewer</entry>
+	<entry key="markets">Markets</entry>
 </properties>

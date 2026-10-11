@@ -55,9 +55,14 @@
 	padding: 0.6em;
 }
 
+/* the check boxes scroll below the find bar, whose suggestions are not cut off */
 .contacts-facet__list {
 	display: grid;
+	align-content: start;
 	gap: 0.15em;
+	max-height: 15em;
+	overflow-y: auto;
+	padding-right: 0.5em;
 }
 
 .contacts-facet__value {

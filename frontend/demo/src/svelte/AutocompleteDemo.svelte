@@ -31,7 +31,8 @@
 	const searchCountry = $derived(searchCountries(config.choicesUrl));
 	// the find bar leaves out the countries listed already
 	const unlisted = $derived(searchCountries(config.choicesUrl, () => visits));
-	const choices = $derived(describe(texts, { owner, team, countries, visits }));
+	const choices = $derived(describe(texts, { owner, team, countries, visits,
+		reviewer: initial.reviewer, markets: initial.markets }));
 
 	function send(event: SubmitEvent) {
 		event.preventDefault();
@@ -66,6 +67,21 @@
 				<Autocomplete name="countries" multiple search={searchCountry} bind:value={countries}
 					template={config.countryTemplate} minLength={0}
 					placeholder={texts['countries.placeholder']} noMatch={texts.noMatch}
+					searching={texts.searching} remove={texts.remove} />
+			</label>
+		</section>
+		<section>
+			<h3>{texts.disabledTitle}</h3>
+			<label class="autocomplete-demo__field">
+				{texts.reviewer}
+				<Autocomplete name="reviewer" search={users} value={initial.reviewer} disabled
+					template={config.userTemplate} noMatch={texts.noMatch}
+					searching={texts.searching} remove={texts.remove} />
+			</label>
+			<label class="autocomplete-demo__field">
+				{texts.markets}
+				<Autocomplete name="markets" multiple search={searchCountry} value={initial.markets}
+					disabled template={config.countryTemplate} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>
 		</section>

@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.autocomplete;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -97,6 +98,24 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 
 		app().findElement(By.cssSelector(".autocomplete-demo__remove")).click();
 		wait.until(d -> visits().equals(List.of("Chile")));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void showsTheValuesOfADisabledAutocompleteWithoutChangingThem(SeleniumBrowser browser,
+		String framework)
+	{
+		open(browser, framework, "autocomplete");
+
+		assertEquals(1, chips("reviewer").size());
+		assertEquals(List.of("Spain", "Japan", "Brazil"), chips("markets"));
+		for (String name : List.of("reviewer", "markets"))
+		{
+			assertTrue(field(name).getDomAttribute("class").contains("antilia-autocomplete-disabled"));
+			assertTrue(field(name).findElements(By.cssSelector(".antilia-chip-remove")).isEmpty());
+			assertFalse(text(name).isEnabled());
+		}
 		assertNoErrors();
 	}
 
