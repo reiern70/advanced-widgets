@@ -37,7 +37,7 @@ class AccountsTest
 	@Test
 	void theDemoAlwaysHasItsAccounts()
 	{
-		assertEquals(Role.USER, accounts.authenticate("semedy", "semady4321").map(User::getRole)
+		assertEquals(Role.USER, accounts.authenticate("semedy", "semedy4321").map(User::getRole)
 			.orElseThrow());
 		assertEquals(Role.USER, accounts.authenticate("wicket", "mellon4321").map(User::getRole)
 			.orElseThrow());

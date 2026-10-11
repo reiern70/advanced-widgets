@@ -72,7 +72,7 @@ public class Accounts
 	 * role. They are added when missing at every start, and never changed.
 	 */
 	private static final String[][] DEFAULTS = {
-		{ "semedy", "hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=", "USER" },
+		{ "semedy", "zzSQ5U6FuRjZX1kcQ7BROA==:enhhgrdSQjvzJbTxhO3DHG7jeLDKE1Y/aQwcU5jqQeo=", "USER" },
 		{ "wicket", "zabicgAmDuftSxuCXCT8aQ==:7k9JpQBWu3u+lPkJ59dmmO7NMkhLm81FpIshwiwVrwM=", "USER" },
 		{ "admin", "92vMz986hJZpF/zSqJnPkg==:H0C0YwBH63MAfeF6K87wDjiuUmLe7qlehEdEdmWJMxA=", "ADMIN" } };
 
