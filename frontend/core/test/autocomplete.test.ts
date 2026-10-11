@@ -107,6 +107,39 @@ describe('Autocomplete', () => {
 		expect(chips(instance)).toEqual(['One']);
 	});
 
+	it('only reports a pick, as a find bar, and keeps no chip', async () => {
+		const element = input();
+		const instance = new Autocomplete(element, { search, pick: true, multiple: true,
+			chosen: [{ id: 'banana', label: 'Banana' }] });
+		const picked: unknown[] = [];
+		element.addEventListener('change', () => picked.push(element.value));
+
+		expect(chips(instance)).toEqual([]);
+		expect(element.value).toBe('');
+		await type(instance, 'ap');
+		key(instance.text, 'Enter');
+
+		expect(picked).toEqual(['["apple"]']);
+		expect(instance.picked).toEqual({ id: 'apple', label: 'Apple' });
+		expect(chips(instance)).toEqual([]);
+		expect(instance.text.value).toBe('');
+		expect(instance.text.hidden).toBe(false);
+		expect(instance.wrapper.classList.contains('antilia-autocomplete-pick')).toBe(true);
+
+		// still suggested: the page decides what it leaves out
+		await type(instance, 'ap');
+		expect(instance.suggestions.map((suggestion) => suggestion.id)).toEqual(['apple', 'apricot']);
+		key(instance.text, 'ArrowDown');
+		key(instance.text, 'Enter');
+		expect(picked).toEqual(['["apple"]', '["apricot"]']);
+
+		// nothing to remove, and nothing to show
+		key(instance.text, 'Backspace');
+		instance.setChosen([{ id: 'x', label: 'X' }]);
+		expect(picked).toHaveLength(2);
+		expect(chips(instance)).toEqual([]);
+	});
+
 	it('asks the url with the term when no search is given', async () => {
 		const fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(FRUITS) });
 		vi.stubGlobal('fetch', fetch);

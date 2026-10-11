@@ -13,6 +13,10 @@
  * text ([{id, label, data}]); each row is options.template evaluated against its data by the
  * engine options.engine of templates(), {{@label}} being its label. Attaching an input that is in
  * a wrapper already, for example one Ajax put in place of the previous one, rebuilds the rest.
+ *
+ * With options.pick it is a find bar: a choice is not kept as a chip, the text field is emptied
+ * for the next one, and the input holds the id of the value last picked ([id]) when it fires
+ * 'change', for the page to add it to a list of its own.
  */
 
 import { Chips } from './chips.js';
@@ -41,6 +45,11 @@ export interface AutocompleteOptions {
 	search?: (term: string) => Promise<AutocompleteSuggestion[]>;
 	/** Whether many values can be chosen. */
 	multiple?: boolean;
+	/**
+	 * Whether a choice is only reported, not kept: the input holds the id of the value picked and
+	 * fires 'change', and the text field is empty again, as in a find bar.
+	 */
+	pick?: boolean;
 	/** The template of a suggestion's row, '{{@label}}' by default. */
 	template?: string;
 	/** The name of the template engine, the built-in one by default. */
@@ -89,7 +98,13 @@ export class Autocomplete {
 
 	readonly multiple: boolean;
 
+	/** Whether a choice is only reported, not kept. */
+	readonly pick: boolean;
+
 	chosen: AutocompleteValue[];
+
+	/** The value picked last, when choices are only reported. */
+	picked: AutocompleteValue | null = null;
 
 	wrapper!: HTMLElement;
 
@@ -136,8 +151,9 @@ export class Autocomplete {
 	constructor(input: HTMLInputElement, options?: AutocompleteOptions) {
 		this.input = input;
 		this.options = { ...options };
-		this.multiple = !!this.options.multiple;
-		this.chosen = (this.options.chosen || []).slice();
+		this.pick = !!this.options.pick;
+		this.multiple = !!this.options.multiple && !this.pick;
+		this.chosen = this.pick ? [] : (this.options.chosen || []).slice();
 		this.attach();
 	}
 
@@ -184,6 +200,7 @@ export class Autocomplete {
 		this.wrapper = wrapper;
 		this.id = input.id || ('antilia-autocomplete-' + (++counter));
 		wrapper.classList.toggle('antilia-autocomplete-multiple', this.multiple);
+		wrapper.classList.toggle('antilia-autocomplete-pick', this.pick);
 
 		this.field = create('div', 'antilia-autocomplete-field');
 		this.chips = create('span', 'antilia-autocomplete-chips');
@@ -230,7 +247,7 @@ export class Autocomplete {
 	 * @param options where the suggestions come from, how they are shown, and the texts
 	 */
 	configure(options?: AutocompleteOptions): void {
-		this.options = { ...options, multiple: this.multiple };
+		this.options = { ...options, multiple: this.multiple, pick: this.pick };
 		const engine = templates().engine(this.options.engine);
 		this.row = engine ? engine.compile(this.options.template || '{{@label}}') :
 			(_data, meta) => templates().escapeHtml(meta?.label);
@@ -246,6 +263,9 @@ export class Autocomplete {
 	 * @param chosen the chosen values
 	 */
 	setChosen(chosen: AutocompleteValue[]): void {
+		if (this.pick) {
+			return;
+		}
 		this.chosen = (chosen || []).slice();
 		this.renderChosen();
 	}
@@ -258,8 +278,8 @@ export class Autocomplete {
 		this.detach();
 		this.field.remove();
 		this.menu.remove();
-		this.wrapper.classList.remove('antilia-autocomplete-multiple', 'antilia-autocomplete-disabled',
-			'antilia-autocomplete-open');
+		this.wrapper.classList.remove('antilia-autocomplete-multiple', 'antilia-autocomplete-pick',
+			'antilia-autocomplete-disabled', 'antilia-autocomplete-open');
 		if (instances.get(this.wrapper) === this) {
 			instances.delete(this.wrapper);
 		}
@@ -305,8 +325,9 @@ export class Autocomplete {
 		this.text.hidden = full;
 		this.text.placeholder = this.chosen.length ? '' : (this.options.placeholder || '');
 		// empty when nothing is chosen, so that the server tells a required one is missing
-		this.input.value = this.chosen.length ?
-			JSON.stringify(this.chosen.map((value) => value.id)) : '';
+		const ids = this.pick ? (this.picked ? [this.picked.id] : []) :
+			this.chosen.map((value) => value.id);
+		this.input.value = ids.length ? JSON.stringify(ids) : '';
 	}
 
 	private listen<E extends Event>(target: EventTarget, type: string,
@@ -535,7 +556,7 @@ export class Autocomplete {
 
 	/**
 	 * Chooses a suggestion: a single autocomplete takes it instead of its value, a multiple one
-	 * adds it.
+	 * adds it, and one only reporting choices tells it and is empty again.
 	 */
 	choose(index: number): void {
 		const suggestion = this.suggestions[index];
@@ -543,7 +564,11 @@ export class Autocomplete {
 			return;
 		}
 		const value = { id: suggestion.id, label: suggestion.label };
-		this.chosen = this.multiple ? this.chosen.concat([value]) : [value];
+		if (this.pick) {
+			this.picked = value;
+		} else {
+			this.chosen = this.multiple ? this.chosen.concat([value]) : [value];
+		}
 		this.text.value = '';
 		this.close();
 		this.renderChosen();

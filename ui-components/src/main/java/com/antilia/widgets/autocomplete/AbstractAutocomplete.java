@@ -40,7 +40,7 @@ import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 
 /**
- * What {@link Autocomplete} and {@link MultiAutocomplete} share: a text field suggesting values
+ * What {@link Autocomplete}, {@link MultiAutocomplete} and {@link FindAutocomplete} share: a text field suggesting values
  * as the user types, whose chosen values are shown as {@link Chips chips} with an x removing
  * them, as in a multiple {@link com.antilia.widgets.dropdown.Dropdown drop-down}.
  * <p>
@@ -117,6 +117,14 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	 * @return whether many values can be chosen
 	 */
 	protected abstract boolean isMultiple();
+
+	/**
+	 * @return whether a choice is only reported, not kept as a chip, as in a find bar
+	 */
+	protected boolean isPick()
+	{
+		return false;
+	}
 
 	/**
 	 * @return the chosen values of the model, none if it is empty
@@ -332,6 +340,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		JSONObject options = new JSONObject();
 		options.put("url", suggestBehavior.getCallbackUrl().toString());
 		options.put("multiple", isMultiple());
+		options.put("pick", isPick());
 		options.put("template", template);
 		options.put("engine", templateEngine.getName());
 		options.put("minLength", minLength);

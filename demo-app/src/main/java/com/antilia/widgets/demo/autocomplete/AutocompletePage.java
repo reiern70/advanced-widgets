@@ -14,22 +14,28 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.wicket.Session;
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
+import org.apache.wicket.markup.html.list.ListItem;
+import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.danekja.java.util.function.serializable.SerializableSupplier;
 
 import com.antilia.widgets.autocomplete.Autocomplete;
+import com.antilia.widgets.autocomplete.FindAutocomplete;
 import com.antilia.widgets.autocomplete.IAutocompleteProvider;
 import com.antilia.widgets.autocomplete.MultiAutocomplete;
 import com.antilia.widgets.demo.Countries;
@@ -47,9 +53,10 @@ import com.github.openjson.JSONObject;
  * {@link Autocomplete} and {@link MultiAutocomplete}: the users of the table demos and the
  * countries suggested as the user types, each row rendered in the browser from a template, the
  * chosen values shown as chips with an x. The choices are shown below the form as Ajax reports
- * them, and again when the form is sent. The React and Svelte tabs show the same form in those
- * frameworks, the users searched through the {@link UsersRowsResource}, the countries filtered in
- * the browser from the {@link ChoicesResource}.
+ * them, and again when the form is sent. A {@link FindAutocomplete} adds the countries it finds to
+ * a list below it instead of keeping them as chips. The React and Svelte tabs show the same form
+ * in those frameworks, the users searched through the {@link UsersRowsResource}, the countries
+ * filtered in the browser from the {@link ChoicesResource}.
  */
 public class AutocompletePage extends DemoPage
 {
@@ -68,6 +75,9 @@ public class AutocompletePage extends DemoPage
 	private List<User> team = new ArrayList<>();
 
 	private List<Country> countries = new ArrayList<>();
+
+	/** The countries found with the find bar, in the order they were found. */
+	private final List<Country> visits = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -113,6 +123,64 @@ public class AutocompletePage extends DemoPage
 			.setMinLength(0)
 			.setPlaceholder(new ResourceModel("countries.placeholder"));
 		form.add(reportChanges(countriesChoice, choices));
+
+		WebMarkupContainer visitList = new WebMarkupContainer("visits");
+		visitList.setOutputMarkupId(true);
+		form.add(visitList);
+		FindAutocomplete<Country> visitFind = new FindAutocomplete<>("visitFind",
+			new CountriesProvider(() -> visits))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onPick(AjaxRequestTarget target, Country country)
+			{
+				if (!visits.contains(country))
+				{
+					visits.add(country);
+				}
+				target.add(visitList);
+			}
+		};
+		visitFind.setTemplate(COUNTRY_TEMPLATE)
+			.setMinLength(0)
+			.setPlaceholder(new ResourceModel("visits.placeholder"));
+		form.add(visitFind);
+		visitList.add(new ListView<>("visit", visits)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<Country> item)
+			{
+				Country country = item.getModelObject();
+				item.add(new Label("flag", country.getFlag()));
+				item.add(new Label("name", country::getName));
+				item.add(new AjaxLink<Void>("remove")
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					public void onClick(AjaxRequestTarget target)
+					{
+						visits.remove(country);
+						target.add(visitList);
+					}
+				}.add(AttributeModifier.replace("aria-label", () -> getString("Dropdown.remove",
+					null, "Remove {0}").replace("{0}", country.getName()))));
+			}
+		});
+		visitList.add(new Label("none", new ResourceModel("visits.none"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(visits.isEmpty());
+			}
+		});
 
 		themed.add(new FeedbackPanel("feedback"));
 	}
@@ -173,7 +241,8 @@ public class AutocompletePage extends DemoPage
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "owner",
 			"owner.placeholder", "team", "team.placeholder", "countries", "countries.placeholder",
-			"send", "nothing", "choices", "sent");
+			"find", "visits", "visits.placeholder", "visits.none", "send", "nothing", "choices",
+			"sent");
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label",
 			getString("owner")))));
 		texts.put("noMatch", getString("Autocomplete.noMatch", null, "No matches"));
@@ -184,11 +253,14 @@ public class AutocompletePage extends DemoPage
 		JSONArray countryValues = new JSONArray();
 		countries.forEach(country -> countryValues.put(value(country.getCode(),
 			country.getName())));
+		JSONArray visitValues = new JSONArray();
+		visits.forEach(country -> visitValues.put(value(country.getCode(), country.getName())));
 		JSONObject values = new JSONObject()
 			.put("owner", owner != null ? new JSONArray().put(value(
 				String.valueOf(owner.getId()), name(owner))) : new JSONArray())
 			.put("team", teamValues)
-			.put("countries", countryValues);
+			.put("countries", countryValues)
+			.put("visits", visitValues);
 		return new JSONObject()
 			.put("texts", texts)
 			.put("userTemplate", USER_TEMPLATE)
@@ -256,18 +328,37 @@ public class AutocompletePage extends DemoPage
 	}
 
 	/**
-	 * Suggests the countries whose name, in the language of the session, contains the text.
+	 * Suggests the countries whose name, in the language of the session, contains the text, but
+	 * those left out.
 	 */
 	private static class CountriesProvider implements IAutocompleteProvider<Country>
 	{
 		private static final long serialVersionUID = 1L;
 
+		private final SerializableSupplier<Collection<Country>> excluded;
+
+		CountriesProvider()
+		{
+			this(List::of);
+		}
+
+		/**
+		 * @param excluded
+		 *            the countries not suggested
+		 */
+		CountriesProvider(SerializableSupplier<Collection<Country>> excluded)
+		{
+			this.excluded = excluded;
+		}
+
 		@Override
 		public List<Country> search(String term, int max)
 		{
 			String lower = term.toLowerCase(locale());
+			Collection<Country> left = excluded.get();
 			return Countries.codes().getObject().stream()
 				.map(Country::of)
+				.filter(country -> !left.contains(country))
 				.filter(country -> country.getName().toLowerCase(locale()).contains(lower))
 				.limit(max)
 				.toList();

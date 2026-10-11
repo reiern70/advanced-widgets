@@ -17,6 +17,16 @@
 			<label class="autocomplete-demo__field"><wicket:message key="team"/> <input type="hidden" wicket:id="team"/></label>
 			<label class="autocomplete-demo__field"><wicket:message key="countries"/> <input type="hidden" wicket:id="countries"/></label>
 		</section>
+		<section>
+			<h3><wicket:message key="find"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="visits"/> <input type="hidden" wicket:id="visitFind"/></label>
+			<div wicket:id="visits">
+				<ul class="autocomplete-demo__list">
+					<li wicket:id="visit"><span class="ac-country"><span class="ac-flag" aria-hidden="true" wicket:id="flag"></span><span wicket:id="name"></span></span><button type="button" class="autocomplete-demo__remove" wicket:id="remove">×</button></li>
+				</ul>
+				<p wicket:id="none" class="autocomplete-demo__none"></p>
+			</div>
+		</section>
 		<p><button type="submit" class="autocomplete-demo__send"><wicket:message key="send"/></button></p>
 	</form>
 	<p wicket:id="choices" class="autocomplete-demo__choices">[choices]</p>

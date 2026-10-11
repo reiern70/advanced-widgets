@@ -71,6 +71,22 @@ describe('Autocomplete', () => {
 		expect(container.querySelectorAll('.antilia-autocomplete-field').length).toBe(1);
 	});
 
+	it('hands each pick to onPick and keeps no chip, as a find bar', async () => {
+		const onPick = vi.fn();
+		const onChange = vi.fn();
+		const { container } = render(<Autocomplete pick search={search} onPick={onPick}
+			onChange={onChange} />);
+
+		await type(container, 'ap');
+		act(() => options(container)[1].click());
+
+		expect(onPick).toHaveBeenCalledWith({ id: 'apricot', label: 'Apricot' });
+		expect(onChange).not.toHaveBeenCalled();
+		expect(chips(container)).toEqual([]);
+		expect(container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')?.value)
+			.toBe('');
+	});
+
 	it('shows the values the parent gives', () => {
 		const { container, rerender } = render(<Autocomplete search={search}
 			value={[{ id: 1, label: 'One' }]} />);

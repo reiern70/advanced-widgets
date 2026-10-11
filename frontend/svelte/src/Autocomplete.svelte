@@ -6,7 +6,8 @@
   @component
   An autocomplete of the core: typing asks search, or url, for suggestions, rendered with the
   template; the chosen values show as chips with an x removing them. The values bind both ways
-  (bind:value); onchange is called with them after every choice or removal.
+  (bind:value); onchange is called with them after every choice or removal. With pick it is a
+  find bar: a choice is handed to onpick, not kept, and the text field is empty again.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -19,6 +20,10 @@
 		/** The URL answering ?term= with the suggestions as JSON, in place of search. */
 		url?: string;
 		multiple?: boolean;
+		/** Whether a choice is only handed to onpick, not kept as a chip. */
+		pick?: boolean;
+		/** Called with the value picked, when pick is set. */
+		onpick?: (value: AutocompleteValue) => void;
 		/** The chosen values. */
 		value?: AutocompleteValue[];
 		onchange?: (value: AutocompleteValue[]) => void;
@@ -42,6 +47,8 @@
 		search,
 		url,
 		multiple = false,
+		pick = false,
+		onpick,
 		value = $bindable([]),
 		onchange,
 		template,
@@ -73,9 +80,15 @@
 			return;
 		}
 		const autocomplete = untrack(() => new Autocomplete(element, { ...options(), multiple,
-			chosen: $state.snapshot(value) }));
+			pick, chosen: $state.snapshot(value) }));
 		instance = autocomplete;
 		const changed = () => {
+			if (autocomplete.pick) {
+				if (autocomplete.picked) {
+					onpick?.(autocomplete.picked);
+				}
+				return;
+			}
 			value = autocomplete.chosen.slice();
 			onchange?.(autocomplete.chosen.slice());
 		};
@@ -108,7 +121,7 @@
 </script>
 
 <div class={['antilia-autocomplete', className]}>
-	{#key multiple}
+	{#key [multiple, pick].join()}
 		<input bind:this={input} type="hidden" {name} {id} />
 	{/key}
 </div>

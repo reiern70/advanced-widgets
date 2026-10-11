@@ -81,6 +81,21 @@ describe('Autocomplete', () => {
 		expect(onchange).toHaveBeenCalledWith([{ id: 2, label: 'Two' }]);
 	});
 
+	it('hands each pick to onpick and keeps no chip, as a find bar', async () => {
+		const onpick = vi.fn();
+		const onchange = vi.fn();
+		const { container } = render(Autocomplete, { search, pick: true, onpick, onchange });
+
+		await type(container, 'ap');
+		click(options(container)[1]);
+
+		expect(onpick).toHaveBeenCalledWith({ id: 'apricot', label: 'Apricot' });
+		expect(onchange).not.toHaveBeenCalled();
+		expect(chips(container)).toEqual([]);
+		expect(container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')?.value)
+			.toBe('');
+	});
+
 	it('leaves nothing behind when unmounted', () => {
 		const { container, unmount } = render(Autocomplete, { search });
 		unmount();

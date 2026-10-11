@@ -3,11 +3,11 @@
  * All rights reserved.
  */
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 
 import { Autocomplete } from '@antilia/react';
 
-import { describe, MAX_SUGGESTIONS, searchCountries, type AutocompleteConfig,
+import { describe, flag, MAX_SUGGESTIONS, searchCountries, type AutocompleteConfig,
 	type AutocompleteValues } from '../autocomplete.js';
 import { format, searchUsers } from '../data.js';
 import { Feedback, type Message } from './Feedback.js';
@@ -23,6 +23,11 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 	const users = useMemo(() => searchUsers(config.usersUrl, MAX_SUGGESTIONS),
 		[config.usersUrl]);
 	const countries = useMemo(() => searchCountries(config.choicesUrl), [config.choicesUrl]);
+	// the find bar leaves out the countries listed already
+	const visits = useRef(values.visits);
+	visits.current = values.visits;
+	const unlisted = useMemo(() => searchCountries(config.choicesUrl, () => visits.current),
+		[config.choicesUrl]);
 
 	const set = (key: keyof AutocompleteValues) => (value: AutocompleteValues[typeof key]) =>
 		setValues((current) => ({ ...current, [key]: value }));
@@ -61,6 +66,34 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 							template={config.countryTemplate} minLength={0}
 							placeholder={texts['countries.placeholder']} {...common} />
 					</label>
+				</section>
+				<section>
+					<h3>{texts.find}</h3>
+					<label className="autocomplete-demo__field">
+						{texts.visits}{' '}
+						<Autocomplete name="visitFind" pick search={unlisted}
+							onPick={(country) => set('visits')(values.visits.concat([country]))}
+							template={config.countryTemplate} minLength={0}
+							placeholder={texts['visits.placeholder']} {...common} />
+					</label>
+					{values.visits.length ? (
+						<ul className="autocomplete-demo__list">
+							{values.visits.map((country) => (
+								<li key={country.id}>
+									<span className="ac-country">
+										<span className="ac-flag" aria-hidden="true">
+											{flag(String(country.id))}
+										</span>
+										{country.label}
+									</span>
+									<button type="button" className="autocomplete-demo__remove"
+										aria-label={format(texts.remove, country.label)}
+										onClick={() => set('visits')(values.visits.filter(
+											(listed) => listed.id !== country.id))}>×</button>
+								</li>
+							))}
+						</ul>
+					) : <p className="autocomplete-demo__none">{texts['visits.none']}</p>}
 				</section>
 				<p><button type="submit" className="autocomplete-demo__send">{texts.send}</button></p>
 			</form>

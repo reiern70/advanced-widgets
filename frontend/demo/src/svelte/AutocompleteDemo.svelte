@@ -10,7 +10,7 @@
 	import { untrack } from 'svelte';
 	import { Autocomplete } from '@antilia/svelte';
 
-	import { describe, MAX_SUGGESTIONS, searchCountries,
+	import { describe, flag, MAX_SUGGESTIONS, searchCountries,
 		type AutocompleteConfig } from '../autocomplete.js';
 	import { format, searchUsers } from '../data.js';
 	import Feedback from './Feedback.svelte';
@@ -24,11 +24,14 @@
 	let owner = $state(initial.owner);
 	let team = $state(initial.team);
 	let countries = $state(initial.countries);
+	let visits = $state(initial.visits);
 	let messages = $state<Message[]>([]);
 
 	const users = $derived(searchUsers(config.usersUrl, MAX_SUGGESTIONS));
 	const searchCountry = $derived(searchCountries(config.choicesUrl));
-	const choices = $derived(describe(texts, { owner, team, countries }));
+	// the find bar leaves out the countries listed already
+	const unlisted = $derived(searchCountries(config.choicesUrl, () => visits));
+	const choices = $derived(describe(texts, { owner, team, countries, visits }));
 
 	function send(event: SubmitEvent) {
 		event.preventDefault();
@@ -65,6 +68,35 @@
 					placeholder={texts['countries.placeholder']} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>
+		</section>
+		<section>
+			<h3>{texts.find}</h3>
+			<label class="autocomplete-demo__field">
+				{texts.visits}
+				<Autocomplete name="visitFind" pick search={unlisted}
+					onpick={(country) => (visits = visits.concat([country]))}
+					template={config.countryTemplate} minLength={0}
+					placeholder={texts['visits.placeholder']} noMatch={texts.noMatch}
+					searching={texts.searching} remove={texts.remove} />
+			</label>
+			{#if visits.length}
+				<ul class="autocomplete-demo__list">
+					{#each visits as country (country.id)}
+						<li>
+							<span class="ac-country">
+								<span class="ac-flag" aria-hidden="true">{flag(String(country.id))}</span>
+								{country.label}
+							</span>
+							<button type="button" class="autocomplete-demo__remove"
+								aria-label={format(texts.remove, country.label)}
+								onclick={() => (visits = visits.filter((listed) => listed.id !== country.id))}
+							>×</button>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="autocomplete-demo__none">{texts['visits.none']}</p>
+			{/if}
 		</section>
 		<p><button type="submit" class="autocomplete-demo__send">{texts.send}</button></p>
 	</form>

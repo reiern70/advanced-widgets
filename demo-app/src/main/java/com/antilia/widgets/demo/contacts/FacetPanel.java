@@ -5,13 +5,10 @@
 package com.antilia.widgets.demo.contacts;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxCheckBox;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -25,18 +22,18 @@ import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.StringResourceModel;
 
+import com.antilia.widgets.autocomplete.FindAutocomplete;
 import com.antilia.widgets.autocomplete.IAutocompleteProvider;
-import com.antilia.widgets.autocomplete.MultiAutocomplete;
 import com.antilia.widgets.button.AjaxActionButton;
 import com.antilia.widgets.collapsible.CollapsiblePanel;
 import com.antilia.widgets.icon.SvgIcon;
 
 /**
- * The filters of a {@link Facet}, in a {@link CollapsiblePanel}: on top an autocomplete finding
- * any value of the facet, which it shows as chips with an x; below, the most common values with
- * how many contacts have each, as check boxes. Both choose the same values, and a value is
- * deselected with either. The header counts the values chosen, and its action, an eraser,
- * deselects them all.
+ * The filters of a {@link Facet}, in a {@link CollapsiblePanel}: on top a find bar, a
+ * {@link FindAutocomplete}, finding any value of the facet not chosen yet; below, as check boxes,
+ * the values chosen, those found among them, then the most common others with how many contacts
+ * have each. A value is deselected with its check box. The header counts the values chosen, and
+ * its action, an eraser, deselects them all.
  */
 public abstract class FacetPanel extends Panel
 {
@@ -161,23 +158,22 @@ public abstract class FacetPanel extends Panel
 	{
 		Fragment filters = new Fragment(id, "filters", this);
 
-		MultiAutocomplete<FacetValue> search = new MultiAutocomplete<>("search",
-			LambdaModel.of(this::getChosen, this::setChosen), new ValuesProvider());
+		FindAutocomplete<FacetValue> search = new FindAutocomplete<>("search", new ValuesProvider())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onPick(AjaxRequestTarget target, FacetValue value)
+			{
+				filter.choose(facet, value.id(), true);
+				onFilterChanged(target, true);
+			}
+		};
 		search.setTemplate("<span class=\"contacts-facet__suggestion\">{{label}}" +
 			"<span class=\"contacts-facet__count\">{{count}}</span></span>");
 		search.setMinLength(0);
 		search.setPlaceholder(() -> getString("facet." + facet.key() + ".find"));
 		search.setLabel(this::getName);
-		search.add(new AjaxFormComponentUpdatingBehavior("change")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				onFilterChanged(target, true);
-			}
-		});
 		filters.add(search);
 
 		list = new WebMarkupContainer("list");
@@ -236,19 +232,6 @@ public abstract class FacetPanel extends Panel
 		}
 		listed.addAll(others.subList(0, Math.min(LISTED, others.size())));
 		return listed;
-	}
-
-	private Collection<FacetValue> getChosen()
-	{
-		Locale locale = getLocale();
-		return filter.get(facet).stream()
-			.map(value -> new FacetValue(value, facet.label(value, locale), 0))
-			.toList();
-	}
-
-	private void setChosen(Collection<FacetValue> chosen)
-	{
-		filter.set(facet, chosen.stream().map(FacetValue::id).toList());
 	}
 
 	@Override

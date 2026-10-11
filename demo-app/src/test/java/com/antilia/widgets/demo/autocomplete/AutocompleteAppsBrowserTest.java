@@ -21,7 +21,8 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
  * Drives the React and Svelte apps of {@link AutocompletePage} in their tabs: the users searched
- * through the users resource, the countries filtered in the browser, the owner required. Runs with
+ * through the users resource, the countries filtered in the browser, the owner required; and the
+ * find bar, also in Wicket. Runs with
  * {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -66,6 +67,37 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 
 		wait.until(d -> choices().endsWith("countries: New Zealand."));
 		assertEquals(List.of("New Zealand"), chips("countries"));
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void findsCountriesIntoAListAndKeepsTheBarEmpty(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "autocomplete");
+		assertTrue(visits().isEmpty());
+
+		text("visitFind").sendKeys("zeal");
+		wait.until(d -> suggestions("visitFind").size() == 1);
+		suggestions("visitFind").get(0).click();
+		wait.until(d -> visits().equals(List.of("New Zealand")));
+		assertTrue(chips("visitFind").isEmpty());
+		assertEquals("", text("visitFind").getDomProperty("value"));
+
+		// the countries listed are not suggested again
+		text("visitFind").sendKeys("zeal");
+		wait.until(d -> app().findElements(By.cssSelector(".antilia-autocomplete-status"))
+			.stream().anyMatch(WebElement::isDisplayed));
+		assertTrue(suggestions("visitFind").isEmpty());
+		text("visitFind").clear();
+
+		text("visitFind").sendKeys("chil");
+		wait.until(d -> suggestions("visitFind").size() == 1);
+		text("visitFind").sendKeys(Keys.ENTER);
+		wait.until(d -> visits().equals(List.of("New Zealand", "Chile")));
+
+		app().findElement(By.cssSelector(".autocomplete-demo__remove")).click();
+		wait.until(d -> visits().equals(List.of("Chile")));
+		assertNoErrors();
 	}
 
 	@ParameterizedTest
@@ -117,6 +149,17 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 	private String choices()
 	{
 		return app().findElement(By.cssSelector(".autocomplete-demo__choices")).getText();
+	}
+
+	/**
+	 * @return the names of the countries listed below the find bar
+	 */
+	private List<String> visits()
+	{
+		return app().findElements(By.cssSelector(".autocomplete-demo__list li")).stream()
+			.map(item -> item.findElement(By.cssSelector(".ac-country")).getText()
+				.replace(item.findElement(By.cssSelector(".ac-flag")).getText(), "").trim())
+			.toList();
 	}
 
 	private WebElement field(String name)

@@ -4,7 +4,7 @@
  */
 
 /*
- * The Autocomplete demo: an owner, a team and countries.
+ * The Autocomplete demo: an owner, a team, countries, and countries to visit found with a find bar.
  */
 
 import type { AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
@@ -21,6 +21,11 @@ export interface AutocompleteDemoTexts {
 	'team.placeholder': string;
 	countries: string;
 	'countries.placeholder': string;
+	find: string;
+	visits: string;
+	'visits.placeholder': string;
+	/** What the list of the countries to visit says while it is empty. */
+	'visits.none': string;
 	send: string;
 	nothing: string;
 	/** What is chosen: {0} the owner, {1} the team and {2} the countries. */
@@ -40,6 +45,8 @@ export interface AutocompleteValues {
 	owner: AutocompleteValue[];
 	team: AutocompleteValue[];
 	countries: AutocompleteValue[];
+	/** The countries found with the find bar, listed below it. */
+	visits: AutocompleteValue[];
 }
 
 /** What the page gives the demo. */
@@ -70,14 +77,18 @@ export function flag(code: string): string {
 
 /**
  * @param url the URL of the choices
+ * @param excluded the countries not suggested, asked at every search
  * @returns the search of the countries: those whose name contains the text, loaded once
  */
-export function searchCountries(url: string): (term: string) => Promise<AutocompleteSuggestion[]> {
+export function searchCountries(url: string, excluded: () => AutocompleteValue[] = () => []):
+	(term: string) => Promise<AutocompleteSuggestion[]> {
 	let countries: Promise<Choice[]> | undefined;
 	return async (term) => {
 		countries ??= loadChoices(url).then((choices) => choices.countries);
 		const lower = term.toLowerCase();
+		const left = excluded().map((country) => String(country.id));
 		return (await countries)
+			.filter((country) => !left.includes(country.value))
 			.filter((country) => country.label.toLowerCase().includes(lower))
 			.slice(0, MAX_SUGGESTIONS)
 			.map((country) => ({ id: country.value, label: country.label,

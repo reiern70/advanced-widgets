@@ -209,7 +209,7 @@ class AutocompleteTest extends WicketTestCase
 	/**
 	 * Fruits by their names.
 	 */
-	private static class FruitsProvider implements IAutocompleteProvider<Fruit>
+	static class FruitsProvider implements IAutocompleteProvider<Fruit>
 	{
 		private static final long serialVersionUID = 1L;
 

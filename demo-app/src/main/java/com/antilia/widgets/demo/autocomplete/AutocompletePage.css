@@ -52,6 +52,52 @@
 	background: var(--surface);
 }
 
+/* the countries found, below the find bar */
+.autocomplete-demo__list {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.autocomplete-demo__list li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 4px 4px 8px;
+	border-radius: var(--radius);
+}
+
+.autocomplete-demo__list li:hover {
+	background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.autocomplete-demo__remove {
+	width: 1.8em;
+	height: 1.8em;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.autocomplete-demo__remove:hover,
+.autocomplete-demo__remove:focus-visible {
+	background: color-mix(in srgb, var(--primary) 15%, transparent);
+	opacity: 1;
+}
+
+.autocomplete-demo__none {
+	margin: 0;
+	font-size: 14px;
+	opacity: 0.7;
+}
+
 /* the rows of the suggestions, from the templates of the page */
 .ac-user {
 	display: grid;

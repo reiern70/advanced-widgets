@@ -15,6 +15,13 @@ export interface AutocompleteProps {
 	url?: string;
 	/** Whether many values can be chosen. */
 	multiple?: boolean;
+	/**
+	 * Whether it is a find bar: a choice is not kept as a chip but handed to onPick, and the text
+	 * field is empty again.
+	 */
+	pick?: boolean;
+	/** Called with the value picked, when pick is set. */
+	onPick?(value: AutocompleteValue): void;
 	/** The chosen values; left out, the autocomplete keeps them itself. */
 	value?: AutocompleteValue[];
 	/** Called with the chosen values after every choice or removal. */
@@ -43,14 +50,14 @@ export interface AutocompleteProps {
  * template; the chosen values show as chips with an x removing them. React renders the wrapper and
  * the hidden input, the core the rest.
  */
-export function Autocomplete({ search, url, multiple = false, value, onChange, template, engine,
-	minLength, disabled, placeholder, noMatch, searching, remove, name, id, className }:
-	AutocompleteProps) {
+export function Autocomplete({ search, url, multiple = false, pick = false, onPick, value, onChange,
+	template, engine, minLength, disabled, placeholder, noMatch, searching, remove, name, id,
+	className }: AutocompleteProps) {
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreAutocomplete | null>(null);
 	// the latest functions, so that new ones on every render leave an open list alone
-	const latest = useRef({ search, onChange });
-	latest.current = { search, onChange };
+	const latest = useRef({ search, onChange, onPick });
+	latest.current = { search, onChange, onPick };
 
 	const options = () => ({
 		url,
@@ -59,20 +66,26 @@ export function Autocomplete({ search, url, multiple = false, value, onChange, t
 		template, engine, minLength, disabled, placeholder, noMatch, searching, remove
 	});
 
-	// the core reads multiple once, so it starts over when that changes
+	// the core reads multiple and pick once, so it starts over when they change
 	useLayoutEffect(() => {
 		const element = input.current!;
-		const autocomplete = new CoreAutocomplete(element, { ...options(), multiple,
+		const autocomplete = new CoreAutocomplete(element, { ...options(), multiple, pick,
 			chosen: value });
 		instance.current = autocomplete;
-		const changed = () => latest.current.onChange?.(autocomplete.chosen.slice());
+		const changed = () => {
+			if (!autocomplete.pick) {
+				latest.current.onChange?.(autocomplete.chosen.slice());
+			} else if (autocomplete.picked) {
+				latest.current.onPick?.(autocomplete.picked);
+			}
+		};
 		element.addEventListener('change', changed);
 		return () => {
 			element.removeEventListener('change', changed);
 			autocomplete.destroy();
 			instance.current = null;
 		};
-	}, [multiple]);
+	}, [multiple, pick]);
 
 	useLayoutEffect(() => {
 		instance.current?.configure(options());
