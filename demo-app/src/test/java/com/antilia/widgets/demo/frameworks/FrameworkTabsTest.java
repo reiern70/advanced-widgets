@@ -69,7 +69,7 @@ class FrameworkTabsTest
 		assertNull(wicket.getAttribute("hidden"), "the Wicket tab is shown first");
 		assertTrue(wicket.getValue().contains("dropdown-demo__form"), "the page's components");
 		// the paths of the page's components stay as they were
-		tester.assertComponent("themed:form:size", com.antilia.widgets.dropdown.Dropdown.class);
+		tester.assertComponent("themed:examples:form:size", com.antilia.widgets.dropdown.Dropdown.class);
 		for (String framework : FrameworkTabs.FRAMEWORKS)
 		{
 			TagTester app = app(framework);

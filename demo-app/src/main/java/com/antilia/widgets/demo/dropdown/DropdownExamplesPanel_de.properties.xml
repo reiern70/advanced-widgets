@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="single">Eine Auswahl</entry>
+	<entry key="multiple">Mehrere Auswahlen</entry>
+	<entry key="disabledTitle">Deaktiviert</entry>
+	<entry key="size">Größe</entry>
+	<entry key="country">Land</entry>
+	<entry key="country.none">Land wählen</entry>
+	<entry key="skills">Kenntnisse</entry>
+	<entry key="languages">Sprachen</entry>
+	<entry key="languages.none">Sprachen wählen</entry>
+	<entry key="send">Senden</entry>
+	<entry key="nothing">nichts</entry>
+	<entry key="choices">Größe {0}, Land {1}; Kenntnisse: {2}; Sprachen: {3}.</entry>
+	<entry key="sent">Gesendet: {0}</entry>
+	<entry key="skill.java">Java</entry>
+	<entry key="skill.wicket">Apache Wicket</entry>
+	<entry key="skill.javascript">JavaScript</entry>
+	<entry key="skill.css">CSS</entry>
+	<entry key="skill.sql">SQL</entry>
+	<entry key="skill.react">React</entry>
+	<entry key="skill.svelte">Svelte</entry>
+	<entry key="skill.docker">Docker</entry>
+</properties>

@@ -139,6 +139,7 @@
 {/snippet}
 
 <Feedback {messages} />
+{#if !config.compact}
 <div class="ant-dataview-options">
 	{#each settingDefs(texts) as setting (setting.key)}
 		<div class="ant-dataview-option">
@@ -152,6 +153,7 @@
 		</div>
 	{/each}
 </div>
+{/if}
 <div>
 	{#key settings.rowsFrom}
 		<DataTable bind:this={table} columns={config.columns}
@@ -165,7 +167,7 @@
 			clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
 			onaction={action} {filter}
 			resizableColumns={settings.resizable ? 'stretch' : false} bodyHeight={config.bodyHeight}
-			adjustToParent texts={texts.table} {toolbar} {actions} />
+			adjustToParent={config.adjustToParent ?? true} texts={texts.table} {toolbar} {actions} />
 	{/key}
 </div>
 {#if shown && 'form' in shown}

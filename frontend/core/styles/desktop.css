@@ -1,0 +1,600 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The desktop of antilia-desktop.js: its area, where the windows float, and its taskbar, in the
+ * colors of the theme it is in and in neutral colors outside one. Each window is where the custom
+ * properties --antilia-window-x and --antilia-window-y say, as large as --antilia-window-width and
+ * --antilia-window-height say, and stacked as --antilia-window-z says; the script sets them. The
+ * state of a window is in its attributes: data-active on the one in front, data-maximized,
+ * data-folded, and hidden when minimized or closed. Give the desktop a height. A desktop with
+ * data-expanded fills the whole page, over all else but the dialogs and the pop-ups, and the page
+ * under it does not scroll. The menu of the taskbar opens next to its button, where the script
+ * places it with the custom properties --antilia-desktop-menu-left, -top, -right, -bottom and
+ * -max-height.
+ */
+.antilia-desktop {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	height: 30rem;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
+	color: var(--antilia-theme-text, #1c2333);
+	overflow: hidden;
+}
+
+/* over the height and width the page gives the desktop */
+.antilia-desktop[data-expanded] {
+	position: fixed;
+	inset: 0;
+	z-index: 900;
+	width: auto !important;
+	height: auto !important;
+	max-width: none !important;
+	max-height: none !important;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+}
+
+.antilia-desktop-expanded,
+.antilia-desktop-expanded > body {
+	overflow: hidden;
+}
+
+.antilia-desktop-taskbar-top {
+	flex-direction: column-reverse;
+}
+
+.antilia-desktop-taskbar-left {
+	flex-direction: row-reverse;
+}
+
+.antilia-desktop-taskbar-right {
+	flex-direction: row;
+}
+
+/* the area of the windows: they stack in it, not over the page around it */
+.antilia-desktop-area {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	isolation: isolate;
+	background:
+		radial-gradient(circle at 1px 1px, color-mix(in srgb, currentColor 12%, transparent) 1px,
+			transparent 0) 0 0 / 22px 22px;
+}
+
+/* a window */
+.antilia-window {
+	position: absolute;
+	left: var(--antilia-window-x, 16px);
+	top: var(--antilia-window-y, 16px);
+	z-index: var(--antilia-window-z, 1);
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	width: var(--antilia-window-width, 420px);
+	height: var(--antilia-window-height, 280px);
+	max-width: none;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: 0 4px 14px rgb(0 0 0 / 0.14);
+	outline: none;
+}
+
+.antilia-window[hidden] {
+	display: none;
+}
+
+.antilia-window[data-active] {
+	border-color: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 55%,
+		var(--antilia-theme-border, #c9cfdb));
+	box-shadow: 0 8px 26px rgb(0 0 0 / 0.24);
+}
+
+.antilia-window:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f5bd3);
+	outline-offset: 1px;
+}
+
+.antilia-window[data-maximized] {
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.antilia-window[data-folded] {
+	height: auto;
+}
+
+.antilia-window[data-folded] > .antilia-window-body {
+	display: none;
+}
+
+/* the title bar: dragged to move the window, a double click folds it */
+.antilia-window-header {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.45em;
+	min-height: 2em;
+	padding: 0.2em 0.3em 0.2em 0.6em;
+	border-bottom: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: calc(0.5em - 1px) calc(0.5em - 1px) 0 0;
+	background: var(--antilia-theme-toolbar, var(--antilia-theme-surface-alt, #eef1f7));
+	cursor: move;
+	touch-action: none;
+	user-select: none;
+}
+
+.antilia-window[data-active] > .antilia-window-header {
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+.antilia-window[data-folded] > .antilia-window-header {
+	border-bottom: 0;
+	border-radius: calc(0.5em - 1px);
+}
+
+.antilia-window[data-maximized] > .antilia-window-header {
+	border-radius: 0;
+	cursor: default;
+}
+
+.antilia-window-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+}
+
+.antilia-window-icon > svg {
+	width: 1.1em;
+	height: 1.1em;
+}
+
+.antilia-window-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	font-weight: 600;
+	font-size: 0.9em;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* the buttons of the title bar: minimize, maximize or restore, close */
+.antilia-window-controls {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 0.15em;
+}
+
+.antilia-window-control,
+.antilia-desktop-tile,
+.antilia-desktop-grip,
+.antilia-desktop-menu-button,
+.antilia-desktop-expand {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.7em;
+	height: 1.7em;
+	padding: 0;
+	border: 0;
+	border-radius: 0.3em;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.antilia-window-control:hover,
+.antilia-desktop-tile:hover,
+.antilia-desktop-grip:hover,
+.antilia-desktop-menu-button:hover,
+.antilia-desktop-menu-button[aria-expanded='true'],
+.antilia-desktop-expand:hover {
+	background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.antilia-window-control-close:hover {
+	background: var(--antilia-theme-danger, #c62828);
+	color: #ffffff;
+}
+
+.antilia-window-control:focus-visible,
+.antilia-desktop-tile:focus-visible,
+.antilia-desktop-grip:focus-visible,
+.antilia-desktop-menu-button:focus-visible,
+.antilia-desktop-expand:focus-visible,
+.antilia-desktop-menu-item:focus-visible,
+.antilia-desktop-task:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+}
+
+.antilia-window-body {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+	padding: 0.6em;
+}
+
+/* the handles resizing a window: its edges and corners */
+.antilia-window-handle {
+	position: absolute;
+	z-index: 1;
+	touch-action: none;
+}
+
+.antilia-window[data-maximized] > .antilia-window-handle,
+.antilia-window[data-folded] > .antilia-window-handle {
+	display: none;
+}
+
+.antilia-window-handle-n,
+.antilia-window-handle-s {
+	left: 8px;
+	right: 8px;
+	height: 6px;
+	cursor: ns-resize;
+}
+
+.antilia-window-handle-n {
+	top: -3px;
+}
+
+.antilia-window-handle-s {
+	bottom: -3px;
+}
+
+.antilia-window-handle-e,
+.antilia-window-handle-w {
+	top: 8px;
+	bottom: 8px;
+	width: 6px;
+	cursor: ew-resize;
+}
+
+.antilia-window-handle-e {
+	right: -3px;
+}
+
+.antilia-window-handle-w {
+	left: -3px;
+}
+
+.antilia-window-handle-ne,
+.antilia-window-handle-se,
+.antilia-window-handle-sw,
+.antilia-window-handle-nw {
+	width: 12px;
+	height: 12px;
+}
+
+.antilia-window-handle-ne {
+	top: -4px;
+	right: -4px;
+	cursor: nesw-resize;
+}
+
+.antilia-window-handle-se {
+	right: -4px;
+	bottom: -4px;
+	cursor: nwse-resize;
+}
+
+.antilia-window-handle-sw {
+	bottom: -4px;
+	left: -4px;
+	cursor: nesw-resize;
+}
+
+.antilia-window-handle-nw {
+	top: -4px;
+	left: -4px;
+	cursor: nwse-resize;
+}
+
+/* while a window moves or resizes, nothing else reacts to the pointer or gets selected */
+.antilia-desktop-moving {
+	user-select: none;
+}
+
+.antilia-desktop-moving .antilia-window-body {
+	pointer-events: none;
+}
+
+/* the taskbar: a button for each window, then the buttons tiling them */
+.antilia-desktop-taskbar {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.4em;
+	min-width: 0;
+	padding: 0.3em 0.4em;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-desktop-taskbar-top > .antilia-desktop-taskbar {
+	border-top: 0;
+	border-bottom: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar,
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar {
+	flex-direction: column;
+	align-items: stretch;
+	width: 11em;
+	border-top: 0;
+}
+
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar {
+	border-right: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar {
+	border-left: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-tasks {
+	display: flex;
+	flex: 1 1 auto;
+	gap: 0.3em;
+	min-width: 0;
+	overflow: auto;
+}
+
+.antilia-desktop-taskbar-left .antilia-desktop-tasks,
+.antilia-desktop-taskbar-right .antilia-desktop-tasks {
+	flex-direction: column;
+}
+
+.antilia-desktop-task {
+	display: inline-flex;
+	flex: 0 1 12em;
+	align-items: center;
+	gap: 0.4em;
+	min-width: 4em;
+	padding: 0.3em 0.6em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: inherit;
+	font: inherit;
+	font-size: 0.85em;
+	text-align: start;
+	cursor: pointer;
+}
+
+.antilia-desktop-taskbar-left .antilia-desktop-task,
+.antilia-desktop-taskbar-right .antilia-desktop-task {
+	flex: 0 0 auto;
+}
+
+.antilia-desktop-task[hidden] {
+	display: none;
+}
+
+.antilia-desktop-task:hover {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-desktop-task[aria-pressed='true'] {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	box-shadow: inset 0 -3px 0 var(--antilia-theme-accent, #2f5bd3);
+	font-weight: 600;
+}
+
+.antilia-desktop-task[data-minimized] {
+	opacity: 0.7;
+	font-style: italic;
+}
+
+.antilia-desktop-task-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
+.antilia-desktop-task-icon > svg {
+	width: 1.1em;
+	height: 1.1em;
+}
+
+.antilia-desktop-task-icon:empty {
+	display: none;
+}
+
+.antilia-desktop-task-title {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.antilia-desktop-tiling {
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 0.15em;
+	padding-inline-start: 0.4em;
+	border-inline-start: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-taskbar-left .antilia-desktop-tiling,
+.antilia-desktop-taskbar-right .antilia-desktop-tiling {
+	justify-content: center;
+	padding: 0.4em 0 0;
+	border-inline-start: 0;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+/* the grip of the taskbar, and the taskbar where it has no button: dragged to another side */
+.antilia-desktop[data-movable-taskbar] > .antilia-desktop-taskbar {
+	cursor: grab;
+	touch-action: none;
+}
+
+.antilia-desktop-taskbar button {
+	cursor: pointer;
+}
+
+.antilia-desktop .antilia-desktop-taskbar > .antilia-desktop-grip {
+	flex: 0 0 auto;
+	cursor: grab;
+}
+
+.antilia-desktop[data-taskbar-target],
+.antilia-desktop[data-taskbar-target] * {
+	cursor: grabbing;
+}
+
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar > .antilia-desktop-grip,
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-grip {
+	align-self: center;
+}
+
+/* the button letting the desktop fill the page */
+.antilia-desktop-expand {
+	flex: 0 0 auto;
+}
+
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar > .antilia-desktop-expand,
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-expand {
+	align-self: center;
+}
+
+/* where the dragged taskbar goes: a band along that side of the desktop */
+.antilia-desktop[data-taskbar-target]::after {
+	content: '';
+	position: absolute;
+	z-index: 2147483000;
+	border: 2px dashed var(--antilia-theme-accent, #2f5bd3);
+	background: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 18%, transparent);
+	pointer-events: none;
+}
+
+.antilia-desktop[data-taskbar-target='bottom']::after {
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2.6em;
+}
+
+.antilia-desktop[data-taskbar-target='top']::after {
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 2.6em;
+}
+
+.antilia-desktop[data-taskbar-target='left']::after {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 11em;
+}
+
+.antilia-desktop[data-taskbar-target='right']::after {
+	top: 0;
+	bottom: 0;
+	right: 0;
+	width: 11em;
+}
+
+/* the button of the menu listing the windows, after the grip */
+.antilia-desktop-menu-button {
+	flex: 0 0 auto;
+}
+
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar > .antilia-desktop-menu-button,
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-menu-button {
+	align-self: center;
+}
+
+/* the menu: the windows open, then those closed */
+.antilia-desktop-menu {
+	position: absolute;
+	left: var(--antilia-desktop-menu-left, auto);
+	top: var(--antilia-desktop-menu-top, auto);
+	right: var(--antilia-desktop-menu-right, auto);
+	bottom: var(--antilia-desktop-menu-bottom, auto);
+	z-index: 3;
+	box-sizing: border-box;
+	min-width: 14em;
+	max-width: min(22em, 90%);
+	max-height: var(--antilia-desktop-menu-max-height, none);
+	overflow: auto;
+	padding: 0.3em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	box-shadow: 0 8px 26px rgb(0 0 0 / 0.24);
+	cursor: default;
+}
+
+.antilia-desktop-menu-group + .antilia-desktop-menu-group {
+	margin-top: 0.3em;
+	padding-top: 0.3em;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-menu-group-heading {
+	padding: 0.2em 0.6em;
+	font-size: 0.75em;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.7;
+}
+
+.antilia-desktop-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.35em 0.6em;
+	border: 0;
+	border-radius: 0.35em;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.9em;
+	text-align: start;
+	cursor: pointer;
+}
+
+.antilia-desktop-menu-item:hover,
+.antilia-desktop-menu-item:focus {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-desktop-menu-item[data-active] {
+	font-weight: 600;
+}
+
+.antilia-desktop-menu-item[data-minimized] {
+	font-style: italic;
+}
+
+.antilia-desktop-menu-group[data-group='closed'] .antilia-desktop-menu-item {
+	opacity: 0.75;
+}

@@ -15,6 +15,7 @@ import { startApps, type Mount } from './apps.js';
 import { AutocompleteDemo } from './react/AutocompleteDemo.js';
 import { ButtonsDemo } from './react/ButtonsDemo.js';
 import { DatePickerDemo } from './react/DatePickerDemo.js';
+import { DesktopDemo } from './react/DesktopDemo.js';
 import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
@@ -30,8 +31,11 @@ import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
  * @returns the mount of a React app taking the configuration as its only prop
  */
 function app<C>(App: ComponentType<{ config: C }>): Mount {
-	return (element, config: C) => createRoot(element).render(
-		<StrictMode><App config={config} /></StrictMode>);
+	return (element, config: C) => {
+		const root = createRoot(element);
+		root.render(<StrictMode><App config={config} /></StrictMode>);
+		return () => root.unmount();
+	};
 }
 
 startApps('react', {
@@ -40,6 +44,7 @@ startApps('react', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),

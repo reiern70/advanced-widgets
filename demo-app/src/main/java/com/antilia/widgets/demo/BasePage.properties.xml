@@ -58,6 +58,8 @@
 	<entry key="demo.scrollbar.description">Slim scroll bars in the theme's colors that look the same in every browser.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>
 	<entry key="demo.splitPanel.description">Two panes side by side or one above the other, sharing the space as the user drags the divider between them or moves it with the keyboard.</entry>
+	<entry key="demo.desktop">Desktop</entry>
+	<entry key="demo.desktop.description">Floating windows that are not modal, many at once, with a taskbar: they move, fold, resize, minimize, maximize and tile, as on the desktop of an operating system.</entry>
 	<entry key="demo.modalDialog">Modal Dialog</entry>
 	<entry key="demo.modalDialog.description">Add, edit and delete in a modal dialog that keeps the focus, the same in Wicket, React and Svelte.</entry>
 	<entry key="demo.themeEditor">Theme Editor</entry>

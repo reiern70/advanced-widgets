@@ -19,11 +19,12 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, the notifications, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+split panel, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Notifications`, `ProgressBar`, `Button`, `DataTable`,
-`Tree` and `TreeGrid`; the core's `dropdown`, `palette`, `datePicker`, `scrollbar` and `splitPanel`
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Notifications`, `Desktop` with its
+`DesktopWindow`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`,
+`palette`, `datePicker`, `scrollbar`, `splitPanel` and `desktop`
 also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
@@ -85,13 +86,49 @@ via Ajax, or when the page renders (`setEscapeBody(false)` for a body of markup)
 messages of the page become notifications too, except those a `FeedbackPanel` rendering in the
 request shows. Every page of the demo has them, in its base page.
 
+The desktop (`desktop.ts`, built as `antilia-desktop.js` for Wicket's `Desktop` and
+`DesktopWindow`) holds floating windows that are not modal, many at once, and a taskbar. A click
+brings a window to the front, the others staying behind as they were; its title bar drags it, a
+double click on it folds the window to it; its buttons minimize it to the taskbar, maximize it to
+the whole desktop and close it, and its edges and corners resize it, as each window allows
+(`data-resizable`, `data-maximizable`, `data-minimizable`, `data-foldable`, `data-closable`). While
+the focus is in a window, F11 maximizes and restores it, and Ctrl+F6 and Ctrl+Shift+F6 go round the
+windows (Ctrl+Tab and Ctrl+Shift+Tab too, where the browser lets the page have them, which Chrome
+and Firefox do not). The taskbar, on any side (`taskbar`), has a button for each window that is not
+closed: it brings the window to the front, restoring it when minimized, and minimizes the one
+already in front; while the window in front is maximized, the one brought to the front is maximized
+too, taking its place. Its last buttons tile the windows in a grid, side by side, one above the
+other, or cascade them (`tiling`), and let the desktop fill the whole page and take it back into
+the page (`expandable`, `expanded`; Escape on the taskbar too). The user moves the taskbar to
+another side by dragging it, by its grip or where it has no button, or with the arrow keys on its
+grip (`movableTaskbar`); the windows move and shrink to stay on the desktop, as they do when it
+takes less of the page again (`fit()`). The menu of the taskbar, the button after the grip, lists
+the windows open, to bring one to the front, and those closed, to open one again (`menu`). Closing
+a window with changes not saved asks first, in a dialog of the markup of `modal.ts` (so its style
+sheets, `modal.css` and `button.css`, are needed too), or as `confirmClose` does; closing it anyway
+puts its fields back as they were rendered and fires `antilia-desktop:discard` on the window, for
+the page to drop changes it keeps itself. A window has changes when a field in it holds another
+value than the one it was rendered with, or as `data-modified` on it or on an element in it says
+(`modified` of `DesktopWindow`, `setModified` in Wicket); the fields in an element marked
+`data-modified="false"` do not count, unless in one marked `"auto"` in it. The windows start where `data-x`, `data-y`, `data-width` and
+`data-height` say, minimized, maximized, folded or closed as `data-minimized` and the like say, and
+the desktop keeps their state in those attributes and in CSS custom properties set through the
+CSSOM, so it needs no inline style. `onChange` reports the states of all windows (`WindowState`)
+each time the user changed any, moved the taskbar or let the desktop fill the page; `onTaskbar` and
+`onExpand` report those two. React, Svelte and Wicket render the windows and may add, remove and
+render them again: the desktop finds them as they come and go, and gives a window rendered again
+the state it had. In Wicket the state of a window is its model, kept in the page by default; with
+`setSendToServer(true)` the browser sends the states via Ajax, with the side of the taskbar and
+whether the desktop fills the page, and the windows give their models the new states.
+
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
 the children of a folder the first time it is expanded. Their style sheet, `tree.css`, built as
 `antilia-tree.css`, and their icons (`TREE_ICONS`, `TreeIcon` in Java) are those of the Wicket
 `Tree` and `TreeGrid` too, so all of them look the same.
 
-`DataTable`, `Tree` and `TreeGrid` are private, as the JSON table and the trees are in Wicket:
+`DataTable`, `Tree`, `TreeGrid` and `Desktop` are private, as the JSON table, the trees and the
+desktop are in Wicket:
 they check a license key in the browser (`license.ts`), the same `AW1.` keys with the same Ed25519
 signature the server checks, and show the same placeholder without one. Give the key with
 `activate(key)` once, or to a component as `licenseKey`. Web Crypto verifies the signature; where
@@ -115,11 +152,13 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
 demo's name (`dropdown`, `autocomplete`, `palette`, `datePicker`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
-`scrollbar`, `splitPanel`, `progressBar`, `notifications`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
+`scrollbar`, `splitPanel`, `progressBar`, `notifications`, `desktop`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of
 the resources the application mounts (`/api/choices`, `/api/users`); the app is mounted the first
-time its tab is shown (`demo/src/apps.ts`). `demo-app` uses the packages `ui-components` installed
+time its tab is shown (`demo/src/apps.ts`). An element marked `data-mount` mounts its app at once,
+as the React and Svelte grids in the windows of the desktop demo do, and again when Wicket renders
+it again by Ajax. `demo-app` uses the packages `ui-components` installed
 and built, so build it with `-am`.
 
 To work on the frontend alone, with the Node Maven installed:

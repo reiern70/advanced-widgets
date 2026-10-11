@@ -6,26 +6,7 @@
 <html xmlns:wicket="http://wicket.apache.org">
 <body>
 <wicket:extend>
-<div wicket:id="themed" class="dropdown-demo">
-	<form wicket:id="form" class="dropdown-demo__form">
-		<section>
-			<h3><wicket:message key="single"/></h3>
-			<label class="dropdown-demo__field"><wicket:message key="size"/> <select wicket:id="size"></select></label>
-			<label class="dropdown-demo__field"><wicket:message key="country"/> <select wicket:id="country"></select></label>
-		</section>
-		<section>
-			<h3><wicket:message key="multiple"/></h3>
-			<label class="dropdown-demo__field"><wicket:message key="skills"/> <select wicket:id="skills"></select></label>
-			<label class="dropdown-demo__field"><wicket:message key="languages"/> <select wicket:id="languages"></select></label>
-		</section>
-		<section>
-			<h3><wicket:message key="disabledTitle"/></h3>
-			<label class="dropdown-demo__field"><wicket:message key="size"/> <select wicket:id="disabled"></select></label>
-		</section>
-		<p><button type="submit" class="dropdown-demo__send"><wicket:message key="send"/></button></p>
-	</form>
-	<p wicket:id="choices" class="dropdown-demo__choices">[choices]</p>
-</div>
+<div wicket:id="themed" class="dropdown-demo"><div wicket:id="examples"></div></div>
 </wicket:extend>
 </body>
 </html>

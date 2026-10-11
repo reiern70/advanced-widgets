@@ -4,10 +4,12 @@
 -->
 <!--
   The Dropdown demo in Svelte: the form of the Wicket page, in its markup, the sentence below it
-  following every choice in the browser.
+  following every choice in the browser. Choices not sent are changes a window of a desktop asks
+  about before it closes, and drops when told to.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { DESKTOP_DISCARD_EVENT } from '@antilia/core';
 	import { Dropdown } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice } from '../data.js';
@@ -26,6 +28,25 @@
 	let skills = $state(initial.skills);
 	let languages = $state(initial.languages);
 	let messages = $state<Message[]>([]);
+	// the choices sent last, the page's at first
+	let sent = $state({ size: initial.size, country: initial.country, skills: initial.skills,
+		languages: initial.languages });
+	let root = $state<HTMLDivElement>();
+	const modified = $derived(JSON.stringify({ size, country, skills, languages }) !==
+		JSON.stringify(sent));
+
+	// the window of a desktop the demo is in drops the choices not sent when it closes
+	$effect(() => {
+		const window = root?.closest('.antilia-window');
+		const discard = () => {
+			size = sent.size;
+			country = sent.country;
+			skills = [...sent.skills];
+			languages = [...sent.languages];
+		};
+		window?.addEventListener(DESKTOP_DISCARD_EVENT, discard);
+		return () => window?.removeEventListener(DESKTOP_DISCARD_EVENT, discard);
+	});
 
 	const sizes = $derived(config.sizes.map((value) => ({ value, label: value })));
 	const choices = $derived(describe(config, countries, { size, country, skills, languages,
@@ -38,11 +59,12 @@
 
 	function send(event: SubmitEvent) {
 		event.preventDefault();
+		sent = { size, country, skills: [...skills], languages: [...languages] };
 		messages = [{ level: 'info', text: format(texts.sent, choices) }];
 	}
 </script>
 
-<div class="dropdown-demo">
+<div bind:this={root} class="dropdown-demo" data-modified={String(modified)}>
 	<form class="dropdown-demo__form" onsubmit={send}>
 		<section>
 			<h3>{texts.single}</h3>

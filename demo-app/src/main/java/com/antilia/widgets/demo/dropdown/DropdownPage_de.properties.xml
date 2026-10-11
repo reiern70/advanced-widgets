@@ -7,25 +7,4 @@
 <properties>
 	<entry key="title">Auswahlliste</entry>
 	<entry key="explanation">&lt;p&gt;Dropdown und MultiDropdown aus ui-components sind Auswahllisten, die in jedem Browser gleich aussehen und die Farben des Farbschemas übernehmen. Alles geschieht im Browser: Die Liste öffnet sich, filtert und wird mit der Tastatur bedient, ohne Anfrage an den Server. Das native Select bleibt verborgen in der Seite und hält die Auswahl, sodass ein Formular sie wie gewohnt sendet und ein Ajax-Verhalten an seinem change-Ereignis wie bei einem nativen Select benachrichtigt wird.&lt;/p&gt;&lt;p&gt;Mit den Pfeiltasten bewegen Sie sich durch die Einträge, Enter oder Leertaste wählen aus, Escape schließt. Tippen Sie in den Filter, den eine Liste ab acht Einträgen bekommt, oder immer, wenn sie darum gebeten wird. Eine Mehrfachauswahl bleibt offen, während Einträge an- und abgewählt werden, und zeigt die gewählten als Chips in den Farben des Farbschemas, jeden mit einem x, das ihn entfernt; die Rücktaste auf der Schaltfläche entfernt den letzten. Der Text unter dem Formular folgt jeder Auswahl per Ajax.&lt;/p&gt;</entry>
-	<entry key="single">Eine Auswahl</entry>
-	<entry key="multiple">Mehrere Auswahlen</entry>
-	<entry key="disabledTitle">Deaktiviert</entry>
-	<entry key="size">Größe</entry>
-	<entry key="country">Land</entry>
-	<entry key="country.none">Land wählen</entry>
-	<entry key="skills">Kenntnisse</entry>
-	<entry key="languages">Sprachen</entry>
-	<entry key="languages.none">Sprachen wählen</entry>
-	<entry key="send">Senden</entry>
-	<entry key="nothing">nichts</entry>
-	<entry key="choices">Größe {0}, Land {1}; Kenntnisse: {2}; Sprachen: {3}.</entry>
-	<entry key="sent">Gesendet: {0}</entry>
-	<entry key="skill.java">Java</entry>
-	<entry key="skill.wicket">Apache Wicket</entry>
-	<entry key="skill.javascript">JavaScript</entry>
-	<entry key="skill.css">CSS</entry>
-	<entry key="skill.sql">SQL</entry>
-	<entry key="skill.react">React</entry>
-	<entry key="skill.svelte">Svelte</entry>
-	<entry key="skill.docker">Docker</entry>
 </properties>

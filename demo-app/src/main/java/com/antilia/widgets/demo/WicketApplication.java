@@ -35,6 +35,7 @@ import com.antilia.widgets.demo.datatable.UsersRowsResource;
 import com.antilia.widgets.demo.data.Accesses;
 import com.antilia.widgets.demo.data.Database;
 import com.antilia.widgets.demo.datepicker.DatePickerPage;
+import com.antilia.widgets.demo.desktop.DesktopPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.mail.IMailer;
@@ -175,6 +176,7 @@ public class WicketApplication extends WebApplication
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
+		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("notifications", NotificationsPage.class);
 		mountPage("register", RegisterPage.class);

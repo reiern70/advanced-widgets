@@ -128,27 +128,66 @@ export function focusableIn(container: HTMLElement): HTMLElement[] {
  * @param container the element holding the fields, a form or a dialog
  */
 export function isModified(container: Element): boolean {
-	return Array.from(container.querySelectorAll('input, textarea, select')).some((field) => {
-		if (field instanceof HTMLInputElement) {
-			if (field.type === 'checkbox' || field.type === 'radio') {
-				return field.checked !== field.defaultChecked;
-			}
-			return !['button', 'submit', 'reset', 'image', 'hidden', 'file'].includes(field.type) &&
-				field.value !== field.defaultValue;
+	return Array.from(container.querySelectorAll('input, textarea, select')).some(isFieldModified);
+}
+
+/**
+ * Whether the user changed a field since it was rendered, as {@link isModified} tells for the
+ * fields of a container.
+ *
+ * @param field a text field, a check box, a radio button, a text area or a select
+ */
+export function isFieldModified(field: Element): boolean {
+	if (field instanceof HTMLInputElement) {
+		if (field.type === 'checkbox' || field.type === 'radio') {
+			return field.checked !== field.defaultChecked;
 		}
-		if (field instanceof HTMLTextAreaElement) {
-			return field.value !== field.defaultValue;
+		return !['button', 'submit', 'reset', 'image', 'hidden', 'file'].includes(field.type) &&
+			field.value !== field.defaultValue;
+	}
+	if (field instanceof HTMLTextAreaElement) {
+		return field.value !== field.defaultValue;
+	}
+	if (field instanceof HTMLSelectElement) {
+		const options = Array.from(field.options);
+		if (!field.multiple && !options.some((option) => option.defaultSelected)) {
+			// a single select without a default starts on its first option
+			return field.selectedIndex > 0;
 		}
-		if (field instanceof HTMLSelectElement) {
-			const options = Array.from(field.options);
-			if (!field.multiple && !options.some((option) => option.defaultSelected)) {
-				// a single select without a default starts on its first option
-				return field.selectedIndex > 0;
-			}
-			return options.some((option) => option.selected !== option.defaultSelected);
+		return options.some((option) => option.selected !== option.defaultSelected);
+	}
+	return false;
+}
+
+/**
+ * Puts a field back as it was rendered, undoing what the user changed, and tells the page as the
+ * user changing it would, with the events input and change.
+ *
+ * @param field a field {@link isFieldModified} says was changed
+ */
+export function resetField(field: Element): void {
+	if (field instanceof HTMLInputElement) {
+		if (field.type === 'checkbox' || field.type === 'radio') {
+			field.checked = field.defaultChecked;
+		} else {
+			field.value = field.defaultValue;
 		}
-		return false;
-	});
+	} else if (field instanceof HTMLTextAreaElement) {
+		field.value = field.defaultValue;
+	} else if (field instanceof HTMLSelectElement) {
+		const options = Array.from(field.options);
+		if (!field.multiple && !options.some((option) => option.defaultSelected)) {
+			field.selectedIndex = options.length ? 0 : -1;
+		} else {
+			options.forEach((option) => {
+				option.selected = option.defaultSelected;
+			});
+		}
+	} else {
+		return;
+	}
+	field.dispatchEvent(new Event('input', { bubbles: true }));
+	field.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function clamp(value: number, min: number, max: number): number {

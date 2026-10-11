@@ -5,6 +5,9 @@
 
 export { DatePicker, DateTimePicker } from './DatePicker.js';
 export type { DatePickerProps, DateTimePickerProps } from './DatePicker.js';
+export { Desktop, DesktopWindow } from './Desktop.js';
+export type { DesktopHandle, DesktopProps, DesktopWindowProps } from './Desktop.js';
+export type { DesktopTexts, TaskbarPosition, TileLayout, WindowState } from '@antilia/core';
 export { Dropdown } from './Dropdown.js';
 export type { DropdownOption, DropdownProps } from './Dropdown.js';
 export { Scrollable } from './Scrollable.js';

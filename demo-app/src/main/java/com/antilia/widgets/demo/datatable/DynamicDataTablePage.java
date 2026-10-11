@@ -7,48 +7,22 @@ package com.antilia.widgets.demo.datatable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.model.IComponentAssignedModel;
-import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.protocol.ws.api.message.AbortedMessage;
 import org.apache.wicket.protocol.ws.api.message.ClosedMessage;
 import org.apache.wicket.protocol.ws.api.message.ConnectedMessage;
-import org.apache.wicket.request.mapper.parameter.PageParameters;
-import org.apache.wicket.resource.loader.ClassStringResourceLoader;
-import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.antilia.widgets.button.AjaxActionButton;
 import com.antilia.widgets.button.ButtonBehavior.Size;
 import com.antilia.widgets.demo.DemoWebSocketBehavior;
-import com.antilia.widgets.demo.frameworks.ChoicesResource;
-import com.antilia.widgets.demo.frameworks.FrameworkTabs;
-import com.antilia.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable;
-import com.antilia.widgets.dynamicdatatable.CompoundDynamicColumn;
-import com.antilia.widgets.dynamicdatatable.DynamicColumn;
-import com.antilia.widgets.dynamicdatatable.IDynamicColumn;
-import com.antilia.widgets.dynamicdatatable.IHideableColumn;
-import com.antilia.widgets.dynamicdatatable.ISortableDynamicColumn;
 import com.antilia.widgets.dynamicdatatable.IWebSocketLightWeightMessage;
-import com.antilia.widgets.dynamicdatatable.JacksonJsonSerializer;
 import com.antilia.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
-import com.antilia.widgets.dynamicdatatable.ProgressBarColumn;
-import com.antilia.widgets.dynamicdatatable.ResourceDynamicColumn;
-import com.antilia.widgets.dynamicdatatable.RowNumberColumn;
-import com.antilia.widgets.dynamicdatatable.SelectionColumn;
-import com.antilia.widgets.dynamicdatatable.SortableDynamicColumn;
-import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.icon.SvgIcon;
-import com.antilia.widgets.table.IMovableColumn;
-import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
@@ -58,9 +32,6 @@ import com.github.openjson.JSONObject;
 public class DynamicDataTablePage extends DynamicTableExamplePage
 {
 	private static final long serialVersionUID = 1L;
-
-	/** The number of users in the local list of the apps' grids. */
-	private static final int LOCAL_USERS = 200;
 
 	/**
 	 * Constructor.
@@ -93,111 +64,26 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		});
 	}
 
-	/**
-	 * The proportions of the columns: selection, number, actions, id, first and last name, born, address, phones, progress and
-	 * the hidden phones, city and country.
-	 */
 	@Override
-	protected double[] getColumnProportions()
+	protected UsersTablePanel newUsersTable(String id)
 	{
-		return new double[] { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.0, 2.4, 1.3,
-			1.1, 1.1, 1.0, 1.0 };
-	}
-
-	@Override
-	protected BaseDynamicDataTable<User, Long, ?> newTable(String id,
-		UsersProvider provider)
-	{
-		List<IDynamicColumn<User>> columns = new ArrayList<>();
-		columns.add(new SelectionColumn<User>().setId("selection"));
-		columns.add(new RowNumberColumn<User>(Model.of("#")).setId("number"));
-		columns.add(new CompoundDynamicColumn<>(new ResourceModel("actions"), newRowActions())
+		JsonUsersTablePanel users = new JsonUsersTablePanel(id, this)
 		{
 			private static final long serialVersionUID = 1L;
-
-			@Override
-			public boolean isResizable()
-			{
-				return false;
-			}
-		}.setId("actions"));
-		columns.add(new ResourceDynamicColumn<User>(new ResourceModel("id"),
-			DynamicDataTablePage.class, "IdColumn")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public boolean isResizable()
-			{
-				return false;
-			}
-		}.setExportValue(User::getId).setId("id"));
-		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("firstName", "FirstNameColumn", User::getFirstName), "firstName"));
-		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("lastName", "LastNameColumn", User::getLastName), "lastName"));
-		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("bornDate", "BornDateColumn", DynamicTableExamplePage::bornOn),
-			"bornDate"));
-		columns.add(new TemplateColumn("address", "AddressColumn",
-			user -> user.getAddress() + ", " + user.getCity() + ", " +
-				user.getCountryName()));
-		columns.add(new PhonesColumn(new ResourceModel("phones"))
-			.setExportValue(user -> user.getHomePhone() + " / " + user.getCellPhone())
-			.setId("phones"));
-		columns.add(new ProgressColumn());
-		List<IDynamicColumn<User>> hidden = List.of(
-			new ValueColumn("homePhone", "{{homePhone}}", User::getHomePhone),
-			new ValueColumn("cellPhone", "{{cellPhone}}", User::getCellPhone),
-			new ValueColumn("city", "{{city}}", User::getCity),
-			new ValueColumn("country", "{{countryName}}", User::getCountryName));
-		columns.addAll(hidden);
-
-		JsonBasedDynamicDataTable<User, Long> table = new JsonBasedDynamicDataTable<>(id,
-			columns, provider, ROWS_PER_PAGE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected AbstractDynamicToolbar newNavigationToolbar(String id,
-				ToolbarPosition position)
-			{
-				return DynamicDataTablePage.this.newNavigationToolbar(this, id, position);
-			}
 
 			@Override
 			protected void onRowsSent(List<Long> keys)
 			{
 				ProgressSimulator.show(getSession().getId(), getPage().getPageId(), keys);
 			}
-
-			@Override
-			protected void onNotFoundAction(AjaxRequestTarget target, String action, Long key,
-				User user)
-			{
-				onUserNotFound(target);
-			}
-
-			@Override
-			protected void addRowsParameters(PageParameters parameters)
-			{
-				String filter = provider.getFilter();
-				if (filter != null && !filter.isBlank())
-				{
-					parameters.set(UsersRowsResource.FILTER, filter);
-				}
-			}
 		};
-		// the rows can come from the mounted resource too, see the setting "Rows from"
-		table.setRowsResource(UsersRowsResource.REFERENCE);
-		hidden.forEach(column -> table.setColumnVisible(column, false));
-		table.setPushEnabled(true);
-		return table;
+		users.getTable().setPushEnabled(true);
+		return users;
 	}
 
 	private JsonBasedDynamicDataTable<User, Long> getJsonTable()
 	{
-		return (JsonBasedDynamicDataTable<User, Long>)getTable();
+		return ((JsonUsersTablePanel)getUsersTable()).getTable();
 	}
 
 	/**
@@ -257,61 +143,6 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * A column the user can hide and move, reading its template from {@code templateName.html}
-	 * next to this page.
-	 */
-	private static class TemplateColumn extends ResourceDynamicColumn<User>
-		implements
-			IHideableColumn,
-			IMovableColumn
-	{
-		private static final long serialVersionUID = 1L;
-
-		TemplateColumn(String headerKey, String templateName,
-			SerializableFunction<User, ?> exportValue)
-		{
-			super(new ResourceModel(headerKey), DynamicDataTablePage.class, templateName);
-			setId(headerKey);
-			setExportValue(exportValue);
-		}
-	}
-
-	/**
-	 * A column the user can hide and move, showing one value of the user.
-	 */
-	private static class ValueColumn extends DynamicColumn<User>
-		implements
-			IHideableColumn,
-			IMovableColumn
-	{
-		private static final long serialVersionUID = 1L;
-
-		ValueColumn(String headerKey, String template, SerializableFunction<User, ?> exportValue)
-		{
-			super(new ResourceModel(headerKey), template);
-			setId(headerKey);
-			setExportValue(exportValue);
-		}
-	}
-
-	/**
-	 * The progress of the user, a column the user can hide and move.
-	 */
-	private static class ProgressColumn extends ProgressBarColumn<User>
-		implements
-			IHideableColumn,
-			IMovableColumn
-	{
-		private static final long serialVersionUID = 1L;
-
-		ProgressColumn()
-		{
-			super(new ResourceModel("progress"), "progress");
-			setId("progress");
-		}
-	}
-
-	/**
 	 * The edit form and the confirmation of a deletion show in the
 	 * {@link com.antilia.widgets.modal.Modal Modal} the React and Svelte tabs use too.
 	 */
@@ -328,137 +159,12 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 	}
 
 	/**
-	 * @return the columns of the table but its selection column, which the apps' tables have of
-	 *         their own, with their templates; the texts of the table and of the page in the
-	 *         language of the session; the URLs of the users and of the countries; and the
-	 *         license key of the application, which activates the private table in the browser too
+	 * @return the configuration of the apps' grids, made from this table, see
+	 *         {@link JsonTableApps#config(Component, JsonBasedDynamicDataTable)}
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JsonBasedDynamicDataTable<User, Long> table = getJsonTable();
-		JSONArray columns = new JSONArray();
-		for (IDynamicColumn<User> column : table.getColumns())
-		{
-			if ("selection".equals(column.getId()))
-			{
-				continue;
-			}
-			JSONObject json = new JSONObject()
-				.put("id", column.getId() != null ? column.getId() : "column" + columns.length())
-				.put("header", header(column))
-				.put("template", column.getTemplate(table))
-				.put("movable", table.isMovable(column))
-				.put("resizable", column.isResizable())
-				.put("hideable", table.isHideable(column))
-				.put("visible", table.isColumnVisible(column));
-			if (column.getCssClass() != null)
-			{
-				json.put("cssClass", column.getCssClass());
-			}
-			if (column instanceof ISortableDynamicColumn<?, ?> sortable && sortable.isSortable())
-			{
-				json.put("sort", String.valueOf(sortable.getSortProperty()));
-			}
-			columns.put(json);
-		}
-		return new JSONObject()
-			.put("texts", texts())
-			.put("columns", columns)
-			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
-			.put("localUsers", localUsers())
-			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE))
-			.put("rowsPerPage", ROWS_PER_PAGE)
-			.put("pageSizes", new JSONArray(List.of(25, 50, 100, 500)))
-			.put("bodyHeight", new JSONObject()
-				.put("value", DynamicTableOptionsPanel.defaultHeight(BodyHeightUnits.PIXELS))
-				.put("unit", "px"))
-			.put("pushMillis", 3000);
-	}
-
-	/**
-	 * @return the first {@value #LOCAL_USERS} users by first name, the local list of the apps'
-	 *         grids, as JSON rows {@code [{key, number, data}]} as the users resource sends them
-	 */
-	private JSONArray localUsers()
-	{
-		UsersProvider provider = new UsersProvider();
-		List<Map<String, Object>> rows = new ArrayList<>();
-		long number = 1;
-		for (Iterator<? extends User> it = provider.iterator(0, LOCAL_USERS); it.hasNext();)
-		{
-			User user = it.next();
-			Map<String, Object> row = new LinkedHashMap<>();
-			row.put("key", provider.formatKey(user.getId()));
-			row.put("number", number++);
-			row.put("data", user);
-			rows.add(row);
-		}
-		return new JSONArray(JacksonJsonSerializer.INSTANCE.toJson(rows));
-	}
-
-	/**
-	 * @return the header of a column, read as the header component reads it
-	 */
-	private String header(IDynamicColumn<User> column)
-	{
-		IModel<String> header = column.getHeader();
-		if (header instanceof IComponentAssignedModel<String> assigned)
-		{
-			header = assigned.wrapOnAssignment(this);
-		}
-		return header.getObject();
-	}
-
-	private JSONObject texts()
-	{
-		JSONObject texts = FrameworkTabs.texts(this, "filter.placeholder", "newUser", "editUser",
-			"delete", "delete.confirm", "deleted", "saved", "failed");
-		texts.put("filterLabel", getString("filter"));
-		texts.put("added", getString("added"));
-		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));
-		for (String key : new String[] { "firstName", "lastName", "country", "city", "address",
-			"save", "cancel" })
-		{
-			texts.put(key, string(UserEditPanel.class, key));
-		}
-		for (String key : new String[] { "infiniteScroll", "infiniteScroll.off",
-			"infiniteScroll.on", "rowsSource", "rowsSource.local", "rowsSource.RESOURCE",
-			"selection", "selection.NONE", "selection.ONE", "selection.MANY", "selectionCount",
-			"selectionCount.shown", "selectionCount.hidden", "clearSelectionOnNavigation",
-			"clearSelectionOnNavigation.off", "clearSelectionOnNavigation.on", "navigation",
-			"navigation.TOP", "navigation.BOTTOM", "navigation.BOTH", "resize", "resize.NONE",
-			"resize.STRETCH" })
-		{
-			texts.put(key, string(DynamicTableOptionsPanel.class, key));
-		}
-		JSONObject table = new JSONObject()
-			.put("showing", getString("NavigatorLabel", Model.ofMap(Map.of("from", "{0}", "to",
-				"{1}", "of", "{2}"))))
-			.put("first", getString("PagingNavigator.first"))
-			.put("previous", getString("PagingNavigator.previous"))
-			.put("next", getString("PagingNavigator.next"))
-			.put("last", getString("PagingNavigator.last"))
-			.put("page", getString("PagingNavigation.page", Model.ofMap(Map.of("page", "{0}"))))
-			.put("rowsPerPage", getString("DynamicDataTable.rowsPerPage"))
-			.put("columns", getString("DynamicDataTable.chooseColumns"))
-			.put("apply", getString("DynamicDataTable.applyColumns"))
-			.put("selectPage", getString("DynamicDataTable.selectPage"))
-			.put("selectRow", getString("DynamicDataTable.selectRow"))
-			.put("moveColumn", getString("MovableColumnsBehavior.moveColumn"))
-			.put("selectedCount", getString("DynamicDataTable.selectedCount",
-				Model.ofMap(Map.of("count", "{0}"))))
-			.put("clearSelection", getString("DynamicDataTable.clearSelection"))
-			.put("unlicensed", getString("License.placeholder"));
-		return FrameworkTabs.withDropdownTexts(this, texts).put("table", table);
-	}
-
-	/**
-	 * @return a text of the bundles of a class, in the language of the session
-	 */
-	private String string(Class<?> scope, String key)
-	{
-		return new ClassStringResourceLoader(scope).loadStringResource(scope, key, getLocale(),
-			getStyle(), getVariation());
+		return JsonTableApps.config(this, getJsonTable());
 	}
 }

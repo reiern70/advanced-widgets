@@ -8,12 +8,13 @@
  * elements of the pages marked for Svelte.
  */
 
-import { mount, type Component } from 'svelte';
+import { mount, unmount, type Component } from 'svelte';
 
 import { startApps, type Mount } from './apps.js';
 import AutocompleteDemo from './svelte/AutocompleteDemo.svelte';
 import ButtonsDemo from './svelte/ButtonsDemo.svelte';
 import DatePickerDemo from './svelte/DatePickerDemo.svelte';
+import DesktopDemo from './svelte/DesktopDemo.svelte';
 import DropdownDemo from './svelte/DropdownDemo.svelte';
 import JsonListDemo from './svelte/JsonListDemo.svelte';
 import JsonTableDemo from './svelte/JsonTableDemo.svelte';
@@ -31,7 +32,10 @@ import TreeGridDemo from './svelte/TreeGridDemo.svelte';
  */
 function app<C extends object>(App: Component<{ config: C }>): Mount {
 	return (element, config: C) => {
-		mount(App, { target: element, props: { config } });
+		const app = mount(App, { target: element, props: { config } });
+		return () => {
+			void unmount(app);
+		};
 	};
 }
 
@@ -41,6 +45,7 @@ startApps('svelte', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),
 	jsonTable: app(JsonTableDemo),

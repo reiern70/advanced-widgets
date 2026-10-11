@@ -75,11 +75,33 @@ public class FrameworkTabs extends Panel
 	}
 
 	/**
-	 * @return the element the app of a framework renders the demo into
+	 * @return the element the app of a framework renders the demo into, once its tab is shown
 	 */
 	static WebMarkupContainer newApp(String framework, String demo, IModel<JSONObject> config)
 	{
-		WebMarkupContainer app = new WebMarkupContainer(framework);
+		return newApp(framework, framework, demo, config);
+	}
+
+	/**
+	 * An element an app renders into, anywhere in a page that renders the bundles of the apps with
+	 * {@link #renderApps(IHeaderResponse)}. The app mounts the first time the element gets the
+	 * event framework-app:mount, or as soon as its bundle runs when the element is marked
+	 * data-mount.
+	 *
+	 * @param id
+	 *            the id of the component
+	 * @param framework
+	 *            the framework of the app, one of {@link #FRAMEWORKS}
+	 * @param demo
+	 *            the name of the demo, the key of its apps in the bundles
+	 * @param config
+	 *            the configuration the app gets, read when the page renders
+	 * @return the element the app renders into
+	 */
+	public static WebMarkupContainer newApp(String id, String framework, String demo,
+		IModel<JSONObject> config)
+	{
+		WebMarkupContainer app = new WebMarkupContainer(id);
 		app.add(AttributeModifier.replace("data-framework-app", framework));
 		app.add(AttributeModifier.replace("data-demo", demo));
 		// the key of the demo, which the apps activate: the demo shows every private component
@@ -147,7 +169,7 @@ public class FrameworkTabs extends Panel
 	/**
 	 * Renders the bundles of the apps, deferred.
 	 */
-	static void renderApps(IHeaderResponse response)
+	public static void renderApps(IHeaderResponse response)
 	{
 		response.render(JavaScriptHeaderItem.forReference(REACT).setDefer(true));
 		response.render(JavaScriptHeaderItem.forReference(SVELTE).setDefer(true));

@@ -88,6 +88,10 @@ export interface JsonTableConfig {
 	bodyHeight: { value: number; unit: string };
 	/** How often the progress of some users shown advances, in milliseconds. */
 	pushMillis: number;
+	/** Whether the grid comes without the settings on top, in a window of the desktop demo. */
+	compact?: boolean;
+	/** Whether the grid takes the width of its parent, as by default, or that of its columns. */
+	adjustToParent?: boolean;
 }
 
 /** The settings of the grid, as the drop-downs on top choose them. */

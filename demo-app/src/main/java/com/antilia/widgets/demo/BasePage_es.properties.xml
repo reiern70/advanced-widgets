@@ -58,6 +58,8 @@
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas en los colores del tema, iguales en todos los navegadores.</entry>
 	<entry key="demo.splitPanel">Panel dividido</entry>
 	<entry key="demo.splitPanel.description">Dos paneles uno al lado del otro o uno encima del otro, que se reparten el espacio según el usuario arrastra el divisor entre ellos o lo mueve con el teclado.</entry>
+	<entry key="demo.desktop">Escritorio</entry>
+	<entry key="demo.desktop.description">Ventanas flotantes que no son modales, muchas a la vez, con una barra de tareas: se mueven, se pliegan, cambian de tamaño, se minimizan, se maximizan y se organizan en mosaico, como en el escritorio de un sistema operativo.</entry>
 	<entry key="demo.modalDialog">Diálogo modal</entry>
 	<entry key="demo.modalDialog.description">Añadir, editar y eliminar en un diálogo modal que retiene el foco, igual en Wicket, React y Svelte.</entry>
 	<entry key="demo.themeEditor">Editor de temas</entry>

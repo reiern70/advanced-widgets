@@ -14,8 +14,17 @@
 
 import { activate } from '@antilia/core';
 
-/** Renders the app of a demo into an element, with the configuration the page gave. */
-export type Mount = (element: HTMLElement, config: never) => void;
+/**
+ * Renders the app of a demo into an element, with the configuration the page gave; returns what
+ * takes it away again, if anything.
+ */
+export type Mount = (element: HTMLElement, config: never) => (() => void) | void;
+
+type Subscriber = (event: unknown, element: unknown) => void;
+
+interface WicketEvents {
+	subscribe(topic: string, subscriber: Subscriber): void;
+}
 
 const MOUNT_EVENT = 'framework-app:mount';
 
@@ -30,6 +39,7 @@ let activated: string | undefined = undefined;
  */
 export function startApps(framework: string, apps: Record<string, Mount>): void {
 	const mounted = new WeakSet<HTMLElement>();
+	const unmounts = new Map<HTMLElement, () => void>();
 	const mount = (element: HTMLElement) => {
 		if (mounted.has(element) || element.dataset.frameworkApp !== framework) {
 			return;
@@ -46,13 +56,36 @@ export function startApps(framework: string, apps: Record<string, Mount>): void 
 			activated = config.licenseKey;
 			activate(config.licenseKey);
 		}
-		app(element, config as never);
+		const unmount = app(element, config as never);
+		if (unmount) {
+			unmounts.set(element, unmount);
+		}
 	};
-	document.querySelectorAll<HTMLElement>(`[data-framework-app="${framework}"][data-mount]`)
-		.forEach(mount);
+	const selector = `[data-framework-app="${framework}"][data-mount]`;
+	document.querySelectorAll<HTMLElement>(selector).forEach(mount);
 	document.addEventListener(MOUNT_EVENT, (event) => {
 		if (event.target instanceof HTMLElement) {
 			mount(event.target);
+		}
+	});
+	// an update of a Wicket page by Ajax renders the elements of apps again, in the windows of a
+	// desktop for example: the apps of the elements it adds mount, those of the elements it removes
+	// go
+	const events = (window as { Wicket?: { Event?: WicketEvents } }).Wicket?.Event;
+	events?.subscribe('/dom/node/added', (_event, added) => {
+		if (added instanceof HTMLElement) {
+			[added, ...Array.from(added.querySelectorAll<HTMLElement>(selector))]
+				.filter((element) => element.matches(selector)).forEach(mount);
+		}
+	});
+	events?.subscribe('/dom/node/removing', (_event, removing) => {
+		if (removing instanceof Element) {
+			unmounts.forEach((unmount, element) => {
+				if (removing.contains(element)) {
+					unmounts.delete(element);
+					unmount();
+				}
+			});
 		}
 	});
 }

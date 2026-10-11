@@ -129,7 +129,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 	return (
 		<>
 			<Feedback messages={messages} />
-			<div className="ant-dataview-options">
+			{!config.compact && <div className="ant-dataview-options">
 				{settingDefs(texts).map((setting) => (
 					<div className="ant-dataview-option" key={setting.key}>
 						<span className="ant-dataview-option-title">
@@ -142,7 +142,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 							remove={texts.remove} />
 					</div>
 				))}
-			</div>
+			</div>}
 			<div>
 				<DataTable key={settings.rowsFrom} ref={table} columns={config.columns}
 					{...(fromResource ? { loadRows: remote.loadRows, subscribe } :
@@ -153,7 +153,8 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 					clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
 					onAction={action} filter={filter}
 					resizableColumns={settings.resizable ? 'stretch' : false}
-					bodyHeight={config.bodyHeight} adjustToParent texts={texts.table}
+					bodyHeight={config.bodyHeight} adjustToParent={config.adjustToParent ?? true}
+					texts={texts.table}
 					toolbar={
 						<label className="user-filter">
 							{texts.filterLabel}{' '}

@@ -5,41 +5,18 @@
   All rights reserved.
 -->
 <properties>
-	<entry key="phones">Teléfonos</entry>
 	<entry key="id">ID</entry>
 	<entry key="firstName">Nombre</entry>
 	<entry key="lastName">Apellido</entry>
-	<entry key="actions">Acciones</entry>
-	<entry key="download">Descargar como jCard</entry>
-	<entry key="progress">Progreso</entry>
 	<entry key="bornDate">Nacimiento</entry>
 	<entry key="aboutThisExample">Acerca de este ejemplo</entry>
-	<entry key="filter">Filtro</entry>
-	<entry key="filter.placeholder">nombre o apellido</entry>
-	<entry key="edit">Editar</entry>
-	<entry key="delete">Borrar</entry>
-	<entry key="delete.confirm">¿Borrar a ${firstName} ${lastName}?</entry>
-	<entry key="discard">¿Descartar los cambios?</entry>
-	<entry key="address">Dirección</entry>
-	<entry key="editUser">Editar a ${firstName} ${lastName}</entry>
-	<entry key="newUser">Usuario nuevo</entry>
-	<entry key="slowAction">Una acción lenta, que tarda dos segundos</entry>
-	<entry key="slowAction.done">La acción lenta ha terminado.</entry>
 	<entry key="homePhone">Teléfono fijo</entry>
 	<entry key="cellPhone">Móvil</entry>
-	<entry key="city">Ciudad</entry>
-	<entry key="country">País</entry>
 	<entry key="pushRows">Enviar las filas de esta página en orden inverso por WebSockets</entry>
-	<entry key="phones.home">Fijo:</entry>
-	<entry key="phones.cell">Móvil:</entry>
-	<entry key="userGone">Ese usuario ya no existe.</entry>
-	<entry key="deleted">{0} {1} borrado.</entry>
 	<entry key="pushed">Las filas de esta página se enviaron en orden inverso por WebSockets.</entry>
 	<entry key="noWebSocket">La página no tiene ninguna conexión WebSocket abierta.</entry>
 	<entry key="pushFailed">El envío a la tabla por WebSockets falló: {0}</entry>
 	<entry key="selectedUser">Usuario seleccionado</entry>
 	<entry key="resetColumns">Restablecer las columnas</entry>
-	<entry key="added">{0} {1} añadido.</entry>
-	<entry key="saved">{0} {1} guardado.</entry>
-	<entry key="failed">El recurso de usuarios falló: {0}</entry>
+	<entry key="discard">¿Descartar los cambios?</entry>
 </properties>

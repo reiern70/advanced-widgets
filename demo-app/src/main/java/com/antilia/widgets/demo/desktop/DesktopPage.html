@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="desktop-demo">
+	<form wicket:id="form" class="desktop-demo__options">
+		<label class="desktop-demo__option"><wicket:message key="taskbar"/> <select wicket:id="taskbar"></select></label>
+		<button wicket:id="openKeyboard">[open the keyboard window]</button>
+	</form>
+	<div wicket:id="desktop" class="desktop-demo__desktop"></div>
+	<p wicket:id="states" class="desktop-demo__states">[states]</p>
+</div>
+
+<wicket:fragment wicket:id="appFragment"><div wicket:id="app"></div></wicket:fragment>
+
+<wicket:fragment wicket:id="keyboardFragment">
+<dl class="desktop-demo__keys">
+	<dt><kbd>F11</kbd></dt><dd><wicket:message key="key.f11"/></dd>
+	<dt><kbd>Ctrl</kbd>+<kbd>F6</kbd></dt><dd><wicket:message key="key.next"/></dd>
+	<dt><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F6</kbd></dt><dd><wicket:message key="key.previous"/></dd>
+	<dt><wicket:message key="key.doubleClick"/></dt><dd><wicket:message key="key.fold"/></dd>
+	<dt><wicket:message key="key.taskbar"/></dt><dd><wicket:message key="key.taskbarHelp"/></dd>
+	<dt><wicket:message key="key.menu"/></dt><dd><wicket:message key="key.menuHelp"/></dd>
+	<dt><wicket:message key="key.close"/></dt><dd><wicket:message key="key.closeHelp"/></dd>
+	<dt><wicket:message key="key.dragTaskbar"/></dt><dd><wicket:message key="key.dragTaskbarHelp"/></dd>
+	<dt><kbd>Esc</kbd></dt><dd><wicket:message key="key.escape"/></dd>
+</dl>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

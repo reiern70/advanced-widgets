@@ -87,6 +87,16 @@ public abstract class DemoPage extends BasePage
 		return new JSONObject();
 	}
 
+	/**
+	 * @param page
+	 *            the page of another demo, made only to read its configuration
+	 * @return the configuration of the React and Svelte apps of the demo of the page
+	 */
+	protected static JSONObject getFrameworkConfig(DemoPage page)
+	{
+		return page.getFrameworkConfig();
+	}
+
 	@Override
 	protected String getPageTitle()
 	{

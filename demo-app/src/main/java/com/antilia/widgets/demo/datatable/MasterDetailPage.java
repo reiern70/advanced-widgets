@@ -164,7 +164,7 @@ public class MasterDetailPage extends DemoPage
 		columns.add(new LambdaColumn<>(new ResourceModel("lastName"), "lastName",
 			User::getLastName));
 		columns.add(new LambdaColumn<>(new ResourceModel("bornDate"),
-			user -> Objects.toString(DynamicTableExamplePage.bornOn(user), "")));
+			user -> Objects.toString(UsersTablePanel.bornOn(user), "")));
 		columns.add(new LambdaColumn<>(new ResourceModel("city"), User::getCity));
 		columns.add(new LambdaColumn<>(new ResourceModel("phones"),
 			user -> user.getHomePhone() + " / " + user.getCellPhone()));
