@@ -23,7 +23,6 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -79,10 +78,6 @@ public class DatePickerPage extends DemoPage
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
-		FeedbackPanel feedback = new FeedbackPanel("feedback");
-		feedback.setOutputMarkupId(true);
-		themed.add(feedback);
-
 		Form<Void> form = new Form<>("form")
 		{
 			private static final long serialVersionUID = 1L;
@@ -103,17 +98,17 @@ public class DatePickerPage extends DemoPage
 
 		LocalDate today = LocalDate.now();
 		form.add(reportChanges(new DatePicker("born", new PropertyModel<>(this, "born"))
-			.setMaximum(today), "born", choices, feedback));
+			.setMaximum(today), "born", choices));
 		form.add(reportChanges(new DatePicker("start", new PropertyModel<>(this, "start"))
 			.setMinimum(today)
-			.setMaximum(today.plusYears(1)), "start", choices, feedback));
+			.setMaximum(today.plusYears(1)), "start", choices));
 		form.add(reportChanges(new DateTimePicker("appointment",
 			new PropertyModel<>(this, "appointment"))
 			.setMinuteStep(15)
 			.setMinimum(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)), "appointment",
-			choices, feedback));
+			choices));
 		form.add(reportChanges(new DateTimePicker("departure",
-			new PropertyModel<>(this, "departure")), "departure", choices, feedback));
+			new PropertyModel<>(this, "departure")), "departure", choices));
 		form.add(new DatePicker("disabled", new PropertyModel<>(this, "disabled"))
 			.setEnabled(false));
 
@@ -137,7 +132,7 @@ public class DatePickerPage extends DemoPage
 	}
 
 	private static <C extends FormComponent<?>> C reportChanges(C picker, String label,
-		Label choices, FeedbackPanel feedback)
+		Label choices)
 	{
 		picker.setLabel(new ResourceModel(label));
 		picker.add(new AjaxFormComponentUpdatingBehavior("change")
@@ -147,13 +142,7 @@ public class DatePickerPage extends DemoPage
 			@Override
 			protected void onUpdate(AjaxRequestTarget target)
 			{
-				target.add(choices, feedback);
-			}
-
-			@Override
-			protected void onError(AjaxRequestTarget target, RuntimeException e)
-			{
-				target.add(feedback);
+				target.add(choices);
 			}
 		});
 		return picker;

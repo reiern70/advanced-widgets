@@ -18,7 +18,6 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -92,8 +91,6 @@ public class JsonListPage extends DemoPage
 	{
 		provider.setSort(sort, SortOrder.ASCENDING);
 
-		add(new FeedbackPanel("feedback").setOutputMarkupId(true));
-
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
@@ -134,7 +131,6 @@ public class JsonListPage extends DemoPage
 				User user)
 			{
 				warn(getString("userGone"));
-				target.add(JsonListPage.this.get("feedback"));
 				refresh(target);
 			}
 		};
@@ -298,7 +294,6 @@ public class JsonListPage extends DemoPage
 				{
 					JsonListPage.this.info(JsonListPage.this.message("added",
 						saved.getFirstName(), saved.getLastName()));
-					target.add(JsonListPage.this.get("feedback"));
 					list.refresh(target);
 				}
 				else
@@ -345,7 +340,6 @@ public class JsonListPage extends DemoPage
 						confirmed.add(details, getThemed().get("noneSelected"));
 					}
 				}
-				confirmed.add(get("feedback"));
 				list.refresh(confirmed);
 			}));
 	}

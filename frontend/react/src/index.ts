@@ -13,6 +13,11 @@ export { Autocomplete } from './Autocomplete.js';
 export type { AutocompleteProps } from './Autocomplete.js';
 export { InfiniteList } from './InfiniteList.js';
 export type { InfiniteListHandle, InfiniteListProps } from './InfiniteList.js';
+export { Notifications, NotificationsProvider, useNotifications } from './Notifications.js';
+export type { NotificationsHandle, NotificationsProps,
+	NotificationsProviderProps } from './Notifications.js';
+export type { NotificationCloseReason, NotificationHandle, NotificationOptions, NotificationPosition,
+	NotificationType } from '@antilia/core';
 export { Palette } from './Palette.js';
 export type { PaletteProps } from './Palette.js';
 export type { PaletteChoice, PaletteTexts } from '@antilia/core';

@@ -16,7 +16,6 @@ import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.image.NonCachingImage;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.link.Link;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -148,7 +147,6 @@ public class SignInPage extends BasePage
 		captcha.add(new RequiredTextField<>("answer", answer)
 			.setLabel(new ResourceModel("captcha")));
 
-		add(new FeedbackPanel("feedback"));
 		add(new BookmarkablePageLink<>("registerInstead", RegisterPage.class));
 	}
 

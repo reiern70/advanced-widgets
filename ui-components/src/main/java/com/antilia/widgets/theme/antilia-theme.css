@@ -24,6 +24,10 @@
  *   --antilia-theme-veil             the dimming over content blocked by a veil or an overlay
  *   --antilia-theme-color-scheme     the color scheme of form controls, such as text fields and
  *                                   check boxes, so they match the theme whatever the page uses
+ *   --antilia-theme-success          the color of what went well, such as a notification of success
+ *   --antilia-theme-error            the color of what went wrong, such as a notification of error
+ *   --antilia-theme-warning          the color of what asks for attention, such as a warning
+ *   --antilia-theme-info             the color of information, such as a notification of information
  */
 .antilia-theme-default {
 	--antilia-theme-primary: #c2410c;
@@ -43,6 +47,10 @@
 	--antilia-theme-track: #ffedd5;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #c53030;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #2b6cb0;
 }
 
 .antilia-theme-blue {
@@ -63,6 +71,10 @@
 	--antilia-theme-track: #e3f2fd;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #ef6c00;
+	--antilia-theme-info: #1976d2;
 }
 
 .antilia-theme-red {
@@ -83,6 +95,10 @@
 	--antilia-theme-track: #fdecea;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #b71c1c;
+	--antilia-theme-warning: #ef6c00;
+	--antilia-theme-info: #1565c0;
 }
 
 .antilia-theme-grey {
@@ -103,6 +119,10 @@
 	--antilia-theme-track: #eceff1;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #4c7a4f;
+	--antilia-theme-error: #b23c3c;
+	--antilia-theme-warning: #c27c0e;
+	--antilia-theme-info: #4a6fa5;
 }
 
 .antilia-theme-green {
@@ -123,6 +143,10 @@
 	--antilia-theme-track: #e8f5e9;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #f57c00;
+	--antilia-theme-info: #0277bd;
 }
 
 .antilia-theme-navy {
@@ -143,6 +167,10 @@
 	--antilia-theme-track: #eef1f4;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #c53030;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #1f5fa8;
 }
 
 .antilia-theme-light-blue {
@@ -163,6 +191,10 @@
 	--antilia-theme-track: #e6f2fb;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #43a047;
+	--antilia-theme-error: #e53935;
+	--antilia-theme-warning: #fb8c00;
+	--antilia-theme-info: #2f74ad;
 }
 
 .antilia-theme-magenta {
@@ -183,6 +215,10 @@
 	--antilia-theme-track: #fae8ff;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #1d4ed8;
 }
 
 .antilia-theme-rose {
@@ -203,6 +239,10 @@
 	--antilia-theme-track: #fde4ea;
 	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
 	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #b91c1c;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #2b6cb0;
 }
 
 .antilia-theme-dark {
@@ -223,6 +263,10 @@
 	--antilia-theme-track: #333d4a;
 	--antilia-theme-veil: rgba(10, 14, 20, 0.6);
 	--antilia-theme-color-scheme: dark;
+	--antilia-theme-success: #51cf66;
+	--antilia-theme-error: #ff6b6b;
+	--antilia-theme-warning: #fcc419;
+	--antilia-theme-info: #7cb7ff;
 }
 
 /* inside a theme: the modal dialog of wicket-extensions and its optional header, body and footer */

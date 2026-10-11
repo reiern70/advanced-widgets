@@ -4,24 +4,16 @@
  */
 package com.antilia.widgets.demo.datatable;
 
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
-
 import com.antilia.widgets.demo.DemoPage;
 
 /**
- * A demo page working on the users: keeps the selected user and shows the feedback messages
- * above the demo.
+ * A demo page working on the users: keeps the selected user.
  */
 public abstract class UsersPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
 
 	private User selected;
-
-	protected UsersPage()
-	{
-		add(new FeedbackPanel("feedback"));
-	}
 
 	/**
 	 * @return the selected user, {@code null} if there is none

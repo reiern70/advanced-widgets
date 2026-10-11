@@ -19,6 +19,7 @@ import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
 import { ModalDemo } from './react/ModalDemo.js';
+import { NotificationsDemo } from './react/NotificationsDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
@@ -46,5 +47,6 @@ startApps('react', {
 	treeGrid: app(TreeGridDemo),
 	progressBar: app(ProgressDemo),
 	scrollbar: app(ScrollbarDemo),
-	modalDialog: app(ModalDemo)
+	modalDialog: app(ModalDemo),
+	notifications: app(NotificationsDemo)
 });

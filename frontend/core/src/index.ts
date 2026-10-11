@@ -42,6 +42,10 @@ export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteL
 export { CLOSE_ATTRIBUTE, focusableIn, isModified, MODAL_CLASSES, MODAL_SIZES, MODAL_THEME_CLASS, ModalDialog,
 	modalSizeClass } from './modal.js';
 export type { ModalOptions, ModalSize } from './modal.js';
+export { NOTIFICATION_CLASSES, NOTIFICATION_ICONS, NOTIFICATION_LEAVE_MS, NOTIFICATION_POSITIONS,
+	NOTIFICATION_TIMEOUT_PROPERTY, NOTIFICATION_TYPES, Notifications } from './notifications.js';
+export type { NotificationCloseReason, NotificationHandle, NotificationOptions, NotificationPosition,
+	NotificationsOptions, NotificationType } from './notifications.js';
 export { parseSplitSize, SPLIT_FIRST_MAX_PROPERTY, SPLIT_FIRST_MIN_PROPERTY, SPLIT_FIRST_PROPERTY,
 	SPLIT_FIRST_SIZE_PROPERTY, SPLIT_SECOND_MIN_PROPERTY, SPLIT_SECOND_PROPERTY, SplitPanel,
 	splitPanel } from './split-panel.js';

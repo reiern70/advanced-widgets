@@ -19,10 +19,10 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+split panel, the notifications, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `ProgressBar`, `Button`, `DataTable`,
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Notifications`, `ProgressBar`, `Button`, `DataTable`,
 `Tree` and `TreeGrid`; the core's `dropdown`, `palette`, `datePicker`, `scrollbar` and `splitPanel`
 also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
@@ -61,6 +61,30 @@ user's preferences. The core works on markup with both panes and the divider, wh
 and Wicket all render, and sets the sizes as CSS custom properties through the CSSOM, so it needs
 no inline style. Split panels go in each other's panes.
 
+The notifications (`notifications.ts`, built as `antilia-notifications.js` for Wicket's
+`Notifications`) show short messages as toasts, stacked in a corner of the window or in the middle
+of its top or bottom edge (`position`, `top-right` by default, or each notification's own). Each
+has a header, with the icon of its type, a `title` and a button closing it (unless `closable` is
+false), and a `body`, a text, markup with `html: true`, or a node of the page's own. It stays until
+the user closes it, with a `timeout` of 0, or goes after its `timeout` in milliseconds (5000 by
+default; an error's is `errorTimeout`, 0 by default, so errors stay until closed), which a bar along
+its bottom counts down; the countdown waits while the pointer is over the notification
+(`pauseOnHover`) or the focus in it, and Escape closes the one that has the focus. The `type` is
+`success`, `error`, `warning` or `info`, each with its icon and the color of the theme
+(`--antilia-theme-success`, `-error`, `-warning`, `-info`, which every theme sets) on a header in
+the theme's primary color, as collapsible panels have, or one of the
+page's own, colored by the class `antilia-notification-<type>` setting `--antilia-notification-color` and with
+the `icon` it is given, the path of an SVG. A stack shows `max` notifications (5), the oldest going
+first. Errors and warnings are alerts, the others status messages. The core works on an element the
+framework renders empty, adding a stack for each position into it, so the notifications are in its
+theme; the timeout is a custom property set through the CSSOM. `show()` returns a handle that
+closes the notification; `onClose` tells why it closed. React has `Notifications`, whose ref
+shows them, and `NotificationsProvider` with `useNotifications()`; Svelte's `Notifications`,
+bound with `bind:this`, has `show()` and `closeAll()`. In Wicket, `show(Notification)` shows one
+via Ajax, or when the page renders (`setEscapeBody(false)` for a body of markup), and the feedback
+messages of the page become notifications too, except those a `FeedbackPanel` rendering in the
+request shows. Every page of the demo has them, in its base page.
+
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
 the children of a folder the first time it is expanded. Their style sheet, `tree.css`, built as
@@ -91,7 +115,7 @@ Maven builds everything: `ui-components` installs Node and npm into `frontend/no
 `demo-app` runs `npm run build:demo`, which builds `react-demo.js` and `svelte-demo.js` into
 `demo/dist`, a resource directory of `demo-app`. Each holds an app of every demo, keyed by the
 demo's name (`dropdown`, `autocomplete`, `palette`, `datePicker`, `jsonList`, `jsonTable`, `tree`, `treeGrid`,
-`scrollbar`, `splitPanel`, `progressBar`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
+`scrollbar`, `splitPanel`, `progressBar`, `notifications`, `buttons`, `modalDialog`). A demo page shows them in its Wicket, React and
 Svelte tabs (`FrameworkTabs`): the element an app renders into carries the demo's name and its
 configuration as JSON, texts in the session's language, options, initial values and the URLs of
 the resources the application mounts (`/api/choices`, `/api/users`); the app is mounted the first

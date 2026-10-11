@@ -42,6 +42,8 @@
 	<entry key="demo.masterDetail.description">The countries of the users and the users of the one you choose, in two tables.</entry>
 	<entry key="demo.progressBar">Progress Bar</entry>
 	<entry key="demo.progressBar.description">Known and unknown progress, in any of the themes.</entry>
+	<entry key="demo.notifications">Notifications</entry>
+	<entry key="demo.notifications.description">Short messages in a corner of the window, of four types or the page's own, that stay until closed or go after a timeout; the feedback messages of the page become ones too.</entry>
 	<entry key="demo.dropdown">Dropdown</entry>
 	<entry key="demo.dropdown.description">Single and multiple choices opened, filtered and chosen in the browser.</entry>
 	<entry key="demo.autocomplete">Autocomplete</entry>

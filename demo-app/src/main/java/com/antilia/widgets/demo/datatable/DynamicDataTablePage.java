@@ -254,7 +254,6 @@ public class DynamicDataTablePage extends DynamicTableExamplePage
 		{
 			error(message("pushFailed", e.getMessage()));
 		}
-		target.add(get("feedback"));
 	}
 
 	/**

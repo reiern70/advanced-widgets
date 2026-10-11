@@ -1,0 +1,248 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The notifications of antilia-notifications.js: stacks fixed to a corner of the window, or to the
+ * middle of its top or bottom edge, of notifications in the colors of the theme they are in, and
+ * in neutral colors outside one. In a theme the header is in its primary color, as the headers
+ * of collapsible panels are. A notification's type gives it its color, in
+ * --antilia-notification-color: the icon, on a round badge, the edge on the left and the countdown
+ * are in it, and outside a theme the header is tinted with it. A type of the page's own sets the
+ * color in its class:
+ *
+ *   .antilia-notification-note { --antilia-notification-color: #7c3aed; }
+ *
+ * The colors of the four types are those of the theme, --antilia-theme-success, -error, -warning
+ * and -info, unless the page sets --antilia-notification-success, -error, -warning or -info on an
+ * element around the notifications; outside a theme they are neutral ones. A type of the page's
+ * own may take another color in a theme, such as .antilia-theme-dark .antilia-notification-note.
+ *
+ * The countdown takes the timeout the script sets in --antilia-notification-timeout, and waits
+ * while the notification has the class antilia-notification-paused.
+ */
+.antilia-notifications-stack {
+	position: fixed;
+	z-index: 2000;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6em;
+	box-sizing: border-box;
+	width: min(24em, calc(100vw - 2em));
+	max-height: calc(100vh - 2em);
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.antilia-notifications-stack-top-left,
+.antilia-notifications-stack-top-center,
+.antilia-notifications-stack-top-right {
+	top: 1em;
+}
+
+.antilia-notifications-stack-bottom-left,
+.antilia-notifications-stack-bottom-center,
+.antilia-notifications-stack-bottom-right {
+	bottom: 1em;
+}
+
+.antilia-notifications-stack-top-left,
+.antilia-notifications-stack-bottom-left {
+	left: 1em;
+}
+
+.antilia-notifications-stack-top-right,
+.antilia-notifications-stack-bottom-right {
+	right: 1em;
+}
+
+.antilia-notifications-stack-top-center,
+.antilia-notifications-stack-bottom-center {
+	left: 50%;
+	translate: -50% 0;
+}
+
+/* without specificity, so that the class of any type, the page's own too, gives the color */
+:where(.antilia-notification) {
+	--antilia-notification-color: var(--antilia-notification-info,
+		var(--antilia-theme-info, #1c7ed6));
+}
+
+.antilia-notification {
+	position: relative;
+	box-sizing: border-box;
+	overflow: hidden;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-left: 4px solid var(--antilia-notification-color);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	color-scheme: var(--antilia-theme-color-scheme, light);
+	box-shadow: 0 0.4em 1.2em rgba(0, 0, 0, 0.18);
+	font-size: 0.95em;
+	line-height: 1.4;
+	pointer-events: auto;
+	animation: antilia-notification-in 0.2s ease-out;
+}
+
+.antilia-notification-success {
+	--antilia-notification-color: var(--antilia-notification-success,
+		var(--antilia-theme-success, #2f9e44));
+}
+
+.antilia-notification-error {
+	--antilia-notification-color: var(--antilia-notification-error,
+		var(--antilia-theme-error, #e03131));
+}
+
+.antilia-notification-warning {
+	--antilia-notification-color: var(--antilia-notification-warning,
+		var(--antilia-theme-warning, #e8890c));
+}
+
+.antilia-notification-info {
+	--antilia-notification-color: var(--antilia-notification-info,
+		var(--antilia-theme-info, #1c7ed6));
+}
+
+.antilia-notification-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	min-height: 2.2em;
+	padding: 0.35em 0.4em 0.35em 0.75em;
+	background: var(--antilia-theme-primary, color-mix(in srgb, var(--antilia-notification-color)
+		14%, #ffffff));
+	color: var(--antilia-theme-on-primary, inherit);
+	font-weight: 600;
+}
+
+.antilia-notification-icon {
+	flex: 0 0 auto;
+	box-sizing: content-box;
+	width: 1.25em;
+	height: 1.25em;
+	padding: 0.15em;
+	border-radius: 50%;
+	background: var(--antilia-theme-surface, #ffffff);
+	fill: var(--antilia-notification-color);
+}
+
+.antilia-notification-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.antilia-notification-close {
+	flex: 0 0 auto;
+	width: 1.75em;
+	height: 1.75em;
+	margin-left: auto;
+	padding: 0;
+	border: 0;
+	border-radius: 0.3em;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 1.2em;
+	line-height: 1;
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.antilia-notification-close:hover,
+.antilia-notification-close:focus-visible {
+	background: color-mix(in srgb, currentColor 20%, transparent);
+	opacity: 1;
+}
+
+.antilia-notification-close:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #1c7ed6);
+	outline-offset: 1px;
+}
+
+.antilia-notification-body {
+	padding: 0.6em 0.9em 0.75em 0.75em;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+/* the countdown: a bar along the bottom that shrinks to nothing as the timeout runs out */
+.antilia-notification-countdown {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	height: 3px;
+	background: var(--antilia-notification-color);
+	opacity: 0.75;
+	transform-origin: left center;
+	animation: antilia-notification-countdown var(--antilia-notification-timeout, 5s) linear forwards;
+}
+
+.antilia-notification-paused .antilia-notification-countdown {
+	animation-play-state: paused;
+}
+
+.antilia-notification-leaving {
+	animation: antilia-notification-out 0.2s ease-in forwards;
+	pointer-events: none;
+}
+
+@keyframes antilia-notification-in {
+	from {
+		opacity: 0;
+		transform: translateY(-0.6em);
+	}
+}
+
+.antilia-notifications-stack-bottom-left > .antilia-notification,
+.antilia-notifications-stack-bottom-center > .antilia-notification,
+.antilia-notifications-stack-bottom-right > .antilia-notification {
+	animation-name: antilia-notification-in-bottom;
+}
+
+.antilia-notifications-stack > .antilia-notification.antilia-notification-leaving {
+	animation-name: antilia-notification-out;
+}
+
+@keyframes antilia-notification-in-bottom {
+	from {
+		opacity: 0;
+		transform: translateY(0.6em);
+	}
+}
+
+@keyframes antilia-notification-out {
+	to {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}
+
+@keyframes antilia-notification-countdown {
+	from {
+		transform: scaleX(1);
+	}
+	to {
+		transform: scaleX(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-notification,
+	.antilia-notifications-stack > .antilia-notification.antilia-notification-leaving {
+		animation: none;
+	}
+
+	.antilia-notification-leaving {
+		opacity: 0;
+	}
+}

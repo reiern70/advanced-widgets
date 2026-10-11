@@ -24,6 +24,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.antilia.widgets.demo.JettyTestCase;
 import com.antilia.widgets.demo.SeleniumBrowser;
+import com.antilia.widgets.demo.Toasts;
 
 /**
  * Drives {@link PalettePage} in Chrome and in Firefox, in deployment mode, so through the
@@ -107,8 +108,8 @@ class PaletteBrowserTest extends JettyTestCase
 		wait.until(d -> choices().endsWith("columns: City, Email, Country, Name."));
 
 		driver.findElement(By.cssSelector(".palette-demo__send")).click();
-		wait.until(d -> d.findElement(By.cssSelector(".feedbackPanel")).getText()
-			.equals("Sent: Skills: Java, Apache Wicket; columns: City, Email, Country, Name."));
+		wait.until(d -> Toasts.latest(d).equals(
+			"Sent: Skills: Java, Apache Wicket; columns: City, Email, Country, Name."));
 		assertEquals("City\nEmail\nCountry\nName", Palettes.selected(palette("columns")),
 			"the order the form posted");
 	}

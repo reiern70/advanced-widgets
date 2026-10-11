@@ -34,6 +34,7 @@ import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dropdown.DropdownBehavior;
+import com.antilia.widgets.notification.Notifications;
 import com.antilia.widgets.theme.Theme;
 import com.antilia.widgets.theme.ThemeBehavior;
 import com.antilia.widgets.theme.ThemeChoice;
@@ -42,7 +43,8 @@ import com.antilia.widgets.theme.ThemeChoice;
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
  * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
  * its own, and the links to sign in and to register, or the account signed in with and the link to
- * sign out, and for an administrator the link to the administration; then the footer. Nothing of it
+ * sign out, and for an administrator the link to the administration; then the footer, and the
+ * {@link Notifications} showing the feedback messages of the page. Nothing of it
  * keeps a page, so the public pages are stateless. The whole page is in the session's
  * {@link Theme}, its own colors included.
  */
@@ -61,6 +63,8 @@ public abstract class BasePage extends WebPage
 	/** The languages the demos have texts in. */
 	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
 		Locale.of("es"));
+
+	private final Notifications notifications;
 
 	protected BasePage()
 	{
@@ -121,9 +125,22 @@ public abstract class BasePage extends WebPage
 			}
 		});
 
+		notifications = new Notifications("notifications");
+		add(notifications);
+
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
 		add(newBuildInfo("buildInfo"));
+	}
+
+	/**
+	 * @return the notifications of the page, which show its feedback messages too, those a
+	 *         {@link org.apache.wicket.markup.html.panel.FeedbackPanel FeedbackPanel} of a form in
+	 *         a dialog shows apart
+	 */
+	public Notifications getNotifications()
+	{
+		return notifications;
 	}
 
 	/**

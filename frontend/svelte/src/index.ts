@@ -11,6 +11,7 @@ export { default as DateTimePicker } from './DateTimePicker.svelte';
 export { default as Dropdown } from './Dropdown.svelte';
 export { default as InfiniteList } from './InfiniteList.svelte';
 export { default as Modal } from './Modal.svelte';
+export { default as Notifications } from './Notifications.svelte';
 export { default as Palette } from './Palette.svelte';
 export { default as ProgressBar } from './ProgressBar.svelte';
 export { default as Scrollable } from './Scrollable.svelte';
@@ -23,6 +24,8 @@ export { activate, datePicker, dropdown, localRows, palette, scrollbar,
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts, DatePickerOptions, DropdownOptions, InfiniteListData, ModalOptions, ModalSize,
+	NotificationCloseReason, NotificationHandle, NotificationOptions, NotificationPosition,
+	NotificationType,
 	PaletteChoice, PaletteOptions, PaletteTexts,
 	ScrollbarOptions, ScrollPosition, SplitOrientation, SplitPane, SplitPanelOptions, SplitSize,
 	TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';

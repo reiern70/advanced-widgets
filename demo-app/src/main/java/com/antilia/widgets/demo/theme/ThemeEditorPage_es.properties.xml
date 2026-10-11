@@ -7,11 +7,12 @@
 <properties>
 	<entry key="title">Editor de temas</entry>
 	<entry key="description">genera un tema de los componentes, con vista previa en vivo</entry>
-	<entry key="explanation">&lt;p&gt;Los temas de los componentes son clases CSS que fijan las propiedades personalizadas --antilia-theme-*, que leen las hojas de estilo de los componentes. Los selectores del ThemeEditorPanel parten del tema elegido para la página en la barra superior o en la lista desplegable de arriba; cambie un color y los componentes de las pestañas de abajo lo siguen: barras de progreso, las tablas JSON y Bean, paneles plegables, también anidados, un panel flotante, pestañas con estilo y un diálogo modal.&lt;/p&gt;&lt;p&gt;El área de texto contiene la clase CSS que define su tema; póngala en su hoja de estilo y las clases antilia-theme y la suya en una página o un componente, y los componentes de dentro toman sus colores. Los cambios se hacen en el navegador mediante el modelo de objetos CSS, de modo que la página no necesita estilos en línea y funciona bajo una Content Security Policy estricta.&lt;/p&gt;</entry>
+	<entry key="explanation">&lt;p&gt;Los temas de los componentes son clases CSS que fijan las propiedades personalizadas --antilia-theme-*, que leen las hojas de estilo de los componentes. Los selectores del ThemeEditorPanel parten del tema elegido para la página en la barra superior o en la lista desplegable de arriba; cambie un color y los componentes de las pestañas de abajo lo siguen: barras de progreso, las tablas JSON y Bean, paneles plegables, también anidados, un panel flotante, pestañas con estilo, un diálogo modal y notificaciones, en los colores de éxito, error, advertencia e información.&lt;/p&gt;&lt;p&gt;El área de texto contiene la clase CSS que define su tema; póngala en su hoja de estilo y las clases antilia-theme y la suya en una página o un componente, y los componentes de dentro toman sus colores. Los cambios se hacen en el navegador mediante el modelo de objetos CSS, de modo que la página no necesita estilos en línea y funciona bajo una Content Security Policy estricta.&lt;/p&gt;</entry>
 	<entry key="tab.progress">Progreso</entry>
 	<entry key="tab.jsonTable">Grid JSON</entry>
 	<entry key="tab.beanTable">Grid Bean</entry>
 	<entry key="tab.panels">Plegables</entry>
+	<entry key="tab.notifications">Notificaciones</entry>
 	<entry key="progress.running">En curso</entry>
 	<entry key="progress.finished">Terminado</entry>
 	<entry key="progress.unknown">Progreso desconocido</entry>
@@ -45,4 +46,9 @@
 	<entry key="tab.first">Primera</entry>
 	<entry key="tab.second">Segunda</entry>
 	<entry key="tab.third">Tercera</entry>
+	<entry key="notification.success">En el color --antilia-theme-success del tema.</entry>
+	<entry key="notification.error">En el color --antilia-theme-error del tema.</entry>
+	<entry key="notification.warning">En el color --antilia-theme-warning del tema.</entry>
+	<entry key="notification.info">En el color --antilia-theme-info del tema.</entry>
+	<entry key="notification.again">Mostrarlas de nuevo</entry>
 </properties>

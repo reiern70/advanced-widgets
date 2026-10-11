@@ -65,6 +65,26 @@ class ThemedDemosTest extends WicketTestCase
 		tester.assertContains("Wicket.ThemeEditor.init");
 	}
 
+	@Test
+	void theThemeEditorPreviewsTheNotificationsInTheColorsOfTheTheme()
+	{
+		tester.startPage(ThemeEditorPage.class);
+
+		tester.clickLink("preview:tabs:tabs-container:tabs:4:link");
+
+		String response = tester.getLastResponseAsString();
+		for (String type : List.of("success", "error", "warning", "info"))
+		{
+			assertTrue(response.contains("{\"type\":\"" + type + "\",\"title\":"), type);
+			assertTrue(response.contains("--antilia-theme-" + type + " color of the theme"), type);
+		}
+		assertTrue(response.contains("Wicket.Notifications.attach("), response);
+
+		tester.clickLink("preview:tabs:panel:again");
+		tester.assertContains("Wicket.Notifications.closeAll");
+		tester.assertContains("\\{\"type\":\"error\",\"title\":\"Error\"");
+	}
+
 	private String bodyClass()
 	{
 		return TagTester.createTagByName(tester.getLastResponseAsString(), "body")

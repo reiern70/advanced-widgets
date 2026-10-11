@@ -63,7 +63,8 @@ public class ThemeEditorPage extends DemoPage
 		List<ITab> tabs = List.of(tab("tab.progress", ProgressPreview::new, true),
 			tab("tab.jsonTable", JsonTablePreview::new, false),
 			tab("tab.beanTable", BeanTablePreview::new, true),
-			tab("tab.panels", PanelsPreview::new, true));
+			tab("tab.panels", PanelsPreview::new, true),
+			tab("tab.notifications", NotificationsPreview::new, true));
 		preview.add(new AjaxTabbedPanel<>("tabs", tabs)
 		{
 			private static final long serialVersionUID = 1L;

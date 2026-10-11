@@ -30,7 +30,6 @@ import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.form.validation.AbstractFormValidator;
 import org.apache.wicket.markup.html.form.validation.EqualPasswordInputValidator;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.CompoundPropertyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -214,8 +213,6 @@ public class RegisterPage extends BasePage
 			.setRequired(true)
 			.setLabel(new ResourceModel("answer")));
 		form.add(new Button("submit"));
-
-		add(new FeedbackPanel("feedback"));
 	}
 
 	@Override

@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import com.antilia.widgets.demo.Dropdowns;
 import com.antilia.widgets.demo.JettyTestCase;
 import com.antilia.widgets.demo.SeleniumBrowser;
+import com.antilia.widgets.demo.Toasts;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -389,8 +390,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 
 		wait.until(d -> veilLog().contains("spinner"));
 		awaitNoVeil();
-		assertTrue(driver.findElement(By.className("feedbackPanel")).getText()
-			.contains("The slow action is done."));
+		wait.until(d -> Toasts.latest(d).contains("The slow action is done."));
 	}
 
 	@ParameterizedTest

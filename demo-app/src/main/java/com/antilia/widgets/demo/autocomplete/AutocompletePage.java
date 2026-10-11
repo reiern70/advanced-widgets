@@ -26,7 +26,6 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
@@ -194,8 +193,6 @@ public class AutocompletePage extends DemoPage
 				setVisible(visits.isEmpty());
 			}
 		});
-
-		themed.add(new FeedbackPanel("feedback"));
 	}
 
 	private static <C extends FormComponent<?>> C reportChanges(C choice, Label choices)

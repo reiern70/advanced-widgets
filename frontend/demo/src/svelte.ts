@@ -18,6 +18,7 @@ import DropdownDemo from './svelte/DropdownDemo.svelte';
 import JsonListDemo from './svelte/JsonListDemo.svelte';
 import JsonTableDemo from './svelte/JsonTableDemo.svelte';
 import ModalDemo from './svelte/ModalDemo.svelte';
+import NotificationsDemo from './svelte/NotificationsDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
@@ -47,5 +48,6 @@ startApps('svelte', {
 	treeGrid: app(TreeGridDemo),
 	progressBar: app(ProgressDemo),
 	scrollbar: app(ScrollbarDemo),
-	modalDialog: app(ModalDemo)
+	modalDialog: app(ModalDemo),
+	notifications: app(NotificationsDemo)
 });

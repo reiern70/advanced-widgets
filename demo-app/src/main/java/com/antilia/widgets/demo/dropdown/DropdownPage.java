@@ -19,7 +19,6 @@ import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
@@ -110,8 +109,6 @@ public class DropdownPage extends DemoPage
 
 		form.add(new Dropdown<>("disabled", new PropertyModel<>(this, "disabled"), SIZES)
 			.setEnabled(false));
-
-		themed.add(new FeedbackPanel("feedback"));
 	}
 
 	private static <C extends FormComponent<?>> C reportChanges(C choice, Label choices)

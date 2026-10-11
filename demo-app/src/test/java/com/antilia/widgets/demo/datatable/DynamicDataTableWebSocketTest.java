@@ -5,7 +5,6 @@
 package com.antilia.widgets.demo.datatable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import java.util.regex.Pattern;
 
 import com.antilia.widgets.demo.JettyTestCase;
 import com.antilia.widgets.demo.SeleniumBrowser;
+import com.antilia.widgets.demo.Toasts;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,8 +72,7 @@ class DynamicDataTableWebSocketTest extends JettyTestCase
 		Collections.reverse(reversed);
 		wait.until(d -> ids().equals(reversed));
 		assertEquals(itemCount, itemCount(), "the rows were repainted, not loaded again");
-		String feedback = driver.findElement(By.className("feedbackPanel")).getText();
-		assertTrue(feedback.contains("Pushed the rows of this page in reverse order"), feedback);
+		wait.until(d -> Toasts.latest(d).contains("Pushed the rows of this page in reverse order"));
 	}
 
 	/**

@@ -20,6 +20,7 @@ import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
+import com.antilia.widgets.demo.notification.NotificationsPage;
 import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
@@ -95,6 +96,7 @@ public final class Demos
 		new Demo("treeGrid", "data", TreeGridPage.class, false, true),
 		new Demo("masterDetail", "data", MasterDetailPage.class, false, false),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true, true),
+		new Demo("notifications", "feedback", NotificationsPage.class, true, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
 		new Demo("palette", "forms", PalettePage.class, true, true),

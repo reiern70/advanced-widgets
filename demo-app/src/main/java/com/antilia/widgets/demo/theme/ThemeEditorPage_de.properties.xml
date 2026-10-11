@@ -7,11 +7,12 @@
 <properties>
 	<entry key="title">Farbschema-Editor</entry>
 	<entry key="description">erzeugt ein Farbschema der Komponenten, mit Live-Vorschau</entry>
-	<entry key="explanation">&lt;p&gt;Die Farbschemas der Komponenten sind CSS-Klassen, die die Custom Properties --antilia-theme-* setzen, welche die Stylesheets der Komponenten lesen. Die Farbwähler des ThemeEditorPanel beginnen mit dem Farbschema, das in der oberen Leiste oder in der Auswahlliste darüber für die Seite gewählt ist; ändern Sie eine Farbe, und die Komponenten in den Reitern darunter folgen: Fortschrittsbalken, die JSON- und die Bean-basierte Tabelle, ein aufklappbares Panel, auch verschachtelt, ein schwebendes Panel, gestaltete Reiter und ein modaler Dialog.&lt;/p&gt;&lt;p&gt;Das Textfeld enthält die CSS-Klasse, die Ihr Farbschema definiert; übernehmen Sie sie in Ihr Stylesheet und setzen Sie die Klassen antilia-theme und Ihre auf eine Seite oder eine Komponente, und die Komponenten darin übernehmen ihre Farben. Die Änderungen geschehen im Browser über das CSS-Objektmodell, sodass die Seite keinen Inline-Style braucht und unter einer strengen Content Security Policy funktioniert.&lt;/p&gt;</entry>
+	<entry key="explanation">&lt;p&gt;Die Farbschemas der Komponenten sind CSS-Klassen, die die Custom Properties --antilia-theme-* setzen, welche die Stylesheets der Komponenten lesen. Die Farbwähler des ThemeEditorPanel beginnen mit dem Farbschema, das in der oberen Leiste oder in der Auswahlliste darüber für die Seite gewählt ist; ändern Sie eine Farbe, und die Komponenten in den Reitern darunter folgen: Fortschrittsbalken, die JSON- und die Bean-basierte Tabelle, ein aufklappbares Panel, auch verschachtelt, ein schwebendes Panel, gestaltete Reiter, ein modaler Dialog und Mitteilungen, in den Farben für Erfolg, Fehler, Warnung und Information.&lt;/p&gt;&lt;p&gt;Das Textfeld enthält die CSS-Klasse, die Ihr Farbschema definiert; übernehmen Sie sie in Ihr Stylesheet und setzen Sie die Klassen antilia-theme und Ihre auf eine Seite oder eine Komponente, und die Komponenten darin übernehmen ihre Farben. Die Änderungen geschehen im Browser über das CSS-Objektmodell, sodass die Seite keinen Inline-Style braucht und unter einer strengen Content Security Policy funktioniert.&lt;/p&gt;</entry>
 	<entry key="tab.progress">Fortschritt</entry>
 	<entry key="tab.jsonTable">JSON-Grid</entry>
 	<entry key="tab.beanTable">Bean-Grid</entry>
 	<entry key="tab.panels">Aufklappbar</entry>
+	<entry key="tab.notifications">Mitteilungen</entry>
 	<entry key="progress.running">Laufend</entry>
 	<entry key="progress.finished">Fertig</entry>
 	<entry key="progress.unknown">Unbekannter Fortschritt</entry>
@@ -45,4 +46,9 @@
 	<entry key="tab.first">Erster</entry>
 	<entry key="tab.second">Zweiter</entry>
 	<entry key="tab.third">Dritter</entry>
+	<entry key="notification.success">In der Farbe --antilia-theme-success des Themas.</entry>
+	<entry key="notification.error">In der Farbe --antilia-theme-error des Themas.</entry>
+	<entry key="notification.warning">In der Farbe --antilia-theme-warning des Themas.</entry>
+	<entry key="notification.info">In der Farbe --antilia-theme-info des Themas.</entry>
+	<entry key="notification.again">Erneut zeigen</entry>
 </properties>

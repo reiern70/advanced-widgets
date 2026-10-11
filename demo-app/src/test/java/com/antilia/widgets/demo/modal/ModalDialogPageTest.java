@@ -95,6 +95,8 @@ class ModalDialogPageTest
 		Map<String, String> expected = TeamStore.validate(member("", "not an address"),
 			Locale.ENGLISH);
 		tester.assertErrorMessages(expected.values().toArray(new String[0]));
+		// the form in the dialog shows its errors, which are not notifications
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.Notifications.show"));
 
 		form = tester.newFormTester(FORM);
 		form.setValue("name", "Margaret Hamilton");
@@ -102,6 +104,9 @@ class ModalDialogPageTest
 		tester.executeAjaxEvent(SAVE, "click");
 
 		tester.assertInfoMessages("Added Margaret Hamilton.");
+		// the page's message is a notification of its base page
+		tester.assertContains("Wicket.Notifications.show\\(\"[^\"]+\", \\{\"type\":\"info\"," +
+			"\"title\":\"Information\",\"body\":\"Added Margaret Hamilton.\"\\}\\);");
 		assertTrue(DemoSession.get().getTeam().list().stream()
 			.anyMatch(member -> member.getName().equals("Margaret Hamilton")));
 	}

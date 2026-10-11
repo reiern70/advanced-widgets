@@ -22,7 +22,6 @@ import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.model.LoadableDetachableModel;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -200,8 +199,6 @@ public class PalettePage extends DemoPage
 
 		form.add(new Palette<>("disabled", new PropertyModel<>(this, "disabled"), SKILLS,
 			new NameRenderer("skill.")).setEnabled(false));
-
-		themed.add(new FeedbackPanel("feedback"));
 	}
 
 	/**

@@ -25,4 +25,8 @@
 	<entry key="property.track">la parte vacía de una barra de progreso</entry>
 	<entry key="property.veil">el oscurecimiento sobre el contenido bloqueado por un velo o un diálogo</entry>
 	<entry key="property.color-scheme">el esquema de color de los controles de formulario</entry>
+	<entry key="property.success">el color de lo que salió bien, como una notificación de éxito</entry>
+	<entry key="property.error">el color de lo que salió mal, como una notificación de error</entry>
+	<entry key="property.warning">el color de lo que pide atención, como una advertencia</entry>
+	<entry key="property.info">el color de la información, como una notificación de información</entry>
 </properties>

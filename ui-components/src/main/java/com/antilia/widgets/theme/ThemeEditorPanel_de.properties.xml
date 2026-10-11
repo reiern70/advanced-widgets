@@ -25,4 +25,8 @@
 	<entry key="property.track">der leere Teil eines Fortschrittsbalkens</entry>
 	<entry key="property.veil">die Abdunkelung über Inhalten, die ein Schleier oder ein Dialog sperrt</entry>
 	<entry key="property.color-scheme">das Farbschema der Formularelemente</entry>
+	<entry key="property.success">die Farbe von Gelungenem, etwa einer Erfolgsmitteilung</entry>
+	<entry key="property.error">die Farbe von Fehlgeschlagenem, etwa einer Fehlermitteilung</entry>
+	<entry key="property.warning">die Farbe von dem, was Aufmerksamkeit verlangt, etwa einer Warnung</entry>
+	<entry key="property.info">die Farbe von Informationen, etwa einer Informationsmitteilung</entry>
 </properties>

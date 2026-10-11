@@ -28,6 +28,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.antilia.widgets.demo.SeleniumBrowser;
+import com.antilia.widgets.demo.Toasts;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 
@@ -85,7 +86,9 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		dialog().findElement(EMAIL).sendKeys("margaret@example.com");
 		save();
 		wait.until(d -> names().contains("Margaret Hamilton"));
-		wait.until(d -> panel().getText().contains("Added Margaret Hamilton."));
+		// in Wicket the page's message is a notification, in the apps under the team
+		wait.until(d -> ("wicket".equals(tab) ? Toasts.latest(d) : panel().getText())
+			.contains("Added Margaret Hamilton."));
 
 		row("Margaret Hamilton").findElement(By.xpath(".//button[normalize-space()='Edit']"))
 			.click();

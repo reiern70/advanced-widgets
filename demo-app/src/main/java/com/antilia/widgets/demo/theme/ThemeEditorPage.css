@@ -64,3 +64,18 @@
 .theme-preview-nested > p {
 	margin: 0;
 }
+
+/* the notifications of the preview are stacked in it, next to the pickers, not in a corner */
+.theme-preview-notifications {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1em;
+	padding-top: 0.6em;
+}
+
+.theme-preview-notifications .antilia-notifications-stack {
+	position: static;
+	translate: none;
+	max-height: none;
+}

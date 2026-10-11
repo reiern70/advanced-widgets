@@ -107,8 +107,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	 */
 	protected DynamicTableExamplePage()
 	{
-		get("feedback").setOutputMarkupId(true);
-
 		details = new UserDetailsPanel("details", new PropertyModel<>(this, "selected"));
 		add(details);
 
@@ -310,7 +308,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 	protected final void onUserNotFound(AjaxRequestTarget target)
 	{
 		warn(getString("userGone"));
-		target.add(get("feedback"));
 	}
 
 	/**
@@ -444,7 +441,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 				Thread.currentThread().interrupt();
 			}
 			info(getString("slowAction.done"));
-			target.add(DynamicTableExamplePage.this.get("feedback"));
 		}
 	}
 
@@ -587,7 +583,6 @@ public abstract class DynamicTableExamplePage extends UsersPage
 		}
 		DatabaseLocator.getLargeDatabase().delete(user);
 		info(message("deleted", user.getFirstName(), user.getLastName()));
-		target.add(get("feedback"));
 		table.refresh(target);
 	}
 

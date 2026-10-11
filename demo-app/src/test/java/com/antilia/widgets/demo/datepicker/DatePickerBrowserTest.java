@@ -19,6 +19,7 @@ import org.openqa.selenium.WebElement;
 
 import com.antilia.widgets.demo.Dropdowns;
 import com.antilia.widgets.demo.SeleniumBrowser;
+import com.antilia.widgets.demo.Toasts;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
@@ -139,8 +140,9 @@ class DatePickerBrowserTest extends FrameworkAppsTestCase
 		assertEquals("nonsense", input("born").getDomProperty("value"));
 		if ("wicket".equals(framework))
 		{
-			wait.until(d -> app().findElement(By.cssSelector(".feedbackPanel")).getText()
-				.equals("The value of 'Born' is not a valid date."));
+			wait.until(d -> Toasts.latest(d).equals("The value of 'Born' is not a valid date."));
+			assertTrue(Toasts.newest(driver).getDomAttribute("class").contains(
+				"antilia-notification-error"));
 		}
 	}
 

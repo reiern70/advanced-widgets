@@ -25,4 +25,8 @@
 	<entry key="property.track">the empty part of a progress bar</entry>
 	<entry key="property.veil">the dimming over content blocked by a veil or a dialog</entry>
 	<entry key="property.color-scheme">the color scheme of form controls</entry>
+	<entry key="property.success">the color of what went well, such as a notification of success</entry>
+	<entry key="property.error">the color of what went wrong, such as a notification of error</entry>
+	<entry key="property.warning">the color of what asks for attention, such as a warning</entry>
+	<entry key="property.info">the color of information, such as a notification of information</entry>
 </properties>

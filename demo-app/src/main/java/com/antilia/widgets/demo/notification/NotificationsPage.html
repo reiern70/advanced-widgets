@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="notifications-demo">
+	<section>
+		<h3><wicket:message key="showTitle"/></h3>
+		<form wicket:id="showForm" class="notifications-demo__form">
+			<label><wicket:message key="type"/> <select wicket:id="type"></select></label>
+			<label><wicket:message key="title.field"/> <input type="text" wicket:id="title"/></label>
+			<label class="notifications-demo__wide"><wicket:message key="message"/> <textarea wicket:id="message" rows="2"></textarea></label>
+			<label class="notifications-demo__check"><input type="checkbox" wicket:id="html"/> <wicket:message key="html"/></label>
+			<label><wicket:message key="position"/> <select wicket:id="position"></select></label>
+			<label><wicket:message key="timeout"/> <select wicket:id="timeout"></select></label>
+			<div class="notifications-demo__buttons">
+				<button type="submit" wicket:id="show" class="notifications-demo__show"><wicket:message key="show"/></button>
+				<button type="button" wicket:id="closeAll" class="notifications-demo__close-all"><wicket:message key="closeAll"/></button>
+			</div>
+		</form>
+	</section>
+	<section>
+		<h3><wicket:message key="feedbackTitle"/></h3>
+		<form wicket:id="saveForm" class="notifications-demo__form">
+			<label><wicket:message key="name"/> <input type="text" wicket:id="name"/></label>
+			<div class="notifications-demo__buttons">
+				<button type="submit" wicket:id="save" class="notifications-demo__save"><wicket:message key="save"/></button>
+			</div>
+		</form>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>

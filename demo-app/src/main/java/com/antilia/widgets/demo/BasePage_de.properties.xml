@@ -42,6 +42,8 @@
 	<entry key="demo.masterDetail.description">Die Länder der Benutzer und die Benutzer des gewählten Landes, in zwei Tabellen.</entry>
 	<entry key="demo.progressBar">Fortschrittsbalken</entry>
 	<entry key="demo.progressBar.description">Bekannter und unbekannter Fortschritt, in jedem Farbschema.</entry>
+	<entry key="demo.notifications">Mitteilungen</entry>
+	<entry key="demo.notifications.description">Kurze Mitteilungen in einer Ecke des Fensters, von vier Typen oder eigenen der Seite, die bleiben, bis man sie schließt, oder nach einer Zeit verschwinden; auch die Feedback-Meldungen der Seite werden zu Mitteilungen.</entry>
 	<entry key="demo.dropdown">Auswahlliste</entry>
 	<entry key="demo.dropdown.description">Einfach- und Mehrfachauswahl, im Browser geöffnet, gefiltert und gewählt.</entry>
 	<entry key="demo.autocomplete">Autovervollständigung</entry>

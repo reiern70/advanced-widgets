@@ -75,4 +75,10 @@
 	<entry key="Tree.loading">Cargando…</entry>
 	<entry key="Tree.empty">Nada que mostrar</entry>
 	<entry key="Modal.close">Cerrar</entry>
+	<entry key="Notifications.close">Cerrar</entry>
+	<entry key="Notifications.label">Notificaciones</entry>
+	<entry key="Notifications.success">Éxito</entry>
+	<entry key="Notifications.error">Error</entry>
+	<entry key="Notifications.warning">Advertencia</entry>
+	<entry key="Notifications.info">Información</entry>
 </properties>

@@ -23,7 +23,6 @@ import org.apache.wicket.markup.html.form.RadioChoice;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
-import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.CompoundPropertyModel;
 import org.apache.wicket.model.LoadableDetachableModel;
@@ -72,8 +71,6 @@ public class ModalDialogPage extends DemoPage
 	 */
 	public ModalDialogPage()
 	{
-		add(new FeedbackPanel("feedback").setOutputMarkupId(true));
-
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 		themed.add(new AjaxActionButton("add", new ResourceModel("addMember"))
@@ -228,13 +225,13 @@ public class ModalDialogPage extends DemoPage
 			@Override
 			protected void onUpdate(AjaxRequestTarget target)
 			{
-				target.add(get("feedback"));
+				// kept in the options; nothing to repaint
 			}
 
 			@Override
 			protected void onError(AjaxRequestTarget target, RuntimeException e)
 			{
-				target.add(get("feedback"));
+				// the message shows as a notification
 			}
 		});
 		return field;
@@ -262,7 +259,7 @@ public class ModalDialogPage extends DemoPage
 				}
 				ModalDialogPage.this.info(ModalDialogPage.this.getString(added ? "added" : "saved")
 					.replace("{0}", saved.getName()));
-				target.add(team, ModalDialogPage.this.get("feedback"));
+				target.add(team);
 			}
 		};
 		dialog.setSize(Modal.Size.MEDIUM);
@@ -305,7 +302,7 @@ public class ModalDialogPage extends DemoPage
 		if (DemoSession.get().getTeam().delete(id))
 		{
 			info(getString("deleted").replace("{0}", member.getName()));
-			target.add(team, get("feedback"));
+			target.add(team);
 		}
 		else
 		{
@@ -316,7 +313,7 @@ public class ModalDialogPage extends DemoPage
 	private void gone(AjaxRequestTarget target)
 	{
 		warn(getString("gone"));
-		target.add(team, get("feedback"));
+		target.add(team);
 	}
 
 	@Override

@@ -47,7 +47,8 @@ public class ThemeEditorPanel extends Panel
 	 */
 	public static final List<String> PROPERTIES = List.of("primary", "primary-dark", "on-primary",
 		"accent", "text", "surface", "surface-alt", "hover", "selected", "highlight", "toolbar",
-		"border", "progress", "progress-dark", "track", "veil", "color-scheme");
+		"border", "progress", "progress-dark", "track", "veil", "color-scheme", "success", "error",
+		"warning", "info");
 
 	/** The script of the editor, {@code Wicket.ThemeEditor}. */
 	public static final ResourceReference JS = new JavaScriptResourceReference(
