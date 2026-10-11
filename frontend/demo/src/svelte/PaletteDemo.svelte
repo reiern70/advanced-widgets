@@ -11,7 +11,7 @@
 	import { Palette } from '@antilia/svelte';
 
 	import { format } from '../data.js';
-	import { describe, describeCountries, type PaletteConfig } from '../palette.js';
+	import { describe, describeCountries, MATCHES, type PaletteConfig } from '../palette.js';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
 
@@ -87,6 +87,18 @@
 					{...config.palette} />
 			</div>
 			<p class="palette-demo__count">{describeCountries(config, countries)}</p>
+		</section>
+		<section class="palette-demo__wide">
+			<h3>{texts.matchTitle}</h3>
+			<p class="palette-demo__hint">{texts.matchHint}</p>
+			<div class="palette-demo__matches">
+				{#each MATCHES as [match, label] (match)}
+					<div class="palette-demo__field">
+						<span>{texts[label]}</span>
+						<Palette options={config.countries} {match} {...config.palette} />
+					</div>
+				{/each}
+			</div>
 		</section>
 		<section>
 			<h3>{texts.disabledTitle}</h3>

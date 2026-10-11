@@ -208,6 +208,23 @@ class PaletteBrowserTest extends JettyTestCase
 		assertEquals("Germany\nSpain\nUruguay\nZimbabwe", Palettes.selected(countries));
 	}
 
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theFiltersMatchFromTheStartAnywhereAndAtTheEnd(SeleniumBrowser browser)
+	{
+		open(browser);
+
+		Palettes.assertMatches(wait, palette("matchStart"), "gu", "Guatemala", "Uruguay",
+			label -> label.startsWith("Gu"));
+		Palettes.assertMatches(wait, palette("matchAnywhere"), "gu", "Uruguay", null,
+			label -> label.toLowerCase().contains("gu"));
+		Palettes.assertMatches(wait, palette("matchEnd"), "land", "Finland", null,
+			label -> label.endsWith("land"));
+		Palettes.assertWordsMatch(wait, palette("matchWords"));
+		assertEquals(30, rows(Palettes.list(palette("countries"), "available")),
+			"the others are not filtered");
+	}
+
 	private static int rows(WebElement list)
 	{
 		return list.findElements(By.cssSelector(".antilia-palette-item")).size();
@@ -219,7 +236,7 @@ class PaletteBrowserTest extends JettyTestCase
 		wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofMillis(20));
 		wait.ignoring(StaleElementReferenceException.class);
 		driver.get("http://localhost:" + localPort + "/palette");
-		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 8);
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 16);
 	}
 
 	private WebElement palette(String name)

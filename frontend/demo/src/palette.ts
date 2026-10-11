@@ -6,7 +6,7 @@
 /*
  * The Palette demo: skills in any order, the columns of a report in their own order while it
  * matters, under titles of their own and with numbered rows, some 250 countries drawn 30 rows at a
- * time, and a disabled palette.
+ * time, four palettes of them whose filters match in different ways, and a disabled palette.
  */
 
 import type { PaletteTexts } from '@antilia/core';
@@ -30,6 +30,13 @@ export interface PaletteDemoTexts {
 	/** The titles of the lists of the columns' palette. */
 	columnsAvailable: string;
 	columnsSelected: string;
+	/** The palettes matching from the start of the names, anywhere and at their end. */
+	matchTitle: string;
+	matchHint: string;
+	matchStart: string;
+	matchAnywhere: string;
+	matchEnd: string;
+	matchWords: string;
 	send: string;
 	nothing: string;
 	/** What is chosen: {0} the skills and {1} the columns. */
@@ -60,6 +67,11 @@ export interface PaletteConfig {
 	countries: Choice[];
 	values: PaletteValues;
 }
+
+/** How the filters of the palettes of the countries' matching example match, and their label. */
+export const MATCHES: ReadonlyArray<readonly ['start' | 'anywhere' | 'end' | 'words',
+	'matchStart' | 'matchAnywhere' | 'matchEnd' | 'matchWords']> = [['start', 'matchStart'],
+	['anywhere', 'matchAnywhere'], ['end', 'matchEnd'], ['words', 'matchWords']];
 
 /**
  * @returns what is chosen, in words, as the Wicket page says it

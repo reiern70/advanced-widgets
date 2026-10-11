@@ -43,6 +43,23 @@
 	max-width: 720px;
 }
 
+.palette-demo__form > .palette-demo__wide {
+	grid-column: 1 / -1;
+}
+
+/* the four ways of matching two by two, one above the other on narrow screens */
+.palette-demo__matches {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+	gap: 16px;
+}
+
+.palette-demo__hint {
+	margin: 0 0 12px;
+	font-size: 13px;
+	color: var(--muted, inherit);
+}
+
 .palette-demo__count {
 	margin: 10px 0 0;
 	font-size: 13px;

@@ -4,6 +4,12 @@
  */
 package com.antilia.widgets.demo.palette;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.openqa.selenium.By;
@@ -11,9 +17,10 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
- * Finds the parts of a palette in the browser tests and drags its items.
+ * Finds the parts of a palette in the browser tests, drags its items and checks its filter.
  */
 final class Palettes
 {
@@ -74,6 +81,52 @@ final class Palettes
 				.equals(text))
 			.findFirst()
 			.orElseThrow(() -> new AssertionError("no item " + text));
+	}
+
+	/**
+	 * Types into the filter of a palette and checks the available ones it lets through, and that
+	 * each has the part matched underlined, the text in any case.
+	 *
+	 * @param included
+	 *            a label among those let through
+	 * @param excluded
+	 *            a label not among them, or {@code null}
+	 * @param matches
+	 *            whether a label is one the filter lets through
+	 */
+	static void assertMatches(WebDriverWait wait, WebElement palette, String text, String included,
+		String excluded, Predicate<String> matches)
+	{
+		palette.findElement(By.cssSelector(".antilia-palette-filter")).sendKeys(text);
+		wait.until(d -> List.of(available(palette).split("\n")).contains(included));
+		List<String> labels = List.of(available(palette).split("\n"));
+		labels.forEach(label -> assertTrue(matches.test(label), label + " matches " + text));
+		if (excluded != null)
+		{
+			assertFalse(labels.contains(excluded), excluded + " does not match " + text);
+		}
+		for (WebElement item : list(palette, "available").findElements(
+			By.cssSelector(".antilia-palette-item")))
+		{
+			List<WebElement> parts = item.findElements(By.cssSelector(".antilia-palette-match"));
+			assertEquals(1, parts.size(), "one part underlined");
+			assertTrue(parts.get(0).getText().equalsIgnoreCase(text), parts.get(0).getText());
+		}
+	}
+
+	/**
+	 * Types "s ge" into the filter of a palette of the countries matching the starts of words,
+	 * which lets South Georgia through with "S" and "Ge" underlined, and South Africa not.
+	 */
+	static void assertWordsMatch(WebDriverWait wait, WebElement palette)
+	{
+		palette.findElement(By.cssSelector(".antilia-palette-filter")).sendKeys("s ge");
+		wait.until(d -> available(palette).startsWith("South Georgia"));
+		assertFalse(available(palette).contains("South Africa"));
+		WebElement item = list(palette, "available").findElement(
+			By.cssSelector(".antilia-palette-item"));
+		assertEquals(List.of("S", "Ge"), item.findElements(By.cssSelector(".antilia-palette-match"))
+			.stream().map(WebElement::getText).toList());
 	}
 
 	static WebElement button(WebElement palette, String name)

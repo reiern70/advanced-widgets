@@ -5,7 +5,8 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { Palette as CorePalette, type PaletteChoice, type PaletteTexts } from '@antilia/core';
+import { Palette as CorePalette, type PaletteChoice, type PaletteMatch,
+	type PaletteTexts } from '@antilia/core';
 
 export interface PaletteProps extends PaletteTexts {
 	/** The choices, in their order. */
@@ -26,6 +27,12 @@ export interface PaletteProps extends PaletteTexts {
 	/** The number of choices from which on the available ones have a filter, 8 when left out. */
 	filterThreshold?: number;
 	/**
+	 * How the filter matches a choice: 'start', 'anywhere' or 'end' of the label, 'words' (each
+	 * word typed starts a word of the label), the name of a matcher in Palette.matchers, or a matcher, made once rather than on every render; 'anywhere'
+	 * when left out. The matched parts of the labels are underlined.
+	 */
+	match?: PaletteMatch;
+	/**
 	 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
 	 * left out; 0 draws them all.
 	 */
@@ -43,8 +50,8 @@ export interface PaletteProps extends PaletteTexts {
  */
 export function Palette(props: PaletteProps) {
 	const { options, value, defaultValue, ordered, numbered, disabled, filterable,
-		filterThreshold, pageSize, name, id, className, availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down,
-		filter, empty } = props;
+		filterThreshold, match, pageSize, name, id, className, availableTitle, selectedTitle, add,
+		addAll, remove, removeAll, up, down, filter, empty } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CorePalette | null>(null);
 	const latest = useRef(props);
@@ -53,8 +60,8 @@ export function Palette(props: PaletteProps) {
 	// a change the parent of a controlled palette did not take renders again, which sets it back
 	const [changes, setChanges] = useState(0);
 	const current = value ?? own;
-	const settings = { ordered, numbered, filterable, filterThreshold, pageSize, availableTitle,
-		selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty };
+	const settings = { ordered, numbered, filterable, filterThreshold, match, pageSize,
+		availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty };
 
 	useLayoutEffect(() => {
 		const palette = new CorePalette(element.current!, {
@@ -79,7 +86,7 @@ export function Palette(props: PaletteProps) {
 
 	useLayoutEffect(() => {
 		instance.current?.configure(settings);
-	}, [ordered, numbered, filterable, filterThreshold, pageSize, availableTitle, selectedTitle,
+	}, [ordered, numbered, filterable, filterThreshold, match, pageSize, availableTitle, selectedTitle,
 		add, addAll, remove, removeAll, up, down, filter, empty]);
 
 	// compared by content, so that options made anew on every render leave the lists alone

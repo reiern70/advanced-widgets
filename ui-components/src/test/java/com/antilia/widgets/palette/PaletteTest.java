@@ -18,6 +18,8 @@ import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
@@ -139,6 +141,61 @@ class PaletteTest extends WicketTestCase
 
 		assertEquals(List.of("Banana"), page.palette.getModelObject());
 		assertEquals(1, page.changes);
+	}
+
+	@Test
+	void matchesAnywhereUnlessSetOtherwise()
+	{
+		TestPage page = new TestPage();
+		tester.startPage(page);
+		tester.assertContains("\"match\":\"anywhere\"");
+		assertEquals(PaletteMatcher.ANYWHERE, page.palette.getMatcher());
+
+		page = new TestPage();
+		page.palette.setMatcher(PaletteMatcher.START);
+		tester.startPage(page);
+		tester.assertContains("\"match\":\"start\"");
+
+		page = new TestPage();
+		page.palette.setMatcher(PaletteMatcher.END);
+		tester.startPage(page);
+		tester.assertContains("\"match\":\"end\"");
+
+		page = new TestPage();
+		page.palette.setMatcher(PaletteMatcher.WORDS);
+		tester.startPage(page);
+		tester.assertContains("\"match\":\"words\"");
+
+		page = new TestPage();
+		page.palette.setMatcher(null);
+		assertEquals(PaletteMatcher.ANYWHERE, page.palette.getMatcher());
+	}
+
+	@Test
+	void rendersTheScriptOfAMatcherOfItsOwn()
+	{
+		TestPage page = new TestPage();
+		page.palette.setMatcher(new IPaletteMatcher()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String getName()
+			{
+				return "words";
+			}
+
+			@Override
+			public void renderHead(IHeaderResponse response)
+			{
+				response.render(JavaScriptHeaderItem.forScript(
+					"Wicket.Palette.matchers.words = function () { return null; };", "words"));
+			}
+		});
+		tester.startPage(page);
+
+		tester.assertContains("\"match\":\"words\"");
+		tester.assertContains("Wicket.Palette.matchers.words = ");
 	}
 
 	@Test

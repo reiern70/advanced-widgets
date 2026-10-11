@@ -146,6 +146,18 @@
 	text-overflow: ellipsis;
 }
 
+/* the part of a label the filter matched */
+.antilia-palette-match {
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+	text-decoration-color: var(--antilia-theme-accent, currentColor);
+}
+
+.antilia-palette-item[aria-selected="true"] .antilia-palette-match {
+	text-decoration-color: currentColor;
+}
+
 .antilia-palette-empty {
 	position: absolute;
 	padding: 0.6em;

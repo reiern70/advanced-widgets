@@ -32,7 +32,9 @@ import com.github.openjson.JSONObject;
  * list moves it too. When the {@link #setOrdered(boolean) order matters}, the chosen ones keep the
  * order they were chosen in and are moved up and down with the buttons next to their list, Alt
  * with the arrow keys, or by dragging them; otherwise they show in the order of the choices. The
- * rows can show their numbers, and each palette can have its own titles over the lists.
+ * rows can show their numbers, and each palette can have its own titles over the lists. A filter
+ * over the available ones underlines what it matched, how it matches being
+ * {@link #setMatcher(IPaletteMatcher) pluggable}.
  * <p>
  * Everything happens in the browser: {@code Wicket.Palette} from {@link #JS} hides the select and
  * draws the lists next to it. The select stays in the page and holds the choice, its selected
@@ -73,6 +75,8 @@ public class PaletteBehavior extends Behavior
 	private boolean filterable = true;
 
 	private int filterThreshold = DEFAULT_FILTER_THRESHOLD;
+
+	private IPaletteMatcher matcher = PaletteMatcher.ANYWHERE;
 
 	private boolean numbered;
 
@@ -139,6 +143,26 @@ public class PaletteBehavior extends Behavior
 	public PaletteBehavior setFilterThreshold(int filterThreshold)
 	{
 		this.filterThreshold = Math.max(0, filterThreshold);
+		return this;
+	}
+
+	/**
+	 * @return how the filter matches the choices
+	 */
+	public IPaletteMatcher getMatcher()
+	{
+		return matcher;
+	}
+
+	/**
+	 * @param matcher
+	 *            how the filter matches the choices, underlining what it matched:
+	 *            {@link PaletteMatcher#ANYWHERE} unless set otherwise, or {@code null}
+	 * @return {@code this}
+	 */
+	public PaletteBehavior setMatcher(IPaletteMatcher matcher)
+	{
+		this.matcher = matcher == null ? PaletteMatcher.ANYWHERE : matcher;
 		return this;
 	}
 
@@ -251,14 +275,16 @@ public class PaletteBehavior extends Behavior
 	{
 		super.renderHead(component, response);
 		renderHeadItems(response);
+		matcher.renderHead(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Palette.attach(" +
 			JSONObject.quote(component.getMarkupId()) + ", " + newOptions(component) + ");"));
 	}
 
 	/**
 	 * @return the options of the script: the texts, whether the order matters, whether the rows
-	 *         show their numbers, when to show the filter, how many rows to draw at a time and, while the order matters, the ids of the chosen ones in their order, which
-	 *         the options of the select, in the order of the choices, do not have
+	 *         show their numbers, when to show the filter and how it matches, how many rows to
+	 *         draw at a time and, while the order matters, the ids of the chosen ones in their
+	 *         order, which the options of the select, in the order of the choices, do not have
 	 */
 	protected JSONObject newOptions(Component component)
 	{
@@ -267,6 +293,7 @@ public class PaletteBehavior extends Behavior
 		options.put("numbered", numbered);
 		options.put("filterable", filterable);
 		options.put("filterThreshold", filterThreshold);
+		options.put("match", matcher.getName());
 		options.put("pageSize", pageSize);
 		for (String text : TEXTS)
 		{

@@ -26,12 +26,14 @@ import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.StringResourceModel;
+import org.apache.wicket.model.util.ListModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.antilia.widgets.palette.Palette;
 import com.antilia.widgets.palette.PaletteBehavior;
+import com.antilia.widgets.palette.PaletteMatcher;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -42,7 +44,9 @@ import com.github.openjson.JSONObject;
  * columns of a report keep the order they are chosen in, and are moved up and down, while the
  * order matters, which a check box switches by Ajax; their palette has titles of its own and
  * another check box numbers its rows. The countries, some 250 of them, are many choices: their
- * lists draw 30 rows at a time, more as they scroll, and the filter searches them all. The choices are shown below the form as Ajax
+ * lists draw 30 rows at a time, more as they scroll, and the filter searches them all. Four more
+ * palettes of the countries show how a filter can match: from the start of the names, anywhere
+ * in them, at their end or at the start of their words, underlining what it matched. The choices are shown below the form as Ajax
  * reports them, and again when the form is sent. The React and Svelte tabs show the same form in
  * those frameworks.
  */
@@ -189,10 +193,25 @@ public class PalettePage extends DemoPage
 		form.add(reportChanges(new Palette<>("countries", new PropertyModel<>(this, "countries"),
 			countryChoices, new CountryRenderer()), countriesChosen));
 
+		form.add(newMatchPalette("matchStart", countryChoices, PaletteMatcher.START));
+		form.add(newMatchPalette("matchAnywhere", countryChoices, PaletteMatcher.ANYWHERE));
+		form.add(newMatchPalette("matchEnd", countryChoices, PaletteMatcher.END));
+		form.add(newMatchPalette("matchWords", countryChoices, PaletteMatcher.WORDS));
+
 		form.add(new Palette<>("disabled", new PropertyModel<>(this, "disabled"), SKILLS,
 			new NameRenderer("skill.")).setEnabled(false));
 
 		themed.add(new FeedbackPanel("feedback"));
+	}
+
+	/**
+	 * @return a palette of the countries whose filter matches with the matcher
+	 */
+	private Palette<String> newMatchPalette(String id, IModel<List<String>> countryChoices,
+		PaletteMatcher matcher)
+	{
+		return new Palette<>(id, new ListModel<>(new ArrayList<>()), countryChoices,
+			new CountryRenderer()).setMatcher(matcher);
 	}
 
 	private static Palette<String> reportChanges(Palette<String> choice, Label choices)
@@ -266,8 +285,9 @@ public class PalettePage extends DemoPage
 	protected JSONObject getFrameworkConfig()
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "unordered", "orderedTitle", "disabledTitle",
-			"manyTitle", "countries", "countriesChosen", "skills", "columns", "ordered", "numbered", "filterable", "columnsAvailable", "columnsSelected", "send",
-			"nothing", "choices", "sent");
+			"manyTitle", "countries", "countriesChosen", "skills", "columns", "ordered", "numbered",
+			"filterable", "columnsAvailable", "columnsSelected", "matchTitle", "matchHint",
+			"matchStart", "matchAnywhere", "matchEnd", "matchWords", "send", "nothing", "choices", "sent");
 		JSONObject palette = new JSONObject();
 		for (String text : List.of("availableTitle", "selectedTitle", "add", "addAll", "remove",
 			"removeAll", "up", "down", "filter", "empty"))

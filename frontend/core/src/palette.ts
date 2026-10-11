@@ -71,6 +71,13 @@ export interface PaletteOptions extends PaletteTexts {
 	/** The number of choices from which on the available ones have a filter, 8 when left out. */
 	filterThreshold?: number;
 	/**
+	 * How the filter matches a choice: 'start' (the label starts with the text), 'anywhere'
+	 * (contains it), 'end' (ends with it) or 'words' (each word of the text starts a word of the
+	 * label, in their order), the name of a matcher put in Palette.matchers, or a
+	 * matcher itself; 'anywhere' when left out. The matched parts of the labels are underlined.
+	 */
+	match?: PaletteMatch;
+	/**
 	 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
 	 * left out; 0 draws them all. A filter searches all choices, drawn or not.
 	 */
@@ -78,6 +85,58 @@ export interface PaletteOptions extends PaletteTexts {
 	/** Called with the values of the chosen ones, in their order, after the user changed them. */
 	onChange?: (selected: string[]) => void;
 }
+
+/**
+ * Matches the text of the filter against the label of a choice.
+ *
+ * @param label the label of the choice
+ * @param text the text of the filter, trimmed, never empty
+ * @returns the parts of the label it matches, as [start, end) pairs in order, which are
+ *          underlined; null or an empty array when it does not match
+ */
+export type PaletteMatcher = (label: string, text: string) => Array<[number, number]> | null;
+
+/**
+ * How the filter matches: the name of a matcher in Palette.matchers, or a matcher.
+ */
+export type PaletteMatch = 'start' | 'anywhere' | 'end' | 'words' | (string & {}) |
+	PaletteMatcher;
+
+/**
+ * Matches each word of the text against the start of a word of the label, in their order, each
+ * word of the label once: "s ge" matches "South Georgia".
+ */
+function matchWords(label: string, text: string): Array<[number, number]> | null {
+	const words = Array.from(label.matchAll(/[\p{L}\p{N}]+/gu), (word) =>
+		[word.index!, word[0].toLowerCase()] as const);
+	const parts: Array<[number, number]> = [];
+	let next = 0;
+	for (const typed of text.toLowerCase().split(/\s+/).filter(Boolean)) {
+		while (next < words.length && !words[next][1].startsWith(typed)) {
+			next++;
+		}
+		if (next === words.length) {
+			return null;
+		}
+		const start = words[next++][0];
+		parts.push([start, start + typed.length]);
+	}
+	return parts;
+}
+
+/** The matchers built in, ignoring case. */
+export const PALETTE_MATCHERS: Readonly<Record<'start' | 'anywhere' | 'end' | 'words',
+	PaletteMatcher>> = {
+	start: (label, text) => label.toLowerCase().startsWith(text.toLowerCase()) ?
+		[[0, text.length]] : null,
+	anywhere: (label, text) => {
+		const index = label.toLowerCase().indexOf(text.toLowerCase());
+		return index < 0 ? null : [[index, index + text.length]];
+	},
+	end: (label, text) => label.toLowerCase().endsWith(text.toLowerCase()) ?
+		[[label.length - text.length, label.length]] : null,
+	words: matchWords
+};
 
 type Side = 'available' | 'selected';
 
@@ -120,6 +179,7 @@ const ACTIVE_CLASS = 'antilia-palette-active';
 const DRAGGING_CLASS = 'antilia-palette-dragging';
 const OVER_CLASS = 'antilia-palette-over';
 const NATIVE_CLASS = 'antilia-palette-native';
+const MATCH_CLASS = 'antilia-palette-match';
 
 /** The number of choices from which on the available ones have a filter, unless set otherwise. */
 export const PALETTE_FILTER_THRESHOLD = 8;
@@ -267,6 +327,15 @@ export class Palette {
 	/** Whether the element was made by Palette.attach(), and is taken away again by destroy(). */
 	private ownElement = false;
 
+	/**
+	 * The matchers the option match can name: those built in, and any an application puts here,
+	 * as a page does for a PaletteBehavior given a matcher of its own.
+	 */
+	static matchers: Record<string, PaletteMatcher> = { ...PALETTE_MATCHERS };
+
+	/** The parts of the labels of the available choices the filter matched, by their value. */
+	private matches = new Map<string, Array<[number, number]>>();
+
 	/** Gives a list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
 	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
 		Scrollbar.attach(list, { axis: 'y' });
@@ -385,6 +454,17 @@ export class Palette {
 	private movable(value: string): boolean {
 		const choice = this.choice(value);
 		return Boolean(choice && !choice.disabled);
+	}
+
+	/**
+	 * @returns the matcher of the option match, that matching anywhere for one not known
+	 */
+	private matcher(): PaletteMatcher {
+		const match = this.options.match;
+		if (typeof match === 'function') {
+			return match;
+		}
+		return (match && Palette.matchers[match]) || PALETTE_MATCHERS.anywhere;
 	}
 
 	private threshold(): number {
@@ -516,9 +596,23 @@ export class Palette {
 	 */
 	private renderItems(): void {
 		const chosen = new Set(this.selected);
-		const text = (this.filter?.value ?? '').trim().toLowerCase();
-		const available = this.choices.filter((choice) => !chosen.has(choice.value) &&
-			(!text || choice.label.toLowerCase().includes(text)));
+		const text = (this.filter?.value ?? '').trim();
+		const matcher = this.matcher();
+		this.matches = new Map();
+		const available = this.choices.filter((choice) => {
+			if (chosen.has(choice.value)) {
+				return false;
+			}
+			if (!text) {
+				return true;
+			}
+			const parts = matcher(choice.label, text);
+			if (!parts?.length) {
+				return false;
+			}
+			this.matches.set(choice.value, parts);
+			return true;
+		});
 		const selected = this.selected.map((value) => this.choice(value)!).filter(Boolean);
 		this.fill(this.available, available);
 		this.fill(this.chosen, selected);
@@ -572,7 +666,8 @@ export class Palette {
 				item.appendChild(create('span', 'antilia-palette-number', String(index + 1) + '.'))
 					.setAttribute('aria-hidden', 'true');
 			}
-			item.appendChild(create('span', 'antilia-palette-text', choice.label));
+			item.appendChild(this.label(choice, list.side === 'available' ?
+				this.matches.get(choice.value) : undefined));
 			if (choice.disabled) {
 				item.setAttribute('aria-disabled', 'true');
 			}
@@ -581,6 +676,32 @@ export class Palette {
 		});
 		this.paint(list);
 		list.scrollbar?.update();
+	}
+
+	/**
+	 * @param parts the parts of the label to underline, as [start, end) pairs
+	 * @returns the text of a choice, with those parts in a span.antilia-palette-match
+	 */
+	private label(choice: PaletteChoice, parts?: Array<[number, number]>): HTMLSpanElement {
+		const text = create('span', 'antilia-palette-text');
+		const label = choice.label;
+		let at = 0;
+		for (const [from, to] of (parts ?? []).slice().sort((a, b) => a[0] - b[0])) {
+			const start = Math.max(at, Math.min(from, label.length));
+			const end = Math.min(Math.max(to, start), label.length);
+			if (end <= start) {
+				continue;
+			}
+			if (start > at) {
+				text.appendChild(document.createTextNode(label.slice(at, start)));
+			}
+			text.appendChild(create('span', MATCH_CLASS, label.slice(start, end)));
+			at = end;
+		}
+		if (at < label.length) {
+			text.appendChild(document.createTextNode(label.slice(at)));
+		}
+		return text;
 	}
 
 	/**

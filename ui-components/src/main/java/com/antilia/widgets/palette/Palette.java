@@ -162,6 +162,27 @@ public class Palette<T> extends ListMultipleChoice<T>
 	}
 
 	/**
+	 * @param matcher
+	 *            how the filter matches the choices, underlining what it matched:
+	 *            {@link PaletteMatcher#ANYWHERE} unless set otherwise
+	 * @return {@code this}
+	 * @see PaletteBehavior#setMatcher(IPaletteMatcher)
+	 */
+	public Palette<T> setMatcher(IPaletteMatcher matcher)
+	{
+		palette.setMatcher(matcher);
+		return this;
+	}
+
+	/**
+	 * @return how the filter matches the choices
+	 */
+	public IPaletteMatcher getMatcher()
+	{
+		return palette.getMatcher();
+	}
+
+	/**
 	 * @param pageSize
 	 *            how many rows a list draws at first, and adds each time it is scrolled to its
 	 *            end, {@link PaletteBehavior#DEFAULT_PAGE_SIZE} unless set otherwise; 0 draws

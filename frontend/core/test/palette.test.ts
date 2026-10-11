@@ -5,8 +5,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { insertAt, moveBy, Palette, palette, setHost, type Host, type PaletteChoice,
-	standaloneHost } from '../src/index.js';
+import { insertAt, moveBy, Palette, palette, PALETTE_MATCHERS, setHost, type Host,
+	type PaletteChoice, standaloneHost } from '../src/index.js';
 
 const FRUITS: PaletteChoice[] = ['Apple', 'Banana', 'Cherry', 'Date'].map((label) => ({
 	value: label.toLowerCase(),
@@ -255,6 +255,112 @@ describe('Palette', () => {
 		expect(instance.filter).toBeNull();
 		instance.configure({ filterable: true });
 		expect(instance.filter).not.toBeNull();
+	});
+
+	it('underlines what the filter matched, anywhere unless set otherwise', () => {
+		const instance = new Palette(element(), { choices: FRUITS, filterThreshold: 0,
+			selected: ['date'] });
+		const search = (text: string) => {
+			instance.filter!.value = text;
+			instance.filter!.dispatchEvent(new Event('input'));
+		};
+		const matched = (list: { items: HTMLLIElement[] }) => list.items.map((each) =>
+			Array.from(each.querySelectorAll('.antilia-palette-match'), (part) => part.textContent)
+				.join('|'));
+
+		search(' AN ');
+		expect(texts(instance.available)).toEqual(['Banana']);
+		expect(matched(instance.available)).toEqual(['an']);
+		expect(instance.available.items[0].querySelector('.antilia-palette-text')!.innerHTML)
+			.toBe('B<span class="antilia-palette-match">an</span>ana');
+		search('');
+		expect(matched(instance.available)).toEqual(['', '', '']);
+
+		instance.configure({ match: 'start' });
+		search('a');
+		expect(texts(instance.available)).toEqual(['Apple']);
+		expect(matched(instance.available)).toEqual(['A']);
+
+		instance.configure({ match: 'end' });
+		search('Y');
+		expect(texts(instance.available)).toEqual(['Cherry']);
+		expect(matched(instance.available)).toEqual(['y']);
+		// the chosen ones are not filtered, nor underlined
+		search('e');
+		expect(texts(instance.available)).toEqual(['Apple']);
+		expect(matched(instance.chosen)).toEqual(['']);
+
+		instance.configure({ match: 'nothing such' });
+		search('an');
+		expect(texts(instance.available)).toEqual(['Banana']);
+	});
+
+	it('matches the start of the words, in their order, underlining each', () => {
+		const words = PALETTE_MATCHERS.words;
+		expect(words('South Georgia & South Sandwich Islands', 's ge')).toEqual([[0, 1], [6, 8]]);
+		expect(words('South Georgia & South Sandwich Islands', 'S  s  i')).toEqual(
+			[[0, 1], [16, 17], [31, 32]]);
+		expect(words('Guinea-Bissau', 'bis')).toEqual([[7, 10]]);
+		expect(words('Côte d’Ivoire', 'cô iv')).toEqual([[0, 2], [7, 9]]);
+		expect(words('South Georgia', 'ge s')).toBeNull();
+		expect(words('South Georgia', 'outh')).toBeNull();
+		expect(words('New Zealand', 'new new')).toBeNull();
+
+		const choices = ['New Zealand', 'Papua New Guinea', 'Niue'].map((label) =>
+			({ value: label, label }));
+		const instance = new Palette(element(), { choices, filterThreshold: 0, match: 'words' });
+		instance.filter!.value = 'n g';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(texts(instance.available)).toEqual(['Papua New Guinea']);
+		expect(instance.available.items[0].querySelector('.antilia-palette-text')!.innerHTML)
+			.toBe('Papua <span class="antilia-palette-match">N</span>ew ' +
+				'<span class="antilia-palette-match">G</span>uinea');
+	});
+
+	it('takes a matcher of its own, or the name of one put among the matchers', () => {
+		// the first letter of each word
+		const initials = (label: string, text: string): Array<[number, number]> | null => {
+			const starts = Array.from(label.matchAll(/\b\w/g), (found) => found.index!);
+			const parts: Array<[number, number]> = [];
+			for (const letter of text.toLowerCase()) {
+				const at = starts.find((start) => label[start].toLowerCase() === letter &&
+					!parts.some(([from]) => from === start));
+				if (at === undefined) {
+					return null;
+				}
+				parts.push([at, at + 1]);
+			}
+			return parts;
+		};
+		const choices = ['New York', 'New Delhi', 'York'].map((label) => ({ value: label, label }));
+		const instance = new Palette(element(), { choices, filterThreshold: 0, match: initials });
+		instance.filter!.value = 'ny';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(texts(instance.available)).toEqual(['New York']);
+		expect(Array.from(instance.available.items[0].querySelectorAll('.antilia-palette-match'),
+			(part) => part.textContent)).toEqual(['N', 'Y']);
+
+		Palette.matchers.initials = initials;
+		try {
+			instance.configure({ match: 'initials' });
+			instance.filter!.value = 'd';
+			instance.filter!.dispatchEvent(new Event('input'));
+			expect(texts(instance.available)).toEqual(['New Delhi']);
+		} finally {
+			delete Palette.matchers.initials;
+		}
+	});
+
+	it('underlines only the parts of the label a matcher gives, in order', () => {
+		const instance = new Palette(element(), { choices: FRUITS, filterThreshold: 0,
+			match: () => [[4, 99], [-3, 1], [2, 2], [3, 5]] });
+		instance.filter!.value = 'x';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(texts(instance.available)).toEqual(['Apple', 'Banana', 'Cherry', 'Date']);
+		expect(instance.available.items[1].querySelector('.antilia-palette-text')!.innerHTML)
+			.toBe('<span class="antilia-palette-match">B</span>an' +
+				'<span class="antilia-palette-match">an</span>' +
+				'<span class="antilia-palette-match">a</span>');
 	});
 
 	it('takes other texts, choices and chosen ones', () => {

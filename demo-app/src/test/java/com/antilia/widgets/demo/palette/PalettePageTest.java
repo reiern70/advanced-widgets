@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.palette.Palette;
+import com.antilia.widgets.palette.PaletteMatcher;
 
 /**
  * Checks {@link PalettePage}: the palettes, the order of the columns while it matters, the check
@@ -141,6 +142,21 @@ class PalettePageTest
 		assertTrue(!page.isFilterable());
 		tester.assertComponentOnAjaxResponse(palette("skills"));
 		tester.assertContains("\"filterable\":false");
+	}
+
+	@Test
+	void theFiltersOfTheFourExamplesMatchInTheirOwnWay()
+	{
+		assertEquals(PaletteMatcher.START, palette("matchStart").getMatcher());
+		assertEquals(PaletteMatcher.ANYWHERE, palette("matchAnywhere").getMatcher());
+		assertEquals(PaletteMatcher.END, palette("matchEnd").getMatcher());
+		assertEquals(PaletteMatcher.WORDS, palette("matchWords").getMatcher());
+		for (String id : List.of("matchStart", "matchAnywhere", "matchEnd", "matchWords"))
+		{
+			tester.assertContains("Wicket.Palette.attach\\(\"" + palette(id).getMarkupId() +
+				"\", \\{[^}]*\"match\":\"" + palette(id).getMatcher().getName() + "\"");
+		}
+		tester.assertContains("How the filter matches");
 	}
 
 	@Test

@@ -42,8 +42,8 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 			".antilia-palette-available .antilia-palette-item")).size(), "a page of countries");
 		assertEquals("3 chosen: Germany, Spain, Uruguay.", app().findElement(
 			By.cssSelector(".palette-demo__count")).getText());
-		assertEquals("SQL", Palettes.selected(palette(3)));
-		assertFalse(Palettes.button(palette(3), "add-all").isEnabled());
+		assertEquals("SQL", Palettes.selected(palette(7)));
+		assertFalse(Palettes.button(palette(7), "add-all").isEnabled());
 		assertEquals("Available", palette(0).findElement(By.cssSelector(".antilia-palette-title"))
 			.getText());
 		assertEquals("Columns left out\nIn the report", Palettes.titles(palette(1)));
@@ -92,6 +92,23 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 			.map(input -> input.getDomProperty("value"))
 			.toList();
 		assertEquals(List.of("name", "email", "country"), posted);
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
+	void theFiltersMatchFromTheStartAnywhereAndAtTheEnd(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "palette");
+		wait.until(d -> choices().equals(START));
+
+		Palettes.assertMatches(wait, palette(3), "gu", "Guatemala", "Uruguay",
+			label -> label.startsWith("Gu"));
+		Palettes.assertMatches(wait, palette(4), "gu", "Uruguay", null,
+			label -> label.toLowerCase().contains("gu"));
+		Palettes.assertMatches(wait, palette(5), "land", "Finland", null,
+			label -> label.endsWith("land"));
+		Palettes.assertWordsMatch(wait, palette(6));
+		assertNoErrors();
 	}
 
 	private WebElement palette(int index)

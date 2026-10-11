@@ -11,7 +11,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Palette, type PaletteChoice, type PaletteTexts } from '@antilia/core';
+	import { Palette, type PaletteChoice, type PaletteMatch, type PaletteTexts } from '@antilia/core';
 
 	type Props = PaletteTexts & {
 		/** The choices, in their order. */
@@ -27,6 +27,12 @@
 		filterable?: boolean;
 		/** The number of choices from which on the available ones have a filter, 8 when left out. */
 		filterThreshold?: number;
+		/**
+		 * How the filter matches a choice: 'start', 'anywhere' or 'end' of the label, 'words' (each
+		 * word typed starts a word of the label), the name of a matcher in Palette.matchers, or a matcher; 'anywhere' when left out. The matched parts of
+		 * the labels are underlined.
+		 */
+		match?: PaletteMatch;
 		/**
 		 * How many rows a list draws at first, and adds each time it is scrolled to its end, 30 when
 		 * left out; 0 draws them all.
@@ -48,6 +54,7 @@
 		disabled = false,
 		filterable = true,
 		filterThreshold,
+		match,
 		pageSize,
 		name,
 		id,
@@ -68,7 +75,7 @@
 	let element = $state<HTMLDivElement>();
 	let instance: Palette | null = null;
 
-	const settings = () => ({ ordered, numbered, filterable, filterThreshold, pageSize,
+	const settings = () => ({ ordered, numbered, filterable, filterThreshold, match, pageSize,
 		availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty });
 
 	$effect(() => {

@@ -28,8 +28,10 @@ export { DateFormat, DatePicker, datePicker, daysInMonth, firstDayOfWeek, format
 export type { DateParts, DatePickerOptions } from './date-picker.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
-export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD } from './palette.js';
-export type { PaletteChoice, PaletteOptions, PaletteTexts } from './palette.js';
+export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD,
+	PALETTE_MATCHERS } from './palette.js';
+export type { PaletteChoice, PaletteMatch, PaletteMatcher, PaletteOptions,
+	PaletteTexts } from './palette.js';
 export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
 export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';

@@ -8,7 +8,8 @@ import { useState, type FormEvent } from 'react';
 import { Palette } from '@antilia/react';
 
 import { format } from '../data.js';
-import { describe, describeCountries, type PaletteConfig, type PaletteValues } from '../palette.js';
+import { describe, describeCountries, MATCHES, type PaletteConfig,
+	type PaletteValues } from '../palette.js';
 import { Feedback, type Message } from './Feedback.js';
 
 /**
@@ -83,6 +84,19 @@ export function PaletteDemo({ config }: { config: PaletteConfig }) {
 					<p className="palette-demo__count">
 						{describeCountries(config, values.countries)}
 					</p>
+				</section>
+				<section className="palette-demo__wide">
+					<h3>{texts.matchTitle}</h3>
+					<p className="palette-demo__hint">{texts.matchHint}</p>
+					<div className="palette-demo__matches">
+						{MATCHES.map(([match, label]) => (
+							<div key={match} className="palette-demo__field">
+								<span>{texts[label]}</span>
+								<Palette options={config.countries} match={match}
+									{...config.palette} />
+							</div>
+						))}
+					</div>
 				</section>
 				<section>
 					<h3>{texts.disabledTitle}</h3>
