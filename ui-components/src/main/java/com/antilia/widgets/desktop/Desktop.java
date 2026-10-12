@@ -5,7 +5,11 @@
 package com.antilia.widgets.desktop;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.AttributeModifier;
@@ -21,6 +25,8 @@ import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.markup.repeater.RepeatingView;
+import org.apache.wicket.model.IComponentAssignedModel;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.CssResourceReference;
@@ -32,6 +38,7 @@ import org.apache.wicket.util.string.Strings;
 import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.modal.Modal;
+import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 
@@ -58,6 +65,20 @@ import com.github.openjson.JSONObject;
  * desktop. The menu of the taskbar, the button after the grip, lists the windows open, to bring
  * one to the front, and those closed, to open one again; {@link #setMenu(boolean)} leaves it out.
  * <p>
+ * The windows are in {@link DesktopPane panes}, as in the workspaces of the desktop of an
+ * operating system: the desktop shows the windows of one pane at a time, the
+ * {@link #setActivePane(String) pane shown}. The {@link DesktopPane#DEFAULT default pane} is
+ * always there; {@link #addPane(String)} adds others. The taskbar shows the panes, unless
+ * {@link #setPaneSwitcher(boolean)} turns that off, and lets the user add one, asking for its name,
+ * rename one and remove one, its windows going to the default pane, unless
+ * {@link #setEditablePanes(boolean)} turns that off. Ctrl+Shift and the arrow keys go from pane to
+ * pane, and a button on the title bar of each window moves it to another pane.
+ * {@link DesktopWindow#setPane(String)} says which pane a window starts in.
+ * <p>
+ * The launcher of the taskbar opens windows of the {@link WindowType types}
+ * {@link #addWindowType(WindowType) registered}: the desktop asks the type for a new window, adds it
+ * to the pane shown and renders it by Ajax, and takes it away again when the user closes it.
+ * <p>
  * Closing a window with changes not saved asks first, in a dialog of the look of
  * {@link com.antilia.widgets.modal.Modal}: a window has changes when a field in it holds another
  * value than the one it was rendered with, or as {@link DesktopWindow#setModified(Boolean)} says.
@@ -73,8 +94,9 @@ import com.github.openjson.JSONObject;
  * added with {@link #addWindow(DesktopWindow)}. A window rendered again by Ajax keeps its state in
  * the browser. With {@link #setSendToServer(boolean)} the browser sends the server, via Ajax, the
  * states of all windows each time the user has changed any, with the side of the taskbar and
- * whether the desktop fills the page; the windows give their models the new states, the desktop
- * keeps the side and whether it fills the page, and calls {@link #onChanged(AjaxRequestTarget)}.
+ * whether the desktop fills the page, and the panes; the windows give their models the new states,
+ * the desktop keeps the side, whether it fills the page and the panes, and calls
+ * {@link #onChanged(AjaxRequestTarget)}.
  * <p>
  * The desktop is a private component: without a license key activating it, it renders a
  * placeholder telling so, see {@link Licensing}.
@@ -99,16 +121,41 @@ public class Desktop extends Panel
 
 	private static final String EXPANDED_PARAMETER = "expanded";
 
+	private static final String PANES_PARAMETER = "panes";
+
+	private static final String PANE_PARAMETER = "pane";
+
+	private static final String ACTION_PARAMETER = "action";
+
+	private static final String TYPE_PARAMETER = "type";
+
+	private static final String WINDOW_PARAMETER = "window";
+
 	/** The texts of the desktop, by their names in the script; their keys are Desktop.name. */
 	private static final String[] TEXTS = { "minimize", "maximize", "restore", "close", "taskbar",
 		"grid", "columns", "rows", "cascade", "expand", "collapse", "move", "menu", "openWindows",
-		"closedWindows", "closeModifiedTitle", "closeModified", "discard", "keep" };
+		"closedWindows", "closeModifiedTitle", "closeModified", "discard", "keep", "panes",
+		"defaultPane", "newPane", "newPaneName", "renamePane", "renamePaneTitle", "removePane",
+		"paneName", "moveToPane", "moveToNewPane", "newWindow", "ok", "cancel" };
 
 	private final WebMarkupContainer desktop;
 
 	private final RepeatingView windows;
 
 	private final AbstractDefaultAjaxBehavior changed;
+
+	/** Adds the windows of types the user opens, and takes them away when closed. */
+	private final AbstractDefaultAjaxBehavior windowsBehavior;
+
+	private final List<DesktopPane> panes = new ArrayList<>();
+
+	private final Map<String, WindowType> windowTypes = new LinkedHashMap<>();
+
+	private String activePane = DesktopPane.DEFAULT;
+
+	private boolean paneSwitcher = true;
+
+	private boolean editablePanes = true;
 
 	private TaskbarPosition taskbarPosition = TaskbarPosition.BOTTOM;
 
@@ -165,11 +212,279 @@ public class Desktop extends Panel
 				onStates(target,
 					parameters.getParameterValue(STATES_PARAMETER).toOptionalString(),
 					parameters.getParameterValue(TASKBAR_PARAMETER).toOptionalString(),
-					parameters.getParameterValue(EXPANDED_PARAMETER).toOptionalString());
+					parameters.getParameterValue(EXPANDED_PARAMETER).toOptionalString(),
+					parameters.getParameterValue(PANES_PARAMETER).toOptionalString(),
+					parameters.getParameterValue(PANE_PARAMETER).toOptionalString());
 			}
 		};
 		// on the element of the desktop, which has an id even when the panel's tag is not rendered
 		desktop.add(changed);
+
+		windowsBehavior = new AbstractDefaultAjaxBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isEnabled(Component component)
+			{
+				return !windowTypes.isEmpty() && super.isEnabled(component);
+			}
+
+			@Override
+			protected void respond(AjaxRequestTarget target)
+			{
+				IRequestParameters parameters = getRequest().getRequestParameters();
+				String action = parameters.getParameterValue(ACTION_PARAMETER).toOptionalString();
+				if ("open".equals(action))
+				{
+					openWindow(target,
+						parameters.getParameterValue(TYPE_PARAMETER).toOptionalString(),
+						parameters.getParameterValue(PANE_PARAMETER).toOptionalString());
+				}
+				else if ("dispose".equals(action))
+				{
+					disposeWindow(target,
+						parameters.getParameterValue(WINDOW_PARAMETER).toOptionalString());
+				}
+			}
+		};
+		desktop.add(windowsBehavior);
+
+		panes.add(new DesktopPane(DesktopPane.DEFAULT, null));
+	}
+
+	/**
+	 * Adds a window of a type the user opened from the launcher, to a pane, and renders it.
+	 */
+	private void openWindow(AjaxRequestTarget target, String type, String pane)
+	{
+		WindowType windowType = type == null ? null : windowTypes.get(type);
+		if (windowType == null)
+		{
+			return;
+		}
+		DesktopWindow window = windowType.newWindow(newWindowId());
+		window.setPane(getPane(pane) != null ? pane : activePane).setDisposable(true)
+			.setClosable(true);
+		addWindow(window);
+		String desktopId = JSONObject.quote(desktop.getMarkupId());
+		String windowId = JSONObject.quote(window.getMarkupId());
+		// an element for Wicket to replace by the window, in the area of the windows
+		target.prependJavaScript("(function(){var desktop=Wicket.Desktop.of(" + desktopId +
+			");if(desktop){var window=document.createElement('section');window.id=" + windowId +
+			";desktop.area.appendChild(window);}})();");
+		target.add(window);
+		target.appendJavaScript("(function(){var desktop=Wicket.Desktop.of(" + desktopId +
+			");if(desktop){desktop.refresh();desktop.activate(" + windowId + ");}})();");
+		onWindowOpened(target, window);
+	}
+
+	/**
+	 * Takes away a window of a type the user closed.
+	 */
+	private void disposeWindow(AjaxRequestTarget target, String markupId)
+	{
+		for (DesktopWindow window : getWindows())
+		{
+			if (window.isDisposable() && window.getMarkupId().equals(markupId))
+			{
+				windows.remove(window);
+				target.appendJavaScript("(function(){var window=document.getElementById(" +
+					JSONObject.quote(markupId) + ");if(window){window.remove();}})();");
+				onWindowDisposed(target, window);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Called when the user opened a window of a {@link WindowType type}, which the desktop added
+	 * and renders. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param window
+	 *            the window
+	 */
+	protected void onWindowOpened(AjaxRequestTarget target, DesktopWindow window)
+	{
+	}
+
+	/**
+	 * Called when the user closed a window of a {@link WindowType type}, which the desktop took
+	 * away. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param window
+	 *            the window, no longer in the desktop
+	 */
+	protected void onWindowDisposed(AjaxRequestTarget target, DesktopWindow window)
+	{
+	}
+
+	/**
+	 * Registers a type of window, which the launcher of the taskbar opens; one of the same name
+	 * goes.
+	 *
+	 * @param type
+	 *            the type
+	 * @return {@code this}
+	 */
+	public Desktop addWindowType(WindowType type)
+	{
+		windowTypes.put(type.getType(), type);
+		return this;
+	}
+
+	/**
+	 * @return the types of windows the launcher opens, in the order they were registered
+	 */
+	public List<WindowType> getWindowTypes()
+	{
+		return Collections.unmodifiableList(new ArrayList<>(windowTypes.values()));
+	}
+
+	/**
+	 * @return the panes, the default one first; with {@link #isSendToServer()} on, as the user
+	 *         left them
+	 */
+	public List<DesktopPane> getPanes()
+	{
+		return Collections.unmodifiableList(panes);
+	}
+
+	/**
+	 * @param id
+	 *            the id of a pane
+	 * @return the pane, {@code null} when there is no such pane
+	 */
+	public DesktopPane getPane(String id)
+	{
+		return panes.stream().filter(pane -> pane.getId().equals(id)).findFirst().orElse(null);
+	}
+
+	/**
+	 * @return the default pane, which is always there
+	 */
+	public DesktopPane getDefaultPane()
+	{
+		return panes.get(0);
+	}
+
+	/**
+	 * Adds a pane, after the others.
+	 *
+	 * @param name
+	 *            the name of the pane
+	 * @return the pane
+	 */
+	public DesktopPane addPane(String name)
+	{
+		int last = 0;
+		for (DesktopPane pane : panes)
+		{
+			try
+			{
+				last = Math.max(last, Integer.parseInt(pane.getId()));
+			}
+			catch (NumberFormatException e)
+			{
+				// an id given by the page, not a number
+			}
+		}
+		DesktopPane pane = new DesktopPane(String.valueOf(last + 1), name);
+		panes.add(pane);
+		return pane;
+	}
+
+	/**
+	 * Removes a pane, its windows going to the default pane, which is shown when the pane was.
+	 * The default pane cannot be removed.
+	 *
+	 * @param id
+	 *            the id of the pane
+	 * @return whether the pane was removed
+	 */
+	public boolean removePane(String id)
+	{
+		DesktopPane pane = getPane(id);
+		if (pane == null || pane.isDefault())
+		{
+			return false;
+		}
+		panes.remove(pane);
+		for (DesktopWindow window : getWindows())
+		{
+			if (id.equals(window.getPane()))
+			{
+				window.setPane(DesktopPane.DEFAULT);
+			}
+		}
+		if (id.equals(activePane))
+		{
+			activePane = DesktopPane.DEFAULT;
+		}
+		return true;
+	}
+
+	/**
+	 * @return the id of the pane shown; with {@link #isSendToServer()} on, as the user left it
+	 */
+	public String getActivePane()
+	{
+		return activePane;
+	}
+
+	/**
+	 * @param activePane
+	 *            the id of the pane shown, the next time the desktop is rendered; the default
+	 *            pane when there is no such pane
+	 * @return {@code this}
+	 */
+	public Desktop setActivePane(String activePane)
+	{
+		this.activePane = getPane(activePane) != null ? activePane : DesktopPane.DEFAULT;
+		return this;
+	}
+
+	/**
+	 * @return whether the taskbar shows the panes, {@code true} by default
+	 */
+	public boolean isPaneSwitcher()
+	{
+		return paneSwitcher;
+	}
+
+	/**
+	 * @param paneSwitcher
+	 *            whether the taskbar shows the panes, and the title bars the buttons moving the
+	 *            windows to another pane
+	 * @return {@code this}
+	 */
+	public Desktop setPaneSwitcher(boolean paneSwitcher)
+	{
+		this.paneSwitcher = paneSwitcher;
+		return this;
+	}
+
+	/**
+	 * @return whether the user may add, rename and remove panes, {@code true} by default
+	 */
+	public boolean isEditablePanes()
+	{
+		return editablePanes;
+	}
+
+	/**
+	 * @param editablePanes
+	 *            whether the user may add, rename and remove panes
+	 * @return {@code this}
+	 */
+	public Desktop setEditablePanes(boolean editablePanes)
+	{
+		this.editablePanes = editablePanes;
+		return this;
 	}
 
 	/**
@@ -205,9 +520,10 @@ public class Desktop extends Panel
 
 	/**
 	 * Takes what the browser sent: gives the windows their new states, keeps the side of the
-	 * taskbar and whether the desktop fills the page, and calls back.
+	 * taskbar, whether the desktop fills the page and the panes, and calls back.
 	 */
-	private void onStates(AjaxRequestTarget target, String json, String taskbar, String expand)
+	private void onStates(AjaxRequestTarget target, String json, String taskbar, String expand,
+		String panesJson, String pane)
 	{
 		boolean any = false;
 		TaskbarPosition position = TaskbarPosition.of(taskbar);
@@ -219,6 +535,18 @@ public class Desktop extends Panel
 		if (!Strings.isEmpty(expand) && "true".equals(expand) != expanded)
 		{
 			expanded = !expanded;
+			any = true;
+		}
+		List<DesktopPane> sent = parsePanes(panesJson);
+		if (!sent.isEmpty() && !sent.equals(panes))
+		{
+			panes.clear();
+			panes.addAll(sent);
+			any = true;
+		}
+		if (!Strings.isEmpty(pane) && getPane(pane) != null && !pane.equals(activePane))
+		{
+			activePane = pane;
 			any = true;
 		}
 		JSONObject states = parse(json);
@@ -260,6 +588,42 @@ public class Desktop extends Panel
 		{
 			return new JSONObject();
 		}
+	}
+
+	/**
+	 * @return the panes the browser sent, the default one first; none when the JSON is missing,
+	 *         wrong, or has no default pane
+	 */
+	private static List<DesktopPane> parsePanes(String json)
+	{
+		List<DesktopPane> parsed = new ArrayList<>();
+		if (Strings.isEmpty(json))
+		{
+			return parsed;
+		}
+		try
+		{
+			JSONArray array = new JSONArray(json);
+			for (int index = 0; index < array.length(); index++)
+			{
+				JSONObject object = array.optJSONObject(index);
+				DesktopPane pane = object == null ? null : DesktopPane.fromJson(object);
+				if (pane != null && parsed.stream().noneMatch(other ->
+					other.getId().equals(pane.getId())))
+				{
+					parsed.add(pane);
+				}
+			}
+		}
+		catch (JSONException e)
+		{
+			parsed.clear();
+		}
+		if (parsed.isEmpty() || !parsed.get(0).isDefault())
+		{
+			parsed.clear();
+		}
+		return parsed;
 	}
 
 	/**
@@ -428,12 +792,22 @@ public class Desktop extends Panel
 		renderHeadItems(response);
 		StringBuilder script = new StringBuilder("Wicket.Desktop.attach(")
 			.append(JSONObject.quote(desktop.getMarkupId())).append(", ").append(getOptions());
-		if (sendToServer)
+		if (sendToServer || !windowTypes.isEmpty())
 		{
-			script.append(", ").append(changed.getCallbackFunction(
+			script.append(", ").append(sendToServer ? changed.getCallbackFunction(
 				CallbackParameter.explicit(STATES_PARAMETER),
 				CallbackParameter.explicit(TASKBAR_PARAMETER),
-				CallbackParameter.explicit(EXPANDED_PARAMETER)));
+				CallbackParameter.explicit(EXPANDED_PARAMETER),
+				CallbackParameter.explicit(PANES_PARAMETER),
+				CallbackParameter.explicit(PANE_PARAMETER)) : "null");
+		}
+		if (!windowTypes.isEmpty())
+		{
+			script.append(", ").append(windowsBehavior.getCallbackFunction(
+				CallbackParameter.explicit(ACTION_PARAMETER),
+				CallbackParameter.explicit(TYPE_PARAMETER),
+				CallbackParameter.explicit(PANE_PARAMETER),
+				CallbackParameter.explicit(WINDOW_PARAMETER)));
 		}
 		response.render(OnDomReadyHeaderItem.forScript(script.append(");").toString()));
 	}
@@ -452,6 +826,26 @@ public class Desktop extends Panel
 				texts.put(name, text);
 			}
 		}
+		JSONArray paneList = new JSONArray();
+		panes.forEach(pane -> paneList.put(pane.toJson()));
+		JSONArray types = new JSONArray();
+		for (WindowType type : windowTypes.values())
+		{
+			IModel<String> title = type.getTitle();
+			if (title instanceof IComponentAssignedModel<String> assigned)
+			{
+				// a resource model, say, as the desktop finds its texts
+				title = assigned.wrapOnAssignment(this);
+			}
+			JSONObject json = new JSONObject().put("type", type.getType())
+				.put("title", Objects.toString(title.getObject(), type.getType()));
+			title.detach();
+			if (type.getIcon() != null)
+			{
+				json.put("icon", type.getIcon().getMarkup());
+			}
+			types.put(json);
+		}
 		return new JSONObject()
 			.put("taskbar", taskbarPosition.cssName())
 			.put("tiling", tiling)
@@ -459,6 +853,11 @@ public class Desktop extends Panel
 			.put("expanded", expanded)
 			.put("movableTaskbar", movableTaskbar)
 			.put("menu", menu)
+			.put("panes", paneList)
+			.put("activePane", activePane)
+			.put("paneSwitcher", paneSwitcher)
+			.put("editablePanes", editablePanes)
+			.put("windowTypes", types)
 			.put("texts", texts)
 			.toString();
 	}

@@ -7,8 +7,32 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, us
 	type ReactNode } from 'react';
 
 import { Desktop as CoreDesktop, DEFAULT_DESKTOP_TEXTS, DESKTOP_COMPONENTS, isLicensed,
-	UNLICENSED_CLASS, type DesktopTexts, type TaskbarPosition, type TileLayout,
+	UNLICENSED_CLASS, type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
 	type WindowState } from '@antilia/core';
+
+/**
+ * A type of window, which the launcher of the taskbar opens: the desktop renders a new window of
+ * it in the pane shown, each time the user opens one, and takes it away when the user closes it.
+ */
+export interface DesktopWindowType {
+	/** The name of the type. */
+	type: string;
+	/** What the launcher says for it, and the title of its windows. */
+	title: string;
+	/** The markup of its icon, an svg, in the launcher and on its windows. */
+	icon?: string;
+	/** Renders the body of a window of the type. */
+	render(id: string): ReactNode;
+	/** What else its windows are: where they start, their size, and the like. */
+	window?: Omit<DesktopWindowProps, 'id' | 'title' | 'icon' | 'iconMarkup' | 'pane' | 'children'>;
+}
+
+/** A window of a type the user opened. */
+interface Launched {
+	id: string;
+	type: string;
+	pane: string;
+}
 
 export interface DesktopProps {
 	/** The windows, {@link DesktopWindow}s; they may come and go. */
@@ -25,6 +49,19 @@ export interface DesktopProps {
 	movableTaskbar?: boolean;
 	/** Whether the taskbar has the menu listing the windows open and closed, true when left out. */
 	menu?: boolean;
+	/**
+	 * The panes, the default one, of the id DEFAULT_PANE, first; that one alone when left out.
+	 * The user changes them too.
+	 */
+	panes?: DesktopPane[];
+	/** The id of the pane shown, the default one when left out; the user changes it too. */
+	activePane?: string;
+	/** Whether the taskbar shows the panes, true when left out. */
+	paneSwitcher?: boolean;
+	/** Whether the user may add, rename and remove panes, true when left out. */
+	editablePanes?: boolean;
+	/** The types of windows the launcher of the taskbar opens; none when left out. */
+	windowTypes?: DesktopWindowType[];
 	/**
 	 * Asked before the user closes a window with changes not saved, instead of the dialog of the
 	 * desktop; resolving to true closes it.
@@ -50,6 +87,10 @@ export interface DesktopProps {
 	onActivate?(id: string): void;
 	/** Called with the id of the window the user closed. */
 	onClose?(id: string): void;
+	/** Called with the panes and the id of the one shown, once the user changed them. */
+	onPanes?(panes: DesktopPane[], active: string): void;
+	/** Called with the type and the pane of a window the user opened from the launcher. */
+	onOpenWindow?(type: string, pane: string): void;
 	id?: string;
 	/** CSS classes of the desktop, next to antilia-desktop; one giving it a height, say. */
 	className?: string;
@@ -82,6 +123,21 @@ export interface DesktopHandle {
 	cycle(direction?: 1 | -1): void;
 	/** Lets the desktop fill the whole page, or takes it back into the page. */
 	expand(expanded?: boolean): void;
+	/** The panes, the default one first. */
+	panes(): DesktopPane[];
+	/** The id of the pane shown. */
+	activePane(): string;
+	/** Shows another pane. */
+	showPane(id: string): void;
+	/** Adds a pane, without showing it. */
+	addPane(name: string): DesktopPane | null;
+	renamePane(id: string, name: string): void;
+	/** Removes a pane, its windows going to the default pane. */
+	removePane(id: string): void;
+	/** Moves a window to another pane. */
+	moveToPane(window: string, pane: string): void;
+	/** Opens a window of a type, in the pane shown when none is given. */
+	openWindow(type: string, pane?: string): void;
 }
 
 /**
@@ -90,13 +146,17 @@ export interface DesktopHandle {
  * buttons minimize, maximize and close it, as it allows, and its edges resize it. F11 maximizes
  * the window the focus is in, Ctrl+F6 goes round the windows. The user drags the taskbar to
  * another side, and a button of it lets the desktop fill the whole page; its menu lists the
- * windows open and closed. Closing a window with changes not saved asks first. React renders the
- * windows, the core moves them and fills the taskbar. A ref gets a {@link DesktopHandle}. Give it
- * a height. A private component: it needs a license key.
+ * windows open and closed. Closing a window with changes not saved asks first. The windows are in
+ * panes, which the taskbar shows, one at a time; Ctrl+Shift and the arrow keys go from pane to pane
+ * and a button of each title bar moves its window to another pane. The launcher of the taskbar
+ * opens windows of the types given, which the desktop renders. React renders the windows, the core
+ * moves them and fills the taskbar. A ref gets a {@link DesktopHandle}. Give it a height. A
+ * private component: it needs a license key.
  */
 export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(props, ref) {
 	const { children, taskbar = 'bottom', tiling = true, expandable = true, expanded = false,
-		movableTaskbar = true, menu = true, texts, licenseKey, id, className } = props;
+		movableTaskbar = true, menu = true, panes, activePane, paneSwitcher = true,
+		editablePanes = true, windowTypes, texts, licenseKey, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreDesktop | null>(null);
 	const latest = useRef(props);
@@ -105,9 +165,31 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	// the side of the taskbar: as the props say, or where the user moved it since
 	const [position, setPosition] = useState<TaskbarPosition>(taskbar);
 	const [filling, setFilling] = useState(expanded);
+	// the panes and the one shown: as the props say, or as the user changed them since
+	const [paneList, setPaneList] = useState<DesktopPane[] | undefined>(panes);
+	const [shown, setShown] = useState<string | undefined>(activePane);
+	// the windows of types the user opened
+	const [launched, setLaunched] = useState<Launched[]>([]);
+	const count = useRef(0);
+	const panesKey = JSON.stringify(panes ?? null);
 
 	useEffect(() => setPosition(taskbar), [taskbar]);
 	useEffect(() => setFilling(expanded), [expanded]);
+	useEffect(() => setPaneList(panes), [panesKey]);
+	useEffect(() => setShown(activePane), [activePane]);
+
+	const coreTypes = (windowTypes ?? []).map(({ type, title, icon }) => ({ type, title, icon }));
+	const typesKey = JSON.stringify(coreTypes);
+
+	/** Renders a window of a type in a pane, with an id unique in the page. */
+	const launch = (type: string, pane: string) => {
+		let window: string;
+		do {
+			window = (id ?? 'antilia-desktop') + '-' + type + '-' + (++count.current);
+		} while (document.getElementById(window));
+		const added = window;
+		setLaunched((current) => [...current, { id: added, type, pane }]);
+	};
 
 	useEffect(() => {
 		let live = true;
@@ -135,7 +217,30 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 		expand: (value = true) => {
 			instance.current?.expand(value);
 			setFilling(value);
-		}
+		},
+		panes: () => instance.current?.panes() ?? [],
+		activePane: () => instance.current?.activePane() ?? '0',
+		showPane: (pane) => {
+			if (instance.current?.showPane(pane)) {
+				setShown(pane);
+			}
+		},
+		addPane: (name) => {
+			const pane = instance.current?.addPane(name) ?? null;
+			setPaneList(instance.current?.panes());
+			return pane;
+		},
+		renamePane: (pane, name) => {
+			instance.current?.renamePane(pane, name);
+			setPaneList(instance.current?.panes());
+		},
+		removePane: (pane) => {
+			instance.current?.removePane(pane);
+			setPaneList(instance.current?.panes());
+			setShown(instance.current?.activePane());
+		},
+		moveToPane: (window, pane) => instance.current?.moveToPane(window, pane),
+		openWindow: (type, pane) => instance.current?.openWindow(type, pane)
 	}), []);
 
 	useLayoutEffect(() => {
@@ -144,11 +249,25 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 		}
 		const desktop = new CoreDesktop(element.current!, {
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
+			panes: paneList, activePane: shown, paneSwitcher, editablePanes, windowTypes: coreTypes,
 			confirmClose: (window, title) => latest.current.confirmClose ?
 				latest.current.confirmClose(window, title) : desktop.askToClose(title),
 			onChange: (states) => latest.current.onChange?.(states),
 			onActivate: (window) => latest.current.onActivate?.(window),
-			onClose: (window) => latest.current.onClose?.(window),
+			onClose: (window) => {
+				setLaunched((current) => current.some((other) => other.id === window) ?
+					current.filter((other) => other.id !== window) : current);
+				latest.current.onClose?.(window);
+			},
+			onPanes: (list, active) => {
+				setPaneList(list);
+				setShown(active);
+				latest.current.onPanes?.(list, active);
+			},
+			onOpenWindow: (type, pane) => {
+				launch(type, pane);
+				latest.current.onOpenWindow?.(type, pane);
+			},
 			onTaskbar: (side) => {
 				setPosition(side);
 				latest.current.onTaskbar?.(side);
@@ -166,10 +285,13 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	}, [licensed]);
 
 	const textsKey = JSON.stringify(texts ?? {});
+	const paneListKey = JSON.stringify(paneList ?? null);
 	useLayoutEffect(() => {
 		instance.current?.configure({ taskbar: position, tiling, expandable, expanded: filling,
-			movableTaskbar, menu, texts });
-	}, [position, tiling, expandable, filling, movableTaskbar, menu, textsKey]);
+			movableTaskbar, menu, texts, panes: paneList, activePane: shown, paneSwitcher,
+			editablePanes, windowTypes: coreTypes });
+	}, [position, tiling, expandable, filling, movableTaskbar, menu, textsKey, paneListKey, shown,
+		paneSwitcher, editablePanes, typesKey]);
 
 	if (licensed === null) {
 		return null;
@@ -181,7 +303,18 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	return (
 		<div ref={element} id={id} className={['antilia-desktop', 'antilia-desktop-taskbar-' + position,
 			className].filter(Boolean).join(' ')}>
-			<div className="antilia-desktop-area">{children}</div>
+			<div className="antilia-desktop-area">
+				{children}
+				{launched.map((window) => {
+					const type = windowTypes?.find((other) => other.type === window.type);
+					return type && (
+						<DesktopWindow key={window.id} {...type.window} id={window.id}
+							title={type.title} iconMarkup={type.icon} pane={window.pane} closable>
+							{type.render(window.id)}
+						</DesktopWindow>
+					);
+				})}
+			</div>
 			<div className="antilia-desktop-taskbar" />
 		</div>
 	);
@@ -194,6 +327,13 @@ export interface DesktopWindowProps {
 	title: ReactNode;
 	/** An icon before the title, which the taskbar shows too; an svg, for example. */
 	icon?: ReactNode;
+	/** The markup of the icon, an svg, instead of icon. */
+	iconMarkup?: string;
+	/**
+	 * The id of the pane the window is in, the one shown when left out; the user moves it to
+	 * another too.
+	 */
+	pane?: string;
 	/** Where the window starts, from the left of the desktop, in pixels; cascading when left out. */
 	x?: number;
 	/** Where the window starts, from the top of the desktop, in pixels; cascading when left out. */
@@ -250,7 +390,8 @@ function present(value: boolean | undefined): '' | undefined {
  * A window of a {@link Desktop}: its title bar, with the icon and the title, and its body. The
  * desktop adds the buttons and the handles, as the window allows.
  */
-export function DesktopWindow({ id, title, icon, x, y, width, height, minWidth, minHeight,
+export function DesktopWindow({ id, title, icon, iconMarkup, pane, x, y, width, height, minWidth,
+	minHeight,
 	resizable, maximizable, minimizable, foldable, closable, modified, minimized, maximized, folded,
 	closed, className, bodyClassName, children }: DesktopWindowProps) {
 	return (
@@ -261,9 +402,11 @@ export function DesktopWindow({ id, title, icon, x, y, width, height, minWidth, 
 			data-foldable={flag(foldable)} data-closable={flag(closable)}
 			data-modified={flag(modified)}
 			data-minimized={present(minimized)} data-maximized={present(maximized)}
-			data-folded={present(folded)} data-closed={present(closed)}>
+			data-folded={present(folded)} data-closed={present(closed)} data-pane={pane}>
 			<header className="antilia-window-header">
-				{icon && <span className="antilia-window-icon">{icon}</span>}
+				{iconMarkup ? <span className="antilia-window-icon"
+					dangerouslySetInnerHTML={{ __html: iconMarkup }} /> :
+					icon && <span className="antilia-window-icon">{icon}</span>}
 				<span className="antilia-window-title">{title}</span>
 			</header>
 			<div className={['antilia-window-body', bodyClassName].filter(Boolean).join(' ')}>

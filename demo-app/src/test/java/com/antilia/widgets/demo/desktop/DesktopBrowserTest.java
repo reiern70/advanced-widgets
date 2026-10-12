@@ -42,7 +42,8 @@ import com.antilia.widgets.demo.SeleniumBrowser;
  * front, dragging, folding, resizing, minimizing and maximizing it, F11 and Ctrl+F6, the taskbar,
  * dragging it to another side, filling the page, tiling, closing and opening the keyboard window,
  * the menu of the taskbar opening the windows closed, the dialog asking before a window with
- * changes closes, the states the server keeps, and the desktops of the React and Svelte tabs. Runs with {@code -Pselenium}, see
+ * changes closes, the panes and the launcher, the states the server keeps, and the desktops of the
+ * React and Svelte tabs. Runs with {@code -Pselenium}, see
  * {@link SeleniumBrowser}. With {@code -Ddesktop.screenshots=<folder>} it saves screenshots there.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -74,12 +75,11 @@ class DesktopBrowserTest extends JettyTestCase
 	{
 		open(browser);
 
-		// all open
+		// all open, the grids and the keyboard in the first pane
 		assertEquals(List.of("JSON grid in Wicket", "Bean grid in Wicket", "JSON grid in React",
-			"JSON grid in Svelte", "Dropdowns in Wicket", "Dropdowns in React", "Dropdowns in Svelte",
-			"Keyboard"), driver.findElements(
-				By.cssSelector(".desktop-demo__desktop > .antilia-desktop .antilia-desktop-task"))
-				.stream().filter(WebElement::isDisplayed).map(DesktopBrowserTest::title).toList());
+			"JSON grid in Svelte", "Keyboard"), shownTasks());
+		assertEquals(List.of("Grids", "Dropdowns"), desktop().findElements(
+			By.className("antilia-desktop-pane")).stream().map(WebElement::getText).toList());
 		for (int index = 0; index < 4; index++)
 		{
 			int window = index;
@@ -88,11 +88,19 @@ class DesktopBrowserTest extends JettyTestCase
 			assertFalse(window(window).findElements(By.className("antilia-col-mover")).isEmpty(),
 				"columns moving by drag and drop");
 		}
-		assertTrue(window(6).getDomAttribute("data-active") != null, "the last one in front");
-		assertTrue(window(5).isDisplayed());
+		assertTrue(window(3).getDomAttribute("data-active") != null, "the last one in front");
+		assertTrue(window(2).isDisplayed());
+		assertFalse(window(4).isDisplayed(), "in the other pane");
 		assertFalse(window(KEYBOARD).isDisplayed(), "the keyboard minimized");
 		assertTrue(task(KEYBOARD).getDomAttribute("data-minimized") != null);
 		screenshot("wicket");
+
+		click(pane("Dropdowns"));
+		wait.until(d -> window(6).isDisplayed());
+		assertEquals(List.of("Dropdowns in Wicket", "Dropdowns in React", "Dropdowns in Svelte"),
+			shownTasks());
+		assertTrue(window(6).getDomAttribute("data-active") != null, "the last one in front");
+		assertFalse(window(0).isDisplayed());
 	}
 
 	@ParameterizedTest
@@ -150,7 +158,8 @@ class DesktopBrowserTest extends JettyTestCase
 
 		new Actions(driver).doubleClick(window(0).findElement(By.cssSelector(
 			".antilia-window-title"))).perform();
-		wait.until(d -> states().contains("JSON grid in Wicket at 116, 66, 900 × 460, folded"));
+		wait.until(d -> states().contains("JSON grid in Wicket at 116, 66, 900 × 460 in Grids, " +
+			"folded"));
 		assertTrue(height(window(0)) < 60, "only the title bar");
 		new Actions(driver).doubleClick(window(0).findElement(By.cssSelector(
 			".antilia-window-title"))).perform();
@@ -167,17 +176,18 @@ class DesktopBrowserTest extends JettyTestCase
 	{
 		open(browser);
 
-		click(window(6).findElement(By.cssSelector(".antilia-window-control-minimize")));
-		wait.until(d -> !window(6).isDisplayed());
-		assertTrue(window(5).getDomAttribute("data-active") != null, "the one behind");
-		wait.until(d -> states().contains("Dropdowns in Svelte at 320, 140, 700 × 460, minimized"));
+		click(window(3).findElement(By.cssSelector(".antilia-window-control-minimize")));
+		wait.until(d -> !window(3).isDisplayed());
+		assertTrue(window(2).getDomAttribute("data-active") != null, "the one behind");
+		wait.until(d -> states().contains("JSON grid in Svelte at 136, 136, 900 × 460 in Grids, " +
+			"minimized"));
 
-		click(task(6));
-		wait.until(d -> window(6).isDisplayed());
-		assertTrue(window(6).getDomAttribute("data-active") != null);
+		click(task(3));
+		wait.until(d -> window(3).isDisplayed());
+		assertTrue(window(3).getDomAttribute("data-active") != null);
 		// the button of the window in front minimizes it
-		click(task(6));
-		wait.until(d -> !window(6).isDisplayed());
+		click(task(3));
+		wait.until(d -> !window(3).isDisplayed());
 	}
 
 	@ParameterizedTest
@@ -191,7 +201,8 @@ class DesktopBrowserTest extends JettyTestCase
 		click(window(0).findElement(By.cssSelector(".antilia-window-control-maximize")));
 		wait.until(d -> window(0).getDomAttribute("data-maximized") != null);
 		assertEquals(width(area), width(window(0)), 1);
-		wait.until(d -> states().contains("JSON grid in Wicket at 16, 16, 900 × 460, maximized"));
+		wait.until(d -> states().contains("JSON grid in Wicket at 16, 16, 900 × 460 in Grids, " +
+			"maximized"));
 
 		// another window brought to the front from the taskbar takes its place, maximized
 		click(task(1));
@@ -211,7 +222,7 @@ class DesktopBrowserTest extends JettyTestCase
 	void goesRoundTheWindowsWithCtrlF6(SeleniumBrowser browser)
 	{
 		open(browser);
-		WebElement field = focusIn(window(6));
+		WebElement field = focusIn(window(3));
 
 		// to the keyboard, minimized
 		field.sendKeys(Keys.chord(Keys.CONTROL, Keys.F6));
@@ -231,21 +242,24 @@ class DesktopBrowserTest extends JettyTestCase
 		open(browser);
 		WebElement area = area();
 
+		// the windows of the pane shown only
 		click(tile("columns"));
 		wait.until(d -> left(window(0)) == 0);
-		double seventh = width(area) / 7;
-		assertEquals(seventh, width(window(0)), 1);
-		assertEquals(seventh, left(window(1)), 1);
-		assertEquals(6 * seventh, left(window(6)), 1);
+		double quarter = width(area) / 4;
+		assertEquals(quarter, width(window(0)), 1);
+		assertEquals(quarter, left(window(1)), 1);
+		assertEquals(3 * quarter, left(window(3)), 1);
 		assertFalse(window(KEYBOARD).isDisplayed(), "minimized, left out");
+		assertEquals("16px", ((JavascriptExecutor)driver).executeScript(
+			"return arguments[0].style.getPropertyValue('--antilia-window-x');", window(4)),
+			"in the other pane, left out");
 
-		// three in the first two rows, one in the last
+		// two in each row
 		click(tile("grid"));
-		wait.until(d -> Math.abs(width(window(6)) - width(area)) < 2);
-		assertEquals(width(area) / 3, width(window(0)), 1);
-		assertEquals(0, left(window(3)), 1);
-		assertEquals(width(area) / 3, left(window(4)), 1);
-		assertEquals(0, left(window(6)), 1);
+		wait.until(d -> Math.abs(width(window(3)) - width(area) / 2) < 2);
+		assertEquals(width(area) / 2, width(window(0)), 1);
+		assertEquals(0, left(window(2)), 1);
+		assertEquals(width(area) / 2, left(window(3)), 1);
 		screenshot("tiled");
 	}
 
@@ -267,12 +281,12 @@ class DesktopBrowserTest extends JettyTestCase
 		wait.until(d -> !window(KEYBOARD).isDisplayed());
 		assertFalse(task(KEYBOARD).isDisplayed());
 		assertTrue(driver.findElements(By.className("antilia-desktop-confirm")).isEmpty());
-		wait.until(d -> states().contains("Keyboard at 560, 40, 600 × 480, closed"));
+		wait.until(d -> states().contains("Keyboard at 560, 16, 640 × 620 in Grids, closed"));
 
 		click(driver.findElement(By.cssSelector("form.desktop-demo__options button")));
 		wait.until(d -> window(KEYBOARD).isDisplayed());
 		assertTrue(window(KEYBOARD).getDomAttribute("data-active") != null);
-		wait.until(d -> !states().contains("Keyboard at 560, 40, 600 × 480, closed"));
+		wait.until(d -> !states().contains("Keyboard at 560, 16, 640 × 620 in Grids, closed"));
 	}
 
 	@ParameterizedTest
@@ -404,12 +418,15 @@ class DesktopBrowserTest extends JettyTestCase
 			wait.until(d -> panel.findElements(By.cssSelector(".antilia-desktop-task")).size() == 10);
 			wait.until(d -> !panel.findElements(By.cssSelector(
 				".antilia-window table.ant-data-table tbody tr")).isEmpty());
-			// six more demos of the framework, each in a window of its own
 			assertEquals(List.of(framework.equals("react") ? "JSON grid in React" :
-				"JSON grid in Svelte", "Notes", framework.equals("react") ? "Dropdowns in React" :
-					"Dropdowns in Svelte", "Autocomplete", "Buttons", "Date and time pickers",
-				"JSON Infinite List", "Modal Dialog", "Progress Bar", "Keyboard"),
-				panel.findElements(By.cssSelector(".antilia-desktop-task")).stream()
+				"JSON grid in Svelte", "Notes", "Keyboard"), panel.findElements(By.cssSelector(
+					".antilia-desktop-task")).stream().filter(WebElement::isDisplayed)
+					.map(DesktopBrowserTest::title).toList());
+			// six more demos of the framework, each in a window of its own, in the third pane
+			click(pane(panel, "Demos"));
+			assertEquals(List.of("Autocomplete", "Buttons", "Date and time pickers",
+				"JSON Infinite List", "Modal Dialog", "Progress Bar"), panel.findElements(
+					By.cssSelector(".antilia-desktop-task")).stream().filter(WebElement::isDisplayed)
 					.map(DesktopBrowserTest::title).toList());
 			for (String demo : new String[] { "autocomplete", "buttons", "datePicker", "jsonList",
 				"modalDialog", "progressBar" })
@@ -425,6 +442,7 @@ class DesktopBrowserTest extends JettyTestCase
 			screenshot(framework + "-windows");
 			WebElement users = panel.findElement(By.id(framework + "-desktop-users"));
 			WebElement dropdowns = panel.findElement(By.id(framework + "-desktop-dropdowns"));
+			click(pane(panel, "Grids"));
 
 			// in front from the taskbar: the windows after it cover its title bar
 			click(panel.findElement(By.cssSelector(".antilia-desktop-task[data-window='" +
@@ -438,9 +456,8 @@ class DesktopBrowserTest extends JettyTestCase
 			click(panel.findElement(By.cssSelector(".desktop-demo__options button")));
 			wait.until(d -> keyboard.isDisplayed());
 
-			// choices not sent are changes; the keyboard came in front, the drop-downs back
-			click(panel.findElement(By.cssSelector(".antilia-desktop-task[data-window='" +
-				framework + "-desktop-dropdowns']")));
+			// choices not sent are changes, in the drop-downs, alone in the second pane
+			click(pane(panel, "Dropdowns"));
 			wait.until(d -> dropdowns.getDomAttribute("data-active") != null);
 			WebElement size = wait.until(d -> dropdowns.findElement(By.name("size")));
 			Dropdowns.choose(driver, size, 2);
@@ -469,22 +486,23 @@ class DesktopBrowserTest extends JettyTestCase
 	{
 		open(browser);
 		// closed without asking, nothing changed in it
-		click(task(5));
-		wait.until(d -> window(5).getDomAttribute("data-active") != null);
-		click(window(5).findElement(By.cssSelector(".antilia-window-control-close")));
-		wait.until(d -> !window(5).isDisplayed());
+		click(task(2));
+		wait.until(d -> window(2).getDomAttribute("data-active") != null);
+		click(window(2).findElement(By.cssSelector(".antilia-window-control-close")));
+		wait.until(d -> !window(2).isDisplayed());
 		assertTrue(driver.findElements(By.className("antilia-desktop-confirm")).isEmpty());
-		assertFalse(task(5).isDisplayed(), "off the taskbar");
+		assertFalse(task(2).isDisplayed(), "off the taskbar");
 		WebElement menuButton = desktop().findElement(By.className("antilia-desktop-menu-button"));
 
 		click(menuButton);
 
 		WebElement menu = wait.until(d -> desktop().findElement(By.className("antilia-desktop-menu")));
 		assertEquals("true", menuButton.getDomAttribute("aria-expanded"));
-		assertEquals(List.of("JSON grid in Wicket", "Bean grid in Wicket", "JSON grid in React",
-			"JSON grid in Svelte", "Dropdowns in Wicket", "Dropdowns in Svelte", "Keyboard"),
-			items(menu, "open"));
-		assertEquals(List.of("Dropdowns in React"), items(menu, "closed"));
+		assertEquals(List.of("JSON grid in Wicket", "Bean grid in Wicket", "JSON grid in Svelte",
+			"Keyboard"), items(menu, "open"));
+		assertEquals(List.of("Dropdowns in Wicket", "Dropdowns in React", "Dropdowns in Svelte"),
+			items(menu, "pane"));
+		assertEquals(List.of("JSON grid in React"), items(menu, "closed"));
 		assertTrue(menu.isDisplayed());
 		assertEquals(Boolean.TRUE, ((JavascriptExecutor)driver).executeScript(
 			"var r = arguments[0].getBoundingClientRect();" +
@@ -492,14 +510,21 @@ class DesktopBrowserTest extends JettyTestCase
 			menu), "nothing covers the menu");
 		screenshot("menu");
 
-		click(menuItem(desktop(), "Dropdowns in React"));
+		click(menuItem(desktop(), "JSON grid in React"));
 
-		wait.until(d -> window(5).isDisplayed());
+		wait.until(d -> window(2).isDisplayed());
 		assertTrue(desktop().findElements(By.className("antilia-desktop-menu")).isEmpty());
+		assertTrue(window(2).getDomAttribute("data-active") != null);
+		assertTrue(task(2).isDisplayed());
+		wait.until(d -> !states().contains("JSON grid in React at 96, 96, 900 × 460 in Grids, " +
+			"closed"));
+
+		// a window of another pane: its pane is shown
+		click(desktop().findElement(By.className("antilia-desktop-menu-button")));
+		click(menuItem(desktop(), "Dropdowns in React"));
+		wait.until(d -> window(5).isDisplayed());
+		assertFalse(window(2).isDisplayed());
 		assertTrue(window(5).getDomAttribute("data-active") != null);
-		assertTrue(task(5).isDisplayed());
-		wait.until(d -> !window(5).findElements(By.cssSelector(".antilia-dropdown-toggle")).isEmpty());
-		wait.until(d -> !states().contains("Dropdowns in React at 280, 100, 700 × 460, closed"));
 
 		// with the keyboard: Escape closes it again, giving its button the focus
 		focusOn(desktop().findElement(By.className("antilia-desktop-menu-button")))
@@ -517,6 +542,7 @@ class DesktopBrowserTest extends JettyTestCase
 	{
 		open(browser);
 		WebElement dropdowns = window(4);
+		click(pane("Dropdowns"));
 		click(task(4));
 		wait.until(d -> dropdowns.getDomAttribute("data-active") != null);
 		WebElement size = dropdowns.findElement(By.name("size"));
@@ -545,7 +571,8 @@ class DesktopBrowserTest extends JettyTestCase
 		click(wait.until(d -> d.findElement(By.cssSelector(
 			".antilia-desktop-confirm [data-confirm='discard']"))));
 		wait.until(d -> !dropdowns.isDisplayed());
-		wait.until(d -> states().contains("Dropdowns in Wicket at 240, 60, 700 × 460, closed"));
+		wait.until(d -> states().contains("Dropdowns in Wicket at 16, 16, 700 × 460 in Dropdowns, " +
+			"closed"));
 
 		// open again, its choices as they were: the server knows too
 		click(desktop().findElement(By.className("antilia-desktop-menu-button")));
@@ -556,12 +583,72 @@ class DesktopBrowserTest extends JettyTestCase
 
 		// the grids lose nothing but a user being edited: searching closes at once
 		WebElement bean = window(1);
+		click(pane("Grids"));
 		click(task(1));
 		WebElement filter = bean.findElement(By.cssSelector("input[type='search']"));
 		filter.sendKeys("an");
 		click(bean.findElement(By.cssSelector(".antilia-window-control-close")));
 		wait.until(d -> !bean.isDisplayed());
 		assertTrue(driver.findElements(By.className("antilia-desktop-confirm")).isEmpty());
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void goesFromPaneToPaneAddsOneMovesAWindowAndOpensNotes(SeleniumBrowser browser)
+		throws IOException
+	{
+		open(browser);
+
+		// Ctrl+Shift and the arrow keys go from pane to pane
+		focusIn(window(3)).sendKeys(Keys.chord(Keys.CONTROL, Keys.SHIFT, Keys.ARROW_RIGHT));
+		wait.until(d -> window(6).isDisplayed());
+		assertEquals("true", pane("Dropdowns").getDomAttribute("aria-pressed"));
+		wait.until(d -> states().contains("showing Dropdowns"));
+		driver.switchTo().activeElement().sendKeys(Keys.chord(Keys.CONTROL, Keys.SHIFT,
+			Keys.ARROW_LEFT));
+		wait.until(d -> window(3).isDisplayed());
+
+		// a new pane, named in a dialog, shown
+		click(desktop().findElement(By.className("antilia-desktop-pane-action-add")));
+		WebElement name = wait.until(d -> d.findElement(By.cssSelector(
+			".antilia-desktop-prompt input")));
+		name.clear();
+		name.sendKeys("Charts", Keys.ENTER);
+		wait.until(d -> "true".equals(pane("Charts").getDomAttribute("aria-pressed")));
+		assertTrue(shownTasks().isEmpty());
+		wait.until(d -> states().contains("panes Grids, Dropdowns, Charts, showing Charts"));
+		screenshot("pane-new");
+
+		// the Bean grid moved there from its title bar
+		click(pane("Grids"));
+		click(task(1));
+		click(window(1).findElement(By.cssSelector(".antilia-window-control-pane")));
+		click(menuItem(desktop(), "Charts"));
+		wait.until(d -> !window(1).isDisplayed());
+		wait.until(d -> states().contains("Bean grid in Wicket at 56, 56, 900 × 460 in Charts"));
+		click(pane("Charts"));
+		wait.until(d -> window(1).isDisplayed());
+
+		// notes, opened from the launcher in the pane shown, gone when closed
+		click(desktop().findElement(By.className("antilia-desktop-launcher")));
+		click(menuItem(desktop(), "Notes"));
+		WebElement notes = wait.until(d -> d.findElements(By.cssSelector(
+			".desktop-demo__desktop .antilia-window[data-disposable]")).stream()
+			.filter(WebElement::isDisplayed).findFirst().orElse(null));
+		assertTrue(notes.getDomAttribute("data-active") != null);
+		assertEquals(List.of("Bean grid in Wicket", "Notes"), shownTasks());
+		screenshot("pane-notes");
+		click(notes.findElement(By.cssSelector(".antilia-window-control-close")));
+		wait.until(d -> d.findElements(By.cssSelector(
+			".desktop-demo__desktop .antilia-window[data-disposable]")).isEmpty());
+		assertEquals(List.of("Bean grid in Wicket"), shownTasks());
+
+		// removed: the Bean grid back in the default pane
+		click(desktop().findElement(By.className("antilia-desktop-pane-action-remove")));
+		wait.until(d -> desktop().findElements(By.className("antilia-desktop-pane")).size() == 2);
+		assertTrue(window(1).isDisplayed());
+		wait.until(d -> states().contains("panes Grids, Dropdowns, showing Grids"));
+		wait.until(d -> states().contains("Bean grid in Wicket at 56, 56, 900 × 460 in Grids"));
 	}
 
 	private void open(SeleniumBrowser browser)
@@ -594,11 +681,37 @@ class DesktopBrowserTest extends JettyTestCase
 
 	/**
 	 * @return the title of a button of the taskbar or of an item of its menu, without the letter
-	 *         of the icon
+	 *         of the icon, shown or not
 	 */
 	private static String title(WebElement element)
 	{
-		return element.findElement(By.className("antilia-desktop-task-title")).getText();
+		return element.findElement(By.className("antilia-desktop-task-title"))
+			.getDomProperty("textContent");
+	}
+
+	/**
+	 * @return the titles of the buttons of the taskbar of the Wicket desktop shown: those of the
+	 *         windows of the pane shown
+	 */
+	private List<String> shownTasks()
+	{
+		return driver.findElements(By.cssSelector(
+			".desktop-demo__desktop > .antilia-desktop .antilia-desktop-task")).stream()
+			.filter(WebElement::isDisplayed).map(DesktopBrowserTest::title).toList();
+	}
+
+	/**
+	 * @return the button of a pane in the taskbar of the Wicket desktop
+	 */
+	private WebElement pane(String name)
+	{
+		return pane(desktop(), name);
+	}
+
+	private WebElement pane(WebElement container, String name)
+	{
+		return wait.until(d -> container.findElements(By.className("antilia-desktop-pane"))
+			.stream().filter(pane -> name.equals(pane.getText())).findFirst().orElse(null));
 	}
 
 	private WebElement menuItem(WebElement container, String title)

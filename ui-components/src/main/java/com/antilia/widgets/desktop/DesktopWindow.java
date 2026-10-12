@@ -31,6 +31,10 @@ import com.antilia.widgets.icon.IIcon;
  * the window gives its model the new state, which it renders again when it or its page is rendered
  * again. To keep the state elsewhere, in the session for example, give the window a model that
  * stores what it is given. The browser keeps the state of a window rendered again by Ajax anyway.
+ * <p>
+ * A window is in a {@link DesktopPane pane} of the desktop, the one {@link #setPane(String)} says,
+ * or the one shown when it is rendered; the user moves it to another pane with the first button
+ * on the right of its title bar.
  *
  * @since 11.0.0
  */
@@ -59,6 +63,9 @@ public abstract class DesktopWindow extends Panel
 	private boolean closable;
 
 	private Boolean modified;
+
+	/** Whether the desktop added the window of a type, and takes it away when it is closed. */
+	private boolean disposable;
 
 	/**
 	 * A window keeping its state in the page.
@@ -232,6 +239,54 @@ public abstract class DesktopWindow extends Panel
 	public DesktopWindow setClosed(boolean closed)
 	{
 		initial = initial.withClosed(closed);
+		return this;
+	}
+
+	/**
+	 * Puts the window in a pane, as it starts and as its model has it.
+	 *
+	 * @param pane
+	 *            the id of a {@link DesktopPane pane} of the desktop; {@code null} for the one
+	 *            shown when the window is rendered
+	 * @return {@code this}
+	 */
+	public DesktopWindow setPane(String pane)
+	{
+		initial = initial.withPane(pane);
+		WindowState state = getModelObject();
+		if (state != null)
+		{
+			setModelObject(state.withPane(pane));
+		}
+		return this;
+	}
+
+	/**
+	 * @return the id of the pane the window is in, {@code null} for the one shown when it is
+	 *         rendered
+	 */
+	public String getPane()
+	{
+		return getState().getPane();
+	}
+
+	/**
+	 * @return whether the desktop added the window, of a {@link WindowType type}, and takes it
+	 *         away when the user closes it
+	 */
+	public boolean isDisposable()
+	{
+		return disposable;
+	}
+
+	/**
+	 * @param disposable
+	 *            whether the desktop takes the window away when the user closes it
+	 * @return {@code this}
+	 */
+	DesktopWindow setDisposable(boolean disposable)
+	{
+		this.disposable = disposable;
 		return this;
 	}
 
@@ -443,6 +498,14 @@ public abstract class DesktopWindow extends Panel
 		if (modified != null)
 		{
 			tag.put("data-modified", modified.toString());
+		}
+		if (state.getPane() != null)
+		{
+			tag.put("data-pane", state.getPane());
+		}
+		if (disposable)
+		{
+			tag.put("data-disposable", "");
 		}
 	}
 

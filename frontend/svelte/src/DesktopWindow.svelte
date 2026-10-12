@@ -17,6 +17,13 @@
 		title: string;
 		/** An icon before the title, which the taskbar shows too; an svg, for example. */
 		icon?: Snippet;
+		/** The markup of the icon, an svg, instead of icon. */
+		iconMarkup?: string;
+		/**
+		 * The id of the pane the window is in, the one shown when left out; the user moves it to
+		 * another too.
+		 */
+		pane?: string;
 		/** The body of the window. */
 		children?: Snippet;
 		/** Where the window starts, from the left of the desktop, in pixels; cascading when left out. */
@@ -60,7 +67,7 @@
 		bodyClass?: string;
 	};
 
-	let { id, title, icon, children, x, y, width, height, minWidth, minHeight, resizable,
+	let { id, title, icon, iconMarkup, pane, children, x, y, width, height, minWidth, minHeight, resizable,
 		maximizable, minimizable, foldable, closable, modified, minimized = false, maximized = false,
 		folded = false, closed = false, class: className = '', bodyClass = '' }: Props = $props();
 
@@ -79,9 +86,10 @@
 	data-maximizable={flag(maximizable)} data-minimizable={flag(minimizable)}
 	data-foldable={flag(foldable)} data-closable={flag(closable)} data-modified={flag(modified)}
 	data-minimized={start.minimized} data-maximized={start.maximized} data-folded={start.folded}
-	data-closed={start.closed}>
+	data-closed={start.closed} data-pane={pane}>
 	<header class="antilia-window-header">
-		{#if icon}<span class="antilia-window-icon">{@render icon()}</span>{/if}
+		{#if iconMarkup}<span class="antilia-window-icon">{@html iconMarkup}</span>
+		{:else if icon}<span class="antilia-window-icon">{@render icon()}</span>{/if}
 		<span class="antilia-window-title">{title}</span>
 	</header>
 	<div class={['antilia-window-body', bodyClass].filter(Boolean).join(' ')}>

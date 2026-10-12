@@ -29,6 +29,7 @@ import com.antilia.widgets.demo.datatable.User;
 import com.antilia.widgets.demo.datatable.UsersTablePanel;
 import com.antilia.widgets.demo.dropdown.DropdownExamplesPanel;
 import com.antilia.widgets.desktop.Desktop;
+import com.antilia.widgets.desktop.DesktopPane;
 import com.antilia.widgets.desktop.DesktopWindow;
 import com.antilia.widgets.desktop.TaskbarPosition;
 import com.antilia.widgets.desktop.WindowState;
@@ -161,12 +162,56 @@ class DesktopPageTest
 		assertEquals("hidden", window.getAttribute("hidden"));
 		tester.assertContains("Ctrl</kbd>\\+<kbd>F6");
 		tester.assertContains("Dragging the taskbar");
-		tester.assertLabel("themed:states", "The server knows: taskbar below; JSON grid in " +
-			"Wicket at 16, 16, " +
+		tester.assertLabel("themed:states", "The server knows: taskbar below; panes Grids, " +
+			"Dropdowns, showing Grids; JSON grid in Wicket at 16, 16, " +
 			"900 × 460; Bean grid in Wicket at 56, 56, 900 × 460; JSON grid in React at 96, 96, " +
-			"900 × 460; JSON grid in Svelte at 136, 136, 900 × 460; Dropdowns in Wicket at 240, " +
-			"60, 700 × 460; Dropdowns in React at 280, 100, 700 × 460; Dropdowns in " +
-			"Svelte at 320, 140, 700 × 460; Keyboard at 560, 40, 600 × 480, minimized.");
+			"900 × 460; JSON grid in Svelte at 136, 136, 900 × 460; Dropdowns in Wicket at 16, " +
+			"16, 700 × 460 in Dropdowns; Dropdowns in React at 56, 56, 700 × 460 in Dropdowns; " +
+			"Dropdowns in Svelte at 96, 96, 700 × 460 in Dropdowns; Keyboard at 560, 16, " +
+			"640 × 620 in Grids, minimized.");
+	}
+
+	@Test
+	void putsTheDropdownsInAPaneOfTheirOwnAndOpensNotesAndBeanGrids()
+	{
+		Desktop desktop = page.getDesktop();
+		assertEquals(List.of("Grids", "Dropdowns"), desktop.getPanes().stream()
+			.map(DesktopPane::getName).toList());
+		tester.assertContains("\"windowTypes\":\\[\\{\"type\":\"notes\",\"title\":\"Notes\"");
+		tester.assertContains("\\{\"type\":\"beanGrid\",\"title\":\"Bean grid in Wicket\"");
+		tester.assertContains("\"newWindow\":\"Open a window\"");
+		tester.assertContains("moves it to another pane, or to a new one.");
+
+		AbstractDefaultAjaxBehavior windows = desktop.get("desktop")
+			.getBehaviors(AbstractDefaultAjaxBehavior.class).get(1);
+		tester.getRequest().setParameter("action", "open");
+		tester.getRequest().setParameter("type", "notes");
+		tester.getRequest().setParameter("pane", "1");
+		tester.executeBehavior(windows);
+
+		DesktopWindow notes = windows().get(windows().size() - 1);
+		assertEquals("1", notes.getPane());
+		assertTrue(notes.isDisposable());
+		tester.assertContains("desktop-demo__notes");
+
+		tester.getRequest().setParameter("action", "open");
+		tester.getRequest().setParameter("type", "beanGrid");
+		tester.getRequest().setParameter("pane", "0");
+		tester.executeBehavior(windows);
+		assertEquals(10, windows().size());
+		tester.assertContains("Bean grid in Wicket");
+
+		// the user renames the panes and shows the second one
+		tester.getRequest().setParameter("states", "{}");
+		tester.getRequest().setParameter("panes", "[{\"id\":\"0\",\"name\":\"Tables\"}," +
+			"{\"id\":\"1\",\"name\":\"Choices\"}]");
+		tester.getRequest().setParameter("pane", "1");
+		tester.executeBehavior(desktop.get("desktop")
+			.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		assertEquals("1", desktop.getActivePane());
+		tester.assertComponentOnAjaxResponse("themed:states");
+		assertTrue(page.get("themed:states").getDefaultModelObjectAsString()
+			.contains("panes Tables, Choices, showing Choices"));
 	}
 
 	@Test

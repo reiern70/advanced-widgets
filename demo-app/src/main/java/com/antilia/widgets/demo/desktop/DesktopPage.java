@@ -47,9 +47,11 @@ import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.desktop.Desktop;
+import com.antilia.widgets.desktop.DesktopPane;
 import com.antilia.widgets.desktop.DesktopWindow;
 import com.antilia.widgets.desktop.TaskbarPosition;
 import com.antilia.widgets.desktop.WindowState;
+import com.antilia.widgets.desktop.WindowType;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
@@ -68,6 +70,10 @@ import com.github.openjson.JSONObject;
  * The React and Svelte tabs show a desktop of their own, with the grid and the drop-downs of their
  * framework, notes, the keyboard shortcuts, and six more demos of the framework, each configured by
  * its page.
+ * <p>
+ * The windows are in two panes, the grids and the keyboard in the first, the drop-downs in the
+ * second; the user adds, renames and removes panes and moves windows between them. The launcher of
+ * the taskbar opens notes and Bean grids, types of windows the page registers.
  */
 public class DesktopPage extends DemoPage implements IUsersTableHost
 {
@@ -94,6 +100,12 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 	static final IIcon SVELTE_ICON = badge("#ff3e00", "S");
 
 	static final IIcon KEYBOARD_ICON = SvgIcon.KEYBOARD;
+
+	/** The icon of the notes: a sheet with lines, as the React and Svelte desktops have it. */
+	static final IIcon NOTES_ICON = () -> "<svg viewBox=\"0 0 24 24\" width=\"16\" " +
+		"height=\"16\" aria-hidden=\"true\" focusable=\"false\" fill=\"none\" " +
+		"stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" " +
+		"stroke-linejoin=\"round\"><path d=\"M6 3h9l4 4v14H6z M9 11h7 M9 15h7\"/></svg>";
 
 	private final Desktop desktop;
 
@@ -134,6 +146,38 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 		};
 		desktop.setSendToServer(true).setOutputMarkupId(true);
 		themed.add(desktop);
+		desktop.getDefaultPane().setName(getString("pane.grids"));
+		String dropdownsPane = desktop.addPane(getString("pane.dropdowns")).getId();
+		desktop.addWindowType(new WindowType("notes", new ResourceModel("notes"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public DesktopWindow newWindow(String id)
+			{
+				return newNotesWindow(id);
+			}
+		}.setIcon(NOTES_ICON));
+		desktop.addWindowType(new WindowType("beanGrid", new ResourceModel("beanUsers"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public DesktopWindow newWindow(String id)
+			{
+				return new DesktopWindow(id, new ResourceModel("beanUsers"))
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					protected Component newContent(String id)
+					{
+						return sized(new BeanUsersTablePanel(id, DesktopPage.this));
+					}
+				}.setIcon(BEAN_ICON).setPosition(96, 56).setSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+					.setMinSize(320, 160);
+			}
+		}.setIcon(BEAN_ICON));
 
 		desktop.addWindow(new DesktopWindow(desktop.newWindowId(), new ResourceModel("jsonUsers"))
 		{
@@ -175,14 +219,14 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 				dropdowns = new DropdownExamplesPanel(id);
 				return dropdowns;
 			}
-		}.setIcon(WICKET_ICON).setPosition(240, 60).setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT)
-			.setMinSize(320, 160).setClosable(true));
+		}.setIcon(WICKET_ICON).setPosition(16, 16).setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT)
+			.setMinSize(320, 160).setClosable(true).setPane(dropdownsPane));
 		desktop.addWindow(newAppWindow("reactDropdowns", "react", "dropdown",
-			this::getDropdownConfig, REACT_ICON).setPosition(280, 100)
-				.setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT));
+			this::getDropdownConfig, REACT_ICON).setPosition(56, 56)
+				.setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT).setPane(dropdownsPane));
 		desktop.addWindow(newAppWindow("svelteDropdowns", "svelte", "dropdown",
-			this::getDropdownConfig, SVELTE_ICON).setPosition(320, 140)
-				.setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT));
+			this::getDropdownConfig, SVELTE_ICON).setPosition(96, 96)
+				.setSize(DROPDOWNS_WIDTH, WINDOW_HEIGHT).setPane(dropdownsPane));
 		keyboard = new DesktopWindow(desktop.newWindowId(), new ResourceModel("keyboard"))
 		{
 			private static final long serialVersionUID = 1L;
@@ -193,8 +237,8 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 				return new Fragment(id, "keyboardFragment", DesktopPage.this);
 			}
 		};
-		keyboard.setIcon(KEYBOARD_ICON).setPosition(560, 40).setSize(600, 480).setMinSize(320, 200)
-			.setClosable(true).setMinimized(true);
+		keyboard.setIcon(KEYBOARD_ICON).setPosition(560, 16).setSize(640, 620).setMinSize(320, 200)
+			.setClosable(true).setMinimized(true).setPane(DesktopPane.DEFAULT);
 		desktop.addWindow(keyboard);
 
 		DropDownChoice<TaskbarPosition> position = new DropDownChoice<>("taskbar",
@@ -240,6 +284,23 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 					JSONObject.quote(keyboard.getMarkupId()) + ", true);");
 			}
 		}.setIcon(SvgIcon.KEYBOARD).setSize(Size.SMALL));
+	}
+
+	/**
+	 * @return a window of notes, a field to write in, which the launcher of the taskbar opens
+	 */
+	private DesktopWindow newNotesWindow(String id)
+	{
+		return new DesktopWindow(id, new ResourceModel("notes"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newContent(String id)
+			{
+				return new Fragment(id, "notesFragment", DesktopPage.this);
+			}
+		}.setIcon(NOTES_ICON).setPosition(200, 40).setSize(360, 240);
 	}
 
 	/**
@@ -313,12 +374,16 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 			"reactDropdowns", "svelteDropdowns", "keyboard", "notes", "notesText", "key.f11",
 			"key.next", "key.previous", "key.doubleClick", "key.fold", "key.taskbar",
 			"key.taskbarHelp", "key.menu", "key.menuHelp", "key.close", "key.closeHelp",
-			"key.dragTaskbar", "key.dragTaskbarHelp", "key.escape");
+			"key.dragTaskbar", "key.dragTaskbarHelp", "key.escape", "key.previousPane",
+			"key.nextPane", "key.panes", "key.panesHelp", "key.moveToPane", "key.moveToPaneHelp",
+			"key.launcher", "key.launcherHelp", "pane.grids", "pane.dropdowns", "pane.demos");
 		JSONObject desktopTexts = new JSONObject();
 		for (String name : new String[] { "minimize", "maximize", "restore", "close", "taskbar",
 			"grid", "columns", "rows", "cascade", "expand", "collapse", "move", "menu",
 			"openWindows", "closedWindows", "closeModifiedTitle", "closeModified", "discard",
-			"keep" })
+			"keep", "panes", "defaultPane", "newPane", "newPaneName", "renamePane",
+			"renamePaneTitle", "removePane", "paneName", "moveToPane", "moveToNewPane", "newWindow",
+			"ok", "cancel" })
 		{
 			desktopTexts.put(name, getString("Desktop." + name));
 		}
@@ -362,6 +427,13 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 		String layout = new StringResourceModel("layout", this).setParameters(
 			side.substring(0, 1).toLowerCase(getLocale()) + side.substring(1)).getString();
 		described.add(desktop.isExpanded() ? layout + ", " + getString("filling") : layout);
+		List<String> panes = new ArrayList<>();
+		for (DesktopPane pane : desktop.getPanes())
+		{
+			panes.add(paneName(pane));
+		}
+		described.add(new StringResourceModel("panes", this).setParameters(String.join(", ", panes),
+			paneName(desktop.getPane(desktop.getActivePane()))).getString());
 		for (DesktopWindow window : desktop.getWindows())
 		{
 			WindowState state = window.getState();
@@ -369,6 +441,12 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 			StringBuilder text = new StringBuilder(state.getX() == null ? title + " " +
 				getString("nowhere") : new StringResourceModel("state", this).setParameters(title,
 					state.getX(), state.getY(), state.getWidth(), state.getHeight()).getString());
+			DesktopPane pane = desktop.getPane(state.getPane());
+			if (pane != null)
+			{
+				text.append(" ").append(new StringResourceModel("inPane", this)
+					.setParameters(paneName(pane)).getString());
+			}
 			for (String flag : new String[] { "minimized", "maximized", "folded", "closed" })
 			{
 				boolean on = switch (flag)
@@ -387,6 +465,15 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 		}
 		return new StringResourceModel("states", this).setParameters(String.join("; ", described))
 			.getString();
+	}
+
+	/**
+	 * @return the name of a pane, as the desktop names the default one while it has none
+	 */
+	private String paneName(DesktopPane pane)
+	{
+		return pane.getName() != null && !pane.getName().isBlank() ? pane.getName() :
+			getString("Desktop.defaultPane");
 	}
 
 	@Override

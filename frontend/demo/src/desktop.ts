@@ -5,11 +5,11 @@
 
 /*
  * The Desktop demo: a desktop with the JSON grid of the framework, notes, the drop-downs of the
- * framework, six more demos of the framework and the keyboard shortcuts in its windows, and a
- * choice of the side of its taskbar.
+ * framework, six more demos of the framework and the keyboard shortcuts in its windows, in three
+ * panes, notes the launcher opens, and a choice of the side of its taskbar.
  */
 
-import type { DesktopTexts, TaskbarPosition } from '@antilia/core';
+import type { DesktopPane, DesktopTexts, TaskbarPosition } from '@antilia/core';
 
 import type { AutocompleteConfig } from './autocomplete.js';
 import type { ButtonsConfig } from './buttons.js';
@@ -49,6 +49,17 @@ export interface DesktopDemoTexts {
 	'key.dragTaskbar': string;
 	'key.dragTaskbarHelp': string;
 	'key.escape': string;
+	'key.previousPane': string;
+	'key.nextPane': string;
+	'key.panes': string;
+	'key.panesHelp': string;
+	'key.moveToPane': string;
+	'key.moveToPaneHelp': string;
+	'key.launcher': string;
+	'key.launcherHelp': string;
+	'pane.grids': string;
+	'pane.dropdowns': string;
+	'pane.demos': string;
 }
 
 /** What the page gives the demo. */
@@ -84,12 +95,12 @@ export interface DesktopDemos {
 export type DesktopWindowName = 'users' | 'notes' | 'dropdowns' | 'keyboard' | keyof DesktopDemos;
 
 /**
- * @returns where the window of the other demo at an index starts, and its size: cascading from
- *          the right of the drop-downs
+ * @returns where the window of the other demo at an index starts, and its size: cascading in the
+ *          pane of the demos
  */
 export function demoBounds(index: number): { x: number; y: number; width: number;
 	height: number } {
-	return { x: 300 + index * 40, y: 20 + index * 30, width: 700, height: 420 };
+	return { x: 16 + index * 40, y: 16 + index * 30, width: 700, height: 420 };
 }
 
 /** The sides of the desktop the taskbar can be on, in the order the choice offers them. */
@@ -123,9 +134,43 @@ export function shortcuts(texts: DesktopDemoTexts): Shortcut[] {
 		{ action: texts['key.menu'], text: texts['key.menuHelp'] },
 		{ action: texts['key.close'], text: texts['key.closeHelp'] },
 		{ action: texts['key.dragTaskbar'], text: texts['key.dragTaskbarHelp'] },
-		{ keys: ['Esc'], text: texts['key.escape'] }
+		{ keys: ['Esc'], text: texts['key.escape'] },
+		{ keys: ['Ctrl', 'Shift', '←'], text: texts['key.previousPane'] },
+		{ keys: ['Ctrl', 'Shift', '→'], text: texts['key.nextPane'] },
+		{ action: texts['key.panes'], text: texts['key.panesHelp'] },
+		{ action: texts['key.moveToPane'], text: texts['key.moveToPaneHelp'] },
+		{ action: texts['key.launcher'], text: texts['key.launcherHelp'] }
 	];
 }
+
+/**
+ * @returns the panes of the desktop: the grids, notes and keyboard in the default one, the
+ *          drop-downs in the second, the other demos in the third
+ */
+export function demoPanes(texts: DesktopDemoTexts): DesktopPane[] {
+	return [{ id: '0', name: texts['pane.grids'] }, { id: '1', name: texts['pane.dropdowns'] },
+		{ id: '2', name: texts['pane.demos'] }];
+}
+
+/**
+ * @returns the id of the pane a window of the demo starts in
+ */
+export function paneOf(name: DesktopWindowName): string {
+	return name === 'dropdowns' ? '1' : name === 'users' || name === 'notes' ||
+		name === 'keyboard' ? '0' : '2';
+}
+
+/**
+ * @returns the markup of an icon of a path, in a 24 by 24 box, as the launcher takes it
+ */
+export function iconMarkup(path: string): string {
+	return '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" ' +
+		'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+		'stroke-linejoin="round"><path d="' + path + '"/></svg>';
+}
+
+/** Where the notes the launcher opens start, and their size. */
+export const NOTES_BOUNDS = { x: 200, y: 40, width: 360, height: 240 };
 
 /** The paths of the icons of the windows, in a 24 by 24 box: a sheet of notes, a keyboard. */
 export const NOTES_ICON = 'M6 3h9l4 4v14H6z M9 11h7 M9 15h7';

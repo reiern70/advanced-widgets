@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -80,7 +81,9 @@ class DesktopTest extends WicketTestCase
 		tester.assertContains("antilia-button.*\\.css");
 		tester.assertContains("Wicket.Desktop.attach\\(\"" + desktop.getDesktopMarkupId() +
 			"\", \\{\"taskbar\":\"bottom\",\"tiling\":true,\"expandable\":true,\"expanded\":false," +
-			"\"movableTaskbar\":true,\"menu\":true,\"texts\":\\{\"minimize\":\"Minimize\"," +
+			"\"movableTaskbar\":true,\"menu\":true,\"panes\":\\[\\{\"id\":\"0\",\"name\":\"\"\\}\\]," +
+			"\"activePane\":\"0\",\"paneSwitcher\":true,\"editablePanes\":true," +
+			"\"windowTypes\":\\[\\],\"texts\":\\{\"minimize\":\"Minimize\"," +
 			"\"maximize\":\"Maximize\",\"restore\":\"Restore\",\"close\":\"Close\"," +
 			"\"taskbar\":\"Windows\",\"grid\":\"Tile the windows\"");
 		assertFalse(tester.getLastResponseAsString().contains("style="), "no inline style");
@@ -186,7 +189,7 @@ class DesktopTest extends WicketTestCase
 		TestWindow second = desktop.window("Two", "second");
 		tester.startPage(new TestPage(desktop));
 		tester.assertContains("Wicket.Desktop.attach\\(\"" + desktop.getDesktopMarkupId() +
-			"\", \\{.*\\}, function \\(states,taskbar,expanded\\)");
+			"\", \\{.*\\}, function \\(states,taskbar,expanded,panes,pane\\)");
 
 		JSONObject states = new JSONObject()
 			.put(first.getMarkupId(), new JSONObject().put("x", 40).put("y", 50.4)
@@ -305,12 +308,169 @@ class DesktopTest extends WicketTestCase
 		assertFalse(state.equals(changed));
 	}
 
+	@Test
+	void rendersThePanesAndThePaneOfEachWindow()
+	{
+		TestDesktop desktop = new TestDesktop();
+		desktop.getDefaultPane().setName("Grids");
+		DesktopPane dropdowns = desktop.addPane("Dropdowns");
+		assertEquals("1", dropdowns.getId());
+		TestWindow first = desktop.window("One", "first");
+		TestWindow second = desktop.window("Two", "second");
+		second.setPane(dropdowns.getId());
+		desktop.setActivePane("1").setEditablePanes(false);
+		tester.startPage(new TestPage(desktop));
+
+		tester.assertContains("\"panes\":\\[\\{\"id\":\"0\",\"name\":\"Grids\"\\}," +
+			"\\{\"id\":\"1\",\"name\":\"Dropdowns\"\\}\\],\"activePane\":\"1\"," +
+			"\"paneSwitcher\":true,\"editablePanes\":false");
+		tester.assertContains("\"moveToPane\":\"Move to another pane\"");
+		assertNull(TagTester.createTagByAttribute(tester.getLastResponseAsString(), "id",
+			first.getMarkupId()).getAttribute("data-pane"), "in the pane shown");
+		assertEquals("1", TagTester.createTagByAttribute(tester.getLastResponseAsString(), "id",
+			second.getMarkupId()).getAttribute("data-pane"));
+
+		desktop.setActivePane("nowhere");
+		assertEquals(DesktopPane.DEFAULT, desktop.getActivePane());
+	}
+
+	@Test
+	void removesAPaneMovingItsWindowsToTheDefaultOne()
+	{
+		TestDesktop desktop = new TestDesktop();
+		DesktopPane other = desktop.addPane("Other");
+		TestWindow first = desktop.window("One", "first");
+		first.setModelObject(new WindowState().withPosition(1, 2));
+		first.setPane(other.getId());
+		assertEquals("1", first.getModelObject().getPane());
+		desktop.setActivePane(other.getId());
+
+		assertFalse(desktop.removePane(DesktopPane.DEFAULT));
+		assertTrue(desktop.removePane(other.getId()));
+
+		assertEquals(List.of(desktop.getDefaultPane()), desktop.getPanes());
+		assertEquals(DesktopPane.DEFAULT, first.getPane());
+		assertEquals(DesktopPane.DEFAULT, desktop.getActivePane());
+		assertFalse(desktop.removePane(other.getId()));
+	}
+
+	@Test
+	void keepsThePanesTheBrowserSends()
+	{
+		TestDesktop desktop = new TestDesktop();
+		desktop.setSendToServer(true);
+		TestWindow first = desktop.window("One", "first");
+		tester.startPage(new TestPage(desktop));
+
+		send(desktop, new JSONObject().put(first.getMarkupId(), new WindowState()
+			.withPosition(4, 5).withPane("2").toJson()).toString(), null, null,
+			"[{\"id\":\"0\",\"name\":\"Main\"},{\"id\":\"2\",\"name\":\"Charts\"}]", "2");
+
+		assertEquals(1, desktop.changes);
+		assertEquals(List.of(new DesktopPane("0", "Main"), new DesktopPane("2", "Charts")),
+			desktop.getPanes());
+		assertEquals("2", desktop.getActivePane());
+		assertEquals("2", first.getPane());
+
+		// without the default pane, or not JSON: kept as they were
+		send(desktop, "{}", null, null, "[{\"id\":\"2\",\"name\":\"Charts\"}]", "9");
+		send(desktop, "{}", null, null, "[", "");
+		assertEquals(1, desktop.changes);
+		assertEquals(2, desktop.getPanes().size());
+
+		send(desktop, "{}", null, null, "[{\"id\":\"0\",\"name\":\"\"}]", "0");
+		assertEquals(2, desktop.changes);
+		assertEquals(List.of(new DesktopPane("0", null)), desktop.getPanes());
+		assertEquals("0", desktop.getActivePane());
+	}
+
+	@Test
+	void opensWindowsOfATypeAndTakesThemAwayClosed()
+	{
+		TestDesktop desktop = new TestDesktop();
+		desktop.addPane("Other");
+		desktop.window("One", "first");
+		desktop.addWindowType(new WindowType("notes", Model.of("Notes"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public DesktopWindow newWindow(String id)
+			{
+				return new TestWindow(id, "Notes", "notes", null);
+			}
+		}.setIcon(SvgIcon.KEYBOARD));
+		tester.startPage(new TestPage(desktop));
+		tester.assertContains("\"windowTypes\":\\[\\{\"type\":\"notes\",\"title\":\"Notes\"," +
+			"\"icon\":\"<svg");
+		// no states sent, but the windows of types
+		tester.assertContains("\\}, null, function \\(action,type,pane,window\\)");
+
+		AbstractDefaultAjaxBehavior behavior = desktop.get("desktop")
+			.getBehaviors(AbstractDefaultAjaxBehavior.class).get(1);
+		tester.getRequest().setParameter("action", "open");
+		tester.getRequest().setParameter("type", "notes");
+		tester.getRequest().setParameter("pane", "1");
+		tester.executeBehavior(behavior);
+
+		assertEquals(2, desktop.getWindows().size());
+		DesktopWindow opened = desktop.getWindows().get(1);
+		assertEquals(List.of(opened), desktop.opened);
+		assertTrue(opened.isDisposable());
+		assertTrue(opened.isClosable());
+		assertEquals("1", opened.getPane());
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("desktop.area.appendChild(window)"), response);
+		assertTrue(response.contains("data-disposable"), response);
+		assertTrue(response.contains("desktop.activate(\"" + opened.getMarkupId() + "\")"), response);
+
+		// a type there is not: nothing
+		tester.getRequest().setParameter("action", "open");
+		tester.getRequest().setParameter("type", "none");
+		tester.executeBehavior(behavior);
+		assertEquals(2, desktop.getWindows().size());
+
+		tester.getRequest().setParameter("action", "dispose");
+		tester.getRequest().setParameter("window", desktop.getWindows().get(0).getMarkupId());
+		tester.executeBehavior(behavior);
+		assertEquals(2, desktop.getWindows().size(), "not of a type: kept");
+
+		tester.getRequest().setParameter("action", "dispose");
+		tester.getRequest().setParameter("window", opened.getMarkupId());
+		tester.executeBehavior(behavior);
+		assertEquals(1, desktop.getWindows().size());
+		assertEquals(List.of(opened), desktop.disposed);
+		assertEquals("notes", desktop.getWindowTypes().get(0).getType());
+	}
+
+	@Test
+	void panesComeAndGoAsJson()
+	{
+		DesktopPane pane = new DesktopPane("3", "Charts");
+		assertEquals(pane, DesktopPane.fromJson(pane.toJson()));
+		assertEquals(pane.hashCode(), DesktopPane.fromJson(pane.toJson()).hashCode());
+		assertNull(DesktopPane.fromJson(new JSONObject().put("name", "x")));
+		assertEquals(new DesktopPane("0", null), DesktopPane.fromJson(new DesktopPane("0", null)
+			.toJson()));
+		assertTrue(new DesktopPane("0", null).isDefault());
+		assertEquals("{\"id\":\"3\",\"name\":\"Charts\"}", pane.toString());
+		WindowState state = new WindowState().withPane("3");
+		assertEquals(state, WindowState.fromJson(state.toJson()));
+		assertNull(new WindowState().withPane("").getPane());
+	}
+
 	private void send(TestDesktop desktop, String states)
 	{
 		send(desktop, states, null, null);
 	}
 
 	private void send(TestDesktop desktop, String states, String taskbar, String expanded)
+	{
+		send(desktop, states, taskbar, expanded, null, null);
+	}
+
+	private void send(TestDesktop desktop, String states, String taskbar, String expanded,
+		String panes, String pane)
 	{
 		AbstractDefaultAjaxBehavior behavior = desktop.get("desktop")
 			.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0);
@@ -320,6 +480,11 @@ class DesktopTest extends WicketTestCase
 			tester.getRequest().setParameter("taskbar", taskbar);
 			tester.getRequest().setParameter("expanded", expanded);
 		}
+		if (panes != null)
+		{
+			tester.getRequest().setParameter("panes", panes);
+			tester.getRequest().setParameter("pane", pane);
+		}
 		tester.executeBehavior(behavior);
 	}
 
@@ -328,6 +493,10 @@ class DesktopTest extends WicketTestCase
 		private static final long serialVersionUID = 1L;
 
 		int changes;
+
+		final List<DesktopWindow> opened = new ArrayList<>();
+
+		final List<DesktopWindow> disposed = new ArrayList<>();
 
 		TestDesktop()
 		{
@@ -345,6 +514,18 @@ class DesktopTest extends WicketTestCase
 		protected void onChanged(AjaxRequestTarget target)
 		{
 			changes++;
+		}
+
+		@Override
+		protected void onWindowOpened(AjaxRequestTarget target, DesktopWindow window)
+		{
+			opened.add(window);
+		}
+
+		@Override
+		protected void onWindowDisposed(AjaxRequestTarget target, DesktopWindow window)
+		{
+			disposed.add(window);
 		}
 	}
 

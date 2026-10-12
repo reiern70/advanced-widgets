@@ -253,3 +253,67 @@ describe('Desktop', () => {
 		expect(container.querySelector('.antilia-desktop-menu-button')).toBeNull();
 	});
 });
+
+describe('Desktop panes and window types', () => {
+	it('shows the windows of the pane shown, following the user and the props', async () => {
+		const onPanes = vi.fn();
+		const panes = [{ id: '0', name: 'Grids' }, { id: '1', name: 'Dropdowns' }];
+		const ui = (active?: string) => <Desktop id="d" panes={panes} activePane={active}
+			onPanes={onPanes}>
+			<DesktopWindow id="one" title="One" pane="0" />
+			<DesktopWindow id="two" title="Two" pane="1" />
+		</Desktop>;
+		const { container, rerender } = await shown(ui());
+
+		expect(win(container, 'two').hidden).toBe(true);
+		const buttons = Array.from(container.querySelectorAll<HTMLElement>('.antilia-desktop-pane'));
+		expect(buttons.map((button) => button.textContent)).toEqual(['Grids', 'Dropdowns']);
+
+		act(() => buttons[1].click());
+
+		expect(onPanes).toHaveBeenCalledWith(panes, '1');
+		expect(win(container, 'two').hidden).toBe(false);
+		expect(win(container, 'one').hidden).toBe(true);
+		expect(container.querySelector('.antilia-desktop-pane[aria-pressed="true"]')?.textContent)
+			.toBe('Dropdowns');
+
+		rerender(ui('0'));
+		expect(win(container, 'one').hidden).toBe(false);
+		expect(win(container, 'two').hidden).toBe(true);
+	});
+
+	it('renders the windows of a type the user opens, and takes them away closed', async () => {
+		const onOpenWindow = vi.fn();
+		const ref = createRef<DesktopHandle>();
+		const { container } = await shown(<Desktop id="d" ref={ref} onOpenWindow={onOpenWindow}
+			windowTypes={[{ type: 'notes', title: 'Notes', icon: '<svg class="notes"></svg>',
+				render: (window) => <p>Notes of {window}</p>, window: { width: 300 } }]}>
+			<DesktopWindow id="one" title="One" />
+		</Desktop>);
+
+		act(() => container.querySelector<HTMLElement>('.antilia-desktop-launcher')!.click());
+		const item = container.querySelector<HTMLElement>('.antilia-desktop-menu-item')!;
+		expect(item.textContent).toBe('Notes');
+		act(() => item.click());
+
+		expect(onOpenWindow).toHaveBeenCalledWith('notes', '0');
+		const opened = await waitFor(() => {
+			const element = container.querySelector<HTMLElement>('#d-notes-1');
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		expect(opened.querySelector('.antilia-window-body')?.textContent).toBe('Notes of d-notes-1');
+		expect(opened.querySelector('.antilia-window-icon svg.notes')).not.toBeNull();
+		expect(opened.getAttribute('data-width')).toBe('300');
+		await waitFor(() => expect(tasks(container)).toEqual(['One', 'Notes']));
+
+		act(() => opened.querySelector<HTMLElement>('.antilia-window-control-close')!.click());
+
+		await waitFor(() => expect(container.querySelector('#d-notes-1')).toBeNull());
+		await waitFor(() => expect(tasks(container)).toEqual(['One']));
+
+		act(() => ref.current!.openWindow('notes'));
+		await waitFor(() => expect(container.querySelector('#d-notes-2')).not.toBeNull());
+	});
+});
+

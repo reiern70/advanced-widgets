@@ -27,10 +27,11 @@ export type { Host, Unsubscribe } from './host.js';
 export { DateFormat, DatePicker, datePicker, daysInMonth, firstDayOfWeek, formatIso,
 	parseIso } from './date-picker.js';
 export type { DateParts, DatePickerOptions } from './date-picker.js';
-export { DEFAULT_DESKTOP_TEXTS, Desktop, desktop, DESKTOP_CLASSES, DESKTOP_COMPONENTS,
+export { DEFAULT_DESKTOP_TEXTS, DEFAULT_PANE, Desktop, desktop, DESKTOP_CLASSES, DESKTOP_COMPONENTS,
 	DESKTOP_DISCARD_EVENT,
 	WINDOW_HEIGHT_PROPERTY, WINDOW_WIDTH_PROPERTY, WINDOW_X_PROPERTY, WINDOW_Y_PROPERTY, WINDOW_Z_PROPERTY } from './desktop.js';
-export type { DesktopOptions, DesktopTexts, TaskbarPosition, TileLayout, WindowState } from './desktop.js';
+export type { DesktopOptions, DesktopPane, DesktopTexts, TaskbarPosition, TileLayout, WindowState,
+	WindowType } from './desktop.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
 export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD,

@@ -7,15 +7,18 @@
   Svelte, notes, the drop-downs, the autocompletes, the buttons, the date pickers, the JSON list,
   the modal dialogs and the progress bars in Svelte, and the keyboard shortcuts, which start
   minimized; the menu of the taskbar opens them all, and each can be closed, asking first
-  when it has changes. Above it, the side of the taskbar and a button opening the keyboard
-  shortcuts again.
+  when it has changes. The grids, the notes and the keyboard are in the first pane, the drop-downs
+  in the second, the other demos in the third; the launcher opens more notes. Above it, the side
+  of the taskbar and a button opening the keyboard shortcuts again.
 -->
 <script lang="ts">
 	import { Button, Desktop, DesktopWindow, type TaskbarPosition } from '@antilia/svelte';
 
-	import { demoBounds, FRAMEWORK_COLORS, KEYBOARD_ICON, NOTES_ICON, shortcuts,
-		TASKBAR_POSITIONS, windowId, type DesktopConfig, type DesktopDemos, type DesktopDemoTexts,
-		type DesktopWindowName } from '../desktop.js';
+	import { untrack } from 'svelte';
+
+	import { demoBounds, demoPanes, FRAMEWORK_COLORS, iconMarkup, KEYBOARD_ICON, NOTES_BOUNDS,
+		NOTES_ICON, paneOf, shortcuts, TASKBAR_POSITIONS, windowId, type DesktopConfig,
+		type DesktopDemos, type DesktopDemoTexts, type DesktopWindowName } from '../desktop.js';
 	import AutocompleteDemo from './AutocompleteDemo.svelte';
 	import ButtonsDemo from './ButtonsDemo.svelte';
 	import DatePickerDemo from './DatePickerDemo.svelte';
@@ -37,7 +40,14 @@
 		'modalDialog', 'progressBar'];
 	const positionText = (position: TaskbarPosition) =>
 		texts[('taskbar.' + position) as keyof DesktopDemoTexts];
+	// once: the user renames them since
+	const panes = untrack(() => demoPanes(config.texts));
 </script>
+
+{#snippet notes()}
+	<textarea class="desktop-demo__notes" aria-label={texts.notes}
+		defaultValue={texts.notesText}></textarea>
+{/snippet}
 
 {#snippet badge()}
 	<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
@@ -77,26 +87,29 @@
 		</Button>
 	</form>
 	<Desktop bind:this={desktop} {taskbar} texts={config.desktop}
-		ontaskbar={(position) => (taskbar = position)}>
-		<DesktopWindow id={id('users')} title={texts.svelteUsers} x={16} y={16} width={900}
+		ontaskbar={(position) => (taskbar = position)} {panes}
+		windowTypes={[{ type: 'notes', title: texts.notes, icon: iconMarkup(NOTES_ICON),
+			window: NOTES_BOUNDS, content: notes }]}>
+		<DesktopWindow id={id('users')} pane={paneOf('users')} title={texts.svelteUsers} x={16} y={16} width={900}
 			height={460} minWidth={320} minHeight={160} closable modified={false}>
 			{#snippet icon()}{@render badge()}{/snippet}
 			<JsonTableDemo config={config.jsonTable} />
 		</DesktopWindow>
-		<DesktopWindow id={id('notes')} title={texts.notes} x={800} y={24} width={360}
+		<DesktopWindow id={id('notes')} pane={paneOf('notes')} title={texts.notes} x={800} y={24} width={360}
 			height={240} closable>
 			{#snippet icon()}{@render iconOf(NOTES_ICON)}{/snippet}
 			<textarea class="desktop-demo__notes" aria-label={texts.notes}
 				defaultValue={texts.notesText}></textarea>
 		</DesktopWindow>
-		<DesktopWindow id={id('dropdowns')} title={texts.svelteDropdowns} x={240} y={60}
+		<DesktopWindow id={id('dropdowns')} pane={paneOf('dropdowns')}
+			title={texts.svelteDropdowns} x={16} y={16}
 			width={700} height={460} minWidth={320} minHeight={160} closable>
 			{#snippet icon()}{@render badge()}{/snippet}
 			<DropdownDemo config={config.dropdown} />
 		</DesktopWindow>
 		{#each DEMOS as name, index (name)}
 			{@const bounds = demoBounds(index)}
-			<DesktopWindow id={id(name)} title={demos[name].title} x={bounds.x} y={bounds.y}
+			<DesktopWindow id={id(name)} pane={paneOf(name)} title={demos[name].title} x={bounds.x} y={bounds.y}
 				width={bounds.width} height={bounds.height} minWidth={320} minHeight={160} closable>
 				{#snippet icon()}{@render badge()}{/snippet}
 				{#if name === 'autocomplete'}
@@ -114,8 +127,8 @@
 				{/if}
 			</DesktopWindow>
 		{/each}
-		<DesktopWindow id={id('keyboard')} title={texts.keyboard} x={560} y={40} width={600}
-			height={480} minWidth={320} minHeight={200} closable minimized>
+		<DesktopWindow id={id('keyboard')} pane={paneOf('keyboard')} title={texts.keyboard} x={560} y={16} width={640}
+			height={620} minWidth={320} minHeight={200} closable minimized>
 			{#snippet icon()}{@render iconOf(KEYBOARD_ICON)}{/snippet}
 			<dl class="desktop-demo__keys">
 				{#each shortcuts(texts) as shortcut (shortcut.text)}

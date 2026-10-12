@@ -15,6 +15,8 @@
 	<p wicket:id="states" class="desktop-demo__states">[states]</p>
 </div>
 
+<wicket:fragment wicket:id="notesFragment"><textarea class="desktop-demo__notes" wicket:message="aria-label:notes"><wicket:message key="notesText"/></textarea></wicket:fragment>
+
 <wicket:fragment wicket:id="appFragment"><div wicket:id="app"></div></wicket:fragment>
 
 <wicket:fragment wicket:id="keyboardFragment">
@@ -28,6 +30,11 @@
 	<dt><wicket:message key="key.close"/></dt><dd><wicket:message key="key.closeHelp"/></dd>
 	<dt><wicket:message key="key.dragTaskbar"/></dt><dd><wicket:message key="key.dragTaskbarHelp"/></dd>
 	<dt><kbd>Esc</kbd></dt><dd><wicket:message key="key.escape"/></dd>
+	<dt><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>←</kbd></dt><dd><wicket:message key="key.previousPane"/></dd>
+	<dt><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd></dt><dd><wicket:message key="key.nextPane"/></dd>
+	<dt><wicket:message key="key.panes"/></dt><dd><wicket:message key="key.panesHelp"/></dd>
+	<dt><wicket:message key="key.moveToPane"/></dt><dd><wicket:message key="key.moveToPaneHelp"/></dd>
+	<dt><wicket:message key="key.launcher"/></dt><dd><wicket:message key="key.launcherHelp"/></dd>
 </dl>
 </wicket:fragment>
 </wicket:extend>

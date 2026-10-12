@@ -9,6 +9,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { activate } from '../src/index.js';
 import BoundDesktop from './BoundDesktop.svelte';
+import PanedDesktop from './PanedDesktop.svelte';
 // the key the demo application installs, which activates every private component
 import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
@@ -176,3 +177,67 @@ describe('Desktop', () => {
 		expect(container.querySelector('.antilia-desktop-menu-button')).toBeNull();
 	});
 });
+
+describe('Desktop panes and window types', () => {
+	async function paned(props: Record<string, unknown> = {}) {
+		const result = render(PanedDesktop, props);
+		await waitFor(() => expect(result.container.querySelector('.antilia-desktop')).not
+			.toBeNull());
+		flushSync();
+		return result;
+	}
+
+	it('shows the windows of the pane shown, following the user and the props', async () => {
+		const onpanes = vi.fn();
+		const { container, rerender } = await paned({ onpanes });
+
+		expect(win(container, 'two').hidden).toBe(true);
+		const buttons = Array.from(container.querySelectorAll<HTMLElement>('.antilia-desktop-pane'));
+		expect(buttons.map((button) => button.textContent)).toEqual(['Grids', 'Dropdowns']);
+
+		buttons[1].click();
+		flushSync();
+
+		expect(onpanes).toHaveBeenCalledWith([{ id: '0', name: 'Grids' },
+			{ id: '1', name: 'Dropdowns' }], '1');
+		expect(win(container, 'two').hidden).toBe(false);
+		expect(win(container, 'one').hidden).toBe(true);
+
+		await rerender({ onpanes, activePane: '0' });
+		flushSync();
+		expect(win(container, 'one').hidden).toBe(false);
+		expect(win(container, 'two').hidden).toBe(true);
+	});
+
+	it('renders the windows of a type the user opens, and takes them away closed', async () => {
+		const onopenwindow = vi.fn();
+		const { container } = await paned({ onopenwindow });
+
+		container.querySelector<HTMLElement>('.antilia-desktop-launcher')!.click();
+		const item = container.querySelector<HTMLElement>('.antilia-desktop-menu-item')!;
+		expect(item.textContent).toBe('Notes');
+		item.click();
+		flushSync();
+
+		expect(onopenwindow).toHaveBeenCalledWith('notes', '0');
+		const opened = await waitFor(() => {
+			const element = container.querySelector<HTMLElement>('#d-notes-1');
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		expect(opened.querySelector('.antilia-window-body')?.textContent?.trim())
+			.toBe('Notes of d-notes-1');
+		expect(opened.querySelector('.antilia-window-icon svg.notes')).not.toBeNull();
+		expect(opened.getAttribute('data-width')).toBe('300');
+		expect(opened.getAttribute('data-pane')).toBe('0');
+		await waitFor(() => expect(tasks(container)).toEqual(['One', 'Two', 'Notes']));
+
+		opened.querySelector<HTMLElement>('.antilia-window-control-close')!.click();
+		flushSync();
+
+		await waitFor(() => expect(container.querySelector('#d-notes-1')).toBeNull());
+		await settle();
+		expect(tasks(container)).toEqual(['One', 'Two']);
+	});
+});
+

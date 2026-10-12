@@ -22,7 +22,22 @@
  * side by dragging it, or with the arrow keys on its grip, the first button of the taskbar; the
  * windows move and shrink to stay on the desktop, as they do when it takes less of the page again.
  * The menu of the taskbar, the button after the grip, lists the windows open, to bring one to the
- * front, and those closed, to open one again.
+ * front, those of the other panes, and those closed, to open one again in the pane shown.
+ *
+ * The windows are in panes, as in the workspaces of the desktop of an operating system: the
+ * desktop shows the windows of one pane at a time, and the taskbar the buttons of those windows
+ * only. The default pane, the first, is always there; the taskbar shows the panes, to show
+ * another, and lets the user add one, asking for its name in a dialog, rename the one shown, with
+ * a double click or F2 on its button too, and remove it, its windows going to the default pane.
+ * Ctrl+Shift+Arrow Left and Up show the pane before, Ctrl+Shift+Arrow Right and Down the one after.
+ * A button on the title bar of a window, the first on the right, moves the window to another pane,
+ * or to a new one. A window is in the pane its attribute data-pane says, which the desktop keeps;
+ * in the pane shown when it has none.
+ *
+ * The page registers types of windows, which the launcher of the taskbar, the button after its
+ * menu, opens: in the pane shown, either by the function of the type making the element of the
+ * window, which the desktop takes away again when the user closes it, or by the page, which
+ * onOpenWindow of the options tells.
  *
  * Closing a window whose changes are not saved asks first, in a dialog of the markup of modal.ts
  * that its style sheet shows: closing it then puts its fields back as they were rendered. A window
@@ -85,6 +100,37 @@ export interface WindowState {
 	closed: boolean;
 	/** Where the window is stacked, 1 for the one at the back. */
 	order: number;
+	/** The id of the pane the window is in. */
+	pane: string;
+}
+
+/** A pane of the desktop: windows shown together, as a workspace of an operating system. */
+export interface DesktopPane {
+	/** The id of the pane, which the windows in it have in data-pane. */
+	id: string;
+	/** The name of the pane, in the taskbar; empty for the default pane, as the texts name it. */
+	name: string;
+}
+
+/** The id of the default pane, which is always there and the first. */
+export const DEFAULT_PANE = '0';
+
+/** A type of window, which the launcher of the taskbar opens. */
+export interface WindowType {
+	/** The name of the type. */
+	type: string;
+	/** What the launcher says for it. */
+	title: string;
+	/** The markup of its icon in the launcher, an svg, for example. */
+	icon?: string;
+	/**
+	 * Makes the element of a new window, which the desktop adds to its area and takes away again
+	 * when the user closes it; when left out, onOpenWindow of the options asks the page to add it.
+	 *
+	 * @param id the id the window gets, unique in the page
+	 * @param pane the pane it opens in
+	 */
+	create?: (id: string, pane: string) => HTMLElement;
 }
 
 /** The side of the desktop the taskbar is on. */
@@ -129,6 +175,32 @@ export interface DesktopTexts {
 	discard: string;
 	/** The button keeping the window open. */
 	keep: string;
+	/** The name of the panes in the taskbar. */
+	panes: string;
+	/** The name of the default pane, until the user renames it. */
+	defaultPane: string;
+	/** The title of the button adding a pane, and of the dialog asking for its name. */
+	newPane: string;
+	/** The name a new pane is offered; {0} is its number. */
+	newPaneName: string;
+	/** The title of the button renaming the pane shown. */
+	renamePane: string;
+	/** The title of the dialog asking for the new name of a pane; {0} is its name. */
+	renamePaneTitle: string;
+	/** The title of the button removing the pane shown. */
+	removePane: string;
+	/** The label of the field of the name of a pane. */
+	paneName: string;
+	/** The title of the button of a window moving it to another pane. */
+	moveToPane: string;
+	/** The item of that menu moving the window to a new pane. */
+	moveToNewPane: string;
+	/** The title of the launcher, opening a window of a type. */
+	newWindow: string;
+	/** The button saying yes in a dialog. */
+	ok: string;
+	/** The button saying no in a dialog. */
+	cancel: string;
 }
 
 /**
@@ -160,6 +232,19 @@ export interface DesktopOptions {
 	 * on its grip, true when left out.
 	 */
 	movableTaskbar?: boolean;
+	/**
+	 * The panes, the default one, of the id DEFAULT_PANE, first; that one alone when left out,
+	 * and added when missing.
+	 */
+	panes?: DesktopPane[];
+	/** The id of the pane shown, the default one when left out. */
+	activePane?: string;
+	/** Whether the taskbar shows the panes, true when left out. */
+	paneSwitcher?: boolean;
+	/** Whether the user may add, rename and remove panes, true when left out. */
+	editablePanes?: boolean;
+	/** The types of windows the launcher of the taskbar opens; none when left out. */
+	windowTypes?: WindowType[];
 	/** What the desktop says, in English when left out. */
 	texts?: Partial<DesktopTexts>;
 	/**
@@ -176,6 +261,16 @@ export interface DesktopOptions {
 	onActivate?: (id: string) => void;
 	/** Called with the id of the window the user closed. */
 	onClose?: (id: string) => void;
+	/**
+	 * Called with the panes and the id of the one shown, once the user added, renamed or removed
+	 * one, or showed another.
+	 */
+	onPanes?: (panes: DesktopPane[], active: string) => void;
+	/**
+	 * Called when the user opens a window of a type without a function making it, with the type and
+	 * the pane: the page adds the window, with that pane in data-pane.
+	 */
+	onOpenWindow?: (type: string, pane: string) => void;
 }
 
 export const DEFAULT_DESKTOP_TEXTS: DesktopTexts = {
@@ -189,7 +284,11 @@ export const DEFAULT_DESKTOP_TEXTS: DesktopTexts = {
 	menu: 'All windows', openWindows: 'Open', closedWindows: 'Closed',
 	closeModifiedTitle: 'Close {0}?',
 	closeModified: 'The changes in {0} are not saved. Close the window and lose them?',
-	discard: 'Close and lose them', keep: 'Keep it open'
+	discard: 'Close and lose them', keep: 'Keep it open',
+	panes: 'Panes', defaultPane: 'Main', newPane: 'New pane', newPaneName: 'Pane {0}',
+	renamePane: 'Rename the pane', renamePaneTitle: 'Rename {0}', removePane: 'Remove the pane',
+	paneName: 'Name', moveToPane: 'Move to another pane', moveToNewPane: 'New pane…',
+	newWindow: 'Open a window', ok: 'OK', cancel: 'Cancel'
 };
 
 /** The names a license key activates the desktop by, a private component. */
@@ -214,6 +313,12 @@ export const DESKTOP_CLASSES = {
 	menuItem: 'antilia-desktop-menu-item',
 	/** On the wrapper of the dialog asking before a window with changes closes. */
 	confirm: 'antilia-desktop-confirm',
+	/** On the wrapper of the dialog asking for the name of a pane. */
+	prompt: 'antilia-desktop-prompt',
+	launcher: 'antilia-desktop-launcher',
+	panes: 'antilia-desktop-panes',
+	pane: 'antilia-desktop-pane',
+	paneAction: 'antilia-desktop-pane-action',
 	window: 'antilia-window',
 	header: 'antilia-window-header',
 	icon: 'antilia-window-icon',
@@ -243,7 +348,7 @@ const STATE_ATTRIBUTES = ['minimized', 'maximized', 'folded', 'closed'] as const
 /** The attributes the page sets on a window, which the desktop follows as they change. */
 const OPTION_ATTRIBUTES = ['data-x', 'data-y', 'data-width', 'data-height', 'data-min-width',
 	'data-min-height', 'data-resizable', 'data-maximizable', 'data-minimizable', 'data-foldable',
-	'data-closable', 'data-modified'];
+	'data-closable', 'data-modified', 'data-pane'];
 
 /** The edges and corners of a window that resize it, and the sides they move. */
 const HANDLES = ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'] as const;
@@ -259,7 +364,7 @@ const DEFAULTS = { width: 420, height: 280, minWidth: 180, minHeight: 100, casca
 
 /** The paths of the icons of the buttons, in a 24 by 24 box. */
 const ICONS: Record<'minimize' | 'maximize' | 'restore' | 'close' | 'expand' | 'collapse' |
-	'grip' | 'menu' | TileLayout, string> = {
+	'grip' | 'menu' | 'pane' | 'launcher' | 'add' | 'rename' | 'remove' | TileLayout, string> = {
 	minimize: 'M6 18h12',
 	maximize: 'M5 5h14v14H5z',
 	restore: 'M8 8h11v11H8z M5 16V5h11',
@@ -271,12 +376,22 @@ const ICONS: Record<'minimize' | 'maximize' | 'restore' | 'close' | 'expand' | '
 	expand: 'M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5',
 	collapse: 'M9 4v5H4 M15 4v5h5 M20 15h-5v5 M4 15h5v5',
 	grip: 'M9 5h.01 M15 5h.01 M9 12h.01 M15 12h.01 M9 19h.01 M15 19h.01',
-	menu: 'M4 6h16 M4 12h16 M4 18h16'
+	menu: 'M4 6h16 M4 12h16 M4 18h16',
+	pane: 'M14 4h6v16h-6 M4 12h11 M11 8l4 4-4 4',
+	launcher: 'M4 4h16v16H4z M12 8v8 M8 12h8',
+	add: 'M12 5v14 M5 12h14',
+	rename: 'M4 20h4L19 9l-4-4L4 16z M13 7l4 4',
+	remove: 'M5 7h14 M10 7V4h4v3 M7 7l1 13h8l1-13'
 };
 
 /** The sides the arrow keys on the grip move the taskbar to. */
 const ARROWS: Record<string, TaskbarPosition> = {
 	ArrowUp: 'top', ArrowDown: 'bottom', ArrowLeft: 'left', ArrowRight: 'right'
+};
+
+/** The arrow keys that, with Ctrl and Shift, show the pane before or the one after. */
+const PANE_KEYS: Record<string, 1 | -1> = {
+	ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1
 };
 
 /** The fields whose changes a window may lose when it closes. */
@@ -370,13 +485,46 @@ interface DesktopWindow {
 	element: HTMLElement;
 	state: WindowState;
 	controls: HTMLElement | null;
-	buttons: Partial<Record<'minimize' | 'maximize' | 'close', HTMLButtonElement>>;
+	buttons: Partial<Record<'pane' | 'minimize' | 'maximize' | 'close', HTMLButtonElement>>;
 	handles: HTMLElement[];
 	task: HTMLButtonElement | null;
 	/** Watches the title, which the taskbar shows. */
 	titleObserver: MutationObserver | null;
 	/** The element in the window that had the focus last, which gets it back. */
 	focused: HTMLElement | null;
+}
+
+/** An item of a menu of the desktop: what it says, its icon, and what it does. */
+interface MenuItem {
+	label: string;
+	/** The markup of the icon, or the element whose children are the icon. */
+	icon?: string | Element | null;
+	/** The data attributes of the item. */
+	data: Record<string, string>;
+	active?: boolean;
+	minimized?: boolean;
+	action: () => void;
+}
+
+/** The items of a menu under a heading. */
+interface MenuGroup {
+	name: string;
+	/** The pane the items are in, for the windows of another pane. */
+	pane?: string;
+	heading: string;
+	items: MenuItem[];
+}
+
+/**
+ * @returns whether the user writes in an element, where the arrow keys move in the text
+ */
+function writing(target: Element | null): boolean {
+	const field = target?.closest?.('input, textarea, select, [contenteditable]');
+	if (!field || field.getAttribute('contenteditable') === 'false') {
+		return false;
+	}
+	return !(field instanceof HTMLInputElement) || !['button', 'checkbox', 'radio', 'reset',
+		'submit', 'image', 'range', 'color', 'file'].includes(field.type);
 }
 
 export class Desktop {
@@ -407,14 +555,35 @@ export class Desktop {
 	/** The button of the menu listing the windows. */
 	private menuButton: HTMLButtonElement | null = null;
 
-	/** The menu listing the windows, while it is open. */
+	/** The launcher, opening windows of the types the page registered. */
+	private launcher: HTMLButtonElement | null = null;
+
+	/** The panes in the taskbar. */
+	private paneSwitcher: HTMLElement | null = null;
+
+	/** The open menu: of the taskbar, of the launcher or of a window. */
 	private menu: HTMLElement | null = null;
+
+	/** The button the open menu belongs to. */
+	private menuAnchor: HTMLButtonElement | null = null;
+
+	/** What the items of the open menu do. */
+	private menuActions = new Map<Element, () => void>();
+
+	/** The ids of the windows the desktop made, of a type, which it takes away when closed. */
+	private created = new Set<string>();
+
+	/** How many windows of types the desktop made, for their ids. */
+	private createdCount = 0;
 
 	/** Stops listening for a press outside the open menu. */
 	private stopWatchingMenu: (() => void) | null = null;
 
-	/** Takes away the dialog asking before a window with changes closes, while it is open. */
-	private cancelConfirm: (() => void) | null = null;
+	/**
+	 * Takes away the dialog asking before a window with changes closes, or for the name of a
+	 * pane, while it is open.
+	 */
+	private cancelDialog: (() => void) | null = null;
 
 	/** Whether the taskbar was added by the desktop, and is taken away again by destroy(). */
 	private ownTaskbar = false;
@@ -441,6 +610,8 @@ export class Desktop {
 	constructor(element: HTMLElement, options: DesktopOptions = {}) {
 		this.element = element;
 		this.options = { ...options };
+		this.options.panes = this.normalizePanes(options.panes);
+		this.options.activePane = this.paneOf(options.activePane) ?? DEFAULT_PANE;
 		instances.get(element)?.destroy();
 		instances.set(element, this);
 		const children = Array.from(element.children) as HTMLElement[];
@@ -522,6 +693,8 @@ export class Desktop {
 		this.closeMenu(false);
 		this.renderGrip(texts);
 		this.renderMenuButton(texts);
+		this.renderLauncher(texts);
+		this.renderPanes(texts);
 		this.renderTiling(texts);
 		this.renderExpandButton(texts);
 		this.windows.forEach((window) => this.renderWindow(window));
@@ -552,56 +725,201 @@ export class Desktop {
 		this.tasks.before(this.menuButton);
 	}
 
+	private renderLauncher(texts: DesktopTexts): void {
+		this.launcher?.remove();
+		this.launcher = null;
+		if (!this.windowTypes().length) {
+			return;
+		}
+		this.launcher = button(DESKTOP_CLASSES.launcher, ICONS.launcher, texts.newWindow);
+		this.launcher.setAttribute('aria-haspopup', 'menu');
+		this.launcher.setAttribute('aria-expanded', 'false');
+		// after the menu, before the buttons of the windows
+		this.tasks.before(this.launcher);
+	}
+
 	/**
-	 * @returns whether the menu listing the windows is open
+	 * Shows the panes in the taskbar, after the buttons of the windows: a button for each, then
+	 * those adding a pane, renaming the one shown and removing it, as the user may.
+	 */
+	private renderPanes(texts: DesktopTexts): void {
+		const hadFocus = this.paneSwitcher?.contains(document.activeElement) ?
+			(document.activeElement as HTMLElement) : null;
+		const focused = hadFocus ? hadFocus.dataset.pane ?? hadFocus.dataset.action ?? null : null;
+		this.paneSwitcher?.remove();
+		this.paneSwitcher = null;
+		if (this.options.paneSwitcher === false) {
+			return;
+		}
+		const switcher = document.createElement('div');
+		switcher.className = DESKTOP_CLASSES.panes;
+		switcher.setAttribute('role', 'group');
+		switcher.setAttribute('aria-label', texts.panes);
+		const active = this.activePane();
+		for (const pane of this.panes()) {
+			const element = document.createElement('button');
+			element.type = 'button';
+			element.className = DESKTOP_CLASSES.pane;
+			element.dataset.pane = pane.id;
+			element.textContent = this.paneName(pane);
+			element.title = this.paneName(pane);
+			element.setAttribute('aria-pressed', String(pane.id === active));
+			if (this.isEditable()) {
+				element.setAttribute('aria-keyshortcuts', 'F2' + (pane.id === DEFAULT_PANE ? '' :
+					' Delete'));
+			}
+			switcher.append(element);
+		}
+		if (this.isEditable()) {
+			const actions: Array<['add' | 'rename' | 'remove', string]> = [['add', texts.newPane],
+				['rename', texts.renamePane]];
+			if (active !== DEFAULT_PANE) {
+				actions.push(['remove', texts.removePane]);
+			}
+			for (const [action, label] of actions) {
+				const element = button(DESKTOP_CLASSES.paneAction + ' ' + DESKTOP_CLASSES.paneAction +
+					'-' + action, ICONS[action], label);
+				element.dataset.action = action;
+				switcher.append(element);
+			}
+		}
+		this.paneSwitcher = switcher;
+		this.tasks.after(switcher);
+		if (focused !== null) {
+			(Array.from(switcher.querySelectorAll<HTMLElement>('button')).find((element) =>
+				element.dataset.pane === focused || element.dataset.action === focused) ??
+				switcher.querySelector<HTMLElement>('[aria-pressed="true"]'))?.focus();
+		}
+	}
+
+	/**
+	 * @returns whether the menu of the taskbar, of its launcher or of a window is open
 	 */
 	isMenuOpen(): boolean {
 		return this.menu !== null;
 	}
 
 	/**
-	 * Opens the menu listing the windows: those open, to bring one to the front, then those
-	 * closed, to open one again. The focus goes to its first item.
+	 * Opens the menu listing the windows: those open in the pane shown, to bring one to the front,
+	 * those of each other pane, showing it, then those closed, to open one again in the pane shown.
+	 * The focus goes to its first item.
 	 */
 	openMenu(): void {
 		if (!this.menuButton || this.menu) {
 			return;
 		}
 		const texts = this.texts();
+		const windows = Array.from(this.windows.values());
+		const active = this.activePane();
+		const item = (window: DesktopWindow): MenuItem => ({
+			label: this.titleOf(window), icon: window.element.querySelector('.' +
+				DESKTOP_CLASSES.icon), data: { window: window.element.id },
+			active: this.active === window.element.id, minimized: window.state.minimized,
+			// opened again when closed, restored when minimized, in front with the focus
+			action: () => {
+				this.activate(window.element.id, true);
+				this.focus(window);
+			}
+		});
+		const groups: MenuGroup[] = [{ name: 'open', heading: texts.openWindows,
+			items: windows.filter((window) => !window.state.closed && window.state.pane === active)
+				.map(item) }];
+		for (const pane of this.panes()) {
+			if (pane.id !== active) {
+				groups.push({ name: 'pane', pane: pane.id, heading: this.paneName(pane),
+					items: windows.filter((window) => !window.state.closed &&
+						window.state.pane === pane.id).map(item) });
+			}
+		}
+		groups.push({ name: 'closed', heading: texts.closedWindows,
+			items: windows.filter((window) => window.state.closed).map(item) });
+		this.showMenu(this.menuButton, texts.menu, groups);
+	}
+
+	/**
+	 * Opens the menu of the launcher, listing the types of windows to open one in the pane shown.
+	 */
+	openLauncher(): void {
+		if (!this.launcher || this.menu) {
+			return;
+		}
+		const texts = this.texts();
+		this.showMenu(this.launcher, texts.newWindow, [{ name: 'types', heading: texts.newWindow,
+			items: this.windowTypes().map((type) => ({ label: type.title, icon: type.icon ?? null,
+				data: { type: type.type }, action: () => {
+					this.openWindow(type.type, this.activePane(), true);
+				} })) }]);
+	}
+
+	/**
+	 * Opens the menu of a window moving it to another pane, or to a new one.
+	 *
+	 * @param id the id of the window
+	 */
+	openPaneMenu(id: string): void {
+		const window = this.windows.get(id);
+		const anchor = window?.buttons.pane;
+		if (!window || !anchor || this.menu) {
+			return;
+		}
+		const texts = this.texts();
+		const items: MenuItem[] = this.panes().filter((pane) => pane.id !== window.state.pane)
+			.map((pane) => ({ label: this.paneName(pane), data: { pane: pane.id },
+				action: () => this.moveToPane(id, pane.id, true) }));
+		if (this.isEditable()) {
+			items.push({ label: texts.moveToNewPane, data: { pane: '' }, action: () => {
+				void this.requestNewPane().then((pane) => {
+					if (pane) {
+						this.moveToPane(id, pane.id, true);
+					}
+				});
+			} });
+		}
+		this.showMenu(anchor, texts.moveToPane, [{ name: 'panes', heading: texts.moveToPane,
+			items }]);
+	}
+
+	/**
+	 * Opens a menu next to the button it belongs to, its items in groups with headings, those
+	 * without items left out. The focus goes to its first item.
+	 */
+	private showMenu(anchor: HTMLButtonElement, label: string, groups: MenuGroup[]): void {
 		const menu = document.createElement('div');
 		menu.className = DESKTOP_CLASSES.menu;
 		menu.id = (this.element.id || 'antilia-desktop') + '-menu';
 		menu.setAttribute('role', 'menu');
-		menu.setAttribute('aria-label', texts.menu);
-		const windows = Array.from(this.windows.values());
-		const groups: Array<[string, string, DesktopWindow[]]> = [
-			['open', texts.openWindows, windows.filter((window) => !window.state.closed)],
-			['closed', texts.closedWindows, windows.filter((window) => window.state.closed)]];
-		for (const [name, heading, members] of groups) {
-			if (!members.length) {
-				continue;
+		menu.setAttribute('aria-label', label);
+		this.menuActions.clear();
+		groups.forEach((members, index) => {
+			if (!members.items.length) {
+				return;
 			}
 			const group = document.createElement('div');
 			group.className = DESKTOP_CLASSES.menuGroup;
-			group.dataset.group = name;
+			group.dataset.group = members.name;
+			if (members.pane !== undefined) {
+				group.dataset.pane = members.pane;
+			}
 			group.setAttribute('role', 'group');
-			const label = document.createElement('div');
-			label.className = DESKTOP_CLASSES.menuGroup + '-heading';
-			label.id = menu.id + '-' + name;
-			label.textContent = heading;
-			group.setAttribute('aria-labelledby', label.id);
-			group.append(label);
-			members.forEach((window) => group.append(this.menuItem(window)));
+			const heading = document.createElement('div');
+			heading.className = DESKTOP_CLASSES.menuGroup + '-heading';
+			heading.id = menu.id + '-' + members.name + (members.pane !== undefined ? '-' + index :
+				'');
+			heading.textContent = members.heading;
+			group.setAttribute('aria-labelledby', heading.id);
+			group.append(heading);
+			members.items.forEach((entry) => group.append(this.menuItem(entry)));
 			menu.append(group);
-		}
+		});
 		this.menu = menu;
+		this.menuAnchor = anchor;
 		this.element.append(menu);
 		this.placeMenu();
-		this.menuButton.setAttribute('aria-expanded', 'true');
-		this.menuButton.setAttribute('aria-controls', menu.id);
+		anchor.setAttribute('aria-expanded', 'true');
+		anchor.setAttribute('aria-controls', menu.id);
 		const outside = (event: Event) => {
 			const target = event.target as Node;
-			if (!menu.contains(target) && !this.menuButton?.contains(target)) {
+			if (!menu.contains(target) && !anchor.contains(target)) {
 				this.closeMenu(false);
 			}
 		};
@@ -610,50 +928,62 @@ export class Desktop {
 		this.menuItems()[0]?.focus();
 	}
 
-	private menuItem(window: DesktopWindow): HTMLButtonElement {
+	private menuItem(entry: MenuItem): HTMLButtonElement {
 		const item = document.createElement('button');
 		item.type = 'button';
 		item.className = DESKTOP_CLASSES.menuItem;
 		item.setAttribute('role', 'menuitem');
 		item.tabIndex = -1;
-		item.dataset.window = window.element.id;
-		item.toggleAttribute('data-active', this.active === window.element.id);
-		item.toggleAttribute('data-minimized', window.state.minimized);
-		const title = this.titleOf(window);
+		Object.entries(entry.data).forEach(([name, value]) => {
+			item.dataset[name] = value;
+		});
+		item.toggleAttribute('data-active', !!entry.active);
+		item.toggleAttribute('data-minimized', !!entry.minimized);
 		const itemIcon = document.createElement('span');
 		itemIcon.className = DESKTOP_CLASSES.taskIcon;
 		itemIcon.setAttribute('aria-hidden', 'true');
-		window.element.querySelector('.' + DESKTOP_CLASSES.icon)?.childNodes
-			.forEach((node) => itemIcon.append(node.cloneNode(true)));
+		if (typeof entry.icon === 'string') {
+			const template = document.createElement('template');
+			template.innerHTML = entry.icon;
+			itemIcon.append(template.content);
+		} else {
+			entry.icon?.childNodes.forEach((node) => itemIcon.append(node.cloneNode(true)));
+		}
 		const text = document.createElement('span');
 		text.className = DESKTOP_CLASSES.taskTitle;
-		text.textContent = title;
+		text.textContent = entry.label;
 		item.append(itemIcon, text);
+		this.menuActions.set(item, entry.action);
 		return item;
 	}
 
 	/**
-	 * Places the open menu next to its button, on the side of the desktop away from the taskbar.
+	 * Places the open menu next to its button: on the side of the desktop away from the taskbar
+	 * for those of the taskbar, below it for that of a window.
 	 */
 	private placeMenu(): void {
 		const menu = this.menu;
-		const anchor = this.menuButton;
+		const anchor = this.menuAnchor;
 		if (!menu || !anchor) {
 			return;
 		}
 		const desktop = this.element.getBoundingClientRect();
 		const rect = anchor.getBoundingClientRect();
-		const position = this.position();
+		const position = this.taskbar.contains(anchor) ? this.position() : null;
 		const gap = 4;
 		const place = { left: 'auto', top: 'auto', right: 'auto', bottom: 'auto', 'max-height': '' };
-		if (position === 'bottom') {
+		if (position === null || position === 'top') {
+			if (position === null) {
+				place.right = (desktop.right - rect.right) + 'px';
+			} else {
+				place.left = (rect.left - desktop.left) + 'px';
+			}
+			place.top = (rect.bottom - desktop.top + gap) + 'px';
+			place['max-height'] = (desktop.bottom - rect.bottom - 2 * gap) + 'px';
+		} else if (position === 'bottom') {
 			place.left = (rect.left - desktop.left) + 'px';
 			place.bottom = (desktop.bottom - rect.top + gap) + 'px';
 			place['max-height'] = (rect.top - desktop.top - 2 * gap) + 'px';
-		} else if (position === 'top') {
-			place.left = (rect.left - desktop.left) + 'px';
-			place.top = (rect.bottom - desktop.top + gap) + 'px';
-			place['max-height'] = (desktop.bottom - rect.bottom - 2 * gap) + 'px';
 		} else {
 			if (position === 'left') {
 				place.left = (rect.right - desktop.left + gap) + 'px';
@@ -669,7 +999,7 @@ export class Desktop {
 	}
 
 	/**
-	 * Closes the menu listing the windows.
+	 * Closes the open menu.
 	 *
 	 * @param focus whether its button takes the focus
 	 */
@@ -679,14 +1009,17 @@ export class Desktop {
 			return;
 		}
 		const hadFocus = menu.contains(document.activeElement);
+		const anchor = this.menuAnchor;
 		this.menu = null;
+		this.menuAnchor = null;
+		this.menuActions.clear();
 		this.stopWatchingMenu?.();
 		this.stopWatchingMenu = null;
 		menu.remove();
-		this.menuButton?.setAttribute('aria-expanded', 'false');
-		this.menuButton?.removeAttribute('aria-controls');
-		if (focus || hadFocus) {
-			this.menuButton?.focus();
+		anchor?.setAttribute('aria-expanded', 'false');
+		anchor?.removeAttribute('aria-controls');
+		if ((focus || hadFocus) && anchor?.isConnected) {
+			anchor.focus();
 		}
 	}
 
@@ -737,17 +1070,12 @@ export class Desktop {
 
 	private onMenuClick(event: MouseEvent): void {
 		const item = (event.target as Element).closest<HTMLElement>('.' + DESKTOP_CLASSES.menuItem);
-		const id = item?.dataset.window;
-		if (!id) {
+		const action = item ? this.menuActions.get(item) : undefined;
+		if (!action) {
 			return;
 		}
 		this.closeMenu(false);
-		// opened again when closed, restored when minimized, in front with the focus
-		this.activate(id, true);
-		const window = this.windows.get(id);
-		if (window) {
-			this.focus(window);
-		}
+		action();
 	}
 
 	private renderExpandButton(texts: DesktopTexts): void {
@@ -858,7 +1186,11 @@ export class Desktop {
 		const remembered = this.remembered.get(element.id);
 		this.remembered.delete(element.id);
 		const index = this.windows.size;
-		const state: WindowState = remembered ?? {
+		// in the pane shown when it says none, in the default one when it says one there is not
+		const attribute = element.getAttribute('data-pane');
+		const pane = attribute === null ? this.activePane() : this.paneOf(attribute) ?? DEFAULT_PANE;
+		const state: WindowState = remembered ? { ...remembered,
+			pane: this.paneOf(remembered.pane) ?? pane } : {
 			x: numberOf(element, 'data-x') ?? DEFAULTS.cascade * (index + 1) - DEFAULTS.cascade / 2,
 			y: numberOf(element, 'data-y') ?? DEFAULTS.cascade * (index + 1) - DEFAULTS.cascade / 2,
 			width: numberOf(element, 'data-width') ?? DEFAULTS.width,
@@ -867,7 +1199,8 @@ export class Desktop {
 			maximized: element.hasAttribute('data-maximized'),
 			folded: element.hasAttribute('data-folded'),
 			closed: element.hasAttribute('data-closed'),
-			order: numberOf(element, 'data-order') ?? Number.MAX_SAFE_INTEGER - 1000 + index
+			order: numberOf(element, 'data-order') ?? Number.MAX_SAFE_INTEGER - 1000 + index,
+			pane
 		};
 		const window: DesktopWindow = { element, state, controls: null, buttons: {}, handles: [],
 			task: null, titleObserver: null, focused: null };
@@ -960,7 +1293,10 @@ export class Desktop {
 			element.toggleAttribute('data-' + name, state[name]);
 		});
 		element.toggleAttribute('data-active', this.active === element.id);
-		element.hidden = state.minimized || state.closed;
+		if (element.getAttribute('data-pane') !== state.pane) {
+			element.setAttribute('data-pane', state.pane);
+		}
+		element.hidden = state.minimized || state.closed || state.pane !== this.activePane();
 		this.renderControls(window, flags);
 		this.renderHandles(window, flags.resizable);
 		this.renderTaskState(window);
@@ -993,7 +1329,9 @@ export class Desktop {
 			header.append(window.controls);
 		}
 		const controls = window.controls;
-		const wanted: Array<['minimize' | 'maximize' | 'close', boolean]> = [
+		const wanted: Array<['pane' | 'minimize' | 'maximize' | 'close', boolean]> = [
+			['pane', this.options.paneSwitcher !== false && (this.panes().length > 1 ||
+				this.isEditable())],
 			['minimize', flags.minimizable], ['maximize', flags.maximizable],
 			['close', flags.closable]];
 		for (const [name, shown] of wanted) {
@@ -1005,11 +1343,15 @@ export class Desktop {
 			}
 			if (!control) {
 				control = button(DESKTOP_CLASSES.control + ' ' + DESKTOP_CLASSES.control + '-' + name,
-					ICONS[name], texts[name]);
+					ICONS[name], name === 'pane' ? texts.moveToPane : texts[name]);
 				control.dataset.control = name;
+				if (name === 'pane') {
+					control.setAttribute('aria-haspopup', 'menu');
+					control.setAttribute('aria-expanded', 'false');
+				}
 				window.buttons[name] = control;
 			}
-			// in the order of the title bar: minimize, maximize, close
+			// in the order of the title bar: pane, minimize, maximize, close
 			controls.append(control);
 		}
 		const maximize = window.buttons.maximize;
@@ -1026,6 +1368,10 @@ export class Desktop {
 		if (window.buttons.close) {
 			window.buttons.close.title = texts.close;
 			window.buttons.close.setAttribute('aria-label', texts.close);
+		}
+		if (window.buttons.pane) {
+			window.buttons.pane.title = texts.moveToPane;
+			window.buttons.pane.setAttribute('aria-label', texts.moveToPane);
 		}
 	}
 
@@ -1097,7 +1443,7 @@ export class Desktop {
 		if (!task) {
 			return;
 		}
-		task.hidden = window.state.closed;
+		task.hidden = window.state.closed || window.state.pane !== this.activePane();
 		task.setAttribute('aria-pressed', String(this.active === window.element.id));
 		task.toggleAttribute('data-minimized', window.state.minimized);
 	}
@@ -1115,11 +1461,14 @@ export class Desktop {
 	}
 
 	/**
-	 * @returns the windows shown, neither minimized nor closed, from the back to the front
+	 * @returns the windows shown, in the pane shown, neither minimized nor closed, from the back
+	 *          to the front
 	 */
 	private shown(): DesktopWindow[] {
+		const pane = this.activePane();
 		return Array.from(this.windows.values())
-			.filter((window) => !window.state.minimized && !window.state.closed)
+			.filter((window) => !window.state.minimized && !window.state.closed &&
+				window.state.pane === pane)
 			.sort((a, b) => a.state.order - b.state.order);
 	}
 
@@ -1159,6 +1508,13 @@ export class Desktop {
 		this.listen<MouseEvent>(this.area, 'dblclick', (event) => this.onDoubleClick(event));
 		this.listen<FocusEvent>(this.area, 'focusin', (event) => this.onFocusIn(event));
 		this.listen<MouseEvent>(this.taskbar, 'click', (event) => this.onTaskbarClick(event));
+		this.listen<MouseEvent>(this.taskbar, 'dblclick', (event) => {
+			const pane = (event.target as Element).closest<HTMLElement>('.' + DESKTOP_CLASSES.pane);
+			if (pane && this.paneSwitcher?.contains(pane) && this.isEditable()) {
+				event.preventDefault();
+				void this.requestRenamePane(pane.dataset.pane ?? DEFAULT_PANE);
+			}
+		});
 		this.listen<PointerEvent>(this.taskbar, 'pointerdown',
 			(event) => this.onTaskbarPointerDown(event));
 		this.listen<KeyboardEvent>(this.element, 'keydown', (event) => this.onKeyDown(event));
@@ -1207,6 +1563,9 @@ export class Desktop {
 			state.width;
 		state.height = names.has('data-height') ? numberOf(element, 'data-height') ??
 			state.height : state.height;
+		if (names.has('data-pane')) {
+			state.pane = this.paneOf(element.getAttribute('data-pane')) ?? state.pane;
+		}
 		this.limitSize(window);
 		this.renderWindow(window);
 		this.findActive();
@@ -1399,6 +1758,14 @@ export class Desktop {
 			case 'close':
 				void this.requestClose(id);
 				break;
+			case 'pane':
+				if (this.menuAnchor === control) {
+					this.closeMenu(true);
+				} else {
+					this.closeMenu(false);
+					this.openPaneMenu(id);
+				}
+				break;
 		}
 	}
 
@@ -1441,11 +1808,39 @@ export class Desktop {
 			this.expand(!this.isExpanded(), true);
 			return;
 		}
-		if (this.menuButton && this.menuButton.contains(target)) {
-			if (this.menu) {
-				this.closeMenu(true);
-			} else {
-				this.openMenu();
+		for (const [anchor, open] of [[this.menuButton, () => this.openMenu()],
+			[this.launcher, () => this.openLauncher()]] as const) {
+			if (anchor && anchor.contains(target)) {
+				if (this.menuAnchor === anchor) {
+					this.closeMenu(true);
+				} else {
+					this.closeMenu(false);
+					open();
+				}
+				return;
+			}
+		}
+		const pane = target.closest<HTMLElement>('.' + DESKTOP_CLASSES.pane);
+		if (pane && this.paneSwitcher?.contains(pane)) {
+			this.showPane(pane.dataset.pane ?? DEFAULT_PANE, true);
+			return;
+		}
+		const action = target.closest<HTMLElement>('.' + DESKTOP_CLASSES.paneAction);
+		if (action && this.paneSwitcher?.contains(action)) {
+			switch (action.dataset.action) {
+				case 'add':
+					void this.requestNewPane().then((added) => {
+						if (added) {
+							this.showPane(added.id, true);
+						}
+					});
+					break;
+				case 'rename':
+					void this.requestRenamePane(this.activePane());
+					break;
+				case 'remove':
+					this.removePane(this.activePane(), true);
+					break;
 			}
 			return;
 		}
@@ -1527,10 +1922,38 @@ export class Desktop {
 			this.onMenuKeyDown(event);
 			return;
 		}
-		if (this.menuButton && event.target === this.menuButton && !this.menu &&
-			(event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+		if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !this.menu && !event.ctrlKey &&
+			!event.altKey && !event.metaKey) {
+			const target = event.target as Element;
+			const window = this.windowOf(target);
+			const open = target === this.menuButton ? () => this.openMenu() :
+				target === this.launcher ? () => this.openLauncher() :
+					window && target === window.buttons.pane ?
+						() => this.openPaneMenu(window.element.id) : null;
+			if (open) {
+				event.preventDefault();
+				open();
+				return;
+			}
+		}
+		const pane = (event.target as Element).closest?.<HTMLElement>('.' + DESKTOP_CLASSES.pane);
+		if (pane && this.paneSwitcher?.contains(pane) && this.isEditable() && !event.ctrlKey &&
+			!event.altKey && !event.metaKey && !event.shiftKey &&
+			(event.key === 'F2' || event.key === 'Delete')) {
 			event.preventDefault();
-			this.openMenu();
+			const id = pane.dataset.pane ?? DEFAULT_PANE;
+			if (event.key === 'F2') {
+				void this.requestRenamePane(id);
+			} else {
+				this.removePane(id, true);
+			}
+			return;
+		}
+		const step = PANE_KEYS[event.key];
+		if (step && event.ctrlKey && event.shiftKey && !event.altKey && !event.metaKey &&
+			!writing(event.target as Element) && this.panes().length > 1) {
+			event.preventDefault();
+			this.nextPane(step, true);
 			return;
 		}
 		if (this.grip && event.target === this.grip && ARROWS[event.key] && !event.ctrlKey &&
@@ -1563,13 +1986,18 @@ export class Desktop {
 	}
 
 	/**
-	 * Brings a window to the front, restoring it when minimized; while the window in front is
-	 * maximized, it is maximized too. The window takes the focus.
+	 * Brings a window to the front, restoring it when minimized and showing its pane; while the
+	 * window in front is maximized, it is maximized too. The window takes the focus.
 	 */
 	private bringForward(id: string, user: boolean): void {
 		const window = this.windows.get(id);
 		if (!window || window.state.closed) {
 			return;
+		}
+		const paneChanged = window.state.pane !== this.activePane();
+		if (paneChanged) {
+			this.applyPane(window.state.pane);
+			this.findActive();
 		}
 		const front = this.active ? this.windows.get(this.active) : undefined;
 		if (front && front !== window && front.state.maximized && !front.state.minimized &&
@@ -1583,6 +2011,9 @@ export class Desktop {
 		this.focus(window);
 		if (user) {
 			this.options.onActivate?.(id);
+			if (paneChanged) {
+				this.options.onPanes?.(this.panes(), this.activePane());
+			}
 			this.changed();
 		}
 	}
@@ -1648,7 +2079,8 @@ export class Desktop {
 	}
 
 	/**
-	 * Brings a window to the front, restoring it when minimized and opening it when closed.
+	 * Brings a window to the front, restoring it when minimized, showing its pane, and opening it
+	 * in the pane shown when closed.
 	 *
 	 * @param id the id of the window
 	 * @param user whether the user did, calling back
@@ -1662,7 +2094,7 @@ export class Desktop {
 			this.open(id, user);
 			return;
 		}
-		if (window.state.minimized) {
+		if (window.state.minimized || window.state.pane !== this.activePane()) {
 			this.bringForward(id, user);
 			return;
 		}
@@ -1781,7 +2213,8 @@ export class Desktop {
 	}
 
 	/**
-	 * Closes a window: gone from the desktop and from the taskbar until opened again.
+	 * Closes a window: gone from the desktop and from the taskbar until opened again; one the
+	 * desktop made, of a type, is taken away.
 	 *
 	 * @param id the id of the window
 	 * @param user whether the user did, calling back
@@ -1800,6 +2233,12 @@ export class Desktop {
 			if (front) {
 				this.focus(front);
 			}
+		}
+		if (this.created.delete(id)) {
+			// made by the desktop, of a type: gone for good
+			window.element.remove();
+			this.findWindows();
+			this.remembered.delete(id);
 		}
 		if (user) {
 			this.options.onClose?.(id);
@@ -1876,20 +2315,73 @@ export class Desktop {
 	 * @returns whether to close it
 	 */
 	askToClose(title: string): Promise<boolean> {
-		this.cancelConfirm?.();
+		const texts = this.texts();
+		const text = document.createElement('p');
+		text.textContent = format(texts.closeModified, title);
+		return this.showDialog(DESKTOP_CLASSES.confirm, format(texts.closeModifiedTitle, title),
+			text, [texts.keep, 'keep'], [texts.discard, 'discard', 'danger']);
+	}
+
+	/**
+	 * Asks for the name of a pane, in a dialog of the markup of modal.ts.
+	 *
+	 * @param title the title of the dialog
+	 * @param value the name the field starts with
+	 * @returns the name, trimmed; null when the user cancelled or left it empty
+	 */
+	askPaneName(title: string, value = ''): Promise<string | null> {
+		const texts = this.texts();
+		const field = document.createElement('div');
+		field.className = 'antilia-desktop-prompt-field';
+		const label = document.createElement('label');
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.id = (this.element.id || 'antilia-desktop') + '-prompt-name';
+		input.className = 'antilia-desktop-prompt-input';
+		input.value = value;
+		input.setAttribute('autocomplete', 'off');
+		label.htmlFor = input.id;
+		label.textContent = texts.paneName;
+		field.append(label, input);
+		return this.showDialog(DESKTOP_CLASSES.prompt, title, field, [texts.cancel, 'cancel'],
+			[texts.ok, 'ok', 'primary'], input).then((confirmed) => {
+			const name = input.value.trim();
+			return confirmed && name ? name : null;
+		});
+	}
+
+	/**
+	 * Shows a dialog of the markup of modal.ts, over the page: Escape and the first button close
+	 * it, the second one confirms it, as Enter in its field does.
+	 *
+	 * @param className the class of its wrapper
+	 * @param title its title
+	 * @param body what it shows
+	 * @param cancel what the button closing it says, and its name
+	 * @param confirm what the button confirming it says, its name and variant
+	 * @param input the field in it, if any, which takes the focus
+	 * @returns whether the user confirmed it
+	 */
+	private showDialog(className: string, title: string, body: HTMLElement,
+		cancel: [string, string], confirm: [string, string, 'danger' | 'primary'],
+		input?: HTMLInputElement): Promise<boolean> {
+		this.cancelDialog?.();
 		return new Promise((resolve) => {
-			const texts = this.texts();
-			const prefix = (this.element.id || 'antilia-desktop') + '-confirm';
+			const prefix = (this.element.id || 'antilia-desktop') + '-' +
+				className.replace('antilia-desktop-', '');
 			const wrapper = document.createElement('div');
-			wrapper.className = MODAL_THEME_CLASS + ' ' + DESKTOP_CLASSES.confirm;
+			wrapper.className = MODAL_THEME_CLASS + ' ' + className;
 			const overlay = document.createElement('div');
 			overlay.className = MODAL_CLASSES.overlay;
 			const dialog = document.createElement('div');
 			dialog.className = MODAL_CLASSES.dialog;
-			dialog.setAttribute('role', 'alertdialog');
+			dialog.setAttribute('role', input ? 'dialog' : 'alertdialog');
 			dialog.setAttribute('aria-modal', 'true');
 			dialog.setAttribute('aria-labelledby', prefix + '-title');
-			dialog.setAttribute('aria-describedby', prefix + '-text');
+			if (!input) {
+				body.id = prefix + '-text';
+				dialog.setAttribute('aria-describedby', body.id);
+			}
 			const content = document.createElement('div');
 			content.className = MODAL_CLASSES.content;
 			const header = document.createElement('div');
@@ -1897,43 +2389,50 @@ export class Desktop {
 			const heading = document.createElement('h1');
 			heading.className = MODAL_CLASSES.title;
 			heading.id = prefix + '-title';
-			heading.textContent = format(texts.closeModifiedTitle, title);
+			heading.textContent = title;
 			header.append(heading);
-			const body = document.createElement('div');
-			body.className = MODAL_CLASSES.body;
-			const text = document.createElement('p');
-			text.id = prefix + '-text';
-			text.textContent = format(texts.closeModified, title);
-			body.append(text);
+			const main = document.createElement('div');
+			main.className = MODAL_CLASSES.body;
+			main.append(body);
 			const footer = document.createElement('div');
 			footer.className = MODAL_CLASSES.footer;
-			const keep = this.dialogButton(texts.keep, 'secondary', 'keep');
-			const discard = this.dialogButton(texts.discard, 'danger', 'discard');
-			footer.append(keep, discard);
-			content.append(header, body, footer);
+			const no = this.dialogButton(cancel[0], 'secondary', cancel[1]);
+			const yes = this.dialogButton(confirm[0], confirm[2], confirm[1]);
+			footer.append(no, yes);
+			content.append(header, main, footer);
 			dialog.append(content);
 			overlay.append(dialog);
 			wrapper.append(overlay);
 			document.body.append(wrapper);
 			let modal: ModalDialog | null = null;
 			const finish = (value: boolean) => {
-				if (this.cancelConfirm !== cancel) {
+				if (this.cancelDialog !== close) {
 					return;
 				}
-				this.cancelConfirm = null;
+				this.cancelDialog = null;
 				modal?.destroy();
 				wrapper.remove();
 				resolve(value);
 			};
-			const cancel = () => finish(false);
-			this.cancelConfirm = cancel;
-			keep.addEventListener('click', cancel);
-			discard.addEventListener('click', () => finish(true));
-			modal = new ModalDialog(overlay, { size: 'small', foldable: false, onClose: cancel });
+			const close = () => finish(false);
+			this.cancelDialog = close;
+			no.addEventListener('click', close);
+			yes.addEventListener('click', () => finish(true));
+			input?.addEventListener('keydown', (event) => {
+				if (event.key === 'Enter' && !event.isComposing) {
+					event.preventDefault();
+					finish(true);
+				}
+			});
+			modal = new ModalDialog(overlay, { size: 'small', foldable: false, onClose: close });
+			if (input) {
+				input.focus();
+				input.select();
+			}
 		});
 	}
 
-	private dialogButton(label: string, variant: 'secondary' | 'danger',
+	private dialogButton(label: string, variant: 'secondary' | 'danger' | 'primary',
 		name: string): HTMLButtonElement {
 		const element = document.createElement('button');
 		element.type = 'button';
@@ -1947,7 +2446,317 @@ export class Desktop {
 	}
 
 	/**
-	 * Opens a closed window again, in front.
+	 * @returns the panes, the default one first
+	 */
+	panes(): DesktopPane[] {
+		return (this.options.panes ?? []).map((pane) => ({ ...pane }));
+	}
+
+	/**
+	 * @returns the id of the pane shown
+	 */
+	activePane(): string {
+		return this.options.activePane ?? DEFAULT_PANE;
+	}
+
+	/**
+	 * @returns the id of a pane of the desktop, null when it has no such pane
+	 */
+	private paneOf(id: string | null | undefined): string | null {
+		return id !== null && id !== undefined && (this.options.panes ?? [])
+			.some((pane) => pane.id === id) ? id : null;
+	}
+
+	/**
+	 * @returns the name of a pane, as the texts name the default one while it has none
+	 */
+	private paneName(pane: DesktopPane): string {
+		return pane.name.trim() || (pane.id === DEFAULT_PANE ? this.texts().defaultPane : pane.id);
+	}
+
+	/**
+	 * @returns the panes as given, each once, the default one first, added when missing
+	 */
+	private normalizePanes(panes: DesktopPane[] | undefined): DesktopPane[] {
+		const seen = new Set<string>();
+		const normalized = (panes ?? []).filter((pane) => pane && typeof pane.id === 'string' &&
+			pane.id !== '' && !seen.has(pane.id) && seen.add(pane.id))
+			.map((pane) => ({ id: pane.id, name: String(pane.name ?? '') }));
+		const index = normalized.findIndex((pane) => pane.id === DEFAULT_PANE);
+		const first = index < 0 ? { id: DEFAULT_PANE, name: '' } : normalized.splice(index, 1)[0];
+		return [first, ...normalized];
+	}
+
+	/**
+	 * @returns whether the user may add, rename and remove panes
+	 */
+	private isEditable(): boolean {
+		return this.options.editablePanes !== false;
+	}
+
+	/**
+	 * Shows a pane: its windows, and the buttons of the taskbar for them.
+	 */
+	private applyPane(id: string): void {
+		this.closeMenu(false);
+		this.options.activePane = id;
+		this.windows.forEach((window) => this.renderWindow(window));
+		this.renderPanes(this.texts());
+	}
+
+	/**
+	 * Calls back with the panes, once the user changed them, and with the states of the windows.
+	 */
+	private panesChanged(): void {
+		this.options.onPanes?.(this.panes(), this.activePane());
+		this.changed();
+	}
+
+	/**
+	 * Shows another pane, its window in front taking the focus when the focus was in a window.
+	 *
+	 * @param id the id of the pane
+	 * @param user whether the user did, calling back
+	 * @returns whether the pane shown changed
+	 */
+	showPane(id: string, user = false): boolean {
+		if (this.paneOf(id) === null || id === this.activePane()) {
+			return false;
+		}
+		const hadFocus = this.area.contains(document.activeElement);
+		this.applyPane(id);
+		this.findActive();
+		if (hadFocus) {
+			const front = this.active ? this.windows.get(this.active) : undefined;
+			if (front) {
+				this.focus(front);
+			} else {
+				this.paneSwitcher?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
+			}
+		}
+		if (user) {
+			this.panesChanged();
+		}
+		return true;
+	}
+
+	/**
+	 * Shows the pane after the one shown, or the one before, going round.
+	 *
+	 * @param direction 1 for the pane after, -1 for the one before
+	 * @param user whether the user did, calling back
+	 */
+	nextPane(direction: 1 | -1 = 1, user = false): void {
+		const panes = this.panes();
+		const index = panes.findIndex((pane) => pane.id === this.activePane());
+		this.showPane(panes[(index + direction + panes.length) % panes.length].id, user);
+	}
+
+	/**
+	 * Adds a pane, after the others, without showing it.
+	 *
+	 * @param name the name of the pane
+	 * @param user whether the user did, calling back
+	 * @returns the pane
+	 */
+	addPane(name: string, user = false): DesktopPane {
+		const panes = this.options.panes ?? [];
+		const pane = { id: String(Math.max(0, ...panes.map((other) => Number(other.id))
+			.filter(Number.isFinite)) + 1), name: name.trim() };
+		this.options.panes = [...panes, pane];
+		this.renderPanes(this.texts());
+		this.windows.forEach((window) => this.renderWindow(window));
+		if (user) {
+			this.panesChanged();
+		}
+		return { ...pane };
+	}
+
+	/**
+	 * Renames a pane.
+	 *
+	 * @param id the id of the pane
+	 * @param name its new name; an empty one names the default pane as the texts do
+	 * @param user whether the user did, calling back
+	 * @returns whether there is such a pane
+	 */
+	renamePane(id: string, name: string, user = false): boolean {
+		const pane = (this.options.panes ?? []).find((other) => other.id === id);
+		if (!pane) {
+			return false;
+		}
+		pane.name = name.trim();
+		this.renderPanes(this.texts());
+		if (user) {
+			this.panesChanged();
+		}
+		return true;
+	}
+
+	/**
+	 * Removes a pane, its windows going to the default pane, which is shown when the pane was.
+	 * The default pane cannot be removed.
+	 *
+	 * @param id the id of the pane
+	 * @param user whether the user did, calling back
+	 * @returns whether the pane was removed
+	 */
+	removePane(id: string, user = false): boolean {
+		if (id === DEFAULT_PANE || this.paneOf(id) === null) {
+			return false;
+		}
+		const hadFocus = this.paneSwitcher?.contains(document.activeElement) ?? false;
+		this.closeMenu(false);
+		this.options.panes = (this.options.panes ?? []).filter((pane) => pane.id !== id);
+		this.windows.forEach((window) => {
+			if (window.state.pane === id) {
+				window.state.pane = DEFAULT_PANE;
+			}
+		});
+		if (this.activePane() === id) {
+			this.options.activePane = DEFAULT_PANE;
+		}
+		this.renderPanes(this.texts());
+		this.windows.forEach((window) => this.renderWindow(window));
+		this.findActive();
+		if (hadFocus) {
+			this.paneSwitcher?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
+		}
+		if (user) {
+			this.panesChanged();
+		}
+		return true;
+	}
+
+	/**
+	 * Moves a window to another pane, leaving the pane shown as it is.
+	 *
+	 * @param id the id of the window
+	 * @param pane the id of the pane
+	 * @param user whether the user did, calling back
+	 * @returns whether the window moved
+	 */
+	moveToPane(id: string, pane: string, user = false): boolean {
+		const window = this.windows.get(id);
+		if (!window || this.paneOf(pane) === null || window.state.pane === pane) {
+			return false;
+		}
+		const hadFocus = window.element.contains(document.activeElement);
+		window.state.pane = pane;
+		this.renderWindow(window);
+		this.findActive();
+		if (hadFocus) {
+			const front = this.active ? this.windows.get(this.active) : undefined;
+			if (front) {
+				this.focus(front);
+			} else {
+				this.paneSwitcher?.querySelector<HTMLElement>('[data-pane="' + pane + '"]')?.focus();
+			}
+		}
+		if (user) {
+			this.changed();
+		}
+		return true;
+	}
+
+	/**
+	 * Asks the user for the name of a new pane and adds it, without showing it.
+	 *
+	 * @returns the pane, null when the user cancelled
+	 */
+	async requestNewPane(): Promise<DesktopPane | null> {
+		const texts = this.texts();
+		const name = await this.askPaneName(texts.newPane, format(texts.newPaneName,
+			String(this.panes().length + 1)));
+		return name === null ? null : this.addPane(name, true);
+	}
+
+	/**
+	 * Asks the user for the new name of a pane and renames it.
+	 *
+	 * @param id the id of the pane, the one shown when left out
+	 * @returns whether the user renamed it
+	 */
+	async requestRenamePane(id = this.activePane()): Promise<boolean> {
+		const pane = this.panes().find((other) => other.id === id);
+		if (!pane) {
+			return false;
+		}
+		const name = await this.askPaneName(format(this.texts().renamePaneTitle,
+			this.paneName(pane)), this.paneName(pane));
+		return name !== null && this.renamePane(id, name, true);
+	}
+
+	/**
+	 * @returns the types of windows the launcher opens
+	 */
+	windowTypes(): WindowType[] {
+		return [...this.options.windowTypes ?? []];
+	}
+
+	/**
+	 * Registers a type of window, which the launcher opens; one of the same name goes.
+	 *
+	 * @param type the type
+	 */
+	registerWindowType(type: WindowType): void {
+		this.options.windowTypes = [...this.windowTypes().filter((other) =>
+			other.type !== type.type), type];
+		this.closeMenu(false);
+		this.renderLauncher(this.texts());
+	}
+
+	/**
+	 * Takes a type of window out of the launcher.
+	 *
+	 * @param type the name of the type
+	 */
+	unregisterWindowType(type: string): void {
+		this.options.windowTypes = this.windowTypes().filter((other) => other.type !== type);
+		this.closeMenu(false);
+		this.renderLauncher(this.texts());
+	}
+
+	/**
+	 * Opens a window of a type, in front: one the type makes, closable unless it says otherwise,
+	 * or one the page adds, which onOpenWindow of the options asks for.
+	 *
+	 * @param type the name of the type
+	 * @param pane the id of the pane, the one shown when left out
+	 * @param user whether the user did, calling back
+	 * @returns the id of the window the type made, null when the page adds it or there is no
+	 *          such type
+	 */
+	openWindow(type: string, pane = this.activePane(), user = false): string | null {
+		const windowType = this.windowTypes().find((other) => other.type === type);
+		if (!windowType) {
+			return null;
+		}
+		const target = this.paneOf(pane) ?? this.activePane();
+		if (!windowType.create) {
+			this.options.onOpenWindow?.(type, target);
+			return null;
+		}
+		let id: string;
+		do {
+			id = (this.element.id || 'antilia-desktop') + '-' + type + '-' + (++this.createdCount);
+		} while (document.getElementById(id));
+		const element = windowType.create(id, target);
+		element.id = id;
+		element.classList.add(DESKTOP_CLASSES.window);
+		element.setAttribute('data-pane', target);
+		if (!element.hasAttribute('data-closable')) {
+			element.setAttribute('data-closable', 'true');
+		}
+		this.created.add(id);
+		this.area.append(element);
+		this.findWindows();
+		this.bringForward(id, user);
+		return id;
+	}
+
+	/**
+	 * Opens a closed window again, in front, in the pane shown.
 	 *
 	 * @param id the id of the window
 	 * @param user whether the user did, calling back
@@ -1957,19 +2766,24 @@ export class Desktop {
 		if (!window) {
 			return;
 		}
+		if (window.state.closed) {
+			window.state.pane = this.activePane();
+		}
 		window.state.closed = false;
 		this.bringForward(id, user);
 	}
 
 	/**
-	 * Brings the next window to the front, or the previous one, in the order of the taskbar,
-	 * restoring it when minimized.
+	 * Brings the next window of the pane shown to the front, or the previous one, in the order of
+	 * the taskbar, restoring it when minimized.
 	 *
 	 * @param direction 1 for the next window, -1 for the previous one
 	 * @param user whether the user did, calling back
 	 */
 	cycle(direction: 1 | -1 = 1, user = false): void {
-		const open = Array.from(this.windows.values()).filter((window) => !window.state.closed);
+		const pane = this.activePane();
+		const open = Array.from(this.windows.values()).filter((window) => !window.state.closed &&
+			window.state.pane === pane);
 		if (!open.length) {
 			return;
 		}
@@ -1980,16 +2794,17 @@ export class Desktop {
 	}
 
 	/**
-	 * Lays out the windows shown, neither minimized nor closed, restoring those maximized or
-	 * folded, in the order of the page.
+	 * Lays out the windows shown, in the pane shown, neither minimized nor closed, restoring those
+	 * maximized or folded, in the order of the page.
 	 *
 	 * @param layout in a grid, side by side, one above the other, or cascading
 	 * @param user whether the user did, calling back
 	 */
 	tile(layout: TileLayout = 'grid', user = false): void {
 		const area = this.areaSize();
+		const pane = this.activePane();
 		const windows = Array.from(this.windows.values()).filter((window) =>
-			!window.state.minimized && !window.state.closed);
+			!window.state.minimized && !window.state.closed && window.state.pane === pane);
 		if (!area || !windows.length) {
 			return;
 		}
@@ -2116,12 +2931,14 @@ export class Desktop {
 		if (!window) {
 			this.remembered.set(id, { ...this.remembered.get(id) ?? {
 				x: 0, y: 0, width: DEFAULTS.width, height: DEFAULTS.height, minimized: false,
-				maximized: false, folded: false, closed: false, order: this.windows.size + 1 },
+				maximized: false, folded: false, closed: false, order: this.windows.size + 1,
+				pane: '' },
 			...state });
 			return;
 		}
 		Object.assign(window.state, Object.fromEntries(Object.entries(state)
 			.filter(([, value]) => value !== undefined)));
+		window.state.pane = this.paneOf(window.state.pane) ?? DEFAULT_PANE;
 		this.limitSize(window);
 		if (state.order !== undefined) {
 			this.normalizeOrder();
@@ -2138,8 +2955,17 @@ export class Desktop {
 			.filter(([, value]) => value !== undefined)) as DesktopOptions;
 		const position = this.position();
 		const expanded = this.isExpanded();
+		const pane = this.activePane();
 		this.options = { ...this.options, ...defined };
+		this.options.panes = this.normalizePanes(this.options.panes);
+		this.options.activePane = this.paneOf(this.options.activePane) ?? DEFAULT_PANE;
+		this.windows.forEach((window) => {
+			window.state.pane = this.paneOf(window.state.pane) ?? DEFAULT_PANE;
+		});
 		this.render();
+		if (this.activePane() !== pane) {
+			this.findActive();
+		}
 		this.renderExpanded();
 		this.windows.forEach((window) => this.renderTask(window));
 		if (this.position() !== position || (expanded && !this.isExpanded())) {
@@ -2175,8 +3001,10 @@ export class Desktop {
 		});
 		this.windows.clear();
 		this.closeMenu(false);
-		this.cancelConfirm?.();
+		this.cancelDialog?.();
 		this.menuButton?.remove();
+		this.launcher?.remove();
+		this.paneSwitcher?.remove();
 		this.tiling?.remove();
 		this.grip?.remove();
 		this.expandButton?.remove();

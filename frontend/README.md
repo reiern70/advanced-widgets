@@ -121,6 +121,22 @@ the state it had. In Wicket the state of a window is its model, kept in the page
 `setSendToServer(true)` the browser sends the states via Ajax, with the side of the taskbar and
 whether the desktop fills the page, and the windows give their models the new states.
 
+The windows are in panes, as in the workspaces of Ubuntu (`panes`, `activePane`, `DesktopPane` in
+Wicket): the desktop shows the windows of one pane at a time, and the taskbar the buttons of those
+windows and, after them, the panes (`paneSwitcher`). The default pane, of the id `DEFAULT_PANE`
+(`"0"`), is always there and cannot be removed. The user adds a pane, asked for its name in a
+dialog, renames the one shown (F2 or a double click on its button too) and removes it, its windows
+going to the default pane (`editablePanes`); Ctrl+Shift and the arrow keys go from pane to pane,
+and the first button on the right of each title bar moves its window to another pane, or to a new
+one. A window is in the pane its `data-pane` says (`pane` of `DesktopWindow`, `setPane` in
+Wicket), in the pane shown when it says none; `onPanes` reports the panes and the one shown, and
+Wicket keeps them with `setSendToServer(true)`. The launcher of the taskbar, the button after its
+menu, opens windows of the types the page registers (`windowTypes`, `registerWindowType()`,
+`addWindowType(WindowType)` in Wicket) in the pane shown: a type with `create` makes the element,
+one without asks the page through `onOpenWindow`; React and Svelte render the windows of their
+types themselves, and Wicket adds a `DesktopWindow` the type creates by Ajax. Closed, those windows
+are gone.
+
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading
 the children of a folder the first time it is expanded. Their style sheet, `tree.css`, built as

@@ -105,10 +105,11 @@ describe('Desktop', () => {
 		expect(win('one').getAttribute('aria-labelledby')).toBe('one-title');
 		expect(win('one').tabIndex).toBe(-1);
 		expect(Array.from(win('one').querySelectorAll('.antilia-window-control'))
-			.map((button) => button.getAttribute('aria-label'))).toEqual(['Minimize', 'Maximize']);
+			.map((button) => button.getAttribute('aria-label')))
+			.toEqual(['Move to another pane', 'Minimize', 'Maximize']);
 		expect(Array.from(win('three').querySelectorAll('.antilia-window-control'))
 			.map((button) => button.getAttribute('aria-label')))
-			.toEqual(['Minimize', 'Maximize', 'Close']);
+			.toEqual(['Move to another pane', 'Minimize', 'Maximize', 'Close']);
 		expect(win('one').querySelectorAll('.antilia-window-handle')).toHaveLength(8);
 		expect(win('three').querySelectorAll('.antilia-window-handle')).toHaveLength(0);
 	});
@@ -855,5 +856,350 @@ describe('Desktop', () => {
 		expect(confirmClose).toHaveBeenCalledWith('one', 'Title one');
 		expect(document.querySelector('.antilia-desktop-confirm')).toBeNull();
 		expect(desk.state('one')?.closed).toBe(true);
+	});
+});
+
+describe('Desktop panes', () => {
+	const PANES = [{ id: '0', name: 'Grids' }, { id: '1', name: 'Dropdowns' }];
+
+	function panes(): string[] {
+		return Array.from(document.querySelectorAll<HTMLElement>('.antilia-desktop-pane'))
+			.map((pane) => pane.textContent + (pane.getAttribute('aria-pressed') === 'true' ? '*' :
+				''));
+	}
+
+	function paneButton(id: string): HTMLButtonElement {
+		return document.querySelector('.antilia-desktop-pane[data-pane="' + id + '"]')!;
+	}
+
+	function paneAction(name: string): HTMLButtonElement | null {
+		return document.querySelector('.antilia-desktop-pane-action-' + name);
+	}
+
+	function shownTasks(): string[] {
+		return Array.from(document.querySelectorAll<HTMLElement>('.antilia-desktop-task'))
+			.filter((task) => !task.hidden).map((task) => task.dataset.window!);
+	}
+
+	/** Types a name in the dialog asking for one and confirms it with Enter. */
+	function answer(name: string): void {
+		const input = document.querySelector<HTMLInputElement>('.antilia-desktop-prompt input')!;
+		expect(document.activeElement).toBe(input);
+		input.value = name;
+		key(input, 'Enter');
+	}
+
+	it('shows the windows of the pane shown only, and their buttons in the taskbar', () => {
+		const desk = new Desktop(element(true, { two: 'data-pane="1"' }), { panes: PANES });
+
+		expect(panes()).toEqual(['Grids*', 'Dropdowns']);
+		expect(desk.activePane()).toBe('0');
+		expect(desk.state('one')?.pane).toBe('0');
+		expect(desk.state('two')?.pane).toBe('1');
+		expect(win('two').hidden).toBe(true);
+		expect(shownTasks()).toEqual(['one', 'three']);
+		expect(desk.activeId()).toBe('three');
+
+		paneButton('1').click();
+
+		expect(panes()).toEqual(['Grids', 'Dropdowns*']);
+		expect(win('one').hidden).toBe(true);
+		expect(win('three').hidden).toBe(true);
+		expect(win('two').hidden).toBe(false);
+		expect(shownTasks()).toEqual(['two']);
+		expect(desk.activeId()).toBe('two');
+	});
+
+	it('names the default pane as the texts do, and adds it when missing', () => {
+		const desk = new Desktop(element(), { panes: [{ id: 'x', name: 'Other' }] });
+
+		expect(desk.panes()).toEqual([{ id: '0', name: '' }, { id: 'x', name: 'Other' }]);
+		expect(panes()).toEqual(['Main*', 'Other']);
+		// the default pane cannot be removed: no button for it
+		expect(paneAction('remove')).toBeNull();
+		expect(desk.removePane('0')).toBe(false);
+	});
+
+	it('puts a window in a pane there is not in the default one', () => {
+		const desk = new Desktop(element(true, { one: 'data-pane="9"' }), { panes: PANES,
+			activePane: '1' });
+
+		expect(desk.state('one')?.pane).toBe('0');
+		// without data-pane, in the pane shown
+		expect(desk.state('two')?.pane).toBe('1');
+	});
+
+	it('goes from pane to pane with Ctrl+Shift and the arrow keys, not while writing', () => {
+		const onPanes = vi.fn();
+		const onChange = vi.fn();
+		const desk = new Desktop(element(true, { two: 'data-pane="1"' }), { panes: PANES, onPanes,
+			onChange });
+		win('one').focus();
+
+		key(win('one'), 'ArrowRight', { ctrlKey: true, shiftKey: true });
+
+		expect(desk.activePane()).toBe('1');
+		expect(onPanes).toHaveBeenCalledWith(PANES, '1');
+		expect(onChange).toHaveBeenCalled();
+		// the window in front of the pane takes the focus
+		expect(document.activeElement).toBe(win('two'));
+
+		key(win('two'), 'ArrowRight', { ctrlKey: true, shiftKey: true });
+		expect(desk.activePane()).toBe('0');
+		key(win('three'), 'ArrowUp', { ctrlKey: true, shiftKey: true });
+		expect(desk.activePane()).toBe('1');
+
+		const field = document.getElementById('two-field')!;
+		const event = key(field, 'ArrowLeft', { ctrlKey: true, shiftKey: true });
+		expect(desk.activePane()).toBe('1');
+		expect(event.defaultPrevented).toBe(false);
+	});
+
+	it('moves a window to another pane from the menu of its title bar', () => {
+		const onChange = vi.fn();
+		const desk = new Desktop(element(), { panes: PANES, onChange });
+		const move = control('three', 'pane');
+		expect(move.getAttribute('aria-haspopup')).toBe('menu');
+
+		move.click();
+
+		const items = Array.from(document.querySelectorAll<HTMLElement>(
+			'.antilia-desktop-menu-item')).map((item) => item.textContent);
+		expect(items).toEqual(['Dropdowns', 'New pane…']);
+		expect(move.getAttribute('aria-expanded')).toBe('true');
+		(document.activeElement as HTMLElement).click();
+
+		expect(desk.state('three')?.pane).toBe('1');
+		expect(win('three').getAttribute('data-pane')).toBe('1');
+		expect(win('three').hidden).toBe(true);
+		expect(desk.activePane()).toBe('0');
+		expect(desk.activeId()).toBe('two');
+		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+			three: expect.objectContaining({ pane: '1' }) }));
+	});
+
+	it('moves a window to a new pane, asking for its name', async () => {
+		const desk = new Desktop(element(), { panes: PANES });
+
+		control('one', 'pane').click();
+		(document.querySelector('.antilia-desktop-menu-item[data-pane=""]') as HTMLElement).click();
+		const dialog = document.querySelector('.antilia-desktop-prompt [role="dialog"]')!;
+		expect(dialog.querySelector('h1')?.textContent).toBe('New pane');
+		expect((document.activeElement as HTMLInputElement).value).toBe('Pane 3');
+		answer('Charts');
+		await settle();
+
+		expect(desk.panes()).toEqual([...PANES, { id: '2', name: 'Charts' }]);
+		expect(desk.state('one')?.pane).toBe('2');
+		expect(desk.activePane()).toBe('0');
+		expect(document.querySelector('.antilia-desktop-prompt')).toBeNull();
+	});
+
+	it('adds a pane and shows it, renames it and removes it from the taskbar', async () => {
+		const onPanes = vi.fn();
+		const desk = new Desktop(element(), { onPanes });
+		expect(panes()).toEqual(['Main*']);
+
+		paneAction('add')!.click();
+		answer('Second');
+		await settle();
+
+		expect(panes()).toEqual(['Main', 'Second*']);
+		expect(onPanes).toHaveBeenLastCalledWith([{ id: '0', name: '' }, { id: '1',
+			name: 'Second' }], '1');
+		expect(desk.activeId()).toBeNull();
+		desk.moveToPane('one', '1');
+
+		paneAction('rename')!.click();
+		expect(document.querySelector('.antilia-desktop-prompt h1')?.textContent)
+			.toBe('Rename Second');
+		answer('  Later  ');
+		await settle();
+		expect(panes()).toEqual(['Main', 'Later*']);
+
+		paneAction('remove')!.click();
+
+		expect(panes()).toEqual(['Main*']);
+		expect(desk.state('one')?.pane).toBe('0');
+		expect(win('one').hidden).toBe(false);
+		expect(onPanes).toHaveBeenLastCalledWith([{ id: '0', name: '' }], '0');
+	});
+
+	it('renames a pane with F2 or a double click on its button, removes it with Delete',
+		async () => {
+			const desk = new Desktop(element(), { panes: PANES });
+
+			key(paneButton('0'), 'F2');
+			answer('Tables');
+			await settle();
+			expect(desk.panes()[0]).toEqual({ id: '0', name: 'Tables' });
+
+			paneButton('1').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+			document.querySelector<HTMLElement>('.antilia-desktop-prompt [data-confirm="cancel"]')!
+				.click();
+			await settle();
+			expect(desk.panes()[1].name).toBe('Dropdowns');
+
+			key(paneButton('1'), 'Delete');
+			expect(desk.panes()).toEqual([{ id: '0', name: 'Tables' }]);
+		});
+
+	it('leaves the name of a pane as it was when the new one is empty', async () => {
+		const desk = new Desktop(element(), { panes: PANES });
+
+		void desk.requestRenamePane('1');
+		answer('   ');
+		await settle();
+
+		expect(desk.panes()[1].name).toBe('Dropdowns');
+	});
+
+	it('does not let the user change the panes when told so', () => {
+		const desk = new Desktop(element(), { panes: PANES, editablePanes: false });
+
+		expect(paneAction('add')).toBeNull();
+		expect(paneAction('rename')).toBeNull();
+		key(paneButton('1'), 'Delete');
+		expect(desk.panes()).toHaveLength(2);
+		control('one', 'pane').click();
+		expect(Array.from(document.querySelectorAll('.antilia-desktop-menu-item'))
+			.map((item) => item.textContent)).toEqual(['Dropdowns']);
+	});
+
+	it('leaves the panes out of the taskbar and the title bars when told so', () => {
+		const desk = new Desktop(element(), { paneSwitcher: false });
+
+		expect(document.querySelector('.antilia-desktop-panes')).toBeNull();
+		expect(control('one', 'pane')).toBeNull();
+		desk.configure({ paneSwitcher: true });
+		expect(document.querySelector('.antilia-desktop-panes')).not.toBeNull();
+		expect(control('one', 'pane')).not.toBeNull();
+	});
+
+	it('shows the pane of a window brought to the front from elsewhere', () => {
+		const desk = new Desktop(element(true, { two: 'data-pane="1"' }), { panes: PANES });
+
+		desk.activate('two', true);
+
+		expect(desk.activePane()).toBe('1');
+		expect(desk.activeId()).toBe('two');
+		expect(win('two').hidden).toBe(false);
+	});
+
+	it('lists the windows of the other panes in the menu of the taskbar', () => {
+		const desk = new Desktop(element(true, { one: 'data-pane="0"', two: 'data-pane="1"',
+			three: 'data-closed' }),
+			{ panes: PANES, activePane: '1' });
+
+		desk.openMenu();
+
+		const groups = Array.from(document.querySelectorAll('.antilia-desktop-menu [role="group"]')).map((group) =>
+			[group.querySelector('.antilia-desktop-menu-group-heading')!.textContent,
+				...Array.from(group.querySelectorAll('[role="menuitem"]'))
+					.map((item) => item.textContent)]);
+		expect(groups).toEqual([['Open', 'Title two'], ['Grids', 'Title one'],
+			['Closed', 'Title three']]);
+
+		// a closed window opens in the pane shown
+		(document.querySelector('[data-group="closed"] [role="menuitem"]') as HTMLElement).click();
+		expect(desk.state('three')).toMatchObject({ closed: false, pane: '1' });
+		expect(desk.activePane()).toBe('1');
+
+		desk.openMenu();
+		(document.querySelector('[data-group="pane"] [role="menuitem"]') as HTMLElement).click();
+		expect(desk.activePane()).toBe('0');
+		expect(desk.activeId()).toBe('one');
+	});
+
+	it('tiles and goes round the windows of the pane shown only', () => {
+		const desk = new Desktop(element(true, { two: 'data-pane="1"' }), { panes: PANES });
+
+		desk.tile('columns');
+		expect(place('one').slice(0, 4)).toEqual(['0px', '0px', '500px', '600px']);
+		expect(place('three').slice(0, 4)).toEqual(['500px', '0px', '500px', '600px']);
+		expect(place('two').slice(0, 4)).toEqual(['100px', '80px', '320px', '220px']);
+
+		desk.cycle(1);
+		expect(desk.activeId()).toBe('one');
+		desk.cycle(1);
+		expect(desk.activeId()).toBe('three');
+	});
+
+	it('follows the pane the page gives a window', async () => {
+		const desk = new Desktop(element(), { panes: PANES });
+
+		win('one').setAttribute('data-pane', '1');
+		await settle();
+
+		expect(desk.state('one')?.pane).toBe('1');
+		expect(win('one').hidden).toBe(true);
+	});
+
+	it('takes other panes, its windows in panes gone going to the default one', () => {
+		const desk = new Desktop(element(true, { two: 'data-pane="1"' }), { panes: PANES,
+			activePane: '1' });
+
+		desk.configure({ panes: [{ id: '0', name: 'Only' }] });
+
+		expect(desk.activePane()).toBe('0');
+		expect(desk.state('two')?.pane).toBe('0');
+		expect(panes()).toEqual(['Only*']);
+	});
+});
+
+describe('Desktop window types', () => {
+	function notes(id: string): HTMLElement {
+		const section = document.createElement('section');
+		section.innerHTML = '<header class="antilia-window-header"><span class="antilia-window-title">' +
+			'Notes</span></header><div class="antilia-window-body"><textarea></textarea></div>';
+		section.dataset.made = id;
+		return section;
+	}
+
+	it('opens a window of a type from the launcher, in the pane shown, and takes it away closed',
+		() => {
+			const onChange = vi.fn();
+			const desk = new Desktop(element(), { panes: [{ id: '0', name: '' },
+				{ id: '1', name: 'Other' }], activePane: '1', onChange,
+			windowTypes: [{ type: 'notes', title: 'Notes', icon: '<svg class="n"></svg>',
+				create: notes }] });
+			const launcher = desk.taskbar.querySelector<HTMLButtonElement>(
+				'.antilia-desktop-launcher')!;
+			expect(launcher.previousElementSibling?.className).toBe('antilia-desktop-menu-button');
+			expect(launcher.title).toBe('Open a window');
+
+			key(launcher, 'ArrowDown');
+			const item = document.activeElement as HTMLElement;
+			expect(item.textContent).toBe('Notes');
+			expect(item.querySelector('svg.n')).not.toBeNull();
+			item.click();
+
+			const id = 'd-notes-1';
+			expect(desk.ids()).toContain(id);
+			expect(win(id).dataset.made).toBe(id);
+			expect(desk.state(id)).toMatchObject({ pane: '1', closed: false });
+			expect(desk.activeId()).toBe(id);
+			expect(onChange).toHaveBeenCalled();
+
+			control(id, 'close').click();
+
+			expect(document.getElementById(id)).toBeNull();
+			expect(desk.ids()).not.toContain(id);
+		});
+
+	it('asks the page for a window of a type it does not make', () => {
+		const onOpenWindow = vi.fn();
+		const desk = new Desktop(element(), { onOpenWindow });
+		expect(desk.taskbar.querySelector('.antilia-desktop-launcher')).toBeNull();
+
+		desk.registerWindowType({ type: 'chart', title: 'Chart' });
+		desk.taskbar.querySelector<HTMLButtonElement>('.antilia-desktop-launcher')!.click();
+		(document.activeElement as HTMLElement).click();
+
+		expect(onOpenWindow).toHaveBeenCalledWith('chart', '0');
+		expect(desk.openWindow('none')).toBeNull();
+
+		desk.unregisterWindowType('chart');
+		expect(desk.taskbar.querySelector('.antilia-desktop-launcher')).toBeNull();
 	});
 });

@@ -13,7 +13,8 @@
  * data-expanded fills the whole page, over all else but the dialogs and the pop-ups, and the page
  * under it does not scroll. The menu of the taskbar opens next to its button, where the script
  * places it with the custom properties --antilia-desktop-menu-left, -top, -right, -bottom and
- * -max-height.
+ * -max-height. The windows of a pane other than the one shown are hidden; the panes are buttons
+ * after those of the windows, the one shown pressed.
  */
 .antilia-desktop {
 	position: relative;
@@ -188,6 +189,8 @@
 .antilia-desktop-tile,
 .antilia-desktop-grip,
 .antilia-desktop-menu-button,
+.antilia-desktop-launcher,
+.antilia-desktop-pane-action,
 .antilia-desktop-expand {
 	display: inline-flex;
 	align-items: center;
@@ -208,6 +211,10 @@
 .antilia-desktop-grip:hover,
 .antilia-desktop-menu-button:hover,
 .antilia-desktop-menu-button[aria-expanded='true'],
+.antilia-desktop-launcher:hover,
+.antilia-desktop-launcher[aria-expanded='true'],
+.antilia-window-control[aria-expanded='true'],
+.antilia-desktop-pane-action:hover,
 .antilia-desktop-expand:hover {
 	background: color-mix(in srgb, currentColor 16%, transparent);
 }
@@ -221,6 +228,9 @@
 .antilia-desktop-tile:focus-visible,
 .antilia-desktop-grip:focus-visible,
 .antilia-desktop-menu-button:focus-visible,
+.antilia-desktop-launcher:focus-visible,
+.antilia-desktop-pane:focus-visible,
+.antilia-desktop-pane-action:focus-visible,
 .antilia-desktop-expand:focus-visible,
 .antilia-desktop-menu-item:focus-visible,
 .antilia-desktop-task:focus-visible {
@@ -518,14 +528,83 @@
 	width: 11em;
 }
 
-/* the button of the menu listing the windows, after the grip */
-.antilia-desktop-menu-button {
+/* the button of the menu listing the windows, after the grip, and the launcher after it */
+.antilia-desktop-menu-button,
+.antilia-desktop-launcher {
 	flex: 0 0 auto;
 }
 
 .antilia-desktop-taskbar-left > .antilia-desktop-taskbar > .antilia-desktop-menu-button,
-.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-menu-button {
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-menu-button,
+.antilia-desktop-taskbar-left > .antilia-desktop-taskbar > .antilia-desktop-launcher,
+.antilia-desktop-taskbar-right > .antilia-desktop-taskbar > .antilia-desktop-launcher {
 	align-self: center;
+}
+
+/* the panes, after the buttons of the windows: one button for each, then add, rename, remove */
+.antilia-desktop-panes {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: center;
+	gap: 0.15em;
+	min-width: 0;
+	padding-inline-start: 0.4em;
+	border-inline-start: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-taskbar-left .antilia-desktop-panes,
+.antilia-desktop-taskbar-right .antilia-desktop-panes {
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: 0.4em 0 0;
+	border-inline-start: 0;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-desktop-pane {
+	flex: 0 1 auto;
+	min-width: 1.7em;
+	max-width: 9em;
+	height: 1.7em;
+	padding: 0 0.55em;
+	overflow: hidden;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: inherit;
+	font: inherit;
+	font-size: 0.8em;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.antilia-desktop-pane:hover {
+	background: var(--antilia-theme-hover, #eef2fb);
+}
+
+.antilia-desktop-pane[aria-pressed='true'] {
+	border-color: var(--antilia-theme-accent, #2f5bd3);
+	background: var(--antilia-theme-accent, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+	font-weight: 600;
+}
+
+/* the field of the dialog asking for the name of a pane */
+.antilia-desktop-prompt-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3em;
+}
+
+.antilia-desktop-prompt-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.4em 0.5em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: inherit;
+	font: inherit;
 }
 
 /* the menu: the windows open, then those closed */

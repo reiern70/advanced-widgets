@@ -9,7 +9,10 @@
   buttons minimize, maximize and close it, as it allows, and its edges resize it. F11 maximizes the
   window the focus is in, Ctrl+F6 goes round the windows. The user drags the taskbar to another
   side, and a button of it lets the desktop fill the whole page; its menu lists the windows open
-  and closed. Closing a window with changes not saved asks first. Svelte renders the windows,
+  and closed. Closing a window with changes not saved asks first. The windows are in panes, which
+  the taskbar shows, one at a time; Ctrl+Shift and the arrow keys go from pane to pane and a button
+  of each title bar moves its window to another pane. The launcher of the taskbar opens windows of
+  the types given, which the desktop renders, their content a snippet. Svelte renders the windows,
   DesktopWindow components in the children, which may come and go; the core moves them and fills
   the taskbar. bind:this gets the functions below, which change the windows by their ids without
   calling back. Give it a height. A private component: it needs a license key.
@@ -17,7 +20,11 @@
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
 	import { DEFAULT_DESKTOP_TEXTS, Desktop, DESKTOP_COMPONENTS, isLicensed, UNLICENSED_CLASS,
-		type DesktopTexts, type TaskbarPosition, type TileLayout, type WindowState } from '@antilia/core';
+		type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
+		type WindowState } from '@antilia/core';
+
+	import DesktopWindow from './DesktopWindow.svelte';
+	import type { DesktopWindowType } from './types.js';
 
 	type Props = {
 		/** The windows, DesktopWindow components. */
@@ -34,6 +41,19 @@
 		movableTaskbar?: boolean;
 		/** Whether the taskbar has the menu listing the windows open and closed, true when left out. */
 		menu?: boolean;
+		/**
+		 * The panes, the default one, of the id DEFAULT_PANE, first; that one alone when left out.
+		 * The user changes them too.
+		 */
+		panes?: DesktopPane[];
+		/** The id of the pane shown, the default one when left out; the user changes it too. */
+		activePane?: string;
+		/** Whether the taskbar shows the panes, true when left out. */
+		paneSwitcher?: boolean;
+		/** Whether the user may add, rename and remove panes, true when left out. */
+		editablePanes?: boolean;
+		/** The types of windows the launcher of the taskbar opens; none when left out. */
+		windowTypes?: DesktopWindowType[];
 		/**
 		 * Asked before the user closes a window with changes not saved, instead of the dialog of the
 		 * desktop; resolving to true closes it.
@@ -62,6 +82,10 @@
 		onactivate?: (id: string) => void;
 		/** Called with the id of the window the user closed. */
 		onclose?: (id: string) => void;
+		/** Called with the panes and the id of the one shown, once the user changed them. */
+		onpanes?: (panes: DesktopPane[], active: string) => void;
+		/** Called with the type and the pane of a window the user opened from the launcher. */
+		onopenwindow?: (type: string, pane: string) => void;
 	};
 
 	let {
@@ -72,6 +96,11 @@
 		expanded = false,
 		movableTaskbar = true,
 		menu = true,
+		panes,
+		activePane,
+		paneSwitcher = true,
+		editablePanes = true,
+		windowTypes,
 		confirmClose,
 		texts,
 		licenseKey,
@@ -81,7 +110,9 @@
 		ontaskbar,
 		onexpand,
 		onactivate,
-		onclose
+		onclose,
+		onpanes,
+		onopenwindow
 	}: Props = $props();
 
 	let element = $state<HTMLDivElement>();
@@ -94,6 +125,41 @@
 	// the props as they were, which only override the user when they change
 	let givenTaskbar = untrack(() => taskbar);
 	let givenExpanded = untrack(() => expanded);
+	// the panes and the one shown: as the props say, or as the user changed them since
+	let paneList = $state<DesktopPane[] | undefined>(untrack(() => panes));
+	let shown = $state<string | undefined>(untrack(() => activePane));
+	let givenPanes = untrack(() => JSON.stringify(panes ?? null));
+	let givenPane = untrack(() => activePane);
+	// the windows of types the user opened
+	let launched = $state<{ id: string; type: string; pane: string }[]>([]);
+	let count = 0;
+
+	$effect.pre(() => {
+		const key = JSON.stringify(panes ?? null);
+		if (key !== givenPanes) {
+			givenPanes = key;
+			paneList = panes;
+		}
+	});
+
+	$effect.pre(() => {
+		if (activePane !== givenPane) {
+			givenPane = activePane;
+			shown = activePane;
+		}
+	});
+
+	const coreTypes = $derived((windowTypes ?? []).map(({ type, title, icon }) =>
+		({ type, title, icon })));
+
+	/** Renders a window of a type in a pane, with an id unique in the page. */
+	function launch(type: string, pane: string): void {
+		let window: string;
+		do {
+			window = (id ?? 'antilia-desktop') + '-' + type + '-' + (++count);
+		} while (document.getElementById(window));
+		launched = [...launched, { id: window, type, pane }];
+	}
 
 	$effect.pre(() => {
 		if (taskbar !== givenTaskbar) {
@@ -131,11 +197,27 @@
 		}
 		const desktop: Desktop = new Desktop(element, untrack(() => ({
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
+			panes: $state.snapshot(paneList), activePane: shown, paneSwitcher, editablePanes,
+			windowTypes: coreTypes,
 			confirmClose: (window: string, title: string): Promise<boolean> | boolean => confirmClose ?
 				confirmClose(window, title) : desktop.askToClose(title),
 			onChange: (states: Record<string, WindowState>) => onchange?.(states),
 			onActivate: (window: string) => onactivate?.(window),
-			onClose: (window: string) => onclose?.(window),
+			onClose: (window: string) => {
+				if (launched.some((other) => other.id === window)) {
+					launched = launched.filter((other) => other.id !== window);
+				}
+				onclose?.(window);
+			},
+			onPanes: (list: DesktopPane[], active: string) => {
+				paneList = list;
+				shown = active;
+				onpanes?.(list, active);
+			},
+			onOpenWindow: (type: string, pane: string) => {
+				launch(type, pane);
+				onopenwindow?.(type, pane);
+			},
 			onTaskbar: (side: TaskbarPosition) => {
 				position = side;
 				ontaskbar?.(side);
@@ -154,7 +236,8 @@
 
 	$effect(() => {
 		const next = { taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu,
-			texts };
+			texts, panes: $state.snapshot(paneList), activePane: shown, paneSwitcher, editablePanes,
+			windowTypes: coreTypes };
 		untrack(() => instance?.configure(next));
 	});
 
@@ -220,6 +303,52 @@
 		instance?.expand(value);
 		filling = value;
 	}
+
+	/** @returns the panes, the default one first */
+	export function getPanes(): DesktopPane[] {
+		return instance?.panes() ?? [];
+	}
+
+	/** @returns the id of the pane shown */
+	export function getActivePane(): string {
+		return instance?.activePane() ?? '0';
+	}
+
+	/** Shows another pane. */
+	export function showPane(pane: string): void {
+		if (instance?.showPane(pane)) {
+			shown = pane;
+		}
+	}
+
+	/** Adds a pane, without showing it. */
+	export function addPane(name: string): DesktopPane | null {
+		const pane = instance?.addPane(name) ?? null;
+		paneList = instance?.panes();
+		return pane;
+	}
+
+	export function renamePane(pane: string, name: string): void {
+		instance?.renamePane(pane, name);
+		paneList = instance?.panes();
+	}
+
+	/** Removes a pane, its windows going to the default pane. */
+	export function removePane(pane: string): void {
+		instance?.removePane(pane);
+		paneList = instance?.panes();
+		shown = instance?.activePane();
+	}
+
+	/** Moves a window to another pane. */
+	export function moveToPane(window: string, pane: string): void {
+		instance?.moveToPane(window, pane);
+	}
+
+	/** Opens a window of a type, in the pane shown when none is given. */
+	export function openWindow(type: string, pane?: string): void {
+		instance?.openWindow(type, pane);
+	}
 </script>
 
 {#if licensed === false}
@@ -227,7 +356,18 @@
 		{texts?.unlicensed ?? DEFAULT_DESKTOP_TEXTS.unlicensed}</div>
 {:else if licensed}
 	<div bind:this={element} {id} class={classes}>
-		<div class="antilia-desktop-area">{@render children?.()}</div>
+		<div class="antilia-desktop-area">
+			{@render children?.()}
+			{#each launched as window (window.id)}
+				{@const type = windowTypes?.find((other) => other.type === window.type)}
+				{#if type}
+					<DesktopWindow {...type.window} id={window.id} title={type.title}
+						iconMarkup={type.icon} pane={window.pane} closable>
+						{@render type.content(window.id)}
+					</DesktopWindow>
+				{/if}
+			{/each}
+		</div>
 		<div class="antilia-desktop-taskbar"></div>
 	</div>
 {/if}
