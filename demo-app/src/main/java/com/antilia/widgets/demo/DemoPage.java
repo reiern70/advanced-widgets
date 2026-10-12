@@ -15,20 +15,19 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.util.string.Strings;
 
-import com.antilia.widgets.collapsible.CollapsiblePanel;
 import com.antilia.widgets.demo.Demos.Demo;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.github.openjson.JSONObject;
 
 /**
  * The layout of a demo page: links back to the {@link HomePage} and to the previous and next demo,
- * the demo's title and its explanation in a collapsible panel. Both come from the page's own
- * bundle, under the keys {@code title} and {@code explanation}; the explanation is markup authored
- * with the demo and is written as is.
+ * the demo's title and a button opening its explanation in a {@link BrowserModal}. Both come from
+ * the page's own bundle, under the keys {@code title} and {@code explanation}; the explanation is
+ * markup authored with the demo and is written as is.
  * <p>
  * A demo that has React and Svelte apps too names them with {@link #getFrameworkDemo()} and gives
  * them their configuration with {@link #getFrameworkConfig()}: the page then shows the
- * {@link FrameworkTabs} below the explanation, its own components in the Wicket tab.
+ * {@link FrameworkTabs} below the title, its own components in the Wicket tab.
  */
 public abstract class DemoPage extends BasePage
 {
@@ -53,8 +52,11 @@ public abstract class DemoPage extends BasePage
 		add(new Label("demoTitle", () -> getString("title")));
 		add(Demos.of(getClass()).<Component> map(demo -> newVisibilityBadge("visibility", demo))
 			.orElseGet(() -> new WebMarkupContainer("visibility").setVisible(false)));
-		add(newExplanation("explanation", () -> getString("explanation", null, ""))
-			.setOutputMarkupId(true));
+		BrowserModal explanation = newExplanation("explanation",
+			() -> getString("explanation", null, ""));
+		add(explanation);
+		add(new WebMarkupContainer("about").add(AttributeModifier.replace(
+			BrowserModal.OPENER_ATTRIBUTE, explanation::getMarkupId)));
 	}
 
 	@Override
@@ -167,11 +169,11 @@ public abstract class DemoPage extends BasePage
 	}
 
 	/**
-	 * @return the component showing the explanation: a collapsible panel
+	 * @return the dialog showing the explanation, which the button next to the title opens
 	 */
-	private Component newExplanation(String id, IModel<String> explanation)
+	private BrowserModal newExplanation(String id, IModel<String> explanation)
 	{
-		return new CollapsiblePanel(id, new ResourceModel("aboutThisDemo"))
+		return new BrowserModal(id, () -> getString("title"), "52em")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -180,6 +182,6 @@ public abstract class DemoPage extends BasePage
 			{
 				return new Label(id, explanation).setEscapeModelStrings(false);
 			}
-		}.setRememberExpanded(true);
+		};
 	}
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="carousel">Die Demos, eine nach der anderen</entry>
+	<entry key="slide">{0} von {1}</entry>
+	<entry key="previous">Vorherige Demo</entry>
+	<entry key="next">Nächste Demo</entry>
+	<entry key="pause">Nicht mehr durch die Demos gehen</entry>
+	<entry key="play">Durch die Demos gehen</entry>
+	<entry key="open">Demo öffnen</entry>
+	<entry key="details">Details</entry>
+</properties>

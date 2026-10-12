@@ -380,8 +380,9 @@ class DesktopBrowserTest extends JettyTestCase
 		click(task(2));
 		wait.until(d -> react.getDomAttribute("data-active") != null);
 		click(react.findElement(By.cssSelector("button[title='New user']")));
-		WebElement dialog = wait.until(d -> d.findElement(By.cssSelector(".modal-dialog")));
-		wait.until(d -> dialog.isDisplayed());
+		// the one shown: the dialogs the page opens in the browser alone are in it too, hidden
+		WebElement dialog = wait.until(d -> d.findElements(By.cssSelector(".modal-dialog"))
+			.stream().filter(WebElement::isDisplayed).findFirst().orElse(null));
 
 		assertTrue(react.getDomAttribute("data-active") != null);
 		assertEquals(Boolean.TRUE, ((JavascriptExecutor)driver).executeScript(

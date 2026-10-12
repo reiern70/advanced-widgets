@@ -9,17 +9,16 @@
 	<entry key="webSocket">WebSocket connection</entry>
 	<entry key="connecting">Connecting</entry>
 	<entry key="live">Live</entry>
-	<entry key="demos">Demos</entry>
 	<entry key="signInHint">The demos are for registered visitors.</entry>
 	<entry key="hint.signIn">Sign in</entry>
 	<entry key="hint.or">or</entry>
 	<entry key="hint.register">register</entry>
-	<entry key="supportTitle">What runs where</entry>
-	<entry key="supportLead">Every component in Wicket, and many in React and Svelte too, all of them in every theme.</entry>
-	<entry key="supportComponent">Component</entry>
-	<entry key="supportCategory">Category</entry>
-	<entry key="supportVisibility">Public or private</entry>
-	<entry key="supportThemes">Themes</entry>
-	<entry key="supported">Yes</entry>
-	<entry key="notSupported">No</entry>
+	<entry key="browse">Browse the demos</entry>
+	<entry key="indexTitle">Every demo, by category</entry>
+	<entry key="indexLead">Point at a demo to preview it, click it to open it.</entry>
+	<entry key="factDemos">demos</entry>
+	<entry key="factFrameworks">frameworks</entry>
+	<entry key="factThemes">themes</entry>
+	<entry key="frameworks">In React and Svelte too</entry>
+	<entry key="details">Details</entry>
 </properties>

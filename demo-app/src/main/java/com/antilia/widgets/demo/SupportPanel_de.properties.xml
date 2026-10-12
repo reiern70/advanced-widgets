@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="supportLead">Jede Komponente in Wicket, viele auch in React und Svelte, alle in jedem Theme.</entry>
+	<entry key="supportComponent">Komponente</entry>
+	<entry key="supportCategory">Kategorie</entry>
+	<entry key="supportVisibility">Öffentlich oder privat</entry>
+	<entry key="supportThemes">Themes</entry>
+	<entry key="supported">Ja</entry>
+	<entry key="notSupported">Nein</entry>
+</properties>

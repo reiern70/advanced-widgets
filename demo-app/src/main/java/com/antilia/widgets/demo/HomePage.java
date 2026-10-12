@@ -4,29 +4,50 @@
  */
 package com.antilia.widgets.demo;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.WebMarkupContainer;
-import org.apache.wicket.markup.html.image.ContextImage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.request.resource.JavaScriptResourceReference;
+import org.apache.wicket.request.resource.ResourceReference;
 
 import com.antilia.widgets.demo.Demos.Demo;
 import com.antilia.widgets.demo.account.DemosAuthorization;
 import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.register.RegisterPage;
+import com.antilia.widgets.theme.Theme;
 
 /**
- * The public part of the application: what the components are and do, with a screenshot of each
- * demo and the frameworks they run in. The demos themselves are for the visitors who signed in,
+ * The public part of the application: the name of the components and what sets them apart beside
+ * a {@link DemoCarousel} going through the demos, then an index of all of them by category, which
+ * previews the screenshot of the demo and what it shows as the pointer or the focus goes over it.
+ * A button of each demo, in the carousel and in the index, opens what it is about in
+ * {@link DemoDetails}, and another one what runs where. The demos themselves are for the visitors who signed in,
  * see {@link DemosAuthorization}.
  */
 public class HomePage extends BasePage {
 	private static final long serialVersionUID = 1L;
+
+	private static final ResourceReference SCRIPT = new JavaScriptResourceReference(
+		HomePage.class, "home-index.js");
+
+	private static final ResourceReference CSS = new CssResourceReference(HomePage.class,
+		"home-index.css");
 
 	public HomePage(final PageParameters parameters) {
 		super(parameters);
@@ -37,40 +58,71 @@ public class HomePage extends BasePage {
 
 		add(newSignInHint("signInHint"));
 
-		add(new ListView<>("demos", Demos.all()) {
+		add(new Label("demoCount", Demos.all().size()));
+		add(new Label("themeCount", Theme.values().length));
+		add(new DemoCarousel("carousel", Demos.all()));
+
+		add(new ListView<>("demoDetails", Demos.all())
+		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void populateItem(ListItem<Demo> item) {
-				Demo demo = item.getModelObject();
-				BookmarkablePageLink<Void> link = new BookmarkablePageLink<>("link", demo.page());
-				item.add(link);
-				link.add(new ContextImage("image", demo.imagePath())
-					.add(AttributeModifier.replace("alt", new ResourceModel(demo.nameKey()))));
-				link.add(new Label("category", new ResourceModel(demo.categoryKey())));
-				link.add(DemoPage.newVisibilityBadge("visibility", demo));
-				link.add(new Label("name", new ResourceModel(demo.nameKey())));
-				link.add(new Label("description", new ResourceModel(demo.descriptionKey())));
-				link.add(new WebMarkupContainer("react").setVisible(demo.frameworkApps()));
-				link.add(new WebMarkupContainer("svelte").setVisible(demo.frameworkApps()));
+			protected void populateItem(ListItem<Demo> item)
+			{
+				item.add(new DemoDetails("details", item.getModelObject()));
 			}
 		});
 
-		add(new ListView<>("support", Demos.all()) {
+		Map<String, List<Demo>> byCategory = new LinkedHashMap<>();
+		Demos.all().forEach(demo -> byCategory.computeIfAbsent(demo.category(),
+			category -> new ArrayList<>()).add(demo));
+		add(new ListView<>("categories", new ArrayList<>(byCategory.keySet()))
+		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void populateItem(ListItem<Demo> item) {
-				Demo demo = item.getModelObject();
-				item.add(new Label("name", new ResourceModel(demo.nameKey())));
-				item.add(new Label("category", new ResourceModel(demo.categoryKey())));
-				item.add(DemoPage.newVisibilityBadge("visibility", demo));
-				item.add(newSupported("wicket", true));
-				item.add(newSupported("react", demo.frameworkApps()));
-				item.add(newSupported("svelte", demo.frameworkApps()));
-				item.add(newSupported("themes", true));
+			protected void populateItem(ListItem<String> item)
+			{
+				item.add(new Label("category", new ResourceModel("category." + item.getModelObject())));
+				item.add(new ListView<>("demos", byCategory.get(item.getModelObject()))
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					protected void populateItem(ListItem<Demo> item)
+					{
+						item.add(newIndexLink("link", item.getModelObject()));
+						item.add(newDetailsButton("details", item.getModelObject()));
+					}
+				});
 			}
 		});
+	}
+
+	/**
+	 * @return the button opening the dialog about a demo, {@link DemoDetails}
+	 */
+	static Component newDetailsButton(String id, Demo demo)
+	{
+		return new WebMarkupContainer(id).add(AttributeModifier.replace(
+			BrowserModal.OPENER_ATTRIBUTE, DemoDetails.markupIdOf(demo)));
+	}
+
+	/**
+	 * @return the link to a demo in the index: its name, whether it runs in React and Svelte too
+	 *         and whether it is public, with its screenshot and what it shows for the preview
+	 */
+	private static Component newIndexLink(String id, Demo demo)
+	{
+		BookmarkablePageLink<Void> link = new BookmarkablePageLink<>(id, demo.page());
+		link.add(AttributeModifier.replace("data-image", () -> RequestCycle.get()
+			.getUrlRenderer().renderContextRelativeUrl(demo.imagePath())));
+		link.add(AttributeModifier.replace("data-description",
+			new ResourceModel(demo.descriptionKey())));
+		link.add(new Label("name", new ResourceModel(demo.nameKey())));
+		link.add(new WebMarkupContainer("frameworks").setVisible(demo.frameworkApps()));
+		link.add(DemoPage.newVisibilityBadge("visibility", demo));
+		return link;
 	}
 
 	/**
@@ -92,13 +144,11 @@ public class HomePage extends BasePage {
 		return hint;
 	}
 
-	/**
-	 * @return a check mark or a dash telling whether a demo supports something, with the words for
-	 *         screen readers
-	 */
-	private static Component newSupported(String id, boolean supported) {
-		return new Label(id, new ResourceModel(supported ? "supported" : "notSupported"))
-			.add(AttributeModifier.replace("class", supported ? "support support--yes"
-				: "support support--no"));
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		super.renderHead(response);
+		response.render(CssHeaderItem.forReference(CSS));
+		response.render(JavaScriptHeaderItem.forReference(SCRIPT).setDefer(true));
 	}
 }

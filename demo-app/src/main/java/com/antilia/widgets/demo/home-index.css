@@ -1,0 +1,179 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/* the top of the home page: what the components are beside the carousel of the demos */
+.showcase {
+	background:
+		radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--accent, var(--primary)) 45%, transparent), transparent 55%),
+		linear-gradient(135deg, var(--primary-dark), var(--primary));
+	color: var(--on-primary, #fff);
+	padding: 48px 0;
+}
+.showcase__inner {
+	display: grid;
+	grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+	align-items: center;
+	gap: 40px;
+}
+.showcase h1 {
+	margin: 0 0 12px;
+	font-size: clamp(30px, 4.4vw, 52px);
+	line-height: 1.08;
+	letter-spacing: -.5px;
+}
+.showcase .hero__lead { max-width: 34em; }
+.showcase__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 28px 0 0;
+}
+.showcase__primary,
+.showcase__secondary {
+	padding: 10px 22px;
+	border-radius: 999px;
+	font-weight: 600;
+	text-decoration: none;
+}
+.showcase__primary {
+	background: var(--on-primary, #fff);
+	color: var(--primary-dark);
+}
+.showcase__primary:hover { background: color-mix(in srgb, var(--on-primary, #fff) 88%, transparent); }
+.showcase__secondary {
+	border: 1px solid color-mix(in srgb, var(--on-primary, #fff) 60%, transparent);
+	color: inherit;
+}
+.showcase__secondary:hover { background: color-mix(in srgb, var(--on-primary, #fff) 12%, transparent); }
+.showcase__facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 28px;
+	margin: 32px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 14px;
+	opacity: .9;
+}
+.showcase__facts strong { display: block; font-size: 28px; line-height: 1.1; }
+.showcase .hero__meta { margin-top: 24px; }
+.showcase .ws-status { color: inherit; }
+.showcase__stage .carousel {
+	border: 0;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+	color: var(--text);
+}
+@media (max-width: 1000px) {
+	.showcase__inner { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* every demo by category, with a preview of the one the pointer or the focus is on */
+.index { padding-top: 40px; padding-bottom: 56px; }
+.index__title { margin: 0 0 4px; font-size: 24px; }
+.index__lead { margin: 0 0 20px; color: var(--muted); }
+.index__body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+	align-items: start;
+	gap: 32px;
+}
+.index__columns { columns: 3 220px; column-gap: 24px; }
+.index__group {
+	break-inside: avoid;
+	margin-bottom: 20px;
+	padding: 14px 10px 10px;
+	border-top: 3px solid var(--primary);
+	background: var(--surface);
+	border-radius: 0 0 var(--radius) var(--radius);
+}
+.index__category {
+	margin: 0 6px 6px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .8px;
+}
+.index__list { margin: 0; padding: 0; list-style: none; }
+.index__list li { display: flex; align-items: center; gap: 2px; }
+.index__list .index__link { flex: 1; min-width: 0; }
+/* opens what the demo is about */
+.index__details {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+}
+.index__details:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.index__details:focus-visible { outline: 2px solid var(--accent, var(--primary)); outline-offset: -2px; }
+.index__link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px;
+	border-radius: 8px;
+	color: var(--text);
+	text-decoration: none;
+}
+.index__name { flex: 1; min-width: 0; font-weight: 500; }
+.index__link:hover,
+.index__link--previewed { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.index__link:focus-visible { outline: 2px solid var(--accent, var(--primary)); outline-offset: -2px; }
+.index__frameworks {
+	padding: 0 5px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--primary) 12%, transparent);
+	color: var(--primary);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: .5px;
+}
+.index .visibility { width: 20px; height: 20px; }
+.index .visibility svg { width: 12px; height: 12px; }
+
+.index__preview {
+	display: none;
+	position: sticky;
+	top: 16px;
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: 0 10px 30px rgba(28, 35, 51, .08);
+}
+.index__preview--ready { display: block; }
+.index__preview-shot {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 10;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	object-fit: cover;
+	object-position: top left;
+	background: var(--bg);
+}
+.index__preview-name { margin: 12px 4px 4px; font-size: 18px; font-weight: 600; }
+.index__preview-description { margin: 0 4px 4px; color: var(--muted); font-size: 14px; }
+.index__preview--fresh { animation: index-preview .25s ease; }
+@keyframes index-preview {
+	from { opacity: .4; transform: translateY(4px); }
+	to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.index__preview--fresh { animation: none; }
+}
+/* on narrow screens the index only: the carousel above shows the screenshots */
+@media (max-width: 900px) {
+	.index__body { grid-template-columns: minmax(0, 1fr); }
+	.index__preview--ready { display: none; }
+}

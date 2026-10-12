@@ -24,6 +24,7 @@ import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.link.StatelessLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
+import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
@@ -44,9 +45,10 @@ import com.antilia.widgets.theme.ThemeChoice;
  * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
  * its own, and the links to sign in and to register, or the account signed in with and the link to
  * sign out, and for an administrator the link to the administration; then the footer, and the
- * {@link Notifications} showing the feedback messages of the page. Nothing of it
- * keeps a page, so the public pages are stateless. The whole page is in the session's
- * {@link Theme}, its own colors included.
+ * {@link Notifications} showing the feedback messages of the page, and the dialog telling what runs
+ * where, which the link in the footer opens in the browser. Nothing of it keeps a page, so the
+ * public pages are stateless. The whole page is in the session's {@link Theme}, its own colors
+ * included.
  */
 public abstract class BasePage extends WebPage
 {
@@ -63,6 +65,9 @@ public abstract class BasePage extends WebPage
 	/** The languages the demos have texts in. */
 	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
 		Locale.of("es"));
+
+	/** The markup id of the dialog telling what runs where, which a link opens from any page. */
+	public static final String WHAT_RUNS_WHERE = "what-runs-where";
 
 	private final Notifications notifications;
 
@@ -128,6 +133,16 @@ public abstract class BasePage extends WebPage
 		notifications = new Notifications("notifications");
 		add(notifications);
 
+		add(new BrowserModal("whatRunsWhere", new ResourceModel("whatRunsWhere"), "1400px")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newBody(String id)
+			{
+				return new SupportPanel(id);
+			}
+		}.setMarkupId(WHAT_RUNS_WHERE));
 		add(new Label("year", Year.now().getValue()));
 		add(new Label("version", getApplication().getFrameworkSettings().getVersion()));
 		add(newBuildInfo("buildInfo"));

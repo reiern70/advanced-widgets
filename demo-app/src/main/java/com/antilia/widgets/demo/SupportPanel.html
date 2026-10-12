@@ -1,0 +1,35 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+		<div class="support-matrix">
+			<p class="support-matrix__lead"><wicket:message key="supportLead"/></p>
+			<div class="support-matrix__scroll">
+				<table class="support-matrix__table">
+					<thead>
+						<tr>
+							<th scope="col"><wicket:message key="supportComponent"/></th>
+							<th scope="col"><wicket:message key="supportCategory"/></th>
+							<th scope="col"><wicket:message key="supportVisibility"/></th>
+							<th scope="col">Wicket</th>
+							<th scope="col">React</th>
+							<th scope="col">Svelte</th>
+							<th scope="col"><wicket:message key="supportThemes"/></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr wicket:id="support">
+							<th scope="row"><a wicket:id="link"><span wicket:id="name">JSON Grid</span></a></th>
+							<td wicket:id="category">Data</td>
+							<td><span wicket:id="visibility">Private</span></td>
+							<td><span wicket:id="wicket">Yes</span></td>
+							<td><span wicket:id="react">Yes</span></td>
+							<td><span wicket:id="svelte">Yes</span></td>
+							<td><span wicket:id="themes">Yes</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+</wicket:panel>

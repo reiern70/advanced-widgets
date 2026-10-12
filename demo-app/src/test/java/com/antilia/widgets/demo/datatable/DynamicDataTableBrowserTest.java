@@ -455,7 +455,9 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 	private void closeDialog(WebElement dialog)
 	{
 		dialog.findElement(By.cssSelector(".modal-dialog-close")).click();
-		wait.until(d -> driver.findElements(By.cssSelector(".modal-dialog")).isEmpty());
+		// the dialogs the page opens in the browser alone stay in it, hidden
+		wait.until(d -> driver.findElements(By.cssSelector(".modal-dialog")).stream()
+			.noneMatch(WebElement::isDisplayed));
 		awaitNoVeil();
 	}
 

@@ -68,8 +68,18 @@ public class TestHomePage
 	{
 		tester.startPage(HomePage.class);
 
-		ListView<?> demos = (ListView<?>) tester.getComponentFromLastRenderedPage("demos");
+		ListView<?> demos = (ListView<?>) tester.getComponentFromLastRenderedPage(
+			"carousel:slides");
 		assertEquals(Demos.all().size(), demos.size());
+		ListView<?> categories = (ListView<?>) tester.getComponentFromLastRenderedPage(
+			"categories");
+		assertEquals(Demos.all().stream().map(Demos.Demo::category).distinct().count(),
+			categories.size());
+		tester.assertLabel("categories:1:category", "Data");
+		tester.assertLabel("categories:1:demos:0:link:name", "JSON Grid");
+		// the index previews the screenshot of a demo and what it shows
+		tester.assertContains("data-image=\"[^\"]*images/demos/jsonTable.png\"");
+		tester.assertContains("data-description=\"A data grid whose rows are rendered in the browser");
 		assertNull(tester.getLastRenderedPage().get("components"));
 		tester.assertContainsNot("components in the catalog");
 		tester.assertContains("Ernesto Reinaldo Barreiro");
@@ -129,7 +139,7 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("demos:0:link:name", "Agenda de contactos");
+		tester.assertLabel("categories:0:demos:0:link:name", "Agenda de contactos");
 		tester.assertContains("Todos los derechos reservados.");
 		tester.assertContains("Español");
 	}
@@ -140,7 +150,7 @@ public class TestHomePage
 		tester.getSession().setLocale(Locale.GERMAN);
 		tester.startPage(HomePage.class);
 
-		tester.assertLabel("demos:0:link:name", "Adressbuch");
+		tester.assertLabel("categories:0:demos:0:link:name", "Adressbuch");
 		tester.assertContains("Alle Rechte vorbehalten.");
 	}
 

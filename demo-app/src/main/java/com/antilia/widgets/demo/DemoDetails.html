@@ -1,0 +1,21 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+	<wicket:fragment wicket:id="bodyFragment">
+		<div class="demo-details">
+			<p class="demo-details__lead" wicket:id="description">What the demo shows</p>
+			<p class="demo-details__meta">
+				<span class="demo-details__category" wicket:id="category">Data</span>
+				<span wicket:id="visibility">Private</span>
+				<span class="framework">Wicket</span> <span class="framework" wicket:id="react">React</span> <span class="framework" wicket:id="svelte">Svelte</span>
+			</p>
+			<div class="demo-details__explanation" wicket:id="explanation">[the explanation of the demo page]</div>
+		</div>
+	</wicket:fragment>
+	<wicket:fragment wicket:id="footerFragment">
+		<button type="button" wicket:id="close" data-modal-close=""><wicket:message key="close"/></button>
+		<a wicket:id="open"><wicket:message key="open"/> &rarr;</a>
+	</wicket:fragment>
+</wicket:extend>
