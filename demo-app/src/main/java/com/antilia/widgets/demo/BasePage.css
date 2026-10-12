@@ -496,7 +496,7 @@ a.brand { color: inherit; text-decoration: none; }
 	.register__card { padding: 20px; }
 }
 
-/* in demo mode (-Dwicket.demo=true): the branch and commit the demo was built from */
+/* the commit the application was built from, in demo mode (-Dwicket.demo=true) its branch too */
 .footer__built {
 	display: inline-flex;
 	flex-wrap: wrap;

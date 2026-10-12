@@ -100,13 +100,15 @@ public class TestHomePage
 	}
 
 	@Test
-	public void showsTheBranchOnlyInDemoMode()
+	public void showsTheCommitAndInDemoModeTheBranch()
 	{
 		BuildInfo build = BuildInfo.get();
 		assertTrue(build.isKnown(), "the build writes build-info.properties");
 
 		tester.startPage(HomePage.class);
-		tester.assertInvisible("buildInfo");
+		tester.assertVisible("buildInfo");
+		tester.assertContains("Commit " + Pattern.quote(build.commit()));
+		tester.assertContainsNot("Branch " + Pattern.quote(build.branch() + " · "));
 
 		System.setProperty(BuildInfo.DEMO_PROPERTY, "true");
 		try

@@ -66,5 +66,7 @@
 	<entry key="demo.themeEditor.description">Genera un tema de los componentes, con vista previa en vivo.</entry>
 	<entry key="buildInfo">Rama {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Rama {0} · {1}, con cambios sin confirmar</entry>
+	<entry key="buildInfo.commit">Commit {1}</entry>
+	<entry key="buildInfo.commit.dirty">Commit {1}, con cambios sin confirmar</entry>
 	<entry key="admin">Administración</entry>
 </properties>

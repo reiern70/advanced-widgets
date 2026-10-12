@@ -291,12 +291,14 @@ public abstract class BasePage extends WebPage
 	}
 
 	/**
-	 * @return the branch and commit the demo was built from, shown only in demo mode
+	 * @return the commit the application was built from, and in demo mode its branch too, so
+	 *         that what a server runs shows at a glance
 	 */
 	private Component newBuildInfo(String id)
 	{
 		BuildInfo build = BuildInfo.get();
-		String key = build.dirty() ? "buildInfo.dirty" : "buildInfo";
+		String key = (BuildInfo.isDemoMode() ? "buildInfo" : "buildInfo.commit") +
+			(build.dirty() ? ".dirty" : "");
 		return new Label(id, new StringResourceModel(key, this).setParameters(build.branch(),
 			build.commit()))
 		{
@@ -306,7 +308,7 @@ public abstract class BasePage extends WebPage
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setVisible(BuildInfo.isDemoMode() && build.isKnown());
+				setVisible(build.isKnown());
 			}
 		};
 	}
