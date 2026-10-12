@@ -284,7 +284,8 @@
 	background: var(--antilia-theme-veil);
 }
 
-.antilia-theme .dialog-theme-default .modal-dialog a {
+/* the links of a dialog, but those drawn as buttons, which keep the colors of their variant */
+.antilia-theme .dialog-theme-default .modal-dialog a:not(.ant-button) {
 	color: var(--antilia-theme-accent);
 }
 
