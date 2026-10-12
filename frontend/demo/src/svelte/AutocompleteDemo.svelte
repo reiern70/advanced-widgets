@@ -8,9 +8,10 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import type { AutocompleteSuggestion } from '@antilia/core';
 	import { Autocomplete } from '@antilia/svelte';
 
-	import { describe, flag, MAX_SUGGESTIONS, searchCountries,
+	import { calling, describe, flag, MAX_SUGGESTIONS, searchCountries, userActions,
 		type AutocompleteConfig } from '../autocomplete.js';
 	import { format, searchUsers } from '../data.js';
 	import Feedback from './Feedback.svelte';
@@ -26,6 +27,12 @@
 	let countries = $state(initial.countries);
 	let visits = $state(initial.visits);
 	let messages = $state<Message[]>([]);
+	// whom the phone at the end of a row of a user called last
+	let call = $state('');
+	const actions = $derived(userActions(config));
+	const onaction = (_action: string, user: AutocompleteSuggestion) => {
+		call = calling(texts, user);
+	};
 
 	const users = $derived(searchUsers(config.usersUrl, MAX_SUGGESTIONS));
 	const searchCountry = $derived(searchCountries(config.choicesUrl));
@@ -48,7 +55,7 @@
 			<label class="autocomplete-demo__field">
 				{texts.owner}
 				<Autocomplete name="owner" search={users} bind:value={owner}
-					template={config.userTemplate} minLength={1}
+					template={config.userTemplate} minLength={1} {actions} {onaction}
 					placeholder={texts['owner.placeholder']} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>
@@ -58,7 +65,7 @@
 			<label class="autocomplete-demo__field">
 				{texts.team}
 				<Autocomplete name="team" multiple search={users} bind:value={team}
-					template={config.userTemplate} minLength={1}
+					template={config.userTemplate} minLength={1} {actions} {onaction}
 					placeholder={texts['team.placeholder']} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>
@@ -117,5 +124,8 @@
 		<p><button type="submit" class="autocomplete-demo__send">{texts.send}</button></p>
 	</form>
 	<p class="autocomplete-demo__choices">{choices}</p>
+	{#if call}
+		<p class="autocomplete-demo__calling" role="status">{call}</p>
+	{/if}
 	<Feedback {messages} />
 </div>

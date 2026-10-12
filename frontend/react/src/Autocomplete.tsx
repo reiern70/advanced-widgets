@@ -5,8 +5,8 @@
 
 import { useLayoutEffect, useRef } from 'react';
 
-import { Autocomplete as CoreAutocomplete, type AutocompleteSuggestion,
-	type AutocompleteValue } from '@antilia/core';
+import { Autocomplete as CoreAutocomplete, type AutocompleteAction,
+	type AutocompleteSuggestion, type AutocompleteValue } from '@antilia/core';
 
 export interface AutocompleteProps {
 	/** Finds the suggestions for a text: [{id, label, data}]. */
@@ -30,6 +30,13 @@ export interface AutocompleteProps {
 	template?: string;
 	/** The name of the template engine, the built-in one by default. */
 	engine?: string;
+	/**
+	 * The buttons at the end of every row, their content a template; one with a tooltip shows it
+	 * while hovered, and F1 toggles it for the active row.
+	 */
+	actions?: AutocompleteAction[];
+	/** Called when an action without a tooltip is clicked, with the suggestion of its row. */
+	onAction?(action: string, suggestion: AutocompleteSuggestion): void;
 	/** The number of characters typed from which on suggestions are asked for. */
 	minLength?: number;
 	disabled?: boolean;
@@ -51,19 +58,21 @@ export interface AutocompleteProps {
  * the hidden input, the core the rest.
  */
 export function Autocomplete({ search, url, multiple = false, pick = false, onPick, value, onChange,
-	template, engine, minLength, disabled, placeholder, noMatch, searching, remove, name, id,
-	className }: AutocompleteProps) {
+	template, engine, actions, onAction, minLength, disabled, placeholder, noMatch, searching,
+	remove, name, id, className }: AutocompleteProps) {
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreAutocomplete | null>(null);
 	// the latest functions, so that new ones on every render leave an open list alone
-	const latest = useRef({ search, onChange, onPick });
-	latest.current = { search, onChange, onPick };
+	const latest = useRef({ search, onChange, onPick, onAction });
+	latest.current = { search, onChange, onPick, onAction };
 
 	const options = () => ({
 		url,
 		search: latest.current.search || !url ? (term: string) =>
 			(latest.current.search ?? (() => Promise.resolve([])))(term) : undefined,
-		template, engine, minLength, disabled, placeholder, noMatch, searching, remove
+		template, engine, actions, minLength, disabled, placeholder, noMatch, searching, remove,
+		onAction: (action: string, suggestion: AutocompleteSuggestion) =>
+			latest.current.onAction?.(action, suggestion)
 	});
 
 	// the core reads multiple and pick once, so it starts over when they change
@@ -87,10 +96,12 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 		};
 	}, [multiple, pick]);
 
+	// compared by content, so that actions made anew on every render leave an open list alone
+	const actionsKey = JSON.stringify(actions ?? []);
 	useLayoutEffect(() => {
 		instance.current?.configure(options());
-	}, [url, Boolean(search), template, engine, minLength, disabled, placeholder, noMatch,
-		searching, remove]);
+	}, [url, Boolean(search), template, engine, actionsKey, minLength, disabled, placeholder,
+		noMatch, searching, remove]);
 
 	// compared by content, so that values made anew on every render are not drawn again
 	const valueKey = value === undefined ? undefined : JSON.stringify(value.map((chosen) =>

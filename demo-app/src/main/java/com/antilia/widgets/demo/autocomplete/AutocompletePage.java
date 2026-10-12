@@ -33,13 +33,16 @@ import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.danekja.java.util.function.serializable.SerializableSupplier;
 
+import com.antilia.widgets.autocomplete.AbstractAutocomplete;
 import com.antilia.widgets.autocomplete.Autocomplete;
+import com.antilia.widgets.autocomplete.AutocompleteAction;
 import com.antilia.widgets.autocomplete.FindAutocomplete;
 import com.antilia.widgets.autocomplete.IAutocompleteProvider;
 import com.antilia.widgets.autocomplete.MultiAutocomplete;
 import com.antilia.widgets.demo.Countries;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.datatable.DatabaseLocator;
+import com.antilia.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antilia.widgets.demo.datatable.User;
 import com.antilia.widgets.demo.datatable.UsersProvider;
 import com.antilia.widgets.demo.datatable.UsersRowsResource;
@@ -53,7 +56,9 @@ import com.github.openjson.JSONObject;
  * countries suggested as the user types, each row rendered in the browser from a template, the
  * chosen values shown as chips with an x. The choices are shown below the form as Ajax reports
  * them, and again when the form is sent. A {@link FindAutocomplete} adds the countries it finds to
- * a list below it instead of keeping them as chips. The React and Svelte tabs show the same form
+ * a list below it instead of keeping them as chips. The rows of the users end with two actions: an
+ * (i) whose tooltip, a template too, shows their address, phones and birthday, toggled by F1 for
+ * the active row, and a phone reported to the page via Ajax. The React and Svelte tabs show the same form
  * in those frameworks, the users searched through the {@link UsersRowsResource}, the countries
  * filtered in the browser from the {@link ChoicesResource}.
  */
@@ -64,6 +69,19 @@ public class AutocompletePage extends DemoPage
 	/** The row of a user: name, city and country. */
 	static final String USER_TEMPLATE = "<span class=\"ac-user\"><b>{{firstName}} {{lastName}}</b>" +
 		"<small>{{city}}, {{countryName}}</small></span>";
+
+	/** The (i) at the end of the row of a user. */
+	static final String INFO_TEMPLATE = "<i class=\"fa-solid fa-circle-info\" aria-hidden=\"true\"></i>";
+
+	/** The tooltip of the (i) of a user: address, phones and birthday. */
+	static final String USER_TOOLTIP = "<span class=\"ac-info\"><b>{{firstName}} {{lastName}}</b>" +
+		"<span>{{address}}, {{city}}, {{countryName}}</span>" +
+		"<span><i class=\"fa-solid fa-mobile-screen\" aria-hidden=\"true\"></i> {{cellPhone}}</span>" +
+		"<span><i class=\"fa-solid fa-phone\" aria-hidden=\"true\"></i> {{homePhone}}</span>" +
+		"<span><i class=\"fa-solid fa-cake-candles\" aria-hidden=\"true\"></i> {{born}}</span></span>";
+
+	/** The phone at the end of the row of a user, reported to the page. */
+	static final String CALL_TEMPLATE = "<i class=\"fa-solid fa-phone\" aria-hidden=\"true\"></i>";
 
 	/** The row of a country: its flag and name. */
 	static final String COUNTRY_TEMPLATE = "<span class=\"ac-country\"><span class=\"ac-flag\" " +
@@ -110,16 +128,50 @@ public class AutocompletePage extends DemoPage
 		choices.setOutputMarkupId(true);
 		themed.add(choices);
 
+		// the user whose phone was clicked last, at the end of a suggested row
+		Model<String> calling = Model.of("");
+		Label call = new Label("calling", calling)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!calling.getObject().isEmpty());
+			}
+		};
+		call.setOutputMarkupPlaceholderTag(true);
+		themed.add(call);
+
 		Autocomplete<User> ownerChoice = new Autocomplete<>("owner",
-			new PropertyModel<>(this, "owner"), new UsersAutocompleteProvider());
-		ownerChoice.setTemplate(USER_TEMPLATE)
+			new PropertyModel<>(this, "owner"), new UsersAutocompleteProvider())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onAction(AjaxRequestTarget target, String action, User user)
+			{
+				call(target, call, calling, user);
+			}
+		};
+		withUserActions(ownerChoice).setTemplate(USER_TEMPLATE)
 			.setPlaceholder(new ResourceModel("owner.placeholder"));
 		ownerChoice.setRequired(true).setLabel(new ResourceModel("owner"));
 		form.add(reportChanges(ownerChoice, choices));
 
 		MultiAutocomplete<User> teamChoice = new MultiAutocomplete<>("team",
-			new PropertyModel<>(this, "team"), new UsersAutocompleteProvider());
-		teamChoice.setTemplate(USER_TEMPLATE)
+			new PropertyModel<>(this, "team"), new UsersAutocompleteProvider())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onAction(AjaxRequestTarget target, String action, User user)
+			{
+				call(target, call, calling, user);
+			}
+		};
+		withUserActions(teamChoice).setTemplate(USER_TEMPLATE)
 			.setPlaceholder(new ResourceModel("team.placeholder"));
 		form.add(reportChanges(teamChoice, choices));
 
@@ -195,6 +247,28 @@ public class AutocompletePage extends DemoPage
 		});
 	}
 
+	/**
+	 * Ends the rows of the users with the (i) of their details and their phone.
+	 */
+	private static <A extends AbstractAutocomplete<User, ?>> A withUserActions(A autocomplete)
+	{
+		autocomplete.addAction(new AutocompleteAction("info", INFO_TEMPLATE)
+			.setTooltip(USER_TOOLTIP).setLabel(new ResourceModel("info")));
+		autocomplete.addAction(new AutocompleteAction("call", CALL_TEMPLATE)
+			.setLabel(new ResourceModel("call")));
+		return autocomplete;
+	}
+
+	/**
+	 * Tells that a user is being called, as their phone at the end of a row was clicked.
+	 */
+	private void call(AjaxRequestTarget target, Label call, Model<String> calling, User user)
+	{
+		calling.setObject(new StringResourceModel("calling", this).setParameters(name(user),
+			user.getCellPhone()).getString());
+		target.add(call);
+	}
+
 	private static <C extends FormComponent<?>> C reportChanges(C choice, Label choices)
 	{
 		choice.add(new AjaxFormComponentUpdatingBehavior("change")
@@ -252,7 +326,7 @@ public class AutocompletePage extends DemoPage
 		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "owner",
 			"owner.placeholder", "team", "team.placeholder", "countries", "countries.placeholder",
 			"find", "visits", "visits.placeholder", "visits.none", "disabledTitle", "reviewer",
-			"markets", "send", "nothing", "choices", "sent");
+			"markets", "send", "nothing", "choices", "sent", "info", "call", "calling");
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label",
 			getString("owner")))));
 		texts.put("noMatch", getString("Autocomplete.noMatch", null, "No matches"));
@@ -279,6 +353,9 @@ public class AutocompletePage extends DemoPage
 		return new JSONObject()
 			.put("texts", texts)
 			.put("userTemplate", USER_TEMPLATE)
+			.put("infoTemplate", INFO_TEMPLATE)
+			.put("userTooltip", USER_TOOLTIP)
+			.put("callTemplate", CALL_TEMPLATE)
 			.put("countryTemplate", COUNTRY_TEMPLATE)
 			.put("values", values)
 			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
@@ -294,6 +371,8 @@ public class AutocompletePage extends DemoPage
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
+		// the icons of the actions of the rows
+		response.render(FontAwesomeResourceReference.styleSheet());
 		response.render(CssHeaderItem.forReference(
 			new CssResourceReference(AutocompletePage.class, "AutocompletePage.css")));
 	}

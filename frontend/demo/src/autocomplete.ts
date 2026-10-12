@@ -5,10 +5,11 @@
 
 /*
  * The Autocomplete demo: an owner, a team, countries, a disabled reviewer and markets, and
- * countries to visit found with a find bar.
+ * countries to visit found with a find bar. The rows of the users end with an (i), whose tooltip
+ * shows their details, and a phone telling whom it calls.
  */
 
-import type { AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
+import type { AutocompleteAction, AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
 
 import { format, loadChoices, type Choice } from './data.js';
 
@@ -42,6 +43,12 @@ export interface AutocompleteDemoTexts {
 	searching: string;
 	/** The label of the x of a chip, {0} standing for its text. */
 	remove: string;
+	/** The label of the (i) of a user, {0} standing for the user. */
+	info: string;
+	/** The label of the phone of a user, {0} standing for the user. */
+	call: string;
+	/** Whom the phone calls: {0} the user, {1} the number. */
+	calling: string;
 }
 
 /** The values of the demo, as the page has them. */
@@ -62,6 +69,12 @@ export interface AutocompleteConfig {
 	texts: AutocompleteDemoTexts;
 	/** The template of a suggested user, as the Wicket page has it. */
 	userTemplate: string;
+	/** The (i) at the end of the row of a user. */
+	infoTemplate: string;
+	/** The tooltip of the (i): the address, phones and birthday of the user. */
+	userTooltip: string;
+	/** The phone at the end of the row of a user. */
+	callTemplate: string;
 	/** The template of a suggested country: its flag and name. */
 	countryTemplate: string;
 	values: AutocompleteValues;
@@ -69,6 +82,25 @@ export interface AutocompleteConfig {
 	usersUrl: string;
 	/** The choices, whose countries are filtered in the browser. */
 	choicesUrl: string;
+}
+
+/**
+ * @returns the actions of the rows of the users, as the Wicket page has them
+ */
+export function userActions(config: AutocompleteConfig): AutocompleteAction[] {
+	return [
+		{ name: 'info', template: config.infoTemplate, tooltip: config.userTooltip,
+			label: config.texts.info },
+		{ name: 'call', template: config.callTemplate, label: config.texts.call }
+	];
+}
+
+/**
+ * @returns whom the phone of a suggested user calls, as the Wicket page says it
+ */
+export function calling(texts: AutocompleteDemoTexts, user: AutocompleteSuggestion): string {
+	const data = user.data as { cellPhone?: string } | undefined;
+	return format(texts.calling, user.label, data?.cellPhone ?? '');
 }
 
 /** The number of suggestions, as the Wicket autocomplete has it. */

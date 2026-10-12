@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.wicket.Application;
+import org.apache.wicket.Component;
 import org.apache.wicket.WicketRuntimeException;
+import org.apache.wicket.ajax.AjaxEventBehavior;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -21,6 +25,7 @@ import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
@@ -56,7 +61,12 @@ import com.github.openjson.JSONObject;
  * {@link #setTemplateEngine(ITemplateEngine) template engine}, just as the cells of a
  * {@link com.antilia.widgets.dynamicdatatable.JsonBasedDynamicDataTable}. {@code {{@label}}} is
  * the label of the value. The template is authored by the developer and written into the page as
- * it is; the values are escaped by {@code {{ }}}.
+ * it is; the values are escaped by {@code {{ }}}, and the labels written into the script of the
+ * page cannot close it.
+ * <p>
+ * {@link #addAction(AutocompleteAction) Actions} are buttons at the end of every row, such as an
+ * (i) whose tooltip, a template too, tells more about the value; F1 toggles the tooltip of the
+ * active row. Up and Down move from row to row, Enter chooses the active one.
  *
  * @param <T>
  *            the type of the values
@@ -85,6 +95,8 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 
 	private final SuggestBehavior suggestBehavior;
 
+	private final List<AutocompleteAction> actions = new ArrayList<>();
+
 	private String template = DEFAULT_TEMPLATE;
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
@@ -111,6 +123,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		this.provider = Args.notNull(provider, "provider");
 		setOutputMarkupId(true);
 		add(suggestBehavior = new SuggestBehavior());
+		add(new ActionBehavior());
 	}
 
 	/**
@@ -237,6 +250,47 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		return this;
 	}
 
+	/**
+	 * Adds a button at the end of every row of the suggestions.
+	 *
+	 * @param action
+	 *            the action
+	 * @return {@code this}
+	 */
+	public AbstractAutocomplete<T, M> addAction(AutocompleteAction action)
+	{
+		Args.notNull(action, "action");
+		// a ResourceModel looks its text up in the bundles of this component and its page
+		if (action.getLabel() instanceof IComponentAssignedModel<String> assigned)
+		{
+			action.setLabel(assigned.wrapOnAssignment(this));
+		}
+		actions.add(action);
+		return this;
+	}
+
+	/**
+	 * @return the buttons at the end of every row of the suggestions
+	 */
+	public List<AutocompleteAction> getActions()
+	{
+		return actions;
+	}
+
+	/**
+	 * Called when the user clicked an action without a tooltip on the row of a value.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param action
+	 *            the name of the action
+	 * @param value
+	 *            the value of the row
+	 */
+	protected void onAction(AjaxRequestTarget target, String action, T value)
+	{
+	}
+
 	@Override
 	protected void onComponentTag(ComponentTag tag)
 	{
@@ -329,7 +383,20 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Autocomplete.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + newOptions() + ");"));
+			JSONObject.quote(getMarkupId()) + ", " + scriptSafe(newOptions().toString()) + ");"));
+	}
+
+	/**
+	 * Escapes every {@code <} of JSON, which only its strings hold, so that no text in it, such as a
+	 * label, closes the script it is written into or opens a comment there.
+	 *
+	 * @param json
+	 *            the JSON
+	 * @return the same JSON, read the same by the script
+	 */
+	static String scriptSafe(String json)
+	{
+		return json.replace("<", "\\u003c");
 	}
 
 	/**
@@ -358,6 +425,9 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 				.put("label", provider.getLabel(value)));
 		}
 		options.put("chosen", chosen);
+		JSONArray actionsJson = new JSONArray();
+		actions.forEach(action -> actionsJson.put(action.toJson()));
+		options.put("actions", actionsJson);
 		return options;
 	}
 
@@ -365,6 +435,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	protected void onDetach()
 	{
 		provider.detach();
+		actions.forEach(AutocompleteAction::detach);
 		if (placeholder != null)
 		{
 			placeholder.detach();
@@ -400,6 +471,57 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	static <T> List<T> listOf(Collection<T> values)
 	{
 		return values != null ? new ArrayList<>(values) : new ArrayList<>();
+	}
+
+	/**
+	 * Hands the actions the script reports, those without a tooltip, to
+	 * {@link AbstractAutocomplete#onAction(AjaxRequestTarget, String, Object)}.
+	 */
+	private class ActionBehavior extends AjaxEventBehavior
+	{
+		private static final long serialVersionUID = 1L;
+
+		private static final String ACTION_PARAMETER = "action";
+
+		private static final String ID_PARAMETER = "id";
+
+		ActionBehavior()
+		{
+			super("antilia-autocomplete-action");
+		}
+
+		@Override
+		public boolean isEnabled(Component component)
+		{
+			return super.isEnabled(component) &&
+				actions.stream().anyMatch(AutocompleteAction::isReported);
+		}
+
+		@Override
+		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+		{
+			super.updateAjaxAttributes(attributes);
+			// the detail of the event the script fires: the action and the id of the row
+			attributes.getDynamicExtraParameters().add("var detail = (attrs.event.originalEvent " +
+				"|| attrs.event).detail || {}; return {" + ACTION_PARAMETER + ": detail.action, " +
+				ID_PARAMETER + ": detail.id};");
+		}
+
+		@Override
+		protected void onEvent(AjaxRequestTarget target)
+		{
+			IRequestParameters parameters = getRequest().getRequestParameters();
+			String name = parameters.getParameterValue(ACTION_PARAMETER).toOptionalString();
+			String id = parameters.getParameterValue(ID_PARAMETER).toOptionalString();
+			// only the actions there are, on values the provider knows
+			boolean known = actions.stream().anyMatch(action -> action.isReported() &&
+				action.getName().equals(name));
+			T value = known && id != null ? provider.fromId(id) : null;
+			if (value != null)
+			{
+				onAction(target, name, value);
+			}
+		}
 	}
 
 	/**

@@ -14,6 +14,15 @@
  * engine options.engine of templates(), {{@label}} being its label. Attaching an input that is in
  * a wrapper already, for example one Ajax put in place of the previous one, rebuilds the rest.
  *
+ * options.actions are buttons at the end of every row, such as an (i): their content is a template
+ * evaluated against the row's data as the row is. One with a tooltip shows it, a template too,
+ * while hovered, and F1 toggles the tooltip of the active row; the others are reported to
+ * options.onAction and as an 'antilia-autocomplete-action' event of the input, whose detail is
+ * {action, id, label}. Up and Down move from row to row, Enter chooses the active one.
+ *
+ * The templates are the developer's and written into the page as they are; the values are escaped
+ * by {{ }}, never by {{{ }}}, so that only values that are markup on purpose go through that.
+ *
  * With options.pick it is a find bar: a choice is not kept as a chip, the text field is emptied
  * for the next one, and the input holds the id of the value last picked ([id]) when it fires
  * 'change', for the page to add it to a list of its own.
@@ -36,6 +45,32 @@ export interface AutocompleteSuggestion extends AutocompleteValue {
 }
 
 /**
+ * A button at the end of every row of the suggestions.
+ */
+export interface AutocompleteAction {
+	/** The name the action is reported with. */
+	name: string;
+	/** The content of the button, evaluated against the row's data as the row is: an icon. */
+	template: string;
+	/** What the button does, for screen readers and as its title; '{0}' stands for the label. */
+	label?: string;
+	/**
+	 * The template of the tooltip of the button, evaluated against the row's data: the button
+	 * shows it instead of being reported, while hovered or clicked, and F1 toggles it for the
+	 * active row.
+	 */
+	tooltip?: string;
+}
+
+/** The detail of the 'antilia-autocomplete-action' event of the input. */
+export interface AutocompleteActionDetail extends AutocompleteValue {
+	action: string;
+}
+
+/** The event the input fires when an action of a row is clicked. */
+export const ACTION_EVENT = 'antilia-autocomplete-action';
+
+/**
  * Where the suggestions come from, how they are shown, and the texts.
  */
 export interface AutocompleteOptions {
@@ -54,6 +89,10 @@ export interface AutocompleteOptions {
 	template?: string;
 	/** The name of the template engine, the built-in one by default. */
 	engine?: string;
+	/** The buttons at the end of every row. */
+	actions?: AutocompleteAction[];
+	/** Called when an action without a tooltip is clicked, with the suggestion of its row. */
+	onAction?: (action: string, suggestion: AutocompleteSuggestion) => void;
 	/** The number of characters typed from which on suggestions are asked for. */
 	minLength?: number;
 	disabled?: boolean;
@@ -122,11 +161,20 @@ export class Autocomplete {
 
 	status!: HTMLDivElement;
 
+	/** The tooltip of an action of a row. */
+	tooltip!: HTMLDivElement;
+
 	suggestions: AutocompleteSuggestion[] = [];
 
 	active: HTMLElement | null = null;
 
 	private row!: CompiledTemplate;
+
+	private actions: Array<{ action: AutocompleteAction; content: CompiledTemplate;
+		tooltip: CompiledTemplate | null }> = [];
+
+	/** The row whose tooltip shows, and whether F1 or a click keeps it there. */
+	private tipped: { item: HTMLElement; pinned: boolean } | null = null;
 
 	private request = 0;
 
@@ -231,6 +279,11 @@ export class Autocomplete {
 		this.status = create('div', 'antilia-autocomplete-status');
 		this.status.hidden = true;
 		this.menu.appendChild(this.status);
+		this.tooltip = create('div', 'antilia-autocomplete-tooltip');
+		this.tooltip.id = this.id + '-tooltip';
+		this.tooltip.setAttribute('role', 'tooltip');
+		this.tooltip.hidden = true;
+		this.menu.appendChild(this.tooltip);
 		wrapper.appendChild(this.menu);
 
 		this.configure(this.options);
@@ -249,8 +302,15 @@ export class Autocomplete {
 	configure(options?: AutocompleteOptions): void {
 		this.options = { ...options, multiple: this.multiple, pick: this.pick };
 		const engine = templates().engine(this.options.engine);
+		const compile = (template: string): CompiledTemplate => engine ?
+			engine.compile(template) : () => '';
 		this.row = engine ? engine.compile(this.options.template || '{{@label}}') :
 			(_data, meta) => templates().escapeHtml(meta?.label);
+		this.actions = (this.options.actions || []).map((action) => ({
+			action,
+			content: compile(action.template),
+			tooltip: action.tooltip ? compile(action.tooltip) : null
+		}));
 		this.wrapper.classList.toggle('antilia-autocomplete-disabled', !!this.options.disabled);
 		this.text.disabled = !!this.options.disabled;
 		this.close();
@@ -353,9 +413,17 @@ export class Autocomplete {
 		this.listen(this.list, 'mousedown', (event) => event.preventDefault());
 		const itemOf = (event: Event) => (event.target as Element).closest<HTMLElement>(
 			'.antilia-autocomplete-option');
+		const buttonOf = (event: Event) => (event.target as Element).closest<HTMLElement>(
+			'.antilia-autocomplete-action');
 		this.listen(this.list, 'click', (event) => {
 			const item = itemOf(event);
-			if (item) {
+			if (!item) {
+				return;
+			}
+			const button = buttonOf(event);
+			if (button) {
+				this.act(item, Number(button.dataset.action));
+			} else {
 				this.choose(Number(item.dataset.index));
 			}
 		});
@@ -363,6 +431,25 @@ export class Autocomplete {
 			const item = itemOf(event);
 			if (item && item !== this.active) {
 				this.activate(item, false);
+			}
+		});
+		this.listen(this.list, 'mouseover', (event) => {
+			const button = buttonOf(event);
+			if (button?.classList.contains('antilia-autocomplete-info') && !this.tipped?.pinned) {
+				this.showTooltip(itemOf(event)!, false);
+			}
+		});
+		this.listen(this.list, 'mouseout', (event) => {
+			const button = buttonOf(event);
+			const to = (event as MouseEvent).relatedTarget as Node | null;
+			if (button && !(to && button.contains(to)) && this.tipped && !this.tipped.pinned) {
+				this.hideTooltip();
+			}
+		});
+		// the list scrolls away from the row of the tooltip
+		this.listen(this.list, 'scroll', () => {
+			if (this.tipped) {
+				this.placeTooltip(this.tipped.item);
 			}
 		});
 		// a click on the label of the hidden input focuses the text field
@@ -445,6 +532,7 @@ export class Autocomplete {
 		const chosenIds = this.chosen.map((value) => String(value.id));
 		this.suggestions = (suggestions || []).filter((suggestion) =>
 			chosenIds.indexOf(String(suggestion.id)) < 0);
+		this.hideTooltip();
 		this.list.textContent = '';
 		this.active = null;
 		this.suggestions.forEach((suggestion, index) => {
@@ -452,11 +540,17 @@ export class Autocomplete {
 			item.id = this.id + '-option-' + index;
 			item.dataset.index = String(index);
 			item.setAttribute('role', 'option');
-			item.innerHTML = this.row(suggestion.data || {}, {
-				id: suggestion.id,
-				label: suggestion.label,
-				index
-			});
+			const data = suggestion.data || {};
+			const meta = { id: suggestion.id, label: suggestion.label, index };
+			if (this.actions.length) {
+				item.classList.add('antilia-autocomplete-has-actions');
+				const content = create('span', 'antilia-autocomplete-content');
+				content.innerHTML = this.row(data, meta);
+				item.appendChild(content);
+				item.appendChild(this.renderActions(data, meta));
+			} else {
+				item.innerHTML = this.row(data, meta);
+			}
 			this.list.appendChild(item);
 		});
 		if (!this.suggestions.length) {
@@ -466,6 +560,125 @@ export class Autocomplete {
 		this.status.hidden = true;
 		this.open();
 		this.activate(this.list.firstElementChild as HTMLElement, true);
+	}
+
+	/**
+	 * @returns the buttons of the actions of a row
+	 */
+	private renderActions(data: unknown, meta: Record<string, unknown>): HTMLSpanElement {
+		const buttons = create('span', 'antilia-autocomplete-actions');
+		this.actions.forEach(({ action, content }, index) => {
+			const button = create('button', 'antilia-autocomplete-action');
+			button.type = 'button';
+			// the focus stays in the text field: the keys are those of the text field
+			button.tabIndex = -1;
+			button.dataset.action = String(index);
+			button.dataset.name = action.name;
+			if (action.tooltip) {
+				button.classList.add('antilia-autocomplete-info');
+			}
+			if (action.label) {
+				const label = action.label.replace('{0}', String(meta.label));
+				button.setAttribute('aria-label', label);
+				button.title = label;
+			}
+			button.innerHTML = content(data, meta);
+			buttons.appendChild(button);
+		});
+		return buttons;
+	}
+
+	/**
+	 * Clicks an action of a row: shows its tooltip, or reports it.
+	 *
+	 * @param item the row
+	 * @param index the index of the action
+	 */
+	private act(item: HTMLElement, index: number): void {
+		const entry = this.actions[index];
+		const suggestion = this.suggestions[Number(item.dataset.index)];
+		if (!entry || !suggestion) {
+			return;
+		}
+		if (entry.tooltip) {
+			if (this.tipped?.item === item && this.tipped.pinned) {
+				this.hideTooltip();
+			} else {
+				this.showTooltip(item, true);
+			}
+			return;
+		}
+		this.options.onAction?.(entry.action.name, suggestion);
+		this.input.dispatchEvent(new CustomEvent<AutocompleteActionDetail>(ACTION_EVENT, {
+			bubbles: true,
+			detail: { action: entry.action.name, id: suggestion.id, label: suggestion.label }
+		}));
+	}
+
+	/**
+	 * @returns whether the tooltip of a row shows
+	 */
+	isTooltipShown(): boolean {
+		return !this.tooltip.hidden;
+	}
+
+	/**
+	 * Shows the tooltip of the first action of a row having one, next to the row.
+	 *
+	 * @param item the row
+	 * @param pinned whether it stays when the mouse leaves its button
+	 */
+	private showTooltip(item: HTMLElement, pinned: boolean): void {
+		const index = this.actions.findIndex((entry) => entry.tooltip);
+		const suggestion = this.suggestions[Number(item.dataset.index)];
+		if (index < 0 || !suggestion) {
+			this.hideTooltip();
+			return;
+		}
+		if (this.tipped?.item !== item) {
+			this.tipped?.item.removeAttribute('aria-describedby');
+			this.tooltip.innerHTML = this.actions[index].tooltip!(suggestion.data || {}, {
+				id: suggestion.id,
+				label: suggestion.label,
+				index: Number(item.dataset.index)
+			});
+		}
+		this.tipped = { item, pinned };
+		item.setAttribute('aria-describedby', this.tooltip.id);
+		this.tooltip.hidden = false;
+		this.placeTooltip(item);
+	}
+
+	private hideTooltip(): void {
+		this.tipped?.item.removeAttribute('aria-describedby');
+		this.tipped = null;
+		this.tooltip.hidden = true;
+		this.tooltip.textContent = '';
+	}
+
+	/**
+	 * Puts the tooltip beside the menu at the height of a row: right of it where there is room,
+	 * else left of it, else below the row.
+	 */
+	private placeTooltip(item: HTMLElement): void {
+		const style = this.tooltip.style;
+		style.left = style.right = style.top = '';
+		this.tooltip.classList.remove('antilia-autocomplete-tooltip-below');
+		const menu = this.menu.getBoundingClientRect();
+		const row = item.getBoundingClientRect();
+		const width = this.tooltip.offsetWidth;
+		const gap = 6;
+		const top = Math.max(0, row.top - menu.top);
+		if (menu.right + gap + width <= document.documentElement.clientWidth) {
+			style.left = (menu.width + gap) + 'px';
+			style.top = top + 'px';
+		} else if (menu.left - gap - width >= 0) {
+			style.right = (menu.width + gap) + 'px';
+			style.top = top + 'px';
+		} else {
+			this.tooltip.classList.add('antilia-autocomplete-tooltip-below');
+			style.top = (row.bottom - menu.top + gap) + 'px';
+		}
 	}
 
 	private showStatus(text: string): void {
@@ -491,6 +704,7 @@ export class Autocomplete {
 		this.wrapper.classList.remove('antilia-autocomplete-open');
 		this.text.setAttribute('aria-expanded', 'false');
 		this.text.removeAttribute('aria-activedescendant');
+		this.hideTooltip();
 		this.active = null;
 	}
 
@@ -505,6 +719,14 @@ export class Autocomplete {
 		this.text.setAttribute('aria-activedescendant', item.id);
 		if (scroll) {
 			item.scrollIntoView?.({ block: 'nearest' });
+		}
+		// the tooltip F1 showed follows the active row
+		if (this.tipped && this.tipped.item !== item) {
+			if (this.tipped.pinned) {
+				this.showTooltip(item, true);
+			} else {
+				this.hideTooltip();
+			}
 		}
 	}
 
@@ -534,8 +756,24 @@ export class Autocomplete {
 					this.choose(Number(this.active.dataset.index));
 				}
 				break;
+			case 'F1':
+				// shows the tooltip of the active row, not the help of the browser
+				if (open && this.active && this.actions.some((entry) => entry.tooltip)) {
+					event.preventDefault();
+					if (this.tipped?.item === this.active && this.tipped.pinned) {
+						this.hideTooltip();
+					} else {
+						this.showTooltip(this.active, true);
+					}
+				}
+				break;
 			case 'Escape':
-				if (!this.menu.hidden) {
+				if (this.tipped) {
+					// the tooltip first, the list then
+					event.preventDefault();
+					event.stopPropagation();
+					this.hideTooltip();
+				} else if (!this.menu.hidden) {
 					event.preventDefault();
 					event.stopPropagation();
 					this.close();

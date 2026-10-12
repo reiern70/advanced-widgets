@@ -116,3 +116,26 @@
 .ac-flag {
 	font-size: 1.2em;
 }
+
+/* the tooltip of the (i) of a user */
+.ac-info {
+	display: grid;
+	gap: 2px;
+}
+
+.ac-info i {
+	width: 1.2em;
+	opacity: 0.7;
+	text-align: center;
+}
+
+/* whom the phone at the end of a row calls */
+.autocomplete-demo__calling {
+	padding: 8px 16px;
+	border-left: 4px solid var(--primary);
+	background: var(--surface);
+}
+
+.autocomplete-demo__calling[hidden] {
+	display: none;
+}

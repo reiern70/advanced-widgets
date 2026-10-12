@@ -3,8 +3,9 @@
  * All rights reserved.
  */
 
-export { Autocomplete } from './autocomplete.js';
-export type { AutocompleteOptions, AutocompleteSuggestion, AutocompleteValue } from './autocomplete.js';
+export { ACTION_EVENT, Autocomplete } from './autocomplete.js';
+export type { AutocompleteAction, AutocompleteActionDetail, AutocompleteOptions,
+	AutocompleteSuggestion, AutocompleteValue } from './autocomplete.js';
 export { Chips } from './chips.js';
 export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';

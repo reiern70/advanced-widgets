@@ -5,13 +5,14 @@
 <!--
   @component
   An autocomplete of the core: typing asks search, or url, for suggestions, rendered with the
-  template; the chosen values show as chips with an x removing them. The values bind both ways
+  template, with the buttons of the actions at the end of every row; the chosen values show as
+  chips with an x removing them. The values bind both ways
   (bind:value); onchange is called with them after every choice or removal. With pick it is a
   find bar: a choice is handed to onpick, not kept, and the text field is empty again.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Autocomplete, type AutocompleteSuggestion,
+	import { Autocomplete, type AutocompleteAction, type AutocompleteSuggestion,
 		type AutocompleteValue } from '@antilia/core';
 
 	type Props = {
@@ -30,6 +31,13 @@
 		/** The template of a suggestion's row, rendered from its data; '{{@label}}' by default. */
 		template?: string;
 		engine?: string;
+		/**
+		 * The buttons at the end of every row, their content a template; one with a tooltip
+		 * shows it while hovered, and F1 toggles it for the active row.
+		 */
+		actions?: AutocompleteAction[];
+		/** Called when an action without a tooltip is clicked, with the suggestion of its row. */
+		onaction?: (action: string, suggestion: AutocompleteSuggestion) => void;
 		minLength?: number;
 		disabled?: boolean;
 		placeholder?: string;
@@ -53,6 +61,8 @@
 		onchange,
 		template,
 		engine,
+		actions,
+		onaction,
 		minLength,
 		disabled,
 		placeholder,
@@ -71,7 +81,10 @@
 		url,
 		search: search || !url ? (term: string) => (search ?? (() => Promise.resolve([])))(term) :
 			undefined,
-		template, engine, minLength, disabled, placeholder, noMatch, searching, remove
+		template, engine, actions: $state.snapshot(actions), minLength, disabled, placeholder,
+		noMatch, searching, remove,
+		onAction: (action: string, suggestion: AutocompleteSuggestion) => onaction?.(action,
+			suggestion)
 	});
 
 	$effect(() => {

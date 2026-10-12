@@ -5,6 +5,7 @@
 package com.antilia.widgets.autocomplete;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,7 @@ import java.util.Objects;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
+import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
@@ -50,7 +52,8 @@ class AutocompleteTest extends WicketTestCase
 		assertEquals("[\"apple\",\"kiwi\"]",
 			tester.getTagByWicketId("multiple").getAttribute("value"));
 		tester.assertContains("Wicket\\.Autocomplete\\.attach\\(\"" + page.single.getMarkupId());
-		tester.assertContains("\"template\":\"<b>\\{\\{name\\}\\}<\\\\/b> \\{\\{@label\\}\\}\"");
+		tester.assertContains("\"template\":\"\\\\u003cb>\\{\\{name\\}\\}\\\\u003c\\\\/b> " +
+			"\\{\\{@label\\}\\}\"");
 		tester.assertContains("\"chosen\":\\[\\{\"id\":\"cherry\",\"label\":\"Cherry\"\\}\\]");
 		tester.assertContains("\"multiple\":true");
 		tester.assertContains("antilia-autocomplete.*\\.js");
@@ -157,6 +160,69 @@ class AutocompleteTest extends WicketTestCase
 	}
 
 	@Test
+	void writesNoLabelThatClosesTheScript()
+	{
+		TestPage page = new TestPage();
+		page.single.setModelObject(Fruit.of("cherry"));
+		page.single.setPlaceholder(Model.of("</script><!--<script>alert(1)"));
+		tester.startPage(page);
+
+		String html = tester.getLastResponseAsString();
+		assertFalse(html.contains("<!--<script>alert"), html);
+		tester.assertContains("\\\\u003c\\\\/script>\\\\u003c!--\\\\u003cscript>alert\\(1\\)");
+		assertEquals("{\"a\":\"\\u003c/b>\"}", AbstractAutocomplete.scriptSafe("{\"a\":\"</b>\"}"));
+	}
+
+	@Test
+	void writesTheActionsIntoTheOptions()
+	{
+		TestPage page = new TestPage();
+		page.single.addAction(new AutocompleteAction("info", "(i)").setTooltip("About {{name}}")
+			.setLabel(Model.of("About {0}")));
+		page.single.addAction(new AutocompleteAction("eat", "Eat"));
+		tester.startPage(page);
+
+		tester.assertContains("\"actions\":\\[\\{\"name\":\"info\",\"template\":\"\\(i\\)\"," +
+			"\"label\":\"About \\{0\\}\",\"tooltip\":\"About \\{\\{name\\}\\}\"\\}," +
+			"\\{\"name\":\"eat\",\"template\":\"Eat\"\\}\\]");
+	}
+
+	@Test
+	void handsAReportedActionToOnAction()
+	{
+		TestPage page = new TestPage();
+		page.single.addAction(new AutocompleteAction("info", "(i)").setTooltip("About"));
+		page.single.addAction(new AutocompleteAction("eat", "Eat"));
+		tester.startPage(page);
+		tester.assertContains("antilia-autocomplete-action");
+
+		act(page, "eat", "kiwi");
+		// an action shown as a tooltip, one there is not and a value the provider does not know
+		act(page, "info", "kiwi");
+		act(page, "drop", "kiwi");
+		act(page, "eat", "gone");
+
+		assertEquals(List.of("eat kiwi"), page.actions);
+	}
+
+	@Test
+	void listensForNoActionWhenEveryActionHasATooltip()
+	{
+		TestPage page = new TestPage();
+		page.single.addAction(new AutocompleteAction("info", "(i)").setTooltip("About"));
+		tester.startPage(page);
+
+		tester.assertContainsNot("antilia-autocomplete-action");
+	}
+
+	private void act(TestPage page, String action, String id)
+	{
+		tester.getRequest().setParameter("action", action);
+		tester.getRequest().setParameter("id", id);
+		tester.executeBehavior(page.single.getBehaviors(AjaxEventBehavior.class).get(0));
+	}
+
+	@Test
 	void refusesATagOtherThanAnInput()
 	{
 		assertThrows(WicketRuntimeException.class,
@@ -248,8 +314,19 @@ class AutocompleteTest extends WicketTestCase
 
 		private final String singleMarkup;
 
+		final List<String> actions = new ArrayList<>();
+
 		final Autocomplete<Fruit> single = new Autocomplete<>("single", Model.of(),
-			new FruitsProvider());
+			new FruitsProvider())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onAction(AjaxRequestTarget target, String action, Fruit value)
+			{
+				actions.add(action + " " + value.getName());
+			}
+		};
 
 		final MultiAutocomplete<Fruit> multiple = new MultiAutocomplete<Fruit>("multiple",
 			new ListModel<>(new ArrayList<>()), new FruitsProvider());

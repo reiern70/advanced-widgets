@@ -103,6 +103,45 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void showsTheDetailsOfAUserWithF1AndCallsThemWithoutChoosing(SeleniumBrowser browser,
+		String framework)
+	{
+		open(browser, framework, "autocomplete");
+		text("owner").sendKeys("an");
+		wait.until(d -> suggestions("owner").size() > 2 && suggestions("owner").stream()
+			.allMatch(option -> option.getText().toLowerCase().contains("an")));
+		WebElement tooltip = field("owner").findElement(By.cssSelector(
+			".antilia-autocomplete-tooltip"));
+
+		// the tooltip of the active row, which follows the arrows
+		text("owner").sendKeys(Keys.F1);
+		wait.until(d -> tooltip.isDisplayed());
+		assertTrue(tooltip.getText().startsWith(name(suggestions("owner").get(0))));
+		text("owner").sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> tooltip.getText().startsWith(name(suggestions("owner").get(1))));
+		text("owner").sendKeys(Keys.F1);
+		wait.until(d -> !tooltip.isDisplayed());
+
+		WebElement second = suggestions("owner").get(1);
+		String user = name(second);
+		second.findElement(By.cssSelector(".antilia-autocomplete-action[data-name='call']"))
+			.click();
+		wait.until(d -> app().findElement(By.cssSelector(".autocomplete-demo__calling"))
+			.getText().startsWith("Calling " + user + " at "));
+		assertTrue(chips("owner").isEmpty());
+
+		text("owner").sendKeys(Keys.ENTER);
+		wait.until(d -> chips("owner").equals(List.of(user)));
+		assertNoErrors();
+	}
+
+	private static String name(WebElement suggestion)
+	{
+		return suggestion.findElement(By.tagName("b")).getText();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void showsTheValuesOfADisabledAutocompleteWithoutChangingThem(SeleniumBrowser browser,
 		String framework)
 	{

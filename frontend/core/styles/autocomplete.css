@@ -113,3 +113,75 @@
 .antilia-autocomplete-status[hidden] {
 	display: none;
 }
+
+/* a row with actions: its content, then its buttons at the end */
+.antilia-autocomplete-option.antilia-autocomplete-has-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.antilia-autocomplete-content {
+	flex: 1;
+	min-width: 0;
+}
+
+.antilia-autocomplete-actions {
+	display: inline-flex;
+	flex: none;
+	gap: 0.15em;
+}
+
+.antilia-autocomplete-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.8em;
+	height: 1.8em;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0.45;
+	transition: opacity 0.15s, background-color 0.15s;
+}
+
+.antilia-autocomplete-active .antilia-autocomplete-action {
+	opacity: 0.75;
+}
+
+.antilia-autocomplete-action:hover {
+	background: color-mix(in srgb, var(--antilia-theme-primary, #2f5bd3) 15%, transparent);
+	opacity: 1;
+}
+
+/* the tooltip of an action, beside the menu at the height of its row */
+.antilia-autocomplete-tooltip {
+	position: absolute;
+	z-index: 1;
+	width: max-content;
+	max-width: min(22em, calc(100vw - 32px));
+	padding: 0.5em 0.7em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0.4em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	font-size: 0.9em;
+	pointer-events: none;
+}
+
+.antilia-autocomplete-tooltip.antilia-autocomplete-tooltip-below {
+	left: 0;
+	right: 0;
+	width: auto;
+	max-width: none;
+}
+
+.antilia-autocomplete-tooltip[hidden] {
+	display: none;
+}

@@ -5,10 +5,11 @@
 
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 
+import type { AutocompleteSuggestion } from '@antilia/core';
 import { Autocomplete } from '@antilia/react';
 
-import { describe, flag, MAX_SUGGESTIONS, searchCountries, type AutocompleteConfig,
-	type AutocompleteValues } from '../autocomplete.js';
+import { calling, describe, flag, MAX_SUGGESTIONS, searchCountries, userActions,
+	type AutocompleteConfig, type AutocompleteValues } from '../autocomplete.js';
 import { format, searchUsers } from '../data.js';
 import { Feedback, type Message } from './Feedback.js';
 
@@ -20,6 +21,11 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 	const { texts } = config;
 	const [values, setValues] = useState<AutocompleteValues>(config.values);
 	const [messages, setMessages] = useState<Message[]>([]);
+	// whom the phone at the end of a row of a user called last
+	const [call, setCall] = useState('');
+	const actions = useMemo(() => userActions(config), [config]);
+	const onAction = (_action: string, user: AutocompleteSuggestion) =>
+		setCall(calling(texts, user));
 	const users = useMemo(() => searchUsers(config.usersUrl, MAX_SUGGESTIONS),
 		[config.usersUrl]);
 	const countries = useMemo(() => searchCountries(config.choicesUrl), [config.choicesUrl]);
@@ -48,6 +54,7 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 						{texts.owner}{' '}
 						<Autocomplete name="owner" search={users} value={values.owner}
 							onChange={set('owner')} template={config.userTemplate} minLength={1}
+							actions={actions} onAction={onAction}
 							placeholder={texts['owner.placeholder']} {...common} />
 					</label>
 				</section>
@@ -57,6 +64,7 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 						{texts.team}{' '}
 						<Autocomplete name="team" multiple search={users} value={values.team}
 							onChange={set('team')} template={config.userTemplate} minLength={1}
+							actions={actions} onAction={onAction}
 							placeholder={texts['team.placeholder']} {...common} />
 					</label>
 					<label className="autocomplete-demo__field">
@@ -111,6 +119,7 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 				<p><button type="submit" className="autocomplete-demo__send">{texts.send}</button></p>
 			</form>
 			<p className="autocomplete-demo__choices">{choices}</p>
+			{call && <p className="autocomplete-demo__calling" role="status">{call}</p>}
 			<Feedback messages={messages} />
 		</div>
 	);

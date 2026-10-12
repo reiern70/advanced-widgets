@@ -5,7 +5,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Autocomplete, Scrollbar, type AutocompleteSuggestion } from '../src/index.js';
+import { ACTION_EVENT, Autocomplete, Scrollbar, type AutocompleteAction,
+	type AutocompleteSuggestion } from '../src/index.js';
 
 const FRUITS: AutocompleteSuggestion[] = ['Apple', 'Apricot', 'Banana'].map((label) => ({
 	id: label.toLowerCase(), label, data: { name: label }
@@ -175,5 +176,127 @@ describe('Autocomplete', () => {
 
 		instance.destroy();
 		expect(Scrollbar.of(instance.list)).toBeUndefined();
+	});
+
+	describe('the actions of the rows', () => {
+		const ACTIONS: AutocompleteAction[] = [
+			{ name: 'info', template: '<i>i</i>', label: 'About {0}', tooltip: 'All about {{name}}' },
+			{ name: 'eat', template: 'Eat {{name}}' }
+		];
+
+		it('puts the buttons of the actions at the end of every row', async () => {
+			const instance = new Autocomplete(input(), { search, actions: ACTIONS });
+
+			await type(instance, 'ap');
+
+			const item = instance.list.children[0];
+			expect(item.querySelector('.antilia-autocomplete-content')?.textContent).toBe('Apple');
+			const buttons = Array.from(item.querySelectorAll('button'));
+			expect(buttons.map((button) => button.innerHTML)).toEqual(['<i>i</i>', 'Eat Apple']);
+			expect(buttons[0].getAttribute('aria-label')).toBe('About Apple');
+			expect(buttons[0].tabIndex).toBe(-1);
+			expect(buttons[0].classList.contains('antilia-autocomplete-info')).toBe(true);
+		});
+
+		it('reports an action without choosing its row', async () => {
+			const element = input();
+			const onAction = vi.fn();
+			const instance = new Autocomplete(element, { search, actions: ACTIONS, onAction });
+			const events: unknown[] = [];
+			element.addEventListener(ACTION_EVENT, (event) =>
+				events.push((event as CustomEvent).detail));
+			const change = vi.fn();
+			element.addEventListener('change', change);
+
+			await type(instance, 'ap');
+			instance.list.children[1].querySelectorAll('button')[1].click();
+
+			expect(onAction).toHaveBeenCalledWith('eat', FRUITS[1]);
+			expect(events).toEqual([{ action: 'eat', id: 'apricot', label: 'Apricot' }]);
+			expect(change).not.toHaveBeenCalled();
+			expect(instance.isOpen()).toBe(true);
+		});
+
+		it('toggles the tooltip of the active row with F1, which follows the arrows', async () => {
+			const instance = new Autocomplete(input(), { search, actions: ACTIONS });
+			await type(instance, 'ap');
+
+			const f1 = new KeyboardEvent('keydown', { key: 'F1', cancelable: true });
+			instance.text.dispatchEvent(f1);
+			expect(f1.defaultPrevented).toBe(true);
+			expect(instance.isTooltipShown()).toBe(true);
+			expect(instance.tooltip.innerHTML).toBe('All about Apple');
+			expect(instance.list.children[0].getAttribute('aria-describedby'))
+				.toBe(instance.tooltip.id);
+
+			key(instance.text, 'ArrowDown');
+			expect(instance.tooltip.innerHTML).toBe('All about Apricot');
+			expect(instance.list.children[0].hasAttribute('aria-describedby')).toBe(false);
+
+			key(instance.text, 'F1');
+			expect(instance.isTooltipShown()).toBe(false);
+
+			// Escape hides the tooltip first, then the list
+			key(instance.text, 'F1');
+			key(instance.text, 'Escape');
+			expect(instance.isTooltipShown()).toBe(false);
+			expect(instance.isOpen()).toBe(true);
+			key(instance.text, 'Escape');
+			expect(instance.isOpen()).toBe(false);
+		});
+
+		it('shows the tooltip while its button is hovered, and on a click', async () => {
+			const instance = new Autocomplete(input(), { search, actions: ACTIONS });
+			const change = vi.fn();
+			instance.input.addEventListener('change', change);
+			await type(instance, 'ap');
+			const info = instance.list.children[1].querySelector('button')!;
+
+			info.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+			expect(instance.tooltip.innerHTML).toBe('All about Apricot');
+			info.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+			expect(instance.isTooltipShown()).toBe(false);
+
+			info.click();
+			info.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+			expect(instance.isTooltipShown()).toBe(true);
+			expect(change).not.toHaveBeenCalled();
+			info.click();
+			expect(instance.isTooltipShown()).toBe(false);
+		});
+
+		it('leaves F1 to the browser when no action has a tooltip', async () => {
+			const instance = new Autocomplete(input(), { search, actions: [ACTIONS[1]] });
+			await type(instance, 'ap');
+
+			const f1 = new KeyboardEvent('keydown', { key: 'F1', cancelable: true });
+			instance.text.dispatchEvent(f1);
+
+			expect(f1.defaultPrevented).toBe(false);
+			expect(instance.isTooltipShown()).toBe(false);
+		});
+	});
+
+	it('escapes the values of the suggestions, in rows, tooltips, labels and chips', async () => {
+		const evil = '<img src=x onerror="alert(1)">';
+		const element = input();
+		const instance = new Autocomplete(element, {
+			search: () => Promise.resolve([{ id: evil, label: evil, data: { name: evil } }]),
+			template: '{{name}} {{@label}} {{@id}}',
+			actions: [{ name: 'info', template: '{{name}}', label: 'About {0}',
+				tooltip: '{{name}}' }]
+		});
+
+		await type(instance, 'x');
+		key(instance.text, 'F1');
+
+		expect(instance.list.querySelector('img')).toBeNull();
+		expect(instance.tooltip.querySelector('img')).toBeNull();
+		expect(instance.list.querySelector('button')!.getAttribute('aria-label'))
+			.toBe('About ' + evil);
+		key(instance.text, 'Enter');
+		expect(instance.chips.querySelector('img')).toBeNull();
+		expect(chips(instance)).toEqual([evil]);
+		expect(JSON.parse(element.value)).toEqual([evil]);
 	});
 });
