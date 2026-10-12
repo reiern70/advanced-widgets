@@ -39,11 +39,11 @@ class AccountsTest
 	{
 		assertEquals(Role.USER, accounts.authenticate("semedy", "semedy4321").map(User::getRole)
 			.orElseThrow());
-		assertEquals(Role.USER, accounts.authenticate("wicket", "mellon4321").map(User::getRole)
+		assertEquals(Role.USER, accounts.authenticate("wicket", "wicket4321").map(User::getRole)
 			.orElseThrow());
 		assertEquals(Role.ADMIN, accounts.authenticate("admin", "$Macarena_4321")
 			.map(User::getRole).orElseThrow());
-		assertFalse(accounts.authenticate("admin", "mellon4321").isPresent());
+		assertFalse(accounts.authenticate("admin", "wicket4321").isPresent());
 
 		// adding them again changes nothing
 		accounts.addDefaults();

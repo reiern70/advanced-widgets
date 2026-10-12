@@ -73,7 +73,7 @@ public class Accounts
 	 */
 	private static final String[][] DEFAULTS = {
 		{ "semedy", "zzSQ5U6FuRjZX1kcQ7BROA==:enhhgrdSQjvzJbTxhO3DHG7jeLDKE1Y/aQwcU5jqQeo=", "USER" },
-		{ "wicket", "zabicgAmDuftSxuCXCT8aQ==:7k9JpQBWu3u+lPkJ59dmmO7NMkhLm81FpIshwiwVrwM=", "USER" },
+		{ "wicket", "6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=", "USER" },
 		{ "admin", "92vMz986hJZpF/zSqJnPkg==:H0C0YwBH63MAfeF6K87wDjiuUmLe7qlehEdEdmWJMxA=", "ADMIN" } };
 
 	private static final String ALGORITHM = "PBKDF2WithHmacSHA256";

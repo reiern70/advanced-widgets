@@ -242,7 +242,7 @@ class DemosAuthorizationTest
 		tester.assertRenderedPage(SignInPage.class);
 
 		// a user who is not an administrator is turned away
-		signIn("wicket", "mellon4321");
+		signIn("wicket", "wicket4321");
 		tester.assertRenderedPage(AccessDeniedPage.class);
 		tester.startPage(HomePage.class);
 		tester.assertInvisible("admin");
