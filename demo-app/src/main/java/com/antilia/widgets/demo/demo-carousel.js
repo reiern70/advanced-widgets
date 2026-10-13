@@ -5,9 +5,11 @@
 
 /*
  * The carousel of the demos (DemoCarousel): shows one slide at a time and moves on by itself every
- * few seconds, unless the visitor prefers reduced motion. It stops while the pointer or the focus is
- * in it, and for good once the visitor stops it with its button; a bar fills up until the next
- * slide. The arrows, the arrow keys and a swipe move it by hand, a counter tells where it is. Without this script the slides scroll sideways.
+ * few seconds, unless the visitor prefers reduced motion. It stops while the mouse is over it or the
+ * focus of the keyboard is in it, and for good once the visitor stops it with its button; a bar
+ * fills up until the next slide. A click on its arrows or a tap leaves the focus in it but does not
+ * stop it, nor does a touch, which no mouse leaves. The arrows, the arrow keys and a swipe move it by
+ * hand, a counter tells where it is. Without this script the slides scroll sideways.
  */
 var AntiliaDemoCarousel = (function () {
 	'use strict';
@@ -77,20 +79,29 @@ var AntiliaDemoCarousel = (function () {
 		play.addEventListener('click', function () {
 			setPlaying(!playing);
 		});
-		carousel.addEventListener('mouseenter', function () {
-			hovered = true;
+		// a mouse over it, not a finger: a touch is never followed by the pointer leaving
+		carousel.addEventListener('pointerenter', function (event) {
+			hovered = event.pointerType === 'mouse';
 			schedule();
 		});
-		carousel.addEventListener('mouseleave', function () {
+		carousel.addEventListener('pointerleave', function () {
 			hovered = false;
 			schedule();
 		});
-		carousel.addEventListener('focusin', function () {
-			focused = true;
+		// the focus of the keyboard, not that a click or a dialog closing leaves on a button
+		function keyboardFocus(element) {
+			try {
+				return !!element && element.matches(':focus-visible');
+			} catch (e) {
+				return true;
+			}
+		}
+		carousel.addEventListener('focusin', function (event) {
+			focused = keyboardFocus(event.target);
 			schedule();
 		});
 		carousel.addEventListener('focusout', function (event) {
-			focused = carousel.contains(event.relatedTarget);
+			focused = carousel.contains(event.relatedTarget) && keyboardFocus(event.relatedTarget);
 			schedule();
 		});
 		carousel.addEventListener('keydown', function (event) {
