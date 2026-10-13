@@ -38,6 +38,10 @@ export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD,
 	PALETTE_MATCHERS } from './palette.js';
 export type { PaletteChoice, PaletteMatch, PaletteMatcher, PaletteOptions,
 	PaletteTexts } from './palette.js';
+export { Popover, popoverClasses, POPOVER_ARROW_PROPERTY, POPOVER_CLASSES, POPOVER_DESIGNS, POPOVER_PLACEMENTS,
+	POPOVER_VARIANTS, POPOVER_X_PROPERTY, POPOVER_Y_PROPERTY, THEME_PROPERTIES } from './popover.js';
+export type { PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide,
+	PopoverVariant } from './popover.js';
 export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
 export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';
@@ -56,6 +60,11 @@ export { parseSplitSize, SPLIT_FIRST_MAX_PROPERTY, SPLIT_FIRST_MIN_PROPERTY, SPL
 	SPLIT_FIRST_SIZE_PROPERTY, SPLIT_SECOND_MIN_PROPERTY, SPLIT_SECOND_PROPERTY, SplitPanel,
 	splitPanel } from './split-panel.js';
 export type { SplitOrientation, SplitPane, SplitPanelOptions, SplitSize } from './split-panel.js';
+export { DEFAULT_TABS_TEXTS, Tabs, tabs, TABS_CLASSES, TABS_DISCARD_EVENT, TABS_DESIGN_CLASSES, TABS_DESIGNS,
+	TABS_ORIENTATION_CLASSES } from './tabs.js';
+export type { TabsDesign, TabsOptions, TabsOrientation, TabsTexts } from './tabs.js';
+export { askToDiscard, MODIFIED_ATTRIBUTE, modifiedFields } from './unsaved.js';
+export type { DiscardQuestion, DiscardTexts } from './unsaved.js';
 export { Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,

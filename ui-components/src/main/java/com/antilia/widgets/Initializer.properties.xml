@@ -95,6 +95,13 @@
 	<entry key="Desktop.newWindow">Open a window</entry>
 	<entry key="Desktop.ok">OK</entry>
 	<entry key="Desktop.cancel">Cancel</entry>
+	<entry key="Tabs.close">Close</entry>
+	<entry key="Tabs.modified">Changes not saved</entry>
+	<entry key="Tabs.closeModifiedTitle">Close {0}?</entry>
+	<entry key="Tabs.closeModified">The changes in {0} are not saved. Close the tab and lose them?</entry>
+	<entry key="Tabs.discard">Close and lose them</entry>
+	<entry key="Tabs.keep">Keep it open</entry>
+	<entry key="Popover.close">Close</entry>
 	<entry key="Autocomplete.placeholder">Type to search…</entry>
 	<entry key="Autocomplete.noMatch">No matches</entry>
 	<entry key="Autocomplete.searching">Searching…</entry>

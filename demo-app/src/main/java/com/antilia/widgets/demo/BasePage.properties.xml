@@ -42,6 +42,8 @@
 	<entry key="demo.treeGrid.description">A tree with columns: the scientific names, ranks and periods of the tree of life, as a Wicket table tree or rendered in the browser from JSON as a WAI-ARIA tree grid, with lazily loaded branches and resizable columns.</entry>
 	<entry key="demo.masterDetail">Master and Detail</entry>
 	<entry key="demo.masterDetail.description">Two grids working together: choose a country in the master, rendered in the browser from JSON, and the detail, rendered on the server by Wicket components, shows its users via Ajax.</entry>
+	<entry key="demo.popovers">Popovers</entry>
+	<entry key="demo.popovers.description">A bubble with an arrow pointing at what opened it: on any side, centered or along an edge, in nine designs and five variants of the theme; with text from the server, or components such as a form, help on fields and more on table rows.</entry>
 	<entry key="demo.progressBar">Progress Bar</entry>
 	<entry key="demo.progressBar.description">Known and unknown progress driven by an Ajax timer, on the native progress element with moving stripes, so it works under a strict Content Security Policy.</entry>
 	<entry key="demo.notifications">Notifications</entry>
@@ -60,6 +62,8 @@
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>
 	<entry key="demo.splitPanel.description">Panes that share the space, nested as in an IDE: drag the divider or move it with the keyboard, collapse a pane, size in percent or pixels, and let the server know and remember the layout.</entry>
+	<entry key="demo.tabs">Tabs</entry>
+	<entry key="demo.tabs.description">Tabs along the top or down the side, in nine designs: documents that close, asking first when the server says they have changes not saved, with actions of their own and new ones added via Ajax.</entry>
 	<entry key="demo.desktop">Desktop</entry>
 	<entry key="demo.desktop.description">A desktop inside the page: floating windows that are not modal, with a taskbar; they move, fold, resize, minimize, maximize, tile and cascade, each holding real components such as the grids.</entry>
 	<entry key="demo.modalDialog">Modal Dialog</entry>

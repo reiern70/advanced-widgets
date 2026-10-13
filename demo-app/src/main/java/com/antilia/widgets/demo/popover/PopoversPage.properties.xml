@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Popovers</entry>
+	<entry key="explanation">&lt;p&gt;Popover from ui-components shows a bubble with an arrow pointing at the button that opened it, telling more about it: a title and a text, or components of the page. The server shows it in the response to the click, so what it says can come from the server just then. It closes with its ×, Escape, a click outside it or a click on the button again, and gives the focus back to the button; it follows the button as the page scrolls.&lt;/p&gt;&lt;p&gt;It opens where you ask: on any side of the button, centered on it or along it from either edge, or on the side with the most room. Without room on its side it opens on the other one, and it slides to stay in the window, its arrow still pointing at the button. Nine designs, from a card with a stripe of its color to glass, neon or a comic speech bubble, each in five variants, take their colors from the theme, light or dark. The gallery draws each design open where its Position drop-down says, and Open it opens it there for real.&lt;/p&gt;&lt;p&gt;A popover can show any component: the facts below are rendered by the server as the popover opens, and the form renaming the project is a Wicket form in a popover, its error shown in it. React and Svelte render their own content into it. Everything works under a strict Content Security Policy, without inline style.&lt;/p&gt;</entry>
+	<entry key="placementsTitle">Where it opens</entry>
+	<entry key="placementsText">Each button opens a popover on its side of the target: from one edge, centered, or from the other edge; the one in the middle opens where there is most room. Scroll the page with one open and watch it follow, or flip to the other side.</entry>
+	<entry key="design">Design</entry>
+	<entry key="position">Position</entry>
+	<entry key="variant">Variant</entry>
+	<entry key="placementText">Opened {0}, in the design and the variant chosen above. Click outside, press Escape or click the button again to close it.</entry>
+	<entry key="placement.TOP_LEFT">Top left</entry>
+	<entry key="placement.TOP_CENTER">Top center</entry>
+	<entry key="placement.TOP_RIGHT">Top right</entry>
+	<entry key="placement.RIGHT_TOP">Right top</entry>
+	<entry key="placement.RIGHT_CENTER">Right center</entry>
+	<entry key="placement.RIGHT_BOTTOM">Right bottom</entry>
+	<entry key="placement.BOTTOM_RIGHT">Bottom right</entry>
+	<entry key="placement.BOTTOM_CENTER">Bottom center</entry>
+	<entry key="placement.BOTTOM_LEFT">Bottom left</entry>
+	<entry key="placement.LEFT_BOTTOM">Left bottom</entry>
+	<entry key="placement.LEFT_CENTER">Left center</entry>
+	<entry key="placement.LEFT_TOP">Left top</entry>
+	<entry key="placement.AUTO">Auto</entry>
+	<entry key="galleryTitle">Nine designs</entry>
+	<entry key="try">Open it</entry>
+	<entry key="design.CARD">Card</entry>
+	<entry key="design.CARD.text">The surface of the theme, a stripe of its color along the top.</entry>
+	<entry key="design.SOLID">Solid</entry>
+	<entry key="design.SOLID.text">Filled with its color, for what must not be missed.</entry>
+	<entry key="design.OUTLINE">Outline</entry>
+	<entry key="design.OUTLINE.text">Flat, drawn by a line of its color, no shadow.</entry>
+	<entry key="design.GLASS">Glass</entry>
+	<entry key="design.GLASS.text">Frosted: the page shows blurred through it.</entry>
+	<entry key="design.INVERSE">Inverse</entry>
+	<entry key="design.INVERSE.text">The colors of the theme the other way round, small, as a tooltip.</entry>
+	<entry key="design.CALLOUT">Callout</entry>
+	<entry key="design.CALLOUT.text">Tinted, a bar along its side and a badge of what it stands for.</entry>
+	<entry key="design.AURORA">Aurora</entry>
+	<entry key="design.AURORA.text">A border of its color flowing into the accent of the theme.</entry>
+	<entry key="design.COMIC">Comic</entry>
+	<entry key="design.COMIC.text">A speech bubble, outlined in ink, with a hard shadow.</entry>
+	<entry key="design.NEON">Neon</entry>
+	<entry key="design.NEON.text">A line of its color glowing around it; best in the dark.</entry>
+	<entry key="variant.DEFAULT">Default</entry>
+	<entry key="variant.INFO">Info</entry>
+	<entry key="variant.SUCCESS">Success</entry>
+	<entry key="variant.WARNING">Warning</entry>
+	<entry key="variant.ERROR">Error</entry>
+	<entry key="richTitle">Components in a popover</entry>
+	<entry key="status.wicket">Ask the server</entry>
+	<entry key="status.app">Ask the browser</entry>
+	<entry key="statusTitle">How it is now</entry>
+	<entry key="statusText">Rendered just now, as the popover opened:</entry>
+	<entry key="fact.time">Time</entry>
+	<entry key="fact.wicket">Wicket</entry>
+	<entry key="fact.java">Java</entry>
+	<entry key="fact.uptime">Up for</entry>
+	<entry key="fact.memory">Memory</entry>
+	<entry key="fact.window">Window</entry>
+	<entry key="fact.language">Language</entry>
+	<entry key="fact.opened">Opened</entry>
+	<entry key="minutes">{0} min</entry>
+	<entry key="megabytes">{0} of {1} MB</entry>
+	<entry key="project">Project</entry>
+	<entry key="rename">Rename the project</entry>
+	<entry key="renameTitle">Rename the project</entry>
+	<entry key="name">Name</entry>
+	<entry key="save">Save</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="required">Give the project a name.</entry>
+	<entry key="fieldsTitle">Help on the fields of a form</entry>
+	<entry key="help">Help on {0}</entry>
+	<entry key="field.username">User name</entry>
+	<entry key="field.username.help">3 to 20 letters, digits, dots or hyphens. Others see it next to what you write.</entry>
+	<entry key="field.password">Password</entry>
+	<entry key="field.password.help">At least 12 characters. Never use one of another site: a long sentence is easier to remember.</entry>
+	<entry key="field.code">Promotion code</entry>
+	<entry key="field.code.help">The code of 8 characters in the mail we sent you, if you have one.</entry>
+	<entry key="tableTitle">More on the rows of a table</entry>
+	<entry key="country">Country</entry>
+	<entry key="language">Language</entry>
+	<entry key="currency">Currency</entry>
+	<entry key="aboutCountry">More about {0}</entry>
+	<entry key="countryInfo">In its own language: {0}. ISO codes {1}; it pays in {2}.</entry>
+</properties>

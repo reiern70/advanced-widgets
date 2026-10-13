@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="element" class="antilia-tabs">
+	<div wicket:id="list" class="antilia-tabs-list" role="tablist"><div wicket:id="headers">[tab]</div></div>
+	<div wicket:id="panels" class="antilia-tabs-panels"><div wicket:id="items"><wicket:container wicket:id="panel">[panel]</wicket:container></div></div>
+</div>
+
+<wicket:fragment wicket:id="header"><button type="button" wicket:id="button" class="antilia-tab-button" role="tab"><span wicket:id="icon" class="antilia-tab-icon">[icon]</span><span wicket:id="title" class="antilia-tab-title">[title]</span></button><span wicket:id="actions" class="antilia-tab-actions"><button type="button" wicket:id="action">[action]</button></span></wicket:fragment>
+</wicket:panel>

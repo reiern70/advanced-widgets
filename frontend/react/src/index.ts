@@ -31,6 +31,9 @@ export type { ModalProps, ModalSize } from './Modal.js';
 export { SplitPanel } from './SplitPanel.js';
 export type { SplitPanelProps } from './SplitPanel.js';
 export type { SplitOrientation, SplitPane, SplitSize } from '@antilia/core';
+export { Tab, Tabs } from './Tabs.js';
+export type { TabProps, TabsHandle, TabsProps } from './Tabs.js';
+export type { TabsDesign, TabsOrientation, TabsTexts } from '@antilia/core';
 export { Tree, TreeGrid } from './Tree.js';
 export type { TreeHandle, TreeProps, TreeGridProps } from './Tree.js';
 export type { TreeColumn, TreeIcons, TreeNode, TreeTexts } from '@antilia/core';
@@ -38,7 +41,11 @@ export { DataTable } from './DataTable.js';
 export type { DataTableColumnDef, DataTableFilter, DataTableHandle, DataTableProps, DataTablePush,
 	DataTableQuery, DataTableSort, DataTableTexts } from './DataTable.js';
 export { Button } from './Button.js';
-export { localRows } from '@antilia/core';
+export { localRows, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS } from '@antilia/core';
+export type { PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide,
+	PopoverVariant } from '@antilia/core';
+export { PopoverButton } from './PopoverButton.js';
+export type { PopoverButtonProps } from './PopoverButton.js';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button.js';
 export { LookProvider, useLook } from './Look.js';
 export type { Look, LookPart, LookProviderProps } from './Look.js';

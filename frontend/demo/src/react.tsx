@@ -27,6 +27,8 @@ import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 import { SplitPanelDemo } from './react/SplitPanelDemo.js';
+import { PopoversDemo } from './react/PopoversDemo.js';
+import { TabsDemo } from './react/TabsDemo.js';
 import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
 
 /**
@@ -48,6 +50,8 @@ startApps('react', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	tabs: app(TabsDemo),
+	popovers: app(PopoversDemo),
 	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),

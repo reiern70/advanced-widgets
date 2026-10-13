@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.provider.Arguments;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -71,6 +73,25 @@ public abstract class FrameworkAppsTestCase extends JettyTestCase
 		wait = new WebDriverWait(driver, Duration.ofSeconds(10), Duration.ofMillis(20));
 		wait.ignoring(StaleElementReferenceException.class);
 		driver.get("http://localhost:" + localPort + "/" + path);
+		tab(framework).click();
+		wait.until(d -> app().isDisplayed() && !app().findElements(By.xpath("*")).isEmpty());
+	}
+
+	/**
+	 * Chooses a look in the top bar, which every page of the session is in then, and shows the tab
+	 * of the framework again in the page loaded anew.
+	 *
+	 * @param name
+	 *            the name of the look, as the top bar has it: Bootstrap for example
+	 */
+	protected void chooseLook(String name)
+	{
+		((JavascriptExecutor)driver).executeScript("var s = arguments[0]; s.selectedIndex = " +
+			"Array.from(s.options).findIndex(o => o.text === arguments[1]); s.dispatchEvent(" +
+			"new Event('change', {bubbles: true}));",
+			driver.findElement(By.cssSelector(".topbar__setting select[name$='look']")), name);
+		String look = "antilia-look-" + name.toLowerCase(Locale.ROOT);
+		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class").contains(look));
 		tab(framework).click();
 		wait.until(d -> app().isDisplayed() && !app().findElements(By.xpath("*")).isEmpty());
 	}

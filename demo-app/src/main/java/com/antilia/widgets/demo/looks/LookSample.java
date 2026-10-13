@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -28,12 +29,16 @@ import com.antilia.widgets.icon.SvgIcon;
 import com.antilia.widgets.modal.IModalButtonFactory;
 import com.antilia.widgets.modal.Modal;
 import com.antilia.widgets.notification.Notification;
+import com.antilia.widgets.popover.Popover;
+import com.antilia.widgets.popover.PopoverPlacement;
 import com.antilia.widgets.progress.ProgressBar;
+import com.antilia.widgets.tabs.Tab;
+import com.antilia.widgets.tabs.Tabs;
 
 /**
  * The same components in each look of the {@link LooksPage}: a button of every variant and small
- * buttons showing only their icon, a drop-down, a date picker, a progress bar, a collapsible panel
- * and a modal dialog. The look is that of the column the sample is in.
+ * buttons showing only their icon, a drop-down, a date picker, a progress bar, a collapsible panel,
+ * tabs, a modal dialog and a popover. The look is that of the column the sample is in.
  */
 class LookSample extends Panel
 {
@@ -70,6 +75,13 @@ class LookSample extends Panel
 			}
 		}.setExpanded(true));
 
+		Tabs tabs = new Tabs("tabs");
+		tabs.setLabel(new ResourceModel("tabs"));
+		tabs.addTab(tab("general", false));
+		tabs.addTab(tab("notes", true));
+		tabs.addTab(tab("history", true));
+		add(tabs);
+
 		dialog = new Modal("dialog");
 		add(dialog);
 		add(new AjaxActionButton("openDialog", new ResourceModel("dialog.open"))
@@ -84,6 +96,42 @@ class LookSample extends Panel
 					IModalButtonFactory.close(new ResourceModel("dialog.close")));
 			}
 		});
+		add(new AjaxActionButton("popover", new ResourceModel("popover.open"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				new Popover(getString("popover.body")).setTitle(getString("popover.title"))
+					.setPlacement(PopoverPlacement.TOP_CENTER).setMaxWidth("16rem")
+					.show(target, this);
+			}
+		});
+	}
+
+	/**
+	 * @return a tab of the sample, its panel a sentence
+	 */
+	private static Tab tab(String name, boolean closable)
+	{
+		return new Tab(name, new ResourceModel("tab." + name))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				return new Label(id, new ResourceModel("tab." + name + ".text"));
+			}
+		}.setClosable(closable);
+	}
+
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		super.renderHead(response);
+		Popover.renderHeadItems(response);
 	}
 
 	/**

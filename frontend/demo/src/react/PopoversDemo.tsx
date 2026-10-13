@@ -1,0 +1,275 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+import { useState, type FormEvent, type ReactNode } from 'react';
+
+import { buttonClasses, partClasses, popoverClasses, type ButtonVariant,
+	type Look } from '@antilia/core';
+import { Popover, PopoverButton, useLook, type PopoverDesign, type PopoverOptions, type PopoverPlacement,
+	type PopoverVariant } from '@antilia/react';
+
+import { format } from '../data.js';
+import { facts, nameOf, placementText, sideOf, type PopoversConfig } from '../popovers.js';
+import { Icon } from './DialogOptionsDemo.js';
+
+/**
+ * The Popovers demo in React: the popovers of the Wicket page, opened by PopoverButton, whose
+ * content React renders into them: the facts of the browser as the popover opens, and a form
+ * renaming the project.
+ */
+export function PopoversDemo({ config }: { config: PopoversConfig }) {
+	const { texts, icons } = config;
+	const look = useLook();
+	const [design, setDesign] = useState<PopoverDesign>(config.design);
+	const [variant, setVariant] = useState<PopoverVariant>(config.variant);
+	const [position, setPosition] = useState<PopoverPlacement>(config.position);
+	const [project, setProject] = useState(config.project);
+	const [opened, setOpened] = useState(0);
+	const closeLabel = texts.close;
+
+	return (
+		<div className="popovers-demo">
+			<section>
+				<h3>{texts.placementsTitle}</h3>
+				<p className="popovers-demo__text">{texts.placementsText}</p>
+				<div className="popovers-demo__controls">
+					<label className="popovers-demo__control">
+						{texts.design}{' '}
+						<select value={design} onChange={(event) =>
+							setDesign(event.currentTarget.value as PopoverDesign)}>
+							{config.designs.map((each) => <option key={each} value={each}>
+								{nameOf(config, 'design', each)}</option>)}
+						</select>
+					</label>
+					<label className="popovers-demo__control">
+						{texts.variant}{' '}
+						<select value={variant} onChange={(event) =>
+							setVariant(event.currentTarget.value as PopoverVariant)}>
+							{config.variants.map((each) => <option key={each} value={each}>
+								{nameOf(config, 'variant', each)}</option>)}
+						</select>
+					</label>
+				</div>
+				<div className="popovers-demo__compass">
+					<div className="popovers-demo__target" aria-hidden="true" />
+					{config.placements.map((placement) => {
+						const name = nameOf(config, 'placement', placement);
+						return (
+							<PopoverButton key={placement} className={buttonClasses({ look, size: 'small',
+								variant: placement === 'auto' ? 'primary' : 'secondary',
+								className: 'popovers-demo__place popovers-demo__place--' + placement })}
+								options={{ title: name, body: placementText(config, placement), placement,
+									design, variant, maxWidth: config.placementWidth, closeLabel }}>
+								<Body label={name} icon={placement === 'auto' ? icons.auto : undefined} />
+							</PopoverButton>
+						);
+					})}
+				</div>
+			</section>
+			<section>
+				<h3>{texts.galleryTitle}</h3>
+				<div className="popovers-demo__controls">
+					<label className="popovers-demo__control">
+						{texts.position}{' '}
+						<select value={position} onChange={(event) =>
+							setPosition(event.currentTarget.value as PopoverPlacement)}>
+							{config.positions.map((each) => <option key={each} value={each}>
+								{nameOf(config, 'placement', each)}</option>)}
+						</select>
+					</label>
+				</div>
+				<div className="popovers-demo__gallery">
+					{config.designs.map((each) => {
+						const name = nameOf(config, 'design', each);
+						const text = texts['design.' + each.toUpperCase() + '.text'];
+						return (
+							<figure key={each} className="popovers-demo__example">
+								<div className="popovers-demo__stage">
+									<Preview design={each} variant={variant} position={position} title={name}
+										text={text} />
+								</div>
+								<PopoverButton className={buttonClasses({ look, size: 'small' })}
+									options={{ title: name, body: text, design: each, variant, placement: position,
+										maxWidth: config.galleryWidth, closeLabel }}>
+									<Body label={texts.try} />
+								</PopoverButton>
+							</figure>
+						);
+					})}
+				</div>
+			</section>
+			<section>
+				<h3>{texts.richTitle}</h3>
+				<div className="popovers-demo__rich">
+					<PopoverButton className={buttonClasses({ look })} onOpen={() => setOpened(opened + 1)}
+						options={{ title: texts.statusTitle, body: texts.statusText,
+							placement: 'bottom-left', maxWidth: '24rem', closeLabel }}
+						content={<dl className="popovers-demo__facts">
+							{facts(opened).map(([key, value]) => <Fact key={key} name={texts['fact.' + key]}
+								value={value} />)}
+						</dl>}>
+						<Body label={texts['status.app']} icon={icons.status} />
+					</PopoverButton>
+					<p className="popovers-demo__project">
+						{texts.project} <strong>{project}</strong>
+						<PopoverButton {...iconOnly(texts.rename, 'ghost', look)}
+							options={{ title: texts.renameTitle, placement: 'right-top', design: 'aurora',
+								closeLabel }}
+							content={<Rename config={config} project={project} onRename={setProject} />}>
+							<Body label={texts.rename} icon={icons.rename} iconOnly />
+						</PopoverButton>
+					</p>
+				</div>
+			</section>
+			<section className="popovers-demo__pair">
+				<div>
+					<h3>{texts.fieldsTitle}</h3>
+					<form className="popovers-demo__fields" onSubmit={(event) => event.preventDefault()}>
+						{config.fields.map((field) => {
+							const help = format(texts.help, field.label);
+							return (
+								<div key={field.key} className="popovers-demo__field">
+									<div className="popovers-demo__label">
+										<label htmlFor={'react-' + field.key}>{field.label}</label>
+										<PopoverButton {...iconOnly(help, 'ghost', look)} options={helpOf(field)}>
+											<Body label={help} icon={icons.help} iconOnly />
+										</PopoverButton>
+									</div>
+									<input id={'react-' + field.key} className="popovers-demo__input"
+										type={field.key === 'password' ? 'password' : 'text'} />
+								</div>
+							);
+						})}
+					</form>
+				</div>
+				<div>
+					<h3>{texts.tableTitle}</h3>
+					<div className="popovers-demo__scroll">
+						<table className="popovers-demo__table">
+							<thead>
+								<tr><th scope="col">{texts.country}</th><th scope="col">{texts.language}</th>
+									<th scope="col">{texts.currency}</th><th scope="col" /></tr>
+							</thead>
+							<tbody>
+								{config.countries.map((country) => {
+									const about = format(texts.aboutCountry, country.name);
+									return (
+										<tr key={country.code}>
+											<td>{country.name}</td><td>{country.language}</td><td>{country.currency}</td>
+											<td className="popovers-demo__action">
+												<PopoverButton {...iconOnly(about, 'ghost', look)}
+													options={{ title: country.name, body: country.about, placement: 'left-center',
+														design: 'callout', closeLabel }}>
+													<Body label={about} icon={icons.info} iconOnly />
+												</PopoverButton>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+		</div>
+	);
+
+	function helpOf(field: PopoversConfig['fields'][number]): PopoverOptions {
+		return { title: field.label, body: field.help, placement: 'right-center', design: 'inverse',
+			closeLabel };
+	}
+}
+
+/**
+ * @returns the class, the title and the name of a small button showing only its icon
+ */
+function iconOnly(label: string, variant: ButtonVariant, look: Look) {
+	return { className: buttonClasses({ size: 'small', variant, iconOnly: true, look }), title: label,
+		'aria-label': label };
+}
+
+/**
+ * The body of a button in the markup of the Wicket buttons: its icon, its text or both.
+ */
+function Body({ label, icon, iconOnly = false }: { label: string; icon?: string;
+	iconOnly?: boolean }) {
+	return (
+		<>
+			{icon && <span className="ant-button__icon" aria-hidden="true"><Icon markup={icon} /></span>}
+			{!iconOnly && <span className="ant-button__label">{label}</span>}
+		</>
+	);
+}
+
+function Fact({ name, value }: { name: string; value: string }): ReactNode {
+	return <><dt>{name}</dt><dd>{value}</dd></>;
+}
+
+/**
+ * A popover of a design drawn open in the page, in the markup the core gives it, on the side and
+ * along the edge of a position.
+ */
+function Preview({ design, variant, position, title, text }: { design: PopoverDesign;
+	variant: PopoverVariant; position: PopoverPlacement; title: string; text: string }) {
+	const { side, align } = sideOf(position);
+	const look = useLook();
+	return (
+		<div className={popoverClasses(look, design, variant)} data-side={side} data-align={align}>
+			<div className={partClasses(look, 'popover-arrow')} />
+			<div className={partClasses(look, 'popover-header')}>
+				<div className={partClasses(look, 'popover-title')}>{title}</div>
+				<span className={partClasses(look, 'popover-close')} aria-hidden="true">
+					<svg viewBox="0 0 24 24" width="12" height="12" focusable="false">
+						<path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2.5"
+							strokeLinecap="round" />
+					</svg>
+				</span>
+			</div>
+			<div className={partClasses(look, 'popover-body')}>{text}</div>
+		</div>
+	);
+}
+
+/**
+ * The form renaming the project, in its popover: it starts with the name of the project, says
+ * what is wrong with the one typed, and closes the popover once it took it.
+ */
+function Rename({ config, project, onRename }: { config: PopoversConfig; project: string;
+	onRename: (name: string) => void }) {
+	const { texts } = config;
+	const look = useLook();
+	const [draft, setDraft] = useState(project);
+	const [error, setError] = useState<string | null>(null);
+
+	const save = (event: FormEvent) => {
+		event.preventDefault();
+		if (draft.trim() === '') {
+			setError(texts.required);
+			return;
+		}
+		onRename(draft.trim());
+		Popover.closeAll();
+	};
+
+	return (
+		<form className="popovers-demo__rename" onSubmit={save}>
+			<label className="popovers-demo__rename-field">
+				{texts.name}{' '}
+				<input type="text" value={draft} autoFocus
+					onChange={(event) => setDraft(event.currentTarget.value)} />
+			</label>
+			<p className="popovers-demo__error" role="alert" hidden={error === null}>{error}</p>
+			<div className="popovers-demo__actions">
+				<button type="submit" className={buttonClasses({ look, size: 'small', variant: 'primary' })}>
+					<span className="ant-button__label">{texts.save}</span>
+				</button>
+				<button type="button" className={buttonClasses({ look, size: 'small', variant: 'ghost' })}
+					onClick={() => Popover.closeAll()}>
+					<span className="ant-button__label">{texts.cancel}</span>
+				</button>
+			</div>
+		</form>
+	);
+}

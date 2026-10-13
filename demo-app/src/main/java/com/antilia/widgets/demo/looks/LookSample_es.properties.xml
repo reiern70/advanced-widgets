@@ -15,6 +15,16 @@
 	<entry key="dialog.title">Un diálogo modal</entry>
 	<entry key="dialog.body">Con el aspecto Bootstrap su cabecera es la de un modal de Bootstrap.</entry>
 	<entry key="dialog.close">Cerrar</entry>
+	<entry key="tabs">Pestañas</entry>
+	<entry key="tab.general">General</entry>
+	<entry key="tab.general.text">Con el aspecto Bootstrap las pestañas son un nav de Bootstrap, aquí nav-tabs.</entry>
+	<entry key="tab.notes">Notas</entry>
+	<entry key="tab.notes.text">Cierre una pestaña con su ×: con el aspecto Bootstrap es el botón de cierre de Bootstrap.</entry>
+	<entry key="tab.history">Historial</entry>
+	<entry key="tab.history.text">Todos los diseños de las pestañas funcionan con ambos aspectos.</entry>
+	<entry key="popover.open">Abrir un popover</entry>
+	<entry key="popover.title">Un popover</entry>
+	<entry key="popover.body">Con el aspecto Bootstrap su cabecera y su cuerpo son los de un popover de Bootstrap.</entry>
 	<entry key="button.primary">Guardar</entry>
 	<entry key="button.secondary">Actualizar</entry>
 	<entry key="button.ghost">Ajustes</entry>

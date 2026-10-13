@@ -26,6 +26,8 @@ import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
 import SplitPanelDemo from './svelte/SplitPanelDemo.svelte';
+import PopoversDemo from './svelte/PopoversDemo.svelte';
+import TabsDemo from './svelte/TabsDemo.svelte';
 import TreeDemo from './svelte/TreeDemo.svelte';
 import TreeGridDemo from './svelte/TreeGridDemo.svelte';
 
@@ -49,6 +51,8 @@ startApps('svelte', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	tabs: app(TabsDemo),
+	popovers: app(PopoversDemo),
 	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),
 	jsonList: app(JsonListDemo),

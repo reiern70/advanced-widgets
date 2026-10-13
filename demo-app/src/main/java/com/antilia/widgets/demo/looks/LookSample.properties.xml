@@ -15,6 +15,16 @@
 	<entry key="dialog.title">A modal dialog</entry>
 	<entry key="dialog.body">In the Bootstrap look its header is that of a Bootstrap modal.</entry>
 	<entry key="dialog.close">Close</entry>
+	<entry key="tabs">Tabs</entry>
+	<entry key="tab.general">General</entry>
+	<entry key="tab.general.text">In the Bootstrap look the tabs are a Bootstrap nav, here nav-tabs.</entry>
+	<entry key="tab.notes">Notes</entry>
+	<entry key="tab.notes.text">Close a tab with its ×: in the Bootstrap look it is Bootstrap's close button.</entry>
+	<entry key="tab.history">History</entry>
+	<entry key="tab.history.text">Every design of the tabs works in either look.</entry>
+	<entry key="popover.open">Open a popover</entry>
+	<entry key="popover.title">A popover</entry>
+	<entry key="popover.body">In the Bootstrap look its header and body are those of a Bootstrap popover.</entry>
 	<entry key="button.primary">Save</entry>
 	<entry key="button.secondary">Refresh</entry>
 	<entry key="button.ghost">Settings</entry>

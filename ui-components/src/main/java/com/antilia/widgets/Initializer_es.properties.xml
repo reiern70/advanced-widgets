@@ -95,6 +95,13 @@
 	<entry key="Desktop.newWindow">Abrir una ventana</entry>
 	<entry key="Desktop.ok">Aceptar</entry>
 	<entry key="Desktop.cancel">Cancelar</entry>
+	<entry key="Tabs.close">Cerrar</entry>
+	<entry key="Tabs.modified">Cambios sin guardar</entry>
+	<entry key="Tabs.closeModifiedTitle">¿Cerrar {0}?</entry>
+	<entry key="Tabs.closeModified">Los cambios en {0} no se han guardado. ¿Cerrar la pestaña y perderlos?</entry>
+	<entry key="Tabs.discard">Cerrar y perderlos</entry>
+	<entry key="Tabs.keep">Dejarla abierta</entry>
+	<entry key="Popover.close">Cerrar</entry>
 	<entry key="Autocomplete.placeholder">Escriba para buscar…</entry>
 	<entry key="Autocomplete.noMatch">Sin resultados</entry>
 	<entry key="Autocomplete.searching">Buscando…</entry>

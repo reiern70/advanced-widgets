@@ -47,6 +47,8 @@ import com.antilia.widgets.demo.notification.NotificationsPage;
 import com.antilia.widgets.demo.modal.TeamResource;
 import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
+import com.antilia.widgets.demo.popover.PopoversPage;
+import com.antilia.widgets.demo.tabs.TabsPage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.register.EmailValidationPage;
@@ -184,6 +186,8 @@ public class WicketApplication extends WebApplication
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
+		mountPage("tabs", TabsPage.class);
+		mountPage("popovers", PopoversPage.class);
 		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("notifications", NotificationsPage.class);

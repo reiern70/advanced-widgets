@@ -1,0 +1,881 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The looks of tabs, in the colors of the theme they are in (see antilia-theme.css) and with
+ * colors of their own outside one: tabs joined to the panel (antilia-tabs-tabs), rounded buttons
+ * (antilia-tabs-pills) and plain titles underlined (antilia-tabs-underline).
+ *
+ * First for Wicket's TabbedPanel, given a look by TabsStyleBehavior; then for the tabs of
+ * antilia-tabs.js, along the top of their panels (antilia-tabs-horizontal) or down their left side
+ * (antilia-tabs-vertical), with the buttons closing them, the actions of the page and the marks of
+ * changes not saved. These have six looks more: a segmented control (antilia-tabs-segmented),
+ * folder tabs (antilia-tabs-folder) and lifted cards (antilia-tabs-lifted), made for tabs along the
+ * top; the side bar of an application (antilia-tabs-sidebar), numbered steps (antilia-tabs-steps)
+ * and cards pointing at the panel (antilia-tabs-cards), made for tabs down the side. Every look
+ * works in both orientations.
+ */
+
+/* Wicket's TabbedPanel */
+
+.antilia-tabs .tab-row ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-tabs .tab-row li {
+	margin: 0;
+	padding: 0;
+}
+
+.antilia-tabs .tab-row a {
+	display: block;
+	padding: 0.45em 1em;
+	color: var(--antilia-theme-accent, #c2410c);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.antilia-tabs .tab-row a:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #c2410c);
+	outline-offset: -2px;
+}
+
+.antilia-tabs .tab-row li.selected a {
+	font-weight: 600;
+}
+
+.antilia-tabs .tab-panel {
+	color: var(--antilia-theme-text, currentColor);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+/* tabs */
+
+.antilia-tabs-tabs .tab-row {
+	border-bottom: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-tabs .tab-row ul {
+	padding: 0 0.5em;
+}
+
+.antilia-tabs-tabs .tab-row li {
+	margin-bottom: -1px;
+}
+
+.antilia-tabs-tabs .tab-row a {
+	border: 1px solid transparent;
+	border-radius: 0.4em 0.4em 0 0;
+}
+
+.antilia-tabs-tabs .tab-row a:hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-tabs .tab-row li.selected a {
+	border-color: var(--antilia-theme-border, #f2b98d);
+	border-bottom-color: var(--antilia-theme-surface, #ffffff);
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-tabs .tab-panel {
+	padding: 1em;
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-top: none;
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+/* pills */
+
+.antilia-tabs-pills .tab-row a {
+	border-radius: 999px;
+}
+
+.antilia-tabs-pills .tab-row a:hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-pills .tab-row li.selected a {
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+.antilia-tabs-pills .tab-panel {
+	padding: 1em 0.25em;
+}
+
+/* underline */
+
+.antilia-tabs-underline .tab-row {
+	border-bottom: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-underline .tab-row a {
+	margin-bottom: -1px;
+	border-bottom: 3px solid transparent;
+}
+
+.antilia-tabs-underline .tab-row a:hover {
+	border-bottom-color: var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-underline .tab-row li.selected a {
+	border-bottom-color: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-underline .tab-panel {
+	padding: 1em 0.25em;
+}
+
+/* The tabs of antilia-tabs.js */
+
+.antilia-tabs-horizontal,
+.antilia-tabs-vertical {
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+	box-sizing: border-box;
+}
+
+.antilia-tabs-horizontal {
+	flex-direction: column;
+}
+
+.antilia-tabs-vertical {
+	flex-direction: row;
+}
+
+.antilia-tabs > .antilia-tabs-list {
+	display: flex;
+	gap: 0.25em;
+	margin: 0;
+	padding: 0;
+	scrollbar-width: thin;
+}
+
+/* too many tabs for the width scroll, rather than wrap */
+.antilia-tabs-horizontal > .antilia-tabs-list {
+	flex: 0 0 auto;
+	flex-direction: row;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.antilia-tabs-vertical > .antilia-tabs-list {
+	flex: 0 0 auto;
+	flex-direction: column;
+	max-width: 40%;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.antilia-tabs > .antilia-tabs-panels {
+	flex: 1 1 auto;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	color: var(--antilia-theme-text, currentColor);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+.antilia-tabs-panels > .antilia-tabs-panel[hidden] {
+	display: none;
+}
+
+.antilia-tabs-list > .antilia-tab {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	box-sizing: border-box;
+	color: var(--antilia-theme-accent, #c2410c);
+	white-space: nowrap;
+}
+
+.antilia-tabs-list > .antilia-tab[hidden] {
+	display: none;
+}
+
+.antilia-tabs-list > .antilia-tab[data-selected] {
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tab > .antilia-tab-button {
+	display: inline-flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 0.45em;
+	margin: 0;
+	padding: 0.45em 1em;
+	border: 0;
+	border-radius: inherit;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.antilia-tab[data-selected] > .antilia-tab-button {
+	font-weight: 600;
+}
+
+/* the buttons after the title take the room at its end */
+.antilia-tab:has(> .antilia-tab-actions, > .antilia-tab-close) > .antilia-tab-button {
+	padding-inline-end: 0.3em;
+}
+
+.antilia-tab-icon {
+	display: inline-flex;
+	align-items: center;
+	line-height: 0;
+}
+
+.antilia-tab-icon svg {
+	width: 1em;
+	height: 1em;
+}
+
+.antilia-tab > .antilia-tab-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1em;
+}
+
+.antilia-tab > .antilia-tab-actions:last-child {
+	margin-inline-end: 0.4em;
+}
+
+.antilia-tab-actions :is(button, a),
+.antilia-tab > .antilia-tab-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 1.6em;
+	height: 1.6em;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0.3em;
+	background: none;
+	color: inherit;
+	font: inherit;
+	line-height: 0;
+	opacity: 0.65;
+	cursor: pointer;
+}
+
+.antilia-tab-actions :is(button, a) svg {
+	width: 0.95em;
+	height: 0.95em;
+}
+
+.antilia-tab > .antilia-tab-close {
+	margin-inline-end: 0.4em;
+}
+
+.antilia-tab-actions :is(button, a):hover,
+.antilia-tab-actions :is(button, a).antilia-popover-open,
+.antilia-tab > .antilia-tab-close:hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+	opacity: 1;
+}
+
+.antilia-tab > .antilia-tab-button:focus-visible,
+.antilia-tab-actions :is(button, a):focus-visible,
+.antilia-tab > .antilia-tab-close:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #c2410c);
+	outline-offset: -2px;
+	opacity: 1;
+}
+
+/* changes not saved: a dot after the title */
+.antilia-tab-mark {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: 0.5em;
+	height: 0.5em;
+	border-radius: 50%;
+	background: var(--antilia-theme-primary, #c2410c);
+}
+
+.antilia-tab-mark[hidden] {
+	display: none;
+}
+
+/* tabs: horizontal */
+
+.antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list {
+	padding: 0 0.5em;
+	border-bottom: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab {
+	margin-bottom: -1px;
+	border: 1px solid transparent;
+	border-radius: 0.4em 0.4em 0 0;
+}
+
+.antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-color: var(--antilia-theme-border, #f2b98d);
+	border-bottom-color: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-panels {
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-top: none;
+}
+
+/* tabs: vertical */
+
+.antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list {
+	padding: 0.5em 0;
+	border-right: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab {
+	margin-right: -1px;
+	border: 1px solid transparent;
+	border-radius: 0.4em 0 0 0.4em;
+}
+
+.antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-color: var(--antilia-theme-border, #f2b98d);
+	border-right-color: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-panels {
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-left: none;
+}
+
+/* tabs: both */
+
+.antilia-tabs-tabs > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-tabs > .antilia-tabs-list > .antilia-tab[data-selected],
+.antilia-tabs-tabs > .antilia-tabs-panels {
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-tabs-tabs > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em;
+}
+
+/* pills */
+
+.antilia-tabs-pills > .antilia-tabs-list > .antilia-tab {
+	border-radius: 999px;
+}
+
+.antilia-tabs-pills > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-pills > .antilia-tabs-list > .antilia-tab[data-selected] {
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+.antilia-tabs-pills > .antilia-tabs-list > .antilia-tab[data-selected] .antilia-tab-mark {
+	background: currentColor;
+}
+
+.antilia-tabs-pills > .antilia-tabs-list > .antilia-tab[data-selected] :is(.antilia-tab-actions button, .antilia-tab-actions a, .antilia-tab-close):hover {
+	background: rgb(255 255 255 / 0.2);
+}
+
+.antilia-tabs-pills.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 0.25em;
+}
+
+.antilia-tabs-pills.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.25em 1em;
+}
+
+/* underline */
+
+.antilia-tabs-underline.antilia-tabs-horizontal > .antilia-tabs-list {
+	border-bottom: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-underline.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab {
+	margin-bottom: -1px;
+	border-bottom: 3px solid transparent;
+}
+
+.antilia-tabs-underline.antilia-tabs-vertical > .antilia-tabs-list {
+	border-right: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-underline.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab {
+	margin-right: -1px;
+	border-right: 3px solid transparent;
+}
+
+.antilia-tabs-underline > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	border-color: var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-underline > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-color: var(--antilia-theme-primary, #c2410c);
+}
+
+.antilia-tabs-underline.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 0.25em;
+}
+
+.antilia-tabs-underline.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.25em 1em;
+}
+
+/* segmented: a track, the selected segment raised on it */
+
+.antilia-tabs-segmented > .antilia-tabs-list {
+	align-self: flex-start;
+	max-width: 100%;
+	box-sizing: border-box;
+	gap: 0.2em;
+	padding: 0.25em;
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 0.75em;
+	background: var(--antilia-theme-surface-alt, #fff4ec);
+}
+
+.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tab {
+	border-radius: 0.55em;
+	color: var(--antilia-theme-text, #2b1d12);
+	transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tab:not([data-selected]) {
+	opacity: 0.75;
+}
+
+.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+	opacity: 1;
+}
+
+.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tab[data-selected] {
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.18), 0 0 0 1px var(--antilia-theme-border, #f2b98d);
+}
+
+.antilia-tabs-segmented.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 0.25em;
+}
+
+.antilia-tabs-segmented.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.25em 1.25em;
+}
+
+/* folder: tabs that widen towards the panel and overlap, the selected one in front of it */
+
+.antilia-tabs-folder > .antilia-tabs-list {
+	gap: 0;
+}
+
+.antilia-tabs-folder.antilia-tabs-horizontal > .antilia-tabs-list {
+	padding: 0.4em 1em 0;
+}
+
+.antilia-tabs-folder.antilia-tabs-vertical > .antilia-tabs-list {
+	padding: 1em 0 1em 0.4em;
+}
+
+.antilia-tabs-folder > .antilia-tabs-list > .antilia-tab {
+	position: relative;
+	z-index: 0;
+	isolation: isolate;
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-folder.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab {
+	margin: 0 -0.35em -1px;
+	padding: 0 0.8em;
+}
+
+.antilia-tabs-folder.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab {
+	margin: -0.2em -1px -0.2em 0;
+	padding: 0.35em 0;
+}
+
+/* the shape of the tab, behind its content */
+.antilia-tabs-folder > .antilia-tabs-list > .antilia-tab::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	background: var(--antilia-theme-surface-alt, #fff4ec);
+}
+
+.antilia-tabs-folder.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab::before {
+	border-bottom: none;
+	border-radius: 0.5em 0.5em 0 0;
+	transform: perspective(0.6em) rotateX(2.2deg);
+	transform-origin: bottom;
+}
+
+.antilia-tabs-folder.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab::before {
+	border-right: none;
+	border-radius: 0.5em 0 0 0.5em;
+	transform: perspective(0.6em) rotateY(-1.6deg);
+	transform-origin: right;
+}
+
+.antilia-tabs-folder > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover::before {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-folder > .antilia-tabs-list > .antilia-tab[data-selected] {
+	z-index: 2;
+}
+
+.antilia-tabs-folder > .antilia-tabs-list > .antilia-tab[data-selected]::before {
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: 0 -2px 0 var(--antilia-theme-primary, #c2410c) inset;
+}
+
+.antilia-tabs-folder.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab[data-selected]::before {
+	box-shadow: 0 3px 0 var(--antilia-theme-primary, #c2410c) inset;
+}
+
+.antilia-tabs-folder.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab[data-selected]::before {
+	box-shadow: 3px 0 0 var(--antilia-theme-primary, #c2410c) inset;
+}
+
+.antilia-tabs-folder > .antilia-tabs-panels {
+	position: relative;
+	z-index: 1;
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 0.5em;
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+}
+
+.antilia-tabs-folder.antilia-tabs-horizontal > .antilia-tabs-panels {
+	border-top-left-radius: 0;
+}
+
+.antilia-tabs-folder.antilia-tabs-vertical > .antilia-tabs-panels {
+	border-top-left-radius: 0;
+}
+
+/* the selected tab covers the border of the panel it opens onto */
+.antilia-tabs-folder > .antilia-tabs-list {
+	position: relative;
+	z-index: 2;
+}
+
+.antilia-tabs-folder > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 1.25em;
+}
+
+/* lifted: cards on the page, the selected one lifted and marked in the primary color */
+
+.antilia-tabs-lifted > .antilia-tabs-list {
+	gap: 0.6em;
+}
+
+.antilia-tabs-lifted.antilia-tabs-horizontal > .antilia-tabs-list {
+	padding: 0.5em 0.25em 0.75em;
+}
+
+.antilia-tabs-lifted.antilia-tabs-vertical > .antilia-tabs-list {
+	padding: 0.25em 0.9em 0.25em 0.25em;
+}
+
+.antilia-tabs-lifted > .antilia-tabs-list > .antilia-tab {
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 0.6em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #2b1d12);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+	transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.antilia-tabs-lifted > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	box-shadow: 0 3px 8px rgb(0 0 0 / 0.12);
+}
+
+.antilia-tabs-lifted.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-top: 3px solid var(--antilia-theme-primary, #c2410c);
+	transform: translateY(-3px);
+}
+
+.antilia-tabs-lifted.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-left: 3px solid var(--antilia-theme-primary, #c2410c);
+	transform: translateX(3px);
+}
+
+.antilia-tabs-lifted > .antilia-tabs-list > .antilia-tab[data-selected] {
+	box-shadow: 0 6px 16px rgb(0 0 0 / 0.16);
+}
+
+.antilia-tabs-lifted > .antilia-tabs-panels {
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 0.75em;
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: 0 4px 14px rgb(0 0 0 / 0.08);
+}
+
+.antilia-tabs-lifted > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 1.25em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tab,
+	.antilia-tabs-lifted > .antilia-tabs-list > .antilia-tab {
+		transition: none;
+	}
+}
+
+/* sidebar: the navigation of an application, an accent on the selected entry */
+
+.antilia-tabs-sidebar > .antilia-tabs-list {
+	gap: 0.15em;
+	padding: 0.5em;
+	border-radius: 0.75em;
+	background: var(--antilia-theme-surface-alt, #fff4ec);
+}
+
+.antilia-tabs-sidebar.antilia-tabs-vertical > .antilia-tabs-list {
+	min-width: 11em;
+}
+
+.antilia-tabs-sidebar > .antilia-tabs-list > .antilia-tab {
+	border-radius: 0.45em;
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-sidebar > .antilia-tabs-list > .antilia-tab .antilia-tab-icon {
+	color: var(--antilia-theme-accent, #c2410c);
+}
+
+.antilia-tabs-sidebar > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+.antilia-tabs-sidebar > .antilia-tabs-list > .antilia-tab[data-selected] {
+	background: color-mix(in srgb, var(--antilia-theme-primary, #c2410c) 16%, var(--antilia-theme-surface, #ffffff));
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-sidebar.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab[data-selected] {
+	box-shadow: inset 4px 0 0 var(--antilia-theme-primary, #c2410c);
+}
+
+.antilia-tabs-sidebar.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab[data-selected] {
+	box-shadow: inset 0 -3px 0 var(--antilia-theme-primary, #c2410c);
+}
+
+.antilia-tabs-sidebar.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 0.5em;
+}
+
+.antilia-tabs-sidebar.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.5em 1.5em;
+}
+
+/* steps: numbered, joined by a line; the steps before the selected one are done */
+
+.antilia-tabs-steps > .antilia-tabs-list {
+	counter-reset: antilia-tabs-step;
+}
+
+.antilia-tabs-steps.antilia-tabs-horizontal > .antilia-tabs-list {
+	gap: 2em;
+	padding: 0.25em 0.25em 0.75em;
+}
+
+.antilia-tabs-steps.antilia-tabs-vertical > .antilia-tabs-list {
+	gap: 0.6em;
+	padding: 0.25em 1em 0.25em 0.25em;
+}
+
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab {
+	position: relative;
+	counter-increment: antilia-tabs-step;
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab > .antilia-tab-button {
+	gap: 0.7em;
+	padding: 0.3em 0.4em;
+	border-radius: 0.5em;
+}
+
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab > .antilia-tab-button:hover {
+	background: var(--antilia-theme-hover, #ffe3cc);
+}
+
+/* the number tells the step, without the icon */
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab .antilia-tab-icon {
+	display: none;
+}
+
+/* the number in its circle */
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab > .antilia-tab-button::before {
+	content: counter(antilia-tabs-step);
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 2em;
+	height: 2em;
+	border: 2px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 50%;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #2b1d12);
+	font-size: 0.9em;
+	font-weight: 600;
+}
+
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab[data-selected] > .antilia-tab-button::before {
+	border-color: var(--antilia-theme-primary, #c2410c);
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--antilia-theme-primary, #c2410c) 22%, transparent);
+}
+
+/* the steps done, before the selected one */
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab:has(~ .antilia-tab[data-selected]) > .antilia-tab-button::before {
+	content: "\2713";
+	border-color: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-primary, #c2410c);
+}
+
+/* the line to the next step */
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	background: var(--antilia-theme-border, #f2b98d);
+	pointer-events: none;
+}
+
+.antilia-tabs-steps > .antilia-tabs-list > .antilia-tab:has(~ .antilia-tab[data-selected])::after {
+	background: var(--antilia-theme-primary, #c2410c);
+}
+
+.antilia-tabs-steps.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab:not(:last-child)::after {
+	top: 50%;
+	left: calc(100% + 0.3em);
+	width: 1.4em;
+	height: 2px;
+	margin-top: -1px;
+}
+
+.antilia-tabs-steps.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab:not(:last-child)::after {
+	top: calc(0.3em + 1.8em + 0.2em);
+	bottom: calc(-0.6em - 0.3em + 0.2em);
+	left: calc(0.4em + 0.9em - 1px);
+	width: 2px;
+}
+
+.antilia-tabs-steps.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 1em 0.25em;
+}
+
+.antilia-tabs-steps.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.25em 1.25em;
+	border-left: 1px solid var(--antilia-theme-border, #f2b98d);
+}
+
+/* cards: each tab a card, the selected one pointing at the panel */
+
+.antilia-tabs-cards > .antilia-tabs-list {
+	gap: 0.5em;
+}
+
+.antilia-tabs-cards.antilia-tabs-horizontal > .antilia-tabs-list {
+	padding: 0.25em 0.25em 1em;
+}
+
+.antilia-tabs-cards.antilia-tabs-vertical > .antilia-tabs-list {
+	min-width: 11em;
+	padding: 0.25em 1.1em 0.25em 0.25em;
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab {
+	position: relative;
+	border: 1px solid var(--antilia-theme-border, #f2b98d);
+	border-radius: 0.6em;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab > .antilia-tab-button {
+	padding: 0.7em 1em;
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab .antilia-tab-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.9em;
+	height: 1.9em;
+	border-radius: 0.45em;
+	background: var(--antilia-theme-surface-alt, #fff4ec);
+	color: var(--antilia-theme-accent, #c2410c);
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab:not([data-selected]):hover {
+	border-color: var(--antilia-theme-accent, #c2410c);
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab[data-selected] {
+	border-color: var(--antilia-theme-primary, #c2410c);
+	box-shadow: 0 0 0 1px var(--antilia-theme-primary, #c2410c), 0 4px 12px rgb(0 0 0 / 0.1);
+}
+
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab[data-selected] .antilia-tab-icon {
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+/* the arrow of the selected card */
+.antilia-tabs-cards > .antilia-tabs-list > .antilia-tab[data-selected]::after {
+	content: "";
+	position: absolute;
+	width: 0.8em;
+	height: 0.8em;
+	border: solid var(--antilia-theme-primary, #c2410c);
+	background: var(--antilia-theme-surface, #ffffff);
+	pointer-events: none;
+}
+
+.antilia-tabs-cards.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tab[data-selected]::after {
+	top: 50%;
+	right: -0.5em;
+	border-width: 2px 2px 0 0;
+	transform: translateY(-50%) rotate(45deg);
+}
+
+.antilia-tabs-cards.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tab[data-selected]::after {
+	bottom: -0.5em;
+	left: 50%;
+	border-width: 0 2px 2px 0;
+	transform: translateX(-50%) rotate(45deg);
+}
+
+.antilia-tabs-cards.antilia-tabs-horizontal > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.5em 0.25em;
+}
+
+.antilia-tabs-cards.antilia-tabs-vertical > .antilia-tabs-panels > .antilia-tabs-panel {
+	padding: 0.25em 1em;
+}

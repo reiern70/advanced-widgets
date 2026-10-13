@@ -42,6 +42,8 @@
 	<entry key="demo.treeGrid.description">Un árbol con columnas: los nombres científicos, rangos y periodos del árbol de la vida, como TableTree de Wicket o dibujado en el navegador a partir de JSON como tree grid WAI-ARIA, con ramas cargadas a demanda y columnas redimensionables.</entry>
 	<entry key="demo.masterDetail">Maestra y detalle</entry>
 	<entry key="demo.masterDetail.description">Dos tablas que trabajan juntas: elija un país en la maestra, dibujada en el navegador a partir de JSON, y el detalle, dibujado en el servidor por componentes de Wicket, muestra sus usuarios por Ajax.</entry>
+	<entry key="demo.popovers">Popovers</entry>
+	<entry key="demo.popovers.description">Una burbuja con una flecha que apunta a lo que la abrió: a cualquier lado, centrada o a lo largo de un borde, en nueve diseños y cinco variantes del tema; con texto del servidor o componentes como un formulario, ayuda en campos y más sobre filas de tablas.</entry>
 	<entry key="demo.progressBar">Barra de progreso</entry>
 	<entry key="demo.progressBar.description">Progreso conocido y desconocido, movido por un temporizador Ajax, sobre el elemento progress nativo con rayas en movimiento, así que funciona bajo una Content Security Policy estricta.</entry>
 	<entry key="demo.notifications">Notificaciones</entry>
@@ -60,6 +62,8 @@
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas con los colores del tema, iguales en todos los navegadores, dibujadas sobre el desplazamiento nativo para que la rueda, las teclas y el tacto funcionen como siempre, y que siguen al contenido cambiado por Ajax.</entry>
 	<entry key="demo.splitPanel">Panel dividido</entry>
 	<entry key="demo.splitPanel.description">Paneles que se reparten el espacio, anidados como en un IDE: arrastre el divisor o muévalo con el teclado, pliegue un panel, tamaños en porcentaje o píxeles, y que el servidor conozca y recuerde la disposición.</entry>
+	<entry key="demo.tabs">Pestañas</entry>
+	<entry key="demo.tabs.description">Pestañas arriba o al lado, en nueve diseños: documentos que se cierran, preguntando antes si el servidor dice que tienen cambios sin guardar, con acciones propias y otros nuevos añadidos por Ajax.</entry>
 	<entry key="demo.desktop">Escritorio</entry>
 	<entry key="demo.desktop.description">Un escritorio dentro de la página: ventanas flotantes no modales con una barra de tareas; se mueven, pliegan, redimensionan, minimizan, maximizan, se colocan en mosaico y en cascada, y cada una tiene componentes reales como las tablas.</entry>
 	<entry key="demo.modalDialog">Diálogo modal</entry>

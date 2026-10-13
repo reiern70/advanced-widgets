@@ -19,12 +19,14 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+split panel, the tabs, the popovers, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
-and `AjaxActionButton` use). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Notifications`, `Desktop` with its
-`DesktopWindow`, `ProgressBar`, `Button`, `DataTable`, `Tree` and `TreeGrid`; the core's `dropdown`,
-`palette`, `datePicker`, `scrollbar`, `splitPanel` and `desktop`
+and `AjaxActionButton` use), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
+(in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Notifications`, `Desktop` with its
+`DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `DataTable`, `Tree` and `TreeGrid`, and
+export the core's `Popover`; the core's `dropdown`,
+`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs` and `desktop`
 also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
@@ -61,6 +63,73 @@ gives its model the new state, so a model of one's own can keep it in the sessio
 user's preferences. The core works on markup with both panes and the divider, which React, Svelte
 and Wicket all render, and sets the sizes as CSS custom properties through the CSSOM, so it needs
 no inline style. Split panels go in each other's panes.
+
+The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `Tabs`) show a list of tabs, along
+the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of the
+tab selected, in one of nine designs (`design`, `TABS_DESIGNS`, `TabsDesign` in Wicket), all in the colors
+of the theme: `tabs` joined to the panel, `pills` and `underline`, those `TabsStyle` gives Wicket's
+`TabbedPanel` too; `segmented`, `folder` and `lifted`, made for tabs along the top; `sidebar`,
+`steps` (numbered, those before the selected one done) and `cards` (pointing at the panel), made for
+tabs down the side. Every design works in both orientations, and in the look of the page too: in the
+Bootstrap look the list of `tabs`, `pills` and `underline` is Bootstrap's `nav nav-tabs`, `nav-pills`
+and `nav-underline`, the other designs stay the components' own. It is a WAI-ARIA tab list: a click selects a tab, and while the focus
+is on one the arrow keys select the next or the previous, Home and End the first and the last; only
+the selected tab takes the focus with Tab, then its actions and its close button. A closable tab
+(`data-closable="true"`) has a button closing it, after its title; Delete closes the tab with the
+focus, and so does the middle button. Closing a tab whose panel has changes not saved asks first, in
+the dialog of the desktop's markup (`unsaved.ts`, which the desktop uses too, so `modal.css` and
+`button.css` are needed), or as `confirmClose` does; closing it anyway puts its fields back as they
+were rendered and fires `antilia-tabs:discard` on the panel. A panel has changes as the desktop's
+windows do, by its fields or by `data-modified`, and its tab shows a dot meanwhile, which follows the
+user typing and the page changing `data-modified` (`setModified()`). A tab may have actions of the
+page's own, buttons in an element of the class `antilia-tab-actions` after its title, before the
+close button; a click on them does not select the tab. `onSelect` and `onClose` report what the
+user did; a closed tab is hidden, with `data-closed`, until the page takes it away or opens it again
+(`open()`). The core works on markup with a list of tabs and the panels, each tab and its panel
+sharing a name in `data-tab`, which React, Svelte and Wicket render, and adds and takes away as
+they please: the tabs find them as they come and go, set their roles and states, and hide the
+panels not selected. Tabs go in each other's panels. React has `Tabs` with `Tab` children, its ref
+a `TabsHandle`; Svelte's `Tabs` takes the list `tabs` and the snippets `panel`, `icon` and
+`actions`, and binds `selected`. In Wicket the tabs are `Tab`s with `TabAction`s, all panels
+rendered; the name of the tab selected is the model, and with `setSendToServer(true)` the browser
+sends each tab the user selects. The browser always tells the server the tabs the user closes,
+which `Tabs` takes away, calling `onClosed`; `addTab(tab, target)` and `removeTab(tab, target)`
+change the tabs via Ajax without rendering the other panels, and `setModified(tab, modified, target)`
+marks a tab whose changes the server heard of.
+
+The popovers (`popover.ts`, built as `antilia-popover.js` for Wicket's `Popover`) are bubbles with
+an arrow pointing at the element that opened them, their trigger, telling more about it: a `title`
+and a `body` of text, markup (`html`) or a node, and a `content`, an element of the page that moves
+into the popover while it is open and back to its place, hidden by its class
+`antilia-popover-content`, when it closes; its element with `autofocus` takes the focus.
+`Popover.show(trigger, options)` opens one next to the trigger where `placement` says
+(`POPOVER_PLACEMENTS`): on a side, centered (`top-center`, `right-center`, `bottom-center`,
+`left-center`) or along the trigger from one of its edges (`top-left`, `top-right`, `right-top`,
+`right-bottom`, `bottom-left`, `bottom-right`, `left-top`, `left-bottom`), its arrow on the middle of
+the trigger, or on the side with the most room (`auto`). Where it does not fit in the window it opens
+where it does: on the opposite side, else on the side across with the most room; without room
+anywhere it stays in the window over the trigger, without its arrow. It slides along to stay in the
+window with its arrow on the trigger, following it as the page scrolls and as its content resizes;
+`Popover.toggle()` closes the one open at the trigger instead. It closes with its close button,
+Escape, a click outside, a click on the trigger again (which the trigger's own listeners then do not
+get) or the trigger leaving the page; one is open at a time, and `Popover.closeAll()` closes it. It
+is a non-modal dialog labelled by its title, with `aria-expanded` and `aria-controls` on the
+trigger. Appended to the body, it copies the theme properties of its trigger, so it is in the
+trigger's theme, in the color of its `variant` (`default`, `info`, `success`, `warning`, `error`)
+and in one of nine designs (`design`, `POPOVER_DESIGNS`, `PopoverDesign` in Wicket): `card`, with a stripe of its color, `solid`,
+`outline`, `glass` (frosted), `inverse` (a deep shade of the theme, as a tooltip), `callout` (tinted, with a badge), `aurora`
+(a border flowing into the accent of the theme), `comic` (a speech bubble) and `neon`; where it is
+and its arrow are custom properties set through the CSSOM. It takes the look of its trigger as well
+(`look` to give another) and carries it into the body, `data-antilia-look` and `antilia-look-<name>`:
+in the Bootstrap look its header and body are Bootstrap's `popover-header` and `popover-body`, its
+close button `btn-close`, and the `card` takes the shape of Bootstrap's popover; `popoverClasses()`
+(`Popover.getCssClasses()` in Wicket) gives the classes of a bubble drawn in the page. React and Svelte have `PopoverButton`, a
+button opening a popover of `options` with a `content` they render, React through a portal, Svelte
+moving it. In Wicket, `new Popover(body).setTitle(...).show(target, trigger)` shows one in the
+response to an Ajax request; `new Popover(component)` shows a component of the page, a panel with a
+form for example, which the server may render again via Ajax as it shows it, and
+`Popover.close(target)` closes it. The action of a tab (`TabAction`, given its button) shows what
+the server knows of the tab this way.
 
 The notifications (`notifications.ts`, built as `antilia-notifications.js` for Wicket's
 `Notifications`) show short messages as toasts, stacked in a corner of the window or in the middle
@@ -152,7 +221,8 @@ have none of their own (`lookClasses`). The Bootstrap look (`BOOTSTRAP_LOOK`, `L
 gives the parts Bootstrap's classes: `btn btn-primary btn-sm` for a button, `modal-header` for a
 dialog's header, `table` for a data table, `dropdown-menu` and `dropdown-item` for a menu and its
 options, `card` for a panel, `alert alert-danger` for a notification of an error, `pagination` and
-`page-link` for Wicket's paging navigator... and its corners, shadows and focus rings through the
+`page-link` for Wicket's paging navigator, `nav nav-tabs` for tabs, `popover-header` for a popover's
+header... and its corners, shadows and focus rings through the
 custom properties `--antilia-look-radius`, `-radius-sm`, `-shadow`, `-shadow-lg` and `-focus-ring`.
 The page brings the style sheet of Bootstrap 5.3, any build of it, such as a theme of Bootswatch,
 never its script: what the components do stays their own. `antilia-look-bootstrap.css`, which the

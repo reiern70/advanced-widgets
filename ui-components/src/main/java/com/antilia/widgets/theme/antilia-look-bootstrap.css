@@ -360,7 +360,8 @@
 	opacity: var(--bs-btn-close-focus-opacity);
 }
 
-.antilia-look-bootstrap .antilia-floating-panel-close.btn-close > svg {
+.antilia-look-bootstrap :is(.antilia-floating-panel-close, .antilia-popover-close,
+	.antilia-tab-close).btn-close > svg {
 	display: none;
 }
 
@@ -648,4 +649,222 @@
 	border-bottom-color: currentcolor;
 	color: var(--bs-nav-underline-link-active-color);
 	font-weight: 700;
+}
+
+/*
+ * Tabs: in the designs tabs, pills and underline their list is Bootstrap's nav, each tab drawn as
+ * its nav-link, the selected one (data-selected) as the active one, as the tabs of TabbedPanel
+ * above; the buttons of a tab, its title, its actions and its close button, sit inside the link.
+ * Too many tabs scroll, rather than wrap, as without a look. The other designs are the components'
+ * own.
+ */
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav {
+	flex-wrap: nowrap;
+	gap: 0;
+	padding: 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav > .antilia-tab.nav-item {
+	color: var(--bs-nav-link-color);
+	font-size: var(--bs-nav-link-font-size);
+	font-weight: var(--bs-nav-link-font-weight);
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav > .antilia-tab.nav-item:hover {
+	color: var(--bs-nav-link-hover-color);
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav > .antilia-tab > .antilia-tab-button {
+	padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+	font-weight: inherit;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav >
+	.antilia-tab:has(> .antilia-tab-actions, > .antilia-tab-close) > .antilia-tab-button {
+	padding-inline-end: calc(var(--bs-nav-link-padding-x) / 3);
+}
+
+/* tabs: Bootstrap's nav-tabs, along the top; down the side the same, turned */
+
+.antilia-look-bootstrap .antilia-tabs-horizontal > .antilia-tabs-list.nav-tabs {
+	border-bottom: var(--bs-nav-tabs-border-width) solid var(--bs-nav-tabs-border-color);
+}
+
+.antilia-look-bootstrap .antilia-tabs-vertical > .antilia-tabs-list.nav-tabs {
+	border-right: var(--bs-nav-tabs-border-width) solid var(--bs-nav-tabs-border-color);
+	border-bottom: 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item {
+	border: var(--bs-nav-tabs-border-width) solid transparent;
+	background: none;
+}
+
+.antilia-look-bootstrap .antilia-tabs-horizontal > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item {
+	margin-bottom: calc(-1 * var(--bs-nav-tabs-border-width));
+	border-radius: var(--bs-nav-tabs-border-radius) var(--bs-nav-tabs-border-radius) 0 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs-vertical > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item {
+	margin-right: calc(-1 * var(--bs-nav-tabs-border-width));
+	border-radius: var(--bs-nav-tabs-border-radius) 0 0 var(--bs-nav-tabs-border-radius);
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item:not([data-selected]):hover {
+	border-color: var(--bs-nav-tabs-link-hover-border-color);
+	background: none;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item[data-selected] {
+	border-color: var(--bs-nav-tabs-link-active-border-color);
+	background-color: var(--bs-nav-tabs-link-active-bg);
+	color: var(--bs-nav-tabs-link-active-color);
+}
+
+.antilia-look-bootstrap .antilia-tabs-vertical > .antilia-tabs-list.nav-tabs > .antilia-tab.nav-item[data-selected] {
+	border-right-color: var(--bs-nav-tabs-link-active-bg);
+}
+
+/* the panels, out of the nav whose properties the tabs read: those of the page */
+.antilia-look-bootstrap .antilia-tabs:has(> .antilia-tabs-list.nav-tabs) > .antilia-tabs-panels {
+	border-color: var(--bs-border-color);
+	background-color: var(--bs-body-bg);
+}
+
+/* pills: Bootstrap's nav-pills, the selected one in the primary color */
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-pills > .antilia-tab.nav-item {
+	border-radius: var(--bs-nav-pills-border-radius);
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-pills > .antilia-tab.nav-item[data-selected] {
+	background-color: var(--bs-nav-pills-link-active-bg);
+	color: var(--bs-nav-pills-link-active-color);
+}
+
+/* underline: Bootstrap's nav-underline, the selected one bold over a line of its color */
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline {
+	gap: var(--bs-nav-underline-gap);
+	border: 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline > .antilia-tab.nav-item {
+	margin: 0;
+	border: 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs-horizontal > .antilia-tabs-list.nav-underline > .antilia-tab.nav-item {
+	border-bottom: var(--bs-nav-underline-border-width) solid transparent;
+}
+
+.antilia-look-bootstrap .antilia-tabs-vertical > .antilia-tabs-list.nav-underline > .antilia-tab.nav-item {
+	border-right: var(--bs-nav-underline-border-width) solid transparent;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline > .antilia-tab > .antilia-tab-button {
+	padding-right: 0;
+	padding-left: 0;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline >
+	.antilia-tab:has(> .antilia-tab-actions, > .antilia-tab-close) > .antilia-tab-button {
+	padding-inline-end: 0.3em;
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline > .antilia-tab.nav-item:not([data-selected]):hover {
+	border-color: var(--bs-border-color);
+}
+
+.antilia-look-bootstrap .antilia-tabs > .antilia-tabs-list.nav-underline > .antilia-tab.nav-item[data-selected] {
+	border-color: currentcolor;
+	color: var(--bs-nav-underline-link-active-color);
+	font-weight: 700;
+}
+
+/*
+ * The popovers: their header and body are Bootstrap's popover-header and popover-body, which read
+ * the properties of a .popover around them; a popover of the components has none, so that
+ * Bootstrap's rules leave the header and the body of its designs as they are. The card, the
+ * default design, takes the shape of Bootstrap's popover, in the colors of the theme: its corners,
+ * its shadow, its size of text, its room, and a header on the secondary surface over a line. A
+ * popover carries its look, antilia-look-bootstrap, being in the body of the page.
+ */
+
+.antilia-popover-card.antilia-look-bootstrap {
+	--bs-popover-border-width: var(--antilia-popover-edge-width);
+	--bs-popover-border-color: var(--antilia-popover-edge);
+	--bs-popover-inner-border-radius: calc(var(--bs-border-radius-lg) - var(--bs-border-width));
+	--bs-popover-header-padding-x: 1rem;
+	--bs-popover-header-padding-y: 0.5rem;
+	--bs-popover-header-font-size: 1rem;
+	--bs-popover-header-bg: var(--antilia-theme-surface-alt, var(--bs-secondary-bg));
+	--bs-popover-body-padding-x: 1rem;
+	--bs-popover-body-padding-y: 1rem;
+	--antilia-popover-radius: var(--bs-border-radius-lg);
+	--antilia-popover-shadow: var(--bs-box-shadow);
+	font-size: 0.875rem;
+	line-height: var(--bs-body-line-height);
+}
+
+.antilia-popover-card.antilia-look-bootstrap > .antilia-popover-header.popover-header {
+	padding: var(--bs-popover-header-padding-y) var(--bs-popover-header-padding-x);
+}
+
+.antilia-popover-card.antilia-look-bootstrap > .antilia-popover-header > .antilia-popover-title {
+	font-weight: 500;
+}
+
+.antilia-popover-card.antilia-look-bootstrap > .antilia-popover-body.popover-body {
+	padding: var(--bs-popover-body-padding-y) var(--bs-popover-body-padding-x);
+}
+
+/*
+ * The close buttons of the tabs and the popovers: Bootstrap's x, in the color of the text around
+ * it, as their designs are light or dark, the selected pill for one; its image is the mask of
+ * the button's ::before, so the button keeps its own ring of the focus
+ */
+.antilia-look-bootstrap :is(.antilia-tab-close, .antilia-popover-close).btn-close {
+	box-sizing: content-box;
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+	padding: 0.25em;
+	border: 0;
+	border-radius: var(--bs-border-radius);
+	background-image: none;
+	color: inherit;
+	filter: none;
+	opacity: var(--bs-btn-close-opacity);
+}
+
+.antilia-look-bootstrap :is(.antilia-tab-close, .antilia-popover-close).btn-close::before {
+	content: "";
+	width: 100%;
+	height: 100%;
+	background-color: currentColor;
+	-webkit-mask: url("antilia-look-bootstrap-close.svg") center / contain no-repeat;
+	mask: url("antilia-look-bootstrap-close.svg") center / contain no-repeat;
+}
+
+.antilia-look-bootstrap :is(.antilia-tab-close, .antilia-popover-close).btn-close:hover {
+	opacity: var(--bs-btn-close-hover-opacity);
+}
+
+.antilia-look-bootstrap :is(.antilia-tab-close, .antilia-popover-close).btn-close:focus-visible {
+	outline: 0;
+	box-shadow: var(--bs-btn-close-focus-shadow);
+	opacity: var(--bs-btn-close-focus-opacity);
+}
+
+/* small in a tab */
+.antilia-look-bootstrap .antilia-tab > .antilia-tab-close.btn-close {
+	width: 0.6em;
+	height: 0.6em;
+	padding: 0.35em;
+	border-radius: var(--bs-border-radius-sm);
 }

@@ -1,0 +1,378 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The popovers of antilia-popover.js: a bubble with an arrow pointing at its trigger, in the
+ * colors of the theme of the trigger, which the script copies onto it, and in colors of their own
+ * outside one. The script sets where the bubble is, --antilia-popover-x and --antilia-popover-y,
+ * and where its arrow points along its side, --antilia-popover-arrow, and says the side of the
+ * trigger it is on in data-side.
+ *
+ * The bubble and its arrow draw themselves from the custom properties of the popover, which each
+ * design (antilia-popover-<design>) sets: its background, its color, its edge, its corners and its
+ * shadow, in the color of its variant (antilia-popover-<variant>), --antilia-popover-color. The
+ * header and the body are found as parts of the bubble, so that the classes of a look on them,
+ * such as Bootstrap's popover-header, do not undo their room; antilia-look-bootstrap.css draws the
+ * Bootstrap look.
+ */
+.antilia-popover {
+	--antilia-popover-color: var(--antilia-theme-primary, #c2410c);
+	--antilia-popover-background: var(--antilia-theme-surface, #ffffff);
+	--antilia-popover-foreground: var(--antilia-theme-text, #2b1d12);
+	--antilia-popover-edge: var(--antilia-theme-border, #f2b98d);
+	--antilia-popover-edge-width: 1px;
+	--antilia-popover-radius: 0.6em;
+	--antilia-popover-shadow: 0 10px 30px rgb(0 0 0 / 0.18), 0 2px 6px rgb(0 0 0 / 0.08);
+	/* its color, toward the text of the theme so that it reads on light and dark surfaces */
+	--antilia-popover-title: color-mix(in srgb, var(--antilia-popover-color) 72%,
+		var(--antilia-theme-text, #2b1d12));
+	--antilia-popover-hover: var(--antilia-theme-hover, #ffe3cc);
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 10000;
+	box-sizing: border-box;
+	width: max-content;
+	max-width: min(var(--antilia-popover-max-width, 20rem), calc(100vw - 16px));
+	border: var(--antilia-popover-edge-width) solid var(--antilia-popover-edge);
+	border-radius: var(--antilia-popover-radius);
+	background: var(--antilia-popover-background);
+	color: var(--antilia-popover-foreground);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+	box-shadow: var(--antilia-popover-shadow);
+	font-size: 0.9rem;
+	line-height: 1.45;
+	text-align: start;
+	transform: translate(var(--antilia-popover-x, 0), var(--antilia-popover-y, 0));
+	animation: antilia-popover-in 0.14s ease-out;
+}
+
+.antilia-popover:focus {
+	outline: none;
+}
+
+.antilia-popover:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #c2410c);
+	outline-offset: 2px;
+}
+
+.antilia-popover-info {
+	--antilia-popover-color: var(--antilia-theme-info, #2b6cb0);
+}
+
+.antilia-popover-success {
+	--antilia-popover-color: var(--antilia-theme-success, #2f855a);
+}
+
+.antilia-popover-warning {
+	--antilia-popover-color: var(--antilia-theme-warning, #d97706);
+}
+
+.antilia-popover-error {
+	--antilia-popover-color: var(--antilia-theme-error, #c53030);
+}
+
+.antilia-popover > .antilia-popover-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.65em 0.5em 0 0.9em;
+}
+
+.antilia-popover-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	color: var(--antilia-popover-title);
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+
+.antilia-popover-close {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 1.6em;
+	height: 1.6em;
+	margin-left: auto;
+	padding: 0;
+	border: 0;
+	border-radius: 0.3em;
+	background: none;
+	color: inherit;
+	opacity: 0.6;
+	cursor: pointer;
+}
+
+.antilia-popover-close:hover {
+	background: var(--antilia-popover-hover);
+	opacity: 1;
+}
+
+.antilia-popover-close:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+	opacity: 1;
+}
+
+.antilia-popover > .antilia-popover-body {
+	padding: 0.5em 0.9em 0.8em;
+	overflow-wrap: anywhere;
+}
+
+.antilia-popover > .antilia-popover-body:first-child,
+.antilia-popover > .antilia-popover-arrow + .antilia-popover-body {
+	padding-top: 0.8em;
+}
+
+/* the content a popover shows: hidden in the page, in the popover only while it is open */
+.antilia-popover-content:not(.antilia-popover-body > .antilia-popover-content) {
+	display: none;
+}
+
+.antilia-popover-body > .antilia-popover-content:not(:first-child) {
+	margin-top: 0.6em;
+}
+
+/*
+ * The arrow: a square turned on its corner, centered on the inner edge of the bubble, cut along
+ * that edge so that only the half out of the bubble shows, covering its edge there.
+ */
+.antilia-popover-arrow {
+	position: absolute;
+	width: 0.9em;
+	height: 0.9em;
+	box-sizing: border-box;
+	border: var(--antilia-popover-edge-width) solid
+		var(--antilia-popover-arrow-edge, var(--antilia-popover-edge));
+	background: var(--antilia-popover-arrow-background, var(--antilia-popover-background));
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.antilia-popover[data-side="bottom"] > .antilia-popover-arrow {
+	top: 0;
+	left: var(--antilia-popover-arrow, 50%);
+	border-right: none;
+	border-bottom: none;
+	clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.antilia-popover[data-side="top"] > .antilia-popover-arrow {
+	top: 100%;
+	left: var(--antilia-popover-arrow, 50%);
+	border-top: none;
+	border-left: none;
+	clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.antilia-popover[data-side="right"] > .antilia-popover-arrow {
+	top: var(--antilia-popover-arrow, 50%);
+	left: 0;
+	border-top: none;
+	border-right: none;
+	clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+
+.antilia-popover[data-side="left"] > .antilia-popover-arrow {
+	top: var(--antilia-popover-arrow, 50%);
+	left: 100%;
+	border-bottom: none;
+	border-left: none;
+	clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+/* pushed into the window over its trigger, without room on any side: no arrow then */
+.antilia-popover[data-cramped] > .antilia-popover-arrow {
+	display: none;
+}
+
+/* card, the default: the surface of the theme with a stripe of its color along the top */
+.antilia-popover-card::before {
+	content: "";
+	position: absolute;
+	inset: calc(-1 * var(--antilia-popover-edge-width)) calc(-1 * var(--antilia-popover-edge-width))
+		auto;
+	height: 4px;
+	border-radius: var(--antilia-popover-radius) var(--antilia-popover-radius) 0 0;
+	background: var(--antilia-popover-color);
+}
+
+/* the stripe goes on into the arrow above it */
+.antilia-popover-card[data-side="bottom"] {
+	--antilia-popover-arrow-background: var(--antilia-popover-color);
+	--antilia-popover-arrow-edge: var(--antilia-popover-color);
+}
+
+/* solid: filled with its color, a shade darker for the colors of the variants */
+.antilia-popover-solid {
+	--antilia-popover-background: color-mix(in srgb, var(--antilia-popover-color) 86%, #000000);
+	--antilia-popover-foreground: #ffffff;
+	--antilia-popover-edge: transparent;
+	--antilia-popover-arrow-edge: var(--antilia-popover-background);
+	--antilia-popover-title: var(--antilia-popover-foreground);
+	--antilia-popover-hover: rgb(255 255 255 / 0.2);
+}
+
+.antilia-popover-solid.antilia-popover-default {
+	--antilia-popover-background: var(--antilia-theme-primary, #c2410c);
+	--antilia-popover-foreground: var(--antilia-theme-on-primary, #ffffff);
+}
+
+/* outline: flat, drawn by a line of its color */
+.antilia-popover-outline {
+	--antilia-popover-edge: var(--antilia-popover-color);
+	--antilia-popover-edge-width: 2px;
+	--antilia-popover-radius: 0.35em;
+	--antilia-popover-shadow: none;
+}
+
+/* glass: frosted, the page showing blurred through it */
+.antilia-popover-glass {
+	--antilia-popover-background: color-mix(in srgb, var(--antilia-theme-surface, #ffffff) 62%,
+		transparent);
+	--antilia-popover-edge: color-mix(in srgb, var(--antilia-popover-color) 35%, transparent);
+	--antilia-popover-radius: 1em;
+	--antilia-popover-shadow: 0 8px 32px rgb(0 0 0 / 0.2),
+		inset 0 1px 0 rgb(255 255 255 / 0.35);
+	-webkit-backdrop-filter: blur(14px) saturate(1.6);
+	backdrop-filter: blur(14px) saturate(1.6);
+}
+
+.antilia-popover-glass > .antilia-popover-arrow {
+	-webkit-backdrop-filter: blur(14px) saturate(1.6);
+	backdrop-filter: blur(14px) saturate(1.6);
+}
+
+/* inverse: the colors of the theme the other way round, a deep shade of its primary color behind
+   the color of its surface, small, as a tooltip */
+.antilia-popover-inverse {
+	--antilia-popover-background: color-mix(in srgb, var(--antilia-theme-primary, #c2410c) 30%,
+		var(--antilia-theme-text, #2b1d12));
+	--antilia-popover-foreground: var(--antilia-theme-surface, #ffffff);
+	--antilia-popover-edge: transparent;
+	--antilia-popover-arrow-edge: var(--antilia-popover-background);
+	--antilia-popover-radius: 0.45em;
+	--antilia-popover-title: color-mix(in srgb, var(--antilia-popover-color) 55%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-popover-hover: color-mix(in srgb, var(--antilia-theme-surface, #ffffff) 18%,
+		transparent);
+	font-size: 0.82rem;
+}
+
+/* callout: tinted with its color, a bar along its side and a badge saying what it stands for */
+.antilia-popover-callout {
+	--antilia-popover-background: color-mix(in srgb, var(--antilia-popover-color) 10%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-popover-edge: color-mix(in srgb, var(--antilia-popover-color) 40%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-popover-radius: 0.5em;
+	--antilia-popover-shadow: inset 4px 0 0 var(--antilia-popover-color),
+		0 6px 18px rgb(0 0 0 / 0.12);
+	--antilia-popover-hover: color-mix(in srgb, var(--antilia-popover-color) 18%, transparent);
+	--antilia-popover-badge: "\2726";
+}
+
+.antilia-popover-callout.antilia-popover-info {
+	--antilia-popover-badge: "i";
+}
+
+.antilia-popover-callout.antilia-popover-success {
+	--antilia-popover-badge: "\2713";
+}
+
+.antilia-popover-callout.antilia-popover-warning {
+	--antilia-popover-badge: "!";
+}
+
+.antilia-popover-callout.antilia-popover-error {
+	--antilia-popover-badge: "\2715";
+}
+
+.antilia-popover-callout .antilia-popover-header,
+.antilia-popover-callout .antilia-popover-body {
+	padding-left: 1.2em;
+}
+
+.antilia-popover-callout .antilia-popover-header::before {
+	content: var(--antilia-popover-badge);
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 50%;
+	background: var(--antilia-popover-color);
+	color: var(--antilia-theme-surface, #ffffff);
+	font-size: 0.85em;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* aurora: a border of the colors of the popover and of the theme flowing into each other */
+.antilia-popover-aurora {
+	--antilia-popover-background: linear-gradient(var(--antilia-theme-surface, #ffffff),
+		var(--antilia-theme-surface, #ffffff)) padding-box, linear-gradient(135deg,
+		var(--antilia-popover-color), var(--antilia-theme-accent, #7c3aed),
+		var(--antilia-popover-color)) border-box;
+	--antilia-popover-edge: transparent;
+	--antilia-popover-edge-width: 2px;
+	--antilia-popover-arrow-background: var(--antilia-theme-surface, #ffffff);
+	--antilia-popover-arrow-edge: var(--antilia-popover-color);
+	--antilia-popover-radius: 1em;
+	--antilia-popover-shadow: 0 12px 36px color-mix(in srgb, var(--antilia-popover-color) 30%,
+		transparent);
+}
+
+.antilia-popover-aurora .antilia-popover-title {
+	background: linear-gradient(90deg, var(--antilia-popover-title), color-mix(in srgb,
+		var(--antilia-theme-accent, #7c3aed) 72%, var(--antilia-theme-text, #2b1d12)));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* comic: a speech bubble, outlined in ink with a hard shadow and a title in capitals */
+.antilia-popover-comic {
+	--antilia-popover-edge: var(--antilia-theme-text, #2b1d12);
+	--antilia-popover-edge-width: 2px;
+	--antilia-popover-radius: 1.1em;
+	--antilia-popover-shadow: 4px 4px 0 var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-popover-comic .antilia-popover-title {
+	font-family: "Comic Neue", "Comic Sans MS", "Chalkboard SE", "Marker Felt", system-ui, sans-serif;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* neon: a line of its color glowing around it */
+.antilia-popover-neon {
+	--antilia-popover-background: color-mix(in srgb, var(--antilia-theme-surface, #ffffff) 92%,
+		var(--antilia-popover-color));
+	--antilia-popover-edge: var(--antilia-popover-color);
+	--antilia-popover-radius: 0.5em;
+	--antilia-popover-shadow: 0 0 0 1px color-mix(in srgb, var(--antilia-popover-color) 40%,
+		transparent), 0 0 14px color-mix(in srgb, var(--antilia-popover-color) 55%, transparent),
+		0 0 36px color-mix(in srgb, var(--antilia-popover-color) 30%, transparent);
+	--antilia-popover-hover: color-mix(in srgb, var(--antilia-popover-color) 18%, transparent);
+}
+
+.antilia-popover-neon .antilia-popover-title {
+	text-shadow: 0 0 8px color-mix(in srgb, var(--antilia-popover-color) 70%, transparent);
+}
+
+@keyframes antilia-popover-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-popover {
+		animation: none;
+	}
+}

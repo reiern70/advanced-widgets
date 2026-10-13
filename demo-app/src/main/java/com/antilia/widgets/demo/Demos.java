@@ -24,9 +24,11 @@ import com.antilia.widgets.demo.looks.LooksPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.notification.NotificationsPage;
 import com.antilia.widgets.demo.palette.PalettePage;
+import com.antilia.widgets.demo.popover.PopoversPage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
+import com.antilia.widgets.demo.tabs.TabsPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
 import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.demo.tree.TreeGridPage;
@@ -99,6 +101,7 @@ public final class Demos
 		new Demo("masterDetail", "data", MasterDetailPage.class, false, false),
 		new Demo("progressBar", "feedback", ProgressBarPage.class, true, true),
 		new Demo("notifications", "feedback", NotificationsPage.class, true, true),
+		new Demo("popovers", "feedback", PopoversPage.class, true, true),
 		new Demo("dropdown", "forms", DropdownPage.class, true, true),
 		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
 		new Demo("palette", "forms", PalettePage.class, true, true),
@@ -106,6 +109,7 @@ public final class Demos
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
+		new Demo("tabs", "layout", TabsPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
 		new Demo("desktop", "layout", DesktopPage.class, false, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, true, false),

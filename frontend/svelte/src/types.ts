@@ -32,3 +32,26 @@ export type DesktopWindowType = {
 		minHeight?: number; resizable?: boolean; maximizable?: boolean; minimizable?: boolean;
 		foldable?: boolean; modified?: boolean; class?: string; bodyClass?: string };
 };
+
+/**
+ * A tab of Tabs: its name, its title and what the user may do with it. The panel, the icon and
+ * the actions are snippets of Tabs, given the tab.
+ */
+export interface TabItem {
+	/** The name of the tab, which the tabs know it by. */
+	id: string;
+	/** The title of the tab. */
+	title: string;
+	/** Whether the tab has a button closing it, false when left out. */
+	closable?: boolean;
+	/**
+	 * Whether the panel has changes not saved, which the user is asked about before the tab
+	 * closes; when left out, whether a field in it holds another value than the one it was
+	 * rendered with.
+	 */
+	modified?: boolean;
+	/** CSS classes of the tab, next to antilia-tab. */
+	class?: string;
+	/** CSS classes of the panel, next to antilia-tabs-panel. */
+	panelClass?: string;
+}

@@ -1,0 +1,145 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+import { useState } from 'react';
+
+import { Button, Popover, Tab, Tabs, type TabsDesign } from '@antilia/react';
+
+import { format } from '../data.js';
+import { documentsOf, newDocument, popoverOf, type Document, type GalleryConfig,
+	type TabsConfig } from '../tabs.js';
+import { Icon } from './DialogOptionsDemo.js';
+
+/**
+ * The Tabs demo in React: the tabs of the Wicket page, in its markup. The app keeps the documents:
+ * a tab is marked while its text differs from the one saved, and closing it takes the document
+ * away. Its action shows what the app knows of the document in a popover pointing at it.
+ */
+export function TabsDemo({ config }: { config: TabsConfig }) {
+	const { texts, icons } = config;
+	const [documents, setDocuments] = useState<Document[]>(() => documentsOf(config));
+	const [selected, setSelected] = useState('welcome');
+	const [untitled, setUntitled] = useState(0);
+	const [message, setMessage] = useState(texts.start);
+	const [vertical, setVertical] = useState(config.vertical);
+	const [design, setDesign] = useState<TabsDesign>(config.design);
+	const [section, setSection] = useState(config.sections[0]);
+
+	const update = (id: string, change: Partial<Document>) => setDocuments((all) =>
+		all.map((document) => document.id === id ? { ...document, ...change } : document));
+
+	return (
+		<div className="tabs-demo">
+			<section>
+				<div className="tabs-demo__heading">
+					<h3>{texts.documentsTitle}</h3>
+					<Button label={texts.newDocument} size="small" className="tabs-demo__new"
+						onClick={() => {
+							const document = newDocument(config, untitled + 1);
+							setUntitled(untitled + 1);
+							setDocuments([...documents, document]);
+							setSelected(document.id);
+							setMessage(format(texts.opened, document.name));
+						}} />
+				</div>
+				<Tabs className="tabs-demo__documents" label={texts.documents} texts={config.tabs}
+					selected={selected} onSelect={setSelected}
+					onClose={(id) => {
+						const closed = documents.find((document) => document.id === id);
+						setDocuments(documents.filter((document) => document.id !== id));
+						if (closed) {
+							setMessage(format(texts.closed, closed.name));
+						}
+					}}>
+					<Tab id="welcome" title={texts.welcome} icon={<Icon markup={icons.welcome} />}>
+						<p className="tabs-demo__text">{texts.welcomeText}</p>
+					</Tab>
+					{documents.map((document) => (
+						<Tab key={document.id} id={document.id} title={document.name} closable
+							modified={document.text !== document.saved}
+							icon={<Icon markup={icons.document} />}
+							actions={<button type="button" title={texts.about} aria-label={texts.about}
+								onClick={(event) => Popover.toggle(event.currentTarget,
+									popoverOf(config, document))}>
+								<Icon markup={icons.info} />
+							</button>}>
+							<form className="tabs-demo__document" onSubmit={(event) => {
+								event.preventDefault();
+								update(document.id, { saved: document.text });
+								setMessage(format(texts.saved, document.name));
+							}}>
+								<textarea className="tabs-demo__editor" rows={6} aria-label={document.name}
+									value={document.text}
+									onChange={(event) => update(document.id, { text: event.currentTarget.value })} />
+								<div><Button type="submit" label={texts.save} variant="primary" size="small" /></div>
+							</form>
+						</Tab>
+					))}
+				</Tabs>
+				<p className="tabs-demo__status" role="status">{message}</p>
+			</section>
+			<section>
+				<h3>{texts.settingsTitle}</h3>
+				<div className="tabs-demo__controls">
+					<label className="tabs-demo__control">
+						<input type="checkbox" checked={vertical}
+							onChange={(event) => setVertical(event.currentTarget.checked)} />
+						{' '}{texts.vertical}
+					</label>
+					<label className="tabs-demo__control">
+						{texts.design}{' '}
+						<select value={design} onChange={(event) => setDesign(event.currentTarget.value as TabsDesign)}>
+							{config.designs.map((each) => <option key={each} value={each}>
+								{texts['design.' + each.toUpperCase()]}</option>)}
+						</select>
+					</label>
+				</div>
+				<Tabs className="tabs-demo__settings" label={texts.settings} texts={config.tabs}
+					orientation={vertical ? 'vertical' : 'horizontal'} design={design} selected={section}
+					onSelect={setSection}>
+					{config.sections.map((name) => (
+						<Tab key={name} id={name} title={texts[name]}>{texts[name + '.text']}</Tab>
+					))}
+				</Tabs>
+				<p className="tabs-demo__status">{format(texts.selected, texts[section])}</p>
+			</section>
+			<section>
+				<h3>{texts.galleryTitle}</h3>
+				<h4 className="tabs-demo__group">{texts.alongTheTop}</h4>
+				<Gallery config={config} part={config.gallery.top} orientation="horizontal" />
+				<h4 className="tabs-demo__group">{texts.downTheSide}</h4>
+				<Gallery config={config} part={config.gallery.side} orientation="vertical" />
+			</section>
+		</div>
+	);
+}
+
+/**
+ * A part of the gallery: tabs in each of its designs, under the name of the design.
+ */
+function Gallery({ config, part, orientation }: { config: TabsConfig; part: GalleryConfig;
+	orientation: 'horizontal' | 'vertical' }) {
+	const { texts } = config;
+	return (
+		<div className={'tabs-demo__gallery tabs-demo__gallery--' +
+			(orientation === 'horizontal' ? 'top' : 'side')}>
+			{part.designs.map((design) => {
+				const name = texts['design.' + design.toUpperCase()];
+				return (
+					<figure key={design} className="tabs-demo__example">
+						<figcaption>{name}</figcaption>
+						<Tabs design={design} orientation={orientation} label={name} texts={config.tabs}
+							selected={part.selected}>
+							{part.tabs.map((tab) => (
+								<Tab key={tab.name} id={tab.name} title={texts[tab.name]}
+									icon={<Icon markup={tab.icon} />}>{texts[tab.name + '.text']}</Tab>
+							))}
+						</Tabs>
+					</figure>
+				);
+			})}
+		</div>
+	);
+}

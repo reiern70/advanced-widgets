@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Pestañas</entry>
+	<entry key="explanation">&lt;p&gt;Tabs de ui-components muestra una lista de pestañas, a lo largo de la parte superior de sus paneles o en su lado izquierdo, y el panel de la pestaña seleccionada. Haga clic en una pestaña, o dele el foco con Tab y muévase con las flechas, Inicio y Fin. Los paneles de todas las pestañas están en la página, así que cambiar no necesita ninguna petición y conserva lo que escribió en cada una.&lt;/p&gt;&lt;p&gt;Los documentos se pueden cerrar: con su ×, con Supr mientras su pestaña tiene el foco, o con el botón central. Cada cambio que hace en un documento llega al servidor por el comportamiento Ajax de su área de texto, y el servidor marca su pestaña con un punto: cambios sin guardar. Cerrar una pestaña con cambios pregunta antes, en un diálogo, y cerrarla de todos modos devuelve su texto; el servidor se entera entonces de la pestaña cerrada y la olvida. Guardar quita la marca. El botón antes de la × de un documento es una acción de la página: muestra lo que el servidor sabe del documento en un popover, una burbuja que lo señala, en los colores del tema: en su color principal si todo está guardado, ámbar con cambios. Un clic fuera, Escape o el botón de nuevo lo cierran. Nuevo documento añade una pestaña por Ajax sin volver a mostrar las demás, así que lo que escribió en ellas se queda.&lt;/p&gt;&lt;p&gt;Las segundas pestañas toman cualquiera de nueve diseños, arriba o al lado: pestañas, píldoras y subrayado; segmentado, carpeta y elevado, pensados para pestañas arriba; barra lateral, pasos y tarjetas, pensados para pestañas al lado, que muestra la galería de debajo. Todos toman sus colores del tema; con setSendToServer el servidor se entera de cada pestaña que selecciona, como dice la frase de debajo. Todo funciona con una Content Security Policy estricta, sin estilos en línea.&lt;/p&gt;</entry>
+	<entry key="documentsTitle">Documentos, editados en el servidor</entry>
+	<entry key="documents">Documentos</entry>
+	<entry key="welcome">Bienvenida</entry>
+	<entry key="welcomeText">Esta pestaña no se puede cerrar. Las demás son documentos: escriba en uno y el servidor se entera y marca su pestaña; guárdelo y la marca se va. Cierre un documento con cambios y se le preguntará antes.</entry>
+	<entry key="newDocument">Nuevo documento</entry>
+	<entry key="save">Guardar</entry>
+	<entry key="about">Sobre este documento</entry>
+	<entry key="info">{0}: {1} líneas, {2} caracteres; {3}.</entry>
+	<entry key="unsaved">cambios sin guardar</entry>
+	<entry key="allSaved">todo guardado</entry>
+	<entry key="untitled">sin-titulo-{0}.txt</entry>
+	<entry key="closed">El servidor olvidó {0}, cerrado.</entry>
+	<entry key="saved">{0} guardado.</entry>
+	<entry key="opened">{0} abierto.</entry>
+	<entry key="start">Cierre un documento con su ×, Supr o el botón central; uno con cambios pregunta antes.</entry>
+	<entry key="settingsTitle">Cualquier diseño, arriba o al lado</entry>
+	<entry key="settings">Ajustes</entry>
+	<entry key="vertical">Al lado</entry>
+	<entry key="design">Diseño</entry>
+	<entry key="design.TABS">Pestañas</entry>
+	<entry key="design.PILLS">Píldoras</entry>
+	<entry key="design.UNDERLINE">Subrayado</entry>
+	<entry key="selected">El servidor conoce la pestaña seleccionada: {0}.</entry>
+	<entry key="profile">Perfil</entry>
+	<entry key="profile.text">Su nombre, su foto y cómo le ven los demás.</entry>
+	<entry key="alerts">Avisos</entry>
+	<entry key="alerts.text">De qué le informamos, y si por correo o en la aplicación.</entry>
+	<entry key="privacy">Privacidad</entry>
+	<entry key="privacy.text">Quién ve su actividad, y qué guardamos de ella.</entry>
+	<entry key="design.SEGMENTED">Segmentado</entry>
+	<entry key="design.FOLDER">Carpeta</entry>
+	<entry key="design.LIFTED">Elevado</entry>
+	<entry key="design.SIDEBAR">Barra lateral</entry>
+	<entry key="design.STEPS">Pasos</entry>
+	<entry key="design.CARDS">Tarjetas</entry>
+	<entry key="galleryTitle">Una galería de diseños</entry>
+	<entry key="alongTheTop">Pensados para pestañas arriba</entry>
+	<entry key="downTheSide">Pensados para pestañas al lado</entry>
+	<entry key="overview">Resumen</entry>
+	<entry key="overview.text">Una chaqueta ligera y cálida para la ciudad y la montaña, rellena de plumón reciclado.</entry>
+	<entry key="specs">Detalles</entry>
+	<entry key="specs.text">Peso 420 g. Repele el agua. Dos bolsillos con cremallera y uno interior. Se guarda en su propio bolsillo.</entry>
+	<entry key="reviews">Opiniones</entry>
+	<entry key="reviews.text">4,7 de 5 en 128 opiniones: «Abriga sin abultar».</entry>
+	<entry key="account">Cuenta</entry>
+	<entry key="account.text">Quién es usted: su nombre y su correo electrónico.</entry>
+	<entry key="shipping">Envío</entry>
+	<entry key="shipping.text">Adónde va y con qué rapidez: estándar, urgente o recogida en tienda.</entry>
+	<entry key="payment">Pago</entry>
+	<entry key="payment.text">Cómo paga: con tarjeta, por transferencia o contra reembolso. Los pasos anteriores están hechos.</entry>
+	<entry key="review">Revisar</entry>
+	<entry key="review.text">Todo de un vistazo antes de hacer el pedido.</entry>
+</properties>

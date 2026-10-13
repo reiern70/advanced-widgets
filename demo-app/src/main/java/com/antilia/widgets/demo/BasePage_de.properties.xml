@@ -42,6 +42,8 @@
 	<entry key="demo.treeGrid.description">Ein Baum mit Spalten: wissenschaftliche Namen, Ränge und Zeitalter des Stammbaums des Lebens, als Wicket-TableTree oder vom Browser aus JSON als WAI-ARIA-Tree-Grid gezeichnet, mit nachgeladenen Zweigen und Spalten mit änderbarer Breite.</entry>
 	<entry key="demo.masterDetail">Master und Detail</entry>
 	<entry key="demo.masterDetail.description">Zwei Grids im Zusammenspiel: Wählen Sie im Master, den der Browser aus JSON zeichnet, ein Land, und das Detail, auf dem Server von Wicket-Komponenten gezeichnet, zeigt per Ajax seine Benutzer.</entry>
+	<entry key="demo.popovers">Popover</entry>
+	<entry key="demo.popovers.description">Eine Blase mit einem Pfeil, der auf ihren Auslöser zeigt: auf jeder Seite, mittig oder an einer Kante, in neun Designs und fünf Varianten des Themes; mit Text vom Server oder Komponenten wie einem Formular, Hilfe zu Feldern und mehr zu Tabellenzeilen.</entry>
 	<entry key="demo.progressBar">Fortschrittsbalken</entry>
 	<entry key="demo.progressBar.description">Bekannter und unbekannter Fortschritt, von einem Ajax-Timer angetrieben, auf dem nativen progress-Element mit wandernden Streifen, sodass er unter einer strikten Content Security Policy funktioniert.</entry>
 	<entry key="demo.notifications">Mitteilungen</entry>
@@ -60,6 +62,8 @@
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Themes, in jedem Browser gleich, über dem nativen Scrollen gezeichnet, sodass Mausrad, Tasten und Touch wie immer funktionieren, und sie folgen per Ajax geändertem Inhalt.</entry>
 	<entry key="demo.splitPanel">Geteiltes Panel</entry>
 	<entry key="demo.splitPanel.description">Bereiche, die sich den Platz teilen, verschachtelt wie in einer IDE: Trenner ziehen oder mit der Tastatur bewegen, einen Bereich einklappen, Größen in Prozent oder Pixeln, und der Server erfährt und merkt sich die Aufteilung.</entry>
+	<entry key="demo.tabs">Tabs</entry>
+	<entry key="demo.tabs.description">Tabs oben oder an der Seite, in neun Designs: Dokumente, die sich schließen lassen und zuerst fragen, wenn der Server nicht gespeicherte Änderungen meldet, mit eigenen Aktionen und neuen, per Ajax hinzugefügten.</entry>
 	<entry key="demo.desktop">Desktop</entry>
 	<entry key="demo.desktop.description">Ein Desktop in der Seite: schwebende, nicht modale Fenster mit einer Taskleiste; sie lassen sich verschieben, einklappen, in der Größe ändern, minimieren, maximieren, nebeneinander und überlappend anordnen, und jedes enthält echte Komponenten wie die Grids.</entry>
 	<entry key="demo.modalDialog">Modaler Dialog</entry>

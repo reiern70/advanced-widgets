@@ -1,0 +1,136 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+.tabs-demo {
+	display: grid;
+	gap: 16px;
+}
+
+.tabs-demo section {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.tabs-demo h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+}
+
+.tabs-demo__heading {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.tabs-demo__documents .antilia-tabs-panel {
+	min-height: 180px;
+}
+
+.tabs-demo__document {
+	display: grid;
+	gap: 8px;
+}
+
+.tabs-demo__editor {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 120px;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--surface);
+	color: inherit;
+	font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	resize: vertical;
+}
+
+.tabs-demo__text {
+	margin: 0;
+	line-height: 1.5;
+}
+
+.tabs-demo__status {
+	margin: 12px 0 0;
+	color: var(--muted);
+	font-size: 14px;
+}
+
+.tabs-demo__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	align-items: center;
+	margin: 0 0 12px;
+}
+
+.tabs-demo__control {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.tabs-demo__settings .antilia-tabs-panel {
+	min-height: 120px;
+	line-height: 1.5;
+}
+
+/* the icons of the buttons of the React and Svelte apps */
+.tabs-demo__icon {
+	display: inline-flex;
+	line-height: 0;
+}
+
+.tabs-demo__icon svg {
+	width: 1em;
+	height: 1em;
+	fill: currentColor;
+}
+
+/* the gallery of looks */
+.tabs-demo__group {
+	margin: 16px 0 8px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.tabs-demo__gallery {
+	display: grid;
+	gap: 16px;
+}
+
+/* the looks along the top one below the other, those down the side side by side */
+.tabs-demo__gallery--top {
+	grid-template-columns: 1fr;
+}
+
+.tabs-demo__gallery--side {
+	grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+}
+
+.tabs-demo__example {
+	min-width: 0;
+	margin: 0;
+	padding: 12px;
+	border: 1px dashed var(--border);
+	border-radius: 8px;
+}
+
+.tabs-demo__example figcaption {
+	margin: 0 0 10px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.tabs-demo__example .antilia-tabs-panel {
+	min-height: 64px;
+	font-size: 14px;
+	line-height: 1.5;
+}
