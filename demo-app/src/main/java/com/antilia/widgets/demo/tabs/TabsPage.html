@@ -7,16 +7,21 @@
 <body>
 <wicket:extend>
 <div wicket:id="themed" class="tabs-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+
+<wicket:fragment wicket:id="documentsCase">
 	<section>
 		<div class="tabs-demo__heading">
-			<h3><wicket:message key="documentsTitle"/></h3>
 			<a wicket:id="newDocument" href="#" class="tabs-demo__new"><wicket:message key="newDocument"/></a>
 		</div>
 		<div wicket:id="documents" class="tabs-demo__documents"></div>
 		<p wicket:id="status" class="tabs-demo__status" role="status">[status]</p>
 	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="settingsCase">
 	<section>
-		<h3><wicket:message key="settingsTitle"/></h3>
 		<form wicket:id="form" class="tabs-demo__controls">
 			<label class="tabs-demo__control"><input type="checkbox" wicket:id="vertical"/> <wicket:message key="vertical"/></label>
 			<label class="tabs-demo__control"><wicket:message key="design"/> <select wicket:id="design"></select></label>
@@ -24,8 +29,10 @@
 		<div wicket:id="settings" class="tabs-demo__settings"></div>
 		<p wicket:id="selected" class="tabs-demo__status">[selected]</p>
 	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="galleryCase">
 	<section>
-		<h3><wicket:message key="galleryTitle"/></h3>
 		<h4 class="tabs-demo__group"><wicket:message key="alongTheTop"/></h4>
 		<div class="tabs-demo__gallery tabs-demo__gallery--top">
 			<figure wicket:id="topDesigns" class="tabs-demo__example"><figcaption wicket:id="name">[design]</figcaption><div wicket:id="tabs"></div></figure>
@@ -35,7 +42,7 @@
 			<figure wicket:id="sideDesigns" class="tabs-demo__example"><figcaption wicket:id="name">[design]</figcaption><div wicket:id="tabs"></div></figure>
 		</div>
 	</section>
-</div>
+</wicket:fragment>
 
 <wicket:fragment wicket:id="welcomePanel"><p class="tabs-demo__text"><wicket:message key="welcomeText"/></p></wicket:fragment>
 

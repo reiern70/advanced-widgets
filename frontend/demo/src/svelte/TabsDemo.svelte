@@ -32,6 +32,9 @@
 	const tabs = $derived<TabItem[]>([{ id: 'welcome', title: texts.welcome },
 		...documents.map((document) => ({ id: document.id, title: document.name, closable: true,
 			modified: document.text !== document.saved }))]);
+	// the cases, one at a time
+	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'galleryTitle']
+		.map((id) => ({ id, title: texts[id], modified: false })));
 	const sections = $derived<TabItem[]>(config.sections.map((name) => ({ id: name,
 		title: texts[name] })));
 
@@ -66,66 +69,71 @@
 </script>
 
 <div class="tabs-demo">
-	<section>
-		<div class="tabs-demo__heading">
-			<h3>{texts.documentsTitle}</h3>
-			<Button label={texts.newDocument} size="small" class="tabs-demo__new" onclick={open} />
-		</div>
-		<Tabs class="tabs-demo__documents" label={texts.documents} texts={config.tabs} {tabs}
-			bind:selected onclose={close}>
-			{#snippet icon(tab)}
-				<span class="tabs-demo__icon">{@html tab.id === 'welcome' ? icons.welcome :
-					icons.document}</span>
-			{/snippet}
-			{#snippet actions(tab)}
-				{@const document = documentOf(tab.id)}
-				{#if document}
-					<button type="button" title={texts.about} aria-label={texts.about}
-						onclick={(event) => Popover.toggle(event.currentTarget, popoverOf(config,
-							document))}>{@html icons.info}</button>
-				{/if}
-			{/snippet}
-			{#snippet panel(tab)}
-				{@const document = documentOf(tab.id)}
-				{#if document}
-					<form class="tabs-demo__document" onsubmit={(event) => save(event, document)}>
-						<textarea class="tabs-demo__editor" rows="6" aria-label={document.name}
-							bind:value={document.text}></textarea>
-						<div><Button type="submit" label={texts.save} variant="primary" size="small" /></div>
-					</form>
-				{:else}
-					<p class="tabs-demo__text">{texts.welcomeText}</p>
-				{/if}
-			{/snippet}
-		</Tabs>
-		<p class="tabs-demo__status" role="status">{message}</p>
-	</section>
-	<section>
-		<h3>{texts.settingsTitle}</h3>
-		<div class="tabs-demo__controls">
-			<label class="tabs-demo__control">
-				<input type="checkbox" bind:checked={vertical} /> {texts.vertical}
-			</label>
-			<label class="tabs-demo__control">
-				{texts.design}
-				<select bind:value={design}>
-					{#each config.designs as each (each)}
-						<option value={each}>{texts['design.' + each.toUpperCase()]}</option>
-					{/each}
-				</select>
-			</label>
-		</div>
-		<Tabs class="tabs-demo__settings" label={texts.settings} texts={config.tabs} tabs={sections}
-			orientation={vertical ? 'vertical' : 'horizontal'} {design} bind:selected={section}>
-			{#snippet panel(tab)}{texts[tab.id + '.text']}{/snippet}
-		</Tabs>
-		<p class="tabs-demo__status">{format(texts.selected, texts[section ?? ''] ?? '')}</p>
-	</section>
-	<section>
-		<h3>{texts.galleryTitle}</h3>
-		{@render gallery(texts.alongTheTop, config.gallery.top, 'horizontal')}
-		{@render gallery(texts.downTheSide, config.gallery.side, 'vertical')}
-	</section>
+	<Tabs design="pills" label={texts.cases} tabs={cases}>
+		{#snippet panel(tab)}
+			{#if tab.id === 'documentsTitle'}
+				<section>
+					<div class="tabs-demo__heading">
+						<Button label={texts.newDocument} size="small" class="tabs-demo__new" onclick={open} />
+					</div>
+					<Tabs class="tabs-demo__documents" label={texts.documents} texts={config.tabs} {tabs}
+						bind:selected onclose={close}>
+						{#snippet icon(tab)}
+							<span class="tabs-demo__icon">{@html tab.id === 'welcome' ? icons.welcome :
+								icons.document}</span>
+						{/snippet}
+						{#snippet actions(tab)}
+							{@const document = documentOf(tab.id)}
+							{#if document}
+								<button type="button" title={texts.about} aria-label={texts.about}
+									onclick={(event) => Popover.toggle(event.currentTarget, popoverOf(config,
+										document))}>{@html icons.info}</button>
+							{/if}
+						{/snippet}
+						{#snippet panel(tab)}
+							{@const document = documentOf(tab.id)}
+							{#if document}
+								<form class="tabs-demo__document" onsubmit={(event) => save(event, document)}>
+									<textarea class="tabs-demo__editor" rows="6" aria-label={document.name}
+										bind:value={document.text}></textarea>
+									<div><Button type="submit" label={texts.save} variant="primary" size="small" /></div>
+								</form>
+							{:else}
+								<p class="tabs-demo__text">{texts.welcomeText}</p>
+							{/if}
+						{/snippet}
+					</Tabs>
+					<p class="tabs-demo__status" role="status">{message}</p>
+				</section>
+			{:else if tab.id === 'settingsTitle'}
+				<section>
+					<div class="tabs-demo__controls">
+						<label class="tabs-demo__control">
+							<input type="checkbox" bind:checked={vertical} /> {texts.vertical}
+						</label>
+						<label class="tabs-demo__control">
+							{texts.design}
+							<select bind:value={design}>
+								{#each config.designs as each (each)}
+									<option value={each}>{texts['design.' + each.toUpperCase()]}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+					<Tabs class="tabs-demo__settings" label={texts.settings} texts={config.tabs} tabs={sections}
+						orientation={vertical ? 'vertical' : 'horizontal'} {design} bind:selected={section}>
+						{#snippet panel(tab)}{texts[tab.id + '.text']}{/snippet}
+					</Tabs>
+					<p class="tabs-demo__status">{format(texts.selected, texts[section ?? ''] ?? '')}</p>
+				</section>
+			{:else if tab.id === 'galleryTitle'}
+				<section>
+					{@render gallery(texts.alongTheTop, config.gallery.top, 'horizontal')}
+					{@render gallery(texts.downTheSide, config.gallery.side, 'vertical')}
+				</section>
+			{/if}
+		{/snippet}
+	</Tabs>
 </div>
 
 {#snippet gallery(title: string, part: GalleryConfig, orientation: 'horizontal' | 'vertical')}

@@ -191,6 +191,7 @@ class TabsBrowserTest extends FrameworkAppsTestCase
 	void switchesTheOrientationAndTheDesignOfTheSecondTabs(SeleniumBrowser browser, String framework)
 	{
 		openTabs(browser, framework);
+		selectCase("Any design, along the top or down the side");
 		assertTrue(settings().getDomAttribute("class").contains("antilia-tabs-vertical"));
 		assertTrue(settings().getDomAttribute("class").contains("antilia-tabs-pills"));
 		assertEquals("vertical", settings().findElement(By.cssSelector(".antilia-tabs-list"))
@@ -218,6 +219,7 @@ class TabsBrowserTest extends FrameworkAppsTestCase
 	void showsTheGalleryOfDesigns(SeleniumBrowser browser, String framework)
 	{
 		openTabs(browser, framework);
+		selectCase("A gallery of designs");
 		List<WebElement> examples = app().findElements(By.cssSelector(".tabs-demo__example"));
 		assertEquals(List.of("Segmented", "Folder", "Lifted", "Side bar", "Steps", "Cards"),
 			examples.stream().map(example -> example.findElement(By.tagName("figcaption"))
@@ -247,6 +249,7 @@ class TabsBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> !((String)((JavascriptExecutor)d).executeScript("return getComputedStyle(" +
 			"arguments[0]).backgroundColor;", gallery("Lifted").findElement(By.cssSelector(
 				".antilia-tabs-panels")))).equals("rgb(255, 255, 255)"));
+		selectCase("A gallery of designs");
 		screenshot("gallery-dark", gallerySection());
 	}
 
@@ -273,19 +276,23 @@ class TabsBrowserTest extends FrameworkAppsTestCase
 		assertEquals("antilia-tabs-list", gallery("Folder").findElement(By.cssSelector(
 			".antilia-tabs-list")).getDomAttribute("class"));
 		screenshot("bootstrap");
+		selectCase("A gallery of designs");
 		screenshot("bootstrap-gallery", gallerySection());
 		assertNoErrors();
 	}
 
 	private WebElement gallerySection()
 	{
-		return app().findElements(By.cssSelector(".tabs-demo > section")).get(2);
+		return app().findElement(By.cssSelector(".tabs-demo__gallery"))
+			.findElement(By.xpath("ancestor::section[1]"));
 	}
 
 	private WebElement gallery(String name)
 	{
 		return app().findElements(By.cssSelector(".tabs-demo__example")).stream()
-			.filter(example -> example.findElement(By.tagName("figcaption")).getText().equals(name))
+			// its text even while the case of the gallery is hidden
+			.filter(example -> name.equals(example.findElement(By.tagName("figcaption"))
+				.getDomProperty("textContent")))
 			.findFirst().orElseThrow().findElement(By.cssSelector(".antilia-tabs"));
 	}
 

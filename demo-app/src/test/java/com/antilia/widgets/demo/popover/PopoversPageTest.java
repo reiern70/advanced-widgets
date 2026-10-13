@@ -17,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.popover.PopoverDesign;
 import com.antilia.widgets.popover.PopoverPlacement;
@@ -36,6 +37,14 @@ class PopoversPageTest
 	private WicketTester tester;
 
 	private PopoversPage page;
+
+	/**
+	 * @return the path of a component of a case
+	 */
+	private static String inCase(String name, String path)
+	{
+		return "themed:cases:" + DemoCases.pathOf(name) + ":" + path;
+	}
 
 	@BeforeEach
 	void startPage()
@@ -71,7 +80,7 @@ class PopoversPageTest
 		tester.assertContains("popovers-demo__place popovers-demo__place--top-left");
 		tester.assertContains("popovers-demo__place popovers-demo__place--auto");
 
-		String topLeft = "themed:placements:0:button";
+		String topLeft = inCase("placementsTitle", "placements:0:button");
 		tester.executeAjaxEvent(topLeft, "click");
 		JSONObject options = shown(topLeft);
 		assertEquals("top-left", options.getString("placement"));
@@ -80,18 +89,19 @@ class PopoversPageTest
 		assertEquals("default", options.getString("variant"));
 		assertTrue(options.getString("body").startsWith("Opened Top left,"));
 
-		FormTester form = tester.newFormTester("themed:controls");
+		FormTester form = tester.newFormTester(inCase("placementsTitle", "controls"));
 		form.select("design", PopoverDesign.NEON.ordinal());
-		tester.executeAjaxEvent("themed:controls:design", "change");
-		form = tester.newFormTester("themed:controls");
+		tester.executeAjaxEvent(inCase("placementsTitle", "controls:design"), "change");
+		form = tester.newFormTester(inCase("placementsTitle", "controls"));
 		form.select("variant", PopoverVariant.SUCCESS.ordinal());
-		tester.executeAjaxEvent("themed:controls:variant", "change");
+		tester.executeAjaxEvent(inCase("placementsTitle", "controls:variant"), "change");
 		assertEquals(PopoverDesign.NEON, page.getDesign());
 		assertEquals(PopoverVariant.SUCCESS, page.getVariant());
 		// the gallery in the variant chosen
 		tester.assertContains("antilia-popover antilia-popover-success antilia-popover-comic");
 
-		String auto = "themed:placements:" + PopoverPlacement.AUTO.ordinal() + ":button";
+		String auto = inCase("placementsTitle", "placements:" + PopoverPlacement.AUTO.ordinal() +
+			":button");
 		tester.executeAjaxEvent(auto, "click");
 		options = shown(auto);
 		assertEquals("auto", options.getString("placement"));
@@ -126,7 +136,8 @@ class PopoversPageTest
 			GLASS);
 		assertEquals("bottom", preview.getAttribute("data-side"));
 		assertEquals("center", preview.getAttribute("data-align"));
-		String glass = "themed:gallery:designs:" + PopoverDesign.GLASS.ordinal() + ":try";
+		String glass = inCase("galleryTitle", "gallery:designs:" + PopoverDesign.GLASS.ordinal() +
+			":try");
 		tester.executeAjaxEvent(glass, "click");
 		JSONObject options = shown(glass);
 		assertEquals("glass", options.getString("design"));
@@ -135,9 +146,9 @@ class PopoversPageTest
 		assertEquals("14rem", options.getString("maxWidth"));
 
 		// the gallery and what it opens where the drop-down says
-		FormTester form = tester.newFormTester("themed:galleryControls");
+		FormTester form = tester.newFormTester(inCase("galleryTitle", "galleryControls"));
 		form.select("position", PopoversPage.POSITIONS.indexOf(PopoverPlacement.LEFT_TOP));
-		tester.executeAjaxEvent("themed:galleryControls:position", "change");
+		tester.executeAjaxEvent(inCase("galleryTitle", "galleryControls:position"), "change");
 		assertEquals(PopoverPlacement.LEFT_TOP, page.getPosition());
 		preview = TagTester.createTagByAttribute(tester.getLastResponseAsString(), "class",
 			GLASS);
@@ -153,15 +164,16 @@ class PopoversPageTest
 	@Test
 	void rendersTheFactsAsTheirPopoverOpens()
 	{
-		Component content = tester.getComponentFromLastRenderedPage("themed:statusContent");
+		Component content = tester.getComponentFromLastRenderedPage(inCase("richTitle",
+			"statusContent"));
 		TagTester hidden = TagTester.createTagByAttribute(tester.getLastResponseAsString(), "id",
 			content.getMarkupId());
 		assertEquals("antilia-popover-content", hidden.getAttribute("class"));
 
-		tester.executeAjaxEvent("themed:status", "click");
+		tester.executeAjaxEvent(inCase("richTitle", "status"), "click");
 
 		tester.assertComponentOnAjaxResponse(content);
-		JSONObject options = shown("themed:status");
+		JSONObject options = shown(inCase("richTitle", "status"));
 		assertEquals(content.getMarkupId(), options.getString("content"));
 		assertEquals("How it is now", options.getString("title"));
 		assertEquals("bottom-left", options.getString("placement"));
@@ -171,41 +183,43 @@ class PopoversPageTest
 	@Test
 	void renamesTheProjectInAFormInAPopover()
 	{
-		Component content = tester.getComponentFromLastRenderedPage("themed:renameContent");
-		tester.executeAjaxEvent("themed:rename", "click");
+		Component content = tester.getComponentFromLastRenderedPage(inCase("richTitle",
+			"renameContent"));
+		tester.executeAjaxEvent(inCase("richTitle", "rename"), "click");
 		tester.assertComponentOnAjaxResponse(content);
-		JSONObject options = shown("themed:rename");
+		JSONObject options = shown(inCase("richTitle", "rename"));
 		assertEquals(content.getMarkupId(), options.getString("content"));
 		assertEquals("aurora", options.getString("design"));
 		assertEquals("right-top", options.getString("placement"));
 		assertEquals("Apollo", page.getDraft());
 
 		// no name: the form says so, in the popover
-		FormTester form = tester.newFormTester("themed:renameContent:renameForm");
+		FormTester form = tester.newFormTester(inCase("richTitle", "renameContent:renameForm"));
 		form.setValue("name", "  ");
-		tester.executeAjaxEvent("themed:renameContent:renameForm:save", "click");
+		tester.executeAjaxEvent(inCase("richTitle", "renameContent:renameForm:save"), "click");
 		assertEquals("Apollo", page.getProject());
 		tester.assertComponentOnAjaxResponse(content);
 		tester.assertContains("Give the project a name.");
 		assertTrue(!tester.getLastResponseAsString().contains("Wicket.Popover.closeAll()"));
 
-		form = tester.newFormTester("themed:renameContent:renameForm");
+		form = tester.newFormTester(inCase("richTitle", "renameContent:renameForm"));
 		form.setValue("name", " Artemis ");
-		tester.executeAjaxEvent("themed:renameContent:renameForm:save", "click");
+		tester.executeAjaxEvent(inCase("richTitle", "renameContent:renameForm:save"), "click");
 		assertEquals("Artemis", page.getProject());
-		tester.assertComponentOnAjaxResponse("themed:project");
+		tester.assertComponentOnAjaxResponse(inCase("richTitle", "project"));
 		tester.assertContains("Wicket.Popover.closeAll\\(\\);");
 
-		tester.executeAjaxEvent("themed:renameContent:renameForm:cancel", "click");
+		tester.executeAjaxEvent(inCase("richTitle", "renameContent:renameForm:cancel"), "click");
 		tester.assertContains("Wicket.Popover.closeAll\\(\\);");
 	}
 
 	@Test
 	void helpsOnTheFieldsAndTellsMoreOfTheRows()
 	{
-		String password = "themed:fields:field:1:help";
+		String password = inCase("fieldsTitle", "fields:field:1:help");
 		TagTester help = TagTester.createTagByAttribute(tester.getLastResponseAsString(), "id",
-			tester.getComponentFromLastRenderedPage("themed:fields:field:0:help").getMarkupId());
+			tester.getComponentFromLastRenderedPage(inCase("fieldsTitle", "fields:field:0:help"))
+				.getMarkupId());
 		assertEquals("Help on User name", help.getAttribute("aria-label"));
 		tester.executeAjaxEvent(password, "click");
 		JSONObject options = shown(password);
@@ -214,7 +228,7 @@ class PopoversPageTest
 		assertEquals("default", options.getString("variant"));
 		assertEquals("right-center", options.getString("placement"));
 
-		String japan = "themed:countries:2:about";
+		String japan = inCase("tableTitle", "countries:2:about");
 		tester.executeAjaxEvent(japan, "click");
 		options = shown(japan);
 		assertEquals("Japan", options.getString("title"));

@@ -22,6 +22,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.antilia.widgets.demo.Cases;
 import com.antilia.widgets.demo.JettyTestCase;
 import com.antilia.widgets.demo.SeleniumBrowser;
 import com.antilia.widgets.demo.Toasts;
@@ -55,6 +56,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void movesTheSkillsWithTheArrowsAndADoubleClick(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Any order");
 		assertEquals("Java\nApache Wicket", Palettes.selected(palette("skills")));
 
 		Palettes.item(palette("skills"), "CSS").click();
@@ -75,6 +77,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void filtersTheSkillsAndAddsWithTheKeyboard(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Any order");
 
 		WebElement filter = palette("skills").findElement(By.cssSelector(".antilia-palette-filter"));
 		filter.sendKeys("script");
@@ -91,6 +94,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void ordersTheColumnsWithTheButtonsAndByDragging(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "The order matters");
 		assertEquals("Name\nCountry\nEmail", Palettes.selected(palette("columns")));
 
 		Palettes.item(palette("columns"), "Email").click();
@@ -119,10 +123,11 @@ class PaletteBrowserTest extends JettyTestCase
 	void theCheckBoxSwitchesTheOrderOff(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "The order matters");
 		assertTrue(palette("columns").findElement(By.cssSelector(".antilia-palette-order"))
 			.isDisplayed());
 
-		driver.findElement(By.name("ordered")).click();
+		field("ordered").click();
 
 		wait.until(d -> choices().endsWith("columns: Name, Email, Country."));
 		wait.until(d -> !palette("columns").findElement(By.cssSelector(".antilia-palette-order"))
@@ -135,18 +140,20 @@ class PaletteBrowserTest extends JettyTestCase
 	void numbersTheRowsOfTheColumnsUnderTheirOwnTitles(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Any order");
+		assertEquals("Available\nSelected", Palettes.titles(palette("skills")));
+		assertEquals("", Palettes.numbers(palette("skills"), "selected"));
+		Cases.selectInWicket(wait, driver, "The order matters");
 		WebElement columns = palette("columns");
 		assertEquals("Columns left out\nIn the report", Palettes.titles(columns));
-		assertEquals("Available\nSelected", Palettes.titles(palette("skills")));
 		assertEquals("1.\n2.\n3.", Palettes.numbers(columns, "selected"));
 		assertEquals("1.\n2.\n3.\n4.", Palettes.numbers(columns, "available"));
-		assertEquals("", Palettes.numbers(palette("skills"), "selected"));
 
 		Palettes.doubleClick(driver, Palettes.item(columns, "Born"));
 		wait.until(d -> Palettes.numbers(palette("columns"), "selected").equals("1.\n2.\n3.\n4."));
 		assertEquals("Name\nCountry\nEmail\nBorn", Palettes.selected(palette("columns")));
 
-		driver.findElement(By.name("numbered")).click();
+		field("numbered").click();
 		wait.until(d -> Palettes.numbers(palette("columns"), "selected").isEmpty());
 		assertEquals("Name\nCountry\nEmail\nBorn", Palettes.selected(palette("columns")));
 		assertEquals("Columns left out\nIn the report", Palettes.titles(palette("columns")));
@@ -157,11 +164,12 @@ class PaletteBrowserTest extends JettyTestCase
 	void theCheckBoxTakesTheFilterAway(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Any order");
 		WebElement filter = palette("skills").findElement(By.cssSelector(".antilia-palette-filter"));
 		filter.sendKeys("sv");
 		assertEquals("Svelte", Palettes.available(palette("skills")));
 
-		driver.findElement(By.name("filterable")).click();
+		field("filterable").click();
 
 		wait.until(d -> palette("skills").findElements(By.cssSelector(".antilia-palette-filter"))
 			.isEmpty());
@@ -176,6 +184,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void doesNothingWhenDisabled(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Disabled");
 
 		WebElement disabled = palette("disabled");
 		assertTrue(disabled.getDomAttribute("class").contains("antilia-palette-disabled"));
@@ -188,6 +197,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void drawsTheCountriesAPageAtATimeAndFiltersThemAll(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "Many choices");
 		WebElement countries = palette("countries");
 		WebElement list = Palettes.list(countries, "available");
 		assertEquals(30, rows(list));
@@ -214,6 +224,7 @@ class PaletteBrowserTest extends JettyTestCase
 	void theFiltersMatchFromTheStartAnywhereAndAtTheEnd(SeleniumBrowser browser)
 	{
 		open(browser);
+		Cases.selectInWicket(wait, driver, "How the filter matches");
 
 		Palettes.assertMatches(wait, palette("matchStart"), "gu", "Guatemala", "Uruguay",
 			label -> label.startsWith("Gu"));
@@ -240,9 +251,17 @@ class PaletteBrowserTest extends JettyTestCase
 		wait.until(d -> d.findElements(By.cssSelector(".antilia-palette-side")).size() == 16);
 	}
 
+	/**
+	 * @return the field of a name, in the form its name ends the path of
+	 */
+	private WebElement field(String name)
+	{
+		return driver.findElement(By.cssSelector("[name$=':" + name + "']"));
+	}
+
 	private WebElement palette(String name)
 	{
-		return driver.findElement(By.name(name)).findElement(By.xpath(".."));
+		return field(name).findElement(By.xpath(".."));
 	}
 
 	private String choices()

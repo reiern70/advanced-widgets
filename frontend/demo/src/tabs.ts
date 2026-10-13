@@ -16,6 +16,8 @@ import { format } from './data.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
 export interface TabsDemoTexts {
+	/** The accessible name of the pills of the cases. */
+	cases: string;
 	documentsTitle: string;
 	documents: string;
 	welcome: string;

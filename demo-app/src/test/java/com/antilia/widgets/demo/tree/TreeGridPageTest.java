@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
 import com.antilia.widgets.tree.JsonBasedTree;
@@ -30,6 +31,14 @@ import com.antilia.widgets.tree.TreeGrid;
  */
 class TreeGridPageTest
 {
+	/** The tree grid of Wicket components, in its case. */
+	private static final String TREE_GRID = "themed:cases:" +
+		DemoCases.pathOf("case.treeGrid") + ":treeGrid";
+
+	/** The tree grid rendered from JSON, in its case. */
+	private static final String JSON_TREE_GRID = "themed:cases:" +
+		DemoCases.pathOf("case.jsonTreeGrid") + ":jsonTreeGrid";
+
 	private WicketTester tester;
 
 	@BeforeEach
@@ -48,8 +57,8 @@ class TreeGridPageTest
 	@Test
 	void showsTheTreeOfLifeInBothTreeGridsWithTheirColumns()
 	{
-		tester.assertComponent("themed:treeGrid", TreeGrid.class);
-		tester.assertComponent("themed:jsonTreeGrid", JsonBasedTreeGrid.class);
+		tester.assertComponent(TREE_GRID, TreeGrid.class);
+		tester.assertComponent(JSON_TREE_GRID, JsonBasedTreeGrid.class);
 		tester.assertContains(">Scientific name<");
 		tester.assertContains(">Period<");
 		tester.assertContains(">Theropods<");
@@ -64,7 +73,7 @@ class TreeGridPageTest
 	void aSpeciesSelectedInTheJsonTreeGridIsShownNextToIt()
 	{
 		JsonBasedTree<?, ?> table = (JsonBasedTree<?, ?>)tester.getComponentFromLastRenderedPage(
-			"themed:jsonTreeGrid");
+			JSON_TREE_GRID);
 		tester.getRequest().getPostParameters().setParameterValue("action",
 			JsonBasedTree.SELECT_ACTION);
 		tester.getRequest().getPostParameters().setParameterValue("key", "triceratops");
@@ -80,9 +89,9 @@ class TreeGridPageTest
 	void theDropdownChoosesHowTheColumnsOfBothTreeGridsAreResized()
 	{
 		TreeGrid<?, ?> treeGrid = (TreeGrid<?, ?>)tester.getComponentFromLastRenderedPage(
-			"themed:treeGrid");
+			TREE_GRID);
 		JsonBasedTreeGrid<?, ?> jsonTreeGrid = (JsonBasedTreeGrid<?, ?>)tester
-			.getComponentFromLastRenderedPage("themed:jsonTreeGrid");
+			.getComponentFromLastRenderedPage(JSON_TREE_GRID);
 		assertEquals(Mode.FIT, treeGrid.getResizableColumns());
 		tester.assertContains(Pattern.quote(">keeping the table&#039;s width<"));
 
@@ -93,8 +102,8 @@ class TreeGridPageTest
 
 		assertEquals(Mode.STRETCH, treeGrid.getResizableColumns());
 		assertEquals(Mode.STRETCH, jsonTreeGrid.getResizableColumns());
-		tester.assertComponentOnAjaxResponse("themed:treeGrid");
-		tester.assertComponentOnAjaxResponse("themed:jsonTreeGrid");
+		tester.assertComponentOnAjaxResponse(TREE_GRID);
+		tester.assertComponentOnAjaxResponse(JSON_TREE_GRID);
 		tester.assertContains(Pattern.quote("\"resizableColumns\":\"stretch\""));
 
 		tester.getRequest().getPostParameters().setParameterValue(

@@ -7,8 +7,10 @@
 <body>
 <wicket:extend>
 <div wicket:id="themed" class="popovers-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+<wicket:fragment wicket:id="placementsCase">
 	<section>
-		<h3><wicket:message key="placementsTitle"/></h3>
 		<p class="popovers-demo__text"><wicket:message key="placementsText"/></p>
 		<form wicket:id="controls" class="popovers-demo__controls">
 			<label class="popovers-demo__control"><wicket:message key="design"/> <select wicket:id="design"></select></label>
@@ -19,8 +21,9 @@
 			<wicket:container wicket:id="placements"><button wicket:id="button">[placement]</button></wicket:container>
 		</div>
 	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="galleryCase">
 	<section>
-		<h3><wicket:message key="galleryTitle"/></h3>
 		<form wicket:id="galleryControls" class="popovers-demo__controls">
 			<label class="popovers-demo__control"><wicket:message key="position"/> <select wicket:id="position"></select></label>
 		</form>
@@ -40,8 +43,9 @@
 			</figure>
 		</div>
 	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="richCase">
 	<section>
-		<h3><wicket:message key="richTitle"/></h3>
 		<div class="popovers-demo__rich">
 			<button wicket:id="status">[status]</button>
 			<p class="popovers-demo__project"><wicket:message key="project"/> <strong wicket:id="project">[project]</strong> <button wicket:id="rename">[rename]</button></p>
@@ -57,29 +61,29 @@
 			</form>
 		</div>
 	</section>
-	<section class="popovers-demo__pair">
-		<div>
-			<h3><wicket:message key="fieldsTitle"/></h3>
-			<form wicket:id="fields" class="popovers-demo__fields">
-				<div wicket:id="field" class="popovers-demo__field">
-					<div class="popovers-demo__label"><label wicket:id="label">[label]</label><button wicket:id="help">[help]</button></div>
-					<input type="text" wicket:id="input" class="popovers-demo__input"/>
-				</div>
-			</form>
-		</div>
-		<div>
-			<h3><wicket:message key="tableTitle"/></h3>
-			<div class="popovers-demo__scroll">
-				<table class="popovers-demo__table">
-					<thead><tr><th scope="col"><wicket:message key="country"/></th><th scope="col"><wicket:message key="language"/></th><th scope="col"><wicket:message key="currency"/></th><th scope="col"></th></tr></thead>
-					<tbody>
-						<tr wicket:id="countries"><td wicket:id="name">[name]</td><td wicket:id="language">[language]</td><td wicket:id="currency">[currency]</td><td class="popovers-demo__action"><button wicket:id="about">[about]</button></td></tr>
-					</tbody>
-				</table>
+</wicket:fragment>
+<wicket:fragment wicket:id="fieldsCase">
+	<section>
+		<form wicket:id="fields" class="popovers-demo__fields">
+			<div wicket:id="field" class="popovers-demo__field">
+				<div class="popovers-demo__label"><label wicket:id="label">[label]</label><button wicket:id="help">[help]</button></div>
+				<input type="text" wicket:id="input" class="popovers-demo__input"/>
 			</div>
+		</form>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="tableCase">
+	<section>
+		<div class="popovers-demo__scroll">
+			<table class="popovers-demo__table">
+				<thead><tr><th scope="col"><wicket:message key="country"/></th><th scope="col"><wicket:message key="language"/></th><th scope="col"><wicket:message key="currency"/></th><th scope="col"></th></tr></thead>
+				<tbody>
+					<tr wicket:id="countries"><td wicket:id="name">[name]</td><td wicket:id="language">[language]</td><td wicket:id="currency">[currency]</td><td class="popovers-demo__action"><button wicket:id="about">[about]</button></td></tr>
+				</tbody>
+			</table>
 		</div>
 	</section>
-</div>
+</wicket:fragment>
 </wicket:extend>
 </body>
 </html>

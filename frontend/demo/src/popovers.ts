@@ -16,6 +16,8 @@ import { format } from './data.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
 export interface PopoversDemoTexts {
+	/** The accessible name of the pills of the cases. */
+	cases: string;
 	placementsTitle: string;
 	placementsText: string;
 	design: string;

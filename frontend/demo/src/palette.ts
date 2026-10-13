@@ -15,6 +15,8 @@ import { format, labelOf, type Choice } from './data.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
 export interface PaletteDemoTexts {
+	/** The accessible name of the pills of the cases. */
+	cases: string;
 	unordered: string;
 	orderedTitle: string;
 	disabledTitle: string;

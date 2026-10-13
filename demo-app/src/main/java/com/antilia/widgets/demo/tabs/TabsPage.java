@@ -37,6 +37,7 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.antilia.widgets.button.ButtonBehavior;
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.antilia.widgets.icon.IIcon;
@@ -120,9 +121,15 @@ public class TabsPage extends DemoPage
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
+		DemoCases cases = new DemoCases("cases", this);
+		themed.add(cases);
+		Fragment documentsCase = cases.addCase("documentsTitle", "documentsCase");
+		Fragment settingsCase = cases.addCase("settingsTitle", "settingsCase");
+		Fragment galleryCase = cases.addCase("galleryTitle", "galleryCase");
+
 		status = new Label("status", () -> message != null ? message : getString("start"));
 		status.setOutputMarkupId(true);
-		themed.add(status);
+		documentsCase.add(status);
 
 		documents = new Tabs("documents")
 		{
@@ -146,9 +153,9 @@ public class TabsPage extends DemoPage
 			}
 		}.setIcon(WELCOME_ICON));
 		DOCUMENTS.forEach(document -> documents.addTab(new DocumentTab(document.copy())));
-		themed.add(documents);
+		documentsCase.add(documents);
 
-		themed.add(new AjaxLink<Void>("newDocument")
+		documentsCase.add(new AjaxLink<Void>("newDocument")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -165,7 +172,7 @@ public class TabsPage extends DemoPage
 
 		Label selected = new Label("selected", this::describeSelected);
 		selected.setOutputMarkupId(true);
-		themed.add(selected);
+		settingsCase.add(selected);
 
 		settings = new Tabs("settings")
 		{
@@ -200,10 +207,10 @@ public class TabsPage extends DemoPage
 				}
 			});
 		}
-		themed.add(settings);
+		settingsCase.add(settings);
 
 		Form<Void> form = new Form<>("form");
-		themed.add(form);
+		settingsCase.add(form);
 		form.add(new CheckBox("vertical", new PropertyModel<>(this, "vertical"))
 			.add(rerender(settings)));
 		form.add(new DropDownChoice<>("design", new PropertyModel<>(this, "design"),
@@ -224,8 +231,9 @@ public class TabsPage extends DemoPage
 				}
 			}).setRequired(true).add(rerender(settings)));
 
-		themed.add(gallery("topDesigns", TOP_DESIGNS, TabsOrientation.HORIZONTAL, TOP_TABS, null));
-		themed.add(gallery("sideDesigns", SIDE_DESIGNS, TabsOrientation.VERTICAL, SIDE_TABS,
+		galleryCase.add(gallery("topDesigns", TOP_DESIGNS, TabsOrientation.HORIZONTAL, TOP_TABS,
+			null));
+		galleryCase.add(gallery("sideDesigns", SIDE_DESIGNS, TabsOrientation.VERTICAL, SIDE_TABS,
 			SIDE_SELECTED));
 	}
 
@@ -342,10 +350,10 @@ public class TabsPage extends DemoPage
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JSONObject texts = FrameworkTabs.texts(this, "documentsTitle", "documents", "welcome",
-			"welcomeText", "newDocument", "save", "about", "info", "unsaved", "allSaved", "untitled",
-			"closed", "saved", "opened", "start", "settingsTitle", "settings", "vertical", "design",
-			"selected", "galleryTitle", "alongTheTop", "downTheSide");
+		JSONObject texts = FrameworkTabs.texts(this, "cases", "documentsTitle", "documents",
+			"welcome", "welcomeText", "newDocument", "save", "about", "info", "unsaved", "allSaved",
+			"untitled", "closed", "saved", "opened", "start", "settingsTitle", "settings", "vertical",
+			"design", "selected", "galleryTitle", "alongTheTop", "downTheSide");
 		for (TabsDesign each : TabsDesign.values())
 		{
 			texts.put("design." + each.name(), getString("design." + each.name()));

@@ -36,19 +36,22 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 
 		wait.until(d -> choices().equals(START));
 		assertEquals("Java\nApache Wicket", Palettes.selected(palette(0)));
+		assertEquals("Available", palette(0).findElement(By.cssSelector(".antilia-palette-title"))
+			.getText());
+		assertEquals("", Palettes.numbers(palette(0), "selected"));
+		selectCase("The order matters");
 		assertEquals("Name\nCountry\nEmail", Palettes.selected(palette(1)));
+		assertEquals("Columns left out\nIn the report", Palettes.titles(palette(1)));
+		assertEquals("1.\n2.\n3.", Palettes.numbers(palette(1), "selected"));
+		selectCase("Many choices");
 		assertEquals("Germany\nSpain\nUruguay", Palettes.selected(palette(2)));
 		assertEquals(30, palette(2).findElements(By.cssSelector(
 			".antilia-palette-available .antilia-palette-item")).size(), "a page of countries");
 		assertEquals("3 chosen: Germany, Spain, Uruguay.", app().findElement(
 			By.cssSelector(".palette-demo__count")).getText());
+		selectCase("Disabled");
 		assertEquals("SQL", Palettes.selected(palette(7)));
 		assertFalse(Palettes.button(palette(7), "add-all").isEnabled());
-		assertEquals("Available", palette(0).findElement(By.cssSelector(".antilia-palette-title"))
-			.getText());
-		assertEquals("Columns left out\nIn the report", Palettes.titles(palette(1)));
-		assertEquals("1.\n2.\n3.", Palettes.numbers(palette(1), "selected"));
-		assertEquals("", Palettes.numbers(palette(0), "selected"));
 		assertFalse(driver.findElement(By.id("framework-panel-wicket")).isDisplayed());
 		assertNoErrors();
 	}
@@ -63,6 +66,7 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 		Palettes.doubleClick(driver, Palettes.item(palette(0), "Docker"));
 		wait.until(d -> choices().startsWith("Skills: Java, Apache Wicket, Docker;"));
 
+		selectCase("The order matters");
 		Palettes.drag(driver, Palettes.item(palette(1), "Email"),
 			Palettes.item(palette(1), "Name"), 0.1);
 		wait.until(d -> choices().endsWith("columns: Email, Name, Country."));
@@ -78,10 +82,12 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 		app().findElements(By.cssSelector(".palette-demo__check input")).get(1).click();
 		wait.until(d -> choices().endsWith("columns: Name, Email, Country."));
 
+		selectCase("Any order");
 		assertEquals(1, palette(0).findElements(By.cssSelector(".antilia-palette-filter")).size());
 		app().findElements(By.cssSelector(".palette-demo__check input")).get(0).click();
 		wait.until(d -> palette(0).findElements(By.cssSelector(".antilia-palette-filter"))
 			.isEmpty());
+		selectCase("The order matters");
 		assertEquals("Name\nEmail\nCountry", Palettes.selected(palette(1)));
 		assertFalse(palette(1).findElement(By.cssSelector(".antilia-palette-order")).isDisplayed());
 
@@ -100,6 +106,7 @@ class PaletteAppsBrowserTest extends FrameworkAppsTestCase
 	{
 		open(browser, framework, "palette");
 		wait.until(d -> choices().equals(START));
+		selectCase("How the filter matches");
 
 		Palettes.assertMatches(wait, palette(3), "gu", "Guatemala", "Uruguay",
 			label -> label.startsWith("Gu"));

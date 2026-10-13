@@ -21,6 +21,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.logging.LogEntry;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.antilia.widgets.demo.Cases;
 import com.antilia.widgets.demo.JettyTestCase;
 import com.antilia.widgets.demo.SeleniumBrowser;
 
@@ -94,6 +95,17 @@ public abstract class FrameworkAppsTestCase extends JettyTestCase
 		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class").contains(look));
 		tab(framework).click();
 		wait.until(d -> app().isDisplayed() && !app().findElements(By.xpath("*")).isEmpty());
+	}
+
+	/**
+	 * Shows a case of the demo, in the app of the framework or in the Wicket demo.
+	 *
+	 * @param title
+	 *            the title of the case, as its pill has it
+	 */
+	protected void selectCase(String title)
+	{
+		Cases.select(wait, app(), title);
 	}
 
 	/**

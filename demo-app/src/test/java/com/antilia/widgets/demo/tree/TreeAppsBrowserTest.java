@@ -20,6 +20,7 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.antilia.widgets.demo.Cases;
 import com.antilia.widgets.demo.SeleniumBrowser;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
@@ -78,7 +79,7 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 	void bothTreesOfTheWicketTabShowWhatIsSelected(SeleniumBrowser browser)
 	{
 		openWicketTab(browser, "tree");
-		bothTreesShowWhatIsSelected(".antilia-tree:not(.json-tree)");
+		bothTreesShowWhatIsSelected(".antilia-tree:not(.json-tree)", null, null);
 	}
 
 	@ParameterizedTest
@@ -86,7 +87,8 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 	void bothTreeGridsOfTheWicketTabShowWhatIsSelected(SeleniumBrowser browser)
 	{
 		openWicketTab(browser, "tree-grid");
-		bothTreesShowWhatIsSelected(".antilia-tree-grid:not(.json-tree)");
+		bothTreesShowWhatIsSelected(".antilia-tree-grid:not(.json-tree)",
+			"TreeGrid · Wicket components", "JsonBasedTreeGrid · Rendered from JSON");
 	}
 
 	private void openWicketTab(SeleniumBrowser browser, String path)
@@ -101,10 +103,20 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 	/**
 	 * Selects a group in the tree of components, then a species in the JSON tree, the way to the
 	 * dinosaurs expanded in both.
+	 *
+	 * @param componentsCase
+	 *            the case showing the tree of components, {@code null} when both trees show
+	 * @param jsonCase
+	 *            the case showing the JSON tree, {@code null} when both trees show
 	 */
-	private void bothTreesShowWhatIsSelected(String componentsTree)
+	private void bothTreesShowWhatIsSelected(String componentsTree, String componentsCase,
+		String jsonCase)
 	{
 		WebElement wicket = driver.findElement(By.cssSelector("[data-framework-panel='wicket']"));
+		if (componentsCase != null)
+		{
+			Cases.select(wait, wicket, componentsCase);
+		}
 		WebElement tree = wicket.findElement(By.cssSelector(componentsTree));
 		wait.until(d -> tree.findElements(By.cssSelector(".antilia-tree-node-button")).stream()
 			.anyMatch(button -> button.getText().equals("Dinosaurs")));
@@ -113,6 +125,10 @@ class TreeAppsBrowserTest extends FrameworkAppsTestCase
 			.click();
 		wait.until(d -> details(wicket).contains("Dinosauria"));
 
+		if (jsonCase != null)
+		{
+			Cases.select(wait, wicket, jsonCase);
+		}
 		WebElement jsonTree = wicket.findElement(By.cssSelector(".json-tree"));
 		wait.until(d -> node(jsonTree, "Ornithischians") != null);
 		node(jsonTree, "Ornithischians").findElement(By.cssSelector(".antilia-tree-content"))

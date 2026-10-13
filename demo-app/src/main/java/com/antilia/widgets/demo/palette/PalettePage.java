@@ -21,6 +21,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
+import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
@@ -28,6 +29,7 @@ import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.model.util.ListModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.antilia.widgets.palette.Palette;
@@ -45,9 +47,10 @@ import com.github.openjson.JSONObject;
  * another check box numbers its rows. The countries, some 250 of them, are many choices: their
  * lists draw 30 rows at a time, more as they scroll, and the filter searches them all. Four more
  * palettes of the countries show how a filter can match: from the start of the names, anywhere
- * in them, at their end or at the start of their words, underlining what it matched. The choices are shown below the form as Ajax
- * reports them, and again when the form is sent. The React and Svelte tabs show the same form in
- * those frameworks.
+ * in them, at their end or at the start of their words, underlining what it matched. Each of
+ * these is a case of {@link DemoCases}, one at a time. The choices are shown below the form as
+ * Ajax reports them, and again when the form is sent. The React and Svelte tabs show the same
+ * form in those frameworks.
  */
 public class PalettePage extends DemoPage
 {
@@ -100,6 +103,14 @@ public class PalettePage extends DemoPage
 		choices.setOutputMarkupId(true);
 		themed.add(choices);
 
+		DemoCases cases = new DemoCases("cases", this);
+		form.add(cases);
+		Fragment unorderedCase = cases.addCase("unordered", "unorderedCase");
+		Fragment orderedCase = cases.addCase("orderedTitle", "orderedCase");
+		Fragment manyCase = cases.addCase("manyTitle", "manyCase");
+		Fragment matchCase = cases.addCase("matchTitle", "matchCase");
+		Fragment disabledCase = cases.addCase("disabledTitle", "disabledCase");
+
 		Palette<String> skillsChoice = new Palette<>("skills", new PropertyModel<>(this, "skills"),
 			SKILLS, new NameRenderer("skill."))
 		{
@@ -112,7 +123,7 @@ public class PalettePage extends DemoPage
 				setFilterable(filterable);
 			}
 		};
-		form.add(reportChanges(skillsChoice, choices));
+		unorderedCase.add(reportChanges(skillsChoice, choices));
 
 		CheckBox filterableChoice = new CheckBox("filterable",
 			new PropertyModel<>(this, "filterable"));
@@ -126,7 +137,7 @@ public class PalettePage extends DemoPage
 				target.add(skillsChoice);
 			}
 		});
-		form.add(filterableChoice);
+		unorderedCase.add(filterableChoice);
 
 		Palette<String> columnsChoice = new Palette<>("columns",
 			new PropertyModel<>(this, "columns"), COLUMNS, new NameRenderer("column."))
@@ -143,7 +154,7 @@ public class PalettePage extends DemoPage
 		};
 		columnsChoice.setAvailableTitle(new StringResourceModel("columnsAvailable", this))
 			.setSelectedTitle(new StringResourceModel("columnsSelected", this));
-		form.add(reportChanges(columnsChoice, choices));
+		orderedCase.add(reportChanges(columnsChoice, choices));
 
 		CheckBox orderedChoice = new CheckBox("ordered", new PropertyModel<>(this, "ordered"));
 		orderedChoice.add(new AjaxFormComponentUpdatingBehavior("change")
@@ -161,7 +172,7 @@ public class PalettePage extends DemoPage
 				target.add(columnsChoice, choices);
 			}
 		});
-		form.add(orderedChoice);
+		orderedCase.add(orderedChoice);
 
 		CheckBox numberedChoice = new CheckBox("numbered", new PropertyModel<>(this, "numbered"));
 		numberedChoice.add(new AjaxFormComponentUpdatingBehavior("change")
@@ -174,7 +185,7 @@ public class PalettePage extends DemoPage
 				target.add(columnsChoice);
 			}
 		});
-		form.add(numberedChoice);
+		orderedCase.add(numberedChoice);
 
 		IModel<List<String>> countryChoices = new LoadableDetachableModel<>()
 		{
@@ -188,16 +199,17 @@ public class PalettePage extends DemoPage
 		};
 		Label countriesChosen = new Label("countriesChosen", this::describeCountries);
 		countriesChosen.setOutputMarkupId(true);
-		form.add(countriesChosen);
-		form.add(reportChanges(new Palette<>("countries", new PropertyModel<>(this, "countries"),
-			countryChoices, new CountryRenderer()), countriesChosen));
+		manyCase.add(countriesChosen);
+		manyCase.add(reportChanges(new Palette<>("countries",
+			new PropertyModel<>(this, "countries"), countryChoices, new CountryRenderer()),
+			countriesChosen));
 
-		form.add(newMatchPalette("matchStart", countryChoices, PaletteMatcher.START));
-		form.add(newMatchPalette("matchAnywhere", countryChoices, PaletteMatcher.ANYWHERE));
-		form.add(newMatchPalette("matchEnd", countryChoices, PaletteMatcher.END));
-		form.add(newMatchPalette("matchWords", countryChoices, PaletteMatcher.WORDS));
+		matchCase.add(newMatchPalette("matchStart", countryChoices, PaletteMatcher.START));
+		matchCase.add(newMatchPalette("matchAnywhere", countryChoices, PaletteMatcher.ANYWHERE));
+		matchCase.add(newMatchPalette("matchEnd", countryChoices, PaletteMatcher.END));
+		matchCase.add(newMatchPalette("matchWords", countryChoices, PaletteMatcher.WORDS));
 
-		form.add(new Palette<>("disabled", new PropertyModel<>(this, "disabled"), SKILLS,
+		disabledCase.add(new Palette<>("disabled", new PropertyModel<>(this, "disabled"), SKILLS,
 			new NameRenderer("skill.")).setEnabled(false));
 	}
 
@@ -281,8 +293,8 @@ public class PalettePage extends DemoPage
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JSONObject texts = FrameworkTabs.texts(this, "unordered", "orderedTitle", "disabledTitle",
-			"manyTitle", "countries", "countriesChosen", "skills", "columns", "ordered", "numbered",
+		JSONObject texts = FrameworkTabs.texts(this, "cases", "unordered", "orderedTitle",
+			"disabledTitle", "manyTitle", "countries", "countriesChosen", "skills", "columns", "ordered", "numbered",
 			"filterable", "columnsAvailable", "columnsSelected", "matchTitle", "matchHint",
 			"matchStart", "matchAnywhere", "matchEnd", "matchWords", "send", "nothing", "choices", "sent");
 		JSONObject palette = new JSONObject();

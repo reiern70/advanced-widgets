@@ -15,11 +15,6 @@
 	background: var(--surface);
 }
 
-.popovers-demo h3 {
-	margin: 0 0 12px;
-	font-size: 16px;
-}
-
 .popovers-demo__text {
 	margin: 0 0 12px;
 	color: var(--muted);
@@ -209,12 +204,6 @@
 }
 
 /* help on fields, more on the rows of a table */
-.popovers-demo__pair {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-	gap: 16px 32px;
-}
-
 .popovers-demo__fields {
 	display: grid;
 	gap: 12px;

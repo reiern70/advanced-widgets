@@ -14,17 +14,10 @@
 	background: var(--surface);
 }
 
-.tabs-demo h3 {
-	margin: 0 0 12px;
-	font-size: 16px;
-}
-
 .tabs-demo__heading {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 8px 16px;
-	align-items: baseline;
-	justify-content: space-between;
+	justify-content: flex-end;
+	margin-bottom: 12px;
 }
 
 .tabs-demo__documents .antilia-tabs-panel {

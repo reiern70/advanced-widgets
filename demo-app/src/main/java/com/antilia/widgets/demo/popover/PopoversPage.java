@@ -33,6 +33,7 @@ import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
@@ -41,6 +42,7 @@ import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.button.AjaxActionButton;
 import com.antilia.widgets.button.ButtonBehavior;
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.antilia.widgets.icon.IIcon;
@@ -127,15 +129,23 @@ public class PopoversPage extends DemoPage
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
+		DemoCases cases = new DemoCases("cases", this);
+		themed.add(cases);
+		Fragment placementsCase = cases.addCase("placementsTitle", "placementsCase");
+		Fragment galleryCase = cases.addCase("galleryTitle", "galleryCase");
+		Fragment richCase = cases.addCase("richTitle", "richCase");
+		Fragment fieldsCase = cases.addCase("fieldsTitle", "fieldsCase");
+		Fragment tableCase = cases.addCase("tableTitle", "tableCase");
+
 		WebMarkupContainer gallery = new WebMarkupContainer("gallery");
 		gallery.setOutputMarkupId(true);
 
 		Form<Void> controls = new Form<>("controls");
-		themed.add(controls);
+		placementsCase.add(controls);
 		controls.add(choice("design", "design", Arrays.asList(PopoverDesign.values()), gallery));
 		controls.add(choice("variant", "variant", Arrays.asList(PopoverVariant.values()), gallery));
 
-		themed.add(new ListView<>("placements", PLACEMENTS)
+		placementsCase.add(new ListView<>("placements", PLACEMENTS)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -165,9 +175,9 @@ public class PopoversPage extends DemoPage
 		});
 
 		Form<Void> galleryControls = new Form<>("galleryControls");
-		themed.add(galleryControls);
+		galleryCase.add(galleryControls);
 		galleryControls.add(choice("position", "placement", POSITIONS, gallery));
-		themed.add(gallery);
+		galleryCase.add(gallery);
 		gallery.add(new ListView<>("designs", Arrays.asList(PopoverDesign.values()))
 		{
 			private static final long serialVersionUID = 1L;
@@ -207,10 +217,10 @@ public class PopoversPage extends DemoPage
 			}
 		});
 
-		addStatus(themed);
-		addRename(themed);
-		addFields(themed);
-		addCountries(themed);
+		addStatus(richCase);
+		addRename(richCase);
+		addFields(fieldsCase);
+		addCountries(tableCase);
 	}
 
 	/**
@@ -284,10 +294,10 @@ public class PopoversPage extends DemoPage
 	/**
 	 * A button asking the server how it is: the facts, rendered as the popover opens.
 	 */
-	private void addStatus(WebMarkupContainer themed)
+	private void addStatus(WebMarkupContainer parent)
 	{
 		WebMarkupContainer status = Popover.asContent(new WebMarkupContainer("statusContent"));
-		themed.add(status);
+		parent.add(status);
 		status.add(new ListView<>("facts", this::facts)
 		{
 			private static final long serialVersionUID = 1L;
@@ -299,7 +309,7 @@ public class PopoversPage extends DemoPage
 				item.add(new Label("value", item.getModelObject().getValue()));
 			}
 		});
-		themed.add(new AjaxActionButton("status", new ResourceModel("status.wicket"))
+		parent.add(new AjaxActionButton("status", new ResourceModel("status.wicket"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -340,14 +350,14 @@ public class PopoversPage extends DemoPage
 	 * The name of a project and a button renaming it in a form in a popover, which shows what is
 	 * wrong with the name, and closes once it is taken.
 	 */
-	private void addRename(WebMarkupContainer themed)
+	private void addRename(WebMarkupContainer parent)
 	{
 		Label name = new Label("project", () -> project);
 		name.setOutputMarkupId(true);
-		themed.add(name);
+		parent.add(name);
 
 		WebMarkupContainer content = Popover.asContent(new WebMarkupContainer("renameContent"));
-		themed.add(content);
+		parent.add(content);
 		Form<Void> form = new Form<>("renameForm");
 		content.add(form);
 		form.add(new TextField<>("name", new PropertyModel<String>(this, "draft"))
@@ -384,7 +394,7 @@ public class PopoversPage extends DemoPage
 			}
 		}.setSize(ButtonBehavior.Size.SMALL).setVariant(ButtonBehavior.Variant.GHOST));
 
-		themed.add(new AjaxActionButton("rename", new ResourceModel("rename"))
+		parent.add(new AjaxActionButton("rename", new ResourceModel("rename"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -406,10 +416,10 @@ public class PopoversPage extends DemoPage
 	/**
 	 * A form whose fields have a button giving help on them beside their labels.
 	 */
-	private void addFields(WebMarkupContainer themed)
+	private void addFields(WebMarkupContainer parent)
 	{
 		Form<Void> form = new Form<>("fields");
-		themed.add(form);
+		parent.add(form);
 		form.add(new ListView<>("field", FIELDS)
 		{
 			private static final long serialVersionUID = 1L;
@@ -447,9 +457,9 @@ public class PopoversPage extends DemoPage
 	/**
 	 * A table of countries, a button in each row telling more of the country.
 	 */
-	private void addCountries(WebMarkupContainer themed)
+	private void addCountries(WebMarkupContainer parent)
 	{
-		themed.add(new ListView<>("countries", COUNTRIES)
+		parent.add(new ListView<>("countries", COUNTRIES)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -493,11 +503,11 @@ public class PopoversPage extends DemoPage
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JSONObject texts = FrameworkTabs.texts(this, "placementsTitle", "placementsText", "design",
-			"variant", "position", "placementText", "galleryTitle", "try", "richTitle", "status.app",
-			"statusTitle", "statusText", "fact.time", "fact.window", "fact.language", "fact.opened",
-			"project", "rename", "renameTitle", "name", "save", "cancel", "required", "fieldsTitle",
-			"help", "tableTitle", "country", "language", "currency", "aboutCountry");
+		JSONObject texts = FrameworkTabs.texts(this, "cases", "placementsTitle", "placementsText",
+			"design", "variant", "position", "placementText", "galleryTitle", "try", "richTitle",
+			"status.app", "statusTitle", "statusText", "fact.time", "fact.window", "fact.language",
+			"fact.opened", "project", "rename", "renameTitle", "name", "save", "cancel", "required",
+			"fieldsTitle", "help", "tableTitle", "country", "language", "currency", "aboutCountry");
 		texts.put("close", getString("Popover.close"));
 		for (PopoverPlacement each : PopoverPlacement.values())
 		{

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.tabs.TabsPage.Document;
 import com.antilia.widgets.tabs.Tab;
@@ -37,13 +38,21 @@ import com.github.openjson.JSONObject;
  */
 class TabsPageTest
 {
-	private static final String DOCUMENTS = "themed:documents";
+	private static final String DOCUMENTS = inCase("documentsTitle", "documents");
 
-	private static final String SETTINGS = "themed:settings";
+	private static final String SETTINGS = inCase("settingsTitle", "settings");
 
 	private WicketTester tester;
 
 	private TabsPage page;
+
+	/**
+	 * @return the path of a component of a case
+	 */
+	private static String inCase(String name, String path)
+	{
+		return "themed:cases:" + DemoCases.pathOf(name) + ":" + path;
+	}
 
 	@BeforeEach
 	void startPage()
@@ -93,8 +102,8 @@ class TabsPageTest
 		assertEquals("welcome", documents.getSelectedTab().getName());
 		tester.assertContains("Wicket.Tabs.attach");
 		tester.assertContains("Buy milk");
-		tester.assertLabel("themed:status", "Close a document with its ×, Delete or the middle " +
-			"button; one with changes asks first.");
+		tester.assertLabel(inCase("documentsTitle", "status"), "Close a document with its ×, " +
+			"Delete or the middle button; one with changes asks first.");
 		assertFalse(tester.getLastResponseAsString().contains("style="), "no inline style");
 	}
 
@@ -150,7 +159,7 @@ class TabsPageTest
 			.toList());
 		tester.assertContains("The server forgot notes.txt, closed.");
 
-		tester.clickLink("themed:newDocument");
+		tester.clickLink(inCase("documentsTitle", "newDocument"));
 		assertEquals(List.of("todo.txt", "untitled-1.txt"), page.getDocuments().stream()
 			.map(Document::getName).toList());
 		Tab added = documents.getTabs().get(2);
@@ -167,31 +176,33 @@ class TabsPageTest
 		Tabs settings = tabs(SETTINGS);
 		assertEquals(TabsOrientation.VERTICAL, settings.getOrientation());
 		assertEquals(TabsDesign.PILLS, settings.getDesign());
-		tester.assertLabel("themed:selected", "The server knows the tab selected: Profile.");
+		tester.assertLabel(inCase("settingsTitle", "selected"),
+			"The server knows the tab selected: Profile.");
 
-		FormTester form = tester.newFormTester("themed:form");
+		FormTester form = tester.newFormTester(inCase("settingsTitle", "form"));
 		form.setValue("vertical", false);
-		tester.executeAjaxEvent("themed:form:vertical", "change");
-		form = tester.newFormTester("themed:form");
+		tester.executeAjaxEvent(inCase("settingsTitle", "form:vertical"), "change");
+		form = tester.newFormTester(inCase("settingsTitle", "form"));
 		form.select("design", 2);
-		tester.executeAjaxEvent("themed:form:design", "change");
+		tester.executeAjaxEvent(inCase("settingsTitle", "form:design"), "change");
 		assertEquals(TabsOrientation.HORIZONTAL, settings.getOrientation());
 		assertEquals(TabsDesign.UNDERLINE, settings.getDesign());
 		tester.assertContains("antilia-tabs-horizontal antilia-tabs-underline");
 
 		send(settings, "select", "privacy");
 		assertEquals("privacy", settings.getModelObject());
-		tester.assertLabel("themed:selected", "The server knows the tab selected: Privacy.");
+		tester.assertLabel(inCase("settingsTitle", "selected"),
+			"The server knows the tab selected: Privacy.");
 	}
 
 	@Test
 	void showsTheGalleryOfDesigns()
 	{
-		Tabs segmented = tabs("themed:topDesigns:0:tabs");
+		Tabs segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
 		assertEquals(TabsDesign.SEGMENTED, segmented.getDesign());
 		assertEquals(TabsOrientation.HORIZONTAL, segmented.getOrientation());
 		assertEquals("overview", segmented.getSelectedTab().getName());
-		Tabs steps = tabs("themed:sideDesigns:1:tabs");
+		Tabs steps = tabs(inCase("galleryTitle", "sideDesigns:1:tabs"));
 		assertEquals(TabsDesign.STEPS, steps.getDesign());
 		assertEquals(TabsOrientation.VERTICAL, steps.getOrientation());
 		assertEquals("payment", steps.getSelectedTab().getName());
@@ -237,7 +248,8 @@ class TabsPageTest
 		tester.getSession().setLocale(new Locale("es"));
 		tester.startPage(TabsPage.class);
 		tester.assertContains("Documentos, editados en el servidor");
-		Component selected = tester.getComponentFromLastRenderedPage("themed:selected");
+		Component selected = tester.getComponentFromLastRenderedPage(inCase("settingsTitle",
+			"selected"));
 		assertEquals("El servidor conoce la pestaña seleccionada: Perfil.",
 			selected.getDefaultModelObjectAsString());
 	}

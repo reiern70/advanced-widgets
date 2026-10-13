@@ -8,6 +8,7 @@
 	<entry key="aboutThisDemo">Über diese Demo</entry>
 	<entry key="backToHome">Alle Demos</entry>
 	<entry key="icons">Symbole</entry>
+	<entry key="cases">Die Beispiele der Demo</entry>
 	<entry key="ActionIcons.BUILT_IN">eingebaut</entry>
 	<entry key="ActionIcons.SVG">SvgIcon, Inline-SVG</entry>
 	<entry key="ActionIcons.FONT_AWESOME">FontAwesomeIcon, Schrift</entry>

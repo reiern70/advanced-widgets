@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.wicket.util.string.StringValue;
 import org.apache.wicket.util.tester.FormTester;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.palette.Palette;
 import com.antilia.widgets.palette.PaletteMatcher;
@@ -28,6 +30,12 @@ import com.antilia.widgets.palette.PaletteMatcher;
 class PalettePageTest
 {
 	private static final String FORM = "themed:form";
+
+	/** The case of each component of a case, by its id. */
+	private static final Map<String, String> CASES = Map.of("skills", "unordered", "filterable",
+		"unordered", "columns", "orderedTitle", "ordered", "orderedTitle", "numbered",
+		"orderedTitle", "countries", "manyTitle", "countriesChosen", "manyTitle", "disabled",
+		"disabledTitle");
 
 	private WicketTester tester;
 
@@ -46,9 +54,17 @@ class PalettePageTest
 		tester.destroy();
 	}
 
+	/**
+	 * @return the path of a component of a case, relative to the form
+	 */
+	private static String inForm(String id)
+	{
+		return "cases:" + DemoCases.pathOf(CASES.getOrDefault(id, "matchTitle")) + ":" + id;
+	}
+
 	private Palette<?> palette(String id)
 	{
-		return (Palette<?>)tester.getComponentFromLastRenderedPage(FORM + ":" + id);
+		return (Palette<?>)tester.getComponentFromLastRenderedPage(FORM + ":" + inForm(id));
 	}
 
 	@Test
@@ -82,7 +98,8 @@ class PalettePageTest
 	{
 		tester.assertContains("Wicket.Palette.attach\\(\"" + palette("countries").getMarkupId() +
 			"\", \\{[^}]*\"pageSize\":30");
-		tester.assertLabel(FORM + ":countriesChosen", "3 chosen: Germany, Spain, Uruguay.");
+		tester.assertLabel(FORM + ":" + inForm("countriesChosen"),
+			"3 chosen: Germany, Spain, Uruguay.");
 		List<String> codes = PalettePage.countryCodes(Locale.ENGLISH);
 		assertTrue(codes.size() > 200, "many choices");
 		assertEquals("AF", codes.get(0), "Afghanistan first");
@@ -94,7 +111,7 @@ class PalettePageTest
 		tester.executeAjaxEvent(palette("countries"), "change");
 
 		assertEquals(List.of("FR", "UY"), page.getCountries());
-		tester.assertComponentOnAjaxResponse(FORM + ":countriesChosen");
+		tester.assertComponentOnAjaxResponse(FORM + ":" + inForm("countriesChosen"));
 		tester.assertContains("2 chosen: France, Uruguay\\.");
 	}
 
@@ -102,8 +119,8 @@ class PalettePageTest
 	void theCheckBoxSwitchesTheOrderOfTheColumns()
 	{
 		FormTester form = tester.newFormTester(FORM, false);
-		form.setValue("ordered", false);
-		tester.executeAjaxEvent(FORM + ":ordered", "change");
+		form.setValue(inForm("ordered"), false);
+		tester.executeAjaxEvent(FORM + ":" + inForm("ordered"), "change");
 
 		assertTrue(!page.isOrdered());
 		assertEquals(List.of("name", "email", "country"), page.getColumns(),
@@ -120,8 +137,8 @@ class PalettePageTest
 		tester.assertContains("\"numbered\":true");
 
 		FormTester form = tester.newFormTester(FORM, false);
-		form.setValue("numbered", false);
-		tester.executeAjaxEvent(FORM + ":numbered", "change");
+		form.setValue(inForm("numbered"), false);
+		tester.executeAjaxEvent(FORM + ":" + inForm("numbered"), "change");
 
 		assertTrue(!page.isNumbered());
 		tester.assertComponentOnAjaxResponse(palette("columns"));
@@ -136,8 +153,8 @@ class PalettePageTest
 			"\", \\{\"ordered\":false,\"numbered\":false,\"filterable\":true");
 
 		FormTester form = tester.newFormTester(FORM, false);
-		form.setValue("filterable", false);
-		tester.executeAjaxEvent(FORM + ":filterable", "change");
+		form.setValue(inForm("filterable"), false);
+		tester.executeAjaxEvent(FORM + ":" + inForm("filterable"), "change");
 
 		assertTrue(!page.isFilterable());
 		tester.assertComponentOnAjaxResponse(palette("skills"));

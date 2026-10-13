@@ -15,10 +15,12 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.LambdaColumn;
 import org.apache.wicket.extensions.markup.html.repeater.tree.table.TreeColumn;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
+import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.ResourceModel;
 
+import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
@@ -63,6 +65,11 @@ public class TreeGridPage extends TreeOfLifeDemoPage
 	{
 		TreeOfLifeProvider provider = new TreeOfLifeProvider();
 
+		DemoCases cases = new DemoCases("cases", this);
+		getThemed().add(cases);
+		Fragment treeGridCase = cases.addCase("case.treeGrid", "treeGridCase");
+		Fragment jsonTreeGridCase = cases.addCase("case.jsonTreeGrid", "jsonTreeGridCase");
+
 		treeGrid = new TreeGrid<>("treeGrid", columns(), provider)
 		{
 			private static final long serialVersionUID = 1L;
@@ -85,7 +92,7 @@ public class TreeGridPage extends TreeOfLifeDemoPage
 		treeGrid.setResizableColumns(RESIZED);
 		treeGrid.setOutputMarkupId(true);
 		withIcons(treeGrid::setIcon);
-		getThemed().add(treeGrid);
+		treeGridCase.add(treeGrid);
 
 		jsonTreeGrid = new JsonBasedTreeGrid<>(
 			"jsonTreeGrid", provider)
@@ -118,7 +125,7 @@ public class TreeGridPage extends TreeOfLifeDemoPage
 		jsonTreeGrid.setResizableColumns(RESIZED);
 		jsonTreeGrid.setOutputMarkupId(true);
 		withIcons(jsonTreeGrid::setIcon);
-		getThemed().add(jsonTreeGrid);
+		jsonTreeGridCase.add(jsonTreeGrid);
 
 		getThemed().add(resizing("resize"));
 	}

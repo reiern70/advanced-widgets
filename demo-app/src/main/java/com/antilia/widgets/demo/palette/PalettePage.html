@@ -8,42 +8,48 @@
 <wicket:extend>
 <div wicket:id="themed" class="palette-demo">
 	<form wicket:id="form" class="palette-demo__form">
-		<section>
-			<h3><wicket:message key="unordered"/></h3>
-			<label class="palette-demo__check"><input type="checkbox" wicket:id="filterable"/> <wicket:message key="filterable"/></label>
-			<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="skills"></select></div>
-		</section>
-		<section>
-			<h3><wicket:message key="orderedTitle"/></h3>
-			<div class="palette-demo__checks">
-				<label class="palette-demo__check"><input type="checkbox" wicket:id="ordered"/> <wicket:message key="ordered"/></label>
-				<label class="palette-demo__check"><input type="checkbox" wicket:id="numbered"/> <wicket:message key="numbered"/></label>
-			</div>
-			<div class="palette-demo__field"><span><wicket:message key="columns"/></span> <select wicket:id="columns"></select></div>
-		</section>
-		<section>
-			<h3><wicket:message key="manyTitle"/></h3>
-			<div class="palette-demo__field"><span><wicket:message key="countries"/></span> <select wicket:id="countries"></select></div>
-			<p wicket:id="countriesChosen" class="palette-demo__count">[countries chosen]</p>
-		</section>
-		<section class="palette-demo__wide">
-			<h3><wicket:message key="matchTitle"/></h3>
-			<p class="palette-demo__hint"><wicket:message key="matchHint"/></p>
-			<div class="palette-demo__matches">
-				<div class="palette-demo__field"><span><wicket:message key="matchStart"/></span> <select wicket:id="matchStart"></select></div>
-				<div class="palette-demo__field"><span><wicket:message key="matchAnywhere"/></span> <select wicket:id="matchAnywhere"></select></div>
-				<div class="palette-demo__field"><span><wicket:message key="matchEnd"/></span> <select wicket:id="matchEnd"></select></div>
-				<div class="palette-demo__field"><span><wicket:message key="matchWords"/></span> <select wicket:id="matchWords"></select></div>
-			</div>
-		</section>
-		<section>
-			<h3><wicket:message key="disabledTitle"/></h3>
-			<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="disabled"></select></div>
-		</section>
+		<div wicket:id="cases">[the cases, as pills]</div>
 		<p><button type="submit" class="palette-demo__send"><wicket:message key="send"/></button></p>
 	</form>
 	<p wicket:id="choices" class="palette-demo__choices">[choices]</p>
 </div>
+<wicket:fragment wicket:id="unorderedCase">
+	<section>
+		<label class="palette-demo__check"><input type="checkbox" wicket:id="filterable"/> <wicket:message key="filterable"/></label>
+		<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="skills"></select></div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="orderedCase">
+	<section>
+		<div class="palette-demo__checks">
+			<label class="palette-demo__check"><input type="checkbox" wicket:id="ordered"/> <wicket:message key="ordered"/></label>
+			<label class="palette-demo__check"><input type="checkbox" wicket:id="numbered"/> <wicket:message key="numbered"/></label>
+		</div>
+		<div class="palette-demo__field"><span><wicket:message key="columns"/></span> <select wicket:id="columns"></select></div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="manyCase">
+	<section>
+		<div class="palette-demo__field"><span><wicket:message key="countries"/></span> <select wicket:id="countries"></select></div>
+		<p wicket:id="countriesChosen" class="palette-demo__count">[countries chosen]</p>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="matchCase">
+	<section>
+		<p class="palette-demo__hint"><wicket:message key="matchHint"/></p>
+		<div class="palette-demo__matches">
+			<div class="palette-demo__field"><span><wicket:message key="matchStart"/></span> <select wicket:id="matchStart"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchAnywhere"/></span> <select wicket:id="matchAnywhere"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchEnd"/></span> <select wicket:id="matchEnd"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchWords"/></span> <select wicket:id="matchWords"></select></div>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="disabledCase">
+	<section>
+		<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="disabled"></select></div>
+	</section>
+</wicket:fragment>
 </wicket:extend>
 </body>
 </html>

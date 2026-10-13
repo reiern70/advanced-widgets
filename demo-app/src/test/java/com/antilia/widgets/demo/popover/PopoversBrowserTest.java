@@ -115,9 +115,10 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 	void showsEveryDesign(SeleniumBrowser browser, String framework)
 	{
 		openPopovers(browser, framework);
+		selectCase("Nine designs");
 		List<WebElement> examples = app().findElements(By.cssSelector(".popovers-demo__example"));
 		assertEquals(9, examples.size());
-		WebElement gallery = app().findElements(By.cssSelector(".popovers-demo > section")).get(1);
+		WebElement gallery = gallery();
 		scrollToCenter(gallery);
 		screenshot("gallery", gallery);
 
@@ -134,7 +135,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).isEmpty());
 
 		// the gallery and what it opens where the drop-down says
-		new Select(app().findElement(By.cssSelector(".popovers-demo > section:nth-of-type(2) select")))
+		new Select(gallery().findElement(By.tagName("select")))
 			.selectByVisibleText("Right top");
 		wait.until(d -> app().findElements(By.cssSelector(".popovers-demo__example .antilia-popover"))
 			.stream().allMatch(each -> "right".equals(each.getDomAttribute("data-side")) &&
@@ -145,8 +146,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		popover = live();
 		assertEquals("right", popover.getDomAttribute("data-side"));
 		assertEquals("start", popover.getDomAttribute("data-align"));
-		screenshot("gallery-right", app().findElements(By.cssSelector(".popovers-demo > section"))
-			.get(1));
+		screenshot("gallery-right", gallery());
 		card.click();
 		wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).isEmpty());
 
@@ -159,8 +159,8 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> !((String)((JavascriptExecutor)d).executeScript("return getComputedStyle(" +
 			"arguments[0]).backgroundColor;", app().findElement(By.cssSelector(
 				".popovers-demo__example .antilia-popover")))).equals("rgb(255, 255, 255)"));
-		screenshot("gallery-dark", app().findElements(By.cssSelector(".popovers-demo > section"))
-			.get(1));
+		selectCase("Nine designs");
+		screenshot("gallery-dark", gallery());
 		assertNoErrors();
 	}
 
@@ -195,7 +195,8 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).isEmpty());
 
 		// the gallery as they open
-		WebElement gallery = app().findElements(By.cssSelector(".popovers-demo > section")).get(1);
+		selectCase("Nine designs");
+		WebElement gallery = gallery();
 		scrollToCenter(gallery);
 		WebElement preview = gallery.findElement(By.cssSelector(".popovers-demo__example " +
 			".antilia-popover"));
@@ -209,6 +210,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 	void showsContentAndAFormInAPopover(SeleniumBrowser browser, String framework)
 	{
 		openPopovers(browser, framework);
+		selectCase("Components in a popover");
 		WebElement status = app().findElement(By.cssSelector(".popovers-demo__rich > button"));
 		scrollToCenter(status);
 		status.click();
@@ -258,6 +260,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 	void helpsOnFieldsAndTellsMoreOfRows(SeleniumBrowser browser, String framework)
 	{
 		openPopovers(browser, framework);
+		selectCase("Help on the fields of a form");
 		WebElement password = app().findElements(By.cssSelector(".popovers-demo__label button"))
 			.get(1);
 		assertEquals("Help on Password", password.getDomAttribute("aria-label"));
@@ -283,6 +286,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> !((String)((JavascriptExecutor)d).executeScript("return getComputedStyle(" +
 			"arguments[0]).backgroundColor;", app().findElement(By.cssSelector(
 				".popovers-demo__example .antilia-popover")))).equals("rgb(255, 255, 255)"));
+		selectCase("Help on the fields of a form");
 		WebElement help = app().findElements(By.cssSelector(".popovers-demo__label button")).get(1);
 		scrollToCenter(help);
 		help.click();
@@ -290,6 +294,9 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		assertTrue(!dark.equals(light), "the help in the dark theme: " + dark + ", " + light);
 		screenshot("help-dark");
 
+		help.click();
+		wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).isEmpty());
+		selectCase("More on the rows of a table");
 		WebElement japan = app().findElements(By.cssSelector(".popovers-demo__action button")).get(2);
 		scrollToCenter(japan);
 		japan.click();
@@ -339,6 +346,15 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 	{
 		return wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).stream()
 			.filter(WebElement::isDisplayed).findFirst().orElse(null));
+	}
+
+	/**
+	 * @return the case of the gallery of designs
+	 */
+	private WebElement gallery()
+	{
+		return app().findElement(By.cssSelector(".popovers-demo__gallery"))
+			.findElement(By.xpath("ancestor::section[1]"));
 	}
 
 	private WebElement place(String placement)

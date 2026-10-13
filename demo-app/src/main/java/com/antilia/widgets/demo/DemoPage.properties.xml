@@ -8,6 +8,7 @@
 	<entry key="aboutThisDemo">About this demo</entry>
 	<entry key="backToHome">All demos</entry>
 	<entry key="icons">Icons</entry>
+	<entry key="cases">The examples of the demo</entry>
 	<entry key="ActionIcons.BUILT_IN">built in</entry>
 	<entry key="ActionIcons.SVG">SvgIcon, inline SVG</entry>
 	<entry key="ActionIcons.FONT_AWESOME">FontAwesomeIcon, font</entry>
