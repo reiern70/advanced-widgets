@@ -52,6 +52,8 @@ import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.template.Templates;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A tree whose nodes are rendered in the browser from JSON, the way the rows of a JSON table are:
@@ -584,16 +586,15 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	{
 		checkComponentTag(tag, "div");
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
-		tag.append("class", getTreeCssClass(), " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TREE_JSON, getTreePart());
 	}
 
 	/**
-	 * @return the CSS class of the kind of tree, which the style sheet of the trees styles
+	 * @return the part of the kind of tree, whose class the style sheet of the trees styles
 	 */
-	String getTreeCssClass()
+	LookPart getTreePart()
 	{
-		return Tree.CSS_CLASS;
+		return LookPart.TREE;
 	}
 
 	@Override

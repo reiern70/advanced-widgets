@@ -13,8 +13,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { Scrollbar, scrollbar, type ScrollbarOptions,
-		type ScrollPosition } from '@antilia/core';
+	import { partClasses, scrollbar, Scrollbar, type ScrollbarOptions, type ScrollPosition } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = HTMLAttributes<HTMLDivElement> & {
 		/** The axes of the bars: by default those along which the CSS of the element scrolls. */
@@ -61,9 +64,9 @@
 	}
 </script>
 
-<div class={['antilia-scrollbar', wrapperClass]}>
-	<div {...rest} class={['antilia-scrollbar-host', className]} bind:this={element}
-		use:scrollbar={{ axis }}>
+<div class={[partClasses(look, 'scrollbar'), wrapperClass]}>
+	<div {...rest} class={[partClasses(look, 'scrollbar-host'), className]} bind:this={element}
+		use:scrollbar={{ axis, look }}>
 		{@render children?.()}
 	</div>
 </div>

@@ -13,6 +13,10 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 
 import com.antilia.widgets.icon.IIcon;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A window of a {@link Desktop}: a title bar, with an icon and the title, and a body, the component
@@ -93,7 +97,9 @@ public abstract class DesktopWindow extends Panel
 	{
 		super(id, model == null ? Model.of((WindowState)null) : model);
 		setOutputMarkupId(true);
-		add(new Label("title", title).setOutputMarkupId(true));
+		add(new LookContainer("header", LookPart.WINDOW_HEADER));
+		add(new Label("title", title).setOutputMarkupId(true)
+			.add(new LookBehavior(LookPart.WINDOW_TITLE)));
 		add(new Label("icon", () -> icon != null ? icon.getMarkup() : null)
 		{
 			private static final long serialVersionUID = 1L;
@@ -104,8 +110,9 @@ public abstract class DesktopWindow extends Panel
 				super.onConfigure();
 				setVisible(icon != null);
 			}
-		}.setEscapeModelStrings(false));
+		}.setEscapeModelStrings(false).add(new LookBehavior(LookPart.WINDOW_ICON)));
 		body = new WebMarkupContainer("body");
+		body.add(new LookBehavior(LookPart.WINDOW_BODY));
 		add(body);
 	}
 
@@ -452,7 +459,7 @@ public abstract class DesktopWindow extends Panel
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", "antilia-window", " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.WINDOW);
 		tag.put("role", "region");
 		tag.put("tabindex", "-1");
 		tag.put("aria-labelledby", get("title").getMarkupId());

@@ -41,6 +41,9 @@ import com.antilia.widgets.modal.Modal;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
 
 /**
  * A desktop: {@link DesktopWindow floating windows} that are not modal, many at once, as on the
@@ -181,6 +184,8 @@ public class Desktop extends Panel
 
 		desktop = new WebMarkupContainer("desktop");
 		desktop.setOutputMarkupId(true);
+		desktop.add(new LookBehavior(LookPart.DESKTOP));
+		desktop.add(new LookContainer("area", LookPart.DESKTOP_AREA));
 		desktop.add(AttributeModifier.append("class",
 			() -> "antilia-desktop-taskbar-" + taskbarPosition.cssName()));
 		add(desktop);
@@ -193,6 +198,7 @@ public class Desktop extends Panel
 		taskbar.add(AttributeModifier.replace("aria-orientation",
 			() -> taskbarPosition == TaskbarPosition.LEFT ||
 				taskbarPosition == TaskbarPosition.RIGHT ? "vertical" : "horizontal"));
+		taskbar.add(new LookBehavior(LookPart.DESKTOP_TASKBAR));
 		desktop.add(taskbar);
 
 		changed = new AbstractDefaultAjaxBehavior()

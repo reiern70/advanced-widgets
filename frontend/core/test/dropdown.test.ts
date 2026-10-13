@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Dropdown, dropdown, Scrollbar, setHost, standaloneHost, type Host } from '../src/index.js';
+import { ANTILIA_LOOK, Dropdown, dropdown, Scrollbar, setHost, standaloneHost, type Host } from '../src/index.js';
 
 const FRUITS = ['Apple', 'Banana', 'Cherry'];
 
@@ -253,7 +253,7 @@ describe('Dropdown', () => {
 		expect(instance.list.parentElement).toBe(instance.listBox);
 		expect(instance.listBox.className).toBe('antilia-scrollbar');
 		expect(instance.filter?.nextElementSibling).toBe(instance.listBox);
-		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
+		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y', look: ANTILIA_LOOK });
 
 		instance.destroy();
 		expect(Scrollbar.of(instance.list)).toBeUndefined();

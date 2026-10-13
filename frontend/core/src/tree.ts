@@ -20,6 +20,7 @@
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
+import { ANTILIA_LOOK, lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { ResizableColumns, type ResizableColumnsOptions,
 	type ResizeMode } from './resizable-columns.js';
 import { Scrollbar, type ScrollbarHandle, type ScrollbarOptions } from './scrollbar.js';
@@ -67,6 +68,8 @@ export interface TreeTexts {
 export interface TreeConfig {
 	/** The id of the tree's element. */
 	id: string;
+	/** The look of the tree; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** The URL answering with {nodes: TreeNode[]}: the roots, or the children of ?parent=key. */
 	dataUrl?: string;
 	/** Loads the roots, for null, or the children of a node, in place of dataUrl. */
@@ -144,8 +147,6 @@ export const TREE_GRID_COMPONENTS = ['TreeGrid', 'JsonBasedTreeGrid', 'JsonBased
 
 const ITEM_CLASS = 'antilia-tree-item';
 
-const SELECTED_CLASS = 'antilia-tree-item--selected';
-
 const LOADING_CLASS = 'antilia-tree-toggle--loading';
 
 const SCROLLING_CLASS = 'antilia-tree--scrolling';
@@ -182,6 +183,9 @@ export class JsonTree {
 	readonly cfg: TreeConfig;
 
 	readonly element: HTMLElement | null;
+
+	/** The look of the tree, whose classes the elements it makes get. */
+	private look: Look = ANTILIA_LOOK;
 
 	private readonly callbacks: TreeCallbacks;
 
@@ -235,6 +239,7 @@ export class JsonTree {
 		if (!this.element) {
 			return;
 		}
+		this.look = cfg.look ?? lookOf(this.element);
 		const engine = templates().engine(cfg.engine);
 		if (!engine) {
 			return;
@@ -243,13 +248,13 @@ export class JsonTree {
 		this.cells = (cfg.table?.columns ?? []).map((column) => engine.compile(column.template));
 
 		this.status = document.createElement('div');
-		this.status.className = 'antilia-tree-status';
+		this.status.className = this.css('tree-status');
 		this.status.setAttribute('role', 'status');
 		if (cfg.table) {
 			this.element.replaceChildren(this.buildTable(cfg.table), this.status);
 		} else {
 			this.container = document.createElement('ul');
-			this.container.className = 'antilia-tree-group antilia-tree-roots';
+			this.container.className = this.css('tree-group', 'tree-roots');
 			this.container.setAttribute('role', 'tree');
 			if (cfg.label) {
 				this.container.setAttribute('aria-label', cfg.label);
@@ -260,7 +265,7 @@ export class JsonTree {
 			this.element.classList.add(SCROLLING_CLASS);
 			this.element.style.height = cfg.height.value + cfg.height.unit;
 			this.scrollbar = JsonTree.attachScrollbar(this.element,
-				cfg.table ? { header: ':scope > table > thead' } : {});
+				cfg.table ? { header: ':scope > table > thead', look: this.look } : { look: this.look });
 		}
 
 		this.element.addEventListener('click', this.clickHandler);
@@ -276,6 +281,13 @@ export class JsonTree {
 		}
 	}
 
+	/**
+	 * @returns the classes of parts of the tree in its look
+	 */
+	private css(...parts: (LookPart | false)[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
 	private isLive(): boolean {
 		return JsonTree.instances[this.id] === this;
 	}
@@ -286,7 +298,7 @@ export class JsonTree {
 	private buildTable(table: NonNullable<TreeConfig['table']>): HTMLTableElement {
 		const element = document.createElement('table');
 		element.id = this.id + '-grid';
-		element.className = 'antilia-tree-grid-grid';
+		element.className = this.css('tree-grid-grid');
 		element.setAttribute('role', 'treegrid');
 		if (this.cfg.label) {
 			element.setAttribute('aria-label', this.cfg.label);
@@ -296,7 +308,7 @@ export class JsonTree {
 			const th = document.createElement('th');
 			th.scope = 'col';
 			th.textContent = text;
-			const cssClass = index === 0 ? 'antilia-tree-grid-tree-cell' :
+			const cssClass = index === 0 ? this.css('tree-grid-tree-cell') :
 				table.columns[index - 1].cssClass;
 			if (cssClass) {
 				th.className = cssClass;
@@ -421,7 +433,7 @@ export class JsonTree {
 		const entry = this.entries.get(key)!;
 		const table = Boolean(this.cfg.table);
 		const item = document.createElement(table ? 'tr' : 'li');
-		item.className = ITEM_CLASS + (table ? ' antilia-tree-grid-row' : '');
+		item.className = this.css('tree-item', table && 'tree-grid-row');
 		item.setAttribute('role', table ? 'row' : 'treeitem');
 		item.setAttribute('data-key', key);
 		item.setAttribute('aria-level', String(entry.level));
@@ -440,7 +452,7 @@ export class JsonTree {
 	private fill(entry: Entry): void {
 		const item = entry.element!;
 		const node = entry.node;
-		item.classList.toggle('antilia-tree-item--leaf', node.leaf);
+		toggleParts(item, this.look, node.leaf, 'tree-item-leaf');
 		if (node.leaf) {
 			item.removeAttribute('aria-expanded');
 		} else {
@@ -451,25 +463,26 @@ export class JsonTree {
 		} else {
 			item.removeAttribute('aria-selected');
 		}
-		item.classList.toggle(SELECTED_CLASS, this.isSelectable(node) && node.key === this.selected);
+		toggleParts(item, this.look, this.isSelectable(node) && node.key === this.selected,
+			'tree-item-selected');
 
 		const row = document.createElement('div');
-		row.className = 'antilia-tree-row';
+		row.className = this.css('tree-row');
 		row.style.setProperty('--antilia-tree-level', String(entry.level));
 		const toggle = document.createElement('span');
-		toggle.className = 'antilia-tree-toggle';
+		toggle.className = this.css('tree-toggle');
 		toggle.setAttribute('aria-hidden', 'true');
 		if (!node.leaf) {
 			toggle.innerHTML = this.icons.toggle;
 			toggle.classList.toggle(LOADING_CLASS, entry.loading !== null);
 		}
 		const icon = document.createElement('span');
-		icon.className = 'antilia-tree-icon';
+		icon.className = this.css('tree-icon');
 		icon.setAttribute('aria-hidden', 'true');
 		icon.innerHTML = node.icon ?? (node.leaf ? this.icons.leaf : entry.expanded ?
 			this.icons.folderOpen : this.icons.folder);
 		const content = document.createElement('span');
-		content.className = 'antilia-tree-content';
+		content.className = this.css('tree-content');
 		content.innerHTML = this.node(node.data, { key: node.key, level: entry.level });
 		row.append(toggle, icon, content);
 
@@ -481,7 +494,7 @@ export class JsonTree {
 			})].map((child, index) => {
 				const td = document.createElement('td');
 				td.setAttribute('role', 'gridcell');
-				const cssClass = index === 0 ? 'antilia-tree-grid-tree-cell' :
+				const cssClass = index === 0 ? this.css('tree-grid-tree-cell') :
 					this.cfg.table!.columns[index - 1].cssClass;
 				if (cssClass) {
 					td.className = cssClass;
@@ -502,7 +515,7 @@ export class JsonTree {
 	 */
 	private group(keys: string[]): HTMLElement {
 		const group = document.createElement('ul');
-		group.className = 'antilia-tree-group';
+		group.className = this.css('tree-group');
 		group.setAttribute('role', 'group');
 		group.append(...keys.map((key) => this.build(key)));
 		return group;
@@ -699,11 +712,11 @@ export class JsonTree {
 		this.selected = key;
 		if (previous?.element) {
 			previous.element.setAttribute('aria-selected', 'false');
-			previous.element.classList.remove(SELECTED_CLASS);
+			toggleParts(previous.element, this.look, false, 'tree-item-selected');
 		}
 		if (entry?.element) {
 			entry.element.setAttribute('aria-selected', 'true');
-			entry.element.classList.add(SELECTED_CLASS);
+			toggleParts(entry.element, this.look, true, 'tree-item-selected');
 		}
 		this.resetTabStop();
 		if (report && entry) {

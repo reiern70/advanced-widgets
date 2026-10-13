@@ -9,6 +9,11 @@
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
+	import { partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** The id of the window, which the desktop knows it by. */
@@ -80,19 +85,19 @@
 	}));
 </script>
 
-<section {id} class={['antilia-window', className].filter(Boolean).join(' ')} data-x={x}
+<section {id} class={[partClasses(look, 'window'), className].filter(Boolean).join(' ')} data-x={x}
 	data-y={y} data-width={width} data-height={height} data-min-width={minWidth}
 	data-min-height={minHeight} data-resizable={flag(resizable)}
 	data-maximizable={flag(maximizable)} data-minimizable={flag(minimizable)}
 	data-foldable={flag(foldable)} data-closable={flag(closable)} data-modified={flag(modified)}
 	data-minimized={start.minimized} data-maximized={start.maximized} data-folded={start.folded}
 	data-closed={start.closed} data-pane={pane}>
-	<header class="antilia-window-header">
-		{#if iconMarkup}<span class="antilia-window-icon">{@html iconMarkup}</span>
-		{:else if icon}<span class="antilia-window-icon">{@render icon()}</span>{/if}
-		<span class="antilia-window-title">{title}</span>
+	<header class={partClasses(look, 'window-header')}>
+		{#if iconMarkup}<span class={partClasses(look, 'window-icon')}>{@html iconMarkup}</span>
+		{:else if icon}<span class={partClasses(look, 'window-icon')}>{@render icon()}</span>{/if}
+		<span class={partClasses(look, 'window-title')}>{title}</span>
 	</header>
-	<div class={['antilia-window-body', bodyClass].filter(Boolean).join(' ')}>
+	<div class={[partClasses(look, 'window-body'), bodyClass].filter(Boolean).join(' ')}>
 		{@render children?.()}
 	</div>
 </section>

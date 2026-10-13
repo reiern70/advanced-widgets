@@ -5,7 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ACTION_EVENT, Autocomplete, Scrollbar, type AutocompleteAction,
+import { ACTION_EVENT, ANTILIA_LOOK, Autocomplete, Scrollbar, type AutocompleteAction,
 	type AutocompleteSuggestion } from '../src/index.js';
 
 const FRUITS: AutocompleteSuggestion[] = ['Apple', 'Apricot', 'Banana'].map((label) => ({
@@ -172,7 +172,7 @@ describe('Autocomplete', () => {
 		const instance = new Autocomplete(input(), { search });
 
 		expect(instance.list.parentElement?.className).toBe('antilia-scrollbar');
-		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y' });
+		expect(Scrollbar.of(instance.list)?.options).toEqual({ axis: 'y', look: ANTILIA_LOOK });
 
 		instance.destroy();
 		expect(Scrollbar.of(instance.list)).toBeUndefined();

@@ -5,8 +5,9 @@
 
 import { forwardRef, useId, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { JsonInfiniteList, type InfiniteListConfig,
-	type InfiniteListData } from '@antilia/core';
+import { type InfiniteListConfig, type InfiniteListData, JsonInfiniteList, partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface InfiniteListProps {
 	/** Loads the items shown, or the next page of them when more is true. */
@@ -50,6 +51,7 @@ export const InfiniteList = forwardRef<InfiniteListHandle, InfiniteListProps>(fu
 	const latest = useRef({ load, onAction });
 	latest.current = { load, onAction };
 	const instance = useRef<JsonInfiniteList | null>(null);
+	const look = useLook();
 
 	useImperativeHandle(ref, () => ({
 		reload: () => instance.current?.load() ?? Promise.resolve(),
@@ -61,7 +63,7 @@ export const InfiniteList = forwardRef<InfiniteListHandle, InfiniteListProps>(fu
 	const textsKey = JSON.stringify(texts);
 	useLayoutEffect(() => {
 		const list = new JsonInfiniteList({
-			id, template, engine, height, texts, locale,
+			id, template, engine, height, texts, locale, look,
 			load: (more) => latest.current.load(more)
 		}, (action, key) => latest.current.onAction?.(action, key));
 		instance.current = list;
@@ -69,10 +71,10 @@ export const InfiniteList = forwardRef<InfiniteListHandle, InfiniteListProps>(fu
 			list.destroy();
 			instance.current = null;
 		};
-	}, [id, template, engine, heightKey, textsKey, locale]);
+	}, [id, template, engine, heightKey, textsKey, locale, look]);
 
-	const list = <div id={id} className={['json-infinite-list', className].filter(Boolean)
+	const list = <div id={id} className={[partClasses(look, 'list'), className].filter(Boolean)
 		.join(' ')} />;
 	// a list of a height scrolls in the wrapper of its scroll bars, which React renders
-	return height ? <div className="antilia-scrollbar">{list}</div> : list;
+	return height ? <div className={partClasses(look, 'scrollbar')}>{list}</div> : list;
 });

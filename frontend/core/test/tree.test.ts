@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { JsonTree, ResizableColumns, Scrollbar, setHost, TREE_ICONS, type TreeConfig,
+import { ANTILIA_LOOK, JsonTree, ResizableColumns, Scrollbar, setHost, TREE_ICONS, type TreeConfig,
 	type TreeNode } from '../src/index.js';
 
 const TEXTS = { loading: 'Loading…', empty: 'Nothing here' };
@@ -286,7 +286,7 @@ describe('JsonTree', () => {
 
 		expect(element.style.height).toBe('20em');
 		expect(element.classList.contains('antilia-tree--scrolling')).toBe(true);
-		expect(Scrollbar.of(element)?.options).toEqual({});
+		expect(Scrollbar.of(element)?.options).toEqual({ look: ANTILIA_LOOK });
 		expect(element.parentElement!.classList.contains('antilia-scrollbar')).toBe(true);
 
 		tree.destroy();

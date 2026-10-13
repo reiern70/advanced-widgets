@@ -13,6 +13,7 @@
  */
 
 import { getHost, type Host, type Unsubscribe } from './host.js';
+import { lookOf, partClasses, type Look } from './look.js';
 
 /**
  * How the columns of a table can be moved.
@@ -20,6 +21,8 @@ import { getHost, type Host, type Unsubscribe } from './host.js';
 export interface MovableColumnsOptions {
 	/** The indexes of the movable columns, marking their header cells with data-movable. */
 	movable?: number[];
+	/** The look of the table; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** The label of a handle, {0} standing for the column's header. */
 	label?: string;
 	/**
@@ -48,8 +51,6 @@ const HANDLE_CLASS = 'antilia-col-mover';
 const DRAGGING_CLASS = 'antilia-col-dragging';
 const NO_DROP_CLASS = 'antilia-col-no-drop';
 const MOVING_CLASS = 'antilia-col-moving';
-const GHOST_CLASS = 'antilia-col-move-ghost';
-const MARKER_CLASS = 'antilia-col-drop-marker';
 
 /** How far, in pixels, the pointer has to travel on a column's handle before it drags the column. */
 const DRAG_THRESHOLD = 4;
@@ -105,6 +106,9 @@ export class MovableColumns {
 
 	readonly table: HTMLTableElement;
 
+	/** The look of the table, whose classes the elements made for it get. */
+	private readonly look: Look;
+
 	readonly id: string;
 
 	onMove: MovableColumnsOptions['onMove'];
@@ -124,6 +128,7 @@ export class MovableColumns {
 	constructor(table: HTMLTableElement, options: MovableColumnsOptions = {}) {
 		this.table = table;
 		this.id = table.id;
+		this.look = options.look ?? lookOf(table);
 		this.onMove = options.onMove;
 		this.label = options.label || 'Move {0}';
 		if (Array.isArray(options.movable)) {
@@ -231,7 +236,7 @@ export class MovableColumns {
 			}
 			const handle = document.createElement('button');
 			handle.type = 'button';
-			handle.className = HANDLE_CLASS;
+			handle.className = partClasses(this.look, 'column-mover');
 			const label = this.label.replace('{0}', (cell.textContent ?? '').trim());
 			handle.title = label;
 			handle.setAttribute('aria-label', label);
@@ -307,10 +312,10 @@ export class MovableColumns {
 		this.table.classList.add(DRAGGING_CLASS);
 		this.columnCells(move.from).forEach((cell) => cell.classList.add(MOVING_CLASS));
 		move.ghost = document.createElement('div');
-		move.ghost.className = GHOST_CLASS;
+		move.ghost.className = partClasses(this.look, 'column-move-ghost');
 		move.ghost.textContent = (move.header.textContent ?? '').trim();
 		move.marker = document.createElement('div');
-		move.marker.className = MARKER_CLASS;
+		move.marker.className = partClasses(this.look, 'column-drop-marker');
 		move.marker.style.display = 'none';
 		document.body.appendChild(move.ghost);
 		document.body.appendChild(move.marker);

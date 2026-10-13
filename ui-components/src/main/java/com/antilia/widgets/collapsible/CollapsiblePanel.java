@@ -23,6 +23,9 @@ import org.danekja.java.util.function.serializable.SerializableConsumer;
 import com.antilia.widgets.button.AjaxActionButton;
 import com.antilia.widgets.button.ButtonBehavior.Size;
 import com.antilia.widgets.icon.IIcon;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
 
 /**
  * A title and a body the user can expand and collapse, collapsed by default.
@@ -91,10 +94,14 @@ public abstract class CollapsiblePanel extends Panel
 		details = new WebMarkupContainer("details");
 		details.setOutputMarkupId(true);
 		details.add(AttributeModifier.replace("open", () -> expanded ? "open" : null));
+		details.add(new LookBehavior(LookPart.COLLAPSIBLE));
+		add(new LookContainer("frame", LookPart.COLLAPSIBLE_FRAME));
 		add(details);
 		this.title = new Label("title", title);
 		this.title.setOutputMarkupId(true);
+		this.title.add(new LookBehavior(LookPart.COLLAPSIBLE_TITLE));
 		details.add(this.title);
+		details.add(new LookContainer("bodyFrame", LookPart.COLLAPSIBLE_BODY));
 
 		actions = new WebMarkupContainer("actions")
 		{
@@ -108,6 +115,7 @@ public abstract class CollapsiblePanel extends Panel
 			}
 		};
 		actions.setOutputMarkupPlaceholderTag(true);
+		actions.add(new LookBehavior(LookPart.COLLAPSIBLE_ACTIONS));
 		add(actions);
 		action = new RepeatingView("action");
 		actions.add(action);

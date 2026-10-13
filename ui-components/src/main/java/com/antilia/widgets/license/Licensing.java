@@ -19,6 +19,9 @@ import org.apache.wicket.util.string.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * The license key of an application, which activates the private components of ui-components.
  * Public components work without a key; a private one without a key that activates it renders a
@@ -163,7 +166,8 @@ public final class Licensing
 		String text = component.getString("License.placeholder", null,
 			"This component needs a license key.");
 		response.write("<div id=\"" + component.getAjaxRegionMarkupId() + "\" class=\"" +
-			PLACEHOLDER_CSS_CLASS + "\" role=\"note\" data-component=\"" +
+			Looks.of(component).getPartClasses(LookPart.UNLICENSED) +
+			"\" role=\"note\" data-component=\"" +
 			Strings.escapeMarkup(namedClass(component.getClass()).getSimpleName()) + "\">" +
 			Strings.escapeMarkup(text) + "</div>");
 		return true;

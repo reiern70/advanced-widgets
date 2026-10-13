@@ -70,6 +70,10 @@ import com.antilia.widgets.table.IResizableColumnsTable;
 import com.antilia.widgets.table.MovableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
 import com.antilia.widgets.template.Templates;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -173,9 +177,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	private static final ResourceReference CSS = new CssResourceReference(
 		BaseDynamicDataTable.class, "ant-data-table.css");
 
-	private static final Map<SortOrder, String> SORT_CSS_CLASSES = new EnumMap<>(
-		Map.of(SortOrder.ASCENDING, "wicket_orderUp", SortOrder.DESCENDING, "wicket_orderDown",
-			SortOrder.NONE, "wicket_orderNone"));
+	private static final Map<SortOrder, LookPart> SORT_PARTS = new EnumMap<>(
+		Map.of(SortOrder.ASCENDING, LookPart.TABLE_HEADER_ASCENDING, SortOrder.DESCENDING,
+			LookPart.TABLE_HEADER_DESCENDING, SortOrder.NONE, LookPart.TABLE_HEADER_UNSORTED));
 
 	private static final Map<SortOrder, String> ARIA_SORT = new EnumMap<>(Map.of(
 		SortOrder.ASCENDING, "ascending", SortOrder.DESCENDING, "descending", SortOrder.NONE,
@@ -421,11 +425,13 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				super.onComponentTag(tag);
 				if (overlayPlacement == OverlayPlacement.BODY)
 				{
-					tag.append("class", "ant-data-table-overlay-body", " ");
+					Looks.addClasses(tag, Looks.of(this), LookPart.TABLE_OVERLAY_OVER_ROWS);
 				}
 			}
 		};
 		overlay.setOutputMarkupPlaceholderTag(true);
+		overlay.add(new LookBehavior(LookPart.TABLE_OVERLAY));
+		overlay.add(new LookContainer("veil", LookPart.TABLE_OVERLAY_VEIL));
 		add(overlay);
 		overlayWindow = new WebMarkupContainer("window")
 		{
@@ -441,12 +447,13 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			}
 		};
 		overlayWindow.setOutputMarkupId(true);
-		overlayWindow.add(new TrapFocusBehavior());
+		overlayWindow.add(new TrapFocusBehavior(), new LookBehavior(LookPart.TABLE_OVERLAY_WINDOW));
 		overlayWindow.add(new WebMarkupContainer(OVERLAY_CONTENT_ID));
 		overlay.add(overlayWindow);
 
 		headersRow = new WebMarkupContainer("headersRow");
 		headersRow.setOutputMarkupId(true);
+		headersRow.add(new LookBehavior(LookPart.TABLE_HEADERS));
 		add(headersRow);
 		headersRow.add(new ListView<>("headers", this::getVisibleColumns)
 		{
@@ -468,7 +475,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				super.onConfigure();
 				setVisible(hasFiller());
 			}
-		});
+		}.add(new LookBehavior(LookPart.TABLE_FILLER)));
 
 		add(actionBehavior = new ActionBehavior());
 		add(navigationBehavior = new NavigationBehavior());
@@ -2158,8 +2165,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				sort(column, target);
 			}
 		};
-		item.add(sort);
-		sort.add(newHeader("header", column));
+		item.add(sort.add(new LookBehavior(LookPart.TABLE_SORT)));
+		sort.add(newHeader("header", column).add(new LookBehavior(LookPart.TABLE_SORT_TITLE)));
+		item.add(new LookContainer("frame", LookPart.TABLE_HEADER));
 		item.add(new WebMarkupContainer("move")
 		{
 			private static final long serialVersionUID = 1L;
@@ -2180,8 +2188,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				tag.put("title", label);
 				tag.put("aria-label", label);
 			}
-		});
-		item.add(new AjaxLink<Void>("arrows")
+		}.add(new LookBehavior(LookPart.COLUMN_MOVER)));
+		AjaxLink<Void> arrows = new AjaxLink<>("arrows")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -2197,14 +2205,27 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			{
 				sort(column, target);
 			}
-		});
+		};
+		arrows.add(new LookBehavior(LookPart.TABLE_SORT_ARROWS));
+		arrows.add(new LookContainer("ascending", LookPart.TABLE_SORT_ASCENDING),
+			new LookContainer("descending", LookPart.TABLE_SORT_DESCENDING));
+		item.add(arrows);
 
 		String cssClass = getColumnCssClass(column);
 		if (cssClass != null)
 		{
 			item.add(AttributeModifier.append("class", cssClass));
 		}
-		item.add(AttributeModifier.append("class", () -> SORT_CSS_CLASSES.get(getSortOrder(column))));
+		item.add(new LookBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected LookPart[] getParts(Component component)
+			{
+				return new LookPart[] { SORT_PARTS.get(getSortOrder(column)) };
+			}
+		});
 		item.add(AttributeModifier.replace("data-resizable",
 			() -> isColumnResizable(column) ? null : "false"));
 		item.add(AttributeModifier.replace("data-movable",
@@ -2327,7 +2348,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	{
 		checkComponentTag(tag, "table");
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TABLE);
 	}
 
 	@Override

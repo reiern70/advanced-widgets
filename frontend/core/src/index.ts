@@ -63,3 +63,6 @@ export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIc
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';
 export { BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';
+export { ANTILIA_LOOK, BOOTSTRAP_LOOK, composeLook, LOOK_ASPECTS, LOOK_ATTRIBUTE, LOOK_PARTS,
+	lookClasses, lookNamed, lookOf, partClasses, registerLook, toggleParts } from './look.js';
+export type { Look, LookAspect, LookPart } from './look.js';

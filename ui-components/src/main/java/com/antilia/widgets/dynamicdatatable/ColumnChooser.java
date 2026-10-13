@@ -17,6 +17,10 @@ import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+
 class ColumnChooser<T, K extends Serializable, C extends IDetachable> extends Panel
 {
 	private static final long serialVersionUID = 1L;
@@ -46,10 +50,13 @@ class ColumnChooser<T, K extends Serializable, C extends IDetachable> extends Pa
 			AttributeModifier.replace("aria-label", assigned));
 		toggle.add(new Label("icon", () -> action.getIcon().getMarkup()).setEscapeModelStrings(false)
 			.setRenderBodyOnly(true));
-		add(toggle);
+		add(new LookContainer("chooser", LookPart.TABLE_COLUMN_CHOOSER));
+		add(toggle.add(new LookBehavior(LookPart.TABLE_ACTION)));
 
 		WebMarkupContainer menu = new WebMarkupContainer("menu");
 		menu.add(AttributeModifier.replace("aria-label", assigned));
+		menu.add(new LookBehavior(LookPart.TABLE_COLUMN_CHOOSER_MENU));
+		menu.add(new LookContainer("apply", LookPart.TABLE_BUTTON, LookPart.TABLE_BUTTON_PRIMARY));
 		add(menu);
 		menu.add(new ListView<>("columns", this::hideableColumns)
 		{
@@ -65,6 +72,8 @@ class ColumnChooser<T, K extends Serializable, C extends IDetachable> extends Pa
 				button.add(AttributeModifier.replace("aria-pressed",
 					String.valueOf(table.isColumnVisible(column))));
 				button.add(new Label("label", table.getColumnTitle(column)));
+				button.add(new LookBehavior(LookPart.TABLE_COLUMN_CHOOSER_COLUMN));
+				button.add(new LookContainer("tick", LookPart.TABLE_COLUMN_CHOOSER_TICK));
 				item.add(button);
 			}
 		});

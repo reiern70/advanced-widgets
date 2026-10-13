@@ -21,12 +21,13 @@ export { default as SplitPanel } from './SplitPanel.svelte';
 export { default as Tree } from './Tree.svelte';
 export { default as TreeGrid } from './TreeGrid.svelte';
 export type { DesktopWindowType, DropdownOption } from './types.js';
-export { activate, datePicker, desktop, dropdown, localRows, palette, scrollbar,
-	splitPanel } from '@antilia/core';
+export { getLook, LOOK_CONTEXT, setLook } from './look.js';
+export { activate, BOOTSTRAP_LOOK, buttonClasses, datePicker, desktop, dropdown, localRows, palette, scrollbar,
+	lookOf, registerLook, splitPanel } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts, DatePickerOptions, DesktopOptions, DesktopPane, DesktopTexts, DropdownOptions,
-	InfiniteListData, ModalOptions, ModalSize, NotificationCloseReason, NotificationHandle,
+	InfiniteListData, Look, LookPart, ModalOptions, ModalSize, NotificationCloseReason, NotificationHandle,
 	NotificationOptions, NotificationPosition, NotificationType, PaletteChoice, PaletteOptions,
 	PaletteTexts,
 	ScrollbarOptions, ScrollPosition, SplitOrientation, SplitPane, SplitPanelOptions, SplitSize,

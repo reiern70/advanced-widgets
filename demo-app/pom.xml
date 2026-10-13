@@ -102,6 +102,12 @@
 			<artifactId>fortawesome__fontawesome-free</artifactId>
 		</dependency>
 
+		<!-- STYLE: the style sheet of Bootstrap, served by BootstrapResourceReference -->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>bootstrap</artifactId>
+		</dependency>
+
 		<!-- LOGGING DEPENDENCIES - SLF4J-SIMPLE -->
 		<dependency>
 			<groupId>org.slf4j</groupId>

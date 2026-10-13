@@ -4,11 +4,11 @@
   All rights reserved.
 -->
 <wicket:panel xmlns:wicket="http://wicket.apache.org">
-<td wicket:id="span"><div class="ant-data-table-navigation">
+<td wicket:id="span"><div wicket:id="navigation" class="ant-data-table-navigation">
 	<div class="ant-data-table-navigation-prefix" wicket:id="prefix"></div>
 	<div class="ant-data-table-paging" wicket:id="paging">
-		<div class="navigatorLabel"><div wicket:id="navigatorLabel">[navigator-label]</div></div>
-		<div class="navigator"><div wicket:id="navigator">[navigator]</div></div>
+		<div wicket:id="labelFrame" class="navigatorLabel"><div wicket:id="navigatorLabel">[navigator-label]</div></div>
+		<div wicket:id="navigatorFrame" class="navigator"><div wicket:id="navigator">[navigator]</div></div>
 	</div>
 	<div class="ant-data-table-actions" wicket:id="actionsContainer"><span wicket:id="actions"></span></div>
 	<label class="ant-data-table-page-size" wicket:id="pageSize"><span wicket:id="label">[rows per page]</span> <select wicket:id="itemsPerPage"></select></label>

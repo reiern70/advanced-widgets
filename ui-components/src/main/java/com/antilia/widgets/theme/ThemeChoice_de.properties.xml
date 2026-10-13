@@ -15,4 +15,6 @@
 	<entry key="Theme.MAGENTA">Magenta</entry>
 	<entry key="Theme.ROSE">Rosé</entry>
 	<entry key="Theme.DARK">Dunkel</entry>
+	<entry key="Theme.BOOTSTRAP">Bootstrap</entry>
+	<entry key="Theme.BOOTSTRAP_DARK">Bootstrap (dunkel)</entry>
 </properties>

@@ -28,6 +28,8 @@
  *   --antilia-theme-error            the color of what went wrong, such as a notification of error
  *   --antilia-theme-warning          the color of what asks for attention, such as a warning
  *   --antilia-theme-info             the color of information, such as a notification of information
+ *
+ * The shapes are a look's (see antilia-look-bootstrap.css), not a theme's.
  */
 .antilia-theme-default {
 	--antilia-theme-primary: #c2410c;
@@ -269,6 +271,52 @@
 	--antilia-theme-info: #7cb7ff;
 }
 
+/*
+ * The colors of the Bootstrap on the page: its custom properties (--bs-*), from Bootstrap 5.3 on,
+ * so a theme of Bootstrap's, such as one of Bootswatch or one of the application's own, colors the
+ * components too. The dark one is for a page in Bootstrap's dark mode; ThemeBehavior writes
+ * data-bs-theme on the element, which turns the mode on for Bootstrap's own components inside it.
+ * Without Bootstrap on the page the properties are missing, and the components take the colors
+ * they fall back to.
+ */
+.antilia-theme-bootstrap,
+.antilia-theme-bootstrap-dark,
+.antilia-theme-bootstrap [data-bs-theme],
+.antilia-theme-bootstrap-dark [data-bs-theme] {
+	--antilia-theme-primary: var(--bs-primary);
+	--antilia-theme-primary-dark: color-mix(in srgb, var(--bs-primary) 80%, #000000);
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: var(--bs-link-color);
+	--antilia-theme-text: var(--bs-body-color);
+	--antilia-theme-surface: var(--bs-body-bg);
+	--antilia-theme-surface-alt: var(--bs-tertiary-bg);
+	--antilia-theme-hover: var(--bs-secondary-bg);
+	--antilia-theme-selected: var(--bs-warning-bg-subtle);
+	--antilia-theme-highlight: var(--bs-primary-bg-subtle);
+	--antilia-theme-toolbar: var(--bs-tertiary-bg);
+	--antilia-theme-border: var(--bs-border-color);
+	--antilia-theme-progress: var(--bs-primary);
+	--antilia-theme-progress-dark: color-mix(in srgb, var(--bs-primary) 80%, #000000);
+	--antilia-theme-track: var(--bs-secondary-bg);
+	--antilia-theme-veil: rgba(var(--bs-body-bg-rgb), 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: var(--bs-success);
+	--antilia-theme-error: var(--bs-danger);
+	--antilia-theme-warning: var(--bs-warning);
+	--antilia-theme-info: var(--bs-info);
+}
+
+.antilia-theme-bootstrap-dark,
+.antilia-theme-bootstrap [data-bs-theme="dark"],
+.antilia-theme-bootstrap-dark [data-bs-theme="dark"] {
+	--antilia-theme-color-scheme: dark;
+}
+
+.antilia-theme-bootstrap [data-bs-theme="light"],
+.antilia-theme-bootstrap-dark [data-bs-theme="light"] {
+	--antilia-theme-color-scheme: light;
+}
+
 /* inside a theme: the modal dialog of wicket-extensions and its optional header, body and footer */
 
 .antilia-theme .dialog-theme-default .modal-dialog {
@@ -276,7 +324,7 @@
 	background: var(--antilia-theme-surface);
 	color-scheme: var(--antilia-theme-color-scheme);
 	border: 1px solid var(--antilia-theme-border);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	overflow: hidden;
 }
 
@@ -313,7 +361,7 @@
 .antilia-unlicensed {
 	padding: 1em 1.2em;
 	border: 1px dashed var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-highlight, #f5f7fb);
 	color: var(--antilia-theme-text, #1c2333);
 }

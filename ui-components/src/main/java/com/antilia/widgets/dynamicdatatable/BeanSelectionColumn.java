@@ -15,6 +15,9 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.util.string.Strings;
 
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * The column of a {@link BeanBasedDynamicDataTable} selecting rows, the counterpart of
  * {@link SelectionColumn}: a checkbox in every row, checked if the row is selected, and one in the
@@ -59,7 +62,8 @@ public class BeanSelectionColumn<T, S> extends AbstractColumn<T, S> implements I
 		BaseDynamicDataTable<T, ?, ?> table = cell.findParent(BaseDynamicDataTable.class);
 		String label = table.getString("DynamicDataTable.selectRow", null, "Select row");
 		boolean selected = row != null && isSelected(table, row);
-		return "<input type=\"checkbox\" class=\"" + SelectionColumn.ROW_CHECKBOX_CLASS +
+		return "<input type=\"checkbox\" class=\"" +
+			Looks.of(table).getPartClasses(LookPart.TABLE_SELECT) +
 			"\" data-dt-action=\"" + BaseDynamicDataTable.SELECT_ACTION +
 			"\" data-dt-action-unchecked=\"" + BaseDynamicDataTable.DESELECT_ACTION +
 			"\" aria-label=\"" + Strings.escapeMarkup(label) + "\"" + (selected ? " checked" : "") +

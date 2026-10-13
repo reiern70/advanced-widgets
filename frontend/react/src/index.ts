@@ -40,3 +40,6 @@ export type { DataTableColumnDef, DataTableFilter, DataTableHandle, DataTablePro
 export { Button } from './Button.js';
 export { localRows } from '@antilia/core';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button.js';
+export { LookProvider, useLook } from './Look.js';
+export type { Look, LookPart, LookProviderProps } from './Look.js';
+export { BOOTSTRAP_LOOK, buttonClasses, lookOf, registerLook } from '@antilia/core';

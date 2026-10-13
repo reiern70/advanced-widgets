@@ -80,11 +80,11 @@
 	overflow: hidden;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-left: 4px solid var(--antilia-notification-color);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
 	color-scheme: var(--antilia-theme-color-scheme, light);
-	box-shadow: 0 0.4em 1.2em rgba(0, 0, 0, 0.18);
+	box-shadow: var(--antilia-look-shadow, 0 0.4em 1.2em rgba(0, 0, 0, 0.18));
 	font-size: 0.95em;
 	line-height: 1.4;
 	pointer-events: auto;
@@ -147,7 +147,7 @@
 	margin-left: auto;
 	padding: 0;
 	border: 0;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	background: transparent;
 	color: inherit;
 	font: inherit;

@@ -5,7 +5,9 @@
 
 import { useLayoutEffect, useRef, type ChangeEvent, type InputHTMLAttributes } from 'react';
 
-import { DatePicker as CoreDatePicker, type DatePickerOptions } from '@antilia/core';
+import { DatePicker as CoreDatePicker, type DatePickerOptions, partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' |
 	'onChange' | 'type' | 'min' | 'max' | 'placeholder' | 'children'>;
@@ -49,6 +51,7 @@ function Picker(props: DatePickerProps & { time: boolean }) {
 		close, hour, minute, ...rest } = props;
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreDatePicker | null>(null);
+	const look = useLook();
 	const options: DatePickerOptions = { time, locale, min, max, minuteStep, firstDayOfWeek,
 		hour12, placeholder, symbols, open, previousMonth, nextMonth, previousYear, nextYear,
 		previousYears, nextYears, chooseMonth, chooseYear, today, now, clear, close, hour, minute };
@@ -57,13 +60,13 @@ function Picker(props: DatePickerProps & { time: boolean }) {
 	latest.current = options;
 
 	useLayoutEffect(() => {
-		const picker = new CoreDatePicker(input.current!, latest.current);
+		const picker = new CoreDatePicker(input.current!, { ...latest.current, look });
 		instance.current = picker;
 		return () => {
 			picker.destroy();
 			instance.current = null;
 		};
-	}, []);
+	}, [look]);
 
 	useLayoutEffect(() => {
 		instance.current?.configure(latest.current);
@@ -76,7 +79,8 @@ function Picker(props: DatePickerProps & { time: boolean }) {
 	const change = (event: ChangeEvent<HTMLInputElement>) => onChange?.(event.currentTarget.value);
 	const controlled = value === undefined ? { defaultValue } : { value };
 	return (
-		<div className={['antilia-datepicker', wrapperClassName].filter(Boolean).join(' ')}>
+		<div className={[partClasses(look, 'datepicker'), wrapperClassName].filter(Boolean)
+			.join(' ')}>
 			<input {...rest} {...controlled} ref={input} type="text" onChange={change}
 				className={['antilia-datepicker-native', className].filter(Boolean).join(' ')}
 				tabIndex={-1} aria-hidden="true" />

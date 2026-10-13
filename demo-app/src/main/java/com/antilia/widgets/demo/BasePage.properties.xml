@@ -6,6 +6,8 @@
 -->
 <properties>
 	<entry key="theme">Theme</entry>
+	<entry key="look">Look</entry>
+	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Language</entry>
 	<entry key="component.public">Public</entry>
 	<entry key="component.private">Private</entry>
@@ -64,6 +66,8 @@
 	<entry key="demo.modalDialog.description">Add, edit and delete in a modal dialog that keeps the focus, drags and folds by its title and asks before discarding changes; the same dialog in Wicket, React and Svelte over one shared REST resource.</entry>
 	<entry key="demo.themeEditor">Theme Editor</entry>
 	<entry key="demo.themeEditor.description">Make a theme of your own: pick its colors and watch grids, tabs, dialogs and notifications follow live, then copy the CSS class that defines it. No inline style, so it works under a strict Content Security Policy.</entry>
+	<entry key="demo.looks">Looks</entry>
+	<entry key="demo.looks.description">The components in the Bootstrap look beside their own: Bootstrap's classes and shapes, the components' behavior, in any theme. Bootstrap's own markup takes the colors of the theme too; only Bootstrap's style sheet is on the page, never its script.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
 	<entry key="buildInfo.commit">Commit {1}</entry>

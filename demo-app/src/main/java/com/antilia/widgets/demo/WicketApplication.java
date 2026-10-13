@@ -8,6 +8,7 @@ import java.io.File;
 
 import org.apache.wicket.csp.CSPDirective;
 import org.apache.wicket.csp.CSPDirectiveSrcValue;
+import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
@@ -31,6 +32,7 @@ import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.datatable.FontAwesomeResourceReference;
+import com.antilia.widgets.demo.theme.BootstrapResourceReference;
 import com.antilia.widgets.demo.datatable.UsersRowsResource;
 import com.antilia.widgets.demo.data.Accesses;
 import com.antilia.widgets.demo.data.Database;
@@ -38,6 +40,7 @@ import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.desktop.DesktopPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
+import com.antilia.widgets.demo.looks.LooksPage;
 import com.antilia.widgets.demo.mail.IMailer;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.notification.NotificationsPage;
@@ -54,6 +57,7 @@ import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.demo.tree.TreeGridPage;
 import com.antilia.widgets.demo.tree.TreeOfLifeResource;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * Application object for your web application.
@@ -156,9 +160,12 @@ public class WicketApplication extends WebApplication
 			}
 		});
 
-		// allow the application stylesheet (BasePage.css) served from this origin
+		// allow the application stylesheet (BasePage.css) served from this origin, and the images
+		// Bootstrap's style sheet writes as data: URLs, such as the tick of its check boxes, for
+		// the pages in its look
 		getCspSettings().blocking()
-			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF);
+			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF)
+			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"));
 
 		mountPage("address-book", ContactsPage.class);
 		mountPage("dynamic-data-table", DynamicDataTablePage.class);
@@ -169,6 +176,7 @@ public class WicketApplication extends WebApplication
 		mountPage("master-detail", MasterDetailPage.class);
 		mountPage("progress-bar", ProgressBarPage.class);
 		mountPage("theme-editor", ThemeEditorPage.class);
+		mountPage("looks", LooksPage.class);
 		mountPage("dropdown", DropdownPage.class);
 		mountPage("autocomplete", AutocompletePage.class);
 		mountPage("palette", PalettePage.class);
@@ -186,6 +194,7 @@ public class WicketApplication extends WebApplication
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
+		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);

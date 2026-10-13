@@ -9,24 +9,27 @@
  * with Chips.removeTarget(event), which returns the chip whose x was clicked.
  */
 
+import { ANTILIA_LOOK, partClasses, type Look } from './look.js';
+
 export const Chips = {
 
 	/**
 	 * @param text the text of the chip
 	 * @param removeLabel the label of its x for screen readers, '{0}' replaced by the text; no x
 	 *            when empty
+	 * @param look the look of the chip
 	 * @returns the chip
 	 */
-	create(text: string, removeLabel?: string | null): HTMLSpanElement {
+	create(text: string, removeLabel?: string | null, look: Look = ANTILIA_LOOK): HTMLSpanElement {
 		const chip = document.createElement('span');
-		chip.className = 'antilia-chip';
+		chip.className = partClasses(look, 'chip');
 		const label = document.createElement('span');
-		label.className = 'antilia-chip-text';
+		label.className = partClasses(look, 'chip-text');
 		label.textContent = text;
 		chip.appendChild(label);
 		if (removeLabel) {
 			const remove = document.createElement('span');
-			remove.className = 'antilia-chip-remove';
+			remove.className = partClasses(look, 'chip-remove');
 			remove.setAttribute('role', 'button');
 			remove.setAttribute('aria-label', removeLabel.replace('{0}', text));
 			remove.title = remove.getAttribute('aria-label') ?? '';
@@ -37,11 +40,12 @@ export const Chips = {
 
 	/**
 	 * @param text the text, such as '+2 more'
+	 * @param look the look of the chip
 	 * @returns a chip without an x
 	 */
-	more(text: string): HTMLSpanElement {
-		const chip = Chips.create(text, null);
-		chip.classList.add('antilia-chip-more');
+	more(text: string, look: Look = ANTILIA_LOOK): HTMLSpanElement {
+		const chip = Chips.create(text, null, look);
+		chip.className = partClasses(look, 'chip', 'chip-more');
 		return chip;
 	},
 

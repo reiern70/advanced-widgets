@@ -21,6 +21,10 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * A window with a title bar and a body, for content floating on top of a page or a component, for
  * example a form editing a row in the
@@ -73,7 +77,10 @@ public abstract class FloatingPanel extends Panel
 	protected void onInitialize()
 	{
 		super.onInitialize();
-		add(new Label("title", title));
+		add(new LookContainer("panel", LookPart.FLOATING_PANEL));
+		add(new LookContainer("header", LookPart.FLOATING_PANEL_HEADER));
+		add(new LookContainer("bodyFrame", LookPart.FLOATING_PANEL_BODY));
+		add(new Label("title", title).add(new LookBehavior(LookPart.FLOATING_PANEL_TITLE)));
 		add(new AjaxLink<Void>("close")
 		{
 			private static final long serialVersionUID = 1L;
@@ -90,7 +97,7 @@ public abstract class FloatingPanel extends Panel
 			{
 				onClose(target);
 			}
-		}.add(new LabelAttribute()));
+		}.add(new LabelAttribute(), new LookBehavior(LookPart.FLOATING_PANEL_CLOSE)));
 		add(newBody(BODY_ID));
 	}
 

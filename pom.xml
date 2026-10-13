@@ -35,6 +35,7 @@
 		<jetty.version>11.0.26</jetty.version>
 		<jackson.version>3.2.3</jackson.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
+		<bootstrap.version>5.3.8</bootstrap.version>
 		<junit.version>5.13.4</junit.version>
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
 		<selenium.version>4.50.0</selenium.version>
@@ -107,6 +108,19 @@
 				<groupId>org.webjars.npm</groupId>
 				<artifactId>fortawesome__fontawesome-free</artifactId>
 				<version>${fontawesome-free.version}</version>
+			</dependency>
+
+			<!-- the style sheet of Bootstrap, for the Bootstrap look of the demo; never its script -->
+			<dependency>
+				<groupId>org.webjars.npm</groupId>
+				<artifactId>bootstrap</artifactId>
+				<version>${bootstrap.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>*</groupId>
+						<artifactId>*</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<!-- DATABASE DEPENDENCIES -->

@@ -30,6 +30,10 @@ import org.apache.wicket.util.string.Strings;
 
 import com.github.openjson.JSONObject;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * Two panes, side by side or one above the other, with a divider between them the user drags, with
  * the mouse, a pen or a finger, to share the space differently. The divider is a WAI-ARIA
@@ -163,12 +167,15 @@ public abstract class SplitPanel extends Panel
 
 		split = new WebMarkupContainer("split");
 		split.setOutputMarkupId(true);
+		split.add(new LookBehavior(LookPart.SPLIT));
 		split.add(AttributeModifier.append("class", this::getCssClasses));
 		add(split);
 
 		firstPane = new WebMarkupContainer("firstPane");
 		firstPane.setOutputMarkupId(true);
+		firstPane.add(new LookBehavior(LookPart.SPLIT_PANE, LookPart.SPLIT_FIRST));
 		split.add(firstPane);
+		split.add(new LookContainer("secondPane", LookPart.SPLIT_PANE, LookPart.SPLIT_SECOND));
 
 		WebMarkupContainer divider = new WebMarkupContainer("divider");
 		// what the script sets too, right before it runs
@@ -181,6 +188,7 @@ public abstract class SplitPanel extends Panel
 		divider.add(AttributeModifier.replace("aria-valuemax", () -> getValueLimit(max, 100)));
 		divider.add(AttributeModifier.replace("tabindex", () -> resizable ? "0" : null));
 		divider.add(AttributeModifier.replace("aria-disabled", () -> resizable ? null : "true"));
+		divider.add(new LookBehavior(LookPart.SPLIT_DIVIDER));
 		split.add(divider);
 
 		changed = new AbstractDefaultAjaxBehavior()

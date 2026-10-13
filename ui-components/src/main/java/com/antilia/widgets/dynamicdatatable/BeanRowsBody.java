@@ -18,6 +18,9 @@ import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * The rows of a {@link BeanBasedDynamicDataTable}, in its {@code <tbody>}: one {@code <tr>} per row
  * of the current page, carrying the attributes the table's script reads, and one {@code <td>} per
@@ -64,8 +67,9 @@ class BeanRowsBody<T, K extends Serializable, S> extends Panel
 		item.add(AttributeModifier.replace("id", table.getMarkupId() + "-row-" + formatted));
 		item.add(AttributeModifier.replace("data-key", formatted));
 		item.add(AttributeModifier.replace("data-number", number));
-		item.add(AttributeModifier.replace("class",
-			(number % 2 == 1 ? "even" : "odd") + (table.isSelected(key) ? " selected" : "")));
+		item.add(new LookBehavior(
+			number % 2 == 1 ? LookPart.TABLE_ROW_EVEN : LookPart.TABLE_ROW_ODD,
+			table.isSelected(key) ? LookPart.TABLE_ROW_SELECTED : null));
 
 		RepeatingView cells = new RepeatingView("cells");
 		item.add(cells);
@@ -82,6 +86,7 @@ class BeanRowsBody<T, K extends Serializable, S> extends Panel
 			cells.add(cell);
 			column.populateItem(cell, "cell", item.getModel());
 		}
-		item.add(new WebMarkupContainer("filler").setVisible(table.hasFiller()));
+		item.add(new WebMarkupContainer("filler").setVisible(table.hasFiller())
+			.add(new LookBehavior(LookPart.TABLE_FILLER)));
 	}
 }

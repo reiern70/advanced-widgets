@@ -52,8 +52,8 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 		String page = tester.getLastResponseAsString();
 		assertTrue(page.contains("aria-sort=\"none\""), page);
 		assertHeaderClass(1, "wicket_orderNone");
-		assertTrue(page.contains("<span class=\"ant-data-table-sort-asc\">&#9650;</span>" +
-			"<span class=\"ant-data-table-sort-desc\">&#9660;</span>"), page);
+		assertTrue(page.contains("class=\"ant-data-table-sort-asc\">&#9650;</span>") &&
+			page.contains("class=\"ant-data-table-sort-desc\">&#9660;</span>"), page);
 		assertTrue(tester.getComponentFromLastRenderedPage(NAME_SORT).isEnabledInHierarchy());
 		assertFalse(tester.getComponentFromLastRenderedPage("table:headersRow:headers:2:sort")
 			.isEnabledInHierarchy(), "a column without sort property is not sortable");

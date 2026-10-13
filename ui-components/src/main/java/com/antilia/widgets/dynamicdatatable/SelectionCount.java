@@ -16,6 +16,10 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * The count of a {@link SelectionCountToolbarAction}, "2 selected" and a button deselecting every
  * row, which the table re-renders when the selection changes.
@@ -54,7 +58,7 @@ class SelectionCount extends Panel implements ISelectionView
 			AttributeModifier.replace("aria-label", tooltip));
 		clear.add(new Label("icon", () -> action.getClearIcon().getMarkup())
 			.setEscapeModelStrings(false).setRenderBodyOnly(true));
-		add(clear);
+		add(clear.add(new LookBehavior(LookPart.TABLE_SELECTION_CLEAR)));
 	}
 
 	@Override
@@ -69,6 +73,6 @@ class SelectionCount extends Panel implements ISelectionView
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", SelectionCountToolbarAction.CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TABLE_SELECTION_COUNT);
 	}
 }

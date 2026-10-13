@@ -6,7 +6,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Button } from '../src/index.js';
+import { BOOTSTRAP_LOOK, Button, LOOK_CONTEXT } from '../src/index.js';
+import LookedButtons from './LookedButtons.svelte';
 
 afterEach(cleanup);
 
@@ -37,5 +38,18 @@ describe('Button', () => {
 		expect(button.querySelector('.ant-button__label')).toBeNull();
 		expect(button.type).toBe('submit');
 		expect(button.disabled).toBe(true);
+	});
+
+	it('has the classes of the look set, or given to the app as it mounts', () => {
+		const { container } = render(LookedButtons, { look: 'bootstrap' });
+
+		const [save, undo] = Array.from(container.querySelectorAll('button'));
+		expect(save.className).toBe('btn btn-primary btn-sm');
+		expect(save.querySelector('.ant-button__label')?.textContent).toBe('Save');
+		expect(undo.className).toBe('btn btn-link ant-button--icon-only');
+
+		const mounted = render(Button, { props: { label: 'Go' },
+			context: new Map([[LOOK_CONTEXT, BOOTSTRAP_LOOK]]) });
+		expect(mounted.container.querySelector('button')!.className).toBe('btn btn-secondary');
 	});
 });

@@ -39,7 +39,7 @@
 	align-self: stretch;
 	min-width: 0;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	overflow: hidden;
 	transition: border-color 0.15s, box-shadow 0.15s;
@@ -48,7 +48,7 @@
 .antilia-palette-side:focus-within,
 .antilia-palette-side.antilia-palette-over {
 	border-color: var(--antilia-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+	box-shadow: var(--antilia-look-focus-ring, 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent));
 }
 
 .antilia-palette-title {
@@ -65,7 +65,7 @@
 	margin: 0.3em;
 	padding: 0.3em 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface-alt, #f5f7fb);
 	color: inherit;
 	font: inherit;
@@ -97,7 +97,7 @@
 	display: flex;
 	align-items: center;
 	padding: 0.3em 0.6em;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	cursor: pointer;
 	white-space: nowrap;
 	user-select: none;
@@ -198,7 +198,7 @@
 	height: 2.1em;
 	padding: 0 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
@@ -217,7 +217,7 @@
 .antilia-palette-button:focus-visible {
 	outline: none;
 	border-color: var(--antilia-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+	box-shadow: var(--antilia-look-focus-ring, 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent));
 }
 
 .antilia-palette-button:disabled {
@@ -250,10 +250,10 @@
 	z-index: 1200;
 	max-width: 20em;
 	padding: 0.3em 0.6em;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	background: var(--antilia-theme-primary, #2f5bd3);
 	color: var(--antilia-theme-on-primary, #ffffff);
-	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+	box-shadow: var(--antilia-look-shadow, 0 6px 18px rgba(0, 0, 0, 0.2));
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;

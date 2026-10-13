@@ -12,7 +12,7 @@
 	min-width: 6em;
 	height: 1.4em;
 	border: 1px solid var(--antilia-theme-border, #9aa5b1);
-	border-radius: 0.6em;
+	border-radius: var(--antilia-look-radius, 0.6em);
 	background: var(--antilia-theme-track, #ffedd5);
 	overflow: hidden;
 }
@@ -93,7 +93,7 @@
 	margin: 0 auto;
 	display: block;
 	padding: 0 0.5em;
-	border-radius: 0.6em;
+	border-radius: var(--antilia-look-radius, 0.6em);
 	background: var(--antilia-theme-track, #ffedd5);
 	font-size: 0.85em;
 	font-weight: bold;

@@ -12,6 +12,7 @@
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
+import { ANTILIA_LOOK, lookOf, partClasses, toggleParts, type Look } from './look.js';
 import { ResizableColumns, type ResizableColumnsOptions } from './resizable-columns.js';
 import { Scrollbar } from './scrollbar.js';
 import { templates, type CompiledTemplate, type TemplateEngine } from './templates.js';
@@ -57,6 +58,8 @@ export interface DataTableMessage {
 export interface DataTableConfig {
 	/** The id of the table element. */
 	id: string;
+	/** The look of the table; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** Whether the rows come with the markup instead of as JSON. */
 	serverRows?: boolean;
 	/** The URL answering with the rows shown, or with the next page of them for ?more=true. */
@@ -125,17 +128,7 @@ const SHOW_COLUMNS_ACTION = '_antilia-show-columns';
 
 const HEADERS_CLASS = 'ant-data-table-headers';
 
-const FILLER_CLASS = 'ant-data-table-filler';
-
 const FILLER_WIDTH = '3em';
-
-const BODY_ROW_CLASS = 'ant-data-table-body-row';
-
-const BODY_CELL_CLASS = 'ant-data-table-body-cell';
-
-const BODY_CLASS = 'ant-data-table-body';
-
-const ROWS_CLASS = 'ant-data-table-rows';
 
 const COLGROUP_CLASS = 'ant-data-table-colgroup';
 
@@ -149,8 +142,8 @@ export class DynamicDataTable {
 	static readonly instances: Record<string, DynamicDataTable> = {};
 
 	/** Gives a scrolling body its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
-	static attachScrollbar: (element: HTMLElement) => Bars | undefined = (element) =>
-		Scrollbar.attach(element, { axis: 'y' });
+	static attachScrollbar: (element: HTMLElement, look?: Look) => Bars | undefined =
+		(element, look) => Scrollbar.attach(element, { axis: 'y', look });
 
 	/** The resizable columns of the page; Wicket gives Wicket.ResizableColumns, if any. */
 	static resizableColumns: () => ResizableColumnsRegistry | undefined = () => ResizableColumns;
@@ -186,6 +179,9 @@ export class DynamicDataTable {
 	selectedKeys: Set<string>;
 
 	readonly table: HTMLTableElement;
+
+	/** The look of the table, whose classes the elements it makes get. */
+	private look: Look = ANTILIA_LOOK;
 
 	loading = false;
 
@@ -243,6 +239,7 @@ export class DynamicDataTable {
 		if (!this.table) {
 			return;
 		}
+		this.look = cfg.look ?? lookOf(this.table);
 
 		if (!cfg.serverRows) {
 			const engine = templates().engines[cfg.engine ?? 'builtin'];
@@ -501,17 +498,17 @@ export class DynamicDataTable {
 		const table = this.table;
 		const rowsBody = table.tBodies[0];
 		const rows = document.createElement('table');
-		rows.className = table.className + ' ' + ROWS_CLASS;
+		rows.className = table.className + ' ' + partClasses(this.look, 'table-rows');
 		rows.setAttribute('role', 'presentation');
 		rows.appendChild(document.createElement('colgroup'));
 		const body = document.createElement('div');
-		body.className = BODY_CLASS;
+		body.className = partClasses(this.look, 'table-body');
 		body.appendChild(rows);
 		const cell = document.createElement('td');
-		cell.className = BODY_CELL_CLASS;
+		cell.className = partClasses(this.look, 'table-body-cell');
 		cell.appendChild(body);
 		const host = document.createElement('tr');
-		host.className = BODY_ROW_CLASS;
+		host.className = partClasses(this.look, 'table-body-row');
 		host.appendChild(cell);
 		const hostBody = document.createElement('tbody');
 		hostBody.appendChild(host);
@@ -521,7 +518,7 @@ export class DynamicDataTable {
 		this.body = body;
 		this.bodyCell = cell;
 		// the same slim scroll bar in every browser, over the room the empty column leaves
-		this.scrollbar = DynamicDataTable.attachScrollbar(body);
+		this.scrollbar = DynamicDataTable.attachScrollbar(body, this.look);
 
 		if (window.ResizeObserver) {
 			this.bodyObserver = new window.ResizeObserver(() => this.layoutBody());
@@ -584,7 +581,7 @@ export class DynamicDataTable {
 	 * resizable columns add after the rows were put into it, so the same rules apply.
 	 */
 	private copyClasses(): void {
-		const classes = this.table.className + ' ' + ROWS_CLASS;
+		const classes = this.table.className + ' ' + partClasses(this.look, 'table-rows');
 		if (this.rowsTable && this.rowsTable.className !== classes) {
 			this.rowsTable.className = classes;
 		}
@@ -735,7 +732,7 @@ export class DynamicDataTable {
 		tr.id = this.rowId(key);
 		tr.setAttribute('data-key', key);
 		tr.setAttribute('data-number', String(number));
-		tr.className = number % 2 === 1 ? 'even' : 'odd';
+		tr.className = partClasses(this.look, number % 2 === 1 ? 'table-row-even' : 'table-row-odd');
 		this.cells.forEach((cell, index) => {
 			const td = document.createElement('td');
 			const cssClass = this.cfg.columns[index].cssClass;
@@ -747,14 +744,14 @@ export class DynamicDataTable {
 		});
 		if (this.cfg.filler) {
 			const filler = document.createElement('td');
-			filler.className = FILLER_CLASS;
+			filler.className = partClasses(this.look, 'table-filler');
 			filler.setAttribute('aria-hidden', 'true');
 			tr.appendChild(filler);
 		}
 		tr.querySelectorAll<HTMLInputElement>(ROW_CHECKBOX).forEach((checkbox) => {
 			checkbox.checked = meta.selected;
 		});
-		tr.classList.toggle('selected', meta.selected);
+		toggleParts(tr, this.look, meta.selected, 'table-row-selected');
 		return tr;
 	}
 
@@ -791,7 +788,7 @@ export class DynamicDataTable {
 					selectedKeys.delete(key);
 				}
 			}
-			tr.classList.toggle('selected', !!checkbox && checkbox.checked);
+			toggleParts(tr, this.look, !!checkbox && checkbox.checked, 'table-row-selected');
 		});
 		const header = this.table.tHead?.querySelector<HTMLInputElement>(PAGE_CHECKBOX);
 		if (header) {

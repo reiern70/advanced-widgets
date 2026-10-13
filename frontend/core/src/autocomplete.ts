@@ -30,7 +30,8 @@
 
 import { Chips } from './chips.js';
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
-import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
+import { lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
+import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 import { templates, type CompiledTemplate } from './templates.js';
 
 /** A chosen value. */
@@ -76,6 +77,8 @@ export const ACTION_EVENT = 'antilia-autocomplete-action';
 export interface AutocompleteOptions {
 	/** The URL answering ?term= with the suggestions as JSON, unless search is given. */
 	url?: string;
+	/** The look of the autocomplete; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** Finds the suggestions for a text, in place of url. */
 	search?: (term: string) => Promise<AutocompleteSuggestion[]>;
 	/** Whether many values can be chosen. */
@@ -182,6 +185,9 @@ export class Autocomplete {
 
 	private ownWrapper = false;
 
+	/** The look of the autocomplete, whose classes the elements it makes get. */
+	private look!: Look;
+
 	private listeners: Array<[EventTarget, string, EventListener]> = [];
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
@@ -189,8 +195,8 @@ export class Autocomplete {
 	private scrollbar: ScrollbarHandle | undefined = undefined;
 
 	/** Gives the list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
-	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
-		Scrollbar.attach(list, { axis: 'y' });
+	static attachScrollbar: (list: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
+		(list, look) => Scrollbar.attach(list, { axis: 'y', look });
 
 	/**
 	 * @param input the hidden input
@@ -229,11 +235,19 @@ export class Autocomplete {
 		return autocomplete && autocomplete.input === element ? autocomplete : null;
 	}
 
+	/**
+	 * @returns the classes of parts of the autocomplete in its look
+	 */
+	private css(...parts: LookPart[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
 	private attach(): void {
 		const input = this.input;
+		this.look = this.options.look ?? lookOf(input);
 		let wrapper = input.parentElement;
 		if (!wrapper || !wrapper.classList.contains(WRAPPER_CLASS)) {
-			wrapper = create('div', WRAPPER_CLASS);
+			wrapper = create('div', this.css('autocomplete'));
 			input.parentNode?.insertBefore(wrapper, input);
 			wrapper.appendChild(input);
 			this.ownWrapper = true;
@@ -250,10 +264,10 @@ export class Autocomplete {
 		wrapper.classList.toggle('antilia-autocomplete-multiple', this.multiple);
 		wrapper.classList.toggle('antilia-autocomplete-pick', this.pick);
 
-		this.field = create('div', 'antilia-autocomplete-field');
-		this.chips = create('span', 'antilia-autocomplete-chips');
+		this.field = create('div', this.css('autocomplete-field'));
+		this.chips = create('span', this.css('autocomplete-chips'));
 		this.field.appendChild(this.chips);
-		this.text = create('input', 'antilia-autocomplete-text');
+		this.text = create('input', this.css('autocomplete-text'));
 		this.text.type = 'text';
 		this.text.autocomplete = 'off';
 		this.text.setAttribute('role', 'combobox');
@@ -267,19 +281,19 @@ export class Autocomplete {
 		this.field.appendChild(this.text);
 		wrapper.appendChild(this.field);
 
-		this.menu = create('div', 'antilia-autocomplete-menu');
+		this.menu = create('div', this.css('autocomplete-menu'));
 		this.menu.hidden = true;
-		this.list = create('ul', 'antilia-autocomplete-list');
+		this.list = create('ul', this.css('autocomplete-list'));
 		this.list.id = this.id + '-list';
 		this.list.setAttribute('role', 'listbox');
 		// the list scrolls in the wrapper of the slim scroll bars of the core
-		const listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
+		const listBox = create('div', this.css('scrollbar'));
 		listBox.appendChild(this.list);
 		this.menu.appendChild(listBox);
-		this.status = create('div', 'antilia-autocomplete-status');
+		this.status = create('div', this.css('autocomplete-status'));
 		this.status.hidden = true;
 		this.menu.appendChild(this.status);
-		this.tooltip = create('div', 'antilia-autocomplete-tooltip');
+		this.tooltip = create('div', this.css('autocomplete-tooltip'));
 		this.tooltip.id = this.id + '-tooltip';
 		this.tooltip.setAttribute('role', 'tooltip');
 		this.tooltip.hidden = true;
@@ -289,7 +303,7 @@ export class Autocomplete {
 		this.configure(this.options);
 		this.bind();
 		if (this.list.isConnected) {
-			this.scrollbar = Autocomplete.attachScrollbar(this.list);
+			this.scrollbar = Autocomplete.attachScrollbar(this.list, this.look);
 		}
 		this.stopWatchingRemoval = onRemoving(wrapper, () => this.detach());
 	}
@@ -376,7 +390,7 @@ export class Autocomplete {
 		this.chips.textContent = '';
 		const removeLabel = this.options.disabled ? null : (this.options.remove || 'Remove {0}');
 		this.chosen.forEach((value) => {
-			const chip = Chips.create(value.label, removeLabel);
+			const chip = Chips.create(value.label, removeLabel, this.look);
 			chip.dataset.id = String(value.id);
 			this.chips.appendChild(chip);
 		});
@@ -536,7 +550,7 @@ export class Autocomplete {
 		this.list.textContent = '';
 		this.active = null;
 		this.suggestions.forEach((suggestion, index) => {
-			const item = create('li', 'antilia-autocomplete-option');
+			const item = create('li', this.css('autocomplete-option'));
 			item.id = this.id + '-option-' + index;
 			item.dataset.index = String(index);
 			item.setAttribute('role', 'option');
@@ -544,7 +558,7 @@ export class Autocomplete {
 			const meta = { id: suggestion.id, label: suggestion.label, index };
 			if (this.actions.length) {
 				item.classList.add('antilia-autocomplete-has-actions');
-				const content = create('span', 'antilia-autocomplete-content');
+				const content = create('span', this.css('autocomplete-content'));
 				content.innerHTML = this.row(data, meta);
 				item.appendChild(content);
 				item.appendChild(this.renderActions(data, meta));
@@ -566,9 +580,9 @@ export class Autocomplete {
 	 * @returns the buttons of the actions of a row
 	 */
 	private renderActions(data: unknown, meta: Record<string, unknown>): HTMLSpanElement {
-		const buttons = create('span', 'antilia-autocomplete-actions');
+		const buttons = create('span', this.css('autocomplete-actions'));
 		this.actions.forEach(({ action, content }, index) => {
-			const button = create('button', 'antilia-autocomplete-action');
+			const button = create('button', this.css('autocomplete-action'));
 			button.type = 'button';
 			// the focus stays in the text field: the keys are those of the text field
 			button.tabIndex = -1;
@@ -709,13 +723,15 @@ export class Autocomplete {
 	}
 
 	private activate(item: HTMLElement | null, scroll: boolean): void {
-		this.active?.classList.remove('antilia-autocomplete-active');
+		if (this.active) {
+			toggleParts(this.active, this.look, false, 'autocomplete-option-active');
+		}
 		this.active = item;
 		if (!item) {
 			this.text.removeAttribute('aria-activedescendant');
 			return;
 		}
-		item.classList.add('antilia-autocomplete-active');
+		toggleParts(item, this.look, true, 'autocomplete-option-active');
 		this.text.setAttribute('aria-activedescendant', item.id);
 		if (scroll) {
 			item.scrollIntoView?.({ block: 'nearest' });

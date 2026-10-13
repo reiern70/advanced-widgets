@@ -11,8 +11,11 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { JsonInfiniteList, type InfiniteListConfig,
-		type InfiniteListData } from '@antilia/core';
+	import { type InfiniteListConfig, type InfiniteListData, JsonInfiniteList, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** Loads the items shown, or the next page of them when more is true. */
@@ -40,7 +43,7 @@
 	$effect(() => {
 		const config = { id, template, engine, height: $state.snapshot(height),
 			texts: $state.snapshot(texts), locale };
-		const list = untrack(() => new JsonInfiniteList({ ...config, load: (more) => load(more) },
+		const list = untrack(() => new JsonInfiniteList({ ...config, look, load: (more) => load(more) },
 			(action, key) => onaction?.(action, key)));
 		instance = list;
 		return () => {
@@ -67,9 +70,9 @@
 
 {#if height}
 	<!-- a list of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
-	<div class="antilia-scrollbar">
-		<div {id} class={['json-infinite-list', className]}></div>
+	<div class={partClasses(look, 'scrollbar')}>
+		<div {id} class={[partClasses(look, 'list'), className]}></div>
 	</div>
 {:else}
-	<div {id} class={['json-infinite-list', className]}></div>
+	<div {id} class={[partClasses(look, 'list'), className]}></div>
 {/if}

@@ -16,12 +16,17 @@ import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.icon.IIcon;
+import com.antilia.widgets.theme.ILook;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * Draws the element of a component as a button in the colors of the theme: a {@code <button>},
  * an {@code <a>} or a submit {@code <input>}, whatever component it belongs to, such as a link or
  * a form's button. The look comes from {@link #CSS}, the same style sheet the React and Svelte
- * buttons use; the {@link Variant} and the {@link Size} each add a CSS class.
+ * buttons use; the {@link Variant} and the {@link Size} each add a CSS class. In another
+ * {@link ILook}, such as Bootstrap's, the button gets the classes of that look instead (see
+ * {@link Looks#of(Component)}).
  *
  * <pre>
  * add(new Link&lt;Void&gt;("help") { ... }.add(new ButtonBehavior(Variant.GHOST, Size.SMALL)));
@@ -62,6 +67,14 @@ public class ButtonBehavior extends Behavior
 		{
 			return CSS_CLASS + "--" + name().toLowerCase();
 		}
+
+		/**
+		 * @return the part of a look the variant is
+		 */
+		public LookPart part()
+		{
+			return LookPart.valueOf("BUTTON_" + name());
+		}
 	}
 
 	/**
@@ -82,6 +95,14 @@ public class ButtonBehavior extends Behavior
 		public String cssClass()
 		{
 			return CSS_CLASS + "--" + name().toLowerCase();
+		}
+
+		/**
+		 * @return the part of a look the size is
+		 */
+		public LookPart part()
+		{
+			return LookPart.valueOf("BUTTON_" + name());
 		}
 	}
 
@@ -179,6 +200,18 @@ public class ButtonBehavior extends Behavior
 	}
 
 	/**
+	 * @param look
+	 *            a look
+	 * @return the CSS classes of the button in the look: those of a button, of the variant, of the
+	 *         size and, for an icon only, of a button showing only its icon
+	 */
+	public String getCssClasses(ILook look)
+	{
+		return look.getCssClasses(LookPart.BUTTON, variant.part(), size.part(),
+			iconOnly ? LookPart.BUTTON_ICON_ONLY : null);
+	}
+
+	/**
 	 * The body of a button, as {@link AjaxActionButton} writes it: the icon, if any, then the
 	 * text, unless the button shows only its icon.
 	 *
@@ -212,7 +245,7 @@ public class ButtonBehavior extends Behavior
 	public void onComponentTag(Component component, ComponentTag tag)
 	{
 		super.onComponentTag(component, tag);
-		tag.append("class", getCssClasses(), " ");
+		tag.append("class", getCssClasses(Looks.of(component)), " ");
 		if ("button".equalsIgnoreCase(tag.getName()) && tag.getAttribute("type") == null &&
 			component instanceof IFormSubmittingComponent == false)
 		{
@@ -231,5 +264,6 @@ public class ButtonBehavior extends Behavior
 	{
 		super.renderHead(component, response);
 		response.render(CssHeaderItem.forReference(CSS));
+		Looks.of(component).renderHead(response);
 	}
 }

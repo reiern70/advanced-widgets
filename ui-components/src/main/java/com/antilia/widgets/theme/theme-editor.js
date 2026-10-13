@@ -18,6 +18,32 @@
 
 	const HEX = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i;
 
+	const HEX6 = /^#[0-9a-f]{6}$/i;
+
+	/*
+	 * A color as the #rrggbb a color field takes: a theme may write it otherwise, such as the
+	 * Bootstrap themes, whose colors are Bootstrap's or mixed from them with color-mix(); a
+	 * canvas paints it and tells its channels.
+	 */
+	function hex(value) {
+		const short = value.replace(HEX, '#$1$1$2$2$3$3');
+		if (HEX6.test(short) || !value) {
+			return short;
+		}
+		const canvas = document.createElement('canvas');
+		canvas.width = canvas.height = 1;
+		const context = canvas.getContext('2d', { willReadFrequently: true });
+		if (!context) {
+			return short;
+		}
+		context.fillStyle = value;
+		context.fillRect(0, 0, 1, 1);
+		const pixel = context.getImageData(0, 0, 1, 1).data;
+		return '#' + [pixel[0], pixel[1], pixel[2]].map(function (channel) {
+			return channel.toString(16).padStart(2, '0');
+		}).join('');
+	}
+
 	const editors = {};
 
 	function fields(cfg) {
@@ -83,7 +109,7 @@
 			const style = window.getComputedStyle(target);
 			all.forEach(function (field) {
 				const value = style.getPropertyValue(field.getAttribute('data-theme-property')).trim();
-				field.value = field.type === 'color' ? value.replace(HEX, '#$1$1$2$2$3$3') : value;
+				field.value = field.type === 'color' ? hex(value) : value;
 				// a select drawn as a drop-down shows the value set here
 				const dropdown = Wicket.Dropdown && Wicket.Dropdown.of(field);
 				if (dropdown) {

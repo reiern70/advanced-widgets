@@ -19,7 +19,8 @@
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
-import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
+import { lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
+import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 
 /**
  * A choice of a palette.
@@ -58,6 +59,8 @@ export interface PaletteTexts {
 export interface PaletteOptions extends PaletteTexts {
 	/** The choices, in their order; those of the select for Palette.attach(). */
 	choices?: PaletteChoice[];
+	/** The look of the palette; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** The values of the chosen ones, in their order. */
 	selected?: string[];
 	/** Whether the order of the chosen ones matters: they can be moved up and down. */
@@ -175,11 +178,9 @@ interface Drag {
 
 const CLASS = 'antilia-palette';
 const ITEM_CLASS = 'antilia-palette-item';
-const ACTIVE_CLASS = 'antilia-palette-active';
 const DRAGGING_CLASS = 'antilia-palette-dragging';
 const OVER_CLASS = 'antilia-palette-over';
 const NATIVE_CLASS = 'antilia-palette-native';
-const MATCH_CLASS = 'antilia-palette-match';
 
 /** The number of choices from which on the available ones have a filter, unless set otherwise. */
 export const PALETTE_FILTER_THRESHOLD = 8;
@@ -223,11 +224,11 @@ function create<K extends keyof HTMLElementTagNameMap>(tag: K, className?: strin
 	return element;
 }
 
-function button(className: string, symbol: string): HTMLButtonElement {
-	const element = create('button', 'antilia-palette-button ' + className);
+function button(look: Look, className: string, symbol: string): HTMLButtonElement {
+	const element = create('button', partClasses(look, 'palette-button') + ' ' + className);
 	element.type = 'button';
-	element.appendChild(create('span', 'antilia-palette-arrow', symbol)).setAttribute('aria-hidden',
-		'true');
+	element.appendChild(create('span', partClasses(look, 'palette-arrow'), symbol))
+		.setAttribute('aria-hidden', 'true');
 	return element;
 }
 
@@ -327,6 +328,9 @@ export class Palette {
 	/** Whether the element was made by Palette.attach(), and is taken away again by destroy(). */
 	private ownElement = false;
 
+	/** The look of the palette, whose classes the elements it makes get. */
+	private readonly look: Look;
+
 	/**
 	 * The matchers the option match can name: those built in, and any an application puts here,
 	 * as a page does for a PaletteBehavior given a matcher of its own.
@@ -337,8 +341,8 @@ export class Palette {
 	private matches = new Map<string, Array<[number, number]>>();
 
 	/** Gives a list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
-	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
-		Scrollbar.attach(list, { axis: 'y' });
+	static attachScrollbar: (list: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
+		(list, look) => Scrollbar.attach(list, { axis: 'y', look });
 
 	/**
 	 * @param element the element to draw the palette into, emptied first
@@ -349,6 +353,7 @@ export class Palette {
 		this.element = element;
 		this.select = select ?? null;
 		this.options = { ...options };
+		this.look = options.look ?? lookOf(element);
 		this.id = (select?.id || element.id || 'antilia-palette-' + (++counter));
 		instances.get(element)?.detach();
 		instances.set(element, this);
@@ -376,7 +381,7 @@ export class Palette {
 		let wrapper = element.parentElement;
 		let own = false;
 		if (!wrapper || !wrapper.classList.contains(CLASS)) {
-			wrapper = create('div', CLASS);
+			wrapper = create('div', partClasses(options?.look ?? lookOf(element), 'palette'));
 			element.parentNode?.insertBefore(wrapper, element);
 			wrapper.appendChild(element);
 			own = true;
@@ -483,26 +488,34 @@ export class Palette {
 		return size === 0 ? Infinity : Math.max(1, Math.floor(size));
 	}
 
+	/**
+	 * @returns the classes of parts of the palette in its look
+	 */
+	private css(...parts: LookPart[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
 	private values(list: List): string[] {
 		return list.choices.map((choice) => choice.value);
 	}
 
 	private newList(side: Side): List {
-		const box = create('div', 'antilia-palette-side antilia-palette-' + side);
-		const title = create('div', 'antilia-palette-title');
+		const box = create('div', this.css('palette-side', side === 'available' ?
+			'palette-available' : 'palette-selected'));
+		const title = create('div', this.css('palette-title'));
 		title.id = this.id + '-' + side + '-title';
 		box.appendChild(title);
-		const list = create('ul', 'antilia-palette-list');
+		const list = create('ul', this.css('palette-list'));
 		list.id = this.id + '-' + side;
 		list.tabIndex = 0;
 		list.setAttribute('role', 'listbox');
 		list.setAttribute('aria-multiselectable', 'true');
 		list.setAttribute('aria-labelledby', title.id);
 		list.dataset.side = side;
-		const scroller = create('div', SCROLLBAR_WRAPPER_CLASS);
+		const scroller = create('div', this.css('scrollbar'));
 		scroller.appendChild(list);
 		box.appendChild(scroller);
-		const empty = create('div', 'antilia-palette-empty');
+		const empty = create('div', this.css('palette-empty'));
 		scroller.appendChild(empty);
 		return { side, box, title, list, scroller, empty, choices: [], items: [],
 			highlighted: new Set(),
@@ -519,7 +532,7 @@ export class Palette {
 				child.remove();
 			}
 		});
-		element.classList.add(CLASS);
+		element.classList.add(...this.css('palette').split(' '));
 		if (this.select) {
 			this.select.classList.add(NATIVE_CLASS);
 			this.select.tabIndex = -1;
@@ -527,25 +540,25 @@ export class Palette {
 		}
 		this.available = this.newList('available');
 		this.chosen = this.newList('selected');
-		const middle = create('div', 'antilia-palette-buttons');
+		const middle = create('div', this.css('palette-buttons'));
 		middle.setAttribute('role', 'group');
 		this.buttons = {
-			add: button('antilia-palette-add', '›'),
-			addAll: button('antilia-palette-add-all', '»'),
-			remove: button('antilia-palette-remove', '‹'),
-			removeAll: button('antilia-palette-remove-all', '«'),
-			up: button('antilia-palette-up', '↑'),
-			down: button('antilia-palette-down', '↓')
+			add: button(this.look, 'antilia-palette-add', '›'),
+			addAll: button(this.look, 'antilia-palette-add-all', '»'),
+			remove: button(this.look, 'antilia-palette-remove', '‹'),
+			removeAll: button(this.look, 'antilia-palette-remove-all', '«'),
+			up: button(this.look, 'antilia-palette-up', '↑'),
+			down: button(this.look, 'antilia-palette-down', '↓')
 		};
 		middle.append(this.buttons.add, this.buttons.addAll, this.buttons.remove,
 			this.buttons.removeAll);
-		this.order = create('div', 'antilia-palette-buttons antilia-palette-order');
+		this.order = create('div', this.css('palette-buttons', 'palette-order'));
 		this.order.setAttribute('role', 'group');
 		this.order.append(this.buttons.up, this.buttons.down);
 		element.append(this.available.box, middle, this.chosen.box, this.order);
 		for (const list of [this.available, this.chosen]) {
 			if (list.list.isConnected) {
-				list.scrollbar = Palette.attachScrollbar(list.list);
+				list.scrollbar = Palette.attachScrollbar(list.list, this.look);
 			}
 		}
 		this.renderTexts();
@@ -565,7 +578,7 @@ export class Palette {
 		const withFilter = this.options.filterable !== false &&
 			this.choices.length >= this.threshold();
 		if (withFilter && !this.filter) {
-			this.filter = create('input', 'antilia-palette-filter');
+			this.filter = create('input', this.css('palette-filter'));
 			this.filter.type = 'search';
 			this.filter.autocomplete = 'off';
 			this.filter.setAttribute('aria-controls', this.available.list.id);
@@ -658,12 +671,12 @@ export class Palette {
 		}
 		list.choices.slice(start, end).forEach((choice, offset) => {
 			const index = start + offset;
-			const item = create('li', ITEM_CLASS);
+			const item = create('li', this.css('palette-item'));
 			item.id = list.list.id + '-' + index;
 			item.setAttribute('role', 'option');
 			item.dataset.value = choice.value;
 			if (this.options.numbered) {
-				item.appendChild(create('span', 'antilia-palette-number', String(index + 1) + '.'))
+				item.appendChild(create('span', this.css('palette-number'), String(index + 1) + '.'))
 					.setAttribute('aria-hidden', 'true');
 			}
 			item.appendChild(this.label(choice, list.side === 'available' ?
@@ -683,7 +696,7 @@ export class Palette {
 	 * @returns the text of a choice, with those parts in a span.antilia-palette-match
 	 */
 	private label(choice: PaletteChoice, parts?: Array<[number, number]>): HTMLSpanElement {
-		const text = create('span', 'antilia-palette-text');
+		const text = create('span', this.css('palette-text'));
 		const label = choice.label;
 		let at = 0;
 		for (const [from, to] of (parts ?? []).slice().sort((a, b) => a[0] - b[0])) {
@@ -695,7 +708,7 @@ export class Palette {
 			if (start > at) {
 				text.appendChild(document.createTextNode(label.slice(at, start)));
 			}
-			text.appendChild(create('span', MATCH_CLASS, label.slice(start, end)));
+			text.appendChild(create('span', this.css('palette-match'), label.slice(start, end)));
 			at = end;
 		}
 		if (at < label.length) {
@@ -738,7 +751,7 @@ export class Palette {
 		list.items.forEach((item) => {
 			const value = item.dataset.value!;
 			item.setAttribute('aria-selected', String(list.highlighted.has(value)));
-			item.classList.toggle(ACTIVE_CLASS, value === list.active);
+			toggleParts(item, this.look, value === list.active, 'palette-item-active');
 			if (value === list.active) {
 				active = item;
 			}
@@ -1189,10 +1202,10 @@ export class Palette {
 			}
 			drag.started = true;
 			this.element.classList.add(DRAGGING_CLASS);
-			drag.ghost = create('div', 'antilia-palette-ghost',
+			drag.ghost = create('div', this.css('palette-ghost'),
 				drag.values.map((value) => this.choice(value)?.label ?? value).join(', '));
 			drag.ghost.setAttribute('aria-hidden', 'true');
-			drag.marker = create('div', 'antilia-palette-marker');
+			drag.marker = create('div', this.css('palette-marker'));
 			drag.marker.setAttribute('aria-hidden', 'true');
 			document.body.appendChild(drag.ghost);
 		}

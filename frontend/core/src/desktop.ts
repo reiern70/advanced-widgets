@@ -77,8 +77,8 @@
 
 import { buttonClasses } from './button.js';
 import { onRemoving, type Unsubscribe } from './host.js';
-import { isFieldModified, MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog,
-	resetField } from './modal.js';
+import { lookOf, partClasses, type Look, type LookPart } from './look.js';
+import { isFieldModified, ModalDialog, resetField } from './modal.js';
 
 /** Where a window is, its size, and what the user made of it. */
 export interface WindowState {
@@ -209,6 +209,8 @@ export interface DesktopTexts {
 export interface DesktopOptions {
 	/** The side of the desktop the taskbar is on, bottom when left out. */
 	taskbar?: TaskbarPosition;
+	/** The look of the desktop; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** Whether the taskbar has the buttons tiling the windows, true when left out. */
 	tiling?: boolean;
 	/**
@@ -530,6 +532,9 @@ function writing(target: Element | null): boolean {
 export class Desktop {
 	readonly element: HTMLElement;
 
+	/** The look of the desktop, whose classes the elements it makes get. */
+	readonly look: Look;
+
 	readonly area: HTMLElement;
 
 	readonly taskbar: HTMLElement;
@@ -610,6 +615,7 @@ export class Desktop {
 	constructor(element: HTMLElement, options: DesktopOptions = {}) {
 		this.element = element;
 		this.options = { ...options };
+		this.look = options.look ?? lookOf(element);
 		this.options.panes = this.normalizePanes(options.panes);
 		this.options.activePane = this.paneOf(options.activePane) ?? DEFAULT_PANE;
 		instances.get(element)?.destroy();
@@ -624,14 +630,14 @@ export class Desktop {
 		let taskbar = children.find((child) => child.classList.contains(DESKTOP_CLASSES.taskbar));
 		if (!taskbar) {
 			taskbar = document.createElement('div');
-			taskbar.className = DESKTOP_CLASSES.taskbar;
+			taskbar.className = this.css('desktop-taskbar');
 			element.append(taskbar);
 			this.ownTaskbar = true;
 		}
 		this.taskbar = taskbar;
 		this.taskbar.replaceChildren();
 		this.tasks = document.createElement('div');
-		this.tasks.className = DESKTOP_CLASSES.tasks;
+		this.tasks.className = this.css('desktop-tasks');
 		this.taskbar.append(this.tasks);
 		if (typeof MutationObserver !== 'undefined') {
 			this.observer = new MutationObserver((records) => this.onMutations(records));
@@ -672,6 +678,20 @@ export class Desktop {
 	/**
 	 * @returns the side of the taskbar
 	 */
+	/**
+	 * @returns the classes of parts of the desktop in its look
+	 */
+	private css(...parts: LookPart[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
+	/**
+	 * Gives an element of the desktop the classes of parts in its look.
+	 */
+	private add(element: Element, ...parts: LookPart[]): void {
+		element.classList.add(...this.css(...parts).split(' '));
+	}
+
 	position(): TaskbarPosition {
 		const position = this.options.taskbar;
 		return position === 'top' || position === 'left' || position === 'right' ? position :
@@ -681,7 +701,7 @@ export class Desktop {
 	private render(): void {
 		const element = this.element;
 		const position = this.position();
-		element.classList.add(DESKTOP_CLASSES.desktop);
+		this.add(element, 'desktop');
 		for (const side of ['bottom', 'top', 'left', 'right']) {
 			element.classList.toggle('antilia-desktop-taskbar-' + side, side === position);
 		}
@@ -707,7 +727,7 @@ export class Desktop {
 		if (this.options.movableTaskbar === false) {
 			return;
 		}
-		this.grip = button(DESKTOP_CLASSES.grip, ICONS.grip, texts.move);
+		this.grip = button(this.css('desktop-grip'), ICONS.grip, texts.move);
 		this.grip.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown ArrowLeft ArrowRight');
 		this.taskbar.prepend(this.grip);
 	}
@@ -718,7 +738,7 @@ export class Desktop {
 		if (this.options.menu === false) {
 			return;
 		}
-		this.menuButton = button(DESKTOP_CLASSES.menuButton, ICONS.menu, texts.menu);
+		this.menuButton = button(this.css('desktop-menu-button'), ICONS.menu, texts.menu);
 		this.menuButton.setAttribute('aria-haspopup', 'menu');
 		this.menuButton.setAttribute('aria-expanded', 'false');
 		// after the grip, before the buttons of the windows
@@ -731,7 +751,7 @@ export class Desktop {
 		if (!this.windowTypes().length) {
 			return;
 		}
-		this.launcher = button(DESKTOP_CLASSES.launcher, ICONS.launcher, texts.newWindow);
+		this.launcher = button(this.css('desktop-launcher'), ICONS.launcher, texts.newWindow);
 		this.launcher.setAttribute('aria-haspopup', 'menu');
 		this.launcher.setAttribute('aria-expanded', 'false');
 		// after the menu, before the buttons of the windows
@@ -752,14 +772,14 @@ export class Desktop {
 			return;
 		}
 		const switcher = document.createElement('div');
-		switcher.className = DESKTOP_CLASSES.panes;
+		switcher.className = this.css('desktop-panes');
 		switcher.setAttribute('role', 'group');
 		switcher.setAttribute('aria-label', texts.panes);
 		const active = this.activePane();
 		for (const pane of this.panes()) {
 			const element = document.createElement('button');
 			element.type = 'button';
-			element.className = DESKTOP_CLASSES.pane;
+			element.className = this.css('desktop-pane');
 			element.dataset.pane = pane.id;
 			element.textContent = this.paneName(pane);
 			element.title = this.paneName(pane);
@@ -777,8 +797,7 @@ export class Desktop {
 				actions.push(['remove', texts.removePane]);
 			}
 			for (const [action, label] of actions) {
-				const element = button(DESKTOP_CLASSES.paneAction + ' ' + DESKTOP_CLASSES.paneAction +
-					'-' + action, ICONS[action], label);
+				const element = button(this.css('desktop-pane-action') + ' ' + DESKTOP_CLASSES.paneAction + '-' + action, ICONS[action], label);
 				element.dataset.action = action;
 				switcher.append(element);
 			}
@@ -885,7 +904,7 @@ export class Desktop {
 	 */
 	private showMenu(anchor: HTMLButtonElement, label: string, groups: MenuGroup[]): void {
 		const menu = document.createElement('div');
-		menu.className = DESKTOP_CLASSES.menu;
+		menu.className = this.css('desktop-menu');
 		menu.id = (this.element.id || 'antilia-desktop') + '-menu';
 		menu.setAttribute('role', 'menu');
 		menu.setAttribute('aria-label', label);
@@ -895,14 +914,14 @@ export class Desktop {
 				return;
 			}
 			const group = document.createElement('div');
-			group.className = DESKTOP_CLASSES.menuGroup;
+			group.className = this.css('desktop-menu-group');
 			group.dataset.group = members.name;
 			if (members.pane !== undefined) {
 				group.dataset.pane = members.pane;
 			}
 			group.setAttribute('role', 'group');
 			const heading = document.createElement('div');
-			heading.className = DESKTOP_CLASSES.menuGroup + '-heading';
+			heading.className = this.css('desktop-menu-group-heading');
 			heading.id = menu.id + '-' + members.name + (members.pane !== undefined ? '-' + index :
 				'');
 			heading.textContent = members.heading;
@@ -931,7 +950,7 @@ export class Desktop {
 	private menuItem(entry: MenuItem): HTMLButtonElement {
 		const item = document.createElement('button');
 		item.type = 'button';
-		item.className = DESKTOP_CLASSES.menuItem;
+		item.className = this.css('desktop-menu-item');
 		item.setAttribute('role', 'menuitem');
 		item.tabIndex = -1;
 		Object.entries(entry.data).forEach(([name, value]) => {
@@ -940,7 +959,7 @@ export class Desktop {
 		item.toggleAttribute('data-active', !!entry.active);
 		item.toggleAttribute('data-minimized', !!entry.minimized);
 		const itemIcon = document.createElement('span');
-		itemIcon.className = DESKTOP_CLASSES.taskIcon;
+		itemIcon.className = this.css('desktop-task-icon');
 		itemIcon.setAttribute('aria-hidden', 'true');
 		if (typeof entry.icon === 'string') {
 			const template = document.createElement('template');
@@ -950,7 +969,7 @@ export class Desktop {
 			entry.icon?.childNodes.forEach((node) => itemIcon.append(node.cloneNode(true)));
 		}
 		const text = document.createElement('span');
-		text.className = DESKTOP_CLASSES.taskTitle;
+		text.className = this.css('desktop-task-title');
 		text.textContent = entry.label;
 		item.append(itemIcon, text);
 		this.menuActions.set(item, entry.action);
@@ -1086,7 +1105,7 @@ export class Desktop {
 		}
 		const expanded = this.isExpanded();
 		const label = expanded ? texts.collapse : texts.expand;
-		this.expandButton = button(DESKTOP_CLASSES.expand, expanded ? ICONS.collapse : ICONS.expand,
+		this.expandButton = button(this.css('desktop-expand'), expanded ? ICONS.collapse : ICONS.expand,
 			label);
 		this.expandButton.setAttribute('aria-pressed', String(expanded));
 		this.taskbar.append(this.expandButton);
@@ -1126,9 +1145,9 @@ export class Desktop {
 			return;
 		}
 		this.tiling = document.createElement('div');
-		this.tiling.className = DESKTOP_CLASSES.tiling;
+		this.tiling.className = this.css('desktop-tiling');
 		for (const layout of ['grid', 'columns', 'rows', 'cascade'] as TileLayout[]) {
-			const tile = button(DESKTOP_CLASSES.tile + ' ' + DESKTOP_CLASSES.tile + '-' + layout,
+			const tile = button(this.css('desktop-tile') + ' ' + DESKTOP_CLASSES.tile + '-' + layout,
 				ICONS[layout], texts[layout]);
 			tile.dataset.layout = layout;
 			this.tiling.append(tile);
@@ -1287,7 +1306,7 @@ export class Desktop {
 		if (!flags.foldable) {
 			state.folded = false;
 		}
-		element.classList.add(DESKTOP_CLASSES.window);
+		this.add(element, 'window');
 		this.place(window);
 		STATE_ATTRIBUTES.forEach((name) => {
 			element.toggleAttribute('data-' + name, state[name]);
@@ -1324,7 +1343,7 @@ export class Desktop {
 		if (!window.controls || window.controls.parentElement !== header) {
 			window.controls?.remove();
 			window.controls = document.createElement('span');
-			window.controls.className = DESKTOP_CLASSES.controls;
+			window.controls.className = this.css('window-controls');
 			window.buttons = {};
 			header.append(window.controls);
 		}
@@ -1342,7 +1361,7 @@ export class Desktop {
 				continue;
 			}
 			if (!control) {
-				control = button(DESKTOP_CLASSES.control + ' ' + DESKTOP_CLASSES.control + '-' + name,
+				control = button(this.css('window-control') + ' ' + DESKTOP_CLASSES.control + '-' + name,
 					ICONS[name], name === 'pane' ? texts.moveToPane : texts[name]);
 				control.dataset.control = name;
 				if (name === 'pane') {
@@ -1386,7 +1405,7 @@ export class Desktop {
 		}
 		window.handles = HANDLES.map((side) => {
 			const handle = document.createElement('span');
-			handle.className = DESKTOP_CLASSES.handle + ' ' + DESKTOP_CLASSES.handle + '-' + side;
+			handle.className = this.css('window-handle') + ' ' + DESKTOP_CLASSES.handle + '-' + side;
 			handle.dataset.handle = side;
 			handle.setAttribute('aria-hidden', 'true');
 			window.element.append(handle);
@@ -1409,7 +1428,7 @@ export class Desktop {
 		if (!window.task) {
 			window.task = document.createElement('button');
 			window.task.type = 'button';
-			window.task.className = DESKTOP_CLASSES.task;
+			window.task.className = this.css('desktop-task');
 			window.task.dataset.window = window.element.id;
 			window.task.setAttribute('aria-controls', window.element.id);
 		}
@@ -1417,13 +1436,13 @@ export class Desktop {
 		const title = this.titleOf(window);
 		const source = window.element.querySelector('.' + DESKTOP_CLASSES.icon);
 		const taskIcon = document.createElement('span');
-		taskIcon.className = DESKTOP_CLASSES.taskIcon;
+		taskIcon.className = this.css('desktop-task-icon');
 		taskIcon.setAttribute('aria-hidden', 'true');
 		if (source) {
 			source.childNodes.forEach((node) => taskIcon.append(node.cloneNode(true)));
 		}
 		const text = document.createElement('span');
-		text.className = DESKTOP_CLASSES.taskTitle;
+		text.className = this.css('desktop-task-title');
 		text.textContent = title;
 		task.replaceChildren(taskIcon, text);
 		task.title = title;
@@ -2332,12 +2351,12 @@ export class Desktop {
 	askPaneName(title: string, value = ''): Promise<string | null> {
 		const texts = this.texts();
 		const field = document.createElement('div');
-		field.className = 'antilia-desktop-prompt-field';
+		field.className = this.css('desktop-prompt-field');
 		const label = document.createElement('label');
 		const input = document.createElement('input');
 		input.type = 'text';
 		input.id = (this.element.id || 'antilia-desktop') + '-prompt-name';
-		input.className = 'antilia-desktop-prompt-input';
+		input.className = this.css('desktop-prompt-input');
 		input.value = value;
 		input.setAttribute('autocomplete', 'off');
 		label.htmlFor = input.id;
@@ -2370,11 +2389,12 @@ export class Desktop {
 			const prefix = (this.element.id || 'antilia-desktop') + '-' +
 				className.replace('antilia-desktop-', '');
 			const wrapper = document.createElement('div');
-			wrapper.className = MODAL_THEME_CLASS + ' ' + className;
+			wrapper.className = this.css('dialog-theme', className === DESKTOP_CLASSES.confirm ?
+				'desktop-confirm' : 'desktop-prompt');
 			const overlay = document.createElement('div');
-			overlay.className = MODAL_CLASSES.overlay;
+			overlay.className = this.css('dialog-overlay');
 			const dialog = document.createElement('div');
-			dialog.className = MODAL_CLASSES.dialog;
+			dialog.className = this.css('dialog');
 			dialog.setAttribute('role', input ? 'dialog' : 'alertdialog');
 			dialog.setAttribute('aria-modal', 'true');
 			dialog.setAttribute('aria-labelledby', prefix + '-title');
@@ -2383,19 +2403,19 @@ export class Desktop {
 				dialog.setAttribute('aria-describedby', body.id);
 			}
 			const content = document.createElement('div');
-			content.className = MODAL_CLASSES.content;
+			content.className = this.css('dialog-content');
 			const header = document.createElement('div');
-			header.className = MODAL_CLASSES.header;
+			header.className = this.css('dialog-header');
 			const heading = document.createElement('h1');
-			heading.className = MODAL_CLASSES.title;
+			heading.className = this.css('dialog-title');
 			heading.id = prefix + '-title';
 			heading.textContent = title;
 			header.append(heading);
 			const main = document.createElement('div');
-			main.className = MODAL_CLASSES.body;
+			main.className = this.css('dialog-body');
 			main.append(body);
 			const footer = document.createElement('div');
-			footer.className = MODAL_CLASSES.footer;
+			footer.className = this.css('dialog-footer');
 			const no = this.dialogButton(cancel[0], 'secondary', cancel[1]);
 			const yes = this.dialogButton(confirm[0], confirm[2], confirm[1]);
 			footer.append(no, yes);
@@ -2424,7 +2444,8 @@ export class Desktop {
 					finish(true);
 				}
 			});
-			modal = new ModalDialog(overlay, { size: 'small', foldable: false, onClose: close });
+			modal = new ModalDialog(overlay, { size: 'small', foldable: false, onClose: close,
+				look: this.look });
 			if (input) {
 				input.focus();
 				input.select();
@@ -2436,10 +2457,11 @@ export class Desktop {
 		name: string): HTMLButtonElement {
 		const element = document.createElement('button');
 		element.type = 'button';
-		element.className = buttonClasses({ variant, size: 'small' });
+		// in the look of the desktop, as the buttons rendered with it
+		element.className = buttonClasses({ variant, size: 'small', look: this.look });
 		element.dataset.confirm = name;
 		const text = document.createElement('span');
-		text.className = 'ant-button__label';
+		text.className = this.css('button-label');
 		text.textContent = label;
 		element.append(text);
 		return element;
@@ -2743,7 +2765,7 @@ export class Desktop {
 		} while (document.getElementById(id));
 		const element = windowType.create(id, target);
 		element.id = id;
-		element.classList.add(DESKTOP_CLASSES.window);
+		this.add(element, 'window');
 		element.setAttribute('data-pane', target);
 		if (!element.hasAttribute('data-closable')) {
 			element.setAttribute('data-closable', 'true');

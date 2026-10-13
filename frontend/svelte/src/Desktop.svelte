@@ -19,12 +19,15 @@
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { DEFAULT_DESKTOP_TEXTS, Desktop, DESKTOP_COMPONENTS, isLicensed, UNLICENSED_CLASS,
-		type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
+	import { DEFAULT_DESKTOP_TEXTS, Desktop, DESKTOP_COMPONENTS, type DesktopPane,
+		type DesktopTexts, isLicensed, partClasses, type TaskbarPosition, type TileLayout,
 		type WindowState } from '@antilia/core';
 
 	import DesktopWindow from './DesktopWindow.svelte';
 	import type { DesktopWindowType } from './types.js';
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** The windows, DesktopWindow components. */
@@ -188,7 +191,7 @@
 		};
 	});
 
-	const classes = $derived(['antilia-desktop', 'antilia-desktop-taskbar-' + position, className]
+	const classes = $derived([partClasses(look, 'desktop'), 'antilia-desktop-taskbar-' + position, className]
 		.filter(Boolean).join(' '));
 
 	$effect(() => {
@@ -196,6 +199,7 @@
 			return;
 		}
 		const desktop: Desktop = new Desktop(element, untrack(() => ({
+			look,
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
 			panes: $state.snapshot(paneList), activePane: shown, paneSwitcher, editablePanes,
 			windowTypes: coreTypes,
@@ -352,11 +356,11 @@
 </script>
 
 {#if licensed === false}
-	<div {id} class={UNLICENSED_CLASS} role="note" data-component="Desktop">
+	<div {id} class={partClasses(look, 'unlicensed')} role="note" data-component="Desktop">
 		{texts?.unlicensed ?? DEFAULT_DESKTOP_TEXTS.unlicensed}</div>
 {:else if licensed}
 	<div bind:this={element} {id} class={classes}>
-		<div class="antilia-desktop-area">
+		<div class={partClasses(look, 'desktop-area')}>
 			{@render children?.()}
 			{#each launched as window (window.id)}
 				{@const type = windowTypes?.find((other) => other.type === window.type)}
@@ -368,6 +372,6 @@
 				{/if}
 			{/each}
 		</div>
-		<div class="antilia-desktop-taskbar"></div>
+		<div class={partClasses(look, 'desktop-taskbar')}></div>
 	</div>
 {/if}

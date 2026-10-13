@@ -121,61 +121,6 @@ a { color: var(--accent, var(--primary)); }
 	opacity: .8;
 }
 
-.cards {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-	gap: 16px;
-}
-.card {
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	padding: 20px;
-	transition: box-shadow .15s, transform .15s;
-}
-.card:hover {
-	box-shadow: 0 6px 20px rgba(28, 35, 51, .08);
-	transform: translateY(-2px);
-}
-.card__head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-}
-.card__category {
-	font-size: 12px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: .6px;
-	color: var(--primary);
-}
-.card__name { margin: 12px 0 6px; font-size: 18px; }
-.card__description { margin: 0; color: var(--muted); font-size: 14px; }
-
-/* a demo on the home page: its screenshot on top, the frameworks it runs in below */
-.card--shot { padding: 0; overflow: hidden; }
-.card--shot .card__link { display: block; padding: 0 20px 20px; }
-.card__shot {
-	display: block;
-	width: calc(100% + 40px);
-	height: auto;
-	aspect-ratio: 16 / 10;
-	margin: 0 -20px 16px;
-	object-fit: cover;
-	object-position: top left;
-	background: var(--bg);
-	border-bottom: 1px solid var(--border);
-}
-.card__frameworks {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	margin: 12px 0 0;
-}
 .framework {
 	padding: 1px 8px;
 	border-radius: 999px;
@@ -356,7 +301,6 @@ a.brand { color: inherit; text-decoration: none; }
 
 .demos { padding-top: 40px; padding-bottom: 56px; }
 .demos h2 { margin: 0 0 20px; font-size: 22px; }
-.card__link { color: inherit; text-decoration: none; display: block; }
 
 .hero .ws-status { color: inherit; }
 

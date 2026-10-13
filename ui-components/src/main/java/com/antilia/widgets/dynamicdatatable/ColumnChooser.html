@@ -3,12 +3,12 @@
   Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
   All rights reserved.
 -->
-<wicket:panel xmlns:wicket="http://wicket.apache.org"><details class="ant-data-table-column-chooser">
+<wicket:panel xmlns:wicket="http://wicket.apache.org"><details wicket:id="chooser" class="ant-data-table-column-chooser">
 	<summary wicket:id="toggle" class="ant-data-table-action"><wicket:container wicket:id="icon"></wicket:container></summary>
 	<div wicket:id="menu" class="ant-data-table-column-chooser-menu" role="group">
 		<ul>
-			<li wicket:id="columns"><button type="button" wicket:id="column" class="ant-data-table-column-chooser-column"><span class="ant-data-table-column-chooser-tick" aria-hidden="true">&#10003;</span><span wicket:id="label"></span></button></li>
+			<li wicket:id="columns"><button type="button" wicket:id="column" class="ant-data-table-column-chooser-column"><span wicket:id="tick" class="ant-data-table-column-chooser-tick" aria-hidden="true">&#10003;</span><span wicket:id="label"></span></button></li>
 		</ul>
-		<button type="button" class="ant-data-table-button ant-data-table-button-primary" data-dt-apply="true"><wicket:message key="DynamicDataTable.applyColumns">Apply</wicket:message></button>
+		<button type="button" wicket:id="apply" class="ant-data-table-button ant-data-table-button-primary" data-dt-apply="true"><wicket:message key="DynamicDataTable.applyColumns">Apply</wicket:message></button>
 	</div>
 </details></wicket:panel>

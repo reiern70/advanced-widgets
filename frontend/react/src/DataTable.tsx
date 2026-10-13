@@ -8,11 +8,12 @@ import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, use
 
 import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
 	MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
-	UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData, type DataTableFilter,
+	type DataTableColumnDef, type DataTableData, type DataTableFilter,
 	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableSort,
-	type DataTableTexts, type ResizeMode } from '@antilia/core';
+	type DataTableTexts, type LookPart, partClasses, type ResizeMode } from '@antilia/core';
 
 import { Dropdown } from './Dropdown.js';
+import { useLook } from './Look.js';
 
 export type { DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableSort,
 	DataTableTexts };
@@ -153,6 +154,8 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		movableColumns = true, resizableColumns = false, columnChooser = true, bodyHeight,
 		adjustToParent, engine, toolbar, actions, licenseKey, className } = props;
 	const texts: DataTableTexts = { ...DATA_TABLE_TEXTS, ...props.texts };
+	const look = useLook();
+	const css = (...parts: LookPart[]) => partClasses(look, ...parts);
 	const generatedId = useId();
 	const id = props.id ?? 'data-table-' + generatedId.replace(/[^\w-]/g, '');
 
@@ -188,7 +191,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	const visible = order.filter((column) => shown.has(column) && byId.has(column))
 		.map((column) => byId.get(column)!);
 	const withSelection = selection !== 'none';
-	const coreColumns = (withSelection ? [selectionColumn(texts)] : []).concat(visible.map(
+	const coreColumns = (withSelection ? [selectionColumn(texts, look)] : []).concat(visible.map(
 		(column) => ({ template: column.template, cssClass: column.cssClass })));
 	const columnsKey = JSON.stringify(coreColumns);
 	const filler = Boolean(bodyHeight);
@@ -215,6 +218,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		}
 		const table = new DynamicDataTable({
 			id,
+			look,
 			columns: JSON.parse(columnsKey),
 			engine,
 			filler,
@@ -296,7 +300,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		};
 		// the instance starts over when what it renders with changes
 	}, [licensed, id, columnsKey, engine, filler, heightKey, selection, infinite, adjustToParent,
-		resizableColumns, movableColumns]);
+		resizableColumns, movableColumns, look]);
 
 	// another page, page size, sort or filter loads the rows again; the last three from the start
 	const queried = useRef({ page, pageSize, sort: JSON.stringify(sort), filter });
@@ -360,7 +364,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		return null;
 	}
 	if (!licensed) {
-		return <div className={UNLICENSED_CLASS} role="note" data-component="DataTable">
+		return <div className={css('unlicensed')} role="note" data-component="DataTable">
 			{texts.unlicensed}</div>;
 	}
 
@@ -388,26 +392,28 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	};
 	const link = (target: number, className: string, label: ReactNode, title: string,
 		rel?: string) => target === page || target < 0 || target >= pages ?
-		<a className={className || undefined} rel={rel} {...{ disabled: 'disabled' }} title={title}>{label}</a> :
-		<a className={className || undefined} rel={rel} href="#" title={title} onClick={go(target)}>{label}</a>;
+		<a className={[className, css('table-page-link')].filter(Boolean).join(' ') || undefined}
+			rel={rel} {...{ disabled: 'disabled' }} title={title}>{label}</a> :
+		<a className={[className, css('table-page-link')].filter(Boolean).join(' ') || undefined}
+			rel={rel} href="#" title={title} onClick={go(target)}>{label}</a>;
 	const label = texts.showing.replace('{0}', String(range.count ? range.first + 1 : 0))
 		.replace('{1}', String(range.first + range.count)).replace('{2}', String(itemCount));
 	const colSpan = visible.length + (withSelection ? 1 : 0) + (filler ? 1 : 0);
 	const hideable = columns.filter((column) => column.hideable);
 
 	const navigation = (
-		<tr className="navigation">
+		<tr className={css('table-navigation-row')}>
 			<td colSpan={colSpan}>
-				<div className="ant-data-table-navigation">
-					{toolbar && <div className="ant-data-table-navigation-prefix">{toolbar}</div>}
-					<div className="ant-data-table-paging">
-						<div className="navigatorLabel"><div>{label}</div></div>
+				<div className={css('table-navigation')}>
+					{toolbar && <div className={css('table-navigation-prefix')}>{toolbar}</div>}
+					<div className={css('table-paging')}>
+						<div className={css('table-navigator-label')}><div>{label}</div></div>
 						{!infinite && (
-							<div className="navigator"><div>
+							<div className={css('table-navigator')}><div className={css('table-pages') || undefined}>
 								{link(0, 'first', '<<', texts.first)}
 								{link(page - 1, 'prev', '<', texts.previous, 'prev')}
 								{pageLinks(page, pages).map((target) => (
-									<span className="goto" key={target}>
+									<span className={css('table-page')} key={target}>
 										{link(target, '', <span>{target + 1}</span>,
 											texts.page.replace('{0}', String(target + 1)))}
 									</span>
@@ -417,30 +423,30 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 							</div></div>
 						)}
 					</div>
-					<div className="ant-data-table-actions">
+					<div className={css('table-actions')}>
 						{actions}
 						{withSelection && selectionCount && selected > 0 && (
-							<span className="ant-data-table-selection-count">
+							<span className={css('table-selection-count')}>
 								<span role="status">{texts.selectedCount.replace('{0}',
 									String(selected))}</span>
-								<button type="button" className="ant-data-table-selection-clear"
+								<button type="button" className={css('table-selection-clear')}
 									title={texts.clearSelection} aria-label={texts.clearSelection}
 									onClick={clearSelection}><ClearIcon /></button>
 							</span>
 						)}
 						{columnChooser && hideable.length > 0 && (
 							<span>
-								<details className="ant-data-table-column-chooser">
-									<summary className="ant-data-table-action" title={texts.columns}
+								<details className={css('table-column-chooser')}>
+									<summary className={css('table-action')} title={texts.columns}
 										aria-label={texts.columns}><ColumnsIcon /></summary>
-									<div className="ant-data-table-column-chooser-menu" role="group"
+									<div className={css('table-column-chooser-menu')} role="group"
 										aria-label={texts.columns}>
 										<ul>
 											{hideable.map((column) => (
 												<li key={column.id}>
-													<button type="button" className="ant-data-table-column-chooser-column"
+													<button type="button" className={css('table-column-chooser-column')}
 														data-dt-column={column.id} aria-pressed={shown.has(column.id)}>
-														<span className="ant-data-table-column-chooser-tick"
+														<span className={css('table-column-chooser-tick')}
 															aria-hidden="true">✓</span>
 														<span>{column.header}</span>
 													</button>
@@ -448,7 +454,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 											))}
 										</ul>
 										<button type="button" data-dt-apply="true"
-											className="ant-data-table-button ant-data-table-button-primary">
+											className={css('table-button', 'table-button-primary')}>
 											{texts.apply}
 										</button>
 									</div>
@@ -457,7 +463,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 						)}
 					</div>
 					{!infinite && (
-						<label className="ant-data-table-page-size">
+						<label className={css('table-page-size')}>
 							<span>{texts.rowsPerPage}</span>{' '}
 							<Dropdown options={pageSizes.map((size) => ({ value: String(size),
 								label: String(size) }))} value={String(pageSize)}
@@ -470,18 +476,18 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	);
 
 	return (
-		<div className="ant-data-table-host">
-			<table id={id} className={['ant-dataview ant-data-table', className]
+		<div className={css('table-host')}>
+			<table id={id} className={['ant-dataview', css('table'), className]
 				.filter(Boolean).join(' ')} cellSpacing={0}>
 				<thead>
 					{navigationPosition !== 'bottom' && navigation}
-					<tr className="ant-data-table-headers">
+					<tr className={css('table-headers')}>
 						{withSelection && (
-							<th className="ant-data-table-selection" data-resizable="false">
-								<div className="ant-data-table-header">
-									<span className="ant-data-table-sort-title">
+							<th className={css('table-selection')} data-resizable="false">
+								<div className={css('table-header')}>
+									<span className={css('table-sort-title')}>
 										{selection === 'many' && <input type="checkbox"
-											className="ant-data-table-select-page"
+											className={css('table-select-page')}
 											data-dt-action={SELECTION_ACTIONS[2]}
 											data-dt-action-unchecked={SELECTION_ACTIONS[3]}
 											aria-label={texts.selectPage} />}
@@ -497,38 +503,39 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 								<th key={column.id} data-movable={movableColumns && column.movable ?
 									'true' : undefined} data-resizable={column.resizable === false ?
 									'false' : undefined} aria-sort={sorted}
-									className={sorted ? { none: 'wicket_orderNone', ascending: 'wicket_orderUp',
-										descending: 'wicket_orderDown' }[sorted] : undefined}>
-									<div className="ant-data-table-header">
+									className={sorted ? css(({ none: 'table-header-unsorted', ascending:
+										'table-header-ascending', descending: 'table-header-descending' } as
+										const)[sorted]) : undefined}>
+									<div className={css('table-header')}>
 										{movableColumns && column.movable && (
-											<button type="button" className="antilia-col-mover"
+											<button type="button" className={css('column-mover')}
 												title={texts.moveColumn} aria-label={texts.moveColumn}><Grip /></button>
 										)}
 										{column.sort ? (
 											<>
-												<a className="ant-data-table-sort" href="#"
+												<a className={css('table-sort')} href="#"
 													onClick={sortBy(column.sort)}>
-													<span className="ant-data-table-sort-title">{column.header}</span>
+													<span className={css('table-sort-title')}>{column.header}</span>
 												</a>
-												<a className="ant-data-table-sort-arrows" aria-hidden="true"
+												<a className={css('table-sort-arrows')} aria-hidden="true"
 													tabIndex={-1} href="#" onClick={sortBy(column.sort)}>
-													<span className="ant-data-table-sort-asc">▲</span>
-													<span className="ant-data-table-sort-desc">▼</span>
+													<span className={css('table-sort-ascending')}>▲</span>
+													<span className={css('table-sort-descending')}>▼</span>
 												</a>
 											</>
-										) : <span className="ant-data-table-sort-title">{column.header}</span>}
+										) : <span className={css('table-sort-title')}>{column.header}</span>}
 									</div>
 								</th>
 							);
 						})}
-						{filler && <th className="ant-data-table-filler" data-resizable-skip="true"
+						{filler && <th className={css('table-filler')} data-resizable-skip="true"
 							aria-hidden="true"></th>}
 					</tr>
 				</thead>
 				<tbody></tbody>
 				{navigationPosition !== 'top' && <tfoot>{navigation}</tfoot>}
 			</table>
-			{veiled && <div className="ant-data-table-veil" aria-hidden="true" />}
+			{veiled && <div className={css('table-veil')} aria-hidden="true" />}
 		</div>
 	);
 });

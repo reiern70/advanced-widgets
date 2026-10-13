@@ -4,7 +4,7 @@
  */
 .antilia-collapsible {
 	border: 1px solid var(--antilia-theme-border);
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	overflow: hidden;
 	background: var(--antilia-theme-surface);
 	color: var(--antilia-theme-text);

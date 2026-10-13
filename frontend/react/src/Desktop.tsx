@@ -7,8 +7,10 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, us
 	type ReactNode } from 'react';
 
 import { Desktop as CoreDesktop, DEFAULT_DESKTOP_TEXTS, DESKTOP_COMPONENTS, isLicensed,
-	UNLICENSED_CLASS, type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
+	partClasses, type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
 	type WindowState } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 /**
  * A type of window, which the launcher of the taskbar opens: the desktop renders a new window of
@@ -159,6 +161,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 		editablePanes = true, windowTypes, texts, licenseKey, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreDesktop | null>(null);
+	const look = useLook();
 	const latest = useRef(props);
 	latest.current = props;
 	const [licensed, setLicensed] = useState<boolean | null>(null);
@@ -248,6 +251,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 			return;
 		}
 		const desktop = new CoreDesktop(element.current!, {
+			look,
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
 			panes: paneList, activePane: shown, paneSwitcher, editablePanes, windowTypes: coreTypes,
 			confirmClose: (window, title) => latest.current.confirmClose ?
@@ -282,7 +286,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 			desktop.destroy();
 			instance.current = null;
 		};
-	}, [licensed]);
+	}, [licensed, look]);
 
 	const textsKey = JSON.stringify(texts ?? {});
 	const paneListKey = JSON.stringify(paneList ?? null);
@@ -297,13 +301,14 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 		return null;
 	}
 	if (!licensed) {
-		return <div id={id} className={UNLICENSED_CLASS} role="note" data-component="Desktop">
+		return <div id={id} className={partClasses(look, 'unlicensed')} role="note"
+			data-component="Desktop">
 			{texts?.unlicensed ?? DEFAULT_DESKTOP_TEXTS.unlicensed}</div>;
 	}
 	return (
-		<div ref={element} id={id} className={['antilia-desktop', 'antilia-desktop-taskbar-' + position,
-			className].filter(Boolean).join(' ')}>
-			<div className="antilia-desktop-area">
+		<div ref={element} id={id} className={[partClasses(look, 'desktop'),
+			'antilia-desktop-taskbar-' + position, className].filter(Boolean).join(' ')}>
+			<div className={partClasses(look, 'desktop-area')}>
 				{children}
 				{launched.map((window) => {
 					const type = windowTypes?.find((other) => other.type === window.type);
@@ -315,7 +320,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 					);
 				})}
 			</div>
-			<div className="antilia-desktop-taskbar" />
+			<div className={partClasses(look, 'desktop-taskbar')} />
 		</div>
 	);
 });
@@ -394,8 +399,10 @@ export function DesktopWindow({ id, title, icon, iconMarkup, pane, x, y, width, 
 	minHeight,
 	resizable, maximizable, minimizable, foldable, closable, modified, minimized, maximized, folded,
 	closed, className, bodyClassName, children }: DesktopWindowProps) {
+	const look = useLook();
 	return (
-		<section id={id} className={['antilia-window', className].filter(Boolean).join(' ')}
+		<section id={id} className={[partClasses(look, 'window'), className].filter(Boolean)
+			.join(' ')}
 			data-x={x} data-y={y} data-width={width} data-height={height} data-min-width={minWidth}
 			data-min-height={minHeight} data-resizable={flag(resizable)}
 			data-maximizable={flag(maximizable)} data-minimizable={flag(minimizable)}
@@ -403,13 +410,14 @@ export function DesktopWindow({ id, title, icon, iconMarkup, pane, x, y, width, 
 			data-modified={flag(modified)}
 			data-minimized={present(minimized)} data-maximized={present(maximized)}
 			data-folded={present(folded)} data-closed={present(closed)} data-pane={pane}>
-			<header className="antilia-window-header">
-				{iconMarkup ? <span className="antilia-window-icon"
+			<header className={partClasses(look, 'window-header')}>
+				{iconMarkup ? <span className={partClasses(look, 'window-icon')}
 					dangerouslySetInnerHTML={{ __html: iconMarkup }} /> :
-					icon && <span className="antilia-window-icon">{icon}</span>}
-				<span className="antilia-window-title">{title}</span>
+					icon && <span className={partClasses(look, 'window-icon')}>{icon}</span>}
+				<span className={partClasses(look, 'window-title')}>{title}</span>
 			</header>
-			<div className={['antilia-window-body', bodyClassName].filter(Boolean).join(' ')}>
+			<div className={[partClasses(look, 'window-body'), bodyClassName].filter(Boolean)
+				.join(' ')}>
 				{children}
 			</div>
 		</section>

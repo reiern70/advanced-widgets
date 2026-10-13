@@ -28,6 +28,7 @@
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
+import { lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 
 /**
  * The texts of a date picker, the locale it follows and the dates it takes.
@@ -35,6 +36,8 @@ import { onRemoving, type Unsubscribe } from './host.js';
 export interface DatePickerOptions {
 	/** The locale, a BCP 47 tag such as de-DE; the language of the page when left out. */
 	locale?: string;
+	/** The look of the picker; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** Whether the picker takes a time too. */
 	time?: boolean;
 	/** The first date that can be chosen, ISO text. */
@@ -443,6 +446,9 @@ export class DatePicker {
 	/** Whether the wrapper was made by the picker, and is taken away again by destroy(). */
 	private ownWrapper = false;
 
+	/** The look of the picker, whose classes the elements it makes get. */
+	private look!: Look;
+
 	/** Whether the text field holds text typed since the value was last taken or shown. */
 	private typing = false;
 
@@ -483,11 +489,19 @@ export class DatePicker {
 		return picker && picker.input === element ? picker : null;
 	}
 
+	/**
+	 * @returns the classes of parts of the picker in its look
+	 */
+	private css(...parts: LookPart[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
 	private attach(): void {
 		const input = this.input;
+		this.look = this.options.look ?? lookOf(input);
 		let wrapper = input.parentElement;
 		if (!wrapper || !wrapper.classList.contains(WRAPPER_CLASS)) {
-			wrapper = create('div', WRAPPER_CLASS);
+			wrapper = create('div', this.css('datepicker'));
 			input.parentNode?.insertBefore(wrapper, input);
 			wrapper.appendChild(input);
 			this.ownWrapper = true;
@@ -505,34 +519,34 @@ export class DatePicker {
 		input.tabIndex = -1;
 		input.setAttribute('aria-hidden', 'true');
 
-		const box = create('div', 'antilia-datepicker-field');
-		this.field = create('input', 'antilia-datepicker-text');
+		const box = create('div', this.css('datepicker-field'));
+		this.field = create('input', this.css('datepicker-text'));
 		this.field.type = 'text';
 		this.field.id = this.id + '-text';
 		this.field.autocomplete = 'off';
 		this.field.spellcheck = false;
 		box.appendChild(this.field);
-		this.toggle = button('antilia-datepicker-toggle');
+		this.toggle = button(this.css('datepicker-toggle'));
 		this.toggle.setAttribute('aria-haspopup', 'dialog');
 		this.toggle.setAttribute('aria-expanded', 'false');
 		this.toggle.setAttribute('aria-controls', this.id + '-calendar');
-		this.toggle.appendChild(create('span', 'antilia-datepicker-icon'));
+		this.toggle.appendChild(create('span', this.css('datepicker-icon')));
 		box.appendChild(this.toggle);
 		wrapper.appendChild(box);
 
-		this.popup = create('div', 'antilia-datepicker-popup');
+		this.popup = create('div', this.css('datepicker-popup'));
 		this.popup.id = this.id + '-calendar';
 		this.popup.setAttribute('role', 'dialog');
 		this.popup.hidden = true;
-		const header = create('div', 'antilia-datepicker-header');
-		this.previous = button('antilia-datepicker-previous');
-		this.title = button('antilia-datepicker-title');
+		const header = create('div', this.css('datepicker-header'));
+		this.previous = button(this.css('datepicker-previous'));
+		this.title = button(this.css('datepicker-title'));
 		this.title.id = this.id + '-title';
 		this.title.setAttribute('aria-live', 'polite');
-		this.next = button('antilia-datepicker-next');
+		this.next = button(this.css('datepicker-next'));
 		header.append(this.previous, this.title, this.next);
 		this.popup.appendChild(header);
-		this.body = create('div', 'antilia-datepicker-body');
+		this.body = create('div', this.css('datepicker-body'));
 		this.popup.appendChild(this.body);
 		wrapper.appendChild(this.popup);
 
@@ -930,7 +944,7 @@ export class DatePicker {
 		const locale = this.format.locale;
 		const { year, month } = this.focused;
 		const firstDay = this.options.firstDayOfWeek ?? firstDayOfWeek(locale);
-		const table = create('table', 'antilia-datepicker-days');
+		const table = create('table', this.css('datepicker-days'));
 		table.setAttribute('role', 'grid');
 		table.setAttribute('aria-labelledby', this.title.id);
 		const head = table.createTHead().insertRow();
@@ -956,12 +970,12 @@ export class DatePicker {
 			for (let i = 0; i < 7; i++) {
 				const cell = row.insertCell();
 				cell.setAttribute('role', 'gridcell');
-				const item = button('antilia-datepicker-day', String(day.day));
+				const item = button(this.css('datepicker-day'), String(day.day));
 				item.dataset.value = formatIso(day, false);
 				item.setAttribute('aria-label', full.format(utc(day)));
 				item.tabIndex = compare(day, this.focused, false) === 0 ? 0 : -1;
 				if (day.month !== month) {
-					item.classList.add('antilia-datepicker-outside');
+					toggleParts(item, this.look, true, 'datepicker-day-outside');
 				}
 				if (compare(day, today, false) === 0) {
 					item.setAttribute('aria-current', 'date');
@@ -980,14 +994,14 @@ export class DatePicker {
 	}
 
 	private renderMonths(): HTMLDivElement {
-		const grid = create('div', 'antilia-datepicker-months');
+		const grid = create('div', this.css('datepicker-months'));
 		const names = new Intl.DateTimeFormat(this.format.locale, { month: 'short', timeZone: 'UTC' });
 		const longNames = new Intl.DateTimeFormat(this.format.locale, { month: 'long',
 			year: 'numeric', timeZone: 'UTC' });
 		const value = this.value();
 		const { year } = this.focused;
 		for (let month = 1; month <= 12; month++) {
-			const item = button('antilia-datepicker-month', names.format(utc({ year, month, day: 1 })));
+			const item = button(this.css('datepicker-month'), names.format(utc({ year, month, day: 1 })));
 			item.dataset.value = String(month);
 			item.setAttribute('aria-label', longNames.format(utc({ year, month, day: 1 })));
 			item.tabIndex = month === this.focused.month ? 0 : -1;
@@ -1010,12 +1024,12 @@ export class DatePicker {
 	}
 
 	private renderYears(first: number): HTMLDivElement {
-		const grid = create('div', 'antilia-datepicker-years');
+		const grid = create('div', this.css('datepicker-years'));
 		const value = this.value();
 		const min = this.min();
 		const max = this.max();
 		for (let year = first; year < first + YEARS_SHOWN; year++) {
-			const item = button('antilia-datepicker-year', String(year));
+			const item = button(this.css('datepicker-year'), String(year));
 			item.dataset.value = String(year);
 			item.tabIndex = year === this.focused.year ? 0 : -1;
 			item.setAttribute('aria-pressed', String(value?.year === year));
@@ -1038,12 +1052,12 @@ export class DatePicker {
 		this.dayPeriod = null;
 		const options = this.options;
 		if (this.isTime()) {
-			const clock = create('div', 'antilia-datepicker-clock');
-			const number = (className: string, label: string, max: number, step: number) => {
-				const field = create('input', className);
+			const clock = create('div', this.css('datepicker-clock'));
+			const number = (part: LookPart, label: string, max: number, step: number) => {
+				const field = create('input', this.css(part));
 				field.type = 'number';
 				field.inputMode = 'numeric';
-				field.min = this.format.hour12 && className.endsWith('hour') ? '1' : '0';
+				field.min = this.format.hour12 && part === 'datepicker-hour' ? '1' : '0';
 				field.max = String(max);
 				field.step = String(step);
 				this.setLabel(field, label);
@@ -1057,14 +1071,14 @@ export class DatePicker {
 				});
 				return field;
 			};
-			this.hourField = number('antilia-datepicker-hour', options.hour || 'Hour',
+			this.hourField = number('datepicker-hour', options.hour || 'Hour',
 				this.format.hour12 ? 12 : 23, 1);
-			this.minuteField = number('antilia-datepicker-minute', options.minute || 'Minute', 59,
+			this.minuteField = number('datepicker-minute', options.minute || 'Minute', 59,
 				Math.max(1, Math.min(59, options.minuteStep ?? 1)));
-			clock.append(this.hourField, create('span', 'antilia-datepicker-colon', ':'),
+			clock.append(this.hourField, create('span', this.css('datepicker-colon'), ':'),
 				this.minuteField);
 			if (this.format.hour12) {
-				this.dayPeriod = button('antilia-datepicker-period');
+				this.dayPeriod = button(this.css('datepicker-period'));
 				this.listen(this.dayPeriod, 'click', () => {
 					this.dayPeriod!.dataset.pm = String(this.dayPeriod!.dataset.pm !== 'true');
 					this.dayPeriod!.textContent = this.format.dayPeriods[
@@ -1075,8 +1089,8 @@ export class DatePicker {
 			}
 			this.popup.appendChild(clock);
 		}
-		const footer = create('div', 'antilia-datepicker-footer');
-		const today = button('antilia-datepicker-today', this.isTime() ? options.now || 'Now'
+		const footer = create('div', this.css('datepicker-footer'));
+		const today = button(this.css('datepicker-today'), this.isTime() ? options.now || 'Now'
 			: options.today || 'Today');
 		this.listen(today, 'click', () => {
 			const now = this.clamp(current());
@@ -1085,14 +1099,14 @@ export class DatePicker {
 			this.setValue(formatIso(now, this.isTime()));
 			this.close(true);
 		});
-		const clear = button('antilia-datepicker-clear', options.clear || 'Clear');
+		const clear = button(this.css('datepicker-clear'), options.clear || 'Clear');
 		this.listen(clear, 'click', () => {
 			this.setValue('');
 			this.close(true);
 		});
 		footer.append(today, clear);
 		if (this.isTime()) {
-			const close = button('antilia-datepicker-close', options.close || 'Close');
+			const close = button(this.css('datepicker-close'), options.close || 'Close');
 			this.listen(close, 'click', () => this.close(true));
 			footer.appendChild(close);
 		}

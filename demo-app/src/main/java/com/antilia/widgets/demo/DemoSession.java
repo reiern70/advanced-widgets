@@ -24,8 +24,8 @@ import com.antilia.widgets.theme.Theme;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * The session of the demo application: remembers the {@link Theme} and the {@link AjaxEngine} the
- * user chose for every page, the account the user signed in with, the failed attempts to sign in
+ * The session of the demo application: remembers the {@link Theme} and the
+ * {@link AjaxEngine} the user chose for every page, the account the user signed in with, the failed attempts to sign in
  * and the {@link Access} recording the session.
  * <p>
  * The home page is stateless, so a session is only kept once there is something to keep: a

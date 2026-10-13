@@ -1,0 +1,33 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div class="looks__group">
+	<h3 class="looks__label"><wicket:message key="buttons"/></h3>
+	<div class="ant-button-bar">
+		<button wicket:id="primary"></button>
+		<button wicket:id="secondary"></button>
+		<button wicket:id="ghost"></button>
+		<button wicket:id="danger"></button>
+	</div>
+	<div class="ant-button-bar looks__small">
+		<button wicket:id="smallSave"></button>
+		<button wicket:id="smallSettings"></button>
+		<button wicket:id="smallDelete"></button>
+	</div>
+</div>
+<form wicket:id="form" class="looks__group looks__fields">
+	<label><span class="looks__label"><wicket:message key="fruit"/></span> <select wicket:id="fruit"></select></label>
+	<label><span class="looks__label"><wicket:message key="date"/></span> <input type="text" wicket:id="date"/></label>
+</form>
+<div class="looks__group">
+	<h3 class="looks__label"><wicket:message key="progress"/></h3>
+	<div wicket:id="progress"></div>
+</div>
+<div class="looks__group" wicket:id="collapsible"></div>
+<div class="looks__group">
+	<button wicket:id="openDialog"></button>
+	<div wicket:id="dialog"></div>
+</div>
+</wicket:panel>

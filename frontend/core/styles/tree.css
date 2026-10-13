@@ -24,7 +24,7 @@
 	gap: 0.35em;
 	min-height: 2em;
 	padding: 0.1em 0.5em 0.1em calc(0.25em + (var(--antilia-tree-level, 1) - 1) * var(--antilia-tree-indent));
-	border-radius: 6px;
+	border-radius: var(--antilia-look-radius, 6px);
 	cursor: pointer;
 	user-select: none;
 }
@@ -271,7 +271,7 @@ html[dir="rtl"] .antilia-tree-grid .tree-subtree {
 	justify-content: center;
 	width: 1.1em;
 	height: 1.1em;
-	border-radius: 4px;
+	border-radius: var(--antilia-look-radius, 4px);
 }
 
 .antilia-tree-junction--none {
@@ -282,7 +282,7 @@ html[dir="rtl"] .antilia-tree-grid .tree-subtree {
 	flex: 1 1 auto;
 	min-width: 0;
 	gap: 0.35em;
-	border-radius: 4px;
+	border-radius: var(--antilia-look-radius, 4px);
 }
 
 .antilia-tree-node-button .antilia-tree-content {

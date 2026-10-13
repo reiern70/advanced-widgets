@@ -1,0 +1,651 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+/*
+ * The Bootstrap look (Look.BOOTSTRAP): the components drawn by the style sheet of Bootstrap 5.3,
+ * which the page brings, never its script. Every part that has a Bootstrap counterpart gets its
+ * classes (look.ts has the table): a button btn btn-primary btn-sm, a dialog's header
+ * modal-header, a menu dropdown-menu and its options dropdown-item, a table table, a panel card,
+ * a notification alert alert-danger... next to its own classes, which its script and its style
+ * sheet keep finding it by. This style sheet settles where the two meet, such as the menus,
+ * which Bootstrap hides without its script's class show. The parts take Bootstrap's shapes
+ * through the look properties the style sheets of the components read, each falling back to the
+ * Antilia look:
+ *
+ *   --antilia-look-radius        the corners of fields, menus, dialogs and the like
+ *   --antilia-look-radius-sm     the corners of small things, such as check boxes and chips
+ *   --antilia-look-shadow        the shadow of what floats over the page, such as a menu
+ *   --antilia-look-shadow-lg     the shadow of dialogs and windows
+ *   --antilia-look-focus-ring    the ring of a field with the focus
+ *
+ * The colors stay the theme's. In the Bootstrap themes (Theme.BOOTSTRAP and BOOTSTRAP_DARK) they
+ * are Bootstrap's; in any other theme this style sheet gives Bootstrap's buttons and the
+ * custom properties of Bootstrap the theme's colors, so the components and the page's own
+ * Bootstrap markup inside the theme look alike. CSS cannot take a color apart into the channels
+ * of Bootstrap's --bs-*-rgb properties, so what Bootstrap draws from those, such as its links and
+ * the .text-* and .bg-* utilities, keeps Bootstrap's colors.
+ */
+
+.antilia-look-bootstrap,
+.antilia-look-bootstrap .antilia-theme {
+	--antilia-look-radius: var(--bs-border-radius);
+	--antilia-look-radius-sm: var(--bs-border-radius-sm);
+	--antilia-look-shadow: var(--bs-box-shadow);
+	--antilia-look-shadow-lg: var(--bs-box-shadow-lg);
+	--antilia-look-focus-ring: 0 0 0 var(--bs-focus-ring-width)
+		color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
+}
+
+/* Bootstrap in the colors of a theme of the components' own */
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) {
+	--bs-body-color: var(--antilia-theme-text);
+	--bs-body-bg: var(--antilia-theme-surface);
+	--bs-secondary-bg: var(--antilia-theme-hover);
+	--bs-tertiary-bg: var(--antilia-theme-surface-alt);
+	--bs-border-color: var(--antilia-theme-border);
+	--bs-link-color: var(--antilia-theme-accent);
+	--bs-link-hover-color: var(--antilia-theme-primary-dark);
+	--bs-primary: var(--antilia-theme-primary);
+	--bs-primary-bg-subtle: var(--antilia-theme-highlight);
+	--bs-primary-border-subtle: var(--antilia-theme-border);
+	--bs-primary-text-emphasis: var(--antilia-theme-primary-dark);
+	--bs-success: var(--antilia-theme-success);
+	--bs-danger: var(--antilia-theme-error);
+	--bs-warning: var(--antilia-theme-warning);
+	--bs-info: var(--antilia-theme-info);
+	--bs-focus-ring-color: color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
+	--bs-form-valid-color: var(--antilia-theme-success);
+	--bs-form-invalid-color: var(--antilia-theme-error);
+	color-scheme: var(--antilia-theme-color-scheme);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn {
+	--bs-btn-focus-box-shadow: 0 0 0 0.25rem
+		color-mix(in srgb, var(--antilia-theme-accent) 50%, transparent);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-primary {
+	--bs-btn-color: var(--antilia-theme-on-primary);
+	--bs-btn-bg: var(--antilia-theme-primary);
+	--bs-btn-border-color: var(--antilia-theme-primary);
+	--bs-btn-hover-color: var(--antilia-theme-on-primary);
+	--bs-btn-hover-bg: var(--antilia-theme-primary-dark);
+	--bs-btn-hover-border-color: var(--antilia-theme-primary-dark);
+	--bs-btn-active-color: var(--antilia-theme-on-primary);
+	--bs-btn-active-bg: color-mix(in srgb, var(--antilia-theme-primary-dark) 88%, #000000);
+	--bs-btn-active-border-color: color-mix(in srgb, var(--antilia-theme-primary-dark) 88%, #000000);
+	--bs-btn-disabled-color: var(--antilia-theme-on-primary);
+	--bs-btn-disabled-bg: var(--antilia-theme-primary);
+	--bs-btn-disabled-border-color: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-secondary {
+	--bs-btn-color: var(--antilia-theme-text);
+	--bs-btn-bg: var(--antilia-theme-surface);
+	--bs-btn-border-color: var(--antilia-theme-border);
+	--bs-btn-hover-color: var(--antilia-theme-text);
+	--bs-btn-hover-bg: var(--antilia-theme-hover);
+	--bs-btn-hover-border-color: var(--antilia-theme-border);
+	--bs-btn-active-color: var(--antilia-theme-text);
+	--bs-btn-active-bg: var(--antilia-theme-hover);
+	--bs-btn-active-border-color: var(--antilia-theme-primary);
+	--bs-btn-disabled-color: var(--antilia-theme-text);
+	--bs-btn-disabled-bg: var(--antilia-theme-surface);
+	--bs-btn-disabled-border-color: var(--antilia-theme-border);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-danger {
+	--bs-btn-color: #ffffff;
+	--bs-btn-bg: var(--antilia-theme-error);
+	--bs-btn-border-color: var(--antilia-theme-error);
+	--bs-btn-hover-color: #ffffff;
+	--bs-btn-hover-bg: color-mix(in srgb, var(--antilia-theme-error) 85%, #000000);
+	--bs-btn-hover-border-color: color-mix(in srgb, var(--antilia-theme-error) 80%, #000000);
+	--bs-btn-active-color: #ffffff;
+	--bs-btn-active-bg: color-mix(in srgb, var(--antilia-theme-error) 80%, #000000);
+	--bs-btn-active-border-color: color-mix(in srgb, var(--antilia-theme-error) 75%, #000000);
+	--bs-btn-disabled-color: #ffffff;
+	--bs-btn-disabled-bg: var(--antilia-theme-error);
+	--bs-btn-disabled-border-color: var(--antilia-theme-error);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-link {
+	--bs-btn-color: var(--antilia-theme-accent);
+	--bs-btn-hover-color: var(--antilia-theme-primary-dark);
+	--bs-btn-active-color: var(--antilia-theme-primary-dark);
+}
+
+/* what Bootstrap colors with its primary blue written out, not with --bs-primary */
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-outline-primary {
+	--bs-btn-color: var(--antilia-theme-primary);
+	--bs-btn-border-color: var(--antilia-theme-primary);
+	--bs-btn-hover-color: var(--antilia-theme-on-primary);
+	--bs-btn-hover-bg: var(--antilia-theme-primary);
+	--bs-btn-hover-border-color: var(--antilia-theme-primary);
+	--bs-btn-active-color: var(--antilia-theme-on-primary);
+	--bs-btn-active-bg: var(--antilia-theme-primary-dark);
+	--bs-btn-active-border-color: var(--antilia-theme-primary-dark);
+	--bs-btn-disabled-color: var(--antilia-theme-primary);
+	--bs-btn-disabled-border-color: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .form-control:focus,
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .form-select:focus,
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .form-check-input:focus {
+	border-color: var(--antilia-theme-accent);
+	box-shadow: var(--antilia-look-focus-ring);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .form-check-input:checked,
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .form-check-input[type="checkbox"]:indeterminate {
+	border-color: var(--antilia-theme-primary);
+	background-color: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .nav-link:focus-visible {
+	box-shadow: var(--antilia-look-focus-ring);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .nav-pills {
+	--bs-nav-pills-link-active-color: var(--antilia-theme-on-primary);
+	--bs-nav-pills-link-active-bg: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .dropdown-menu {
+	--bs-dropdown-link-active-color: var(--antilia-theme-on-primary);
+	--bs-dropdown-link-active-bg: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .pagination {
+	--bs-pagination-active-color: var(--antilia-theme-on-primary);
+	--bs-pagination-active-bg: var(--antilia-theme-primary);
+	--bs-pagination-active-border-color: var(--antilia-theme-primary);
+	--bs-pagination-focus-box-shadow: var(--antilia-look-focus-ring);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .list-group {
+	--bs-list-group-active-color: var(--antilia-theme-on-primary);
+	--bs-list-group-active-bg: var(--antilia-theme-primary);
+	--bs-list-group-active-border-color: var(--antilia-theme-primary);
+}
+
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .progress,
+.antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .progress-stacked {
+	--bs-progress-bar-bg: var(--antilia-theme-progress);
+	--bs-progress-bg: var(--antilia-theme-track);
+}
+
+/* the buttons of the components: their icon before their text, and square showing only an icon */
+
+.antilia-look-bootstrap .btn:has(> .ant-button__icon) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45em;
+}
+
+.antilia-look-bootstrap .btn.ant-button--icon-only {
+	aspect-ratio: 1;
+	min-width: 0;
+	padding: var(--bs-btn-padding-y);
+}
+
+/*
+ * Looks made of both (CompoundLook): Bootstrap's btn in the colors of Antilia's button classes,
+ * and Antilia's button in the colors of Bootstrap's, each through the custom properties of the
+ * other. A secondary button of Antilia has no class of its own, its colors are those of every
+ * button.
+ */
+.antilia-look-bootstrap .btn.ant-button--secondary {
+	--ant-button-bg: var(--antilia-theme-surface, #ffffff);
+	--ant-button-fg: var(--antilia-theme-text, #2b1d12);
+	--ant-button-border: var(--antilia-theme-border, #c4c9d4);
+	--ant-button-hover: var(--antilia-theme-hover, #eef0f4);
+}
+
+.antilia-look-bootstrap .btn:is(.ant-button--primary, .ant-button--secondary, .ant-button--ghost,
+	.ant-button--danger) {
+	--bs-btn-color: var(--ant-button-fg);
+	--bs-btn-bg: var(--ant-button-bg);
+	--bs-btn-border-color: var(--ant-button-border);
+	--bs-btn-hover-color: var(--ant-button-fg);
+	--bs-btn-hover-bg: var(--ant-button-hover);
+	--bs-btn-hover-border-color: var(--ant-button-border);
+	--bs-btn-active-color: var(--ant-button-fg);
+	--bs-btn-active-bg: var(--ant-button-hover);
+	--bs-btn-active-border-color: var(--ant-button-border);
+	--bs-btn-disabled-color: var(--ant-button-fg);
+	--bs-btn-disabled-bg: var(--ant-button-bg);
+	--bs-btn-disabled-border-color: var(--ant-button-border);
+}
+
+.antilia-look-bootstrap .ant-button:is(.btn-primary, .btn-secondary, .btn-danger, .btn-link) {
+	--ant-button-bg: var(--bs-btn-bg, transparent);
+	--ant-button-fg: var(--bs-btn-color);
+	--ant-button-border: var(--bs-btn-border-color, transparent);
+	--ant-button-hover: var(--bs-btn-hover-bg, transparent);
+}
+
+/* the fields of the components as tall as Bootstrap's .form-control, with its padding */
+
+.antilia-look-bootstrap .antilia-dropdown-toggle,
+.antilia-look-bootstrap .antilia-datepicker-field,
+.antilia-look-bootstrap .antilia-autocomplete-field {
+	min-height: calc(1.5em + 0.75rem + 2 * var(--bs-border-width));
+	line-height: 1.5;
+}
+
+.antilia-look-bootstrap .antilia-dropdown-toggle,
+.antilia-look-bootstrap .antilia-datepicker-text {
+	padding: 0.375rem 0.75rem;
+}
+
+.antilia-look-bootstrap .antilia-autocomplete-field {
+	padding-inline: 0.75rem;
+}
+
+/* the buttons in the header of a collapsible panel, on its primary color */
+.antilia-look-bootstrap .antilia-collapsible-actions .btn {
+	--bs-btn-color: var(--antilia-theme-on-primary);
+	--bs-btn-bg: transparent;
+	--bs-btn-border-color: transparent;
+	--bs-btn-hover-color: var(--antilia-theme-on-primary);
+	--bs-btn-hover-bg: color-mix(in srgb, var(--antilia-theme-on-primary) 20%, transparent);
+	--bs-btn-hover-border-color: transparent;
+	--bs-btn-active-color: var(--antilia-theme-on-primary);
+	--bs-btn-active-bg: color-mix(in srgb, var(--antilia-theme-on-primary) 30%, transparent);
+	--bs-btn-active-border-color: transparent;
+	--bs-btn-padding-y: 0.15rem;
+	--bs-btn-padding-x: 0.35rem;
+	text-decoration: none;
+}
+
+/*
+ * The dialogs: Bootstrap's modal-content, modal-header, modal-body and modal-footer read the
+ * properties of a .modal around them, which a dialog of the components has not
+ */
+.antilia-look-bootstrap {
+	--bs-modal-padding: 1rem;
+	--bs-modal-color: var(--bs-body-color);
+	--bs-modal-bg: var(--bs-body-bg);
+	--bs-modal-border-color: var(--bs-border-color-translucent);
+	--bs-modal-border-width: var(--bs-border-width);
+	--bs-modal-border-radius: var(--bs-border-radius-lg);
+	--bs-modal-inner-border-radius: calc(var(--bs-border-radius-lg) - (var(--bs-border-width)));
+	--bs-modal-header-padding-x: 1rem;
+	--bs-modal-header-padding-y: 1rem;
+	--bs-modal-header-padding: 1rem 1rem;
+	--bs-modal-header-border-color: var(--bs-border-color);
+	--bs-modal-header-border-width: var(--bs-border-width);
+	--bs-modal-title-line-height: 1.5;
+	--bs-modal-footer-gap: 0.5rem;
+	--bs-modal-footer-border-color: var(--bs-border-color);
+	--bs-modal-footer-border-width: var(--bs-border-width);
+}
+
+.antilia-look-bootstrap .dialog-theme-default .modal-dialog .modal-dialog-content.modal-content {
+	border-radius: var(--bs-modal-border-radius);
+}
+
+.antilia-look-bootstrap .dialog-theme-default .modal-dialog .modal-dialog-header.modal-header {
+	padding: var(--bs-modal-header-padding);
+	border-bottom: var(--bs-modal-header-border-width) solid var(--bs-modal-header-border-color);
+	background: transparent;
+	color: var(--bs-modal-color);
+	font-size: 1rem;
+	font-weight: normal;
+}
+
+.antilia-look-bootstrap .dialog-theme-default .modal-dialog .modal-dialog-title.modal-title {
+	font-weight: 500;
+	line-height: var(--bs-modal-title-line-height);
+}
+
+.antilia-look-bootstrap .dialog-theme-default .modal-dialog .modal-dialog-body.modal-body {
+	padding: var(--bs-modal-padding);
+}
+
+.antilia-look-bootstrap .dialog-theme-default .modal-dialog .modal-dialog-footer.modal-footer {
+	gap: var(--bs-modal-footer-gap);
+	padding: calc(var(--bs-modal-padding) - var(--bs-modal-footer-gap) * 0.5);
+	border-top: var(--bs-modal-footer-border-width) solid var(--bs-modal-footer-border-color);
+	background: transparent;
+}
+
+.antilia-look-bootstrap .modal-footer > * {
+	margin: 0;
+}
+
+/*
+ * Bootstrap's x of a close button, an image of its own: the text of the button, an x too, and the
+ * icon of a floating panel's close button give way to it. Bootstrap writes the image as a data:
+ * URL, which a content security policy such as Wicket's (img-src 'self') blocks: here it is a
+ * file next to this style sheet, which the policy lets through.
+ */
+.antilia-look-bootstrap .btn-close {
+	--bs-btn-close-bg: url("antilia-look-bootstrap-close.svg");
+}
+
+.antilia-look-bootstrap :is(.modal-dialog-close, .antilia-notification-close,
+	.antilia-floating-panel-close).btn-close {
+	box-sizing: content-box;
+	flex: none;
+	width: 1em;
+	height: 1em;
+	margin: 0 0 0 auto;
+	padding: 0.25em;
+	border: 0;
+	border-radius: var(--bs-border-radius);
+	background: transparent var(--bs-btn-close-bg) center / 1em auto no-repeat;
+	color: transparent;
+	font-size: 1rem;
+	line-height: 1;
+	opacity: var(--bs-btn-close-opacity);
+	overflow: hidden;
+}
+
+.antilia-look-bootstrap :is(.modal-dialog-close, .antilia-notification-close,
+	.antilia-floating-panel-close).btn-close:hover {
+	background-color: transparent;
+	opacity: var(--bs-btn-close-hover-opacity);
+}
+
+.antilia-look-bootstrap :is(.modal-dialog-close, .antilia-notification-close,
+	.antilia-floating-panel-close).btn-close:focus-visible {
+	outline: 0;
+	box-shadow: var(--bs-btn-close-focus-shadow);
+	opacity: var(--bs-btn-close-focus-opacity);
+}
+
+.antilia-look-bootstrap .antilia-floating-panel-close.btn-close > svg {
+	display: none;
+}
+
+/*
+ * The menus: Bootstrap's dropdown-menu is hidden until its script adds show; the components show
+ * theirs by taking away the attribute hidden, as without a look
+ */
+.antilia-look-bootstrap :is(.antilia-dropdown-menu, .antilia-autocomplete-menu,
+	.antilia-datepicker-popup, .antilia-desktop-menu, .ant-data-table-column-chooser-menu).dropdown-menu {
+	display: block;
+}
+
+.antilia-look-bootstrap :is(.antilia-dropdown-option, .antilia-autocomplete-option).dropdown-item {
+	width: auto;
+	padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
+	border-radius: var(--bs-dropdown-item-border-radius, 0);
+}
+
+/* the option the keys are on, as Bootstrap shows the one with the focus */
+.antilia-look-bootstrap :is(.antilia-dropdown-active, .antilia-autocomplete-active).dropdown-item {
+	background-color: var(--bs-dropdown-link-hover-bg);
+	color: var(--bs-dropdown-link-hover-color);
+}
+
+/* the date picker: its field an input-group, its days, months and years small buttons */
+
+.antilia-look-bootstrap .antilia-datepicker-field.input-group {
+	flex-wrap: nowrap;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+.antilia-look-bootstrap .antilia-datepicker-field.input-group > .form-control {
+	min-height: 0;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+	background-color: var(--bs-body-bg);
+}
+
+.antilia-look-bootstrap .antilia-datepicker-field.input-group > .btn {
+	margin-left: calc(-1 * var(--bs-border-width));
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
+	background-color: var(--bs-tertiary-bg);
+	color: var(--bs-body-color);
+}
+
+.antilia-look-bootstrap .antilia-datepicker-popup .btn {
+	--bs-btn-padding-y: 0.25rem;
+	--bs-btn-padding-x: 0.5rem;
+	--bs-btn-hover-bg: var(--bs-tertiary-bg);
+	--bs-btn-hover-border-color: transparent;
+}
+
+.antilia-look-bootstrap .antilia-datepicker-popup [aria-pressed="true"].btn,
+.antilia-look-bootstrap .antilia-datepicker-popup [aria-selected="true"] > .btn {
+	--bs-btn-color: var(--bs-white);
+	--bs-btn-bg: var(--bs-primary);
+	--bs-btn-hover-color: var(--bs-white);
+	--bs-btn-hover-bg: var(--bs-primary);
+}
+
+/*
+ * The tables: the check boxes in their cells, not floating as in a .form-check, in a column
+ * narrow enough for them with Bootstrap's padding of the cells
+ */
+
+.antilia-look-bootstrap .ant-data-table .form-check-input {
+	float: none;
+	margin: 0;
+	vertical-align: middle;
+}
+
+.antilia-look-bootstrap table.ant-data-table .ant-data-table-selection {
+	padding-inline: 0.35rem;
+	overflow: visible;
+	text-overflow: clip;
+}
+
+/* the paging navigator of Wicket, drawn as Bootstrap's pagination */
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .pagination {
+	gap: 0;
+	margin: 0;
+}
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-link {
+	min-width: 0;
+	margin-left: calc(-1 * var(--bs-pagination-border-width));
+	padding: var(--bs-pagination-padding-y) var(--bs-pagination-padding-x);
+	border: var(--bs-pagination-border-width) solid var(--bs-pagination-border-color);
+	border-radius: 0;
+	background-color: var(--bs-pagination-bg);
+	color: var(--bs-pagination-color);
+	font-size: var(--bs-pagination-font-size);
+	line-height: 1.5;
+}
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-link:first-child {
+	margin-left: 0;
+	border-top-left-radius: var(--bs-pagination-border-radius);
+	border-bottom-left-radius: var(--bs-pagination-border-radius);
+}
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-link:last-child {
+	border-top-right-radius: var(--bs-pagination-border-radius);
+	border-bottom-right-radius: var(--bs-pagination-border-radius);
+}
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-link[href]:hover {
+	z-index: 2;
+	border-color: var(--bs-pagination-hover-border-color);
+	background-color: var(--bs-pagination-hover-bg);
+	color: var(--bs-pagination-hover-color);
+}
+
+/* the page shown, a link leading nowhere in Wicket's navigator */
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-item .page-link:not([href]) {
+	z-index: 3;
+	border-color: var(--bs-pagination-active-border-color);
+	background-color: var(--bs-pagination-active-bg);
+	color: var(--bs-pagination-active-color);
+}
+
+.antilia-look-bootstrap .ant-data-table-paging .navigator .page-link:not([href]):not(.page-item *) {
+	border-color: var(--bs-pagination-disabled-border-color);
+	background-color: var(--bs-pagination-disabled-bg);
+	color: var(--bs-pagination-disabled-color);
+	opacity: 1;
+}
+
+/* the progress bars, as Bootstrap's progress: their native bar takes its colors */
+
+.antilia-look-bootstrap .antilia-progress-bar.progress {
+	height: var(--bs-progress-height);
+	border: 0;
+	border-radius: var(--bs-progress-border-radius);
+	background: var(--bs-progress-bg);
+	font-size: var(--bs-progress-font-size);
+}
+
+.antilia-look-bootstrap .progress > .antilia-progress-bar-value::-webkit-progress-value {
+	background: var(--bs-progress-bar-bg);
+	animation: none;
+}
+
+.antilia-look-bootstrap .progress > .antilia-progress-bar-value::-moz-progress-bar {
+	background: var(--bs-progress-bar-bg);
+	animation: none;
+}
+
+.antilia-look-bootstrap .progress > .antilia-progress-bar-label {
+	display: flex;
+	align-items: center;
+	padding: 0 0.4em;
+	border-radius: var(--bs-progress-border-radius);
+	background: transparent;
+	color: var(--bs-body-color);
+	font-weight: 600;
+}
+
+/* the notifications, Bootstrap's alerts: their colors are those of their type */
+
+.antilia-look-bootstrap .antilia-notification.alert {
+	margin: 0;
+	padding: 0;
+	border-color: var(--bs-alert-border-color);
+	background: var(--bs-alert-bg);
+	color: var(--bs-alert-color);
+}
+
+.antilia-look-bootstrap .antilia-notification.alert .antilia-notification-header {
+	padding: 0.75rem 1rem 0.25rem;
+	background: transparent;
+	color: inherit;
+}
+
+.antilia-look-bootstrap .antilia-notification.alert .antilia-notification-body {
+	padding: 0 1rem 0.75rem;
+	color: inherit;
+}
+
+.antilia-look-bootstrap .antilia-notification.alert .antilia-notification-countdown {
+	background: var(--bs-alert-link-color, currentColor);
+	opacity: 0.4;
+}
+
+/* the panels, Bootstrap's cards */
+
+.antilia-look-bootstrap :is(.antilia-collapsible-frame, .antilia-floating-panel, .antilia-palette-side,
+	.antilia-window).card {
+	border: var(--bs-card-border-width) solid var(--bs-card-border-color);
+	border-radius: var(--bs-card-border-radius);
+}
+
+.antilia-look-bootstrap .antilia-collapsible-body.card-body {
+	padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+}
+
+/* the lists of a palette, Bootstrap's list groups: the option highlighted is active */
+
+.antilia-look-bootstrap .antilia-palette-list.list-group {
+	border-radius: 0;
+}
+
+.antilia-look-bootstrap .antilia-palette-item.list-group-item {
+	padding: 0.375rem 0.75rem;
+	border-radius: 0;
+}
+
+.antilia-look-bootstrap .antilia-palette-item[aria-selected="true"].list-group-item {
+	z-index: 2;
+	border-color: var(--bs-list-group-active-border-color);
+	background-color: var(--bs-list-group-active-bg);
+	color: var(--bs-list-group-active-color);
+}
+
+/*
+ * The tabs of Wicket's TabbedPanel: the row is a .nav; its ul gives way to the li, whose links
+ * look as Bootstrap's nav-link, the selected one as the active one
+ */
+
+.antilia-look-bootstrap .tab-row.nav > ul {
+	display: contents;
+}
+
+.antilia-look-bootstrap .tab-row.nav li {
+	list-style: none;
+}
+
+.antilia-look-bootstrap .tab-row.nav li > a {
+	display: block;
+	padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+	border: 0;
+	background: none;
+	color: var(--bs-nav-link-color);
+	font-size: var(--bs-nav-link-font-size);
+	font-weight: var(--bs-nav-link-font-weight);
+	text-decoration: none;
+}
+
+.antilia-look-bootstrap .tab-row.nav li > a:hover {
+	color: var(--bs-nav-link-hover-color);
+}
+
+.antilia-look-bootstrap .tab-row.nav-tabs li > a {
+	margin-bottom: calc(-1 * var(--bs-nav-tabs-border-width));
+	border: var(--bs-nav-tabs-border-width) solid transparent;
+	border-top-left-radius: var(--bs-nav-tabs-border-radius);
+	border-top-right-radius: var(--bs-nav-tabs-border-radius);
+}
+
+.antilia-look-bootstrap .tab-row.nav-tabs li > a:hover {
+	border-color: var(--bs-nav-tabs-link-hover-border-color);
+}
+
+.antilia-look-bootstrap .tab-row.nav-tabs li.selected > a {
+	border-color: var(--bs-nav-tabs-link-active-border-color);
+	background-color: var(--bs-nav-tabs-link-active-bg);
+	color: var(--bs-nav-tabs-link-active-color);
+}
+
+.antilia-look-bootstrap .tab-row.nav-pills li > a {
+	border-radius: var(--bs-nav-pills-border-radius);
+}
+
+.antilia-look-bootstrap .tab-row.nav-pills li.selected > a {
+	background-color: var(--bs-nav-pills-link-active-bg);
+	color: var(--bs-nav-pills-link-active-color);
+}
+
+.antilia-look-bootstrap .tab-row.nav-underline {
+	gap: var(--bs-nav-underline-gap);
+}
+
+.antilia-look-bootstrap .tab-row.nav-underline li > a {
+	padding-right: 0;
+	padding-left: 0;
+	border-bottom: var(--bs-nav-underline-border-width) solid transparent;
+}
+
+.antilia-look-bootstrap .tab-row.nav-underline li.selected > a {
+	border-bottom-color: currentcolor;
+	color: var(--bs-nav-underline-link-active-color);
+	font-weight: 700;
+}

@@ -7,6 +7,8 @@ package com.antilia.widgets.theme;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.regex.Pattern;
+
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -58,7 +60,9 @@ class ThemeBehaviorTest extends WicketTestCase
 			"UTF-8");
 		for (Theme theme : Theme.values())
 		{
-			assertTrue(css.contains("." + theme.getCssClass() + " {"), theme.name());
+			assertTrue(Pattern.compile("^\\." + theme.getCssClass() + "\\s*[{,]", Pattern.MULTILINE)
+				.matcher(css)
+				.find(), theme.name());
 		}
 	}
 

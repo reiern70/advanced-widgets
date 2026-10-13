@@ -10,6 +10,8 @@
 
 import { mount, unmount, type Component } from 'svelte';
 
+import { LOOK_CONTEXT, lookOf } from '@antilia/svelte';
+
 import { startApps, type Mount } from './apps.js';
 import AutocompleteDemo from './svelte/AutocompleteDemo.svelte';
 import ButtonsDemo from './svelte/ButtonsDemo.svelte';
@@ -28,11 +30,13 @@ import TreeDemo from './svelte/TreeDemo.svelte';
 import TreeGridDemo from './svelte/TreeGridDemo.svelte';
 
 /**
- * @returns the mount of a Svelte app taking the configuration as its only prop
+ * @returns the mount of a Svelte app taking the configuration as its only prop, in the look of the
+ * page around it
  */
 function app<C extends object>(App: Component<{ config: C }>): Mount {
 	return (element, config: C) => {
-		const app = mount(App, { target: element, props: { config } });
+		const app = mount(App, { target: element, props: { config },
+			context: new Map([[LOOK_CONTEXT, lookOf(element)]]) });
 		return () => {
 			void unmount(app);
 		};

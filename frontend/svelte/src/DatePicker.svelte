@@ -12,7 +12,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
-	import { DatePicker, type DatePickerOptions } from '@antilia/core';
+	import { DatePicker, type DatePickerOptions, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = Omit<HTMLInputAttributes, 'value' | 'type' | 'min' | 'max' | 'placeholder' |
 		'children' | 'onchange'> & DatePickerOptions & {
@@ -66,7 +70,7 @@
 		if (!input) {
 			return;
 		}
-		const picker = new DatePicker(input, untrack(options));
+		const picker = new DatePicker(input, { ...untrack(options), look });
 		instance = picker;
 		return () => {
 			picker.destroy();
@@ -94,7 +98,7 @@
 	}
 </script>
 
-<div class={['antilia-datepicker', wrapperClass]}>
+<div class={[partClasses(look, 'datepicker'), wrapperClass]}>
 	<input {...rest} type="text" bind:value bind:this={input} onchange={changed}
 		class={['antilia-datepicker-native', className]} tabindex="-1" aria-hidden="true" />
 </div>

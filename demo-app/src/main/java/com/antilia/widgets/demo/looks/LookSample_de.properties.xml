@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="buttons">Schaltflächen</entry>
+	<entry key="fruit">Obst</entry>
+	<entry key="date">Datum</entry>
+	<entry key="progress">Fortschritt</entry>
+	<entry key="collapsible.title">Ein aufklappbares Panel</entry>
+	<entry key="collapsible.body">Seine Kopfzeile ist in beiden Aussehen in der Primärfarbe des Farbschemas.</entry>
+	<entry key="dialog.open">Einen Dialog öffnen</entry>
+	<entry key="dialog.title">Ein modaler Dialog</entry>
+	<entry key="dialog.body">Im Bootstrap-Aussehen ist seine Kopfzeile die eines Bootstrap-Modals.</entry>
+	<entry key="dialog.close">Schließen</entry>
+	<entry key="button.primary">Speichern</entry>
+	<entry key="button.secondary">Aktualisieren</entry>
+	<entry key="button.ghost">Einstellungen</entry>
+	<entry key="button.danger">Löschen</entry>
+	<entry key="button.smallSave">Speichern</entry>
+	<entry key="button.smallSettings">Einstellungen</entry>
+	<entry key="button.smallDelete">Löschen</entry>
+	<entry key="clicked">Geklickt: {0}</entry>
+</properties>

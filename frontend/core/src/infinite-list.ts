@@ -11,6 +11,7 @@
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
+import { ANTILIA_LOOK, lookOf, partClasses, type Look } from './look.js';
 import { Scrollbar } from './scrollbar.js';
 import { templates, type CompiledTemplate } from './templates.js';
 
@@ -41,6 +42,8 @@ export interface InfiniteListMessage {
 export interface InfiniteListConfig {
 	/** The id of the list's element. */
 	id: string;
+	/** The look of the list; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** The URL answering with the items shown, or with the next page of them for ?more=true. */
 	dataUrl?: string;
 	/** Loads the items shown, or the next page of them, in place of dataUrl. */
@@ -65,8 +68,6 @@ export interface InfiniteListConfig {
 
 const ITEM_CLASS = 'json-infinite-list-item';
 
-const STATUS_CLASS = 'json-infinite-list-status';
-
 const LOADING_CLASS = 'json-infinite-list-loading';
 
 /**
@@ -80,8 +81,9 @@ export class JsonInfiniteList {
 	 * Gives a list of a fixed height its scroll bars; Wicket gives the bars of Wicket.Scrollbar
 	 * only when the page loaded them.
 	 */
-	static attachScrollbar: (element: HTMLElement) => { update(): void; destroy(): void } |
-		undefined = (element) => Scrollbar.attach(element, { axis: 'y' });
+	static attachScrollbar: (element: HTMLElement, look?: Look) =>
+		{ update(): void; destroy(): void } | undefined = (element, look) =>
+		Scrollbar.attach(element, { axis: 'y', look });
 
 	readonly id: string;
 
@@ -94,6 +96,9 @@ export class JsonInfiniteList {
 	itemCount: number;
 
 	readonly element: HTMLElement | null;
+
+	/** The look of the list, whose classes the elements it makes get. */
+	private look: Look = ANTILIA_LOOK;
 
 	loading = false;
 
@@ -139,16 +144,17 @@ export class JsonInfiniteList {
 			return;
 		}
 		this.item = engine.compile(cfg.template);
+		this.look = cfg.look ?? lookOf(this.element);
 
 		this.status = document.createElement('div');
-		this.status.className = STATUS_CLASS;
+		this.status.className = partClasses(this.look, 'list-status');
 		this.status.setAttribute('role', 'status');
 		this.element.replaceChildren(this.status);
 
 		if (cfg.height) {
 			this.element.classList.add('json-infinite-list--scrolling');
 			this.element.style.height = cfg.height.value + cfg.height.unit;
-			this.scrollbar = JsonInfiniteList.attachScrollbar(this.element);
+			this.scrollbar = JsonInfiniteList.attachScrollbar(this.element, this.look);
 		}
 
 		this.element.addEventListener('click', this.clickHandler);
@@ -305,7 +311,7 @@ export class JsonInfiniteList {
 	private buildItem(key: string, number: number, data: unknown): HTMLElement {
 		const article = document.createElement('article');
 		article.id = this.itemId(key);
-		article.className = ITEM_CLASS;
+		article.className = partClasses(this.look, 'list-item');
 		article.tabIndex = 0;
 		article.setAttribute('data-key', key);
 		article.setAttribute('data-number', String(number));

@@ -10,8 +10,12 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Notifications, type NotificationHandle, type NotificationOptions,
-		type NotificationPosition } from '@antilia/core';
+	import { type NotificationHandle, type NotificationOptions, type NotificationPosition,
+		Notifications, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** Where notifications are stacked, top-right when left out. */
@@ -50,7 +54,7 @@
 			return;
 		}
 		const notifications = new Notifications(element, untrack(() => ({ position, timeout,
-			errorTimeout, max, pauseOnHover, closeLabel, label })));
+			errorTimeout, max, pauseOnHover, closeLabel, label, look })));
 		instance = notifications;
 		return () => {
 			notifications.destroy();
@@ -80,4 +84,4 @@
 	}
 </script>
 
-<div bind:this={element} {id} class={['antilia-notifications', className].filter(Boolean).join(' ')}></div>
+<div bind:this={element} {id} class={[partClasses(look, 'notifications'), className].filter(Boolean).join(' ')}></div>

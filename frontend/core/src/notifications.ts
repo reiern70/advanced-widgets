@@ -25,6 +25,7 @@
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
+import { LOOK_PARTS, lookOf, partClasses, type Look, type LookPart } from './look.js';
 
 /** The types of notification that have a color and an icon of their own; any other is the page's. */
 export const NOTIFICATION_TYPES = ['success', 'error', 'warning', 'info'] as const;
@@ -88,6 +89,8 @@ export interface NotificationOptions {
 export interface NotificationsOptions {
 	/** Where notifications are stacked, top-right when left out. */
 	position?: NotificationPosition;
+	/** The look of the notifications; that of the element they are in when left out (see lookOf). */
+	look?: Look;
 	/**
 	 * How long notifications stay, in milliseconds, 5000 when left out; 0 keeps them until the
 	 * user closes them.
@@ -202,9 +205,13 @@ class Shown implements NotificationHandle {
 		this.remaining = timeout;
 		this.timed = timeout > 0;
 		const type = options.type?.trim() || 'info';
+		const look = owner.look;
 		const element = document.createElement('div');
-		element.className = [NOTIFICATION_CLASSES.notification, typeClass(type),
-			options.className].filter(Boolean).join(' ');
+		// a type of the look's, such as error, has its colors; any other its class alone
+		const part = 'notification-' + type as LookPart;
+		const known = part in LOOK_PARTS;
+		element.className = [partClasses(look, 'notification', known && part),
+			!known && typeClass(type), options.className].filter(Boolean).join(' ');
 		element.id = 'antilia-notification-' + ++counter;
 		const urgent = type === 'error' || type === 'warning';
 		element.setAttribute('role', urgent ? 'alert' : 'status');
@@ -212,14 +219,14 @@ class Shown implements NotificationHandle {
 		element.dataset.type = type;
 
 		const header = document.createElement('div');
-		header.className = NOTIFICATION_CLASSES.header;
+		header.className = partClasses(look, 'notification-header');
 		const icon = options.icon === undefined ?
 			NOTIFICATION_ICONS[type as keyof typeof NOTIFICATION_ICONS] : options.icon;
 		if (icon) {
-			header.append(this.icon(icon));
+			header.append(this.icon(icon, partClasses(look, 'notification-icon')));
 		}
 		const title = document.createElement('span');
-		title.className = NOTIFICATION_CLASSES.title;
+		title.className = partClasses(look, 'notification-title');
 		title.id = element.id + '-title';
 		title.textContent = options.title ?? '';
 		header.append(title);
@@ -229,7 +236,7 @@ class Shown implements NotificationHandle {
 		if (options.closable !== false) {
 			const close = document.createElement('button');
 			close.type = 'button';
-			close.className = NOTIFICATION_CLASSES.close;
+			close.className = partClasses(look, 'notification-close');
 			close.title = closeLabel;
 			close.setAttribute('aria-label', closeLabel);
 			close.textContent = '×';
@@ -240,7 +247,7 @@ class Shown implements NotificationHandle {
 
 		if (options.body !== undefined && options.body !== '') {
 			const body = document.createElement('div');
-			body.className = NOTIFICATION_CLASSES.body;
+			body.className = partClasses(look, 'notification-body');
 			if (typeof options.body === 'string' && options.html) {
 				body.innerHTML = options.body;
 			} else if (typeof options.body === 'string') {
@@ -255,7 +262,7 @@ class Shown implements NotificationHandle {
 			element.classList.add(NOTIFICATION_CLASSES.timed);
 			element.style.setProperty(NOTIFICATION_TIMEOUT_PROPERTY, timeout + 'ms');
 			const countdown = document.createElement('div');
-			countdown.className = NOTIFICATION_CLASSES.countdown;
+			countdown.className = partClasses(look, 'notification-countdown');
 			element.append(countdown);
 		}
 
@@ -287,9 +294,9 @@ class Shown implements NotificationHandle {
 		this.element = element;
 	}
 
-	private icon(path: string): SVGSVGElement {
+	private icon(path: string, classes: string): SVGSVGElement {
 		const svg = document.createElementNS(SVG, 'svg');
-		svg.setAttribute('class', NOTIFICATION_CLASSES.icon);
+		svg.setAttribute('class', classes);
 		svg.setAttribute('viewBox', '0 0 24 24');
 		svg.setAttribute('aria-hidden', 'true');
 		svg.setAttribute('focusable', 'false');
@@ -375,6 +382,9 @@ export class Notifications {
 	/** The notifications shown, oldest first. */
 	private readonly shown: Shown[] = [];
 
+	/** The look of the notifications, whose classes the elements they are made of get. */
+	readonly look: Look;
+
 	private stopWatchingRemoval: Unsubscribe | null = null;
 
 	private destroyed = false;
@@ -386,7 +396,8 @@ export class Notifications {
 	constructor(element: HTMLElement, options: NotificationsOptions = {}) {
 		this.element = element;
 		this.options = { ...options };
-		element.classList.add(NOTIFICATION_CLASSES.host);
+		this.look = options.look ?? lookOf(element);
+		element.classList.add(...partClasses(this.look, 'notifications').split(' '));
 		this.stopWatchingRemoval = onRemoving(element, () => this.destroy());
 	}
 
@@ -474,8 +485,8 @@ export class Notifications {
 		let stack = this.stacks.get(position);
 		if (!stack || !stack.isConnected) {
 			stack = document.createElement('section');
-			stack.className = NOTIFICATION_CLASSES.stack + ' ' + NOTIFICATION_CLASSES.stack + '-' +
-				position;
+			stack.className = partClasses(this.look, 'notification-stack') + ' ' +
+				NOTIFICATION_CLASSES.stack + '-' + position;
 			stack.setAttribute('aria-label', this.label());
 			stack.setAttribute('aria-live', 'polite');
 			stack.setAttribute('aria-relevant', 'additions');

@@ -14,6 +14,7 @@
  */
 
 import { getHost } from './host.js';
+import { lookOf, partClasses } from './look.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -47,16 +48,16 @@ function announce(message: string): void {
 	if (!region) {
 		region = document.createElement('span');
 		region.id = 'antilia-clipboard-status';
-		region.className = 'antilia-clipboard-status';
+		region.className = partClasses(lookOf(document.body), 'clipboard-status');
 		region.setAttribute('role', 'status');
 		document.body.appendChild(region);
 	}
 	region.textContent = message;
 }
 
-function createIcon(): HTMLSpanElement {
+function createIcon(classes: string): HTMLSpanElement {
 	const icon = document.createElement('span');
-	icon.className = ICON_CLASS;
+	icon.className = classes;
 	icon.setAttribute('aria-hidden', 'true');
 	const svg = document.createElementNS(SVG, 'svg');
 	svg.setAttribute('viewBox', '0 0 24 24');
@@ -77,8 +78,9 @@ function showIcon(target: Element | null | undefined): void {
 		return;
 	}
 	target.querySelector(':scope > .' + ICON_CLASS)?.remove();
-	const icon = createIcon();
-	target.classList.add(HOST_CLASS);
+	const look = lookOf(target);
+	const icon = createIcon(partClasses(look, 'clipboard-copied'));
+	target.classList.add(...partClasses(look, 'clipboard-host').split(' '));
 	target.appendChild(icon);
 	window.setTimeout(() => {
 		icon.remove();

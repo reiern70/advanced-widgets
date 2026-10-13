@@ -10,7 +10,7 @@
 	margin-right: 0.2em;
 	padding: 0.15em 0.1em;
 	border: none;
-	border-radius: 0.2em;
+	border-radius: var(--antilia-look-radius-sm, 0.2em);
 	background: transparent;
 	color: inherit;
 	font: inherit;
@@ -49,7 +49,7 @@ table .antilia-col-moving {
 	position: absolute;
 	z-index: 1001;
 	padding: 0.3em 0.6em;
-	border-radius: 0.2em;
+	border-radius: var(--antilia-look-radius-sm, 0.2em);
 	background: var(--antilia-theme-primary, #c2410c);
 	color: var(--antilia-theme-on-primary, #fff);
 	font-weight: 600;

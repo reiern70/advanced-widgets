@@ -6,8 +6,10 @@
 import { createContext, forwardRef, useContext, useImperativeHandle, useLayoutEffect, useMemo,
 	useRef, type ReactNode } from 'react';
 
-import { Notifications as CoreNotifications, type NotificationHandle, type NotificationOptions,
-	type NotificationPosition } from '@antilia/core';
+import { type NotificationHandle, type NotificationOptions, type NotificationPosition,
+	Notifications as CoreNotifications, partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 /**
  * What a ref to {@link Notifications}, or {@link useNotifications}, can do.
@@ -68,16 +70,17 @@ export const Notifications = forwardRef<NotificationsHandle, NotificationsProps>
 			className } = props;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreNotifications | null>(null);
+		const look = useLook();
 
 		useLayoutEffect(() => {
 			const notifications = new CoreNotifications(element.current!, { position, timeout,
-				errorTimeout, max, pauseOnHover, closeLabel, label });
+				errorTimeout, max, pauseOnHover, closeLabel, label, look });
 			instance.current = notifications;
 			return () => {
 				notifications.destroy();
 				instance.current = null;
 			};
-		}, []);
+		}, [look]);
 
 		useLayoutEffect(() => {
 			instance.current?.configure({ position, timeout, errorTimeout, max, pauseOnHover,
@@ -90,7 +93,7 @@ export const Notifications = forwardRef<NotificationsHandle, NotificationsProps>
 		}), []);
 
 		return <div ref={element} id={id}
-			className={['antilia-notifications', className].filter(Boolean).join(' ')} />;
+			className={[partClasses(look, 'notifications'), className].filter(Boolean).join(' ')} />;
 	});
 
 const Context = createContext<NotificationsHandle | null>(null);

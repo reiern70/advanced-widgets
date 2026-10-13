@@ -6,9 +6,11 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef,
 	useState } from 'react';
 
-import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
-	UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
-	type TreeNode, type TreeTexts } from '@antilia/core';
+import { isLicensed, JsonTree, partClasses, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
+	type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons, type TreeNode,
+	type TreeTexts } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface TreeProps {
 	/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -79,6 +81,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 	const latest = useRef(props);
 	latest.current = props;
 	const instance = useRef<JsonTree | null>(null);
+	const look = useLook();
 
 	useEffect(() => {
 		let live = true;
@@ -105,7 +108,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			return;
 		}
 		const tree = new JsonTree({
-			id, template, engine, label, icons, texts, height, selectBranches,
+			id, template, engine, label, icons, texts, height, selectBranches, look,
 			table: table ? { header: header ?? '', columns: table } : undefined,
 			resizableColumns: table && resizableColumns ? resizableColumns : undefined,
 			expanded: latest.current.expanded,
@@ -122,7 +125,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			instance.current = null;
 		};
 	}, [licensed, id, template, engine, label, tableKey, iconsKey, textsKey, heightKey,
-		resizableColumns, selectBranches]);
+		resizableColumns, selectBranches, look]);
 
 	useEffect(() => {
 		if (props.selected !== undefined && instance.current &&
@@ -135,13 +138,13 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 		return null;
 	}
 	if (!licensed) {
-		return <div className={UNLICENSED_CLASS} role="note"
+		return <div className={partClasses(look, 'unlicensed')} role="note"
 			data-component={table ? 'TreeGrid' : 'Tree'}>{texts.unlicensed}</div>;
 	}
-	const tree = <div id={id} className={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree',
+	const tree = <div id={id} className={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'),
 		className].filter(Boolean).join(' ')} />;
 	// a tree of a height scrolls in the wrapper of its scroll bars, which React renders
-	return height ? <div className="antilia-scrollbar">{tree}</div> : tree;
+	return height ? <div className={partClasses(look, 'scrollbar')}>{tree}</div> : tree;
 });
 
 /**

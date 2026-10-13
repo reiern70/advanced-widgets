@@ -14,6 +14,10 @@ import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.model.IModel;
 
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+import com.antilia.widgets.theme.LookContainer;
+
 /**
  * A node of a {@link Tree} or a {@link TreeGrid}: the row of the trees rendered in the browser,
  * with the arrow of a folder, the junction, as a button, and the {@link TreeNodeContent content}.
@@ -34,6 +38,7 @@ class TreeNode<T> extends Node<T>
 		super(id, renderer.asTree(), model);
 		this.renderer = renderer;
 		setOutputMarkupId(true);
+		add(new LookContainer("row", LookPart.TREE_ROW));
 	}
 
 	@Override
@@ -91,19 +96,27 @@ class TreeNode<T> extends Node<T>
 	@Override
 	protected String getExpandedStyleClass(T node)
 	{
-		return "antilia-tree-junction antilia-tree-toggle--expanded";
+		return junction() + " antilia-tree-toggle--expanded";
 	}
 
 	@Override
 	protected String getCollapsedStyleClass()
 	{
-		return "antilia-tree-junction";
+		return junction();
 	}
 
 	@Override
 	protected String getOtherStyleClass()
 	{
-		return "antilia-tree-junction antilia-tree-junction--none";
+		return junction() + " antilia-tree-junction--none";
+	}
+
+	/**
+	 * @return the classes of the junction in the look of the tree
+	 */
+	private String junction()
+	{
+		return Looks.of(this).getPartClasses(LookPart.TREE_JUNCTION);
 	}
 
 	@Override
@@ -111,14 +124,9 @@ class TreeNode<T> extends Node<T>
 	{
 		super.onComponentTag(tag);
 		T node = getModelObject();
-		tag.append("class", "antilia-tree-node", " ");
-		if (renderer.isLeaf(node))
-		{
-			tag.append("class", "antilia-tree-node--leaf", " ");
-		}
-		if (renderer.isSelectable(node) && renderer.isSelected(node))
-		{
-			tag.append("class", "antilia-tree-node--selected", " ");
-		}
+		Looks.addClasses(tag, Looks.of(this), LookPart.TREE_NODE,
+			renderer.isLeaf(node) ? LookPart.TREE_NODE_LEAF : null,
+			renderer.isSelectable(node) && renderer.isSelected(node) ? LookPart.TREE_NODE_SELECTED
+				: null);
 	}
 }

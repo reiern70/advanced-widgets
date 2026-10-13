@@ -11,6 +11,8 @@
 import { StrictMode, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { LookProvider, lookOf } from '@antilia/react';
+
 import { startApps, type Mount } from './apps.js';
 import { AutocompleteDemo } from './react/AutocompleteDemo.js';
 import { ButtonsDemo } from './react/ButtonsDemo.js';
@@ -28,12 +30,14 @@ import { SplitPanelDemo } from './react/SplitPanelDemo.js';
 import { TreeDemo, TreeGridDemo } from './react/TreeDemo.js';
 
 /**
- * @returns the mount of a React app taking the configuration as its only prop
+ * @returns the mount of a React app taking the configuration as its only prop, in the look of the
+ * page around it
  */
 function app<C>(App: ComponentType<{ config: C }>): Mount {
 	return (element, config: C) => {
 		const root = createRoot(element);
-		root.render(<StrictMode><App config={config} /></StrictMode>);
+		root.render(<StrictMode><LookProvider look={lookOf(element)}><App config={config} />
+			</LookProvider></StrictMode>);
 		return () => root.unmount();
 	};
 }

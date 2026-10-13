@@ -14,6 +14,9 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+
 class IconToolbarButton<T, K extends Serializable> extends Panel
 {
 	private static final long serialVersionUID = 1L;
@@ -40,6 +43,7 @@ class IconToolbarButton<T, K extends Serializable> extends Panel
 			AttributeModifier.replace("aria-label", assigned));
 		button.add(new Label("icon", () -> action.getIcon().getMarkup())
 			.setEscapeModelStrings(false).setRenderBodyOnly(true));
+		button.add(new LookBehavior(LookPart.TABLE_ACTION, LookPart.TABLE_ICON_ACTION));
 		add(button);
 	}
 }

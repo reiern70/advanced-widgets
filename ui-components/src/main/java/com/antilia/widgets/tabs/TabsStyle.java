@@ -4,6 +4,9 @@
  */
 package com.antilia.widgets.tabs;
 
+import com.antilia.widgets.theme.Look;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * A look for the tabs of a {@link TabbedPanel}, applied by a {@link TabsStyleBehavior}. Every
  * look takes its colors from the {@link com.antilia.widgets.theme.Theme theme} the panel
@@ -14,19 +17,22 @@ package com.antilia.widgets.tabs;
 public enum TabsStyle
 {
 	/** Tabs on top of the panel, the selected one joined to it. */
-	TABS("antilia-tabs-tabs"),
+	TABS(LookPart.TABS_TABS, LookPart.TAB_ROW_TABS),
 
 	/** Rounded buttons, the selected one filled with the theme's primary color. */
-	PILLS("antilia-tabs-pills"),
+	PILLS(LookPart.TABS_PILLS, LookPart.TAB_ROW_PILLS),
 
 	/** Plain titles, the selected one underlined in the theme's primary color. */
-	UNDERLINE("antilia-tabs-underline");
+	UNDERLINE(LookPart.TABS_UNDERLINE, LookPart.TAB_ROW_UNDERLINE);
 
-	private final String cssClass;
+	private final LookPart part;
 
-	TabsStyle(String cssClass)
+	private final LookPart rowPart;
+
+	TabsStyle(LookPart part, LookPart rowPart)
 	{
-		this.cssClass = cssClass;
+		this.part = part;
+		this.rowPart = rowPart;
 	}
 
 	/**
@@ -34,6 +40,22 @@ public enum TabsStyle
 	 */
 	public String getCssClass()
 	{
-		return cssClass;
+		return Look.ANTILIA.getCssClass(part);
+	}
+
+	/**
+	 * @return the part of a look the tabbed panel is in this style
+	 */
+	public LookPart getPart()
+	{
+		return part;
+	}
+
+	/**
+	 * @return the part of a look the row of the tabs is in this style
+	 */
+	public LookPart getRowPart()
+	{
+		return rowPart;
 	}
 }

@@ -23,6 +23,8 @@ import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A tree of Wicket components: a {@link NestedTree} of wicket-extensions, whose nodes render the
@@ -304,7 +306,7 @@ public class Tree<T> extends NestedTree<T> implements INodeRenderer<T>
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TREE);
 		support.onComponentTag(tag);
 	}
 

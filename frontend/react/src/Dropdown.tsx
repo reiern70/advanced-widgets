@@ -5,7 +5,9 @@
 
 import { useLayoutEffect, useRef, type ChangeEvent, type SelectHTMLAttributes } from 'react';
 
-import { Dropdown as CoreDropdown, type DropdownOptions } from '@antilia/core';
+import { Dropdown as CoreDropdown, type DropdownOptions, partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 /**
  * An option of a {@link Dropdown}.
@@ -53,17 +55,18 @@ export function Dropdown(props: DropdownProps) {
 		filterThreshold, wrapperClassName, className, ...rest } = props;
 	const select = useRef<HTMLSelectElement>(null);
 	const instance = useRef<CoreDropdown | null>(null);
+	const look = useLook();
 	const texts: DropdownOptions = { placeholder, filter, noMatch, more, remove, filterThreshold };
 
 	// the core reads whether the select is multiple once, so it starts over when that changes
 	useLayoutEffect(() => {
-		const dropdown = new CoreDropdown(select.current!, texts);
+		const dropdown = new CoreDropdown(select.current!, { ...texts, look });
 		instance.current = dropdown;
 		return () => {
 			dropdown.destroy();
 			instance.current = null;
 		};
-	}, [multiple]);
+	}, [multiple, look]);
 
 	useLayoutEffect(() => {
 		instance.current?.configure(texts);
@@ -92,7 +95,7 @@ export function Dropdown(props: DropdownProps) {
 
 	const controlled = value === undefined ? {} : { value };
 	return (
-		<div className={['antilia-dropdown', wrapperClassName].filter(Boolean).join(' ')}>
+		<div className={[partClasses(look, 'dropdown'), wrapperClassName].filter(Boolean).join(' ')}>
 			<select {...rest} {...controlled} ref={select} multiple={multiple} onChange={change}
 				className={['antilia-dropdown-native', className].filter(Boolean).join(' ')}
 				tabIndex={-1} aria-hidden="true">

@@ -5,8 +5,10 @@
 
 import { useLayoutEffect, useRef } from 'react';
 
-import { Autocomplete as CoreAutocomplete, type AutocompleteAction,
-	type AutocompleteSuggestion, type AutocompleteValue } from '@antilia/core';
+import { Autocomplete as CoreAutocomplete, type AutocompleteAction, type AutocompleteSuggestion,
+	type AutocompleteValue, partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface AutocompleteProps {
 	/** Finds the suggestions for a text: [{id, label, data}]. */
@@ -62,6 +64,7 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 	remove, name, id, className }: AutocompleteProps) {
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreAutocomplete | null>(null);
+	const look = useLook();
 	// the latest functions, so that new ones on every render leave an open list alone
 	const latest = useRef({ search, onChange, onPick, onAction });
 	latest.current = { search, onChange, onPick, onAction };
@@ -79,7 +82,7 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 	useLayoutEffect(() => {
 		const element = input.current!;
 		const autocomplete = new CoreAutocomplete(element, { ...options(), multiple, pick,
-			chosen: value });
+			chosen: value, look });
 		instance.current = autocomplete;
 		const changed = () => {
 			if (!autocomplete.pick) {
@@ -94,7 +97,7 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 			autocomplete.destroy();
 			instance.current = null;
 		};
-	}, [multiple, pick]);
+	}, [multiple, pick, look]);
 
 	// compared by content, so that actions made anew on every render leave an open list alone
 	const actionsKey = JSON.stringify(actions ?? []);
@@ -113,7 +116,7 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 	}, [valueKey]);
 
 	return (
-		<div className={['antilia-autocomplete', className].filter(Boolean).join(' ')}>
+		<div className={[partClasses(look, 'autocomplete'), className].filter(Boolean).join(' ')}>
 			<input ref={input} type="hidden" name={name} id={id} />
 		</div>
 	);

@@ -11,7 +11,11 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Palette, type PaletteChoice, type PaletteMatch, type PaletteTexts } from '@antilia/core';
+	import { Palette, type PaletteChoice, type PaletteMatch, type PaletteTexts, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = PaletteTexts & {
 		/** The choices, in their order. */
@@ -84,6 +88,7 @@
 		}
 		const palette = new Palette(element, untrack(() => ({
 			...settings(),
+			look,
 			choices: options,
 			selected: value,
 			disabled,
@@ -126,7 +131,7 @@
 	});
 </script>
 
-<div bind:this={element} {id} class={['antilia-palette', className]}></div>
+<div bind:this={element} {id} class={[partClasses(look, 'palette'), className]}></div>
 {#if name}
 	{#each value as each (each)}
 		<input type="hidden" {name} value={each} />

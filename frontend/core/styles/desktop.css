@@ -25,7 +25,7 @@
 	min-height: 0;
 	height: 30rem;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface-alt, #f5f7fb);
 	color: var(--antilia-theme-text, #1c2333);
 	overflow: hidden;
@@ -88,9 +88,9 @@
 	height: var(--antilia-window-height, 280px);
 	max-width: none;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
-	box-shadow: 0 4px 14px rgb(0 0 0 / 0.14);
+	box-shadow: var(--antilia-look-shadow, 0 4px 14px rgb(0 0 0 / 0.14));
 	outline: none;
 }
 
@@ -101,7 +101,7 @@
 .antilia-window[data-active] {
 	border-color: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 55%,
 		var(--antilia-theme-border, #c9cfdb));
-	box-shadow: 0 8px 26px rgb(0 0 0 / 0.24);
+	box-shadow: var(--antilia-look-shadow-lg, 0 8px 26px rgb(0 0 0 / 0.24));
 }
 
 .antilia-window:focus-visible {
@@ -199,7 +199,7 @@
 	height: 1.7em;
 	padding: 0;
 	border: 0;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	background: transparent;
 	color: inherit;
 	font: inherit;
@@ -385,7 +385,7 @@
 	min-width: 4em;
 	padding: 0.3em 0.6em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
@@ -569,7 +569,7 @@
 	padding: 0 0.55em;
 	overflow: hidden;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
@@ -601,7 +601,7 @@
 	width: 100%;
 	padding: 0.4em 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
@@ -622,10 +622,10 @@
 	overflow: auto;
 	padding: 0.3em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
-	box-shadow: 0 8px 26px rgb(0 0 0 / 0.24);
+	box-shadow: var(--antilia-look-shadow-lg, 0 8px 26px rgb(0 0 0 / 0.24));
 	cursor: default;
 }
 
@@ -652,7 +652,7 @@
 	width: 100%;
 	padding: 0.35em 0.6em;
 	border: 0;
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: transparent;
 	color: inherit;
 	font: inherit;

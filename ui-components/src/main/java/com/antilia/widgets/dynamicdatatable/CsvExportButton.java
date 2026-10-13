@@ -25,6 +25,9 @@ import org.apache.wicket.request.resource.AbstractResource;
 import org.apache.wicket.request.resource.ContentDisposition;
 import org.apache.wicket.util.convert.IConverter;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * The icon button of a {@link CsvExportToolbarAction}.
  */
@@ -64,7 +67,8 @@ class CsvExportButton<T, K extends Serializable, C extends IDetachable> extends 
 				download.initiate(target);
 			}
 		}.add(AttributeModifier.replace("title", label),
-			AttributeModifier.replace("aria-label", label)));
+			AttributeModifier.replace("aria-label", label),
+			new LookBehavior(LookPart.TABLE_ACTION, LookPart.TABLE_EXPORT)));
 	}
 
 	private IModel<String> label()

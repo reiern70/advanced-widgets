@@ -18,13 +18,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.antilia.widgets.demo.button.ButtonsPage;
+import com.antilia.widgets.demo.looks.LooksPage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
+import com.antilia.widgets.theme.Look;
+import com.antilia.widgets.theme.LookAspect;
+import com.antilia.widgets.theme.Looks;
 import com.antilia.widgets.theme.Theme;
 import com.antilia.widgets.theme.ThemeEditorPanel;
 
 /**
- * Every page is in the theme the user chooses with the floating button.
+ * Every page is in the theme and the look the user chooses in the top bar.
  */
 class ThemedDemosTest extends WicketTestCase
 {
@@ -46,6 +51,74 @@ class ThemedDemosTest extends WicketTestCase
 		assertEquals(Theme.DARK, DemoSession.get().getTheme());
 		tester.startPage(page);
 		assertTrue(bodyClass().contains(Theme.DARK.getCssClass()), page.getSimpleName());
+	}
+
+	@Test
+	void theLookChosenAppliesToTheWholePageWithTheStyleSheetOfBootstrap()
+	{
+		tester.startPage(ButtonsPage.class);
+		assertTrue(bodyClass().contains("antilia-look-antilia"), bodyClass());
+		tester.assertContainsNot("bootstrap\\.min\\.css");
+
+		choose("settings:look", Look.BOOTSTRAP.ordinal());
+
+		assertEquals(Look.BOOTSTRAP, Looks.getSessionLook());
+		// another page, in the look chosen on the first
+		tester.startPage(ButtonsPage.class);
+		TagTester body = TagTester.createTagByName(tester.getLastResponseAsString(), "body");
+		assertTrue(bodyClass().contains("antilia-look-bootstrap"), bodyClass());
+		assertEquals("bootstrap", body.getAttribute("data-antilia-look"));
+		assertEquals("light", body.getAttribute("data-bs-theme"));
+		tester.assertContains("bootstrap/5\\.[0-9.]+/bootstrap\\.min\\.css");
+		tester.assertContains("antilia-look-bootstrap.*\\.css");
+		// the buttons of the page are outside the <body>'s ThemeBehavior in Wicket's hierarchy,
+		// in the look of the session all the same
+		tester.assertContains("class=\"btn btn-primary btn-sm\"");
+		tester.assertContainsNot("class=\"ant-button ");
+	}
+
+	@Test
+	void aLookMadeOfBootstrapsWithTheColorsAndSizesOfAntilias()
+	{
+		tester.startPage(HomePage.class);
+
+		choose("settings:look", 2);
+
+		assertEquals(Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE,
+			Look.ANTILIA), Looks.getSessionLook());
+		tester.startPage(ButtonsPage.class);
+		TagTester body = TagTester.createTagByName(tester.getLastResponseAsString(), "body");
+		assertEquals("bootstrap color:antilia size:antilia",
+			body.getAttribute("data-antilia-look"));
+		assertTrue(bodyClass().contains("antilia-look-bootstrap antilia-look-antilia"), bodyClass());
+		tester.assertContains("antilia-look-bootstrap.*\\.css");
+		tester.assertContains("class=\"btn ant-button--primary ant-button--small\"");
+	}
+
+	@Test
+	void thePublicPagesChooseTheThemeTheLookAndTheLanguageButNotTheScriptOfAjax()
+	{
+		tester.startPage(HomePage.class);
+
+		tester.assertVisible("settings:theme");
+		tester.assertVisible("settings:look");
+		tester.assertVisible("settings:language");
+		tester.assertInvisible("settings:ajaxEngineSetting");
+	}
+
+	@Test
+	void theLooksSideBySideOnAPageWithBootstrap()
+	{
+		tester.startPage(LooksPage.class);
+
+		tester.assertContains("bootstrap\\.min\\.css");
+		String response = tester.getLastResponseAsString();
+		assertEquals(2, response.split("data-antilia-look=\"bootstrap\"", -1).length - 1,
+			"the Bootstrap look and Bootstrap's own markup");
+		assertEquals(2, response.split("data-antilia-look=\"antilia\"", -1).length - 1,
+			"the <body> and the Antilia look");
+		tester.assertContains("class=\"btn btn-primary\"");
+		tester.assertContains("class=\"ant-button ant-button--primary ant-button--medium\"");
 	}
 
 	@Test

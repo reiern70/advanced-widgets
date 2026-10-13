@@ -15,6 +15,7 @@ import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.TransparentWebMarkupContainer;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
@@ -35,20 +36,27 @@ import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dropdown.DropdownBehavior;
+import com.antilia.widgets.demo.theme.BootstrapResourceReference;
 import com.antilia.widgets.notification.Notifications;
+import com.antilia.widgets.theme.ILook;
+import com.antilia.widgets.theme.Look;
+import com.antilia.widgets.theme.LookAspect;
+import com.antilia.widgets.theme.LookChoice;
+import com.antilia.widgets.theme.Looks;
 import com.antilia.widgets.theme.Theme;
 import com.antilia.widgets.theme.ThemeBehavior;
 import com.antilia.widgets.theme.ThemeChoice;
 
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
- * drop-downs choosing the theme, the language and the {@link AjaxEngine} of the session, each on
- * its own, and the links to sign in and to register, or the account signed in with and the link to
+ * drop-downs choosing the theme, the {@link Look}, the language and the {@link AjaxEngine} of the
+ * session, each on its own, and the links to sign in and to register, or the account signed in with and the link to
  * sign out, and for an administrator the link to the administration; then the footer, and the
  * {@link Notifications} showing the feedback messages of the page, and the dialog telling what runs
  * where, which the link in the footer opens in the browser. Nothing of it keeps a page, so the
  * public pages are stateless. The whole page is in the session's {@link Theme}, its own colors
- * included.
+ * included, and in its look; in the Bootstrap look or a Bootstrap theme the page has the style
+ * sheet of Bootstrap, never its script.
  */
 public abstract class BasePage extends WebPage
 {
@@ -63,6 +71,13 @@ public abstract class BasePage extends WebPage
 		"BasePage.css");
 
 	/** The languages the demos have texts in. */
+	/**
+	 * The looks to choose from: those of ui-components, and Bootstrap's made of Antilia's colors and
+	 * sizes.
+	 */
+	private static final List<ILook> LOOKS = List.of(Look.ANTILIA, Look.BOOTSTRAP,
+		Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA));
+
 	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
 		Locale.of("es"));
 
@@ -83,7 +98,7 @@ public abstract class BasePage extends WebPage
 		add(new Label("pageTitle", this::getPageTitle));
 
 		TransparentWebMarkupContainer body = new TransparentWebMarkupContainer("body");
-		body.add(new ThemeBehavior(getThemeModel()));
+		body.add(new ThemeBehavior(getThemeModel(), Looks.sessionLook()));
 		add(body);
 
 		add(new BookmarkablePageLink<>("home", HomePage.class));
@@ -92,8 +107,21 @@ public abstract class BasePage extends WebPage
 		StatelessForm<Void> settings = new StatelessForm<>("settings");
 		add(settings);
 		settings.add(newThemeChoice("theme"));
+		settings.add(newLookChoice("look"));
 		settings.add(newLanguageChoice("language"));
-		settings.add(newAjaxEngineChoice("ajaxEngine"));
+		// the script of Wicket's Ajax is for the signed in only, not for the public pages
+		WebMarkupContainer ajaxEngine = new WebMarkupContainer("ajaxEngineSetting")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(DemoSession.get().isSignedIn());
+			}
+		};
+		settings.add(ajaxEngine.add(newAjaxEngineChoice("ajaxEngine")));
 
 		add(new BookmarkablePageLink<>("register", RegisterPage.class)
 		{
@@ -173,6 +201,24 @@ public abstract class BasePage extends WebPage
 	{
 		return LambdaModel.of(() -> DemoSession.get().getTheme(),
 			theme -> DemoSession.get().setTheme(theme));
+	}
+
+	private LookChoice newLookChoice(String id)
+	{
+		// the look of the session, which every page is in once chosen on one
+		LookChoice choice = new LookChoice(id, Looks.sessionLook(), LOOKS)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onLookChanged(AjaxRequestTarget target)
+			{
+				// anew, as the Bootstrap look brings a style sheet the page may lack
+				reload();
+			}
+		};
+		choice.add(new DropdownBehavior());
+		return choice;
 	}
 
 	private ThemeChoice newThemeChoice(String id)
@@ -332,6 +378,11 @@ public abstract class BasePage extends WebPage
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
+		if (Looks.current().getLooks().contains(Look.BOOTSTRAP) ||
+			DemoSession.get().getTheme().isBootstrap())
+		{
+			response.render(BootstrapResourceReference.styleSheet());
+		}
 		response.render(CssHeaderItem.forReference(STYLE));
 		AccessTimeResource.renderHead(response);
 	}

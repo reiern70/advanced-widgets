@@ -21,6 +21,7 @@
  * scrolls with the slim scroll bars of the core.
  */
 
+import { lookOf, toggleParts, type Look } from './look.js';
 import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
 
 /** The class of the element wrapping a dialog in the default theme of Wicket's ModalDialog. */
@@ -107,6 +108,8 @@ export interface ModalOptions {
 	 * browser window; it overrides the width of the size.
 	 */
 	width?: string;
+	/** The look of the dialog; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 }
 
 /**
@@ -208,6 +211,9 @@ export class ModalDialog {
 
 	private readonly options: ModalOptions;
 
+	/** The look of the dialog, whose classes its parts get. */
+	private readonly look: Look;
+
 	/** The element that had the focus when the dialog opened. */
 	private readonly opener: Element | null;
 
@@ -229,8 +235,8 @@ export class ModalDialog {
 	 * Gives the body of a dialog, in the wrapper of the scroll bars, its scroll bars; Wicket gives
 	 * those of Wicket.Scrollbar, if any.
 	 */
-	static attachScrollbar: (body: HTMLElement) => ScrollbarHandle | undefined = (body) =>
-		Scrollbar.attach(body);
+	static attachScrollbar: (body: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
+		(body, look) => Scrollbar.attach(body, { look });
 
 	/**
 	 * @param overlay the overlay, the element of the class modal-dialog-overlay
@@ -240,6 +246,7 @@ export class ModalDialog {
 		this.overlay = overlay;
 		this.dialog = overlay.querySelector<HTMLElement>('.' + MODAL_CLASSES.dialog) ?? overlay;
 		this.options = options;
+		this.look = options.look ?? lookOf(this.dialog);
 		this.opener = document.activeElement;
 		this.overlay.addEventListener('keydown', this.keyHandler);
 		this.overlay.addEventListener('click', this.clickHandler);
@@ -257,7 +264,7 @@ export class ModalDialog {
 		ModalDialog.open.push(this);
 		const body = this.body();
 		if (body?.parentElement?.classList.contains(SCROLLBAR_WRAPPER_CLASS)) {
-			this.scrollbar = ModalDialog.attachScrollbar(body);
+			this.scrollbar = ModalDialog.attachScrollbar(body, this.look);
 		}
 		if (this.trapsFocus()) {
 			this.firstFocusable().focus();
@@ -265,12 +272,12 @@ export class ModalDialog {
 	}
 
 	/**
-	 * Gives the dialog the class of its size, and its width.
+	 * Gives the dialog the classes of its size in its look, and its width.
 	 */
 	private resize(): void {
 		const { size, width } = this.options;
-		MODAL_SIZES.forEach((each) => this.dialog.classList.toggle(modalSizeClass(each),
-			each === size));
+		MODAL_SIZES.forEach((each) => toggleParts(this.dialog, this.look, each === size,
+			`dialog-${each}`));
 		this.dialog.classList.toggle(MODAL_CLASSES.sized, size !== undefined || !!width);
 		this.dialog.style.width = width ?? '';
 	}

@@ -26,13 +26,19 @@
 .dialog-theme-default .modal-dialog {
 	position: absolute;
 	top: 10%;
+	/* Bootstrap's .modal-dialog, on a page with its style sheet, would not let the dialog be
+	   clicked and would keep it to 500px */
+	width: auto;
+	max-width: none;
+	margin: 0;
+	pointer-events: auto;
 	overflow: hidden;
 	border: 1px solid var(--antilia-theme-border, transparent);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, Canvas);
 	color: var(--antilia-theme-text, CanvasText);
 	color-scheme: var(--antilia-theme-color-scheme, normal);
-	box-shadow: 0 0 60px 10px rgba(0, 0, 0, 0.35);
+	box-shadow: var(--antilia-look-shadow-lg, 0 0 60px 10px rgba(0, 0, 0, 0.35));
 }
 
 .dialog-theme-default .modal-dialog:focus {
@@ -77,7 +83,7 @@
 	margin: -0.1em -0.35em -0.1em 0;
 	padding: 0 0.3em;
 	border: 0;
-	border-radius: 0.25em;
+	border-radius: var(--antilia-look-radius-sm, 0.25em);
 	background: transparent;
 	color: inherit;
 	font: inherit;

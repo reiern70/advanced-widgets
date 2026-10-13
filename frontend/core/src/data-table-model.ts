@@ -9,6 +9,7 @@
  */
 
 import type { DataTableColumn, DataTableRow } from './data-table.js';
+import { ANTILIA_LOOK, partClasses, type Look } from './look.js';
 
 /** A column of a React or Svelte table. */
 export interface DataTableColumnDef {
@@ -118,16 +119,19 @@ export const SHOW_COLUMNS = '_antilia-show-columns';
 export const PAGE_LINKS = 10;
 
 /**
+ * @param texts the label of the checkboxes
+ * @param look the look of the table, whose classes the checkboxes and their column get
  * @returns the column of the checkboxes selecting the rows
  */
-export function selectionColumn(texts: Pick<DataTableTexts, 'selectRow'>): DataTableColumn {
+export function selectionColumn(texts: Pick<DataTableTexts, 'selectRow'>,
+	look: Look = ANTILIA_LOOK): DataTableColumn {
 	const label = texts.selectRow.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 		.replace(/</g, '&lt;');
 	return {
-		template: '<input type="checkbox" class="ant-data-table-select" data-dt-action="' +
-			SELECTION_ACTIONS[0] + '" data-dt-action-unchecked="' + SELECTION_ACTIONS[1] +
-			'" aria-label="' + label + '">',
-		cssClass: 'ant-data-table-selection'
+		template: '<input type="checkbox" class="' + partClasses(look, 'table-select') +
+			'" data-dt-action="' + SELECTION_ACTIONS[0] + '" data-dt-action-unchecked="' +
+			SELECTION_ACTIONS[1] + '" aria-label="' + label + '">',
+		cssClass: partClasses(look, 'table-selection')
 	};
 }
 

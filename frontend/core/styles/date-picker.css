@@ -42,7 +42,7 @@
 	min-height: 2.1em;
 	box-sizing: border-box;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, #ffffff);
 	transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -54,7 +54,7 @@
 .antilia-datepicker-field:focus-within,
 .antilia-datepicker-open > .antilia-datepicker-field {
 	border-color: var(--antilia-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+	box-shadow: var(--antilia-look-focus-ring, 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent));
 }
 
 .antilia-datepicker-invalid > .antilia-datepicker-field {
@@ -130,7 +130,7 @@
 	box-sizing: border-box;
 	border: 2px solid currentColor;
 	border-top-width: 0.25em;
-	border-radius: 0.15em;
+	border-radius: var(--antilia-look-radius-sm, 0.15em);
 	opacity: 0.8;
 }
 
@@ -161,10 +161,10 @@
 	width: max-content;
 	padding: 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	box-shadow: var(--antilia-look-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
 	color-scheme: var(--antilia-theme-color-scheme, light);
 	font-variant-numeric: tabular-nums;
 }
@@ -205,7 +205,7 @@
 	flex: 1;
 	padding: 0.3em 0.5em;
 	border: 0;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	background: transparent;
 	font-weight: 600 !important;
 	text-transform: capitalize;
@@ -277,7 +277,7 @@
 .antilia-datepicker-month,
 .antilia-datepicker-year {
 	border: 1px solid transparent;
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: transparent;
 }
 
@@ -347,7 +347,7 @@
 	width: 3.6em;
 	padding: 0.3em 0.4em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface-alt, #f5f7fb);
 	color: inherit;
 	font: inherit;
@@ -369,7 +369,7 @@
 	margin-left: 0.3em;
 	padding: 0.3em 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface-alt, #f5f7fb);
 }
 

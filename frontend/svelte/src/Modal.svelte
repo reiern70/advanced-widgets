@@ -14,8 +14,9 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog, SCROLLBAR_WRAPPER_CLASS,
-		type ModalSize } from '@antilia/core';
+	import { ModalDialog, partClasses, type ModalSize } from '@antilia/core';
+
+	import { getLook } from './look.js';
 
 	type Props = {
 		/** Whether the dialog is open; nothing is rendered while it is closed. */
@@ -63,6 +64,7 @@
 		foldable = true, size, width, class: className = '', children }: Props = $props();
 
 	const titleId = $props.id();
+	const look = getLook();
 	let overlay = $state<HTMLDivElement>();
 
 	$effect(() => {
@@ -70,30 +72,30 @@
 			return;
 		}
 		const modal = new ModalDialog(overlay, { closeOnEscape, closeOnClick, trapFocus, draggable,
-			foldable, size, width, onClose: () => onclose(), canClose: () => canClose?.() ?? true });
+			foldable, size, width, look, onClose: () => onclose(), canClose: () => canClose?.() ?? true });
 		return () => modal.destroy();
 	});
 </script>
 
 {#if open}
-	<div class={[MODAL_THEME_CLASS, className]}>
-		<div bind:this={overlay} class={MODAL_CLASSES.overlay}>
-			<div class={MODAL_CLASSES.dialog} role="dialog" aria-modal="true"
+	<div class={[partClasses(look, 'dialog-theme'), className]}>
+		<div bind:this={overlay} class={partClasses(look, 'dialog-overlay')}>
+			<div class={partClasses(look, 'dialog')} role="dialog" aria-modal="true"
 				aria-labelledby={title ? titleId : undefined}>
-				<div class={MODAL_CLASSES.content}>
+				<div class={partClasses(look, 'dialog-content')}>
 					{#if title || closeButton}
-						<div class={MODAL_CLASSES.header}>
-							{#if title}<h1 class={MODAL_CLASSES.title} id={titleId}>{title}</h1>{/if}
+						<div class={partClasses(look, 'dialog-header')}>
+							{#if title}<h1 class={partClasses(look, 'dialog-title')} id={titleId}>{title}</h1>{/if}
 							{#if closeButton}
-								<button type="button" class={MODAL_CLASSES.close} aria-label={closeLabel}
+								<button type="button" class={partClasses(look, 'dialog-close')} aria-label={closeLabel}
 									title={closeLabel}>×</button>
 							{/if}
 						</div>
 					{/if}
-					<div class={SCROLLBAR_WRAPPER_CLASS}>
-						<div class={MODAL_CLASSES.body}>{@render children?.()}</div>
+					<div class={partClasses(look, 'scrollbar')}>
+						<div class={partClasses(look, 'dialog-body')}>{@render children?.()}</div>
 					</div>
-					{#if footer}<div class={MODAL_CLASSES.footer}>{@render footer()}</div>{/if}
+					{#if footer}<div class={partClasses(look, 'dialog-footer')}>{@render footer()}</div>{/if}
 				</div>
 			</div>
 		</div>

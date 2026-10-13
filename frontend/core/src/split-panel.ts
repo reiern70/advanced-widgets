@@ -25,6 +25,7 @@
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
+import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 
 /**
  * horizontal: the panes side by side, the divider standing between them; vertical: the panes one
@@ -44,6 +45,8 @@ export type SplitPane = 'first' | 'second';
 export interface SplitPanelOptions {
 	/** horizontal (the default) for the panes side by side, vertical for one above the other. */
 	orientation?: SplitOrientation;
+	/** The look of the panel; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/**
 	 * The size of the first pane, 50 (percent of the space the divider leaves) when left out. In
 	 * pixels, '250px', the first pane keeps its size when the split panel grows or shrinks.
@@ -95,7 +98,6 @@ interface Length {
 }
 
 const CLASS = 'antilia-split';
-const PANE_CLASS = 'antilia-split-pane';
 const DIVIDER_CLASS = 'antilia-split-divider';
 const DRAGGING_CLASS = 'antilia-split-dragging';
 const FIXED_CLASS = 'antilia-split-fixed';
@@ -191,6 +193,9 @@ export class SplitPanel {
 	/** Whether the divider was added by the split panel, and is taken away again by destroy(). */
 	private ownDivider = false;
 
+	/** The look of the panel, whose classes the elements it makes get. */
+	private readonly look: Look;
+
 	/** The collapse buttons on the divider, when collapsible. */
 	private buttons: Record<SplitPane, HTMLElement> | null = null;
 
@@ -202,6 +207,7 @@ export class SplitPanel {
 	constructor(element: HTMLElement, options: SplitPanelOptions = {}) {
 		this.element = element;
 		this.options = { ...options };
+		this.look = options.look ?? lookOf(element);
 		instances.get(element)?.destroy();
 		instances.set(element, this);
 		this.findParts();
@@ -247,7 +253,7 @@ export class SplitPanel {
 			this.divider = divider;
 		} else {
 			this.divider = document.createElement('div');
-			this.divider.className = DIVIDER_CLASS;
+			this.divider.className = this.css('split-divider');
 			this.element.insertBefore(this.divider, this.second);
 			this.ownDivider = true;
 		}
@@ -352,24 +358,38 @@ export class SplitPanel {
 		return space > 0 ? value / space * 100 : null;
 	}
 
+	/**
+	 * @returns the classes of parts of the panel in its look
+	 */
+	private css(...parts: LookPart[]): string {
+		return partClasses(this.look, ...parts);
+	}
+
+	/**
+	 * Gives an element of the panel the classes of parts in its look.
+	 */
+	private add(element: Element, ...parts: LookPart[]): void {
+		element.classList.add(...this.css(...parts).split(' '));
+	}
+
 	private render(): void {
 		const element = this.element;
 		const orientation = this.orientation();
-		element.classList.add(CLASS);
+		this.add(element, 'split');
 		element.classList.toggle(ORIENTATION_CLASSES.horizontal, orientation === 'horizontal');
 		element.classList.toggle(ORIENTATION_CLASSES.vertical, orientation === 'vertical');
 		element.classList.toggle(FIXED_CLASS, !this.isResizable());
 		element.classList.toggle(PIXELS_CLASS, this.unit === 'px');
 		element.classList.toggle(COLLAPSIBLE_CLASS, this.collapsible());
 		element.classList.toggle(DRAGGING_CLASS, this.stopDragging !== null);
-		this.first.classList.add(PANE_CLASS, 'antilia-split-first');
-		this.second.classList.add(PANE_CLASS, 'antilia-split-second');
+		this.add(this.first, 'split-pane', 'split-first');
+		this.add(this.second, 'split-pane', 'split-second');
 		if (!this.first.id) {
 			this.first.id = (element.id || 'antilia-split-' + (++counter)) + '-first';
 		}
 
 		const divider = this.divider;
-		divider.classList.add(DIVIDER_CLASS);
+		this.add(divider, 'split-divider');
 		divider.setAttribute('role', 'separator');
 		// the separator stands upright between panes side by side
 		divider.setAttribute('aria-orientation', orientation === 'horizontal' ? 'vertical' :
@@ -406,7 +426,7 @@ export class SplitPanel {
 		if (!this.buttons) {
 			const button = (pane: SplitPane) => {
 				const element = document.createElement('span');
-				element.className = BUTTON_CLASS + ' ' + BUTTON_CLASS + '-' + pane;
+				element.className = this.css('split-collapse') + ' ' + BUTTON_CLASS + '-' + pane;
 				element.setAttribute('aria-hidden', 'true');
 				return element;
 			};

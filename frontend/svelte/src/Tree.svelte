@@ -15,9 +15,13 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { isLicensed, JsonTree, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
-		UNLICENSED_CLASS, type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons,
+	import { isLicensed, JsonTree, partClasses, type ResizeMode, TREE_COMPONENTS,
+		TREE_GRID_COMPONENTS, TREE_TEXTS, type TreeColumn, type TreeConfig, type TreeIcons,
 		type TreeNode, type TreeTexts } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** Loads the roots, for null, or the children of a folder, the first time it is expanded. */
@@ -91,7 +95,7 @@
 			texts: $state.snapshot(texts), height: $state.snapshot(height),
 			table: columns ? { header: header ?? '', columns: $state.snapshot(columns) } : undefined,
 			resizableColumns: columns && resizableColumns ? resizableColumns : undefined };
-		const tree = untrack(() => new JsonTree({ ...config, expanded: $state.snapshot(expanded),
+		const tree = untrack(() => new JsonTree({ ...config, look, expanded: $state.snapshot(expanded),
 			selected, load: (parent) => load(parent) }, {
 			select: (key, data) => onselect?.(key, data),
 			action: (action, key, data) => onaction?.(action, key, data),
@@ -135,13 +139,13 @@
 </script>
 
 {#if licensed === false}
-	<div class={UNLICENSED_CLASS} role="note" data-component={table ? 'TreeGrid' : 'Tree'}>
+	<div class={partClasses(look, 'unlicensed')} role="note" data-component={table ? 'TreeGrid' : 'Tree'}>
 		{texts.unlicensed}</div>
 {:else if licensed && height}
 	<!-- a tree of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
-	<div class="antilia-scrollbar">
-		<div {id} class={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree', className]}></div>
+	<div class={partClasses(look, 'scrollbar')}>
+		<div {id} class={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'), className]}></div>
 	</div>
 {:else if licensed}
-	<div {id} class={['json-tree', table ? 'antilia-tree-grid' : 'antilia-tree', className]}></div>
+	<div {id} class={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'), className]}></div>
 {/if}

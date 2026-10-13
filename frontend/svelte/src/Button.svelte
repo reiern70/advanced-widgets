@@ -6,13 +6,16 @@
   @component
   A button in the colors of the theme, in the markup of Wicket's AjaxActionButton and shown by the
   core's style sheet button.css: an icon, a text or both, in a variant and a size. It is a button
-  of type button unless told otherwise, so it never submits a form by accident.
+  of type button unless told otherwise, so it never submits a form by accident. In the look given
+  by setLook, such as Bootstrap's, it has the classes of that look.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	import { buttonClasses, type ButtonSize, type ButtonVariant } from '@antilia/core';
+	import { buttonClasses, type ButtonSize, type ButtonVariant, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
 
 	type Props = Omit<HTMLButtonAttributes, 'children'> & {
 		/** The text of the button; with only the icon shown, its tooltip and accessible name. */
@@ -29,12 +32,14 @@
 
 	let { label, icon, iconOnly = false, variant, size, class: className, type = 'button', title,
 		'aria-label': ariaLabel, ...rest }: Props = $props();
+
+	const look = getLook();
 </script>
 
-<button {...rest} {type} class={buttonClasses({ variant, size, iconOnly,
+<button {...rest} {type} class={buttonClasses({ variant, size, iconOnly, look,
 	className: typeof className === 'string' ? className : undefined })}
 	title={title ?? (iconOnly ? label : undefined)}
 	aria-label={ariaLabel ?? (iconOnly ? label : undefined)}>
-	{#if icon}<span class="ant-button__icon" aria-hidden="true">{@render icon()}</span>{/if}
-	{#if !iconOnly}<span class="ant-button__label">{label}</span>{/if}
+	{#if icon}<span class={partClasses(look, 'button-icon')} aria-hidden="true">{@render icon()}</span>{/if}
+	{#if !iconOnly}<span class={partClasses(look, 'button-label')}>{label}</span>{/if}
 </button>

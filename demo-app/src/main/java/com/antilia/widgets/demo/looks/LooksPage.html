@@ -1,0 +1,68 @@
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<p class="looks__intro"><wicket:message key="intro"/></p>
+<div class="looks">
+	<section class="looks__column" wicket:id="antilia">
+		<h2 class="looks__title"><wicket:message key="antilia"/></h2>
+		<p class="looks__help"><wicket:message key="antilia.help"/></p>
+		<div wicket:id="sample"></div>
+	</section>
+	<section class="looks__column" wicket:id="bootstrap">
+		<h2 class="looks__title"><wicket:message key="bootstrap"/></h2>
+		<p class="looks__help"><wicket:message key="bootstrap.help"/></p>
+		<div wicket:id="sample"></div>
+	</section>
+	<section class="looks__column" wicket:id="mixed">
+		<h2 class="looks__title"><wicket:message key="mixed"/></h2>
+		<p class="looks__help"><wicket:message key="mixed.help"/></p>
+		<div wicket:id="sample"></div>
+	</section>
+	<section class="looks__column" wicket:id="native">
+		<h2 class="looks__title"><wicket:message key="native"/></h2>
+		<p class="looks__help"><wicket:message key="native.help"/></p>
+		<div class="looks__group">
+			<div class="alert alert-primary" role="alert"><wicket:message key="native.alert"/></div>
+		</div>
+		<div class="looks__group">
+			<div class="btn-group" role="group" wicket:message="aria-label:native.view">
+				<button type="button" class="btn btn-primary"><wicket:message key="native.day"/></button>
+				<button type="button" class="btn btn-secondary"><wicket:message key="native.week"/></button>
+				<button type="button" class="btn btn-secondary"><wicket:message key="native.month"/></button>
+			</div>
+		</div>
+		<div class="looks__group">
+			<label class="form-label" for="looks-native-email"><wicket:message key="native.email"/></label>
+			<input type="email" class="form-control" id="looks-native-email" placeholder="you@example.com"/>
+			<div class="form-check mt-2">
+				<input class="form-check-input" type="checkbox" id="looks-native-check" checked="checked"/>
+				<label class="form-check-label" for="looks-native-check"><wicket:message key="native.remember"/></label>
+			</div>
+		</div>
+		<div class="looks__group">
+			<ul class="nav nav-tabs">
+				<li class="nav-item"><a class="nav-link active" aria-current="page" href="#"><wicket:message key="native.overview"/></a></li>
+				<li class="nav-item"><a class="nav-link" href="#"><wicket:message key="native.details"/></a></li>
+			</ul>
+		</div>
+		<div class="looks__group">
+			<div class="card">
+				<div class="card-header"><wicket:message key="native.card"/></div>
+				<ul class="list-group list-group-flush">
+					<li class="list-group-item active"><wicket:message key="native.first"/></li>
+					<li class="list-group-item"><wicket:message key="native.second"/></li>
+				</ul>
+			</div>
+		</div>
+		<div class="looks__group">
+			<div class="progress" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" wicket:message="aria-label:progress"><div class="progress-bar looks__native-progress"></div></div>
+		</div>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>

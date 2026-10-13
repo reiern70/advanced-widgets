@@ -6,7 +6,9 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef,
 	type HTMLAttributes } from 'react';
 
-import { Scrollbar, type ScrollbarOptions, type ScrollPosition } from '@antilia/core';
+import { partClasses, Scrollbar, type ScrollbarOptions, type ScrollPosition } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface ScrollableProps extends HTMLAttributes<HTMLDivElement> {
 	/** The axes of the bars: by default those along which the CSS of the element scrolls. */
@@ -43,6 +45,7 @@ export const Scrollable = forwardRef<ScrollableHandle, ScrollableProps>(function
 	{ axis, wrapperClassName, className, children, ...rest }, ref) {
 	const element = useRef<HTMLDivElement>(null);
 	const bars = useRef<Scrollbar | undefined>(undefined);
+	const look = useLook();
 
 	useImperativeHandle(ref, () => ({
 		get element() {
@@ -55,18 +58,20 @@ export const Scrollable = forwardRef<ScrollableHandle, ScrollableProps>(function
 	}), []);
 
 	useLayoutEffect(() => {
-		const instance = Scrollbar.attach(element.current!, { axis });
+		const instance = Scrollbar.attach(element.current!, { axis, look });
 		bars.current = instance;
 		return () => {
 			instance?.destroy();
 			bars.current = undefined;
 		};
-	}, [axis]);
+	}, [axis, look]);
 
 	return (
-		<div className={['antilia-scrollbar', wrapperClassName].filter(Boolean).join(' ')}>
+		<div className={[partClasses(look, 'scrollbar'), wrapperClassName].filter(Boolean)
+			.join(' ')}>
 			<div {...rest} ref={element}
-				className={['antilia-scrollbar-host', className].filter(Boolean).join(' ')}>
+				className={[partClasses(look, 'scrollbar-host'), className].filter(Boolean)
+					.join(' ')}>
 				{children}
 			</div>
 		</div>

@@ -16,6 +16,10 @@ import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * The content of a {@link Modal} opened with a title, a body and buttons: a header
  * ({@code modal-dialog-header}) holding the title ({@code modal-dialog-title}) and the close
@@ -67,7 +71,7 @@ public class ModalContent extends Panel
 				setVisible(ModalContent.this.title != null || hasCloseButton());
 			}
 		};
-		add(header);
+		add(header.add(new LookBehavior(LookPart.DIALOG_HEADER)));
 		header.add(new Label("title", title)
 		{
 			private static final long serialVersionUID = 1L;
@@ -78,7 +82,7 @@ public class ModalContent extends Panel
 				super.onConfigure();
 				setVisible(ModalContent.this.title != null);
 			}
-		}.setOutputMarkupId(true));
+		}.setOutputMarkupId(true).add(new LookBehavior(LookPart.DIALOG_TITLE)));
 		header.add(new WebMarkupContainer("close")
 		{
 			private static final long serialVersionUID = 1L;
@@ -98,13 +102,15 @@ public class ModalContent extends Panel
 				tag.put("aria-label", label);
 				tag.put("title", label);
 			}
-		});
+		}.add(new LookBehavior(LookPart.DIALOG_CLOSE)));
 
-		add(body);
+		add(new LookContainer("scroller", LookPart.SCROLLBAR));
+		add(body.add(new LookBehavior(LookPart.DIALOG_BODY)));
 
 		List<IModalButtonFactory> factories = new ArrayList<>(Args.notNull(buttons, "buttons"));
 		WebMarkupContainer footer = new WebMarkupContainer("footer");
 		footer.setVisible(!factories.isEmpty());
+		footer.add(new LookBehavior(LookPart.DIALOG_FOOTER));
 		add(footer);
 		RepeatingView repeater = new RepeatingView("buttons");
 		footer.add(repeater);

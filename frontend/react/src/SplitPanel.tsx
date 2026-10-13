@@ -5,8 +5,10 @@
 
 import { Children, useLayoutEffect, useRef, type ReactNode } from 'react';
 
-import { parseSplitSize, SplitPanel as CoreSplitPanel, type SplitOrientation, type SplitPane,
-	type SplitSize } from '@antilia/core';
+import { parseSplitSize, partClasses, type SplitOrientation, type SplitPane,
+	SplitPanel as CoreSplitPanel, type SplitSize } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface SplitPanelProps {
 	/** The two panes: the first child is the left or top one, the second the right or bottom one. */
@@ -64,11 +66,12 @@ export function SplitPanel(props: SplitPanelProps) {
 		collapseSecondLabel, restoreLabel, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreSplitPanel | null>(null);
+	const look = useLook();
 	const latest = useRef(props);
 	latest.current = props;
 	const [first, second] = Children.toArray(children);
 	// the classes the core gives the element, so that React keeps them when it renders again
-	const classes = ['antilia-split', 'antilia-split-' + orientation,
+	const classes = [partClasses(look, 'split'), 'antilia-split-' + orientation,
 		resizable ? null : 'antilia-split-fixed',
 		parseSplitSize(position)?.unit === 'px' ? 'antilia-split-pixels' : null,
 		collapsible ? 'antilia-split-collapsible' : null, className].filter(Boolean).join(' ');
@@ -77,7 +80,7 @@ export function SplitPanel(props: SplitPanelProps) {
 	useLayoutEffect(() => {
 		const split = new CoreSplitPanel(element.current!, {
 			orientation, position, min, max, minSecond, step, resizable, collapsible, collapsed,
-			label, collapseFirstLabel, collapseSecondLabel, restoreLabel,
+			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, look,
 			onResize: (next) => latest.current.onResize?.(next),
 			onResized: (next) => latest.current.onResized?.(next),
 			onCollapse: (next) => latest.current.onCollapse?.(next)
@@ -87,7 +90,7 @@ export function SplitPanel(props: SplitPanelProps) {
 			split.destroy();
 			instance.current = null;
 		};
-	}, []);
+	}, [look]);
 
 	useLayoutEffect(() => {
 		instance.current?.configure({ orientation, min, max, minSecond, step, resizable,
@@ -118,9 +121,9 @@ export function SplitPanel(props: SplitPanelProps) {
 
 	return (
 		<div ref={element} id={id} className={classes}>
-			<div className="antilia-split-pane antilia-split-first">{first}</div>
-			<div className="antilia-split-divider" />
-			<div className="antilia-split-pane antilia-split-second">{second}</div>
+			<div className={partClasses(look, 'split-pane', 'split-first')}>{first}</div>
+			<div className={partClasses(look, 'split-divider')} />
+			<div className={partClasses(look, 'split-pane', 'split-second')}>{second}</div>
 		</div>
 	);
 }

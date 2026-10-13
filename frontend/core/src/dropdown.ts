@@ -19,7 +19,8 @@
 
 import { Chips } from './chips.js';
 import { onRemoving, type Unsubscribe } from './host.js';
-import { Scrollbar, SCROLLBAR_WRAPPER_CLASS, type ScrollbarHandle } from './scrollbar.js';
+import { lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
+import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 
 /**
  * The texts of a drop-down and when it shows a filter.
@@ -37,6 +38,8 @@ export interface DropdownOptions {
 	remove?: string;
 	/** The number of options from which on the list has a filter, 8 when left out. */
 	filterThreshold?: number;
+	/** The look of the drop-down; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 }
 
 const WRAPPER_CLASS = 'antilia-dropdown';
@@ -52,12 +55,10 @@ const instances = new WeakMap<Element, Dropdown>();
 
 let counter = 0;
 
-function create<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
+function create<K extends keyof HTMLElementTagNameMap>(tag: K, look: Look, part: LookPart,
 	text?: string): HTMLElementTagNameMap[K] {
 	const element = document.createElement(tag);
-	if (className) {
-		element.className = className;
-	}
+	element.className = partClasses(look, part);
 	if (text !== undefined) {
 		element.textContent = text;
 	}
@@ -105,6 +106,9 @@ export class Dropdown {
 	/** Whether the wrapper was made by the drop-down, and is taken away again by destroy(). */
 	private ownWrapper = false;
 
+	/** The look of the drop-down, whose classes the elements it makes get. */
+	private look!: Look;
+
 	private listeners: Array<[EventTarget, string, EventListener]> = [];
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
@@ -112,8 +116,8 @@ export class Dropdown {
 	private scrollbar: ScrollbarHandle | undefined = undefined;
 
 	/** Gives the list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
-	static attachScrollbar: (list: HTMLElement) => ScrollbarHandle | undefined = (list) =>
-		Scrollbar.attach(list, { axis: 'y' });
+	static attachScrollbar: (list: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
+		(list, look) => Scrollbar.attach(list, { axis: 'y', look });
 
 	/**
 	 * @param select the select
@@ -151,9 +155,10 @@ export class Dropdown {
 
 	private attach(): void {
 		const select = this.select;
+		this.look = this.options.look ?? lookOf(select);
 		let wrapper = select.parentElement;
 		if (!wrapper || !wrapper.classList.contains(WRAPPER_CLASS)) {
-			wrapper = create('div', WRAPPER_CLASS);
+			wrapper = create('div', this.look, 'dropdown');
 			select.parentNode?.insertBefore(wrapper, select);
 			wrapper.appendChild(select);
 			this.ownWrapper = true;
@@ -172,20 +177,20 @@ export class Dropdown {
 		select.tabIndex = -1;
 		select.setAttribute('aria-hidden', 'true');
 
-		this.toggle = create('button', 'antilia-dropdown-toggle');
+		this.toggle = create('button', this.look, 'dropdown-toggle');
 		this.toggle.type = 'button';
 		this.toggle.id = this.id + '-toggle';
 		this.toggle.setAttribute('aria-haspopup', 'listbox');
 		this.toggle.setAttribute('aria-expanded', 'false');
 		this.toggle.setAttribute('aria-controls', this.id + '-list');
-		this.value = create('span', 'antilia-dropdown-value');
+		this.value = create('span', this.look, 'dropdown-value');
 		this.toggle.appendChild(this.value);
-		this.toggle.appendChild(create('span', 'antilia-dropdown-arrow'));
+		this.toggle.appendChild(create('span', this.look, 'dropdown-arrow'));
 		wrapper.appendChild(this.toggle);
 
-		this.menu = create('div', 'antilia-dropdown-menu');
+		this.menu = create('div', this.look, 'dropdown-menu');
 		this.menu.hidden = true;
-		this.list = create('ul', 'antilia-dropdown-list');
+		this.list = create('ul', this.look, 'dropdown-list');
 		this.list.id = this.id + '-list';
 		this.list.tabIndex = -1;
 		this.list.setAttribute('role', 'listbox');
@@ -193,10 +198,10 @@ export class Dropdown {
 			this.list.setAttribute('aria-multiselectable', 'true');
 		}
 		// the list scrolls in the wrapper of the slim scroll bars of the core
-		this.listBox = create('div', SCROLLBAR_WRAPPER_CLASS);
+		this.listBox = create('div', this.look, 'scrollbar');
 		this.listBox.appendChild(this.list);
 		this.menu.appendChild(this.listBox);
-		this.empty = create('div', 'antilia-dropdown-empty');
+		this.empty = create('div', this.look, 'dropdown-empty');
 		this.empty.hidden = true;
 		this.menu.appendChild(this.empty);
 		wrapper.appendChild(this.menu);
@@ -204,7 +209,7 @@ export class Dropdown {
 		this.renderOptions();
 		this.bind();
 		if (this.list.isConnected) {
-			this.scrollbar = Dropdown.attachScrollbar(this.list);
+			this.scrollbar = Dropdown.attachScrollbar(this.list, this.look);
 		}
 		this.stopWatchingRemoval = onRemoving(wrapper, () => this.detach());
 	}
@@ -293,7 +298,7 @@ export class Dropdown {
 		}
 		const withFilter = this.select.options.length >= this.threshold();
 		if (withFilter && !this.filter) {
-			this.filter = create('input', 'antilia-dropdown-filter');
+			this.filter = create('input', this.look, 'dropdown-filter');
 			this.filter.type = 'search';
 			this.filter.autocomplete = 'off';
 			this.filter.setAttribute('aria-controls', this.id + '-list');
@@ -312,19 +317,19 @@ export class Dropdown {
 		this.items = [];
 		this.active = null;
 		Array.from(this.select.options).forEach((option, index) => {
-			const item = create('li', 'antilia-dropdown-option');
+			const item = create('li', this.look, 'dropdown-option');
 			item.id = this.id + '-option-' + index;
 			item.setAttribute('role', 'option');
 			item.dataset.index = String(index);
 			if (this.multiple) {
-				item.appendChild(create('span', 'antilia-dropdown-check'));
+				item.appendChild(create('span', this.look, 'dropdown-check'));
 			}
-			item.appendChild(create('span', 'antilia-dropdown-text', option.text));
+			item.appendChild(create('span', this.look, 'dropdown-text', option.text));
 			if (option.disabled) {
 				item.setAttribute('aria-disabled', 'true');
 			}
 			if (option.value === '' && !this.multiple) {
-				item.classList.add('antilia-dropdown-option-none');
+				toggleParts(item, this.look, true, 'dropdown-option-none');
 			}
 			this.list.appendChild(item);
 			this.items.push(item);
@@ -355,24 +360,24 @@ export class Dropdown {
 			const none = !this.multiple && select.selectedIndex >= 0 ?
 				select.options[select.selectedIndex].text : '';
 			this.value.textContent = none || this.options.placeholder || '';
-			this.value.classList.add('antilia-dropdown-placeholder');
+			toggleParts(this.value, this.look, true, 'dropdown-placeholder');
 			return;
 		}
-		this.value.classList.remove('antilia-dropdown-placeholder');
+		toggleParts(this.value, this.look, false, 'dropdown-placeholder');
 		if (!this.multiple) {
 			this.value.textContent = chosen[0].text;
 			return;
 		}
 		const removeLabel = select.disabled ? null : (this.options.remove || 'Remove {0}');
 		chosen.slice(0, MAX_CHIPS).forEach((option) => {
-			const chip = Chips.create(option.text, removeLabel);
+			const chip = Chips.create(option.text, removeLabel, this.look);
 			chip.dataset.index = String(option.index);
 			this.value.appendChild(chip);
 		});
 		if (chosen.length > MAX_CHIPS) {
 			const more = (this.options.more || '+{0}').replace('{0}',
 				String(chosen.length - MAX_CHIPS));
-			this.value.appendChild(Chips.more(more));
+			this.value.appendChild(Chips.more(more, this.look));
 		}
 		this.toggle.title = chosen.map((option) => option.text).join(', ');
 	}
@@ -507,14 +512,16 @@ export class Dropdown {
 	 * Marks an option as the one the keyboard acts on.
 	 */
 	activate(item: HTMLLIElement | null, scroll: boolean): void {
-		this.active?.classList.remove('antilia-dropdown-active');
+		if (this.active) {
+			toggleParts(this.active, this.look, false, 'dropdown-option-active');
+		}
 		this.active = item;
 		const owner = this.filter || this.list;
 		if (!item) {
 			owner.removeAttribute('aria-activedescendant');
 			return;
 		}
-		item.classList.add('antilia-dropdown-active');
+		toggleParts(item, this.look, true, 'dropdown-option-active');
 		owner.setAttribute('aria-activedescendant', item.id);
 		if (scroll) {
 			const list = this.list;

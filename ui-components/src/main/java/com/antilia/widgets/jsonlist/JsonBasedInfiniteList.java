@@ -56,6 +56,8 @@ import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.template.Templates;
 import com.github.openjson.JSONObject;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A list that scrolls infinitely, whose items are rendered in the browser from JSON, the way the
@@ -663,7 +665,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 	{
 		checkComponentTag(tag, "div");
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.LIST);
 		tag.put("role", "feed");
 	}
 

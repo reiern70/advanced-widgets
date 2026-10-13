@@ -11,8 +11,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLSelectAttributes } from 'svelte/elements';
-	import { Dropdown, type DropdownOptions } from '@antilia/core';
+	import { Dropdown, type DropdownOptions, partClasses } from '@antilia/core';
 	import type { DropdownOption } from './types.js';
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = Omit<HTMLSelectAttributes, 'value' | 'multiple' | 'children' | 'onchange'> &
 		DropdownOptions & {
@@ -53,7 +56,7 @@
 		if (!select) {
 			return;
 		}
-		const dropdown = new Dropdown(select, untrack(texts));
+		const dropdown = new Dropdown(select, { ...untrack(texts), look });
 		instance = dropdown;
 		return () => {
 			dropdown.destroy();
@@ -104,7 +107,7 @@
 	}
 </script>
 
-<div class={['antilia-dropdown', wrapperClass]}>
+<div class={[partClasses(look, 'dropdown'), wrapperClass]}>
 	{#if multiple}
 		<select {...rest} multiple bind:value bind:this={select} onchange={changed}
 			class={['antilia-dropdown-native', className]} tabindex="-1" aria-hidden="true">

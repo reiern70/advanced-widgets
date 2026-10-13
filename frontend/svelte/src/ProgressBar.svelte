@@ -9,6 +9,11 @@
   unless the system asks for reduced motion.
 -->
 <script lang="ts">
+	import { partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 	type Props = {
 		/** The percentage, clamped to 0..100; null or left out for an indeterminate bar. */
 		value?: number | null;
@@ -21,11 +26,11 @@
 		Math.round(value))));
 </script>
 
-<div class={['antilia-progress-bar', className]}>
+<div class={[partClasses(look, 'progress'), className]}>
 	{#if percentage === null}
-		<progress class="antilia-progress-bar-value" max="100"></progress>
+		<progress class={partClasses(look, 'progress-value')} max="100"></progress>
 	{:else}
-		<progress class="antilia-progress-bar-value" max="100" value={percentage}>{percentage}%</progress>
-		<span class="antilia-progress-bar-label" aria-hidden="true">{percentage}%</span>
+		<progress class={partClasses(look, 'progress-value')} max="100" value={percentage}>{percentage}%</progress>
+		<span class={partClasses(look, 'progress-label')} aria-hidden="true">{percentage}%</span>
 	{/if}
 </div>

@@ -15,6 +15,9 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * The bar offering to select every row of a {@link BaseDynamicDataTable} once every row of its page
  * is selected, and to clear that selection again. Shown only then; see
@@ -120,6 +123,6 @@ public class DynamicSelectionToolbar extends AbstractDynamicToolbar
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", "ant-data-table-selection-toolbar", " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TABLE_SELECTION_TOOLBAR);
 	}
 }

@@ -13,7 +13,11 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { Autocomplete, type AutocompleteAction, type AutocompleteSuggestion,
-		type AutocompleteValue } from '@antilia/core';
+		type AutocompleteValue, partClasses } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** Finds the suggestions for a text: [{id, label, data}]. */
@@ -93,7 +97,7 @@
 			return;
 		}
 		const autocomplete = untrack(() => new Autocomplete(element, { ...options(), multiple,
-			pick, chosen: $state.snapshot(value) }));
+			pick, chosen: $state.snapshot(value), look }));
 		instance = autocomplete;
 		const changed = () => {
 			if (autocomplete.pick) {
@@ -133,7 +137,7 @@
 	});
 </script>
 
-<div class={['antilia-autocomplete', className]}>
+<div class={[partClasses(look, 'autocomplete'), className]}>
 	{#key [multiple, pick].join()}
 		<input bind:this={input} type="hidden" {name} {id} />
 	{/key}

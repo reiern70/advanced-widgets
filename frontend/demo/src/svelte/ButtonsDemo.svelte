@@ -9,7 +9,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 
-	import { Button, Dropdown, Scrollable } from '@antilia/svelte';
+	import { Button, buttonClasses, Dropdown, getLook, Scrollable } from '@antilia/svelte';
 
 	import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, iconSetOptions, sizeName,
 		type ButtonIconSet, type ButtonsConfig } from '../buttons.js';
@@ -17,6 +17,9 @@
 	let { config }: { config: ButtonsConfig } = $props();
 
 	const texts = $derived(config.texts);
+
+	// a link drawn as a button, in the look of the page as the buttons
+	const look = getLook();
 	const variants = $derived(config.variants);
 	let clicked = $state<string | null>(null);
 	let icons = $state<ButtonIconSet>(untrack(() => config.icons));
@@ -73,6 +76,7 @@
 	</div>
 	<h3>{texts.asLink}</h3>
 	<p>
-		<a href="#buttons-as-links" class="ant-button ant-button--ghost ant-button--small">{texts['asLink.text']}</a>
+		<a href="#buttons-as-links"
+			class={buttonClasses({ variant: 'ghost', size: 'small', look })}>{texts['asLink.text']}</a>
 	</p>
 </div>

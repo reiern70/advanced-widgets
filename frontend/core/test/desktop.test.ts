@@ -820,6 +820,26 @@ describe('Desktop', () => {
 		expect(desk.isModified('one')).toBe(false);
 	});
 
+	it('asks in the look of the page around the desktop', async () => {
+		document.body.setAttribute('data-antilia-look', 'bootstrap');
+		const desk = new Desktop(element(true, { one: 'data-closable="true"' }));
+		(document.getElementById('one-field') as HTMLInputElement).value = 'typed';
+
+		const closing = desk.requestClose('one');
+
+		expect(document.querySelector('.antilia-desktop-confirm .modal-dialog-header')!.className)
+			.toBe('modal-dialog-header modal-header');
+		expect(document.querySelector('.antilia-desktop-confirm .modal-dialog')!.className)
+			.toContain('modal-dialog-small modal-sm');
+		expect(document.querySelector('[data-confirm="keep"]')!.className)
+			.toBe('btn btn-secondary btn-sm');
+		expect(document.querySelector('[data-confirm="discard"]')!.className)
+			.toBe('btn btn-danger btn-sm');
+		document.querySelector<HTMLButtonElement>('[data-confirm="keep"]')!.click();
+		await expect(closing).resolves.toBe(false);
+		document.body.removeAttribute('data-antilia-look');
+	});
+
 	it('keeps a window with changes open on Escape in the dialog', async () => {
 		const desk = new Desktop(element(true, { one: 'data-closable="true"' }));
 		(document.getElementById('one-field') as HTMLInputElement).value = 'typed';

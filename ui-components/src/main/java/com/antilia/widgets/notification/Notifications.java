@@ -34,6 +34,9 @@ import org.apache.wicket.util.visit.IVisit;
 
 import com.github.openjson.JSONObject;
 
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * Notifications, as toasts: short messages stacked in a corner of the browser window, or in the
  * middle of its top or bottom edge, the same script of the core ({@code Wicket.Notifications}
@@ -413,7 +416,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	{
 		checkComponentTag(tag, "div");
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.NOTIFICATIONS);
 	}
 
 	@Override

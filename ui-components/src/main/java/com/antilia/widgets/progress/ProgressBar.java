@@ -13,6 +13,10 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
+import com.antilia.widgets.theme.ILook;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * A progress bar showing a percentage from 0 to 100, with its value as label. The bar is a native
  * {@code <progress>} element styled by CSS, so it needs no inline style and works under a strict
@@ -67,7 +71,22 @@ public class ProgressBar extends WebComponent
 	 */
 	public static String markup(String value)
 	{
-		return "<div class=\"" + CSS_CLASS + "\">" + body(value) + "</div>";
+		return markup(value, Looks.current());
+	}
+
+	/**
+	 * Returns the markup of a whole bar in a look, as {@link #markup(String)}.
+	 *
+	 * @param value
+	 *            the percentage, or a placeholder for it
+	 * @param look
+	 *            the look of the bar
+	 * @return the markup of the bar
+	 */
+	public static String markup(String value, ILook look)
+	{
+		return "<div class=\"" + look.getPartClasses(LookPart.PROGRESS) + "\">" +
+			body(value, look) + "</div>";
 	}
 
 	/**
@@ -75,19 +94,23 @@ public class ProgressBar extends WebComponent
 	 */
 	public static String indeterminateMarkup()
 	{
-		return "<div class=\"" + CSS_CLASS + "\">" + indeterminateBody() + "</div>";
+		ILook look = Looks.current();
+		return "<div class=\"" + look.getPartClasses(LookPart.PROGRESS) + "\">" +
+			indeterminateBody(look) + "</div>";
 	}
 
-	private static String indeterminateBody()
+	private static String indeterminateBody(ILook look)
 	{
-		return "<progress class=\"" + CSS_CLASS + "-value\" max=\"100\"></progress>";
+		return "<progress class=\"" + look.getPartClasses(LookPart.PROGRESS_VALUE) +
+			"\" max=\"100\"></progress>";
 	}
 
-	private static String body(String value)
+	private static String body(String value, ILook look)
 	{
-		return "<progress class=\"" + CSS_CLASS + "-value\" max=\"100\" value=\"" + value + "\">" +
-			value + "%</progress><span class=\"" + CSS_CLASS + "-label\" aria-hidden=\"true\">" +
-			value + "%</span>";
+		return "<progress class=\"" + look.getPartClasses(LookPart.PROGRESS_VALUE) +
+			"\" max=\"100\" value=\"" + value + "\">" + value + "%</progress><span class=\"" +
+			look.getPartClasses(LookPart.PROGRESS_LABEL) + "\" aria-hidden=\"true\">" + value +
+			"%</span>";
 	}
 
 	/**
@@ -113,14 +136,15 @@ public class ProgressBar extends WebComponent
 	{
 		checkComponentTag(tag, "div");
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.PROGRESS);
 	}
 
 	@Override
 	public void onComponentTagBody(MarkupStream markupStream, ComponentTag openTag)
 	{
-		replaceComponentTagBody(markupStream, openTag,
-			isIndeterminate() ? indeterminateBody() : body(String.valueOf(getPercentage())));
+		ILook look = Looks.of(this);
+		replaceComponentTagBody(markupStream, openTag, isIndeterminate() ? indeterminateBody(look)
+			: body(String.valueOf(getPercentage()), look));
 	}
 
 	@Override

@@ -11,6 +11,10 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.util.string.Strings;
 
+import com.antilia.widgets.theme.ILook;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
+
 /**
  * A column with a checkbox per row, selecting the row, and a checkbox in its header, selecting
  * every row of the page. The selection is kept by the table; see
@@ -52,7 +56,7 @@ public class SelectionColumn<T> extends AbstractDynamicColumn<T>
 	@Override
 	public String getTemplate()
 	{
-		return checkbox(null);
+		return checkbox(null, Looks.current());
 	}
 
 	/**
@@ -62,12 +66,14 @@ public class SelectionColumn<T> extends AbstractDynamicColumn<T>
 	@Override
 	public String getTemplate(JsonBasedDynamicDataTable<T, ?> table)
 	{
-		return checkbox(table.getString("DynamicDataTable.selectRow", null, "Select row"));
+		return checkbox(table.getString("DynamicDataTable.selectRow", null, "Select row"),
+			Looks.of(table));
 	}
 
-	private static String checkbox(String label)
+	private static String checkbox(String label, ILook look)
 	{
-		return "<input type=\"checkbox\" class=\"" + ROW_CHECKBOX_CLASS + "\" data-dt-action=\"" +
+		return "<input type=\"checkbox\" class=\"" + look.getPartClasses(LookPart.TABLE_SELECT) +
+			"\" data-dt-action=\"" +
 			BaseDynamicDataTable.SELECT_ACTION + "\" data-dt-action-unchecked=\"" +
 			BaseDynamicDataTable.DESELECT_ACTION + "\"" +
 			(label != null ? " aria-label=\"" + Strings.escapeMarkup(label) + "\"" : "") + ">";
@@ -95,7 +101,8 @@ public class SelectionColumn<T> extends AbstractDynamicColumn<T>
 					return;
 				}
 				replaceComponentTagBody(markupStream, openTag, "<input type=\"checkbox\" class=\"" +
-					PAGE_CHECKBOX_CLASS + "\" data-dt-action=\"" +
+					Looks.of(this).getPartClasses(LookPart.TABLE_SELECT_PAGE) +
+					"\" data-dt-action=\"" +
 					BaseDynamicDataTable.SELECT_PAGE_ACTION + "\" data-dt-action-unchecked=\"" +
 					BaseDynamicDataTable.DESELECT_PAGE_ACTION + "\" aria-label=\"" +
 					getDefaultModelObjectAsString() + "\">");

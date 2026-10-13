@@ -11,6 +11,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
 import com.antilia.widgets.progress.ProgressBar;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A column showing a {@link ProgressBar} for a percentage property of the row, rendered in the
@@ -28,7 +29,8 @@ public class ProgressBarColumn<T> extends AbstractDynamicColumn<T> implements IH
 {
 	private static final long serialVersionUID = 1L;
 
-	private final String template;
+	/** The placeholder of the percentage in the template. */
+	private final String value;
 
 	/**
 	 * @param header
@@ -40,13 +42,22 @@ public class ProgressBarColumn<T> extends AbstractDynamicColumn<T> implements IH
 	public ProgressBarColumn(IModel<String> header, String path)
 	{
 		super(header);
-		template = ProgressBar.markup("{{" + Args.notEmpty(path, "path") + "}}");
+		value = "{{" + Args.notEmpty(path, "path") + "}}";
 	}
 
 	@Override
 	public String getTemplate()
 	{
-		return template;
+		return ProgressBar.markup(value);
+	}
+
+	/**
+	 * Returns the bar in the look of the table.
+	 */
+	@Override
+	public String getTemplate(JsonBasedDynamicDataTable<T, ?> table)
+	{
+		return ProgressBar.markup(value, Looks.of(table));
 	}
 
 	@Override

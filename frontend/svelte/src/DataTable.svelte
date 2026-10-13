@@ -18,11 +18,16 @@
 	import { untrack, type Snippet } from 'svelte';
 	import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
 		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
-		SHOW_COLUMNS, UNLICENSED_CLASS, type DataTableColumnDef, type DataTableData,
+		SHOW_COLUMNS, type DataTableColumnDef, type DataTableData,
 		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
-		type DataTableSort, type DataTableTexts, type ResizeMode } from '@antilia/core';
+		type DataTableSort, type DataTableTexts, type LookPart, partClasses,
+		type ResizeMode } from '@antilia/core';
 
 	import Dropdown from './Dropdown.svelte';
+	import { getLook } from './look.js';
+
+	const look = getLook();
+	const css = (...parts: LookPart[]) => partClasses(look, ...parts);
 
 	type Props = {
 		/** The columns, in their first order; the user may move, hide and show them. */
@@ -163,7 +168,7 @@
 	const visible = $derived(order.filter((column) => shown.includes(column) && byId.has(column))
 		.map((column) => byId.get(column)!));
 	const withSelection = $derived(selection !== 'none');
-	const columnsKey = $derived(JSON.stringify((withSelection ? [selectionColumn(texts)] : [])
+	const columnsKey = $derived(JSON.stringify((withSelection ? [selectionColumn(texts, look)] : [])
 		.concat(visible.map((column) => ({ template: column.template,
 			cssClass: column.cssClass })))));
 	const filler = $derived(Boolean(bodyHeight));
@@ -249,7 +254,7 @@
 				moveLabel: string;
 			};
 		return untrack(() => {
-			const table: DynamicDataTable = new DynamicDataTable({ ...config,
+			const table: DynamicDataTable = new DynamicDataTable({ ...config, look,
 				onBusy: (value) => (busy = value), load },
 				(action, key) => act(table, action, key), () => (itemCount = table.itemCount ?? 0));
 			instance = table;
@@ -388,8 +393,8 @@
 			(sort.ascending ? 'ascending' : 'descending') : column.sort ? 'none' : undefined;
 	}
 
-	const ORDER_CLASSES = { none: 'wicket_orderNone', ascending: 'wicket_orderUp',
-		descending: 'wicket_orderDown' };
+	const ORDER_PARTS = { none: 'table-header-unsorted', ascending: 'table-header-ascending',
+		descending: 'table-header-descending' } as const;
 
 	/** A link of the navigator that leads nowhere, as Wicket's disabled links are. */
 	const DISABLED: Record<string, string> = { disabled: 'disabled' };
@@ -397,33 +402,35 @@
 
 {#snippet link(target: number, linkClass: string, text: string, title: string, rel?: string)}
 	{#if target === page || target < 0 || target >= pages}
-		<a class={linkClass || undefined} {rel} {...DISABLED} {title}>{text}</a>
+		<a class={[linkClass, css('table-page-link')]} {rel} {...DISABLED} {title}>{text}</a>
 	{:else}
-		<a class={linkClass || undefined} {rel} href="#top" {title}
+		<a class={[linkClass, css('table-page-link')]} {rel} href="#top" {title}
 			onclick={(event) => go(target, event)}>{text}</a>
 	{/if}
 {/snippet}
 
 {#snippet navigation()}
-	<tr class="navigation">
+	<tr class={css('table-navigation-row')}>
 		<td colspan={colSpan}>
-			<div class="ant-data-table-navigation">
+			<div class={css('table-navigation')}>
 				{#if toolbar}
-					<div class="ant-data-table-navigation-prefix">{@render toolbar()}</div>
+					<div class={css('table-navigation-prefix')}>{@render toolbar()}</div>
 				{/if}
-				<div class="ant-data-table-paging">
-					<div class="navigatorLabel"><div>{label}</div></div>
+				<div class={css('table-paging')}>
+					<div class={css('table-navigator-label')}><div>{label}</div></div>
 					{#if !infinite}
-						<div class="navigator"><div>
+						<div class={css('table-navigator')}><div class={css('table-pages') || undefined}>
 							{@render link(0, 'first', '<<', texts.first)}
 							{@render link(page - 1, 'prev', '<', texts.previous, 'prev')}
 							{#each pageLinks(page, pages) as target (target)}
-								<span class="goto">
+								<span class={css('table-page')}>
 									{#if target === page}
-										<a {...DISABLED} title={texts.page.replace('{0}',
-											String(target + 1))}><span>{target + 1}</span></a>
+										<a class={css('table-page-link')} {...DISABLED}
+											title={texts.page.replace('{0}', String(target + 1))}
+											><span>{target + 1}</span></a>
 									{:else}
-										<a href="#top" title={texts.page.replace('{0}', String(target + 1))}
+										<a class={css('table-page-link')} href="#top"
+											title={texts.page.replace('{0}', String(target + 1))}
 											onclick={(event) => go(target, event)}><span>{target + 1}</span></a>
 									{/if}
 								</span>
@@ -433,12 +440,12 @@
 						</div></div>
 					{/if}
 				</div>
-				<div class="ant-data-table-actions">
+				<div class={css('table-actions')}>
 					{@render actions?.()}
 					{#if withSelection && selectionCount && selected > 0}
-						<span class="ant-data-table-selection-count">
+						<span class={css('table-selection-count')}>
 							<span role="status">{texts.selectedCount.replace('{0}', String(selected))}</span>
-							<button type="button" class="ant-data-table-selection-clear"
+							<button type="button" class={css('table-selection-clear')}
 								title={texts.clearSelection} aria-label={texts.clearSelection}
 								onclick={clearSelection}>
 								<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18"
@@ -450,21 +457,21 @@
 					{/if}
 					{#if columnChooser && hideable.length > 0}
 						<span>
-							<details class="ant-data-table-column-chooser">
-								<summary class="ant-data-table-action" title={texts.columns}
+							<details class={css('table-column-chooser')}>
+								<summary class={css('table-action')} title={texts.columns}
 									aria-label={texts.columns}>
 									<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18"
 										height="18" fill="none" stroke="currentColor" stroke-width="2"
 										stroke-linecap="round"><path d="M4 5h16v14H4z M10 5v14 M15 5v14" /></svg>
 								</summary>
-								<div class="ant-data-table-column-chooser-menu" role="group"
+								<div class={css('table-column-chooser-menu')} role="group"
 									aria-label={texts.columns}>
 									<ul>
 										{#each hideable as column (column.id)}
 											<li>
-												<button type="button" class="ant-data-table-column-chooser-column"
+												<button type="button" class={css('table-column-chooser-column')}
 													data-dt-column={column.id} aria-pressed={shown.includes(column.id)}>
-													<span class="ant-data-table-column-chooser-tick"
+													<span class={css('table-column-chooser-tick')}
 														aria-hidden="true">✓</span>
 													<span>{column.header}</span>
 												</button>
@@ -472,7 +479,7 @@
 										{/each}
 									</ul>
 									<button type="button" data-dt-apply="true"
-										class="ant-data-table-button ant-data-table-button-primary">
+										class={css('table-button', 'table-button-primary')}>
 										{texts.apply}
 									</button>
 								</div>
@@ -481,7 +488,7 @@
 					{/if}
 				</div>
 				{#if !infinite}
-					<label class="ant-data-table-page-size">
+					<label class={css('table-page-size')}>
 						<span>{texts.rowsPerPage}</span>
 						<Dropdown options={pageSizes.map((size) => ({ value: String(size),
 							label: String(size) }))} value={String(pageSize)}
@@ -494,19 +501,19 @@
 {/snippet}
 
 {#if licensed === false}
-	<div class={UNLICENSED_CLASS} role="note" data-component="DataTable">{texts.unlicensed}</div>
+	<div class={css('unlicensed')} role="note" data-component="DataTable">{texts.unlicensed}</div>
 {:else if licensed}
-	<div class="ant-data-table-host">
-		<table {id} class={['ant-dataview ant-data-table', className]} cellspacing="0">
+	<div class={css('table-host')}>
+		<table {id} class={['ant-dataview', css('table'), className]} cellspacing="0">
 			<thead>
 				{#if navigationPosition !== 'bottom'}{@render navigation()}{/if}
-				<tr class="ant-data-table-headers">
+				<tr class={css('table-headers')}>
 					{#if withSelection}
-						<th class="ant-data-table-selection" data-resizable="false">
-							<div class="ant-data-table-header">
-								<span class="ant-data-table-sort-title">
+						<th class={css('table-selection')} data-resizable="false">
+							<div class={css('table-header')}>
+								<span class={css('table-sort-title')}>
 									{#if selection === 'many'}
-										<input type="checkbox" class="ant-data-table-select-page"
+										<input type="checkbox" class={css('table-select-page')}
 											data-dt-action={SELECTION_ACTIONS[2]}
 											data-dt-action-unchecked={SELECTION_ACTIONS[3]}
 											aria-label={texts.selectPage} />
@@ -519,10 +526,10 @@
 						{@const sorting = sorted(column)}
 						<th data-movable={movableColumns && column.movable ? 'true' : undefined}
 							data-resizable={column.resizable === false ? 'false' : undefined}
-							aria-sort={sorting} class={sorting ? ORDER_CLASSES[sorting] : undefined}>
-							<div class="ant-data-table-header">
+							aria-sort={sorting} class={sorting ? css(ORDER_PARTS[sorting]) : undefined}>
+							<div class={css('table-header')}>
 								{#if movableColumns && column.movable}
-									<button type="button" class="antilia-col-mover" title={texts.moveColumn}
+									<button type="button" class={css('column-mover')} title={texts.moveColumn}
 										aria-label={texts.moveColumn}>
 										<svg aria-hidden="true" focusable="false" viewBox="0 0 10 16" width="8"
 											height="13"><path fill="currentColor" d={GRIP} /></svg>
@@ -530,23 +537,23 @@
 								{/if}
 								{#if column.sort}
 									{@const property = column.sort}
-									<a class="ant-data-table-sort" href="#top"
+									<a class={css('table-sort')} href="#top"
 										onclick={(event) => sortBy(property, event)}>
-										<span class="ant-data-table-sort-title">{column.header}</span>
+										<span class={css('table-sort-title')}>{column.header}</span>
 									</a>
-									<a class="ant-data-table-sort-arrows" aria-hidden="true" tabindex="-1"
+									<a class={css('table-sort-arrows')} aria-hidden="true" tabindex="-1"
 										href="#top" onclick={(event) => sortBy(property, event)}>
-										<span class="ant-data-table-sort-asc">▲</span>
-										<span class="ant-data-table-sort-desc">▼</span>
+										<span class={css('table-sort-ascending')}>▲</span>
+										<span class={css('table-sort-descending')}>▼</span>
 									</a>
 								{:else}
-									<span class="ant-data-table-sort-title">{column.header}</span>
+									<span class={css('table-sort-title')}>{column.header}</span>
 								{/if}
 							</div>
 						</th>
 					{/each}
 					{#if filler}
-						<th class="ant-data-table-filler" data-resizable-skip="true" aria-hidden="true"></th>
+						<th class={css('table-filler')} data-resizable-skip="true" aria-hidden="true"></th>
 					{/if}
 				</tr>
 			</thead>
@@ -554,7 +561,7 @@
 			{#if navigationPosition !== 'top'}<tfoot>{@render navigation()}</tfoot>{/if}
 		</table>
 		{#if veiled}
-			<div class="ant-data-table-veil" aria-hidden="true"></div>
+			<div class={css('table-veil')} aria-hidden="true"></div>
 		{/if}
 	</div>
 {/if}

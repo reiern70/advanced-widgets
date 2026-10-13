@@ -143,6 +143,45 @@ the children of a folder the first time it is expanded. Their style sheet, `tree
 `antilia-tree.css`, and their icons (`TREE_ICONS`, `TreeIcon` in Java) are those of the Wicket
 `Tree` and `TreeGrid` too, so all of them look the same.
 
+A theme gives the components their colors, a look the CSS classes of their parts. Every element a
+component draws is a part, in the table of `look.ts` (`LookPart` in Java, which reads the same
+table from `antilia-looks.properties`, written by the build): a dialog's header, a table's header,
+a dropdown's option... An element keeps its own classes, those of the Antilia look, which its script
+and its style sheet find it by, and a look adds its own (`partClasses(look, part)`); buttons alone
+have none of their own (`lookClasses`). The Bootstrap look (`BOOTSTRAP_LOOK`, `Look.BOOTSTRAP`)
+gives the parts Bootstrap's classes: `btn btn-primary btn-sm` for a button, `modal-header` for a
+dialog's header, `table` for a data table, `dropdown-menu` and `dropdown-item` for a menu and its
+options, `card` for a panel, `alert alert-danger` for a notification of an error, `pagination` and
+`page-link` for Wicket's paging navigator... and its corners, shadows and focus rings through the
+custom properties `--antilia-look-radius`, `-radius-sm`, `-shadow`, `-shadow-lg` and `-focus-ring`.
+The page brings the style sheet of Bootstrap 5.3, any build of it, such as a theme of Bootswatch,
+never its script: what the components do stays their own. `antilia-look-bootstrap.css`, which the
+Bootstrap look renders in Wicket, bridges the two, for example showing the menus Bootstrap hides
+without its script's `show`; in the themes `Theme.BOOTSTRAP` and `BOOTSTRAP_DARK` the components
+take Bootstrap's colors from its `--bs-*` properties, light or in its dark mode (`data-bs-theme`);
+in any other theme Bootstrap's components and properties take the theme's colors, so the page's
+own Bootstrap markup in the theme matches the components.
+
+Each part is of an aspect: what it is, its colors, its size or a state. A look can be made of
+others, an aspect from each: `composeLook(BOOTSTRAP_LOOK, { color: ANTILIA_LOOK, size: ANTILIA_LOOK
+})`, `Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA)` in Java (`CompoundLook`), gives the parts
+Bootstrap's classes with the colors and the sizes of Antilia's. A look is on an element and
+everything inside it as `data-antilia-look`, which Wicket's `ThemeBehavior` writes, the name of the
+look and the aspects taken from others (`bootstrap color:antilia size:antilia`), with a class
+`antilia-look-<name>` for each look it is made of; `lookOf(element)` finds it, so markup made in the
+browser is in the look of the page. The core's components take a `look` option too, which React's
+`LookProvider` and `useLook()` and Svelte's `setLook()` and `getLook()` (or `LOOK_CONTEXT` given to
+`mount`) give their wrappers. In Wicket `Looks.of(component)` finds the look of a component: that of
+the closest `ThemeBehavior` with one, else the look of the session (`Looks.setSessionLook`, or the
+model `Looks.sessionLook()` for a `ThemeBehavior` and a `LookChoice`), which every page of the
+session then has, else the application's default (`Looks.setDefault`). `LookBehavior` gives a
+component's tag the classes of its parts, and `LookContainer` an element of a component's markup.
+A look of one's own, for another framework of CSS, implements `ILook` in Java and is registered in
+the browser with `registerLook()`. The demo's Looks page shows the looks side by side. Bootstrap
+writes some images as `data:` URLs, such as the tick of its check boxes, which a content security
+policy such as Wicket's (`img-src 'self'`) blocks: the bridge serves the x of the close buttons
+itself, and the demo allows `data:` images for Bootstrap's own markup.
+
 `DataTable`, `Tree`, `TreeGrid` and `Desktop` are private, as the JSON table, the trees and the
 desktop are in Wicket:
 they check a license key in the browser (`license.ts`), the same `AW1.` keys with the same Ed25519

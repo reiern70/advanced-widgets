@@ -6,7 +6,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Button } from '../src/index.js';
+import { BOOTSTRAP_LOOK, Button, LookProvider } from '../src/index.js';
 
 afterEach(cleanup);
 
@@ -36,5 +36,18 @@ describe('Button', () => {
 		expect(icon.querySelector('.ant-button__label')).toBeNull();
 		expect(submit.type).toBe('submit');
 		expect(submit.disabled).toBe(true);
+	});
+
+	it('has the classes of the look it is in, keeping its icon and text', () => {
+		const { container } = render(<LookProvider look="bootstrap">
+			<Button label="Save" icon={<svg />} variant="primary" size="small" />
+			<LookProvider look={BOOTSTRAP_LOOK}><Button label="Undo" variant="ghost" /></LookProvider>
+		</LookProvider>);
+
+		const [save, undo] = Array.from(container.querySelectorAll('button'));
+		expect(save.className).toBe('btn btn-primary btn-sm');
+		expect(save.innerHTML).toBe('<span class="ant-button__icon" aria-hidden="true"><svg></svg>' +
+			'</span><span class="ant-button__label">Save</span>');
+		expect(undo.className).toBe('btn btn-link');
 	});
 });

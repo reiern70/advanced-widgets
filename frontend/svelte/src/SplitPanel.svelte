@@ -14,8 +14,12 @@
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { parseSplitSize, SplitPanel, type SplitOrientation, type SplitPane,
+	import { parseSplitSize, partClasses, type SplitOrientation, type SplitPane, SplitPanel,
 		type SplitSize } from '@antilia/core';
+
+	import { getLook } from './look.js';
+
+	const look = getLook();
 
 	type Props = {
 		/** The left or top pane. */
@@ -89,7 +93,7 @@
 	let instance: SplitPanel | null = null;
 
 	// the classes the core gives the element, so that Svelte keeps them when it updates it
-	const classes = $derived(['antilia-split', 'antilia-split-' + orientation,
+	const classes = $derived([partClasses(look, 'split'), 'antilia-split-' + orientation,
 		!resizable && 'antilia-split-fixed',
 		parseSplitSize(position)?.unit === 'px' && 'antilia-split-pixels',
 		collapsible && 'antilia-split-collapsible', className].filter(Boolean).join(' '));
@@ -100,7 +104,7 @@
 		}
 		const split = new SplitPanel(element, untrack(() => ({
 			orientation, position, min, max, minSecond, step, resizable, collapsible, collapsed,
-			label, collapseFirstLabel, collapseSecondLabel, restoreLabel,
+			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, look,
 			onResize: (next: SplitSize) => onresize?.(next),
 			onResized: (next: SplitSize) => {
 				position = next;
@@ -145,7 +149,7 @@
 </script>
 
 <div bind:this={element} {id} class={classes}>
-	<div class="antilia-split-pane antilia-split-first">{@render first()}</div>
-	<div class="antilia-split-divider"></div>
-	<div class="antilia-split-pane antilia-split-second">{@render second()}</div>
+	<div class={partClasses(look, 'split-pane', 'split-first')}>{@render first()}</div>
+	<div class={partClasses(look, 'split-divider')}></div>
+	<div class={partClasses(look, 'split-pane', 'split-second')}>{@render second()}</div>
 </div>

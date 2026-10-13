@@ -13,9 +13,9 @@
  */
 
 import { build } from 'esbuild';
-import { copyFile, mkdir, rm } from 'node:fs/promises';
+import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'dist', 'wicket');
@@ -90,5 +90,19 @@ for (const [file, path] of STYLES) {
 	await mkdir(dirname(join(out, path)), { recursive: true });
 	await copyFile(join(root, file), join(out, path));
 }
+
+/*
+ * The table of the looks, which Java's LookPart and Look read as properties: the aspect of every
+ * part, as aspect.<part>, and the classes the looks give it, as <look>.<part>. tsc has built
+ * dist/look.js before.
+ */
+const { ANTILIA_LOOK, BOOTSTRAP_LOOK, LOOK_PARTS } = await import(
+	pathToFileURL(join(root, 'dist', 'look.js')).href);
+const looks = join(out, 'com/antilia/widgets/theme/antilia-looks.properties');
+await mkdir(dirname(looks), { recursive: true });
+await writeFile(looks, ['# Built from frontend/core/src/look.ts, do not edit.',
+	...Object.entries(LOOK_PARTS).map(([part, aspect]) => `aspect.${part}=${aspect}`),
+	...[ANTILIA_LOOK, BOOTSTRAP_LOOK].flatMap((look) => Object.entries(look.classes)
+		.map(([part, classes]) => `${look.name}.${part}=${classes}`))].join('\n') + '\n');
 
 console.log(`Built ${SCRIPTS.length} scripts and ${STYLES.length} style sheets for Wicket into ${out}`);

@@ -11,6 +11,10 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * Asks to confirm an {@link IconBasedRowAction} in the overlay of its table, and carries out the
  * action on the row, looked up again by its key, once the user confirms.
@@ -27,7 +31,9 @@ class RowActionConfirmationPanel<T> extends Panel
 	{
 		super(id);
 
-		add(new Label("question", question));
+		add(new Label("question", question)
+			.add(new LookBehavior(LookPart.TABLE_CONFIRMATION_QUESTION)));
+		add(new LookContainer("buttons", LookPart.TABLE_OVERLAY_BUTTONS));
 		add(new AjaxLink<Void>("cancel")
 		{
 			private static final long serialVersionUID = 1L;
@@ -37,7 +43,8 @@ class RowActionConfirmationPanel<T> extends Panel
 			{
 				action.getTable().closeOverlay(target);
 			}
-		}.setBody(new ResourceModel("DynamicDataTable.cancel", "Cancel")));
+		}.setBody(new ResourceModel("DynamicDataTable.cancel", "Cancel"))
+			.add(new LookBehavior(LookPart.TABLE_BUTTON, LookPart.TABLE_BUTTON_SECONDARY)));
 		add(new AjaxLink<Void>("confirm")
 		{
 			private static final long serialVersionUID = 1L;
@@ -53,6 +60,7 @@ class RowActionConfirmationPanel<T> extends Panel
 					action.onRowAction(row, target);
 				}
 			}
-		}.setBody(new ResourceModel("DynamicDataTable.confirm", "Confirm")));
+		}.setBody(new ResourceModel("DynamicDataTable.confirm", "Confirm"))
+			.add(new LookBehavior(LookPart.TABLE_BUTTON, LookPart.TABLE_BUTTON_PRIMARY)));
 	}
 }

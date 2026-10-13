@@ -5,8 +5,10 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { Palette as CorePalette, type PaletteChoice, type PaletteMatch,
-	type PaletteTexts } from '@antilia/core';
+import { Palette as CorePalette, type PaletteChoice, type PaletteMatch, type PaletteTexts,
+	partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export interface PaletteProps extends PaletteTexts {
 	/** The choices, in their order. */
@@ -60,12 +62,14 @@ export function Palette(props: PaletteProps) {
 	// a change the parent of a controlled palette did not take renders again, which sets it back
 	const [changes, setChanges] = useState(0);
 	const current = value ?? own;
+	const look = useLook();
 	const settings = { ordered, numbered, filterable, filterThreshold, match, pageSize,
 		availableTitle, selectedTitle, add, addAll, remove, removeAll, up, down, filter, empty };
 
 	useLayoutEffect(() => {
 		const palette = new CorePalette(element.current!, {
 			...settings,
+			look,
 			choices: options,
 			selected: current,
 			disabled,
@@ -82,7 +86,7 @@ export function Palette(props: PaletteProps) {
 			palette.destroy();
 			instance.current = null;
 		};
-	}, []);
+	}, [look]);
 
 	useLayoutEffect(() => {
 		instance.current?.configure(settings);
@@ -108,7 +112,7 @@ export function Palette(props: PaletteProps) {
 	return (
 		<>
 			<div ref={element} id={id}
-				className={['antilia-palette', className].filter(Boolean).join(' ')} />
+				className={[partClasses(look, 'palette'), className].filter(Boolean).join(' ')} />
 			{name && current.map((each) => (
 				<input key={each} type="hidden" name={name} value={each} />
 			))}

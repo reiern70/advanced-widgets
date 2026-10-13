@@ -18,6 +18,7 @@
  */
 
 import { onRemoving, type Unsubscribe } from './host.js';
+import { lookOf, partClasses, type Look } from './look.js';
 
 /**
  * The axes of the scroll bars: by default those along which the CSS of the element lets it
@@ -25,6 +26,8 @@ import { onRemoving, type Unsubscribe } from './host.js';
  */
 export interface ScrollbarOptions {
 	axis?: 'x' | 'y' | 'both';
+	/** The look of the bars; that of the element they are in when left out (see lookOf). */
+	look?: Look;
 	/**
 	 * A CSS selector of an element at the top of the scrolling one that stays in place while the
 	 * rest scrolls, such as the sticky head of a table: the vertical bar runs below it.
@@ -62,10 +65,6 @@ const WRAPPER_CLASS = SCROLLBAR_WRAPPER_CLASS;
 const HOST_CLASS = 'antilia-scrollbar-host';
 
 const TRACK_CLASS = 'antilia-scrollbar-track';
-
-const RAIL_CLASS = 'antilia-scrollbar-rail';
-
-const THUMB_CLASS = 'antilia-scrollbar-thumb';
 
 const MIN_THUMB = 24;
 
@@ -132,6 +131,9 @@ export class Scrollbar {
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
 
+	/** The look of the bars, whose classes the elements they are made of get. */
+	private look!: Look;
+
 	/**
 	 * @param element the scrolling element
 	 * @param options the axes of the bars
@@ -182,10 +184,11 @@ export class Scrollbar {
 
 	private attach(): void {
 		const element = this.element;
+		this.look = this.options.look ?? lookOf(element);
 		let wrapper = element.parentElement;
 		if (!wrapper || !wrapper.classList.contains(WRAPPER_CLASS)) {
 			wrapper = document.createElement('div');
-			wrapper.className = WRAPPER_CLASS;
+			wrapper.className = partClasses(this.look, 'scrollbar');
 			element.parentNode?.insertBefore(wrapper, element);
 			wrapper.appendChild(element);
 		}
@@ -195,7 +198,7 @@ export class Scrollbar {
 			}
 		});
 		this.wrapper = wrapper;
-		element.classList.add(HOST_CLASS);
+		element.classList.add(...partClasses(this.look, 'scrollbar-host').split(' '));
 
 		const style = window.getComputedStyle(element);
 		const axis = this.options.axis;
@@ -240,13 +243,14 @@ export class Scrollbar {
 
 	private newBar(vertical: boolean): Bar {
 		const track = document.createElement('div');
-		track.className = TRACK_CLASS + ' ' + TRACK_CLASS + (vertical ? '--y' : '--x');
+		track.className = partClasses(this.look, 'scrollbar-track') + ' ' + TRACK_CLASS +
+			(vertical ? '--y' : '--x');
 		track.setAttribute('aria-hidden', 'true');
 		const rail = document.createElement('div');
-		rail.className = RAIL_CLASS;
+		rail.className = partClasses(this.look, 'scrollbar-rail');
 		track.appendChild(rail);
 		const thumb = document.createElement('div');
-		thumb.className = THUMB_CLASS;
+		thumb.className = partClasses(this.look, 'scrollbar-thumb');
 		rail.appendChild(thumb);
 		this.wrapper.appendChild(track);
 		const bar: Bar = { vertical, track, rail, thumb };

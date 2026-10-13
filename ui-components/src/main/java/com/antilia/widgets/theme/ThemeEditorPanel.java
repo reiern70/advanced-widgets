@@ -76,6 +76,12 @@ public class ThemeEditorPanel extends Panel
 
 		editor = new WebMarkupContainer("editor");
 		editor.setOutputMarkupId(true);
+		editor.add(new LookBehavior(LookPart.THEME_EDITOR));
+		editor.add(new LookContainer("grid", LookPart.THEME_EDITOR_GRID));
+		editor.add(new LookContainer("output", LookPart.THEME_EDITOR_OUTPUT));
+		editor.add(new LookContainer("className", LookPart.THEME_EDITOR_CLASS));
+		editor.add(new LookContainer("css", LookPart.THEME_EDITOR_CSS));
+		editor.add(new LookContainer("copy", LookPart.THEME_EDITOR_COPY));
 		add(editor);
 		editor.add(new ListView<>("properties", PROPERTIES)
 		{
@@ -85,6 +91,8 @@ public class ThemeEditorPanel extends Panel
 			protected void populateItem(ListItem<String> item)
 			{
 				String property = item.getModelObject();
+				item.add(new LookBehavior(LookPart.THEME_EDITOR_PROPERTY));
+				item.add(new LookContainer("text", LookPart.THEME_EDITOR_PROPERTY_TEXT));
 				item.add(new Label("name", property).add(
 					AttributeModifier.replace("title", "--antilia-theme-" + property)));
 				item.add(new Label("description", new ResourceModel("property." + property)));
@@ -128,7 +136,12 @@ public class ThemeEditorPanel extends Panel
 		{
 			field.add(new DropdownBehavior().setFilterThreshold(Integer.MAX_VALUE));
 		}
+		if ("veil".equals(property))
+		{
+			field.add(new LookBehavior(LookPart.THEME_EDITOR_FIELD));
+		}
 		input.add(field);
+		input.add(new LookBehavior(LookPart.THEME_EDITOR_PROPERTY_INPUT));
 		return input;
 	}
 

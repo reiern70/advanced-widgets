@@ -8,12 +8,17 @@ import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.extensions.markup.html.tabs.TabbedPanel;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
+
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * Gives a {@link TabbedPanel} one of the looks of {@link TabsStyle}, by a CSS class only, so it
@@ -61,7 +66,33 @@ public class TabsStyleBehavior extends Behavior
 		TabsStyle current = style.getObject();
 		if (current != null)
 		{
-			tag.append("class", "antilia-tabs " + current.getCssClass(), " ");
+			Looks.addClasses(tag, Looks.of(component), LookPart.TABS, current.getPart());
+		}
+	}
+
+	/**
+	 * Gives the row of the tabs of a {@link TabbedPanel} the classes of its part in the look of
+	 * the panel, such as Bootstrap's {@code nav nav-tabs}. The tabs themselves, which the panel
+	 * makes anew each time it renders, keep Wicket's markup: the style sheet of a look styles
+	 * them inside the row.
+	 */
+	@Override
+	public void bind(Component component)
+	{
+		if (component instanceof TabbedPanel<?> panel && panel.get("tabs-container") != null)
+		{
+			panel.get("tabs-container").add(new LookBehavior()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected LookPart[] getParts(Component container)
+				{
+					TabsStyle current = style.getObject();
+					return new LookPart[] { LookPart.TAB_ROW,
+						current != null ? current.getRowPart() : null };
+				}
+			});
 		}
 	}
 

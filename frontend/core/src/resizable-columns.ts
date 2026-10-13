@@ -14,6 +14,7 @@
  */
 
 import { getHost, type Host, type Unsubscribe } from './host.js';
+import { lookOf, partClasses, type Look } from './look.js';
 
 export type ResizeMode = 'fit' | 'stretch';
 
@@ -23,6 +24,8 @@ export type ResizeMode = 'fit' | 'stretch';
 export interface ResizableColumnsOptions {
 	/** 'fit' keeps the width of the table, 'stretch' lets it follow its columns; 'fit' by default. */
 	mode?: ResizeMode;
+	/** The look of the table; that of the element it is in when left out (see lookOf). */
+	look?: Look;
 	/** The narrowest a column gets, in pixels; 80 by default. */
 	minWidth?: number;
 	/** The pixels an arrow key resizes by; 10 by default. */
@@ -67,7 +70,6 @@ interface Drag {
 const HANDLE_CLASS = 'antilia-col-resizer';
 const GUIDE_CLASS = 'antilia-col-resize-guide';
 const BAND_CLASS = 'antilia-col-resize-band';
-const LABEL_CLASS = 'antilia-col-resize-label';
 const RESIZING_CLASS = 'antilia-resizing';
 const COLGROUP_CLASS = 'antilia-resizable-colgroup';
 /** Marks a header cell that is not a column of its own, and its col. */
@@ -130,6 +132,9 @@ export class ResizableColumns {
 
 	readonly table: HTMLTableElement;
 
+	/** The look of the table, whose classes the elements made for it get. */
+	private readonly look: Look;
+
 	readonly mode: ResizeMode;
 
 	readonly minWidth: number;
@@ -176,6 +181,7 @@ export class ResizableColumns {
 	 */
 	constructor(table: HTMLTableElement, options: ResizableColumnsOptions = {}) {
 		this.table = table;
+		this.look = options.look ?? lookOf(table);
 		this.mode = options.mode === 'stretch' ? 'stretch' : 'fit';
 		this.minWidth = options.minWidth !== undefined ? options.minWidth : 80;
 		this.step = options.step !== undefined ? options.step : 10;
@@ -642,7 +648,7 @@ export class ResizableColumns {
 			}
 			if (!handle) {
 				handle = document.createElement('span');
-				handle.className = HANDLE_CLASS;
+				handle.className = partClasses(this.look, 'column-resizer');
 				handle.setAttribute('role', 'separator');
 				handle.setAttribute('aria-orientation', 'vertical');
 				handle.setAttribute('aria-label', 'Resize column');
@@ -728,13 +734,13 @@ export class ResizableColumns {
 				}
 			}
 		};
-		drag.guide.className = GUIDE_CLASS;
+		drag.guide.className = partClasses(this.look, 'column-resize-guide');
 		drag.guide.style.top = (extent.top + window.scrollY) + 'px';
 		drag.guide.style.height = extent.height + 'px';
 		drag.guide.style.left = drag.edge + 'px';
-		drag.label.className = LABEL_CLASS;
+		drag.label.className = partClasses(this.look, 'column-resize-label');
 		drag.guide.appendChild(drag.label);
-		drag.band.className = BAND_CLASS;
+		drag.band.className = partClasses(this.look, 'column-resize-band');
 		drag.band.style.top = drag.guide.style.top;
 		drag.band.style.height = drag.guide.style.height;
 		drag.band.style.left = (cellRect.left + window.scrollX) + 'px';

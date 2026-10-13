@@ -29,7 +29,7 @@
 	margin: 0;
 	padding: 0.4em 0.95em;
 	border: 1px solid var(--ant-button-border);
-	border-radius: 0.375rem;
+	border-radius: var(--antilia-look-radius, 0.375rem);
 	background: var(--ant-button-bg);
 	color: var(--ant-button-fg);
 	font: inherit;
@@ -98,14 +98,14 @@
 .ant-button--small {
 	min-height: 1.75rem;
 	padding: 0.25em 0.65em;
-	border-radius: 0.3rem;
+	border-radius: var(--antilia-look-radius, 0.3rem);
 	font-size: 0.8125rem;
 }
 
 .ant-button--large {
 	min-height: 2.875rem;
 	padding: 0.55em 1.25em;
-	border-radius: 0.45rem;
+	border-radius: var(--antilia-look-radius, 0.45rem);
 	font-size: 1.0625rem;
 }
 

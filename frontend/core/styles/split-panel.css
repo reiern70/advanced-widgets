@@ -20,7 +20,7 @@
 	min-width: 0;
 	min-height: 0;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
 	overflow: hidden;

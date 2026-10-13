@@ -34,6 +34,8 @@ import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.table.IResizableColumnsTable;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * A tree grid of Wicket components: a {@link TableTree} of wicket-extensions whose tree column,
@@ -242,7 +244,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 				T node = getModelObject();
 				if (isSelectable(node) && isSelected(node))
 				{
-					tag.append("class", "antilia-tree-node--selected", " ");
+					Looks.addClasses(tag, Looks.of(this), LookPart.TREE_NODE_SELECTED);
 				}
 			}
 		};
@@ -406,7 +408,7 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", CSS_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TREE_GRID);
 		support.onComponentTag(tag);
 	}
 

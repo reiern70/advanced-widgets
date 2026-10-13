@@ -39,7 +39,7 @@
 	min-height: 2.1em;
 	padding: 0.25em 0.6em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: inherit;
 	font: inherit;
@@ -56,7 +56,7 @@
 .antilia-dropdown-open > .antilia-dropdown-toggle {
 	outline: none;
 	border-color: var(--antilia-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+	box-shadow: var(--antilia-look-focus-ring, 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent));
 }
 
 .antilia-dropdown-toggle:disabled {
@@ -106,10 +106,10 @@
 	max-width: max(100%, 24em);
 	padding: 0.3em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	box-shadow: var(--antilia-look-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
 	color-scheme: var(--antilia-theme-color-scheme, light);
 }
 
@@ -128,7 +128,7 @@
 	margin-bottom: 0.3em;
 	padding: 0.3em 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.35em;
+	border-radius: var(--antilia-look-radius, 0.35em);
 	background: var(--antilia-theme-surface-alt, #f5f7fb);
 	color: inherit;
 	font: inherit;
@@ -155,7 +155,7 @@
 	align-items: center;
 	gap: 0.5em;
 	padding: 0.35em 0.6em;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	cursor: pointer;
 	white-space: nowrap;
 }
@@ -197,7 +197,7 @@
 	width: 1em;
 	height: 1em;
 	border: 1.5px solid var(--antilia-theme-border, #9aa3b5);
-	border-radius: 0.25em;
+	border-radius: var(--antilia-look-radius-sm, 0.25em);
 	background: var(--antilia-theme-surface, #ffffff);
 }
 

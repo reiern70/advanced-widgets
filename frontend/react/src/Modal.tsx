@@ -5,8 +5,9 @@
 
 import { useId, useLayoutEffect, useRef, type ReactNode } from 'react';
 
-import { MODAL_CLASSES, MODAL_THEME_CLASS, ModalDialog, SCROLLBAR_WRAPPER_CLASS,
-	type ModalSize } from '@antilia/core';
+import { ModalDialog, partClasses, type ModalSize } from '@antilia/core';
+
+import { useLook } from './Look.js';
 
 export type { ModalSize };
 
@@ -65,6 +66,7 @@ export function Modal({ open, onClose, canClose, title, footer, closeButton = tr
 	draggable = true, foldable = true, size, width, className, children }: ModalProps) {
 	const overlay = useRef<HTMLDivElement>(null);
 	const titleId = useId();
+	const look = useLook();
 	const latest = useRef({ onClose, canClose });
 	latest.current = { onClose, canClose };
 
@@ -73,33 +75,34 @@ export function Modal({ open, onClose, canClose, title, footer, closeButton = tr
 			return;
 		}
 		const modal = new ModalDialog(overlay.current, { closeOnEscape, closeOnClick, trapFocus,
-			draggable, foldable, size, width, onClose: () => latest.current.onClose(),
+			draggable, foldable, size, width, look, onClose: () => latest.current.onClose(),
 			canClose: () => latest.current.canClose?.() ?? true });
 		return () => modal.destroy();
-	}, [open, closeOnEscape, closeOnClick, trapFocus, draggable, foldable, size, width]);
+	}, [open, closeOnEscape, closeOnClick, trapFocus, draggable, foldable, size, width, look]);
 
 	if (!open) {
 		return null;
 	}
 	return (
-		<div className={[MODAL_THEME_CLASS, className].filter(Boolean).join(' ')}>
-			<div ref={overlay} className={MODAL_CLASSES.overlay}>
-				<div className={MODAL_CLASSES.dialog} role="dialog" aria-modal="true"
+		<div className={[partClasses(look, 'dialog-theme'), className].filter(Boolean).join(' ')}>
+			<div ref={overlay} className={partClasses(look, 'dialog-overlay')}>
+				<div className={partClasses(look, 'dialog')} role="dialog" aria-modal="true"
 					aria-labelledby={title ? titleId : undefined}>
-					<div className={MODAL_CLASSES.content}>
+					<div className={partClasses(look, 'dialog-content')}>
 						{title || closeButton ? (
-							<div className={MODAL_CLASSES.header}>
-								{title ? <h1 className={MODAL_CLASSES.title} id={titleId}>{title}</h1> : null}
+							<div className={partClasses(look, 'dialog-header')}>
+								{title ? <h1 className={partClasses(look, 'dialog-title')} id={titleId}>
+									{title}</h1> : null}
 								{closeButton ? (
-									<button type="button" className={MODAL_CLASSES.close}
+									<button type="button" className={partClasses(look, 'dialog-close')}
 										aria-label={closeLabel} title={closeLabel}>×</button>
 								) : null}
 							</div>
 						) : null}
-						<div className={SCROLLBAR_WRAPPER_CLASS}>
-							<div className={MODAL_CLASSES.body}>{children}</div>
+						<div className={partClasses(look, 'scrollbar')}>
+							<div className={partClasses(look, 'dialog-body')}>{children}</div>
 						</div>
-						{footer ? <div className={MODAL_CLASSES.footer}>{footer}</div> : null}
+						{footer ? <div className={partClasses(look, 'dialog-footer')}>{footer}</div> : null}
 					</div>
 				</div>
 			</div>

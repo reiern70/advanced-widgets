@@ -21,6 +21,10 @@ import org.apache.wicket.request.resource.ResourceReference;
  * properties are listed in {@link #CSS}. An element in such a theme carries that class and
  * {@link #MARKER_CSS_CLASS}, which components use for the parts they style only inside a theme,
  * such as the header of a modal dialog.
+ * <p>
+ * A theme gives the colors only; the shapes and the CSS classes of the parts of the components are
+ * an {@link ILook}'s. {@link #BOOTSTRAP} and {@link #BOOTSTRAP_DARK} take the colors of the
+ * Bootstrap on the page, whatever its look.
  *
  * @since 11.0.0
  */
@@ -54,7 +58,16 @@ public enum Theme
 	ROSE("antilia-theme-rose"),
 
 	/** Light text on dark surfaces, with dark form controls. */
-	DARK("antilia-theme-dark");
+	DARK("antilia-theme-dark", true),
+
+	/**
+	 * The colors of the Bootstrap on the page, read from its custom properties ({@code --bs-*}),
+	 * so a theme of Bootstrap's colors the components too; Bootstrap's light mode.
+	 */
+	BOOTSTRAP("antilia-theme-bootstrap"),
+
+	/** The colors of the Bootstrap on the page in its dark mode. */
+	BOOTSTRAP_DARK("antilia-theme-bootstrap-dark", true);
 
 	/**
 	 * The CSS class marking an element as being in a theme, put on it by {@link ThemeBehavior}
@@ -66,11 +79,25 @@ public enum Theme
 	public static final ResourceReference CSS = new CssResourceReference(Theme.class,
 		"antilia-theme.css");
 
+	/**
+	 * The attribute switching Bootstrap's color mode, {@code light} or {@code dark}, for Bootstrap's
+	 * own components inside the element.
+	 */
+	public static final String BOOTSTRAP_MODE_ATTRIBUTE = "data-bs-theme";
+
 	private final String cssClass;
+
+	private final boolean dark;
 
 	Theme(String cssClass)
 	{
+		this(cssClass, false);
+	}
+
+	Theme(String cssClass, boolean dark)
+	{
 		this.cssClass = cssClass;
+		this.dark = dark;
 	}
 
 	/**
@@ -79,5 +106,21 @@ public enum Theme
 	public String getCssClass()
 	{
 		return cssClass;
+	}
+
+	/**
+	 * @return whether the theme is dark: light text on dark surfaces
+	 */
+	public boolean isDark()
+	{
+		return dark;
+	}
+
+	/**
+	 * @return whether the theme takes its colors from Bootstrap
+	 */
+	public boolean isBootstrap()
+	{
+		return this == BOOTSTRAP || this == BOOTSTRAP_DARK;
 	}
 }

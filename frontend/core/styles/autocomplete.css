@@ -24,7 +24,7 @@
 	min-height: 2.1em;
 	padding: 0.2em 0.5em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, #ffffff);
 	cursor: text;
 	transition: border-color 0.15s, box-shadow 0.15s;
@@ -37,7 +37,7 @@
 .antilia-autocomplete-field:focus-within,
 .antilia-autocomplete-open > .antilia-autocomplete-field {
 	border-color: var(--antilia-theme-accent, #2f5bd3);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent);
+	box-shadow: var(--antilia-look-focus-ring, 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 25%, transparent));
 }
 
 .antilia-autocomplete-disabled > .antilia-autocomplete-field {
@@ -74,10 +74,10 @@
 	max-width: max(100%, 28em);
 	padding: 0.3em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.5em;
+	border-radius: var(--antilia-look-radius, 0.5em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	box-shadow: var(--antilia-look-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
 }
 
 .antilia-autocomplete-menu[hidden] {
@@ -96,7 +96,7 @@
 
 .antilia-autocomplete-option {
 	padding: 0.35em 0.6em;
-	border-radius: 0.3em;
+	border-radius: var(--antilia-look-radius, 0.3em);
 	cursor: pointer;
 }
 
@@ -167,10 +167,10 @@
 	max-width: min(22em, calc(100vw - 32px));
 	padding: 0.5em 0.7em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
-	border-radius: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.4em);
 	background: var(--antilia-theme-surface, #ffffff);
 	color: var(--antilia-theme-text, #1c2333);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+	box-shadow: var(--antilia-look-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
 	font-size: 0.9em;
 	pointer-events: none;
 }

@@ -6,6 +6,8 @@
 -->
 <properties>
 	<entry key="theme">Farbschema</entry>
+	<entry key="look">Aussehen</entry>
+	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Sprache</entry>
 	<entry key="component.public">Öffentlich</entry>
 	<entry key="component.private">Privat</entry>
@@ -64,6 +66,8 @@
 	<entry key="demo.modalDialog.description">Hinzufügen, bearbeiten und löschen in einem modalen Dialog, der den Fokus hält, sich am Titel verschieben und einklappen lässt und vor dem Verwerfen von Änderungen fragt; derselbe Dialog in Wicket, React und Svelte über eine gemeinsame REST-Ressource.</entry>
 	<entry key="demo.themeEditor">Farbschema-Editor</entry>
 	<entry key="demo.themeEditor.description">Ein eigenes Theme gestalten: Farben wählen und zusehen, wie Grids, Tabs, Dialoge und Benachrichtigungen live folgen, dann die CSS-Klasse kopieren, die es definiert. Ohne Inline-Styles, also unter einer strikten Content Security Policy.</entry>
+	<entry key="demo.looks">Aussehen</entry>
+	<entry key="demo.looks.description">Die Komponenten im Bootstrap-Aussehen neben ihrem eigenen: Bootstraps Klassen und Formen, das Verhalten der Komponenten, in jedem Farbschema. Auch Bootstraps eigenes Markup bekommt die Farben des Farbschemas; auf der Seite ist nur Bootstraps Stylesheet, nie sein Skript.</entry>
 	<entry key="buildInfo">Branch {0} · {1}</entry>
 	<entry key="buildInfo.dirty">Branch {0} · {1}, mit noch nicht eingecheckten Änderungen</entry>
 	<entry key="buildInfo.commit">Commit {1}</entry>

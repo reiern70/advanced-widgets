@@ -85,7 +85,7 @@ table.antilia-resizable-columns th:has(> .antilia-col-resizer) {
 	top: 4px;
 	left: 6px;
 	padding: 0.1em 0.4em;
-	border-radius: 0.2em;
+	border-radius: var(--antilia-look-radius-sm, 0.2em);
 	background: var(--antilia-theme-accent, #c2410c);
 	color: var(--antilia-theme-on-primary, #fff);
 	font-size: 0.8em;

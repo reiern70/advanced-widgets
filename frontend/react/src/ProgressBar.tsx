@@ -3,6 +3,10 @@
  * All rights reserved.
  */
 
+import { partClasses } from '@antilia/core';
+
+import { useLook } from './Look.js';
+
 export interface ProgressBarProps {
 	/** The percentage, clamped to 0..100; null or left out for an indeterminate bar. */
 	value?: number | null;
@@ -16,15 +20,18 @@ export interface ProgressBarProps {
  * unless the system asks for reduced motion.
  */
 export function ProgressBar({ value, className }: ProgressBarProps) {
+	const look = useLook();
 	const percentage = value == null ? null : Math.max(0, Math.min(100, Math.round(value)));
 	return (
-		<div className={['antilia-progress-bar', className].filter(Boolean).join(' ')}>
-			{percentage === null ? <progress className="antilia-progress-bar-value" max={100} /> : (
+		<div className={[partClasses(look, 'progress'), className].filter(Boolean).join(' ')}>
+			{percentage === null ? <progress className={partClasses(look, 'progress-value')}
+				max={100} /> : (
 				<>
-					<progress className="antilia-progress-bar-value" max={100} value={percentage}>
+					<progress className={partClasses(look, 'progress-value')} max={100}
+						value={percentage}>
 						{percentage}%
 					</progress>
-					<span className="antilia-progress-bar-label" aria-hidden="true">{percentage}%</span>
+					<span className={partClasses(look, 'progress-label')} aria-hidden="true">{percentage}%</span>
 				</>
 			)}
 		</div>

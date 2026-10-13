@@ -15,6 +15,8 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.NavigatorLab
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.markup.html.list.LoopItem;
 import org.apache.wicket.markup.html.navigation.paging.IPageableItems;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
@@ -23,6 +25,10 @@ import org.apache.wicket.util.lang.Args;
 
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPosition;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookContainer;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 
 /**
  * The navigation of a {@link BaseDynamicDataTable}: from left to right an optional
@@ -79,17 +85,40 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 		WebMarkupContainer span = new WebMarkupContainer("span");
 		span.add(newColspan());
 		add(span);
+		span.add(new LookContainer("navigation", LookPart.TABLE_NAVIGATION));
 
 		prefix = newPrefix("prefix");
-		span.add(prefix);
+		span.add(prefix.add(new LookBehavior(LookPart.TABLE_NAVIGATION_PREFIX)));
 
 		paging = new WebMarkupContainer("paging");
 		paging.setOutputMarkupId(true);
-		span.add(paging);
+		span.add(paging.add(new LookBehavior(LookPart.TABLE_PAGING)));
+		paging.add(new LookContainer("labelFrame", LookPart.TABLE_NAVIGATOR_LABEL));
 		paging.add(new NavigatorLabel("navigatorLabel", new ShownRows(table)));
+		paging.add(new LookContainer("navigatorFrame", LookPart.TABLE_NAVIGATOR));
 		paging.add(new AjaxPagingNavigator("navigator", table)
 		{
 			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onBeforeRender()
+			{
+				super.onBeforeRender();
+				// Wicket's markup of the links: the pages, made anew each time, and every link
+				visitChildren((child, visit) -> {
+					if (child.getBehaviors(LookBehavior.class).isEmpty())
+					{
+						if (child instanceof LoopItem)
+						{
+							child.add(new LookBehavior(LookPart.TABLE_PAGE));
+						}
+						else if (child instanceof AbstractLink)
+						{
+							child.add(new LookBehavior(LookPart.TABLE_PAGE_LINK));
+						}
+					}
+				});
+			}
 
 			@Override
 			protected void onConfigure()
@@ -104,12 +133,13 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 				table.onNavigation(target);
 				table.refresh(target);
 			}
-		});
+		}.add(new LookBehavior(LookPart.TABLE_PAGES)));
 
 		actions = new RepeatingView("actions");
 		populateActions(actions);
 		WebMarkupContainer actionsContainer = new WebMarkupContainer("actionsContainer");
 		actionsContainer.setVisible(actions.size() > 0);
+		actionsContainer.add(new LookBehavior(LookPart.TABLE_ACTIONS));
 		actionsContainer.add(actions);
 		span.add(actionsContainer);
 
@@ -185,7 +215,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", "navigation", " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.TABLE_NAVIGATION_ROW);
 	}
 
 	/**
@@ -287,6 +317,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			}
 		});
 		pageSize.add(choice);
+		pageSize.add(new LookBehavior(LookPart.TABLE_PAGE_SIZE));
 		pageSize.add(new Label("label", new ResourceModel("DynamicDataTable.rowsPerPage",
 			"Rows per page")));
 		return pageSize;

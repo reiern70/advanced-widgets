@@ -29,6 +29,9 @@ import org.apache.wicket.util.lang.Args;
 
 import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+import com.antilia.widgets.theme.Looks;
 import com.github.openjson.JSONObject;
 
 /**
@@ -167,6 +170,7 @@ public class Modal extends ModalDialog
 		// called by the constructor of ModalDialog, before the fields of this class are set
 		WebMarkupContainer overlay = super.newOverlay(overlayId);
 		overlay.setOutputMarkupId(true);
+		overlay.add(new LookBehavior(LookPart.DIALOG_OVERLAY));
 		return overlay;
 	}
 
@@ -181,7 +185,7 @@ public class Modal extends ModalDialog
 	@Override
 	protected WebMarkupContainer newDialog(String dialogId)
 	{
-		return new WebMarkupContainer(dialogId)
+		WebMarkupContainer dialog = new WebMarkupContainer(dialogId)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -193,6 +197,19 @@ public class Modal extends ModalDialog
 				tag.put("aria-modal", "true");
 			}
 		};
+		dialog.add(new LookBehavior(LookPart.DIALOG));
+		return dialog;
+	}
+
+	@Override
+	public void setContent(Component content)
+	{
+		super.setContent(content);
+		// the element of the content, whatever component it is
+		if (content.getBehaviors(ContentLook.class).isEmpty())
+		{
+			content.add(new ContentLook());
+		}
 	}
 
 	/**
@@ -511,7 +528,7 @@ public class Modal extends ModalDialog
 	protected void onComponentTag(ComponentTag tag)
 	{
 		super.onComponentTag(tag);
-		tag.append("class", THEME_CLASS, " ");
+		Looks.addClasses(tag, Looks.of(this), LookPart.DIALOG_THEME);
 	}
 
 	@Override
@@ -587,5 +604,16 @@ public class Modal extends ModalDialog
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
 		response.render(CssHeaderItem.forReference(CSS));
+	}
+
+	/** The look of the content of the dialog. */
+	private static class ContentLook extends LookBehavior
+	{
+		private static final long serialVersionUID = 1L;
+
+		ContentLook()
+		{
+			super(LookPart.DIALOG_CONTENT);
+		}
 	}
 }

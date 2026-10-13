@@ -12,6 +12,9 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
+import com.antilia.widgets.theme.LookBehavior;
+import com.antilia.widgets.theme.LookPart;
+
 /**
  * The content of a node of a {@link Tree} or a {@link TreeGrid}: a button holding its icon and
  * its text, which selects a leaf and expands or collapses a folder, or selects it when the tree
@@ -57,12 +60,14 @@ class TreeNodeContent<T> extends Panel
 			}
 		};
 		link.setOutputMarkupId(true);
+		link.add(new LookBehavior(LookPart.TREE_NODE_BUTTON));
 		add(link);
 		link.add(new Label("icon", () -> {
 			T node = getNode();
 			return renderer.getIcon(node, renderer.isLeaf(node), isExpanded()).getMarkup();
-		}).setEscapeModelStrings(false));
-		link.add(new Label("label", renderer.newLabelModel(model)));
+		}).setEscapeModelStrings(false).add(new LookBehavior(LookPart.TREE_ICON)));
+		link.add(new Label("label", renderer.newLabelModel(model))
+			.add(new LookBehavior(LookPart.TREE_CONTENT)));
 	}
 
 	@SuppressWarnings("unchecked")

@@ -21,6 +21,7 @@ import com.antilia.widgets.table.ResizableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
+import com.antilia.widgets.theme.LookPart;
 
 /**
  * A tree grid whose rows are rendered in the browser from JSON: a {@link JsonBasedTree} shown as
@@ -142,9 +143,9 @@ public class JsonBasedTreeGrid<T, K extends Serializable> extends JsonBasedTree<
 	}
 
 	@Override
-	String getTreeCssClass()
+	LookPart getTreePart()
 	{
-		return TreeGrid.CSS_CLASS;
+		return LookPart.TREE_GRID;
 	}
 
 	@Override

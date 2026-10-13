@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 
-import { Button, Dropdown, Scrollable } from '@antilia/react';
+import { Button, buttonClasses, Dropdown, Scrollable, useLook } from '@antilia/react';
 
 import { BUTTON_SIZES, BUTTON_VARIANTS, clickedText, iconSetOptions, sizeName,
 	type ButtonIconSet, type ButtonsConfig } from '../buttons.js';
@@ -23,6 +23,8 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 	const { texts, variants } = config;
 	const [clicked, setClicked] = useState<string | null>(null);
 	const [icons, setIcons] = useState<ButtonIconSet>(config.icons);
+	// a link drawn as a button, in the look of the page as the buttons
+	const look = useLook();
 
 	return (
 		<div className="buttons-demo">
@@ -76,7 +78,8 @@ export function ButtonsDemo({ config }: { config: ButtonsConfig }) {
 			</div>
 			<h3>{texts.asLink}</h3>
 			<p>
-				<a href="#buttons-as-links" className="ant-button ant-button--ghost ant-button--small">
+				<a href="#buttons-as-links"
+					className={buttonClasses({ variant: 'ghost', size: 'small', look })}>
 					{texts['asLink.text']}
 				</a>
 			</p>
