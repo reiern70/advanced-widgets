@@ -13,6 +13,7 @@ import type { DesktopPane, DesktopTexts, TaskbarPosition } from '@antilia/core';
 
 import type { AutocompleteConfig } from './autocomplete.js';
 import type { ButtonsConfig } from './buttons.js';
+import type { DropdownTexts } from './data.js';
 import type { DatePickerConfig } from './date-picker.js';
 import type { DropdownConfig } from './dropdown.js';
 import type { JsonListConfig } from './json-list.js';
@@ -21,7 +22,7 @@ import type { ProgressConfig } from './progress.js';
 import type { ModalDemoConfig } from './team.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
-export interface DesktopDemoTexts {
+export interface DesktopDemoTexts extends DropdownTexts {
 	taskbar: string;
 	'taskbar.bottom': string;
 	'taskbar.top': string;

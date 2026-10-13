@@ -18,8 +18,8 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.Select;
 
+import com.antilia.widgets.demo.Dropdowns;
 import com.antilia.widgets.demo.SeleniumBrowser;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
@@ -42,10 +42,12 @@ class NotificationsBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> !app().findElements(By.cssSelector(".notifications-demo__show")).isEmpty());
 	}
 
-	private Select select(int index)
+	/**
+	 * @return the select under a drop-down of the first form
+	 */
+	private WebElement select(int index)
 	{
-		return new Select(app().findElements(By.cssSelector(".notifications-demo__form select"))
-			.get(index));
+		return app().findElements(By.cssSelector(".notifications-demo__form select")).get(index);
 	}
 
 	private void type(WebElement field, String text)
@@ -59,11 +61,11 @@ class NotificationsBrowserTest extends FrameworkAppsTestCase
 	 */
 	private void show(String type, String title, String message, String position, String timeout)
 	{
-		select(0).selectByValue(type);
+		Dropdowns.chooseByValue(driver, select(0), type);
 		type(app().findElement(By.cssSelector(".notifications-demo__form input[type=text]")), title);
 		type(app().findElement(By.cssSelector(".notifications-demo__form textarea")), message);
-		select(1).selectByValue(position);
-		select(2).selectByValue(timeout);
+		Dropdowns.chooseByValue(driver, select(1), position);
+		Dropdowns.chooseByValue(driver, select(2), timeout);
 		app().findElement(By.cssSelector(".notifications-demo__show")).click();
 	}
 

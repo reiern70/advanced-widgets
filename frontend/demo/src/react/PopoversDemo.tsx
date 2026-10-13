@@ -7,10 +7,10 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { buttonClasses, partClasses, popoverClasses, type ButtonVariant,
 	type Look } from '@antilia/core';
-import { Popover, PopoverButton, Tab, Tabs, useLook, type PopoverDesign, type PopoverOptions,
+import { Dropdown, Popover, PopoverButton, Tab, Tabs, useLook, type PopoverDesign, type PopoverOptions,
 	type PopoverPlacement, type PopoverVariant } from '@antilia/react';
 
-import { format } from '../data.js';
+import { dropdownTexts, format } from '../data.js';
 import { facts, nameOf, placementText, sideOf, type PopoversConfig } from '../popovers.js';
 import { Icon } from './DialogOptionsDemo.js';
 
@@ -38,19 +38,17 @@ export function PopoversDemo({ config }: { config: PopoversConfig }) {
 						<div className="popovers-demo__controls">
 							<label className="popovers-demo__control">
 								{texts.design}{' '}
-								<select value={design} onChange={(event) =>
-									setDesign(event.currentTarget.value as PopoverDesign)}>
-									{config.designs.map((each) => <option key={each} value={each}>
-										{nameOf(config, 'design', each)}</option>)}
-								</select>
+								<Dropdown value={design} options={config.designs.map((each) =>
+									({ value: each, label: nameOf(config, 'design', each) }))}
+									onChange={(value) => setDesign(value as PopoverDesign)}
+									{...dropdownTexts(texts)} />
 							</label>
 							<label className="popovers-demo__control">
 								{texts.variant}{' '}
-								<select value={variant} onChange={(event) =>
-									setVariant(event.currentTarget.value as PopoverVariant)}>
-									{config.variants.map((each) => <option key={each} value={each}>
-										{nameOf(config, 'variant', each)}</option>)}
-								</select>
+								<Dropdown value={variant} options={config.variants.map((each) =>
+									({ value: each, label: nameOf(config, 'variant', each) }))}
+									onChange={(value) => setVariant(value as PopoverVariant)}
+									{...dropdownTexts(texts)} />
 							</label>
 						</div>
 						<div className="popovers-demo__compass">
@@ -75,11 +73,10 @@ export function PopoversDemo({ config }: { config: PopoversConfig }) {
 						<div className="popovers-demo__controls">
 							<label className="popovers-demo__control">
 								{texts.position}{' '}
-								<select value={position} onChange={(event) =>
-									setPosition(event.currentTarget.value as PopoverPlacement)}>
-									{config.positions.map((each) => <option key={each} value={each}>
-										{nameOf(config, 'placement', each)}</option>)}
-								</select>
+								<Dropdown value={position} options={config.positions.map((each) =>
+									({ value: each, label: nameOf(config, 'placement', each) }))}
+									onChange={(value) => setPosition(value as PopoverPlacement)}
+									{...dropdownTexts(texts)} />
 							</label>
 						</div>
 						<div className="popovers-demo__gallery">

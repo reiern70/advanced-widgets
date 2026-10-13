@@ -27,7 +27,6 @@ import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextField;
@@ -45,6 +44,7 @@ import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
+import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
 import com.antilia.widgets.popover.Popover;
@@ -250,10 +250,10 @@ public class PopoversPage extends DemoPage
 	 * @return a drop-down of the values of an enum, named by the texts under a prefix, rendering a
 	 *         component again on change
 	 */
-	private <T extends Enum<T>> DropDownChoice<T> choice(String id, String prefix, List<T> values,
+	private <T extends Enum<T>> Dropdown<T> choice(String id, String prefix, List<T> values,
 		Component changed)
 	{
-		DropDownChoice<T> choice = new DropDownChoice<>(id, new PropertyModel<>(this, id), values,
+		Dropdown<T> choice = new Dropdown<>(id, new PropertyModel<>(this, id), values,
 			new IChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
@@ -531,7 +531,7 @@ public class PopoversPage extends DemoPage
 			.put("name", country.name(locale)).put("language", country.language(locale))
 			.put("currency", country.currency(locale)).put("about", country.describe(this, locale))));
 		return new JSONObject()
-			.put("texts", texts)
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
 			.put("placements", new JSONArray(PLACEMENTS.stream().map(PopoverPlacement::cssName)
 				.toList()))
 			.put("designs", new JSONArray(Arrays.stream(PopoverDesign.values()).map(PopoverDesign::cssName)

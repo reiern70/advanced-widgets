@@ -11,7 +11,7 @@
 
 import type { NotificationOptions, NotificationPosition } from '@antilia/core';
 
-import { format } from './data.js';
+import { format, type DropdownTexts } from './data.js';
 
 /** The types the demo shows: the four of the component and one of the page's own, note. */
 export const DEMO_TYPES = ['success', 'error', 'warning', 'info', 'note'] as const;
@@ -30,7 +30,7 @@ export const NOTE_ICON = 'M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.
 	'0-3.86-3.14-7-7-7z';
 
 /** The texts of the demo, by the keys of the page's bundle. */
-export interface NotificationsDemoTexts {
+export interface NotificationsDemoTexts extends DropdownTexts {
 	showTitle: string;
 	feedbackTitle: string;
 	type: string;

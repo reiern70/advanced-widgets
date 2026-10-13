@@ -5,10 +5,11 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { Button, NotificationsProvider, useNotifications,
+import { Button, Dropdown, NotificationsProvider, useNotifications,
 	type NotificationPosition } from '@antilia/react';
 import { NOTIFICATION_POSITIONS } from '@antilia/core';
 
+import { dropdownTexts } from '../data.js';
 import { DEMO_TIMEOUTS, DEMO_TYPES, notification, saved, type DemoType,
 	type NotificationsConfig } from '../notifications.js';
 
@@ -50,11 +51,10 @@ function Forms({ config }: { config: NotificationsConfig }) {
 				<h3>{texts.showTitle}</h3>
 				<form className="notifications-demo__form" onSubmit={show}>
 					<label>{texts.type}
-						<select name="type" value={type}
-							onChange={(event) => setType(event.currentTarget.value as DemoType)}>
-							{DEMO_TYPES.map((value) =>
-								<option key={value} value={value}>{texts.types[value]}</option>)}
-						</select>
+						<Dropdown name="type" value={type} options={DEMO_TYPES.map((value) =>
+							({ value, label: texts.types[value] }))}
+							onChange={(value) => setType(value as DemoType)}
+							{...dropdownTexts(texts)} />
 					</label>
 					<label>{texts.title}
 						<input type="text" name="title" value={title}
@@ -70,18 +70,18 @@ function Forms({ config }: { config: NotificationsConfig }) {
 						{texts.html}
 					</label>
 					<label>{texts.position}
-						<select name="position" value={position} onChange={(event) =>
-							setPosition(event.currentTarget.value as NotificationPosition)}>
-							{NOTIFICATION_POSITIONS.map((value) =>
-								<option key={value} value={value}>{texts.positions[value]}</option>)}
-						</select>
+						<Dropdown name="position" value={position}
+							options={NOTIFICATION_POSITIONS.map((value) =>
+								({ value, label: texts.positions[value] }))}
+							onChange={(value) => setPosition(value as NotificationPosition)}
+							{...dropdownTexts(texts)} />
 					</label>
 					<label>{texts.timeout}
-						<select name="timeout" value={timeout}
-							onChange={(event) => setTimeoutChoice(Number(event.currentTarget.value))}>
-							{DEMO_TIMEOUTS.map((value) =>
-								<option key={value} value={value}>{texts.timeouts[value]}</option>)}
-						</select>
+						<Dropdown name="timeout" value={String(timeout)}
+							options={DEMO_TIMEOUTS.map((value) =>
+								({ value: String(value), label: texts.timeouts[value] }))}
+							onChange={(value) => setTimeoutChoice(Number(value))}
+							{...dropdownTexts(texts)} />
 					</label>
 					<div className="notifications-demo__buttons">
 						<Button type="submit" variant="primary" label={texts.show}

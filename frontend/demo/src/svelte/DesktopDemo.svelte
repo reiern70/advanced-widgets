@@ -12,10 +12,11 @@
   of the taskbar and a button opening the keyboard shortcuts again.
 -->
 <script lang="ts">
-	import { Button, Desktop, DesktopWindow, type TaskbarPosition } from '@antilia/svelte';
+	import { Button, Desktop, DesktopWindow, Dropdown, type TaskbarPosition } from '@antilia/svelte';
 
 	import { untrack } from 'svelte';
 
+	import { dropdownTexts } from '../data.js';
 	import { demoBounds, demoPanes, FRAMEWORK_COLORS, iconMarkup, KEYBOARD_ICON, NOTES_BOUNDS,
 		NOTES_ICON, paneOf, shortcuts, TASKBAR_POSITIONS, windowId, type DesktopConfig,
 		type DesktopDemos, type DesktopDemoTexts, type DesktopWindowName } from '../desktop.js';
@@ -69,11 +70,9 @@
 	<form class="desktop-demo__options" onsubmit={(event) => event.preventDefault()}>
 		<label class="desktop-demo__option">
 			{texts.taskbar}
-			<select bind:value={taskbar}>
-				{#each TASKBAR_POSITIONS as position (position)}
-					<option value={position}>{positionText(position)}</option>
-				{/each}
-			</select>
+			<Dropdown value={taskbar} options={TASKBAR_POSITIONS.map((position) =>
+				({ value: position, label: positionText(position) }))}
+				onchange={(value) => taskbar = value as TaskbarPosition} {...dropdownTexts(texts)} />
 		</label>
 		<Button label={texts.openKeyboard} size="small"
 			onclick={() => desktop?.activate(id('keyboard'))}>

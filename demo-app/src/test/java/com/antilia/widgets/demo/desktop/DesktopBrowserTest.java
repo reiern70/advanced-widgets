@@ -283,7 +283,7 @@ class DesktopBrowserTest extends JettyTestCase
 		assertTrue(driver.findElements(By.className("antilia-desktop-confirm")).isEmpty());
 		wait.until(d -> states().contains("Keyboard at 560, 16, 640 × 620 in Grids, closed"));
 
-		click(driver.findElement(By.cssSelector("form.desktop-demo__options button")));
+		click(driver.findElement(By.cssSelector("form.desktop-demo__options > button")));
 		wait.until(d -> window(KEYBOARD).isDisplayed());
 		assertTrue(window(KEYBOARD).getDomAttribute("data-active") != null);
 		wait.until(d -> !states().contains("Keyboard at 560, 16, 640 × 620 in Grids, closed"));
@@ -297,8 +297,8 @@ class DesktopBrowserTest extends JettyTestCase
 		drag(window(0).findElement(By.cssSelector(".antilia-window-title")), 60, 40);
 		wait.until(d -> states().contains("JSON grid in Wicket at 76, 56"));
 
-		new org.openqa.selenium.support.ui.Select(driver.findElement(By.cssSelector(
-			"form.desktop-demo__options select"))).selectByIndex(2);
+		Dropdowns.choose(driver, driver.findElement(By.cssSelector(
+			"form.desktop-demo__options select")), 2);
 		wait.until(d -> driver.findElement(By.cssSelector(".desktop-demo__desktop > .antilia-desktop"))
 			.getDomAttribute("class").contains("antilia-desktop-taskbar-left"));
 		wait.until(d -> !driver.findElements(By.cssSelector(
@@ -453,7 +453,7 @@ class DesktopBrowserTest extends JettyTestCase
 
 			WebElement keyboard = panel.findElement(By.id(framework + "-desktop-keyboard"));
 			assertFalse(keyboard.isDisplayed());
-			click(panel.findElement(By.cssSelector(".desktop-demo__options button")));
+			click(panel.findElement(By.cssSelector(".desktop-demo__options > button")));
 			wait.until(d -> keyboard.isDisplayed());
 
 			// choices not sent are changes, in the drop-downs, alone in the second pane

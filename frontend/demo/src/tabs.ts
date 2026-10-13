@@ -12,10 +12,10 @@
 
 import type { PopoverOptions, TabsDesign, TabsTexts } from '@antilia/core';
 
-import { format } from './data.js';
+import { format, type DropdownTexts } from './data.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
-export interface TabsDemoTexts {
+export interface TabsDemoTexts extends DropdownTexts {
 	/** The accessible name of the pills of the cases. */
 	cases: string;
 	documentsTitle: string;

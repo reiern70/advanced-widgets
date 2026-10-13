@@ -23,7 +23,6 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.CheckBox;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -40,6 +39,7 @@ import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
+import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
 import com.antilia.widgets.popover.Popover;
@@ -213,7 +213,7 @@ public class TabsPage extends DemoPage
 		settingsCase.add(form);
 		form.add(new CheckBox("vertical", new PropertyModel<>(this, "vertical"))
 			.add(rerender(settings)));
-		form.add(new DropDownChoice<>("design", new PropertyModel<>(this, "design"),
+		form.add(new Dropdown<>("design", new PropertyModel<>(this, "design"),
 			Arrays.asList(TabsDesign.values()), new IChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
@@ -375,7 +375,7 @@ public class TabsPage extends DemoPage
 		DOCUMENTS.forEach(document -> documentsConfig.put(new JSONObject()
 			.put("name", document.getName()).put("text", document.getText())));
 		return new JSONObject()
-			.put("texts", texts)
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
 			.put("tabs", tabs)
 			.put("documents", documentsConfig)
 			.put("sections", new JSONArray(SECTIONS))

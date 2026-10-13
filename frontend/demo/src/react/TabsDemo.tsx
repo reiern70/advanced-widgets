@@ -5,9 +5,9 @@
 
 import { useState } from 'react';
 
-import { Button, Popover, Tab, Tabs, type TabsDesign } from '@antilia/react';
+import { Button, Dropdown, Popover, Tab, Tabs, type TabsDesign } from '@antilia/react';
 
-import { format } from '../data.js';
+import { dropdownTexts, format } from '../data.js';
 import { documentsOf, newDocument, popoverOf, type Document, type GalleryConfig,
 	type TabsConfig } from '../tabs.js';
 import { Icon } from './DialogOptionsDemo.js';
@@ -92,10 +92,10 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 							</label>
 							<label className="tabs-demo__control">
 								{texts.design}{' '}
-								<select value={design} onChange={(event) => setDesign(event.currentTarget.value as TabsDesign)}>
-									{config.designs.map((each) => <option key={each} value={each}>
-										{texts['design.' + each.toUpperCase()]}</option>)}
-								</select>
+								<Dropdown value={design} options={config.designs.map((each) =>
+									({ value: each, label: texts['design.' + each.toUpperCase()] }))}
+									onChange={(value) => setDesign(value as TabsDesign)}
+									{...dropdownTexts(texts)} />
 							</label>
 						</div>
 						<Tabs className="tabs-demo__settings" label={texts.settings} texts={config.tabs}

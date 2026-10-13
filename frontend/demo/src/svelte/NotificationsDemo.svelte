@@ -8,9 +8,10 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, Notifications, type NotificationPosition } from '@antilia/svelte';
+	import { Button, Dropdown, Notifications, type NotificationPosition } from '@antilia/svelte';
 	import { NOTIFICATION_POSITIONS } from '@antilia/core';
 
+	import { dropdownTexts } from '../data.js';
 	import { DEMO_TIMEOUTS, DEMO_TYPES, notification, saved, type DemoType,
 		type NotificationsConfig } from '../notifications.js';
 
@@ -44,9 +45,9 @@
 		<h3>{texts.showTitle}</h3>
 		<form class="notifications-demo__form" onsubmit={show}>
 			<label>{texts.type}
-				<select name="type" bind:value={type}>
-					{#each DEMO_TYPES as value (value)}<option {value}>{texts.types[value]}</option>{/each}
-				</select>
+				<Dropdown name="type" value={type} options={DEMO_TYPES.map((value) =>
+					({ value, label: texts.types[value] }))}
+					onchange={(value) => type = value as DemoType} {...dropdownTexts(texts)} />
 			</label>
 			<label>{texts.title}
 				<input type="text" name="title" bind:value={title} />
@@ -59,16 +60,15 @@
 				{texts.html}
 			</label>
 			<label>{texts.position}
-				<select name="position" bind:value={position}>
-					{#each NOTIFICATION_POSITIONS as value (value)}
-						<option {value}>{texts.positions[value]}</option>
-					{/each}
-				</select>
+				<Dropdown name="position" value={position} options={NOTIFICATION_POSITIONS.map((value) =>
+					({ value, label: texts.positions[value] }))}
+					onchange={(value) => position = value as NotificationPosition}
+					{...dropdownTexts(texts)} />
 			</label>
 			<label>{texts.timeout}
-				<select name="timeout" bind:value={timeout}>
-					{#each DEMO_TIMEOUTS as value (value)}<option {value}>{texts.timeouts[value]}</option>{/each}
-				</select>
+				<Dropdown name="timeout" value={String(timeout)} options={DEMO_TIMEOUTS.map((value) =>
+					({ value: String(value), label: texts.timeouts[value] }))}
+					onchange={(value) => timeout = Number(value)} {...dropdownTexts(texts)} />
 			</label>
 			<div class="notifications-demo__buttons">
 				<Button type="submit" variant="primary" label={texts.show}

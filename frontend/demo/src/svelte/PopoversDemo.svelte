@@ -10,10 +10,10 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { buttonClasses, partClasses, popoverClasses, type ButtonVariant } from '@antilia/core';
-	import { getLook, Popover, PopoverButton, Tabs, type PopoverDesign, type PopoverOptions,
+	import { Dropdown, getLook, Popover, PopoverButton, Tabs, type PopoverDesign, type PopoverOptions,
 		type PopoverPlacement, type PopoverVariant, type TabItem } from '@antilia/svelte';
 
-	import { format } from '../data.js';
+	import { dropdownTexts, format } from '../data.js';
 	import { facts, nameOf, placementText, sideOf, type FieldConfig,
 		type PopoversConfig } from '../popovers.js';
 
@@ -99,19 +99,17 @@
 					<div class="popovers-demo__controls">
 						<label class="popovers-demo__control">
 							{texts.design}
-							<select bind:value={design}>
-								{#each config.designs as each (each)}
-									<option value={each}>{nameOf(config, 'design', each)}</option>
-								{/each}
-							</select>
+							<Dropdown value={design} options={config.designs.map((each) =>
+								({ value: each, label: nameOf(config, 'design', each) }))}
+								onchange={(value) => design = value as PopoverDesign}
+								{...dropdownTexts(texts)} />
 						</label>
 						<label class="popovers-demo__control">
 							{texts.variant}
-							<select bind:value={variant}>
-								{#each config.variants as each (each)}
-									<option value={each}>{nameOf(config, 'variant', each)}</option>
-								{/each}
-							</select>
+							<Dropdown value={variant} options={config.variants.map((each) =>
+								({ value: each, label: nameOf(config, 'variant', each) }))}
+								onchange={(value) => variant = value as PopoverVariant}
+								{...dropdownTexts(texts)} />
 						</label>
 					</div>
 					<div class="popovers-demo__compass">
@@ -133,11 +131,10 @@
 					<div class="popovers-demo__controls">
 						<label class="popovers-demo__control">
 							{texts.position}
-							<select bind:value={position}>
-								{#each config.positions as each (each)}
-									<option value={each}>{nameOf(config, 'placement', each)}</option>
-								{/each}
-							</select>
+							<Dropdown value={position} options={config.positions.map((each) =>
+								({ value: each, label: nameOf(config, 'placement', each) }))}
+								onchange={(value) => position = value as PopoverPlacement}
+								{...dropdownTexts(texts)} />
 						</label>
 					</div>
 					<div class="popovers-demo__gallery">

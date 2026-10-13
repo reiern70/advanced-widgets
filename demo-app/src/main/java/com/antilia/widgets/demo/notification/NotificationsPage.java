@@ -15,7 +15,6 @@ import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.CheckBox;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -28,6 +27,7 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import com.antilia.widgets.button.ButtonBehavior;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
+import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.notification.Notification;
 import com.antilia.widgets.notification.NotificationPosition;
 import com.github.openjson.JSONObject;
@@ -82,15 +82,15 @@ public class NotificationsPage extends DemoPage
 
 		Form<Void> showForm = new Form<>("showForm");
 		themed.add(showForm);
-		showForm.add(new DropDownChoice<>("type", new PropertyModel<>(this, "type"), TYPES,
+		showForm.add(new Dropdown<>("type", new PropertyModel<>(this, "type"), TYPES,
 			new KeyRenderer<>("type.")).setRequired(true));
 		showForm.add(new TextField<>("title", new PropertyModel<>(this, "title")));
 		showForm.add(new TextArea<>("message", new PropertyModel<>(this, "message")));
 		showForm.add(new CheckBox("html", new PropertyModel<>(this, "html")));
-		showForm.add(new DropDownChoice<>("position", new PropertyModel<>(this, "position"),
+		showForm.add(new Dropdown<>("position", new PropertyModel<>(this, "position"),
 			Arrays.asList(NotificationPosition.values()), new KeyRenderer<>("position."))
 			.setRequired(true));
-		showForm.add(new DropDownChoice<>("timeout", new PropertyModel<>(this, "timeout"), TIMEOUTS,
+		showForm.add(new Dropdown<>("timeout", new PropertyModel<>(this, "timeout"), TIMEOUTS,
 			new KeyRenderer<>("timeout.")).setRequired(true));
 		showForm.add(new AjaxButton("show")
 		{
@@ -178,7 +178,7 @@ public class NotificationsPage extends DemoPage
 		TIMEOUTS.forEach(each -> timeouts.put(String.valueOf(each), getString("timeout." + each)));
 		texts.put("types", types).put("positions", positions).put("timeouts", timeouts);
 		return new JSONObject()
-			.put("texts", texts)
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
 			.put("type", type)
 			.put("title", title)
 			.put("message", message)

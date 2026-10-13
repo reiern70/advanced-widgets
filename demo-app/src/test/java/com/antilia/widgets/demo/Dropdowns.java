@@ -4,7 +4,11 @@
  */
 package com.antilia.widgets.demo;
 
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -34,9 +38,60 @@ public final class Dropdowns
 		WebElement wrapper = select.findElement(By.xpath(".."));
 		// the arrow: the middle of the button may show the x of a chosen option's chip
 		WebElement arrow = wrapper.findElement(By.cssSelector(".antilia-dropdown-arrow"));
+		scrollTo(driver, arrow);
 		new Actions(driver).moveToElement(arrow).click().perform();
 		WebElement option = wrapper.findElements(By.cssSelector(".antilia-dropdown-option"))
 			.get(index);
+		// in sight, in the list and in the page: geckodriver does not scroll to it
+		scrollTo(driver, option);
 		new Actions(driver).moveToElement(option).click().perform();
+	}
+
+	/**
+	 * Chooses the option of a text in the drop-down drawn over a select.
+	 *
+	 * @param text
+	 *            the text of the option
+	 * @see #choose(WebDriver, WebElement, int)
+	 */
+	public static void chooseByText(WebDriver driver, WebElement select, String text)
+	{
+		choose(driver, select, indexOf(select, option -> text.equals(
+			option.getDomProperty("textContent").trim())));
+	}
+
+	/**
+	 * Chooses the option of a value in the drop-down drawn over a select.
+	 *
+	 * @param value
+	 *            the value of the option
+	 * @see #choose(WebDriver, WebElement, int)
+	 */
+	public static void chooseByValue(WebDriver driver, WebElement select, String value)
+	{
+		choose(driver, select, indexOf(select, option -> value.equals(
+			option.getDomProperty("value"))));
+	}
+
+	private static void scrollTo(WebDriver driver, WebElement element)
+	{
+		((JavascriptExecutor)driver).executeScript(
+			"arguments[0].scrollIntoView({block: 'nearest', inline: 'nearest'});", element);
+	}
+
+	/**
+	 * @return the index of the first option of a select that matches
+	 */
+	private static int indexOf(WebElement select, Predicate<WebElement> matches)
+	{
+		List<WebElement> options = select.findElements(By.tagName("option"));
+		for (int i = 0; i < options.size(); i++)
+		{
+			if (matches.test(options.get(i)))
+			{
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("no such option");
 	}
 }

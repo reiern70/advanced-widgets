@@ -9,9 +9,9 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, Popover, Tabs, type TabItem, type TabsDesign } from '@antilia/svelte';
+	import { Button, Dropdown, Popover, Tabs, type TabItem, type TabsDesign } from '@antilia/svelte';
 
-	import { format } from '../data.js';
+	import { dropdownTexts, format } from '../data.js';
 	import { documentsOf, newDocument, popoverOf, type Document, type GalleryConfig,
 		type TabsConfig } from '../tabs.js';
 
@@ -113,11 +113,10 @@
 						</label>
 						<label class="tabs-demo__control">
 							{texts.design}
-							<select bind:value={design}>
-								{#each config.designs as each (each)}
-									<option value={each}>{texts['design.' + each.toUpperCase()]}</option>
-								{/each}
-							</select>
+							<Dropdown value={design} options={config.designs.map((each) =>
+								({ value: each, label: texts['design.' + each.toUpperCase()] }))}
+								onchange={(value) => design = value as TabsDesign}
+								{...dropdownTexts(texts)} />
 						</label>
 					</div>
 					<Tabs class="tabs-demo__settings" label={texts.settings} texts={config.tabs} tabs={sections}

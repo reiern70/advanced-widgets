@@ -24,8 +24,8 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Select;
 
+import com.antilia.widgets.demo.Dropdowns;
 import com.antilia.widgets.demo.SeleniumBrowser;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
@@ -203,8 +203,8 @@ class TabsBrowserTest extends FrameworkAppsTestCase
 
 		app().findElement(By.cssSelector(".tabs-demo__controls input[type='checkbox']")).click();
 		wait.until(d -> settings().getDomAttribute("class").contains("antilia-tabs-horizontal"));
-		new Select(app().findElement(By.cssSelector(".tabs-demo__controls select")))
-			.selectByVisibleText("Underline");
+		Dropdowns.chooseByText(driver, app().findElement(By.cssSelector(
+			".tabs-demo__controls select")), "Underline");
 		wait.until(d -> settings().getDomAttribute("class").contains("antilia-tabs-underline"));
 		screenshot("underline");
 		assertEquals("horizontal", settings().findElement(By.cssSelector(".antilia-tabs-list"))

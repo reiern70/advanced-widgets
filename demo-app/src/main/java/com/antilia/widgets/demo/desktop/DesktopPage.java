@@ -19,7 +19,6 @@ import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.panel.Fragment;
@@ -52,6 +51,7 @@ import com.antilia.widgets.desktop.DesktopWindow;
 import com.antilia.widgets.desktop.TaskbarPosition;
 import com.antilia.widgets.desktop.WindowState;
 import com.antilia.widgets.desktop.WindowType;
+import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
@@ -241,7 +241,7 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 			.setClosable(true).setMinimized(true).setPane(DesktopPane.DEFAULT);
 		desktop.addWindow(keyboard);
 
-		DropDownChoice<TaskbarPosition> position = new DropDownChoice<>("taskbar",
+		Dropdown<TaskbarPosition> position = new Dropdown<>("taskbar",
 			new PropertyModel<>(desktop, "taskbarPosition"), Arrays.asList(TaskbarPosition.values()),
 			new IChoiceRenderer<>()
 			{
@@ -388,7 +388,7 @@ public class DesktopPage extends DemoPage implements IUsersTableHost
 			desktopTexts.put(name, getString("Desktop." + name));
 		}
 		return new JSONObject()
-			.put("texts", texts)
+			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
 			.put("desktop", desktopTexts)
 			.put("jsonTable", getJsonTableConfig())
 			.put("dropdown", getDropdownConfig())

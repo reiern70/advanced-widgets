@@ -25,8 +25,8 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Select;
 
+import com.antilia.widgets.demo.Dropdowns;
 import com.antilia.widgets.demo.SeleniumBrowser;
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
@@ -93,10 +93,10 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		}
 
 		// in the design and the variant chosen
-		new Select(app().findElement(By.cssSelector(".popovers-demo__controls select")))
-			.selectByVisibleText("Neon");
-		new Select(app().findElements(By.cssSelector(".popovers-demo__controls select")).get(1))
-			.selectByVisibleText("Success");
+		Dropdowns.chooseByText(driver, app().findElement(By.cssSelector(
+			".popovers-demo__controls select")), "Neon");
+		Dropdowns.chooseByText(driver, app().findElements(By.cssSelector(
+			".popovers-demo__controls select")).get(1), "Success");
 		wait.until(d -> app().findElement(By.cssSelector(".popovers-demo__example .antilia-popover"))
 			.getDomAttribute("class").contains("antilia-popover-success"));
 		place("auto").click();
@@ -135,8 +135,7 @@ class PopoversBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> d.findElements(By.cssSelector("body > .antilia-popover")).isEmpty());
 
 		// the gallery and what it opens where the drop-down says
-		new Select(gallery().findElement(By.tagName("select")))
-			.selectByVisibleText("Right top");
+		Dropdowns.chooseByText(driver, gallery().findElement(By.tagName("select")), "Right top");
 		wait.until(d -> app().findElements(By.cssSelector(".popovers-demo__example .antilia-popover"))
 			.stream().allMatch(each -> "right".equals(each.getDomAttribute("data-side")) &&
 				"start".equals(each.getDomAttribute("data-align"))));

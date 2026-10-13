@@ -29,6 +29,14 @@ export interface DropdownTexts {
 	remove: string;
 }
 
+/**
+ * @return the texts of the drop-downs out of those of a demo, for the props of a Dropdown
+ */
+export function dropdownTexts(texts: DropdownTexts): DropdownTexts {
+	const { filter, noMatch, more, remove } = texts;
+	return { filter, noMatch, more, remove };
+}
+
 /** A user as the users resource sends it. */
 export interface User {
 	id: number;

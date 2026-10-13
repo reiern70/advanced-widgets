@@ -5,9 +5,10 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 
-import { Button, Desktop, DesktopWindow, type DesktopHandle,
+import { Button, Desktop, DesktopWindow, Dropdown, type DesktopHandle,
 	type TaskbarPosition } from '@antilia/react';
 
+import { dropdownTexts } from '../data.js';
 import { demoBounds, demoPanes, FRAMEWORK_COLORS, iconMarkup, KEYBOARD_ICON, NOTES_BOUNDS,
 	NOTES_ICON, paneOf, shortcuts, TASKBAR_POSITIONS, windowId, type DesktopConfig,
 	type DesktopDemos, type DesktopWindowName } from '../desktop.js';
@@ -71,13 +72,10 @@ export function DesktopDemo({ config }: { config: DesktopConfig }) {
 			<form className="desktop-demo__options" onSubmit={(event) => event.preventDefault()}>
 				<label className="desktop-demo__option">
 					{texts.taskbar}{' '}
-					<select value={taskbar}
-						onChange={(event) => setTaskbar(event.target.value as TaskbarPosition)}>
-						{TASKBAR_POSITIONS.map((position) => (
-							<option key={position} value={position}>{texts['taskbar.' + position as
-								keyof typeof texts]}</option>
-						))}
-					</select>
+					<Dropdown value={taskbar} options={TASKBAR_POSITIONS.map((position) => ({
+						value: position, label: texts['taskbar.' + position as keyof typeof texts] }))}
+						onChange={(value) => setTaskbar(value as TaskbarPosition)}
+						{...dropdownTexts(texts)} />
 				</label>
 				<Button label={texts.openKeyboard} size="small" icon={<Icon path={KEYBOARD_ICON} />}
 					onClick={() => desktop.current?.activate(id('keyboard'))} />
