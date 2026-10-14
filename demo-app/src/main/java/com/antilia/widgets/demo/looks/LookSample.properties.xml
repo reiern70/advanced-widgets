@@ -22,6 +22,12 @@
 	<entry key="tab.notes.text">Close a tab with its ×: in the Bootstrap look it is Bootstrap's close button.</entry>
 	<entry key="tab.history">History</entry>
 	<entry key="tab.history.text">Every design of the tabs works in either look.</entry>
+	<entry key="menu">Menu</entry>
+	<entry key="menu.home">Home</entry>
+	<entry key="menu.products">Products</entry>
+	<entry key="menu.laptops">Laptops</entry>
+	<entry key="menu.phones">Phones</entry>
+	<entry key="menu.about">About</entry>
 	<entry key="popover.open">Open a popover</entry>
 	<entry key="popover.title">A popover</entry>
 	<entry key="popover.body">In the Bootstrap look its header and body are those of a Bootstrap popover.</entry>

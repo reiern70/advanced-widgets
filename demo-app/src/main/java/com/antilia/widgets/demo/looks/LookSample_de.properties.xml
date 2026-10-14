@@ -22,6 +22,12 @@
 	<entry key="tab.notes.text">Schließen Sie einen Tab mit seinem ×: Im Bootstrap-Aussehen ist es die Schließen-Schaltfläche von Bootstrap.</entry>
 	<entry key="tab.history">Verlauf</entry>
 	<entry key="tab.history.text">Jedes Design der Tabs funktioniert in beiden Aussehen.</entry>
+	<entry key="menu">Menü</entry>
+	<entry key="menu.home">Start</entry>
+	<entry key="menu.products">Produkte</entry>
+	<entry key="menu.laptops">Laptops</entry>
+	<entry key="menu.phones">Telefone</entry>
+	<entry key="menu.about">Über uns</entry>
 	<entry key="popover.open">Ein Popover öffnen</entry>
 	<entry key="popover.title">Ein Popover</entry>
 	<entry key="popover.body">Im Bootstrap-Aussehen sind Kopf und Inhalt die eines Bootstrap-Popovers.</entry>

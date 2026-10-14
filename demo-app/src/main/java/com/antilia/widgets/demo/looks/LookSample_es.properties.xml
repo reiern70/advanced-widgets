@@ -22,6 +22,12 @@
 	<entry key="tab.notes.text">Cierre una pestaña con su ×: con el aspecto Bootstrap es el botón de cierre de Bootstrap.</entry>
 	<entry key="tab.history">Historial</entry>
 	<entry key="tab.history.text">Todos los diseños de las pestañas funcionan con ambos aspectos.</entry>
+	<entry key="menu">Menú</entry>
+	<entry key="menu.home">Inicio</entry>
+	<entry key="menu.products">Productos</entry>
+	<entry key="menu.laptops">Portátiles</entry>
+	<entry key="menu.phones">Teléfonos</entry>
+	<entry key="menu.about">Acerca de</entry>
 	<entry key="popover.open">Abrir un popover</entry>
 	<entry key="popover.title">Un popover</entry>
 	<entry key="popover.body">Con el aspecto Bootstrap su cabecera y su cuerpo son los de un popover de Bootstrap.</entry>

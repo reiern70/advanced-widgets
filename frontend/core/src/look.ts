@@ -331,6 +331,33 @@ const PARTS = {
 	'popover-body': ['base', 'antilia-popover-body', 'popover-body'],
 	'popover-content': ['base', 'antilia-popover-content', ''],
 
+	// menus: a bar of items along the top or down the side, in a design of MenuDesign, whose
+	// submenus pop up or open in place; in Bootstrap's look the bar is a nav, its items nav-links,
+	// a submenu a dropdown-menu and its items dropdown-items
+	'menu': ['base', 'antilia-menu', ''],
+	'menu-horizontal': ['base', 'antilia-menu-horizontal', ''],
+	'menu-vertical': ['base', 'antilia-menu-vertical', ''],
+	'menu-inline': ['base', 'antilia-menu-inline', ''],
+	'menu-bar': ['base', 'antilia-menu-bar', ''],
+	'menu-pills': ['base', 'antilia-menu-pills', ''],
+	'menu-underline': ['base', 'antilia-menu-underline', ''],
+	'menu-sidebar': ['base', 'antilia-menu-sidebar', ''],
+	'menu-list': ['base', 'antilia-menu-list', 'nav'],
+	'menu-list-bar': ['base', '', 'bg-body-tertiary border rounded'],
+	'menu-list-pills': ['base', '', 'nav-pills'],
+	'menu-list-underline': ['base', '', 'nav-underline'],
+	'menu-list-sidebar': ['base', '', 'nav-pills bg-body-tertiary rounded'],
+	'menu-item': ['base', 'antilia-menu-item', 'nav-item'],
+	'menu-link': ['base', 'antilia-menu-link', 'nav-link'],
+	'menu-icon': ['base', 'antilia-menu-icon', ''],
+	'menu-label': ['base', 'antilia-menu-label', ''],
+	'menu-submenu': ['base', 'antilia-menu-submenu', 'dropdown-menu'],
+	'menu-submenu-item': ['base', 'antilia-menu-submenu-item', ''],
+	'menu-submenu-link': ['base', 'antilia-menu-submenu-link', 'dropdown-item'],
+	'menu-separator': ['base', 'antilia-menu-separator', 'dropdown-divider'],
+	'menu-current': ['state', 'antilia-menu-current', 'active'],
+	'menu-current-parent': ['state', 'antilia-menu-current-parent', ''],
+
 	// trees and tree grids
 	'tree': ['base', 'antilia-tree', ''],
 	'tree-json': ['base', 'json-tree', ''],

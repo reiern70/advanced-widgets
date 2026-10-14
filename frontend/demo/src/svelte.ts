@@ -20,6 +20,7 @@ import DesktopDemo from './svelte/DesktopDemo.svelte';
 import DropdownDemo from './svelte/DropdownDemo.svelte';
 import JsonListDemo from './svelte/JsonListDemo.svelte';
 import JsonTableDemo from './svelte/JsonTableDemo.svelte';
+import MenusDemo from './svelte/MenusDemo.svelte';
 import ModalDemo from './svelte/ModalDemo.svelte';
 import NotificationsDemo from './svelte/NotificationsDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
@@ -52,6 +53,7 @@ startApps('svelte', {
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
 	tabs: app(TabsDemo),
+	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),
 	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),

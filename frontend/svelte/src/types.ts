@@ -55,3 +55,42 @@ export interface TabItem {
 	/** CSS classes of the panel, next to antilia-tabs-panel. */
 	panelClass?: string;
 }
+
+/**
+ * An item of a Menu: a link when it has href, a button calling onclick otherwise, or the item
+ * opening a submenu when it has items.
+ */
+export interface MenuItem {
+	/** The name of the item, the key Svelte knows it by; its place in its list when left out. */
+	id?: string;
+	/** The label of the item. */
+	label: string;
+	/** The markup of an icon before the label, an svg, written as is. */
+	icon?: string;
+	/** The tooltip of the item, its title. */
+	tooltip?: string;
+	/** Where the item leads: it is a link then. */
+	href?: string;
+	/** Where the link opens, _blank for a new window. */
+	target?: string;
+	/** Called when the user chose the item, a link or a button. */
+	onclick?: (event: MouseEvent) => void;
+	/** Whether the user cannot choose the item, which shows dimmed; false when left out. */
+	disabled?: boolean;
+	/** Whether the item leads to the page shown, which the menu marks, and the items holding it. */
+	current?: boolean;
+	/** The items of the submenu the item opens; it has neither href nor onclick then. */
+	items?: MenuEntry[];
+	/** CSS classes of the link or the button of the item. */
+	class?: string;
+}
+
+/** A line between the items of a submenu, or upright between those of a bar along the top. */
+export interface MenuSeparator {
+	separator: true;
+	/** The key Svelte knows it by; its place in its list when left out. */
+	id?: string;
+}
+
+/** An item or a separator of a Menu. */
+export type MenuEntry = MenuItem | MenuSeparator;

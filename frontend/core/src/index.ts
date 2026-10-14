@@ -34,6 +34,9 @@ export type { DesktopOptions, DesktopPane, DesktopTexts, TaskbarPosition, TileLa
 	WindowType } from './desktop.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
+export { Menu, menu, MENU_CLASSES, MENU_DESIGN_CLASSES, MENU_DESIGNS, MENU_MAX_HEIGHT_PROPERTY,
+	MENU_ORIENTATION_CLASSES, MENU_X_PROPERTY, MENU_Y_PROPERTY } from './menu.js';
+export type { MenuDesign, MenuOptions, MenuOrientation } from './menu.js';
 export { insertAt, moveBy, Palette, palette, PALETTE_FILTER_THRESHOLD,
 	PALETTE_MATCHERS } from './palette.js';
 export type { PaletteChoice, PaletteMatch, PaletteMatcher, PaletteOptions,

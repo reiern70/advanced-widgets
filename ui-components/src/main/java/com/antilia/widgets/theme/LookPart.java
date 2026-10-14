@@ -310,6 +310,33 @@ public enum LookPart
 	POPOVER_BODY(LookAspect.BASE),
 	POPOVER_CONTENT(LookAspect.BASE),
 
+	// menus: a bar of items along the top or down the side, in a design of MenuDesign, whose
+	// submenus pop up or open in place; in Bootstrap's look the bar is a nav, its items nav-links,
+	// a submenu a dropdown-menu and its items dropdown-items
+	MENU(LookAspect.BASE),
+	MENU_HORIZONTAL(LookAspect.BASE),
+	MENU_VERTICAL(LookAspect.BASE),
+	MENU_INLINE(LookAspect.BASE),
+	MENU_BAR(LookAspect.BASE),
+	MENU_PILLS(LookAspect.BASE),
+	MENU_UNDERLINE(LookAspect.BASE),
+	MENU_SIDEBAR(LookAspect.BASE),
+	MENU_LIST(LookAspect.BASE),
+	MENU_LIST_BAR(LookAspect.BASE),
+	MENU_LIST_PILLS(LookAspect.BASE),
+	MENU_LIST_UNDERLINE(LookAspect.BASE),
+	MENU_LIST_SIDEBAR(LookAspect.BASE),
+	MENU_ITEM(LookAspect.BASE),
+	MENU_LINK(LookAspect.BASE),
+	MENU_ICON(LookAspect.BASE),
+	MENU_LABEL(LookAspect.BASE),
+	MENU_SUBMENU(LookAspect.BASE),
+	MENU_SUBMENU_ITEM(LookAspect.BASE),
+	MENU_SUBMENU_LINK(LookAspect.BASE),
+	MENU_SEPARATOR(LookAspect.BASE),
+	MENU_CURRENT(LookAspect.STATE),
+	MENU_CURRENT_PARENT(LookAspect.STATE),
+
 	// trees and tree grids
 	TREE(LookAspect.BASE),
 	TREE_JSON(LookAspect.BASE),

@@ -20,6 +20,7 @@ import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.desktop.DesktopPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
+import com.antilia.widgets.demo.menu.MenusPage;
 import com.antilia.widgets.demo.looks.LooksPage;
 import com.antilia.widgets.demo.modal.ModalDialogPage;
 import com.antilia.widgets.demo.notification.NotificationsPage;
@@ -110,6 +111,7 @@ public final class Demos
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
 		new Demo("tabs", "layout", TabsPage.class, true, true),
+		new Demo("menus", "layout", MenusPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
 		new Demo("desktop", "layout", DesktopPage.class, false, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, true, false),

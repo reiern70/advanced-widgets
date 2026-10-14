@@ -21,6 +21,7 @@ import { DesktopDemo } from './react/DesktopDemo.js';
 import { DropdownDemo } from './react/DropdownDemo.js';
 import { JsonListDemo } from './react/JsonListDemo.js';
 import { JsonTableDemo } from './react/JsonTableDemo.js';
+import { MenusDemo } from './react/MenusDemo.js';
 import { ModalDemo } from './react/ModalDemo.js';
 import { NotificationsDemo } from './react/NotificationsDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
@@ -51,6 +52,7 @@ startApps('react', {
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
 	tabs: app(TabsDemo),
+	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),
 	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),

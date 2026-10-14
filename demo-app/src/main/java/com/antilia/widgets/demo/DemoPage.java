@@ -13,6 +13,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.demo.Demos.Demo;
@@ -46,6 +47,16 @@ public abstract class DemoPage extends BasePage
 
 	protected DemoPage()
 	{
+		this(null);
+	}
+
+	/**
+	 * @param parameters
+	 *            the parameters of a page that can be bookmarked, {@code null} for none
+	 */
+	protected DemoPage(PageParameters parameters)
+	{
+		super(parameters);
 		add(new BookmarkablePageLink<>("back", HomePage.class));
 		add(newDemoLink("previous", Demos.previous(getClass())));
 		add(newDemoLink("next", Demos.next(getClass())));

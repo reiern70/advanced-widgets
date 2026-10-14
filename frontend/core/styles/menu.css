@@ -1,0 +1,356 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * Menus, in the colors of the theme they are in (see antilia-theme.css) and with colors of their
+ * own outside one: a bar of items along the top (antilia-menu-horizontal) or down the side
+ * (antilia-menu-vertical), whose submenus pop up below or beside their items, placed by
+ * antilia-menu.js through --antilia-menu-x, --antilia-menu-y and --antilia-menu-max-height, or open
+ * in place (antilia-menu-inline). Four designs: a bar of the toolbar's color (antilia-menu-bar),
+ * rounded pills the current one filled (antilia-menu-pills), plain items the current one
+ * underlined (antilia-menu-underline) and the side bar of an application with an accent on the
+ * current item (antilia-menu-sidebar). Every design works in both orientations.
+ *
+ * The item of the page shown is marked aria-current and antilia-menu-current, the items whose
+ * submenus hold it antilia-menu-current-parent; an item with a submenu shows an arrow, pointing
+ * where the submenu opens.
+ */
+
+.antilia-menu {
+	color: var(--antilia-theme-text, #1c2333);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+.antilia-menu-list,
+.antilia-menu-submenu {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-menu-list {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.15em;
+}
+
+.antilia-menu-vertical > .antilia-menu-list {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+}
+
+.antilia-menu-item,
+.antilia-menu-submenu-item {
+	margin: 0;
+	padding: 0;
+}
+
+.antilia-menu-item[hidden],
+.antilia-menu-submenu-item[hidden] {
+	display: none;
+}
+
+/* the items, links and buttons alike */
+
+.antilia-menu-link,
+.antilia-menu-submenu-link {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0.45em 0.85em;
+	border: 0;
+	border-radius: var(--antilia-look-radius, 0.35em);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1.3;
+	text-align: start;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.antilia-menu-vertical > .antilia-menu-list > .antilia-menu-item > .antilia-menu-link,
+.antilia-menu-submenu-link {
+	width: 100%;
+}
+
+.antilia-menu-submenu-link {
+	padding: 0.4em 0.8em;
+	border-radius: var(--antilia-look-radius-sm, 0.25em);
+}
+
+.antilia-menu-link:hover,
+.antilia-menu-submenu-link:hover,
+.antilia-menu-submenu-link:focus,
+.antilia-menu:not(.antilia-menu-inline) .antilia-menu-link[aria-expanded='true'],
+.antilia-menu:not(.antilia-menu-inline) .antilia-menu-submenu-link[aria-expanded='true'] {
+	background: var(--antilia-theme-hover, #e8edf7);
+	color: inherit;
+}
+
+.antilia-menu-link:focus-visible,
+.antilia-menu-submenu-link:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2563eb);
+	outline-offset: -2px;
+}
+
+.antilia-menu-link[aria-disabled='true'],
+.antilia-menu-submenu-link[aria-disabled='true'],
+.antilia-menu-link:disabled,
+.antilia-menu-submenu-link:disabled {
+	background: transparent;
+	opacity: 0.5;
+	cursor: default;
+}
+
+.antilia-menu-current,
+.antilia-menu-current-parent {
+	color: var(--antilia-theme-primary, #1d4ed8);
+}
+
+.antilia-menu-current {
+	font-weight: 600;
+}
+
+.antilia-menu-icon {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 1.15em;
+}
+
+.antilia-menu-icon > svg {
+	width: 1em;
+	height: 1em;
+}
+
+.antilia-menu-label {
+	flex: 1 1 auto;
+}
+
+/* the labels of a submenu, or of a bar down the side, line up, the items without an icon keeping
+   its room */
+.antilia-menu-submenu:has(> li > * > .antilia-menu-icon) > li >
+	.antilia-menu-submenu-link:not(:has(> .antilia-menu-icon))::before,
+.antilia-menu-vertical > .antilia-menu-list:has(> li > * > .antilia-menu-icon) > li >
+	.antilia-menu-link:not(:has(> .antilia-menu-icon))::before {
+	content: '';
+	flex: none;
+	width: 1.15em;
+}
+
+/* the arrow of an item with a submenu: down below a bar along the top */
+
+.antilia-menu-link[aria-haspopup]::after,
+.antilia-menu-submenu-link[aria-haspopup]::after {
+	content: '';
+	flex: none;
+	box-sizing: border-box;
+	width: 0.42em;
+	height: 0.42em;
+	margin-inline-start: 0.1em;
+	border: solid currentColor;
+	border-width: 0 0.12em 0.12em 0;
+	opacity: 0.7;
+	transform: translateY(-0.12em) rotate(45deg);
+	transition: transform 0.15s ease;
+}
+
+/* right, beside the items of a bar down the side and of the submenus popping up */
+.antilia-menu-vertical:not(.antilia-menu-inline) .antilia-menu-link[aria-haspopup]::after,
+.antilia-menu:not(.antilia-menu-inline) .antilia-menu-submenu-link[aria-haspopup]::after {
+	margin-inline-start: auto;
+	transform: rotate(-45deg);
+}
+
+/* down in place, up once open */
+.antilia-menu-inline .antilia-menu-link[aria-haspopup]::after,
+.antilia-menu-inline .antilia-menu-submenu-link[aria-haspopup]::after {
+	margin-inline-start: auto;
+}
+
+.antilia-menu-inline [aria-haspopup][aria-expanded='true']::after {
+	transform: translateY(0.12em) rotate(225deg);
+}
+
+/* the submenus popping up */
+
+.antilia-menu-submenu {
+	position: fixed;
+	top: var(--antilia-menu-y, 0);
+	left: var(--antilia-menu-x, 0);
+	z-index: 1000;
+	box-sizing: border-box;
+	min-width: 12em;
+	max-height: var(--antilia-menu-max-height, none);
+	overflow-y: auto;
+	padding: 0.3em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: var(--antilia-theme-surface, #ffffff);
+	box-shadow: var(--antilia-look-shadow, 0 0.5em 1.5em rgba(15, 23, 42, 0.18));
+	color: var(--antilia-theme-text, #1c2333);
+	text-align: start;
+}
+
+.antilia-menu-submenu[hidden] {
+	display: none;
+}
+
+/* the submenus open in place, under their items */
+
+.antilia-menu-inline .antilia-menu-submenu {
+	position: static;
+	z-index: auto;
+	min-width: 0;
+	max-height: none;
+	overflow: visible;
+	margin: 0.1em 0 0.1em 1.05em;
+	padding: 0 0 0 0.45em;
+	border: 0;
+	border-left: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	color: inherit;
+}
+
+/* separators: a line across a submenu, upright between the items of a bar along the top */
+
+.antilia-menu-separator {
+	flex: none;
+	height: 1px;
+	margin: 0.3em 0.4em;
+	background: var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-menu-horizontal > .antilia-menu-list > .antilia-menu-separator {
+	align-self: center;
+	width: 1px;
+	height: 1.4em;
+	margin: 0 0.3em;
+}
+
+/* bar: a strip of the toolbar's color */
+
+.antilia-menu-bar > .antilia-menu-list {
+	padding: 0.2em;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: var(--antilia-theme-toolbar, #f6f8fc);
+}
+
+.antilia-menu-bar > .antilia-menu-list > .antilia-menu-item > .antilia-menu-link {
+	padding: 0.35em 0.75em;
+}
+
+.antilia-menu-bar > .antilia-menu-list > .antilia-menu-item > .antilia-menu-link:hover,
+.antilia-menu-bar:not(.antilia-menu-inline) > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link[aria-expanded='true'] {
+	background: var(--antilia-theme-hover, #e8edf7);
+}
+
+/* pills: rounded, the current one filled with the primary color */
+
+.antilia-menu-pills .antilia-menu-link,
+.antilia-menu-pills.antilia-menu-inline .antilia-menu-submenu-link {
+	border-radius: 999px;
+}
+
+.antilia-menu-pills > .antilia-menu-list {
+	gap: 0.3em;
+}
+
+.antilia-menu-pills .antilia-menu-link.antilia-menu-current,
+.antilia-menu-pills .antilia-menu-link.antilia-menu-current-parent,
+.antilia-menu-pills .antilia-menu-submenu-link.antilia-menu-current {
+	background: var(--antilia-theme-primary, #1d4ed8);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+/* underline: plain, the current one underlined in the primary color; on the left down the side */
+
+.antilia-menu-underline > .antilia-menu-list {
+	gap: 0.4em;
+	border-bottom: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-menu-underline > .antilia-menu-list > .antilia-menu-item > .antilia-menu-link {
+	margin-bottom: -1px;
+	padding-inline: 0.35em;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+}
+
+.antilia-menu-underline > .antilia-menu-list > .antilia-menu-item > .antilia-menu-link:hover,
+.antilia-menu-underline:not(.antilia-menu-inline) > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link[aria-expanded='true'] {
+	border-bottom-color: var(--antilia-theme-border, #c9cfdb);
+	background: transparent;
+}
+
+.antilia-menu-underline > .antilia-menu-list > .antilia-menu-item >
+	:is(.antilia-menu-current, .antilia-menu-current-parent) {
+	border-bottom-color: var(--antilia-theme-primary, #1d4ed8);
+	color: var(--antilia-theme-text, #1c2333);
+}
+
+.antilia-menu-underline.antilia-menu-vertical > .antilia-menu-list {
+	gap: 0;
+	border-bottom: 0;
+	border-left: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-menu-underline.antilia-menu-vertical > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link {
+	margin: 0 0 0 -1px;
+	padding: 0.4em 0.9em;
+	border-bottom: 0;
+	border-left: 2px solid transparent;
+}
+
+.antilia-menu-underline.antilia-menu-vertical > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link:hover,
+.antilia-menu-underline.antilia-menu-vertical:not(.antilia-menu-inline) > .antilia-menu-list >
+	.antilia-menu-item > .antilia-menu-link[aria-expanded='true'] {
+	border-left-color: var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-menu-underline.antilia-menu-vertical > .antilia-menu-list > .antilia-menu-item >
+	:is(.antilia-menu-current, .antilia-menu-current-parent) {
+	border-left-color: var(--antilia-theme-primary, #1d4ed8);
+}
+
+/* sidebar: the side bar of an application, an accent on the current item */
+
+.antilia-menu-sidebar > .antilia-menu-list {
+	padding: 0.4em;
+	border-radius: var(--antilia-look-radius, 0.5em);
+	background: var(--antilia-theme-surface-alt, #f1f4fa);
+}
+
+.antilia-menu-sidebar .antilia-menu-link.antilia-menu-current,
+.antilia-menu-sidebar .antilia-menu-submenu-link.antilia-menu-current {
+	background: color-mix(in srgb, var(--antilia-theme-primary, #1d4ed8) 12%, transparent);
+	box-shadow: inset 3px 0 0 var(--antilia-theme-primary, #1d4ed8);
+	color: var(--antilia-theme-primary, #1d4ed8);
+}
+
+.antilia-menu-sidebar.antilia-menu-horizontal > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link.antilia-menu-current {
+	box-shadow: inset 0 -3px 0 var(--antilia-theme-primary, #1d4ed8);
+}
+
+.antilia-menu-sidebar.antilia-menu-horizontal > .antilia-menu-list > .antilia-menu-item >
+	.antilia-menu-link.antilia-menu-current-parent {
+	box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--antilia-theme-primary, #1d4ed8) 45%,
+		transparent);
+}

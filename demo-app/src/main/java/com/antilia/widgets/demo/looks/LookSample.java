@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.wicket.Component;
+import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -26,6 +27,12 @@ import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.icon.SvgIcon;
+import com.antilia.widgets.menu.AjaxMenuItem;
+import com.antilia.widgets.menu.IMenuItem;
+import com.antilia.widgets.menu.Menu;
+import com.antilia.widgets.menu.MenuDesign;
+import com.antilia.widgets.menu.MenuSeparator;
+import com.antilia.widgets.menu.SubMenu;
 import com.antilia.widgets.modal.IModalButtonFactory;
 import com.antilia.widgets.modal.Modal;
 import com.antilia.widgets.notification.Notification;
@@ -81,6 +88,12 @@ class LookSample extends Panel
 		tabs.addTab(tab("notes", true));
 		tabs.addTab(tab("history", true));
 		add(tabs);
+
+		add(new Menu("menu", List.of(menuItem("home", SvgIcon.HOUSE, true),
+			new SubMenu(new ResourceModel("menu.products")).add(menuItem("laptops", SvgIcon.LAPTOP,
+				false), MenuSeparator.INSTANCE, menuItem("phones", SvgIcon.MOBILE_SCREEN, false)),
+			menuItem("about", null, false))).setDesign(MenuDesign.PILLS)
+			.setLabel(new ResourceModel("menu")));
 
 		dialog = new Modal("dialog");
 		add(dialog);
@@ -153,5 +166,27 @@ class LookSample extends Panel
 		};
 		button.setVariant(variant).setSize(size).setIcon(icon).setIconOnly(iconOnly);
 		return button;
+	}
+
+	/**
+	 * @return an item of the menu, doing nothing, the current one if told
+	 */
+	private static IMenuItem menuItem(String name, IIcon icon, boolean current)
+	{
+		return new AjaxMenuItem(new ResourceModel("menu." + name))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onClick(AjaxRequestTarget target)
+			{
+			}
+
+			@Override
+			public boolean isCurrent(Page page)
+			{
+				return current;
+			}
+		}.setIcon(icon);
 	}
 }

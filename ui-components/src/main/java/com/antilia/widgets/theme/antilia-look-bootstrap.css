@@ -821,6 +821,128 @@
 }
 
 /*
+ * Menus: the bar is Bootstrap's nav, a column down the side, its items nav-links; a submenu is a
+ * dropdown-menu, which the script places and shows by taking away hidden, its items dropdown-items
+ * and its separators dropdown-dividers. The item of the page shown is Bootstrap's active one, and
+ * so is, in pills and underline, the item of the bar holding it. Submenus open in place are no
+ * dropdowns, but a column under their items.
+ */
+
+.antilia-look-bootstrap .antilia-menu-vertical > .antilia-menu-list.nav {
+	flex-direction: column;
+	flex-wrap: nowrap;
+}
+
+.antilia-look-bootstrap .antilia-menu-list.nav.bg-body-tertiary {
+	padding: 0.2em;
+}
+
+.antilia-look-bootstrap :is(.antilia-menu-link.nav-link, .antilia-menu-submenu-link.dropdown-item) {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.antilia-look-bootstrap .antilia-menu-bar .antilia-menu-link.nav-link {
+	color: var(--bs-body-color);
+}
+
+.antilia-look-bootstrap .antilia-menu-link.nav-link:hover,
+.antilia-look-bootstrap .antilia-menu:not(.antilia-menu-inline)
+	.antilia-menu-link.nav-link[aria-expanded='true'] {
+	background-color: var(--bs-tertiary-bg);
+}
+
+.antilia-look-bootstrap .antilia-menu-bar .antilia-menu-link.nav-link:hover,
+.antilia-look-bootstrap .antilia-menu-bar:not(.antilia-menu-inline)
+	.antilia-menu-link.nav-link[aria-expanded='true'] {
+	background-color: var(--bs-secondary-bg);
+}
+
+.antilia-look-bootstrap .antilia-menu-underline .antilia-menu-link.nav-link:hover,
+.antilia-look-bootstrap .antilia-menu-underline .antilia-menu-link.nav-link[aria-expanded='true'] {
+	background-color: transparent;
+}
+
+.antilia-look-bootstrap .nav-pills > .antilia-menu-item >
+	.antilia-menu-current-parent.nav-link:not(.active) {
+	background-color: var(--bs-nav-pills-link-active-bg);
+	color: var(--bs-nav-pills-link-active-color);
+}
+
+.antilia-look-bootstrap .nav-underline > .antilia-menu-item >
+	.antilia-menu-current-parent.nav-link:not(.active) {
+	border-bottom-color: currentcolor;
+	color: var(--bs-nav-underline-link-active-color);
+	font-weight: 700;
+}
+
+.antilia-look-bootstrap .antilia-menu-vertical > .nav-underline {
+	gap: 0;
+	border-left: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+.antilia-look-bootstrap .antilia-menu-vertical > .nav-underline > .antilia-menu-item > .nav-link {
+	margin-left: calc(-1 * var(--bs-border-width));
+	padding-inline: 0.9em;
+	border-bottom: 0;
+	border-left: var(--bs-nav-underline-border-width) solid transparent;
+}
+
+.antilia-look-bootstrap .antilia-menu-vertical > .nav-underline > .antilia-menu-item >
+	:is(.active, .antilia-menu-current-parent).nav-link {
+	border-left-color: currentcolor;
+}
+
+.antilia-look-bootstrap .antilia-menu-submenu.dropdown-menu {
+	position: fixed;
+	inset: var(--antilia-menu-y, 0) auto auto var(--antilia-menu-x, 0);
+	max-height: var(--antilia-menu-max-height, none);
+	margin: 0;
+	overflow-y: auto;
+}
+
+.antilia-look-bootstrap .antilia-menu-submenu.dropdown-menu:not([hidden]) {
+	display: block;
+}
+
+.antilia-look-bootstrap .antilia-menu-submenu > .antilia-menu-separator.dropdown-divider {
+	height: 0;
+	margin: var(--bs-dropdown-divider-margin-y) 0;
+	background: none;
+}
+
+.antilia-look-bootstrap .antilia-menu-horizontal > .antilia-menu-list >
+	.antilia-menu-separator.dropdown-divider {
+	width: 0;
+	height: 1.4em;
+	margin: 0 0.3em;
+	border-top: 0;
+	border-left: var(--bs-border-width) solid var(--bs-border-color);
+	background: none;
+	opacity: 1;
+}
+
+.antilia-look-bootstrap .antilia-menu-inline .antilia-menu-submenu.dropdown-menu {
+	position: static;
+	inset: auto;
+	min-width: 0;
+	max-height: none;
+	margin: 0.1em 0 0.1em 1.05em;
+	padding: 0 0 0 0.45em;
+	overflow: visible;
+	border: 0;
+	border-left: var(--bs-border-width) solid var(--bs-border-color);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.antilia-look-bootstrap .antilia-menu-inline .antilia-menu-submenu-link.dropdown-item {
+	border-radius: var(--bs-border-radius);
+}
+
+/*
  * The close buttons of the tabs and the popovers: Bootstrap's x, in the color of the text around
  * it, as their designs are light or dark, the selected pill for one; its image is the mask of
  * the button's ::before, so the button keeps its own ring of the focus

@@ -19,14 +19,14 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, the tabs, the popovers, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+split panel, the tabs, the menus, the popovers, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Notifications`, `Desktop` with its
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Notifications`, `Desktop` with its
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `DataTable`, `Tree` and `TreeGrid`, and
 export the core's `Popover`; the core's `dropdown`,
-`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs` and `desktop`
+`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu` and `desktop`
 also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
@@ -96,6 +96,41 @@ sends each tab the user selects. The browser always tells the server the tabs th
 which `Tabs` takes away, calling `onClosed`; `addTab(tab, target)` and `removeTab(tab, target)`
 change the tabs via Ajax without rendering the other panels, and `setModified(tab, modified, target)`
 marks a tab whose changes the server heard of.
+
+The menus (`menu.ts`, built as `antilia-menu.js` for Wicket's `Menu`) show a bar of items along the
+top of the page (`horizontal`) or down its side (`vertical`), each a link leading somewhere, a
+button doing something, or an item opening a submenu of more items, nested as deep as one likes,
+with separators between them. It is a WAI-ARIA menu bar: a click opens a submenu, and while one of
+the bar is open the pointer opens the others; in a submenu the pointer resting on an item opens its
+own, after a moment. The arrow keys move along the bar and up and down a submenu, the arrow pointing
+away from an item opening its submenu and its first item, Escape closing it; from a submenu of a bar
+along the top the arrows across go on to the next or the previous item of the bar. Home and End go to
+the first and the last item, a letter to the next item starting with it; only one item of the bar
+takes the focus with Tab. Choosing an item, a click outside, Tab or the focus leaving the menu close
+the submenus. They pop up below the items of a bar along the top and beside the others, on the side
+with room and in the window, following the page as it scrolls; where they are, and how high they may
+be, are custom properties set through the CSSOM, so they need no inline style and escape the
+overflow of what holds the menu. A menu down the side may open them in place instead (`inline`),
+under their items, as the side bar of an application does: several stay open, the arrows up and down
+go through the items shown and the arrows across open and close the submenus, as in a tree. With
+`openOnHover` the submenus of the bar open as the pointer rests on them too, and close as it leaves,
+as in the navigation of a site. `aria-current="page"` marks the item of the page shown, which gets
+`antilia-menu-current`, the items holding it `antilia-menu-current-parent`, and the submenus holding
+it start open in place; `aria-disabled="true"` an item the user cannot choose. There are four designs
+(`design`, `MENU_DESIGNS`, `MenuDesign` in Wicket), in the colors of the theme and both orientations:
+`bar`, of the toolbar's color, `pills`, the current item filled, `underline` and `sidebar`, an accent
+on the current item. In the Bootstrap look the bar is Bootstrap's `nav`, `nav-pills` and
+`nav-underline`, its items `nav-link`, a submenu a `dropdown-menu` of `dropdown-item`s. The core works
+on markup of lists, the bar of the class `antilia-menu-list`, each item a link or a button among the
+children of its element with its submenu next to it, which React, Svelte and Wicket render, and
+change as they please. React's and Svelte's `Menu` take the tree of items, `items`: a link with
+`href`, a button with `onClick` (`onclick` in Svelte), a submenu with `items`, a separator
+`{ separator: true }`; `onSelect` hears each item chosen. In Wicket, `Menu` takes `IMenuItem`s, or an
+`IMenu` whose label names the bar: `BookmarkableMenuItem` (current on its page with the same
+parameters), `AjaxMenuItem`, `LinkMenuItem`, `SubMenu` and `MenuSeparator`, an item of one's own
+returning any link; `MenuLinkPanel` puts the icon and the label in the link of an item and its
+tooltip on it. The ids of the items stay the same each time the menu renders, so the item with the
+focus keeps it when Ajax renders the menu again.
 
 The popovers (`popover.ts`, built as `antilia-popover.js` for Wicket's `Popover`) are bubbles with
 an arrow pointing at the element that opened them, their trigger, telling more about it: a `title`

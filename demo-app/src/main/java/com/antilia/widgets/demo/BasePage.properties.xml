@@ -64,6 +64,8 @@
 	<entry key="demo.splitPanel.description">Panes that share the space, nested as in an IDE: drag the divider or move it with the keyboard, collapse a pane, size in percent or pixels, and let the server know and remember the layout.</entry>
 	<entry key="demo.tabs">Tabs</entry>
 	<entry key="demo.tabs.description">Tabs along the top or down the side, in nine designs: documents that close, asking first when the server says they have changes not saved, with actions of their own and new ones added via Ajax.</entry>
+	<entry key="demo.menus">Menus</entry>
+	<entry key="demo.menus.description">A bar of items along the top or down the side, in four designs: bookmarkable, Ajax and plain links with icons and tooltips, submenus as deep as you like that pop up or open in place, driven by the keys as on a desktop.</entry>
 	<entry key="demo.desktop">Desktop</entry>
 	<entry key="demo.desktop.description">A desktop inside the page: floating windows that are not modal, with a taskbar; they move, fold, resize, minimize, maximize, tile and cascade, each holding real components such as the grids.</entry>
 	<entry key="demo.modalDialog">Modal Dialog</entry>
