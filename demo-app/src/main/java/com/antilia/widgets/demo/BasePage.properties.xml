@@ -58,6 +58,8 @@
 	<entry key="demo.datePicker.description">Date and time pickers that speak every locale: the format of the field, the language of the calendar, the first day of the week and the 12- or 24-hour clock; typed or picked, by mouse or keyboard, checked on the server.</entry>
 	<entry key="demo.buttons">Buttons</entry>
 	<entry key="demo.buttons.description">One look for the buttons of Wicket, React and Svelte: four variants, three sizes, a text, an icon or both, actions via Ajax, and any link or form button turned into one by a behavior.</entry>
+	<entry key="demo.downloads">Downloads</entry>
+	<entry key="demo.downloads.description">Files of every kind from the buttons of the theme: via Ajax into the browser, through a hidden iframe, in a new tab or the same window, busy while they come; links, a URL to share and the report a form describes.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>

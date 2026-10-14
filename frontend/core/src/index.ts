@@ -73,7 +73,8 @@ export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,
 	TreeTexts } from './tree.js';
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';
-export { BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses } from './button.js';
+export { BUTTON_BUSY_CLASS, BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses, guardBusyButtons, isButtonBusy,
+	setButtonBusy } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';
 export { ANTILIA_LOOK, BOOTSTRAP_LOOK, composeLook, LOOK_ASPECTS, LOOK_ATTRIBUTE, LOOK_PARTS,
 	lookClasses, lookNamed, lookOf, partClasses, registerLook, toggleParts } from './look.js';

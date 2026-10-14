@@ -18,6 +18,7 @@ import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.MasterDetailPage;
 import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.desktop.DesktopPage;
+import com.antilia.widgets.demo.download.DownloadsPage;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.menu.MenusPage;
@@ -108,6 +109,7 @@ public final class Demos
 		new Demo("palette", "forms", PalettePage.class, true, true),
 		new Demo("datePicker", "forms", DatePickerPage.class, true, true),
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
+		new Demo("downloads", "forms", DownloadsPage.class, true, false),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
 		new Demo("tabs", "layout", TabsPage.class, true, true),

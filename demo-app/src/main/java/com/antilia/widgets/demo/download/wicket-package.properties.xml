@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+
+  The texts of the files of the downloads demo, which the page and the mounted resource make.
+-->
+<properties>
+	<entry key="file.title">Countries of the world</entry>
+	<entry key="file.code">Code</entry>
+	<entry key="file.name">Name</entry>
+	<entry key="file.chart">Countries by the initial of their name</entry>
+	<entry key="file.page">Page ${page} of ${pages}</entry>
+</properties>

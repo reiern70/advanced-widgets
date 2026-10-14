@@ -4,6 +4,9 @@
  */
 package com.antilia.widgets.demo;
 
+import java.nio.file.Path;
+import java.util.Map;
+
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -24,12 +27,19 @@ public enum SeleniumBrowser
 	CHROME
 	{
 		@Override
-		WebDriver start()
+		WebDriver start(Path downloads)
 		{
 			ChromeOptions options = new ChromeOptions();
 			if (isHeadless())
 			{
 				options.addArguments("--headless=new");
+			}
+			if (downloads != null)
+			{
+				options.setExperimentalOption("prefs", Map.of(
+					"download.default_directory", downloads.toAbsolutePath().toString(),
+					"download.prompt_for_download", false,
+					"download.directory_upgrade", true));
 			}
 			return new ChromeDriver(options);
 		}
@@ -39,9 +49,17 @@ public enum SeleniumBrowser
 	FIREFOX
 	{
 		@Override
-		WebDriver start()
+		WebDriver start(Path downloads)
 		{
 			FirefoxOptions options = new FirefoxOptions();
+			if (downloads != null)
+			{
+				options.addPreference("browser.download.folderList", 2);
+				options.addPreference("browser.download.dir", downloads.toAbsolutePath().toString());
+				options.addPreference("browser.download.useDownloadDir", true);
+				options.addPreference("browser.download.always_ask_before_handling_new_types", false);
+				options.addPreference("browser.download.manager.showWhenStarting", false);
+			}
 			String binary = System.getProperty("wicket.selenium.firefox");
 			if (binary != null && !binary.isBlank())
 			{
@@ -66,12 +84,30 @@ public enum SeleniumBrowser
 	 */
 	public WebDriver newDriver(int width, int height)
 	{
-		WebDriver driver = start();
+		return newDriver(width, height, null);
+	}
+
+	/**
+	 * Starts the browser, saving what it downloads into a folder without asking. Firefox in a snap
+	 * writes only below the home folder, outside of hidden folders: the folder is best in the
+	 * target folder of the build.
+	 *
+	 * @param width
+	 *            the width of the window
+	 * @param height
+	 *            the height of the window
+	 * @param downloads
+	 *            the folder the browser saves the files it downloads into, {@code null} for its own
+	 * @return the driver of the started browser
+	 */
+	public WebDriver newDriver(int width, int height, Path downloads)
+	{
+		WebDriver driver = start(downloads);
 		driver.manage().window().setSize(new Dimension(width, height));
 		return driver;
 	}
 
-	abstract WebDriver start();
+	abstract WebDriver start(Path downloads);
 
 	private static boolean isHeadless()
 	{

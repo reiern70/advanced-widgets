@@ -11,6 +11,7 @@ import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.form.IFormSubmittingComponent;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
@@ -42,6 +43,14 @@ public class ButtonBehavior extends Behavior
 	/** The style sheet of the buttons. */
 	public static final ResourceReference CSS = new CssResourceReference(ButtonBehavior.class,
 		"antilia-button.css");
+
+	/**
+	 * The script marking a button busy, {@code Wicket.Button}; a busy button ignores clicks.
+	 *
+	 * @see ButtonDownloadBehavior
+	 */
+	public static final ResourceReference JS = new JavaScriptResourceReference(
+		ButtonBehavior.class, "antilia-button.js");
 
 	/** The CSS class of every button. */
 	public static final String CSS_CLASS = "ant-button";

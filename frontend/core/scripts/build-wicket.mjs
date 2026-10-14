@@ -26,6 +26,7 @@ const BANNER = '/*\n * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gm
 /** The scripts: their entry in src/wicket and their path in ui-components. */
 const SCRIPTS = [
 	['src/wicket/autocomplete.ts', 'com/antilia/widgets/autocomplete/antilia-autocomplete.js'],
+	['src/wicket/button.ts', 'com/antilia/widgets/button/antilia-button.js'],
 	['src/wicket/chips.ts', 'com/antilia/widgets/chips/antilia-chips.js'],
 	['src/wicket/clipboard.ts', 'com/antilia/widgets/clipboard/antilia-clipboard.js'],
 	['src/wicket/date-picker.ts', 'com/antilia/widgets/datepicker/antilia-date-picker.js'],

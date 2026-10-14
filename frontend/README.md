@@ -21,7 +21,9 @@ picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
 split panel, the tabs, the menus, the popovers, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
-and `AjaxActionButton` use), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
+and `AjaxActionButton` use; `setButtonBusy()` in `button.ts`, built as `antilia-button.js`, shows a
+button busy with a spinner while it ignores clicks, for the downloads of Wicket's `AjaxDownloadButton`
+and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
 `DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Notifications`, `Desktop` with its
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `DataTable`, `Tree` and `TreeGrid`, and

@@ -141,6 +141,47 @@
 	min-width: 2.875rem;
 }
 
+/*
+ * A button busy with what it started, a download for example (ant-button--busy, a state the button
+ * has in every look, with aria-busy): a spinner in the color of its text instead of its icon, or
+ * before its text.
+ */
+.ant-button--busy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45em;
+	cursor: progress;
+}
+
+.ant-button--busy::before {
+	content: '';
+	flex: none;
+	box-sizing: border-box;
+	width: 1.1em;
+	height: 1.1em;
+	border: 0.15em solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: ant-button-spin 0.75s linear infinite;
+}
+
+.ant-button--busy > .ant-button__icon {
+	display: none;
+}
+
+@keyframes ant-button-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ant-button--busy::before {
+		animation-duration: 2.5s;
+	}
+}
+
 /* buttons in a row, wrapping on narrow screens */
 .ant-button-bar {
 	display: flex;

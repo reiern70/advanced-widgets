@@ -7,7 +7,7 @@
  * The buttons of the theme: their look is the style sheet button.css, the same for Wicket's
  * ButtonBehavior and AjaxActionButton and for the React and Svelte Button, or the classes of
  * another look, such as Bootstrap's (see look.ts). A button is an element with these classes;
- * this module only names them.
+ * this module names them, and marks a button busy with what it started, a download for example.
  */
 
 import { ANTILIA_LOOK, type Look, lookClasses } from './look.js';
@@ -35,4 +35,60 @@ export function buttonClasses(options: { variant?: ButtonVariant; size?: ButtonS
 		look = ANTILIA_LOOK } = options;
 	return [lookClasses(look, 'button', `button-${variant}`, `button-${size}`,
 		iconOnly && 'button-icon-only'), className ?? ''].filter(Boolean).join(' ');
+}
+
+/** The class of a button busy with what it started, a download for example. */
+export const BUTTON_BUSY_CLASS = 'ant-button--busy';
+
+/**
+ * Marks a button busy with what it started, or done with it. Busy, it shows a spinner instead of
+ * its icon, or before its text, and screen readers hear it is busy (aria-busy); clicks on it are
+ * ignored once guardBusyButtons() ran, while it keeps the focus. The class is a state, not a look:
+ * the button has it in every look.
+ */
+export function setButtonBusy(button: Element | null | undefined, busy: boolean): void {
+	if (!button) {
+		return;
+	}
+	button.classList.toggle(BUTTON_BUSY_CLASS, busy);
+	if (busy) {
+		button.setAttribute('aria-busy', 'true');
+	} else {
+		button.removeAttribute('aria-busy');
+	}
+}
+
+/**
+ * @returns whether a button is busy with what it started
+ */
+export function isButtonBusy(button: Element | null | undefined): boolean {
+	return !!button?.classList.contains(BUTTON_BUSY_CLASS);
+}
+
+const guarded = new WeakMap<Document, () => void>();
+
+/**
+ * Makes the busy buttons of a document ignore clicks, by the mouse or the keyboard: a click on one
+ * is stopped before any listener of the button hears it. Once per document: the next calls return
+ * the same function, which removes the guard.
+ */
+export function guardBusyButtons(doc: Document = document): () => void {
+	const existing = guarded.get(doc);
+	if (existing) {
+		return existing;
+	}
+	const guard = (event: Event): void => {
+		const target = event.target instanceof Element ? event.target : null;
+		if (isButtonBusy(target?.closest('.' + BUTTON_BUSY_CLASS))) {
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		}
+	};
+	doc.addEventListener('click', guard, true);
+	const remove = (): void => {
+		doc.removeEventListener('click', guard, true);
+		guarded.delete(doc);
+	};
+	guarded.set(doc, remove);
+	return remove;
 }

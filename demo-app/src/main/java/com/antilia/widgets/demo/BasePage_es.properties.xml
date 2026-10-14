@@ -58,6 +58,8 @@
 	<entry key="demo.datePicker.description">Selectores de fecha y hora que hablan cualquier idioma y región: el formato del campo, el idioma del calendario, el primer día de la semana y el reloj de 12 o 24 horas; escrita o elegida, con ratón o teclado, comprobada en el servidor.</entry>
 	<entry key="demo.buttons">Botones</entry>
 	<entry key="demo.buttons.description">Un mismo aspecto para los botones de Wicket, React y Svelte: cuatro variantes, tres tamaños, texto, icono o ambos, acciones por Ajax, y cualquier enlace o botón de formulario convertido en uno por un behavior.</entry>
+	<entry key="demo.downloads">Descargas</entry>
+	<entry key="demo.downloads.description">Archivos de todo tipo desde los botones del tema: por Ajax en el navegador, a través de un iframe oculto, en una pestaña nueva o en la misma ventana, ocupados mientras llegan; enlaces, una URL para compartir y el informe que describe un formulario.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas con los colores del tema, iguales en todos los navegadores, dibujadas sobre el desplazamiento nativo para que la rueda, las teclas y el tacto funcionen como siempre, y que siguen al contenido cambiado por Ajax.</entry>
 	<entry key="demo.splitPanel">Panel dividido</entry>

@@ -38,6 +38,8 @@ import com.antilia.widgets.demo.data.Accesses;
 import com.antilia.widgets.demo.data.Database;
 import com.antilia.widgets.demo.datepicker.DatePickerPage;
 import com.antilia.widgets.demo.desktop.DesktopPage;
+import com.antilia.widgets.demo.download.DownloadsPage;
+import com.antilia.widgets.demo.download.DownloadsResource;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.looks.LooksPage;
@@ -185,6 +187,7 @@ public class WicketApplication extends WebApplication
 		mountPage("palette", PalettePage.class);
 		mountPage("date-picker", DatePickerPage.class);
 		mountPage("buttons", ButtonsPage.class);
+		mountPage("downloads", DownloadsPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
 		mountPage("tabs", TabsPage.class);
@@ -204,6 +207,7 @@ public class WicketApplication extends WebApplication
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
+		mountResource(DownloadsResource.PATH, DownloadsResource.REFERENCE);
 	}
 
 	/**
