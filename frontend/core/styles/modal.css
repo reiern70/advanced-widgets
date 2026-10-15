@@ -56,6 +56,12 @@
 	flex-direction: column;
 }
 
+/* with a body, only the body scrolls: what is positioned in it against the dialog, such as
+   visually hidden text, would otherwise scroll the header away with the rest */
+.dialog-theme-default .modal-dialog .modal-dialog-content:has(> .modal-dialog-body, > .antilia-scrollbar) {
+	overflow: hidden;
+}
+
 .dialog-theme-default .modal-dialog-header {
 	display: flex;
 	flex: none;

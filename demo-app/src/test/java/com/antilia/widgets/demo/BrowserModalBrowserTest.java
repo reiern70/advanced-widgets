@@ -13,10 +13,12 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.WheelInput;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
@@ -70,6 +72,21 @@ class BrowserModalBrowserTest extends FrameworkAppsTestCase
 			"wide: " + dialog("what-runs-where").getSize());
 		assertEquals(Demos.all().size(), driver.findElements(
 			By.cssSelector("#what-runs-where .support-matrix__table tbody tr")).size());
+
+		// only the body scrolls, the header stays where it is
+		WebElement header = driver.findElement(By.cssSelector("#what-runs-where .modal-dialog-header"));
+		WebElement body = driver.findElement(By.cssSelector("#what-runs-where .modal-dialog-body"));
+		String top = "return arguments[0].getBoundingClientRect().top;";
+		Object before = ((JavascriptExecutor)driver).executeScript(top, header);
+		new Actions(driver).scrollFromOrigin(WheelInput.ScrollOrigin.fromElement(header), 0, 600)
+			.perform();
+		new Actions(driver).scrollFromOrigin(WheelInput.ScrollOrigin.fromElement(body), 0, 600)
+			.perform();
+		wait.until(d -> ((Number)((JavascriptExecutor)d).executeScript(
+			"return arguments[0].scrollTop;", body)).intValue() > 0);
+		assertEquals(before, ((JavascriptExecutor)driver).executeScript(top, header));
+		assertEquals(0L, ((Number)((JavascriptExecutor)driver).executeScript(
+			"return arguments[0].closest('.modal-dialog-content').scrollTop;", body)).longValue());
 
 		new Actions(driver).sendKeys(Keys.ESCAPE).perform();
 		waitClosed("what-runs-where");
