@@ -155,6 +155,9 @@ public class WicketApplication extends WebApplication
 		accounts.addDefaults();
 		accounts.addFromSettings();
 
+		// a client keeping no cookies gets its pages instead of redirects for good
+		setPageRendererProvider(CookielessPageRenderer::new);
+
 		// the fields that failed their validation say so, to assistive technologies and the eye
 		getComponentInitializationListeners().add(InvalidFieldMarker::install);
 
