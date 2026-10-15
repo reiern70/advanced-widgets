@@ -60,13 +60,15 @@ public class Accesses
 	}
 
 	/**
+	 * @param filter
+	 *            which accesses
 	 * @param pageable
 	 *            the page and the order
-	 * @return a page of the accesses
+	 * @return a page of the accesses the filter lets through
 	 */
-	public Page<Access> page(Pageable pageable)
+	public Page<Access> page(AccessFilter filter, Pageable pageable)
 	{
-		return accesses.findAll(pageable);
+		return accesses.findAll(filter.toSpecification(), pageable);
 	}
 
 	/**
@@ -75,6 +77,16 @@ public class Accesses
 	public long count()
 	{
 		return accesses.count();
+	}
+
+	/**
+	 * @param filter
+	 *            which accesses
+	 * @return how many accesses the filter lets through
+	 */
+	public long count(AccessFilter filter)
+	{
+		return accesses.count(filter.toSpecification());
 	}
 
 	/**

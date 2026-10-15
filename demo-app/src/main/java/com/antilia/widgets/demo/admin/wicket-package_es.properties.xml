@@ -24,7 +24,7 @@
 	<entry key="yes">Sí</entry>
 	<entry key="no">No</entry>
 	<entry key="filter.name">Nombre</entry>
-	<entry key="filter.name.placeholder">Cuenta, nombre o apellido</entry>
+	<entry key="filter.name.placeholder">Cuenta o nombre</entry>
 	<entry key="filter.email">Correo</entry>
 	<entry key="filter.email.placeholder">Parte del correo</entry>
 	<entry key="filter.country">País</entry>
@@ -38,6 +38,12 @@
 	<entry key="localTime">Hora local del visitante</entry>
 	<entry key="timeZone">Zona horaria</entry>
 	<entry key="browser">Navegador</entry>
+	<entry key="filter.user">Usuario</entry>
+	<entry key="filter.user.placeholder">Parte del usuario</entry>
+	<entry key="filter.part">Parte</entry>
+	<entry key="part.nullValid">Todas las partes</entry>
+	<entry key="filter.address">Desde</entry>
+	<entry key="filter.address.placeholder">Parte de la dirección</entry>
 	<entry key="jobRole">Función</entry>
 	<entry key="JobRole.DEVELOPER">Desarrollador</entry>
 	<entry key="JobRole.ARCHITECT">Arquitecto</entry>

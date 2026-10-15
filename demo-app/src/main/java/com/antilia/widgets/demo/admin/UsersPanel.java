@@ -7,7 +7,6 @@ package com.antilia.widgets.demo.admin;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
@@ -20,9 +19,6 @@ import com.antilia.widgets.demo.data.JobRole;
 import com.antilia.widgets.demo.data.Language;
 import com.antilia.widgets.demo.data.User;
 import com.antilia.widgets.demo.data.UserFilter;
-import com.antilia.widgets.dynamicdatatable.AbstractDynamicToolbar;
-import com.antilia.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
-import com.antilia.widgets.dynamicdatatable.DynamicNavigationToolbar;
 import com.antilia.widgets.dynamicdatatable.IIdentifiableDynamicDataProvider;
 import com.antilia.widgets.dynamicdatatable.SortableDynamicDataProvider;
 
@@ -56,41 +52,29 @@ class UsersPanel extends Panel
 			new AdminColumn<>("created", "created", user -> AdminTables.format(user.getCreated())));
 
 		UsersProvider provider = new UsersProvider(filter);
-		add(new Label("count", () -> provider.size()));
-		add(AdminTables.configure(new BeanBasedDynamicDataTable<>("table", columns, provider,
-			AdminPage.ROWS_PER_PAGE)
+		add(new Label("count", () -> provider.size()).setOutputMarkupId(true));
+		FilteredAdminTable<User> table = new FilteredAdminTable<>("table", columns, provider)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected AbstractDynamicToolbar newNavigationToolbar(String id,
-				ToolbarPosition position)
+			protected AdminFilterPanel newFilter(String id)
 			{
-				BeanBasedDynamicDataTable<User, Long, String> table = this;
-				return new DynamicNavigationToolbar<>(id, this, position)
+				return new UsersFilterPanel(id, filter)
 				{
 					private static final long serialVersionUID = 1L;
 
 					@Override
-					protected Component newPrefix(String id)
+					protected void onFilter(AjaxRequestTarget target)
 					{
-						return new UsersFilterPanel(id, filter)
-						{
-							private static final long serialVersionUID = 1L;
-
-							@Override
-							protected void onFilter(AjaxRequestTarget target)
-							{
-								table.setCurrentPage(0);
-								table.refresh(target);
-								target.add(UsersPanel.this.get("count"));
-							}
-						};
+						filtered(target);
+						target.add(UsersPanel.this.get("count"));
 					}
 				};
 			}
-		}, "users.csv"));
-		get("count").setOutputMarkupId(true);
+		};
+		table.setColumnProportions(1.5, 1.9, 1, 1, 1.1, 1, 0.9, 1, 1.2, 1.5);
+		add(AdminTables.configure(table, "users.csv"));
 	}
 
 	/**

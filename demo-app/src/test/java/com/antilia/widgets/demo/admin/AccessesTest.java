@@ -10,12 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import org.apache.wicket.RuntimeConfigurationType;
+import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.util.string.StringValue;
 import org.apache.wicket.util.tester.WicketTester;
+import org.apache.wicket.util.visit.IVisit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -140,6 +143,57 @@ class AccessesTest
 		tester.assertContains("Europe/Berlin");
 		tester.assertContains("2026-10-10 09:00:00");
 		tester.assertContains(">admin<");
+	}
+
+	@Test
+	void theAccessesAreFilteredByUserPartAndAddress()
+	{
+		record("ada@example.com", true, "200.46.55.1");
+		record(Access.UNKNOWN, false, "66.249.66.5");
+		record(Access.UNKNOWN, false, "66.249.66.4");
+		tester.startPage(HomePage.class);
+		DemoSession.get().signIn("admin", Role.ADMIN);
+		tester.startPage(AdminPage.class);
+		tester.clickLink("tabs:tabs-container:tabs:1:link");
+		tester.assertLabel("tabs:panel:count", "4");
+
+		filter("user", "ADA", "input");
+		tester.assertLabel("tabs:panel:count", "1");
+		tester.assertContains("200.46.55.1");
+		tester.assertContainsNot("66.249.66.5");
+
+		filter("user", "", "input");
+		filter("part", "true", "change");
+		tester.assertLabel("tabs:panel:count", "1");
+		filter("part", "false", "change");
+		tester.assertLabel("tabs:panel:count", "3");
+
+		filter("part", "", "change");
+		filter("address", "66.249.", "input");
+		tester.assertLabel("tabs:panel:count", "2");
+		filter("user", "unknown", "input");
+		tester.assertLabel("tabs:panel:count", "2");
+		filter("user", "admin", "input");
+		tester.assertLabel("tabs:panel:count", "0");
+	}
+
+	private static void record(String user, boolean privatePart, String address)
+	{
+		Accesses.get().record(null,
+			() -> new Access(null, address, "Mozilla/5.0", Instant.now()), access -> {
+				access.setUserName(user);
+				access.setPrivatePart(privatePart);
+			});
+	}
+
+	private void filter(String field, String value, String event)
+	{
+		AccessesFilterPanel panel = tester.getLastRenderedPage().visitChildren(
+			AccessesFilterPanel.class,
+			(AccessesFilterPanel component, IVisit<AccessesFilterPanel> visit) -> visit.stop(component));
+		FormComponent<?> component = (FormComponent<?>)panel.get(field);
+		tester.getRequest().getPostParameters().setParameterValue(component.getInputName(), value);
+		tester.executeAjaxEvent(component, event);
 	}
 
 	private void postTime(String zone, String local)
