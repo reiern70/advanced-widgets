@@ -254,6 +254,29 @@ const PARTS = {
 	'progress-value': ['base', 'antilia-progress-bar-value', ''],
 	'progress-label': ['base', 'antilia-progress-bar-label', ''],
 
+	// uploads: the picker drawn over a file input, as a button or a zone to drop files on, and the
+	// progress of an upload
+	'file-picker': ['base', 'antilia-file-picker', ''],
+	'file-picker-choose': ['base', 'antilia-file-picker-choose', ''],
+	'file-picker-zone': ['base', 'antilia-file-picker-zone', 'card card-body'],
+	'file-picker-zone-over': ['state', 'antilia-file-picker-zone-over', 'border-primary'],
+	'file-picker-icon': ['base', 'antilia-file-picker-icon', ''],
+	'file-picker-prompt': ['base', 'antilia-file-picker-prompt', ''],
+	'file-picker-summary': ['base', 'antilia-file-picker-summary', 'form-text'],
+	'file-picker-clear': ['base', 'antilia-file-picker-clear', ''],
+	'file-picker-files': ['base', 'antilia-file-picker-files', 'list-group list-group-flush'],
+	'file-picker-file': ['base', 'antilia-file-picker-file', 'list-group-item'],
+	'file-picker-name': ['base', 'antilia-file-picker-name', ''],
+	'file-picker-size': ['base', 'antilia-file-picker-size', 'text-body-secondary'],
+	'file-picker-remove': ['base', 'antilia-file-picker-remove', ''],
+	'file-picker-file-invalid': ['state', 'antilia-file-picker-file-invalid', 'list-group-item-danger'],
+	'file-picker-zone-invalid': ['state', 'antilia-file-picker-zone-invalid', 'border-danger'],
+	'file-picker-error': ['base', 'antilia-file-picker-error', 'invalid-feedback d-block'],
+	'upload-progress': ['base', 'antilia-upload-progress', ''],
+	'upload-status': ['base', 'antilia-upload-status', 'form-text'],
+	'upload-status-done': ['state', 'antilia-upload-status-done', 'text-success'],
+	'upload-status-failed': ['state', 'antilia-upload-status-failed', 'text-danger'],
+
 	// collapsible panels
 	'collapsible-frame': ['base', 'antilia-collapsible-frame', 'card'],
 	'collapsible': ['base', 'antilia-collapsible', ''],

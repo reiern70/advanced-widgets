@@ -34,6 +34,7 @@ import com.antilia.widgets.demo.tabs.TabsPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
 import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.demo.tree.TreeGridPage;
+import com.antilia.widgets.demo.upload.UploadPage;
 
 /**
  * The demo pages, in the order the home page lists them and the previous and next links of a demo
@@ -110,6 +111,7 @@ public final class Demos
 		new Demo("datePicker", "forms", DatePickerPage.class, true, true),
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("downloads", "forms", DownloadsPage.class, true, false),
+		new Demo("upload", "forms", UploadPage.class, true, false),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
 		new Demo("tabs", "layout", TabsPage.class, true, true),

@@ -46,6 +46,7 @@ import com.antilia.widgets.theme.Looks;
 import com.antilia.widgets.theme.Theme;
 import com.antilia.widgets.theme.ThemeBehavior;
 import com.antilia.widgets.theme.ThemeChoice;
+import com.antilia.widgets.throttle.ThrottleButton;
 
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
@@ -122,6 +123,9 @@ public abstract class BasePage extends WebPage
 			}
 		};
 		settings.add(ajaxEngine.add(newAjaxEngineChoice("ajaxEngine")));
+		// a demo can be seen as on a slow network: the server slows down for the session
+		add(this instanceof DemoPage ? new ThrottleButton("throttle")
+			: new WebMarkupContainer("throttle").setVisible(false));
 
 		add(new BookmarkablePageLink<>("register", RegisterPage.class)
 		{

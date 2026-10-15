@@ -47,7 +47,8 @@ const SCRIPTS = [
 	['src/wicket/split-panel.ts', 'com/antilia/widgets/split/antilia-split-panel.js'],
 	['src/wicket/tabs.ts', 'com/antilia/widgets/tabs/antilia-tabs.js'],
 	['src/wicket/templates.ts', 'com/antilia/widgets/template/antilia-templates.js'],
-	['src/wicket/tree.ts', 'com/antilia/widgets/tree/json-tree.js']
+	['src/wicket/tree.ts', 'com/antilia/widgets/tree/json-tree.js'],
+	['src/wicket/upload.ts', 'com/antilia/widgets/upload/antilia-upload.js']
 ];
 
 /** The style sheets and the images they use: their file in styles and their path in ui-components. */
@@ -74,7 +75,8 @@ const STYLES = [
 	['styles/scrollbar.css', 'com/antilia/widgets/scrollbar/antilia-scrollbar.css'],
 	['styles/split-panel.css', 'com/antilia/widgets/split/antilia-split-panel.css'],
 	['styles/tabs.css', 'com/antilia/widgets/tabs/antilia-tabs.css'],
-	['styles/tree.css', 'com/antilia/widgets/tree/antilia-tree.css']
+	['styles/tree.css', 'com/antilia/widgets/tree/antilia-tree.css'],
+	['styles/upload.css', 'com/antilia/widgets/upload/antilia-upload.css']
 ];
 
 await rm(out, { recursive: true, force: true });

@@ -328,6 +328,12 @@ a.brand { color: inherit; text-decoration: none; }
 	gap: 16px;
 	min-width: 0;
 }
+/* the gauge slowing the session down, closer to its neighbours than they are to each other */
+.topbar__throttle {
+	display: flex;
+	align-items: center;
+	margin-inline: -6px;
+}
 .topbar__settings {
 	display: flex;
 	align-items: center;

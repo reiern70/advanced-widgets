@@ -60,6 +60,8 @@
 	<entry key="demo.buttons.description">One look for the buttons of Wicket, React and Svelte: four variants, three sizes, a text, an icon or both, actions via Ajax, and any link or form button turned into one by a behavior.</entry>
 	<entry key="demo.downloads">Downloads</entry>
 	<entry key="demo.downloads.description">Files of every kind from the buttons of the theme: via Ajax into the browser, through a hidden iframe, in a new tab or the same window, busy while they come; links, a URL to share and the report a form describes.</entry>
+	<entry key="demo.upload">Upload</entry>
+	<entry key="demo.upload.description">Files sent in a form, by Ajax or to a resource, chosen with a button of the theme or dropped on a zone, with a progress bar of the theme, a guard keeping the user on the page, and a way to slow the uploads down.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>

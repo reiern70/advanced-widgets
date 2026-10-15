@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="upload-demo">
+	<div wicket:id="speed">[the speed of the uploads]</div>
+	<div wicket:id="cases">[the cases, as pills]</div>
+	<section wicket:id="received" class="upload-demo__received">
+		<h3><wicket:message key="received"/></h3>
+		<table wicket:id="table" class="upload-demo__table">
+			<thead>
+				<tr>
+					<th><wicket:message key="received.name"/></th>
+					<th><wicket:message key="received.size"/></th>
+					<th><wicket:message key="received.type"/></th>
+					<th><wicket:message key="received.way"/></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr wicket:id="files">
+					<td wicket:id="name">[name]</td>
+					<td wicket:id="size" class="upload-demo__number">[size]</td>
+					<td wicket:id="type">[type]</td>
+					<td wicket:id="way">[way]</td>
+				</tr>
+			</tbody>
+		</table>
+		<p wicket:id="none" class="upload-demo__hint"><wicket:message key="received.none"/></p>
+	</section>
+</div>
+<wicket:fragment wicket:id="formCase">
+	<section class="upload-demo__case">
+		<p class="upload-demo__hint"><wicket:message key="form.hint"/></p>
+		<form wicket:id="form" class="upload-demo__form">
+			<div class="upload-demo__field">
+				<label wicket:for="description"><wicket:message key="description"/></label>
+				<input type="text" wicket:id="description" class="upload-demo__text"/>
+			</div>
+			<div class="upload-demo__field">
+				<label wicket:for="files"><wicket:message key="files"/></label>
+				<input type="file" wicket:id="files"/>
+				<p wicket:id="selection" class="upload-demo__selection">[what the browser told]</p>
+				<p wicket:id="limits" class="upload-demo__hint">[limits]</p>
+				<label class="upload-demo__check"><input type="checkbox" wicket:id="several"/> <wicket:message key="several"/></label>
+			</div>
+			<div wicket:id="progress"></div>
+			<div class="ant-button-bar">
+				<button type="submit" wicket:id="submit"><wicket:message key="form.submit"/></button>
+				<button type="submit" wicket:id="ajaxSubmit"><wicket:message key="form.ajaxSubmit"/></button>
+			</div>
+		</form>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="resourceCase">
+	<section class="upload-demo__case">
+		<p class="upload-demo__hint"><wicket:message key="resource.hint"/></p>
+		<div class="upload-demo__field">
+			<label wicket:for="resourceFiles"><wicket:message key="files"/></label>
+			<input type="file" wicket:id="resourceFiles"/>
+			<p wicket:id="resourceLimits" class="upload-demo__hint">[limits]</p>
+		</div>
+		<div class="upload-demo__checks">
+			<label class="upload-demo__check"><input type="checkbox" wicket:id="several"/> <wicket:message key="several"/></label>
+			<label class="upload-demo__check"><input type="checkbox" wicket:id="keepOnPage"/> <wicket:message key="keepOnPage"/></label>
+			<label class="upload-demo__check"><input type="checkbox" wicket:id="blockRequests"/> <wicket:message key="blockRequests"/></label>
+		</div>
+		<div wicket:id="resourceProgress"></div>
+		<div wicket:id="buttons" class="ant-button-bar">
+			<button wicket:id="upload">[upload]</button>
+			<button wicket:id="cancel">[cancel]</button>
+		</div>
+		<div class="upload-demo__hooks">
+			<h4><wicket:message key="hooks"/></h4>
+			<p class="upload-demo__hint"><wicket:message key="hooks.hint"/></p>
+			<ol wicket:id="hookLog" class="upload-demo__hook-log" aria-live="polite"></ol>
+		</div>
+		<div class="upload-demo__requests">
+			<p class="upload-demo__hint"><wicket:message key="requests.hint"/></p>
+			<div class="upload-demo__request">
+				<button wicket:id="blocked">[stopped while uploading]</button>
+				<span wicket:id="blockedCount">[clicks]</span>
+			</div>
+			<div class="upload-demo__request">
+				<button wicket:id="bypassing">[goes on while uploading]</button>
+				<span wicket:id="bypassingCount">[clicks]</span>
+			</div>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="dropCase">
+	<div class="upload-demo__columns">
+		<section class="upload-demo__case">
+			<h3><wicket:message key="drop.resource"/></h3>
+			<p class="upload-demo__hint"><wicket:message key="drop.resource.hint"/></p>
+			<label class="upload-demo__check"><input type="checkbox" wicket:id="severalDropped"/> <wicket:message key="several"/></label>
+			<input type="file" wicket:id="dropFiles"/>
+			<div wicket:id="dropProgress"></div>
+		</section>
+		<section class="upload-demo__case">
+			<h3><wicket:message key="drop.form"/></h3>
+			<p class="upload-demo__hint"><wicket:message key="drop.form.hint"/></p>
+			<label class="upload-demo__check"><input type="checkbox" wicket:id="severalImages"/> <wicket:message key="several"/></label>
+			<form wicket:id="dropForm" class="upload-demo__form">
+				<input type="file" wicket:id="images" accept="image/*"/>
+				<div wicket:id="dropFormProgress"></div>
+				<div class="ant-button-bar">
+					<button type="submit" wicket:id="send"><wicket:message key="drop.send"/></button>
+				</div>
+			</form>
+		</section>
+	</div>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

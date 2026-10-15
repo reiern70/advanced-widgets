@@ -73,6 +73,15 @@ export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,
 	TreeTexts } from './tree.js';
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';
+export { accepts, DEFAULT_FILE_PICKER_TEXTS, DEFAULT_UPLOAD_PROGRESS_TEXTS, FILE_PICKER_DESIGNS,
+	FilePicker, filePicker, filesSize, formatBytes, formatDuration, setFiles, UPLOAD_BLOCKED_ATTRIBUTE,
+	UPLOAD_BLOCKED_EVENT, UPLOAD_BYPASS_ATTRIBUTE, UPLOAD_END_EVENT, UPLOAD_REFUSED_EVENT,
+	UPLOAD_START_EVENT, uploadEnded, UploadGuard, uploadProblems, UploadProgress, uploadRefused,
+	uploadStarted } from './upload.js';
+export type { FilePickerDesign, FilePickerOptions, FilePickerTexts, GuardedRequest, UploadEndDetail,
+	UploadGuardHandle, UploadGuardOptions, UploadOutcome, UploadProblem, UploadProblemKind,
+	UploadProgressOptions, UploadProgressTexts, UploadRefusedDetail, UploadStartDetail }
+	from './upload.js';
 export { BUTTON_BUSY_CLASS, BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses, guardBusyButtons, isButtonBusy,
 	setButtonBusy } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';

@@ -1,0 +1,249 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The file pickers drawn over a file input and the progress of uploads (upload.ts), in the colors
+ * of the theme (see antilia-theme.css), with fallbacks for pages without a theme. The buttons of a
+ * picker are buttons of the theme (button.css), the bar of a progress a progress bar of the theme
+ * (progress-bar.css): both style sheets are needed too.
+ */
+
+/* the input stays in the page, holding the files and taking part in the form, unseen */
+.antilia-file-picker-native {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+.antilia-file-picker [hidden],
+.antilia-upload-progress [hidden],
+.antilia-upload-progress[hidden] {
+	display: none !important;
+}
+
+/* a button, what was chosen and the button clearing it, in a row wrapping on narrow screens */
+.antilia-file-picker {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em 0.75em;
+	max-width: 100%;
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-file-picker-summary {
+	min-width: 0;
+	font-size: 0.9em;
+	overflow-wrap: anywhere;
+}
+
+.antilia-file-picker .antilia-file-picker-clear {
+	color: inherit;
+}
+
+.antilia-file-picker-button.antilia-file-picker-over .antilia-file-picker-choose {
+	outline: 2px dashed var(--antilia-theme-primary, #2563eb);
+	outline-offset: 2px;
+}
+
+/* the files chosen, when more than one */
+.antilia-file-picker .antilia-file-picker-files {
+	flex-basis: 100%;
+	box-sizing: border-box;
+	max-height: 12em;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+	list-style: none;
+	border: 1px solid var(--antilia-theme-border, #c4c9d4);
+	border-radius: var(--antilia-look-radius-sm, 0.375rem);
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-file-picker .antilia-file-picker-file {
+	display: flex;
+	align-items: center;
+	gap: 0.5em 1em;
+	padding: 0.15em 0.25em 0.15em 0.75em;
+	border: 0;
+	border-top: 1px solid var(--antilia-theme-border, #c4c9d4);
+	font-size: 0.9em;
+}
+
+/* a file larger than a file may be */
+.antilia-file-picker .antilia-file-picker-file.antilia-file-picker-file-invalid {
+	color: var(--antilia-theme-error, #b91c1c);
+}
+
+.antilia-file-picker .antilia-file-picker-remove {
+	flex: none;
+	color: inherit;
+}
+
+.antilia-file-picker .antilia-file-picker-file:first-child {
+	border-top: 0;
+}
+
+.antilia-file-picker-name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.antilia-file-picker-size {
+	flex: none;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.8;
+}
+
+/* the zone files are dropped on, the whole of it opening the dialog too */
+.antilia-file-picker-drop-zone {
+	display: block;
+}
+
+.antilia-file-picker .antilia-file-picker-zone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	box-sizing: border-box;
+	min-height: 9em;
+	padding: 1.25em 1em;
+	border: 2px dashed var(--antilia-theme-border, #9aa5b1);
+	border-radius: var(--antilia-look-radius, 0.6em);
+	background: var(--antilia-theme-surface-alt, #f8f9fb);
+	color: var(--antilia-theme-text, #2b1d12);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.12s, background-color 0.12s;
+}
+
+.antilia-file-picker .antilia-file-picker-zone:hover {
+	border-color: var(--antilia-theme-accent, #2563eb);
+}
+
+.antilia-file-picker .antilia-file-picker-zone.antilia-file-picker-zone-over {
+	border-style: solid;
+	border-color: var(--antilia-theme-primary, #2563eb);
+	background: var(--antilia-theme-highlight, #eef2ff);
+}
+
+/* the button in the zone reads as a word of its prompt */
+.antilia-file-picker .antilia-file-picker-zone .antilia-file-picker-choose {
+	min-height: 0;
+	padding: 0.1em 0.3em;
+	vertical-align: baseline;
+}
+
+.antilia-file-picker-icon {
+	width: 2.5em;
+	height: 2.5em;
+	color: var(--antilia-theme-primary, #2563eb);
+}
+
+.antilia-file-picker-status {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25em 0.5em;
+}
+
+.antilia-file-picker-drop-zone .antilia-file-picker-files {
+	margin-top: 0.5em;
+}
+
+/* what keeps the files chosen from being sent: the limits they break */
+.antilia-file-picker .antilia-file-picker-error {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--antilia-theme-error, #b91c1c);
+	font-size: 0.875em;
+	overflow-wrap: anywhere;
+}
+
+.antilia-file-picker-drop-zone .antilia-file-picker-error {
+	margin-top: 0.35em;
+}
+
+.antilia-file-picker .antilia-file-picker-zone.antilia-file-picker-zone-invalid {
+	border-color: var(--antilia-theme-error, #b91c1c);
+}
+
+.antilia-file-picker-disabled {
+	opacity: 0.6;
+}
+
+.antilia-file-picker-disabled .antilia-file-picker-zone {
+	cursor: not-allowed;
+}
+
+/* while its files are being sent */
+.antilia-file-picker[aria-busy] .antilia-file-picker-zone {
+	cursor: progress;
+}
+
+/* the progress of an upload: the bar, then what was sent, how fast and how long it still takes */
+.antilia-upload-progress {
+	display: grid;
+	gap: 0.35em;
+	margin: 0.5em 0;
+}
+
+.antilia-upload-status {
+	min-height: 1.3em;
+	color: var(--antilia-theme-text, #2b1d12);
+	font-size: 0.875em;
+	font-variant-numeric: tabular-nums;
+}
+
+.antilia-upload-status.antilia-upload-status-done {
+	color: var(--antilia-theme-success, #15803d);
+}
+
+.antilia-upload-status.antilia-upload-status-failed {
+	color: var(--antilia-theme-error, #b91c1c);
+}
+
+/* an element whose request the guard stopped while an upload runs, for a moment */
+[data-antilia-upload-blocked] {
+	outline: 2px solid var(--antilia-theme-warning, #d97706);
+	outline-offset: 2px;
+	animation: antilia-upload-blocked 0.4s ease-in-out;
+}
+
+@keyframes antilia-upload-blocked {
+	0%,
+	100% {
+		translate: 0;
+	}
+
+	25% {
+		translate: -3px;
+	}
+
+	75% {
+		translate: 3px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-antilia-upload-blocked] {
+		animation: none;
+	}
+
+	.antilia-file-picker .antilia-file-picker-zone {
+		transition: none;
+	}
+}

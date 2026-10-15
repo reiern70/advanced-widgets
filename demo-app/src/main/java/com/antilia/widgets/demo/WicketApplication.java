@@ -11,6 +11,7 @@ import org.apache.wicket.csp.CSPDirectiveSrcValue;
 import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.form.upload.resource.FileUploadResourceReference;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
@@ -62,7 +63,10 @@ import com.antilia.widgets.demo.tree.TreePage;
 import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.demo.tree.TreeGridPage;
 import com.antilia.widgets.demo.tree.TreeOfLifeResource;
+import com.antilia.widgets.demo.upload.DemoUploadsFileManager;
+import com.antilia.widgets.demo.upload.UploadPage;
 import com.antilia.widgets.theme.Looks;
+import com.antilia.widgets.throttle.Throttle;
 
 /**
  * Application object for your web application.
@@ -151,6 +155,16 @@ public class WicketApplication extends WebApplication
 			getStoreSettings().setFileStoreFolder(pageStore);
 		}
 
+		// the upload demo: the progress of uploads the browser cannot follow is asked of the
+		// server, and the files sent to a resource go to a folder only until the page told of them
+		getApplicationSettings().setUploadProgressUpdatesEnabled(true);
+		mountResource("uploads", FileUploadResourceReference.createNewInstance(
+			new DemoUploadsFileManager(DemoUploadsFileManager.defaultFolder())));
+		// the session that asks for it waits before its Ajax requests and sends files slowly, to
+		// see the demos as on a slow network: the button of the top bar of a demo opens the
+		// settings, which the upload demo shows too
+		Throttle.install(this);
+
 		// leave out <wicket:child> and the like also in development, they would break the layout
 		getMarkupSettings().setStripWicketTags(true);
 
@@ -188,6 +202,7 @@ public class WicketApplication extends WebApplication
 		mountPage("date-picker", DatePickerPage.class);
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("downloads", DownloadsPage.class);
+		mountPage("upload", UploadPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
 		mountPage("tabs", TabsPage.class);

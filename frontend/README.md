@@ -19,7 +19,8 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, the tabs, the menus, the popovers, the notifications, the desktop, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+split panel, the tabs, the menus, the popovers, the notifications, the desktop, the uploads (`upload.ts`, built as
+`antilia-upload.js`), and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use; `setButtonBusy()` in `button.ts`, built as `antilia-button.js`, shows a
 button busy with a spinner while it ignores clicks, for the downloads of Wicket's `AjaxDownloadButton`
@@ -242,6 +243,47 @@ menu, opens windows of the types the page registers (`windowTypes`, `registerWin
 one without asks the page through `onOpenWindow`; React and Svelte render the windows of their
 types themselves, and Wicket adds a `DesktopWindow` the type creates by Ajax. Closed, those windows
 are gone.
+
+The uploads (`upload.ts`, built as `antilia-upload.js` and `antilia-upload.css` for Wicket's
+`FilePickerBehavior`, `UploadProgressBar` and `UploadToResourceField`) draw a file input the same in
+every browser and follow what it sends. `FilePicker` hides the input, which stays in the page and
+holds the files, and puts a picker right after it, in the look of the page: a button of the theme
+opening the browser's dialog (`design: 'button'`), or a zone the files are dropped on, with a button
+in it (`'drop-zone'`), then what was chosen, the name and the size of a file or the list of
+several, and a button clearing them. Files dropped on the picker go into the input, those its
+`accept` takes and only the first unless it is `multiple`, and the input fires `input` and `change`,
+so a form, an Ajax behavior or the binding of a framework gets them as if chosen in the dialog; the
+picker tells the names of the others. A `multiple` input keeps the files chosen before: files chosen
+in the dialog or dropped are added to them, and each has a button taking it out of the list. Given
+the limits of the server (`maxSize`, `fileMaxSize`, `fileCountMax`, and `uniqueNames` where it
+keeps one file of each name), the picker tells at once which
+the files break (`problems()`, `uploadProblems(element)`), and while its files are being sent it lets
+nothing change. `UploadProgress` draws the progress of the uploads of a source,
+an input or a form, into an element the framework renders empty, hidden until an upload starts: a
+progress bar of the theme (`progress-bar.css`), what was sent of how much, how fast and how long it
+still takes, then whether it went well, or why not: the message of the server, the HTTP status it
+answered, or that the connection broke off. `uploadStarted(source, xhr)`, `uploadEnded(source,
+outcome, message, status)` and `uploadRefused(source, message)`, for files not sent as they break a
+limit, tell it. It asks the server how far it got reading the files, at `statusUrl` every
+`pollMillis`, which is what arrived; without one it follows the progress events of the request, which
+count what the browser handed to the network, whose buffers may hold megabytes the server did not
+read yet. `UploadGuard.begin()` asks before the page is left until the upload ends and, with
+`requests`, stops the other requests of the page meanwhile: `UploadGuard.blocks(request)` lets go
+the requests of an element in one marked `data-antilia-upload-bypass`, those marked to bypass and
+those to the URLs the upload allows, and marks the element of a request it stopped with
+`data-antilia-upload-blocked` for a moment, which the style sheet outlines, and the progress tells.
+In Wicket, `wicket/upload.ts` gives every Ajax request a precondition asking the guard (bypassed
+with `UploadGuard.bypass()` in Java), follows the request of a multipart form sent by Ajax where
+the engine gives it to `/ajax/call/beforeSend` (the plain JavaScript one does), and the post of
+one sent the usual way, sending neither while the files break a limit, and ends the upload when its
+request ends should Wicket not tell; `UploadToResourceField`, Wicket's `FileUploadToResourceField`
+telling its uploads around the hooks of Wicket's field, which stay the page's, guards them, lets
+the field's own callback go, sends one upload at a time and none breaking a limit, and tells the
+server only errors it has words for, and the files received by POST, however many they are. The server tells the progress with
+`UploadStatusResource`, from what Wicket keeps of an upload with
+`setUploadProgressUpdatesEnabled(true)`. The demo's Upload page shows a form posted or sent by Ajax,
+an upload to a resource with the guard, and zones to drop files on, and slows the server down
+reading the files to watch the progress on a fast network.
 
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading

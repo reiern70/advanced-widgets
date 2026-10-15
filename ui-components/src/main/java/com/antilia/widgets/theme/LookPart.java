@@ -233,6 +233,29 @@ public enum LookPart
 	PROGRESS_VALUE(LookAspect.BASE),
 	PROGRESS_LABEL(LookAspect.BASE),
 
+	// uploads: the picker drawn over a file input, as a button or a zone to drop files on, and the
+	// progress of an upload
+	FILE_PICKER(LookAspect.BASE),
+	FILE_PICKER_CHOOSE(LookAspect.BASE),
+	FILE_PICKER_ZONE(LookAspect.BASE),
+	FILE_PICKER_ZONE_OVER(LookAspect.STATE),
+	FILE_PICKER_ICON(LookAspect.BASE),
+	FILE_PICKER_PROMPT(LookAspect.BASE),
+	FILE_PICKER_SUMMARY(LookAspect.BASE),
+	FILE_PICKER_CLEAR(LookAspect.BASE),
+	FILE_PICKER_FILES(LookAspect.BASE),
+	FILE_PICKER_FILE(LookAspect.BASE),
+	FILE_PICKER_NAME(LookAspect.BASE),
+	FILE_PICKER_SIZE(LookAspect.BASE),
+	FILE_PICKER_REMOVE(LookAspect.BASE),
+	FILE_PICKER_FILE_INVALID(LookAspect.STATE),
+	FILE_PICKER_ZONE_INVALID(LookAspect.STATE),
+	FILE_PICKER_ERROR(LookAspect.BASE),
+	UPLOAD_PROGRESS(LookAspect.BASE),
+	UPLOAD_STATUS(LookAspect.BASE),
+	UPLOAD_STATUS_DONE(LookAspect.STATE),
+	UPLOAD_STATUS_FAILED(LookAspect.STATE),
+
 	// collapsible panels
 	COLLAPSIBLE_FRAME(LookAspect.BASE),
 	COLLAPSIBLE(LookAspect.BASE),
