@@ -232,8 +232,11 @@ public class CodeEditorPage extends DemoPage
 			}
 		});
 		editorForm.add(editor);
+		// lambdas, not editor::getMarkupId and preview::getMarkupId: javac deserializes two method
+		// references to one inherited method as the first one's, and the page fails to load
+		// from the page store
 		editorForm.add(new Label("name", () -> sample().getName())
-			.add(AttributeModifier.replace("for", editor::getMarkupId)));
+			.add(AttributeModifier.replace("for", () -> editor.getMarkupId())));
 		editorForm.add(new AjaxButton("save")
 		{
 			private static final long serialVersionUID = 1L;
@@ -401,7 +404,7 @@ public class CodeEditorPage extends DemoPage
 				sayAboutNotes(target, shown ? "previewHidden" : "bothShown");
 			}
 		}.setBody(() -> getString(isPreviewShown() ? "hidePreview" : "showPreview"))
-			.add(AttributeModifier.replace("aria-controls", preview::getMarkupId))
+			.add(AttributeModifier.replace("aria-controls", () -> preview.getMarkupId()))
 			.add(new ButtonBehavior(ButtonBehavior.Variant.SECONDARY, ButtonBehavior.Size.SMALL))
 			.setOutputMarkupId(true);
 		notesForm.add(togglePreview);
