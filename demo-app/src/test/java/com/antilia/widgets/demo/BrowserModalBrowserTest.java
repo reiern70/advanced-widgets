@@ -25,9 +25,9 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
  * Opens and closes the dialogs of the pages in the browser alone, in Chrome and in Firefox: what
- * runs where from the footer, what a demo is about from the index and the carousel of the home
- * page, and the explanation of a demo from its page; Escape, the × and the button of the footer
- * close them. Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
+ * runs where from the footer, what a demo is about from the index of the home page, and the
+ * explanation of a demo from its page; Escape, the × and the button of the footer close them.
+ * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class BrowserModalBrowserTest extends FrameworkAppsTestCase
@@ -102,7 +102,7 @@ class BrowserModalBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void theDetailsOfADemoOpenFromTheIndexAndTheCarousel(SeleniumBrowser browser)
+	void theDetailsOfADemoOpenFromTheIndex(SeleniumBrowser browser)
 	{
 		open(browser, "");
 
@@ -116,8 +116,8 @@ class BrowserModalBrowserTest extends FrameworkAppsTestCase
 		driver.findElement(By.cssSelector("#demo-details-tree [data-modal-close]")).click();
 		waitClosed("demo-details-tree");
 
-		// the slide shown first is the Address Book's
-		driver.findElement(By.cssSelector(".carousel__slide:first-child .carousel__details")).click();
+		driver.findElement(By.cssSelector("[data-browser-modal='demo-details-contacts'].index__details"))
+			.click();
 		waitOpen("demo-details-contacts");
 		driver.findElement(By.cssSelector("#demo-details-contacts .modal-dialog-footer a")).click();
 		wait.until(d -> d.getCurrentUrl().contains("/address-book"));

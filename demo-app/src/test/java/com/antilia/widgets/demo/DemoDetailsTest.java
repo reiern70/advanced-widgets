@@ -21,7 +21,7 @@ import com.antilia.widgets.demo.tree.TreePage;
 
 /**
  * The home page has a dialog about each demo, with the explanation of the demo page, which the
- * buttons of the carousel and of the index open in the browser.
+ * buttons of the index open in the browser.
  */
 class DemoDetailsTest
 {
@@ -57,13 +57,13 @@ class DemoDetailsTest
 	}
 
 	@Test
-	void theCarouselAndTheIndexOpenIt()
+	void theIndexOpensIt()
 	{
 		tester.startPage(HomePage.class);
 
 		String opener = "data-browser-modal=\"" +
 			DemoDetails.markupIdOf(Demos.of(TreePage.class).orElseThrow()) + "\"";
-		assertEquals(2, tester.getLastResponseAsString().split(opener).length - 1);
+		assertEquals(1, tester.getLastResponseAsString().split(opener).length - 1);
 		tester.assertContains("id=\"demo-details-tree\"");
 	}
 

@@ -33,12 +33,11 @@ import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.theme.Theme;
 
 /**
- * The public part of the application: the name of the components and what sets them apart beside
- * a {@link DemoCarousel} going through the demos, then an index of all of them by category, which
- * previews the screenshot of the demo and what it shows as the pointer or the focus goes over it.
- * A button of each demo, in the carousel and in the index, opens what it is about in
- * {@link DemoDetails}, and another one what runs where. The demos themselves are for the visitors who signed in,
- * see {@link DemosAuthorization}.
+ * The public part of the application: the name of the components and what sets them apart, then
+ * an index of all the demos by category, which previews the screenshot of the demo and what it
+ * shows as the pointer or the focus goes over it. A button of each demo in the index opens what it
+ * is about in {@link DemoDetails}, and another one what runs where. The demos themselves are for
+ * the visitors who signed in, see {@link DemosAuthorization}.
  */
 public class HomePage extends BasePage {
 	private static final long serialVersionUID = 1L;
@@ -60,7 +59,6 @@ public class HomePage extends BasePage {
 
 		add(new Label("demoCount", Demos.all().size()));
 		add(new Label("themeCount", Theme.values().length));
-		add(new DemoCarousel("carousel", Demos.all()));
 
 		add(new ListView<>("demoDetails", Demos.all())
 		{

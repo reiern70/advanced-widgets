@@ -68,9 +68,6 @@ public class TestHomePage
 	{
 		tester.startPage(HomePage.class);
 
-		ListView<?> demos = (ListView<?>) tester.getComponentFromLastRenderedPage(
-			"carousel:slides");
-		assertEquals(Demos.all().size(), demos.size());
 		ListView<?> categories = (ListView<?>) tester.getComponentFromLastRenderedPage(
 			"categories");
 		assertEquals(Demos.all().stream().map(Demos.Demo::category).distinct().count(),
