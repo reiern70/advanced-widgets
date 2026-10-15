@@ -34,4 +34,9 @@
 		<filter-name>wicket.demo-app</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
+
+	<!-- a session ends after 5 minutes without a request, see WicketApplication.SESSION_TIMEOUT -->
+	<session-config>
+		<session-timeout>5</session-timeout>
+	</session-config>
 </web-app>

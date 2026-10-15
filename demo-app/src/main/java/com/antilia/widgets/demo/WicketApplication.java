@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo;
 
 import java.io.File;
+import java.time.Duration;
 
 import org.apache.wicket.csp.CSPDirective;
 import org.apache.wicket.csp.CSPDirectiveSrcValue;
@@ -85,6 +86,12 @@ public class WicketApplication extends WebApplication
 
 	/** The environment variable holding the folder of the page store. */
 	public static final String PAGE_STORE_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_PAGE_STORE";
+
+	/**
+	 * How long a session lasts without a request, as {@code web.xml} sets it: then the visitor is
+	 * signed out.
+	 */
+	public static final Duration SESSION_TIMEOUT = Duration.ofMinutes(5);
 
 	/**
 	 * The system property naming the account every new session is signed in with, so that nobody
