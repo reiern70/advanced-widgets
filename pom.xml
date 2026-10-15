@@ -336,4 +336,36 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!--
+		  No coverage without tests: with -DskipTests or -Dmaven.test.skip=true, JaCoCo would check
+		  and report the target/jacoco.exec of an earlier run, a partial one too (-Dtest=...), and
+		  fail the build on the coverage of that run.
+		-->
+		<profile>
+			<id>no-coverage-when-tests-are-skipped</id>
+			<activation>
+				<property>
+					<name>skipTests</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<properties>
+				<jacoco.skip>true</jacoco.skip>
+			</properties>
+		</profile>
+		<profile>
+			<id>no-coverage-when-test-compilation-is-skipped</id>
+			<activation>
+				<property>
+					<name>maven.test.skip</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<properties>
+				<jacoco.skip>true</jacoco.skip>
+			</properties>
+		</profile>
+	</profiles>
 </project>
