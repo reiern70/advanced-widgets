@@ -412,6 +412,18 @@ const PARTS = {
 	'split-divider': ['base', 'antilia-split-divider', ''],
 	'split-collapse': ['base', 'antilia-split-collapse', ''],
 
+	// the elements the user resizes, by the handle on their edge or corner
+	'resizable': ['base', 'antilia-resizable', ''],
+	'resizable-handle': ['base', 'antilia-resizable-handle', ''],
+
+	// code editors: CodeMirror's markup inside is its own; in the Bootstrap look the editor is a
+	// field, as Bootstrap's form-control
+	'code-editor': ['base', 'antilia-code-editor', 'form-control'],
+	'code-editor-field': ['base', 'antilia-code-editor-field', ''],
+	// the preview of Markdown: its tables are Bootstrap's in the Bootstrap look
+	'markdown-preview': ['base', 'antilia-markdown-preview', ''],
+	'markdown-preview-table': ['base', 'antilia-markdown-preview-table', 'table table-sm'],
+
 	// desktops and their windows
 	'desktop': ['base', 'antilia-desktop', ''],
 	'desktop-area': ['base', 'antilia-desktop-area', ''],

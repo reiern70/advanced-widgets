@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.frameworks;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.wicket.Page;
+import org.apache.wicket.request.resource.JavaScriptPackageResource;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +50,15 @@ class FrameworkTabsTest
 	void stop()
 	{
 		tester.destroy();
+	}
+
+	@Test
+	void leavesTheBundlesOfTheAppsAsTheBuildMinifiedThem()
+	{
+		// Wicket's compressor would strip them again in deployment mode, breaking their template
+		// literals
+		assertFalse(((JavaScriptPackageResource)FrameworkTabs.REACT.getResource()).getCompress());
+		assertFalse(((JavaScriptPackageResource)FrameworkTabs.SVELTE.getResource()).getCompress());
 	}
 
 	@Test

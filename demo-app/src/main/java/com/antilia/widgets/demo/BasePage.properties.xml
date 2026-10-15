@@ -62,10 +62,14 @@
 	<entry key="demo.downloads.description">Files of every kind from the buttons of the theme: via Ajax into the browser, through a hidden iframe, in a new tab or the same window, busy while they come; links, a URL to share and the report a form describes.</entry>
 	<entry key="demo.upload">Upload</entry>
 	<entry key="demo.upload.description">Files sent in a form, by Ajax or to a resource, chosen with a button of the theme or dropped on a zone, with a progress bar of the theme, a guard keeping the user on the page, and a way to slow the uploads down.</entry>
+	<entry key="demo.codeEditor">Code Editor</entry>
+	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown or a grammar of your own, highlighted in the colors of the theme: the server keeps the text, the cursor, the selection and the size, and the tabs it is in know of its changes not saved. Markdown shows beside its live preview.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>
 	<entry key="demo.splitPanel.description">Panes that share the space, nested as in an IDE: drag the divider or move it with the keyboard, collapse a pane, size in percent or pixels, and let the server know and remember the layout.</entry>
+	<entry key="demo.resizable">Resizable</entry>
+	<entry key="demo.resizable.description">Any element resized by its edge or its corner, with the mouse, a finger or the keyboard, within limits; the server remembers the size, also when the component is taken out of the page and put back.</entry>
 	<entry key="demo.tabs">Tabs</entry>
 	<entry key="demo.tabs.description">Tabs along the top or down the side, in nine designs: documents that close, asking first when the server says they have changes not saved, with actions of their own and new ones added via Ajax.</entry>
 	<entry key="demo.menus">Menus</entry>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="code-editor-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+
+<wicket:fragment wicket:id="editorCase">
+	<section>
+		<form wicket:id="controls" class="code-editor-demo__controls">
+			<label class="code-editor-demo__control"><wicket:message key="language"/> <select wicket:id="language"></select></label>
+			<label class="code-editor-demo__control"><wicket:message key="resize"/> <select wicket:id="resize"></select></label>
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="lineNumbers"/> <wicket:message key="lineNumbers"/></label>
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="readOnly"/> <wicket:message key="readOnly"/></label>
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="selectable"/> <wicket:message key="selectable"/></label>
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="lineWrapping"/> <wicket:message key="lineWrapping"/></label>
+		</form>
+		<form wicket:id="editorForm" class="code-editor-demo__editor">
+			<label wicket:id="name" class="code-editor-demo__name">[file]</label>
+			<textarea wicket:id="editor"></textarea>
+			<div class="code-editor-demo__actions">
+				<button type="submit" wicket:id="save"><wicket:message key="save"/></button>
+				<span wicket:id="heard" class="code-editor-demo__heard" role="status">[what the server heard]</span>
+			</div>
+		</form>
+		<p wicket:id="known" class="code-editor-demo__status">[what the server knows]</p>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="notesCase">
+	<section>
+		<form wicket:id="notesForm" class="code-editor-demo__notes">
+			<div class="code-editor-demo__actions">
+				<span wicket:id="notesName" class="code-editor-demo__name">[file]</span>
+				<button type="submit" wicket:id="save"><wicket:message key="save"/></button>
+				<button type="button" wicket:id="togglePreview">[hide or show the preview]</button>
+			</div>
+			<div wicket:id="notesSplit" class="code-editor-demo__split"></div>
+		</form>
+		<p wicket:id="notesStatus" class="code-editor-demo__status" role="status">[status]</p>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="notesEditorPane"><textarea wicket:id="editor"></textarea></wicket:fragment>
+
+<wicket:fragment wicket:id="notesPreviewPane"><div wicket:id="preview"></div></wicket:fragment>
+
+<wicket:fragment wicket:id="filesCase">
+	<section>
+		<div wicket:id="files" class="code-editor-demo__files"></div>
+		<p wicket:id="filesStatus" class="code-editor-demo__status" role="status">[status]</p>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="filePanel">
+<form wicket:id="form" class="code-editor-demo__file">
+	<textarea wicket:id="editor"></textarea>
+	<div><button type="submit" wicket:id="save"><wicket:message key="save"/></button></div>
+</form>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

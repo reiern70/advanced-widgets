@@ -1,0 +1,411 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The code editor of antilia-code-editor.js: CodeMirror in the colors of the theme it is in, and
+ * in neutral colors outside one. The custom properties below are the colors CodeMirror's look
+ * reads (see THEME in code-editor.ts) and those of the grammar, the classes tok-keyword and so on
+ * of Lezer's classHighlighter; each is made of the colors of the theme, so that it suits the light
+ * themes and the dark one. A page or a theme of its own sets them to change them.
+ *
+ * The editor is as high as --antilia-code-editor-height says, 18em by default, until the user
+ * resizes it by the bar along its bottom (see resizable.css): then the script sets its size.
+ *
+ * The preview of Markdown, at the end, shows the code blocks in the colors of the grammar too.
+ */
+.antilia-code-editor,
+.antilia-markdown-preview {
+	/*
+	 * the grammar: each color leans on the text of the theme, for contrast in light and dark; the
+	 * primary color of a dark theme is too deep for the keywords, which take a light mauve of its
+	 * accent and its error color instead
+	 */
+	--antilia-code-keyword: light-dark(color-mix(in srgb, var(--antilia-theme-primary, #6d28d9) 78%,
+		var(--antilia-theme-text, #1c2333)), color-mix(in srgb, var(--antilia-theme-accent, #7cb7ff)
+		55%, var(--antilia-theme-error, #ff6b6b)));
+	--antilia-code-string: color-mix(in srgb, var(--antilia-theme-success, #2f855a) 80%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-number: color-mix(in srgb, var(--antilia-theme-warning, #d97706) 70%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-type: color-mix(in srgb, var(--antilia-theme-info, #2b6cb0) 80%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-property: color-mix(in srgb, var(--antilia-theme-info, #2b6cb0) 50%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-definition: color-mix(in srgb, var(--antilia-theme-accent, #2f6fde) 60%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-comment: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 55%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-code-meta: color-mix(in srgb, var(--antilia-theme-warning, #d97706) 55%,
+		var(--antilia-theme-text, #1c2333));
+	--antilia-code-punctuation: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 75%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-code-link: var(--antilia-theme-accent, #2f6fde);
+	--antilia-code-invalid: var(--antilia-theme-error, #c53030);
+}
+
+.antilia-code-editor {
+	--antilia-code-editor-text: var(--antilia-theme-text, #1c2333);
+	--antilia-code-editor-background: var(--antilia-theme-surface, #ffffff);
+	--antilia-code-editor-border: var(--antilia-theme-border, #c9cfdb);
+	--antilia-code-editor-gutter-background: var(--antilia-theme-surface-alt, #f5f7fb);
+	--antilia-code-editor-gutter-text: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 50%,
+		var(--antilia-theme-surface-alt, #f5f7fb));
+	--antilia-code-editor-active-line: color-mix(in srgb, var(--antilia-theme-hover, #e8eefc) 55%,
+		transparent);
+	--antilia-code-editor-cursor: var(--antilia-theme-accent, #2f6fde);
+	--antilia-code-editor-selection: color-mix(in srgb, var(--antilia-theme-accent, #2f6fde) 28%,
+		transparent);
+	--antilia-code-editor-selection-blurred: color-mix(in srgb, var(--antilia-theme-text, #1c2333)
+		14%, transparent);
+	--antilia-code-editor-match: color-mix(in srgb, var(--antilia-theme-selected, #fff3b0) 80%,
+		transparent);
+	--antilia-code-editor-match-selected: color-mix(in srgb, var(--antilia-theme-warning, #d97706)
+		45%, transparent);
+	--antilia-code-editor-bracket: color-mix(in srgb, var(--antilia-theme-accent, #2f6fde) 22%,
+		transparent);
+	--antilia-code-editor-invalid: var(--antilia-theme-error, #c53030);
+	--antilia-code-editor-panel-background: var(--antilia-theme-toolbar, #f5f7fb);
+	--antilia-code-editor-panel-button: var(--antilia-theme-surface-alt, #eef1f6);
+	--antilia-code-editor-font: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono',
+		monospace;
+	--antilia-code-editor-font-size: 0.875rem;
+
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	height: var(--antilia-code-editor-height, 18em);
+	min-height: 4em;
+	/* room for the bar resizing the editor, which resizable.css draws */
+	padding: 0 var(--antilia-code-editor-bar-right, 0) var(--antilia-code-editor-bar-bottom, 0) 0;
+	border: 1px solid var(--antilia-code-editor-border);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: var(--antilia-code-editor-gutter-background);
+	color: var(--antilia-code-editor-text);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+	overflow: hidden;
+	text-align: start;
+}
+
+.antilia-code-editor:focus-within {
+	border-color: var(--antilia-theme-accent, #2f6fde);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-theme-accent, #2f6fde) 22%, transparent);
+}
+
+/* the text area the editor keeps the text in, should a style sheet show hidden elements */
+.antilia-code-editor > .antilia-code-editor-field {
+	display: none;
+}
+
+.antilia-code-editor > .cm-editor {
+	flex: 1 1 auto;
+	min-height: 0;
+	height: auto;
+	background: var(--antilia-code-editor-background);
+}
+
+/* slim scroll bars, in the colors of the theme */
+.antilia-code-editor .cm-scroller {
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--antilia-code-editor-text) 30%, transparent) transparent;
+}
+
+/* the bar along the bottom, or the right edge, by which the user resizes the editor */
+.antilia-code-editor.antilia-resizable-vertical,
+.antilia-code-editor.antilia-resizable-both {
+	--antilia-code-editor-bar-bottom: 10px;
+}
+
+.antilia-code-editor.antilia-resizable-horizontal {
+	--antilia-code-editor-bar-right: 10px;
+}
+
+.antilia-code-editor.antilia-resizable-both > .antilia-resizable-handle {
+	width: 14px;
+	height: 10px;
+}
+
+.antilia-code-editor.antilia-resizable-both > .antilia-resizable-handle::after {
+	inset: 1px 2px 1px 4px;
+}
+
+.antilia-code-editor-readonly > .cm-editor .cm-cursor {
+	border-left-style: dashed;
+}
+
+.antilia-code-editor-unselectable > .cm-editor .cm-content {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.antilia-code-editor-disabled {
+	opacity: 0.65;
+}
+
+.antilia-code-editor-disabled:focus-within {
+	box-shadow: none;
+}
+
+/* the grammar, by the classes of Lezer's classHighlighter, in the editor and in the preview */
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-keyword {
+	color: var(--antilia-code-keyword);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-string, .tok-inserted) {
+	color: var(--antilia-code-string);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-string2 {
+	color: color-mix(in srgb, var(--antilia-code-string) 70%, var(--antilia-code-number));
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview)
+	:is(.tok-number, .tok-bool, .tok-atom, .tok-literal) {
+	color: var(--antilia-code-number);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview)
+	:is(.tok-typeName, .tok-className, .tok-namespace) {
+	color: var(--antilia-code-type);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-propertyName, .tok-labelName) {
+	color: var(--antilia-code-property);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-definition {
+	color: var(--antilia-code-definition);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-variableName2 {
+	color: var(--antilia-code-keyword);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-comment {
+	color: var(--antilia-code-comment);
+	font-style: italic;
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-meta, .tok-macroName) {
+	color: var(--antilia-code-meta);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-operator, .tok-punctuation) {
+	color: var(--antilia-code-punctuation);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-invalid, .tok-deleted) {
+	color: var(--antilia-code-invalid);
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-heading {
+	color: var(--antilia-code-keyword);
+	font-weight: bold;
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-strong {
+	font-weight: bold;
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) .tok-emphasis {
+	font-style: italic;
+}
+
+:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-link, .tok-url) {
+	color: var(--antilia-code-link);
+	text-decoration: underline;
+}
+
+/*
+ * The preview of Markdown: the text as a page shows it, in the colors of the theme it is in, and
+ * in neutral colors outside one; the code blocks in the colors of the editor's grammar. It scrolls
+ * when the page gives it a height.
+ */
+.antilia-markdown-preview {
+	--antilia-markdown-preview-border: var(--antilia-theme-border, #c9cfdb);
+	--antilia-markdown-preview-muted: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 65%,
+		var(--antilia-theme-surface, #ffffff));
+	--antilia-markdown-preview-code-background: var(--antilia-theme-surface-alt, #f5f7fb);
+
+	box-sizing: border-box;
+	padding: 0.75em 1em;
+	overflow: auto;
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, #1c2333);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+	line-height: 1.55;
+	overflow-wrap: break-word;
+	text-align: start;
+	scrollbar-width: thin;
+}
+
+.antilia-markdown-preview:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f6fde);
+	outline-offset: -2px;
+}
+
+.antilia-markdown-preview > :first-child {
+	margin-top: 0;
+}
+
+.antilia-markdown-preview > :last-child {
+	margin-bottom: 0;
+}
+
+.antilia-markdown-preview :is(h1, h2, h3, h4, h5, h6) {
+	margin: 1.25em 0 0.5em;
+	color: inherit;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.antilia-markdown-preview :is(h1, h2) {
+	padding-bottom: 0.3em;
+	border-bottom: 1px solid var(--antilia-markdown-preview-border);
+}
+
+.antilia-markdown-preview h1 {
+	font-size: 1.75em;
+}
+
+.antilia-markdown-preview h2 {
+	font-size: 1.4em;
+}
+
+.antilia-markdown-preview h3 {
+	font-size: 1.2em;
+}
+
+.antilia-markdown-preview h4 {
+	font-size: 1em;
+}
+
+.antilia-markdown-preview h5 {
+	font-size: 0.9em;
+}
+
+.antilia-markdown-preview h6 {
+	color: var(--antilia-markdown-preview-muted);
+	font-size: 0.85em;
+}
+
+.antilia-markdown-preview :is(p, ul, ol, blockquote, pre, table) {
+	margin: 0 0 0.9em;
+}
+
+.antilia-markdown-preview :is(ul, ol) {
+	padding-left: 1.75em;
+}
+
+.antilia-markdown-preview li + li {
+	margin-top: 0.2em;
+}
+
+.antilia-markdown-preview li > p {
+	margin: 0.4em 0;
+}
+
+.antilia-markdown-preview li > :is(ul, ol) {
+	margin: 0.2em 0 0;
+}
+
+/* a task: its check box where the bullet would be */
+.antilia-markdown-preview .antilia-markdown-preview-task {
+	list-style: none;
+}
+
+.antilia-markdown-preview .antilia-markdown-preview-task input {
+	margin: 0 0.35em 0 -1.4em;
+	vertical-align: -0.1em;
+	accent-color: var(--antilia-theme-accent, #2f6fde);
+}
+
+.antilia-markdown-preview blockquote {
+	padding: 0 1em;
+	border-left: 0.25em solid var(--antilia-markdown-preview-border);
+	color: var(--antilia-markdown-preview-muted);
+}
+
+.antilia-markdown-preview a {
+	color: var(--antilia-theme-accent, #2f6fde);
+}
+
+.antilia-markdown-preview code {
+	padding: 0.15em 0.35em;
+	border-radius: 0.3em;
+	background: var(--antilia-markdown-preview-code-background);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+	font-size: 0.875em;
+}
+
+.antilia-markdown-preview pre {
+	padding: 0.75em 1em;
+	overflow: auto;
+	border: 1px solid var(--antilia-markdown-preview-border);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: var(--antilia-markdown-preview-code-background);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+	font-size: 0.875em;
+	line-height: 1.45;
+}
+
+.antilia-markdown-preview pre > code {
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	font-size: inherit;
+}
+
+/* HTML in the text, shown as written */
+.antilia-markdown-preview .antilia-markdown-preview-html {
+	white-space: pre-wrap;
+}
+
+.antilia-markdown-preview hr {
+	height: 0;
+	margin: 1.5em 0;
+	border: 0;
+	border-top: 1px solid var(--antilia-markdown-preview-border);
+}
+
+.antilia-markdown-preview img {
+	max-width: 100%;
+}
+
+/* a wide table scrolls on its own */
+.antilia-markdown-preview table {
+	display: block;
+	width: max-content;
+	max-width: 100%;
+	overflow: auto;
+	border-collapse: collapse;
+}
+
+.antilia-markdown-preview :is(th, td) {
+	padding: 0.35em 0.75em;
+	border: 1px solid var(--antilia-markdown-preview-border);
+}
+
+.antilia-markdown-preview th {
+	background: var(--antilia-markdown-preview-code-background);
+	font-weight: 600;
+}
+
+.antilia-markdown-preview :is(th, td).antilia-markdown-preview-left {
+	text-align: left;
+}
+
+.antilia-markdown-preview :is(th, td).antilia-markdown-preview-center {
+	text-align: center;
+}
+
+.antilia-markdown-preview :is(th, td).antilia-markdown-preview-right {
+	text-align: right;
+}
+
+.antilia-markdown-preview .antilia-markdown-preview-empty {
+	color: var(--antilia-markdown-preview-muted);
+	font-style: italic;
+}

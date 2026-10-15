@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Größenänderung</entry>
+	<entry key="explanation">&lt;p&gt;ResizableBehavior aus ui-components lässt Sie die Größe eines Elements ändern: an seinem unteren Rand, seinem rechten Rand oder seiner rechten unteren Ecke, mit der Maus, einem Stift oder einem Finger. Der Griff erhält den Fokus mit Tab: Die Pfeiltasten ändern die Größe um zehn Pixel, mit Umschalt um fünfzig, Pos1 und Ende bringen das Element auf seine kleinste und größte Größe, und ein Doppelklick bringt es auf seine Anfangsgröße zurück. Escape setzt es während des Ziehens dorthin zurück, wo das Ziehen begann.&lt;/p&gt;&lt;p&gt;Der Server erfährt jede Größe, die Sie geben, und sagt es unten: Die Notiz und die Seitenleiste behalten ihre in der Sitzung, sodass die Seite sie wieder zeigt, wenn Sie zurückkommen; die Karte behält ihre eigene in ihrem Behavior, in der Seite. Nehmen Sie die Karte weg und legen Sie sie zurück: Sie kommt in der Größe zurück, die sie hatte. Der Code-Editor ändert seine Größe genauso und merkt sie sich standardmäßig. Die Größen sind benutzerdefinierte Eigenschaften, über das CSSOM gesetzt, sodass alles unter einer strengen Content Security Policy funktioniert.&lt;/p&gt;</entry>
+	<entry key="noteTitle">Eine Notiz: ihre Höhe</entry>
+	<entry key="noteText">Ziehen Sie die Leiste am unteren Rand dieser Notiz, oder geben Sie ihr mit Tab den Fokus und drücken Sie die Pfeiltasten. Ein Doppelklick auf die Leiste bringt die Notiz auf die Höhe zurück, die die Seite ihr gibt. Der Server behält die Höhe in der Sitzung.</entry>
+	<entry key="sideTitle">Eine Seitenleiste: ihre Breite</entry>
+	<entry key="inbox">Posteingang</entry>
+	<entry key="drafts">Entwürfe</entry>
+	<entry key="sent">Gesendet</entry>
+	<entry key="archive">Archiv</entry>
+	<entry key="cardTitle">Eine Karte: beides</entry>
+	<entry key="cardText">Ändern Sie die Größe dieser Karte an ihrer rechten unteren Ecke. Nehmen Sie sie weg und legen Sie sie zurück: Ihr Behavior merkt sich ihre Größe.</entry>
+	<entry key="takeCardAway">Karte wegnehmen</entry>
+	<entry key="putCardBack">Karte zurücklegen</entry>
+	<entry key="sizes">Der Server weiß: die Notiz {0} hoch, die Seitenleiste {1} breit, die Karte {2}.</entry>
+	<entry key="pageSize">wie die Seite sie macht</entry>
+	<entry key="away">weggenommen</entry>
+	<entry key="appSizes">Die App weiß: die Notiz {0} hoch, die Seitenleiste {1} breit, die Karte {2}.</entry>
+</properties>

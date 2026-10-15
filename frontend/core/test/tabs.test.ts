@@ -452,6 +452,37 @@ describe('Tabs', () => {
 		expect(outer.isModified('one')).toBe(true);
 	});
 
+	it('keeps the changes of tabs in a panel without any to the inner tabs', async () => {
+		// as the cases of a demo: their panels have no changes, whatever the panels of tabs in them
+		markup({ panelOne: 'data-modified="false"' });
+		panel('one').innerHTML = '<div id="inner"><div class="antilia-tabs-list">' +
+			tabMarkup('a') + tabMarkup('b') + '</div><div class="antilia-tabs-panels">' +
+			panelMarkup('a') + panelMarkup('b') + '</div></div>';
+		const outer = new Tabs(document.getElementById('t')!);
+		const inner = new Tabs(document.getElementById('inner')!);
+		const innerTab = (name: string) => tab(name, document.getElementById('inner')!);
+
+		field('a').value = 'typed';
+		field('a').dispatchEvent(new Event('input', { bubbles: true }));
+		expect(inner.isModified('a')).toBe(true);
+		expect(innerTab('a').classList.contains('antilia-tab-modified')).toBe(true);
+		expect(outer.isModified('one')).toBe(false);
+
+		// and an editor in it, saying so with data-modified as the user types
+		field('a').value = '';
+		panel('b', document.getElementById('inner')!).insertAdjacentHTML('beforeend',
+			'<div class="editor" data-modified="false"><textarea id="code">saved</textarea></div>');
+		await settle();
+		// its text area holds the text, and the text saved as the one it was rendered with
+		(document.getElementById('code') as HTMLTextAreaElement).value = 'changed';
+		document.querySelector('.editor')!.setAttribute('data-modified', 'true');
+		await settle();
+		expect(inner.isModified('b')).toBe(true);
+		expect(innerTab('b').classList.contains('antilia-tab-modified')).toBe(true);
+		expect(outer.isModified('one')).toBe(false);
+		expect(tab('one').classList.contains('antilia-tab-modified')).toBe(false);
+	});
+
 	it('gives its parts the classes of its look, the look of the page by default', async () => {
 		const element = markup({ one: 'data-closable="true"', panelOne: 'data-modified' });
 		element.setAttribute('data-antilia-look', 'bootstrap');

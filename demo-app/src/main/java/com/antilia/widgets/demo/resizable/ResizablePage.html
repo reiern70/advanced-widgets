@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="resizable-demo">
+	<section>
+		<h3><wicket:message key="noteTitle"/></h3>
+		<div wicket:id="note" class="resizable-demo__note"><p><wicket:message key="noteText"/></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="sideTitle"/></h3>
+		<div class="resizable-demo__layout">
+			<nav wicket:id="side" class="resizable-demo__side">
+				<ul>
+					<li wicket:id="inbox">[inbox]</li>
+					<li wicket:id="drafts">[drafts]</li>
+					<li wicket:id="sent">[sent]</li>
+					<li wicket:id="archive">[archive]</li>
+				</ul>
+			</nav>
+			<div class="resizable-demo__main"></div>
+		</div>
+	</section>
+	<section>
+		<h3><wicket:message key="cardTitle"/></h3>
+		<div class="resizable-demo__heading"><a wicket:id="toggleCard" href="#">[take the card away]</a></div>
+		<div wicket:id="cardPlace" class="resizable-demo__place">
+			<div wicket:id="card" class="resizable-demo__card"><p><wicket:message key="cardText"/></p></div>
+		</div>
+	</section>
+	<p wicket:id="sizes" class="resizable-demo__sizes" role="status">[sizes]</p>
+</div>
+</wicket:extend>
+</body>
+</html>

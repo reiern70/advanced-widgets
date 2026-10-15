@@ -3,6 +3,12 @@
  * All rights reserved.
  */
 
+export { CodeEditor } from './CodeEditor.js';
+export type { CodeEditorHandle, CodeEditorProps } from './CodeEditor.js';
+export { CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditorLanguages,
+	registerLanguage } from '@antilia/core';
+export type { CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader, CodeEditorSelection,
+	CodeEditorState, CodeEditorStateChange, CodeEditorTexts, Extension } from '@antilia/core';
 export { DatePicker, DateTimePicker } from './DatePicker.js';
 export type { DatePickerProps, DateTimePickerProps } from './DatePicker.js';
 export { Desktop, DesktopWindow } from './Desktop.js';
@@ -10,6 +16,11 @@ export type { DesktopHandle, DesktopProps, DesktopWindowProps, DesktopWindowType
 export type { DesktopPane, DesktopTexts, TaskbarPosition, TileLayout, WindowState } from '@antilia/core';
 export { Dropdown } from './Dropdown.js';
 export type { DropdownOption, DropdownProps } from './Dropdown.js';
+export { MarkdownPreview } from './MarkdownPreview.js';
+export type { MarkdownPreviewProps } from './MarkdownPreview.js';
+export { Resizable } from './Resizable.js';
+export type { ResizableHandle, ResizableProps } from './Resizable.js';
+export type { ResizableSize, ResizeAxis } from '@antilia/core';
 export { Scrollable } from './Scrollable.js';
 export type { ScrollableHandle, ScrollableProps } from './Scrollable.js';
 export { Autocomplete } from './Autocomplete.js';

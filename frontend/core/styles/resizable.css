@@ -1,0 +1,133 @@
+/*
+ * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+ * All rights reserved.
+ */
+
+/*
+ * The resizable elements of antilia-resizable.js: the handle on their bottom edge, their right
+ * edge or their bottom right corner, in the colors of the theme they are in and in neutral colors
+ * outside one. While the user has sized a dimension, the element takes it from
+ * --antilia-resizable-width or --antilia-resizable-height, which the script sets, as its border
+ * box; the other dimension stays as the page's style sheets make it.
+ *
+ * The handle is the element's last child, positioned in its padding box: an element scrolling its
+ * own content would scroll the handle away, so such content scrolls in an element inside it.
+ */
+
+/* the box the handle sits in, unless the page positions the element otherwise */
+:where(.antilia-resizable) {
+	position: relative;
+}
+
+.antilia-resizable.antilia-resizable-sized-width {
+	box-sizing: border-box;
+	width: var(--antilia-resizable-width);
+	max-width: none;
+}
+
+.antilia-resizable.antilia-resizable-sized-height {
+	box-sizing: border-box;
+	height: var(--antilia-resizable-height);
+	max-height: none;
+}
+
+.antilia-resizable > .antilia-resizable-handle {
+	--antilia-resizable-handle-size: 10px;
+	position: absolute;
+	z-index: 2;
+	box-sizing: border-box;
+	color: var(--antilia-theme-text, #1c2333);
+	touch-action: none;
+	outline: none;
+}
+
+.antilia-resizable-vertical > .antilia-resizable-handle {
+	inset: auto 0 0 0;
+	height: var(--antilia-resizable-handle-size);
+	cursor: ns-resize;
+}
+
+.antilia-resizable-horizontal > .antilia-resizable-handle {
+	inset: 0 0 0 auto;
+	width: var(--antilia-resizable-handle-size);
+	cursor: ew-resize;
+}
+
+.antilia-resizable-both > .antilia-resizable-handle {
+	inset: auto 0 0 auto;
+	width: 16px;
+	height: 16px;
+	cursor: nwse-resize;
+}
+
+/* the grip: a short bar across the middle of an edge, or three lines across the corner */
+.antilia-resizable > .antilia-resizable-handle::after {
+	content: '';
+	position: absolute;
+	opacity: 0.4;
+	transition: opacity 0.15s, background-color 0.15s;
+}
+
+.antilia-resizable-vertical > .antilia-resizable-handle::after {
+	inset: 50% auto auto 50%;
+	translate: -50% -50%;
+	width: 28px;
+	height: 4px;
+	border-radius: 2px;
+	background: radial-gradient(circle, currentColor 1.1px, transparent 1.5px) 0 0 / 5.6px 4px;
+}
+
+.antilia-resizable-horizontal > .antilia-resizable-handle::after {
+	inset: 50% auto auto 50%;
+	translate: -50% -50%;
+	width: 4px;
+	height: 28px;
+	border-radius: 2px;
+	background: radial-gradient(circle, currentColor 1.1px, transparent 1.5px) 0 0 / 4px 5.6px;
+}
+
+.antilia-resizable-both > .antilia-resizable-handle::after {
+	inset: 3px;
+	background: linear-gradient(135deg, transparent 0 45%, currentColor 45% 52%, transparent 52% 63%,
+		currentColor 63% 70%, transparent 70% 81%, currentColor 81% 88%, transparent 88%);
+}
+
+.antilia-resizable > .antilia-resizable-handle:hover::after,
+.antilia-resizable-resizing > .antilia-resizable-handle::after {
+	opacity: 0.8;
+}
+
+.antilia-resizable > .antilia-resizable-handle:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f6fde);
+	outline-offset: -2px;
+	border-radius: 2px;
+}
+
+.antilia-resizable > .antilia-resizable-handle:focus-visible::after {
+	opacity: 0.9;
+	color: var(--antilia-theme-accent, #2f6fde);
+}
+
+/* no text selected, and the pointer kept, while the user drags the handle */
+.antilia-resizable-resizing,
+.antilia-resizable-resizing * {
+	user-select: none;
+}
+
+.antilia-resizable-resizing.antilia-resizable-vertical {
+	cursor: ns-resize;
+}
+
+.antilia-resizable-resizing.antilia-resizable-horizontal {
+	cursor: ew-resize;
+}
+
+.antilia-resizable-resizing.antilia-resizable-both {
+	cursor: nwse-resize;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-resizable > .antilia-resizable-handle::after {
+		transition: none;
+	}
+}

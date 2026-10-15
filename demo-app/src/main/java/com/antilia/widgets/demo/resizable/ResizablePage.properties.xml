@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="title">Resizable</entry>
+	<entry key="explanation">&lt;p&gt;ResizableBehavior from ui-components lets you resize an element: by its bottom edge, its right edge or its bottom right corner, with the mouse, a pen or a finger. The handle takes the focus with Tab: the arrow keys resize the element ten pixels at a time, fifty with Shift, Home and End take it to its smallest and largest size, and a double click takes it back to the size it started with. Escape, while dragging, puts it back where the drag began.&lt;/p&gt;&lt;p&gt;The server hears each size you give, and says so below: the note and the side panel keep theirs in the session, so the page shows them again when you come back to it; the card keeps its own in its behavior, in the page. Take the card away, and put it back: it comes back in the size it had. The code editor resizes this way too, and remembers its size by default. The sizes are custom properties set through the CSSOM, so everything works under a strict Content Security Policy.&lt;/p&gt;</entry>
+	<entry key="noteTitle">A note: its height</entry>
+	<entry key="noteText">Drag the bar along the bottom of this note, or give it the focus with Tab and press the arrow keys. A double click on the bar takes the note back to the height the page gives it. The server keeps the height in the session.</entry>
+	<entry key="sideTitle">A side panel: its width</entry>
+	<entry key="inbox">Inbox</entry>
+	<entry key="drafts">Drafts</entry>
+	<entry key="sent">Sent</entry>
+	<entry key="archive">Archive</entry>
+	<entry key="cardTitle">A card: both</entry>
+	<entry key="cardText">Resize this card by its bottom right corner. Take it away, then put it back: its behavior remembers its size.</entry>
+	<entry key="takeCardAway">Take the card away</entry>
+	<entry key="putCardBack">Put the card back</entry>
+	<entry key="sizes">The server knows: the note {0} high, the side panel {1} wide, the card {2}.</entry>
+	<entry key="pageSize">as the page makes it</entry>
+	<entry key="away">taken away</entry>
+	<entry key="appSizes">The app knows: the note {0} high, the side panel {1} wide, the card {2}.</entry>
+</properties>

@@ -380,6 +380,31 @@ public abstract class SplitPanel extends Panel
 	}
 
 	/**
+	 * Collapses a pane, or restores both, from the server: gives the model the new state and tells
+	 * the split panel in the browser, without rendering it again, so that the panes keep what the
+	 * user did in them. Only when {@link #setCollapsible(boolean) collapsible}; does not call
+	 * {@link #onCollapsed(AjaxRequestTarget)}, which tells of what the user did.
+	 *
+	 * @param pane
+	 *            the pane to collapse, {@code null} to restore both
+	 * @param target
+	 *            the Ajax request target
+	 * @return {@code this}
+	 */
+	public SplitPanel collapse(SplitPane pane, AjaxRequestTarget target)
+	{
+		if (!collapsible || getCollapsed() == pane)
+		{
+			return this;
+		}
+		setModelObject(getState().withCollapsed(pane));
+		target.appendJavaScript("(function (split) { if (split) { split.setCollapsed(" +
+			(pane == null ? "null" : JSONObject.quote(pane.cssName())) + "); } })(" +
+			"Wicket.SplitPanel.of(" + JSONObject.quote(split.getMarkupId()) + "));");
+		return this;
+	}
+
+	/**
 	 * @return the smallest size of the first pane, {@code null} for none
 	 */
 	public SplitSize getMin()

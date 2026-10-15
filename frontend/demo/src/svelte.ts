@@ -15,6 +15,7 @@ import { LOOK_CONTEXT, lookOf } from '@antilia/svelte';
 import { startApps, type Mount } from './apps.js';
 import AutocompleteDemo from './svelte/AutocompleteDemo.svelte';
 import ButtonsDemo from './svelte/ButtonsDemo.svelte';
+import CodeEditorDemo from './svelte/CodeEditorDemo.svelte';
 import DatePickerDemo from './svelte/DatePickerDemo.svelte';
 import DesktopDemo from './svelte/DesktopDemo.svelte';
 import DropdownDemo from './svelte/DropdownDemo.svelte';
@@ -25,6 +26,7 @@ import ModalDemo from './svelte/ModalDemo.svelte';
 import NotificationsDemo from './svelte/NotificationsDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
+import ResizableDemo from './svelte/ResizableDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
 import SplitPanelDemo from './svelte/SplitPanelDemo.svelte';
 import PopoversDemo from './svelte/PopoversDemo.svelte';
@@ -52,6 +54,8 @@ startApps('svelte', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	resizable: app(ResizableDemo),
+	codeEditor: app(CodeEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

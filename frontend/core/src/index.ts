@@ -7,6 +7,16 @@ export { ACTION_EVENT, Autocomplete } from './autocomplete.js';
 export type { AutocompleteAction, AutocompleteActionDetail, AutocompleteOptions,
 	AutocompleteSuggestion, AutocompleteValue } from './autocomplete.js';
 export { Chips } from './chips.js';
+export { CODE_EDITOR_CLASSES, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES,
+	CODE_EDITOR_PHRASES, CodeEditor, codeEditor, codeEditorLanguages, DEFAULT_CODE_EDITOR_TEXTS,
+	loadLanguage, registerLanguage } from './code-editor.js';
+export type { Extension } from '@codemirror/state';
+export type { CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader,
+	CodeEditorOptions, CodeEditorRange, CodeEditorSelection, CodeEditorState, CodeEditorStateChange,
+	CodeEditorTexts } from './code-editor.js';
+export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
+	renderMarkdown } from './markdown-preview.js';
+export type { MarkdownPreviewOptions } from './markdown-preview.js';
 export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,
@@ -45,6 +55,9 @@ export { Popover, popoverClasses, POPOVER_ARROW_PROPERTY, POPOVER_CLASSES, POPOV
 	POPOVER_VARIANTS, POPOVER_X_PROPERTY, POPOVER_Y_PROPERTY, THEME_PROPERTIES } from './popover.js';
 export type { PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide,
 	PopoverVariant } from './popover.js';
+export { RESIZABLE_CLASSES, RESIZABLE_HEIGHT_PROPERTY, RESIZABLE_WIDTH_PROPERTY, Resizable, resizable,
+	RESIZE_AXES } from './resizable.js';
+export type { ResizableOptions, ResizableSize, ResizeAxis } from './resizable.js';
 export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
 export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';

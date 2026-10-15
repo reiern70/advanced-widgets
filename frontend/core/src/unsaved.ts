@@ -10,8 +10,9 @@
  *
  * A part has changes when a field in it holds another value than the one it was rendered with,
  * see isFieldModified() of modal.ts, or when the page says so with data-modified on it or on an
- * element in it: "true" or empty for changes, "false" for none. The fields in an element marked
- * data-modified="false" do not count, unless in one marked data-modified="auto" in it.
+ * element in it: "true" or empty for changes, "false" for none. The fields and the marks in an
+ * element of the part marked data-modified="false" do not count, unless in one marked
+ * data-modified="auto" in it.
  */
 
 import { buttonClasses } from './button.js';
@@ -25,20 +26,39 @@ const FIELDS = 'input, textarea, select';
 export const MODIFIED_ATTRIBUTE = 'data-modified';
 
 /**
+ * @returns how the region of a node counts its changes: "false" when it is in an element marked so,
+ *          up to the part of the page, "auto" when in one marked "auto" in it, null when in neither
+ */
+function regionOf(node: Element | null, part: Element): string | null {
+	for (let current = node; current; current = current.parentElement) {
+		const value = current.getAttribute(MODIFIED_ATTRIBUTE);
+		if (value === 'false' || value === 'auto') {
+			return value;
+		}
+		if (current === part) {
+			return null;
+		}
+	}
+	return null;
+}
+
+/**
  * @param element the part of the page, a window or the panel of a tab
  * @returns the fields of the part the user changed, empty when the page says it has changes of its
- *          own; null when it has none
+ *          own; null when it has none. In the part, what an element marked "false" holds does not
+ *          count, its fields and its marks, unless in one marked "auto" in it: the panels of tabs
+ *          in a tab marked "false", or an editor in it, tell of their changes to their own tabs
+ *          alone.
  */
 export function modifiedFields(element: Element): Element[] | null {
 	const marks = [element, ...Array.from(element.querySelectorAll('[' + MODIFIED_ATTRIBUTE +
 		']'))];
-	if (marks.some((mark) => mark.hasAttribute(MODIFIED_ATTRIBUTE) &&
-		['', 'true'].includes(mark.getAttribute(MODIFIED_ATTRIBUTE) ?? 'false'))) {
+	if (marks.some((mark) => ['', 'true'].includes(mark.getAttribute(MODIFIED_ATTRIBUTE) ??
+		'false') && regionOf(mark === element ? null : mark.parentElement, element) !== 'false')) {
 		return [];
 	}
 	const fields = Array.from(element.querySelectorAll(FIELDS)).filter((field) =>
-		field.closest('[' + MODIFIED_ATTRIBUTE + ']')?.getAttribute(MODIFIED_ATTRIBUTE) !==
-			'false' && isFieldModified(field));
+		regionOf(field, element) !== 'false' && isFieldModified(field));
 	return fields.length ? fields : null;
 }
 

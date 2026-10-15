@@ -247,6 +247,23 @@
 	padding-inline: 0.75rem;
 }
 
+/*
+ * A code editor is Bootstrap's .form-control: its border, its corners and the ring of its focus,
+ * which the editor shows while the focus is in the text; CodeMirror fills it, without the padding
+ * of a field, above the bar resizing it
+ */
+.antilia-look-bootstrap .antilia-code-editor.form-control {
+	padding: 0 var(--antilia-code-editor-bar-right, 0) var(--antilia-code-editor-bar-bottom, 0) 0;
+	font-size: inherit;
+	line-height: inherit;
+	background-color: var(--antilia-code-editor-gutter-background);
+}
+
+.antilia-look-bootstrap .antilia-code-editor.form-control:focus-within {
+	border-color: color-mix(in srgb, var(--antilia-theme-accent) 50%, var(--antilia-theme-surface));
+	box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
+}
+
 /* the buttons in the header of a collapsible panel, on its primary color */
 .antilia-look-bootstrap .antilia-collapsible-actions .btn {
 	--bs-btn-color: var(--antilia-theme-on-primary);

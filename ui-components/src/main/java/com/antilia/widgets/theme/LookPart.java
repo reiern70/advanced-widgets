@@ -391,6 +391,18 @@ public enum LookPart
 	SPLIT_DIVIDER(LookAspect.BASE),
 	SPLIT_COLLAPSE(LookAspect.BASE),
 
+	// the elements the user resizes, by the handle on their edge or corner
+	RESIZABLE(LookAspect.BASE),
+	RESIZABLE_HANDLE(LookAspect.BASE),
+
+	// code editors: CodeMirror's markup inside is its own
+	CODE_EDITOR(LookAspect.BASE),
+	CODE_EDITOR_FIELD(LookAspect.BASE),
+
+	// the preview of Markdown, and its tables
+	MARKDOWN_PREVIEW(LookAspect.BASE),
+	MARKDOWN_PREVIEW_TABLE(LookAspect.BASE),
+
 	// desktops and their windows
 	DESKTOP(LookAspect.BASE),
 	DESKTOP_AREA(LookAspect.BASE),

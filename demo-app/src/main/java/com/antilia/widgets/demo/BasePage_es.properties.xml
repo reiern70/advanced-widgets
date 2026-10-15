@@ -62,10 +62,14 @@
 	<entry key="demo.downloads.description">Archivos de todo tipo desde los botones del tema: por Ajax en el navegador, a través de un iframe oculto, en una pestaña nueva o en la misma ventana, ocupados mientras llegan; enlaces, una URL para compartir y el informe que describe un formulario.</entry>
 	<entry key="demo.upload">Subida de archivos</entry>
 	<entry key="demo.upload.description">Archivos enviados en un formulario, por Ajax o a un recurso, elegidos con un botón del tema o soltados sobre una zona, con una barra de progreso del tema, una guarda que mantiene al usuario en la página y una forma de ralentizar las subidas.</entry>
+	<entry key="demo.codeEditor">Editor de código</entry>
+	<entry key="demo.codeEditor.description">Código en Java, JavaScript, TypeScript, JSON, Markdown o una gramática propia, resaltado en los colores del tema: el servidor guarda el texto, el cursor, la selección y el tamaño, y las pestañas en las que está saben de sus cambios sin guardar. El Markdown se muestra junto a su vista previa en vivo.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas con los colores del tema, iguales en todos los navegadores, dibujadas sobre el desplazamiento nativo para que la rueda, las teclas y el tacto funcionen como siempre, y que siguen al contenido cambiado por Ajax.</entry>
 	<entry key="demo.splitPanel">Panel dividido</entry>
 	<entry key="demo.splitPanel.description">Paneles que se reparten el espacio, anidados como en un IDE: arrastre el divisor o muévalo con el teclado, pliegue un panel, tamaños en porcentaje o píxeles, y que el servidor conozca y recuerde la disposición.</entry>
+	<entry key="demo.resizable">Redimensionable</entry>
+	<entry key="demo.resizable.description">Cualquier elemento redimensionado por su borde o su esquina, con el ratón, un dedo o el teclado, dentro de unos límites; el servidor recuerda el tamaño, también cuando el componente sale de la página y vuelve.</entry>
 	<entry key="demo.tabs">Pestañas</entry>
 	<entry key="demo.tabs.description">Pestañas arriba o al lado, en nueve diseños: documentos que se cierran, preguntando antes si el servidor dice que tienen cambios sin guardar, con acciones propias y otros nuevos añadidos por Ajax.</entry>
 	<entry key="demo.menus">Menús</entry>

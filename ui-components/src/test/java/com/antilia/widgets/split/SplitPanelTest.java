@@ -16,6 +16,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
@@ -198,6 +199,42 @@ class SplitPanelTest extends WicketTestCase
 		send(panel, "80", "");
 		assertNull(panel.getCollapsed());
 		assertEquals(2, panel.collapses);
+	}
+
+	@Test
+	void collapsesAPaneFromTheServerWithoutRenderingItAgain()
+	{
+		TestPanel panel = new TestPanel(SplitOrientation.HORIZONTAL);
+		panel.setCollapsible(true);
+		CollapsePage page = new CollapsePage(panel);
+		tester.startPage(page);
+		String id = panel.getSplitMarkupId();
+
+		page.collapse = SplitPane.SECOND;
+		tester.clickLink("act");
+		assertEquals(SplitPane.SECOND, panel.getCollapsed());
+		assertEquals(new SplitState(SplitSize.percent(50), SplitPane.SECOND), panel.getModelObject());
+		tester.assertContains("split.setCollapsed\\(\"second\"\\); \\} \\}\\)\\(" +
+			"Wicket.SplitPanel.of\\(\"" + id + "\"\\)\\);");
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.SplitPanel.attach"),
+			"the split panel is not rendered again");
+		assertEquals(0, panel.collapses);
+
+		// the same again: nothing to tell
+		tester.clickLink("act");
+		assertFalse(tester.getLastResponseAsString().contains("setCollapsed"));
+
+		page.collapse = null;
+		tester.clickLink("act");
+		assertNull(panel.getCollapsed());
+		tester.assertContains("split.setCollapsed\\(null\\)");
+
+		// a split panel that is not collapsible collapses none
+		panel.setCollapsible(false);
+		page.collapse = SplitPane.FIRST;
+		tester.clickLink("act");
+		assertNull(panel.getCollapsed());
+		assertFalse(tester.getLastResponseAsString().contains("setCollapsed"));
 	}
 
 	@Test
@@ -396,6 +433,39 @@ class SplitPanelTest extends WicketTestCase
 		protected void onCollapsed(AjaxRequestTarget target)
 		{
 			collapses++;
+		}
+	}
+
+	/**
+	 * A page with a link collapsing a pane of its split panel.
+	 */
+	public static class CollapsePage extends WebPage implements IMarkupResourceStreamProvider
+	{
+		private static final long serialVersionUID = 1L;
+
+		SplitPane collapse;
+
+		CollapsePage(SplitPanel panel)
+		{
+			add(panel);
+			add(new AjaxLink<Void>("act")
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void onClick(AjaxRequestTarget target)
+				{
+					panel.collapse(collapse, target);
+				}
+			});
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream("<html><head></head><body>" +
+				"<div wicket:id=\"panel\"></div><a wicket:id=\"act\">Act</a></body></html>");
 		}
 	}
 

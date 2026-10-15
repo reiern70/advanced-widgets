@@ -20,17 +20,17 @@ built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
 split panel, the tabs, the menus, the popovers, the notifications, the desktop, the uploads (`upload.ts`, built as
-`antilia-upload.js`), and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+`antilia-upload.js`), the resizable elements, the code editor and the preview of Markdown, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use; `setButtonBusy()` in `button.ts`, built as `antilia-button.js`, shows a
 button busy with a spinner while it ignores clicks, for the downloads of Wicket's `AjaxDownloadButton`
 and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
 `DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Notifications`, `Desktop` with its
-`DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `DataTable`, `Tree` and `TreeGrid`, and
-export the core's `Popover`; the core's `dropdown`,
-`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu` and `desktop`
-also work as Svelte actions, and `Clipboard.install()` and
+`DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
+`DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
+`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `desktop`, `resizable`, `codeEditor` and
+`markdownPreview` also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
@@ -66,6 +66,73 @@ gives its model the new state, so a model of one's own can keep it in the sessio
 user's preferences. The core works on markup with both panes and the divider, which React, Svelte
 and Wicket all render, and sets the sizes as CSS custom properties through the CSSOM, so it needs
 no inline style. Split panels go in each other's panes.
+
+A resizable element (`resizable.ts`, built as `antilia-resizable.js` for Wicket's
+`ResizableBehavior`) is resized by the user by its bottom edge (`axis: 'vertical'`), its right edge
+(`horizontal`) or its bottom right corner (`both`, the default), dragged with the mouse, a pen or a
+finger. The handle, the element's last child, is a WAI-ARIA separator that takes the focus: the
+arrow keys resize the element ten pixels at a time (`step`), fifty with Shift, Home and End take it
+to its limits (`minWidth`, `minHeight`, 32 pixels by default, `maxWidth`, `maxHeight`), a double
+click takes it back to the size it started with, and Escape, while dragging, back to where the drag
+began. Sizes are in pixels, those of the border box; `null` leaves a dimension as the page's style
+sheets make it, which is how the element starts unless given a `width` or a `height`. `onResize`
+follows the handle and `onResized` reports the size the user left. The sizes are CSS custom
+properties set through the CSSOM. React's `Resizable` takes `width` and `height`, Svelte's binds
+them. In Wicket the size is the model of the behavior, a `ResizableSize`, kept in the page by default:
+with `setSendToServer(true)` the browser sends each size the user gives, which the element takes
+again when rendered again, also after its component was taken out of the page and put back; a model
+of one's own keeps it in the session or anywhere else.
+
+The code editor (`code-editor.ts`, built as `antilia-code-editor.js` for Wicket's `CodeEditor`) is
+CodeMirror 6, in the colors of the theme and the look of the page: the grammar of a `language`
+highlights the text, with Lezer's `classHighlighter`, whose classes `code-editor.css` colors from the
+theme, the keywords in its primary color, the strings in that of success and so on, lighter in a
+dark theme. The editor knows Java, JavaScript, TypeScript, JSON and Markdown (`CODE_EDITOR_LANGUAGES`),
+whose fenced code blocks take the grammars of the others; `registerLanguage(name, loader)` plugs in
+another, the loader given the CodeMirror classes of the editor (`CODE_EDITOR_KIT`), from which a page
+without CodeMirror of its own, a Wicket page, builds one, a `StreamLanguage` for example; a grammar is
+loaded the first time an editor shows it, or `language` is a CodeMirror extension of one's own. The
+lines show their numbers (`lineNumbers`), blocks fold (`folding`), Ctrl+F searches and replaces,
+Ctrl+Z undoes, brackets close and match, Alt and the mouse select a rectangle, Tab indents
+(`indentWithTab`: Escape, then Tab, leaves the editor) and Ctrl+S calls `onSave`. `readOnly` lets the
+user read and select but not change the text, `selectable: false` shows it as a picture, and the
+editor is resizable by a bar along its bottom (`resizable`, `vertical` by default, a `Resizable`).
+`extensions` take any other CodeMirror extension, and `texts.phrases` CodeMirror's phrases in the
+language of the page. Over a text area, as in Wicket, the editor hides it and keeps the text in it,
+which a form posts; the text area fires `input` as the user types and `change` once the editor loses
+the focus, and the editor fires the events of `CODE_EDITOR_EVENTS` on it too: the focus, the blur,
+the selection, Ctrl+S, a resize and changes not saved. Against the text last saved (`saved`,
+`markSaved()`) the editor tells whether the text has changes as `data-modified` on its element,
+which the tabs and the desktop show; closing them anyway puts the saved text back. What is selected,
+how far the text is scrolled and the size the user gave the editor are its state
+(`CodeEditorState`): the editor keeps it while hidden, in a tab not selected, `onStateChange` reports
+it a moment after the user changed it, as the editor loses the focus and as the page goes, and the
+option `state` gives it back; rendered anew in the same place with the same text, as Wicket does,
+the editor goes on as it was. CodeMirror writes its style sheet into a style element, which takes
+the nonce of the page's scripts, or `nonce`, under a Content Security Policy. React's `CodeEditor`
+takes `value` and `state` and calls back; Svelte's binds `value`, `state` and `modified`. Wicket's
+`CodeEditor` is a `TextArea` whose model is the text and whose state model, kept in the page by
+default, takes the state the browser sends (`setSendToServer`, on by default), with the text the
+user changed as its input; `CodeEditorEventBehavior`s hear of its events, `markSaved(target)` tells
+the browser the text was saved, and `CodeEditorLanguage.of(name, script)` plugs in the grammar of a
+script of the page's own.
+
+The preview of Markdown (`markdown-preview.ts`, in `antilia-code-editor.js` for Wicket's
+`MarkdownPreview`) shows a text as a page does, with GitHub's tables, task lists and strikethrough,
+its fenced code blocks highlighted by the grammars of the code editor in the colors of the theme
+(`code-editor.css`). It reads the text with the editor's grammar, Lezer's Markdown parser, and builds
+the preview from the syntax tree an element at a time, never parsing HTML: HTML in the text shows as
+text, and links and pictures take only the page's own addresses, http, https and mailto, and pictures
+in `data:` addresses (`safeUrl`), so it shows safely what anyone wrote, under a strict Content
+Security Policy too; links open in a new tab, but for those to places in the page. The tables get
+the classes of the look, Bootstrap's `table` in the Bootstrap look. `new MarkdownPreview(element,
+{ value })` renders a text and `setValue()` another; with `editor`, the preview follows a code editor,
+rendering its text again a frame later each time it changes, by the user or the page, which the
+editor tells with `CODE_EDITOR_EVENTS.text`; `renderMarkdown(text, element)` renders a text once.
+React's and Svelte's `MarkdownPreview` take `value`, `label` and `placeholder`. Wicket's
+`MarkdownPreview` follows a `CodeEditor`, or shows the text of its model, in the browser alone.
+`SplitPanel.collapse(pane, target)` collapses a pane of a collapsible split panel from the server,
+without rendering its panes again: the demo's button hiding the preview beside the editor.
 
 The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `Tabs`) show a list of tabs, along
 the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of the

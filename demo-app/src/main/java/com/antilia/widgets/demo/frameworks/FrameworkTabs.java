@@ -14,6 +14,7 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.request.resource.JavaScriptPackageResource;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
@@ -44,12 +45,10 @@ public class FrameworkTabs extends Panel
 	public static final String[] FRAMEWORKS = { "react", "svelte" };
 
 	/** The bundle of the React apps. */
-	public static final ResourceReference REACT = new JavaScriptResourceReference(
-		FrameworkTabs.class, "react-demo.js");
+	public static final ResourceReference REACT = new BundleReference("react-demo.js");
 
 	/** The bundle of the Svelte apps. */
-	public static final ResourceReference SVELTE = new JavaScriptResourceReference(
-		FrameworkTabs.class, "svelte-demo.js");
+	public static final ResourceReference SVELTE = new BundleReference("svelte-demo.js");
 
 	private static final ResourceReference SCRIPT = new JavaScriptResourceReference(
 		FrameworkTabs.class, "framework-tabs.js");
@@ -173,5 +172,28 @@ public class FrameworkTabs extends Panel
 	{
 		response.render(JavaScriptHeaderItem.forReference(REACT).setDefer(true));
 		response.render(JavaScriptHeaderItem.forReference(SVELTE).setDefer(true));
+	}
+
+	/**
+	 * A bundle of apps, which the build minifies already: Wicket's own compressor, which in
+	 * deployment mode strips the scripts again, takes the // in a template literal for a comment,
+	 * breaking the bundle.
+	 */
+	private static final class BundleReference extends JavaScriptResourceReference
+	{
+		private static final long serialVersionUID = 1L;
+
+		BundleReference(String name)
+		{
+			super(FrameworkTabs.class, name);
+		}
+
+		@Override
+		public JavaScriptPackageResource getResource()
+		{
+			JavaScriptPackageResource resource = super.getResource();
+			resource.setCompress(false);
+			return resource;
+		}
 	}
 }

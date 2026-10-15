@@ -62,10 +62,14 @@
 	<entry key="demo.downloads.description">Dateien jeder Art über die Schaltflächen des Themes: per Ajax in den Browser, über einen versteckten iframe, in einem neuen Tab oder im selben Fenster, beschäftigt, solange sie kommen; Links, eine URL zum Teilen und der Bericht, den ein Formular beschreibt.</entry>
 	<entry key="demo.upload">Hochladen</entry>
 	<entry key="demo.upload.description">Dateien, in einem Formular, per Ajax oder an eine Ressource gesendet, mit einer Schaltfläche des Themes ausgewählt oder auf einer Fläche abgelegt, mit einem Fortschrittsbalken des Themes, einem Schutz, der den Benutzer auf der Seite hält, und einer Möglichkeit, die Uploads zu verlangsamen.</entry>
+	<entry key="demo.codeEditor">Code-Editor</entry>
+	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown oder einer eigenen Grammatik, in den Farben des Themas hervorgehoben: Der Server behält Text, Cursor, Auswahl und Größe, und die Tabs, in denen er liegt, wissen von seinen ungespeicherten Änderungen. Markdown steht neben seiner Live-Vorschau.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Themes, in jedem Browser gleich, über dem nativen Scrollen gezeichnet, sodass Mausrad, Tasten und Touch wie immer funktionieren, und sie folgen per Ajax geändertem Inhalt.</entry>
 	<entry key="demo.splitPanel">Geteiltes Panel</entry>
 	<entry key="demo.splitPanel.description">Bereiche, die sich den Platz teilen, verschachtelt wie in einer IDE: Trenner ziehen oder mit der Tastatur bewegen, einen Bereich einklappen, Größen in Prozent oder Pixeln, und der Server erfährt und merkt sich die Aufteilung.</entry>
+	<entry key="demo.resizable">Größenänderung</entry>
+	<entry key="demo.resizable.description">Jedes Element in der Größe veränderbar, an seinem Rand oder seiner Ecke, mit der Maus, einem Finger oder der Tastatur, in Grenzen; der Server merkt sich die Größe, auch wenn die Komponente aus der Seite genommen und zurückgelegt wird.</entry>
 	<entry key="demo.tabs">Tabs</entry>
 	<entry key="demo.tabs.description">Tabs oben oder an der Seite, in neun Designs: Dokumente, die sich schließen lassen und zuerst fragen, wenn der Server nicht gespeicherte Änderungen meldet, mit eigenen Aktionen und neuen, per Ajax hinzugefügten.</entry>
 	<entry key="demo.menus">Menüs</entry>

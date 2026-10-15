@@ -16,6 +16,7 @@ import { LookProvider, lookOf } from '@antilia/react';
 import { startApps, type Mount } from './apps.js';
 import { AutocompleteDemo } from './react/AutocompleteDemo.js';
 import { ButtonsDemo } from './react/ButtonsDemo.js';
+import { CodeEditorDemo } from './react/CodeEditorDemo.js';
 import { DatePickerDemo } from './react/DatePickerDemo.js';
 import { DesktopDemo } from './react/DesktopDemo.js';
 import { DropdownDemo } from './react/DropdownDemo.js';
@@ -26,6 +27,7 @@ import { ModalDemo } from './react/ModalDemo.js';
 import { NotificationsDemo } from './react/NotificationsDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
+import { ResizableDemo } from './react/ResizableDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 import { SplitPanelDemo } from './react/SplitPanelDemo.js';
 import { PopoversDemo } from './react/PopoversDemo.js';
@@ -51,6 +53,8 @@ startApps('react', {
 	palette: app(PaletteDemo),
 	datePicker: app(DatePickerDemo),
 	splitPanel: app(SplitPanelDemo),
+	resizable: app(ResizableDemo),
+	codeEditor: app(CodeEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

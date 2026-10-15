@@ -12,6 +12,7 @@ import org.apache.wicket.Page;
 
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
+import com.antilia.widgets.demo.codeeditor.CodeEditorPage;
 import com.antilia.widgets.demo.contacts.ContactsPage;
 import com.antilia.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antilia.widgets.demo.datatable.DynamicDataTablePage;
@@ -28,6 +29,7 @@ import com.antilia.widgets.demo.notification.NotificationsPage;
 import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.popover.PopoversPage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
+import com.antilia.widgets.demo.resizable.ResizablePage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.tabs.TabsPage;
@@ -112,8 +114,10 @@ public final class Demos
 		new Demo("buttons", "forms", ButtonsPage.class, true, true),
 		new Demo("downloads", "forms", DownloadsPage.class, true, false),
 		new Demo("upload", "forms", UploadPage.class, true, false),
+		new Demo("codeEditor", "forms", CodeEditorPage.class, true, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
+		new Demo("resizable", "layout", ResizablePage.class, true, true),
 		new Demo("tabs", "layout", TabsPage.class, true, true),
 		new Demo("menus", "layout", MenusPage.class, true, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
