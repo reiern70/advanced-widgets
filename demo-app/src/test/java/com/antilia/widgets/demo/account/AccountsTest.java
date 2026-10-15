@@ -76,6 +76,8 @@ class AccountsTest
 			.orElseThrow();
 		assertFalse(ada.getPasswordHash().contains("analytical-engine"));
 		assertEquals(Role.USER, ada.getRole());
+		// the email is the name of the account, and kept apart too
+		assertEquals("ada@example.com", ada.getEmail());
 		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
 		assertFalse(accounts.authenticate("ada@example.com", "difference-engine").isPresent());
 	}

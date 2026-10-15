@@ -10,7 +10,8 @@
 	<entry key="tab.accesses">Zugriffe</entry>
 	<entry key="users.lead">Die Konten, die neuesten zuerst. Konten:</entry>
 	<entry key="accesses.lead">Wer die Seite besucht hat, eine Zeile je Sitzung, die neuesten zuerst. Sitzungen:</entry>
-	<entry key="email">E-Mail oder Konto</entry>
+	<entry key="account">Konto</entry>
+	<entry key="email">E-Mail</entry>
 	<entry key="firstName">Vorname</entry>
 	<entry key="lastName">Nachname</entry>
 	<entry key="country">Land</entry>
@@ -23,7 +24,7 @@
 	<entry key="yes">Ja</entry>
 	<entry key="no">Nein</entry>
 	<entry key="filter.name">Name</entry>
-	<entry key="filter.name.placeholder">Vor- oder Nachname</entry>
+	<entry key="filter.name.placeholder">Konto, Vor- oder Nachname</entry>
 	<entry key="filter.email">E-Mail</entry>
 	<entry key="filter.email.placeholder">Teil der E-Mail</entry>
 	<entry key="filter.country">Land</entry>

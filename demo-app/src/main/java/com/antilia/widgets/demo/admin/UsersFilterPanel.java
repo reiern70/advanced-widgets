@@ -20,8 +20,9 @@ import com.antilia.widgets.demo.data.UserFilter;
 import com.antilia.widgets.dropdown.Dropdown;
 
 /**
- * Filters the accounts while the administrator types or chooses: by country, by first or last
- * name and by email; shown in front of the navigation of the {@link UsersPanel}'s table.
+ * Filters the accounts while the administrator types or chooses: by country, by the name of the
+ * account, first or last name and by email; shown in front of the navigation of the
+ * {@link UsersPanel}'s table.
  */
 abstract class UsersFilterPanel extends Panel
 {

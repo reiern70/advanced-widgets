@@ -20,10 +20,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * An account that may open the demos: its name, a salted hash of its password and its
- * {@link Role}. A visitor who registered has the email as name, tells the first and last name,
- * the country, the {@link JobRole} and the {@link Language} of the emails, and opens the demos
- * once the email is {@link #isValidated() validated}.
+ * An account that may open the demos: its name, a salted hash of its password, its
+ * {@link Role} and an email, which a configured account may lack. A visitor who registered has the
+ * email as name too, tells the first and last name, the country, the {@link JobRole} and the
+ * {@link Language} of the emails, and opens the demos once the email is
+ * {@link #isValidated() validated}.
  */
 @Entity
 @Table(name = "users")
@@ -47,6 +48,9 @@ public class User implements Serializable, IIdentifiable<Long>
 
 	@Column(nullable = false)
 	private Instant created;
+
+	@Column(length = 254)
+	private String email;
 
 	@Column(name = "first_name", length = 60)
 	private String firstName;
@@ -124,6 +128,19 @@ public class User implements Serializable, IIdentifiable<Long>
 	public Instant getCreated()
 	{
 		return created;
+	}
+
+	/**
+	 * @return the email, in lower case; {@code null} for a configured account without one
+	 */
+	public String getEmail()
+	{
+		return email;
+	}
+
+	public void setEmail(String email)
+	{
+		this.email = email;
 	}
 
 	public String getFirstName()

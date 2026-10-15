@@ -202,6 +202,7 @@ public class Accounts
 			return Optional.empty();
 		}
 		User user = new User(key, hash(password), Role.USER);
+		user.setEmail(key);
 		details.accept(user);
 		String token = newValidation(user);
 		try

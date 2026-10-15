@@ -28,8 +28,8 @@ import com.antilia.widgets.dynamicdatatable.SortableDynamicDataProvider;
 
 /**
  * The accounts: those the demo always has, the configured ones and the ones visitors registered,
- * the latest first, filtered by country, by first or last name and by email (see
- * {@link UsersFilterPanel}).
+ * the latest first, filtered by country, by the name of the account, first or last name and by
+ * email (see {@link UsersFilterPanel}).
  */
 class UsersPanel extends Panel
 {
@@ -41,7 +41,8 @@ class UsersPanel extends Panel
 	{
 		super(id);
 		List<IColumn<User, String>> columns = List.of(
-			new AdminColumn<>("email", "name", User::getName),
+			new AdminColumn<>("account", "name", User::getName),
+			new AdminColumn<>("email", "email", User::getEmail),
 			new AdminColumn<>("firstName", "firstName", User::getFirstName),
 			new AdminColumn<>("lastName", "lastName", User::getLastName),
 			new AdminColumn<User>("country", "country",

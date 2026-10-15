@@ -61,6 +61,8 @@ class AdminPageTest
 		tester.assertComponent("tabs:panel", UsersPanel.class);
 		tester.assertLabel("tabs:panel:count", "5");
 		tester.assertContains("ada@example.com");
+		tester.assertContains(">Account<");
+		tester.assertContains(">Email<");
 		tester.assertContains("Lovelace");
 		tester.assertContains("Hopper");
 		tester.assertContains("United States");
@@ -81,9 +83,16 @@ class AdminPageTest
 		tester.assertLabel("tabs:panel:count", "1");
 		tester.assertContains("ada@example.com");
 
+		// the name of the account too, which the accounts the demo always has have alone
+		filter("name", "wicket", "input");
+		tester.assertLabel("tabs:panel:count", "1");
+
+		// the email, which these accounts lack
 		filter("name", "", "input");
 		filter("email", "example", "input");
 		tester.assertLabel("tabs:panel:count", "2");
+		filter("email", "wicket", "input");
+		tester.assertLabel("tabs:panel:count", "0");
 	}
 
 	@Test

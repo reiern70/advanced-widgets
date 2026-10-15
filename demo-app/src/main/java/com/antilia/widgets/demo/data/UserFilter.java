@@ -16,9 +16,9 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 
 /**
- * Which {@link User}s an administrator looks at: those of a country, those whose first or last
- * name contains a text and those whose email contains another, ignoring case. What is left empty
- * does not filter.
+ * Which {@link User}s an administrator looks at: those of a country, those whose name, first name
+ * or last name contains a text and those whose email contains another, ignoring case. What is
+ * left empty does not filter.
  */
 public class UserFilter implements Serializable
 {
@@ -44,7 +44,8 @@ public class UserFilter implements Serializable
 	}
 
 	/**
-	 * @return the text the first or the last name contains, {@code null} for all
+	 * @return the text the name of the account, the first or the last name contains, {@code null}
+	 *         for all
 	 */
 	public String getName()
 	{
@@ -57,7 +58,7 @@ public class UserFilter implements Serializable
 	}
 
 	/**
-	 * @return the text the email, the name of the account, contains, {@code null} for all
+	 * @return the text the email contains, {@code null} for all
 	 */
 	public String getEmail()
 	{
@@ -86,14 +87,15 @@ public class UserFilter implements Serializable
 			}
 			if (byName != null)
 			{
+				Expression<String> account = builder.lower(user.get("name"));
 				Expression<String> first = builder.lower(user.get("firstName"));
 				Expression<String> last = builder.lower(user.get("lastName"));
-				predicates.add(builder.or(builder.like(first, byName, '\\'),
-					builder.like(last, byName, '\\')));
+				predicates.add(builder.or(builder.like(account, byName, '\\'),
+					builder.like(first, byName, '\\'), builder.like(last, byName, '\\')));
 			}
 			if (byEmail != null)
 			{
-				predicates.add(builder.like(builder.lower(user.get("name")), byEmail, '\\'));
+				predicates.add(builder.like(builder.lower(user.get("email")), byEmail, '\\'));
 			}
 			return builder.and(predicates.toArray(Predicate[]::new));
 		};

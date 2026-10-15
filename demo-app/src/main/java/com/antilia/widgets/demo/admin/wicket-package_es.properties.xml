@@ -10,7 +10,8 @@
 	<entry key="tab.accesses">Accesos</entry>
 	<entry key="users.lead">Las cuentas, las más recientes primero. Cuentas:</entry>
 	<entry key="accesses.lead">Quién accedió al sitio, una fila por sesión, las más recientes primero. Sesiones:</entry>
-	<entry key="email">Correo o cuenta</entry>
+	<entry key="account">Cuenta</entry>
+	<entry key="email">Correo</entry>
 	<entry key="firstName">Nombre</entry>
 	<entry key="lastName">Apellido</entry>
 	<entry key="country">País</entry>
@@ -23,7 +24,7 @@
 	<entry key="yes">Sí</entry>
 	<entry key="no">No</entry>
 	<entry key="filter.name">Nombre</entry>
-	<entry key="filter.name.placeholder">Nombre o apellido</entry>
+	<entry key="filter.name.placeholder">Cuenta, nombre o apellido</entry>
 	<entry key="filter.email">Correo</entry>
 	<entry key="filter.email.placeholder">Parte del correo</entry>
 	<entry key="filter.country">País</entry>
