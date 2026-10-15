@@ -61,6 +61,17 @@ class DatePickerTest extends WicketTestCase
 	}
 
 	@Test
+	void leavesTheFirstDayOfWeekOfALanguageWithoutACountryToTheScript()
+	{
+		// Java answers Sunday for German and Spanish without a country; the script, Monday
+		tester.getSession().setLocale(Locale.GERMAN);
+		tester.startPage(new TestPage());
+
+		tester.assertContains("\"locale\":\"de\"");
+		assertFalse(tester.getLastResponseAsString().contains("firstDayOfWeek"));
+	}
+
+	@Test
 	void passesALocaleOfItsOwnTheBoundsAndTheMinuteStep()
 	{
 		TestPage page = new TestPage();

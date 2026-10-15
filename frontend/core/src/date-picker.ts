@@ -922,9 +922,11 @@ export class DatePicker {
 		this.body.textContent = '';
 		this.body.dataset.view = this.view;
 		if (this.view === 'days') {
-			this.title.textContent = new Intl.DateTimeFormat(locale, { calendar: 'gregory',
+			// "mayo de 1990" becomes "Mayo de 1990": only the first letter is made upper case
+			const title = new Intl.DateTimeFormat(locale, { calendar: 'gregory',
 				numberingSystem: 'latn', timeZone: 'UTC', month: 'long', year: 'numeric' })
 				.format(utc({ year, month, day: 1 }));
+			this.title.textContent = title.charAt(0).toLocaleUpperCase(locale) + title.slice(1);
 			this.body.appendChild(this.renderDays());
 		} else if (this.view === 'months') {
 			this.title.textContent = String(year);

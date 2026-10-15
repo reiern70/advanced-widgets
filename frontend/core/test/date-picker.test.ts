@@ -193,6 +193,15 @@ describe('DatePicker', () => {
 		expect(DatePicker.of(element)).toBe(again);
 	});
 
+	it('upper-cases only the first letter of the month, the week of a language as in its region', () => {
+		const picker = new DatePicker(input('', '1990-05-17'), { locale: 'es' });
+		picker.toggle.click();
+
+		expect(picker.title.textContent).toBe('Mayo de 1990');
+		const heads = Array.from(picker.body.querySelectorAll('th'), (cell) => cell.textContent);
+		expect(heads[0]).toBe('lun');
+	});
+
 	it('opens on the month of its value, the week starting on the first day of the locale', () => {
 		const picker = new DatePicker(input('', '2026-10-09'), { locale: 'de-DE' });
 		picker.toggle.click();

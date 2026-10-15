@@ -30,15 +30,17 @@ import com.github.openjson.JSONObject;
  * 2026-10-09T14:30, into a date picker that takes the colors of the
  * {@link com.antilia.widgets.theme.Theme theme} it is in.
  * <p>
- * Everything happens in the browser: {@code Wicket.DatePicker} from {@link #JS} hides the input
- * and puts a text field, a button and a calendar next to it. The text field shows the date the way
- * the {@link #setLocale(Locale) locale} writes it, 09.10.2026 in Germany and 10/09/2026 in the
- * United States, and reads it back typed so; the calendar names the months and days in the language
- * of the locale and starts the week on its first day, which this behavior takes from
- * {@link WeekFields}; a time has the clock of the locale. The texts of the buttons come from the
- * bundles, in the language of the session. The input stays in the page and holds the value as ISO
- * text: a form posts it as always, and a change fires the input's {@code change} event, so an
- * {@code AjaxFormComponentUpdatingBehavior} on it is notified. Text that is no date is posted as
+ * Everything happens in the browser: {@code Wicket.DatePicker} from {@link #JS} hides the input and
+ * puts a text field, a button and a calendar next to it. The text field shows the date the way the
+ * {@link #setLocale(Locale) locale} writes it, 09.10.2026 in Germany and 10/09/2026 in the United
+ * States, and reads it back typed so; the calendar names the months and days in the language of the
+ * locale and starts the week on its first day, which this behavior takes from {@link WeekFields}
+ * when the locale has a country; for a language alone, such as German, the script takes the first
+ * day of its likeliest country (Monday for German and Spanish, where Java answers Sunday), as the
+ * React and Svelte pickers do. A time has the clock of the locale. The texts of the buttons come
+ * from the bundles, in the language of the session. The input stays in the page and holds the value
+ * as ISO text: a form posts it as always, and a change fires the input's {@code change} event, so
+ * an {@code AjaxFormComponentUpdatingBehavior} on it is notified. Text that is no date is posted as
  * typed, for the converter of the component to refuse.
  * <p>
  * The calendar is used with the mouse, touch or the keyboard: the arrow keys move by a day or a
@@ -252,7 +254,11 @@ public class DatePickerBehavior extends Behavior
 		Locale chosen = resolveLocale(component);
 		JSONObject options = new JSONObject();
 		options.put("locale", chosen.toLanguageTag());
-		options.put("firstDayOfWeek", WeekFields.of(chosen).getFirstDayOfWeek().getValue() % 7);
+		if (!chosen.getCountry().isEmpty())
+		{
+			options.put("firstDayOfWeek",
+				WeekFields.of(chosen).getFirstDayOfWeek().getValue() % 7);
+		}
 		options.put("time", time);
 		if (minimum != null)
 		{

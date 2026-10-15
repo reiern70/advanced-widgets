@@ -208,7 +208,6 @@
 	border-radius: var(--antilia-look-radius, 0.3em);
 	background: transparent;
 	font-weight: 600 !important;
-	text-transform: capitalize;
 }
 
 .antilia-datepicker-title:hover:not(:disabled),
