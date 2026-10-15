@@ -21,6 +21,7 @@ import com.antilia.widgets.demo.HomePage;
 import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.admin.AdminPage;
+import com.antilia.widgets.demo.data.Role;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 
@@ -230,6 +231,38 @@ class DemosAuthorizationTest
 
 		tester.assertVisible("form:captcha");
 		assertNotEquals(first, ((SignInPage)tester.getLastRenderedPage()).getChallenge());
+	}
+
+	@Test
+	void atMostFiveUsersAreSignedInAtOnce()
+	{
+		start(RuntimeConfigurationType.DEPLOYMENT);
+		SignedInUsers users = SignedInUsers.get();
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			String id = "session-" + i;
+			assertTrue(users.signIn("user" + i, Role.USER, () -> id));
+		}
+
+		tester.startPage(SignInPage.class);
+		signIn("client", "secret-one");
+		tester.assertRenderedPage(SignInPage.class);
+		tester.assertErrorMessages("Too many users are signed in right now: at most 5 at once. " +
+			"Please try again in a few minutes.");
+		assertFalse(DemoSession.get().isSignedIn());
+
+		// an administrator always signs in
+		tester.startPage(SignInPage.class);
+		signIn("admin", "$Macarena_4321");
+		tester.assertRenderedPage(HomePage.class);
+		DemoSession.get().signOut();
+
+		// a user signing out makes room
+		users.signedOut("session-1");
+		tester.startPage(SignInPage.class);
+		signIn("client", "secret-one");
+		tester.assertRenderedPage(HomePage.class);
+		assertEquals(SignedInUsers.MAXIMUM, users.count());
 	}
 
 	@Test

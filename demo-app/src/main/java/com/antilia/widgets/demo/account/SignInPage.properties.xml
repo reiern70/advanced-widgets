@@ -11,6 +11,7 @@
 	<entry key="password">Password</entry>
 	<entry key="submit">Sign in</entry>
 	<entry key="wrong">The account or the password is wrong.</entry>
+	<entry key="full">Too many users are signed in right now: at most {0} at once. Please try again in a few minutes.</entry>
 	<entry key="noAccount">No account yet?</entry>
 	<entry key="register">Register</entry>
 	<entry key="Required">Please enter ${label}.</entry>

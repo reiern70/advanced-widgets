@@ -16,6 +16,7 @@ import org.apache.wicket.util.lang.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antilia.widgets.demo.account.SignedInUsers;
 import com.antilia.widgets.demo.data.Access;
 import com.antilia.widgets.demo.data.Accesses;
 import com.antilia.widgets.demo.data.Role;
@@ -166,34 +167,47 @@ public class DemoSession extends WebSession
 	 *
 	 * @param account
 	 *            the name of the account
+	 * @return whether the user signed in
 	 * @see #signIn(String, Role)
 	 */
-	public void signIn(String account)
+	public boolean signIn(String account)
 	{
-		signIn(account, Role.USER);
+		return signIn(account, Role.USER);
 	}
 
 	/**
-	 * Signs the user in, under a new session id so that the old one is of no use; the demo the
-	 * user was going to stays in the session. The access of the session gets the account.
+	 * Signs the user in, under a new session id so that the old one is of no use, unless
+	 * {@value SignedInUsers#MAXIMUM} other users are signed in already (see
+	 * {@link SignedInUsers}); the demo the user was going to stays in the session. The access of
+	 * the session gets the account.
 	 *
 	 * @param account
 	 *            the name of the account
 	 * @param role
 	 *            what the account may do
+	 * @return whether the user signed in; {@code false} when too many users are
 	 */
-	public void signIn(String account, Role role)
+	public boolean signIn(String account, Role role)
 	{
-		bind();
-		changeSessionId();
-		this.account = Args.notEmpty(account, "account");
-		this.role = Args.notNull(role, "role");
-		failedSignIns = 0;
-		dirty();
-		recordAccess(access -> {
-			access.setSessionId(getId());
-			access.setUserName(account);
+		Args.notEmpty(account, "account");
+		Args.notNull(role, "role");
+		boolean signedIn = SignedInUsers.get().signIn(account, role, () -> {
+			bind();
+			changeSessionId();
+			this.account = account;
+			this.role = role;
+			failedSignIns = 0;
+			dirty();
+			return getId();
 		});
+		if (signedIn)
+		{
+			recordAccess(access -> {
+				access.setSessionId(getId());
+				access.setUserName(account);
+			});
+		}
+		return signedIn;
 	}
 
 	/**
@@ -217,6 +231,10 @@ public class DemoSession extends WebSession
 	 */
 	public void signOut()
 	{
+		if (getId() != null)
+		{
+			SignedInUsers.get().signedOut(getId());
+		}
 		account = null;
 		role = null;
 		dirty();

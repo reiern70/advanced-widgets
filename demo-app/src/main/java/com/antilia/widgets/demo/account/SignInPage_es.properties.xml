@@ -11,6 +11,7 @@
 	<entry key="password">Contraseña</entry>
 	<entry key="submit">Iniciar sesión</entry>
 	<entry key="wrong">La cuenta o la contraseña no son correctas.</entry>
+	<entry key="full">Hay demasiados usuarios conectados en este momento: como mucho {0} a la vez. Vuelva a intentarlo en unos minutos.</entry>
 	<entry key="noAccount">¿Aún no tiene cuenta?</entry>
 	<entry key="register">Regístrese</entry>
 	<entry key="Required">Indique ${label}.</entry>

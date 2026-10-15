@@ -27,6 +27,7 @@ import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.demo.account.DemosAuthorization;
 import com.antilia.widgets.demo.account.SignInAttempts;
 import com.antilia.widgets.demo.account.SignInPage;
+import com.antilia.widgets.demo.account.SignedInUsers;
 import com.antilia.widgets.demo.admin.AccessTimeResource;
 import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
@@ -106,6 +107,8 @@ public class WicketApplication extends WebApplication
 
 	private final SignInAttempts signInAttempts = new SignInAttempts();
 
+	private final SignedInUsers signedInUsers = new SignedInUsers();
+
 	private IMailer mailer = IMailer.fromSettings();
 
 	/**
@@ -166,7 +169,20 @@ public class WicketApplication extends WebApplication
 					DemoSession.get().identify(visitor);
 				}
 			}
+
+			@Override
+			public void onEndRequest(RequestCycle cycle)
+			{
+				// a request keeps the user counted among those signed in
+				if (Session.exists() && DemoSession.get().isSignedIn() &&
+					DemoSession.get().getId() != null)
+				{
+					signedInUsers.seen(DemoSession.get().getId());
+				}
+			}
 		});
+		// at most SignedInUsers.MAXIMUM users are signed in at once: the ended sessions are not
+		getSessionStore().registerUnboundListener(signedInUsers::signedOut);
 
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());
@@ -287,6 +303,14 @@ public class WicketApplication extends WebApplication
 	public void setMailer(IMailer mailer)
 	{
 		this.mailer = mailer;
+	}
+
+	/**
+	 * @return the users signed in now
+	 */
+	public SignedInUsers getSignedInUsers()
+	{
+		return signedInUsers;
 	}
 
 	/**

@@ -29,7 +29,8 @@ import com.antilia.widgets.demo.register.ConfirmationMail;
 import com.antilia.widgets.demo.register.RegisterPage;
 
 /**
- * Signs a visitor in with the name of an account and its password; then goes on to the demo the
+ * Signs a visitor in with the name of an account and its password, while fewer than
+ * {@value SignedInUsers#MAXIMUM} other users are signed in; then goes on to the demo the
  * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA}
  * failed attempts in the session, or on the account, it asks for the letters of a captcha too.
  * A visitor who registered signs in only once the email is confirmed; until then signing in
@@ -87,7 +88,12 @@ public class SignInPage extends BasePage
 					notValidated(user.get());
 					return;
 				}
-				session.signIn(user.get().getName(), user.get().getRole());
+				if (!session.signIn(user.get().getName(), user.get().getRole()))
+				{
+					error(new StringResourceModel("full", SignInPage.this)
+						.setParameters(SignedInUsers.MAXIMUM).getString());
+					return;
+				}
 				continueToOriginalDestination();
 				setResponsePage(HomePage.class);
 			}
