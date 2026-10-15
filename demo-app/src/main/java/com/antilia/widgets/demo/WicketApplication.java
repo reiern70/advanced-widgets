@@ -15,6 +15,8 @@ import org.apache.wicket.markup.html.form.upload.resource.FileUploadResourceRefe
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
+import org.apache.wicket.request.cycle.IRequestCycleListener;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
 import org.apache.wicket.util.string.Strings;
@@ -140,6 +142,24 @@ public class WicketApplication extends WebApplication
 		accesses = database.getBean(Accesses.class);
 		accounts.addDefaults();
 		accounts.addFromSettings();
+
+		// a visitor who does not sign in, such as a script checking the site, tells who it is with
+		// ?visitor=, which the accesses show
+		getRequestCycleListeners().add(new IRequestCycleListener()
+		{
+			@Override
+			public void onBeginRequest(RequestCycle cycle)
+			{
+				String visitor = cycle.getRequest()
+					.getQueryParameters()
+					.getParameterValue(DemoSession.VISITOR_PARAMETER)
+					.toOptionalString();
+				if (visitor != null)
+				{
+					DemoSession.get().identify(visitor);
+				}
+			}
+		});
 
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());

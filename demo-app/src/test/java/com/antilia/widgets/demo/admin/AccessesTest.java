@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.string.StringValue;
 import org.apache.wicket.util.tester.WicketTester;
 import org.apache.wicket.util.visit.IVisit;
@@ -143,6 +144,64 @@ class AccessesTest
 		tester.assertContains("Europe/Berlin");
 		tester.assertContains("2026-10-10 09:00:00");
 		tester.assertContains(">admin<");
+	}
+
+	@Test
+	void aVisitorTellsWhoItIs()
+	{
+		tester.startPage(HomePage.class,
+			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "claude-dev"));
+
+		// recorded at once, the script and robots alike
+		assertEquals("user-claude-dev", access().getUserName());
+		assertFalse(DemoSession.get().isTemporary());
+		postTime("UTC", "2026-10-15T10:00:00");
+		assertEquals("user-claude-dev", access().getUserName());
+		assertEquals(1, Accesses.get().count());
+
+		// the account signed in with wins
+		DemoSession.get().signIn("wicket", Role.USER);
+		assertEquals("wicket", access().getUserName());
+		tester.startPage(HomePage.class,
+			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "someone-else"));
+		assertEquals("wicket", access().getUserName());
+		assertEquals(1, Accesses.get().count());
+	}
+
+	@Test
+	void whatAVisitorTellsIsChecked()
+	{
+		tester.startPage(HomePage.class, new PageParameters()
+			.add(DemoSession.VISITOR_PARAMETER, "admin'); DROP TABLE accesses; --"));
+		assertNull(DemoSession.get().getVisitor());
+		assertNull(DemoSession.get().getAccessId());
+
+		tester.startPage(HomePage.class,
+			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "x".repeat(41)));
+		assertNull(DemoSession.get().getVisitor());
+	}
+
+	@Test
+	void robotsAreToldApart()
+	{
+		tester.startPage(HomePage.class);
+		tester.getRequest().setHeader("User-Agent",
+			"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
+		postTime("America/Los_Angeles", "2026-10-14T17:00:00");
+
+		assertEquals(Access.ROBOT, access().getUserName());
+
+		assertTrue(Access.isRobot("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+			"AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15 " +
+			"(Applebot/0.1; +http://www.apple.com/go/applebot)"));
+		assertTrue(Access.isRobot("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 " +
+			"(KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36"));
+		assertTrue(Access.isRobot("curl/8.5.0"));
+		assertFalse(Access.isRobot("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:155.0) " +
+			"Gecko/20100101 Firefox/155.0"));
+		assertFalse(Access.isRobot("Mozilla/5.0 (iPhone; CPU iPhone OS 18_7_8 like Mac OS X) " +
+			"AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"));
+		assertFalse(Access.isRobot(null));
 	}
 
 	@Test

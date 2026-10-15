@@ -7,6 +7,7 @@ package com.antilia.widgets.demo.data;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 
 import com.antilia.widgets.dynamicdatatable.IIdentifiable;
 
@@ -29,6 +30,15 @@ public class Access implements Serializable, IIdentifiable<Long>
 
 	/** The user of a session in which nobody signed in. */
 	public static final String UNKNOWN = "unknown";
+
+	/** The user of a session of a robot, such as a search engine's, in which nobody signed in. */
+	public static final String ROBOT = "robot";
+
+	/** What the browser of a robot tells, such as Googlebot/2.1, Applebot or HeadlessChrome. */
+	private static final Pattern ROBOT_AGENT = Pattern.compile(
+		"bot/|bot;|crawl|spider|slurp|headless|facebookexternalhit|preview|curl/|wget/|python|" +
+			"java/|go-http-client|okhttp|scrapy|lighthouse|pingdom|uptime",
+		Pattern.CASE_INSENSITIVE);
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -78,6 +88,16 @@ public class Access implements Serializable, IIdentifiable<Long>
 		this.address = address;
 		this.userAgent = userAgent;
 		this.accessed = accessed;
+	}
+
+	/**
+	 * @param userAgent
+	 *            what the browser tells it is, may be {@code null}
+	 * @return whether the browser is a robot's
+	 */
+	public static boolean isRobot(String userAgent)
+	{
+		return userAgent != null && ROBOT_AGENT.matcher(userAgent).find();
 	}
 
 	@Override

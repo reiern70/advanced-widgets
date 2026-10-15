@@ -6,6 +6,7 @@ package com.antilia.widgets.demo;
 
 import java.time.Instant;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Session;
 import org.apache.wicket.protocol.http.WebSession;
@@ -25,8 +26,10 @@ import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * The session of the demo application: remembers the {@link Theme} and the
- * {@link AjaxEngine} the user chose for every page, the account the user signed in with, the failed attempts to sign in
- * and the {@link Access} recording the session.
+ * {@link AjaxEngine} the user chose for every page, the account the user signed in with, the failed attempts to sign in,
+ * who a visitor who does not sign in told it is (see {@link #VISITOR_PARAMETER}) and the
+ * {@link Access} recording the session, whose user is the account, the visitor, a robot or
+ * unknown.
  * <p>
  * The home page is stateless, so a session is only kept once there is something to keep: a
  * choice, an account or an access; the setters bind it.
@@ -34,6 +37,16 @@ import jakarta.servlet.http.HttpServletRequest;
 public class DemoSession extends WebSession
 {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The query parameter with which a visitor who does not sign in, such as a script checking
+	 * the site, tells who it is: {@code ?visitor=claude-dev} on any page records the access of the
+	 * session as {@code user-claude-dev}.
+	 */
+	public static final String VISITOR_PARAMETER = "visitor";
+
+	/** What a visitor may tell it is: a few letters, digits, dots and dashes. */
+	private static final Pattern VISITOR = Pattern.compile("[a-z0-9][a-z0-9.-]{0,39}");
 
 	private Theme theme = Theme.DEFAULT;
 
@@ -48,6 +61,9 @@ public class DemoSession extends WebSession
 	private Role role;
 
 	private int failedSignIns;
+
+	/** Who the visitor told it is, see {@link #VISITOR_PARAMETER}; {@code null} if it did not. */
+	private String visitor;
 
 	/** The id of the {@link Access} recording this session, {@code null} until there is one. */
 	private Long accessId;
@@ -207,6 +223,38 @@ public class DemoSession extends WebSession
 	}
 
 	/**
+	 * Records the access of the session as the visitor's, unless somebody signed in: the
+	 * visitor tells who it is with {@link #VISITOR_PARAMETER}. A name with other characters than
+	 * letters, digits, dots and dashes is ignored.
+	 *
+	 * @param name
+	 *            what the visitor tells it is, such as {@code claude-dev}
+	 */
+	public void identify(String name)
+	{
+		if (name == null || !VISITOR.matcher(name).matches() || ("user-" + name).equals(visitor))
+		{
+			return;
+		}
+		visitor = "user-" + name;
+		recordAccess(access -> {
+			if (account == null)
+			{
+				access.setUserName(visitor);
+			}
+		});
+	}
+
+	/**
+	 * @return who the visitor told it is, as the accesses show it, such as
+	 *         {@code user-claude-dev}; {@code null} if it did not
+	 */
+	public String getVisitor()
+	{
+		return visitor;
+	}
+
+	/**
 	 * @return how often the user failed to sign in since signing in last
 	 */
 	public int getFailedSignIns()
@@ -299,6 +347,14 @@ public class DemoSession extends WebSession
 		if (account != null)
 		{
 			access.setUserName(account);
+		}
+		else if (visitor != null)
+		{
+			access.setUserName(visitor);
+		}
+		else if (Access.isRobot(userAgent))
+		{
+			access.setUserName(Access.ROBOT);
 		}
 		return access;
 	}
