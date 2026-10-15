@@ -189,6 +189,18 @@
 				<groupId>com.github.blutorange</groupId>
 				<artifactId>closure-compiler-maven-plugin</artifactId>
 				<version>3.1.0</version>
+				<configuration>
+					<baseSourceDir>${project.build.outputDirectory}</baseSourceDir>
+					<baseTargetDir>${project.build.outputDirectory}</baseTargetDir>
+					<sourceDir>.</sourceDir>
+					<targetDir>.</targetDir>
+					<skipMerge>true</skipMerge>
+					<outputFilename>#{path}/#{basename}.min.#{extension}</outputFilename>
+					<closureCompilationLevel>SIMPLE_OPTIMIZATIONS</closureCompilationLevel>
+					<closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>
+					<closureInjectLibraries>false</closureInjectLibraries>
+					<closureEmitUseStrict>false</closureEmitUseStrict>
+				</configuration>
 				<executions>
 					<execution>
 						<id>minify-js</id>
@@ -197,22 +209,35 @@
 							<goal>minify</goal>
 						</goals>
 						<configuration>
-							<baseSourceDir>${project.build.outputDirectory}</baseSourceDir>
-							<baseTargetDir>${project.build.outputDirectory}</baseTargetDir>
-							<sourceDir>.</sourceDir>
-							<targetDir>.</targetDir>
 							<includes>
 								<include>**/*.js</include>
 							</includes>
 							<excludes>
 								<exclude>**/*.min.js</exclude>
+								<exclude>com/antilia/widgets/codeeditor/antilia-code-editor.js</exclude>
 							</excludes>
-							<skipMerge>true</skipMerge>
-							<outputFilename>#{path}/#{basename}.min.#{extension}</outputFilename>
-							<closureCompilationLevel>SIMPLE_OPTIMIZATIONS</closureCompilationLevel>
-							<closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>
-							<closureInjectLibraries>false</closureInjectLibraries>
-							<closureEmitUseStrict>false</closureEmitUseStrict>
+						</configuration>
+					</execution>
+					<!--
+					  The code editor bundles CodeMirror, whose own code makes the compiler warn on
+					  every build: empty branches (if ... ;) and a new RegExp() made only to see whether
+					  it throws. Those two checks are off for this bundle only, so that a new warning
+					  stands out.
+					-->
+					<execution>
+						<id>minify-code-editor-js</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>minify</goal>
+						</goals>
+						<configuration>
+							<includes>
+								<include>com/antilia/widgets/codeeditor/antilia-code-editor.js</include>
+							</includes>
+							<closureWarningLevels>
+								<suspiciousCode>OFF</suspiciousCode>
+								<uselessCode>OFF</uselessCode>
+							</closureWarningLevels>
 						</configuration>
 					</execution>
 				</executions>
