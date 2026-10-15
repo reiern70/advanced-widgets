@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
+  All rights reserved.
+-->
+<properties>
+	<entry key="notFound.title">Página no encontrada</entry>
+	<entry key="notFound.message">No hay ninguna página en esta dirección: puede que el enlace esté mal o que la página se haya movido.</entry>
+	<entry key="internalError.title">Algo ha fallado</entry>
+	<entry key="internalError.message">La página falló en el servidor, que anotó lo ocurrido. Inténtelo de nuevo o empiece desde la página de inicio.</entry>
+	<entry key="pageExpired.title">Esta página ha caducado</entry>
+	<entry key="pageExpired.message">El servidor ya no guarda esta página: una sesión termina tras unos minutos sin peticiones. Ábrala de nuevo desde la página de inicio.</entry>
+	<entry key="accessDenied.title">No es para esta cuenta</entry>
+	<entry key="accessDenied.message">Esta página no está abierta a la cuenta con la que inició sesión.</entry>
+	<entry key="home">Volver a las demos</entry>
+</properties>

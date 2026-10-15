@@ -48,6 +48,10 @@ import com.antilia.widgets.demo.desktop.DesktopPage;
 import com.antilia.widgets.demo.download.DownloadsPage;
 import com.antilia.widgets.demo.download.DownloadsResource;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
+import com.antilia.widgets.demo.error.AccessDeniedPage;
+import com.antilia.widgets.demo.error.InternalErrorPage;
+import com.antilia.widgets.demo.error.NotFoundPage;
+import com.antilia.widgets.demo.error.PageExpiredPage;
 import com.antilia.widgets.demo.list.JsonListPage;
 import com.antilia.widgets.demo.looks.LooksPage;
 import com.antilia.widgets.demo.mail.IMailer;
@@ -155,8 +159,14 @@ public class WicketApplication extends WebApplication
 		accounts.addDefaults();
 		accounts.addFromSettings();
 
-		// a client keeping no cookies gets its pages instead of redirects for good
-		setPageRendererProvider(CookielessPageRenderer::new);
+		// a client keeping no cookies gets its pages instead of redirects for good, and the error
+		// pages keep their status
+		setPageRendererProvider(DirectPageRenderer::new);
+
+		// what went wrong, in the look of the site; Jetty's 404 goes to not-found (see web.xml)
+		getApplicationSettings().setPageExpiredErrorPage(PageExpiredPage.class)
+			.setInternalErrorPage(InternalErrorPage.class)
+			.setAccessDeniedPage(AccessDeniedPage.class);
 
 		// the fields that failed their validation say so, to assistive technologies and the eye
 		getComponentInitializationListeners().add(InvalidFieldMarker::install);
@@ -270,6 +280,7 @@ public class WicketApplication extends WebApplication
 		mountPage("sign-in", SignInPage.class);
 		mountPage("validate-email", EmailValidationPage.class);
 		mountPage("admin", AdminPage.class);
+		mountPage("not-found", NotFoundPage.class);
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
 		// the API of the administration: the users and the accesses, for administrators only
 		mountResource(UsersApiResource.PATH, UsersApiResource.REFERENCE);

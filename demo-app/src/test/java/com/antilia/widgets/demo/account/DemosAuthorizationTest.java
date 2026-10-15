@@ -14,7 +14,6 @@ import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.core.request.handler.PageProvider;
 import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
-import org.apache.wicket.markup.html.pages.AccessDeniedPage;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.apache.wicket.util.tester.WicketTesterHelper;
@@ -28,6 +27,7 @@ import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.data.Role;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
+import com.antilia.widgets.demo.error.AccessDeniedPage;
 import com.antilia.widgets.demo.register.RegisterPage;
 
 /**

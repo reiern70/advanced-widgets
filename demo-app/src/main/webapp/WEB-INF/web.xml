@@ -33,7 +33,15 @@
 	<filter-mapping>
 		<filter-name>wicket.demo-app</filter-name>
 		<url-pattern>/*</url-pattern>
+		<!-- the errors too: Jetty's 404 renders Wicket's NotFoundPage, see error-page below -->
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>ERROR</dispatcher>
 	</filter-mapping>
+	<!-- an address without a page, in the look of the site rather than Jetty's -->
+	<error-page>
+		<error-code>404</error-code>
+		<location>/not-found</location>
+	</error-page>
 
 	<!-- a session ends after 5 minutes without a request, see WicketApplication.SESSION_TIMEOUT -->
 	<session-config>
