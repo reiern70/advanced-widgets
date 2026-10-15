@@ -7,12 +7,17 @@ package com.antilia.widgets.demo.account;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.wicket.RuntimeConfigurationType;
+import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
+import org.apache.wicket.core.request.handler.PageProvider;
+import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.markup.html.pages.AccessDeniedPage;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
+import org.apache.wicket.util.tester.WicketTesterHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -286,6 +291,37 @@ class DemosAuthorizationTest
 		tester.assertRenderedPage(AdminPage.class);
 		tester.assertVisible("admin");
 		tester.assertContains("admin");
+	}
+
+	@Test
+	void theAdministrationOpenedBeforeSigningOutIsGone()
+	{
+		start(RuntimeConfigurationType.DEPLOYMENT);
+
+		tester.startPage(AdminPage.class);
+		signIn("admin", "$Macarena_4321");
+		tester.assertRenderedPage(AdminPage.class);
+		String url = tester.urlFor(new RenderPageRequestHandler(
+			new PageProvider(tester.getLastRenderedPage()))).toString();
+		String accessesTab = WicketTesterHelper.findAjaxEventBehavior(
+			tester.getComponentFromLastRenderedPage("tabs:tabs-container:tabs:1:link"), "click")
+			.getCallbackUrl()
+			.toString();
+		DemoSession.get().signOut();
+
+		// the page the administrator had open does not answer: its tab of the accesses stays shut
+		tester.getRequest().setHeader("Wicket-Ajax", "true");
+		tester.getRequest().setHeader("Wicket-Ajax-BaseURL", url);
+		assertThrows(ListenerInvocationNotAllowedException.class,
+			() -> tester.executeUrl(accessesTab));
+		// nor is it shown again
+		tester.executeUrl(url);
+		tester.assertRenderedPage(SignInPage.class);
+
+		// nor to a user who signs in in the same browser
+		signIn("wicket", "wicket4321");
+		tester.executeUrl(url);
+		tester.assertRenderedPage(AccessDeniedPage.class);
 	}
 
 	@Test

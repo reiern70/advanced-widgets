@@ -13,13 +13,14 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.model.ResourceModel;
 
 import com.antilia.widgets.demo.BasePage;
+import com.antilia.widgets.demo.account.DemosAuthorization;
 import com.antilia.widgets.tabs.TabsStyle;
 import com.antilia.widgets.tabs.TabsStyleBehavior;
 
 /**
  * The administration, a tab on top for each section: the {@link UsersPanel registered users}
  * and the {@link AccessesPanel accesses}. Only for administrators, see
- * {@link com.antilia.widgets.demo.account.DemosAuthorization}.
+ * {@link DemosAuthorization}.
  */
 public class AdminPage extends BasePage
 {
@@ -50,6 +51,18 @@ public class AdminPage extends BasePage
 			}
 		});
 		add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.TABS)));
+	}
+
+	@Override
+	protected void onConfigure()
+	{
+		super.onConfigure();
+		// shown again after the session stopped being an administrator's, which Wicket refuses
+		// without telling where to go
+		if (!isActionAuthorized(RENDER))
+		{
+			DemosAuthorization.turnAway();
+		}
 	}
 
 	@Override
