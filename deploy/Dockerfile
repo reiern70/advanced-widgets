@@ -2,8 +2,10 @@
 # machine (Wicket 11 is a snapshot built there) and copies it next to this file as ROOT.war.
 FROM jetty:11.0.26-jre21
 
-# websockets for Wicket's native websockets; X-Forwarded-* from Caddy, so Wicket sees https
-RUN java -jar "$JETTY_HOME/start.jar" --add-modules=websocket-jakarta,http-forwarded
+# websockets for Wicket's native websockets; X-Forwarded-* from Caddy, so Wicket sees https;
+# no version of Jetty in the Server header and on its error pages
+RUN java -jar "$JETTY_HOME/start.jar" --add-modules=websocket-jakarta,http-forwarded \
+	&& echo "jetty.httpConfig.sendServerVersion=false" > "$JETTY_BASE/start.d/server-version.ini"
 
 # the Wicket page store and the accounts registered to the demos, on a volume of their own on
 # the instance's SSD (see compose.yaml)

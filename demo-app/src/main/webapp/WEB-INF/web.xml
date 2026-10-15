@@ -38,5 +38,16 @@
 	<!-- a session ends after 5 minutes without a request, see WicketApplication.SESSION_TIMEOUT -->
 	<session-config>
 		<session-timeout>5</session-timeout>
+		<!--
+			The cookie is out of reach of the scripts of the page, and goes along with requests
+			from other sites only when the user follows a link (Jetty reads SameSite from the
+			comment). Secure it is already, on the requests that came over HTTPS.
+		-->
+		<cookie-config>
+			<comment>__SAME_SITE_LAX__</comment>
+			<http-only>true</http-only>
+		</cookie-config>
+		<!-- never ;jsessionid= in the URLs, where links copied and Referers would give it away -->
+		<tracking-mode>COOKIE</tracking-mode>
 	</session-config>
 </web-app>

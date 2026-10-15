@@ -9,7 +9,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `Dockerfile` | Jetty 11 on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
-| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain |
+| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
 | `.env.example` | The settings; copied to `.env` on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |

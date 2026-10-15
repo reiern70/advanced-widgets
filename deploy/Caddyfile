@@ -10,4 +10,13 @@ www.{$DOMAIN} {
 {$DOMAIN} {
 	encode zstd gzip
 	reverse_proxy app:8080
+	# HTTPS only from now on, no guessing of types, the address of a page to other sites only
+	# as its origin, and no names of servers
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+		-Via
+	}
 }
