@@ -29,6 +29,8 @@ import com.antilia.widgets.demo.account.SignInAttempts;
 import com.antilia.widgets.demo.account.SignInPage;
 import com.antilia.widgets.demo.account.SignedInUsers;
 import com.antilia.widgets.demo.admin.AccessTimeResource;
+import com.antilia.widgets.demo.admin.AccessesApiResource;
+import com.antilia.widgets.demo.admin.UsersApiResource;
 import com.antilia.widgets.demo.admin.AdminPage;
 import com.antilia.widgets.demo.autocomplete.AutocompletePage;
 import com.antilia.widgets.demo.button.ButtonsPage;
@@ -263,6 +265,9 @@ public class WicketApplication extends WebApplication
 		mountPage("validate-email", EmailValidationPage.class);
 		mountPage("admin", AdminPage.class);
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
+		// the API of the administration: the users and the accesses, for administrators only
+		mountResource(UsersApiResource.PATH, UsersApiResource.REFERENCE);
+		mountResource(AccessesApiResource.PATH, AccessesApiResource.REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);

@@ -40,7 +40,7 @@ public class StrongPasswordValidator implements IValidator<String>
 	 *            a password
 	 * @return whether it is strong enough
 	 */
-	static boolean isStrong(String password)
+	public static boolean isStrong(String password)
 	{
 		if (password == null || password.length() < MINIMUM_LENGTH ||
 			password.length() > MAXIMUM_LENGTH)

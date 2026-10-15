@@ -5,6 +5,7 @@
 package com.antilia.widgets.demo.data;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,8 +15,8 @@ import jakarta.persistence.criteria.Predicate;
 
 /**
  * Which {@link Access}es an administrator looks at: those whose user contains a text, ignoring
- * case, or is exactly a name; those of the public or of the private part; and those from an
- * address that contains another text. What is left empty does not filter.
+ * case, or is exactly a name; those of the public or of the private part; those from an address
+ * that contains another text; and those between two times. What is left empty does not filter.
  */
 public class AccessFilter implements Serializable
 {
@@ -28,6 +29,10 @@ public class AccessFilter implements Serializable
 	private Boolean privatePart;
 
 	private String address;
+
+	private Instant from;
+
+	private Instant to;
 
 	/**
 	 * @return the text the user contains, {@code null} for all
@@ -83,6 +88,32 @@ public class AccessFilter implements Serializable
 	}
 
 	/**
+	 * @return the first time of the accesses, {@code null} for all
+	 */
+	public Instant getFrom()
+	{
+		return from;
+	}
+
+	public void setFrom(Instant from)
+	{
+		this.from = from;
+	}
+
+	/**
+	 * @return the time the accesses are before, {@code null} for all
+	 */
+	public Instant getTo()
+	{
+		return to;
+	}
+
+	public void setTo(Instant to)
+	{
+		this.to = to;
+	}
+
+	/**
 	 * @return the filter as the query of the repository
 	 */
 	public Specification<Access> toSpecification()
@@ -92,6 +123,8 @@ public class AccessFilter implements Serializable
 		String byExactUser = exactUser;
 		Boolean byPart = privatePart;
 		String byAddress = UserFilter.pattern(address);
+		Instant byFrom = from;
+		Instant byTo = to;
 		return (access, query, builder) -> {
 			List<Predicate> predicates = new ArrayList<>();
 			if (byUser != null)
@@ -109,6 +142,14 @@ public class AccessFilter implements Serializable
 			if (byAddress != null)
 			{
 				predicates.add(builder.like(builder.lower(access.get("address")), byAddress, '\\'));
+			}
+			if (byFrom != null)
+			{
+				predicates.add(builder.greaterThanOrEqualTo(access.get("accessed"), byFrom));
+			}
+			if (byTo != null)
+			{
+				predicates.add(builder.lessThan(access.get("accessed"), byTo));
 			}
 			return builder.and(predicates.toArray(Predicate[]::new));
 		};

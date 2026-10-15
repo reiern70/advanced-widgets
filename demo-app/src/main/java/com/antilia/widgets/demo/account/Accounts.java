@@ -218,6 +218,52 @@ public class Accounts
 	}
 
 	/**
+	 * Adds an account an administrator makes, with no email to confirm.
+	 *
+	 * @param name
+	 *            the name of the account
+	 * @param password
+	 *            the password
+	 * @param role
+	 *            what the account may do
+	 * @param details
+	 *            puts the email and the other details in the account
+	 * @return the account; empty if there is one by that name already
+	 */
+	public Optional<User> create(String name, String password, Role role, Consumer<User> details)
+	{
+		String key = accountName(name);
+		if (users.existsByName(key))
+		{
+			return Optional.empty();
+		}
+		User user = new User(key, hash(password), role);
+		user.setValidated(true);
+		details.accept(user);
+		try
+		{
+			return Optional.of(users.save(user));
+		}
+		catch (DataIntegrityViolationException e)
+		{
+			// another request added it in between
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Removes an account; who signed in with it stays until the session ends, and its accesses
+	 * are kept.
+	 *
+	 * @param user
+	 *            the account
+	 */
+	public void remove(User user)
+	{
+		users.delete(user);
+	}
+
+	/**
 	 * Gives the account a new link for its confirmation email; the one before stops working.
 	 *
 	 * @param user
