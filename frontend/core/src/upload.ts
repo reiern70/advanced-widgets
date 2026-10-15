@@ -114,8 +114,6 @@ export interface FilePickerTexts {
 	tooMany: string;
 	/** What the picker says of files weighing more together than is sent at once: their size and the most. */
 	tooMuch: string;
-	/** What the picker says of several files of a name, where the server keeps one of each: the names. */
-	sameName: string;
 	/** The button taking a file out of the files chosen: its name. */
 	remove: string;
 }
@@ -134,7 +132,6 @@ export const DEFAULT_FILE_PICKER_TEXTS: FilePickerTexts = {
 	tooLarge: '{0}: larger than {1}, the most for a file',
 	tooMany: '{0} files, more than the {1} sent at once',
 	tooMuch: '{0} together, more than the {1} sent at once',
-	sameName: '{0}: several files of this name, the server keeps one',
 	remove: 'Remove {0}'
 };
 
@@ -160,15 +157,10 @@ export interface FilePickerOptions {
 	fileMaxSize?: number;
 	/** The most files sent at once; no limit when left out. */
 	fileCountMax?: number;
-	/**
-	 * Whether the server keeps one file of each name, as a folder does, so that several of a name
-	 * are not sent; false by default.
-	 */
-	uniqueNames?: boolean;
 }
 
 /** Which limit the files chosen break. */
-export type UploadProblemKind = 'tooLarge' | 'tooMany' | 'tooMuch' | 'sameName';
+export type UploadProblemKind = 'tooLarge' | 'tooMany' | 'tooMuch';
 
 /** A limit the files chosen break, which keeps them from being sent. */
 export interface UploadProblem {
@@ -594,11 +586,10 @@ export class FilePicker {
 
 	/**
 	 * @returns the limits the files chosen break, which keep them from being sent: a file larger
-	 * than fileMaxSize, more files than fileCountMax, more than maxSize together, several files of
-	 * a name where the server keeps one of each (uniqueNames)
+	 * than fileMaxSize, more files than fileCountMax, more than maxSize together
 	 */
 	problems(): UploadProblem[] {
-		const { maxSize, fileMaxSize, fileCountMax, uniqueNames, locale } = this.options;
+		const { maxSize, fileMaxSize, fileCountMax, locale } = this.options;
 		const files = this.files;
 		const texts = this.texts;
 		const problems: UploadProblem[] = [];
@@ -616,13 +607,6 @@ export class FilePicker {
 		if (maxSize !== undefined && maxSize >= 0 && size > maxSize) {
 			problems.push({ kind: 'tooMuch', message: format(texts.tooMuch,
 				formatBytes(size, locale), formatBytes(maxSize, locale)) });
-		}
-		const names = files.map((file) => file.name);
-		const repeated = uniqueNames
-			? names.filter((name, index) => names.indexOf(name) !== index) : [];
-		if (repeated.length) {
-			problems.push({ kind: 'sameName', message: format(texts.sameName,
-				Array.from(new Set(repeated)).join(', ')) });
 		}
 		return problems;
 	}
