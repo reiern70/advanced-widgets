@@ -38,7 +38,7 @@
 		<bootstrap.version>5.3.8</bootstrap.version>
 		<junit.version>5.13.4</junit.version>
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
-		<selenium.version>4.50.0</selenium.version>
+		<selenium.version>4.51.0</selenium.version>
 		<!-- the database of the demo: Spring Data JPA on Hibernate, PostgreSQL in production -->
 		<spring.version>7.0.9</spring.version>
 		<spring-data-jpa.version>4.0.7</spring-data-jpa.version>
