@@ -6,6 +6,7 @@ package com.antilia.widgets.demo.upload;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -44,18 +45,20 @@ class DemoUploadsFileManagerTest
 	void storesTheFilesOfAFieldAndDeletesThem() throws IOException
 	{
 		DemoUploadsFileManager files = new DemoUploadsFileManager(folder.toFile());
-		files.save(upload("a.txt", "hello"), "field1");
-		files.save(upload("b.txt", "bye"), "field1");
+		String aName = files.store(upload("a.txt", "hello"), "field1");
+		String bName = files.store(upload("a.txt", "bye"), "field1");
+		assertNotEquals(aName, bName, "two files of one name are kept apart");
 
-		Path a = folder.resolve("field1").resolve("a.txt");
+		Path a = folder.resolve("field1").resolve(aName);
 		assertEquals("hello", Files.readString(a));
-		assertEquals(a.toFile().getCanonicalFile(), files.getFile("field1", "a.txt")
+		assertEquals("bye", Files.readString(folder.resolve("field1").resolve(bName)));
+		assertEquals(a.toFile().getCanonicalFile(), files.getFile("field1", aName)
 			.getCanonicalFile());
 
 		files.delete(a.toFile());
 		assertFalse(Files.exists(a));
-		assertTrue(Files.isDirectory(a.getParent()), "b.txt is still there");
-		files.delete(files.getFile("field1", "b.txt"));
+		assertTrue(Files.isDirectory(a.getParent()), "the other file is still there");
+		files.delete(files.getFile("field1", bName));
 		assertFalse(Files.exists(a.getParent()), "the folder of the field went with its last file");
 
 		files.delete(null);
@@ -71,10 +74,10 @@ class DemoUploadsFileManagerTest
 		Files.setLastModifiedTime(old, FileTime.from(Instant.now()
 			.minus(DemoUploadsFileManager.MAX_AGE).minusSeconds(60)));
 
-		files.save(upload("d.txt", "new"), "fresh");
+		String name = files.store(upload("d.txt", "new"), "fresh");
 
 		assertFalse(Files.exists(old));
-		assertTrue(Files.exists(folder.resolve("fresh").resolve("d.txt")));
+		assertTrue(Files.exists(folder.resolve("fresh").resolve(name)));
 	}
 
 	@Test
