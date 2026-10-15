@@ -70,6 +70,8 @@ export interface DataTableTexts {
 	selectPage: string;
 	selectRow: string;
 	moveColumn: string;
+	/** The accessible name of the handles resizing the columns. */
+	resizeColumn: string;
 	/** How many rows are selected, {0} standing for the number. */
 	selectedCount: string;
 	/** The title of the button of the count that deselects every row. */
@@ -92,6 +94,7 @@ export const DATA_TABLE_TEXTS: DataTableTexts = {
 	selectPage: 'Select all rows on this page',
 	selectRow: 'Select row',
 	moveColumn: 'Move the column: drag it, or use the arrow keys',
+	resizeColumn: 'Resize column',
 	selectedCount: '{0} selected',
 	clearSelection: 'Clear selection',
 	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +

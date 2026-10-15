@@ -89,12 +89,6 @@ public class CodeEditorPage extends DemoPage
 	/** How the editor resizes, in the order of the drop-down: the names of the axes, or none. */
 	static final List<String> RESIZES = List.of("vertical", "horizontal", "both", "none");
 
-	/** CodeMirror's phrases of the search panel, by the keys of their translations. */
-	private static final String[][] PHRASES = { { "Find", "find" }, { "Replace", "replace" },
-			{ "next", "next" }, { "previous", "previous" }, { "all", "all" },
-			{ "match case", "matchCase" }, { "regexp", "regexp" }, { "by word", "byWord" },
-			{ "replace", "replaceOne" }, { "replace all", "replaceAll" }, { "close", "close" } };
-
 	private final CodeEditor editor;
 
 	private final Label known;
@@ -623,17 +617,6 @@ public class CodeEditorPage extends DemoPage
 		{
 			tabs.put(name, getString("Tabs." + name));
 		}
-		JSONObject editorTexts = new JSONObject().put("resize", getString("CodeEditor.resize"));
-		JSONObject phrases = new JSONObject();
-		for (String[] phrase : PHRASES)
-		{
-			String translation = getString("CodeEditor." + phrase[1]);
-			if (!translation.equals(phrase[0]))
-			{
-				phrases.put(phrase[0], translation);
-			}
-		}
-		editorTexts.put("phrases", phrases);
 		CodeDocument notes = CodeSamples.notes();
 		JSONObject split = new JSONObject();
 		for (String name : new String[] { "divider", "collapseLeft", "collapseRight", "restore" })
@@ -646,7 +629,8 @@ public class CodeEditorPage extends DemoPage
 				.put("placeholder", getString("MarkdownPreview.placeholder")))
 			.put("split", split)
 			.put("texts", FrameworkTabs.withDropdownTexts(this, texts))
-			.put("editor", editorTexts)
+			.put("editor", CodeEditor.texts(this))
+			.put("handle", getString("Resizable.handle"))
 			.put("tabs", tabs)
 			.put("languages", languages)
 			.put("resizes", new JSONArray(RESIZES))

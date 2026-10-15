@@ -7,6 +7,11 @@
 <properties>
 	<entry key="buttons">Buttons</entry>
 	<entry key="fruit">Fruit</entry>
+	<entry key="fruit.apple">Apple</entry>
+	<entry key="fruit.banana">Banana</entry>
+	<entry key="fruit.cherry">Cherry</entry>
+	<entry key="fruit.pear">Pear</entry>
+	<entry key="fruit.plum">Plum</entry>
 	<entry key="date">Date</entry>
 	<entry key="progress">Progress</entry>
 	<entry key="collapsible.title">A collapsible panel</entry>

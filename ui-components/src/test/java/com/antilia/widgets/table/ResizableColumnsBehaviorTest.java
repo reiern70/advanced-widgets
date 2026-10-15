@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
@@ -39,7 +40,8 @@ class ResizableColumnsBehaviorTest extends WicketTestCase
 		tester.startPage(page);
 
 		String id = page.get("table").getMarkupId();
-		tester.assertContains(Pattern.quote("var options = {\"mode\":\"stretch\",\"minWidth\":50};" +
+		tester.assertContains(Pattern.quote("var options = {\"mode\":\"stretch\",\"minWidth\":50," +
+			"\"label\":\"Resize column\"};" +
 			"Wicket.ResizableColumns.attach(\"" + id + "\", options);"));
 		tester.assertContains("antilia-resizable-columns.*\\.js");
 		tester.assertContains("antilia-resizable-columns.*\\.css");
@@ -47,11 +49,20 @@ class ResizableColumnsBehaviorTest extends WicketTestCase
 	}
 
 	@Test
+	void namesTheEdgesInTheLanguageOfTheSession()
+	{
+		tester.getSession().setLocale(Locale.GERMAN);
+		tester.startPage(new TablePage("table", new ResizableColumnsBehavior()));
+
+		tester.assertContains(Pattern.quote("\"label\":\"Spaltenbreite ändern\""));
+	}
+
+	@Test
 	void fitModeIsWrittenInLowerCase()
 	{
 		tester.startPage(new TablePage("table", new ResizableColumnsBehavior()));
 
-		tester.assertContains(Pattern.quote("{\"mode\":\"fit\",\"minWidth\":80}"));
+		tester.assertContains(Pattern.quote("{\"mode\":\"fit\",\"minWidth\":80,"));
 	}
 
 	@Test

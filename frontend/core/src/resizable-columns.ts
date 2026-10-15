@@ -30,6 +30,8 @@ export interface ResizableColumnsOptions {
 	minWidth?: number;
 	/** The pixels an arrow key resizes by; 10 by default. */
 	step?: number;
+	/** The accessible name of the handles, in the language of the page; "Resize column" by default. */
+	label?: string;
 	/** Saved widths, in pixels. */
 	widths?: number[];
 	/** Relative widths of the columns. */
@@ -141,6 +143,9 @@ export class ResizableColumns {
 
 	readonly step: number;
 
+	/** The accessible name of the handles. */
+	readonly label: string;
+
 	onResize: ResizableColumnsOptions['onResize'];
 
 	readonly adjustToParent: boolean;
@@ -185,6 +190,7 @@ export class ResizableColumns {
 		this.mode = options.mode === 'stretch' ? 'stretch' : 'fit';
 		this.minWidth = options.minWidth !== undefined ? options.minWidth : 80;
 		this.step = options.step !== undefined ? options.step : 10;
+		this.label = options.label || 'Resize column';
 		this.onResize = options.onResize;
 		this.adjustToParent = options.adjustToParent === true;
 		this.measureContent = options.measure;
@@ -651,10 +657,10 @@ export class ResizableColumns {
 				handle.className = partClasses(this.look, 'column-resizer');
 				handle.setAttribute('role', 'separator');
 				handle.setAttribute('aria-orientation', 'vertical');
-				handle.setAttribute('aria-label', 'Resize column');
 				handle.tabIndex = 0;
 				cell.appendChild(handle);
 			}
+			handle.setAttribute('aria-label', this.label);
 			handle.setAttribute('data-index', String(index));
 			handle.setAttribute('data-neighbour',
 				String(this.mode === 'fit' ? this.neighbourOf(index, cells) : -1));

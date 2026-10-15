@@ -60,6 +60,8 @@ export interface TreeTexts {
 	empty: string;
 	/** The placeholder React and Svelte show without a license key activating the tree. */
 	unlicensed?: string;
+	/** The accessible name of the handles resizing the columns of a tree grid. */
+	resizeColumn?: string;
 }
 
 /**
@@ -136,7 +138,8 @@ export const TREE_TEXTS: Required<TreeTexts> = {
 	loading: 'Loading…',
 	empty: 'Nothing to show',
 	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
-		'which you get by registering.'
+		'which you get by registering.',
+	resizeColumn: 'Resize column'
 };
 
 /** The names a license key activates the trees by: their own and those of the Wicket ones. */
@@ -402,7 +405,8 @@ export class JsonTree {
 			return;
 		}
 		this.resizable = table;
-		JsonTree.resizableColumns()?.attach(table, { mode });
+		const label = this.cfg.texts.resizeColumn;
+		JsonTree.resizableColumns()?.attach(table, label ? { mode, label } : { mode });
 	}
 
 	/**

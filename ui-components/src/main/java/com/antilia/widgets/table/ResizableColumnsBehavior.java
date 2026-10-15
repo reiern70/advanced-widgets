@@ -45,7 +45,8 @@ import com.github.openjson.JSONObject;
  * In {@link Mode#FIT} the table keeps the full width of its container and a column takes the
  * space it gains from its right neighbour; in {@link Mode#STRETCH} every column, the last one too,
  * grows or shrinks on its own and the table becomes as wide as its columns. No column gets
- * narrower than the {@link #setMinColumnWidth(int) minimum width}.
+ * narrower than the {@link #setMinColumnWidth(int) minimum width}. Assistive technologies call the
+ * edges by the resource {@code ResizableColumnsBehavior.resizeColumn}.
  *
  * @since 11.0.0
  */
@@ -200,6 +201,8 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		JSONObject options = new JSONObject();
 		options.put("mode", mode.name().toLowerCase(Locale.ROOT));
 		options.put("minWidth", minColumnWidth);
+		options.put("label", component.getString("ResizableColumnsBehavior.resizeColumn", null,
+			"Resize column"));
 		if (keepWidths)
 		{
 			options.put("keepWidths", true);

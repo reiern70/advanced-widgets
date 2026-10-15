@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.wicket.Application;
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
@@ -661,7 +662,7 @@ public class CodeEditor extends TextArea<String>
 			putPixels(options, "minWidth", minWidth);
 			putPixels(options, "maxWidth", maxWidth);
 		}
-		options.put("texts", getTexts());
+		options.put("texts", texts(this));
 		String nonce = getNonce();
 		if (nonce != null)
 		{
@@ -676,22 +677,27 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * @return what the editor says, in the language of the page: the name of the bar resizing it
-	 *         and CodeMirror's phrases, those translated
+	 * What the editor says, in the language of a component: the name of the bar resizing it and
+	 * CodeMirror's phrases, those translated. The texts of this editor, and those a page hands to the
+	 * React and Svelte editors.
+	 *
+	 * @param component
+	 *            the component whose resources translate the texts
+	 * @return the texts, {@code resize} and {@code phrases}
 	 */
-	private JSONObject getTexts()
+	public static JSONObject texts(Component component)
 	{
 		JSONObject phrases = new JSONObject();
 		PHRASES.forEach((phrase, key) -> {
-			String translation = getString(key, null, "");
+			String translation = component.getString(key, null, "");
 			if (!Strings.isEmpty(translation) && !translation.equals(phrase))
 			{
 				phrases.put(phrase, translation);
 			}
 		});
 		return new JSONObject()
-			.put("resize", getString("CodeEditor.resize", null, "Drag, or use the arrow keys, " +
-				"to resize the editor"))
+			.put("resize", component.getString("CodeEditor.resize", null,
+				"Drag, or use the arrow keys, to resize the editor"))
 			.put("phrases", phrases);
 	}
 

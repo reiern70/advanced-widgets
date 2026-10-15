@@ -19,6 +19,7 @@
 	<entry key="DynamicDataTable.chooseColumns">Spalten</entry>
 	<entry key="DynamicDataTable.applyColumns">Übernehmen</entry>
 	<entry key="MovableColumnsBehavior.moveColumn">Spalte verschieben: ziehen oder mit den Pfeiltasten</entry>
+	<entry key="ResizableColumnsBehavior.resizeColumn">Spaltenbreite ändern</entry>
 	<entry key="FloatingPanel.close">Schließen</entry>
 	<entry key="ClipboardCopyBehavior.copied">Kopiert</entry>
 	<entry key="Dropdown.placeholder">Bitte wählen…</entry>

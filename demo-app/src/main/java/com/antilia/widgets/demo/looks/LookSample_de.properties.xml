@@ -7,6 +7,11 @@
 <properties>
 	<entry key="buttons">Schaltflächen</entry>
 	<entry key="fruit">Obst</entry>
+	<entry key="fruit.apple">Apfel</entry>
+	<entry key="fruit.banana">Banane</entry>
+	<entry key="fruit.cherry">Kirsche</entry>
+	<entry key="fruit.pear">Birne</entry>
+	<entry key="fruit.plum">Pflaume</entry>
 	<entry key="date">Datum</entry>
 	<entry key="progress">Fortschritt</entry>
 	<entry key="collapsible.title">Ein aufklappbares Panel</entry>

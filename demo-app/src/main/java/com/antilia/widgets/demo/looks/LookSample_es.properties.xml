@@ -7,6 +7,11 @@
 <properties>
 	<entry key="buttons">Botones</entry>
 	<entry key="fruit">Fruta</entry>
+	<entry key="fruit.apple">Manzana</entry>
+	<entry key="fruit.banana">Plátano</entry>
+	<entry key="fruit.cherry">Cereza</entry>
+	<entry key="fruit.pear">Pera</entry>
+	<entry key="fruit.plum">Ciruela</entry>
 	<entry key="date">Fecha</entry>
 	<entry key="progress">Progreso</entry>
 	<entry key="collapsible.title">Un panel plegable</entry>

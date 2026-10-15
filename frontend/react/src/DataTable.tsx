@@ -276,7 +276,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		const offset = withSelection ? 1 : 0;
 		const ids = visible.map((column) => column.id);
 		if (resizableColumns) {
-			ResizableColumns.attach(id, { mode: resizableColumns });
+			ResizableColumns.attach(id, { mode: resizableColumns, label: texts.resizeColumn });
 		}
 		if (movableColumns) {
 			MovableColumns.attach(id, {

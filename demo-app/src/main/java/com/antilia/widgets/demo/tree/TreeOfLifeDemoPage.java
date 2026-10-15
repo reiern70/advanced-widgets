@@ -191,6 +191,7 @@ public abstract class TreeOfLifeDemoPage extends DemoPage
 		JSONObject tree = new JSONObject()
 			.put("loading", getString("Tree.loading"))
 			.put("empty", getString("Tree.empty"))
+			.put("resizeColumn", getString("ResizableColumnsBehavior.resizeColumn"))
 			.put("unlicensed", getString("License.placeholder"));
 		texts.put("icons", getString("icons"));
 		JSONObject iconSets = new JSONObject();

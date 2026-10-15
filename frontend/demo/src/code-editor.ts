@@ -90,6 +90,8 @@ export interface CodeEditorConfig {
 	preview: { label: string; placeholder: string };
 	/** What the divider of the split panel says. */
 	split: { divider: string; collapseLeft: string; collapseRight: string; restore: string };
+	/** What the bar resizing the notes says. */
+	handle: string;
 	/** The markup of the icons, as Wicket renders them. */
 	icons: { file: string };
 }

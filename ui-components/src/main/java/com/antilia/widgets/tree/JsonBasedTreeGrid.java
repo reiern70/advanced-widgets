@@ -179,6 +179,8 @@ public class JsonBasedTreeGrid<T, K extends Serializable> extends JsonBasedTree<
 		if (resizableColumns != null)
 		{
 			config.put("resizableColumns", resizableColumns.name().toLowerCase(Locale.ROOT));
+			config.getJSONObject("texts").put("resizeColumn", getString(
+				"ResizableColumnsBehavior.resizeColumn", null, "Resize column"));
 		}
 		return config;
 	}

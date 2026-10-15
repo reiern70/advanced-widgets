@@ -103,6 +103,18 @@ describe('ResizableColumns', () => {
 		expect(document.querySelectorAll('colgroup.antilia-resizable-colgroup col').length).toBe(3);
 	});
 
+	it('names its handles "Resize column", or as the page says in its language', () => {
+		table(['Name', 'City']);
+		ResizableColumns.attach('t', { mode: 'stretch' });
+		expect(document.querySelector('.antilia-col-resizer')?.getAttribute('aria-label'))
+			.toBe('Resize column');
+
+		ResizableColumns.attach('t', { mode: 'stretch', label: 'Spaltenbreite ändern' });
+		const labels = Array.from(document.querySelectorAll('.antilia-col-resizer'),
+			(handle) => handle.getAttribute('aria-label'));
+		expect(labels).toEqual(['Spaltenbreite ändern', 'Spaltenbreite ändern']);
+	});
+
 	it('lays given widths out as shares in fit mode and in pixels in stretch mode', () => {
 		const element = table(['A', 'B']);
 		ResizableColumns.attach(element, { mode: 'fit', widths: [100, 300] });

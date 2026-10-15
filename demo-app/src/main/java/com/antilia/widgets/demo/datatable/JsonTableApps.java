@@ -170,6 +170,7 @@ public final class JsonTableApps
 			.put("selectPage", component.getString("DynamicDataTable.selectPage"))
 			.put("selectRow", component.getString("DynamicDataTable.selectRow"))
 			.put("moveColumn", component.getString("MovableColumnsBehavior.moveColumn"))
+			.put("resizeColumn", component.getString("ResizableColumnsBehavior.resizeColumn"))
 			.put("selectedCount", component.getString("DynamicDataTable.selectedCount",
 				Model.ofMap(Map.of("count", "{0}"))))
 			.put("clearSelection", component.getString("DynamicDataTable.clearSelection"))

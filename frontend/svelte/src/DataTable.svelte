@@ -260,7 +260,7 @@
 			instance = table;
 			selected = table.selectedKeys.size;
 			if (mode) {
-				ResizableColumns.attach(config.id, { mode });
+				ResizableColumns.attach(config.id, { mode, label: texts.resizeColumn });
 			}
 			if (movable) {
 				MovableColumns.attach(config.id, {

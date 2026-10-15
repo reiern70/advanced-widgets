@@ -224,6 +224,7 @@ class JsonBasedTreeTest extends WicketTestCase
 		assertEquals(Mode.STRETCH, table.getResizableColumns());
 		tester.assertContains(Pattern.quote("\"height\":{\"value\":40,\"unit\":\"%\"}"));
 		tester.assertContains(Pattern.quote("\"resizableColumns\":\"stretch\""));
+		tester.assertContains(Pattern.quote("\"resizeColumn\":\"Resize column\""));
 		tester.assertContains("antilia-scrollbar.*\\.js");
 		tester.assertContains("antilia-resizable-columns.*\\.js");
 	}

@@ -19,6 +19,7 @@
 	<entry key="DynamicDataTable.chooseColumns">Columnas</entry>
 	<entry key="DynamicDataTable.applyColumns">Aplicar</entry>
 	<entry key="MovableColumnsBehavior.moveColumn">Mover la columna: arrástrela o use las teclas de flecha</entry>
+	<entry key="ResizableColumnsBehavior.resizeColumn">Cambiar el ancho de la columna</entry>
 	<entry key="FloatingPanel.close">Cerrar</entry>
 	<entry key="ClipboardCopyBehavior.copied">Copiado</entry>
 	<entry key="Dropdown.placeholder">Elija…</entry>

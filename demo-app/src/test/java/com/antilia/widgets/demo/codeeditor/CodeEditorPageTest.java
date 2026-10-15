@@ -432,8 +432,12 @@ class CodeEditorPageTest
 		JSONObject config = new JSONObject(TagTester.createTagByAttribute(
 			tester.getLastResponseAsString(), "data-framework-app", "svelte")
 			.getAttribute("data-config"));
-		assertEquals("Suchen", config.getJSONObject("editor").getJSONObject("phrases")
-			.getString("Find"));
+		JSONObject phrases = config.getJSONObject("editor").getJSONObject("phrases");
+		assertEquals("Suchen", phrases.getString("Find"));
+		// all of CodeMirror's phrases, as the Wicket editor has them, folding too
+		assertEquals("Zeile einklappen", phrases.getString("Fold line"));
+		assertEquals("Ziehen oder die Pfeiltasten benutzen, um die Größe anzupassen",
+			config.getString("handle"));
 
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(CodeEditorPage.class);

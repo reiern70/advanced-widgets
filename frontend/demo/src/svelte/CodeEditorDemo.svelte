@@ -144,7 +144,7 @@
 								onclick={togglePreview} />
 						</div>
 						<Resizable class="code-editor-demo__split" axis="vertical" minHeight={160}
-							bind:height={notesHeight}>
+							label={config.handle} bind:height={notesHeight}>
 							<SplitPanel collapsible bind:collapsed bind:position min={20} minSecond={20}
 								label={config.split.divider} collapseFirstLabel={config.split.collapseLeft}
 								collapseSecondLabel={config.split.collapseRight}

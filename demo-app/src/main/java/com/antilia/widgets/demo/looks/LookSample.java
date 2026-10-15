@@ -13,6 +13,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
@@ -66,8 +67,23 @@ class LookSample extends Panel
 
 		Form<Void> form = new Form<>("form");
 		add(form);
-		form.add(new Dropdown<>("fruit", Model.of("Pear"),
-			List.of("Apple", "Banana", "Cherry", "Pear", "Plum")));
+		form.add(new Dropdown<>("fruit", Model.of("pear"),
+			List.of("apple", "banana", "cherry", "pear", "plum"), new ChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(String fruit)
+				{
+					return getString("fruit." + fruit);
+				}
+
+				@Override
+				public String getIdValue(String fruit, int index)
+				{
+					return fruit;
+				}
+			}));
 		form.add(new DatePicker("date", Model.of(LocalDate.of(2026, 10, 12))));
 
 		add(new ProgressBar("progress", Model.of(62)));

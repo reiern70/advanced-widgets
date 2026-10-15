@@ -133,7 +133,8 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 									onClick={togglePreview} />
 							</div>
 							<Resizable className="code-editor-demo__split" axis="vertical" minHeight={160}
-								height={notesHeight} onResized={(size) => setNotesHeight(size.height)}>
+								label={config.handle} height={notesHeight}
+								onResized={(size) => setNotesHeight(size.height)}>
 								<SplitPanel collapsible collapsed={collapsed} position={position} min={20}
 									minSecond={20} label={config.split.divider}
 									collapseFirstLabel={config.split.collapseLeft}
