@@ -92,6 +92,8 @@ describe('DataTable', () => {
 		const load = vi.fn(loadRows);
 		const { container, rerender } = render(<DataTable columns={COLUMNS} loadRows={load} />);
 		await waitFor(() => expect(rows(container).length).toBe(25));
+		// the rows show before React renders their count, and with it the link to the next page
+		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
 
 		fireEvent.click(container.querySelector('thead a.next')!);
 		await waitFor(() => expect(rows(container)[0][0]).toBe('Person 26'));
