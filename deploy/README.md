@@ -131,6 +131,14 @@ To restore a dump:
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'' < /var/backups/antilia-widgets/widgets-<date>.dump'
 ```
 
+**Upgrading keeps the data.** The data in production is never thrown away: no volume is removed
+and Flyway never cleans (`cleanDisabled`). The migrations in `db/migration` only add: new tables,
+columns and indexes, and rows filled in from what is there; none drops a table or a column or
+deletes rows, which `MigrationsTest` checks along with a database of the first version keeping
+its users and accesses through all of them. A migration, once deployed, is never changed: a
+change is a new one. Before starting the new version, `deploy.sh` dumps the database with
+`backup.sh`, so the data from before its migrations can be restored as below.
+
 **Going back.** Every deployment keeps the image that ran before as `antilia-widgets:previous`:
 
 ```sh

@@ -50,7 +50,8 @@ public class DatabaseConfig
 	@Bean
 	public Flyway flyway(DataSource dataSource)
 	{
-		Flyway flyway = Flyway.configure().dataSource(dataSource).load();
+		// never clean: migrations only add to the data, which upgrading keeps (see MigrationsTest)
+		Flyway flyway = Flyway.configure().dataSource(dataSource).cleanDisabled(true).load();
 		flyway.migrate();
 		return flyway;
 	}

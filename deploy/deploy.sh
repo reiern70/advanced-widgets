@@ -3,7 +3,8 @@
 #   deploy/deploy.sh ubuntu@<static-ip>
 # The WAR is built on this machine (Wicket 11 is a snapshot built here), copied with the files
 # of this folder to /opt/antilia-widgets on the instance, and started there with Docker Compose.
-# The image running before is kept as antilia-widgets:previous, to go back to (see README.md).
+# The image running before is kept as antilia-widgets:previous, to go back to (see README.md), and
+# the database is dumped first, so that the data before the migrations of the new version is kept.
 set -eu
 
 TARGET=${1:?usage: deploy/deploy.sh user@host}
@@ -27,6 +28,7 @@ ssh "$TARGET" "sudo install -d -o \$USER -g \$USER -m 700 /var/backups/antilia-w
 
 ssh "$TARGET" "cd $REMOTE \
 	&& if [ ! -f .env ]; then cp .env.example .env; echo 'Fill in $REMOTE/.env, then deploy again.'; exit 1; fi \
+	&& if docker compose ps --status running --services | grep -qx db; then ./backup.sh; fi \
 	&& if docker image inspect antilia-widgets:latest >/dev/null 2>&1; then docker tag antilia-widgets:latest antilia-widgets:previous; fi \
 	&& docker compose up -d --build \
 	&& docker image prune -f >/dev/null \
