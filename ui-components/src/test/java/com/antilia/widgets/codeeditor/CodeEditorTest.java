@@ -172,7 +172,7 @@ class CodeEditorTest extends WicketTestCase
 	@Test
 	void translatesCodeMirrorsPhrases()
 	{
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		TestPage page = new TestPage(new CodeEditor("editor", Model.of(TEXT)));
 		tester.startPage(page);
 

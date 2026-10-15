@@ -101,7 +101,7 @@ class MarkdownPreviewTest extends WicketTestCase
 		assertEquals("Vorschau", options(preview).getString("label"));
 		assertEquals("Nichts zur Vorschau", options(preview).getString("placeholder"));
 
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		preview = new MarkdownPreview("preview", Model.of(""));
 		tester.startPage(new TestPage(new CodeEditor("editor", Model.of("")), preview));
 		assertEquals("Vista previa", options(preview).getString("label"));

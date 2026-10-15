@@ -245,7 +245,7 @@ class TabsPageTest
 		tester.startPage(TabsPage.class);
 		tester.assertContains("Dokumente, auf dem Server bearbeitet");
 
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(TabsPage.class);
 		tester.assertContains("Documentos, editados en el servidor");
 		Component selected = tester.getComponentFromLastRenderedPage(inCase("settingsTitle",

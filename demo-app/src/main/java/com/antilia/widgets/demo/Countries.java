@@ -75,6 +75,6 @@ public final class Countries
 	 */
 	public static String name(String code, Locale locale)
 	{
-		return new Locale("", code).getDisplayCountry(locale);
+		return Locale.of("", code).getDisplayCountry(locale);
 	}
 }

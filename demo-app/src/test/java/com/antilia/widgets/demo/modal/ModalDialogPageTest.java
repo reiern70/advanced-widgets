@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -94,7 +95,7 @@ class ModalDialogPageTest
 		tester.executeAjaxEvent(SAVE, "click");
 		Map<String, String> expected = TeamStore.validate(member("", "not an address"),
 			Locale.ENGLISH);
-		tester.assertErrorMessages(expected.values().toArray(new String[0]));
+		tester.assertErrorMessages(expected.values().toArray(new Serializable[0]));
 		// the form in the dialog shows its errors, which are not notifications
 		assertFalse(tester.getLastResponseAsString().contains("Wicket.Notifications.show"));
 

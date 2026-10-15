@@ -390,7 +390,7 @@ class DesktopPageTest
 	@Test
 	void speaksSpanish()
 	{
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		page = tester.startPage(DesktopPage.class);
 
 		tester.assertContains("Tabla JSON en Wicket");

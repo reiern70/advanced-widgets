@@ -435,7 +435,7 @@ class CodeEditorPageTest
 		assertEquals("Suchen", config.getJSONObject("editor").getJSONObject("phrases")
 			.getString("Find"));
 
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(CodeEditorPage.class);
 		tester.assertContains("Cualquier lenguaje, guardado en el servidor");
 		tester.assertContains("\"Find\":\"Buscar\"");

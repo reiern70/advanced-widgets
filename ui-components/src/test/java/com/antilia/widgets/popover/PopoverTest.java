@@ -60,7 +60,7 @@ class PopoverTest extends WicketTestCase
 			.setPlacement(PopoverPlacement.AUTO).setVariant(PopoverVariant.WARNING)
 			.setDesign(PopoverDesign.GLASS)
 			.setClosable(false).setMaxWidth("30rem");
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(new TestPage(popover));
 		JSONObject options = new JSONObject(popover.toJson(tester.getLastRenderedPage()));
 

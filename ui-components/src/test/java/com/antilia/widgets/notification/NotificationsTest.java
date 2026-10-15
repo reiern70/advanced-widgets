@@ -164,7 +164,7 @@ class NotificationsTest extends WicketTestCase
 	@Test
 	void makesTheFeedbackMessagesOfAnAjaxRequestNotifications()
 	{
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		TestPage page = tester.startPage(new TestPage(test -> {
 		}));
 		page.onAjax = target -> page.get("ajax").error("Mal");

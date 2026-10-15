@@ -126,7 +126,7 @@ class ResizablePageTest
 		tester.startPage(ResizablePage.class);
 		tester.assertContains("Eine Notiz: ihre Höhe");
 
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(ResizablePage.class);
 		tester.assertContains("Una nota: su altura");
 	}

@@ -328,7 +328,7 @@ class TabsTest extends WicketTestCase
 		tester.assertContains("\"close\":\"Schließen\"");
 		tester.assertContains("\"keep\":\"Geöffnet lassen\"");
 
-		tester.getSession().setLocale(new Locale("es"));
+		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(new TestPage(tabs));
 		tester.assertContains("\"closeModifiedTitle\":\"¿Cerrar \\{0\\}\\?\"");
 	}
