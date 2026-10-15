@@ -383,6 +383,22 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 	}
 
 	@Test
+	void theCountOfTheNavigationNotShownIsLeftOutOfTheAjaxResponse()
+	{
+		startWithCount(5, SelectionMode.MANY);
+		// the navigation is above the rows only: the one below is not in the page, its count
+		// neither, not even as a placeholder
+		String bottom = tester.getComponentFromLastRenderedPage(
+			"table:bottomNavigation:span:actionsContainer:actions:1", false).getMarkupId();
+
+		executeAction(JsonBasedDynamicDataTable.SELECT_ACTION, "1");
+
+		tester.assertComponentOnAjaxResponse(countPath());
+		String response = tester.getLastResponseAsString();
+		assertFalse(response.contains("id=\"" + bottom + "\""), response);
+	}
+
+	@Test
 	void theSelectionCountCountsAllRowsOnceAllAreSelected()
 	{
 		startWithCount(5, SelectionMode.MANY);

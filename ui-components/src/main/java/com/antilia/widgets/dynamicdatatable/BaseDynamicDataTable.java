@@ -1993,7 +1993,12 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	public void refreshSelectionViews(IPartialPageRequestHandler target)
 	{
 		visitChildren(ISelectionView.class, (component, visit) -> {
-			if (component.isVisibleInHierarchy() || component.getOutputMarkupPlaceholderTag())
+			// a view in a toolbar that is not shown, such as the count of the navigation below
+			// the rows when only the one above shows, is not in the page, not even as a placeholder
+			Component parent = component.getParent();
+			boolean inPage = parent == null || parent.isVisibleInHierarchy();
+			if (inPage &&
+				(component.isVisibleInHierarchy() || component.getOutputMarkupPlaceholderTag()))
 			{
 				target.add(component);
 			}
