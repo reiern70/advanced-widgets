@@ -17,6 +17,9 @@
 		countries: Choice[]; onsave: (fields: UserFields) => void; oncancel: () => void } = $props();
 
 	let fields = $state(untrack(() => fieldsOf(user)));
+	// a new user has no country until one is chosen, rather than the first of the list
+	const choices = untrack(() => user?.country ? countries :
+		[{ value: '', label: texts.chooseOne }, ...countries]);
 	let errors = $state<Partial<UserFields>>({});
 	const messages = $derived<Message[]>(FIELDS.filter((field) => errors[field])
 		.map((field) => ({ level: 'error', text: errors[field]! })));
@@ -44,7 +47,7 @@
 	{@render input('lastName', 'family-name')}
 	<label>
 		{texts.country}
-		<Dropdown name="country" options={countries} bind:value={fields.country}
+		<Dropdown name="country" options={choices} bind:value={fields.country}
 			aria-invalid={errors.country ? true : undefined} filter={texts.filter}
 			noMatch={texts.noMatch} more={texts.more} remove={texts.remove} />
 	</label>

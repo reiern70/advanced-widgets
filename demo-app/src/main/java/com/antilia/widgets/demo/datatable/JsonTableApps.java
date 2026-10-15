@@ -140,11 +140,16 @@ public final class JsonTableApps
 		texts.put("filterLabel", string(component, UsersTablePanel.class, "filter"));
 		texts.put("required", component.getString("Required",
 			Model.ofMap(Map.of("label", "{0}"))));
-		for (String key : new String[] { "firstName", "lastName", "country", "city", "address",
-			"save", "cancel" })
+		for (String key : new String[] { "firstName", "lastName", "country", "city", "address" })
+		{
+			texts.put(key, string(component, UserEditPanel.class, "field." + key));
+		}
+		for (String key : new String[] { "save", "cancel" })
 		{
 			texts.put(key, string(component, UserEditPanel.class, key));
 		}
+		// what a new user's country shows until one is chosen, as in Wicket's drop-down
+		texts.put("chooseOne", component.getString("null"));
 		for (String key : new String[] { "infiniteScroll", "infiniteScroll.off",
 			"infiniteScroll.on", "rowsSource", "rowsSource.local", "rowsSource.RESOURCE",
 			"selection", "selection.NONE", "selection.ONE", "selection.MANY", "selectionCount",

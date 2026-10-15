@@ -172,6 +172,13 @@ table.ant-dataview tr.ant-data-table-selection-toolbar a {
 	font: inherit;
 }
 
+/* the drop-down below its label and as wide as the fields, as they are */
+.user-edit .antilia-dropdown {
+	display: flex;
+	width: 100%;
+	margin-top: 0.2em;
+}
+
 .user-edit [aria-invalid="true"] {
 	border-color: #c62828;
 	outline: 1px solid #c62828;

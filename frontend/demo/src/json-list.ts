@@ -24,6 +24,8 @@ export interface JsonListTexts extends DropdownTexts {
 	filterLabel: string;
 	'filter.placeholder': string;
 	newUser: string;
+	/** What the country of a new user shows until one is chosen. */
+	chooseOne: string;
 	/** The title of the form of a user, ${firstName} and ${lastName} standing for the names. */
 	editUser: string;
 	delete: string;
@@ -125,7 +127,8 @@ export function validate(texts: Pick<JsonListTexts, (typeof FIELDS)[number] | 'r
 
 /** The texts of the form of a user. */
 export type UserFormTexts = Pick<JsonListTexts, 'firstName' | 'lastName' | 'country' | 'city' |
-	'address' | 'save' | 'cancel' | 'required' | 'filter' | 'noMatch' | 'more' | 'remove'>;
+	'address' | 'save' | 'cancel' | 'required' | 'filter' | 'noMatch' | 'more' | 'remove' |
+	'chooseOne'>;
 
 /**
  * What the app changed of the users the users resource sends: edited, deleted and added users,

@@ -365,9 +365,12 @@ public class JsonListPage extends DemoPage
 		ClassStringResourceLoader form = new ClassStringResourceLoader(UserEditPanel.class);
 		for (String key : new String[] { "country", "city", "address", "save" })
 		{
-			texts.put(key, form.loadStringResource(UserEditPanel.class, key, getLocale(),
+			String resource = "save".equals(key) ? key : "field." + key;
+			texts.put(key, form.loadStringResource(UserEditPanel.class, resource, getLocale(),
 				getStyle(), getVariation()));
 		}
+		// what a new user's country shows until one is chosen, as in Wicket's drop-down
+		texts.put("chooseOne", getString("null"));
 		// the label of the filter; the drop-downs' filter is theirs
 		texts.put("filterLabel", getString("filter"));
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label", "{0}"))));

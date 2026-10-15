@@ -11,11 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import com.antilia.widgets.dynamicdatatable.CompoundDynamicColumn;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.dynamicdatatable.IDynamicColumn;
@@ -188,6 +190,31 @@ class DynamicDataTablePageTest
 		assertTrue(response.contains("Edit " + user.getFirstName() + " " + user.getLastName()),
 			response);
 		assertTrue(response.contains("Discard the changes?"), response);
+	}
+
+	@Test
+	void theDialogNamesItsFieldsAsItsOwnResourcesSay()
+	{
+		edit();
+
+		// not "First Name", the header of the page's column, which would win over the panel's
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("First name <input"), response);
+		assertTrue(response.contains("Last name <input"), response);
+	}
+
+	@Test
+	void theCountriesComeInTheOrderOfTheLanguage()
+	{
+		tester.getSession().setLocale(Locale.GERMAN);
+		edit();
+
+		@SuppressWarnings("unchecked")
+		List<String> countries = (List<String>)((DropDownChoice<String>)tester
+			.getComponentFromLastRenderedPage(FORM + ":country")).getChoices();
+		// Österreich between Oman and Pakistan, not after Zypern
+		assertEquals(countries.indexOf("OM") + 1, countries.indexOf("AT"));
+		assertEquals(countries.indexOf("AT") + 1, countries.indexOf("PK"));
 	}
 
 	@Test

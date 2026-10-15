@@ -18,6 +18,9 @@ import { Feedback } from './Feedback.js';
 export function UserForm({ texts, user, countries, onSave, onCancel }: { texts: UserFormTexts;
 	user: User | null; countries: Choice[]; onSave(fields: UserFields): void; onCancel(): void }) {
 	const [fields, setFields] = useState(() => fieldsOf(user));
+	// a new user has no country until one is chosen, rather than the first of the list
+	const [choices] = useState(() => user?.country ? countries :
+		[{ value: '', label: texts.chooseOne }, ...countries]);
 	const [errors, setErrors] = useState<Partial<UserFields>>({});
 	const submit = (event: FormEvent) => {
 		event.preventDefault();
@@ -45,7 +48,7 @@ export function UserForm({ texts, user, countries, onSave, onCancel }: { texts: 
 			{input('lastName', 'family-name')}
 			<label>
 				{texts.country}{' '}
-				<Dropdown name="country" options={countries} value={fields.country}
+				<Dropdown name="country" options={choices} value={fields.country}
 					onChange={set('country')} aria-invalid={errors.country ? true : undefined}
 					filter={texts.filter} noMatch={texts.noMatch} more={texts.more}
 					remove={texts.remove} />

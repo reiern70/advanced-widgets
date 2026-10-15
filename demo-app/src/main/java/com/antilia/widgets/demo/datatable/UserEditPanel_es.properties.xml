@@ -5,11 +5,11 @@
   All rights reserved.
 -->
 <properties>
-	<entry key="firstName">Nombre</entry>
-	<entry key="lastName">Apellido</entry>
-	<entry key="country">País</entry>
-	<entry key="city">Ciudad</entry>
-	<entry key="address">Dirección</entry>
+	<entry key="field.firstName">Nombre</entry>
+	<entry key="field.lastName">Apellido</entry>
+	<entry key="field.country">País</entry>
+	<entry key="field.city">Ciudad</entry>
+	<entry key="field.address">Dirección</entry>
 	<entry key="cancel">Cancelar</entry>
 	<entry key="save">Guardar</entry>
 	<entry key="userGone">El usuario ya no existe.</entry>

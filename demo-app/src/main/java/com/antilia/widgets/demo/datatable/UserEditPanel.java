@@ -4,6 +4,7 @@
  */
 package com.antilia.widgets.demo.datatable;
 
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -14,7 +15,6 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import com.antilia.widgets.dropdown.Dropdown;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.form.TextField;
@@ -23,6 +23,11 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.validation.validator.StringValidator;
+
+import com.antilia.widgets.button.ButtonBehavior;
+import com.antilia.widgets.button.ButtonBehavior.Size;
+import com.antilia.widgets.button.ButtonBehavior.Variant;
+import com.antilia.widgets.dropdown.Dropdown;
 
 /**
  * Edits the name and the address of a user, every field required, or enters a new user,
@@ -88,7 +93,7 @@ public abstract class UserEditPanel extends Panel
 				{
 					return code;
 				}
-			}).setRequired(true).setLabel(new ResourceModel("country")));
+			}).setRequired(true).setLabel(new ResourceModel("field.country")));
 		form.add(text("city", 60));
 		form.add(text("address", 120));
 
@@ -101,7 +106,7 @@ public abstract class UserEditPanel extends Panel
 			{
 				onCancel(target);
 			}
-		});
+		}.add(new ButtonBehavior(Variant.SECONDARY, Size.MEDIUM)));
 		form.add(new AjaxButton("save")
 		{
 			private static final long serialVersionUID = 1L;
@@ -138,22 +143,25 @@ public abstract class UserEditPanel extends Panel
 			{
 				target.add(form);
 			}
-		});
+		}.add(new ButtonBehavior(Variant.PRIMARY, Size.MEDIUM)));
 	}
 
 	private FormComponent<String> text(String property, int maximumLength)
 	{
 		TextField<String> field = new TextField<>(property, new PropertyModel<>(this, property));
 		field.setRequired(true);
-		field.setLabel(new ResourceModel(property));
+		// field.*: the page's resources, the headers of its columns, would win over firstName
+		field.setLabel(new ResourceModel("field." + property));
 		field.add(StringValidator.maximumLength(maximumLength));
 		return field;
 	}
 
 	private List<String> countries()
 	{
+		// by the language's order, not the code points': Åland and Österreich go to the A and O
+		Collator collator = Collator.getInstance(getLocale());
 		return Arrays.stream(Locale.getISOCountries())
-			.sorted(Comparator.comparing(this::countryName))
+			.sorted(Comparator.comparing(this::countryName, collator))
 			.toList();
 	}
 
