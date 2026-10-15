@@ -22,6 +22,7 @@ import org.apache.wicket.model.StringResourceModel;
 
 import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.demo.DemoSession;
+import com.antilia.widgets.demo.FormErrors;
 import com.antilia.widgets.demo.HomePage;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.data.User;
@@ -123,6 +124,7 @@ public class SignInPage extends BasePage
 			}
 		};
 		add(form);
+		form.add(new FormErrors("errors"));
 
 		form.add(new RequiredTextField<>("name", name).setLabel(new ResourceModel("name")));
 		form.add(new PasswordTextField("password", password).setLabel(new ResourceModel("password")));

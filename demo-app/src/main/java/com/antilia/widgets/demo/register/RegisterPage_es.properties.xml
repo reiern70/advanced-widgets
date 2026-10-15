@@ -16,7 +16,7 @@
 	<entry key="answer">La suma</entry>
 	<entry key="submit">Registrarse</entry>
 	<entry key="robot">Eso no parecía una persona rellenando el formulario. Calcule la nueva suma y vuelva a enviarlo.</entry>
-	<entry key="Required">Indique ${label}.</entry>
+	<entry key="Required">El campo «${label}» es obligatorio.</entry>
 	<entry key="EmailAddressValidator">${label} no es una dirección de correo válida.</entry>
 	<entry key="password">Contraseña</entry>
 	<entry key="repeatedPassword">Repita la contraseña</entry>

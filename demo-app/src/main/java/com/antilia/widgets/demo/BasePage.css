@@ -14,6 +14,7 @@
 	--in-progress: #b26a00;
 	--planned: #5b6478;
 	--radius: 10px;
+	--error: #c62828;
 }
 
 /* the page takes the colors of the theme the session chose, put on <body> */
@@ -27,8 +28,29 @@
 	--primary-dark: var(--antilia-theme-primary-dark);
 	--on-primary: var(--antilia-theme-on-primary);
 	--accent: var(--antilia-theme-accent);
+	--error: var(--antilia-theme-error);
 	color-scheme: var(--antilia-theme-color-scheme);
 }
+
+/* the fields that failed their validation (InvalidFieldMarker); a drop-down marks its toggle */
+:is(input, textarea, select, .antilia-dropdown-toggle)[aria-invalid="true"] {
+	border-color: var(--error);
+	box-shadow: 0 0 0 1px var(--error);
+}
+
+/* the errors of a form, listed in it: FormErrors, and Wicket's FeedbackPanel in the dialogs */
+.feedbackPanel {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	list-style: none;
+	border: 1px solid color-mix(in srgb, var(--error) 45%, transparent);
+	border-left-width: 4px;
+	border-radius: 0.4em;
+	background: color-mix(in srgb, var(--error) 8%, var(--surface));
+	color: var(--text);
+	font-size: 14px;
+}
+.feedbackPanel li + li { margin-top: 4px; }
 
 * { box-sizing: border-box; }
 
@@ -471,6 +493,8 @@ a.brand { color: inherit; text-decoration: none; }
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--primary)) 25%, transparent);
 }
 .register__field .antilia-dropdown { width: 100%; font-size: 15px; }
+.register__errors { grid-column: 1 / -1; }
+.register__errors .feedbackPanel { margin: 0; }
 /* the field robots fill in and people never see */
 .register__honeypot {
 	position: absolute;

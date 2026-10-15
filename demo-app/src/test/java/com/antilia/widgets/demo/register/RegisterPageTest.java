@@ -9,9 +9,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.util.tester.FormTester;
+import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -171,7 +173,7 @@ class RegisterPageTest
 		form.select("jobRole", JobRole.OTHER.ordinal());
 		form.submit();
 		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertErrorMessages("Please enter Your role.");
+		tester.assertErrorMessages("Your role is required.");
 
 		clock.advance(Duration.ofSeconds(20));
 		form = fillIn(page.getExpectedAnswer());
@@ -194,7 +196,7 @@ class RegisterPageTest
 		form.submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertErrorMessages("Please enter Role.");
+		tester.assertErrorMessages("Role is required.");
 	}
 
 	@Test
@@ -305,13 +307,32 @@ class RegisterPageTest
 	}
 
 	@Test
-	void requiresTheFields()
+	void requiresTheFieldsListingEveryErrorInTheFormInTheOrderOfTheFields()
 	{
 		clock.advance(Duration.ofSeconds(20));
 		tester.newFormTester("form").submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertContains("Please enter First name.");
+		String response = tester.getLastResponseAsString();
+		// more errors than a stack of notifications shows: all in the form, none a notification
+		int previous = -1;
+		for (String message : List.of("First name is required.", "Last name is required.",
+			"Email is required.", "Password is required.", "Password again is required.",
+			"Country is required.", "Role is required.", "The sum is required."))
+		{
+			int at = response.indexOf(message);
+			assertTrue(at > previous, message + " after the one before it");
+			previous = at;
+		}
+		assertFalse(response.contains("Wicket.Notifications.show"), response);
+		// the fields in error say so; the language, chosen already, is right
+		for (String field : List.of("firstName", "email", "password", "country", "answer"))
+		{
+			assertEquals("true", TagTester.createTagByAttribute(response, "name", field)
+				.getAttribute("aria-invalid"), field);
+		}
+		assertNull(TagTester.createTagByAttribute(response, "name", "language")
+			.getAttribute("aria-invalid"));
 	}
 
 	private FormTester fillIn(int answer)

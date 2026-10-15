@@ -9,6 +9,7 @@
 		<h1><wicket:message key="title"/></h1>
 		<p class="register__lead"><wicket:message key="lead"/></p>
 		<form wicket:id="form" class="register__form register__form--single" novalidate="novalidate">
+			<div wicket:id="errors" class="register__errors" role="alert"></div>
 			<label class="register__field register__field--wide"><span><wicket:message key="name"/></span> <input type="text" wicket:id="name" autocomplete="username"/></label>
 			<label class="register__field register__field--wide"><span><wicket:message key="password"/></span> <input type="password" wicket:id="password" autocomplete="current-password"/></label>
 			<div wicket:id="captcha" class="register__captcha register__field--wide">

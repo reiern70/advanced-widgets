@@ -296,6 +296,16 @@ export class Dropdown {
 				element.removeAttribute('aria-label');
 			}
 		}
+		// the hidden select can't tell assistive technologies that it is wrong or required: the
+		// toggle they reach tells them for it
+		for (const name of ['aria-invalid', 'aria-required', 'aria-describedby']) {
+			const value = this.select.getAttribute(name);
+			if (value !== null) {
+				this.toggle.setAttribute(name, value);
+			} else {
+				this.toggle.removeAttribute(name);
+			}
+		}
 		const withFilter = this.select.options.length >= this.threshold();
 		if (withFilter && !this.filter) {
 			this.filter = create('input', this.look, 'dropdown-filter');

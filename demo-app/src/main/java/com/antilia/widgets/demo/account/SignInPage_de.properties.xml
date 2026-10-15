@@ -14,7 +14,7 @@
 	<entry key="full">Gerade sind zu viele Benutzer angemeldet: höchstens {0} gleichzeitig. Bitte versuchen Sie es in ein paar Minuten noch einmal.</entry>
 	<entry key="noAccount">Noch kein Konto?</entry>
 	<entry key="register">Registrieren</entry>
-	<entry key="Required">Bitte geben Sie ${label} ein.</entry>
+	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
 	<entry key="captchaLead">Zu viele Fehlversuche: Geben Sie auch die Buchstaben des Bildes ein.</entry>
 	<entry key="captcha">Die Buchstaben des Bildes</entry>
 	<entry key="captchaImage">Einzugebende Buchstaben</entry>

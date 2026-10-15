@@ -40,6 +40,7 @@ import org.apache.wicket.validation.validator.StringValidator;
 
 import com.antilia.widgets.demo.BasePage;
 import com.antilia.widgets.demo.Countries;
+import com.antilia.widgets.demo.FormErrors;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.demo.data.JobRole;
@@ -142,6 +143,7 @@ public class RegisterPage extends BasePage
 		};
 		form.setEnabled(isOpen());
 		add(form);
+		form.add(new FormErrors("errors"));
 		add(new WebMarkupContainer("closed").setVisible(!isOpen()));
 
 		form.add(new RequiredTextField<String>("firstName")

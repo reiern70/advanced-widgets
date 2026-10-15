@@ -16,7 +16,7 @@
 	<entry key="answer">The sum</entry>
 	<entry key="submit">Register</entry>
 	<entry key="robot">That did not look like a person filling in the form. Please work out the new sum and send it again.</entry>
-	<entry key="Required">Please enter ${label}.</entry>
+	<entry key="Required">${label} is required.</entry>
 	<entry key="EmailAddressValidator">${label} is not a valid email address.</entry>
 	<entry key="password">Password</entry>
 	<entry key="repeatedPassword">Password again</entry>

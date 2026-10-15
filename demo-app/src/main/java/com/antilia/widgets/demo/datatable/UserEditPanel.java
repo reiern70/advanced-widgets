@@ -72,7 +72,7 @@ public abstract class UserEditPanel extends Panel
 
 		form.add(text("firstName", 60));
 		form.add(text("lastName", 60));
-		form.add(markInvalid(new Dropdown<>("country", new PropertyModel<>(this, "country"),
+		form.add(new Dropdown<>("country", new PropertyModel<>(this, "country"),
 			countries(), new ChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
@@ -88,7 +88,7 @@ public abstract class UserEditPanel extends Panel
 				{
 					return code;
 				}
-			}).setRequired(true).setLabel(new ResourceModel("country"))));
+			}).setRequired(true).setLabel(new ResourceModel("country")));
 		form.add(text("city", 60));
 		form.add(text("address", 120));
 
@@ -147,12 +147,6 @@ public abstract class UserEditPanel extends Panel
 		field.setRequired(true);
 		field.setLabel(new ResourceModel(property));
 		field.add(StringValidator.maximumLength(maximumLength));
-		return markInvalid(field);
-	}
-
-	private static <F extends FormComponent<?>> F markInvalid(F field)
-	{
-		field.add(AttributeAppender.replace("aria-invalid", () -> field.isValid() ? null : "true"));
 		return field;
 	}
 

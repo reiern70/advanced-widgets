@@ -16,7 +16,7 @@
 	<entry key="answer">Die Summe</entry>
 	<entry key="submit">Registrieren</entry>
 	<entry key="robot">Das sah nicht nach einem Menschen aus, der das Formular ausfüllt. Bitte rechnen Sie die neue Summe aus und senden Sie es erneut.</entry>
-	<entry key="Required">Bitte geben Sie ${label} an.</entry>
+	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
 	<entry key="EmailAddressValidator">${label} ist keine gültige E-Mail-Adresse.</entry>
 	<entry key="password">Passwort</entry>
 	<entry key="repeatedPassword">Passwort wiederholen</entry>

@@ -14,7 +14,7 @@
 	<entry key="full">Too many users are signed in right now: at most {0} at once. Please try again in a few minutes.</entry>
 	<entry key="noAccount">No account yet?</entry>
 	<entry key="register">Register</entry>
-	<entry key="Required">Please enter ${label}.</entry>
+	<entry key="Required">${label} is required.</entry>
 	<entry key="captchaLead">Too many failed attempts: type the letters of the image too.</entry>
 	<entry key="captcha">The letters of the image</entry>
 	<entry key="captchaImage">Letters to type</entry>

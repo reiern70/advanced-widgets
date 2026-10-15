@@ -188,6 +188,25 @@ describe('Dropdown', () => {
 		expect(instance.filter).toBeNull();
 	});
 
+	it('tells on its toggle that the select is wrong, required or described, also on refresh()', () => {
+		const element = select(FRUITS, 'aria-invalid="true" aria-required="true" aria-describedby="help"');
+		const instance = new Dropdown(element);
+		const toggle = element.parentElement?.querySelector('.antilia-dropdown-toggle') as HTMLElement;
+
+		expect(toggle.getAttribute('aria-invalid')).toBe('true');
+		expect(toggle.getAttribute('aria-required')).toBe('true');
+		expect(toggle.getAttribute('aria-describedby')).toBe('help');
+
+		element.removeAttribute('aria-invalid');
+		element.removeAttribute('aria-describedby');
+		instance.refresh();
+
+		expect(toggle.hasAttribute('aria-invalid')).toBe(false);
+		expect(toggle.getAttribute('aria-required')).toBe('true');
+		expect(toggle.hasAttribute('aria-describedby')).toBe(false);
+		instance.destroy();
+	});
+
 	it('does not open while the select is disabled', () => {
 		const instance = new Dropdown(select(FRUITS, 'disabled'));
 		instance.toggle.click();

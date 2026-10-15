@@ -32,8 +32,6 @@ public abstract class MemberFormPanel extends Panel
 
 	private final Form<TeamMember> form;
 
-	private final FeedbackPanel feedback;
-
 	/**
 	 * @param id
 	 *            component id
@@ -46,8 +44,7 @@ public abstract class MemberFormPanel extends Panel
 		form = new Form<>("form", new CompoundPropertyModel<>(member.copy()));
 		form.setOutputMarkupId(true);
 		add(form);
-		feedback = new FeedbackPanel("feedback");
-		form.add(feedback.setOutputMarkupId(true));
+		form.add(new FeedbackPanel("feedback"));
 
 		form.add(new TextField<String>("name").setRequired(true)
 			.add(StringValidator.maximumLength(TeamStore.MAX_LENGTH))
@@ -95,7 +92,8 @@ public abstract class MemberFormPanel extends Panel
 			@Override
 			protected void onError(AjaxRequestTarget target)
 			{
-				target.add(feedback);
+				// the errors, and the fields in error marked
+				target.add(form);
 			}
 		}.setPrimary(true).setDefault(true);
 	}
