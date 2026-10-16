@@ -14,9 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.model.IModel;
@@ -234,6 +236,31 @@ class MenuTest extends WicketTestCase
 	}
 
 	@Test
+	void marksTheItemsItsModelsSaySelected()
+	{
+		Model<Boolean> second = Model.of(false);
+		MenuItem one = LinkMenuItem.of(Model.of("One"), () -> {}).setSelected(true);
+		SubMenu more = new SubMenu(Model.of("More")).add(LinkMenuItem.of(Model.of("Two"), () -> {})
+			.setSelected(second));
+		Menu menu = new Menu("menu", List.of(one, more));
+		tester.startPage(new TestPage(menu));
+
+		assertEquals("page", tagAt(bar(0) + ":link").getAttribute("aria-current"));
+		assertEquals("antilia-menu-link", tagAt(bar(1) + ":trigger").getAttribute("class"));
+		assertNull(tagAt(sub(bar(1), 0) + ":link").getAttribute("aria-current"));
+
+		one.setSelected(false);
+		second.setObject(true);
+		tester.startPage(new TestPage(menu));
+
+		assertNull(tagAt(bar(0) + ":link").getAttribute("aria-current"));
+		assertEquals("antilia-menu-link antilia-menu-current-parent",
+			tagAt(bar(1) + ":trigger").getAttribute("class"));
+		assertEquals("page", tagAt(sub(bar(1), 0) + ":link").getAttribute("aria-current"));
+		assertFalse(MenuSeparator.INSTANCE.isSelected());
+	}
+
+	@Test
 	void opensTheSubmenusHoldingTheCurrentItemInPlaceDownTheSide()
 	{
 		CurrentPage.inline = true;
@@ -267,6 +294,41 @@ class MenuTest extends WicketTestCase
 		assertEquals("true", tagAt(bar(1) + ":trigger").getAttribute("aria-disabled"));
 		assertEquals("true", tagAt(sub(bar(1), 0) + ":link").getAttribute("aria-disabled"));
 		assertFalse(save.isEnabled());
+	}
+
+	@Test
+	void readsTheIconAndTheFlagsOfItsItemsEachTimeItRenders()
+	{
+		Model<IIcon> icon = Model.of(ICON);
+		Model<Boolean> enabled = Model.of(true);
+		Model<Boolean> visible = Model.of(true);
+		MenuItem save = AjaxMenuItem.of(Model.of("Save"), target -> {}).setIcon(icon)
+			.setEnabled(enabled);
+		MenuItem help = LinkMenuItem.of(Model.of("Help"), () -> {}).setVisible(visible);
+		Menu menu = new Menu("menu", List.of(save, help));
+		tester.startPage(new TestPage(menu));
+
+		TagTester link = tagAt(bar(0) + ":link");
+		assertTrue(link.getValue().contains("<svg class=\"icon\"></svg>"));
+		assertNull(link.getAttribute("aria-disabled"));
+		tester.assertContains(">Help<");
+
+		icon.setObject(() -> "<svg class=\"other\"></svg>");
+		enabled.setObject(false);
+		visible.setObject(false);
+		tester.startPage(new TestPage(menu));
+
+		link = tagAt(bar(0) + ":link");
+		assertTrue(link.getValue().contains("<svg class=\"other\"></svg>"));
+		assertEquals("true", link.getAttribute("aria-disabled"));
+		assertFalse(tester.getLastResponseAsString().contains(">Help<"));
+		assertFalse(save.isEnabled());
+		assertFalse(help.isVisible());
+
+		icon.setObject(null);
+		tester.startPage(new TestPage(menu));
+
+		assertFalse(tagAt(bar(0) + ":link").getValue().contains("<svg"));
 	}
 
 	@Test
@@ -332,6 +394,17 @@ class MenuTest extends WicketTestCase
 		MenuLinkPanel panel = new MenuLinkPanel("link", new ExternalItem(Model.of("Help"), "/help"));
 		assertTrue(panel.getLink() instanceof ExternalLink);
 		assertEquals("Help", panel.getItem().getLabel().getObject());
+		assertThrows(IllegalArgumentException.class, () -> new MenuLinkPanel("link",
+			new MenuItem(Model.of("Text"))
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Component getLink(String id)
+				{
+					return new Label(id, "not a container");
+				}
+			}));
 	}
 
 	@Test
@@ -341,7 +414,9 @@ class MenuTest extends WicketTestCase
 			new PageParameters().add("section", "laptops"));
 		assertEquals(CurrentPage.class, item.getPageClass());
 		assertEquals("laptops", item.getParameters().get("section").toString());
-		assertFalse(item.isCurrent(null));
+		// no page is requested
+		assertFalse(item.isSelected());
+		assertTrue(item.setSelected(true).isSelected());
 	}
 
 	/** A model counting the times it is detached. */

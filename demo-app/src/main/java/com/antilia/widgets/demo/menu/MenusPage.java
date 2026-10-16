@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.wicket.Component;
-import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -268,15 +267,8 @@ public class MenusPage extends DemoPage
 				item.add(new Label("name", name));
 				item.add(new Menu("menu", items(SIDEBAR, (entry, label, path) ->
 					new ViewItem(label, entry.name(), false)
-					{
-						private static final long serialVersionUID = 1L;
-
-						@Override
-						public boolean isCurrent(Page page)
-						{
-							return "dashboard".equals(entry.name());
-						}
-					})).setDesign(shown).setOrientation(orientation).setLabel(Model.of(name)));
+						.setSelected("dashboard".equals(entry.name()))))
+					.setDesign(shown).setOrientation(orientation).setLabel(Model.of(name)));
 			}
 		};
 	}
@@ -577,6 +569,7 @@ public class MenusPage extends DemoPage
 			super(label);
 			this.name = name;
 			this.shows = shows;
+			setSelected((IModel<Boolean>)() -> name.equals(view));
 		}
 
 		@Override
@@ -587,12 +580,6 @@ public class MenusPage extends DemoPage
 				view = name;
 				target.add(content, sidebar);
 			}
-		}
-
-		@Override
-		public boolean isCurrent(Page page)
-		{
-			return name.equals(view);
 		}
 	}
 

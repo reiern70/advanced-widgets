@@ -4,7 +4,7 @@
  */
 package com.antilia.widgets.menu;
 
-import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
@@ -35,7 +35,7 @@ public abstract class LinkMenuItem extends MenuItem
 	protected abstract void onClick();
 
 	@Override
-	public AbstractLink getLink(String id)
+	public Component getLink(String id)
 	{
 		return new Link<Void>(id)
 		{

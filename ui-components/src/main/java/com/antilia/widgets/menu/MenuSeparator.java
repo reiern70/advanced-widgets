@@ -4,7 +4,7 @@
  */
 package com.antilia.widgets.menu;
 
-import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.Component;
 import org.apache.wicket.model.IModel;
 
 /**
@@ -31,7 +31,7 @@ public enum MenuSeparator implements IMenuItem
 	 * @return {@code null}: a separator has no link
 	 */
 	@Override
-	public AbstractLink getLink(String id)
+	public Component getLink(String id)
 	{
 		return null;
 	}
