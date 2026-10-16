@@ -47,19 +47,15 @@ import com.github.openjson.JSONObject;
  * {@link FilePickerBehavior} of the field knows them, nor one without files: those reach
  * {@link #onUploadFailure(org.apache.wicket.ajax.AjaxRequestTarget, String)} as if the server
  * refused them, without being sent. The resources of this class word the errors, in English,
- * German and Spanish, and the bar of the field tells the same words; when the request got no
- * answer, the bar tells that the connection broke off ({@value #CONNECTION_LOST_KEY}), and the
- * server, which hears of it as of any failure, says
- * {@value FileUploadToResourceField#UPLOAD_FAILED_RESOURCE_KEY}.
+ * German and Spanish, and the bar of the field tells the same words: when the request got no
+ * answer, both the bar and the server tell that the connection broke off
+ * ({@value FileUploadToResourceField#CONNECTION_LOST_RESOURCE_KEY}).
  *
  * @since 11.0.0
  */
 public abstract class UploadToResourceField extends FileUploadToResourceField
 {
 	private static final long serialVersionUID = 1L;
-
-	/** The key of the words the bar of the field tells when the connection broke off. */
-	public static final String CONNECTION_LOST_KEY = "uploadConnectionLost";
 
 	private boolean keepingOnPage = true;
 
@@ -159,7 +155,7 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 		JSONObject messages = new JSONObject();
 		for (String key : new String[] { AbstractFileUploadResource.NO_FILE_SELECTED,
 			Form.UPLOAD_TOO_LARGE_RESOURCE_KEY, Form.UPLOAD_SINGLE_FILE_TOO_LARGE_RESOURCE_KEY,
-			Form.UPLOAD_TOO_MANY_FILES_RESOURCE_KEY, CONNECTION_LOST_KEY })
+			Form.UPLOAD_TOO_MANY_FILES_RESOURCE_KEY, CONNECTION_LOST_RESOURCE_KEY })
 		{
 			messages.put(key, getString(key, Model.ofMap(model)));
 		}

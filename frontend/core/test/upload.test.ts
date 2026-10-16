@@ -999,8 +999,8 @@ describe('Wicket.Upload', () => {
 		// an answer with an error: its status tells more
 		expect(failure(500, 'uploadFailed').errorMessage).toBe('uploadFailed');
 		expect(ends.mock.calls[1][0].detail).toMatchObject({ message: undefined, status: 500 });
-		// no answer: the connection broke off
-		expect(failure(0, 'uploadFailed').errorMessage).toBe('uploadFailed');
+		// no answer: the connection broke off, which Wicket's field tells the server too
+		expect(failure(0, 'uploadConnectionLost').errorMessage).toBe('uploadConnectionLost');
 		expect(ends.mock.calls[2][0].detail).toMatchObject({ message: 'Lost.', status: 0 });
 		// an error the server has no words for
 		failure(200, { not: 'a key' });

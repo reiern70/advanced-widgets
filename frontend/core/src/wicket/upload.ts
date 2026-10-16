@@ -19,8 +19,8 @@
  *
  * A field sends one upload at a time, and none whose files break the limits its picker knows: the
  * server hears of those as of files it refused, without receiving them. Wicket's field tells its
- * callback how an upload ended by POST, and words a failure it has no words of its own for as
- * uploadFailed; the progress tells, rather, that the connection broke off when no answer came.
+ * callback how an upload ended by POST: as uploadConnectionLost when no answer came, which the
+ * progress tells too, and as uploadFailed a failure it has no words of its own for.
  *
  * The uploads of forms are told as well: a multipart form posted the usual way, whose progress the
  * server tells, and one sent by Ajax, with its request where Wicket's Ajax gives it to

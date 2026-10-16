@@ -13,8 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -304,29 +306,41 @@ class UploadsTest extends WicketTestCase
 		assertEquals("Nothing to upload: no files were chosen.",
 			messages.getString("wicket.no.files.selected"));
 		assertEquals("The connection to the server broke off during the upload.",
-			messages.getString(UploadToResourceField.CONNECTION_LOST_KEY));
+			messages.getString(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
 		assertEquals(6, messages.length(), messages.toString());
 
-		// the server words any failure as one, a connection broken off too, in the session's language
+		// the server words a connection broken off with the bar's words, any other failure as one,
+		// in the session's language
 		AbstractDefaultAjaxBehavior callback = field.getBehaviors(
 			AbstractDefaultAjaxBehavior.class).get(0);
-		for (String error : new String[] { "uploadFailed", UploadToResourceField.CONNECTION_LOST_KEY,
-			"Internal Server Error" })
-		{
-			tester.getRequest().setParameter("error", "true");
-			tester.getRequest().setParameter("errorMessage", error);
-			tester.executeBehavior(callback);
+		Map<String, String> said = new LinkedHashMap<>();
+		said.put("uploadFailed", "The upload failed.");
+		said.put("Internal Server Error", "The upload failed.");
+		said.put(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY,
+			"The connection to the server broke off during the upload.");
+		said.forEach((error, message) -> {
+			assertEquals(message, failure(field, callback, error));
 			assertEquals(1, field.failures);
 			field.failures = 0;
-			List<FeedbackMessage> errors = field.getFeedbackMessages().toList();
-			assertEquals("The upload failed.", errors.get(errors.size() - 1).getMessage());
-		}
+		});
 		tester.getSession().setLocale(Locale.GERMAN);
+		assertEquals("Der Upload ist fehlgeschlagen.", failure(field, callback, "uploadFailed"));
+		assertEquals("Die Verbindung zum Server ist beim Upload abgebrochen.",
+			failure(field, callback, UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
+	}
+
+	/**
+	 * Tells the field that its upload failed, as its script does.
+	 *
+	 * @return the message the server words the error with
+	 */
+	private String failure(TestField field, AbstractDefaultAjaxBehavior callback, String error)
+	{
 		tester.getRequest().setParameter("error", "true");
-		tester.getRequest().setParameter("errorMessage", "uploadFailed");
+		tester.getRequest().setParameter("errorMessage", error);
 		tester.executeBehavior(callback);
 		List<FeedbackMessage> errors = field.getFeedbackMessages().toList();
-		assertEquals("Der Upload ist fehlgeschlagen.", errors.get(errors.size() - 1).getMessage());
+		return errors.get(errors.size() - 1).getMessage().toString();
 	}
 
 	@Test
