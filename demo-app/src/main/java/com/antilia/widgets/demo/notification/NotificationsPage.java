@@ -14,6 +14,7 @@ import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.form.CheckBox;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
@@ -30,12 +31,14 @@ import com.antilia.widgets.demo.frameworks.FrameworkTabs;
 import com.antilia.widgets.dropdown.Dropdown;
 import com.antilia.widgets.notification.Notification;
 import com.antilia.widgets.notification.NotificationPosition;
+import com.antilia.widgets.notification.SessionNotifications;
 import com.github.openjson.JSONObject;
 
 /**
  * {@link com.antilia.widgets.notification.Notifications Notifications}, those every page of the
  * demo has: a form choosing the type, the title, the message, text or HTML, the position and the
- * timeout of a notification, which its button shows via Ajax, and closes them all; and a form
+ * timeout of a notification, which its button shows via Ajax, another on a new page, after a
+ * redirect, through the {@link SessionNotifications session}, and closes them all; and a form
  * whose feedback messages become notifications, the error of its required field, which stays until
  * closed, or the page's success. Besides the four types of the component the demo has one of its
  * own, note, violet with a light bulb. The React and Svelte tabs show the same with their {@code Notifications}.
@@ -102,6 +105,18 @@ public class NotificationsPage extends DemoPage
 				getNotifications().show(newNotification());
 			}
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.MEDIUM)));
+		showForm.add(new Button("showAfterRedirect")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onSubmit()
+			{
+				// the session keeps the notification for the new page the redirect goes to
+				SessionNotifications.show(newNotification());
+				setResponsePage(NotificationsPage.class);
+			}
+		}.add(new ButtonBehavior()));
 		showForm.add(new AjaxLink<Void>("closeAll")
 		{
 			private static final long serialVersionUID = 1L;

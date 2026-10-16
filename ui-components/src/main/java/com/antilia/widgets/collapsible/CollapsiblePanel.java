@@ -39,9 +39,9 @@ import com.antilia.widgets.theme.LookPart;
  * the panel's parent.
  * <p>
  * By default the server does not learn when the user expands or collapses the panel, and renders
- * it again in the state of {@link #setExpanded(boolean)}. With
- * {@link #setRememberExpanded(boolean)} every toggle is reported via Ajax, so the panel keeps the
- * user's choice when it or its page is rendered again.
+ * it again in the state of {@link #setExpanded(boolean)}; the panel then leaves a stateless page
+ * stateless. With {@link #setRememberExpanded(boolean)} every toggle is reported via Ajax, so the
+ * panel keeps the user's choice when it or its page is rendered again, and its page is stateful.
  * <p>
  * The title is escaped. The body is the component returned by {@link #newBody(String)}, for
  * example a label or a panel.
@@ -271,6 +271,15 @@ public abstract class CollapsiblePanel extends Panel
 		public boolean isEnabled(Component component)
 		{
 			return rememberExpanded && super.isEnabled(component);
+		}
+
+		/**
+		 * @return whether the behavior leaves the page stateless: it does while it reports nothing
+		 */
+		@Override
+		public boolean getStatelessHint(Component component)
+		{
+			return !rememberExpanded;
 		}
 
 		@Override

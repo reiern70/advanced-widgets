@@ -53,7 +53,9 @@ import com.antilia.widgets.theme.Looks;
  * </pre>
  *
  * {@link #show(Notification)} shows a notification via Ajax in an Ajax request, otherwise when the
- * page renders next. The feedback messages of the page become notifications too, unless
+ * page renders next; {@link SessionNotifications#show(Notification)} shows one wherever the session
+ * renders notifications next, also after a redirect. The feedback messages of the page and of the
+ * session, as a {@link FeedbackPanel} shows them, become notifications too, unless
  * {@link #setShowFeedback(boolean) told otherwise}: errors, warnings, successes and the others as
  * information, titled by their type; a {@link #setFeedbackFilter(IFeedbackMessageFilter) filter}
  * may choose them, and those a {@link FeedbackPanel} of the page shows, of a form in a dialog for
@@ -270,7 +272,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	}
 
 	/**
-	 * @return whether the feedback messages of the page become notifications
+	 * @return whether the feedback messages of the page and of the session become notifications
 	 */
 	public boolean isShowFeedback()
 	{
@@ -279,8 +281,8 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 
 	/**
 	 * @param showFeedback
-	 *            whether the feedback messages of the page become notifications, as they do by
-	 *            default
+	 *            whether the feedback messages of the page and of the session become
+	 *            notifications, as they do by default
 	 * @return {@code this}
 	 */
 	public Notifications setShowFeedback(boolean showFeedback)
@@ -338,7 +340,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 		{
 			return notifications;
 		}
-		List<FeedbackMessage> messages = new FeedbackCollector(getPage()).collect(message ->
+		List<FeedbackMessage> messages = new FeedbackCollector(getPage(), true).collect(message ->
 			!message.isRendered() && (feedbackFilter == null || feedbackFilter.accept(message)) &&
 			!isShownElsewhere(message));
 		for (FeedbackMessage message : messages)
@@ -395,8 +397,8 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	}
 
 	/**
-	 * Shows the feedback messages of an Ajax request as notifications, which the page broadcasts
-	 * once the request was handled.
+	 * Shows the notifications of the session and the feedback messages of an Ajax request as
+	 * notifications, which the page broadcasts once the request was handled.
 	 */
 	@Override
 	public void onEvent(IEvent<?> event)
@@ -404,7 +406,9 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 		super.onEvent(event);
 		if (event.getPayload() instanceof AjaxRequestTarget target && isRendered())
 		{
-			for (Notification notification : collectFeedback())
+			List<Notification> notifications = new ArrayList<>(SessionNotifications.take());
+			notifications.addAll(collectFeedback());
+			for (Notification notification : notifications)
 			{
 				target.appendJavaScript(getShowScript(notification));
 			}
@@ -428,6 +432,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
 		List<Notification> notifications = new ArrayList<>(pending);
 		pending.clear();
+		notifications.addAll(SessionNotifications.take());
 		notifications.addAll(collectFeedback());
 		for (Notification notification : notifications)
 		{

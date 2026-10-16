@@ -108,6 +108,20 @@ class NotificationsPageTest
 	}
 
 	@Test
+	void showsTheNotificationOnANewPageAfterARedirect()
+	{
+		FormTester form = tester.newFormTester("themed:showForm");
+		form.setValue("title", "Welcome back");
+		form.submit("showAfterRedirect");
+
+		NotificationsPage next = (NotificationsPage)tester.getLastRenderedPage();
+		assertTrue(next != page, "a new page");
+		tester.assertContains("Wicket.Notifications.show\\(\"" +
+			next.getNotifications().getMarkupId() + "\", \\{\"type\":\"success\"," +
+			"\"title\":\"Welcome back\",\"body\":\"The changes were saved.\"");
+	}
+
+	@Test
 	void closesAllNotifications()
 	{
 		tester.clickLink("themed:showForm:closeAll");

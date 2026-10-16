@@ -180,6 +180,69 @@ class NotificationsTest extends WicketTestCase
 	}
 
 	@Test
+	void makesTheFeedbackMessagesOfTheSessionNotificationsAfterARedirect()
+	{
+		TestPage page = tester.startPage(new TestPage(test -> {
+		}));
+		page.onClick = () -> {
+			page.getSession().success("Signed in");
+			page.setResponsePage(new TestPage(test -> {
+			}));
+		};
+
+		tester.clickLink("link");
+
+		tester.assertContains(
+			"\\{\"type\":\"success\",\"title\":\"Success\",\"body\":\"Signed in\"\\}");
+		assertTrue(tester.getSession().getFeedbackMessages().toList().stream()
+			.allMatch(FeedbackMessage::isRendered));
+
+		// shown once only
+		tester.startPage(new TestPage(test -> {
+		}));
+		assertFalse(tester.getLastResponseAsString().contains("Signed in"));
+	}
+
+	@Test
+	void showsTheNotificationsOfTheSessionOnTheNextPageOnce()
+	{
+		TestPage page = tester.startPage(new TestPage(test -> {
+		}));
+		page.onClick = () -> {
+			SessionNotifications.show(Notification.success("You are signed in.")
+				.setTitle("GitHub"));
+			page.setResponsePage(new TestPage(test -> {
+			}));
+		};
+
+		tester.clickLink("link");
+
+		TestPage next = (TestPage)tester.getLastRenderedPage();
+		tester.assertContains("Wicket.Notifications.show\\(\"" + next.notifications.getMarkupId() +
+			"\", \\{\"type\":\"success\",\"title\":\"GitHub\"," +
+			"\"body\":\"You are signed in.\"\\}\\);");
+		assertTrue(SessionNotifications.getPending().isEmpty());
+		assertFalse(tester.getSession().isTemporary(), "bound, to last until the next request");
+
+		tester.startPage(next);
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.Notifications.show"));
+	}
+
+	@Test
+	void showsTheNotificationsOfTheSessionViaAjax()
+	{
+		TestPage page = tester.startPage(new TestPage(test -> {
+		}));
+		page.onAjax = target -> SessionNotifications.show(Notification.info("Elsewhere"));
+
+		tester.clickLink("ajax");
+
+		tester.assertContains("Wicket.Notifications.show\\(\"" + page.notifications.getMarkupId() +
+			"\", \\{\"type\":\"info\",\"body\":\"Elsewhere\"\\}\\);");
+		assertTrue(SessionNotifications.getPending().isEmpty());
+	}
+
+	@Test
 	void showsOnlyTheFeedbackMessagesTheFilterAccepts()
 	{
 		tester.startPage(new TestPage(test -> {
@@ -287,6 +350,7 @@ class NotificationsTest extends WicketTestCase
 		TestPage page = tester.startPage(new TestPage(test -> test.notifications.setVisible(false)));
 		page.onAjax = target -> {
 			page.notifications.show(Notification.info("Later"));
+			SessionNotifications.show(Notification.info("Later too"));
 			page.error("Wrong");
 		};
 
@@ -294,6 +358,7 @@ class NotificationsTest extends WicketTestCase
 
 		assertFalse(tester.getLastResponseAsString().contains("Wicket.Notifications.show"));
 		assertEquals(1, page.notifications.getPending().size());
+		assertEquals(1, SessionNotifications.getPending().size());
 	}
 
 	@Test

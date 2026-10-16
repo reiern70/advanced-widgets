@@ -19,6 +19,7 @@ import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.TagTester;
@@ -84,6 +85,19 @@ class CollapsiblePanelTest extends WicketTestCase
 
 		assertFalse(panel.isExpanded());
 		assertEquals(2, panel.toggles);
+	}
+
+	@Test
+	void leavesAStatelessPageStatelessUnlessItRemembersTheState()
+	{
+		tester.startPage(StatelessPage.class);
+
+		assertTrue(tester.getLastRenderedPage().isPageStateless());
+		tester.assertContains("<details");
+
+		tester.startPage(StatelessPage.class, new PageParameters().add("remember", true));
+
+		assertFalse(tester.getLastRenderedPage().isPageStateless());
 	}
 
 	@Test
@@ -160,6 +174,20 @@ class CollapsiblePanelTest extends WicketTestCase
 		{
 			return new StringResourceStream("<html><head></head><body>" +
 				"<div wicket:id=\"panel\"></div></body></html>");
+		}
+	}
+
+	/**
+	 * A bookmarkable page with a panel, which remembers its state if the parameter remember says so.
+	 */
+	public static class StatelessPage extends TestPage
+	{
+		private static final long serialVersionUID = 1L;
+
+		public StatelessPage(PageParameters parameters)
+		{
+			super(new TestPanel().setRememberExpanded(
+				parameters.get("remember").toBoolean(false)));
 		}
 	}
 }
