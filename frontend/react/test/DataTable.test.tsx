@@ -83,6 +83,10 @@ describe('DataTable', () => {
 		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
 		expect(Array.from(container.querySelector('thead .navigator')!.querySelectorAll('.goto'),
 			(link) => link.textContent)).toEqual(['1', '2', '3']);
+		// the rows per page early, in sight on a table wider than the window
+		expect(Array.from(container.querySelector('thead .ant-data-table-navigation')!.children,
+			(part) => part.className)).toEqual(['ant-data-table-page-size', 'ant-data-table-paging',
+			'ant-data-table-actions']);
 		expect(load).toHaveBeenLastCalledWith({ first: 0, count: 25, sort: null,
 			filter: undefined });
 		expect(Object.keys(DynamicDataTable.instances).length).toBe(1);

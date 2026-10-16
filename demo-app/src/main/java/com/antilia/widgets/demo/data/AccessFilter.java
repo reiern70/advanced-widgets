@@ -14,9 +14,10 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 
 /**
- * Which {@link Access}es an administrator looks at: those whose user contains a text, ignoring
- * case, or is exactly a name; those of the public or of the private part; those from an address
- * that contains another text; and those between two times. What is left empty does not filter.
+ * Which {@link Access}es, or {@link OldAccess}es, an administrator looks at: those whose user
+ * contains a text, ignoring case, or is exactly a name; those of the public or of the private
+ * part; those from an address that contains another text; and those between two times. What is
+ * left empty does not filter.
  */
 public class AccessFilter implements Serializable
 {
@@ -114,9 +115,11 @@ public class AccessFilter implements Serializable
 	}
 
 	/**
+	 * @param <A>
+	 *            the accesses or the old accesses
 	 * @return the filter as the query of the repository
 	 */
-	public Specification<Access> toSpecification()
+	public <A extends AbstractAccess> Specification<A> toSpecification()
 	{
 		// the fields of the filter, read now: the specification runs later
 		String byUser = UserFilter.pattern(user);

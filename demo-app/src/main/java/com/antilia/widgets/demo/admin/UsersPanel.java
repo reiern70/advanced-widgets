@@ -13,10 +13,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
 
-import com.antilia.widgets.demo.Countries;
 import com.antilia.widgets.demo.account.Accounts;
-import com.antilia.widgets.demo.data.JobRole;
-import com.antilia.widgets.demo.data.Language;
 import com.antilia.widgets.demo.data.User;
 import com.antilia.widgets.demo.data.UserFilter;
 import com.antilia.widgets.dynamicdatatable.IIdentifiableDynamicDataProvider;
@@ -36,20 +33,7 @@ class UsersPanel extends Panel
 	UsersPanel(String id)
 	{
 		super(id);
-		List<IColumn<User, String>> columns = List.of(
-			new AdminColumn<>("account", "name", User::getName),
-			new AdminColumn<>("email", "email", User::getEmail),
-			new AdminColumn<>("firstName", "firstName", User::getFirstName),
-			new AdminColumn<>("lastName", "lastName", User::getLastName),
-			new AdminColumn<User>("country", "country",
-				user -> user.getCountry() == null ? ""
-					: Countries.name(user.getCountry(), getLocale())),
-			new AdminColumn<User>("jobRole", "jobRole", this::jobRole),
-			new AdminColumn<User>("userLanguage", "language", this::language),
-			new AdminColumn<User>("role", "role", user -> getString("role." + user.getRole())),
-			new AdminColumn<User>("validated", "validated",
-				user -> getString(user.isValidated() ? "yes" : "no")),
-			new AdminColumn<>("created", "created", user -> AdminTables.format(user.getCreated())));
+		List<IColumn<User, String>> columns = List.copyOf(UserColumns.of(this));
 
 		UsersProvider provider = new UsersProvider(filter);
 		add(new Label("count", () -> provider.size()).setOutputMarkupId(true));
@@ -75,27 +59,6 @@ class UsersPanel extends Panel
 		};
 		table.setColumnProportions(1.5, 1.9, 1, 1, 1.1, 1, 0.9, 1, 1.2, 1.5);
 		add(AdminTables.configure(table, "users.csv"));
-	}
-
-	/**
-	 * @return what the user does, in words with Other
-	 */
-	private String jobRole(User user)
-	{
-		JobRole role = user.getJobRole();
-		if (role == null)
-		{
-			return "";
-		}
-		String name = getString("JobRole." + role.name());
-		return role == JobRole.OTHER && user.getJobRoleOther() != null
-			? name + ": " + user.getJobRoleOther() : name;
-	}
-
-	private String language(User user)
-	{
-		Language language = user.getLanguage();
-		return language == null ? "" : language.getLocale().getDisplayLanguage(getLocale());
 	}
 
 	/**

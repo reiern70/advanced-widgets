@@ -190,11 +190,11 @@ table.ant-data-table .ant-data-table-action:focus-visible {
 	color: var(--antilia-theme-on-primary, #ffffff);
 }
 
+/* after the filter, not at the far end, so that it stays in sight on a table wider than the window */
 .ant-data-table-page-size {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.4em;
-	margin-left: auto;
 	white-space: nowrap;
 }
 

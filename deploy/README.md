@@ -83,7 +83,7 @@ the table at start.
 
 ### The administration's API
 
-Two resources answer JSON to administrators, leaving out the fields without a value: requests
+The resources below answer JSON to administrators, leaving out the fields without a value: requests
 send the account and password of an administrator with HTTP Basic authentication
 (`curl -u admin:...`), or, to read only, come from a browser signed in as one. After three wrong
 passwords for an account they answer 429 until it signs in on the site.
@@ -95,6 +95,7 @@ passwords for an account they answer 429 until it signs in on the site.
 | `POST /api/admin/users` with `{"name", "password", "email", "role", "firstName", "lastName", "country", "language"}` | Adds an account that opens the demos at once; `name` and a strong `password` are needed |
 | `DELETE /api/admin/users/<name>` | Removes an account, but an administrator's; its accesses stay |
 | `GET /api/admin/accesses?user=&userLike=&part=public&address=&from=&to=&page=0&size=100` | The accesses, the latest first; `user` is exact, `from` and `to` are times as `2026-10-15T10:00:00Z` |
+| `GET /api/admin/old-accesses?...` | The old accesses, filtered alike |
 
 ```sh
 curl -u admin:... 'https://<domain>/api/admin/accesses?user=robot&size=10'
@@ -106,6 +107,10 @@ curl -u admin:... -X DELETE https://<domain>/api/admin/users/client
 The accesses show who: the account signed in with, `robot` for search engines and other
 robots, `unknown` for the other visitors, and `user-<name>` for a visitor who tells who it is
 with `?visitor=<name>` on any page, such as the checks of a developer with `?visitor=claude-dev`.
+Every night at 03:30 UTC the accesses older than 10 days move from the table `accesses` to
+`old_accesses`, keeping their ids, so that the table every session writes to stays small: each is
+copied, then removed from `accesses` once it is in `old_accesses`, in one transaction. The
+administration shows them in the tab *Old accesses*.
 
 ## 4. PostgreSQL
 

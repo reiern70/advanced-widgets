@@ -216,6 +216,23 @@ class AdminApiTest
 		assertEquals(3, Accesses.get().count());
 	}
 
+	@Test
+	void answersTheOldAccessesFiltered()
+	{
+		record("ada@example.com", true, "200.46.55.1", "2026-09-15T10:00:00Z");
+		record(Access.ROBOT, false, "66.249.66.5", "2026-09-15T11:00:00Z");
+		record("user-claude-dev", false, "200.46.55.2", "2026-10-15T12:00:00Z");
+		Accesses.get().archive(Instant.parse("2026-10-01T00:00:00Z"));
+
+		String path = AccessesApiResource.OLD_PATH;
+		JSONObject all = request("GET", path, ADMIN, 200);
+		assertEquals(2, all.getInt("total"));
+		assertEquals("robot", all.getJSONArray("accesses").getJSONObject(0).getString("user"));
+		assertEquals(1, request("GET", path + "?part=private", ADMIN, 200).getInt("total"));
+		assertEquals(1, request("GET", AccessesApiResource.PATH, ADMIN, 200).getInt("total"));
+		request("GET", path, null, 401);
+	}
+
 	private static void record(String user, boolean privatePart, String address, String accessed)
 	{
 		Accesses.get().record(null,

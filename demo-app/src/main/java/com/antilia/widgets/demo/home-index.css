@@ -9,7 +9,14 @@
 		radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--accent, var(--primary)) 45%, transparent), transparent 55%),
 		linear-gradient(135deg, var(--primary-dark), var(--primary));
 	color: var(--on-primary, #fff);
-	padding: 48px 0;
+	padding: 40px 0;
+}
+/* what the components are on the left, the figures beside it on the right */
+.showcase__inner {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 24px 48px;
 }
 .showcase h1 {
 	margin: 0 0 12px;
@@ -41,18 +48,24 @@
 	color: inherit;
 }
 .showcase__secondary:hover { background: color-mix(in srgb, var(--on-primary, #fff) 12%, transparent); }
+.showcase__side {
+	padding: 20px 28px;
+	border: 1px solid color-mix(in srgb, var(--on-primary, #fff) 30%, transparent);
+	border-radius: 16px;
+	background: color-mix(in srgb, var(--on-primary, #fff) 8%, transparent);
+}
 .showcase__facts {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 28px;
-	margin: 32px 0 0;
+	gap: 8px 36px;
+	margin: 0;
 	padding: 0;
 	list-style: none;
 	font-size: 14px;
 	opacity: .9;
 }
-.showcase__facts strong { display: block; font-size: 28px; line-height: 1.1; }
-.showcase .hero__meta { margin-top: 24px; }
+.showcase__facts strong { display: block; font-size: 40px; line-height: 1.1; }
+.showcase .hero__meta { margin-top: 16px; }
 .showcase .ws-status { color: inherit; }
 
 /* every demo by category, with a preview of the one the pointer or the focus is on */
@@ -160,6 +173,8 @@
 }
 /* on narrow screens the index only, without the preview */
 @media (max-width: 900px) {
+	.showcase__inner { grid-template-columns: minmax(0, 1fr); }
+	.showcase__side { justify-self: start; }
 	.index__body { grid-template-columns: minmax(0, 1fr); }
 	.index__preview--ready { display: none; }
 }

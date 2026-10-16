@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.demo.data.Database;
 import com.antilia.widgets.demo.data.IAccessRepository;
+import com.antilia.widgets.demo.data.IOldAccessRepository;
 import com.antilia.widgets.demo.data.IUserRepository;
 import com.antilia.widgets.demo.data.User;
 
@@ -45,13 +46,14 @@ public final class TestDatabase
 	}
 
 	/**
-	 * Removes the accesses and the accounts but those the demo always has, which it adds if
-	 * missing.
+	 * Removes the accesses, the old ones too, and the accounts but those the demo always has,
+	 * which it adds if missing.
 	 */
 	public static void clear()
 	{
 		ApplicationContext context = context();
 		context.getBean(IAccessRepository.class).deleteAll();
+		context.getBean(IOldAccessRepository.class).deleteAll();
 		IUserRepository users = context.getBean(IUserRepository.class);
 		users.deleteAll(users.findAll().stream()
 			.filter(user -> !DEFAULT_ACCOUNTS.contains(user.getName()))

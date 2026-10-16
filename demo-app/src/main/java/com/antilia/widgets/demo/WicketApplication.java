@@ -295,9 +295,11 @@ public class WicketApplication extends WebApplication
 		mountPage("admin", AdminPage.class);
 		mountPage("not-found", NotFoundPage.class);
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
-		// the API of the administration: the users and the accesses, for administrators only
+		// the API of the administration: the users and the accesses, recent and old, for
+		// administrators only
 		mountResource(UsersApiResource.PATH, UsersApiResource.REFERENCE);
 		mountResource(AccessesApiResource.PATH, AccessesApiResource.REFERENCE);
+		mountResource(AccessesApiResource.OLD_PATH, AccessesApiResource.OLD_REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);

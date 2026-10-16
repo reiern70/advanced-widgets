@@ -8,8 +8,10 @@
 	<entry key="title">Administration</entry>
 	<entry key="tab.users">Users</entry>
 	<entry key="tab.accesses">Accesses</entry>
+	<entry key="tab.oldAccesses">Old accesses</entry>
 	<entry key="users.lead">The accounts, the latest first. Accounts:</entry>
 	<entry key="accesses.lead">Who accessed the site, one row per session, the latest first. Sessions:</entry>
+	<entry key="oldAccesses.lead">The accesses older than {0} days, moved here every night, one row per session, the latest first. Sessions:</entry>
 	<entry key="account">Account</entry>
 	<entry key="email">Email</entry>
 	<entry key="firstName">First name</entry>
@@ -44,6 +46,11 @@
 	<entry key="part.nullValid">All parts</entry>
 	<entry key="filter.address">From</entry>
 	<entry key="filter.address.placeholder">Part of the address</entry>
+	<entry key="filter.accessed">Server time (UTC)</entry>
+	<entry key="filter.accessedFrom.placeholder">From</entry>
+	<entry key="filter.accessedUntil.placeholder">Until</entry>
+	<entry key="userInfo">About the account</entry>
+	<entry key="userInfo.none">There is no such account any more.</entry>
 	<entry key="jobRole">Role</entry>
 	<entry key="JobRole.DEVELOPER">Developer</entry>
 	<entry key="JobRole.ARCHITECT">Architect</entry>

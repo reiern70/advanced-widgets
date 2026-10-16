@@ -10,10 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.RuntimeConfigurationType;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
@@ -30,12 +34,13 @@ import com.antilia.widgets.demo.TestDatabase;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.data.Access;
 import com.antilia.widgets.demo.data.Accesses;
+import com.antilia.widgets.demo.data.OldAccess;
 import com.antilia.widgets.demo.data.Role;
 import com.antilia.widgets.demo.dropdown.DropdownPage;
 
 /**
- * Records one {@link Access} per session, with the visitor's clock from the browser, and shows
- * them on the {@link AdminPage}.
+ * Records one {@link Access} per session, with the visitor's clock from the browser, shows them on
+ * the {@link AdminPage}, and moves the old ones to the {@link OldAccess old accesses}.
  */
 class AccessesTest
 {
@@ -135,6 +140,7 @@ class AccessesTest
 		tester.startPage(HomePage.class);
 		postTime("Europe/Berlin", "2026-10-10T09:00:00");
 		DemoSession.get().signIn("admin", Role.ADMIN);
+		tester.startPage(DropdownPage.class);
 
 		tester.startPage(AdminPage.class);
 		tester.clickLink("tabs:tabs-container:tabs:1:link");
@@ -144,6 +150,22 @@ class AccessesTest
 		tester.assertContains("Europe/Berlin");
 		tester.assertContains("2026-10-10 09:00:00");
 		tester.assertContains(">admin<");
+	}
+
+	@Test
+	void theUserComesFirstAndTheTimeOfTheServerBesideTheVisitors()
+	{
+		openAccesses(1);
+
+		FilteredAdminTable<?> table = tester.getLastRenderedPage().visitChildren(
+			FilteredAdminTable.class,
+			(FilteredAdminTable<?> component, IVisit<FilteredAdminTable<?>> visit) -> visit
+				.stop(component));
+		assertEquals(List.of("user", "part", "address", "accessed", "localTime", "timeZone",
+			"browser"), table.getColumns()
+				.stream()
+				.map(column -> ((AdminColumn<?>)column).getHeaderKey())
+				.toList());
 	}
 
 	@Test
@@ -214,6 +236,11 @@ class AccessesTest
 		DemoSession.get().signIn("admin", Role.ADMIN);
 		tester.startPage(AdminPage.class);
 		tester.clickLink("tabs:tabs-container:tabs:1:link");
+		// the private part at first, where those who signed in are
+		tester.assertLabel("tabs:panel:count", "1");
+		tester.assertContains("200.46.55.1");
+		tester.assertContainsNot("66.249.66.5");
+		filter("part", "", "change");
 		tester.assertLabel("tabs:panel:count", "4");
 
 		filter("user", "ADA", "input");
@@ -236,10 +263,129 @@ class AccessesTest
 		tester.assertLabel("tabs:panel:count", "0");
 	}
 
+	@Test
+	void theAccessesAreFilteredByTheTimeOfTheServer()
+	{
+		record("ada@example.com", true, "200.46.55.1", Instant.parse("2026-10-15T10:00:00Z"));
+		record("ada@example.com", true, "200.46.55.1", Instant.parse("2026-10-15T11:00:30Z"));
+		record("ada@example.com", true, "200.46.55.1", Instant.parse("2026-10-15T12:00:00Z"));
+		// and the administrator's, now
+		openAccesses(1);
+		tester.assertLabel("tabs:panel:count", "4");
+
+		// in UTC, as the table shows it
+		filter("accessedFrom", "2026-10-15T11:00", "change");
+		tester.assertLabel("tabs:panel:count", "3");
+		// until the end of the minute
+		filter("accessedUntil", "2026-10-15T11:00", "change");
+		tester.assertLabel("tabs:panel:count", "1");
+		tester.assertContains("2026-10-15 11:00:30 UTC");
+		filter("accessedFrom", "", "change");
+		tester.assertLabel("tabs:panel:count", "2");
+		filter("accessedUntil", "", "change");
+		tester.assertLabel("tabs:panel:count", "4");
+	}
+
+	@Test
+	void aButtonTellsAllAboutTheAccountOfAUser()
+	{
+		TestDatabase.accounts().create("ada@example.com", "Analytical-Engine-1843", Role.USER,
+			user -> {
+				user.setEmail("ada@example.com");
+				user.setFirstName("Ada");
+				user.setLastName("Lovelace");
+			});
+		record("ada@example.com", true, "200.46.55.1");
+		record(Access.UNKNOWN, true, "66.249.66.5");
+		record("user-claude-dev", true, "66.249.66.6");
+		openAccesses(1);
+
+		// only the accounts have one
+		assertTrue(userCell("ada@example.com").get("info").isVisible());
+		assertFalse(userCell(Access.UNKNOWN).get("info").isVisible());
+		assertFalse(userCell("user-claude-dev").get("info").isVisible());
+		assertTrue(userCell("admin").get("info").isVisible());
+
+		Component info = userCell("ada@example.com").get("info");
+		tester.clickLink(info);
+		assertTrue(tester.getLastResponseAsString()
+			.contains("Wicket.Popover.show(\"" + info.getMarkupId() + "\""));
+		tester.assertContains("<th scope=\"row\">First name</th><td>Ada</td>");
+		tester.assertContains("<th scope=\"row\">Last name</th><td>Lovelace</td>");
+		tester.assertContains("<th scope=\"row\">Access</th><td>User</td>");
+
+		// an account removed in between
+		TestDatabase.accounts().remove(TestDatabase.accounts().find("ada@example.com").get());
+		tester.clickLink(userCell("ada@example.com").get("info"));
+		tester.assertContains("There is no such account any more.");
+	}
+
+	@Test
+	void theOldAccessesMoveToTheirTableAndTab()
+	{
+		Instant now = Instant.now();
+		record("ada@example.com", true, "200.46.55.1", now.minus(Duration.ofDays(11)));
+		record("grace@example.org", true, "200.46.55.2", now.minus(Duration.ofDays(9)));
+		Long oldest = record(Access.ROBOT, false, "66.249.66.5", now.minus(Duration.ofDays(30)))
+			.getId();
+
+		assertEquals(2, Accesses.get().archive(now.minus(Accesses.KEPT)));
+		assertEquals(1, Accesses.get().count());
+		assertEquals(2, Accesses.get().countOld());
+		OldAccess robot = Accesses.get().findOld(oldest);
+		// as it was, with its id
+		assertEquals(Access.ROBOT, robot.getUserName());
+		assertEquals("66.249.66.5", robot.getAddress());
+		assertFalse(robot.isPrivatePart());
+		assertNull(Accesses.get().find(oldest));
+		// nothing more to move
+		assertEquals(0, Accesses.get().archive(now.minus(Accesses.KEPT)));
+		assertEquals(2, Accesses.get().countOld());
+
+		openAccesses(2);
+		tester.assertComponent("tabs:panel", AccessesPanel.class);
+		tester.assertContains("older than 10 days");
+		tester.assertLabel("tabs:panel:count", "1");
+		tester.assertContains("200.46.55.1");
+		filter("part", "", "change");
+		tester.assertLabel("tabs:panel:count", "2");
+		tester.assertContains("66.249.66.5");
+		tester.assertContainsNot("200.46.55.2");
+	}
+
+	/**
+	 * Signs in as the administrator and opens a tab of the administration.
+	 */
+	private void openAccesses(int tab)
+	{
+		tester.startPage(HomePage.class);
+		DemoSession.get().signIn("admin", Role.ADMIN);
+		tester.startPage(DropdownPage.class);
+		tester.startPage(AdminPage.class);
+		tester.clickLink("tabs:tabs-container:tabs:" + tab + ":link");
+	}
+
+	private UserCell userCell(String user)
+	{
+		return tester.getLastRenderedPage().visitChildren(UserCell.class,
+			(UserCell cell, IVisit<UserCell> visit) -> {
+				if (user.equals(((Label)cell.get("name")).getDefaultModelObjectAsString()))
+				{
+					visit.stop(cell);
+				}
+			});
+	}
+
 	private static void record(String user, boolean privatePart, String address)
 	{
-		Accesses.get().record(null,
-			() -> new Access(null, address, "Mozilla/5.0", Instant.now()), access -> {
+		record(user, privatePart, address, Instant.now());
+	}
+
+	private static Access record(String user, boolean privatePart, String address,
+		Instant accessed)
+	{
+		return Accesses.get().record(null,
+			() -> new Access(null, address, "Mozilla/5.0", accessed), access -> {
 				access.setUserName(user);
 				access.setPrivatePart(privatePart);
 			});

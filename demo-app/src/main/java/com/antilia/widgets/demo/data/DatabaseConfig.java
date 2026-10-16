@@ -16,7 +16,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.antilia.widgets.demo.account.Accounts;
 import com.zaxxer.hikari.HikariConfig;
@@ -27,10 +30,12 @@ import jakarta.persistence.EntityManagerFactory;
 /**
  * The Spring configuration of the {@link Database}: a pool of connections, Flyway making the
  * tables from {@code db/migration}, JPA on Hibernate, which only checks the tables against the
- * entities, and the repositories with the {@link Accounts} and the {@link Accesses} on them.
+ * entities, and the repositories with the {@link Accounts} and the {@link Accesses} on them; the
+ * accesses move to the old ones every night, see {@link Accesses#archiveOld()}.
  */
 @Configuration
 @EnableTransactionManagement
+@EnableScheduling
 @EnableJpaRepositories(basePackageClasses = IUserRepository.class)
 public class DatabaseConfig
 {
@@ -82,8 +87,22 @@ public class DatabaseConfig
 	}
 
 	@Bean
-	public Accesses accesses(IAccessRepository accesses)
+	public Accesses accesses(IAccessRepository accesses, IOldAccessRepository oldAccesses,
+		JpaTransactionManager transactionManager)
 	{
-		return new Accesses(accesses);
+		return new Accesses(accesses, oldAccesses, new TransactionTemplate(transactionManager));
+	}
+
+	/**
+	 * @return what runs the nightly tasks, on a thread that keeps neither the JVM nor the server
+	 *         from stopping
+	 */
+	@Bean
+	public ThreadPoolTaskScheduler taskScheduler()
+	{
+		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+		scheduler.setThreadNamePrefix("antilia-widgets-tasks-");
+		scheduler.setDaemon(true);
+		return scheduler;
 	}
 }

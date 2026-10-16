@@ -79,6 +79,10 @@ describe('DataTable', () => {
 		expect(headers(container)).toEqual(['Name▲▼', 'City']);
 		expect(rows(container)[0]).toEqual(['Person 01', 'City 0']);
 		await waitFor(() => expect(label(container)).toBe('Showing 1 to 25 of 60'));
+		// the rows per page early, in sight on a table wider than the window
+		expect(Array.from(container.querySelector('thead .ant-data-table-navigation')!.children,
+			(part) => part.className)).toEqual(['ant-data-table-page-size', 'ant-data-table-paging',
+			'ant-data-table-actions']);
 		expect(load).toHaveBeenCalledTimes(1);
 		expect(load).toHaveBeenLastCalledWith({ first: 0, count: 25, sort: null,
 			filter: undefined });

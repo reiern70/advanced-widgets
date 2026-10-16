@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-import com.antilia.widgets.demo.data.Access;
+import com.antilia.widgets.demo.data.AbstractAccess;
 import com.antilia.widgets.demo.data.AccessFilter;
 import com.antilia.widgets.demo.data.Accesses;
 import com.github.openjson.JSONArray;
@@ -19,7 +19,9 @@ import com.github.openjson.JSONObject;
 
 /**
  * Who accessed the site, for administrators (see {@link AdminApiResource}), mounted at
- * {@value #PATH}: {@code GET api/admin/accesses} answers the accesses, the latest first, a page
+ * {@value #PATH}, and the old accesses at {@value #OLD_PATH}, those
+ * {@link Accesses#archive moved} out of the recent ones after {@link Accesses#KEPT}:
+ * {@code GET api/admin/accesses} answers the accesses, the latest first, a page
  * of {@code size} at a time ({@value AdminApiResource#DEFAULT_SIZE}, at most
  * {@value AdminApiResource#MAXIMUM_SIZE}), the first being {@code page=0}, filtered by
  * <ul>
@@ -33,6 +35,7 @@ import com.github.openjson.JSONObject;
  * </ul>
  * It answers {@code {"total": 145, "page": 0, "size": 100, "accesses": [...]}}, an access being
  * {@code {"id", "accessed", "user", "part", "address", "userAgent", "timeZone", "localTime"}}.
+ * {@code GET api/admin/old-accesses} answers the old accesses alike.
  */
 public class AccessesApiResource extends AdminApiResource
 {
@@ -40,6 +43,9 @@ public class AccessesApiResource extends AdminApiResource
 
 	/** Where the resource is mounted. */
 	public static final String PATH = "api/admin/accesses";
+
+	/** Where the resource of the old accesses is mounted. */
+	public static final String OLD_PATH = "api/admin/old-accesses";
 
 	/** The reference the application mounts. */
 	public static final ResourceReference REFERENCE = new ResourceReference(
@@ -50,9 +56,33 @@ public class AccessesApiResource extends AdminApiResource
 		@Override
 		public IResource getResource()
 		{
-			return new AccessesApiResource();
+			return new AccessesApiResource(false);
 		}
 	};
+
+	/** The reference of the old accesses the application mounts. */
+	public static final ResourceReference OLD_REFERENCE = new ResourceReference(
+		AccessesApiResource.class, "admin-old-accesses")
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public IResource getResource()
+		{
+			return new AccessesApiResource(true);
+		}
+	};
+
+	private final boolean old;
+
+	/**
+	 * @param old
+	 *            whether the resource answers the old accesses
+	 */
+	AccessesApiResource(boolean old)
+	{
+		this.old = old;
+	}
 
 	@Override
 	protected Answer answer(String method, Attributes attributes)
@@ -80,8 +110,10 @@ public class AccessesApiResource extends AdminApiResource
 		}
 		int page = number(parameters, "page", 0, 0, Integer.MAX_VALUE);
 		int size = number(parameters, "size", DEFAULT_SIZE, 1, MAXIMUM_SIZE);
-		Page<Access> accesses = Accesses.get().page(filter, PageRequest.of(page, size,
-			Sort.by(Sort.Direction.DESC, "accessed").and(Sort.by(Sort.Direction.DESC, "id"))));
+		PageRequest pageable = PageRequest.of(page, size,
+			Sort.by(Sort.Direction.DESC, "accessed").and(Sort.by(Sort.Direction.DESC, "id")));
+		Page<? extends AbstractAccess> accesses = old ? Accesses.get().pageOld(filter, pageable)
+			: Accesses.get().page(filter, pageable);
 		JSONArray rows = new JSONArray();
 		accesses.forEach(access -> rows.put(toJson(access)));
 		return new Answer(200, new JSONObject().put("total", accesses.getTotalElements())
@@ -93,7 +125,7 @@ public class AccessesApiResource extends AdminApiResource
 	/**
 	 * @return the access as the API answers it, without the id of its session
 	 */
-	static JSONObject toJson(Access access)
+	static JSONObject toJson(AbstractAccess access)
 	{
 		return new JSONObject().put("id", access.getId())
 			.put("accessed", json(access.getAccessed()))

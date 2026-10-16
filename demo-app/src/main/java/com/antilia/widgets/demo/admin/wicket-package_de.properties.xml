@@ -8,8 +8,10 @@
 	<entry key="title">Verwaltung</entry>
 	<entry key="tab.users">Benutzer</entry>
 	<entry key="tab.accesses">Zugriffe</entry>
+	<entry key="tab.oldAccesses">Alte Zugriffe</entry>
 	<entry key="users.lead">Die Konten, die neuesten zuerst. Konten:</entry>
 	<entry key="accesses.lead">Wer die Seite besucht hat, eine Zeile je Sitzung, die neuesten zuerst. Sitzungen:</entry>
+	<entry key="oldAccesses.lead">Die Zugriffe, die älter als {0} Tage sind und jede Nacht hierher verschoben werden, eine Zeile je Sitzung, die neuesten zuerst. Sitzungen:</entry>
 	<entry key="account">Konto</entry>
 	<entry key="email">E-Mail</entry>
 	<entry key="firstName">Vorname</entry>
@@ -44,6 +46,11 @@
 	<entry key="part.nullValid">Alle Bereiche</entry>
 	<entry key="filter.address">Von</entry>
 	<entry key="filter.address.placeholder">Teil der Adresse</entry>
+	<entry key="filter.accessed">Serverzeit (UTC)</entry>
+	<entry key="filter.accessedFrom.placeholder">Von</entry>
+	<entry key="filter.accessedUntil.placeholder">Bis</entry>
+	<entry key="userInfo">Über das Konto</entry>
+	<entry key="userInfo.none">Dieses Konto gibt es nicht mehr.</entry>
 	<entry key="jobRole">Rolle</entry>
 	<entry key="JobRole.DEVELOPER">Entwickler</entry>
 	<entry key="JobRole.ARCHITECT">Architekt</entry>

@@ -416,6 +416,14 @@
 				{#if toolbar}
 					<div class={css('table-navigation-prefix')}>{@render toolbar()}</div>
 				{/if}
+				{#if !infinite}
+					<label class={css('table-page-size')}>
+						<span>{texts.rowsPerPage}</span>
+						<Dropdown options={pageSizes.map((size) => ({ value: String(size),
+							label: String(size) }))} value={String(pageSize)}
+							onchange={(value) => choosePageSize(String(value))} />
+					</label>
+				{/if}
 				<div class={css('table-paging')}>
 					<div class={css('table-navigator-label')}><div>{label}</div></div>
 					{#if !infinite}
@@ -487,14 +495,6 @@
 						</span>
 					{/if}
 				</div>
-				{#if !infinite}
-					<label class={css('table-page-size')}>
-						<span>{texts.rowsPerPage}</span>
-						<Dropdown options={pageSizes.map((size) => ({ value: String(size),
-							label: String(size) }))} value={String(pageSize)}
-							onchange={(value) => choosePageSize(String(value))} />
-					</label>
-				{/if}
 			</div>
 		</td>
 	</tr>

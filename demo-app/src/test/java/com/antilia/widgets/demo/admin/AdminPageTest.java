@@ -20,10 +20,11 @@ import com.antilia.widgets.demo.account.Accounts;
 import com.antilia.widgets.demo.data.JobRole;
 import com.antilia.widgets.demo.data.Language;
 import com.antilia.widgets.demo.data.Role;
+import com.antilia.widgets.demo.dropdown.DropdownPage;
 
 /**
- * The {@link AdminPage}: the accounts in a table filtered by country, name and email, and a tab
- * with the accesses.
+ * The {@link AdminPage}: the accounts in a table filtered by country, name and email, and tabs
+ * with the recent accesses and the old ones.
  */
 class AdminPageTest
 {
@@ -101,7 +102,23 @@ class AdminPageTest
 		tester.clickLink("tabs:tabs-container:tabs:1:link");
 
 		tester.assertComponent("tabs:panel", AccessesPanel.class);
+		// the private part at first, which the administrator did not open yet
+		tester.assertLabel("tabs:panel:count", "0");
+		tester.startPage(DropdownPage.class);
+		tester.startPage(AdminPage.class);
+		tester.clickLink("tabs:tabs-container:tabs:1:link");
+		tester.assertLabel("tabs:panel:count", "1");
 		tester.assertContains(">admin<");
+	}
+
+	@Test
+	void theOldAccessesAreTheThirdTab()
+	{
+		tester.clickLink("tabs:tabs-container:tabs:2:link");
+
+		tester.assertComponent("tabs:panel", AccessesPanel.class);
+		tester.assertContains("Old accesses");
+		tester.assertLabel("tabs:panel:count", "0");
 	}
 
 	private void filter(String field, String value, String event)

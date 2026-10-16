@@ -406,6 +406,14 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 			<td colSpan={colSpan}>
 				<div className={css('table-navigation')}>
 					{toolbar && <div className={css('table-navigation-prefix')}>{toolbar}</div>}
+					{!infinite && (
+						<label className={css('table-page-size')}>
+							<span>{texts.rowsPerPage}</span>{' '}
+							<Dropdown options={pageSizes.map((size) => ({ value: String(size),
+								label: String(size) }))} value={String(pageSize)}
+								onChange={choosePageSize} />
+						</label>
+					)}
 					<div className={css('table-paging')}>
 						<div className={css('table-navigator-label')}><div>{label}</div></div>
 						{!infinite && (
@@ -462,14 +470,6 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 							</span>
 						)}
 					</div>
-					{!infinite && (
-						<label className={css('table-page-size')}>
-							<span>{texts.rowsPerPage}</span>{' '}
-							<Dropdown options={pageSizes.map((size) => ({ value: String(size),
-								label: String(size) }))} value={String(pageSize)}
-								onChange={choosePageSize} />
-						</label>
-					)}
 				</div>
 			</td>
 		</tr>

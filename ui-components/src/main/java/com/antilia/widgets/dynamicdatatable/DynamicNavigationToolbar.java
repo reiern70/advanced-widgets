@@ -32,9 +32,10 @@ import com.antilia.widgets.theme.Looks;
 
 /**
  * The navigation of a {@link BaseDynamicDataTable}: from left to right an optional
- * {@link #newPrefix(String) prefix}, such as a filter, the label telling which rows are shown,
- * the paging links, the {@link IDynamicToolbarAction actions} of the table and the choice of the
- * number of rows per page.
+ * {@link #newPrefix(String) prefix}, such as a filter, the choice of the number of rows per page,
+ * the label telling which rows are shown, the paging links and the
+ * {@link IDynamicToolbarAction actions} of the table. The choice comes early, so that it stays in
+ * sight when the columns make the table wider than the window.
  * <p>
  * The toolbar is shown when there is more than one page, a choice of rows per page, an action or
  * a visible prefix. Override {@link BaseDynamicDataTable#newNavigationToolbar(String,
@@ -90,6 +91,8 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 		prefix = newPrefix("prefix");
 		span.add(prefix.add(new LookBehavior(LookPart.TABLE_NAVIGATION_PREFIX)));
 
+		span.add(newItemsPerPageChoice());
+
 		paging = new WebMarkupContainer("paging");
 		paging.setOutputMarkupId(true);
 		span.add(paging.add(new LookBehavior(LookPart.TABLE_PAGING)));
@@ -142,8 +145,6 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 		actionsContainer.add(new LookBehavior(LookPart.TABLE_ACTIONS));
 		actionsContainer.add(actions);
 		span.add(actionsContainer);
-
-		span.add(newItemsPerPageChoice());
 	}
 
 	/**

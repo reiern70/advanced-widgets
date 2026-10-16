@@ -18,8 +18,8 @@ import com.antilia.widgets.tabs.TabsStyle;
 import com.antilia.widgets.tabs.TabsStyleBehavior;
 
 /**
- * The administration, a tab on top for each section: the {@link UsersPanel registered users}
- * and the {@link AccessesPanel accesses}. Only for administrators, see
+ * The administration, a tab on top for each section: the {@link UsersPanel registered users}, the
+ * recent {@link AccessesPanel accesses} and the old ones. Only for administrators, see
  * {@link DemosAuthorization}.
  */
 public class AdminPage extends BasePage
@@ -47,7 +47,16 @@ public class AdminPage extends BasePage
 			@Override
 			public WebMarkupContainer getPanel(String panelId)
 			{
-				return new AccessesPanel(panelId);
+				return new AccessesPanel(panelId, false);
+			}
+		}, new AbstractTab(new ResourceModel("tab.oldAccesses"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public WebMarkupContainer getPanel(String panelId)
+			{
+				return new AccessesPanel(panelId, true);
 			}
 		});
 		add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.TABS)));

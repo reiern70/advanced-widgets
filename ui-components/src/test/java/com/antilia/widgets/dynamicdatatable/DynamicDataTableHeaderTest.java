@@ -357,6 +357,11 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 		tester.startPage(new TablePage(table));
 		tester.assertVisible("table:topNavigation:span:pageSize");
 		tester.assertInvisible("table:topNavigation:span:paging:navigator");
+		// before the paging, in sight on a table wider than the window
+		String markup = tester.getLastResponseAsString();
+		assertTrue(markup.indexOf("ant-data-table-page-size") >= 0);
+		assertTrue(markup.indexOf("ant-data-table-page-size") < markup.indexOf(
+			"ant-data-table-paging"));
 
 		DropDownChoice<?> choice = (DropDownChoice<?>)tester.getComponentFromLastRenderedPage(
 			"table:topNavigation:span:pageSize:itemsPerPage");

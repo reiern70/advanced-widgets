@@ -4,23 +4,34 @@
  */
 package com.antilia.widgets.demo.admin;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.ResourceModel;
 
+import com.antilia.widgets.datepicker.DateTimePicker;
 import com.antilia.widgets.demo.data.AccessFilter;
 import com.antilia.widgets.dropdown.Dropdown;
 
 /**
  * Filters the accesses while the administrator types or chooses: by user, by the part opened,
- * public or private, and by the address they came from; shown in front of the navigation of the
- * {@link AccessesPanel}'s table.
+ * public or private, by the address they came from, and by when they were on the server's clock,
+ * in UTC as the table shows it, from a minute until another, both included; shown in front of the
+ * navigation of the {@link AccessesPanel}'s table.
  */
 abstract class AccessesFilterPanel extends AdminFilterPanel
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The minute the time until which the accesses are shown is, all of it. */
+	private static final Duration MINUTE = Duration.ofMinutes(1);
 
 	AccessesFilterPanel(String id, AccessFilter filter)
 	{
@@ -47,5 +58,27 @@ abstract class AccessesFilterPanel extends AdminFilterPanel
 		add(filtering(part, "change"));
 		add(filtering(new TextField<>("address", new PropertyModel<String>(filter, "address")),
 			"input"));
+
+		DateTimePicker from = new DateTimePicker("accessedFrom", LambdaModel.of(
+			() -> utc(filter.getFrom()), time -> filter.setFrom(instant(time))));
+		from.getDatePickerBehavior()
+			.setPlaceholder(new ResourceModel("filter.accessedFrom.placeholder"));
+		add(filtering(from, "change"));
+		DateTimePicker until = new DateTimePicker("accessedUntil", LambdaModel.of(
+			() -> filter.getTo() == null ? null : utc(filter.getTo().minus(MINUTE)),
+			time -> filter.setTo(time == null ? null : instant(time).plus(MINUTE))));
+		until.getDatePickerBehavior()
+			.setPlaceholder(new ResourceModel("filter.accessedUntil.placeholder"));
+		add(filtering(until, "change"));
+	}
+
+	private static LocalDateTime utc(Instant instant)
+	{
+		return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+	}
+
+	private static Instant instant(LocalDateTime time)
+	{
+		return time == null ? null : time.toInstant(ZoneOffset.UTC);
 	}
 }

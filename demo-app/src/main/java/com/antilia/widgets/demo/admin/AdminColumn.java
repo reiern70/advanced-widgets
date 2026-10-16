@@ -22,6 +22,8 @@ class AdminColumn<T> extends LambdaColumn<T, String> implements IHideableColumn,
 {
 	private static final long serialVersionUID = 1L;
 
+	private final String headerKey;
+
 	/**
 	 * @param headerKey
 	 *            the key of the header in the package's bundle
@@ -33,5 +35,14 @@ class AdminColumn<T> extends LambdaColumn<T, String> implements IHideableColumn,
 	AdminColumn(String headerKey, String sortProperty, SerializableFunction<T, ?> value)
 	{
 		super(new ResourceModel(headerKey), sortProperty, value);
+		this.headerKey = headerKey;
+	}
+
+	/**
+	 * @return the key of the header in the package's bundle
+	 */
+	String getHeaderKey()
+	{
+		return headerKey;
 	}
 }
