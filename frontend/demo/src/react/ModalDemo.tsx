@@ -140,37 +140,39 @@ export function ModalDemo({ config }: { config: ModalDemoConfig }) {
 					<Button variant="primary" size="small" label={texts.addMember}
 						icon={<Icon markup={icons.add} />} onClick={() => open({ form: null })} />
 				</div>
-				<table className="team-demo__table">
-					<thead>
-						<tr>
-							<th scope="col">{texts.name}</th>
-							<th scope="col">{texts.email}</th>
-							<th scope="col">{texts.role}</th>
-							<th scope="col">{texts.actions}</th>
-						</tr>
-					</thead>
-					<tbody>
-						{members.map((member) => (
-							<tr key={member.id}>
-								<td className="team-demo__name">{member.name}</td>
-								<td>{member.email}</td>
-								<td>{member.roleName}</td>
-								<td>
-									<div className="team-demo__actions">
-										<Button size="small" label={texts.edit}
-											icon={<Icon markup={icons.edit} />}
-											aria-label={texts.edit + ' ' + member.name}
-											onClick={() => open({ form: member })} />
-										<Button size="small" label={texts.delete}
-											icon={<Icon markup={icons.delete} />}
-											aria-label={texts.delete + ' ' + member.name}
-											onClick={() => open({ deletion: member })} />
-									</div>
-								</td>
+				<div className="team-demo__scroll">
+					<table className="team-demo__table">
+						<thead>
+							<tr>
+								<th scope="col">{texts.name}</th>
+								<th scope="col">{texts.email}</th>
+								<th scope="col">{texts.role}</th>
+								<th scope="col">{texts.actions}</th>
 							</tr>
-						))}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{members.map((member) => (
+								<tr key={member.id}>
+									<td className="team-demo__name">{member.name}</td>
+									<td>{member.email}</td>
+									<td>{member.roleName}</td>
+									<td>
+										<div className="team-demo__actions">
+											<Button size="small" label={texts.edit}
+												icon={<Icon markup={icons.edit} />}
+												aria-label={texts.edit + ' ' + member.name}
+												onClick={() => open({ form: member })} />
+											<Button size="small" label={texts.delete}
+												icon={<Icon markup={icons.delete} />}
+												aria-label={texts.delete + ' ' + member.name}
+												onClick={() => open({ deletion: member })} />
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
 				{members.length === 0 ? <p className="team-demo__empty">{texts.empty}</p> : null}
 			</div>
 			<Modal open={formMember !== undefined} onClose={() => setShown(null)} closeOnClick

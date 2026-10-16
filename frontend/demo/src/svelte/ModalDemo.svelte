@@ -103,38 +103,40 @@
 			{#snippet icon()}{@html icons.add}{/snippet}
 		</Button>
 	</div>
-	<table class="team-demo__table">
-		<thead>
-			<tr>
-				<th scope="col">{texts.name}</th>
-				<th scope="col">{texts.email}</th>
-				<th scope="col">{texts.role}</th>
-				<th scope="col">{texts.actions}</th>
-			</tr>
-		</thead>
-		<tbody>
-			{#each members as member (member.id)}
+	<div class="team-demo__scroll">
+		<table class="team-demo__table">
+			<thead>
 				<tr>
-					<td class="team-demo__name">{member.name}</td>
-					<td>{member.email}</td>
-					<td>{member.roleName}</td>
-					<td>
-						<div class="team-demo__actions">
-							<Button size="small" label={texts.edit} aria-label={texts.edit + ' ' + member.name}
-								onclick={() => openForm(member)}>
-								{#snippet icon()}{@html icons.edit}{/snippet}
-							</Button>
-							<Button size="small" label={texts.delete}
-								aria-label={texts.delete + ' ' + member.name}
-								onclick={() => (deletion = member)}>
-								{#snippet icon()}{@html icons.delete}{/snippet}
-							</Button>
-						</div>
-					</td>
+					<th scope="col">{texts.name}</th>
+					<th scope="col">{texts.email}</th>
+					<th scope="col">{texts.role}</th>
+					<th scope="col">{texts.actions}</th>
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{#each members as member (member.id)}
+					<tr>
+						<td class="team-demo__name">{member.name}</td>
+						<td>{member.email}</td>
+						<td>{member.roleName}</td>
+						<td>
+							<div class="team-demo__actions">
+								<Button size="small" label={texts.edit} aria-label={texts.edit + ' ' + member.name}
+									onclick={() => openForm(member)}>
+									{#snippet icon()}{@html icons.edit}{/snippet}
+								</Button>
+								<Button size="small" label={texts.delete}
+									aria-label={texts.delete + ' ' + member.name}
+									onclick={() => (deletion = member)}>
+									{#snippet icon()}{@html icons.delete}{/snippet}
+								</Button>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 	{#if members.length === 0}<p class="team-demo__empty">{texts.empty}</p>{/if}
 </div>
 

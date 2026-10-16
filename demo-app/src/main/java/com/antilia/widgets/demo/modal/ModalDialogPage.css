@@ -22,6 +22,11 @@
 	font-size: 1.15em;
 }
 
+/* the table scrolls sideways in its own box on a phone, the page not */
+.team-demo__scroll {
+	overflow-x: auto;
+}
+
 .team-demo__table {
 	width: 100%;
 	border-collapse: collapse;

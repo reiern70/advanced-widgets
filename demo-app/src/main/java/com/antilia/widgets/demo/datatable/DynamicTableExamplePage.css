@@ -74,6 +74,13 @@ table.ant-dataview tr.ant-data-table-selection-toolbar a {
 	margin: 0 0 0.6rem 0;
 }
 
+/* a button with a long label wraps it rather than sticking out of a phone */
+.ant-dataview-actions > .ant-button {
+	max-width: 100%;
+	white-space: normal;
+	text-align: start;
+}
+
 .ant-dataview-help {
 	position: static;
 	display: inline-flex;

@@ -21,9 +21,9 @@
 	gap: 1.5em;
 }
 
-/* stacked: the column of both grows with the wider table, the page scrolling sideways */
+/* stacked: one column as wide as the page, each table scrolling sideways in it */
 .master-detail--stacked {
-	grid-template-columns: minmax(min-content, 1fr);
+	grid-template-columns: minmax(0, 1fr);
 }
 
 /* side by side: each table scrolls sideways in its own column */
@@ -32,7 +32,7 @@
 	align-items: start;
 }
 
-.master-detail--sideBySide > .master-detail__table {
+.master-detail__tables > .master-detail__table {
 	min-width: 0;
 	overflow-x: auto;
 }

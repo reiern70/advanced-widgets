@@ -5,6 +5,8 @@
 .tabs-demo {
 	display: grid;
 	gap: 16px;
+	/* one column as wide as the page, not as its widest content: a phone does not scroll sideways */
+	grid-template-columns: minmax(0, 1fr);
 }
 
 .tabs-demo section {
