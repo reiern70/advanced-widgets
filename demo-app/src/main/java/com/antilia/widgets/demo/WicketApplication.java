@@ -7,12 +7,14 @@ package com.antilia.widgets.demo;
 import java.io.File;
 import java.time.Duration;
 
+import org.apache.wicket.DefaultPageManagerProvider;
 import org.apache.wicket.csp.CSPDirective;
 import org.apache.wicket.csp.CSPDirectiveSrcValue;
 import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.upload.resource.FileUploadResourceReference;
+import org.apache.wicket.pageStore.IPageStore;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
@@ -20,6 +22,7 @@ import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.settings.JavaScriptLibrarySettings;
+import org.apache.wicket.settings.StoreSettings;
 import org.apache.wicket.util.string.Strings;
 import org.springframework.context.ApplicationContext;
 
@@ -211,12 +214,22 @@ public class WicketApplication extends WebApplication
 		getSecuritySettings().setUnauthorizedComponentInstantiationListener(authorization);
 
 		// the pages of the sessions go to this folder on disk, the servlet container's temporary
-		// folder by default; production puts it on a volume of its own
+		// folder by default; they last as long as the server runs, as the sessions do
 		File pageStore = pageStoreFolder();
 		if (pageStore != null)
 		{
 			getStoreSettings().setFileStoreFolder(pageStore);
 		}
+		setPageManagerProvider(new DefaultPageManagerProvider(this)
+		{
+			@Override
+			protected IPageStore newPersistentStore()
+			{
+				StoreSettings settings = application.getStoreSettings();
+				return new TransientDiskPageStore(application.getName(),
+					settings.getFileStoreFolder(), settings.getMaxSizePerSession());
+			}
+		});
 
 		// the upload demo: the progress of uploads the browser cannot follow is asked of the
 		// server, and the files sent to a resource go to a folder only until the page told of them

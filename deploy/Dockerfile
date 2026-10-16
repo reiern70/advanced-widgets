@@ -8,7 +8,8 @@ RUN java -jar "$JETTY_HOME/start.jar" --add-modules=websocket-jakarta,http-forwa
 	&& echo "jetty.httpConfig.sendServerVersion=false" > "$JETTY_BASE/start.d/server-version.ini"
 
 # the Wicket page store and the accounts registered to the demos, on a volume of their own on
-# the instance's SSD (see compose.yaml)
+# the instance's SSD (see compose.yaml); the page store is emptied at every start, its pages
+# last as long as the sessions, which Jetty keeps in memory (no session-store module)
 USER root
 RUN mkdir -p /var/lib/antilia-widgets/page-store /var/lib/antilia-widgets/accounts \
 	&& chown -R jetty:jetty /var/lib/antilia-widgets

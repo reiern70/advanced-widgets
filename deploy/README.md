@@ -26,7 +26,7 @@ included) and rebuilds the small image on the instance; `rsync` only sends what 
 | PostgreSQL + backups | Managed PostgreSQL, $15/month: 1 GB RAM, 40 GB SSD, daily backups and 7 days of point-in-time restore included |
 | Buy and manage domains in the site | *Domains & DNS* registers domains (through Route 53) and hosts the DNS zone for free |
 | SSL / HTTPS | Caddy gets and renews Let's Encrypt certificates by itself, free |
-| File system for Wicket's disk store | The instance's SSD (40 GB); the page store is a Docker volume on it |
+| File system for Wicket's disk store | The instance's SSD (40 GB); the page store is a Docker volume on it, emptied at every start: pages last as long as the sessions, which Jetty keeps in memory |
 | Web sockets | Nothing in between but Caddy, which passes them through |
 | Publish with a script or Docker | `deploy.sh`, or any Docker image |
 | Scale | Bigger instance from a snapshot in minutes (2 GB $12, 4 GB $24…); later a Lightsail load balancer ($18) with sticky sessions in front of several instances, or a move to EC2 |

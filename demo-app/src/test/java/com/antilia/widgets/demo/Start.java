@@ -28,8 +28,6 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.session.DefaultSessionCache;
-import org.eclipse.jetty.server.session.FileSessionDataStore;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -107,8 +105,6 @@ public class Start
 		// you need org.apache.wicket:wicket-native-websocket-javax in the classpath!
 		// ServerContainer serverContainer = WebSocketServerContainerInitializer.configureContext(bb);
 		// serverContainer.addEndpoint(new WicketServerEndpointConfig());
-
-//		bb.getSessionHandler().setSessionCache(sessionCache);
 
 		ServletContextHandler contextHandler = ServletContextHandler.getServletContextHandler(bb.getServletContext());
 		JakartaWebSocketServletContainerInitializer.configure(contextHandler,
