@@ -36,6 +36,9 @@ import com.antilia.widgets.theme.Looks;
  * <li>the resource {@value #RESOURCE} on the class path.</li>
  * </ol>
  * A key that is wrong or expired is logged and activates nothing.
+ * <p>
+ * For now the key is not enforced: every private component renders, with or without a key, unless
+ * the system property {@value #ENFORCED_PROPERTY} is {@code true}, as in the tests of the library.
  *
  * @since 11.0.0
  */
@@ -49,6 +52,12 @@ public final class Licensing
 
 	/** The resource on the class path holding the key. */
 	public static final String RESOURCE = "META-INF/antilia-widgets.license";
+
+	/**
+	 * The system property that, {@code true}, makes the private components need a key again. For
+	 * now they don't need one without it.
+	 */
+	public static final String ENFORCED_PROPERTY = "antilia-widgets.license.enforced";
 
 	/** The CSS class of the placeholder of a private component. */
 	public static final String PLACEHOLDER_CSS_CLASS = "antilia-unlicensed";
@@ -64,10 +73,13 @@ public final class Licensing
 
 	private final Clock clock;
 
+	private final boolean enforced;
+
 	private Licensing(LicenseKey key, Clock clock)
 	{
 		this.key = key;
 		this.clock = clock;
+		enforced = Boolean.getBoolean(ENFORCED_PROPERTY);
 	}
 
 	/**
@@ -117,11 +129,12 @@ public final class Licensing
 	}
 
 	/**
-	 * @return whether the key activates the private component class today
+	 * @return whether the private component class is active today: always while the key is not
+	 *         enforced, else if the key activates it
 	 */
 	public boolean activates(Class<?> componentClass)
 	{
-		return key != null && key.isValidOn(LocalDate.now(clock)) &&
+		return !enforced || key != null && key.isValidOn(LocalDate.now(clock)) &&
 			key.activates(componentClass);
 	}
 

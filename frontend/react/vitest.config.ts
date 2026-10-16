@@ -11,6 +11,8 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		globals: true,
+		// the private components check their license keys, which are not enforced for now
+		setupFiles: ['test/setup.ts'],
 		include: ['test/**/*.test.tsx'],
 		// every run measures the coverage of the sources: a summary on the console, the full
 		// report in coverage/ (index.html, and lcov.info for other tools); the run fails when the

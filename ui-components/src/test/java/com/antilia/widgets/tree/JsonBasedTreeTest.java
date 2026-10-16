@@ -250,6 +250,28 @@ class JsonBasedTreeTest extends WicketTestCase
 		assertFalse(page.contains("new Wicket.JsonTree("), page);
 	}
 
+	@Test
+	void rendersWithoutALicenseKeyWhileTheKeyIsNotEnforced()
+	{
+		String enforced = System.clearProperty(Licensing.ENFORCED_PROPERTY);
+		try
+		{
+			Licensing.install(tester.getApplication(), null);
+			tester.startPage(new TestPage(tree));
+
+			String page = tester.getLastResponseAsString();
+			assertFalse(page.contains(Licensing.PLACEHOLDER_CSS_CLASS), page);
+			assertTrue(page.contains("new Wicket.JsonTree("), page);
+		}
+		finally
+		{
+			if (enforced != null)
+			{
+				System.setProperty(Licensing.ENFORCED_PROPERTY, enforced);
+			}
+		}
+	}
+
 	private void act(String action, String key)
 	{
 		tester.getRequest().getPostParameters().setParameterValue("action", action);

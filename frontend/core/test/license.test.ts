@@ -5,7 +5,7 @@
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { activate, activates, isLicensed, verifyLicense } from '../src/index.js';
+import { activate, activates, enforceLicenses, isLicensed, verifyLicense } from '../src/index.js';
 // the key of the demo application, signed by the private key of the server
 import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
@@ -70,6 +70,7 @@ describe('license keys', () => {
 
 	it('checks the key of the demo application against the public key of the server', async () => {
 		const key = demoKey;
+		enforceLicenses();
 
 		const license = await verifyLicense(key);
 		expect(license.components).toContain('*');
@@ -77,6 +78,15 @@ describe('license keys', () => {
 		expect(await isLicensed(['JsonBasedDynamicDataTable'])).toBe(true);
 		expect(await isLicensed(['JsonBasedDynamicDataTable'], 'AW1.wrong.key')).toBe(false);
 	});
+
+	it('activates every component, with or without a key, while the keys are not enforced',
+		async () => {
+			enforceLicenses(false);
+			await activate('AW1.wrong.key');
+
+			expect(await isLicensed(['JsonBasedDynamicDataTable'])).toBe(true);
+			expect(await isLicensed(['JsonBasedDynamicDataTable'], 'AW1.wrong.key')).toBe(true);
+		});
 
 	it('checks keys where Web Crypto has no Ed25519, as Firefox before 129', async () => {
 		const importKey = vi.spyOn(crypto.subtle, 'importKey').mockRejectedValue(

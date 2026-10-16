@@ -310,6 +310,8 @@
 				<configuration>
 					<systemPropertyVariables>
 						<antilia-widgets.database.url>jdbc:h2:mem:widgets;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1</antilia-widgets.database.url>
+						<!-- the tests check the key of the demo, which is not enforced for now, see Licensing -->
+						<antilia-widgets.license.enforced>true</antilia-widgets.license.enforced>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

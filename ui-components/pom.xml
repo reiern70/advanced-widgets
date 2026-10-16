@@ -277,6 +277,16 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- the tests check the license keys, which are not enforced for now, see Licensing -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<antilia-widgets.license.enforced>true</antilia-widgets.license.enforced>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>

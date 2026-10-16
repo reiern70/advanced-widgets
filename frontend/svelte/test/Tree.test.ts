@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ResizableColumns, Scrollbar } from '@antilia/core';
 
-import { activate, Tree, TreeGrid, type TreeNode } from '../src/index.js';
+import { activate, enforceLicenses, Tree, TreeGrid, type TreeNode } from '../src/index.js';
 // the key of the demo application, activating every component
 import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
@@ -45,6 +45,19 @@ describe('Tree', () => {
 		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent
 			?.trim()).toBe('Needs a key'));
 		expect(container.querySelector('[role="tree"]')).toBeNull();
+	});
+
+	it('renders without a license key while the keys are not enforced', async () => {
+		enforceLicenses(false);
+		try {
+			const { container } = render(Tree, { load, template: '{{name}}',
+				licenseKey: 'AW1.not.valid' });
+
+			await waitFor(() => expect(shown(container)).toEqual(['docs', 'notes.txt']));
+			expect(container.querySelector('.antilia-unlicensed')).toBeNull();
+		} finally {
+			enforceLicenses();
+		}
 	});
 
 	it('renders the nodes, expands a folder and reports the leaf selected', async () => {

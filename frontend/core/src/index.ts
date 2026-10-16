@@ -61,8 +61,8 @@ export type { ResizableOptions, ResizableSize, ResizeAxis } from './resizable.js
 export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
 export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';
-export { activate, activates, isLicensed, LICENSE_PREFIX, PUBLIC_KEY, UNLICENSED_CLASS,
-	verifyLicense } from './license.js';
+export { activate, activates, enforceLicenses, isLicensed, LICENSE_PREFIX, PUBLIC_KEY,
+	UNLICENSED_CLASS, verifyLicense } from './license.js';
 export type { License } from './license.js';
 export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteListMessage } from './infinite-list.js';
 export { CLOSE_ATTRIBUTE, focusableIn, isFieldModified, isModified, MODAL_CLASSES, MODAL_SIZES,

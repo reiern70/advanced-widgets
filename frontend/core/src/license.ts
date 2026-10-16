@@ -12,6 +12,9 @@
  * whose Web Crypto has no Ed25519 yet.
  *
  * As any check in the browser it keeps honest users honest.
+ *
+ * For now the keys are not enforced: every private component renders, with or without a key, unless
+ * enforceLicenses() is called, as the tests do.
  */
 
 import { verifyEd25519 } from './ed25519.js';
@@ -125,6 +128,19 @@ export function activates(license: License | null, names: string[], day = new Da
 
 let activation: Promise<License | null> = Promise.resolve(null);
 
+/** Whether the private components need a key; for now they don't. */
+let enforced = false;
+
+/**
+ * Makes the private components need a key again, as the server does with the system property
+ * antilia-widgets.license.enforced.
+ *
+ * @param enforce whether they need one
+ */
+export function enforceLicenses(enforce = true): void {
+	enforced = enforce;
+}
+
 /**
  * Activates the private components of the page with a key, as the license key of the application
  * does on the server.
@@ -143,9 +159,13 @@ export function activate(key: string): Promise<License | null> {
 /**
  * @param names the names of the component, see {@link activates}
  * @param key a key of the component's own; the one given to {@link activate} when left out
- * @returns whether the component is activated, once the key is checked
+ * @returns whether the component is activated, once the key is checked; always while the keys are
+ *          not enforced
  */
 export async function isLicensed(names: string[], key?: string | null): Promise<boolean> {
+	if (!enforced) {
+		return true;
+	}
 	const license = key ? await verifyLicense(key).catch(() => null) : await activation;
 	return activates(license, names);
 }
