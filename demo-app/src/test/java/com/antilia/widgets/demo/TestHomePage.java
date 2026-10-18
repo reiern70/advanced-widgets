@@ -148,7 +148,7 @@ public class TestHomePage
 		tester.startPage(HomePage.class);
 
 		tester.assertLabel("categories:0:demos:0:link:name", "Agenda de contactos");
-		tester.assertContains("Todos los derechos reservados.");
+		tester.assertContains(Pattern.quote("Bajo la Apache License, versión 2.0."));
 		tester.assertContains("Español");
 	}
 
@@ -159,7 +159,7 @@ public class TestHomePage
 		tester.startPage(HomePage.class);
 
 		tester.assertLabel("categories:0:demos:0:link:name", "Adressbuch");
-		tester.assertContains("Alle Rechte vorbehalten.");
+		tester.assertContains(Pattern.quote("Lizenziert unter der Apache License, Version 2.0."));
 	}
 
 	@Test
