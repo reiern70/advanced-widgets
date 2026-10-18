@@ -20,10 +20,6 @@
 	<entry key="look">Aspecto</entry>
 	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Idioma</entry>
-	<entry key="component.public">Público</entry>
-	<entry key="component.private">Privado</entry>
-	<entry key="component.public.help">Un componente público</entry>
-	<entry key="component.private.help">Un componente privado por ahora</entry>
 	<entry key="ajaxEngine">Ajax</entry>
 	<entry key="AjaxEngine.JQUERY">jQuery</entry>
 	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">JavaScript puro</entry>

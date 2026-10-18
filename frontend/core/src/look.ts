@@ -486,10 +486,7 @@ const PARTS = {
 	'theme-editor-output': ['base', 'theme-editor-output', ''],
 	'theme-editor-class': ['base', 'theme-editor-class', 'form-control'],
 	'theme-editor-css': ['base', 'theme-editor-css', 'form-control font-monospace'],
-	'theme-editor-copy': ['base', 'theme-editor-copy', 'btn btn-secondary'],
-
-	// the note standing for a component a license key has not activated
-	'unlicensed': ['base', 'antilia-unlicensed', 'alert alert-warning']
+	'theme-editor-copy': ['base', 'theme-editor-copy', 'btn btn-secondary']
 } as const satisfies Record<string, readonly [LookAspect, string, string]>;
 
 /** The parts of the components a look gives classes to. */

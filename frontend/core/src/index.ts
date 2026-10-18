@@ -32,7 +32,7 @@ export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,
 	DataTableRow, ResizableColumnsRegistry, Veil } from './data-table.js';
-export { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, localRows, PAGE_LINKS,
+export { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, localRows, PAGE_LINKS,
 	pageLinks, SELECTION_ACTIONS, selectionColumn, SHOW_COLUMNS } from './data-table-model.js';
 export type { DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts } from './data-table-model.js';
@@ -48,7 +48,7 @@ export type { Host, Unsubscribe } from './host.js';
 export { DateFormat, DatePicker, datePicker, daysInMonth, firstDayOfWeek, formatIso,
 	parseIso } from './date-picker.js';
 export type { DateParts, DatePickerOptions } from './date-picker.js';
-export { DEFAULT_DESKTOP_TEXTS, DEFAULT_PANE, Desktop, desktop, DESKTOP_CLASSES, DESKTOP_COMPONENTS,
+export { DEFAULT_DESKTOP_TEXTS, DEFAULT_PANE, Desktop, desktop, DESKTOP_CLASSES,
 	DESKTOP_DISCARD_EVENT,
 	WINDOW_HEIGHT_PROPERTY, WINDOW_WIDTH_PROPERTY, WINDOW_X_PROPERTY, WINDOW_Y_PROPERTY, WINDOW_Z_PROPERTY } from './desktop.js';
 export type { DesktopOptions, DesktopPane, DesktopTexts, TaskbarPosition, TileLayout, WindowState,
@@ -72,9 +72,6 @@ export type { ResizableOptions, ResizableSize, ResizeAxis } from './resizable.js
 export { Scrollbar, scrollbar, SCROLLBAR_WRAPPER_CLASS } from './scrollbar.js';
 export type { ScrollbarHandle, ScrollbarOptions, ScrollPosition } from './scrollbar.js';
 export { JsonInfiniteList } from './infinite-list.js';
-export { activate, activates, enforceLicenses, isLicensed, LICENSE_PREFIX, PUBLIC_KEY,
-	UNLICENSED_CLASS, verifyLicense } from './license.js';
-export type { License } from './license.js';
 export type { InfiniteListConfig, InfiniteListData, InfiniteListEntry, InfiniteListMessage } from './infinite-list.js';
 export { CLOSE_ATTRIBUTE, focusableIn, isFieldModified, isModified, MODAL_CLASSES, MODAL_SIZES,
 	MODAL_THEME_CLASS, ModalDialog, modalSizeClass, resetField } from './modal.js';
@@ -93,7 +90,7 @@ export type { TabsDesign, TabsOptions, TabsOrientation, TabsTexts } from './tabs
 export { askToDiscard, MODIFIED_ATTRIBUTE, modifiedFields } from './unsaved.js';
 export type { DiscardQuestion, DiscardTexts } from './unsaved.js';
 export { Templates, templates, useTemplates } from './templates.js';
-export { JsonTree, TREE_COMPONENTS, TREE_ICONS, TREE_GRID_COMPONENTS, TREE_TEXTS } from './tree.js';
+export { JsonTree, TREE_ICONS, TREE_TEXTS } from './tree.js';
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,
 	TreeTexts } from './tree.js';
 export type { CompiledTemplate, TemplateEngine, TemplateRegistry } from './templates.js';

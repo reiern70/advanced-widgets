@@ -30,7 +30,6 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
 import com.antilia.widgets.button.ButtonBehavior;
-import com.antilia.widgets.demo.DemoLicense;
 import com.antilia.widgets.modal.Modal;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONObject;
@@ -114,9 +113,7 @@ public class FrameworkTabs extends Panel
 		WebMarkupContainer app = new WebMarkupContainer(id);
 		app.add(AttributeModifier.replace("data-framework-app", framework));
 		app.add(AttributeModifier.replace("data-demo", demo));
-		// the key of the demo, which the apps activate: the demo shows every private component
-		app.add(AttributeModifier.replace("data-config", () -> config.getObject()
-			.put("licenseKey", DemoLicense.key()).toString()));
+		app.add(AttributeModifier.replace("data-config", () -> config.getObject().toString()));
 		return app;
 	}
 

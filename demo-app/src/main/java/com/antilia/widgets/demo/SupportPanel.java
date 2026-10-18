@@ -27,8 +27,7 @@ import org.apache.wicket.model.ResourceModel;
 import com.antilia.widgets.demo.Demos.Demo;
 
 /**
- * What runs where: for each demo, whether its component is public and whether it runs in Wicket,
- * React and Svelte and in every theme. Every page shows it in a {@link BrowserModal}, which the
+ * What runs where: for each demo, whether it runs in Wicket, React and Svelte and in every theme. Every page shows it in a {@link BrowserModal}, which the
  * link in the footer opens.
  */
 public class SupportPanel extends Panel
@@ -51,7 +50,6 @@ public class SupportPanel extends Panel
 				link.add(new Label("name", new ResourceModel(demo.nameKey())));
 				item.add(link);
 				item.add(new Label("category", new ResourceModel(demo.categoryKey())));
-				item.add(DemoPage.newVisibilityBadge("visibility", demo));
 				item.add(newSupported("wicket", true));
 				item.add(newSupported("react", demo.frameworkApps()));
 				item.add(newSupported("svelte", demo.frameworkApps()));

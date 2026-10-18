@@ -321,8 +321,6 @@
 				<configuration>
 					<systemPropertyVariables>
 						<antilia-widgets.database.url>jdbc:h2:mem:widgets;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1</antilia-widgets.database.url>
-						<!-- the tests check the key of the demo, which is not enforced for now, see Licensing -->
-						<antilia-widgets.license.enforced>true</antilia-widgets.license.enforced>
 						<!-- the passwords of the accounts the demo always has, for the tests: see TestDatabase -->
 						<antilia-widgets.admin.password>admin-test-password</antilia-widgets.admin.password>
 						<antilia-widgets.semedy.password>semedy-test-password</antilia-widgets.semedy.password>

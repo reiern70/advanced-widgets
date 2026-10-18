@@ -16,13 +16,11 @@
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DynamicDataTable, type DataTableQuery } from '@antilia/core';
 
-import { activate, DataTable, type DataTableColumnDef } from '../src/index.js';
-// the key of the demo application, activating every component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
+import { DataTable, type DataTableColumnDef } from '../src/index.js';
 
 interface Person {
 	name: string;
@@ -66,21 +64,9 @@ function headers(container: HTMLElement): string[] {
 		(th) => (th.textContent ?? '').replace(/\s+/g, ''));
 }
 
-beforeAll(async () => {
-	await activate(demoKey);
-});
-
 afterEach(cleanup);
 
 describe('DataTable', () => {
-	it('shows the placeholder of a private component without a license key', async () => {
-		const { container } = render(DataTable, { columns: COLUMNS, loadRows,
-			licenseKey: 'AW1.not.valid' });
-
-		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')).not.toBeNull());
-		expect(container.querySelector('table')).toBeNull();
-	});
-
 	it('renders the skeleton of the Wicket table and the rows loadRows gives', async () => {
 		const load = vi.fn(loadRows);
 		const { container } = render(DataTable, { columns: COLUMNS, loadRows: load });

@@ -69,8 +69,6 @@ export interface TreeIcons {
 export interface TreeTexts {
 	loading: string;
 	empty: string;
-	/** The placeholder React and Svelte show without a license key activating the tree. */
-	unlicensed?: string;
 	/** The accessible name of the handles resizing the columns of a tree grid. */
 	resizeColumn?: string;
 }
@@ -148,16 +146,8 @@ export const TREE_ICONS: TreeIcons = {
 export const TREE_TEXTS: Required<TreeTexts> = {
 	loading: 'Loading…',
 	empty: 'Nothing to show',
-	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
-		'which you get by registering.',
 	resizeColumn: 'Resize column'
 };
-
-/** The names a license key activates the trees by: their own and those of the Wicket ones. */
-export const TREE_COMPONENTS = ['Tree', 'JsonBasedTree'];
-
-/** The names a license key activates the tree grids by. */
-export const TREE_GRID_COMPONENTS = ['TreeGrid', 'JsonBasedTreeGrid', 'JsonBasedTree'];
 
 const ITEM_CLASS = 'antilia-tree-item';
 

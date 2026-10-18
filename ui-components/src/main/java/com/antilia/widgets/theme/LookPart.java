@@ -465,10 +465,7 @@ public enum LookPart
 	THEME_EDITOR_OUTPUT(LookAspect.BASE),
 	THEME_EDITOR_CLASS(LookAspect.BASE),
 	THEME_EDITOR_CSS(LookAspect.BASE),
-	THEME_EDITOR_COPY(LookAspect.BASE),
-
-	// the note standing for a component a license key has not activated
-	UNLICENSED(LookAspect.BASE);
+	THEME_EDITOR_COPY(LookAspect.BASE);
 
 	private final LookAspect aspect;
 

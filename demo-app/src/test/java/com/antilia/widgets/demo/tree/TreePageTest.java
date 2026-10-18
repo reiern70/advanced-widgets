@@ -125,13 +125,13 @@ class TreePageTest
 	}
 
 	@Test
-	void theAppsGetTheTreeTheTextsAndTheLicenseKey()
+	void theAppsGetTheTreeAndTheTexts()
 	{
 		String page = tester.getLastResponseAsString();
 		assertTrue(page.contains("data-demo=\"tree\""), page);
 		assertTrue(page.contains("api/tree-of-life"), page);
-		assertTrue(page.contains("&quot;licenseKey&quot;:&quot;AW1."), page);
-		assertTrue(page.contains("&quot;unlicensed&quot;"), page);
+		assertTrue(page.contains("&quot;resizeColumn&quot;"), page);
+		assertFalse(page.contains("licenseKey"), page);
 	}
 
 	/**

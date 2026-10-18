@@ -40,7 +40,6 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
 
 import com.antilia.widgets.icon.SvgIcon;
-import com.antilia.widgets.license.Licensing;
 import com.github.openjson.JSONObject;
 
 class DesktopTest extends WicketTestCase
@@ -256,21 +255,6 @@ class DesktopTest extends WicketTestCase
 		assertFalse(desktop.isExpanded());
 		assertEquals(TaskbarPosition.RIGHT, TaskbarPosition.of("right"));
 		assertNull(TaskbarPosition.of(null));
-	}
-
-	@Test
-	void rendersAPlaceholderWithoutALicenseKey()
-	{
-		Licensing.install(tester.getApplication(), null);
-		TestDesktop desktop = new TestDesktop();
-		desktop.window("One", "first");
-		tester.startPage(new TestPage(desktop));
-
-		TagTester placeholder = TagTester.createTagByAttribute(tester.getLastResponseAsString(),
-			"class", Licensing.PLACEHOLDER_CSS_CLASS);
-		assertEquals("TestDesktop", placeholder.getAttribute("data-component"));
-		assertFalse(tester.getLastResponseAsString().contains("Wicket.Desktop"));
-		assertFalse(tester.getLastResponseAsString().contains("first"));
 	}
 
 	@Test

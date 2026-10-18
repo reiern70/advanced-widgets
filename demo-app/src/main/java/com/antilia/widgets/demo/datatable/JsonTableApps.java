@@ -189,8 +189,7 @@ public final class JsonTableApps
 			.put("resizeColumn", component.getString("ResizableColumnsBehavior.resizeColumn"))
 			.put("selectedCount", component.getString("DynamicDataTable.selectedCount",
 				Model.ofMap(Map.of("count", "{0}"))))
-			.put("clearSelection", component.getString("DynamicDataTable.clearSelection"))
-			.put("unlicensed", component.getString("License.placeholder"));
+			.put("clearSelection", component.getString("DynamicDataTable.clearSelection"));
 		return FrameworkTabs.withDropdownTexts(component, texts).put("table", table);
 	}
 

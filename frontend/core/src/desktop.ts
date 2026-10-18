@@ -170,8 +170,6 @@ export interface DesktopTexts {
 	collapse: string;
 	/** The title of the grip of the taskbar, which moves it to another side. */
 	move: string;
-	/** The placeholder the React and Svelte desktops show without a license key activating them. */
-	unlicensed: string;
 	/** The title of the button of the menu listing the windows. */
 	menu: string;
 	/** The heading of the windows open in the menu. */
@@ -292,8 +290,6 @@ export const DEFAULT_DESKTOP_TEXTS: DesktopTexts = {
 	rows: 'Windows one above the other', cascade: 'Cascade the windows',
 	expand: 'Fill the page', collapse: 'Back into the page',
 	move: 'Move the taskbar: drag it, or press an arrow key',
-	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
-		'which you get by registering.',
 	menu: 'All windows', openWindows: 'Open', closedWindows: 'Closed',
 	closeModifiedTitle: 'Close {0}?',
 	closeModified: 'The changes in {0} are not saved. Close the window and lose them?',
@@ -303,9 +299,6 @@ export const DEFAULT_DESKTOP_TEXTS: DesktopTexts = {
 	paneName: 'Name', moveToPane: 'Move to another pane', moveToNewPane: 'New pane…',
 	newWindow: 'Open a window', ok: 'OK', cancel: 'Cancel'
 };
-
-/** The names a license key activates the desktop by, a private component. */
-export const DESKTOP_COMPONENTS = ['Desktop'];
 
 /** The classes of the parts of a desktop and of its windows. */
 export const DESKTOP_CLASSES = {

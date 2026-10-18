@@ -367,17 +367,3 @@
 	border-top: 1px solid var(--antilia-theme-border);
 	background: var(--antilia-theme-toolbar);
 }
-
-/* the placeholder of a private component without a license key (see Licensing) */
-.antilia-unlicensed {
-	padding: 1em 1.2em;
-	border: 1px dashed var(--antilia-theme-border, #c9cfdb);
-	border-radius: var(--antilia-look-radius, 0.4em);
-	background: var(--antilia-theme-highlight, #f5f7fb);
-	color: var(--antilia-theme-text, #1c2333);
-}
-
-.antilia-unlicensed::before {
-	content: "\1F512";
-	margin-right: 0.5em;
-}

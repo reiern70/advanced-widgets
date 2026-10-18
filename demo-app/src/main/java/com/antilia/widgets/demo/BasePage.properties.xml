@@ -20,10 +20,6 @@
 	<entry key="look">Look</entry>
 	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Language</entry>
-	<entry key="component.public">Public</entry>
-	<entry key="component.private">Private</entry>
-	<entry key="component.public.help">A public component</entry>
-	<entry key="component.private.help">A component that is private for now</entry>
 	<entry key="ajaxEngine">Ajax</entry>
 	<entry key="AjaxEngine.JQUERY">jQuery</entry>
 	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Plain JavaScript</entry>

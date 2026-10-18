@@ -27,7 +27,6 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
 
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
 import com.github.openjson.JSONArray;
@@ -50,9 +49,6 @@ import com.antilia.widgets.theme.LookPart;
  * <p>
  * The table carries the CSS classes {@value JsonBasedTree#CSS_CLASS} and
  * {@value TreeGrid#CSS_CLASS}.
- * <p>
- * A private component: it renders only when the {@link Licensing license key} of the application
- * activates it, else a placeholder telling so.
  *
  * @param <T>
  *            the type of the nodes

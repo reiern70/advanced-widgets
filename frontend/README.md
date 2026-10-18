@@ -397,15 +397,6 @@ writes some images as `data:` URLs, such as the tick of its check boxes, which a
 policy such as Wicket's (`img-src 'self'`) blocks: the bridge serves the x of the close buttons
 itself, and the demo allows `data:` images for Bootstrap's own markup.
 
-`DataTable`, `Tree`, `TreeGrid` and `Desktop` are private, as the JSON table, the trees and the
-desktop are in Wicket:
-they check a license key in the browser (`license.ts`), the same `AW1.` keys with the same Ed25519
-signature the server checks, and show the same placeholder without one. Give the key with
-`activate(key)` once, or to a component as `licenseKey`. Web Crypto verifies the signature; where
-it has no Ed25519 yet (Firefox before 129), `ed25519.ts` does, and where the page has no Web
-Crypto at all (served over plain HTTP from another host than `localhost`, such as
-`http://192.168.0.152:9180`), `ed25519.ts` hashes with a SHA-512 of its own too.
-
 Some core modules are shared state in a page: the template engines (`templates()`, which
 Handlebars registers into) and, for the infinite list and the table, the scroll bars and the
 resizable columns. Each Wicket script bundles its own copy of the core, so these scripts use the

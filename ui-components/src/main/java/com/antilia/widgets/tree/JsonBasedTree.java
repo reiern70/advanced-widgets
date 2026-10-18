@@ -43,7 +43,6 @@ import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebComponent;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.IRequestParameters;
-import org.apache.wicket.request.Response;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
@@ -58,7 +57,6 @@ import com.antilia.widgets.dynamicdatatable.JacksonJsonSerializer;
 import com.antilia.widgets.dynamicdatatable.ResourceTemplate;
 import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.jsonlist.IItemAction;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.template.Templates;
 import com.github.openjson.JSONArray;
@@ -114,9 +112,6 @@ import com.antilia.widgets.theme.Looks;
  * The node template is written into the page as markup and has to be authored by the developer.
  * Every property the {@link #setJsonSerializer serializer} produces for the data of a node is sent
  * to the browser.
- * <p>
- * A private component: it renders only when the {@link Licensing license key} of the application
- * activates it, else a placeholder telling so.
  *
  * @param <T>
  *            the type of the nodes
@@ -574,22 +569,6 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	{
 		this.jsonSerializer = Args.notNull(jsonSerializer, "jsonSerializer");
 		return this;
-	}
-
-	@Override
-	protected void onConfigure()
-	{
-		super.onConfigure();
-		Licensing.configurePrivate(this);
-	}
-
-	@Override
-	protected void renderPlaceholderTag(ComponentTag tag, Response response)
-	{
-		if (!Licensing.renderPlaceholder(this, tag, response))
-		{
-			super.renderPlaceholderTag(tag, response);
-		}
 	}
 
 	@Override

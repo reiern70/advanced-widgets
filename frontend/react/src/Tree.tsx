@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef,
-	useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { isLicensed, JsonTree, partClasses, TREE_COMPONENTS, TREE_GRID_COMPONENTS, TREE_TEXTS,
+import { JsonTree, partClasses, TREE_TEXTS,
 	type ResizeMode, type TreeColumn, type TreeConfig, type TreeIcons, type TreeNode,
 	type TreeTexts } from '@antilia/core';
 
@@ -50,8 +49,6 @@ export interface TreeProps {
 	onAction?(action: string, key: string, data: unknown): void;
 	/** Called when the user expands or collapses a folder. */
 	onToggle?(key: string, expanded: boolean): void;
-	/** A license key of its own; the one given to activate() when left out. */
-	licenseKey?: string;
 	/** CSS classes of the tree, next to json-tree. */
 	className?: string;
 }
@@ -84,24 +81,14 @@ export interface TreeHandle {
  */
 const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps['columns'] } &
 	Partial<Pick<TreeGridProps, 'header' | 'resizableColumns'>>>(function JsonTreeView(props, ref) {
-	const { template, engine, label, icons, height, licenseKey, className, table, header,
+	const { template, engine, label, icons, height, className, table, header,
 		resizableColumns, selectBranches } = props;
 	const texts = { ...TREE_TEXTS, ...props.texts };
 	const id = 'json-tree-' + useId().replace(/[^\w-]/g, '');
-	const [licensed, setLicensed] = useState<boolean | null>(null);
 	const latest = useRef(props);
 	latest.current = props;
 	const instance = useRef<JsonTree | null>(null);
 	const look = useLook();
-
-	useEffect(() => {
-		let live = true;
-		isLicensed(table ? TREE_GRID_COMPONENTS : TREE_COMPONENTS, licenseKey)
-			.then((active) => live && setLicensed(active));
-		return () => {
-			live = false;
-		};
-	}, [licenseKey, Boolean(table)]);
 
 	useImperativeHandle(ref, () => ({
 		reload: () => instance.current?.reload() ?? Promise.resolve(),
@@ -115,9 +102,6 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 	const textsKey = JSON.stringify(texts);
 	const heightKey = height ? height.value + height.unit : '';
 	useLayoutEffect(() => {
-		if (!licensed) {
-			return;
-		}
 		const tree = new JsonTree({
 			id, template, engine, label, icons, texts, height, selectBranches, look,
 			table: table ? { header: header ?? '', columns: table } : undefined,
@@ -135,7 +119,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 			tree.destroy();
 			instance.current = null;
 		};
-	}, [licensed, id, template, engine, label, tableKey, iconsKey, textsKey, heightKey,
+	}, [id, template, engine, label, tableKey, iconsKey, textsKey, heightKey,
 		resizableColumns, selectBranches, look]);
 
 	useEffect(() => {
@@ -145,13 +129,6 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
 		}
 	}, [props.selected]);
 
-	if (licensed === null) {
-		return null;
-	}
-	if (!licensed) {
-		return <div className={partClasses(look, 'unlicensed')} role="note"
-			data-component={table ? 'TreeGrid' : 'Tree'}>{texts.unlicensed}</div>;
-	}
 	const tree = <div id={id} className={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'),
 		className].filter(Boolean).join(' ')} />;
 	// a tree of a height scrolls in the wrapper of its scroll bars, which React renders
@@ -162,8 +139,7 @@ const JsonTreeView = forwardRef<TreeHandle, TreeProps & { table?: TreeGridProps[
  * A tree rendering its nodes from JSON with a template, loading the children of a folder the
  * first time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are
  * selected, a click on a folder expanding or collapsing it, unless selectBranches has a click on
- * a folder select it, and expand it if it is collapsed. A private component: without a license
- * key activating it, it shows the placeholder Wicket shows. A ref gets a {@link TreeHandle}.
+ * a folder select it, and expand it if it is collapsed. A ref gets a {@link TreeHandle}.
  */
 export const Tree = forwardRef<TreeHandle, TreeProps>(function Tree(props, ref) {
 	return <JsonTreeView ref={ref} {...props} />;
@@ -172,8 +148,7 @@ export const Tree = forwardRef<TreeHandle, TreeProps>(function Tree(props, ref) 
 /**
  * A tree grid: a {@link Tree} shown as a treegrid, its first column the tree, the others
  * rendered from the same data by the templates of the columns. Given a height, its head stays in
- * place above the rows scrolling; its columns can be made resizable. A private component, as the
- * tree.
+ * place above the rows scrolling; its columns can be made resizable.
  */
 export const TreeGrid = forwardRef<TreeHandle, TreeGridProps>(function TreeGrid(
 	{ columns, header, resizableColumns, ...props }, ref) {

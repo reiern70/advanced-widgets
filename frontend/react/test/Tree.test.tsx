@@ -16,13 +16,11 @@
 
 import { createRef, StrictMode } from 'react';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activate, enforceLicenses, ResizableColumns, Scrollbar } from '@antilia/core';
+import { ResizableColumns, Scrollbar } from '@antilia/core';
 
 import { Tree, TreeGrid, type TreeHandle, type TreeNode } from '../src/index.js';
-// the key of the demo application, activating every component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 const NODES: Record<string, TreeNode[]> = {
 	'': [
@@ -43,35 +41,9 @@ function item(container: HTMLElement, key: string): HTMLElement {
 	return container.querySelector<HTMLElement>(`[data-key="${key}"]`)!;
 }
 
-beforeAll(async () => {
-	await activate(demoKey);
-});
-
 afterEach(cleanup);
 
 describe('Tree', () => {
-	it('shows the placeholder of a private component without a license key', async () => {
-		const { container } = render(<Tree load={load} template="{{name}}"
-			licenseKey="AW1.not.valid" texts={{ unlicensed: 'Needs a key' }} />);
-
-		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent)
-			.toBe('Needs a key'));
-		expect(container.querySelector('[role="tree"]')).toBeNull();
-	});
-
-	it('renders without a license key while the keys are not enforced', async () => {
-		enforceLicenses(false);
-		try {
-			const { container } = render(<Tree load={load} template="{{name}}"
-				licenseKey="AW1.not.valid" />);
-
-			await waitFor(() => expect(shown(container)).toEqual(['docs', 'notes.txt']));
-			expect(container.querySelector('.antilia-unlicensed')).toBeNull();
-		} finally {
-			enforceLicenses();
-		}
-	});
-
 	it('renders the nodes load gives, and the children of a folder clicked', async () => {
 		const onToggle = vi.fn();
 		const { container } = render(<StrictMode><Tree load={load} template="{{name}}"

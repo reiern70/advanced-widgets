@@ -163,7 +163,7 @@ class DesktopPageTest
 		assertEquals("firstName", firstName.getString("sort"));
 		assertTrue(firstName.getBoolean("movable"));
 		assertEquals("New user", config.getJSONObject("texts").getString("newUser"));
-		assertTrue(config.has("licenseKey"), "the key of the demo");
+		assertFalse(config.has("licenseKey"), "no license key");
 		assertEquals("true", grid(response, "svelte").getAttribute("data-mount"));
 
 		DesktopWindow keyboard = page.getKeyboardWindow();

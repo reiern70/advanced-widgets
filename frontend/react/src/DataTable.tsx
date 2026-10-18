@@ -17,7 +17,7 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState,
 	type MouseEvent, type ReactNode } from 'react';
 
-import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+import { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, DynamicDataTable, localRows,
 	MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
 	type DataTableColumnDef, type DataTableData, type DataTableFilter,
 	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableSort,
@@ -95,8 +95,6 @@ export interface DataTableProps {
 	actions?: ReactNode;
 	/** Subscribes the table to pushed changes of its rows, returning the unsubscription. */
 	subscribe?(listener: (message: DataTablePush) => void): () => void;
-	/** A license key of its own; the one given to activate() when left out. */
-	licenseKey?: string;
 	/** The id of the table element. */
 	id?: string;
 	/** CSS classes of the table, next to ant-dataview ant-data-table. */
@@ -154,8 +152,7 @@ function ColumnsIcon() {
  * navigation, the headers and the column chooser, and the core renders the rows from JSON with
  * the templates of the columns into the body React leaves empty. Sorting, paging or scrolling
  * infinitely, the filter and the page size reload the rows through loadRows; the columns can be
- * moved, resized, hidden and shown. A private component: without a license key activating it, it
- * shows the placeholder Wicket shows.
+ * moved, resized, hidden and shown.
  */
 export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function DataTable(props,
 	ref) {
@@ -163,14 +160,13 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		selection = 'none', selectionCount = true, clearSelectionOnNavigation = false,
 		navigationPosition = 'top', filter,
 		movableColumns = true, resizableColumns = false, columnChooser = true, bodyHeight,
-		adjustToParent, engine, toolbar, actions, licenseKey, className } = props;
+		adjustToParent, engine, toolbar, actions, className } = props;
 	const texts: DataTableTexts = { ...DATA_TABLE_TEXTS, ...props.texts };
 	const look = useLook();
 	const css = (...parts: LookPart[]) => partClasses(look, ...parts);
 	const generatedId = useId();
 	const id = props.id ?? 'data-table-' + generatedId.replace(/[^\w-]/g, '');
 
-	const [licensed, setLicensed] = useState<boolean | null>(null);
 	const [order, setOrder] = useState(() => columns.map((column) => column.id));
 	const [shown, setShown] = useState(() => new Set(columns.filter((column) =>
 		column.visible !== false).map((column) => column.id)));
@@ -189,14 +185,6 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	latest.current = props;
 	const state = useRef({ page, pageSize, sort, filter, infinite });
 	state.current = { page, pageSize, sort, filter, infinite };
-
-	useEffect(() => {
-		let live = true;
-		isLicensed(DATA_TABLE_COMPONENTS, licenseKey).then((active) => live && setLicensed(active));
-		return () => {
-			live = false;
-		};
-	}, [licenseKey]);
 
 	const byId = new Map(columns.map((column) => [column.id, column]));
 	const visible = order.filter((column) => shown.has(column) && byId.has(column))
@@ -224,9 +212,6 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	};
 
 	useLayoutEffect(() => {
-		if (!licensed) {
-			return;
-		}
 		const table = new DynamicDataTable({
 			id,
 			look,
@@ -310,7 +295,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 			instance.current = null;
 		};
 		// the instance starts over when what it renders with changes
-	}, [licensed, id, columnsKey, engine, filler, heightKey, selection, infinite, adjustToParent,
+	}, [id, columnsKey, engine, filler, heightKey, selection, infinite, adjustToParent,
 		resizableColumns, movableColumns, look]);
 
 	// another page, page size, sort or filter loads the rows again; the last three from the start
@@ -370,14 +355,6 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 		const timer = window.setTimeout(() => setVeiled(true), VEIL_DELAY);
 		return () => window.clearTimeout(timer);
 	}, [busy]);
-
-	if (licensed === null) {
-		return null;
-	}
-	if (!licensed) {
-		return <div className={css('unlicensed')} role="note" data-component="DataTable">
-			{texts.unlicensed}</div>;
-	}
 
 	const pages = Math.max(1, Math.ceil(itemCount / pageSize));
 	const go = (target: number) => (event: MouseEvent) => {

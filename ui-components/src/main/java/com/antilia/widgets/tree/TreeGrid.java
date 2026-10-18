@@ -36,11 +36,9 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.request.Response;
 
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.icon.IIcon;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.table.IResizableColumnsTable;
 import com.antilia.widgets.table.ResizableColumnsBehavior;
@@ -67,9 +65,6 @@ import com.antilia.widgets.theme.Looks;
  * <p>
  * The table carries the CSS class {@value #CSS_CLASS} and takes its colors from the
  * {@link com.antilia.widgets.theme.Theme theme} it is rendered in, if any.
- * <p>
- * A private component: it renders only when the {@link Licensing license key} of the application
- * activates it, else a placeholder telling so.
  *
  * @param <T>
  *            the type of the nodes
@@ -397,22 +392,6 @@ public class TreeGrid<T, S> extends TableTree<T, S> implements INodeRenderer<T>
 	{
 		support.setSelectBranches(selectBranches);
 		return this;
-	}
-
-	@Override
-	protected void onConfigure()
-	{
-		super.onConfigure();
-		Licensing.configurePrivate(this);
-	}
-
-	@Override
-	protected void renderPlaceholderTag(ComponentTag tag, Response response)
-	{
-		if (!Licensing.renderPlaceholder(this, tag, response))
-		{
-			super.renderPlaceholderTag(tag, response);
-		}
 	}
 
 	@Override

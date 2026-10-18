@@ -23,11 +23,10 @@
   reload(), repaints one with renderRow(key, data), tells the selected rows with selectedKeys()
   and deselects them all with clearSelection(), as the button of the count of the selected rows
   in the navigation does.
-  A private component: without a license key activating it, it shows the placeholder Wicket shows.
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { CLEAR_SELECTION_ICON, DATA_TABLE_COMPONENTS, DATA_TABLE_TEXTS, DynamicDataTable, isLicensed, localRows,
+	import { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, DynamicDataTable, localRows,
 		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
 		SHOW_COLUMNS, type DataTableColumnDef, type DataTableData,
 		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
@@ -98,8 +97,6 @@
 		actions?: Snippet;
 		/** Subscribes the table to pushed changes of its rows, returning the unsubscription. */
 		subscribe?: (listener: (message: DataTablePush) => void) => () => void;
-		/** A license key of its own; the one given to activate() when left out. */
-		licenseKey?: string;
 		id?: string;
 		class?: string;
 	};
@@ -131,7 +128,6 @@
 		toolbar,
 		actions,
 		subscribe,
-		licenseKey,
 		id: givenId,
 		class: className = ''
 	}: Props = $props();
@@ -145,7 +141,6 @@
 	const id = $derived(givenId ?? 'data-table-' + generatedId.replace(/[^\w-]/g, ''));
 	const texts = $derived<DataTableTexts>({ ...DATA_TABLE_TEXTS, ...givenTexts });
 
-	let licensed = $state<boolean | null>(null);
 	let order = $state(untrack(() => columns.map((column) => column.id)));
 	let shown = $state(untrack(() => columns.filter((column) => column.visible !== false)
 		.map((column) => column.id)));
@@ -161,19 +156,6 @@
 	let instance: DynamicDataTable | null = null;
 	let shownRows = 0;
 	let startOver = false;
-
-	$effect(() => {
-		const key = licenseKey;
-		let live = true;
-		isLicensed(DATA_TABLE_COMPONENTS, key).then((active) => {
-			if (live) {
-				licensed = active;
-			}
-		});
-		return () => {
-			live = false;
-		};
-	});
 
 	const byId = $derived(new Map(columns.map((column) => [column.id, column])));
 	const visible = $derived(order.filter((column) => shown.includes(column) && byId.has(column))
@@ -251,9 +233,6 @@
 
 	// the instance starts over when what it renders with changes
 	$effect(() => {
-		if (!licensed) {
-			return;
-		}
 		const { config, mode, movable, ids, movableIndexes, offset, moveLabel } =
 			JSON.parse(setup) as {
 				config: ConstructorParameters<typeof DynamicDataTable>[0];
@@ -511,68 +490,64 @@
 	</tr>
 {/snippet}
 
-{#if licensed === false}
-	<div class={css('unlicensed')} role="note" data-component="DataTable">{texts.unlicensed}</div>
-{:else if licensed}
-	<div class={css('table-host')}>
-		<table {id} class={['ant-dataview', css('table'), className]} cellspacing="0">
-			<thead>
-				{#if navigationPosition !== 'bottom'}{@render navigation()}{/if}
-				<tr class={css('table-headers')}>
-					{#if withSelection}
-						<th class={css('table-selection')} data-resizable="false">
-							<div class={css('table-header')}>
-								<span class={css('table-sort-title')}>
-									{#if selection === 'many'}
-										<input type="checkbox" class={css('table-select-page')}
-											data-dt-action={SELECTION_ACTIONS[2]}
-											data-dt-action-unchecked={SELECTION_ACTIONS[3]}
-											aria-label={texts.selectPage} />
-									{/if}
-								</span>
-							</div>
-						</th>
-					{/if}
-					{#each visible as column (column.id)}
-						{@const sorting = sorted(column)}
-						<th data-movable={movableColumns && column.movable ? 'true' : undefined}
-							data-resizable={column.resizable === false ? 'false' : undefined}
-							aria-sort={sorting} class={sorting ? css(ORDER_PARTS[sorting]) : undefined}>
-							<div class={css('table-header')}>
-								{#if movableColumns && column.movable}
-									<button type="button" class={css('column-mover')} title={texts.moveColumn}
-										aria-label={texts.moveColumn}>
-										<svg aria-hidden="true" focusable="false" viewBox="0 0 10 16" width="8"
-											height="13"><path fill="currentColor" d={GRIP} /></svg>
-									</button>
+<div class={css('table-host')}>
+	<table {id} class={['ant-dataview', css('table'), className]} cellspacing="0">
+		<thead>
+			{#if navigationPosition !== 'bottom'}{@render navigation()}{/if}
+			<tr class={css('table-headers')}>
+				{#if withSelection}
+					<th class={css('table-selection')} data-resizable="false">
+						<div class={css('table-header')}>
+							<span class={css('table-sort-title')}>
+								{#if selection === 'many'}
+									<input type="checkbox" class={css('table-select-page')}
+										data-dt-action={SELECTION_ACTIONS[2]}
+										data-dt-action-unchecked={SELECTION_ACTIONS[3]}
+										aria-label={texts.selectPage} />
 								{/if}
-								{#if column.sort}
-									{@const property = column.sort}
-									<a class={css('table-sort')} href="#top"
-										onclick={(event) => sortBy(property, event)}>
-										<span class={css('table-sort-title')}>{column.header}</span>
-									</a>
-									<a class={css('table-sort-arrows')} aria-hidden="true" tabindex="-1"
-										href="#top" onclick={(event) => sortBy(property, event)}>
-										<span class={css('table-sort-ascending')}>▲</span>
-										<span class={css('table-sort-descending')}>▼</span>
-									</a>
-								{:else}
+							</span>
+						</div>
+					</th>
+				{/if}
+				{#each visible as column (column.id)}
+					{@const sorting = sorted(column)}
+					<th data-movable={movableColumns && column.movable ? 'true' : undefined}
+						data-resizable={column.resizable === false ? 'false' : undefined}
+						aria-sort={sorting} class={sorting ? css(ORDER_PARTS[sorting]) : undefined}>
+						<div class={css('table-header')}>
+							{#if movableColumns && column.movable}
+								<button type="button" class={css('column-mover')} title={texts.moveColumn}
+									aria-label={texts.moveColumn}>
+									<svg aria-hidden="true" focusable="false" viewBox="0 0 10 16" width="8"
+										height="13"><path fill="currentColor" d={GRIP} /></svg>
+								</button>
+							{/if}
+							{#if column.sort}
+								{@const property = column.sort}
+								<a class={css('table-sort')} href="#top"
+									onclick={(event) => sortBy(property, event)}>
 									<span class={css('table-sort-title')}>{column.header}</span>
-								{/if}
-							</div>
-						</th>
-					{/each}
-					{#if filler}
-						<th class={css('table-filler')} data-resizable-skip="true" aria-hidden="true"></th>
-					{/if}
-				</tr>
-			</thead>
-			<tbody></tbody>
-			{#if navigationPosition !== 'top'}<tfoot>{@render navigation()}</tfoot>{/if}
-		</table>
-		{#if veiled}
-			<div class={css('table-veil')} aria-hidden="true"></div>
-		{/if}
-	</div>
-{/if}
+								</a>
+								<a class={css('table-sort-arrows')} aria-hidden="true" tabindex="-1"
+									href="#top" onclick={(event) => sortBy(property, event)}>
+									<span class={css('table-sort-ascending')}>▲</span>
+									<span class={css('table-sort-descending')}>▼</span>
+								</a>
+							{:else}
+								<span class={css('table-sort-title')}>{column.header}</span>
+							{/if}
+						</div>
+					</th>
+				{/each}
+				{#if filler}
+					<th class={css('table-filler')} data-resizable-skip="true" aria-hidden="true"></th>
+				{/if}
+			</tr>
+		</thead>
+		<tbody></tbody>
+		{#if navigationPosition !== 'top'}<tfoot>{@render navigation()}</tfoot>{/if}
+	</table>
+	{#if veiled}
+		<div class={css('table-veil')} aria-hidden="true"></div>
+	{/if}
+</div>

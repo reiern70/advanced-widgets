@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.jsonlist.IItemAction;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
 import com.antilia.widgets.tree.TestNodes.FileNode;
 import com.antilia.widgets.tree.TreeTest.TestPage;
@@ -246,41 +245,6 @@ class JsonBasedTreeTest extends WicketTestCase
 		assertEquals(-1, tree.getHeight());
 		tester.assertContainsNot(Pattern.quote("\"height\""));
 		tester.assertContainsNot("antilia-scrollbar.*\\.js");
-	}
-
-	@Test
-	void rendersAPlaceholderWithoutALicenseKey()
-	{
-		Licensing.install(tester.getApplication(), null);
-		tester.startPage(new TestPage(tree));
-
-		String page = tester.getLastResponseAsString();
-		TagTester placeholder = TagTester.createTagByAttribute(page, "class",
-			Licensing.PLACEHOLDER_CSS_CLASS);
-		assertEquals("TestTree", placeholder.getAttribute("data-component"));
-		assertFalse(page.contains("new Wicket.JsonTree("), page);
-	}
-
-	@Test
-	void rendersWithoutALicenseKeyWhileTheKeyIsNotEnforced()
-	{
-		String enforced = System.clearProperty(Licensing.ENFORCED_PROPERTY);
-		try
-		{
-			Licensing.install(tester.getApplication(), null);
-			tester.startPage(new TestPage(tree));
-
-			String page = tester.getLastResponseAsString();
-			assertFalse(page.contains(Licensing.PLACEHOLDER_CSS_CLASS), page);
-			assertTrue(page.contains("new Wicket.JsonTree("), page);
-		}
-		finally
-		{
-			if (enforced != null)
-			{
-				System.setProperty(Licensing.ENFORCED_PROPERTY, enforced);
-			}
-		}
 	}
 
 	private void act(String action, String key)

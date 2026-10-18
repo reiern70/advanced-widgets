@@ -147,8 +147,6 @@
 	font-weight: 700;
 	letter-spacing: .5px;
 }
-.index .visibility { width: 20px; height: 20px; }
-.index .visibility svg { width: 12px; height: 12px; }
 
 .index__preview {
 	display: none;

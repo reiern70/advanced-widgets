@@ -25,7 +25,6 @@ import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
-import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.demo.Demos.Demo;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
@@ -45,17 +44,6 @@ public abstract class DemoPage extends BasePage
 {
 	private static final long serialVersionUID = 1L;
 
-	/** A closed lock: the component is private for now. */
-	private static final String LOCK = "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 " +
-		"2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 " +
-		".9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z";
-
-	/** An open lock: the component is public. */
-	private static final String LOCK_OPEN = "M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 " +
-		"2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 " +
-		"3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 " +
-		"12H6V10h12v10z";
-
 	protected DemoPage()
 	{
 		this(null);
@@ -72,8 +60,6 @@ public abstract class DemoPage extends BasePage
 		add(newDemoLink("previous", Demos.previous(getClass())));
 		add(newDemoLink("next", Demos.next(getClass())));
 		add(new Label("demoTitle", () -> getString("title")));
-		add(Demos.of(getClass()).<Component> map(demo -> newVisibilityBadge("visibility", demo))
-			.orElseGet(() -> new WebMarkupContainer("visibility").setVisible(false)));
 		BrowserModal explanation = newExplanation("explanation",
 			() -> getString("explanation", null, ""));
 		add(explanation);
@@ -136,47 +122,6 @@ public abstract class DemoPage extends BasePage
 		WebMarkupContainer themed = new WebMarkupContainer(id);
 		themed.setOutputMarkupId(true);
 		return themed;
-	}
-
-	/**
-	 * @return the icon telling whether the component of a demo is public or private for now
-	 */
-	static Component newVisibilityBadge(String id, Demo demo)
-	{
-		return newVisibilityBadge(id, demo.publicComponent());
-	}
-
-	/**
-	 * @return the icon telling whether a component is public or private for now: an open or a
-	 *         closed lock, with the words as tooltip and for screen readers
-	 */
-	public static Component newVisibilityBadge(String id, boolean publicComponent)
-	{
-		String key = publicComponent ? "component.public" : "component.private";
-		Label badge = new Label(id);
-		badge.setDefaultModel(() -> visibilityIcon(publicComponent, badge));
-		return badge.setEscapeModelStrings(false)
-			.add(AttributeModifier.replace("class", publicComponent
-				? "visibility visibility--public" : "visibility visibility--private"))
-			.add(AttributeModifier.replace("title", new ResourceModel(key + ".help")));
-	}
-
-	/**
-	 * @param publicComponent
-	 *            whether the component is public, else private for now
-	 * @param component
-	 *            the component whose bundles have the words
-	 * @return the markup of the icon telling whether a component is public or private: an open or
-	 *         a closed lock and the words, hidden but for screen readers
-	 */
-	public static String visibilityIcon(boolean publicComponent, Component component)
-	{
-		String path = publicComponent ? LOCK_OPEN : LOCK;
-		String text = Strings.escapeMarkup(component.getString(
-			publicComponent ? "component.public" : "component.private")).toString();
-		return "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" " +
-			"focusable=\"false\"><path fill=\"currentColor\" d=\"" + path + "\"/></svg>" +
-			"<span class=\"visually-hidden\">" + text + "</span>";
 	}
 
 	private static Component newDemoLink(String id, Optional<Demo> demo)

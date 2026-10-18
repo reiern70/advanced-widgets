@@ -215,20 +215,6 @@ a { color: var(--accent, var(--primary)); }
 	border: 1px solid currentColor;
 	white-space: nowrap;
 }
-/* whether the component of a demo is public, or private for now: an open or a closed lock */
-.visibility {
-	display: inline-grid;
-	place-items: center;
-	flex: none;
-	width: 26px;
-	height: 26px;
-	border-radius: 50%;
-	border: 1px solid currentColor;
-	vertical-align: middle;
-	cursor: default;
-}
-.visibility--public { color: var(--available); }
-.visibility--private { color: var(--in-progress); }
 .visually-hidden {
 	position: absolute;
 	width: 1px;
@@ -243,12 +229,6 @@ a { color: var(--accent, var(--primary)); }
 	align-items: center;
 	gap: 6px 12px;
 }
-.tab-visibility {
-	width: 20px;
-	height: 20px;
-	margin-left: 6px;
-}
-.tab-visibility svg { width: 12px; height: 12px; }
 
 /* footer */
 .footer {

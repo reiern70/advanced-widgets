@@ -66,13 +66,11 @@ public final class Demos
 	 *            the category shown on the home page, a key under {@code category.}
 	 * @param page
 	 *            the page of the demo
-	 * @param publicComponent
-	 *            whether the component the demo shows is public, or private for now
 	 * @param frameworkApps
 	 *            whether the demo shows the component in React and Svelte too, not only in Wicket
 	 */
 	public record Demo(String id, String category, Class<? extends Page> page,
-		boolean publicComponent, boolean frameworkApps) implements Serializable
+		boolean frameworkApps) implements Serializable
 	{
 		/**
 		 * @return the path of the screenshot of the demo, in the web application
@@ -108,33 +106,33 @@ public final class Demos
 	}
 
 	private static final List<Demo> ALL = List.of(
-		new Demo("contacts", "examples", ContactsPage.class, false, false),
-		new Demo("jsonTable", "data", DynamicDataTablePage.class, false, true),
-		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, true, false),
-		new Demo("jsonList", "data", JsonListPage.class, false, true),
-		new Demo("tree", "data", TreePage.class, false, true),
-		new Demo("treeGrid", "data", TreeGridPage.class, false, true),
-		new Demo("masterDetail", "data", MasterDetailPage.class, false, false),
-		new Demo("progressBar", "feedback", ProgressBarPage.class, true, true),
-		new Demo("notifications", "feedback", NotificationsPage.class, true, true),
-		new Demo("popovers", "feedback", PopoversPage.class, true, true),
-		new Demo("dropdown", "forms", DropdownPage.class, true, true),
-		new Demo("autocomplete", "forms", AutocompletePage.class, true, true),
-		new Demo("palette", "forms", PalettePage.class, true, true),
-		new Demo("datePicker", "forms", DatePickerPage.class, true, true),
-		new Demo("buttons", "forms", ButtonsPage.class, true, true),
-		new Demo("downloads", "forms", DownloadsPage.class, true, false),
-		new Demo("upload", "forms", UploadPage.class, true, false),
-		new Demo("codeEditor", "forms", CodeEditorPage.class, true, true),
-		new Demo("scrollbar", "layout", ScrollbarPage.class, true, true),
-		new Demo("splitPanel", "layout", SplitPanelPage.class, true, true),
-		new Demo("resizable", "layout", ResizablePage.class, true, true),
-		new Demo("tabs", "layout", TabsPage.class, true, true),
-		new Demo("menus", "layout", MenusPage.class, true, true),
-		new Demo("modalDialog", "layout", ModalDialogPage.class, true, true),
-		new Demo("desktop", "layout", DesktopPage.class, false, true),
-		new Demo("themeEditor", "themes", ThemeEditorPage.class, true, false),
-		new Demo("looks", "themes", LooksPage.class, true, false));
+		new Demo("contacts", "examples", ContactsPage.class, false),
+		new Demo("jsonTable", "data", DynamicDataTablePage.class, true),
+		new Demo("beanTable", "data", BeanDynamicDataTablePage.class, false),
+		new Demo("jsonList", "data", JsonListPage.class, true),
+		new Demo("tree", "data", TreePage.class, true),
+		new Demo("treeGrid", "data", TreeGridPage.class, true),
+		new Demo("masterDetail", "data", MasterDetailPage.class, false),
+		new Demo("progressBar", "feedback", ProgressBarPage.class, true),
+		new Demo("notifications", "feedback", NotificationsPage.class, true),
+		new Demo("popovers", "feedback", PopoversPage.class, true),
+		new Demo("dropdown", "forms", DropdownPage.class, true),
+		new Demo("autocomplete", "forms", AutocompletePage.class, true),
+		new Demo("palette", "forms", PalettePage.class, true),
+		new Demo("datePicker", "forms", DatePickerPage.class, true),
+		new Demo("buttons", "forms", ButtonsPage.class, true),
+		new Demo("downloads", "forms", DownloadsPage.class, false),
+		new Demo("upload", "forms", UploadPage.class, false),
+		new Demo("codeEditor", "forms", CodeEditorPage.class, true),
+		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
+		new Demo("splitPanel", "layout", SplitPanelPage.class, true),
+		new Demo("resizable", "layout", ResizablePage.class, true),
+		new Demo("tabs", "layout", TabsPage.class, true),
+		new Demo("menus", "layout", MenusPage.class, true),
+		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
+		new Demo("desktop", "layout", DesktopPage.class, true),
+		new Demo("themeEditor", "themes", ThemeEditorPage.class, false),
+		new Demo("looks", "themes", LooksPage.class, false));
 
 	private Demos()
 	{

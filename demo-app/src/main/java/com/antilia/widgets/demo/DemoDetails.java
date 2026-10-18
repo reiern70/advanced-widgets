@@ -31,9 +31,9 @@ import com.antilia.widgets.demo.Demos.Demo;
 
 /**
  * What a demo is about, in a {@link BrowserModal} the home page opens without leaving it: what it
- * shows in short, the frameworks it runs in, whether its component is public, the explanation the
- * demo page itself shows, and a button opening the demo. Each demo's dialog has a markup id of its
- * own, {@link #markupIdOf(Demo)}, which the buttons opening it name.
+ * shows in short, the frameworks it runs in, the explanation the demo page itself shows, and a
+ * button opening the demo. Each demo's dialog has a markup id of its own,
+ * {@link #markupIdOf(Demo)}, which the buttons opening it name.
  */
 public class DemoDetails extends BrowserModal
 {
@@ -68,7 +68,6 @@ public class DemoDetails extends BrowserModal
 		Fragment body = new Fragment(id, "bodyFragment", this);
 		body.add(new Label("description", new ResourceModel(demo.descriptionKey())));
 		body.add(new Label("category", new ResourceModel(demo.categoryKey())));
-		body.add(DemoPage.newVisibilityBadge("visibility", demo));
 		body.add(new WebMarkupContainer("react").setVisible(demo.frameworkApps()));
 		body.add(new WebMarkupContainer("svelte").setVisible(demo.frameworkApps()));
 		body.add(new Label("explanation", explanationOf(demo.page()))

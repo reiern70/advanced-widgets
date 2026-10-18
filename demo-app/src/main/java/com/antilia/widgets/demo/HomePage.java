@@ -118,8 +118,8 @@ public class HomePage extends BasePage {
 	}
 
 	/**
-	 * @return the link to a demo in the index: its name, whether it runs in React and Svelte too
-	 *         and whether it is public, with its screenshot and what it shows for the preview
+	 * @return the link to a demo in the index: its name and whether it runs in React and Svelte
+	 *         too, with its screenshot and what it shows for the preview
 	 */
 	private static Component newIndexLink(String id, Demo demo)
 	{
@@ -130,7 +130,6 @@ public class HomePage extends BasePage {
 			new ResourceModel(demo.descriptionKey())));
 		link.add(new Label("name", new ResourceModel(demo.nameKey())));
 		link.add(new WebMarkupContainer("frameworks").setVisible(demo.frameworkApps()));
-		link.add(DemoPage.newVisibilityBadge("visibility", demo));
 		return link;
 	}
 

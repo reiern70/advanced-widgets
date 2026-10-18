@@ -44,7 +44,6 @@ import org.apache.wicket.util.visit.IVisit;
 import org.junit.jupiter.api.Test;
 
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.table.IResizableColumnsTable;
 import com.antilia.widgets.table.ResizableColumnsBehavior.Mode;
 import com.antilia.widgets.tree.TestNodes.FileNode;
@@ -128,18 +127,6 @@ class TreeTest extends WicketTestCase
 
 		tester.assertContains(Pattern.quote("<i class=\"my-leaf\"></i>"));
 		tester.assertContainsNot(Pattern.quote(TreeIcon.LEAF.getMarkup()));
-	}
-
-	@Test
-	void rendersAPlaceholderWithoutALicenseKey()
-	{
-		Licensing.install(tester.getApplication(), null);
-		tester.startPage(new TestPage(new TestTree()));
-
-		TagTester placeholder = TagTester.createTagByAttribute(tester.getLastResponseAsString(),
-			"class", Licensing.PLACEHOLDER_CSS_CLASS);
-		assertEquals("TestTree", placeholder.getAttribute("data-component"));
-		tester.assertContainsNot(">docs<");
 	}
 
 	@Test

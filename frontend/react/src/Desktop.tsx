@@ -17,9 +17,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState,
 	type ReactNode } from 'react';
 
-import { Desktop as CoreDesktop, DEFAULT_DESKTOP_TEXTS, DESKTOP_COMPONENTS, isLicensed,
-	partClasses, type DesktopPane, type DesktopTexts, type TaskbarPosition, type TileLayout,
-	type WindowState } from '@antilia/core';
+import { Desktop as CoreDesktop, partClasses, type DesktopPane, type DesktopTexts,
+	type TaskbarPosition, type TileLayout, type WindowState } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
@@ -82,11 +81,6 @@ export interface DesktopProps {
 	confirmClose?(id: string, title: string): Promise<boolean> | boolean;
 	/** What the desktop says, in English when left out. */
 	texts?: Partial<DesktopTexts>;
-	/**
-	 * A license key activating the desktop, a private component; the one given to activate() of
-	 * the core when left out. Without one the desktop shows a placeholder.
-	 */
-	licenseKey?: string;
 	/**
 	 * Called with the states of all windows, by their ids, once the user has changed any, moved
 	 * the taskbar or let the desktop fill the page.
@@ -163,19 +157,17 @@ export interface DesktopHandle {
  * panes, which the taskbar shows, one at a time; Ctrl+Shift and the arrow keys go from pane to pane
  * and a button of each title bar moves its window to another pane. The launcher of the taskbar
  * opens windows of the types given, which the desktop renders. React renders the windows, the core
- * moves them and fills the taskbar. A ref gets a {@link DesktopHandle}. Give it a height. A
- * private component: it needs a license key.
+ * moves them and fills the taskbar. A ref gets a {@link DesktopHandle}. Give it a height.
  */
 export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(props, ref) {
 	const { children, taskbar = 'bottom', tiling = true, expandable = true, expanded = false,
 		movableTaskbar = true, menu = true, panes, activePane, paneSwitcher = true,
-		editablePanes = true, windowTypes, texts, licenseKey, id, className } = props;
+		editablePanes = true, windowTypes, texts, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreDesktop | null>(null);
 	const look = useLook();
 	const latest = useRef(props);
 	latest.current = props;
-	const [licensed, setLicensed] = useState<boolean | null>(null);
 	// the side of the taskbar: as the props say, or where the user moved it since
 	const [position, setPosition] = useState<TaskbarPosition>(taskbar);
 	const [filling, setFilling] = useState(expanded);
@@ -204,14 +196,6 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 		const added = window;
 		setLaunched((current) => [...current, { id: added, type, pane }]);
 	};
-
-	useEffect(() => {
-		let live = true;
-		isLicensed(DESKTOP_COMPONENTS, licenseKey).then((active) => live && setLicensed(active));
-		return () => {
-			live = false;
-		};
-	}, [licenseKey]);
 
 	useImperativeHandle(ref, () => ({
 		get desktop() {
@@ -258,9 +242,6 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	}), []);
 
 	useLayoutEffect(() => {
-		if (!licensed) {
-			return;
-		}
 		const desktop = new CoreDesktop(element.current!, {
 			look,
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
@@ -297,7 +278,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 			desktop.destroy();
 			instance.current = null;
 		};
-	}, [licensed, look]);
+	}, [look]);
 
 	const textsKey = JSON.stringify(texts ?? {});
 	const paneListKey = JSON.stringify(paneList ?? null);
@@ -308,14 +289,6 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	}, [position, tiling, expandable, filling, movableTaskbar, menu, textsKey, paneListKey, shown,
 		paneSwitcher, editablePanes, typesKey]);
 
-	if (licensed === null) {
-		return null;
-	}
-	if (!licensed) {
-		return <div id={id} className={partClasses(look, 'unlicensed')} role="note"
-			data-component="Desktop">
-			{texts?.unlicensed ?? DEFAULT_DESKTOP_TEXTS.unlicensed}</div>;
-	}
 	return (
 		<div ref={element} id={id} className={[partClasses(look, 'desktop'),
 			'antilia-desktop-taskbar-' + position, className].filter(Boolean).join(' ')}>

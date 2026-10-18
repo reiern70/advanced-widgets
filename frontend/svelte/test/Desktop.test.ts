@@ -16,13 +16,10 @@
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activate } from '../src/index.js';
 import BoundDesktop from './BoundDesktop.svelte';
 import PanedDesktop from './PanedDesktop.svelte';
-// the key the demo application installs, which activates every private component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 function win(container: HTMLElement, id: string): HTMLElement {
 	return container.querySelector('#' + id)!;
@@ -38,7 +35,7 @@ function settle(): Promise<void> {
 }
 
 /**
- * Renders the desktop once its license key is checked.
+ * Renders the desktop, waiting until it is there.
  */
 async function shown(props: Record<string, unknown> = {}) {
 	const result = render(BoundDesktop, props);
@@ -47,21 +44,9 @@ async function shown(props: Record<string, unknown> = {}) {
 	return result;
 }
 
-beforeAll(async () => {
-	await activate(demoKey);
-});
-
 afterEach(cleanup);
 
 describe('Desktop', () => {
-	it('shows the placeholder of a private component without a license key', async () => {
-		const { container } = render(BoundDesktop, { licenseKey: 'AW1.not.valid' });
-
-		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent?.trim())
-			.toBe('Needs a key'));
-		expect(container.querySelector('#w0')).toBeNull();
-	});
-
 	it('renders the windows, which the core places, with their buttons and a taskbar', async () => {
 		const { container } = await shown();
 

@@ -19,17 +19,17 @@
 
 	import { Desktop, DesktopWindow } from '../src/index.js';
 
-	let { count = 2, taskbar = 'bottom', licenseKey, menu = true, confirmClose, modified,
+	let { count = 2, taskbar = 'bottom', menu = true, confirmClose, modified,
 		onchange, ontaskbar, onexpand, onactivate, desktop = $bindable() }: {
-		count?: number; taskbar?: TaskbarPosition; licenseKey?: string; menu?: boolean;
+		count?: number; taskbar?: TaskbarPosition; menu?: boolean;
 		confirmClose?: (id: string, title: string) => boolean; modified?: boolean;
 		onchange?: (states: Record<string, WindowState>) => void;
 		ontaskbar?: (position: TaskbarPosition) => void; onexpand?: (expanded: boolean) => void;
 		onactivate?: (id: string) => void; desktop?: Desktop } = $props();
 </script>
 
-<Desktop bind:this={desktop} id="d" class="tall" {taskbar} {licenseKey} {menu} {confirmClose}
-	{onchange} {ontaskbar} {onexpand} {onactivate} texts={{ grid: 'Grid', unlicensed: 'Needs a key' }}>
+<Desktop bind:this={desktop} id="d" class="tall" {taskbar} {menu} {confirmClose}
+	{onchange} {ontaskbar} {onexpand} {onactivate} texts={{ grid: 'Grid' }}>
 	{#each Array.from({ length: count }, (_, index) => index) as index (index)}
 		<DesktopWindow id={'w' + index} title={'Window ' + index} x={10 * index} y={20}
 			width={300} height={200} closable={index === 1}
