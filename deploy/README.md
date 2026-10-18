@@ -74,9 +74,13 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
 The demos are private: visitors sign in to open them, the home page is public. Registering is
-open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`: the demo always adds `semedy`, `wicket` and
-`admin` (the administrator, who sees the users and the accesses on `/admin`) when they are missing, never
-changing them; accounts for people such as a client go into `.env` as
+open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`.
+The demo always has `semedy`, `wicket` and `admin` (the administrator, who sees the users and the accesses on
+`/admin`), with the passwords `.env` gives them in `ANTILIA_WIDGETS_SEMEDY_PASSWORD`,
+`ANTILIA_WIDGETS_WICKET_PASSWORD` and `ANTILIA_WIDGETS_ADMIN_PASSWORD`: at every start an account is added when
+missing and its password changed when `.env` gives another. Their passwords are never in the source. An account
+without a password in `.env` is not added, and one still holding a password the source once gave it is locked.
+Accounts for people such as a client go into `.env` as
 `ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again. The
 accounts registered with earlier versions, in `/var/lib/antilia-widgets/accounts`, are copied into
 the table at start.

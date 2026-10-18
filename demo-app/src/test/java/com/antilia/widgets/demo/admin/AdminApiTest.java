@@ -50,7 +50,7 @@ import com.github.openjson.JSONObject;
  */
 class AdminApiTest
 {
-	private static final String ADMIN = "admin:$Macarena_4321";
+	private static final String ADMIN = "admin:" + TestDatabase.ADMIN_PASSWORD;
 
 	/** The body the next request sends. */
 	private static String body = "";
@@ -170,8 +170,8 @@ class AdminApiTest
 		assertEquals("Basic realm=\"antilia-widgets\", charset=\"UTF-8\"",
 			tester.getLastResponse().getHeader("WWW-Authenticate"));
 		request("GET", UsersApiResource.PATH, "admin:wrong", 401);
-		request("GET", UsersApiResource.PATH, "wicket:wicket4321", 403);
-		request("GET", AccessesApiResource.PATH, "wicket:wicket4321", 403);
+		request("GET", UsersApiResource.PATH, "wicket:" + TestDatabase.WICKET_PASSWORD, 403);
+		request("GET", AccessesApiResource.PATH, "wicket:" + TestDatabase.WICKET_PASSWORD, 403);
 
 		// a session signed in as an administrator reads, but changes nothing
 		tester.startPage(HomePage.class);

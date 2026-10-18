@@ -269,7 +269,7 @@ class DemosAuthorizationTest
 
 		// an administrator always signs in
 		tester.startPage(SignInPage.class);
-		signIn("admin", "$Macarena_4321");
+		signIn("admin", TestDatabase.ADMIN_PASSWORD);
 		tester.assertRenderedPage(HomePage.class);
 		DemoSession.get().signOut();
 
@@ -291,14 +291,14 @@ class DemosAuthorizationTest
 		tester.assertRenderedPage(SignInPage.class);
 
 		// a user who is not an administrator is turned away
-		signIn("wicket", "wicket4321");
+		signIn("wicket", TestDatabase.WICKET_PASSWORD);
 		tester.assertRenderedPage(AccessDeniedPage.class);
 		tester.startPage(HomePage.class);
 		tester.assertInvisible("admin");
 
 		DemoSession.get().signOut();
 		tester.startPage(AdminPage.class);
-		signIn("admin", "$Macarena_4321");
+		signIn("admin", TestDatabase.ADMIN_PASSWORD);
 		tester.assertRenderedPage(AdminPage.class);
 		tester.assertVisible("admin");
 		tester.assertContains("admin");
@@ -310,7 +310,7 @@ class DemosAuthorizationTest
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
 		tester.startPage(AdminPage.class);
-		signIn("admin", "$Macarena_4321");
+		signIn("admin", TestDatabase.ADMIN_PASSWORD);
 		tester.assertRenderedPage(AdminPage.class);
 		String url = tester.urlFor(new RenderPageRequestHandler(
 			new PageProvider(tester.getLastRenderedPage()))).toString();
@@ -330,7 +330,7 @@ class DemosAuthorizationTest
 		tester.assertRenderedPage(SignInPage.class);
 
 		// nor to a user who signs in in the same browser
-		signIn("wicket", "wicket4321");
+		signIn("wicket", TestDatabase.WICKET_PASSWORD);
 		tester.executeUrl(url);
 		tester.assertRenderedPage(AccessDeniedPage.class);
 	}

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.antilia.widgets.demo.TestDatabase;
+import com.antilia.widgets.demo.data.IUserRepository;
 import com.antilia.widgets.demo.data.Role;
 import com.antilia.widgets.demo.data.User;
 
@@ -48,17 +49,49 @@ class AccountsTest
 	@Test
 	void theDemoAlwaysHasItsAccounts()
 	{
-		assertEquals(Role.USER, accounts.authenticate("semedy", "semedy4321").map(User::getRole)
-			.orElseThrow());
-		assertEquals(Role.USER, accounts.authenticate("wicket", "wicket4321").map(User::getRole)
-			.orElseThrow());
-		assertEquals(Role.ADMIN, accounts.authenticate("admin", "$Macarena_4321")
+		assertEquals(Role.USER, accounts.authenticate("semedy", TestDatabase.SEMEDY_PASSWORD)
 			.map(User::getRole).orElseThrow());
-		assertFalse(accounts.authenticate("admin", "wicket4321").isPresent());
+		assertEquals(Role.USER, accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD)
+			.map(User::getRole).orElseThrow());
+		assertEquals(Role.ADMIN, accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD)
+			.map(User::getRole).orElseThrow());
+		assertFalse(accounts.authenticate("admin", TestDatabase.WICKET_PASSWORD).isPresent());
 
 		// adding them again changes nothing
+		String hash = accounts.find("admin").orElseThrow().getPasswordHash();
 		accounts.addDefaults();
 		assertEquals(3, TestDatabase.users().size());
+		assertEquals(hash, accounts.find("admin").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void theAccountsTheDemoAlwaysHasTakeTheirPasswordsFromTheServer()
+	{
+		// another password replaces the one before
+		accounts.addDefault("wicket", Role.USER, "another-test-password");
+		assertTrue(accounts.authenticate("wicket", "another-test-password").isPresent());
+		assertFalse(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
+
+		// without a password, a missing account is not added
+		accounts.remove(accounts.find("semedy").orElseThrow());
+		accounts.addDefault("semedy", Role.USER, "");
+		assertFalse(accounts.find("semedy").isPresent());
+	}
+
+	@Test
+	void anAccountHoldingAPasswordTheSourceOnceGaveIsLocked()
+	{
+		// the hash V4__wicket_password.sql gives the account wicket
+		User wicket = accounts.find("wicket").orElseThrow();
+		wicket.setPasswordHash("6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=");
+		TestDatabase.context().getBean(IUserRepository.class).save(wicket);
+
+		accounts.addDefault("wicket", Role.USER, "");
+		assertEquals(Accounts.LOCKED, accounts.find("wicket").orElseThrow().getPasswordHash());
+
+		// a password from the server opens it again
+		accounts.addDefault("wicket", Role.USER, TestDatabase.WICKET_PASSWORD);
+		assertTrue(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
 	}
 
 	@Test

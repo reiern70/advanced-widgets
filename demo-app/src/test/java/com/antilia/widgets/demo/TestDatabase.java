@@ -36,6 +36,15 @@ public final class TestDatabase
 	/** The accounts the demo always has. */
 	public static final Set<String> DEFAULT_ACCOUNTS = Set.of("semedy", "wicket", "admin");
 
+	/** The password of the account admin in the tests, which the pom gives like the two below. */
+	public static final String ADMIN_PASSWORD = "admin-test-password";
+
+	/** The password of the account semedy in the tests. */
+	public static final String SEMEDY_PASSWORD = "semedy-test-password";
+
+	/** The password of the account wicket in the tests. */
+	public static final String WICKET_PASSWORD = "wicket-test-password";
+
 	private TestDatabase()
 	{
 	}

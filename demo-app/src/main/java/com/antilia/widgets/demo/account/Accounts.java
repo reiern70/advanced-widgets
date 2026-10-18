@@ -29,8 +29,11 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import javax.crypto.SecretKeyFactory;
@@ -78,14 +81,52 @@ public class Accounts
 	/** The environment variable holding the folder of the accounts of earlier versions. */
 	public static final String FOLDER_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_ACCOUNTS_FOLDER";
 
+	/** The system property holding the password of the account {@code admin}, the administrator. */
+	public static final String ADMIN_PASSWORD_PROPERTY = "antilia-widgets.admin.password";
+
+	/** The environment variable holding the password of the account {@code admin}. */
+	public static final String ADMIN_PASSWORD_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_ADMIN_PASSWORD";
+
+	/** The system property holding the password of the account {@code semedy}. */
+	public static final String SEMEDY_PASSWORD_PROPERTY = "antilia-widgets.semedy.password";
+
+	/** The environment variable holding the password of the account {@code semedy}. */
+	public static final String SEMEDY_PASSWORD_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_SEMEDY_PASSWORD";
+
+	/** The system property holding the password of the account {@code wicket}. */
+	public static final String WICKET_PASSWORD_PROPERTY = "antilia-widgets.wicket.password";
+
+	/** The environment variable holding the password of the account {@code wicket}. */
+	public static final String WICKET_PASSWORD_ENVIRONMENT_VARIABLE = "ANTILIA_WIDGETS_WICKET_PASSWORD";
+
 	/**
-	 * The accounts the demo always has, with the salted hashes of their passwords: name, hash,
-	 * role. They are added when missing at every start, and never changed.
+	 * The accounts the demo always has: name, role, and the system property and the environment
+	 * variable holding the password, which is never in the source. See {@link #addDefaults()}.
 	 */
 	private static final String[][] DEFAULTS = {
-		{ "semedy", "zzSQ5U6FuRjZX1kcQ7BROA==:enhhgrdSQjvzJbTxhO3DHG7jeLDKE1Y/aQwcU5jqQeo=", "USER" },
-		{ "wicket", "6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=", "USER" },
-		{ "admin", "92vMz986hJZpF/zSqJnPkg==:H0C0YwBH63MAfeF6K87wDjiuUmLe7qlehEdEdmWJMxA=", "ADMIN" } };
+		{ "semedy", "USER", SEMEDY_PASSWORD_PROPERTY, SEMEDY_PASSWORD_ENVIRONMENT_VARIABLE },
+		{ "wicket", "USER", WICKET_PASSWORD_PROPERTY, WICKET_PASSWORD_ENVIRONMENT_VARIABLE },
+		{ "admin", "ADMIN", ADMIN_PASSWORD_PROPERTY, ADMIN_PASSWORD_ENVIRONMENT_VARIABLE } };
+
+	/**
+	 * The hashes the source once gave the accounts the demo always has, and V4__wicket_password.sql
+	 * still gives the account wicket: whoever read the source knows their passwords, so an account
+	 * holding one is locked at start, unless the server gives it a password.
+	 */
+	private static final Set<String> PUBLISHED_HASHES = Set.of(
+		"zzSQ5U6FuRjZX1kcQ7BROA==:enhhgrdSQjvzJbTxhO3DHG7jeLDKE1Y/aQwcU5jqQeo=",
+		"6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=",
+		"zabicgAmDuftSxuCXCT8aQ==:7k9JpQBWu3u+lPkJ59dmmO7NMkhLm81FpIshwiwVrwM=",
+		"92vMz986hJZpF/zSqJnPkg==:H0C0YwBH63MAfeF6K87wDjiuUmLe7qlehEdEdmWJMxA=");
+
+	/** The hash of a locked account: having no salt, it matches no password. */
+	static final String LOCKED = "locked";
+
+	/**
+	 * The hashes of the accounts the demo always has that were found to match their passwords, so
+	 * that each start of the application in the same JVM, as in the tests, need not hash them again.
+	 */
+	private static final Map<String, String> CHECKED = new ConcurrentHashMap<>();
 
 	private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
 
@@ -354,14 +395,61 @@ public class Accounts
 	}
 
 	/**
-	 * Adds the accounts the demo always has, those that are missing.
+	 * Gives the accounts the demo always has the passwords the server is started with, each in its
+	 * system property or environment variable, such as {@link #ADMIN_PASSWORD_ENVIRONMENT_VARIABLE}:
+	 * an account is added when missing, and its password replaced when it is another. An account
+	 * without a password set is not added, and is locked if it holds a password the source once
+	 * gave it.
 	 */
 	public void addDefaults()
 	{
 		for (String[] account : DEFAULTS)
 		{
-			add(account[0], account[1], Role.valueOf(account[2]));
+			addDefault(account[0], Role.valueOf(account[1]), setting(account[2], account[3], ""));
 		}
+	}
+
+	/**
+	 * Gives an account the demo always has its password, see {@link #addDefaults()}.
+	 *
+	 * @param name
+	 *            the name of the account
+	 * @param role
+	 *            what it may do, when it is added
+	 * @param password
+	 *            its password; empty when none is set
+	 */
+	void addDefault(String name, Role role, String password)
+	{
+		String key = accountName(name);
+		Optional<User> existing = users.findByName(key);
+		if (Strings.isEmpty(password))
+		{
+			existing.filter(user -> PUBLISHED_HASHES.contains(user.getPasswordHash()))
+				.ifPresent(user -> setPasswordHash(user, LOCKED));
+		}
+		else if (existing.isEmpty())
+		{
+			String hash = hash(password);
+			add(key, hash, role);
+			CHECKED.put(hash, password);
+		}
+		else
+		{
+			String hash = existing.get().getPasswordHash();
+			if (!password.equals(CHECKED.get(hash)) && !matches(password, hash))
+			{
+				hash = hash(password);
+				setPasswordHash(existing.get(), hash);
+			}
+			CHECKED.put(hash, password);
+		}
+	}
+
+	private void setPasswordHash(User user, String passwordHash)
+	{
+		user.setPasswordHash(passwordHash);
+		users.save(user);
 	}
 
 	/**

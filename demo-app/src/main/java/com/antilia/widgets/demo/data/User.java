@@ -131,6 +131,15 @@ public class User implements Serializable, IIdentifiable<Long>
 		return passwordHash;
 	}
 
+	/**
+	 * @param passwordHash
+	 *            the salt and the hash of the new password
+	 */
+	public void setPasswordHash(String passwordHash)
+	{
+		this.passwordHash = passwordHash;
+	}
+
 	public Role getRole()
 	{
 		return role;
