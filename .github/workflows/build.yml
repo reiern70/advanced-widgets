@@ -4,6 +4,9 @@
 #
 # The project depends on Wicket 11.0.0-SNAPSHOT, which no repository serves, so the first step
 # builds the Wicket modules it uses from apache/wicket and installs them into the Maven repository.
+# It builds the branch upload-to-resource: FileUploadToResourceField.UPLOAD_FAILED_RESOURCE_KEY and
+# CONNECTION_LOST_RESOURCE_KEY, which UploadToResourceField uses, are only there so far. Back to
+# master once that branch is merged.
 # The cache keeps that repository with the commit Wicket was built from, so Wicket is built again
 # only when its branch moves on; it is saved even when the tests fail, as building Wicket is the
 # slow part. When the build fails, its errors are also given as annotations of the run, which
@@ -20,7 +23,7 @@ on:
     inputs:
       wicket-ref:
         description: The branch or tag of apache/wicket to build against
-        default: master
+        default: upload-to-resource
 
 permissions:
   contents: read
@@ -35,7 +38,7 @@ jobs:
     timeout-minutes: 60
     env:
       WICKET_REPOSITORY: https://github.com/apache/wicket.git
-      WICKET_REF: ${{ inputs.wicket-ref || 'master' }}
+      WICKET_REF: ${{ inputs.wicket-ref || 'upload-to-resource' }}
       # read by every mvn run (Maven 3.9+)
       MAVEN_ARGS: --batch-mode --errors --no-transfer-progress
     steps:
