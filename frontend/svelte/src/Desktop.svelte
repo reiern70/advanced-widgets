@@ -26,13 +26,12 @@
   the types given, which the desktop renders, their content a snippet. Svelte renders the windows,
   DesktopWindow components in the children, which may come and go; the core moves them and fills
   the taskbar. bind:this gets the functions below, which change the windows by their ids without
-  calling back. Give it a height. A private component: it needs a license key.
+  calling back. Give it a height.
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { DEFAULT_DESKTOP_TEXTS, Desktop, DESKTOP_COMPONENTS, type DesktopPane,
-		type DesktopTexts, isLicensed, partClasses, type TaskbarPosition, type TileLayout,
-		type WindowState } from '@antilia/core';
+	import { Desktop, type DesktopPane, type DesktopTexts, partClasses, type TaskbarPosition,
+		type TileLayout, type WindowState } from '@antilia/core';
 
 	import DesktopWindow from './DesktopWindow.svelte';
 	import type { DesktopWindowType } from './types.js';
@@ -75,11 +74,6 @@
 		confirmClose?: (id: string, title: string) => Promise<boolean> | boolean;
 		/** What the desktop says, in English when left out. */
 		texts?: Partial<DesktopTexts>;
-		/**
-		 * A license key activating the desktop, a private component; the one given to activate() of
-		 * the core when left out. Without one the desktop shows a placeholder.
-		 */
-		licenseKey?: string;
 		id?: string;
 		/** CSS classes of the desktop, next to antilia-desktop; one giving it a height, say. */
 		class?: string;
@@ -117,7 +111,6 @@
 		windowTypes,
 		confirmClose,
 		texts,
-		licenseKey,
 		id,
 		class: className = '',
 		onchange,
@@ -131,7 +124,6 @@
 
 	let element = $state<HTMLDivElement>();
 	let instance: Desktop | null = null;
-	let licensed = $state<boolean | null>(null);
 	// the side of the taskbar and whether the desktop fills the page: as the props say, or as the
 	// user changed them since
 	let position = $state<TaskbarPosition>(untrack(() => taskbar));
@@ -187,19 +179,6 @@
 			givenExpanded = expanded;
 			filling = expanded;
 		}
-	});
-
-	$effect(() => {
-		const key = licenseKey;
-		let live = true;
-		isLicensed(DESKTOP_COMPONENTS, key).then((active) => {
-			if (live) {
-				licensed = active;
-			}
-		});
-		return () => {
-			live = false;
-		};
 	});
 
 	const classes = $derived([partClasses(look, 'desktop'), 'antilia-desktop-taskbar-' + position, className]
@@ -366,23 +345,18 @@
 	}
 </script>
 
-{#if licensed === false}
-	<div {id} class={partClasses(look, 'unlicensed')} role="note" data-component="Desktop">
-		{texts?.unlicensed ?? DEFAULT_DESKTOP_TEXTS.unlicensed}</div>
-{:else if licensed}
-	<div bind:this={element} {id} class={classes}>
-		<div class={partClasses(look, 'desktop-area')}>
-			{@render children?.()}
-			{#each launched as window (window.id)}
-				{@const type = windowTypes?.find((other) => other.type === window.type)}
-				{#if type}
-					<DesktopWindow {...type.window} id={window.id} title={type.title}
-						iconMarkup={type.icon} pane={window.pane} closable>
-						{@render type.content(window.id)}
-					</DesktopWindow>
-				{/if}
-			{/each}
-		</div>
-		<div class={partClasses(look, 'desktop-taskbar')}></div>
+<div bind:this={element} {id} class={classes}>
+	<div class={partClasses(look, 'desktop-area')}>
+		{@render children?.()}
+		{#each launched as window (window.id)}
+			{@const type = windowTypes?.find((other) => other.type === window.type)}
+			{#if type}
+				<DesktopWindow {...type.window} id={window.id} title={type.title}
+					iconMarkup={type.icon} pane={window.pane} closable>
+					{@render type.content(window.id)}
+				</DesktopWindow>
+			{/if}
+		{/each}
 	</div>
-{/if}
+	<div class={partClasses(look, 'desktop-taskbar')}></div>
+</div>

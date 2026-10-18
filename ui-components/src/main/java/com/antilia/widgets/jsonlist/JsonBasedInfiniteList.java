@@ -43,7 +43,6 @@ import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebComponent;
 import org.apache.wicket.request.IRequestParameters;
-import org.apache.wicket.request.Response;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
@@ -63,7 +62,6 @@ import com.antilia.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.antilia.widgets.dynamicdatatable.RefreshMessageType;
 import com.antilia.widgets.dynamicdatatable.ResourceTemplate;
 import com.antilia.widgets.dynamicdatatable.UpdateRowMessageType;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.scrollbar.ScrollbarBehavior;
 import com.antilia.widgets.template.Templates;
 import com.github.openjson.JSONObject;
@@ -117,9 +115,6 @@ import com.antilia.widgets.theme.Looks;
  * The item template is written into the page as markup and has to be authored by the developer.
  * Every property the {@link #setJsonSerializer serializer} produces for an item is sent to the
  * browser.
- * <p>
- * A private component: it renders only when the {@link Licensing license key} of the application
- * activates it, else a placeholder telling so.
  *
  * @param <T>
  *            the type of the items
@@ -653,22 +648,6 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 		heightUnits = Args.notNull(units, "units");
 		this.height = height;
 		return this;
-	}
-
-	@Override
-	protected void onConfigure()
-	{
-		super.onConfigure();
-		Licensing.configurePrivate(this);
-	}
-
-	@Override
-	protected void renderPlaceholderTag(ComponentTag tag, Response response)
-	{
-		if (!Licensing.renderPlaceholder(this, tag, response))
-		{
-			super.renderPlaceholderTag(tag, response);
-		}
 	}
 
 	@Override

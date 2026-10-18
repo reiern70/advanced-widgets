@@ -28,7 +28,6 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
-import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -39,7 +38,6 @@ import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.IRequestParameters;
-import org.apache.wicket.request.Response;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
@@ -47,7 +45,6 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
 import com.antilia.widgets.button.ButtonBehavior;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.modal.Modal;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
@@ -111,9 +108,6 @@ import com.antilia.widgets.theme.LookPart;
  * whether the desktop fills the page, and the panes; the windows give their models the new states,
  * the desktop keeps the side, whether it fills the page and the panes, and calls
  * {@link #onChanged(AjaxRequestTarget)}.
- * <p>
- * The desktop is a private component: without a license key activating it, it renders a
- * placeholder telling so, see {@link Licensing}.
  *
  * @since 11.0.0
  */
@@ -877,22 +871,6 @@ public class Desktop extends Panel
 			.put("windowTypes", types)
 			.put("texts", texts)
 			.toString();
-	}
-
-	@Override
-	protected void onConfigure()
-	{
-		super.onConfigure();
-		Licensing.configurePrivate(this);
-	}
-
-	@Override
-	protected void renderPlaceholderTag(ComponentTag tag, Response response)
-	{
-		if (!Licensing.renderPlaceholder(this, tag, response))
-		{
-			super.renderPlaceholderTag(tag, response);
-		}
 	}
 
 	/**

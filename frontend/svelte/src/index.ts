@@ -40,9 +40,9 @@ export { default as TreeGrid } from './TreeGrid.svelte';
 export type { DesktopWindowType, DropdownOption, MenuEntry, MenuItem, MenuSeparator,
 	TabItem } from './types.js';
 export { getLook, LOOK_CONTEXT, setLook } from './look.js';
-export { activate, BOOTSTRAP_LOOK, buttonClasses, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT,
+export { BOOTSTRAP_LOOK, buttonClasses, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT,
 	CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker, desktop, dropdown,
-	enforceLicenses, localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS,
+	localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS,
 	registerLanguage, registerLook, resizable, scrollbar, splitPanel, tabs } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
 	CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader, CodeEditorOptions,

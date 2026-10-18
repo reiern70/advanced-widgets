@@ -19,14 +19,10 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	// the tests read the license key of the demo application, outside the frontend
-	server: { fs: { allow: ['../..'] } },
 	plugins: [svelte(), svelteTesting()],
 	test: {
 		environment: 'jsdom',
 		globals: true,
-		// the private components check their license keys, which are not enforced for now
-		setupFiles: ['test/setup.ts'],
 		include: ['test/**/*.test.ts'],
 		// every run measures the coverage of the sources: a summary on the console, the full
 		// report in coverage/ (index.html, and lcov.info for other tools); the run fails when the

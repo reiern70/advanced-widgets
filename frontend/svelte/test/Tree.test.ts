@@ -15,13 +15,11 @@
  */
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/svelte';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ResizableColumns, Scrollbar } from '@antilia/core';
 
-import { activate, enforceLicenses, Tree, TreeGrid, type TreeNode } from '../src/index.js';
-// the key of the demo application, activating every component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
+import { Tree, TreeGrid, type TreeNode } from '../src/index.js';
 
 const NODES: Record<string, TreeNode[]> = {
 	'': [
@@ -42,35 +40,9 @@ function item(container: HTMLElement, key: string): HTMLElement {
 	return container.querySelector<HTMLElement>(`[data-key="${key}"]`)!;
 }
 
-beforeAll(async () => {
-	await activate(demoKey);
-});
-
 afterEach(cleanup);
 
 describe('Tree', () => {
-	it('shows the placeholder of a private component without a license key', async () => {
-		const { container } = render(Tree, { load, template: '{{name}}',
-			licenseKey: 'AW1.not.valid', texts: { unlicensed: 'Needs a key' } });
-
-		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent
-			?.trim()).toBe('Needs a key'));
-		expect(container.querySelector('[role="tree"]')).toBeNull();
-	});
-
-	it('renders without a license key while the keys are not enforced', async () => {
-		enforceLicenses(false);
-		try {
-			const { container } = render(Tree, { load, template: '{{name}}',
-				licenseKey: 'AW1.not.valid' });
-
-			await waitFor(() => expect(shown(container)).toEqual(['docs', 'notes.txt']));
-			expect(container.querySelector('.antilia-unlicensed')).toBeNull();
-		} finally {
-			enforceLicenses();
-		}
-	});
-
 	it('renders the nodes, expands a folder and reports the leaf selected', async () => {
 		const onselect = vi.fn();
 		const ontoggle = vi.fn();

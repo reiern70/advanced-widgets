@@ -16,7 +16,6 @@
 package com.antilia.widgets.jsonlist;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -44,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import com.antilia.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antilia.widgets.dynamicdatatable.IDynamicDataProvider;
 import com.antilia.widgets.dynamicdatatable.JacksonJsonSerializer;
-import com.antilia.widgets.license.Licensing;
 
 class JsonBasedInfiniteListTest extends WicketTestCase
 {
@@ -81,20 +79,6 @@ class JsonBasedInfiniteListTest extends WicketTestCase
 		tester.assertContains(Pattern.quote("\"m\":\"POST\""));
 		tester.assertContains(Pattern.quote("\"end\":\"All ${count} shown\""));
 		tester.assertContainsNot(Pattern.quote("\"height\""));
-	}
-
-	@Test
-	void rendersAPlaceholderWithoutALicenseKey()
-	{
-		Licensing.install(tester.getApplication(), null);
-		tester.startPage(new TestPage(list));
-
-		String page = tester.getLastResponseAsString();
-		TagTester placeholder = TagTester.createTagByAttribute(page, "class",
-			Licensing.PLACEHOLDER_CSS_CLASS);
-		assertEquals(list.getMarkupId(), placeholder.getAttribute("id"));
-		assertEquals("TestList", placeholder.getAttribute("data-component"));
-		assertFalse(page.contains("new Wicket.JsonInfiniteList("), page);
 	}
 
 	@Test

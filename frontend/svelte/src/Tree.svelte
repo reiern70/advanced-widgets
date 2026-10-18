@@ -19,16 +19,14 @@
   time it is expanded: a WAI-ARIA tree moved through with the arrow keys. Only leaves are selected,
   a click on a folder expanding or collapsing it, unless selectBranches has a click on a folder
   select it, and expand it if it is collapsed. Given a height, it scrolls itself with slim scroll
-  bars. Given columns and a header, it is a tree grid, as TreeGrid is. A private component:
-  without a license key activating it, it shows the placeholder Wicket shows. Bound with
-  bind:this, the component reloads the nodes with reload(), repaints one with
-  renderNode(key, data), and expands and collapses a folder with expand(key) and collapse(key).
+  bars. Given columns and a header, it is a tree grid, as TreeGrid is. Bound with bind:this, the
+  component reloads the nodes with reload(), repaints one with renderNode(key, data), and expands
+  and collapses a folder with expand(key) and collapse(key).
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { isLicensed, JsonTree, partClasses, type ResizeMode, TREE_COMPONENTS,
-		TREE_GRID_COMPONENTS, TREE_TEXTS, type TreeColumn, type TreeConfig, type TreeIcons,
-		type TreeNode, type TreeTexts } from '@antilia/core';
+	import { JsonTree, partClasses, type ResizeMode, TREE_TEXTS, type TreeColumn, type TreeConfig,
+		type TreeIcons, type TreeNode, type TreeTexts } from '@antilia/core';
 
 	import { getLook } from './look.js';
 
@@ -66,14 +64,12 @@
 		onaction?: (action: string, key: string, data: unknown) => void;
 		/** Called when the user expands or collapses a folder. */
 		ontoggle?: (key: string, expanded: boolean) => void;
-		/** A license key of its own; the one given to activate() when left out. */
-		licenseKey?: string;
 		class?: string;
 	};
 
 	let { load, template, engine, label, expanded, selected, selectBranches, icons,
 		texts: givenTexts, height,
-		header, columns, resizableColumns = false, onselect, onaction, ontoggle, licenseKey,
+		header, columns, resizableColumns = false, onselect, onaction, ontoggle,
 		class: className = '' }: Props = $props();
 
 	const generatedId = $props.id();
@@ -81,27 +77,9 @@
 	const texts = $derived<Required<TreeTexts>>({ ...TREE_TEXTS, ...givenTexts });
 	const table = $derived(Boolean(columns));
 
-	let licensed = $state<boolean | null>(null);
 	let instance: JsonTree | null = null;
 
 	$effect(() => {
-		const key = licenseKey;
-		const names = table ? TREE_GRID_COMPONENTS : TREE_COMPONENTS;
-		let live = true;
-		isLicensed(names, key).then((active) => {
-			if (live) {
-				licensed = active;
-			}
-		});
-		return () => {
-			live = false;
-		};
-	});
-
-	$effect(() => {
-		if (!licensed) {
-			return;
-		}
 		const config = { id, template, engine, label, selectBranches, icons: $state.snapshot(icons),
 			texts: $state.snapshot(texts), height: $state.snapshot(height),
 			table: columns ? { header: header ?? '', columns: $state.snapshot(columns) } : undefined,
@@ -149,14 +127,11 @@
 	}
 </script>
 
-{#if licensed === false}
-	<div class={partClasses(look, 'unlicensed')} role="note" data-component={table ? 'TreeGrid' : 'Tree'}>
-		{texts.unlicensed}</div>
-{:else if licensed && height}
+{#if height}
 	<!-- a tree of a height scrolls in the wrapper of its scroll bars, which Svelte renders -->
 	<div class={partClasses(look, 'scrollbar')}>
 		<div {id} class={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'), className]}></div>
 	</div>
-{:else if licensed}
+{:else}
 	<div {id} class={[partClasses(look, 'tree-json', table ? 'tree-grid' : 'tree'), className]}></div>
 {/if}

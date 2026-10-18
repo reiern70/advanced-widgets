@@ -86,7 +86,6 @@ import com.antilia.widgets.demo.register.RegisterPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.theme.ThemeEditorPage;
 import com.antilia.widgets.demo.tree.TreePage;
-import com.antilia.widgets.license.Licensing;
 import com.antilia.widgets.demo.tree.TreeGridPage;
 import com.antilia.widgets.demo.tree.TreeOfLifeResource;
 import com.antilia.widgets.demo.upload.DemoUploadsFileManager;
@@ -160,10 +159,6 @@ public class WicketApplication extends WebApplication
 	public void init()
 	{
 		super.init();
-
-		// the demo shows every private component, whatever key the system property or the
-		// environment holds: the license limits only the other applications using the library
-		Licensing.install(this, DemoLicense.key());
 
 		// the users and the accesses are in the database; the accounts the demo always has get the
 		// passwords the server is started with, and the other accounts it is started with are added

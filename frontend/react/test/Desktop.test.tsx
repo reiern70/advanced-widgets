@@ -16,13 +16,9 @@
 
 import { createRef, useState, type ReactElement } from 'react';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-
-import { activate } from '@antilia/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Desktop, DesktopWindow, type DesktopHandle } from '../src/index.js';
-// the key the demo application installs, which activates every private component
-import demoKey from '../../../demo-app/src/main/resources/META-INF/antilia-widgets.license?raw';
 
 function win(container: HTMLElement, id: string): HTMLElement {
 	return container.querySelector('#' + id)!;
@@ -34,7 +30,7 @@ function tasks(container: HTMLElement): string[] {
 }
 
 /**
- * Renders a desktop once its license key is checked.
+ * Renders a desktop, waiting until it is there.
  */
 async function shown(ui: ReactElement): Promise<ReturnType<typeof render>> {
 	const result = render(ui);
@@ -42,24 +38,9 @@ async function shown(ui: ReactElement): Promise<ReturnType<typeof render>> {
 	return result;
 }
 
-beforeAll(async () => {
-	await activate(demoKey);
-});
-
 afterEach(cleanup);
 
 describe('Desktop', () => {
-	it('shows the placeholder of a private component without a license key', async () => {
-		const { container } = render(<Desktop licenseKey="AW1.not.valid"
-			texts={{ unlicensed: 'Needs a key' }}>
-			<DesktopWindow id="one" title="One" />
-		</Desktop>);
-
-		await waitFor(() => expect(container.querySelector('.antilia-unlicensed')?.textContent)
-			.toBe('Needs a key'));
-		expect(container.querySelector('#one')).toBeNull();
-	});
-
 	it('renders the windows, which the core places, with their buttons and a taskbar', async () => {
 		const { container } = await shown(<Desktop id="d" className="tall">
 			<DesktopWindow id="one" title="One" x={10} y={20} width={300} height={200}

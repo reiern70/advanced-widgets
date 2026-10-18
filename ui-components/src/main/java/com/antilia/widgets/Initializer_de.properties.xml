@@ -117,7 +117,6 @@
 	<entry key="Autocomplete.placeholder">Tippen zum Suchen…</entry>
 	<entry key="Autocomplete.noMatch">Keine Treffer</entry>
 	<entry key="Autocomplete.searching">Suche…</entry>
-	<entry key="License.placeholder">Dies ist eine private Komponente von Antilia's Advanced Widgets: Sie braucht einen Lizenzschlüssel, den Sie mit einer Registrierung erhalten.</entry>
 	<entry key="JsonBasedInfiniteList.loading">Wird geladen…</entry>
 	<entry key="JsonBasedInfiniteList.end">Alle ${count} werden angezeigt</entry>
 	<entry key="JsonBasedInfiniteList.empty">Nichts anzuzeigen</entry>

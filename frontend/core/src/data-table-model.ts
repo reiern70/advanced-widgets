@@ -87,8 +87,6 @@ export interface DataTableTexts {
 	selectedCount: string;
 	/** The title of the button of the count that deselects every row. */
 	clearSelection: string;
-	/** The placeholder shown without a license key activating the table. */
-	unlicensed: string;
 }
 
 /** The texts of a table in English, as the Wicket table has them. */
@@ -107,17 +105,8 @@ export const DATA_TABLE_TEXTS: DataTableTexts = {
 	moveColumn: 'Move the column: drag it, or use the arrow keys',
 	resizeColumn: 'Resize column',
 	selectedCount: '{0} selected',
-	clearSelection: 'Clear selection',
-	unlicensed: 'This is a private component of Antilia\'s Advanced Widgets: it needs a license key, ' +
-		'which you get by registering.'
+	clearSelection: 'Clear selection'
 };
-
-/**
- * The names a license key activates the React and Svelte tables by: their own and those of the
- * Wicket table they render as.
- */
-export const DATA_TABLE_COMPONENTS = ['DataTable', 'JsonBasedDynamicDataTable',
-	'BaseDynamicDataTable'];
 
 /** The actions the core reports for the checkboxes: select, deselect, select and deselect the page. */
 export const SELECTION_ACTIONS = ['_antilia-select', '_antilia-deselect', '_antilia-select-page',

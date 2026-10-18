@@ -17,8 +17,8 @@
   @component
   A tree grid: a Tree shown as a treegrid, its first column the tree, headed by header, the
   others rendered from the same data by the templates of the columns. Given a height, its head
-  stays in place above the rows scrolling; resizableColumns makes its columns resizable. A private
-  component, as the tree. Bound with bind:this, it does what a bound Tree does.
+  stays in place above the rows scrolling; resizableColumns makes its columns resizable. Bound with
+  bind:this, it does what a bound Tree does.
 -->
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';

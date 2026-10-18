@@ -19,7 +19,6 @@
 	<entry key="supportLead">Every component in Wicket, and many in React and Svelte too, all of them in every theme.</entry>
 	<entry key="supportComponent">Component</entry>
 	<entry key="supportCategory">Category</entry>
-	<entry key="supportVisibility">Public or private</entry>
 	<entry key="supportThemes">Themes</entry>
 	<entry key="supported">Yes</entry>
 	<entry key="notSupported">No</entry>
