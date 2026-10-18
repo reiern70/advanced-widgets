@@ -1,6 +1,17 @@
 /*
- * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).
- * All rights reserved.
+ * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -18,8 +29,25 @@ import { build } from 'vite';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'dist', 'com', 'antilia', 'widgets', 'demo', 'frameworks');
 
-const BANNER = '/*\n * Copyright (c) 2026 Ernesto Reinaldo Barreiro (reiern70@gmail.com).\n' +
-	' * All rights reserved.\n *\n * Built from frontend/demo, do not edit.\n */';
+const BANNER = [
+	'/*',
+	' * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)',
+	' *',
+	' * Licensed under the Apache License, Version 2.0 (the "License");',
+	' * you may not use this file except in compliance with the License.',
+	' * You may obtain a copy of the License at',
+	' *',
+	' *     http://www.apache.org/licenses/LICENSE-2.0',
+	' *',
+	' * Unless required by applicable law or agreed to in writing, software',
+	' * distributed under the License is distributed on an "AS IS" BASIS,',
+	' * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.',
+	' * See the License for the specific language governing permissions and',
+	' * limitations under the License.',
+	' *',
+	' * Built from frontend/demo, do not edit.',
+	' */'
+].join('\n');
 
 const DEMOS = [
 	{ entry: 'src/react.tsx', name: 'react-demo', plugins: [react()] },
