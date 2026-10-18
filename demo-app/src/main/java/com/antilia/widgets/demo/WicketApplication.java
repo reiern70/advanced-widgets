@@ -165,8 +165,9 @@ public class WicketApplication extends WebApplication
 		// environment holds: the license limits only the other applications using the library
 		Licensing.install(this, DemoLicense.key());
 
-		// the users and the accesses are in the database; the accounts the demo always has and
-		// those the server is started with are added when missing
+		// the users and the accesses are in the database; the accounts the demo always has get the
+		// passwords the server is started with, and the other accounts it is started with are added
+		// when missing
 		ApplicationContext database = newDatabase();
 		accounts = database.getBean(Accounts.class);
 		accesses = database.getBean(Accesses.class);

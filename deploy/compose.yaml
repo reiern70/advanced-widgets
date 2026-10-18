@@ -21,6 +21,10 @@ services:
       DATABASE_USER: ${DATABASE_USER:-widgets}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
       ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
+      # the passwords of the accounts the demo always has; one without a password is not added
+      ANTILIA_WIDGETS_ADMIN_PASSWORD: ${ANTILIA_WIDGETS_ADMIN_PASSWORD:-}
+      ANTILIA_WIDGETS_SEMEDY_PASSWORD: ${ANTILIA_WIDGETS_SEMEDY_PASSWORD:-}
+      ANTILIA_WIDGETS_WICKET_PASSWORD: ${ANTILIA_WIDGETS_WICKET_PASSWORD:-}
       # the emails confirming a registration; without SMTP_HOST registering is closed
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
