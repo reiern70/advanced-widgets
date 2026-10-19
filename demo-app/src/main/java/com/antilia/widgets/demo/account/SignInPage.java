@@ -138,7 +138,8 @@ public class SignInPage extends BasePage
 		form.add(new FormErrors("errors"));
 
 		form.add(new RequiredTextField<>("name", name).setLabel(new ResourceModel("name")));
-		form.add(new PasswordTextField("password", password).setLabel(new ResourceModel("password")));
+		form.add(new PasswordTextField("password", password).setLabel(new ResourceModel("password"))
+			.add(new ShowPasswordBehavior()));
 
 		WebMarkupContainer captcha = new WebMarkupContainer("captcha")
 		{

@@ -26,6 +26,8 @@
 	<entry key="register">Registrarse</entry>
 	<entry key="signIn">Iniciar sesión</entry>
 	<entry key="signOut">Cerrar sesión</entry>
+	<entry key="showPassword">Mostrar la contraseña</entry>
+	<entry key="hidePassword">Ocultar la contraseña</entry>
 	<entry key="license">Bajo la Apache License, versión 2.0.</entry>
 	<entry key="builtWith">Hecho con Apache Wicket</entry>
 	<entry key="category.examples">Ejemplos</entry>

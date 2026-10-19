@@ -54,6 +54,7 @@ import com.antilia.widgets.demo.Countries;
 import com.antilia.widgets.demo.FormErrors;
 import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.account.Accounts;
+import com.antilia.widgets.demo.account.ShowPasswordBehavior;
 import com.antilia.widgets.demo.data.JobRole;
 import com.antilia.widgets.demo.data.Language;
 import com.antilia.widgets.dropdown.Dropdown;
@@ -171,9 +172,11 @@ public class RegisterPage extends BasePage
 		PasswordTextField password = new PasswordTextField("password");
 		password.add(new StrongPasswordValidator())
 			.setLabel(new ResourceModel("password"));
+		password.add(new ShowPasswordBehavior());
 		form.add(password);
 		PasswordTextField repeated = new PasswordTextField("repeatedPassword", Model.of());
 		repeated.setLabel(new ResourceModel("repeatedPassword"));
+		repeated.add(new ShowPasswordBehavior());
 		form.add(repeated);
 		form.add(new EqualPasswordInputValidator(password, repeated));
 		form.add(new PasswordNotEmailValidator(email, password));
