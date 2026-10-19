@@ -23,11 +23,10 @@
 (function () {
 	'use strict';
 
-	// an eye, crossed out while the password is shown, in the color of the text around it
+	// an eye, in the color of the text around it, in the accent color while the password is shown
 	var ICON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">' +
 		'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/>' +
-		'<circle cx="12" cy="12" r="3"/>' +
-		'<line class="show-password__slash" x1="4" y1="4" x2="20" y2="20"/></svg>';
+		'<circle cx="12" cy="12" r="3"/></svg>';
 
 	function update(input, button) {
 		var shown = input.type === 'text';

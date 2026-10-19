@@ -551,8 +551,9 @@ a.brand { color: inherit; text-decoration: none; }
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
-.show-password__slash { display: none; }
-.show-password__button--shown .show-password__slash { display: inline; }
+/* the password is shown: the eye in the accent color */
+.show-password__button--shown,
+.show-password__button--shown:hover { color: var(--accent, var(--primary)); }
 
 /* the commit the application was built from, in demo mode (-Dwicket.demo=true) its branch too */
 .footer__built {

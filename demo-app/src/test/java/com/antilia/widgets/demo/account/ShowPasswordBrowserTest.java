@@ -29,6 +29,7 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.antilia.widgets.demo.SeleniumBrowser;
@@ -84,10 +85,15 @@ class ShowPasswordBrowserTest extends FrameworkAppsTestCase
 			"field " + field.getDimension() + " at " + field.getPoint() + ", eye " +
 				button.getDimension() + " at " + button.getPoint());
 
+		String color = eye().getCssValue("color");
 		eye().click();
 		assertEquals("text", password.getDomProperty("type"));
 		assertEquals(TYPED, password.getDomProperty("value"));
 		assertEquals("Hide password", eye().getDomAttribute("aria-label"));
+		// always the same eye, in the accent color while the password is shown
+		assertEquals(0, driver.findElements(By.cssSelector(".show-password__button line")).size());
+		new Actions(driver).moveToElement(password).perform();
+		assertTrue(!color.equals(eye().getCssValue("color")), color);
 
 		// by keyboard: the eye comes after the field
 		password.sendKeys(Keys.TAB);
