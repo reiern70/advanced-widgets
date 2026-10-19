@@ -85,9 +85,23 @@ public class SubMenu extends MenuItem implements IMenu
 	}
 
 	@Override
+	public SubMenu setIcon(IModel<IIcon> icon)
+	{
+		super.setIcon(icon);
+		return this;
+	}
+
+	@Override
 	public SubMenu setIcon(IIcon icon)
 	{
 		super.setIcon(icon);
+		return this;
+	}
+
+	@Override
+	public SubMenu setVisible(IModel<Boolean> visible)
+	{
+		super.setVisible(visible);
 		return this;
 	}
 
@@ -99,9 +113,30 @@ public class SubMenu extends MenuItem implements IMenu
 	}
 
 	@Override
+	public SubMenu setEnabled(IModel<Boolean> enabled)
+	{
+		super.setEnabled(enabled);
+		return this;
+	}
+
+	@Override
 	public SubMenu setEnabled(boolean enabled)
 	{
 		super.setEnabled(enabled);
+		return this;
+	}
+
+	@Override
+	public SubMenu setSelected(IModel<Boolean> selected)
+	{
+		super.setSelected(selected);
+		return this;
+	}
+
+	@Override
+	public SubMenu setSelected(boolean selected)
+	{
+		super.setSelected(selected);
 		return this;
 	}
 

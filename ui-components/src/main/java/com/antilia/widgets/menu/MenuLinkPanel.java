@@ -17,13 +17,14 @@ package com.antilia.widgets.menu;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
+import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
+import com.antilia.widgets.icon.IIcon;
 import com.antilia.widgets.theme.LookBehavior;
 import com.antilia.widgets.theme.LookPart;
 
@@ -42,7 +43,7 @@ public class MenuLinkPanel extends Panel
 
 	private final IMenuItem item;
 
-	private final AbstractLink link;
+	private final Component link;
 
 	/**
 	 * @param id
@@ -59,9 +60,14 @@ public class MenuLinkPanel extends Panel
 		{
 			throw new IllegalArgumentException("The item " + item + " has no link");
 		}
+		if (!(link instanceof MarkupContainer container))
+		{
+			throw new IllegalArgumentException("The link of the item " + item +
+				" must be a container, to hold its icon and its label");
+		}
 		add(link);
-		link.add(newIcon("icon", item));
-		link.add(newLabel("label", item));
+		container.add(newIcon("icon", item));
+		container.add(newLabel("label", item));
 		IModel<String> tooltip = item.getTooltip();
 		if (tooltip != null)
 		{
@@ -70,9 +76,9 @@ public class MenuLinkPanel extends Panel
 	}
 
 	/**
-	 * @return the link of the item
+	 * @return the link of the item, the component it created
 	 */
-	public AbstractLink getLink()
+	public Component getLink()
 	{
 		return link;
 	}
@@ -98,11 +104,15 @@ public class MenuLinkPanel extends Panel
 	 *            component id
 	 * @param item
 	 *            an item
-	 * @return the icon of the item, its markup as is, hidden when it has none
+	 * @return the icon of the item, its markup as is, read each time it renders; hidden when the
+	 *         item has none
 	 */
 	public static Component newIcon(String id, IMenuItem item)
 	{
-		return new Label(id, () -> item.getIcon() != null ? item.getIcon().getMarkup() : null)
+		return new Label(id, () -> {
+			IIcon icon = iconOf(item);
+			return icon != null ? icon.getMarkup() : null;
+		})
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -110,9 +120,18 @@ public class MenuLinkPanel extends Panel
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setVisible(item.getIcon() != null);
+				setVisible(iconOf(item) != null);
 			}
 		}.setEscapeModelStrings(false).add(new LookBehavior(LookPart.MENU_ICON));
+	}
+
+	/**
+	 * @return the icon of an item, {@code null} for none
+	 */
+	private static IIcon iconOf(IMenuItem item)
+	{
+		IModel<IIcon> icon = item.getIcon();
+		return icon != null ? icon.getObject() : null;
 	}
 
 	/**

@@ -15,9 +15,9 @@
  */
 package com.antilia.widgets.menu;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 import org.danekja.java.util.function.serializable.SerializableConsumer;
@@ -50,7 +50,7 @@ public abstract class AjaxMenuItem extends MenuItem
 	protected abstract void onClick(AjaxRequestTarget target);
 
 	@Override
-	public AbstractLink getLink(String id)
+	public Component getLink(String id)
 	{
 		return new AjaxLink<Void>(id)
 		{

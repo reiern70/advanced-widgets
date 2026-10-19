@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.wicket.Application;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
-import org.apache.wicket.Page;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -29,7 +28,6 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
-import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Fragment;
@@ -54,7 +52,7 @@ import com.github.openjson.JSONObject;
  * {@link LinkMenuItem} one, or opening a submenu of more items, an {@link IMenu} such as a
  * {@link SubMenu}, nested as deep as one likes. Items may have an icon before their label and a
  * tooltip, and {@link MenuSeparator separators} go between them. The menu renders each item with a
- * {@link MenuLinkPanel}, marks the item of the page shown as current ({@link IMenuItem#isCurrent}),
+ * {@link MenuLinkPanel}, marks the selected item as current ({@link IMenuItem#getSelected()}),
  * and those whose submenus hold it, and leaves out the items that do not show and the submenus none
  * of whose items do.
  * <p>
@@ -64,7 +62,7 @@ import com.github.openjson.JSONObject;
  * Escape closes them, a letter goes to the next item starting with it. The submenus pop up below
  * the items of a bar along the top and beside the others, on the side with room; those of a bar down
  * the side may {@link #setInline(boolean) open in place} instead, as in the side bar of an
- * application, the submenus holding the current item open from the start. The submenus of the bar
+ * application, the submenus holding the selected item open from the start. The submenus of the bar
  * may {@link #setOpenOnHover(boolean) open as the pointer rests on their items} too, as those of
  * the menus of web sites do.
  * <p>
@@ -253,7 +251,7 @@ public class Menu extends Panel
 	private Component newLink(String id, IMenuItem item, boolean top, String path)
 	{
 		MenuLinkPanel panel = new MenuLinkPanel(id, item);
-		AbstractLink link = panel.getLink();
+		Component link = panel.getLink();
 		link.setMarkupId(markupIdOf("item", path));
 		link.add(new LookBehavior()
 		{
@@ -263,7 +261,7 @@ public class Menu extends Panel
 			protected LookPart[] getParts(Component component)
 			{
 				return new LookPart[] { top ? LookPart.MENU_LINK : LookPart.MENU_SUBMENU_LINK,
-					isCurrent(item) ? LookPart.MENU_CURRENT : null };
+					item.isSelected() ? LookPart.MENU_CURRENT : null };
 			}
 		});
 		link.add(new Behavior()
@@ -274,7 +272,7 @@ public class Menu extends Panel
 			public void onComponentTag(Component component, ComponentTag tag)
 			{
 				tag.put("role", "menuitem");
-				if (isCurrent(item))
+				if (item.isSelected())
 				{
 					tag.put("aria-current", "page");
 				}
@@ -320,7 +318,7 @@ public class Menu extends Panel
 			protected LookPart[] getParts(Component component)
 			{
 				return new LookPart[] { depth == 0 ? LookPart.MENU_LINK : LookPart.MENU_SUBMENU_LINK,
-					holdsCurrent(submenu) ? LookPart.MENU_CURRENT_PARENT : null };
+					holdsSelected(submenu) ? LookPart.MENU_CURRENT_PARENT : null };
 			}
 		});
 		IModel<String> tooltip = submenu.getTooltip();
@@ -366,30 +364,21 @@ public class Menu extends Panel
 	}
 
 	/**
-	 * @return whether an item leads to the page the menu is on
+	 * @return whether an item is selected, or holds one that is in its submenus
 	 */
-	private boolean isCurrent(IMenuItem item)
+	private static boolean holdsSelected(IMenuItem item)
 	{
-		Page page = findPage();
-		return page != null && item.isCurrent(page);
+		return isShown(item) && (item.isSelected() || item instanceof IMenu submenu &&
+			submenu.getItems().stream().anyMatch(Menu::holdsSelected));
 	}
 
 	/**
-	 * @return whether an item leads to the page the menu is on, or holds one that does in its
-	 *         submenus
-	 */
-	private boolean holdsCurrent(IMenuItem item)
-	{
-		return isShown(item) && (isCurrent(item) || item instanceof IMenu submenu &&
-			submenu.getItems().stream().anyMatch(this::holdsCurrent));
-	}
-
-	/**
-	 * @return whether a submenu is open from the start: one holding the current item, open in place
+	 * @return whether a submenu is open from the start: one holding the selected item, open in
+	 *         place
 	 */
 	private boolean isExpanded(IMenu submenu)
 	{
-		return isInline() && submenu.isEnabled() && holdsCurrent(submenu);
+		return isInline() && submenu.isEnabled() && holdsSelected(submenu);
 	}
 
 	/**

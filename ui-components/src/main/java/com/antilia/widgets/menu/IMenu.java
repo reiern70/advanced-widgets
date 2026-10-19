@@ -17,7 +17,7 @@ package com.antilia.widgets.menu;
 
 import java.util.List;
 
-import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.Component;
 
 /**
  * An item of a {@link Menu} that opens a submenu of more items, which may be submenus too, as deep
@@ -40,7 +40,7 @@ public interface IMenu extends IMenuItem
 	 * @return {@code null}
 	 */
 	@Override
-	default AbstractLink getLink(String id)
+	default Component getLink(String id)
 	{
 		return null;
 	}

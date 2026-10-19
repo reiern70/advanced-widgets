@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.wicket.Component;
-import org.apache.wicket.Page;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -208,12 +207,6 @@ class LookSample extends Panel
 			protected void onClick(AjaxRequestTarget target)
 			{
 			}
-
-			@Override
-			public boolean isCurrent(Page page)
-			{
-				return current;
-			}
-		}.setIcon(icon);
+		}.setIcon(icon).setSelected(current);
 	}
 }

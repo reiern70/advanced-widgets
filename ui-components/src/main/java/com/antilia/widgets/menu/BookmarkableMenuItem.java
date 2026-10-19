@@ -15,16 +15,21 @@
  */
 package com.antilia.widgets.menu;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.Page;
-import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.core.request.handler.IPageClassRequestHandler;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.IRequestHandler;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * An item leading to a page that can be bookmarked, by a {@link BookmarkablePageLink}. On that page,
- * with the same parameters, the menu marks it as current.
+ * An item leading to a page that can be bookmarked, by a {@link BookmarkablePageLink}. It is
+ * {@link #getSelected() selected} while that page, with the same parameters, is the one requested,
+ * so that the menu marks it as current without being told; {@link #setSelected(IModel)} decides
+ * otherwise.
  *
  * @since 11.0.0
  */
@@ -61,6 +66,7 @@ public class BookmarkableMenuItem extends MenuItem
 		super(label);
 		this.pageClass = Args.notNull(pageClass, "pageClass");
 		this.parameters = parameters;
+		setSelected((IModel<Boolean>)this::leadsToTheRequestedPage);
 	}
 
 	/**
@@ -80,18 +86,21 @@ public class BookmarkableMenuItem extends MenuItem
 	}
 
 	@Override
-	public AbstractLink getLink(String id)
+	public Component getLink(String id)
 	{
 		return new BookmarkablePageLink<>(id, pageClass, parameters);
 	}
 
 	/**
-	 * @return whether the page is the one the item leads to, with the same parameters
+	 * @return whether the page requested, the one rendering or called via Ajax, is the one the item
+	 *         leads to, with the same parameters
 	 */
-	@Override
-	public boolean isCurrent(Page page)
+	private boolean leadsToTheRequestedPage()
 	{
-		return page != null && page.getClass().equals(pageClass) &&
+		RequestCycle cycle = RequestCycle.get();
+		IRequestHandler handler = cycle != null ? cycle.getActiveRequestHandler() : null;
+		return handler instanceof IPageClassRequestHandler page &&
+			pageClass.equals(page.getPageClass()) &&
 			PageParameters.equals(parameters, page.getPageParameters());
 	}
 }

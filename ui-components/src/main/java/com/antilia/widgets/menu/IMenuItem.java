@@ -15,8 +15,7 @@
  */
 package com.antilia.widgets.menu;
 
-import org.apache.wicket.Page;
-import org.apache.wicket.markup.html.link.AbstractLink;
+import org.apache.wicket.Component;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
 
@@ -32,7 +31,8 @@ import com.antilia.widgets.icon.IIcon;
  * <p>
  * The menu renders an item with a {@link MenuLinkPanel}: the link, with the icon and the label in
  * it and the tooltip as its title. An item of one's own returns any link of Wicket, such as a
- * DownloadLink.
+ * DownloadLink, or any other component on an {@code <a>}. The icon and whether the item shows, may
+ * be chosen and is selected are models, read each time the menu renders, so that they may change.
  *
  * @since 11.0.0
  */
@@ -52,53 +52,96 @@ public interface IMenuItem extends IDetachable
 	}
 
 	/**
-	 * @return the icon before the label; {@code null}, the default, for none
+	 * @return the icon before the label, read each time the menu renders, so that the item may show
+	 *         one icon or another; {@code null}, the default, or a model of {@code null} for none
 	 */
-	default IIcon getIcon()
+	default IModel<IIcon> getIcon()
 	{
 		return null;
 	}
 
 	/**
-	 * Creates the link of the item, which the menu puts the icon and the label in. Its markup is an
-	 * {@code <a>}.
+	 * Creates the component of the item, which the menu puts the icon and the label in: usually a
+	 * link, but any component whose markup is an {@code <a>} will do.
 	 *
 	 * @param id
-	 *            the id the link must have
-	 * @return the link
+	 *            the id the component must have
+	 * @return the component
 	 */
-	AbstractLink getLink(String id);
+	Component getLink(String id);
 
 	/**
-	 * @return whether the menu shows the item, {@code true} by default
+	 * @return whether the menu shows the item, read each time the menu renders; always
+	 *         {@code true} by default
+	 */
+	default IModel<Boolean> getVisible()
+	{
+		return ALWAYS;
+	}
+
+	/**
+	 * @return whether the user may choose the item, read each time the menu renders; always
+	 *         {@code true} by default: a disabled item shows, dimmed, and does nothing
+	 */
+	default IModel<Boolean> getEnabled()
+	{
+		return ALWAYS;
+	}
+
+	/**
+	 * @return whether the item shows: its {@link #getVisible() model} says so
 	 */
 	default boolean isVisible()
 	{
-		return true;
+		return isTrue(getVisible());
 	}
 
 	/**
-	 * @return whether the user may choose the item, {@code true} by default: a disabled item shows,
-	 *         dimmed, and does nothing
+	 * @return whether the user may choose the item: its {@link #getEnabled() model} says so
 	 */
 	default boolean isEnabled()
 	{
-		return true;
+		return isTrue(getEnabled());
 	}
 
 	/**
-	 * @param page
-	 *            the page the menu is on
-	 * @return whether the item leads to the page, which the menu marks as current, and the items
-	 *         whose submenus hold it; {@code false} by default
+	 * @return whether the item is the selected one, read each time the menu renders, which the menu
+	 *         marks as current, and the items whose submenus hold it; never by default. Each item
+	 *         says so of its own, so that several menus on a page, and items calling the server
+	 *         via Ajax, have each their own selection.
 	 */
-	default boolean isCurrent(Page page)
+	default IModel<Boolean> getSelected()
 	{
-		return false;
+		return NEVER;
+	}
+
+	/**
+	 * @return whether the item is selected: its {@link #getSelected() model} says so
+	 */
+	default boolean isSelected()
+	{
+		IModel<Boolean> selected = getSelected();
+		return selected != null && Boolean.TRUE.equals(selected.getObject());
 	}
 
 	@Override
 	default void detach()
 	{
+	}
+
+	/** The model of {@link #getVisible()} and {@link #getEnabled()} by default: always true. */
+	IModel<Boolean> ALWAYS = () -> Boolean.TRUE;
+
+	/** The model of {@link #getSelected()} by default: always false. */
+	IModel<Boolean> NEVER = () -> Boolean.FALSE;
+
+	/**
+	 * @param model
+	 *            a model of a flag, {@code null} counting as true
+	 * @return whether the flag is set: the model is {@code null} or holds {@code true}
+	 */
+	static boolean isTrue(IModel<Boolean> model)
+	{
+		return model == null || Boolean.TRUE.equals(model.getObject());
 	}
 }
