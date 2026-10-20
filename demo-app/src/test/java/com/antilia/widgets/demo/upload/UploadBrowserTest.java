@@ -48,7 +48,7 @@ import com.antilia.widgets.throttle.UploadSpeed;
  * script built from frontend/core: the files chosen in the pickers, the bars following the server
  * while it reads them slowly, a file breaking the limits held back until taken out of the list,
  * the guard stopping one Ajax button and letting the other go during an upload canceled via Ajax,
- * and the files dropped on the zones, two of one name among them. Runs with {@code -Pselenium}, see
+ * and the files dropped on the zones. Runs with {@code -Pselenium}, see
  * {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -282,23 +282,5 @@ class UploadBrowserTest extends JettyTestCase
 		driver.findElement(By.cssSelector("button[name=send]")).click();
 		wait.until(d -> received().startsWith(
 			"logo.svg 2 kB image/svg+xml Dropped into a form\n"));
-	}
-
-	@ParameterizedTest
-	@EnumSource(SeleniumBrowser.class)
-	void uploadsFilesOfOneNameToTheResource(SeleniumBrowser browser)
-	{
-		open(browser, UploadSpeed.QUARTER_MEGABYTE);
-		Cases.selectInWicket(wait, driver, "Drag and drop");
-
-		// as from two folders: the picker sends both, and the server keeps them apart
-		((JavascriptExecutor)driver).executeScript("const input = document.querySelectorAll(" +
-			"'.antilia-file-picker-drop-zone')[0].previousElementSibling;" +
-			"Wicket.Upload.FilePicker.of(input).drop([new File(['hi'], 'notes.txt', " +
-			"{type: 'text/plain'}), new File(['hello'], 'notes.txt', {type: 'text/plain'})]);");
-		wait.until(d -> "done".equals(state()));
-		wait.until(d -> received().lines().sorted().toList().equals(List.of(
-			"notes.txt 2 byte text/plain Dropped, to a resource",
-			"notes.txt 5 byte text/plain Dropped, to a resource")));
 	}
 }
