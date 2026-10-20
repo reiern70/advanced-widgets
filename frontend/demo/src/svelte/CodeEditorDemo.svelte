@@ -18,7 +18,8 @@
   sample, its text and the state the user left its editor in, bound, and gives the editor of a
   language the state again when the language is shown anew. The notes in Markdown show beside their
   preview in a split panel, in a box the user makes taller; a button hides the preview and shows it
-  again. The files open in tabs, which their editors tell of their changes not saved.
+  again, and a check box keeps it in step with the editor. The files open in tabs, which their
+  editors tell of their changes not saved.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -49,6 +50,7 @@
 	let position = $state<SplitSize>(50);
 	let collapsed = $state<SplitPane | null>(null);
 	let notesHeight = $state<number | null>(null);
+	let inStep = $state(false);
 	let files = $state<Sample[]>(filesOf(initial));
 	let filesMessage = $state(initial.texts.filesStart);
 
@@ -153,6 +155,9 @@
 							<Button label={collapsed === 'second' ? texts.showPreview : texts.hidePreview}
 								variant="secondary" size="small" aria-controls="svelte-notes-preview"
 								onclick={togglePreview} />
+							<label class="code-editor-demo__control">
+								<input type="checkbox" bind:checked={inStep} /> {texts.inStep}
+							</label>
 						</div>
 						<Resizable class="code-editor-demo__split" axis="vertical" minHeight={160}
 							label={config.handle} bind:height={notesHeight}>
@@ -162,12 +167,14 @@
 								restoreLabel={config.split.restore}
 								oncollapse={(next) => notesMessage = collapsedText(texts, next)}>
 								{#snippet first()}
-									<CodeEditor bind:value={notes.text} bind:state={notes.state} saved={notes.saved}
-										language="markdown" label={notes.file} lineWrapping resizable={false}
+									<CodeEditor id="svelte-notes-editor" bind:value={notes.text}
+										bind:state={notes.state} saved={notes.saved} language="markdown"
+										label={notes.file} lineWrapping resizable={false}
 										texts={config.editor} onsave={saveNotes} />
 								{/snippet}
 								{#snippet second()}
 									<MarkdownPreview id="svelte-notes-preview" value={notes.text}
+										editor="svelte-notes-editor" scrollWithEditor={inStep}
 										label={config.preview.label} placeholder={config.preview.placeholder} />
 								{/snippet}
 							</SplitPanel>

@@ -185,6 +185,17 @@ final class CodeSamples
 		1. Edit on the left
 		2. Read on the right
 		3. Save with `Ctrl+S`
+
+		## Keeping the preview in step
+
+		Tick *Keep the preview in step* and the preview follows the place you are at: move the
+		cursor, type or scroll the editor, and the part of the preview it matches comes into view.
+		Untick it, and each side scrolls on its own.
+
+		### In a long text
+
+		The longer the notes, the more it helps: on its own, the preview often shows another part
+		than the one being edited; in step, the heading you write under stays in sight beside you.
 		""";
 
 	private static final String LOG_TEXT = """

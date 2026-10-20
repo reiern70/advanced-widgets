@@ -18,8 +18,9 @@
  * The CodeEditor demo: a sample in each language the editor knows and in that of a log, whose
  * grammar the app plugs in, each kept by the app with the state the user left its editor in; check
  * boxes and drop-downs switching the options of the editor; notes in Markdown beside their preview,
- * in a split panel, a button hiding the preview and showing it again; and the files of a project in
- * closable tabs, an editor in each, marking its tab while it has changes not saved.
+ * in a split panel, a button hiding the preview and showing it again, a check box keeping it in
+ * step with the editor; and the files of a project in closable tabs, an editor in each, marking its
+ * tab while it has changes not saved.
  */
 
 import { codeEditorLanguages, registerLanguage, type CodeEditorState,
@@ -58,6 +59,8 @@ export interface CodeEditorDemoTexts extends DropdownTexts {
 	allSaved: string;
 	hidePreview: string;
 	showPreview: string;
+	/** The check box keeping the preview in step with the editor. */
+	inStep: string;
 	notesStart: string;
 	previewHidden: string;
 	editorHidden: string;
