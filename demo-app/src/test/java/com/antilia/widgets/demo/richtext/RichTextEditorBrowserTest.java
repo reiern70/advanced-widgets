@@ -39,8 +39,9 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
  * minified script built from frontend/core and under the demo's strict Content Security Policy, in
  * Wicket and in the React and Svelte apps: formatting from the toolbar and the keys, the menus of
  * the text style and the table from the keyboard, the form of a link, a paste of unsafe HTML, the
- * notes in Markdown, leaving a list with Escape and Tab, reading only, and the text and the
- * selection the server keeps, which the page shows again when opened anew.
+ * notes in Markdown, leaving a list with Escape and Tab, reading only, the text area hidden in the
+ * room of the editor until the script makes it, and the text and the selection the server keeps,
+ * which the page shows again when opened anew.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -224,6 +225,38 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
+	void hidesTheHtmlUntilTheEditorIsMadeInTheRoomItTakes(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		assertEquals("antilia-rich-text-editor-field", field().getDomAttribute("class"));
+
+		// a text area as the server renders it, which the script has not made an editor of yet
+		@SuppressWarnings("unchecked")
+		Map<String, Object> waiting = (Map<String, Object>)script("var area = " +
+			"document.createElement('textarea'); area.id = 'waiting';" +
+			"area.className = 'antilia-rich-text-editor-loading';" +
+			"area.value = '<h2>Not to be seen</h2>'; arguments[0].after(area);" +
+			"return { visibility: getComputedStyle(area).visibility, width: area.offsetWidth," +
+			" height: area.offsetHeight, editor: arguments[0].offsetHeight };", editor());
+		assertEquals("hidden", waiting.get("visibility"));
+		assertEquals(number(waiting.get("editor")), number(waiting.get("height")), 1);
+
+		// made an editor: shown, in the room the text area kept
+		@SuppressWarnings("unchecked")
+		Map<String, Object> made = (Map<String, Object>)script("Wicket.RichTextEditor.attach(" +
+			"'waiting', {}); var area = document.getElementById('waiting'), editor = " +
+			"area.parentElement; return { field: area.className, visibility: " +
+			"getComputedStyle(editor).visibility, width: editor.offsetWidth, height: " +
+			"editor.offsetHeight };");
+		assertEquals("antilia-rich-text-editor-field", made.get("field"));
+		assertEquals("visible", made.get("visibility"));
+		assertEquals(number(waiting.get("width")), number(made.get("width")), 1);
+		assertEquals(number(waiting.get("height")), number(made.get("height")), 1);
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
 	void theServerKeepsTheTextAndTheSelection(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");
@@ -271,6 +304,11 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	private Object script(String script, Object... arguments)
 	{
 		return ((JavascriptExecutor)driver).executeScript(script, arguments);
+	}
+
+	private static double number(Object value)
+	{
+		return ((Number)value).doubleValue();
 	}
 
 	private WebElement editor()

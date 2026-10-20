@@ -31,7 +31,9 @@
  * page of the user's changes with the events input, and change once the editor loses the focus,
  * as a text area does. It works on any other element too, an empty one React or Svelte renders,
  * which becomes the element of the editor; a text area in it, if any, is then the one the editor
- * keeps the text in.
+ * keeps the text in. A text area a server renders may have the class
+ * antilia-rich-text-editor-loading: while scripts run, the style sheet hides it in the room of the
+ * editor until the editor is made, so that a page arriving slowly does not show its HTML.
  *
  * What is selected, how far the text is scrolled and the size the user gave the editor are its
  * state (RichTextEditorState). The editor keeps it while hidden, in a tab that is not selected for
@@ -294,6 +296,8 @@ export interface RichTextEditorEventDetail {
 export const RICH_TEXT_EDITOR_CLASSES = Object.freeze({
 	editor: 'antilia-rich-text-editor',
 	field: 'antilia-rich-text-editor-field',
+	/** Of a text area until the editor is made of it, which the style sheet hides meanwhile. */
+	loading: 'antilia-rich-text-editor-loading',
 	readOnly: 'antilia-rich-text-editor-readonly',
 	disabled: 'antilia-rich-text-editor-disabled',
 	focused: 'antilia-rich-text-editor-focused'
@@ -610,6 +614,7 @@ export class RichTextEditor {
 		element.classList.toggle(RICH_TEXT_EDITOR_CLASSES.disabled, this.isDisabled());
 		const field = this.field;
 		if (field) {
+			field.classList.remove(RICH_TEXT_EDITOR_CLASSES.loading);
 			field.classList.add(...this.css('rich-text-editor-field').split(' '));
 			field.hidden = true;
 			field.tabIndex = -1;

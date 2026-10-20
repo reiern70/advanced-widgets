@@ -70,6 +70,9 @@ class RichTextEditorTest extends WicketTestCase
 		// escaped in the text area
 		assertEquals(HTML.replace("<", "&lt;").replace(">", "&gt;"), area.getValue());
 		assertEquals(page.editor.getMarkupId(), area.getAttribute("id"));
+		// hidden by the style sheet until the script makes the editor of it
+		assertEquals(RichTextEditor.LOADING_CLASS, area.getAttribute("class"));
+		assertEquals("antilia-rich-text-editor-loading", RichTextEditor.LOADING_CLASS);
 		tester.assertContains("antilia-rich-text-editor.*\\.js");
 		tester.assertContains("antilia-rich-text-editor.*\\.css");
 		tester.assertContains("antilia-resizable.*\\.css");

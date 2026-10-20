@@ -80,6 +80,29 @@
 	display: none;
 }
 
+/*
+ * the text area a server rendered, until the script makes the editor of it: hidden in the room
+ * the editor will take, so that a page arriving slowly shows no HTML and nothing moves once the
+ * editor is there. Without scripts the text area is shown, to type the text in.
+ */
+@media (scripting: enabled) {
+	textarea.antilia-rich-text-editor-loading {
+		display: block;
+		box-sizing: border-box;
+		width: 100%;
+		/* the font of the editor, which its height is measured in */
+		font: inherit;
+		height: var(--antilia-rich-text-editor-height, 20em);
+		min-height: 6em;
+		visibility: hidden;
+	}
+}
+
+/* rendered anew via Ajax inside the editor, which has its room already */
+.antilia-rich-text-editor > textarea.antilia-rich-text-editor-loading {
+	display: none;
+}
+
 /* the bar along the bottom, or the right edge, by which the user resizes the editor */
 .antilia-rich-text-editor.antilia-resizable-vertical,
 .antilia-rich-text-editor.antilia-resizable-both {
