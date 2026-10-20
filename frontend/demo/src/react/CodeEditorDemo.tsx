@@ -31,7 +31,8 @@ registerLogGrammar();
  * sample, its text and the state the user left its editor in, and gives the editor of a language
  * the state again when the language is shown anew. The notes in Markdown show beside their
  * preview in a split panel, in a box the user makes taller; a button hides the preview and shows it
- * again. The files open in tabs, which their editors tell of their changes not saved.
+ * again, and a check box keeps it in step with the editor. The files open in tabs, which their
+ * editors tell of their changes not saved.
  */
 export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 	const { texts } = config;
@@ -48,6 +49,7 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 	const [position, setPosition] = useState<SplitSize>(50);
 	const [collapsed, setCollapsed] = useState<SplitPane | null>(null);
 	const [notesHeight, setNotesHeight] = useState<number | null>(null);
+	const [inStep, setInStep] = useState(false);
 	const [files, setFiles] = useState<Sample[]>(() => filesOf(config));
 	const [filesMessage, setFilesMessage] = useState(texts.filesStart);
 	const sample = samples[language];
@@ -142,6 +144,7 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 								<Button label={collapsed === 'second' ? texts.showPreview : texts.hidePreview}
 									variant="secondary" size="small" aria-controls="react-notes-preview"
 									onClick={togglePreview} />
+								{check(texts.inStep, inStep, setInStep)}
 							</div>
 							<Resizable className="code-editor-demo__split" axis="vertical" minHeight={160}
 								label={config.handle} height={notesHeight}
@@ -155,11 +158,13 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 										setCollapsed(next);
 										setNotesMessage(collapsedText(texts, next));
 									}}>
-									<CodeEditor value={notes.text} saved={notes.saved} state={notes.state}
-										language="markdown" label={notes.file} lineWrapping resizable={false}
+									<CodeEditor id="react-notes-editor" value={notes.text} saved={notes.saved}
+										state={notes.state} language="markdown" label={notes.file} lineWrapping
+										resizable={false}
 										texts={config.editor} onChange={(text) => updateNotes({ text })}
 										onStateChange={(state) => updateNotes({ state })} onSave={saveNotes} />
 									<MarkdownPreview id="react-notes-preview" value={notes.text}
+										editor="react-notes-editor" scrollWithEditor={inStep}
 										label={config.preview.label} placeholder={config.preview.placeholder} />
 								</SplitPanel>
 							</Resizable>

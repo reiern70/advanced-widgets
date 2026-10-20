@@ -79,8 +79,10 @@ import com.github.openjson.JSONObject;
  * Notes in Markdown show beside their {@link MarkdownPreview preview}, in a {@link SplitPanel}
  * whose height the user resizes: the preview follows the text as the user types, in the browser,
  * and a button hides it, giving the editor all the room, and shows it again, collapsing the pane
- * from the server without rendering the panes again. The session keeps the notes, the state of
- * their editor, where the divider is, which pane is collapsed and the height given.
+ * from the server without rendering the panes again. A check box keeps the preview in step with
+ * the editor, telling the preview in the browser without rendering it again. The session keeps the
+ * notes, the state of their editor, where the divider is, which pane is collapsed, the height given
+ * and whether the preview keeps in step.
  * <p>
  * The files of a small project open in closable {@link Tabs}, an editor in each: a tab is marked
  * while its file has changes not saved, which the editor tells the tabs in the browser, and
@@ -337,7 +339,17 @@ public class CodeEditorPage extends DemoPage
 			{
 			}
 		});
-		MarkdownPreview preview = new MarkdownPreview("preview", notesEditor);
+		MarkdownPreview preview = new MarkdownPreview("preview", notesEditor)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setScrollWithEditor(notes().inStep);
+			}
+		};
 		notesSplit = new SplitPanel("notesSplit", SplitOrientation.HORIZONTAL, new IModel<>()
 		{
 			private static final long serialVersionUID = 1L;
@@ -413,6 +425,20 @@ public class CodeEditorPage extends DemoPage
 			.add(new ButtonBehavior(ButtonBehavior.Variant.SECONDARY, ButtonBehavior.Size.SMALL))
 			.setOutputMarkupId(true);
 		notesForm.add(togglePreview);
+		// the preview in step with the editor, or not, told in the browser: it stays where it is
+		notesForm.add(new CheckBox("inStep", LambdaModel.of(() -> notes().inStep, inStep -> {
+			notes().inStep = Boolean.TRUE.equals(inStep);
+			Session.get().dirty();
+		})).add(new AjaxFormComponentUpdatingBehavior("change")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				preview.setScrollWithEditor(notes().inStep, target);
+			}
+		}));
 
 		filesStatus = new Label("filesStatus", () -> filesMessage != null ? filesMessage :
 			getString("filesStart"));
@@ -604,8 +630,8 @@ public class CodeEditorPage extends DemoPage
 		JSONObject texts = FrameworkTabs.texts(this, "cases", "editorTitle", "notesTitle",
 			"filesTitle", "language", "resize", "lineNumbers", "readOnly", "selectable",
 			"lineWrapping", "save", "heardSave", "sizeOfPage", "sizeGiven", "unsaved", "allSaved",
-			"hidePreview", "showPreview", "previewHidden", "editorHidden", "bothShown", "filesLabel",
-			"filesStart", "closed", "saved");
+			"hidePreview", "showPreview", "inStep", "previewHidden", "editorHidden", "bothShown",
+			"filesLabel", "filesStart", "closed", "saved");
 		texts.put("notesStart", getString("appNotesStart"));
 		// the app, not the server, keeps the texts and the states
 		texts.put("start", getString("appStart")).put("heardFocus", getString("appHeardFocus"))
@@ -773,7 +799,8 @@ public class CodeEditorPage extends DemoPage
 
 	/**
 	 * The notes in Markdown, the state of their editor, and how they show: where the divider of
-	 * the split panel is, which pane is collapsed and the height given to its box.
+	 * the split panel is, which pane is collapsed, the height given to its box and whether the
+	 * preview keeps in step with the editor.
 	 */
 	static final class Notes implements Serializable
 	{
@@ -784,6 +811,8 @@ public class CodeEditorPage extends DemoPage
 		SplitState split;
 
 		ResizableSize size = ResizableSize.NONE;
+
+		boolean inStep;
 
 		Notes(CodeDocument document)
 		{

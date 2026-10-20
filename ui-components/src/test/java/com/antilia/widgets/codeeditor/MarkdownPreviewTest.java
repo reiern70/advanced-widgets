@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
@@ -61,6 +63,7 @@ class MarkdownPreviewTest extends WicketTestCase
 		assertEquals("Preview", options.getString("label"));
 		assertEquals("Nothing to preview", options.getString("placeholder"));
 		assertFalse(options.has("editor"));
+		assertFalse(options.has("scrollWithEditor"), "without an editor");
 		assertNull(preview.getEditor());
 		assertEquals("# Notes", preview.getText());
 	}
@@ -86,6 +89,31 @@ class MarkdownPreviewTest extends WicketTestCase
 
 		assertThrows(IllegalArgumentException.class, () -> new MarkdownPreview("preview",
 			(CodeEditor)null));
+	}
+
+	@Test
+	void keepsInStepWithItsEditorWhenAsked()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("# One"));
+		MarkdownPreview preview = new MarkdownPreview("preview", editor);
+		tester.startPage(new InStepTestPage(editor, preview));
+		assertFalse(preview.isScrollWithEditor());
+		assertFalse(options(preview).getBoolean("scrollWithEditor"));
+
+		// from the server, without rendering the preview again
+		tester.clickLink("toggle");
+		assertTrue(preview.isScrollWithEditor());
+		tester.assertContains("Wicket\\.MarkdownPreview\\.of\\(\"" + preview.getMarkupId() +
+			"\"\\);if\\(p\\)\\{p\\.configure\\(\\{\"scrollWithEditor\":true\\}\\);");
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.MarkdownPreview.attach"));
+		tester.clickLink("toggle");
+		assertFalse(preview.isScrollWithEditor());
+		tester.assertContains("p\\.configure\\(\\{\"scrollWithEditor\":false\\}\\)");
+
+		// rendered anew, as set
+		preview.setScrollWithEditor(true);
+		tester.startPage(tester.getLastRenderedPage());
+		assertTrue(options(preview).getBoolean("scrollWithEditor"));
 	}
 
 	@Test
@@ -125,6 +153,42 @@ class MarkdownPreviewTest extends WicketTestCase
 				tester.getLastResponseAsString());
 		assertTrue(matcher.find(), "the preview is attached");
 		return new JSONObject(matcher.group(1));
+	}
+
+	/**
+	 * A page with a link keeping the preview in step with its editor, or not.
+	 */
+	public static class InStepTestPage extends WebPage implements IMarkupResourceStreamProvider
+	{
+		private static final long serialVersionUID = 1L;
+
+		InStepTestPage(CodeEditor editor, MarkdownPreview preview)
+		{
+			Form<Void> form = new Form<>("form");
+			add(form);
+			form.add(editor);
+			add(preview);
+			add(new AjaxLink<Void>("toggle")
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void onClick(AjaxRequestTarget target)
+				{
+					preview.setScrollWithEditor(!preview.isScrollWithEditor(), target);
+				}
+			});
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream("<html><head></head><body><form wicket:id=\"form\">" +
+				"<textarea wicket:id=\"editor\"></textarea></form>" +
+				"<div wicket:id=\"preview\">[preview]</div><a wicket:id=\"toggle\">toggle</a>" +
+				"</body></html>");
+		}
 	}
 
 	public static class TestPage extends WebPage implements IMarkupResourceStreamProvider

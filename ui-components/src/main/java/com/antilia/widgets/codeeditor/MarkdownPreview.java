@@ -15,6 +15,7 @@
  */
 package com.antilia.widgets.codeeditor;
 
+import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -38,6 +39,11 @@ import com.antilia.widgets.theme.LookPart;
  * Following a {@link CodeEditor}, the preview shows its text and renders it again in the browser,
  * a frame later, each time it changes, without asking the server; the editor may be rendered
  * again via Ajax, and the preview follows it. Given a model instead, it shows the model's text.
+ * <p>
+ * {@link #setScrollWithEditor(boolean) Scrolling with the editor}, the preview keeps in step with
+ * it: as the user moves the cursor, types or scrolls the editor, the preview scrolls, in the
+ * browser, to the part matching the place in the editor; not while either is hidden, in a
+ * collapsed pane of a {@link com.antilia.widgets.split.SplitPanel} for example.
  * <p>
  * {@code Wicket.MarkdownPreview} from {@link CodeEditor#JS} renders the text with the grammar of
  * the editor, an element at a time, never parsing HTML: HTML in the text shows as text, and links
@@ -63,6 +69,8 @@ public class MarkdownPreview extends WebMarkupContainer
 	private IModel<String> label;
 
 	private IModel<String> placeholder;
+
+	private boolean scrollWithEditor;
 
 	/**
 	 * A preview of the text of a model.
@@ -165,6 +173,49 @@ public class MarkdownPreview extends WebMarkupContainer
 		return this;
 	}
 
+	/**
+	 * @return whether the preview keeps in step with its editor
+	 */
+	public boolean isScrollWithEditor()
+	{
+		return scrollWithEditor;
+	}
+
+	/**
+	 * @param scrollWithEditor
+	 *            whether the preview keeps in step with its editor: as the user moves the cursor,
+	 *            types or scrolls the editor, the preview scrolls to the part matching the place
+	 *            in the editor; {@code false} by default, each scrolling on its own. For a preview
+	 *            following an editor only.
+	 * @return {@code this}
+	 */
+	public MarkdownPreview setScrollWithEditor(boolean scrollWithEditor)
+	{
+		this.scrollWithEditor = scrollWithEditor;
+		return this;
+	}
+
+	/**
+	 * Keeps the preview in step with its editor, or not, from the server: tells the preview in the
+	 * browser, without rendering it again, so that it stays where the user scrolled it. Kept in
+	 * step, it comes in step at once.
+	 *
+	 * @param scrollWithEditor
+	 *            whether the preview keeps in step with its editor
+	 * @param target
+	 *            the Ajax request target
+	 * @return {@code this}
+	 * @see #setScrollWithEditor(boolean)
+	 */
+	public MarkdownPreview setScrollWithEditor(boolean scrollWithEditor, AjaxRequestTarget target)
+	{
+		setScrollWithEditor(scrollWithEditor);
+		target.appendJavaScript("(function(){var p=Wicket.MarkdownPreview&&" +
+			"Wicket.MarkdownPreview.of(" + JSONObject.quote(getMarkupId()) + ");if(p){p.configure(" +
+			new JSONObject().put("scrollWithEditor", scrollWithEditor) + ");}})();");
+		return this;
+	}
+
 	@Override
 	protected void onComponentTag(ComponentTag tag)
 	{
@@ -200,7 +251,7 @@ public class MarkdownPreview extends WebMarkupContainer
 				"Nothing to preview"));
 		if (editor != null)
 		{
-			options.put("editor", editor.getMarkupId());
+			options.put("editor", editor.getMarkupId()).put("scrollWithEditor", scrollWithEditor);
 		}
 		return options;
 	}
