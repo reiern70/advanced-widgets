@@ -17,15 +17,14 @@
 
   The words of the errors of the uploads of an UploadToResourceField, which Wicket's
   FileUploadToResourceField looks for with the limits of the field: ${maxSize}, ${fileMaxSize} and
-  ${fileCountMax}. Wicket's own words of uploadFailed expect an exception, which the field does not
-  have.
+  ${fileCountMax}. uploadConnectionLost is what the field tells when the request got no answer, the
+  server and the progress alike.
 -->
 <properties>
 	<entry key="wicket.no.files.selected">Nothing to upload: no files were chosen.</entry>
 	<entry key="uploadTooLarge">The files weigh more than ${maxSize} together, the most sent at once.</entry>
 	<entry key="uploadSingleFileTooLarge">A file weighs more than ${fileMaxSize}, the most for a file.</entry>
 	<entry key="uploadTooManyFiles">More than ${fileCountMax} files, the most sent at once.</entry>
-	<entry key="uploadFailed">The upload failed.</entry>
+	<entry key="uploadToResourceFailed">The upload failed.</entry>
 	<entry key="uploadConnectionLost">The connection to the server broke off during the upload.</entry>
-	<entry key="uploadSameName">Several files have the same name: the server keeps one of each name.</entry>
 </properties>

@@ -53,8 +53,7 @@ import com.github.openjson.JSONObject;
  * <p>
  * The picker knows the limits the server sets on uploads, those of the form, of its root form, or
  * of an {@link UploadToResourceField}: the most the files weigh together, the most a file weighs
- * and the most files at once, and for a field uploading to a resource that the folder its files go
- * to keeps one file of each name. It tells at once which the files chosen break, and keeps them from
+ * and the most files at once. It tells at once which the files chosen break, and keeps them from
  * being sent, with the form posted the usual way or by Ajax, or by the field, rather than letting
  * the server refuse them once they were sent, which a browser may not even hear of. While its files
  * are being sent it lets nothing change. Without JavaScript the native input is shown.
@@ -220,8 +219,7 @@ public class FilePickerBehavior extends Behavior
 		putLimits(component, options);
 		JSONObject texts = new JSONObject();
 		for (String key : new String[] { "choose", "chooseMany", "drop", "dropMany", "browse",
-			"none", "chosen", "clear", "rejected", "tooLarge", "tooMany", "tooMuch", "sameName",
-			"remove" })
+			"none", "chosen", "clear", "rejected", "tooLarge", "tooMany", "tooMuch", "remove" })
 		{
 			texts.put(key, component.getString("FilePicker." + key));
 		}
@@ -238,8 +236,6 @@ public class FilePickerBehavior extends Behavior
 		if (component instanceof FileUploadToResourceField field)
 		{
 			putLimits(options, field.getMaxSize(), field.getFileMaxSize(), field.getFileCountMax());
-			// its files go to a folder, by name
-			options.put("uniqueNames", true);
 			return;
 		}
 		Form<?> form = Form.findForm(component);

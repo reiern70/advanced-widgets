@@ -143,7 +143,6 @@
 	<entry key="FilePicker.tooLarge">{0}: größer als {1}, das Höchste für eine Datei</entry>
 	<entry key="FilePicker.tooMany">{0} Dateien, mehr als die {1}, die auf einmal gehen</entry>
 	<entry key="FilePicker.tooMuch">{0} zusammen, mehr als die {1}, die auf einmal gehen</entry>
-	<entry key="FilePicker.sameName">{0}: mehrere Dateien dieses Namens, der Server behält eine</entry>
 	<entry key="FilePicker.remove">{0} entfernen</entry>
 	<entry key="UploadProgressBar.starting">Der Upload beginnt…</entry>
 	<entry key="UploadProgressBar.sent">{0} von {1}</entry>
