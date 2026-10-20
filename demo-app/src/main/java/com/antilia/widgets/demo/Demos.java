@@ -41,6 +41,7 @@ import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.popover.PopoversPage;
 import com.antilia.widgets.demo.progress.ProgressBarPage;
 import com.antilia.widgets.demo.resizable.ResizablePage;
+import com.antilia.widgets.demo.richtext.RichTextEditorPage;
 import com.antilia.widgets.demo.scrollbar.ScrollbarPage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.tabs.TabsPage;
@@ -124,6 +125,7 @@ public final class Demos
 		new Demo("downloads", "forms", DownloadsPage.class, false),
 		new Demo("upload", "forms", UploadPage.class, false),
 		new Demo("codeEditor", "forms", CodeEditorPage.class, true),
+		new Demo("richTextEditor", "forms", RichTextEditorPage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true),
 		new Demo("resizable", "layout", ResizablePage.class, true),

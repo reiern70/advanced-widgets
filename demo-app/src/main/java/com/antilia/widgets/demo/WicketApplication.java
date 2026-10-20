@@ -77,6 +77,7 @@ import com.antilia.widgets.demo.palette.PalettePage;
 import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.codeeditor.CodeEditorPage;
 import com.antilia.widgets.demo.resizable.ResizablePage;
+import com.antilia.widgets.demo.richtext.RichTextEditorPage;
 import com.antilia.widgets.demo.popover.PopoversPage;
 import com.antilia.widgets.demo.tabs.TabsPage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
@@ -287,6 +288,7 @@ public class WicketApplication extends WebApplication
 		mountPage("downloads", DownloadsPage.class);
 		mountPage("upload", UploadPage.class);
 		mountPage("code-editor", CodeEditorPage.class);
+		mountPage("rich-text-editor", RichTextEditorPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
 		mountPage("resizable", ResizablePage.class);

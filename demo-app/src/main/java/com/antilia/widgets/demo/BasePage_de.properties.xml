@@ -73,6 +73,8 @@
 	<entry key="demo.upload.description">Dateien, in einem Formular, per Ajax oder an eine Ressource gesendet, mit einer Schaltfläche des Themes ausgewählt oder auf einer Fläche abgelegt, mit einem Fortschrittsbalken des Themes, einem Schutz, der den Benutzer auf der Seite hält, und einer Möglichkeit, die Uploads zu verlangsamen.</entry>
 	<entry key="demo.codeEditor">Code-Editor</entry>
 	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown oder einer eigenen Grammatik, in den Farben des Themas hervorgehoben: Der Server behält Text, Cursor, Auswahl und Größe, und die Tabs, in denen er liegt, wissen von seinen ungespeicherten Änderungen. Markdown steht neben seiner Live-Vorschau.</entry>
+	<entry key="demo.richTextEditor">Rich-Text-Editor</entry>
+	<entry key="demo.richTextEditor.description">Text mit Überschriften, Listen, Links, Tabellen, Bildern und Ausrichtung, aus einer eigenen Werkzeugleiste der Komponenten: Tiptap, in den Farben des Themas. Der Server bereinigt das HTML, bevor er es behält, mit Cursor, Auswahl und Größe; oder der Editor behält Markdown.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Themes, in jedem Browser gleich, über dem nativen Scrollen gezeichnet, sodass Mausrad, Tasten und Touch wie immer funktionieren, und sie folgen per Ajax geändertem Inhalt.</entry>
 	<entry key="demo.splitPanel">Geteiltes Panel</entry>

@@ -275,6 +275,54 @@
 	box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
 }
 
+/*
+ * A rich text editor is Bootstrap's .form-control too, its toolbar groups of Bootstrap's small
+ * outlined buttons, its menus dropdown-menus; the text fills it without the padding of a field,
+ * above the bar resizing it
+ */
+.antilia-look-bootstrap .antilia-rich-text-editor.form-control {
+	padding: 0 var(--antilia-rich-text-bar-right, 0) var(--antilia-rich-text-bar-bottom, 0) 0;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.antilia-look-bootstrap .antilia-rich-text-editor.form-control:focus-within {
+	border-color: color-mix(in srgb, var(--antilia-theme-accent) 50%, var(--antilia-theme-surface));
+	box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
+}
+
+.antilia-look-bootstrap .antilia-rich-text-toolbar.btn-toolbar > .antilia-rich-text-group {
+	padding-left: 0;
+	border-left: 0;
+}
+
+.antilia-look-bootstrap .antilia-rich-text-tool.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+/* a tool with a menu is in a box of its own, out of reach of btn-group-sm */
+.antilia-look-bootstrap .antilia-rich-text-tool-box > .antilia-rich-text-tool.btn {
+	--bs-btn-padding-y: 0.25rem;
+	--bs-btn-padding-x: 0.5rem;
+	--bs-btn-font-size: 0.875rem;
+	--bs-btn-border-radius: var(--bs-border-radius-sm);
+}
+
+.antilia-look-bootstrap .antilia-rich-text-tool.btn > svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+.antilia-look-bootstrap .antilia-rich-text-tool.btn[aria-disabled="true"] {
+	opacity: 0.45;
+}
+
+.antilia-look-bootstrap .antilia-rich-text-menu.dropdown-menu:not([hidden]) {
+	display: block;
+}
+
 /* the buttons in the header of a collapsible panel, on its primary color */
 .antilia-look-bootstrap .antilia-collapsible-actions .btn {
 	--bs-btn-color: var(--antilia-theme-on-primary);

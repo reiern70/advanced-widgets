@@ -67,6 +67,8 @@
 		<!-- as in deploy/Dockerfile; its ASM reads the Java 24 classes of Spring 7 -->
 		<jetty.version>11.0.26</jetty.version>
 		<jackson.version>3.2.3</jackson.version>
+		<!-- cleans the HTML of the rich text editor on the server -->
+		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
 		<bootstrap.version>5.3.8</bootstrap.version>
 		<junit.version>5.13.4</junit.version>
@@ -95,6 +97,11 @@
 				<groupId>com.antilia.widgets</groupId>
 				<artifactId>ui-components</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+				<artifactId>owasp-java-html-sanitizer</artifactId>
+				<version>${owasp-html-sanitizer.version}</version>
 			</dependency>
 
 			<!-- WICKET DEPENDENCIES -->

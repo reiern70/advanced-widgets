@@ -28,6 +28,19 @@ export type { CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage, CodeEdit
 export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
 	renderMarkdown } from './markdown-preview.js';
 export type { MarkdownPreviewOptions } from './markdown-preview.js';
+export { RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RichTextEditor,
+	richTextEditor, richTextExtensions, registerRichTextExtension } from './rich-text-editor.js';
+export type { RichTextEditorEventDetail, RichTextEditorKit, RichTextEditorOptions,
+	RichTextEditorSelection, RichTextEditorState, RichTextEditorStateChange, RichTextExtension,
+	RichTextExtensionLoader } from './rich-text-editor.js';
+export { DEFAULT_HEADING_LEVELS, isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml,
+	RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
+	RICH_TEXT_NOT_IN_MARKDOWN } from './rich-text-schema.js';
+export type { HeadingLevel, RichTextAlignment, RichTextFeature,
+	RichTextFormat } from './rich-text-schema.js';
+export { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, RICH_TEXT_BUBBLE_TOOLS,
+	RICH_TEXT_ICONS, RICH_TEXT_TOOLS, shortcutText } from './rich-text-toolbar.js';
+export type { RichTextEditorTexts, RichTextTool } from './rich-text-toolbar.js';
 export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,

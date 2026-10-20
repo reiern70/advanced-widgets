@@ -29,6 +29,13 @@ export { Dropdown } from './Dropdown.js';
 export type { DropdownOption, DropdownProps } from './Dropdown.js';
 export { MarkdownPreview } from './MarkdownPreview.js';
 export type { MarkdownPreviewProps } from './MarkdownPreview.js';
+export { RichTextEditor } from './RichTextEditor.js';
+export type { RichTextEditorHandle, RichTextEditorProps } from './RichTextEditor.js';
+export { DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, registerRichTextExtension, RICH_TEXT_EDITOR_EVENTS,
+	RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RICH_TEXT_TOOLS } from '@antilia/core';
+export type { HeadingLevel, RichTextEditorKit, RichTextEditorSelection, RichTextEditorState,
+	RichTextEditorStateChange, RichTextEditorTexts, RichTextExtension, RichTextExtensionLoader,
+	RichTextFeature, RichTextFormat, RichTextTool } from '@antilia/core';
 export { Resizable } from './Resizable.js';
 export type { ResizableHandle, ResizableProps } from './Resizable.js';
 export type { ResizableSize, ResizeAxis } from '@antilia/core';

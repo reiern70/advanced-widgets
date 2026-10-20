@@ -46,6 +46,12 @@
 			<artifactId>wicket-native-websocket-core</artifactId>
 		</dependency>
 
+		<!-- cleans the HTML of the rich text editor: RichTextPolicy -->
+		<dependency>
+			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+			<artifactId>owasp-java-html-sanitizer</artifactId>
+		</dependency>
+
 		<!-- JSON DEPENDENCIES (only needed by JacksonJsonSerializer) -->
 		<dependency>
 			<groupId>tools.jackson.core</groupId>

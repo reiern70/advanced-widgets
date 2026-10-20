@@ -32,6 +32,7 @@ import { CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, CodeEditor, codeEditorLanguages
 	type CodeEditorOptions, type CodeEditorState, type CodeEditorStateChange } from '../code-editor.js';
 import { MarkdownPreview } from '../markdown-preview.js';
 import { useWicketHost, wicket } from './host.js';
+import { sendState, type Parameter } from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and where the server hears of the state. */
 interface WicketCodeEditorOptions extends CodeEditorOptions {
@@ -39,35 +40,6 @@ interface WicketCodeEditorOptions extends CodeEditorOptions {
 	stateUrl?: string;
 	/** The name the text area posts the text under, which the text goes to the server under too. */
 	inputName?: string;
-}
-
-interface WicketAjax {
-	post(attributes: Record<string, unknown>): void;
-	baseUrl?: string;
-}
-
-/** A parameter of a request, as Wicket.Ajax takes them. */
-interface Parameter {
-	name: string;
-	value: string;
-}
-
-/**
- * Sends the server the state and maybe the text: via Ajax, or in a beacon as the page goes, which
- * Wicket takes as Ajax by its parameters.
- */
-function send(id: string, url: string, parameters: Parameter[], leaving: boolean): void {
-	const ajax = window.Wicket?.Ajax as WicketAjax | undefined;
-	if (leaving && typeof navigator.sendBeacon === 'function') {
-		const body = new URLSearchParams();
-		parameters.forEach((parameter) => body.append(parameter.name, parameter.value));
-		body.append('wicket-ajax-baseurl', ajax?.baseUrl ?? '');
-		navigator.sendBeacon(url + (url.includes('?') ? '&' : '?') + 'wicket-ajax=true', body);
-		return;
-	}
-	// in the channel of the page's other requests, after them: the state and the text the editor
-	// had as the user went on, to a check box changing the options for example
-	ajax?.post({ u: url, c: id, ep: parameters });
 }
 
 const WicketCodeEditor = {
@@ -88,7 +60,7 @@ const WicketCodeEditor = {
 			if (change.changed && inputName && editor) {
 				parameters.push({ name: inputName, value: editor.getValue() });
 			}
-			send(id, stateUrl, parameters, change.leaving);
+			sendState(id, stateUrl, parameters, change.leaving);
 			rest.onStateChange?.(state, change);
 		} : rest.onStateChange;
 		editor = CodeEditor.attach(id, { ...rest, onStateChange });
