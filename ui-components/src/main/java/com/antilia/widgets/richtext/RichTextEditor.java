@@ -28,6 +28,7 @@ import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -74,8 +75,10 @@ import com.antilia.widgets.resizable.ResizeAxis;
  * fires {@code input} as the user types and {@code change} once the editor loses the focus, as a
  * text area does, so the Ajax behaviors listening to them work as with one. The editor fires its
  * own events too, {@link RichTextEditorEvent}, which {@link RichTextEditorEventBehavior}s hear of:
- * the focus got and lost, the selection, Ctrl+S, the size changed. Without JavaScript the text
- * area is shown.
+ * the focus got and lost, the selection, Ctrl+S, the size changed. Until the script makes the
+ * editor, the text area is hidden in the room the editor takes ({@link #LOADING_CLASS}), so that a
+ * page arriving slowly does not show the HTML of the text. Without JavaScript the text area is
+ * shown.
  * <p>
  * The editor tells the {@link com.antilia.widgets.tabs.Tabs tabs} and the
  * {@link com.antilia.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -124,6 +127,13 @@ public class RichTextEditor extends TextArea<String>
 	/** The style sheet of the editor, and of the text a {@link RichTextView} shows. */
 	public static final ResourceReference CSS = new CssResourceReference(RichTextEditor.class,
 		"antilia-rich-text-editor.css");
+
+	/**
+	 * The class of the text area until the script makes the editor of it. While scripts run,
+	 * {@link #CSS} hides a text area of this class and keeps the room of the editor for it, so that
+	 * a page arriving slowly shows no HTML; without scripts the text area is shown.
+	 */
+	public static final String LOADING_CLASS = "antilia-rich-text-editor-loading";
 
 	/** The height the user resizes the editor from at least, in pixels, unless set otherwise. */
 	public static final int DEFAULT_MIN_HEIGHT = 96;
@@ -735,6 +745,13 @@ public class RichTextEditor extends TextArea<String>
 	{
 		this.sanitizer = sanitizer;
 		return this;
+	}
+
+	@Override
+	protected void onComponentTag(ComponentTag tag)
+	{
+		super.onComponentTag(tag);
+		tag.append("class", LOADING_CLASS, " ");
 	}
 
 	@Override

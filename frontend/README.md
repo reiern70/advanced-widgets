@@ -169,7 +169,10 @@ from which a Wicket page builds a `Mark` or a `Node`. As the code editor does, i
 text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
 `data-modified`, keeps its state (`RichTextEditorState`: the selection, the scrolling and the size)
 while hidden and gives it to `onStateChange`, and goes on as it was when Wicket renders it anew.
-React's `RichTextEditor` takes `value` and `state` and calls back; Svelte's binds `value`, `state`
+The text area Wicket renders has the class `antilia-rich-text-editor-loading`
+(`RICH_TEXT_EDITOR_CLASSES.loading`) until the editor is made of it: while scripts run, the style
+sheet hides it in the room of the editor, so that a page arriving slowly shows no HTML, and without
+scripts it is shown. React's `RichTextEditor` takes `value` and `state` and calls back; Svelte's binds `value`, `state`
 and `modified`. The browser's HTML is never to be trusted: Wicket's `RichTextEditor` cleans it on
 the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its model gets it, keeping
 what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what

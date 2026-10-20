@@ -58,7 +58,8 @@
 	color: var(--muted);
 }
 
-.rich-text-demo .antilia-rich-text-editor {
+/* set on the demo, so that a text area waiting for its editor takes the editor's room too */
+.rich-text-demo {
 	--antilia-rich-text-editor-height: 26em;
 }
 

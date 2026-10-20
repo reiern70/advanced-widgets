@@ -19,7 +19,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TextSelection } from '@tiptap/pm/state';
 
 import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml,
-	registerRichTextExtension,
+	registerRichTextExtension, RICH_TEXT_EDITOR_CLASSES,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RichTextEditor,
 	richTextEditor, richTextExtensions, setHost, shortcutText, standaloneHost,
 	type Host } from '../src/index.js';
@@ -123,6 +123,18 @@ describe('RichTextEditor', () => {
 		expect(field.defaultValue).toBe(ARTICLE);
 		expect(editor.isModified()).toBe(true);
 		expect(element.getAttribute('data-modified')).toBe('true');
+	});
+
+	it('takes away the class of a text area waiting for it, which then stays shown', () => {
+		const field = textArea(ARTICLE, ' class="mine antilia-rich-text-editor-loading"');
+		expect(RICH_TEXT_EDITOR_CLASSES.loading).toBe('antilia-rich-text-editor-loading');
+
+		const editor = new RichTextEditor(field);
+		expect(field.className).toBe('mine antilia-rich-text-editor-field');
+
+		editor.destroy();
+		expect(field.className).toBe('mine');
+		expect(field.hidden).toBe(false);
 	});
 
 	it('writes the HTML its own way, and has no changes for that', () => {
