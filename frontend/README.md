@@ -20,7 +20,7 @@ built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
 split panel, the tabs, the menus, the popovers, the notifications, the desktop, the uploads (`upload.ts`, built as
-`antilia-upload.js`), the resizable elements, the code editor and the preview of Markdown, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
+`antilia-upload.js`), the resizable elements, the code editor and the preview of Markdown, the rich text editor, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use; `setButtonBusy()` in `button.ts`, built as `antilia-button.js`, shows a
 button busy with a spinner while it ignores clicks, for the downloads of Wicket's `AjaxDownloadButton`
@@ -28,9 +28,9 @@ and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `Tab
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
 `DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Notifications`, `Desktop` with its
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
-`DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
-`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `desktop`, `resizable`, `codeEditor` and
-`markdownPreview` also work as Svelte actions, and `Clipboard.install()` and
+`RichTextEditor`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
+`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `desktop`, `resizable`, `codeEditor`,
+`markdownPreview` and `richTextEditor` also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
@@ -133,6 +133,38 @@ React's and Svelte's `MarkdownPreview` take `value`, `label` and `placeholder`. 
 `MarkdownPreview` follows a `CodeEditor`, or shows the text of its model, in the browser alone.
 `SplitPanel.collapse(pane, target)` collapses a pane of a collapsible split panel from the server,
 without rendering its panes again: the demo's button hiding the preview beside the editor.
+
+The rich text editor (`rich-text-editor.ts`, built as `antilia-rich-text-editor.js` for Wicket's
+`RichTextEditor`) is Tiptap, on ProseMirror, with a toolbar of the components' own
+(`rich-text-toolbar.ts`), in the colors of the theme and the look of the page: Tiptap has none.
+The text holds headings, bold, italic, underlined, struck and code text, links, bulleted, numbered
+and task lists, quotes, code blocks, rules, tables, images and alignment, the features
+(`RICH_TEXT_FEATURES`, `rich-text-schema.ts`), all of them unless the page gives fewer
+(`features`); a feature left out is not in the schema, so a paste brings its text alone, and its
+tools do not show. The toolbar is the page's, in groups (`toolbar`, `DEFAULT_RICH_TEXT_TOOLBAR`;
+false for none), a WAI-ARIA toolbar the arrow keys move along; the text style and the table open a
+menu, the link and the image a form in a popover; `bubbleMenu` adds the inline formats over a
+selection. The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types,
+Ctrl+K edits the link, Ctrl+S calls `onSave`, and Escape, then Tab, leaves the editor even in a
+list. The text is HTML by default, or Markdown (`format: 'markdown'`, Tiptap's Markdown extension;
+underlined text and alignment are then left out, Markdown has no syntax for them) or Tiptap's
+JSON. The HTML has no style attribute: text aligns by classes (`RICH_TEXT_ALIGN_CLASSES`), tables
+have no widths, and Tiptap's own style sheet is in `rich-text-editor.css` instead of a style element,
+so the editor needs no `'unsafe-inline'`. Links and images go only to http, https and mailto
+addresses, or relative ones (`isSafeUrl`). The editor writes the text its own way, `<b>` as
+`<strong>`, and tells changes against the text saved written so too. `placeholder`, `readOnly`,
+`limit` and `count` (the characters and the words below the text) do as their names say;
+`extensions` take Tiptap's extensions or the names of those `registerRichTextExtension(name,
+loader)` registered, the loader given the classes of Tiptap of the editor (`RICH_TEXT_EDITOR_KIT`),
+from which a Wicket page builds a `Mark` or a `Node`. As the code editor does, it keeps the text in a
+text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
+`data-modified`, keeps its state (`RichTextEditorState`: the selection, the scrolling and the size)
+while hidden and gives it to `onStateChange`, and goes on as it was when Wicket renders it anew.
+React's `RichTextEditor` takes `value` and `state` and calls back; Svelte's binds `value`, `state`
+and `modified`. The browser's HTML is never to be trusted: Wicket's `RichTextEditor` cleans it on
+the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its model gets it, keeping
+what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what
+the React or Svelte editor gives cleans it so.
 
 The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `Tabs`) show a list of tabs, along
 the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of the

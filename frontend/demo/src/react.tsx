@@ -39,6 +39,7 @@ import { NotificationsDemo } from './react/NotificationsDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ResizableDemo } from './react/ResizableDemo.js';
+import { RichTextEditorDemo } from './react/RichTextEditorDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 import { SplitPanelDemo } from './react/SplitPanelDemo.js';
 import { PopoversDemo } from './react/PopoversDemo.js';
@@ -66,6 +67,7 @@ startApps('react', {
 	splitPanel: app(SplitPanelDemo),
 	resizable: app(ResizableDemo),
 	codeEditor: app(CodeEditorDemo),
+	richTextEditor: app(RichTextEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

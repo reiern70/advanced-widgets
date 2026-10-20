@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Editor de texto enriquecido</entry>
+	<entry key="explanation">&lt;p&gt;RichTextEditor de ui-components es un área de texto mostrada como editor de texto enriquecido, Tiptap, en los colores del tema y el aspecto de la página. Su barra de herramientas da formato al texto: títulos, negrita, cursiva, subrayado, tachado, código, enlaces, listas, listas de tareas, citas, bloques de código, líneas, tablas, imágenes y alineación. Las teclas de siempre también funcionan, Ctrl+B, Ctrl+I o Ctrl+K para un enlace, y las marcas de Markdown al escribir: # y un espacio para un título, - para una lista, **negrita**. La barra es una parada del tabulador: las flechas se mueven por ella. Escape, y luego Tab, sale del editor, incluso en una lista.&lt;/p&gt;&lt;p&gt;El servidor guarda el artículo en la sesión: su HTML, que sigue mientras escribe, y el estado de su editor, lo que seleccionó, cuánto se desplazó y el tamaño que le dio con la barra de abajo. Nunca se fía del HTML del navegador: lo limpia antes de guardarlo, quedándose solo con lo que escriben las funciones del editor. Debajo del editor, el artículo tal como lo muestra una página una vez guardado, y el HTML que guarda el servidor. Ctrl+S, o el botón, lo guarda.&lt;/p&gt;&lt;p&gt;Bajo la segunda píldora, el editor guarda Markdown en lugar de HTML. Bajo la tercera, HTML de cualquier parte, con scripts, manejadores y estilos, y lo que la limpieza deja de él. Todo funciona bajo una Content Security Policy estricta: el HTML no tiene atributos style, el texto se alinea con clases.&lt;/p&gt;</entry>
+	<entry key="articleTitle">Un artículo en HTML, limpiado en el servidor</entry>
+	<entry key="notesTitle">Notas en Markdown</entry>
+	<entry key="cleaningTitle">La limpieza en el servidor</entry>
+	<entry key="articleLabel">Artículo</entry>
+	<entry key="notesLabel">Notas</entry>
+	<entry key="placeholder">Escriba el artículo…</entry>
+	<entry key="toolbar">Barra</entry>
+	<entry key="toolbar.full">Completa</entry>
+	<entry key="toolbar.compact">Compacta</entry>
+	<entry key="toolbar.none">Ninguna</entry>
+	<entry key="bubbleMenu">Menú sobre la selección</entry>
+	<entry key="readOnly">Solo lectura</entry>
+	<entry key="count">Contar las palabras</entry>
+	<entry key="save">Guardar</entry>
+	<entry key="start">Escriba, seleccione, desplácese o cambie el tamaño: el servidor lo guarda todo.</entry>
+	<entry key="heardFocus">El servidor supo que entró en el artículo.</entry>
+	<entry key="heardBlur">El servidor supo que salió del artículo, con su texto.</entry>
+	<entry key="heardSave">Artículo guardado.</entry>
+	<entry key="known">El servidor sabe: {0} caracteres de HTML, {1} palabras; {2}; {3}; {4}.</entry>
+	<entry key="cursorAt">el cursor en {0}</entry>
+	<entry key="selected">seleccionado de {0} a {1}</entry>
+	<entry key="sizeOfPage">el tamaño que le da la página</entry>
+	<entry key="sizeGiven">{0} × {1} px</entry>
+	<entry key="unsaved">cambios sin guardar</entry>
+	<entry key="allSaved">todo guardado</entry>
+	<entry key="asShown">Tal como lo muestra una página</entry>
+	<entry key="htmlKept">El HTML que guarda el servidor</entry>
+	<entry key="markdownKept">El Markdown que guarda el servidor</entry>
+	<entry key="notesStart">Dé a las notas el formato que quiera: el servidor las guarda como Markdown.</entry>
+	<entry key="notesSaved">Notas guardadas.</entry>
+	<entry key="cleaningExplanation">HTML de cualquier parte, pegado o enviado por un navegador que no es el editor: un script, manejadores, un enlace a javascript:, un estilo que tapa la página y un marco. Límpielo y vea lo que queda: solo lo que escribe el editor.</entry>
+	<entry key="unsafeLabel">HTML de cualquier parte</entry>
+	<entry key="clean">Limpiar</entry>
+	<entry key="cleanedHtml">Lo que deja la limpieza</entry>
+	<entry key="appStart">Escriba, seleccione o cambie el tamaño: la aplicación guarda el artículo y su estado.</entry>
+	<entry key="appSaved">Artículo guardado.</entry>
+	<entry key="appNotClean">El HTML tal como lo da el editor. Un servidor que lo guarda lo limpia antes, como hace RichTextEditor de Wicket.</entry>
+	<entry key="appArticleTitle">Un artículo en HTML</entry>
+	<entry key="appHtml">El HTML que da el editor</entry>
+	<entry key="appMarkdown">El Markdown que da el editor</entry>
+	<entry key="appKnown">La aplicación guarda {0} caracteres; {1}.</entry>
+</properties>

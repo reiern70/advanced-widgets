@@ -11,3 +11,11 @@ The demo application uses Font Awesome Free (https://fontawesome.com), Copyright
 from the web jar org.webjars.npm:fortawesome__fontawesome-free: its icons under the Creative
 Commons Attribution 4.0 International License, its fonts under the SIL Open Font License 1.1 and
 its code under the MIT License.
+
+The rich text editor of ui-components (antilia-rich-text-editor.js, built from frontend/core) bundles
+Tiptap (https://tiptap.dev), Copyright Tiptap GmbH; ProseMirror (https://prosemirror.net), with
+orderedmap and rope-sequence, Copyright Marijn Haverbeke and others; marked, Copyright MarkedJS and
+Christopher Jeffrey; linkifyjs, Copyright Nick Frasser; and Floating UI, Copyright Floating UI
+contributors: all under the MIT License. ui-components cleans the HTML of that editor with the OWASP
+Java HTML Sanitizer (https://github.com/OWASP/java-html-sanitizer), under the Apache License,
+Version 2.0.

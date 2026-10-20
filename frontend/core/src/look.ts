@@ -435,6 +435,32 @@ const PARTS = {
 	'markdown-preview': ['base', 'antilia-markdown-preview', ''],
 	'markdown-preview-table': ['base', 'antilia-markdown-preview-table', 'table table-sm'],
 
+	// rich text editors: Tiptap's text inside is the editor's own; in the Bootstrap look the
+	// editor is a field, as Bootstrap's form-control, its toolbar Bootstrap's groups of small
+	// buttons, its menus dropdown menus and its forms Bootstrap's fields
+	'rich-text-editor': ['base', 'antilia-rich-text-editor', 'form-control'],
+	'rich-text-editor-field': ['base', 'antilia-rich-text-editor-field', ''],
+	'rich-text-toolbar': ['base', 'antilia-rich-text-toolbar', 'btn-toolbar'],
+	'rich-text-bubble': ['base', 'antilia-rich-text-bubble', 'btn-toolbar'],
+	'rich-text-group': ['base', 'antilia-rich-text-group', 'btn-group btn-group-sm'],
+	'rich-text-tool': ['base', 'antilia-rich-text-tool', 'btn btn-outline-secondary'],
+	'rich-text-tool-active': ['state', 'antilia-rich-text-tool-active', 'active'],
+	'rich-text-menu': ['base', 'antilia-rich-text-menu', 'dropdown-menu'],
+	'rich-text-menu-item': ['base', 'antilia-rich-text-menu-item', 'dropdown-item'],
+	'rich-text-menu-item-active': ['state', 'antilia-rich-text-menu-item-active', 'active'],
+	'rich-text-menu-separator': ['base', 'antilia-rich-text-menu-separator', 'dropdown-divider'],
+	'rich-text-content': ['base', 'antilia-rich-text-content', ''],
+	'rich-text-status': ['base', 'antilia-rich-text-status', 'form-text'],
+	'rich-text-form': ['base', 'antilia-rich-text-form', ''],
+	'rich-text-form-label': ['base', 'antilia-rich-text-form-label', 'form-label'],
+	'rich-text-form-input': ['base', 'antilia-rich-text-form-input', 'form-control form-control-sm'],
+	'rich-text-form-check': ['base', 'antilia-rich-text-form-check', 'form-check'],
+	'rich-text-form-checkbox': ['base', 'antilia-rich-text-form-checkbox', 'form-check-input'],
+	'rich-text-form-error': ['base', 'antilia-rich-text-form-error', 'invalid-feedback d-block'],
+	'rich-text-form-buttons': ['base', 'antilia-rich-text-form-buttons', ''],
+	// the HTML of a rich text editor shown in a page, read only
+	'rich-text-view': ['base', 'antilia-rich-text-view', ''],
+
 	// desktops and their windows
 	'desktop': ['base', 'antilia-desktop', ''],
 	'desktop-area': ['base', 'antilia-desktop-area', ''],

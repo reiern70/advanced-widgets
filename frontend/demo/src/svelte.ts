@@ -38,6 +38,7 @@ import NotificationsDemo from './svelte/NotificationsDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
 import ResizableDemo from './svelte/ResizableDemo.svelte';
+import RichTextEditorDemo from './svelte/RichTextEditorDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
 import SplitPanelDemo from './svelte/SplitPanelDemo.svelte';
 import PopoversDemo from './svelte/PopoversDemo.svelte';
@@ -67,6 +68,7 @@ startApps('svelte', {
 	splitPanel: app(SplitPanelDemo),
 	resizable: app(ResizableDemo),
 	codeEditor: app(CodeEditorDemo),
+	richTextEditor: app(RichTextEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

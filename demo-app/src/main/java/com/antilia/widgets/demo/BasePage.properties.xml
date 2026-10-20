@@ -73,6 +73,8 @@
 	<entry key="demo.upload.description">Files sent in a form, by Ajax or to a resource, chosen with a button of the theme or dropped on a zone, with a progress bar of the theme, a guard keeping the user on the page, and a way to slow the uploads down.</entry>
 	<entry key="demo.codeEditor">Code Editor</entry>
 	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown or a grammar of your own, highlighted in the colors of the theme: the server keeps the text, the cursor, the selection and the size, and the tabs it is in know of its changes not saved. Markdown shows beside its live preview.</entry>
+	<entry key="demo.richTextEditor">Rich Text Editor</entry>
+	<entry key="demo.richTextEditor.description">Text with headings, lists, links, tables, images and alignment, from a toolbar of the components' own: Tiptap, in the colors of the theme. The server cleans the HTML before it keeps it, with the cursor, the selection and the size; or the editor keeps Markdown.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>

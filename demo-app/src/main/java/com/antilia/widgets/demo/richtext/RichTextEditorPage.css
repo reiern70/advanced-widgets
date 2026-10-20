@@ -1,0 +1,141 @@
+/*
+ * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.rich-text-demo {
+	display: grid;
+	/* a column as wide as the page, however wide the pills of the cases or a line of HTML */
+	grid-template-columns: minmax(0, 1fr);
+	gap: 16px;
+}
+
+.rich-text-demo section {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.rich-text-demo__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.rich-text-demo__control {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	font-size: 14px;
+}
+
+.rich-text-demo__control .antilia-dropdown {
+	min-width: 9em;
+}
+
+.rich-text-demo__editor {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+}
+
+.rich-text-demo__name {
+	font: 600 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	color: var(--muted);
+}
+
+.rich-text-demo .antilia-rich-text-editor {
+	--antilia-rich-text-editor-height: 26em;
+}
+
+.rich-text-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	align-items: center;
+}
+
+.rich-text-demo__heard,
+.rich-text-demo__status {
+	color: var(--muted);
+	font-size: 14px;
+}
+
+.rich-text-demo__status {
+	margin: 12px 0 0;
+	line-height: 1.5;
+}
+
+.rich-text-demo section > .rich-text-demo__status:first-child {
+	margin: 0 0 12px;
+}
+
+.rich-text-demo__saved {
+	margin-top: 16px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.rich-text-demo__subtitle {
+	margin: 0 0 8px;
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.rich-text-demo__view {
+	padding: 12px 16px;
+	border: 1px dashed var(--border);
+	border-radius: var(--radius);
+}
+
+.rich-text-demo__source {
+	margin-top: 12px;
+	font-size: 14px;
+}
+
+.rich-text-demo__source summary {
+	cursor: pointer;
+	color: var(--muted);
+}
+
+.rich-text-demo pre {
+	margin: 8px 0 0;
+	padding: 10px 12px;
+	overflow: auto;
+	max-height: 18em;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface-alt, transparent);
+	font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.rich-text-demo__unsafe {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: inherit;
+	font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	resize: vertical;
+}
