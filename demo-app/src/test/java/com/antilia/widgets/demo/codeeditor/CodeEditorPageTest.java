@@ -341,6 +341,36 @@ class CodeEditorPageTest
 	}
 
 	@Test
+	void keepsThePreviewInStepOnceTicked()
+	{
+		assertFalse(preview().isScrollWithEditor());
+		tester.assertContains("\"scrollWithEditor\":false");
+		tester.assertContains("Keep the preview in step");
+
+		FormTester form = tester.newFormTester(NOTES);
+		form.setValue("inStep", true);
+		tester.executeAjaxEvent(NOTES + ":inStep", "change");
+		assertTrue(CodeEditorPage.notes().inStep);
+		assertTrue(preview().isScrollWithEditor());
+		tester.assertContains("p\\.configure\\(\\{\"scrollWithEditor\":true\\}\\)");
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.MarkdownPreview.attach"),
+			"the preview stays as it is in the browser");
+
+		// a page made anew keeps it in step
+		page = tester.startPage(CodeEditorPage.class);
+		tester.assertContains("\"scrollWithEditor\":true");
+		assertEquals("checked", TagTester.createTagByAttribute(tester.getLastResponseAsString(),
+			"id", tester.getComponentFromLastRenderedPage(NOTES + ":inStep").getMarkupId())
+			.getAttribute("checked"));
+
+		form = tester.newFormTester(NOTES);
+		form.setValue("inStep", false);
+		tester.executeAjaxEvent(NOTES + ":inStep", "change");
+		assertFalse(CodeEditorPage.notes().inStep);
+		tester.assertContains("p\\.configure\\(\\{\"scrollWithEditor\":false\\}\\)");
+	}
+
+	@Test
 	void keepsHowTheNotesShowInTheSession()
 	{
 		sendSplit("35", "first");
@@ -432,6 +462,7 @@ class CodeEditorPageTest
 		assertEquals("Hide the right pane", config.getJSONObject("split").getString("collapseRight"));
 		assertTrue(texts.getString("notesStart").contains("the app keeps the notes"));
 		assertEquals("Show the preview", texts.getString("showPreview"));
+		assertEquals("Keep the preview in step", texts.getString("inStep"));
 	}
 
 	@Test
@@ -440,6 +471,7 @@ class CodeEditorPageTest
 		tester.getSession().setLocale(Locale.GERMAN);
 		tester.startPage(CodeEditorPage.class);
 		tester.assertContains("Jede Sprache, auf dem Server behalten");
+		tester.assertContains("Vorschau synchron halten");
 		JSONObject config = new JSONObject(TagTester.createTagByAttribute(
 			tester.getLastResponseAsString(), "data-framework-app", "svelte")
 			.getAttribute("data-config"));
@@ -453,6 +485,7 @@ class CodeEditorPageTest
 		tester.getSession().setLocale(Locale.of("es"));
 		tester.startPage(CodeEditorPage.class);
 		tester.assertContains("Cualquier lenguaje, guardado en el servidor");
+		tester.assertContains("Mantener la vista previa sincronizada");
 		tester.assertContains("\"Find\":\"Buscar\"");
 	}
 }

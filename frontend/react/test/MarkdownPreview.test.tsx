@@ -17,6 +17,8 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { CodeEditor as CoreCodeEditor, MarkdownPreview as CoreMarkdownPreview } from '@antilia/core';
+
 import { BOOTSTRAP_LOOK, LookProvider, MarkdownPreview } from '../src/index.js';
 
 function preview(container: HTMLElement): HTMLElement {
@@ -55,6 +57,30 @@ describe('MarkdownPreview', () => {
 		rerender(<MarkdownPreview value="" />);
 		expect(element.innerHTML).toBe('');
 		expect(element.hasAttribute('aria-label')).toBe(false);
+	});
+
+	it('follows a code editor, and keeps in step with it when asked to', async () => {
+		document.body.insertAdjacentHTML('beforeend', '<textarea id="code"># Notes</textarea>');
+		const editor = new CoreCodeEditor(document.getElementById('code')!);
+		const { container, rerender } = render(<MarkdownPreview editor="code" />);
+		const element = preview(container);
+		const core = CoreMarkdownPreview.of(element)!;
+		expect(element.innerHTML).toBe('<h1>Notes</h1>');
+		expect(core.options.scrollWithEditor).toBeFalsy();
+
+		rerender(<MarkdownPreview editor="code" scrollWithEditor />);
+		expect(CoreMarkdownPreview.of(element)).toBe(core);
+		expect(core.options.scrollWithEditor).toBe(true);
+		editor.setValue('## Changed');
+		await new Promise((resolve) => setTimeout(resolve, 40));
+		expect(element.innerHTML).toBe('<h2>Changed</h2>');
+
+		rerender(<MarkdownPreview value="own" />);
+		expect(core.options.editor).toBeNull();
+		expect(core.options.scrollWithEditor).toBe(false);
+		expect(element.innerHTML).toBe('<p>own</p>');
+		editor.destroy();
+		document.getElementById('code')!.remove();
 	});
 
 	it('gives its tables the classes of the look', () => {

@@ -40,9 +40,9 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
  * minified script built from frontend/core, in Wicket and in the React and Svelte apps: the grammars
  * highlighting the samples, the text, the cursor and the size the user gives the editor, which the
  * server keeps in Wicket and the page shows again when opened anew, the languages and the options
- * switched, the notes in Markdown beside their preview, which follows the text as the user types
- * and a button hides and shows again, and the files in tabs, marked while they have changes not
- * saved and saved with Ctrl+S.
+ * switched, the notes in Markdown beside their preview, which follows the text as the user types,
+ * keeps in step with the place in the editor once ticked, and a button hides and shows again, and
+ * the files in tabs, marked while they have changes not saved and saved with Ctrl+S.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -291,6 +291,72 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 	}
 
 	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void keepsThePreviewInStepWithTheEditorOnceTicked(SeleniumBrowser browser, String framework)
+	{
+		openNotes(browser, framework);
+		assertFalse(inStep().isSelected());
+
+		// unticked, the preview stays where it is as the cursor goes far down
+		click(notesContent().findElement(By.cssSelector(".cm-line")));
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.END));
+		wait.until(d -> scrollTop(notesScroller()) > 100);
+		frames();
+		assertEquals(0, scrollTop(preview()));
+		assertFalse(inView("In a long text"));
+
+		// ticked, it comes in step at once, then follows the cursor up and down
+		inStep().click();
+		wait.until(d -> inView("In a long text"));
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.HOME));
+		wait.until(d -> inView("Release notes") && !inView("In a long text"));
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.END));
+		wait.until(d -> inView("In a long text") && !inView("Release notes"));
+		// and the editor scrolled up
+		script("arguments[0].scrollTop = 0;", notesScroller());
+		wait.until(d -> inView("Release notes"));
+
+		// unticked again, it stays
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.HOME));
+		// near the top: Firefox leaves the editor a pixel down
+		wait.until(d -> inView("Release notes") && scrollTop(notesScroller()) < 5);
+		inStep().click();
+		wait.until(d -> !inStep().isSelected());
+		frames();
+		double top = scrollTop(preview());
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.END));
+		wait.until(d -> scrollTop(notesScroller()) > 100);
+		frames();
+		assertEquals(top, scrollTop(preview()));
+		assertFalse(inView("In a long text"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void doesNotScrollThePreviewWhileHidden(SeleniumBrowser browser, String framework)
+	{
+		openNotes(browser, framework);
+		inStep().click();
+		click(notesContent().findElement(By.cssSelector(".cm-line")));
+		wait.until(d -> inView("Release notes"));
+		double top = scrollTop(preview());
+
+		togglePreview().click();
+		wait.until(d -> notes().findElement(By.cssSelector(".antilia-split"))
+			.getDomAttribute("class").contains("antilia-split-collapsed-second"));
+		notesContent().sendKeys(Keys.chord(Keys.CONTROL, Keys.END));
+		wait.until(d -> scrollTop(notesScroller()) > 100);
+		frames();
+		assertEquals(top, scrollTop(preview()));
+
+		// shown again, it comes in step
+		togglePreview().click();
+		wait.until(d -> inView("In a long text"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
 	void theServerKeepsTheNotesAndHowTheyShow(SeleniumBrowser browser)
 	{
@@ -346,6 +412,48 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 	private WebElement togglePreview()
 	{
 		return notes().findElement(By.cssSelector(".code-editor-demo__actions button[type=button]"));
+	}
+
+	/**
+	 * @return the check box keeping the preview in step with the editor
+	 */
+	private WebElement inStep()
+	{
+		return notes().findElements(By.cssSelector(".code-editor-demo__actions label")).stream()
+			.filter(each -> each.getText().trim().equals("Keep the preview in step")).findFirst()
+			.orElseThrow().findElement(By.cssSelector("input"));
+	}
+
+	private WebElement notesScroller()
+	{
+		return notes().findElement(By.cssSelector(".cm-scroller"));
+	}
+
+	/**
+	 * @return whether a heading of the preview shows in it: its top, and a little more
+	 */
+	private boolean inView(String heading)
+	{
+		return (Boolean)script("var preview = arguments[0], text = arguments[1];" +
+			"var box = preview.getBoundingClientRect();" +
+			"var heading = Array.from(preview.querySelectorAll('h1, h2, h3')).find(function (each) {" +
+			"  return each.textContent === text; });" +
+			"var top = heading ? heading.getBoundingClientRect().top : -1e6;" +
+			"return top >= box.top - 1 && top < box.bottom - 10;", preview(), heading);
+	}
+
+	private double scrollTop(WebElement element)
+	{
+		return ((Number)script("return arguments[0].scrollTop;", element)).doubleValue();
+	}
+
+	/**
+	 * Waits two frames, for the preview to come in step if it is to.
+	 */
+	private void frames()
+	{
+		script("return new Promise(function (done) { requestAnimationFrame(function () {" +
+			" requestAnimationFrame(done); }); });");
 	}
 
 	private String notesStatus()

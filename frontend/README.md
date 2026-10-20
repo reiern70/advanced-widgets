@@ -129,8 +129,17 @@ the classes of the look, Bootstrap's `table` in the Bootstrap look. `new Markdow
 { value })` renders a text and `setValue()` another; with `editor`, the preview follows a code editor,
 rendering its text again a frame later each time it changes, by the user or the page, which the
 editor tells with `CODE_EDITOR_EVENTS.text`; `renderMarkdown(text, element)` renders a text once.
-React's and Svelte's `MarkdownPreview` take `value`, `label` and `placeholder`. Wicket's
-`MarkdownPreview` follows a `CodeEditor`, or shows the text of its model, in the browser alone.
+With `scrollWithEditor` too, the preview keeps in step with the editor: as the user moves the
+cursor, types or scrolls the editor, the preview scrolls to the part matching the place in the
+editor. Each block it renders knows the line of the text it starts at, and the preview matches the
+editor's lines to them, between the tops of the blocks around a line (`stepScrollTop`): the part
+matching the cursor shows as high as the cursor, and with the cursor out of sight, the part
+matching the editor's top or bottom line; nothing scrolls while either is hidden, in a collapsed
+pane for example. React's and Svelte's `MarkdownPreview` take `value`, `editor` (a `CodeEditor`'s
+id), `scrollWithEditor`, `label` and `placeholder`. Wicket's `MarkdownPreview` follows a
+`CodeEditor`, or shows the text of its model, in the browser alone; `setScrollWithEditor(boolean)`
+keeps it in step, and `setScrollWithEditor(boolean, target)` tells the browser without rendering it
+again.
 `SplitPanel.collapse(pane, target)` collapses a pane of a collapsible split panel from the server,
 without rendering its panes again: the demo's button hiding the preview beside the editor.
 

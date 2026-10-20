@@ -18,7 +18,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { BOOTSTRAP_LOOK, CodeEditor, loadLanguage, MarkdownPreview, markdownPreview,
 	registerLanguage, renderMarkdown, setHost, standaloneHost } from '../src/index.js';
-import { safeUrl } from '../src/markdown-preview.js';
+import { blockAt, matchingHeight, renderMarkdownBlocks, safeUrl, stepScrollTop,
+	type MarkdownBlock, type StepGeometry } from '../src/markdown-preview.js';
 
 /** A moment, for the grammars loading and the frame the preview waits for. */
 const tick = () => new Promise((resolve) => setTimeout(resolve, 40));
@@ -377,5 +378,194 @@ describe('MarkdownPreview', () => {
 
 		expect(preview.element.querySelector('table')!.className).toBe(
 			'antilia-markdown-preview-table table table-sm');
+	});
+});
+
+/**
+ * @returns the geometry of an editor whose lines are 20 pixels high, below a padding of 4, and
+ *          of a preview whose blocks are at the tops given
+ */
+function geometry(lines: number, tops: Map<HTMLElement, number>,
+	previewHeight: number): StepGeometry {
+	return {
+		lineAt: (height) => Math.min(Math.max(Math.floor((height - 4) / 20) + 1, 1), lines),
+		lineTop: (line) => 4 + (line - 1) * 20,
+		blockTop: (element) => tops.get(element)!,
+		editorHeight: 8 + lines * 20,
+		previewHeight
+	};
+}
+
+/**
+ * @returns a block of each line of a text of a hundred, each 40 pixels high in the preview,
+ *          below a padding of 10, and their geometry
+ */
+function evenBlocks(): [MarkdownBlock[], StepGeometry] {
+	const blocks = Array.from({ length: 100 }, (_, index) => ({ line: index + 1,
+		element: document.createElement('p') }));
+	const tops = new Map(blocks.map((block) => [block.element, 10 + (block.line - 1) * 40]));
+	return [blocks, geometry(100, tops, 10 + 100 * 40 + 10)];
+}
+
+describe('keeping in step with the editor', () => {
+	it('knows the line of the text each block starts at', () => {
+		const blocks = renderMarkdownBlocks('# Title\n\nA paragraph\nover two lines\n\n- one\n- two\n\n' +
+			'> quoted\n>\n> again\n\n```js\nlet x = 1;\n```\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n' +
+			'---\n\n1. first\n\n2. second\n   with more\n\n- [x] done', document.createElement('div'));
+
+		expect(blocks.map((block) => block.element.tagName.toLowerCase() + ' ' + block.line))
+			.toEqual(['h1 1', 'p 3', 'ul 6', 'li 6', 'li 7', 'blockquote 9', 'p 9', 'p 11', 'pre 13',
+				'table 17', 'tr 17', 'tr 19', 'hr 21', 'ol 23', 'li 23', 'p 23', 'li 25', 'p 25',
+				'ul 28', 'li 28']);
+		// and the HTML is as it was, without marks of the lines
+		expect(blocks[0].element.outerHTML).toBe('<h1>Title</h1>');
+		expect(renderMarkdownBlocks('', document.createElement('div'))).toEqual([]);
+	});
+
+	it('finds the last block starting at a line or before it', () => {
+		const blocks = [1, 3, 3, 6].map((line) => ({ line, element: document.createElement('p') }));
+
+		expect([0, 1, 2, 3, 5, 6, 40].map((line) => blockAt(blocks, line))).toEqual(
+			[-1, 0, 0, 2, 2, 3, 3]);
+		expect(blockAt([], 4)).toBe(-1);
+	});
+
+	it('matches a height of the editor to one of the preview, between the blocks around it', () => {
+		const [title, paragraph, heading] = ['h1', 'p', 'h2'].map((name) =>
+			document.createElement(name));
+		const blocks = [{ line: 1, element: title }, { line: 3, element: paragraph },
+			{ line: 6, element: heading }];
+		const sizes = geometry(6, new Map([[title, 16], [paragraph, 70], [heading, 200]]), 300);
+		const at = (height: number) => matchingHeight(blocks, sizes, height);
+
+		// the tops of the lines are those of their blocks
+		expect([at(4), at(44), at(104)]).toEqual([16, 70, 200]);
+		// the starts and the ends of the two match, the paddings above the first lines too
+		expect([at(0), at(2), at(128)]).toEqual([0, 8, 300]);
+		// in a block of two lines, and the empty line after it, a sixth of the way to the next
+		expect(at(54)).toBeCloseTo(70 + 130 / 6);
+		expect(at(116)).toBe(250);
+		expect(matchingHeight([], sizes, 64)).toBe(150);
+	});
+
+	it('scrolls the preview to show the part matching the cursor as high as the cursor', () => {
+		const [blocks, sizes] = evenBlocks();
+		// lines 50 to 60 in sight, the cursor on line 56, half way down
+		const top = stepScrollTop(blocks, sizes, { scrollTop: 1000, height: 200,
+			cursor: 4 + 55 * 20 }, 300);
+
+		expect(top).toBeCloseTo(10 + 55 * 40 - 0.52 * 300);
+		// scrolling the editor, the cursor in sight, scrolls the preview as far, in proportion to
+		// their heights
+		expect(stepScrollTop(blocks, sizes, { scrollTop: 1010, height: 200, cursor: 4 + 55 * 20 },
+			300)).toBeCloseTo(top + 10 * 300 / 200);
+	});
+
+	it('takes the edges of the editor with the cursor out of sight, without a jump', () => {
+		const [blocks, sizes] = evenBlocks();
+		const scrolled = (scrollTop: number, cursor: number) => stepScrollTop(blocks, sizes,
+			{ scrollTop, height: 200, cursor }, 300);
+
+		// the cursor just above the editor, and on its top line: about the same
+		expect(Math.abs(scrolled(1000, 999) - scrolled(1000, 1001))).toBeLessThan(1);
+		expect(Math.abs(scrolled(1000, 1199) - scrolled(1000, 1201))).toBeLessThan(1);
+		// a viewport away and more, the start of the text shows the start of the preview, and its
+		// end the end
+		expect(scrolled(0, 1900)).toBe(0);
+		expect(scrolled(1808, 4)).toBe(4020 - 300);
+		// a preview shorter than it is high does not scroll
+		expect(stepScrollTop(blocks, { ...sizes, previewHeight: 200 }, { scrollTop: 1000,
+			height: 200, cursor: 1100 }, 300)).toBe(0);
+	});
+
+	it('scrolls with the editor it follows while asked to, and while both show', async () => {
+		const text = Array.from({ length: 30 }, (_, index) => '## Part ' + (index + 1))
+			.join('\n\n');
+		document.body.innerHTML = '<textarea id="code"></textarea><div id="preview"></div>';
+		const editor = new CodeEditor(document.getElementById('code')!, { value: text });
+		const element = document.getElementById('preview')!;
+		const preview = new MarkdownPreview(element, { editor: 'code' });
+
+		// the layout: the editor's lines 20 pixels high, the preview's headings 100, both 200 high
+		const view = editor.view;
+		const scroller = view.scrollDOM;
+		const doc = view.state.doc;
+		let editorScroll = 0;
+		let previewScroll = 0;
+		const box = (target: HTMLElement, sizes: Record<string, number>) => Object.entries(sizes)
+			.forEach(([name, value]) => Object.defineProperty(target, name, { configurable: true,
+				get: () => value }));
+		box(scroller, { clientHeight: 200, clientWidth: 300, scrollHeight: doc.lines * 20 });
+		box(element, { clientHeight: 200, clientWidth: 300, scrollHeight: 30 * 100 });
+		Object.defineProperty(scroller, 'scrollTop', { configurable: true, get: () => editorScroll,
+			set: () => undefined });
+		Object.defineProperty(element, 'scrollTop', { configurable: true,
+			get: () => previewScroll, set: (value: number) => {
+				previewScroll = value;
+			} });
+		const rect = (top: number) => ({ top, left: 0, right: 0, bottom: top, width: 0, height: 0,
+			x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+			this: HTMLElement) {
+			return rect(this.parentElement === element ?
+				Array.from(element.children).indexOf(this) * 100 - previewScroll : 0);
+		});
+		const lineBlock = (number: number) => {
+			const line = doc.line(Math.min(Math.max(number, 1), doc.lines));
+			return { from: line.from, to: line.to, length: line.length, top: (line.number - 1) * 20,
+				height: 20, bottom: line.number * 20, type: 0 } as unknown as ReturnType<
+				typeof view.lineBlockAt>;
+		};
+		Object.defineProperty(view, 'documentTop', { configurable: true,
+			get: () => -editorScroll });
+		vi.spyOn(view, 'lineBlockAt').mockImplementation((position) =>
+			lineBlock(doc.lineAt(position).number));
+		vi.spyOn(view, 'lineBlockAtHeight').mockImplementation((height) =>
+			lineBlock(Math.floor(height / 20) + 1));
+		vi.spyOn(view, 'coordsAtPos').mockImplementation((position) => {
+			const top = (doc.lineAt(position).number - 1) * 20 - editorScroll;
+			return { top, bottom: top + 20, left: 0, right: 0 };
+		});
+		// the cursor on Part 21, on line 41, half way down the editor
+		const moveTo = async (line: number) => {
+			view.dispatch({ selection: { anchor: doc.line(line).from }, userEvent: 'select' });
+			await tick();
+		};
+		editorScroll = 700;
+
+		await moveTo(41);
+		expect(previewScroll).toBe(0);
+
+		preview.configure({ scrollWithEditor: true });
+		await tick();
+		expect(previewScroll).toBe(2000 - 100);
+
+		// scrolled to the top, the cursor far below: the preview shows its start
+		editorScroll = 0;
+		scroller.dispatchEvent(new Event('scroll'));
+		await tick();
+		expect(previewScroll).toBe(0);
+
+		// collapsed in a split panel, the preview does not scroll; shown again, it does
+		element.style.visibility = 'hidden';
+		editorScroll = 700;
+		await moveTo(41);
+		expect(previewScroll).toBe(0);
+		element.style.visibility = '';
+		await moveTo(41);
+		expect(previewScroll).toBe(1900);
+
+		// another editor is not the one followed
+		document.body.insertAdjacentHTML('beforeend', '<textarea id="other"></textarea>');
+		const other = new CodeEditor(document.getElementById('other')!, { value: 'a\nb' });
+		editorScroll = 0;
+		other.view.dispatch({ selection: { anchor: 2 }, userEvent: 'select' });
+		await tick();
+		expect(previewScroll).toBe(1900);
+
+		preview.configure({ scrollWithEditor: false });
+		await moveTo(1);
+		expect(previewScroll).toBe(1900);
+		preview.destroy();
 	});
 });

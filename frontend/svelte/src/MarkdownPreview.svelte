@@ -19,7 +19,8 @@
   strikethrough, its fenced code blocks highlighted by the grammars of the code editor. The core
   renders it, an element at a time, never parsing HTML: HTML in the text shows as text, and links
   and pictures take only web addresses. Give it the text of a CodeEditor as the user types it
-  (bind:value on the editor), and a height to scroll.
+  (bind:value on the editor), or the editor's id as editor, and a height to scroll; with
+  scrollWithEditor too, it keeps in step with the editor.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -30,8 +31,19 @@
 	const look = getLook();
 
 	type Props = {
-		/** The text, in Markdown. */
+		/** The text, in Markdown; that of the editor when left out and it follows one. */
 		value?: string;
+		/**
+		 * A code editor the preview follows: its element, or the id of the element, a CodeEditor's
+		 * id. The preview shows its text as it changes, and can keep in step with it.
+		 */
+		editor?: HTMLElement | string | null;
+		/**
+		 * Whether the preview keeps in step with its editor: as the user moves the cursor, types or
+		 * scrolls the editor, the preview scrolls to the part matching the place in the editor.
+		 * False when left out.
+		 */
+		scrollWithEditor?: boolean;
 		/** The accessible name of the preview, a region of the page. */
 		label?: string;
 		/** What the preview says while the text is empty, nothing when left out. */
@@ -41,7 +53,8 @@
 		class?: string;
 	};
 
-	let { value = '', label, placeholder, id, class: className = '' }: Props = $props();
+	let { value, editor, scrollWithEditor = false, label, placeholder, id,
+		class: className = '' }: Props = $props();
 
 	let element = $state<HTMLDivElement>();
 	let instance: MarkdownPreview | null = null;
@@ -50,8 +63,8 @@
 		if (!element) {
 			return;
 		}
-		const made = new MarkdownPreview(element, untrack(() => ({ value, label, placeholder,
-			look })));
+		const made = new MarkdownPreview(element, untrack(() => ({ value, editor, scrollWithEditor,
+			label, placeholder, look })));
 		instance = made;
 		return () => {
 			made.destroy();
@@ -61,7 +74,21 @@
 
 	$effect(() => {
 		const next = value;
-		untrack(() => instance?.setValue(next));
+		untrack(() => {
+			if (next !== undefined) {
+				instance?.setValue(next);
+			}
+		});
+	});
+
+	$effect(() => {
+		const next = { editor: editor ?? null, scrollWithEditor };
+		untrack(() => {
+			if (instance && ((instance.options.editor ?? null) !== next.editor ||
+				!!instance.options.scrollWithEditor !== next.scrollWithEditor)) {
+				instance.configure(next);
+			}
+		});
 	});
 
 	$effect(() => {

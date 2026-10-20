@@ -30,6 +30,13 @@
  * it again, a frame later, each time it changes, by the user or the page; the editor may be
  * rendered anew, as Wicket does, and the preview follows the new one. renderMarkdown() renders a
  * text into an element once.
+ *
+ * With scrollWithEditor too, the preview keeps in step with the editor: as the user moves the
+ * cursor, types or scrolls the editor, the preview scrolls to the part matching the place in the
+ * editor. The blocks it renders know the line of the text they start at, and the preview matches
+ * the editor's lines to them, between the tops of the blocks around a line (stepScrollTop()). While
+ * the preview or the editor is hidden, in a collapsed pane of a split panel for example, nothing
+ * scrolls; shown again, the preview comes in step.
  */
 
 import { Language, LanguageSupport } from '@codemirror/language';
@@ -52,6 +59,12 @@ export interface MarkdownPreviewOptions {
 	 * either. The preview follows it as its text changes.
 	 */
 	editor?: HTMLElement | string | null;
+	/**
+	 * Whether the preview keeps in step with the editor it follows: as the user moves the cursor,
+	 * types or scrolls the editor, the preview scrolls to the part matching the place in the
+	 * editor. False when left out: each scrolls on its own.
+	 */
+	scrollWithEditor?: boolean;
 	/** The look of the preview; that of the element it is in when left out (see lookOf). */
 	look?: Look;
 	/** The accessible name of the preview, a region of the page. */
@@ -106,6 +119,42 @@ interface Reference {
 
 /** The pictures of a preview, by their address, which the preview rendered anew takes again. */
 type Pictures = Map<string, HTMLImageElement[]>;
+
+/**
+ * A block the preview rendered, a heading, a paragraph, an item of a list or a row of a table for
+ * example: its element, and the line of the text it starts at, 1 for the first.
+ */
+export interface MarkdownBlock {
+	line: number;
+	element: HTMLElement;
+}
+
+/**
+ * What the preview measures to keep in step with an editor: heights from the top of the content
+ * of each, in pixels, the editor's taking its padding, as its scroll position does.
+ */
+export interface StepGeometry {
+	/** The line of the text at a height of the editor's content, 1 for the first. */
+	lineAt(height: number): number;
+	/** The height of the top of a line in the editor's content. */
+	lineTop(line: number): number;
+	/** The height of the top of an element of the preview in its content. */
+	blockTop(element: HTMLElement): number;
+	/** The height of the editor's content. */
+	editorHeight: number;
+	/** The height of the preview's content. */
+	previewHeight: number;
+}
+
+/** Where the editor is: how far it is scrolled, and where its cursor is, in its content. */
+export interface StepEditor {
+	/** How far its content is scrolled, in pixels. */
+	scrollTop: number;
+	/** The height of what it shows of its content. */
+	height: number;
+	/** The height of the cursor in its content: the top of the cursor. */
+	cursor: number;
+}
 
 /**
  * @returns the label of a reference as references are matched: without its brackets, its case
@@ -172,13 +221,22 @@ class Renderer {
 	/** The languages of the code blocks whose grammars are not loaded yet. */
 	readonly pending = new Set<string>();
 
+	/** The blocks rendered, in the order of the text, as they are in the page. */
+	readonly rendered: MarkdownBlock[] = [];
+
 	private readonly references = new Map<string, Reference>();
+
+	/** Where the lines of the text start. */
+	private readonly lineStarts: number[] = [0];
 
 	/**
 	 * @param tableClasses the classes of the tables, in the look of the preview
 	 */
 	constructor(private readonly text: string, private readonly document: Document,
 		private readonly pictures: Pictures, private readonly tableClasses: string) {
+		for (let index = text.indexOf('\n'); index >= 0; index = text.indexOf('\n', index + 1)) {
+			this.lineStarts.push(index + 1);
+		}
 	}
 
 	render(target: Node): void {
@@ -191,6 +249,24 @@ class Renderer {
 		return this.text.slice(from, to);
 	}
 
+	/**
+	 * @returns the line of a position of the text, 1 for the first
+	 */
+	private lineOf(position: number): number {
+		const starts = this.lineStarts;
+		let low = 0;
+		let high = starts.length - 1;
+		while (low < high) {
+			const middle = (low + high + 1) >> 1;
+			if (starts[middle] <= position) {
+				low = middle;
+			} else {
+				high = middle - 1;
+			}
+		}
+		return low + 1;
+	}
+
 	private element<K extends keyof HTMLElementTagNameMap>(name: K, parent: Node,
 		className?: string): HTMLElementTagNameMap[K] {
 		const element = this.document.createElement(name);
@@ -198,6 +274,16 @@ class Renderer {
 			element.className = className;
 		}
 		parent.appendChild(element);
+		return element;
+	}
+
+	/**
+	 * Adds the element of a block of the text, which knows the line the block starts at.
+	 */
+	private blockElement<K extends keyof HTMLElementTagNameMap>(name: K, parent: Node,
+		node: SyntaxNode, className?: string): HTMLElementTagNameMap[K] {
+		const element = this.element(name, parent, className);
+		this.rendered.push({ line: this.lineOf(node.from), element });
 		return element;
 	}
 
@@ -255,16 +341,18 @@ class Renderer {
 		const name = node.name;
 		const heading = /^(?:ATX|Setext)Heading(\d)$/.exec(name);
 		if (heading) {
-			const element = this.element(('h' + heading[1]) as 'h1', parent);
+			const element = this.blockElement(('h' + heading[1]) as 'h1', parent, node);
 			this.inline(node, element, ...this.headingRange(node));
 			return;
 		}
 		switch (name) {
 			case 'Paragraph':
-				this.inline(node, tight ? parent : this.element('p', parent), node.from, node.to);
+				// in a tight list, the item knows the line
+				this.inline(node, tight ? parent : this.blockElement('p', parent, node), node.from,
+					node.to);
 				return;
 			case 'Blockquote':
-				this.blocks(node, this.element('blockquote', parent), false);
+				this.blocks(node, this.blockElement('blockquote', parent, node), false);
 				return;
 			case 'BulletList':
 			case 'OrderedList':
@@ -275,7 +363,7 @@ class Renderer {
 				this.code(node, parent);
 				return;
 			case 'HorizontalRule':
-				this.element('hr', parent);
+				this.blockElement('hr', parent, node);
 				return;
 			case 'Table':
 				this.table(node, parent);
@@ -283,10 +371,10 @@ class Renderer {
 			case 'HTMLBlock':
 				// shown as written, never as HTML
 				this.textNode(this.slice(node.from, node.to),
-					this.element('pre', parent, MARKDOWN_PREVIEW_CLASSES.html));
+					this.blockElement('pre', parent, node, MARKDOWN_PREVIEW_CLASSES.html));
 				return;
 			case 'Task':
-				this.task(node, tight ? parent : this.element('p', parent));
+				this.task(node, tight ? parent : this.blockElement('p', parent, node));
 				return;
 			case 'LinkReference':
 			case 'CommentBlock':
@@ -346,14 +434,14 @@ class Renderer {
 
 	private list(node: SyntaxNode, parent: Node): void {
 		const ordered = node.name === 'OrderedList';
-		const list = this.element(ordered ? 'ol' : 'ul', parent);
+		const list = this.blockElement(ordered ? 'ol' : 'ul', parent, node);
 		const tight = !this.loose(node);
 		let first = true;
 		for (let item = node.firstChild; item; item = item.nextSibling) {
 			if (item.name !== 'ListItem') {
 				continue;
 			}
-			const element = this.element('li', list);
+			const element = this.blockElement('li', list, item);
 			const mark = item.getChild('ListMark');
 			// the number of the first item is where the list starts
 			if (ordered && mark && first) {
@@ -390,7 +478,7 @@ class Renderer {
 	 * Renders a code block, highlighted by the grammar of its language when the editor knows it.
 	 */
 	private code(node: SyntaxNode, parent: Node): void {
-		const pre = this.element('pre', parent, MARKDOWN_PREVIEW_CLASSES.code);
+		const pre = this.blockElement('pre', parent, node, MARKDOWN_PREVIEW_CLASSES.code);
 		const code = this.element('code', pre);
 		const info = node.getChild('CodeInfo');
 		const language = info ? this.slice(info.from, info.to).trim().split(/\s/)[0] : '';
@@ -430,7 +518,7 @@ class Renderer {
 	}
 
 	private table(node: SyntaxNode, parent: Node): void {
-		const table = this.element('table', parent, this.tableClasses);
+		const table = this.blockElement('table', parent, node, this.tableClasses);
 		const alignments: string[] = [];
 		const delimiter = node.getChildren('TableDelimiter')[0];
 		if (delimiter) {
@@ -443,9 +531,10 @@ class Renderer {
 		}
 		const header = node.getChild('TableHeader');
 		const columns = Math.max(header ? header.getChildren('TableCell').length : 0, 1);
+		// each row a line of the text
 		const row = (source: SyntaxNode, section: HTMLTableSectionElement,
 			cellName: 'th' | 'td') => {
-			const tr = this.element('tr', section);
+			const tr = this.blockElement('tr', section, source);
 			const cells = source.getChildren('TableCell');
 			for (let index = 0; index < columns; index++) {
 				const cell = this.element(cellName, tr);
@@ -656,6 +745,20 @@ function picturesOf(element: Element): Pictures {
 }
 
 /**
+ * Renders a text into an element, replacing what it has.
+ *
+ * @returns the renderer: the blocks rendered and the languages whose grammars are not loaded yet
+ */
+function renderInto(text: string, element: HTMLElement, look: Look): Renderer {
+	const renderer = new Renderer(text, element.ownerDocument, picturesOf(element),
+		partClasses(look, 'markdown-preview-table'));
+	const fragment = element.ownerDocument.createDocumentFragment();
+	renderer.render(fragment);
+	element.replaceChildren(fragment);
+	return renderer;
+}
+
+/**
  * Renders a text in Markdown into an element, replacing what it has; the code blocks whose grammar
  * is not loaded yet show plain.
  *
@@ -666,12 +769,134 @@ function picturesOf(element: Element): Pictures {
  */
 export function renderMarkdown(text: string, element: HTMLElement,
 	look: Look = lookOf(element)): string[] {
-	const renderer = new Renderer(text, element.ownerDocument, picturesOf(element),
-		partClasses(look, 'markdown-preview-table'));
-	const fragment = element.ownerDocument.createDocumentFragment();
-	renderer.render(fragment);
-	element.replaceChildren(fragment);
-	return Array.from(renderer.pending);
+	return Array.from(renderInto(text, element, look).pending);
+}
+
+/**
+ * Renders a text in Markdown into an element, as renderMarkdown() does.
+ *
+ * @returns the blocks rendered, in the order of the text, with the lines they start at
+ */
+export function renderMarkdownBlocks(text: string, element: HTMLElement,
+	look: Look = lookOf(element)): MarkdownBlock[] {
+	return renderInto(text, element, look).rendered;
+}
+
+/**
+ * @param blocks blocks in the order of the text
+ * @returns the index of the last block starting at a line or before it, -1 for none
+ */
+export function blockAt(blocks: readonly MarkdownBlock[], line: number): number {
+	let low = -1;
+	let high = blocks.length - 1;
+	while (low < high) {
+		const middle = (low + high + 1) >> 1;
+		if (blocks[middle].line <= line) {
+			low = middle;
+		} else {
+			high = middle - 1;
+		}
+	}
+	return low;
+}
+
+/**
+ * @param blocks the blocks of the preview, in the order of the text
+ * @param height a height in the editor's content
+ * @returns the height in the preview's content matching it: as far between the tops of the blocks
+ *          around its line as it is between the tops of their lines in the editor; before the
+ *          first block, between the starts of the two contents, and after the last, between it
+ *          and their ends
+ */
+export function matchingHeight(blocks: readonly MarkdownBlock[], geometry: StepGeometry,
+	height: number): number {
+	// a height in the editor and the one matching it in the preview
+	const point = (index: number): [number, number] => index < 0 ? [0, 0] :
+		index >= blocks.length ? [geometry.editorHeight, geometry.previewHeight] :
+			[geometry.lineTop(blocks[index].line), geometry.blockTop(blocks[index].element)];
+	const index = blockAt(blocks, geometry.lineAt(height));
+	let lower = point(index);
+	let upper = point(index + 1);
+	if (height < lower[0]) {
+		// above the first line, in the padding of the editor
+		upper = lower;
+		lower = point(-1);
+	}
+	const span = upper[0] - lower[0];
+	const fraction = span > 0 ? Math.min(Math.max((height - lower[0]) / span, 0), 1) : 0;
+	return lower[1] + fraction * Math.max(upper[1] - lower[1], 0);
+}
+
+/**
+ * @returns where in the editor's viewport the preview is anchored, from 0, its top, to 1, its
+ *          bottom: at the cursor; with the cursor out of sight, at the edge it went past, turning
+ *          to how far the editor is scrolled as the cursor gets a viewport away, so that the start
+ *          of the text shows the start of the preview, and its end the end
+ */
+function anchorOf(editor: StepEditor, contentHeight: number): number {
+	const { scrollTop, height, cursor } = editor;
+	if (height <= 0) {
+		return 0;
+	}
+	const at = (cursor - scrollTop) / height;
+	const scrolled = contentHeight > height ?
+		Math.min(Math.max(scrollTop / (contentHeight - height), 0), 1) : 0;
+	if (at < 0) {
+		return scrolled * Math.min(-at, 1);
+	}
+	if (at > 1) {
+		return 1 - (1 - scrolled) * Math.min(at - 1, 1);
+	}
+	return at;
+}
+
+/**
+ * Where the preview scrolls to keep in step with an editor. The part of the preview matching the
+ * cursor shows as high in the preview as the cursor does in the editor; with the cursor out of
+ * sight, the part matching the top or the bottom line of the editor shows at the top or the bottom
+ * of the preview. While the cursor is in sight, the preview scrolls as the cursor moves up or down
+ * the editor, in proportion to their heights, and there is no jump as the cursor goes out of sight
+ * or comes back.
+ *
+ * @param blocks the blocks of the preview, in the order of the text
+ * @param geometry the sizes of the editor and the preview, and where their lines and blocks are
+ * @param editor how far the editor is scrolled, and where its cursor is
+ * @param height the height of what the preview shows of its content
+ * @returns how far the preview scrolls, in pixels
+ */
+export function stepScrollTop(blocks: readonly MarkdownBlock[], geometry: StepGeometry,
+	editor: StepEditor, height: number): number {
+	const anchor = anchorOf(editor, geometry.editorHeight);
+	// the preview showing the part matching the editor's top line at its top, or its bottom line
+	// at its bottom
+	const top = matchingHeight(blocks, geometry, editor.scrollTop);
+	const bottom = matchingHeight(blocks, geometry, editor.scrollTop + editor.height) - height;
+	const scrollTop = top + anchor * (bottom - top);
+	return Math.min(Math.max(scrollTop, 0), Math.max(geometry.previewHeight - height, 0));
+}
+
+/**
+ * @returns whether an element shows: laid out, not hidden, in a collapsed pane of a split panel
+ *          for example
+ */
+function shown(element: HTMLElement): boolean {
+	if (!element.isConnected || element.clientHeight <= 0 || element.clientWidth <= 0) {
+		return false;
+	}
+	const visibility = getComputedStyle(element).visibility;
+	return visibility !== 'hidden' && visibility !== 'collapse';
+}
+
+/**
+ * Calls back a frame later, or in a moment without frames.
+ */
+function nextFrame(callback: () => void): number {
+	return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) :
+		window.setTimeout(callback, 16);
+}
+
+function cancelNextFrame(frame: number): void {
+	(typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame : clearTimeout)(frame);
 }
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
@@ -691,9 +916,18 @@ export class MarkdownPreview {
 	/** How many times the preview rendered, so that a grammar loaded late renders the last text. */
 	private renders = 0;
 
+	/** The blocks rendered, in the order of the text, with the lines they start at. */
+	private blocks: readonly MarkdownBlock[] = [];
+
 	private frame: number | null = null;
 
-	private listeners: Array<[EventTarget, string, EventListener]> = [];
+	/** The frame the preview comes in step with the editor in, if it is to. */
+	private stepFrame: number | null = null;
+
+	private listeners: Array<[EventTarget, string, EventListener, AddEventListenerOptions?]> = [];
+
+	/** Watches the size of the preview: shown again, or resized, it comes in step. */
+	private observer: ResizeObserver | null = null;
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
 
@@ -711,6 +945,22 @@ export class MarkdownPreview {
 		this.decorate();
 		this.render();
 		this.listen(document, CODE_EDITOR_EVENTS.text, (event) => this.onEditorText(event));
+		// the user moved the cursor, typed or scrolled the editor
+		this.listen(document, CODE_EDITOR_EVENTS.select, (event) => {
+			if (this.follows((event as CustomEvent<{ editor?: CodeEditor }>).detail?.editor)) {
+				this.stepLater();
+			}
+		});
+		this.listen(document, 'scroll', (event) => {
+			if (this.options.scrollWithEditor &&
+				event.target === this.followedEditor()?.view.scrollDOM) {
+				this.stepLater();
+			}
+		}, { capture: true, passive: true });
+		if (typeof ResizeObserver === 'function') {
+			this.observer = new ResizeObserver(() => this.stepLater());
+			this.observer.observe(element);
+		}
 		this.stopWatchingRemoval = onRemoving(element, () => this.detach());
 	}
 
@@ -764,8 +1014,12 @@ export class MarkdownPreview {
 			.filter(([, value]) => value !== undefined)) as MarkdownPreviewOptions;
 		this.options = { ...this.options, ...defined };
 		this.cancelFrame();
+		if (!this.options.scrollWithEditor) {
+			this.cancelStep();
+		}
 		this.value = this.editorValue() ?? defined.value ?? this.value;
 		this.decorate();
+		// and in step at once, when it is to be
 		this.render();
 	}
 
@@ -829,19 +1083,32 @@ export class MarkdownPreview {
 	}
 
 	/**
+	 * @returns the editor the preview follows, null for none or one not made yet
+	 */
+	private followedEditor(): CodeEditor | null {
+		const element = this.editorElement();
+		return element ? CodeEditor.of(element) : null;
+	}
+
+	/**
+	 * @returns whether an editor is the one the preview follows
+	 */
+	private follows(editor: CodeEditor | undefined): editor is CodeEditor {
+		const followed = this.editorElement();
+		return !!followed && !!editor && (followed === editor.element || followed === editor.field);
+	}
+
+	/**
 	 * The text of an editor changed: the preview shows it a frame later, when it is the editor's
 	 * it follows.
 	 */
 	private onEditorText(event: Event): void {
-		const followed = this.editorElement();
 		const editor = (event as CustomEvent<{ editor?: CodeEditor }>).detail?.editor;
-		if (!followed || !editor || (followed !== editor.element && followed !== editor.field)) {
+		if (!this.follows(editor)) {
 			return;
 		}
 		if (this.frame === null) {
-			const later = typeof requestAnimationFrame === 'function' ? requestAnimationFrame :
-				(callback: () => void) => window.setTimeout(callback, 16);
-			this.frame = later(() => {
+			this.frame = nextFrame(() => {
 				this.frame = null;
 				this.setValue(editor.getValue());
 			});
@@ -850,9 +1117,68 @@ export class MarkdownPreview {
 
 	private cancelFrame(): void {
 		if (this.frame !== null) {
-			(typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame : clearTimeout)(
-				this.frame);
+			cancelNextFrame(this.frame);
 			this.frame = null;
+		}
+	}
+
+	/**
+	 * Comes in step with the editor a frame later, once the editor has scrolled to its cursor and
+	 * the text is rendered; when the preview is to keep in step with an editor.
+	 */
+	private stepLater(): void {
+		if (this.stepFrame === null && this.options.scrollWithEditor && this.options.editor) {
+			this.stepFrame = nextFrame(() => {
+				this.stepFrame = null;
+				this.comeInStep();
+			});
+		}
+	}
+
+	private cancelStep(): void {
+		if (this.stepFrame !== null) {
+			cancelNextFrame(this.stepFrame);
+			this.stepFrame = null;
+		}
+	}
+
+	/**
+	 * Scrolls the preview to the part matching the place in the editor, unless either is hidden.
+	 */
+	private comeInStep(): void {
+		const editor = this.followedEditor();
+		const element = this.element;
+		if (!editor || !this.options.scrollWithEditor || !shown(element) ||
+			!shown(editor.view.scrollDOM)) {
+			return;
+		}
+		const view = editor.view;
+		const scroller = view.scrollDOM;
+		const doc = view.state.doc;
+		// where the contents start on the screen; that of the editor holds its padding above the
+		// first line
+		const editorTop = scroller.getBoundingClientRect().top + scroller.clientTop -
+			scroller.scrollTop;
+		const documentTop = view.documentTop - editorTop;
+		const previewTop = element.getBoundingClientRect().top + element.clientTop -
+			element.scrollTop;
+		const geometry: StepGeometry = {
+			lineAt: (height) => doc.lineAt(view.lineBlockAtHeight(height - documentTop).from).number,
+			// the text rendered may be ahead of the editor's, by a frame
+			lineTop: (line) => documentTop + view.lineBlockAt(doc.line(Math.min(Math.max(line, 1),
+				doc.lines)).from).top,
+			blockTop: (block) => block.getBoundingClientRect().top - previewTop,
+			editorHeight: scroller.scrollHeight,
+			previewHeight: element.scrollHeight
+		};
+		const head = view.state.selection.main.head;
+		// where the cursor shows, or its line where the editor has not drawn it
+		const coords = view.coordsAtPos(head);
+		const cursor = coords ? coords.top - editorTop : documentTop + view.lineBlockAt(head).top;
+		const scrollTop = stepScrollTop(this.blocks, geometry, { scrollTop: scroller.scrollTop,
+			height: scroller.clientHeight, cursor }, element.clientHeight);
+		if (Math.abs(scrollTop - element.scrollTop) >= 1) {
+			element.scrollTop = scrollTop;
 		}
 	}
 
@@ -861,8 +1187,11 @@ export class MarkdownPreview {
 		const render = ++this.renders;
 		let pending: string[] = [];
 		if (this.value.trim()) {
-			pending = renderMarkdown(this.value, element, this.look);
+			const renderer = renderInto(this.value, element, this.look);
+			pending = Array.from(renderer.pending);
+			this.blocks = renderer.rendered;
 		} else {
+			this.blocks = [];
 			element.replaceChildren();
 			if (this.options.placeholder) {
 				const empty = element.ownerDocument.createElement('p');
@@ -871,6 +1200,7 @@ export class MarkdownPreview {
 				element.append(empty);
 			}
 		}
+		this.stepLater();
 		this.options.onRender?.(element);
 		if (pending.length) {
 			// the code blocks are highlighted once their grammars are loaded, unless the text
@@ -884,9 +1214,10 @@ export class MarkdownPreview {
 		}
 	}
 
-	private listen(target: EventTarget, type: string, listener: (event: Event) => void): void {
-		target.addEventListener(type, listener);
-		this.listeners.push([target, type, listener]);
+	private listen(target: EventTarget, type: string, listener: (event: Event) => void,
+		options?: AddEventListenerOptions): void {
+		target.addEventListener(type, listener, options);
+		this.listeners.push([target, type, listener, options]);
 	}
 
 	/**
@@ -894,10 +1225,13 @@ export class MarkdownPreview {
 	 */
 	private detach(): void {
 		this.cancelFrame();
-		this.listeners.forEach(([target, type, listener]) => {
-			target.removeEventListener(type, listener);
+		this.cancelStep();
+		this.listeners.forEach(([target, type, listener, options]) => {
+			target.removeEventListener(type, listener, options);
 		});
 		this.listeners = [];
+		this.observer?.disconnect();
+		this.observer = null;
 		this.stopWatchingRemoval?.();
 		this.stopWatchingRemoval = null;
 	}

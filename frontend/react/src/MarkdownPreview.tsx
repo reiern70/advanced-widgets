@@ -22,8 +22,19 @@ import { useLook } from './Look.js';
 
 export interface MarkdownPreviewProps extends Omit<HTMLAttributes<HTMLDivElement>,
 	'children' | 'placeholder'> {
-	/** The text, in Markdown. */
-	value: string;
+	/** The text, in Markdown; that of the editor when left out and it follows one. */
+	value?: string;
+	/**
+	 * A code editor the preview follows: its element, or the id of the element, a CodeEditor's
+	 * id. The preview shows its text as it changes, and can keep in step with it.
+	 */
+	editor?: HTMLElement | string | null;
+	/**
+	 * Whether the preview keeps in step with its editor: as the user moves the cursor, types or
+	 * scrolls the editor, the preview scrolls to the part matching the place in the editor. False
+	 * when left out.
+	 */
+	scrollWithEditor?: boolean;
 	/** The accessible name of the preview, a region of the page. */
 	label?: string;
 	/** What the preview says while the text is empty, nothing when left out. */
@@ -35,10 +46,11 @@ export interface MarkdownPreviewProps extends Omit<HTMLAttributes<HTMLDivElement
  * strikethrough, its fenced code blocks highlighted by the grammars of the code editor. The core
  * renders it, an element at a time, never parsing HTML: HTML in the text shows as text, and links
  * and pictures take only web addresses. Give it the text of a {@link CodeEditor} as the user types
- * it, and a height to scroll.
+ * it, or the editor's id as editor, and a height to scroll; with scrollWithEditor too, it keeps in
+ * step with the editor.
  */
 export function MarkdownPreview(props: MarkdownPreviewProps) {
-	const { value, label, placeholder, className, ...rest } = props;
+	const { value, editor, scrollWithEditor, label, placeholder, className, ...rest } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreMarkdownPreview | null>(null);
 	const look = useLook();
@@ -48,6 +60,7 @@ export function MarkdownPreview(props: MarkdownPreviewProps) {
 	useLayoutEffect(() => {
 		const current = latest.current;
 		const preview = new CoreMarkdownPreview(element.current!, { value: current.value,
+			editor: current.editor, scrollWithEditor: current.scrollWithEditor,
 			label: current.label, placeholder: current.placeholder, look });
 		instance.current = preview;
 		return () => {
@@ -57,8 +70,18 @@ export function MarkdownPreview(props: MarkdownPreviewProps) {
 	}, [look]);
 
 	useLayoutEffect(() => {
-		instance.current?.setValue(value);
+		if (value !== undefined) {
+			instance.current?.setValue(value);
+		}
 	}, [value]);
+
+	useLayoutEffect(() => {
+		const preview = instance.current;
+		if (preview && ((preview.options.editor ?? null) !== (editor ?? null) ||
+			!!preview.options.scrollWithEditor !== !!scrollWithEditor)) {
+			preview.configure({ editor: editor ?? null, scrollWithEditor: !!scrollWithEditor });
+		}
+	}, [editor, scrollWithEditor]);
 
 	useLayoutEffect(() => {
 		const preview = instance.current;
