@@ -455,14 +455,24 @@ describe('FilePicker', () => {
 		expect(picker.zone!.classList.contains('antilia-file-picker-zone-invalid')).toBe(false);
 	});
 
-	it('takes several files of a name', () => {
-		document.body.innerHTML = '<input type="file" id="f" multiple>';
+	it('tells of several files of a name where the server keeps one of each', () => {
+		document.body.innerHTML = '<input type="file" id="f" multiple><input type="file" id="g" multiple>';
 		const input = settable(document.getElementById('f') as HTMLInputElement);
-		const picker = new FilePicker(input);
+		const other = settable(document.getElementById('g') as HTMLInputElement);
+		const picker = new FilePicker(input, { uniqueNames: true });
+		const form = new FilePicker(other);
+		const files = [file('photo.png', 1), file('notes.txt', 2), file('photo.png', 3),
+			file('photo.png', 4)];
 
-		choose(input, file('photo.png', 1), file('notes.txt', 2), file('photo.png', 3));
+		choose(input, ...files);
+		expect(picker.problems()).toEqual([{ kind: 'sameName',
+			message: 'photo.png: several files of this name, the server keeps one' }]);
+		expect(picker.error.hidden).toBe(false);
+		choose(other, ...files);
+		expect(form.problems()).toEqual([]);
+		picker.remove(2);
+		picker.remove(2);
 		expect(picker.problems()).toEqual([]);
-		expect(picker.error.hidden).toBe(true);
 	});
 
 	it('lets nothing change while the files of its input, or of its form, are being sent', () => {
@@ -827,8 +837,8 @@ describe('Wicket.Upload', () => {
 		document.body.innerHTML = '<input type="file" id="f"><a id="link"></a>';
 		const ends = vi.fn();
 		document.addEventListener(UPLOAD_END_EVENT, ends);
-		const post = vi.fn();
-		window.Wicket!.Ajax = { post };
+		const get = vi.fn();
+		window.Wicket!.Ajax = { get };
 
 		const xhr = fakeXhr();
 		window.Wicket!.Timer = { f: { ajaxCallBackUrl: 'callback' } };
@@ -855,31 +865,37 @@ describe('Wicket.Upload', () => {
 		expect(later.pre).toBeUndefined();
 
 		upload.guard('f', null);
-		upload.field('f', { uploadFailed: 'The upload failed.', uploadConnectionLost: 'Lost.' });
+		upload.field('f', { uploadFailed: 'The upload failed.' });
 		const first = fakeXhr();
 		const failing = fakeXhr();
 		upload.started('f', first);
 		expect(UploadGuard.keepsOnPage()).toBe(false);
 		upload.started('f', failing);
-		first.dispatchEvent(new Event('abort'));
+		first.dispatchEvent(new Event('loadend'));
 		expect(ends).toHaveBeenCalledTimes(1);
 		failing.dispatchEvent(new Event('error'));
-		expect(ends.mock.calls[1][0].detail).toMatchObject({ outcome: 'failed', message: 'Lost.',
-			status: 0 });
+		expect(ends.mock.calls[1][0].detail).toMatchObject({ outcome: 'failed', status: 0 });
 
-		// Wicket's handlers tell how a request ended, which its end alone does not
+		// an answer Wicket's handlers told nothing of was not understood: the server hears of it
 		const loading = fakeXhr();
 		upload.started('f', loading);
 		loading.dispatchEvent(new Event('loadend'));
-		expect(ends).toHaveBeenCalledTimes(2);
-		expect(post).not.toHaveBeenCalled();
-		upload.ended('f', 'done');
+		expect(ends.mock.calls[2][0].detail).toMatchObject({ outcome: 'failed',
+			message: 'The upload failed.', status: 200 });
+		expect(get).toHaveBeenCalledWith({ u: 'callback', ep: { error: true,
+			errorMessage: 'uploadFailed' } });
+		const lost = fakeXhr();
+		(lost as { status: number }).status = 0;
+		upload.started('f', lost);
+		lost.dispatchEvent(new Event('loadend'));
+		expect(get).toHaveBeenLastCalledWith({ u: 'callback', ep: { error: true,
+			errorMessage: 'uploadConnectionLost' } });
 
 		upload.started('f');
 		upload.ended('f', 'failed', 'No room');
 		upload.ended('f', 'done');
-		expect(ends).toHaveBeenCalledTimes(4);
-		expect(ends.mock.calls[3][0].detail.message).toBe('No room');
+		expect(ends).toHaveBeenCalledTimes(5);
+		expect(ends.mock.calls[4][0].detail.message).toBe('No room');
 	});
 
 	it('wraps the hooks of Wicket\'s field, which stay the page\'s', async () => {
@@ -889,8 +905,6 @@ describe('Wicket.Upload', () => {
 		const calls: string[] = [];
 		const ends = vi.fn();
 		document.addEventListener(UPLOAD_END_EVENT, ends);
-		const starts = vi.fn();
-		document.addEventListener('antilia-upload:start', starts);
 		const instance = {
 			ajaxCallBackUrl: 'cb',
 			upload: vi.fn(),
@@ -912,31 +926,30 @@ describe('Wicket.Upload', () => {
 		upload.field('f');
 		const cancel = instance.clientSideCancelCallBack;
 
+		// the files received go to the callback by POST, however many they are
+		const report: { u: string; m: string } = { u: 'cb', m: 'GET' };
+		publish('/ajax/call/before', report);
+		expect(report.m).toBe('POST');
+		const other: { u: string; m: string } = { u: 'other', m: 'GET' };
+		publish('/ajax/call/before', other);
+		expect(other.m).toBe('GET');
+
 		choose(input, file('a', 1));
 		expect(upload.upload('f')).toBe(true);
 		const xhr = fakeXhr();
 		instance.clientBeforeSendCallBack(xhr);
-		// the page's hook first, which may keep the request from going
-		expect(calls).toEqual(['before xhr false']);
-		expect(UploadGuard.keepsOnPage()).toBe(true);
+		expect(calls).toEqual(['before xhr true']);
 		instance.clientSideSuccessCallBack();
 		expect(calls[1]).toBe('success');
 		expect(ends.mock.calls[0][0].detail.outcome).toBe('done');
 
 		instance.clientBeforeSendCallBack(fakeXhr());
-		const error = { error: true, errorMessage: 'uploadFailed' };
+		const error = { error: true, errorMessage: 'Server Error' };
 		instance.uploadErrorCallBack(error);
+		// the page's hook hears of the error the server is told
 		expect(calls[3]).toBe('error uploadFailed');
 		expect(ends.mock.calls[1][0].detail).toMatchObject({ outcome: 'failed', message: 'Failed.' });
 		expect(instance.clientSideCancelCallBack).toBe(cancel);
-		expect(starts).toHaveBeenCalledTimes(2);
-
-		// a hook of the page saying false: Wicket's field sends nothing, and nothing starts
-		const refusing = { upload: vi.fn(), clientBeforeSendCallBack: () => false };
-		window.Wicket!.Timer = { h: refusing };
-		upload.field('h');
-		expect(refusing.clientBeforeSendCallBack()).toBe(false);
-		expect(starts).toHaveBeenCalledTimes(2);
 
 		// a field without hooks of its own
 		const bare: Record<string, unknown> = { upload: vi.fn() };
@@ -954,9 +967,9 @@ describe('Wicket.Upload', () => {
 		const input = settable(document.getElementById('f') as HTMLInputElement);
 		new FilePicker(input, { fileCountMax: 1 });
 		const send = vi.fn();
-		const post = vi.fn();
+		const get = vi.fn();
 		window.Wicket!.Timer = { f: { upload: send, ajaxCallBackUrl: 'cb' } };
-		window.Wicket!.Ajax = { post };
+		window.Wicket!.Ajax = { get };
 		upload.field('f', { 'wicket.no.files.selected': 'Nothing to upload.' });
 		const refused = vi.fn();
 		document.addEventListener(UPLOAD_REFUSED_EVENT, refused);
@@ -965,29 +978,26 @@ describe('Wicket.Upload', () => {
 		expect(upload.upload('f')).toBe(false);
 		expect(refused.mock.calls[0][0].detail).toEqual({ source: 'f',
 			message: 'Nothing to upload.' });
-		expect(post).toHaveBeenLastCalledWith({ u: 'cb', ep: { error: true,
+		expect(get).toHaveBeenLastCalledWith({ u: 'cb', ep: { error: true,
 			errorMessage: 'wicket.no.files.selected' } });
 
 		choose(input, file('a', 1), file('b', 2));
 		expect(upload.upload('f')).toBe(false);
 		expect(refused.mock.calls[1][0].detail.message).toBe('2 files, more than the 1 sent at once');
-		expect(post).toHaveBeenLastCalledWith({ u: 'cb', ep: { error: true,
+		expect(get).toHaveBeenLastCalledWith({ u: 'cb', ep: { error: true,
 			errorMessage: 'uploadTooManyFiles' } });
 		expect(send).not.toHaveBeenCalled();
 
 		choose(input, file('a', 1));
-		// Wicket's field may refuse to send as well
-		send.mockReturnValueOnce(false);
-		expect(upload.upload('f')).toBe(false);
 		expect(upload.upload('f')).toBe(true);
-		expect(send).toHaveBeenCalledTimes(2);
+		expect(send).toHaveBeenCalledTimes(1);
 		upload.started('f', fakeXhr());
 		expect(upload.upload('f')).toBe(false);
-		expect(send).toHaveBeenCalledTimes(2);
+		expect(send).toHaveBeenCalledTimes(1);
 		upload.ended('f', 'done');
 	});
 
-	it('tells the progress the server\'s words of an error, or that no answer came', async () => {
+	it('gives the server errors it has words for, and the progress what they say', async () => {
 		const upload = await load();
 		document.body.innerHTML = '<input type="file" id="f">';
 		const ends = vi.fn();
@@ -1003,27 +1013,22 @@ describe('Wicket.Upload', () => {
 			return error;
 		};
 
-		// what Wicket's field tells the server stays as it is
 		expect(failure(200, 'uploadTooManyFiles').errorMessage).toBe('uploadTooManyFiles');
 		expect(ends.mock.calls[0][0].detail).toMatchObject({ message: 'Too many files.',
 			status: undefined });
-		// an answer with an error: its status tells more
-		expect(failure(500, 'uploadFailed').errorMessage).toBe('uploadFailed');
+		// the status text of an answer: the server would look for words of it in vain
+		expect(failure(500, 'Server Error').errorMessage).toBe('uploadFailed');
 		expect(ends.mock.calls[1][0].detail).toMatchObject({ message: undefined, status: 500 });
-		// no answer: the connection broke off, which Wicket's field tells the server too
-		expect(failure(0, 'uploadConnectionLost').errorMessage).toBe('uploadConnectionLost');
+		expect(failure(0, '').errorMessage).toBe('uploadConnectionLost');
 		expect(ends.mock.calls[2][0].detail).toMatchObject({ message: 'Lost.', status: 0 });
-		// an error the server has no words for
-		failure(200, { not: 'a key' });
+		expect(failure(200, { not: 'a key' }).errorMessage).toBe('uploadFailed');
 		expect(ends.mock.calls[3][0].detail.message).toBe('Failed.');
-		failure(200, 'unknown');
-		expect(ends.mock.calls[4][0].detail.message).toBe('Failed.');
 
 		upload.started('f');
 		upload.failed('f');
-		expect(ends.mock.calls[5][0].detail).toMatchObject({ outcome: 'failed', message: 'Failed.' });
+		expect(ends.mock.calls[4][0].detail).toMatchObject({ outcome: 'failed', message: 'Failed.' });
 		upload.failed('f', {});
-		expect(ends).toHaveBeenCalledTimes(6);
+		expect(ends).toHaveBeenCalledTimes(5);
 	});
 
 	it('tells the uploads of forms, sent by Ajax or posted', async () => {

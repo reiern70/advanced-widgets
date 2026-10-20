@@ -60,10 +60,10 @@ public class DemoUploadsFileManager extends FolderUploadsFileManager
 	}
 
 	@Override
-	public String store(FileUpload fileItem, String uploadFieldId)
+	public void save(FileUpload fileItem, String uploadFieldId)
 	{
 		deleteOlderThan(Instant.now().minus(MAX_AGE));
-		return super.store(fileItem, uploadFieldId);
+		super.save(fileItem, uploadFieldId);
 	}
 
 	/**

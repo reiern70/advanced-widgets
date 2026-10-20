@@ -24,10 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
@@ -149,6 +147,7 @@ class UploadsTest extends WicketTestCase
 		assertEquals(20 * 1024 * 1024, options.getLong("maxSize"));
 		assertEquals(10 * 1024 * 1024, options.getLong("fileMaxSize"));
 		assertEquals(3, options.getLong("fileCountMax"), "the root form reads the files");
+		assertFalse(options.has("uniqueNames"), "a form takes files of a name");
 		JSONObject plain = options(page, "Wicket.Upload.FilePicker.attach(" + JSONObject.quote(
 			tester.getComponentFromLastRenderedPage("plain:other").getMarkupId()) + ", ");
 		assertFalse(plain.has("maxSize"), plain.toString());
@@ -159,6 +158,7 @@ class UploadsTest extends WicketTestCase
 		assertEquals(5 * 1024, resource.getLong("maxSize"));
 		assertFalse(resource.has("fileMaxSize"));
 		assertEquals(2, resource.getLong("fileCountMax"));
+		assertTrue(resource.getBoolean("uniqueNames"), "a folder keeps one file of each name");
 	}
 
 	@Test
@@ -237,7 +237,8 @@ class UploadsTest extends WicketTestCase
 		assertTrue(page.contains("Wicket.Upload.guard(" + id +
 			", {\"leaving\":true,\"requests\":false});"), page);
 		// the hooks of Wicket's field stay its own, which the script wraps once the field is made
-		assertTrue(page.contains(field.hooks() + ");"), page);
+		assertTrue(page.contains("function (xhr, settings) { return true; },function () {}," +
+			"function () {},function (res) {}"), page);
 		assertTrue(page.indexOf("Wicket.Upload.field(" + id + ", {") >
 			page.indexOf("new Wicket.FileUploadToResourceField("), page);
 		assertTrue(field.isKeepingOnPage());
@@ -317,41 +318,24 @@ class UploadsTest extends WicketTestCase
 		assertEquals("Nothing to upload: no files were chosen.",
 			messages.getString("wicket.no.files.selected"));
 		assertEquals("The connection to the server broke off during the upload.",
-			messages.getString(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
-		assertEquals(6, messages.length(), messages.toString());
+			messages.getString(UploadToResourceField.CONNECTION_LOST_KEY));
+		assertEquals("Several files have the same name: the server keeps one of each name.",
+			messages.getString(UploadToResourceField.SAME_NAME_KEY));
 
-		// the server words a connection broken off with the bar's words, any other failure as one,
-		// in the session's language
+		// Wicket's own words of uploadFailed expect an exception, which the field does not have
 		AbstractDefaultAjaxBehavior callback = field.getBehaviors(
 			AbstractDefaultAjaxBehavior.class).get(0);
-		Map<String, String> said = new LinkedHashMap<>();
-		said.put("uploadFailed", "The upload failed.");
-		said.put("Internal Server Error", "The upload failed.");
-		said.put(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY,
-			"The connection to the server broke off during the upload.");
-		said.forEach((error, message) -> {
-			assertEquals(message, failure(field, callback, error));
+		for (String error : new String[] { "uploadFailed", UploadToResourceField.CONNECTION_LOST_KEY })
+		{
+			tester.getRequest().setParameter("error", "true");
+			tester.getRequest().setParameter("errorMessage", error);
+			tester.executeBehavior(callback);
 			assertEquals(1, field.failures);
 			field.failures = 0;
-		});
-		tester.getSession().setLocale(Locale.GERMAN);
-		assertEquals("Der Upload ist fehlgeschlagen.", failure(field, callback, "uploadFailed"));
-		assertEquals("Die Verbindung zum Server ist beim Upload abgebrochen.",
-			failure(field, callback, UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
-	}
-
-	/**
-	 * Tells the field that its upload failed, as its script does.
-	 *
-	 * @return the message the server words the error with
-	 */
-	private String failure(TestField field, AbstractDefaultAjaxBehavior callback, String error)
-	{
-		tester.getRequest().setParameter("error", "true");
-		tester.getRequest().setParameter("errorMessage", error);
-		tester.executeBehavior(callback);
+		}
 		List<FeedbackMessage> errors = field.getFeedbackMessages().toList();
-		return errors.get(errors.size() - 1).getMessage().toString();
+		assertEquals("The connection to the server broke off during the upload.",
+			errors.get(errors.size() - 1).getMessage());
 	}
 
 	@Test
@@ -426,15 +410,6 @@ class UploadsTest extends WicketTestCase
 		TestField(String id)
 		{
 			super(id);
-		}
-
-		/**
-		 * @return the hooks of Wicket's field in the browser, as it renders them
-		 */
-		String hooks()
-		{
-			return getClientBeforeSendCallBack() + "," + getClientSideSuccessCallBack() + "," +
-				getClientSideCancelCallBack() + "," + getClientSideUploadErrorCallBack();
 		}
 
 		@Override

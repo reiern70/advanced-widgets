@@ -322,7 +322,8 @@ several, and a button clearing them. Files dropped on the picker go into the inp
 so a form, an Ajax behavior or the binding of a framework gets them as if chosen in the dialog; the
 picker tells the names of the others. A `multiple` input keeps the files chosen before: files chosen
 in the dialog or dropped are added to them, and each has a button taking it out of the list. Given
-the limits of the server (`maxSize`, `fileMaxSize`, `fileCountMax`), the picker tells at once which
+the limits of the server (`maxSize`, `fileMaxSize`, `fileCountMax`, and `uniqueNames` where it
+keeps one file of each name), the picker tells at once which
 the files break (`problems()`, `uploadProblems(element)`), and while its files are being sent it lets
 nothing change. `UploadProgress` draws the progress of the uploads of a source,
 an input or a form, into an element the framework renders empty, hidden until an upload starts: a
@@ -344,8 +345,8 @@ the engine gives it to `/ajax/call/beforeSend` (the plain JavaScript one does), 
 one sent the usual way, sending neither while the files break a limit, and ends the upload when its
 request ends should Wicket not tell; `UploadToResourceField`, Wicket's `FileUploadToResourceField`
 telling its uploads around the hooks of Wicket's field, which stay the page's, guards them, lets
-the field's own callback go, sends one upload at a time and none breaking a limit, and words
-its errors in the language of the page. The server tells the progress with
+the field's own callback go, sends one upload at a time and none breaking a limit, and tells the
+server only errors it has words for, and the files received by POST, however many they are. The server tells the progress with
 `UploadStatusResource`, from what Wicket keeps of an upload with
 `setUploadProgressUpdatesEnabled(true)`. The demo's Upload page shows a form posted or sent by Ajax,
 an upload to a resource with the guard, and zones to drop files on, and slows the server down

@@ -51,22 +51,37 @@ import com.github.openjson.JSONObject;
  * or the script of {@link #getTriggerUploadScript()}, so a change of it needs no new rendering of
  * the field, which would lose the files chosen.
  * <p>
- * The field sends any number of files at once, up to {@link #getFileCountMax()}, files of one name
- * too: Wicket's field keeps them apart.
+ * The field sends any number of files at once, up to {@link #getFileCountMax()}. Wicket's field
+ * tells the server of the files received by GET, in a URL growing with every file, which a server
+ * refuses beyond some kilobytes (Jetty past 8, after some 60 files): its script sends them by
+ * POST.
  * <p>
  * The field sends one upload at a time, and none whose files break its limits, as the
- * {@link FilePickerBehavior} of the field knows them, nor one without files: those reach
+ * {@link FilePickerBehavior} of the field knows them, nor several of a name, nor one without
+ * files: those reach
  * {@link #onUploadFailure(org.apache.wicket.ajax.AjaxRequestTarget, String)} as if the server
- * refused them, without being sent. The resources of this class word the errors, in English,
- * German and Spanish, and the bar of the field tells the same words: when the request got no
- * answer, both the bar and the server tell that the connection broke off
- * ({@value FileUploadToResourceField#CONNECTION_LOST_RESOURCE_KEY}).
+ * refused them, without being sent. Whatever the upload runs into, the error the server is told
+ * is one Wicket's field has words for: the status text of an answer, say, would have it look in
+ * vain for a resource, and Wicket's own words of {@value Form#UPLOAD_FAILED_RESOURCE_KEY} expect an
+ * exception the field does not have. The resources of this class word them, and
+ * {@value #CONNECTION_LOST_KEY}, which the field is told when the connection broke off; the bar of
+ * the field tells the same words.
  *
  * @since 11.0.0
  */
 public abstract class UploadToResourceField extends FileUploadToResourceField
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The key of the error the field is told when the connection broke off during an upload. */
+	public static final String CONNECTION_LOST_KEY = "uploadConnectionLost";
+
+	/**
+	 * The key of the error the field is told of several files of a name, which are not sent: the
+	 * folder of Wicket's {@link org.apache.wicket.markup.html.form.upload.resource.FolderUploadsFileManager}
+	 * keeps one file of each name, the last.
+	 */
+	public static final String SAME_NAME_KEY = "uploadSameName";
 
 	private boolean keepingOnPage = true;
 
@@ -154,8 +169,7 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 	}
 
 	/**
-	 * @return the words of the errors of the uploads, as the server words them, by the key of the
-	 *         error the script of Wicket's field tells
+	 * @return the words of the errors of the uploads, as the server tells them to the field
 	 */
 	protected JSONObject newMessages()
 	{
@@ -166,13 +180,13 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 		JSONObject messages = new JSONObject();
 		for (String key : new String[] { AbstractFileUploadResource.NO_FILE_SELECTED,
 			Form.UPLOAD_TOO_LARGE_RESOURCE_KEY, Form.UPLOAD_SINGLE_FILE_TOO_LARGE_RESOURCE_KEY,
-			Form.UPLOAD_TOO_MANY_FILES_RESOURCE_KEY, CONNECTION_LOST_RESOURCE_KEY })
+			Form.UPLOAD_TOO_MANY_FILES_RESOURCE_KEY, Form.UPLOAD_FAILED_RESOURCE_KEY,
+			CONNECTION_LOST_KEY, SAME_NAME_KEY })
 		{
+			// as Wicket's field words them, the key standing for the exception
+			model.put("exception", key);
 			messages.put(key, getString(key, Model.ofMap(model)));
 		}
-		// the script says uploadFailed, which the server words with a key of its own
-		messages.put(Form.UPLOAD_FAILED_RESOURCE_KEY,
-			getString(FileUploadToResourceField.UPLOAD_FAILED_RESOURCE_KEY));
 		return messages;
 	}
 }

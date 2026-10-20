@@ -21,17 +21,16 @@
  * Wicket's FileUploadToResourceField tell its uploads with Wicket.Upload.field(id, messages), how
  * the server words their errors being the messages, tells what guards them with
  * Wicket.Upload.guard(id, options) and starts them with Wicket.Upload.upload(id). field() wraps the
- * hooks Wicket's field calls in the browser, which stay the page's: once the page's hook let the
- * request be sent it calls Wicket.Upload.started(id, xhr), once the files arrived
- * Wicket.Upload.ended(id, 'done'), once the upload failed Wicket.Upload.failed(id, error); the
- * request itself tells of a cancellation. The guard of a field's upload lets the field's own Ajax
- * callback go, which Wicket's FileUploadToResourceField calls once the upload ended, or was
- * canceled.
+ * hooks Wicket's field calls in the browser, which stay the page's: before the request is sent it
+ * calls Wicket.Upload.started(id, xhr), once the files arrived Wicket.Upload.ended(id, 'done'),
+ * once the upload failed Wicket.Upload.failed(id, error); the request itself tells of a
+ * cancellation. The guard of a field's upload lets the field's own Ajax callback go, which Wicket's
+ * FileUploadToResourceField calls once the upload ended, or was canceled.
  *
  * A field sends one upload at a time, and none whose files break the limits its picker knows: the
- * server hears of those as of files it refused, without receiving them. Wicket's field tells its
- * callback how an upload ended by POST: as uploadConnectionLost when no answer came, which the
- * progress tells too, and as uploadFailed a failure it has no words of its own for.
+ * server hears of those as of files it refused, without receiving them. The error the server's
+ * callback receives is one it has words for, whatever the request ran into, and the files it
+ * received go to the callback by POST, however many they are.
  *
  * The uploads of forms are told as well: a multipart form posted the usual way, whose progress the
  * server tells, and one sent by Ajax, with its request where Wicket's Ajax gives it to
@@ -89,10 +88,9 @@ interface UploadError {
 
 /** Wicket's FileUploadToResourceField in the browser, Wicket.Timer[id]. */
 interface ResourceField {
-	/** Sends the files, unless an upload runs or they break a limit: false then. */
-	upload?: () => boolean | void;
+	upload?: () => void;
 	ajaxCallBackUrl?: unknown;
-	/** The hooks of the page, which Wicket's field calls: false from the first sends nothing. */
+	/** The hooks of the page, which Wicket's field calls. */
 	clientBeforeSendCallBack?: (xhr: XMLHttpRequest) => unknown;
 	clientSideSuccessCallBack?: () => unknown;
 	uploadErrorCallBack?: (error: UploadError) => unknown;
@@ -106,18 +104,17 @@ interface Upload {
 	guard: UploadGuardHandle | null;
 }
 
+/** The errors the server has words for, as Wicket's FileUploadToResourceField tells them. */
+const ERRORS = ['wicket.no.files.selected', 'uploadTooLarge', 'uploadSingleFileTooLarge',
+	'uploadTooManyFiles', 'uploadFailed', 'uploadConnectionLost', 'uploadSameName'];
+
 /** The error the server tells of each limit broken. */
 const PROBLEM_ERRORS: Record<UploadProblemKind, string> = {
 	tooLarge: 'uploadSingleFileTooLarge',
 	tooMany: 'uploadTooManyFiles',
-	tooMuch: 'uploadTooLarge'
+	tooMuch: 'uploadTooLarge',
+	sameName: 'uploadSameName'
 };
-
-/** The words of a failure of the server's, or of the request. */
-const FAILED = 'uploadFailed';
-
-/** The words of an upload whose request got no answer. */
-const CONNECTION_LOST = 'uploadConnectionLost';
 
 /** How long a form's upload waits for Wicket to tell its request is complete, once it ended. */
 const COMPLETE_MILLIS = 3000;
@@ -154,9 +151,9 @@ function fieldOf(source: string): ResourceField | undefined {
 }
 
 /**
- * Has Wicket's FileUploadToResourceField of an id tell its uploads, around the hooks of the page:
- * the request about to be sent, unless the page's hook keeps it from going, the files arrived, the
- * upload failed. The hook of a cancellation stays as it is: the request tells of it.
+ * Has Wicket's FileUploadToResourceField of an id tell its uploads, around the hooks of the page,
+ * which it calls after: the request about to be sent, the files arrived, the upload failed. The
+ * hook of a cancellation stays as it is: the request tells of it.
  *
  * @param source the id of the field
  * @param errors how the server words the errors of its uploads, which the progress tells, by
@@ -173,12 +170,8 @@ function field(source: string, errors?: Record<string, string>): void {
 	instance.antiliaUpload = true;
 	const before = instance.clientBeforeSendCallBack;
 	instance.clientBeforeSendCallBack = function (this: unknown, xhr: XMLHttpRequest) {
-		// Wicket's field sends nothing when the page's hook says false
-		const send = before?.call(this, xhr);
-		if (send !== false) {
-			started(source, xhr);
-		}
-		return send;
+		started(source, xhr);
+		return before?.call(this, xhr);
 	};
 	const success = instance.clientSideSuccessCallBack;
 	instance.clientSideSuccessCallBack = function (this: unknown) {
@@ -187,6 +180,7 @@ function field(source: string, errors?: Record<string, string>): void {
 	};
 	const error = instance.uploadErrorCallBack;
 	instance.uploadErrorCallBack = function (this: unknown, res: UploadError) {
+		// the page's hook hears of the error the server is told
 		failed(source, res);
 		return error?.call(this, res);
 	};
@@ -205,9 +199,9 @@ function callbackOf(source: string): string | undefined {
  */
 function tell(source: string, error: string): void {
 	const url = callbackOf(source);
-	const ajax = wicket().Ajax as { post?: (attrs: object) => unknown } | undefined;
-	if (url && ajax?.post) {
-		ajax.post({ u: url, ep: { error: true, errorMessage: error } });
+	const ajax = wicket().Ajax as { get?: (attrs: object) => unknown } | undefined;
+	if (url && ajax?.get) {
+		ajax.get({ u: url, ep: { error: true, errorMessage: error } });
 	}
 }
 
@@ -232,7 +226,8 @@ function upload(source: string): boolean {
 		return false;
 	}
 	field(source);
-	return instance.upload() !== false;
+	instance.upload();
+	return true;
 }
 
 /**
@@ -252,8 +247,16 @@ function started(source: string, xhr?: XMLHttpRequest): void {
 		// the request ends its own upload only, not one started after it
 		const mine = () => running.get(source)?.xhr === xhr;
 		xhr.addEventListener('abort', () => mine() && ended(source, 'canceled'));
-		xhr.addEventListener('error', () => mine() && ended(source, 'failed',
-			words.get(source)?.[CONNECTION_LOST], 0));
+		xhr.addEventListener('error', () => mine() && ended(source, 'failed', undefined, 0));
+		xhr.addEventListener('loadend', () => {
+			if (!mine()) {
+				return;
+			}
+			// Wicket's handlers ran before, and told nothing: its answer was not understood
+			const error = xhr.status ? 'uploadFailed' : 'uploadConnectionLost';
+			tell(source, error);
+			ended(source, 'failed', words.get(source)?.[error], xhr.status);
+		});
 	}
 	uploadStarted(source, xhr);
 }
@@ -277,22 +280,37 @@ function ended(source: string, outcome: UploadOutcome, message?: string, status?
 
 /**
  * Tells that a field's upload failed, as the error callback of Wicket's FileUploadToResourceField
- * hears: in the server's words of the error, those of uploadFailed for one it has none for, or that
- * the connection broke off when no answer came.
+ * hears: the error goes to the server next, so one the server has no words for, such as the status
+ * text of the answer, becomes uploadFailed, or uploadConnectionLost when no answer came.
  *
  * @param source the id of the field
  * @param error what the request tells, and sends to the server
  */
 function failed(source: string, error?: UploadError): void {
 	const xhr = running.get(source)?.xhr;
-	const said = words.get(source) ?? {};
-	const status = xhr?.status;
-	const key = status === 0 ? CONNECTION_LOST
-		: typeof error?.errorMessage === 'string' ? error.errorMessage : FAILED;
+	let key = typeof error?.errorMessage === 'string' ? error.errorMessage : '';
+	if (xhr && xhr.status === 0) {
+		key = 'uploadConnectionLost';
+	} else if (!ERRORS.includes(key)) {
+		key = 'uploadFailed';
+	}
+	if (error) {
+		error.errorMessage = key;
+	}
 	// the server's words, unless it answered with an error, whose status tells more
+	const status = xhr?.status;
 	const answered = status === undefined || (status >= 200 && status < 300);
-	ended(source, 'failed', answered || status === 0 ? said[key] ?? said[FAILED] : undefined,
+	ended(source, 'failed', answered || status === 0 ? words.get(source)?.[key] : undefined,
 		answered ? undefined : status);
+}
+
+/**
+ * @returns whether a URL is the Ajax callback of a field whose uploads field() follows
+ */
+function isFieldCallback(url: string | undefined): boolean {
+	const fields = window.Wicket?.Timer as Record<string, ResourceField> | undefined;
+	return !!url && !!fields && Object.values(fields)
+		.some((instance) => instance?.antiliaUpload && instance.ajaxCallBackUrl === url);
 }
 
 /**
@@ -376,6 +394,11 @@ if (Wicket.Upload === undefined) {
 		events.subscribe('/ajax/call/before', (_event, attrs) => {
 			if (!attrs) {
 				return;
+			}
+			// Wicket's field tells its callback of the files received in the URL of a GET, which
+			// grows too long for the server with many of them: a POST carries them in its body
+			if (isFieldCallback(attrs.u)) {
+				attrs.m = 'POST';
 			}
 			const pre = Array.isArray(attrs.pre) ? attrs.pre : [];
 			const added = [
