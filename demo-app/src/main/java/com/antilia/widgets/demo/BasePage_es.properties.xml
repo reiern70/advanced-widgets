@@ -99,4 +99,7 @@
 	<entry key="buildInfo.commit.dirty">Commit {1}, con cambios sin confirmar</entry>
 	<entry key="admin">Administración</entry>
 	<entry key="whatRunsWhere">Qué funciona dónde</entry>
+	<entry key="github">GitHub: el código y las incidencias</entry>
+	<entry key="sourceCode">Código en GitHub</entry>
+	<entry key="issues">Incidencias</entry>
 </properties>

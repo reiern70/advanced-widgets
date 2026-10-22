@@ -247,6 +247,12 @@ a { color: var(--accent, var(--primary)); }
 	padding-bottom: 16px;
 }
 
+/* what runs where, and the project on GitHub */
+.footer__links {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+}
 .footer__link { color: inherit; font-weight: 600; }
 .footer__link:hover { color: var(--primary); }
 
@@ -396,6 +402,13 @@ a.brand { color: inherit; text-decoration: none; }
 	text-decoration: none;
 	white-space: nowrap;
 }
+/* the GitHub mark, linking to the project */
+.topbar__github {
+	display: inline-flex;
+	align-items: center;
+	color: inherit;
+}
+.topbar__github:hover,
 .topbar__admin:hover,
 .topbar__sign-in:hover,
 .topbar__sign-out:hover { color: var(--primary); }
@@ -435,6 +448,8 @@ a.brand { color: inherit; text-decoration: none; }
 	.topbar__account {
 		display: none;
 	}
+	/* signing in at the start, the GitHub mark beside the registering at the end */
+	.topbar__github { margin-left: auto; }
 }
 
 /* the registration and the email confirmation */

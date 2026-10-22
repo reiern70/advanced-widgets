@@ -95,6 +95,19 @@ public class TestHomePage
 	}
 
 	@Test
+	public void everyPageLinksToTheProjectAndItsIssuesOnGitHub()
+	{
+		tester.startPage(HomePage.class);
+
+		tester.assertContains("<a class=\"topbar__github\" " +
+			"href=\"https://github.com/reiern70/advanced-widgets\" title=\"GitHub: the code and the issues\">");
+		tester.assertContains("<a class=\"footer__link\" " +
+			"href=\"https://github.com/reiern70/advanced-widgets\">Code on GitHub</a>");
+		tester.assertContains("<a class=\"footer__link\" " +
+			"href=\"https://github.com/reiern70/advanced-widgets/issues\">Issues</a>");
+	}
+
+	@Test
 	public void wicketsAjaxRunsOnPlainJavaScriptByDefault()
 	{
 		tester.startPage(HomePage.class);
