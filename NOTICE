@@ -4,7 +4,7 @@ Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com), its cre
 Licensed under the Apache License, Version 2.0: see the file LICENSE.
 
 Portions of demo-app come from the Apache Wicket quickstart archetype, under the Apache License,
-Version 2.0, as their headers say: src/test/java/com/antilia/widgets/demo/Start.java and the Jetty
+Version 2.0, as their headers say: src/test/java/com/antiliacode/widgets/demo/Start.java and the Jetty
 configuration in src/test/jetty.
 
 The demo application uses Font Awesome Free (https://fontawesome.com), Copyright Fonticons, Inc.,

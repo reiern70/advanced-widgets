@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = join(root, 'dist', 'com', 'antilia', 'widgets', 'demo', 'frameworks');
+const out = join(root, 'dist', 'com', 'antiliacode', 'widgets', 'demo', 'frameworks');
 
 const BANNER = [
 	'/*',

@@ -21,7 +21,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.antilia.widgets</groupId>
+		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>antilia-widgets-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -33,7 +33,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.antilia.widgets</groupId>
+			<groupId>com.antiliacode.widgets</groupId>
 			<artifactId>ui-components</artifactId>
 		</dependency>
 		<!-- the method and the body of the requests to the team resource; Jetty provides it -->

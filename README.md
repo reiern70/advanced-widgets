@@ -133,7 +133,7 @@ The library is not published yet: install it with `mvn install` and depend on it
 
 ```xml
 <dependency>
-	<groupId>com.antilia.widgets</groupId>
+	<groupId>com.antiliacode.widgets</groupId>
 	<artifactId>ui-components</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 </dependency>
@@ -173,7 +173,7 @@ public class EditPage extends WebPage
 </html>
 ```
 
-Each component brings its scripts and style sheets; the classes, under `com.antilia.widgets`,
+Each component brings its scripts and style sheets; the classes, under `com.antiliacode.widgets`,
 describe their options in their Javadoc.
 
 ## Using the components in React and Svelte
@@ -209,7 +209,7 @@ GitHub Actions builds and tests every pull request and push to `master`, against
 
 | Folder | What it holds |
 |---|---|
-| `ui-components` | The Wicket components (`com.antilia.widgets.*`), with the scripts and style sheets built from `frontend/core` |
+| `ui-components` | The Wicket components (`com.antiliacode.widgets.*`), with the scripts and style sheets built from `frontend/core` |
 | `demo-app` | The demo application, a WAR: the pages of every component, sign-in and registration, the database |
 | `frontend` | The TypeScript core, the React and Svelte packages and the React and Svelte pages of the demo |
 | `deploy` | How the demo site runs: Docker, Caddy and PostgreSQL on Amazon Lightsail, see [`deploy/README.md`](deploy/README.md) |

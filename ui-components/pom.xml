@@ -21,7 +21,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.antilia.widgets</groupId>
+		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>antilia-widgets-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -231,7 +231,7 @@
 							</includes>
 							<excludes>
 								<exclude>**/*.min.js</exclude>
-								<exclude>com/antilia/widgets/codeeditor/antilia-code-editor.js</exclude>
+								<exclude>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</exclude>
 							</excludes>
 						</configuration>
 					</execution>
@@ -249,7 +249,7 @@
 						</goals>
 						<configuration>
 							<includes>
-								<include>com/antilia/widgets/codeeditor/antilia-code-editor.js</include>
+								<include>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</include>
 							</includes>
 							<closureWarningLevels>
 								<suspiciousCode>OFF</suspiciousCode>
