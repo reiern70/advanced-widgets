@@ -607,6 +607,8 @@ a.brand { color: inherit; text-decoration: none; }
 .register__captcha-image a { white-space: nowrap; }
 .register__captcha-image { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; }
 .register__captcha-image img { border: 1px solid var(--border); border-radius: var(--radius); max-width: 100%; height: auto; }
+/* the link to answer a question instead of reading the image, and back */
+.register__captcha-other { margin: 8px 0 0; font-size: 14px; }
 
 /* who accessed the site, for administrators */
 /* the administration: a tab per section, each a table */

@@ -15,18 +15,17 @@
  */
 package com.antilia.widgets.demo.account;
 
-import java.security.SecureRandom;
-import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.apache.wicket.extensions.markup.html.captcha.CaptchaImageResource;
-import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
+import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
-import org.apache.wicket.markup.html.image.NonCachingImage;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
-import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -39,37 +38,43 @@ import com.antilia.widgets.demo.WicketApplication;
 import com.antilia.widgets.demo.data.User;
 import com.antilia.widgets.demo.register.ConfirmationMail;
 import com.antilia.widgets.demo.register.RegisterPage;
+import com.github.openjson.JSONObject;
 
 /**
  * Signs a visitor in with the name of an account and its password, while fewer than
  * {@value SignedInUsers#MAXIMUM} other users are signed in; then goes on to the demo the
  * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA}
- * failed attempts in the session, or on the account, it asks for the letters of a captcha too.
+ * failed attempts in the session, or on the account, it asks for a {@link Captcha} too.
  * A visitor who registered signs in only once the email is confirmed; until then signing in
  * sends a new {@link ConfirmationMail} when the last one is {@link Accounts#RESEND_AFTER} old.
+ * <p>
+ * The form is sent via Ajax, so that what went wrong shows without drawing the field of the
+ * password again: what was typed in it stays, unless the password was wrong or missing. Without
+ * scripts the form is sent as any other, and the password has to be typed again.
  */
 public class SignInPage extends BasePage
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The letters of the captcha: none that look like another, as 0 and O or 1 and l. */
-	private static final String LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-	/** How many letters the captcha has. */
-	static final int CAPTCHA_LENGTH = 6;
-
-	private static final SecureRandom RANDOM = new SecureRandom();
-
 	private final Model<String> name = Model.of();
 
-	private final Model<String> challenge = Model.of(newChallenge());
+	private final FormErrors errors;
 
-	private final CaptchaImageResource captchaImage = new CaptchaImageResource(challenge, 40, 20);
+	private final FormComponent<String> nameField;
+
+	private final PasswordTextField passwordField;
+
+	private final Captcha captcha;
+
+	/**
+	 * The field of what turned the last attempt away, the password or the answer of the captcha,
+	 * which then has the focus; {@code null} if nothing did.
+	 */
+	private FormComponent<?> wrong;
 
 	public SignInPage()
 	{
 		Model<String> password = Model.of();
-		Model<String> answer = Model.of();
 
 		Form<Void> form = new Form<>("form")
 		{
@@ -78,20 +83,19 @@ public class SignInPage extends BasePage
 			@Override
 			protected void onSubmit()
 			{
+				wrong = null;
 				SignInAttempts attempts = attempts();
 				DemoSession session = DemoSession.get();
 				String typed = name.getObject();
-				boolean captchaAsked = get("captcha").isVisibleInHierarchy();
-				if (captchaAsked && !challenge.getObject().equalsIgnoreCase(
-					answer.getObject() == null ? "" : answer.getObject().strip()))
+				if (captcha.isVisibleInHierarchy() && !captcha.isSolved())
 				{
-					fail(typed, "captchaWrong");
+					fail(typed, captcha.getWrongMessage(), captcha.getAnswerField());
 					return;
 				}
 				Optional<User> user = Accounts.get().authenticate(typed, password.getObject());
 				if (user.isEmpty())
 				{
-					fail(typed, "wrong");
+					fail(typed, getString("wrong"), passwordField);
 					return;
 				}
 				attempts.succeeded(typed);
@@ -125,23 +129,52 @@ public class SignInPage extends BasePage
 					.setParameters(user.getName()).getString());
 			}
 
-			private void fail(String typed, String key)
+			private void fail(String typed, String message, FormComponent<?> field)
 			{
 				DemoSession.get().failedSignIn();
 				attempts().failed(typed);
-				error(getString(key));
-				renewCaptcha();
-				answer.setObject(null);
+				error(message);
+				captcha.renew();
+				wrong = field;
 			}
 		};
 		add(form);
-		form.add(new FormErrors("errors"));
+		form.add(new AjaxFormSubmitBehavior("submit")
+		{
+			private static final long serialVersionUID = 1L;
 
-		form.add(new RequiredTextField<>("name", name).setLabel(new ResourceModel("name")));
-		form.add(new PasswordTextField("password", password).setLabel(new ResourceModel("password"))
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				super.updateAjaxAttributes(attributes);
+				// the Ajax request sends the form, the browser does not
+				attributes.setPreventDefault(true);
+			}
+
+			@Override
+			protected void onAfterSubmit(AjaxRequestTarget target)
+			{
+				show(target);
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target)
+			{
+				wrong = null;
+				show(target);
+			}
+		});
+
+		errors = new FormErrors("errors");
+		form.add(errors.setOutputMarkupPlaceholderTag(true));
+
+		nameField = new RequiredTextField<>("name", name);
+		form.add(nameField.setLabel(new ResourceModel("name")).setOutputMarkupId(true));
+		passwordField = new PasswordTextField("password", password);
+		form.add(passwordField.setLabel(new ResourceModel("password"))
 			.add(new ShowPasswordBehavior()));
 
-		WebMarkupContainer captcha = new WebMarkupContainer("captcha")
+		captcha = new Captcha("captcha")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -153,25 +186,39 @@ public class SignInPage extends BasePage
 			}
 		};
 		form.add(captcha);
-		captcha.add(new NonCachingImage("image", captchaImage));
-		captcha.add(new Link<Void>("another")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick()
-			{
-				renewCaptcha();
-			}
-		});
-		captcha.add(new RequiredTextField<>("answer", answer)
-			.setLabel(new ResourceModel("captcha")));
 
 		add(new BookmarkablePageLink<>("registerInstead", RegisterPage.class));
 	}
 
 	/**
-	 * @return whether the visitor has to read a captcha: after failing to sign in too often, in
+	 * Shows what an attempt sent via Ajax changed: the errors, the fields marked as wrong, and the
+	 * captcha, asked or renewed. The field of the password is drawn again, empty, only when the
+	 * password was wrong or missing; otherwise what was typed in it stays. The focus goes to the
+	 * first field in error, or to the field of what turned the attempt away.
+	 */
+	private void show(AjaxRequestTarget target)
+	{
+		target.add(errors, nameField, captcha);
+		if (wrong == passwordField || !passwordField.isValid())
+		{
+			target.add(passwordField);
+		}
+		else
+		{
+			// what was typed stays, without the mark of the error it had while it was empty
+			target.appendJavaScript("document.getElementById(" +
+				JSONObject.quote(passwordField.getMarkupId()) +
+				").removeAttribute('aria-invalid');");
+		}
+		Stream.<FormComponent<?>> of(nameField, passwordField, captcha.getAnswerField())
+			.filter(field -> field.isVisibleInHierarchy() && !field.isValid())
+			.findFirst()
+			.or(() -> Optional.ofNullable(wrong))
+			.ifPresent(target::focusComponent);
+	}
+
+	/**
+	 * @return whether the visitor has to solve a captcha: after failing to sign in too often, in
 	 *         the session or on the account typed
 	 */
 	boolean isCaptchaNeeded()
@@ -181,27 +228,19 @@ public class SignInPage extends BasePage
 	}
 
 	/**
-	 * @return the letters the captcha shows, for tests
+	 * @return what solves the captcha, for tests
 	 */
 	String getChallenge()
 	{
-		return challenge.getObject();
+		return captcha.getSolution();
 	}
 
-	private void renewCaptcha()
+	/**
+	 * @return the captcha, for tests
+	 */
+	Captcha getCaptcha()
 	{
-		challenge.setObject(newChallenge());
-		captchaImage.invalidate();
-	}
-
-	private static String newChallenge()
-	{
-		StringBuilder letters = new StringBuilder(CAPTCHA_LENGTH);
-		for (int i = 0; i < CAPTCHA_LENGTH; i++)
-		{
-			letters.append(LETTERS.charAt(RANDOM.nextInt(LETTERS.length())));
-		}
-		return letters.toString().toUpperCase(Locale.ROOT);
+		return captcha;
 	}
 
 	private static SignInAttempts attempts()

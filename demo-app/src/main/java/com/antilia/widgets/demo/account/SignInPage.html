@@ -23,11 +23,7 @@
 			<div wicket:id="errors" class="register__errors" role="alert"></div>
 			<label class="register__field register__field--wide"><span><wicket:message key="name"/></span> <input type="text" wicket:id="name" autocomplete="username"/></label>
 			<label class="register__field register__field--wide"><span><wicket:message key="password"/></span> <input type="password" wicket:id="password" autocomplete="current-password"/></label>
-			<div wicket:id="captcha" class="register__captcha register__field--wide">
-				<p class="register__captcha-lead"><wicket:message key="captchaLead"/></p>
-				<p class="register__captcha-image"><img wicket:id="image" alt="" width="240" height="80" wicket:message="alt:captchaImage"/> <a wicket:id="another"><wicket:message key="another"/></a></p>
-				<label class="register__field register__field--wide"><span><wicket:message key="captcha"/></span> <input type="text" wicket:id="answer" autocomplete="off" autocapitalize="characters" spellcheck="false"/></label>
-			</div>
+			<div wicket:id="captcha" class="register__captcha register__field--wide"></div>
 			<p class="register__actions"><button type="submit" class="register__submit"><wicket:message key="submit"/></button></p>
 		</form>
 		<p class="register__hint"><wicket:message key="noAccount"/> <a wicket:id="registerInstead"><wicket:message key="register"/></a></p>
