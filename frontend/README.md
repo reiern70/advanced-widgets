@@ -178,6 +178,38 @@ the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its mode
 what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what
 the React or Svelte editor gives cleans it so.
 
+A code block is in a language, `<pre><code class="language-java">`, which the menu of the tool
+code block chooses while the editor has languages (`codeLanguages`, or those of the highlighter):
+the block made a paragraph again, or in plain text, Java, JavaScript, TypeScript, JSON or Markdown;
+without languages the tool makes a code block, or takes it away. With `highlight`, the blocks show
+in the colors of their language (`rich-text-code-blocks.ts`): a ProseMirror plugin gives their text
+the classes `tok-keyword` and so on of Lezer's `classHighlighter`, which `code-editor.css` colors from
+the theme, as decorations, so the HTML stays plain; the name of the language shows in the corner of
+the block. The grammars are not in the editor: Lezer's parsers of the five languages and
+`@lezer/highlight` weigh about 217 KB minified, 80 KB gzipped, a third of the editor's 627 KB, and
+most pages have no code to color. So the highlighter is the page's: `highlight: true` takes the one
+registered (`registerRichTextHighlighter`), or the option is a highlighter itself. `lezerHighlighter`
+(`rich-text-highlight.ts`) loads the grammar of a language the first time a block shows it, by a
+dynamic `import()`, which a bundler of the page's own makes a file of its own; React's and Svelte's
+`highlight` take it for `true`. A Wicket IIFE cannot load files so, esbuild inlines what it imports,
+so Wicket's grammars are a script of their own, `antilia-rich-text-highlight.js`: only Lezer, no
+editor, rendered after `antilia-rich-text-editor.js` only where a `RichTextEditor` highlights
+(`setHighlighting(true)`), which registers them as `Wicket.RichTextHighlighter`; the editors already
+there draw their blocks again. The code editor's script has the grammars too, but in CodeMirror's
+classes and with CodeMirror around them: sharing them would make a page highlighting rich text load
+the whole code editor.
+
+While the page uploads images (`onUpload(file): Promise<string>`, `rich-text-upload.ts`), the form
+of the image has a button choosing a file, and an image dropped into the text, or pasted without
+HTML as a screenshot is, uploads too: a mark stands where it goes until the page answers its
+address, which the image then takes, or a message above the text says why not. The editor checks
+the type (`uploadTypes`: PNG, JPEG, GIF and WebP by default, no SVG) and the size (`uploadMaxSize`)
+first, and the address the page answers goes through `isSafeUrl`: never `data:`. `uploadImageTo(url)`
+posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as Wicket's
+`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `RichTextImageStore` has one, which
+checks the size again, tells the type by the first bytes of the file, has the store keep it, and
+checks the address the store answers; a page adds one for its React and Svelte editors.
+
 The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `Tabs`) show a list of tabs, along
 the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of the
 tab selected, in one of nine designs (`design`, `TABS_DESIGNS`, `TabsDesign` in Wicket), all in the colors

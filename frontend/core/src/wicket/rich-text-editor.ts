@@ -23,11 +23,19 @@
  *
  * Wicket.RichTextEditor.registerExtension(name, function (kit) {...}) plugs in an extension of the
  * page's own, built from the Tiptap classes of the kit, a Mark or a Node for example.
+ *
+ * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
+ * chooses, drops or pastes there, and the server answers their addresses. The grammars of the code
+ * blocks are not here: antilia-rich-text-highlight.js, which a page loads only where an editor
+ * highlights, registers them as Wicket.RichTextHighlighter, before this script or after it.
  */
 
+import { registerRichTextHighlighter } from '../rich-text-code-blocks.js';
 import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTextExtensions,
 	type RichTextEditorOptions, type RichTextEditorState,
 	type RichTextEditorStateChange } from '../rich-text-editor.js';
+import type { RichTextHighlighter } from '../rich-text-languages.js';
+import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { sendState, type Parameter } from './send-state.js';
 
@@ -37,6 +45,8 @@ interface WicketRichTextEditorOptions extends RichTextEditorOptions {
 	stateUrl?: string;
 	/** The name the text area posts the text under, which the text goes to the server under too. */
 	inputName?: string;
+	/** The URL of the behavior taking the images the user uploads, and answering their addresses. */
+	uploadUrl?: string;
 }
 
 const WicketRichTextEditor = {
@@ -50,7 +60,7 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { stateUrl, inputName, ...rest } = options;
+		const { stateUrl, inputName, uploadUrl, ...rest } = options;
 		let editor: RichTextEditor | null = null;
 		const onStateChange = stateUrl ? (state: RichTextEditorState,
 			change: RichTextEditorStateChange) => {
@@ -61,7 +71,8 @@ const WicketRichTextEditor = {
 			sendState(id, stateUrl, parameters, change.leaving);
 			rest.onStateChange?.(state, change);
 		} : rest.onStateChange;
-		editor = RichTextEditor.attach(id, { ...rest, onStateChange });
+		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
+		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload });
 		return editor;
 	},
 
@@ -80,11 +91,19 @@ const WicketRichTextEditor = {
 	extensions: richTextExtensions,
 
 	/** The Tiptap classes of the editor, for the extensions of a page. */
-	kit: RICH_TEXT_EDITOR_KIT
+	kit: RICH_TEXT_EDITOR_KIT,
+
+	/** Highlights the code blocks of the editors told so: see registerRichTextHighlighter(). */
+	registerHighlighter: registerRichTextHighlighter
 };
 
 const Wicket = wicket();
 if (Wicket.RichTextEditor === undefined) {
 	useWicketHost();
 	Wicket.RichTextEditor = WicketRichTextEditor;
+	// antilia-rich-text-highlight.js came first
+	const highlighter = Wicket.RichTextHighlighter as RichTextHighlighter | undefined;
+	if (highlighter) {
+		registerRichTextHighlighter(highlighter);
+	}
 }

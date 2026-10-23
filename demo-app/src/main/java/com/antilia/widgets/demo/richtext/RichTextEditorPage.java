@@ -37,8 +37,10 @@ import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.util.lang.Bytes;
 
 import com.antilia.widgets.button.ButtonBehavior;
+import com.antilia.widgets.codeeditor.CodeEditor;
 import com.antilia.widgets.demo.DemoCases;
 import com.antilia.widgets.demo.DemoPage;
 import com.antilia.widgets.demo.frameworks.FrameworkTabs;
@@ -48,6 +50,7 @@ import com.antilia.widgets.richtext.RichTextEditorEvent;
 import com.antilia.widgets.richtext.RichTextEditorEventBehavior;
 import com.antilia.widgets.richtext.RichTextEditorState;
 import com.antilia.widgets.richtext.RichTextFormat;
+import com.antilia.widgets.richtext.RichTextImageUploadBehavior;
 import com.antilia.widgets.richtext.RichTextPolicy;
 import com.antilia.widgets.richtext.RichTextTool;
 import com.antilia.widgets.richtext.RichTextView;
@@ -60,8 +63,9 @@ import com.github.openjson.JSONObject;
  * of its editor, where the cursor is, what is selected, how far it is scrolled and its size, and
  * cleans before it keeps it; below it, the article as a page shows it, a {@link RichTextView}, and
  * the HTML the server keeps. Check boxes and a drop-down switch the toolbar, the bubble menu,
- * reading only and the count of the words, rendering the editor again via Ajax. Ctrl+S, and the
- * button, save the article.
+ * reading only, the count of the words and the colors of the code blocks, rendering the editor
+ * again via Ajax. Ctrl+S, and the button, save the article. The code blocks are in a language,
+ * which the menu of their tool chooses; the images upload, kept by {@link RichTextImages}.
  * <p>
  * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it.
  * <p>
@@ -111,6 +115,11 @@ public class RichTextEditorPage extends DemoPage
 	private boolean readOnly;
 
 	private boolean count = true;
+
+	private boolean highlight = true;
+
+	/** Takes the images the editors of the React and Svelte apps upload. */
+	private final RichTextImageUploadBehavior appUploads;
 
 	private String heardMessage;
 
@@ -164,6 +173,7 @@ public class RichTextEditorPage extends DemoPage
 				setBubbleMenu(bubbleMenu);
 				setReadOnly(readOnly);
 				setCount(count);
+				setHighlighting(highlight);
 			}
 
 			@Override
@@ -174,6 +184,7 @@ public class RichTextEditorPage extends DemoPage
 		};
 		editor.setSavedModel(LambdaModel.of(article, RichTextDocument::getSaved,
 			RichTextDocument::setSaved));
+		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		editor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.FOCUS)
@@ -258,7 +269,9 @@ public class RichTextEditorPage extends DemoPage
 					return each;
 				}
 			}).setRequired(true).add(rerender(editorForm)));
-		for (String option : List.of("bubbleMenu", "readOnly", "count"))
+		articleCase.add(new Label("extras", getString("extras").replace("{0}",
+			sizeText(RichTextImages.MAX_SIZE))));
+		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight"))
 		{
 			controls.add(new CheckBox(option, new PropertyModel<>(this, option))
 				.add(rerender(editorForm)));
@@ -279,7 +292,8 @@ public class RichTextEditorPage extends DemoPage
 				document.setState(state);
 				Session.get().dirty();
 			}));
-		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true)
+		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
+			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setSavedModel(LambdaModel.of(notes, RichTextDocument::getSaved,
 				RichTextDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));
@@ -343,6 +357,19 @@ public class RichTextEditorPage extends DemoPage
 				target.add(cleaned);
 			}
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
+
+		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
+			.setMaxSize(RichTextImages.MAX_SIZE);
+		add(appUploads);
+	}
+
+	/**
+	 * @return a size as the editor says it: 2 MB
+	 */
+	private static String sizeText(Bytes size)
+	{
+		long megabytes = size.bytes() / (1024 * 1024);
+		return megabytes * 1024 * 1024 == size.bytes() ? megabytes + " MB" : size.toString();
 	}
 
 	/**
@@ -471,8 +498,9 @@ public class RichTextEditorPage extends DemoPage
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "cases", "articleTitle", "notesTitle",
 			"articleLabel", "notesLabel", "placeholder", "toolbar", "bubbleMenu", "readOnly",
-			"count", "save", "unsaved", "allSaved", "appArticleTitle", "appHtml", "appMarkdown",
-			"appKnown", "appSaved", "appNotClean", "appStart");
+			"count", "highlight", "save", "unsaved", "allSaved", "appArticleTitle", "appHtml",
+			"appMarkdown", "appKnown", "appSaved", "appNotClean", "appStart");
+		texts.put("extras", getString("extras").replace("{0}", sizeText(RichTextImages.MAX_SIZE)));
 		TOOLBARS.forEach(each -> texts.put("toolbar." + each, getString("toolbar." + each)));
 		return new JSONObject()
 			.put("article", RichTextSamples.ARTICLE)
@@ -481,7 +509,10 @@ public class RichTextEditorPage extends DemoPage
 			.put("editor", RichTextEditor.texts(this))
 			.put("preview", new JSONObject().put("label", getString("MarkdownPreview.label"))
 				.put("placeholder", getString("MarkdownPreview.placeholder")))
-			.put("toolbars", new JSONArray(TOOLBARS));
+			.put("toolbars", new JSONArray(TOOLBARS))
+			.put("uploadUrl", appUploads.getUploadUrl())
+			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
+			.put("uploadMaxSize", appUploads.getMaxSize().bytes());
 	}
 
 	@Override
@@ -489,6 +520,8 @@ public class RichTextEditorPage extends DemoPage
 	{
 		super.renderHead(response);
 		RichTextEditor.renderHeadItems(response);
+		// the colors of the code blocks of the apps too, whose grammars their script holds
+		response.render(CssHeaderItem.forReference(CodeEditor.CSS));
 		response.render(CssHeaderItem.forReference(
 			new CssResourceReference(RichTextEditorPage.class, "RichTextEditorPage.css")));
 	}
@@ -531,6 +564,16 @@ public class RichTextEditorPage extends DemoPage
 	public void setCount(boolean count)
 	{
 		this.count = count;
+	}
+
+	public boolean isHighlight()
+	{
+		return highlight;
+	}
+
+	public void setHighlight(boolean highlight)
+	{
+		this.highlight = highlight;
 	}
 
 	public String getUnsafe()

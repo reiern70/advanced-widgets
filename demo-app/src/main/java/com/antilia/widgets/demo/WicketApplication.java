@@ -78,6 +78,7 @@ import com.antilia.widgets.demo.split.SplitPanelPage;
 import com.antilia.widgets.demo.codeeditor.CodeEditorPage;
 import com.antilia.widgets.demo.resizable.ResizablePage;
 import com.antilia.widgets.demo.richtext.RichTextEditorPage;
+import com.antilia.widgets.demo.richtext.RichTextImageResource;
 import com.antilia.widgets.demo.popover.PopoversPage;
 import com.antilia.widgets.demo.tabs.TabsPage;
 import com.antilia.widgets.demo.frameworks.ChoicesResource;
@@ -310,6 +311,7 @@ public class WicketApplication extends WebApplication
 		mountResource(AccessesApiResource.PATH, AccessesApiResource.REFERENCE);
 		mountResource(AccessesApiResource.OLD_PATH, AccessesApiResource.OLD_REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
+		mountResource(RichTextImageResource.PATH, RichTextImageResource.REFERENCE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);

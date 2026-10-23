@@ -15,6 +15,7 @@
  */
 package com.antilia.widgets.richtext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
@@ -30,10 +32,12 @@ import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.form.TextArea;
+import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestParameters;
@@ -43,12 +47,14 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
+import org.apache.wicket.util.lang.Bytes;
 import org.apache.wicket.util.string.Strings;
 
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 import com.antilia.widgets.button.ButtonBehavior;
+import com.antilia.widgets.codeeditor.CodeEditor;
 import com.antilia.widgets.popover.Popover;
 import com.antilia.widgets.resizable.ResizableBehavior;
 import com.antilia.widgets.resizable.ResizableSize;
@@ -79,6 +85,19 @@ import com.antilia.widgets.resizable.ResizeAxis;
  * editor, the text area is hidden in the room the editor takes ({@link #LOADING_CLASS}), so that a
  * page arriving slowly does not show the HTML of the text. Without JavaScript the text area is
  * shown.
+ * <p>
+ * Code blocks are in a language, {@code <pre><code class="language-java">}, which the menu of the
+ * tool code block chooses among {@link #setCodeLanguages(String...) the languages of the editor}.
+ * {@link #setHighlighting(boolean) Highlighted}, they show in the colors of their language, those of
+ * the {@link CodeEditor code editor}, with its grammars of Java, JavaScript, TypeScript, JSON and
+ * Markdown: the editor then renders {@link #HIGHLIGHT_JS}, which holds them, and the style sheet of
+ * the code editor. The HTML stays plain: the colors are the editor's alone.
+ * <p>
+ * With {@link #setImageStore(RichTextImageStore) a store of images}, the user uploads images: chosen
+ * in the form of the image, dropped into the text or pasted. A behavior of the editor takes each,
+ * no larger than {@link #setImageMaxSize(Bytes) allowed} and of {@link #setImageTypes(Set) a type
+ * allowed} as its bytes say, has the store keep it and answers the address it is served at, which
+ * the image takes and the cleaning checks as any other (see {@link RichTextImageUploadBehavior}).
  * <p>
  * The editor tells the {@link com.antilia.widgets.tabs.Tabs tabs} and the
  * {@link com.antilia.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -129,6 +148,33 @@ public class RichTextEditor extends TextArea<String>
 		"antilia-rich-text-editor.css");
 
 	/**
+	 * The grammars highlighting the code blocks, Lezer's parsers of the code editor's languages,
+	 * which a page renders only where an editor {@link #setHighlighting(boolean) highlights}:
+	 * {@link #JS} does not hold them. Minified by the build, as {@link #JS}.
+	 */
+	public static final ResourceReference HIGHLIGHT_JS = new JavaScriptResourceReference(
+		RichTextEditor.class, "antilia-rich-text-highlight.js")
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public JavaScriptPackageResource getResource()
+		{
+			JavaScriptPackageResource resource = super.getResource();
+			resource.setCompress(false);
+			return resource;
+		}
+
+		@Override
+		public List<HeaderItem> getDependencies()
+		{
+			List<HeaderItem> dependencies = new ArrayList<>(super.getDependencies());
+			dependencies.add(JavaScriptHeaderItem.forReference(JS));
+			return dependencies;
+		}
+	};
+
+	/**
 	 * The class of the text area until the script makes the editor of it. While scripts run,
 	 * {@link #CSS} hides a text area of this class and keeps the room of the editor for it, so that
 	 * a page arriving slowly shows no HTML; without scripts the text area is shown.
@@ -142,6 +188,9 @@ public class RichTextEditor extends TextArea<String>
 	public static final List<Integer> DEFAULT_HEADING_LEVELS = List.of(1, 2, 3, 4);
 
 	private static final String STATE_PARAMETER = "state";
+
+	/** What the name of a language of code blocks may be, as their class holds it. */
+	private static final Pattern LANGUAGE = Pattern.compile("[A-Za-z0-9_+#.-]{1,40}");
 
 	/** The texts of the editor in the browser, by the keys of their translations in the bundles. */
 	private static final Map<String, String> TEXTS = new LinkedHashMap<>();
@@ -174,7 +223,12 @@ public class RichTextEditor extends TextArea<String>
 				{ "characters", "{0} characters" }, { "character", "{0} character" },
 				{ "charactersOfLimit", "{0} of {1} characters" }, { "words", "{0} words" },
 				{ "word", "{0} word" },
-				{ "resize", "Drag, or use the arrow keys, to resize the editor" } };
+				{ "resize", "Drag, or use the arrow keys, to resize the editor" },
+				{ "plainText", "Plain text" }, { "uploadImage", "Upload an image…" },
+				{ "uploading", "Uploading {0}…" }, { "theImage", "The image" },
+				{ "uploadFailed", "{0} could not be uploaded." },
+				{ "uploadTooLarge", "{0} is larger than {1}." },
+				{ "uploadType", "{0} is not an image of a type the editor takes: {1}." } };
 		for (String[] text : texts)
 		{
 			TEXTS.put(text[0], text[1]);
@@ -220,6 +274,19 @@ public class RichTextEditor extends TextArea<String>
 	private List<RichTextExtension> extensions = List.of();
 
 	private RichTextSanitizer sanitizer;
+
+	private boolean highlighting;
+
+	private List<String> codeLanguages;
+
+	private RichTextImageStore imageStore;
+
+	/** The behavior taking the images, made with the first store. */
+	private RichTextImageUploadBehavior imageUpload;
+
+	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
+
+	private Set<RichTextImageType> imageTypes = EnumSet.allOf(RichTextImageType.class);
 
 	/**
 	 * An editor whose model is inherited, for example from a {@code CompoundPropertyModel}, keeping
@@ -727,6 +794,165 @@ public class RichTextEditor extends TextArea<String>
 	}
 
 	/**
+	 * @return whether the code blocks show in the colors of their language
+	 */
+	public boolean isHighlighting()
+	{
+		return highlighting;
+	}
+
+	/**
+	 * @param highlighting
+	 *            whether the code blocks show in the colors of their language, those of the code
+	 *            editor, {@code false} by default: the editor then renders {@link #HIGHLIGHT_JS}
+	 *            and {@link CodeEditor#CSS}, and the menu of the tool code block offers the
+	 *            languages of the code editor, unless {@link #setCodeLanguages(String...) set
+	 *            otherwise}
+	 * @return {@code this}
+	 */
+	public RichTextEditor setHighlighting(boolean highlighting)
+	{
+		this.highlighting = highlighting;
+		return this;
+	}
+
+	/**
+	 * @return the languages of the menu of the tool code block, {@code null} for those of the
+	 *         highlighting, or none without it
+	 */
+	public List<String> getCodeLanguages()
+	{
+		return codeLanguages;
+	}
+
+	/**
+	 * @param languages
+	 *            the languages of code blocks the menu of the tool code block offers, by their
+	 *            names: {@code java}, {@code javascript}, {@code typescript}, {@code json},
+	 *            {@code markdown} or any other a class may hold; none for no menu, the tool then
+	 *            makes a code block without a language; {@code null} for those of the code editor
+	 *            while {@link #setHighlighting(boolean) highlighting}, and none otherwise, as by
+	 *            default
+	 * @return {@code this}
+	 */
+	public RichTextEditor setCodeLanguages(String... languages)
+	{
+		if (languages == null)
+		{
+			this.codeLanguages = null;
+		}
+		else
+		{
+			this.codeLanguages = Arrays.stream(languages).filter(language -> language != null &&
+				LANGUAGE.matcher(language.trim()).matches()).map(String::trim).distinct().toList();
+		}
+		return this;
+	}
+
+	/**
+	 * @return what keeps the images the user uploads, {@code null} for none
+	 */
+	public RichTextImageStore getImageStore()
+	{
+		return imageStore;
+	}
+
+	/**
+	 * @param imageStore
+	 *            what keeps the images the user uploads and tells their addresses; {@code null}
+	 *            for no uploads, as by default: an image is an address the user gives
+	 * @return {@code this}
+	 */
+	public RichTextEditor setImageStore(RichTextImageStore imageStore)
+	{
+		this.imageStore = imageStore;
+		if (imageStore != null && imageUpload == null)
+		{
+			imageUpload = new RichTextImageUploadBehavior(this::storeImage)
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected boolean isUploadAllowed()
+				{
+					return isImageUploading();
+				}
+			};
+			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes);
+			add(imageUpload);
+		}
+		return this;
+	}
+
+	private String storeImage(FileUpload image, RichTextImageType type) throws IOException
+	{
+		if (imageStore == null)
+		{
+			throw new IOException("The editor keeps no images");
+		}
+		return imageStore.store(image, type);
+	}
+
+	/**
+	 * @return the largest image the user uploads
+	 */
+	public Bytes getImageMaxSize()
+	{
+		return imageMaxSize;
+	}
+
+	/**
+	 * @param imageMaxSize
+	 *            the largest image the user uploads,
+	 *            {@link RichTextImageUploadBehavior#DEFAULT_MAX_SIZE} by default
+	 * @return {@code this}
+	 */
+	public RichTextEditor setImageMaxSize(Bytes imageMaxSize)
+	{
+		this.imageMaxSize = Args.notNull(imageMaxSize, "imageMaxSize");
+		if (imageUpload != null)
+		{
+			imageUpload.setMaxSize(imageMaxSize);
+		}
+		return this;
+	}
+
+	/**
+	 * @return the types of the images the user uploads
+	 */
+	public Set<RichTextImageType> getImageTypes()
+	{
+		return Collections.unmodifiableSet(imageTypes);
+	}
+
+	/**
+	 * @param imageTypes
+	 *            the types of the images the user uploads, as their bytes say; all of them by
+	 *            default
+	 * @return {@code this}
+	 */
+	public RichTextEditor setImageTypes(Set<RichTextImageType> imageTypes)
+	{
+		Args.notEmpty(imageTypes, "imageTypes");
+		this.imageTypes = EnumSet.copyOf(imageTypes);
+		if (imageUpload != null)
+		{
+			imageUpload.setTypes(imageTypes);
+		}
+		return this;
+	}
+
+	/**
+	 * @return whether the user uploads images now: the editor has a store, and is enabled, not read
+	 *         only, with the feature image
+	 */
+	public boolean isImageUploading()
+	{
+		return imageStore != null && !readOnly && getFeatures().contains(RichTextFeature.IMAGE) &&
+			isEnabledInHierarchy();
+	}
+
+	/**
 	 * @return what cleans the HTML: the one set, or the {@link RichTextPolicy} of the features
 	 */
 	public RichTextSanitizer getSanitizer()
@@ -759,6 +985,10 @@ public class RichTextEditor extends TextArea<String>
 	{
 		super.renderHead(response);
 		renderHeadItems(response);
+		if (highlighting)
+		{
+			renderHighlightItems(response);
+		}
 		for (RichTextExtension extension : extensions)
 		{
 			if (extension.getScript() != null)
@@ -839,6 +1069,21 @@ public class RichTextEditor extends TextArea<String>
 			extensions.forEach(extension -> names.put(extension.getName()));
 			options.put("extensions", names);
 		}
+		if (highlighting)
+		{
+			options.put("highlight", true);
+		}
+		if (codeLanguages != null)
+		{
+			options.put("codeLanguages", codeLanguages.isEmpty() ? (Object)false :
+				new JSONArray(codeLanguages));
+		}
+		if (isImageUploading())
+		{
+			options.put("uploadUrl", imageUpload.getUploadUrl());
+			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
+			options.put("uploadMaxSize", imageMaxSize.bytes());
+		}
 		options.put("texts", texts(this));
 		if (sendToServer)
 		{
@@ -860,11 +1105,26 @@ public class RichTextEditor extends TextArea<String>
 	public static JSONObject texts(Component component)
 	{
 		JSONObject texts = new JSONObject();
-		TEXTS.forEach((name, english) -> {
-			String translation = component.getString("RichTextEditor." + name, null, english);
-			texts.put(name, Strings.isEmpty(translation) ? english : translation);
-		});
+		TEXTS.keySet().forEach(name -> texts.put(name, text(component, name)));
 		return texts;
+	}
+
+	/**
+	 * @param component
+	 *            the component whose resources translate the text, {@code null} for English
+	 * @param name
+	 *            the name of a text of the editor, {@code uploadFailed} for example
+	 * @return the text, in the language of the component
+	 */
+	static String text(Component component, String name)
+	{
+		String english = TEXTS.getOrDefault(name, name);
+		if (component == null)
+		{
+			return english;
+		}
+		String translation = component.getString("RichTextEditor." + name, null, english);
+		return Strings.isEmpty(translation) ? english : translation;
 	}
 
 	private static void putPixels(JSONObject options, String name, Integer pixels)
@@ -906,5 +1166,19 @@ public class RichTextEditor extends TextArea<String>
 		response.render(CssHeaderItem.forReference(Popover.CSS));
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
+	}
+
+	/**
+	 * Renders what highlighting the code blocks needs in the browser: {@link #HIGHLIGHT_JS}, after
+	 * {@link #JS}, and the colors of the code editor, {@link CodeEditor#CSS}. A page with editors
+	 * of React or Svelte highlighting renders it too.
+	 *
+	 * @param response
+	 *            the header response
+	 */
+	public static void renderHighlightItems(IHeaderResponse response)
+	{
+		response.render(CssHeaderItem.forReference(CodeEditor.CSS));
+		response.render(JavaScriptHeaderItem.forReference(HIGHLIGHT_JS));
 	}
 }

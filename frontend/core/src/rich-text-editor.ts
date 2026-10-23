@@ -59,6 +59,12 @@
  * The extensions are pluggable: any Tiptap extension the page gives (extensions), or one a page
  * without Tiptap's modules of its own, a Wicket page, registers by a name, built from the classes
  * of Tiptap it is given (RICH_TEXT_EDITOR_KIT).
+ *
+ * Code blocks are highlighted in the colors of their language with a highlighter the page gives
+ * (highlight, see rich-text-code-blocks.ts), whose grammars this script does not carry; the menu of
+ * the tool code block chooses the language (codeLanguages). Images are uploaded, chosen in the form
+ * of the image, dropped into the text or pasted, while the page uploads them (onUpload, see
+ * rich-text-upload.ts).
  */
 
 import { createDocument, Editor, Extension, getHTMLFromFragment, Mark, markInputRule, markPasteRule,
@@ -71,12 +77,17 @@ import { Plugin, PluginKey, TextSelection, type Transaction } from '@tiptap/pm/s
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
-import { DEFAULT_HEADING_LEVELS, quietHtml, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
+import { CodeBlocks, redrawCodeBlocks, richTextHighlighter } from './rich-text-code-blocks.js';
+import { codeLanguage, RICH_TEXT_CODE_LANGUAGES,
+	type RichTextHighlighter } from './rich-text-languages.js';
+import { DEFAULT_HEADING_LEVELS, isSafeUrl, quietHtml, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
 	RICH_TEXT_NOT_IN_MARKDOWN, schemaExtensions, type HeadingLevel, type RichTextFeature,
 	type RichTextFormat } from './rich-text-schema.js';
 import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH_TEXT_BUBBLE_TOOLS,
-	RichTextToolbar, type RichTextEditorTexts, type RichTextTool,
+	RichTextToolbar, type RichTextCodeLanguage, type RichTextEditorTexts, type RichTextTool,
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
+import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText, uploadExtension,
+	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
 
 /**
  * The classes of Tiptap and ProseMirror a function registering an extension is given, for a page
@@ -236,6 +247,28 @@ export interface RichTextEditorOptions {
 	stateDelay?: number;
 	/** More extensions: Tiptap's, or the names of those registered. */
 	extensions?: readonly RichTextExtension[];
+	/**
+	 * Whether the code blocks show in the colors of their language: true with the highlighter
+	 * registered (registerRichTextHighlighter, which Wicket's antilia-rich-text-highlight.js calls),
+	 * or a highlighter of the page's own, lezerHighlighter for example; false when left out.
+	 */
+	highlight?: boolean | RichTextHighlighter;
+	/**
+	 * The languages of code blocks the menu of the tool code block offers, by their names: those of
+	 * the highlighter when left out while highlighting, none otherwise; false for none. Without
+	 * languages, the tool makes a code block, or takes it away.
+	 */
+	codeLanguages?: readonly string[] | false;
+	/**
+	 * Uploads an image the user chose in the form of the image, dropped into the text or pasted,
+	 * answering the address it is served at, which must be safe (isSafeUrl): see uploadImageTo().
+	 * None when left out or null: an image is then an address the user gives.
+	 */
+	onUpload?: RichTextUploader | null;
+	/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+	uploadTypes?: readonly string[];
+	/** The largest image the user may upload, in bytes; none when left out or null. */
+	uploadMaxSize?: number | null;
 	/** What the editor says, in English when left out. */
 	texts?: Partial<RichTextEditorTexts>;
 	/** The look of the editor; that of the element it is in when left out (see lookOf). */
@@ -394,6 +427,14 @@ export class RichTextEditor {
 	private bubble: RichTextToolbar | null = null;
 
 	private status: HTMLElement | null = null;
+
+	/** The message telling the user an upload went wrong, while it shows. */
+	private message: HTMLElement | null = null;
+
+	private messageTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** What the uploads ask of the editor, made once. */
+	private uploads: UploadHost | null = null;
 
 	private resizable: Resizable | null = null;
 
@@ -691,6 +732,14 @@ export class RichTextEditor {
 			...(this.options.extensions ?? []).flatMap((extension) =>
 				typeof extension === 'string' ? extensionsNamed(extension) : [extension])
 		];
+		const features = this.features();
+		if (features.has('codeBlock')) {
+			extensions.push(CodeBlocks.configure({ highlighter: () => this.highlighter(),
+				label: (language) => this.languageLabel(language) }));
+		}
+		if (features.has('image')) {
+			extensions.push(uploadExtension(this.uploadHost()));
+		}
 		if (this.options.bubbleMenu) {
 			const bubble = new RichTextToolbar(this.toolbarContext(), [RICH_TEXT_BUBBLE_TOOLS],
 				'rich-text-bubble');
@@ -790,6 +839,8 @@ export class RichTextEditor {
 			texts: () => this.texts(),
 			features: () => this.features(),
 			headingLevels: () => this.headingLevels(),
+			codeLanguages: () => this.codeLanguages(),
+			uploads: () => this.uploadHost(),
 			onForm: (open) => {
 				if (!open) {
 					setTimeout(() => {
@@ -802,6 +853,161 @@ export class RichTextEditor {
 				}
 			}
 		};
+	}
+
+	/**
+	 * @returns the highlighter of the code blocks, null for none
+	 */
+	private highlighter(): RichTextHighlighter | null {
+		const highlight = this.options.highlight;
+		if (typeof highlight === 'object' && highlight !== null) {
+			return highlight;
+		}
+		return highlight ? richTextHighlighter() : null;
+	}
+
+	/**
+	 * @returns the languages of the menu of the code block: those given, or those of the
+	 *          highlighter while highlighting; each once, by its name
+	 */
+	codeLanguages(): RichTextCodeLanguage[] {
+		const given = this.options.codeLanguages;
+		if (given === false || !this.features().has('codeBlock')) {
+			return [];
+		}
+		const highlighter = this.highlighter();
+		const names = given ?? (this.options.highlight ?
+			Object.keys(highlighter?.languages ?? RICH_TEXT_CODE_LANGUAGES) : []);
+		const seen = new Set<string>();
+		return names.map((name) => codeLanguage(name)).filter((name): name is string => {
+			if (name === null || seen.has(name)) {
+				return false;
+			}
+			seen.add(name);
+			return true;
+		}).map((name) => ({ name, label: this.labelOf(name) }));
+	}
+
+	/**
+	 * @returns what the editor calls a language: as the highlighter does, or the editor; its name
+	 *          for one neither knows
+	 */
+	private labelOf(name: string): string {
+		const own = (labels: Readonly<Record<string, string>> | undefined) =>
+			labels && Object.prototype.hasOwnProperty.call(labels, name) ? labels[name] : undefined;
+		return own(this.highlighter()?.languages) ?? own(RICH_TEXT_CODE_LANGUAGES) ?? name;
+	}
+
+	/**
+	 * @returns what a code block shows of its language: what the editor calls it while the menu
+	 *          offers languages, nothing otherwise
+	 */
+	private languageLabel(language: string): string | null {
+		return this.codeLanguages().length ? this.labelOf(language) : null;
+	}
+
+	/**
+	 * @returns what the uploads of images ask of the editor
+	 */
+	private uploadHost(): UploadHost {
+		if (!this.uploads) {
+			this.uploads = {
+				editor: () => this.editor,
+				enabled: () => !!this.options.onUpload && !this.isReadOnly() &&
+					this.features().has('image'),
+				types: () => this.uploadTypes(),
+				refusal: (file) => this.refusal(file),
+				uploading: (file) => format(this.texts().uploading, this.fileName(file)),
+				upload: (file) => this.upload(file),
+				alert: (message) => this.alert(message)
+			};
+		}
+		return this.uploads;
+	}
+
+	/**
+	 * @returns the name of a file as the messages say it, which a file pasted may not have
+	 */
+	private fileName(file: File): string {
+		return file.name || this.texts().theImage;
+	}
+
+	private uploadTypes(): string[] {
+		return (this.options.uploadTypes ?? DEFAULT_RICH_TEXT_UPLOAD_TYPES).map((type) =>
+			type.trim().toLowerCase()).filter(Boolean);
+	}
+
+	/**
+	 * @returns why a file cannot be uploaded: not of the types taken, or too large; null when it
+	 *          can
+	 */
+	private refusal(file: File): string | null {
+		const texts = this.texts();
+		const types = this.uploadTypes();
+		if (!types.includes(file.type.toLowerCase())) {
+			return format(texts.uploadType, this.fileName(file), typesText(types));
+		}
+		const max = this.options.uploadMaxSize;
+		if (max != null && file.size > max) {
+			return format(texts.uploadTooLarge, this.fileName(file), sizeText(max));
+		}
+		return null;
+	}
+
+	/**
+	 * Uploads an image, by the page.
+	 *
+	 * @returns the address of the image, a safe one; rejected with the message saying why not
+	 */
+	private async upload(file: File): Promise<string> {
+		const texts = this.texts();
+		const failed = format(texts.uploadFailed, this.fileName(file));
+		const uploader = this.options.onUpload;
+		const refused = this.refusal(file);
+		if (!uploader || refused) {
+			throw new Error(refused ?? failed);
+		}
+		let address: string;
+		try {
+			address = String(await uploader(file)).trim();
+		} catch (error) {
+			throw new Error(error instanceof Error && error.message ? error.message : failed);
+		}
+		if (!isSafeUrl(address)) {
+			getHost().log.error('The address of an image uploaded is not one the editor takes: ' +
+				address);
+			throw new Error(failed);
+		}
+		return address;
+	}
+
+	/**
+	 * Tells the user something went wrong, above the text, for a while.
+	 */
+	private alert(text: string): void {
+		if (this.destroyed) {
+			return;
+		}
+		if (!this.message) {
+			this.message = document.createElement('div');
+			this.message.className = 'antilia-rich-text-message';
+			this.message.setAttribute('role', 'alert');
+			this.content.before(this.message);
+		}
+		this.message.textContent = text;
+		if (this.messageTimer !== null) {
+			clearTimeout(this.messageTimer);
+		}
+		this.messageTimer = setTimeout(() => this.clearMessage(), 8000);
+	}
+
+	private clearMessage(): void {
+		if (this.messageTimer !== null) {
+			clearTimeout(this.messageTimer);
+			this.messageTimer = null;
+		}
+		this.message?.remove();
+		this.message = null;
 	}
 
 	/**
@@ -1361,7 +1567,12 @@ export class RichTextEditor {
 			// the placeholder shows anew
 			this.editor.view.dispatch(this.editor.state.tr.setMeta(EXTERNAL, true));
 		}
-		if (rebuilt || editableChanged || changed('toolbar', 'texts')) {
+		const codeChanged = before.highlight !== this.options.highlight ||
+			changed('codeLanguages');
+		if (codeChanged && !rebuilt) {
+			redrawCodeBlocks(this.editor.view);
+		}
+		if (rebuilt || editableChanged || codeChanged || changed('toolbar', 'texts')) {
 			this.renderToolbar();
 		} else {
 			this.toolbar?.update();
@@ -1489,6 +1700,7 @@ export class RichTextEditor {
 		this.bubble = null;
 		this.status?.remove();
 		this.status = null;
+		this.clearMessage();
 		this.resizable?.destroy();
 		this.resizable = null;
 		this.editor.destroy();

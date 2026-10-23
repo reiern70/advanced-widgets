@@ -40,7 +40,15 @@ export type { HeadingLevel, RichTextAlignment, RichTextFeature,
 	RichTextFormat } from './rich-text-schema.js';
 export { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, RICH_TEXT_BUBBLE_TOOLS,
 	RICH_TEXT_ICONS, RICH_TEXT_TOOLS, shortcutText } from './rich-text-toolbar.js';
-export type { RichTextEditorTexts, RichTextTool } from './rich-text-toolbar.js';
+export type { RichTextCodeLanguage, RichTextEditorTexts, RichTextTool } from './rich-text-toolbar.js';
+export { CODE_BLOCK_LANGUAGE_ATTRIBUTE, registerRichTextHighlighter,
+	richTextHighlighter } from './rich-text-code-blocks.js';
+export { codeLanguage, RICH_TEXT_CODE_LANGUAGES } from './rich-text-languages.js';
+export type { RichTextHighlighter, RichTextToken } from './rich-text-languages.js';
+export { lezerHighlighter } from './rich-text-highlight.js';
+export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText,
+	uploadImageTo } from './rich-text-upload.js';
+export type { RichTextUploader } from './rich-text-upload.js';
 export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,

@@ -18,6 +18,9 @@ import { createRef, StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { lezerHighlighter } from '@antilia/core';
+import { Slice } from '@tiptap/pm/model';
+
 import { BOOTSTRAP_LOOK, LookProvider, RichTextEditor,
 	type RichTextEditorHandle } from '../src/index.js';
 
@@ -181,6 +184,52 @@ describe('RichTextEditor', () => {
 		expect(error).toHaveBeenCalled();
 		expect(ref.current?.getValue()).toBe('<p>a</p>');
 		error.mockRestore();
+	});
+
+	it('highlights its code blocks with the grammars of the code editor, or none', async () => {
+		await lezerHighlighter.load('java');
+		const value = '<pre><code class="language-java">class A {}</code></pre>';
+		const { container, rerender } = render(<RichTextEditor value={value} highlight />);
+		const keyword = () => container.querySelector('pre span.tok-keyword')?.textContent;
+		const codeBlock = () => container.querySelector('[data-tool="codeBlock"]')!;
+		expect(keyword()).toBe('class');
+		expect(codeBlock().getAttribute('aria-haspopup')).toBe('menu');
+
+		rerender(<RichTextEditor value={value} codeLanguages={['java']} />);
+		expect(keyword()).toBeUndefined();
+		expect(container.querySelector('pre')?.getAttribute('data-antilia-language')).toBe('Java');
+		rerender(<RichTextEditor value={value} codeLanguages={false} />);
+		expect(codeBlock().getAttribute('aria-haspopup')).toBeNull();
+	});
+
+	it('uploads the images the user drops, by onUpload', async () => {
+		const onUpload = vi.fn(() => Promise.resolve('/bird.png'));
+		const onChange = vi.fn();
+		const ref = createRef<RichTextEditorHandle>();
+		const { rerender } = render(<RichTextEditor ref={ref} value="<p>a</p>" onUpload={onUpload}
+			onChange={onChange} uploadMaxSize={1024} />);
+		const view = ref.current!.editor!.editor.view;
+		vi.spyOn(view, 'posAtCoords').mockReturnValue(null);
+		const drop = (size = 1) => {
+			const event = new Event('drop', { cancelable: true });
+			Object.assign(event, { clientX: 0, clientY: 0, dataTransfer: { types: ['Files'],
+				files: [new File([new Uint8Array(size)], 'bird.png', { type: 'image/png' })],
+				getData: () => '' } });
+			return view.someProp('handleDrop', (handle) => handle(view, event as DragEvent,
+				Slice.empty, false));
+		};
+		act(() => {
+			ref.current!.editor!.editor.commands.setTextSelection(2);
+		});
+		expect(drop(2048)).toBe(true);
+		expect(onUpload).not.toHaveBeenCalled();
+		expect(drop()).toBe(true);
+		await tick();
+		expect(onUpload).toHaveBeenCalledTimes(1);
+		expect(onChange).toHaveBeenLastCalledWith('<p>a</p><img src="/bird.png">');
+
+		rerender(<RichTextEditor ref={ref} value="<p>a</p>" />);
+		expect(drop()).toBeFalsy();
 	});
 
 	it('answers its handle before the editor is made, and after it went', () => {

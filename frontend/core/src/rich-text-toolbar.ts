@@ -24,10 +24,13 @@
  * reachable. Pressing a tool keeps the focus and the selection in the text.
  *
  * The text style (paragraph, headings) and the table open a menu of their own, a WAI-ARIA menu:
- * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. The link
- * and the image open a form in a popover: the address, and whether the link opens in a new tab or
- * the text in place of the image. An address must be safe (see isSafeUrl): http, https, mailto or
- * a relative one.
+ * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. So does the
+ * code block when the editor has languages for it: the menu makes the block a paragraph again, or
+ * a block in plain text or in one of the languages. Without them, the tool makes a code block, or
+ * takes it away. The link and the image open a form in a popover: the address, and whether the link
+ * opens in a new tab or the text in place of the image. An address must be safe (see isSafeUrl):
+ * http, https, mailto or a relative one. While the page uploads images, the form of the image has
+ * a button choosing a file to upload, whose address the image then takes.
  *
  * The same class draws the bubble menu over a selection, with the tools of the inline formats.
  */
@@ -36,8 +39,10 @@ import type { Editor } from '@tiptap/core';
 
 import { lookClasses, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Popover } from './popover.js';
+import { codeLanguage } from './rich-text-languages.js';
 import { isSafeUrl, type HeadingLevel, type RichTextAlignment,
 	type RichTextFeature } from './rich-text-schema.js';
+import type { UploadHost } from './rich-text-upload.js';
 
 /** A tool of the toolbar. */
 export type RichTextTool = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
@@ -120,6 +125,18 @@ export interface RichTextEditorTexts {
 	close: string;
 	/** Said of an address the editor does not take. */
 	invalidUrl: string;
+	/** The item of the menu of the code block for a block without a language. */
+	plainText: string;
+	/** The button of the form of an image choosing a file to upload. */
+	uploadImage: string;
+	/** The mark of an image uploading; {0} the name of its file. */
+	uploading: string;
+	/** What stands for the name of a file that has none. */
+	theImage: string;
+	/** Why an image was not uploaded: {0} the name of its file, {1} the largest size, the types. */
+	uploadFailed: string;
+	uploadTooLarge: string;
+	uploadType: string;
 	/** The count: {0} the characters, {1} the limit, {0} the words; one of them alone. */
 	characters: string;
 	character: string;
@@ -174,6 +191,13 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	apply: 'Apply',
 	close: 'Close',
 	invalidUrl: 'Give an address starting with http://, https:// or mailto:, or a relative one.',
+	plainText: 'Plain text',
+	uploadImage: 'Upload an image…',
+	uploading: 'Uploading {0}…',
+	theImage: 'The image',
+	uploadFailed: '{0} could not be uploaded.',
+	uploadTooLarge: '{0} is larger than {1}.',
+	uploadType: '{0} is not an image of a type the editor takes: {1}.',
 	characters: '{0} characters',
 	character: '{0} character',
 	charactersOfLimit: '{0} of {1} characters',
@@ -378,6 +402,12 @@ interface MenuEntry {
 
 type MenuLine = MenuEntry | 'separator';
 
+/** A language of code blocks: its name, as their class has it, and what the menu calls it. */
+export interface RichTextCodeLanguage {
+	name: string;
+	label: string;
+}
+
 /** What a toolbar works with. */
 export interface RichTextToolbarContext {
 	/** The editor of Tiptap, which the rich text editor makes anew when its schema changes. */
@@ -386,6 +416,10 @@ export interface RichTextToolbarContext {
 	texts: () => RichTextEditorTexts;
 	features: () => ReadonlySet<RichTextFeature>;
 	headingLevels: () => readonly HeadingLevel[];
+	/** The languages of the menu of the code block; none for a tool making a code block. */
+	codeLanguages?: () => readonly RichTextCodeLanguage[];
+	/** The uploads of the form of an image; none while the page uploads no images. */
+	uploads?: () => UploadHost | null;
 	/** Called as a form opens and once it closed. */
 	onForm?: (open: boolean) => void;
 }
@@ -459,6 +493,20 @@ export class RichTextToolbar {
 		return partClasses(this.context.look, ...parts);
 	}
 
+	/**
+	 * @returns what a tool is: the code block opens a menu while the editor has languages for it
+	 */
+	private kindOf(tool: RichTextTool): ToolSpec['kind'] {
+		if (tool === 'codeBlock' && this.codeLanguages().length) {
+			return 'menu';
+		}
+		return SPECS[tool].kind;
+	}
+
+	private codeLanguages(): readonly RichTextCodeLanguage[] {
+		return this.context.codeLanguages?.() ?? [];
+	}
+
 	private listen(target: EventTarget, type: string, listener: (event: Event) => void,
 		capture = false): void {
 		target.addEventListener(type, listener, capture);
@@ -502,6 +550,7 @@ export class RichTextToolbar {
 	 */
 	private draw(tool: RichTextTool, texts: RichTextEditorTexts): HTMLElement {
 		const spec = SPECS[tool];
+		const kind = this.kindOf(tool);
 		const button = document.createElement('button');
 		button.type = 'button';
 		button.className = this.css('rich-text-tool');
@@ -519,14 +568,14 @@ export class RichTextToolbar {
 		} else {
 			button.insertAdjacentHTML('beforeend', RICH_TEXT_ICONS[tool]);
 		}
-		if (spec.kind === 'toggle') {
+		if (kind === 'toggle') {
 			button.setAttribute('aria-pressed', 'false');
 		}
 		const drawn: DrawnTool = { tool, button, menu: null, label };
 		this.tools.push(drawn);
 		const index = this.tools.length - 1;
 		button.addEventListener('focus', () => this.setCurrent(index));
-		if (spec.kind !== 'menu') {
+		if (kind !== 'menu') {
 			button.addEventListener('click', () => this.press(drawn));
 			return button;
 		}
@@ -594,7 +643,7 @@ export class RichTextToolbar {
 			const enabled = this.isEnabled(drawn.tool);
 			drawn.button.setAttribute('aria-disabled', String(!enabled));
 			const active = !!spec.active?.(editor);
-			if (spec.kind === 'toggle') {
+			if (drawn.button.hasAttribute('aria-pressed')) {
 				drawn.button.setAttribute('aria-pressed', String(active));
 			}
 			toggleParts(drawn.button, this.context.look, active, 'rich-text-tool-active');
@@ -616,9 +665,9 @@ export class RichTextToolbar {
 		if (tool === 'heading') {
 			return this.blockEntries().some((entry) => entry.enabled(editor));
 		}
-		if (tool === 'table') {
-			return this.tableEntries().some((entry) => entry !== 'separator' &&
-				entry.enabled(editor));
+		if (tool === 'table' || (tool === 'codeBlock' && this.kindOf(tool) === 'menu')) {
+			return this.menuLines(this.tools.find((drawn) => drawn.tool === tool) ??
+				{ tool }).some((entry) => entry !== 'separator' && entry.enabled(editor));
 		}
 		return SPECS[tool].enabled?.(editor) ?? true;
 	}
@@ -680,8 +729,46 @@ export class RichTextToolbar {
 		];
 	}
 
-	private menuLines(drawn: DrawnTool): MenuLine[] {
-		return drawn.tool === 'heading' ? this.blockEntries() : this.tableEntries();
+	/**
+	 * @returns the items of the menu of the code block: a paragraph again, or a code block in
+	 *          plain text or in a language. A block in a language the menu has not is in none of
+	 *          them.
+	 */
+	private codeEntries(): MenuLine[] {
+		const texts = this.context.texts();
+		const language = (editor: Editor) => editor.isActive('codeBlock') ?
+			codeLanguage(editor.getAttributes('codeBlock').language as string | null) : undefined;
+		const choose = (name: string | null) => (editor: Editor) => {
+			const chain = editor.chain().focus();
+			(editor.isActive('codeBlock') ? chain.updateAttributes('codeBlock', { language: name }) :
+				chain.setCodeBlock({ language: name } as { language: string })).run();
+		};
+		const can = (editor: Editor) => editor.isActive('codeBlock') ||
+			editor.can().setCodeBlock();
+		return [
+			{ id: 'paragraph', label: texts.paragraph,
+				checked: (editor) => !editor.isActive('codeBlock'),
+				enabled: (editor) => !editor.isActive('codeBlock') || editor.can().setParagraph(),
+				run: (editor) => editor.chain().focus().setParagraph().run() },
+			'separator',
+			{ id: 'plainText', label: texts.plainText,
+				checked: (editor) => language(editor) === null, enabled: can, run: choose(null) },
+			...this.codeLanguages().map((each): MenuEntry => ({
+				id: 'language-' + each.name, label: each.label,
+				checked: (editor) => language(editor) === each.name, enabled: can,
+				run: choose(each.name) }))
+		];
+	}
+
+	private menuLines(drawn: Pick<DrawnTool, 'tool'>): MenuLine[] {
+		switch (drawn.tool) {
+		case 'heading':
+			return this.blockEntries();
+		case 'codeBlock':
+			return this.codeEntries();
+		default:
+			return this.tableEntries();
+		}
 	}
 
 	/**
@@ -941,16 +1028,13 @@ export class RichTextToolbar {
 			alt?: string } : {};
 		const form = this.form();
 		const src = this.field(form, texts.imageUrl, 'url', attributes.src ?? '');
+		const uploads = this.context.uploads?.() ?? null;
+		const upload = uploads?.enabled() ? this.uploadButton(form, uploads) : null;
 		const alt = this.field(form, texts.imageAlt, 'text', attributes.alt ?? '');
 		const error = this.error(form);
-		form.append(this.buttons(texts, null, () => undefined));
-		form.addEventListener('submit', (event) => {
-			event.preventDefault();
-			const address = src.value.trim();
-			if (!address || !isSafeUrl(address)) {
-				this.showError(src, error, texts.invalidUrl);
-				return;
-			}
+		const buttons = this.buttons(texts, null, () => undefined);
+		form.append(buttons);
+		const apply = (address: string) => {
 			this.closeForm();
 			const values = { src: address, alt: alt.value.trim() || null };
 			if (selected) {
@@ -958,8 +1042,82 @@ export class RichTextToolbar {
 			} else {
 				editor.chain().focus().setImage({ src: address, alt: values.alt ?? undefined }).run();
 			}
+		};
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			const address = src.value.trim();
+			if (!address || !isSafeUrl(address)) {
+				this.showError(src, error, texts.invalidUrl);
+				return;
+			}
+			apply(address);
+		});
+		upload?.picker.addEventListener('change', () => {
+			const file = upload.picker.files?.[0];
+			upload.picker.value = '';
+			if (!file || !uploads) {
+				return;
+			}
+			const refused = uploads.refusal(file);
+			if (refused) {
+				this.showError(upload.button, error, refused);
+				return;
+			}
+			error.hidden = true;
+			upload.status.textContent = uploads.uploading(file);
+			upload.status.hidden = false;
+			const busy = (on: boolean) => {
+				upload.button.disabled = on;
+				buttons.querySelectorAll('button').forEach((button) => {
+					button.disabled = on;
+				});
+			};
+			busy(true);
+			uploads.upload(file).then((address) => {
+				// the user closed the form meanwhile: the image is not wanted any more
+				if (form.isConnected) {
+					apply(address);
+				}
+			}, (failure: unknown) => {
+				busy(false);
+				upload.status.hidden = true;
+				if (form.isConnected) {
+					this.showError(upload.button, error, failure instanceof Error ? failure.message :
+						String(failure));
+				}
+			});
 		});
 		this.showForm(trigger, texts.image, form, src);
+	}
+
+	/**
+	 * Adds a button choosing a file to upload to the form of an image, with the file field it
+	 * opens, hidden, and the line telling the upload.
+	 */
+	private uploadButton(form: HTMLFormElement, uploads: UploadHost): { button: HTMLButtonElement;
+		picker: HTMLInputElement; status: HTMLElement } {
+		const texts = this.context.texts();
+		const box = document.createElement('div');
+		box.className = 'antilia-rich-text-form-upload';
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = lookClasses(this.context.look, 'button', 'button-secondary',
+			'button-small');
+		button.textContent = texts.uploadImage;
+		const picker = document.createElement('input');
+		picker.type = 'file';
+		picker.accept = uploads.types().join(',');
+		picker.hidden = true;
+		picker.tabIndex = -1;
+		picker.className = 'antilia-rich-text-form-file';
+		button.addEventListener('click', () => picker.click());
+		const status = document.createElement('p');
+		status.className = 'antilia-rich-text-form-status';
+		status.setAttribute('role', 'status');
+		status.hidden = true;
+		box.append(button, picker, status);
+		form.append(box);
+		return { button, picker, status };
 	}
 
 	private toolButton(tool: RichTextTool): HTMLButtonElement | undefined {
@@ -1013,10 +1171,12 @@ export class RichTextToolbar {
 		return error;
 	}
 
-	private showError(input: HTMLInputElement, error: HTMLElement, text: string): void {
+	private showError(input: HTMLElement, error: HTMLElement, text: string): void {
 		error.textContent = text;
 		error.hidden = false;
-		input.setAttribute('aria-invalid', 'true');
+		if (input instanceof HTMLInputElement) {
+			input.setAttribute('aria-invalid', 'true');
+		}
 		input.setAttribute('aria-describedby', error.id);
 		input.focus();
 	}

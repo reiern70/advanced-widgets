@@ -16,10 +16,11 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { RichTextEditor as CoreRichTextEditor, type HeadingLevel, type ResizableSize,
-	type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
+import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLevel,
+	type ResizableSize, type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
 	type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
-	type RichTextFeature, type RichTextFormat, type RichTextTool } from '@antilia/core';
+	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
+	type RichTextTool } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
@@ -63,6 +64,21 @@ export interface RichTextEditorProps {
 	stateDelay?: number;
 	/** More extensions of Tiptap, or the names of those registered; keep the array the same. */
 	extensions?: readonly RichTextExtension[];
+	/**
+	 * Whether the code blocks show in the colors of their language: true with the grammars of the
+	 * code editor (lezerHighlighter, which loads each the first time a block needs it), or a
+	 * highlighter of the page's own; false when left out. The colors are those of code-editor.css.
+	 */
+	highlight?: boolean | RichTextHighlighter;
+	/**
+	 * The languages the menu of the tool code block offers, by their names: those of the
+	 * highlighter when left out while highlighting, none otherwise; false for none.
+	 */
+	codeLanguages?: readonly string[] | false;
+	/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+	uploadTypes?: readonly string[];
+	/** The largest image the user may upload, in bytes; none when left out. */
+	uploadMaxSize?: number | null;
 	/** What the editor says, in English when left out. */
 	texts?: Partial<RichTextEditorTexts>;
 	/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -82,6 +98,11 @@ export interface RichTextEditorProps {
 	/** Called with the text when the user pressed Ctrl+S, or Cmd+S. */
 	onSave?(value: string): void;
 	onResize?(size: ResizableSize): void;
+	/**
+	 * Uploads an image the user chose, dropped or pasted, answering the address it is served at
+	 * (see uploadImageTo of the core); without it an image is an address the user gives.
+	 */
+	onUpload?(file: File): Promise<string>;
 }
 
 /**
@@ -110,7 +131,9 @@ export interface RichTextEditorHandle {
  * bottom unless told otherwise. React renders its element, the core the editor in it. It tells
  * whether the text has changes not saved, with data-modified, which the tabs it is in show. Give
  * it a state to start in, one onStateChange reported, to show it again as the user left it. A ref
- * gets a {@link RichTextEditorHandle}.
+ * gets a {@link RichTextEditorHandle}. With highlight, its code blocks show in the colors of their
+ * language, which the menu of the tool code block chooses; with onUpload, the user uploads images
+ * by the form of the image, or by dropping or pasting them into the text.
  *
  * The HTML it gives comes from the user: a server keeping it cleans it, as Wicket's
  * RichTextEditor does.
@@ -119,7 +142,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 	function RichTextEditor(props, ref) {
 		const { value, saved, format, features, headingLevels, toolbar, bubbleMenu, readOnly,
 			placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			stateDelay, extensions, texts, name, id, className } = props;
+			stateDelay, extensions, texts, highlight, codeLanguages, uploadTypes, uploadMaxSize, name,
+			id, className } = props;
+		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
 		const look = useLook();
@@ -149,7 +174,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				count: current.count, resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, stateDelay: current.stateDelay, extensions: current.extensions,
-				texts: current.texts, look,
+				texts: current.texts, look, highlight: highlighterOf(current.highlight) ?? false,
+				codeLanguages: current.codeLanguages, uploadTypes: current.uploadTypes,
+				uploadMaxSize: current.uploadMaxSize, onUpload: uploaderOf(latest),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
 				onBlur: (next) => latest.current.onBlur?.(next),
@@ -180,6 +207,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 		}, [extensions]);
 
 		useLayoutEffect(() => {
+			instance.current?.configure({ highlight: highlighterOf(highlight) ?? false,
+				codeLanguages, uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
+				onUpload: uploaderOf(latest) });
+		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploads]);
+
+		useLayoutEffect(() => {
 			const editor = instance.current;
 			if (editor && value !== undefined && value !== editor.getValue()) {
 				editor.setValue(value);
@@ -206,3 +239,19 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			</div>
 		);
 	});
+
+/**
+ * @returns the highlighter of a prop highlight: the grammars of the code editor for true
+ */
+function highlighterOf(highlight: boolean | RichTextHighlighter | undefined):
+	RichTextHighlighter | undefined {
+	return highlight === true ? lezerHighlighter : highlight || undefined;
+}
+
+/**
+ * @returns the uploader of the props, calling the latest onUpload; null without one
+ */
+function uploaderOf(props: { current: RichTextEditorProps }):
+	((file: File) => Promise<string>) | null {
+	return props.current.onUpload ? (file) => props.current.onUpload!(file) : null;
+}

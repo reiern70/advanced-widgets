@@ -16,9 +16,11 @@
 package com.antilia.widgets.richtext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -123,6 +125,24 @@ class RichTextPolicyTest
 		RichTextPolicy none = RichTextPolicy.of(Set.of());
 		assertEquals("<p>Only text<br />and lines</p>", none.sanitize("<p class=\"antilia-text-center\">" +
 			"Only <b>text</b><br>and lines</p>"));
+	}
+
+	@Test
+	void takesTheAddressesTheEditorTakes()
+	{
+		assertTrue(RichTextPolicy.isSafeUrl("https://example.org/a.png"));
+		assertTrue(RichTextPolicy.isSafeUrl("HTTP://example.org"));
+		assertTrue(RichTextPolicy.isSafeUrl("mailto:someone@example.org"));
+		assertTrue(RichTextPolicy.isSafeUrl("/images/a.png"));
+		assertTrue(RichTextPolicy.isSafeUrl("images/a.png?x=1:2"));
+		assertFalse(RichTextPolicy.isSafeUrl("javascript:alert(1)"));
+		assertFalse(RichTextPolicy.isSafeUrl(" Java\tScript :alert(1)"));
+		assertFalse(RichTextPolicy.isSafeUrl("\u0000javascript:alert(1)"));
+		assertFalse(RichTextPolicy.isSafeUrl("data:image/png;base64,AAAA"));
+		assertFalse(RichTextPolicy.isSafeUrl("vbscript:x"));
+		assertFalse(RichTextPolicy.isSafeUrl(" "));
+		assertFalse(RichTextPolicy.isSafeUrl(""));
+		assertFalse(RichTextPolicy.isSafeUrl(null));
 	}
 
 	@Test

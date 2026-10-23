@@ -17,7 +17,9 @@ package com.antilia.widgets.richtext;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.owasp.html.HtmlPolicyBuilder;
@@ -58,6 +60,13 @@ public final class RichTextPolicy implements RichTextSanitizer
 	/** The widths of the columns a cell spans. */
 	private static final Pattern WIDTHS = Pattern.compile("[0-9]{1,5}(?:,[0-9]{1,5}){0,20}");
 
+	/** What the browser ignores in an address, which does not hide its scheme then. */
+	private static final Pattern IGNORED = Pattern.compile(
+		"[\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u180e\\u2000-\\u2029\\u205f\\u3000\\ufeff]");
+
+	/** The scheme of an address. */
+	private static final Pattern SCHEME = Pattern.compile("^([a-zA-Z][a-zA-Z0-9+.-]*):");
+
 	private static final String[] HEADINGS = { "h1", "h2", "h3", "h4", "h5", "h6" };
 
 	private final Set<RichTextFeature> features;
@@ -83,6 +92,36 @@ public final class RichTextPolicy implements RichTextSanitizer
 			return ALL;
 		}
 		return new RichTextPolicy(features);
+	}
+
+	/**
+	 * Whether a link or an image may go to an address, as the editor in the browser tells
+	 * ({@code isSafeUrl}): an http, https or mailto address, or a relative one; not
+	 * {@code javascript:}, {@code data:} and so on. Spaces and control characters the browser
+	 * ignores do not hide a scheme.
+	 *
+	 * @param url
+	 *            the address
+	 * @return whether the cleaning keeps it
+	 */
+	public static boolean isSafeUrl(String url)
+	{
+		if (url == null)
+		{
+			return false;
+		}
+		String bare = IGNORED.matcher(url).replaceAll("");
+		if (bare.isEmpty())
+		{
+			return false;
+		}
+		Matcher scheme = SCHEME.matcher(bare);
+		if (!scheme.find())
+		{
+			return true;
+		}
+		String name = scheme.group(1).toLowerCase(Locale.ROOT);
+		return name.equals("http") || name.equals("https") || name.equals("mailto");
 	}
 
 	/**

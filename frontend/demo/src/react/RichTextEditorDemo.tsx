@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
-import { describe, richText, toolbarOf, type RichText,
+import { describe, richText, toolbarOf, uploader, type RichText,
 	type RichTextEditorConfig } from '../rich-text-editor.js';
 
 /**
@@ -35,6 +35,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const [bubbleMenu, setBubbleMenu] = useState(true);
 	const [readOnly, setReadOnly] = useState(false);
 	const [count, setCount] = useState(true);
+	const [highlight, setHighlight] = useState(true);
+	const [onUpload] = useState(() => uploader(config));
 	const [heard, setHeard] = useState(texts.appStart);
 	const check = (label: string, checked: boolean, change: (checked: boolean) => void) => (
 		<label className="rich-text-demo__control">
@@ -64,7 +66,9 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 							{check(texts.bubbleMenu, bubbleMenu, setBubbleMenu)}
 							{check(texts.readOnly, readOnly, setReadOnly)}
 							{check(texts.count, count, setCount)}
+							{check(texts.highlight, highlight, setHighlight)}
 						</div>
+						<p className="rich-text-demo__status">{texts.extras}</p>
 						<form className="rich-text-demo__editor" onSubmit={(event) => {
 							event.preventDefault();
 							saveArticle();
@@ -73,7 +77,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 							<RichTextEditor value={article.text} saved={article.saved} state={article.state}
 								label={texts.articleLabel} placeholder={texts.placeholder}
 								toolbar={toolbarOf(toolbar)} bubbleMenu={bubbleMenu} readOnly={readOnly}
-								count={count} texts={config.editor}
+								count={count} texts={config.editor} highlight={highlight} onUpload={onUpload}
+								uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
 								onChange={(text) => setArticle((all) => ({ ...all, text }))}
 								onStateChange={(state) => setArticle((all) => ({ ...all, state }))}
 								onSave={saveArticle} />
@@ -101,6 +106,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 							<span className="rich-text-demo__name">{texts.notesLabel}</span>
 							<RichTextEditor value={notes.text} saved={notes.saved} state={notes.state}
 								format="markdown" label={texts.notesLabel} bubbleMenu texts={config.editor}
+								highlight onUpload={onUpload} uploadTypes={config.uploadTypes}
+								uploadMaxSize={config.uploadMaxSize}
 								onChange={(text) => setNotes((all) => ({ ...all, text }))}
 								onStateChange={(state) => setNotes((all) => ({ ...all, state }))}
 								onSave={saveNotes} />

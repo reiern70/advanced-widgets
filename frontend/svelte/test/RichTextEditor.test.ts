@@ -18,7 +18,8 @@ import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { RichTextEditor } from '@antilia/core';
+import { lezerHighlighter, RichTextEditor } from '@antilia/core';
+import { Slice } from '@tiptap/pm/model';
 
 import BoundRichTextEditor from './BoundRichTextEditor.svelte';
 
@@ -144,5 +145,49 @@ describe('RichTextEditor', () => {
 		const field = container.querySelector<HTMLTextAreaElement>('textarea[name="body"]')!;
 		expect(field.hidden).toBe(true);
 		expect(field.value).toBe('<p>Hello world</p>');
+	});
+
+	it('highlights its code blocks with the grammars of the code editor, or none', async () => {
+		await lezerHighlighter.load('java');
+		const { container, rerender } = render(BoundRichTextEditor, { highlight: true,
+			value: '<pre><code class="language-java">class A {}</code></pre>' });
+		const keyword = () => container.querySelector('pre span.tok-keyword')?.textContent;
+		expect(keyword()).toBe('class');
+		const codeBlock = () => container.querySelector('[data-tool="codeBlock"]')!;
+		expect(codeBlock().getAttribute('aria-haspopup')).toBe('menu');
+
+		await rerender({ highlight: false, codeLanguages: ['java'] });
+		flushSync();
+		expect(keyword()).toBeUndefined();
+		expect(container.querySelector('pre')?.getAttribute('data-antilia-language')).toBe('Java');
+		await rerender({ codeLanguages: false });
+		flushSync();
+		expect(codeBlock().getAttribute('aria-haspopup')).toBeNull();
+	});
+
+	it('uploads the images the user drops, by onupload', async () => {
+		const onupload = vi.fn(() => Promise.resolve('/bird.png'));
+		const { container, rerender } = render(BoundRichTextEditor, { onupload });
+		// the editor the props make, anew after a rerender of the test's
+		const drop = () => {
+			const view = core(container).editor.view;
+			const event = new Event('drop', { cancelable: true });
+			Object.assign(event, { clientX: 0, clientY: 0, dataTransfer: { types: ['Files'],
+				files: [new File(['x'], 'bird.png', { type: 'image/png' })], getData: () => '' } });
+			view.posAtCoords = () => null;
+			return view.someProp('handleDrop', (handle) => handle(view, event as DragEvent,
+				Slice.empty, false));
+		};
+		core(container).editor.commands.setTextSelection(12);
+		expect(drop()).toBe(true);
+		await tick();
+		flushSync();
+		expect(onupload).toHaveBeenCalledTimes(1);
+		expect(container.querySelector('output')?.textContent)
+			.toBe('<p>Hello world</p><img src="/bird.png">');
+
+		await rerender({ onupload: undefined });
+		flushSync();
+		expect(drop()).toBeFalsy();
 	});
 });

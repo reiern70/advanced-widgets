@@ -15,10 +15,14 @@
  */
 package com.antilia.widgets.demo.richtext;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -36,6 +40,7 @@ import com.antilia.widgets.richtext.RichTextEditor;
 import com.antilia.widgets.richtext.RichTextEditorEvent;
 import com.antilia.widgets.richtext.RichTextEditorEventBehavior;
 import com.antilia.widgets.richtext.RichTextFormat;
+import com.antilia.widgets.richtext.RichTextImageUploadBehavior;
 import com.antilia.widgets.richtext.RichTextTool;
 import com.github.openjson.JSONObject;
 
@@ -261,6 +266,71 @@ class RichTextEditorPageTest
 		assertEquals("Bold", config.getJSONObject("editor").getString("bold"));
 		assertEquals("[\"full\",\"compact\",\"none\"]", config.getJSONArray("toolbars").toString());
 		assertEquals("richTextEditor", page.getFrameworkDemo());
+		assertEquals("Highlight the code", config.getJSONObject("texts").getString("highlight"));
+		assertTrue(config.getJSONObject("texts").getString("extras").endsWith(", 2 MB at most."));
+		// the apps upload to the page
+		RichTextImageUploadBehavior uploads = page.getBehaviors(RichTextImageUploadBehavior.class)
+			.get(0);
+		assertEquals(uploads.getUploadUrl(), config.getString("uploadUrl"));
+		assertEquals("[\"image/png\",\"image/jpeg\",\"image/gif\",\"image/webp\"]",
+			config.getJSONArray("uploadTypes").toString());
+		assertEquals(RichTextImages.MAX_SIZE.bytes(), config.getLong("uploadMaxSize"));
+	}
+
+	@Test
+	void highlightsTheCodeBlocksUnlessToldNot()
+	{
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isHighlighting());
+		assertTrue(editor(NOTES).isHighlighting());
+		tester.assertContains("antilia-rich-text-highlight.*\\.js");
+		tester.assertContains("antilia-code-editor.*\\.css");
+		tester.assertContains("\"highlight\":true");
+		tester.assertContains("2 MB at most");
+
+		FormTester form = tester.newFormTester(inCase("articleTitle", "controls"));
+		form.setValue("highlight", false);
+		tester.executeAjaxEvent(inCase("articleTitle", "controls:highlight"), "change");
+		assertFalse(editor(EDITOR).isHighlighting());
+		assertFalse(tester.getLastResponseAsString().contains("\"highlight\":true"));
+	}
+
+	@Test
+	void uploadsImagesWhichTheApplicationServes() throws IOException
+	{
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isImageUploading());
+		assertEquals(RichTextImages.MAX_SIZE, editor.getImageMaxSize());
+		assertTrue(editor(NOTES).isImageUploading());
+		tester.assertContains("\"uploadUrl\":");
+
+		byte[] png = { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 13, 'I', 'H',
+				'D', 'R' };
+		Path file = Files.createTempFile("bird", ".png");
+		try
+		{
+			Files.write(file, png);
+			tester.getRequest().setUseMultiPartContentType(true);
+			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+				new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+			tester.executeBehavior(editor.getBehaviors(RichTextImageUploadBehavior.class).get(0));
+		}
+		finally
+		{
+			Files.deleteIfExists(file);
+		}
+		String url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+		assertTrue(url.matches(".*/rich-text-images/[0-9a-f]{32}\\.png"), url);
+
+		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals("image/png", tester.getLastResponse().getContentType());
+		assertEquals("nosniff", tester.getLastResponse().getHeader("X-Content-Type-Options"));
+		assertArrayEquals(png, tester.getLastResponse().getBinaryContent());
+
+		tester.executeUrl("rich-text-images/../../etc/passwd");
+		assertEquals(404, tester.getLastResponse().getStatus());
+		tester.executeUrl("rich-text-images/" + "0".repeat(32) + ".png");
+		assertEquals(404, tester.getLastResponse().getStatus());
 	}
 
 	@Test

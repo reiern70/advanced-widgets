@@ -234,4 +234,11 @@
 	<entry key="RichTextEditor.words">{0} Wörter</entry>
 	<entry key="RichTextEditor.word">{0} Wort</entry>
 	<entry key="RichTextEditor.resize">Ziehen oder die Pfeiltasten benutzen, um die Größe des Editors anzupassen</entry>
+	<entry key="RichTextEditor.plainText">Nur Text</entry>
+	<entry key="RichTextEditor.uploadImage">Bild hochladen…</entry>
+	<entry key="RichTextEditor.uploading">{0} wird hochgeladen…</entry>
+	<entry key="RichTextEditor.theImage">Das Bild</entry>
+	<entry key="RichTextEditor.uploadFailed">{0} konnte nicht hochgeladen werden.</entry>
+	<entry key="RichTextEditor.uploadTooLarge">{0} ist größer als {1}.</entry>
+	<entry key="RichTextEditor.uploadType">{0} ist kein Bild eines Typs, den der Editor annimmt: {1}.</entry>
 </properties>

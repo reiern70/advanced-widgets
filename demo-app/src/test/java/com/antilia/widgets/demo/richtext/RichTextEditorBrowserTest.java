@@ -16,9 +16,17 @@
 package com.antilia.widgets.demo.richtext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -41,7 +49,8 @@ import com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase;
  * the text style and the table from the keyboard, the form of a link, a paste of unsafe HTML, the
  * notes in Markdown, leaving a list with Escape and Tab, reading only, the text area hidden in the
  * room of the editor until the script makes it, and the text and the selection the server keeps,
- * which the page shows again when opened anew.
+ * which the page shows again when opened anew; the code blocks in the colors of the language their
+ * menu chooses, and the images uploaded from the form of the image, dropped and pasted.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -277,6 +286,161 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 			"arguments[0]).getState().selection;", field().getDomAttribute("id"));
 		assertEquals(state, again);
 		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void highlightsTheCodeBlocksInTheLanguageTheirMenuChooses(SeleniumBrowser browser,
+		String framework)
+	{
+		openEditor(browser, framework);
+		if ("wicket".equals(framework))
+		{
+			// the grammars are a script of their own, which the editor's does not hold
+			assertEquals(Boolean.TRUE, script("return !!Wicket.RichTextHighlighter;"));
+		}
+		wait.until(d -> "Java".equals(block().getDomAttribute("data-antilia-language")) &&
+			!block().findElements(By.cssSelector("span.tok-keyword")).isEmpty());
+		WebElement keyword = block().findElement(By.cssSelector("span.tok-keyword"));
+		// record is a keyword by its place only, which Lezer's grammar of Java leaves plain
+		assertEquals("static", keyword.getText());
+		assertNotEquals(script("return getComputedStyle(arguments[0]).color;", block()),
+			script("return getComputedStyle(arguments[0]).color;", keyword), "in its color");
+		// the HTML stays plain
+		assertTrue(value().contains("<pre><code class=\"language-java\">"), value());
+		assertFalse(value().contains("tok-"), value());
+
+		keyword.click();
+		tool("codeBlock").click();
+		WebElement typeScript = menuItem("TypeScript");
+		assertEquals("true", menuItem("Java").getDomAttribute("aria-checked"));
+		typeScript.click();
+		wait.until(d -> "TypeScript".equals(block().getDomAttribute("data-antilia-language")));
+		wait.until(d -> value().contains("<pre><code class=\"language-typescript\">"));
+
+		checkBox("Highlight the code").click();
+		wait.until(d -> block().findElements(By.cssSelector("span[class^='tok-']")).isEmpty() &&
+			block().getDomAttribute("data-antilia-language") == null);
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antilia.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void uploadsAnImageChosenDroppedOrPasted(SeleniumBrowser browser, String framework)
+		throws IOException
+	{
+		openEditor(browser, framework);
+		// in the build's folder: Firefox, a snap, cannot read the temporary folder of the system
+		Path image = Files.createTempFile(Path.of("target").toAbsolutePath(), "bird", ".png");
+		try
+		{
+			Files.write(image, Base64.getDecoder().decode(PNG));
+
+			// chosen in the form of the image
+			clickAtEnd(content().findElement(By.cssSelector("p")));
+			tool("image").click();
+			WebElement form = wait.until(d -> d.findElements(By.cssSelector(
+				".antilia-popover .antilia-rich-text-form")).stream().findFirst().orElse(null));
+			form.findElement(By.cssSelector("input[type=file]")).sendKeys(image.toAbsolutePath()
+				.toString());
+			wait.until(d -> d.findElements(By.cssSelector(".antilia-popover")).isEmpty());
+			wait.until(d -> uploaded().size() == 1);
+			wait.until(d -> Boolean.TRUE.equals(script("return arguments[0].complete && " +
+				"arguments[0].naturalWidth === 1;", uploaded().get(0))));
+		}
+		finally
+		{
+			Files.deleteIfExists(image);
+		}
+
+		// dropped into the text, and pasted as a screenshot is
+		transfer("drop", "dropped.png", "image/png", PNG);
+		wait.until(d -> uploaded().size() == 2);
+		transfer("paste", "pasted.png", "image/png", PNG);
+		wait.until(d -> uploaded().size() == 3);
+		assertTrue(editor().findElements(By.cssSelector(".antilia-rich-text-uploading")).isEmpty());
+
+		// a file of another type: refused before uploading, a message saying why
+		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
+			"notes".getBytes(StandardCharsets.UTF_8)));
+		WebElement message = wait.until(d -> editor().findElements(By.cssSelector(
+			".antilia-rich-text-message")).stream().findFirst().orElse(null));
+		assertEquals("alert", message.getDomAttribute("role"));
+		assertTrue(message.getText().startsWith("notes.txt is not an image"), message.getText());
+		assertEquals(3, uploaded().size());
+
+		if ("wicket".equals(framework))
+		{
+			// the server keeps the addresses through its cleaning, and serves the images
+			content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+			wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__view " +
+				"img[src*='/rich-text-images/']")).size() == 3);
+		}
+		assertNoErrors();
+	}
+
+	/** A PNG of one pixel. */
+	private static final String PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk" +
+		"+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+	/**
+	 * Drops a file on the first paragraph of the text, or pastes it, as the browser does. Firefox
+	 * gives a paste event of a script no data: ProseMirror is told of the paste then, as it tells
+	 * the editor's plugins of one.
+	 */
+	private void transfer(String kind, String name, String type, String base64)
+	{
+		script("var content = arguments[0], target = content.querySelector('p'), kind = arguments[1];" +
+			"var bytes = Uint8Array.from(atob(arguments[4]), (c) => c.charCodeAt(0));" +
+			"var data = new DataTransfer();" +
+			"data.items.add(new File([bytes], arguments[2], { type: arguments[3] }));" +
+			"var rect = target.getBoundingClientRect();" +
+			"if (kind === 'drop') {" +
+			"  target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true," +
+			"    clientX: rect.left + 4, clientY: rect.top + rect.height / 2, dataTransfer: data }));" +
+			"} else if (!arguments[5]) {" +
+			"  content.focus();" +
+			"  target.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true," +
+			"    clipboardData: data }));" +
+			"} else {" +
+			"  var view = content.editor.view;" +
+			"  view.someProp('handlePaste', (handle) => handle(view, { clipboardData: data," +
+			"    preventDefault: () => undefined }, view.state.doc.slice(0, 0)));" +
+			"}", content(), kind, name, type, base64, browser == SeleniumBrowser.FIREFOX);
+	}
+
+	/**
+	 * @return the images of the text the page uploaded
+	 */
+	private List<WebElement> uploaded()
+	{
+		return content().findElements(By.cssSelector("img[src*='/rich-text-images/']"));
+	}
+
+	/**
+	 * @return the code block of the article
+	 */
+	private WebElement block()
+	{
+		return content().findElement(By.cssSelector("pre"));
+	}
+
+	/**
+	 * @return an item of the menu of a tool open, by its text
+	 */
+	private WebElement menuItem(String text)
+	{
+		return wait.until(d -> editor().findElements(By.cssSelector("[role=menu] " +
+			"[role=menuitemradio]")).stream().filter(item -> text.equals(item.getText().trim()))
+			.findFirst().orElse(null));
+	}
+
+	/**
+	 * @return the text as the editor writes it, Tiptap's HTML
+	 */
+	private String value()
+	{
+		return (String)script("return arguments[0].editor.getHTML();", content());
 	}
 
 	private void openEditor(SeleniumBrowser browser, String framework)

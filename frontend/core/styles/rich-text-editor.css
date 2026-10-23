@@ -29,6 +29,10 @@
  * look of a tool, a menu or a field is in :where(), so that the classes of another look, such as
  * Bootstrap's btn, draw them instead.
  *
+ * The colors of the code blocks an editor highlights, the classes tok-keyword and so on, are those
+ * of the code editor, in code-editor.css, which a page highlighting loads too; the name of the
+ * language of a block shows in its corner here.
+ *
  * The text as a page shows it, out of the editor, is .antilia-rich-text-view: the same headings,
  * lists, quotes, code, tables and alignment.
  */
@@ -403,6 +407,23 @@
 	margin-top: 0.25rem;
 }
 
+/* the button choosing an image to upload, below the address, and the line telling the upload */
+.antilia-rich-text-form-upload {
+	display: grid;
+	justify-items: start;
+	gap: 0.3rem;
+}
+
+.antilia-rich-text-form-status {
+	margin: 0;
+	color: var(--antilia-theme-text, #1c2333);
+	font-size: 0.85em;
+}
+
+.antilia-rich-text-form-status[hidden] {
+	display: none;
+}
+
 /* the text, scrolling below the toolbar */
 .antilia-rich-text-content {
 	flex: 1 1 auto;
@@ -422,6 +443,18 @@
 
 .antilia-rich-text-editor-readonly .antilia-rich-text-content {
 	cursor: default;
+}
+
+/* what went wrong with an upload, above the text, for a while */
+.antilia-rich-text-message {
+	flex: none;
+	padding: 0.35rem 0.75rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--antilia-theme-error, #c53030) 40%,
+		transparent);
+	background: color-mix(in srgb, var(--antilia-theme-error, #c53030) 10%,
+		var(--antilia-rich-text-background));
+	color: var(--antilia-theme-error, #c53030);
+	font-size: 0.875em;
 }
 
 /* the count of the characters and the words */
@@ -513,6 +546,35 @@
 
 .antilia-rich-text-drop-cursor {
 	background: var(--antilia-rich-text-accent);
+}
+
+/* where an image uploading goes, until it is there */
+.antilia-rich-text-uploading {
+	display: inline-block;
+	margin: 0 0.25em;
+	padding: 0.1em 0.5em;
+	border: 1px dashed var(--antilia-rich-text-border);
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	color: var(--antilia-rich-text-muted);
+	font-size: 0.875em;
+	user-select: none;
+}
+
+/* the language of a code block, in its corner */
+.antilia-rich-text-text pre[data-antilia-language] {
+	position: relative;
+}
+
+.antilia-rich-text-text pre[data-antilia-language]::before {
+	content: attr(data-antilia-language);
+	position: absolute;
+	top: 0.2em;
+	right: 0.6em;
+	color: var(--antilia-rich-text-muted);
+	font-family: inherit;
+	font-size: 0.75em;
+	pointer-events: none;
+	user-select: none;
 }
 
 /* the text shown while the editor is empty */
