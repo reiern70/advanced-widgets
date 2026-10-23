@@ -74,6 +74,8 @@ const SCRIPTS = [
 	['src/wicket/resizable-columns.ts', 'com/antilia/widgets/table/antilia-resizable-columns.js'],
 	['src/wicket/resizable.ts', 'com/antilia/widgets/resizable/antilia-resizable.js'],
 	['src/wicket/rich-text-editor.ts', 'com/antilia/widgets/richtext/antilia-rich-text-editor.js'],
+	['src/wicket/rich-text-highlight.ts',
+		'com/antilia/widgets/richtext/antilia-rich-text-highlight.js'],
 	['src/wicket/scrollbar.ts', 'com/antilia/widgets/scrollbar/antilia-scrollbar.js'],
 	['src/wicket/split-panel.ts', 'com/antilia/widgets/split/antilia-split-panel.js'],
 	['src/wicket/tabs.ts', 'com/antilia/widgets/tabs/antilia-tabs.js'],

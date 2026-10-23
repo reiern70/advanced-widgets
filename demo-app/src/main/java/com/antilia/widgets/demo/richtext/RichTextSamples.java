@@ -43,7 +43,12 @@ final class RichTextSamples
 		"</p></blockquote>",
 		"<p class=\"antilia-text-center\"><s>Rain</s> Sun expected tomorrow, so we go out at ",
 		"<code>06:30</code>.</p>",
-		"<pre><code class=\"language-java\">record Sighting(String bird, int count) {}</code></pre>");
+		"<pre><code class=\"language-java\">/** A bird we saw, and how many. */\n",
+		"record Sighting(String bird, int count) {\n",
+		"    static int total(List&lt;Sighting&gt; all) {\n",
+		"        return all.stream().mapToInt(Sighting::count).sum(); // 52\n",
+		"    }\n",
+		"}</code></pre>");
 
 	/** The notes: Markdown, with what it has a syntax for. */
 	static final String NOTES = String.join("\n",

@@ -22,16 +22,19 @@
   it. The state, the selection, the scroll position and the size, binds too (bind:state): the
   editor starts in the state given and reports the one the user leaves it in, a moment after; and
   whether the text has changes not saved (bind:modified), which the tabs it is in show. The core's
-  editor is the bindable editor (bind:editor).
+  editor is the bindable editor (bind:editor). With highlight, its code blocks show in the colors of
+  their language, which the menu of the tool code block chooses; with onupload, the user uploads
+  images by the form of the image, or by dropping or pasting them into the text.
 
   The HTML it gives comes from the user: a server keeping it cleans it, as Wicket's RichTextEditor
   does.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { RichTextEditor, type HeadingLevel, type ResizableSize, type ResizeAxis,
-		type RichTextEditorSelection, type RichTextEditorState, type RichTextEditorStateChange,
-		type RichTextEditorTexts, type RichTextExtension, type RichTextFeature, type RichTextFormat,
+	import { lezerHighlighter, RichTextEditor, type HeadingLevel, type ResizableSize,
+		type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
+		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
+		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
 		type RichTextTool } from '@antilia/core';
 
 	import { getLook } from './look.js';
@@ -79,6 +82,18 @@
 		editor?: RichTextEditor | null;
 		/** More extensions of Tiptap, or the names of those registered. */
 		extensions?: readonly RichTextExtension[];
+		/**
+		 * Whether the code blocks show in the colors of their language: true with the grammars of
+		 * the code editor (lezerHighlighter), or a highlighter of the page's own; false when left
+		 * out. The colors are those of code-editor.css.
+		 */
+		highlight?: boolean | RichTextHighlighter;
+		/** The languages the menu of the tool code block offers: those of the highlighter when left out. */
+		codeLanguages?: readonly string[] | false;
+		/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+		uploadTypes?: readonly string[];
+		/** The largest image the user may upload, in bytes; none when left out. */
+		uploadMaxSize?: number | null;
 		/** What the editor says, in English when left out. */
 		texts?: Partial<RichTextEditorTexts>;
 		/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -94,6 +109,8 @@
 		onmodifiedchange?: (modified: boolean) => void;
 		onsave?: (value: string) => void;
 		onresize?: (size: ResizableSize) => void;
+		/** Uploads an image, answering the address it is served at: see uploadImageTo of the core. */
+		onupload?: (file: File) => Promise<string>;
 	};
 
 	let {
@@ -121,6 +138,10 @@
 		editor = $bindable(null),
 		extensions,
 		texts,
+		highlight,
+		codeLanguages,
+		uploadTypes,
+		uploadMaxSize,
 		name,
 		id,
 		class: className = '',
@@ -131,8 +152,16 @@
 		onstatechange,
 		onmodifiedchange,
 		onsave,
-		onresize
+		onresize,
+		onupload
 	}: Props = $props();
+
+	/** The highlighter of the prop highlight: the grammars of the code editor for true. */
+	const highlighterOf = (given: boolean | RichTextHighlighter | undefined) =>
+		given === true ? lezerHighlighter : given || false;
+
+	/** Uploads by the latest onupload, null without one. */
+	const uploader = () => onupload ? (file: File) => onupload!(file) : null;
 
 	let element = $state<HTMLDivElement>();
 	let instance: RichTextEditor | null = null;
@@ -145,7 +174,8 @@
 		const made = new RichTextEditor(element, untrack(() => ({
 			value, saved, format, features, headingLevels, toolbar, bubbleMenu, readOnly, placeholder,
 			label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			state: editorState, stateDelay, extensions, texts, look,
+			state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
+			codeLanguages, uploadTypes, uploadMaxSize, onUpload: uploader(),
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -188,6 +218,12 @@
 		if (next !== undefined) {
 			untrack(() => instance?.configure({ extensions: next }));
 		}
+	});
+
+	$effect(() => {
+		const next = { highlight: highlighterOf(highlight), codeLanguages, uploadTypes,
+			uploadMaxSize: uploadMaxSize ?? null, onUpload: uploader() };
+		untrack(() => instance?.configure(next));
 	});
 
 	$effect(() => {

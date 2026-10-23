@@ -16,12 +16,14 @@
 
 /*
  * The RichTextEditor demo: an article in HTML, kept by the app with the state the user left its
- * editor in, with a drop-down and check boxes switching the toolbar, the bubble menu, reading only
- * and the count of the words, and the HTML the editor gives; notes in Markdown, and the Markdown
- * the editor gives.
+ * editor in, with a drop-down and check boxes switching the toolbar, the bubble menu, reading only,
+ * the count of the words and the colors of the code blocks, and the HTML the editor gives; notes
+ * in Markdown, and the Markdown the editor gives. The images the user uploads go to the Wicket
+ * page, which keeps them and answers their addresses.
  */
 
-import type { RichTextEditorState, RichTextEditorTexts, RichTextTool } from '@antilia/core';
+import { uploadImageTo, type RichTextEditorState, type RichTextEditorTexts,
+	type RichTextTool } from '@antilia/core';
 
 import { format, type DropdownTexts } from './data.js';
 
@@ -38,6 +40,9 @@ export interface RichTextEditorDemoTexts extends DropdownTexts {
 	bubbleMenu: string;
 	readOnly: string;
 	count: string;
+	highlight: string;
+	/** What the code blocks and the uploads do, as the page says it. */
+	extras: string;
 	save: string;
 	unsaved: string;
 	allSaved: string;
@@ -61,6 +66,17 @@ export interface RichTextEditorConfig {
 	texts: RichTextEditorDemoTexts;
 	editor: Partial<RichTextEditorTexts>;
 	toolbars: string[];
+	/** Where the apps upload images: the page's own resource, answering their addresses. */
+	uploadUrl: string;
+	uploadTypes: string[];
+	uploadMaxSize: number;
+}
+
+/**
+ * @returns what the editors of the apps upload images with: to the page
+ */
+export function uploader(config: RichTextEditorConfig): (file: File) => Promise<string> {
+	return uploadImageTo(config.uploadUrl);
 }
 
 /** A text the app keeps: the text, the text last saved and the state of its editor. */

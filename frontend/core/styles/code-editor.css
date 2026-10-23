@@ -24,10 +24,12 @@
  * The editor is as high as --antilia-code-editor-height says, 18em by default, until the user
  * resizes it by the bar along its bottom (see resizable.css): then the script sets its size.
  *
- * The preview of Markdown, at the end, shows the code blocks in the colors of the grammar too.
+ * The preview of Markdown, at the end, shows the code blocks in the colors of the grammar too, and
+ * so do the code blocks of a rich text editor that highlights them (rich-text-editor.css).
  */
 .antilia-code-editor,
-.antilia-markdown-preview {
+.antilia-markdown-preview,
+.antilia-rich-text-editor {
 	/*
 	 * the grammar: each color leans on the text of the theme, for contrast in light and dark; the
 	 * primary color of a dark theme is too deep for the keywords, which take a light mauve of its
@@ -159,72 +161,81 @@
 	box-shadow: none;
 }
 
-/* the grammar, by the classes of Lezer's classHighlighter, in the editor and in the preview */
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-keyword {
+/*
+ * the grammar, by the classes of Lezer's classHighlighter, in the editor, in the preview and in the
+ * code blocks of a rich text editor
+ */
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-keyword {
 	color: var(--antilia-code-keyword);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-string, .tok-inserted) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-string, .tok-inserted) {
 	color: var(--antilia-code-string);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-string2 {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-string2 {
 	color: color-mix(in srgb, var(--antilia-code-string) 70%, var(--antilia-code-number));
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview)
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
 	:is(.tok-number, .tok-bool, .tok-atom, .tok-literal) {
 	color: var(--antilia-code-number);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview)
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
 	:is(.tok-typeName, .tok-className, .tok-namespace) {
 	color: var(--antilia-code-type);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-propertyName, .tok-labelName) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-propertyName, .tok-labelName) {
 	color: var(--antilia-code-property);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-definition {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-definition {
 	color: var(--antilia-code-definition);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-variableName2 {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-variableName2 {
 	color: var(--antilia-code-keyword);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-comment {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-comment {
 	color: var(--antilia-code-comment);
 	font-style: italic;
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-meta, .tok-macroName) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-meta, .tok-macroName) {
 	color: var(--antilia-code-meta);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-operator, .tok-punctuation) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-operator, .tok-punctuation) {
 	color: var(--antilia-code-punctuation);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-invalid, .tok-deleted) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-invalid, .tok-deleted) {
 	color: var(--antilia-code-invalid);
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-heading {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-heading {
 	color: var(--antilia-code-keyword);
 	font-weight: bold;
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-strong {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-strong {
 	font-weight: bold;
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) .tok-emphasis {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text) .tok-emphasis {
 	font-style: italic;
 }
 
-:is(.antilia-code-editor, .antilia-markdown-preview) :is(.tok-link, .tok-url) {
+:is(.antilia-code-editor, .antilia-markdown-preview, .antilia-rich-text-text)
+	:is(.tok-link, .tok-url) {
 	color: var(--antilia-code-link);
 	text-decoration: underline;
 }

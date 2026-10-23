@@ -41,6 +41,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.resource.JavaScriptPackageResource;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
+import org.apache.wicket.util.lang.Bytes;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.FormTester;
@@ -196,6 +197,99 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void highlightsWithTheScriptOfTheGrammarsOnlyWhenTold()
+	{
+		TestPage page = new TestPage(new RichTextEditor("editor", Model.of(HTML)));
+		tester.startPage(page);
+		tester.assertContainsNot("antilia-rich-text-highlight");
+		tester.assertContainsNot("antilia-code-editor");
+		JSONObject options = options(page.editor);
+		assertFalse(options.has("highlight"));
+		assertFalse(options.has("codeLanguages"));
+		assertFalse(page.editor.isHighlighting());
+
+		page.editor.setHighlighting(true);
+		tester.startPage(page);
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.indexOf("antilia-rich-text-editor.js") <
+			response.indexOf("antilia-rich-text-highlight.js"));
+		tester.assertContains("antilia-code-editor.*\\.css");
+		assertTrue(options(page.editor).getBoolean("highlight"));
+		assertFalse(((JavaScriptPackageResource)RichTextEditor.HIGHLIGHT_JS.getResource())
+			.getCompress());
+	}
+
+	@Test
+	void offersTheLanguagesOfCodeBlocksItIsGiven()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		assertNull(editor.getCodeLanguages());
+		editor.setCodeLanguages("java", " sql ", "not a name", null, "java");
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertEquals("[\"java\",\"sql\"]", options(editor).getJSONArray("codeLanguages")
+			.toString());
+		assertEquals(List.of("java", "sql"), editor.getCodeLanguages());
+
+		editor.setCodeLanguages();
+		tester.startPage(page);
+		assertFalse(options(editor).getBoolean("codeLanguages"));
+		editor.setCodeLanguages((String[])null);
+		tester.startPage(page);
+		assertFalse(options(editor).has("codeLanguages"));
+	}
+
+	@Test
+	void uploadsImagesWhileItHasAStore()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		assertTrue(editor.getBehaviors(RichTextImageUploadBehavior.class).isEmpty());
+		assertFalse(editor.isImageUploading());
+
+		editor.setImageMaxSize(Bytes.kilobytes(512)).setImageTypes(EnumSet.of(
+			RichTextImageType.PNG, RichTextImageType.JPEG))
+			.setImageStore((image, type) -> "/images/a." + type.getExtension());
+		tester.startPage(page);
+		JSONObject options = options(editor);
+		assertTrue(options.getString("uploadUrl").contains("-form-editor"));
+		assertEquals("[\"image/png\",\"image/jpeg\"]", options.getJSONArray("uploadTypes")
+			.toString());
+		assertEquals(512 * 1024, options.getLong("uploadMaxSize"));
+		List<RichTextImageUploadBehavior> behaviors = editor.getBehaviors(
+			RichTextImageUploadBehavior.class);
+		assertEquals(1, behaviors.size());
+		assertEquals(Bytes.kilobytes(512), behaviors.get(0).getMaxSize());
+		assertEquals(Bytes.kilobytes(512), editor.getImageMaxSize());
+		assertEquals(Set.of(RichTextImageType.PNG, RichTextImageType.JPEG), editor.getImageTypes());
+		assertTrue(editor.isImageUploading());
+
+		// changed after: the behavior follows
+		editor.setImageMaxSize(Bytes.megabytes(1)).setImageTypes(EnumSet.of(RichTextImageType.GIF));
+		assertEquals(Bytes.megabytes(1), behaviors.get(0).getMaxSize());
+		assertEquals(Set.of(RichTextImageType.GIF), behaviors.get(0).getTypes());
+
+		// not while read only, without images or disabled
+		editor.setReadOnly(true);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setReadOnly(false).setFeatures(EnumSet.of(RichTextFeature.BOLD));
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setFeatures(null);
+		editor.setEnabled(false);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setEnabled(true);
+		editor.setImageStore(null);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		assertEquals(1, editor.getBehaviors(RichTextImageUploadBehavior.class).size());
+	}
+
+	@Test
 	void translatesItsTexts()
 	{
 		tester.getSession().setLocale(Locale.of("es"));
@@ -207,6 +301,8 @@ class RichTextEditorTest extends WicketTestCase
 		assertEquals("Título {0}", texts.getString("headingLevel"));
 		assertEquals("Arrastre o use las flechas para cambiar el tamaño del editor",
 			texts.getString("resize"));
+		assertEquals("Texto sin formato", texts.getString("plainText"));
+		assertEquals("{0} pesa más de {1}.", texts.getString("uploadTooLarge"));
 
 		tester.getSession().setLocale(Locale.of("de"));
 		tester.startPage(page);

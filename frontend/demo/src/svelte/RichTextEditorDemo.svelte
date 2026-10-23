@@ -23,7 +23,7 @@
 	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
-	import { describe, richText, toolbarOf, type RichText,
+	import { describe, richText, toolbarOf, uploader, type RichText,
 		type RichTextEditorConfig } from '../rich-text-editor.js';
 
 	let { config }: { config: RichTextEditorConfig } = $props();
@@ -37,6 +37,8 @@
 	let bubbleMenu = $state(true);
 	let readOnly = $state(false);
 	let count = $state(true);
+	let highlight = $state(true);
+	const onupload = uploader(initial);
 	let heard = $state(initial.texts.appStart);
 
 	// the cases, one at a time
@@ -74,7 +76,11 @@
 						<label class="rich-text-demo__control">
 							<input type="checkbox" bind:checked={count} /> {texts.count}
 						</label>
+						<label class="rich-text-demo__control">
+							<input type="checkbox" bind:checked={highlight} /> {texts.highlight}
+						</label>
 					</div>
+					<p class="rich-text-demo__status">{texts.extras}</p>
 					<form class="rich-text-demo__editor" onsubmit={(event) => {
 						event.preventDefault();
 						saveArticle();
@@ -83,7 +89,8 @@
 						<RichTextEditor bind:value={article.text} bind:state={article.state}
 							saved={article.saved} label={texts.articleLabel} placeholder={texts.placeholder}
 							toolbar={toolbarOf(toolbar)} {bubbleMenu} {readOnly} {count} texts={config.editor}
-							onsave={saveArticle} />
+							{highlight} {onupload} uploadTypes={config.uploadTypes}
+							uploadMaxSize={config.uploadMaxSize} onsave={saveArticle} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">
@@ -107,7 +114,8 @@
 						<span class="rich-text-demo__name">{texts.notesLabel}</span>
 						<RichTextEditor bind:value={notes.text} bind:state={notes.state} saved={notes.saved}
 							format="markdown" label={texts.notesLabel} bubbleMenu texts={config.editor}
-							onsave={saveNotes} />
+							highlight {onupload} uploadTypes={config.uploadTypes}
+							uploadMaxSize={config.uploadMaxSize} onsave={saveNotes} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">
