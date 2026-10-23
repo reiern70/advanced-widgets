@@ -220,4 +220,4 @@ GitHub Actions builds and tests every pull request and push to `master`, against
 
 ## License
 
-[Apache License 2.0](LICENSE), see also [NOTICE](NOTICE). Created by Ernesto Reinaldo Barreiro.
+[Apache License 2.0](LICENSE), see also [NOTICE](NOTICE).
