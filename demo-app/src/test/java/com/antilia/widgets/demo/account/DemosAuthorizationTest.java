@@ -200,7 +200,7 @@ class DemosAuthorizationTest
 		form.setValue("password", "secret-one");
 		form.setValue("captcha:answer", "nope");
 		form.submit();
-		tester.assertErrorMessages(tester.getLastRenderedPage().getString("captchaWrong"));
+		tester.assertErrorMessages("The letters are not those of the image. Try the new ones.");
 		assertFalse(DemoSession.get().isSignedIn());
 
 		SignInPage page = (SignInPage)tester.getLastRenderedPage();
@@ -243,7 +243,7 @@ class DemosAuthorizationTest
 		SignInPage page = (SignInPage)tester.getLastRenderedPage();
 		String first = page.getChallenge();
 
-		tester.clickLink("form:captcha:another");
+		tester.clickLink("form:captcha:pictured:another");
 
 		tester.assertVisible("form:captcha");
 		assertNotEquals(first, ((SignInPage)tester.getLastRenderedPage()).getChallenge());

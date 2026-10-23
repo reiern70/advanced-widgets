@@ -26,10 +26,5 @@
 	<entry key="noAccount">No account yet?</entry>
 	<entry key="register">Register</entry>
 	<entry key="Required">${label} is required.</entry>
-	<entry key="captchaLead">Too many failed attempts: type the letters of the image too.</entry>
-	<entry key="captcha">The letters of the image</entry>
-	<entry key="captchaImage">Letters to type</entry>
-	<entry key="another">Show other letters</entry>
-	<entry key="captchaWrong">The letters are not those of the image. Try the new ones.</entry>
 	<entry key="notValidated">Please confirm your email first: open the link we sent to {0}. No email? Look in the spam folder; signing in again after a few minutes sends a new one.</entry>
 </properties>

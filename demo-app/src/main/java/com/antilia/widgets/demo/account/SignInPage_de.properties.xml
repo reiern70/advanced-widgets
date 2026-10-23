@@ -26,10 +26,5 @@
 	<entry key="noAccount">Noch kein Konto?</entry>
 	<entry key="register">Registrieren</entry>
 	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
-	<entry key="captchaLead">Zu viele Fehlversuche: Geben Sie auch die Buchstaben des Bildes ein.</entry>
-	<entry key="captcha">Die Buchstaben des Bildes</entry>
-	<entry key="captchaImage">Einzugebende Buchstaben</entry>
-	<entry key="another">Andere Buchstaben zeigen</entry>
-	<entry key="captchaWrong">Die Buchstaben stimmen nicht mit dem Bild überein. Versuchen Sie es mit den neuen.</entry>
 	<entry key="notValidated">Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse: Öffnen Sie den Link, den wir an {0} gesendet haben. Keine E-Mail? Schauen Sie im Spam-Ordner nach; eine erneute Anmeldung nach einigen Minuten sendet einen neuen Link.</entry>
 </properties>
