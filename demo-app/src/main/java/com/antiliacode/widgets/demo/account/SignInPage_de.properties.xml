@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Anmelden</entry>
+	<entry key="lead">Melden Sie sich an, um die Demos der Komponenten auszuprobieren.</entry>
+	<entry key="name">E-Mail oder Konto</entry>
+	<entry key="password">Passwort</entry>
+	<entry key="submit">Anmelden</entry>
+	<entry key="wrong">Das Konto oder das Passwort ist falsch.</entry>
+	<entry key="full">Gerade sind zu viele Benutzer angemeldet: höchstens {0} gleichzeitig. Bitte versuchen Sie es in ein paar Minuten noch einmal.</entry>
+	<entry key="noAccount">Noch kein Konto?</entry>
+	<entry key="register">Registrieren</entry>
+	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
+	<entry key="notValidated">Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse: Öffnen Sie den Link, den wir an {0} gesendet haben. Keine E-Mail? Schauen Sie im Spam-Ordner nach; eine erneute Anmeldung nach einigen Minuten sendet einen neuen Link.</entry>
+</properties>

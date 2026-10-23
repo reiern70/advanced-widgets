@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+<main class="container register">
+	<div class="register__card">
+		<h1><wicket:message key="title"/></h1>
+		<p class="register__lead"><wicket:message key="lead"/></p>
+		<p wicket:id="closed" class="register__closed" role="status"><wicket:message key="closed"/></p>
+		<form wicket:id="form" class="register__form" novalidate="novalidate">
+			<div wicket:id="errors" class="register__errors" role="alert"></div>
+			<label class="register__field"><span><wicket:message key="firstName"/></span> <input type="text" wicket:id="firstName" autocomplete="given-name"/></label>
+			<label class="register__field"><span><wicket:message key="lastName"/></span> <input type="text" wicket:id="lastName" autocomplete="family-name"/></label>
+			<label class="register__field register__field--wide"><span><wicket:message key="email"/></span> <input type="email" wicket:id="email" autocomplete="email"/></label>
+			<label class="register__field"><span><wicket:message key="password"/></span> <input type="password" wicket:id="password" autocomplete="new-password"/></label>
+			<label class="register__field"><span><wicket:message key="repeatedPassword"/></span> <input type="password" wicket:id="repeatedPassword" autocomplete="new-password"/></label>
+			<p class="register__hint register__password-hint"><wicket:message key="passwordHint"/></p>
+			<label class="register__field"><span><wicket:message key="country"/></span> <select wicket:id="country"></select></label>
+			<label class="register__field"><span><wicket:message key="emailLanguage"/></span> <select wicket:id="language"></select></label>
+			<label class="register__field"><span><wicket:message key="jobRole"/></span> <select wicket:id="jobRole"></select></label>
+			<label wicket:id="other" class="register__field"><span><wicket:message key="jobRoleOther"/></span> <input type="text" wicket:id="jobRoleOther" maxlength="100"/></label>
+			<!-- left empty by people: the style sheet hides it, robots fill it in -->
+			<label class="register__honeypot" aria-hidden="true"><wicket:message key="website"/> <input type="text" wicket:id="website" tabindex="-1" autocomplete="off"/></label>
+			<label class="register__field register__field--wide"><span wicket:id="question">[what is 3 + 4?]</span> <input type="number" wicket:id="answer" inputmode="numeric"/></label>
+			<p class="register__actions"><button type="submit" wicket:id="submit" class="register__submit"><wicket:message key="submit"/></button></p>
+		</form>
+	</div>
+</main>
+</wicket:extend>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Upload</entry>
+	<entry key="explanation">&lt;p&gt;Wicket uploads files in two ways, both shown here: in a form, posted the usual way or sent via Ajax, and to a mounted resource with a FileUploadToResourceField, which needs no form. Every case uses the components of ui-components for them.&lt;/p&gt;&lt;p&gt;A FilePickerBehavior draws a file input as a button of the theme, the same in every browser, or as a zone to drop files on. The input stays in the page, hidden, and holds the files: a form and an Ajax behavior get dropped files as if they were chosen in the dialog of the browser. An UploadProgressBar follows each upload in the colors of the theme: what was sent, how fast and how long it still takes. It listens to the progress of the request where the browser gives it, otherwise it asks the server, which knows it once the application calls setUploadProgressUpdatesEnabled(true).&lt;/p&gt;&lt;p&gt;An UploadToResourceField is the FileUploadToResourceField of Wicket telling its uploads to the page. While it uploads, it asks before the page is left and, if chosen, stops the other Ajax requests of the page: those marked with UploadGuard.bypass() go on, such as the button canceling the upload. Click both buttons below the upload while it runs.&lt;/p&gt;&lt;p&gt;The picker knows the limits of the form or of the field: it tells at once which ones the files chosen break, and does not send them. In a picker of several files, the files chosen or dropped later are added to those chosen before, and each one can be taken out of the list. Should an upload fail all the same, the bar tells why: what the server answered, or that the connection broke off.&lt;/p&gt;&lt;p&gt;The settings above the cases, which the gauge in the top bar of every demo opens too, slow the server down for this session: it reads the files at the upload speed chosen, so that the progress can be watched on a fast network, and waits before each Ajax request. They are a ThrottlePanel of ui-components, the gauge a ThrottleButton. The server tells below the cases what it received, and keeps no file.&lt;/p&gt;</entry>
+	<entry key="form">Form</entry>
+	<entry key="resource">Upload to a resource</entry>
+	<entry key="drop">Drag and drop</entry>
+	<entry key="form.hint">A form with a text and files, posted the usual way or via Ajax. As soon as files are chosen, the FilesSelectedBehavior of Wicket tells the server of them, before they are sent. Choose files again to add them.</entry>
+	<entry key="description">Description</entry>
+	<entry key="several">Several files</entry>
+	<entry key="files">Files</entry>
+	<entry key="selection">Chosen: ${count} · ${size}, as the browser told the server before sending anything.</entry>
+	<entry key="selection.tooMuch">Chosen: ${count} · ${size}, as the browser told the server before sending anything. That is more than the form takes: the page does not send it.</entry>
+	<entry key="limits">Up to ${count} files of ${fileMaxSize} each, ${maxSize} in all.</entry>
+	<entry key="form.submit">Post</entry>
+	<entry key="form.ajaxSubmit">Send via Ajax</entry>
+	<entry key="refused">The server refused the files</entry>
+	<entry key="resource.hint">The files go to a mounted resource, without a form, while the page goes on. Wicket's Ajax tells the field once they arrived. Below the buttons, every hook of the field tells when it is called.</entry>
+	<entry key="keepOnPage">Ask before leaving the page while uploading</entry>
+	<entry key="blockRequests">Stop the other Ajax requests while uploading</entry>
+	<entry key="upload">Upload</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="requests.hint">Two Ajax buttons to click while an upload runs: its guard stops the first one and lets the second one go.</entry>
+	<entry key="blocked">Stopped while uploading</entry>
+	<entry key="bypassing">Goes on while uploading</entry>
+	<entry key="clicks">Clicks: ${count}</entry>
+	<entry key="drop.resource">Sent as soon as dropped</entry>
+	<entry key="drop.resource.hint">Drop files on the zone, or click it: they go to a resource at once.</entry>
+	<entry key="drop.form">Dropped into a form</entry>
+	<entry key="drop.form.hint">Drop images on the zone, then send the form via Ajax. Other files stay out.</entry>
+	<entry key="drop.send">Send</entry>
+	<entry key="received">What the server received</entry>
+	<entry key="received.name">File</entry>
+	<entry key="received.size">Size</entry>
+	<entry key="received.type">Type</entry>
+	<entry key="received.way">How</entry>
+	<entry key="received.none">Nothing yet: the files the server receives are listed here.</entry>
+	<entry key="received.count">Files received: ${count}.</entry>
+	<entry key="nothingSent">No file was sent.</entry>
+	<entry key="canceled">The upload was canceled.</entry>
+	<entry key="hooks">Hooks of the field</entry>
+	<entry key="hooks.hint">The hooks of Wicket's FileUploadToResourceField as they are called: in the browser the functions of getClientBeforeSendCallBack(), getClientSideSuccessCallBack(), getClientSideUploadErrorCallBack() and getClientSideCancelCallBack(), then on the server onUploadSuccess(), onUploadFailure() and onUploadCanceled().</entry>
+	<entry key="hook.browser">Browser</entry>
+	<entry key="hook.server">Server</entry>
+	<entry key="hook.beforeSend">the request is about to send the files</entry>
+	<entry key="hook.success">the resource took the files</entry>
+	<entry key="hook.error">the upload failed: {0}</entry>
+	<entry key="hook.cancel">the upload was canceled, before the server heard of it</entry>
+	<entry key="hook.uploadSuccess">{0} files received</entry>
+	<entry key="hook.uploadFailure">the user is told: {0}</entry>
+	<entry key="hook.uploadCanceled">the upload was canceled</entry>
+	<entry key="way.FORM">Form, posted</entry>
+	<entry key="way.AJAX_FORM">Form, via Ajax</entry>
+	<entry key="way.RESOURCE">Resource</entry>
+	<entry key="way.DROPPED">Dropped, to a resource</entry>
+	<entry key="way.DROPPED_IN_FORM">Dropped into a form</entry>
+	<entry key="unit.byte">byte</entry>
+</properties>

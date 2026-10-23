@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="resize">Redimensionable</entry>
+	<entry key="resize.NONE">no</entry>
+	<entry key="resize.STRETCH">ensanchando la tabla</entry>
+	<entry key="resize.help">Si el usuario puede cambiar el ancho de las columnas arrastrando el borde derecho de un encabezado. La tabla tiene entonces un ResizableColumnsBehavior y crece con la columna; las columnas de selección, #, Acciones e ID no se pueden redimensionar.</entry>
+	<entry key="width">Ancho</entry>
+	<entry key="width.content">según las columnas</entry>
+	<entry key="width.parent">todo el ancho</entry>
+	<entry key="width.help">Si la tabla es tan ancha como sus columnas u ocupa todo el ancho de la página, siguiendo el tamaño de la ventana hasta que se redimensiona una columna.</entry>
+	<entry key="proportions">Proporciones</entry>
+	<entry key="proportions.content">según el contenido</entry>
+	<entry key="proportions.set">fijadas por la página</entry>
+	<entry key="proportions.help">Si las columnas se reparten el ancho según su contenido o según las proporciones que fija la página.</entry>
+	<entry key="navigation">Navegación</entry>
+	<entry key="navigation.TOP">arriba</entry>
+	<entry key="navigation.BOTTOM">abajo</entry>
+	<entry key="navigation.BOTH">ambas</entry>
+	<entry key="navigation.help">Dónde se muestran los enlaces de página, las filas por página y las acciones sobre toda la tabla: sobre los encabezados, bajo las filas o en ambos sitios.</entry>
+	<entry key="selectionBar">Posición de la barra de selección masiva</entry>
+	<entry key="selectionBar.help">Dónde se muestra la barra que ofrece seleccionar a todos los usuarios, una vez seleccionadas todas las filas de la página.</entry>
+	<entry key="bodyHeightUnits">Unidad de la altura del cuerpo</entry>
+	<entry key="bodyHeightUnits.PIXELS">píxeles</entry>
+	<entry key="bodyHeightUnits.PERCENT">porcentaje de la altura del contenedor</entry>
+	<entry key="bodyHeightUnits.VIEWPORT_HEIGHT">porcentaje de la altura de la ventana</entry>
+	<entry key="bodyHeightUnits.help">La unidad de la altura del cuerpo. Elegir una fija la altura en 800 píxeles, o en el 100 por ciento de la altura del contenedor o de la ventana. El porcentaje del contenedor da a la tabla un contenedor de 600 píxeles de alto.</entry>
+	<entry key="bodyHeight">Altura del cuerpo (negativa: según las filas)</entry>
+	<entry key="bodyHeight.help">La altura de las filas entre los encabezados y el pie, en la unidad de arriba. Solo se desplazan las filas; una altura negativa deja que el cuerpo tome la altura de sus filas.</entry>
+	<entry key="overlay">Formulario y confirmación</entry>
+	<entry key="overlay.LOCAL">sobre la tabla</entry>
+	<entry key="overlay.BODY">sobre la página</entry>
+	<entry key="overlay.help">Dónde se muestran el formulario de edición y la confirmación del borrado: solo sobre la tabla o sobre toda la página.</entry>
+	<entry key="icons">Iconos</entry>
+	<entry key="icons.BUILT_IN">incorporados</entry>
+	<entry key="icons.SVG">SvgIcon, SVG en línea</entry>
+	<entry key="icons.FONT_AWESOME">FontAwesomeIcon, fuente</entry>
+	<entry key="icons.help">Qué iconos muestran las acciones: los incorporados en ui-components, los iconos de Font Awesome como SVG en línea o los mismos iconos dibujados por la fuente Font Awesome.</entry>
+	<entry key="columnState">Estado de las columnas</entry>
+	<entry key="columnState.session">en la sesión</entry>
+	<entry key="columnState.file">en un archivo</entry>
+	<entry key="columnState.help">Dónde se guardan el orden, la visibilidad y el ancho de las columnas: en la sesión o en un archivo del directorio temporal que sobrevive a los reinicios del servidor.</entry>
+	<entry key="infiniteScroll">Desplazamiento infinito</entry>
+	<entry key="infiniteScroll.off">no, página a página</entry>
+	<entry key="infiniteScroll.on">sí</entry>
+	<entry key="rowsSource">Filas desde</entry>
+	<entry key="rowsSource.PAGE">la página</entry>
+	<entry key="rowsSource.RESOURCE">un recurso montado</entry>
+	<entry key="rowsSource.help">De dónde obtiene el navegador las filas: de un comportamiento Ajax de la tabla en esta página o del recurso montado en /api/users, una petición sin estado que no toca la página, con la página, el orden y el filtro en su URL. Paginar, ordenar y seleccionar pasan por la página en ambos casos.</entry>
+	<entry key="infiniteScroll.help">Si la tabla muestra sus usuarios de página en página o en una sola lista que crece con los 25 usuarios siguientes cada vez que el cuerpo se desplaza hasta el final. Los enlaces de página y las filas por página desaparecen entonces, y el velo bloquea la tabla mientras se cargan los usuarios.</entry>
+	<entry key="selection">Selección</entry>
+	<entry key="selection.help">Cuántos usuarios se pueden seleccionar: ninguno oculta la columna de selección, una mantiene una sola fila seleccionada, varias selecciona cualquier número de filas y ofrece seleccionarlas todas.</entry>
+	<entry key="selection.NONE">ninguna</entry>
+	<entry key="selection.ONE">una fila</entry>
+	<entry key="selection.MANY">varias filas</entry>
+	<entry key="selectionCount">Contador de selección</entry>
+	<entry key="selectionCount.shown">en la navegación</entry>
+	<entry key="selectionCount.hidden">oculto</entry>
+	<entry key="selectionCount.help">Si la navegación indica junto a sus acciones cuántos usuarios hay seleccionados, por ejemplo &quot;2 seleccionados&quot;, con una papelera que los deselecciona todos: una SelectionCountToolbarAction añadida a la tabla, que aquí se activa y desactiva.</entry>
+	<entry key="rowsSource.local">una lista local de JSON</entry>
+	<entry key="clearSelectionOnNavigation">Selección al navegar</entry>
+	<entry key="clearSelectionOnNavigation.off">se conserva</entry>
+	<entry key="clearSelectionOnNavigation.on">se borra</entry>
+	<entry key="clearSelectionOnNavigation.help">Si ir a otra página o elegir otro número de filas por página deselecciona todos los usuarios (setClearSelectionOnNavigation de la tabla), o la selección se conserva al paginar. Ordenar deselecciona a todos de todos modos.</entry>
+</properties>

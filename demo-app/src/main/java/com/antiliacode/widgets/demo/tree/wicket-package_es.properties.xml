@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="treeOfLife">Árbol de la vida</entry>
+	<entry key="section.wicket">Componentes Wicket</entry>
+	<entry key="section.json">Generado a partir de JSON</entry>
+	<entry key="selected">Selección</entry>
+	<entry key="noneSelected">Seleccione un grupo o una especie en un árbol para ver aquí su ficha.</entry>
+	<entry key="lineage">Linaje</entry>
+	<entry key="name">Nombre</entry>
+	<entry key="scientific">Nombre científico</entry>
+	<entry key="rank">Rango</entry>
+	<entry key="period">Periodo</entry>
+	<entry key="lived">Vivió</entry>
+	<entry key="rank.kingdom">Reino</entry>
+	<entry key="rank.phylum">Filo</entry>
+	<entry key="rank.subphylum">Subfilo</entry>
+	<entry key="rank.division">División</entry>
+	<entry key="rank.class">Clase</entry>
+	<entry key="rank.order">Orden</entry>
+	<entry key="rank.clade">Clado</entry>
+	<entry key="rank.group">Grupo</entry>
+	<entry key="rank.genus">Género</entry>
+	<entry key="rank.species">Especie</entry>
+	<entry key="period.tonian">Tónico</entry>
+	<entry key="period.cryogenian">Criogénico</entry>
+	<entry key="period.ediacaran">Ediacárico</entry>
+	<entry key="period.cambrian">Cámbrico</entry>
+	<entry key="period.ordovician">Ordovícico</entry>
+	<entry key="period.silurian">Silúrico</entry>
+	<entry key="period.devonian">Devónico</entry>
+	<entry key="period.carboniferous">Carbonífero</entry>
+	<entry key="period.permian">Pérmico</entry>
+	<entry key="period.triassic">Triásico</entry>
+	<entry key="period.jurassic">Jurásico</entry>
+	<entry key="period.cretaceous">Cretácico</entry>
+	<entry key="period.paleogene">Paleógeno</entry>
+	<entry key="period.neogene">Neógeno</entry>
+	<entry key="period.quaternary">Cuaternario</entry>
+	<entry key="period.today">hoy</entry>
+	<entry key="lived.range">{0}–{1} Ma</entry>
+	<entry key="lived.today">{0} Ma – hoy</entry>
+	<entry key="lived.years">{0} Ma – hace {1} años</entry>
+	<entry key="lived.living">vive hoy</entry>
+	<entry key="lived.until">hasta hace {0} años</entry>
+</properties>

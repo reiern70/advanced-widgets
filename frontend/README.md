@@ -11,7 +11,7 @@ The browser side of the components, written once and offered to three frameworks
 
 Wicket uses the core too: `core/scripts/build-wicket.mjs` builds each component into an IIFE
 script under the name and package the Java classes load it from (`Wicket.Dropdown` in
-`com/antilia/widgets/dropdown/antilia-dropdown.js`, ...), with the Wicket host set. The Java
+`com/antiliacode/widgets/dropdown/antilia-dropdown.js`, ...), with the Wicket host set. The Java
 side and the pages don't change.
 
 Every script of `ui-components` has moved here: the dynamic data tables (`data-table.ts`, built

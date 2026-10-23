@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The texts the modal dialog example shares: the page, the form of a member and the team resource.
+-->
+<properties>
+	<entry key="team">Team</entry>
+	<entry key="addMember">Add member</entry>
+	<entry key="newMember">New member</entry>
+	<entry key="editMember">Edit ${name}</entry>
+	<entry key="edit">Edit</entry>
+	<entry key="delete">Delete</entry>
+	<entry key="deleteMember">Delete member</entry>
+	<entry key="delete.confirm">Delete ${name} from the team?</entry>
+	<entry key="save">Save</entry>
+	<entry key="cancel">Cancel</entry>
+	<entry key="close">Close</entry>
+	<entry key="discard">Discard the changes?</entry>
+	<entry key="name">Name</entry>
+	<entry key="email">Email</entry>
+	<entry key="role">Role</entry>
+	<entry key="actions">Actions</entry>
+	<entry key="added">Added {0}.</entry>
+	<entry key="saved">Saved {0}.</entry>
+	<entry key="deleted">Deleted {0}.</entry>
+	<entry key="gone">That member no longer exists.</entry>
+	<entry key="empty">The team has no members.</entry>
+	<entry key="role.developer">Development</entry>
+	<entry key="role.designer">Design</entry>
+	<entry key="role.tester">Testing</entry>
+	<entry key="role.manager">Management</entry>
+	<entry key="options">Options of a dialog</entry>
+	<entry key="options.behavior">What closes and moves it</entry>
+	<entry key="option.closeOnEscape">Escape closes it</entry>
+	<entry key="option.closeButton">An × in the corner closes it</entry>
+	<entry key="option.closeOnClick">A click around it closes it</entry>
+	<entry key="option.draggable">Its title drags it</entry>
+	<entry key="option.foldable">A double click on its title folds it</entry>
+	<entry key="size">Size</entry>
+	<entry key="size.fit">Fits its content</entry>
+	<entry key="size.small">Small</entry>
+	<entry key="size.medium">Medium</entry>
+	<entry key="size.large">Large</entry>
+	<entry key="width">Width of its own</entry>
+	<entry key="width.PatternValidator">${label} takes a number and a CSS unit, such as 40em or 600px.</entry>
+	<entry key="open">Open a dialog</entry>
+	<entry key="dialog.title">Dialog {0}</entry>
+	<entry key="dialog.text">This dialog has the options chosen above. Open another one nested in it: it opens over this one and takes Escape and the focus until it closes. Without Escape and the ×, Close in the footer still closes it.</entry>
+	<entry key="dialog.deepest">Three dialogs deep, as deep as this demo goes. Close them one by one.</entry>
+	<entry key="dialog.nested">Open a nested dialog</entry>
+	<entry key="dialog.ok">OK</entry>
+</properties>

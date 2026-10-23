@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Autocomplete</entry>
+	<entry key="explanation">&lt;p&gt;Autocomplete and MultiAutocomplete from ui-components suggest values as you type. The suggestions come from the server via Ajax as JSON, and each row is rendered in the browser from a template, the same way the cells of the JSON table are: the users show their name with their city and country below, the countries their flag and name. {{@label}} is the label of a value.&lt;/p&gt;&lt;p&gt;The chosen values are chips in the theme's colors with an x removing them, like those of the multiple drop-down; Backspace in the empty field removes the last one. One value: the chip stands in for the field until it is removed. The hidden input holds the ids of the chosen values, so a form posts them as always and an Ajax behavior on its change event is notified; the text below the form follows every choice.&lt;/p&gt;&lt;p&gt;FindAutocomplete is a find bar: what you pick is not kept as a chip but handed to the page, and the field is empty again for the next one. Here the countries you find are added to the list below it, each with an x removing it, and the bar no longer suggests those already listed. The Address Book example filters its contacts the same way.&lt;/p&gt;&lt;p&gt;Disabled, an autocomplete shows its values greyed out, without the x of the chips, and cannot be typed in; a form sending it leaves its values as they were.&lt;/p&gt;&lt;p&gt;The rows of the users end with actions, defined by the page as templates: the (i) shows a tooltip with their address, phones and birthday, itself a template rendered from the JSON of the row as the cells of the JSON table are, and the phone is reported to the page via Ajax, which says whom it calls below the form. Up and Down move from row to row, F1 toggles the tooltip of the active row, Enter chooses it and Escape closes the tooltip, then the list. The values are escaped by {{ }}, so a name holding markup shows as text.&lt;/p&gt;</entry>
+	<entry key="single">One value</entry>
+	<entry key="multiple">Many values</entry>
+	<entry key="owner">Owner (required)</entry>
+	<entry key="owner.placeholder">Type a first or last name</entry>
+	<entry key="team">Team</entry>
+	<entry key="team.placeholder">Add users by name</entry>
+	<entry key="countries">Countries</entry>
+	<entry key="countries.placeholder">Type a country, or press the down arrow</entry>
+	<entry key="send">Send</entry>
+	<entry key="nothing">nobody</entry>
+	<entry key="choices">Owner: {0}; team: {1}; countries: {2}.</entry>
+	<entry key="sent">Sent: {0}</entry>
+	<entry key="find">Find and add</entry>
+	<entry key="visits">Countries to visit</entry>
+	<entry key="visits.placeholder">Find a country to add it to the list</entry>
+	<entry key="visits.none">No countries yet: those you find are listed here.</entry>
+	<entry key="disabledTitle">Disabled</entry>
+	<entry key="reviewer">Reviewer</entry>
+	<entry key="markets">Markets</entry>
+	<entry key="info">About {0}</entry>
+	<entry key="call">Call {0}</entry>
+	<entry key="calling">Calling {0} at {1}…</entry>
+</properties>

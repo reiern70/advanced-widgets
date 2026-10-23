@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="phones">Teléfonos</entry>
+	<entry key="id">ID</entry>
+	<entry key="firstName">Nombre</entry>
+	<entry key="lastName">Apellido</entry>
+	<entry key="actions">Acciones</entry>
+	<entry key="download">Descargar como jCard</entry>
+	<entry key="progress">Progreso</entry>
+	<entry key="bornDate">Nacimiento</entry>
+	<entry key="filter">Filtro</entry>
+	<entry key="filter.placeholder">nombre o apellido</entry>
+	<entry key="edit">Editar</entry>
+	<entry key="delete">Borrar</entry>
+	<entry key="delete.confirm">¿Borrar a ${firstName} ${lastName}?</entry>
+	<entry key="address">Dirección</entry>
+	<entry key="editUser">Editar a ${firstName} ${lastName}</entry>
+	<entry key="newUser">Usuario nuevo</entry>
+	<entry key="slowAction">Una acción lenta, que tarda dos segundos</entry>
+	<entry key="slowAction.done">La acción lenta ha terminado.</entry>
+	<entry key="homePhone">Teléfono fijo</entry>
+	<entry key="cellPhone">Móvil</entry>
+	<entry key="city">Ciudad</entry>
+	<entry key="country">País</entry>
+	<entry key="phones.home">Fijo:</entry>
+	<entry key="phones.cell">Móvil:</entry>
+	<entry key="userGone">Ese usuario ya no existe.</entry>
+	<entry key="deleted">{0} {1} borrado.</entry>
+	<entry key="added">{0} {1} añadido.</entry>
+	<entry key="saved">{0} {1} guardado.</entry>
+	<entry key="failed">El recurso de usuarios falló: {0}</entry>
+</properties>

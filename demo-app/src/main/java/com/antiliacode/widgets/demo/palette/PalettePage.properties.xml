@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Palette</entry>
+	<entry key="explanation">&lt;p&gt;Palette from ui-components chooses several values out of many: the available ones on the left, the chosen ones on the right and arrows between them moving the highlighted ones, or all of them, from one side to the other. Click to highlight a choice, Ctrl or Shift with the click for several; a double click, Enter or dragging a choice to the other list moves it too. The available ones get a filter from eight choices on. Everything happens in the browser: the native select stays in the page, hidden, and holds the choice, so a form posts it as always and an Ajax behavior on its change event is notified as with a native select.&lt;/p&gt;&lt;p&gt;When the order matters, the chosen ones keep the order they were chosen in and are moved up and down with the buttons next to them, with Alt and the arrow keys or by dragging them to their place; the form posts them in that order and the model keeps it. Untick the check box and the columns show in the order of the choices again. Untick the check box of the skills and they have no filter: it filters in the browser, over the choices the page rendered, without asking the server. The columns' palette has titles of its own, and the other check box numbers its rows or not. The text below the form follows every change via Ajax.&lt;/p&gt;&lt;p&gt;The countries are many choices, some 250: each list draws the first 30 rows and 30 more each time it is scrolled to its end, so a palette with thousands of choices opens as fast as one with ten. setPageSize changes how many, 0 draws them all. The filter searches all countries, drawn or not, and draws its matches from the first one; the arrow keys, Shift, Ctrl+A and “add all” also reach the rows not drawn yet.&lt;/p&gt;&lt;p&gt;The filter matches anywhere in the names unless setMatcher says otherwise: from their start, anywhere, at their end or at the start of their words, with PaletteMatcher, or by a matcher of one’s own, an IPaletteMatcher whose script registers it among Wicket.Palette.matchers. The part of a name it matched is underlined.&lt;/p&gt;</entry>
+	<entry key="unordered">Any order</entry>
+	<entry key="orderedTitle">The order matters</entry>
+	<entry key="matchTitle">How the filter matches</entry>
+	<entry key="matchHint">Type “gu” or “land” into the first three filters and “s ge” or “new” into the last: the parts of a name it matched are underlined. setMatcher takes one of PaletteMatcher, or an IPaletteMatcher of one’s own.</entry>
+	<entry key="matchStart">Starts with</entry>
+	<entry key="matchAnywhere">Anywhere</entry>
+	<entry key="matchWords">Starts of words</entry>
+	<entry key="matchEnd">Ends with</entry>
+	<entry key="disabledTitle">Disabled</entry>
+	<entry key="manyTitle">Many choices</entry>
+	<entry key="countries">Countries</entry>
+	<entry key="countriesChosen">{0} chosen: {1}.</entry>
+	<entry key="skills">Skills</entry>
+	<entry key="columns">Columns of the report</entry>
+	<entry key="ordered">Order matters</entry>
+	<entry key="filterable">Show a filter</entry>
+	<entry key="numbered">Number the rows</entry>
+	<entry key="columnsAvailable">Columns left out</entry>
+	<entry key="columnsSelected">In the report</entry>
+	<entry key="send">Send</entry>
+	<entry key="nothing">nothing</entry>
+	<entry key="choices">Skills: {0}; columns: {1}.</entry>
+	<entry key="sent">Sent: {0}</entry>
+	<entry key="skill.java">Java</entry>
+	<entry key="skill.wicket">Apache Wicket</entry>
+	<entry key="skill.javascript">JavaScript</entry>
+	<entry key="skill.css">CSS</entry>
+	<entry key="skill.sql">SQL</entry>
+	<entry key="skill.react">React</entry>
+	<entry key="skill.svelte">Svelte</entry>
+	<entry key="skill.docker">Docker</entry>
+	<entry key="column.name">Name</entry>
+	<entry key="column.email">Email</entry>
+	<entry key="column.phone">Phone</entry>
+	<entry key="column.city">City</entry>
+	<entry key="column.country">Country</entry>
+	<entry key="column.born">Born</entry>
+	<entry key="column.company">Company</entry>
+</properties>

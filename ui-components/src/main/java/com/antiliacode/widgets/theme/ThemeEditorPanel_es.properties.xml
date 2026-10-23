@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="className">Nombre de la clase</entry>
+	<entry key="css">Su tema:</entry>
+	<entry key="copy">Copiar al portapapeles</entry>
+	<entry key="property.primary">encabezados, la barra de una barra de progreso</entry>
+	<entry key="property.primary-dark">bordes y degradados junto al color principal</entry>
+	<entry key="property.on-primary">texto sobre el color principal</entry>
+	<entry key="property.accent">enlaces, foco e indicadores de arrastre</entry>
+	<entry key="property.text">texto</entry>
+	<entry key="property.surface">fondo del contenido, como las filas</entry>
+	<entry key="property.surface-alt">fondo alterno, como una fila de cada dos</entry>
+	<entry key="property.hover">fondo del contenido bajo el puntero</entry>
+	<entry key="property.selected">fondo del contenido seleccionado</entry>
+	<entry key="property.highlight">fondo de los avisos</entry>
+	<entry key="property.toolbar">fondo de las barras de herramientas</entry>
+	<entry key="property.border">bordes</entry>
+	<entry key="property.progress">la parte llena de una barra de progreso</entry>
+	<entry key="property.progress-dark">el final del degradado de la parte llena</entry>
+	<entry key="property.track">la parte vacía de una barra de progreso</entry>
+	<entry key="property.veil">el oscurecimiento sobre el contenido bloqueado por un velo o un diálogo</entry>
+	<entry key="property.color-scheme">el esquema de color de los controles de formulario</entry>
+	<entry key="property.success">el color de lo que salió bien, como una notificación de éxito</entry>
+	<entry key="property.error">el color de lo que salió mal, como una notificación de error</entry>
+	<entry key="property.warning">el color de lo que pide atención, como una advertencia</entry>
+	<entry key="property.info">el color de la información, como una notificación de información</entry>
+</properties>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Ejemplo de TreeGrid y JsonBasedTreeGrid</entry>
+	<entry key="explanation">Esta es una demo de las dos cuadrículas en árbol de ui-components, que muestran un árbol de la vida, hongos, animales y plantas, con los nombres científicos, los rangos, los periodos y las fechas de sus grupos y especies, con el camino de los animales a los dinosaurios desplegado.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;La primera píldora, TreeGrid: una cuadrícula en árbol de componentes Wicket, un TableTree de wicket-extensions cuya columna del árbol muestra los nodos de Tree, con los iconos de ui-components. Las demás columnas son columnas corrientes de una DataTable; desplegar un grupo vuelve a dibujar la tabla mediante Ajax&lt;/li&gt; &lt;li&gt;La segunda píldora, JsonBasedTreeGrid: un JsonBasedTree mostrado como treegrid WAI-ARIA, un único componente cuyas filas se generan en el navegador a partir de JSON. La columna del árbol muestra la plantilla del nodo, cada una de las demás una plantilla propia a partir del mismo JSON; los hijos de un grupo siguen a su fila y se cargan la primera vez que se despliega&lt;/li&gt; &lt;li&gt;El desplegable de arriba elige si el usuario puede cambiar el ancho de las columnas de ambas arrastrando el borde derecho de un encabezado, y cómo: conservando el ancho de la tabla, una columna tomando su ancho de la vecina (setResizableColumns(Mode.FIT)), o ensanchando la tabla a medida que crece la columna (Mode.STRETCH)&lt;/li&gt; &lt;li&gt;Se seleccionan tanto los grupos como las especies (setSelectBranches(true)): haga clic en la fila de un grupo, por ejemplo los dinosaurios, y su ficha se muestra a la derecha, dibujada de nuevo mediante Ajax por onSelect, con su fila marcada como seleccionada y el grupo desplegado si no lo estaba. Haga clic en una especie, por ejemplo Tyrannosaurus rex, y a la derecha aparecen su linaje, la ficha de su grupo y, debajo, la ficha de la especie. La flecha de un grupo sigue solo desplegándolo o plegándolo&lt;/li&gt; &lt;li&gt;En JsonBasedTreeGrid, Tab lleva a las filas; las flechas arriba y abajo pasan de una a otra, la derecha y la izquierda despliegan y pliegan un grupo o pasan a su primer hijo y a su padre, Inicio y Fin van a la primera y a la última fila, e Intro o Espacio seleccionan un grupo o una especie&lt;/li&gt; &lt;li&gt;Los encabezados, los nombres, los rangos, los periodos y las fechas se escriben en el idioma de la sesión&lt;/li&gt; &lt;li&gt;"Iconos" sobre los árboles elige sus iconos: los suyos, los iconos de Font Awesome como SVG en línea (SvgIcon) o los mismos dibujados por la fuente Font Awesome (FontAwesomeIcon), dados a los árboles con setIcon(TreeIcon, IIcon). Las flechas de los grupos giran sea cual sea su icono; las pestañas React y Svelte los eligen igual, con los iconos de sus árboles&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Las pestañas React y Svelte muestran el mismo árbol en la TreeGrid de @antilia/react y @antilia/svelte, con las mismas columnas y la propiedad selectBranches, cargado del recurso montado /api/tree-of-life; las fichas de lo seleccionado las muestra la propia aplicación. Ma significa millones de años atrás.&lt;/p&gt;</entry>
+	<entry key="case.treeGrid">TreeGrid · Componentes Wicket</entry>
+	<entry key="case.jsonTreeGrid">JsonBasedTreeGrid · Generado a partir de JSON</entry>
+	<entry key="resize">Columnas redimensionables</entry>
+	<entry key="resize.none">no</entry>
+	<entry key="resize.fit">conservando el ancho de la tabla</entry>
+	<entry key="resize.stretch">ensanchando la tabla</entry>
+</properties>

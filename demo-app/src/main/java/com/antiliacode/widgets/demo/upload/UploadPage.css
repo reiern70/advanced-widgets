@@ -1,0 +1,211 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* the columns of the grids may be narrower than their content, such as the row of pills */
+.upload-demo,
+.upload-demo__case,
+.upload-demo__form,
+.upload-demo__field {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.upload-demo {
+	display: grid;
+	gap: 1.25rem;
+}
+
+.upload-demo__hint {
+	margin: 0;
+	color: var(--muted, inherit);
+	font-size: 0.875rem;
+}
+
+.upload-demo__case {
+	display: grid;
+	align-content: start;
+	gap: 0.85rem;
+	max-width: 44rem;
+}
+
+.upload-demo__case > h3 {
+	margin: 0;
+	font-size: 1.05rem;
+}
+
+.upload-demo__form {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.upload-demo__field {
+	display: grid;
+	gap: 0.4rem;
+}
+
+.upload-demo__field > label {
+	font-weight: 600;
+}
+
+.upload-demo__text {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 28rem;
+	padding: 0.45em 0.65em;
+	border: 1px solid var(--antilia-theme-border, #c4c9d4);
+	border-radius: var(--antilia-look-radius-sm, 0.375rem);
+	background: var(--antilia-theme-surface, #ffffff);
+	color: var(--antilia-theme-text, inherit);
+	font: inherit;
+}
+
+/* what the browser told the server of the files chosen */
+.upload-demo__selection {
+	margin: 0;
+	padding: 0.4em 0.65em;
+	border-left: 3px solid var(--antilia-theme-info, #2563eb);
+	background: var(--antilia-theme-surface-alt, transparent);
+	font-size: 0.875rem;
+}
+
+/* the hooks of the field, as they are called: in the browser, then on the server */
+.upload-demo__hooks {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.upload-demo__hooks h4 {
+	margin: 0;
+	font-size: 0.95rem;
+}
+
+.upload-demo__hook-log {
+	display: grid;
+	gap: 0.25rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.85rem;
+}
+
+.upload-demo__hook-log:empty {
+	display: none;
+}
+
+.upload-demo__hook {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.25rem 0.5rem;
+	padding: 0.3em 0.65em;
+	border-left: 3px solid var(--antilia-theme-info, #2563eb);
+	background: var(--antilia-theme-surface-alt, transparent);
+}
+
+.upload-demo__hook--server {
+	border-left-color: var(--antilia-theme-success, #15803d);
+}
+
+.upload-demo__hook-time {
+	font-variant-numeric: tabular-nums;
+	opacity: 0.75;
+}
+
+.upload-demo__hook-side {
+	font-weight: 600;
+}
+
+.upload-demo__hook code {
+	overflow-wrap: anywhere;
+}
+
+.upload-demo__checks {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.upload-demo__check {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+/* the Ajax buttons the guard of an upload stops or lets go */
+.upload-demo__requests {
+	display: grid;
+	gap: 0.5rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid var(--antilia-theme-border, #c4c9d4);
+}
+
+.upload-demo__request {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+}
+
+.upload-demo__request > span {
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+}
+
+/* the two zones of the drop case side by side, one above the other on narrow screens */
+.upload-demo__columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+	gap: 1.5rem;
+}
+
+/* what the server received */
+.upload-demo__received {
+	display: grid;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.upload-demo__received > h3 {
+	margin: 0;
+	font-size: 1.05rem;
+}
+
+.upload-demo__table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.upload-demo__table :is(th, td) {
+	padding: 0.4rem 1rem 0.4rem 0;
+	border-bottom: 1px solid var(--antilia-theme-border, #c4c9d4);
+	text-align: left;
+	vertical-align: top;
+}
+
+.upload-demo__table td:first-child {
+	overflow-wrap: anywhere;
+}
+
+.upload-demo__table th {
+	font-size: 0.8rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.upload-demo__table .upload-demo__number {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}

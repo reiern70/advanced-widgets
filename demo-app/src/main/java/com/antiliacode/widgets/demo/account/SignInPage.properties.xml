@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Sign in</entry>
+	<entry key="lead">Sign in to try the demos of the components.</entry>
+	<entry key="name">Email or account</entry>
+	<entry key="password">Password</entry>
+	<entry key="submit">Sign in</entry>
+	<entry key="wrong">The account or the password is wrong.</entry>
+	<entry key="full">Too many users are signed in right now: at most {0} at once. Please try again in a few minutes.</entry>
+	<entry key="noAccount">No account yet?</entry>
+	<entry key="register">Register</entry>
+	<entry key="Required">${label} is required.</entry>
+	<entry key="notValidated">Please confirm your email first: open the link we sent to {0}. No email? Look in the spam folder; signing in again after a few minutes sends a new one.</entry>
+</properties>

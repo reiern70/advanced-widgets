@@ -1,0 +1,107 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.code-editor-demo {
+	display: grid;
+	/* a column as wide as the page, however wide the pills of the cases or a line of code */
+	grid-template-columns: minmax(0, 1fr);
+	gap: 16px;
+}
+
+.code-editor-demo section {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.code-editor-demo__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.code-editor-demo__control {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	font-size: 14px;
+}
+
+.code-editor-demo__control .antilia-dropdown {
+	min-width: 11em;
+}
+
+.code-editor-demo__editor,
+.code-editor-demo__file,
+.code-editor-demo__notes {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+}
+
+.code-editor-demo__name {
+	font: 600 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	color: var(--muted);
+}
+
+.code-editor-demo .antilia-code-editor {
+	--antilia-code-editor-height: 22em;
+}
+
+.code-editor-demo__files .antilia-code-editor {
+	--antilia-code-editor-height: 18em;
+}
+
+/* the notes beside their preview: the split panel fills its box, whose height the user gives */
+.code-editor-demo__split {
+	height: 24em;
+	padding-bottom: 10px;
+	box-sizing: border-box;
+}
+
+.code-editor-demo__split > .antilia-split {
+	height: 100%;
+}
+
+/* the editor and the preview fill their panes, the split panel drawing the border around them */
+.code-editor-demo__split .antilia-split-pane > :is(.antilia-code-editor,
+	.antilia-markdown-preview) {
+	height: 100%;
+}
+
+.code-editor-demo__split .antilia-split-pane > .antilia-code-editor {
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.code-editor-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	align-items: center;
+}
+
+.code-editor-demo__heard,
+.code-editor-demo__status {
+	color: var(--muted);
+	font-size: 14px;
+}
+
+.code-editor-demo__status {
+	margin: 12px 0 0;
+	line-height: 1.5;
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Descargas</entry>
+	<entry key="explanation">&lt;p&gt;Descargas de todo tipo, todas desde los botones del tema, con el aspecto elegido en la barra superior. Los archivos son un informe de los países del mundo en el idioma de la página, que el servidor hace cuando se lo piden, en siete formatos: texto, CSV, JSON, un gráfico en SVG y en PNG, un PDF y un archivo ZIP con todos ellos.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Por Ajax&lt;/b&gt;: un AjaxDownloadButton de ui-components descarga con el AjaxDownloadBehavior de Wicket: la página queda como está y se entera de cómo terminó la descarga, lo que cuenta una notificación. Cada botón usa otra Location del behavior: en el navegador, como blob, a través de un iframe oculto, en una pestaña nueva o en la misma ventana. Mientras llega el archivo el botón está ocupado: un spinner ocupa el lugar de su icono e ignora los clics. Elija el archivo y cómo responde el servidor: enseguida, despacio, para ver los botones ocupados, o con un error, para ver qué lugares lo notan.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Enlaces&lt;/b&gt;: enlaces que el navegador sigue sin Ajax, dibujados como botones por un ButtonBehavior: el DownloadLink de Wicket de un archivo que el servidor escribe y borra una vez descargado, un ResourceLink a un recurso de la página, un recurso montado en una URL propia, que se puede compartir, el mismo recurso mostrando un PDF en una pestaña nueva, y un archivo de la aplicación web con el atributo download.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Tras un formulario&lt;/b&gt;: los botones de un formulario lo envían por Ajax y, cuando es válido, descargan el informe que describe o lo abren en una pestaña nueva, cada uno con un ButtonDownloadBehavior, que pone ocupado a cualquier botón mientras dura su descarga. Los errores del formulario son notificaciones.&lt;/p&gt;</entry>
+	<entry key="ajax">Por Ajax</entry>
+	<entry key="links">Enlaces</entry>
+	<entry key="form">Tras un formulario</entry>
+	<entry key="ajax.hint">Cada botón descarga el archivo elegido de otra manera, la página queda como está; una notificación cuenta cómo terminó la descarga.</entry>
+	<entry key="links.hint">Enlaces que el navegador sigue sin Ajax, dibujados como botones.</entry>
+	<entry key="form.hint">Los botones envían el formulario y, cuando es válido, descargan el informe que describe o lo abren en una pestaña nueva.</entry>
+	<entry key="file">Archivo</entry>
+	<entry key="answer">El servidor</entry>
+	<entry key="DemoFile.TEXT">Texto (.txt)</entry>
+	<entry key="DemoFile.CSV">CSV (.csv)</entry>
+	<entry key="DemoFile.JSON">JSON (.json)</entry>
+	<entry key="DemoFile.SVG">Gráfico en SVG (.svg)</entry>
+	<entry key="DemoFile.PNG">Gráfico en PNG (.png)</entry>
+	<entry key="DemoFile.PDF">PDF (.pdf)</entry>
+	<entry key="DemoFile.ZIP">ZIP con todos (.zip)</entry>
+	<entry key="Answer.AT_ONCE">responde enseguida</entry>
+	<entry key="Answer.SLOWLY">tarda tres segundos</entry>
+	<entry key="Answer.FAILS">falla</entry>
+	<entry key="location.blob">En el navegador</entry>
+	<entry key="location.blob.help">El navegador pide el archivo con una petición propia a un blob y luego lo guarda. La mejor opción para los navegadores de hoy: sabe si llegó el archivo o falló el servidor.</entry>
+	<entry key="location.iframe">A través de un iframe oculto</entry>
+	<entry key="location.iframe.help">Un iframe oculto pide el archivo, que el navegador guarda. La página nunca se descarga, así que sus WebSockets siguen abiertos; sabe si llegó el archivo o si apareció un error en el marco.</entry>
+	<entry key="location.newwindow">En una pestaña nueva</entry>
+	<entry key="location.newwindow.help">Una pestaña nueva abre el archivo, que el servidor envía inline para que el navegador lo muestre: un PDF, una imagen, un texto; un ZIP se guarda. Un fallo vuelve a cerrar la pestaña.</entry>
+	<entry key="location.samewindow">En la misma ventana</entry>
+	<entry key="location.samewindow.help">La propia ventana va al archivo, que el servidor envía como adjunto, así que el navegador lo guarda y la página se queda; pero la página recibe unload, lo que cierra sus WebSockets. Sabe cuándo llegó el archivo, nunca un fallo.</entry>
+	<entry key="location.samewindow.blocked">El botón espera mientras el servidor falla: el error ocuparía el lugar de la página.</entry>
+	<entry key="fileLink">countries.txt</entry>
+	<entry key="fileLink.help">El DownloadLink de Wicket: al pulsar el enlace, el servidor escribe el archivo en su carpeta temporal, lo envía y lo borra.</entry>
+	<entry key="resourceLink">countries.csv</entry>
+	<entry key="resourceLink.help">Un ResourceLink a un recurso de la página, que hace el archivo cuando el navegador lo pide.</entry>
+	<entry key="mountedLink">countries.json</entry>
+	<entry key="mountedLink.help">Un recurso que la aplicación monta en una URL propia, que se puede guardar en marcadores y compartir:</entry>
+	<entry key="openLink">countries.pdf en una pestaña nueva</entry>
+	<entry key="openLink.help">El mismo recurso envía el PDF inline cuando se lo piden, y el enlace lo abre en una pestaña nueva, que lo muestra.</entry>
+	<entry key="staticLink">downloads.png</entry>
+	<entry key="staticLink.help">Un archivo de la aplicación web, la imagen de esta demo, que el atributo download del enlace guarda en lugar de mostrarla.</entry>
+	<entry key="report.title">Título</entry>
+	<entry key="report.format">Formato</entry>
+	<entry key="report.rows">Países</entry>
+	<entry key="report.download">Descargar</entry>
+	<entry key="report.open">Abrir en una pestaña nueva</entry>
+	<entry key="downloaded.title">Descargado</entry>
+	<entry key="downloaded">${file}: ${where}.</entry>
+	<entry key="failed.title">Descarga fallida</entry>
+	<entry key="failed">El servidor no pudo enviar ${file}: ${where}.</entry>
+</properties>

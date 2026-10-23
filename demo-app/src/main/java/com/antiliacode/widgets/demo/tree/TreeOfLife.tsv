@@ -1,0 +1,100 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# The tree of life of the tree examples, a group before what it holds, separated by tabs: the path
+# of ids from the root, the scientific name ("-" for an informal group), the rank, and when it
+# lived, in millions of years ago: from ("-" when not told) and until (0 for still living). The
+# names and the descriptions are in the bundle TreeOfLife, by the ids.
+fungi	Fungi	kingdom	1000	0
+fungi/basidiomycetes	Basidiomycota	phylum	400	0
+fungi/basidiomycetes/fly-agaric	Amanita muscaria	species	-	0
+fungi/basidiomycetes/porcini	Boletus edulis	species	-	0
+fungi/basidiomycetes/honey-fungus	Armillaria ostoyae	species	-	0
+fungi/ascomycetes	Ascomycota	phylum	400	0
+fungi/ascomycetes/yeast	Saccharomyces cerevisiae	species	-	0
+fungi/ascomycetes/penicillium	Penicillium rubens	species	-	0
+fungi/ascomycetes/truffle	Tuber melanosporum	species	-	0
+fungi/prototaxites	Prototaxites	genus	420	370
+animals	Animalia	kingdom	600	0
+animals/ediacaran	-	group	575	539
+animals/ediacaran/charnia	Charnia masoni	species	575	557
+animals/ediacaran/dickinsonia	Dickinsonia costata	species	560	550
+animals/cambrian	-	group	539	485.4
+animals/cambrian/anomalocaris	Anomalocaris canadensis	species	508	505
+animals/cambrian/opabinia	Opabinia regalis	species	508	505
+animals/cambrian/hallucigenia	Hallucigenia sparsa	species	508	505
+animals/arthropods	Arthropoda	phylum	540	0
+animals/arthropods/paradoxides	Paradoxides	genus	510	500
+animals/arthropods/meganeura	Meganeura monyi	species	305	299
+animals/arthropods/honey-bee	Apis mellifera	species	-	0
+animals/vertebrates	Vertebrata	subphylum	530	0
+animals/vertebrates/fish	-	group	530	0
+animals/vertebrates/fish/dunkleosteus	Dunkleosteus terrelli	species	382	358
+animals/vertebrates/fish/megalodon	Otodus megalodon	species	23	3.6
+animals/vertebrates/fish/coelacanth	Latimeria chalumnae	species	-	0
+animals/vertebrates/amphibians	Amphibia	class	370	0
+animals/vertebrates/amphibians/eryops	Eryops megacephalus	species	303	295
+animals/vertebrates/amphibians/axolotl	Ambystoma mexicanum	species	-	0
+animals/vertebrates/synapsids	Synapsida	clade	320	0
+animals/vertebrates/synapsids/dimetrodon	Dimetrodon	genus	295	272
+animals/vertebrates/synapsids/lystrosaurus	Lystrosaurus	genus	259	247
+animals/vertebrates/synapsids/early-mammals	-	group	225	66
+animals/vertebrates/synapsids/early-mammals/morganucodon	Morganucodon	genus	205	190
+animals/vertebrates/synapsids/early-mammals/repenomamus	Repenomamus	genus	125	123
+animals/vertebrates/synapsids/mammals	Mammalia	class	180	0
+animals/vertebrates/synapsids/mammals/platypus	Ornithorhynchus anatinus	species	-	0
+animals/vertebrates/synapsids/mammals/smilodon	Smilodon fatalis	species	1.6	0.01
+animals/vertebrates/synapsids/mammals/mammoth	Mammuthus primigenius	species	0.8	0.004
+animals/vertebrates/synapsids/mammals/blue-whale	Balaenoptera musculus	species	-	0
+animals/vertebrates/synapsids/mammals/human	Homo sapiens	species	0.3	0
+animals/vertebrates/reptiles	Reptilia	class	312	0
+animals/vertebrates/reptiles/ichthyosaurus	Ichthyosaurus communis	species	200	190
+animals/vertebrates/reptiles/plesiosaurus	Plesiosaurus dolichodeirus	species	199	183
+animals/vertebrates/reptiles/pterosaurs	Pterosauria	order	228	66
+animals/vertebrates/reptiles/pterosaurs/pteranodon	Pteranodon longiceps	species	86	84
+animals/vertebrates/reptiles/pterosaurs/quetzalcoatlus	Quetzalcoatlus northropi	species	68	66
+animals/vertebrates/reptiles/dinosaurs	Dinosauria	clade	233	0
+animals/vertebrates/reptiles/dinosaurs/theropods	Theropoda	clade	231	0
+animals/vertebrates/reptiles/dinosaurs/theropods/tyrannosaurus	Tyrannosaurus rex	species	68	66
+animals/vertebrates/reptiles/dinosaurs/theropods/allosaurus	Allosaurus fragilis	species	155	145
+animals/vertebrates/reptiles/dinosaurs/theropods/spinosaurus	Spinosaurus aegyptiacus	species	99	93.5
+animals/vertebrates/reptiles/dinosaurs/theropods/velociraptor	Velociraptor mongoliensis	species	75	71
+animals/vertebrates/reptiles/dinosaurs/theropods/birds	Aves	class	150	0
+animals/vertebrates/reptiles/dinosaurs/theropods/birds/archaeopteryx	Archaeopteryx lithographica	species	150.8	148.5
+animals/vertebrates/reptiles/dinosaurs/theropods/birds/dodo	Raphus cucullatus	species	-	0.00034
+animals/vertebrates/reptiles/dinosaurs/theropods/birds/ostrich	Struthio camelus	species	-	0
+animals/vertebrates/reptiles/dinosaurs/sauropodomorphs	Sauropodomorpha	clade	231	66
+animals/vertebrates/reptiles/dinosaurs/sauropodomorphs/brachiosaurus	Brachiosaurus altithorax	species	154	150
+animals/vertebrates/reptiles/dinosaurs/sauropodomorphs/diplodocus	Diplodocus carnegii	species	154	152
+animals/vertebrates/reptiles/dinosaurs/sauropodomorphs/argentinosaurus	Argentinosaurus huinculensis	species	96	92
+animals/vertebrates/reptiles/dinosaurs/ornithischians	Ornithischia	order	201	66
+animals/vertebrates/reptiles/dinosaurs/ornithischians/stegosaurus	Stegosaurus stenops	species	155	150
+animals/vertebrates/reptiles/dinosaurs/ornithischians/parasaurolophus	Parasaurolophus walkeri	species	76.5	73
+animals/vertebrates/reptiles/dinosaurs/ornithischians/triceratops	Triceratops horridus	species	68	66
+animals/vertebrates/reptiles/dinosaurs/ornithischians/ankylosaurus	Ankylosaurus magniventris	species	68	66
+plants	Plantae	kingdom	1000	0
+plants/mosses	Bryophyta	division	400	0
+plants/mosses/peat-moss	Sphagnum	genus	-	0
+plants/mosses/haircap-moss	Polytrichum commune	species	-	0
+plants/cooksonia	Cooksonia	genus	433	393
+plants/ferns	Polypodiopsida	class	360	0
+plants/ferns/tree-fern	Dicksonia antarctica	species	-	0
+plants/ferns/horsetail	Equisetum	genus	-	0
+plants/gymnosperms	Gymnospermae	group	319	0
+plants/gymnosperms/ginkgo	Ginkgo biloba	species	-	0
+plants/gymnosperms/giant-sequoia	Sequoiadendron giganteum	species	-	0
+plants/gymnosperms/wollemi-pine	Wollemia nobilis	species	-	0
+plants/flowering-plants	Angiospermae	clade	130	0
+plants/flowering-plants/archaefructus	Archaefructus liaoningensis	species	125	124
+plants/flowering-plants/oak	Quercus robur	species	-	0
+plants/flowering-plants/sunflower	Helianthus annuus	species	-	0
+plants/flowering-plants/wheat	Triticum aestivum	species	-	0

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Administración</entry>
+	<entry key="tab.users">Usuarios</entry>
+	<entry key="tab.accesses">Accesos</entry>
+	<entry key="tab.oldAccesses">Accesos antiguos</entry>
+	<entry key="users.lead">Las cuentas, las más recientes primero. Cuentas:</entry>
+	<entry key="accesses.lead">Quién accedió al sitio, una fila por sesión, las más recientes primero. Sesiones:</entry>
+	<entry key="oldAccesses.lead">Los accesos de hace más de {0} días, que se mueven aquí cada noche, una fila por sesión, los más recientes primero. Sesiones:</entry>
+	<entry key="account">Cuenta</entry>
+	<entry key="email">Correo</entry>
+	<entry key="firstName">Nombre</entry>
+	<entry key="lastName">Apellido</entry>
+	<entry key="country">País</entry>
+	<entry key="userLanguage">Idioma</entry>
+	<entry key="role">Acceso</entry>
+	<entry key="role.USER">Usuario</entry>
+	<entry key="role.ADMIN">Administrador</entry>
+	<entry key="validated">Correo confirmado</entry>
+	<entry key="created">Creada</entry>
+	<entry key="yes">Sí</entry>
+	<entry key="no">No</entry>
+	<entry key="filter.name">Nombre</entry>
+	<entry key="filter.name.placeholder">Cuenta o nombre</entry>
+	<entry key="filter.email">Correo</entry>
+	<entry key="filter.email.placeholder">Parte del correo</entry>
+	<entry key="filter.country">País</entry>
+	<entry key="nullValid">Todos los países</entry>
+	<entry key="accessed">Acceso (servidor)</entry>
+	<entry key="user">Usuario</entry>
+	<entry key="part">Parte</entry>
+	<entry key="part.private">Privada</entry>
+	<entry key="part.public">Pública</entry>
+	<entry key="address">Desde</entry>
+	<entry key="localTime">Hora local del visitante</entry>
+	<entry key="timeZone">Zona horaria</entry>
+	<entry key="browser">Navegador</entry>
+	<entry key="filter.user">Usuario</entry>
+	<entry key="filter.user.placeholder">Parte del usuario</entry>
+	<entry key="filter.part">Parte</entry>
+	<entry key="part.nullValid">Todas las partes</entry>
+	<entry key="filter.address">Desde</entry>
+	<entry key="filter.address.placeholder">Parte de la dirección</entry>
+	<entry key="filter.accessed">Hora del servidor (UTC)</entry>
+	<entry key="filter.accessedFrom.placeholder">Desde</entry>
+	<entry key="filter.accessedUntil.placeholder">Hasta</entry>
+	<entry key="userInfo">Sobre la cuenta</entry>
+	<entry key="userInfo.none">Esa cuenta ya no existe.</entry>
+	<entry key="jobRole">Función</entry>
+	<entry key="JobRole.DEVELOPER">Desarrollador</entry>
+	<entry key="JobRole.ARCHITECT">Arquitecto</entry>
+	<entry key="JobRole.DESIGNER">Diseñador</entry>
+	<entry key="JobRole.MANAGER">Gerente</entry>
+	<entry key="JobRole.STUDENT">Estudiante</entry>
+	<entry key="JobRole.OTHER">Otra</entry>
+</properties>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Split Panel</entry>
+	<entry key="explanation">&lt;p&gt;SplitPanel from ui-components shows two panes, side by side or one above the other, with a divider between them. Drag the divider with the mouse, a pen or a finger to share the space differently; or give it the focus with Tab and move it with the arrow keys, take it to its limits with Home and End. A double click takes it back to where it started. The buttons on a collapsible divider hide a pane, giving the other all the space, and show it again; Enter does so from the keyboard. Split panels go in each other's panes: the layout below is two of them, the files beside an editor above its console.&lt;/p&gt;&lt;p&gt;Sizes are in percent or in pixels. The files are 220 pixels wide, from 140 pixels to half the width, and keep their width when the window changes; the editor takes 65 percent of the height, and leaves the console at least 60 pixels. The divider moves in the browser, between those limits. With setSendToServer the browser sends each change via Ajax, and the sentence below the layout follows. Where the panel keeps it is its model: the files' split panel keeps it in the session, so the page shows it again when you open it anew; the editor's in the page, as by default. The check boxes render the third split panel again by Ajax. Everything works under a strict Content Security Policy, without inline style.&lt;/p&gt;</entry>
+	<entry key="layoutTitle">An editor's layout</entry>
+	<entry key="settingsTitle">Side by side or one above the other</entry>
+	<entry key="files">Files</entry>
+	<entry key="editor">HomePage.java</entry>
+	<entry key="console">Console</entry>
+	<entry key="vertical">One above the other</entry>
+	<entry key="resizable">The divider moves</entry>
+	<entry key="sizes">The files take {0} of the width, the editor {1} of the height.</entry>
+	<entry key="first">The first pane: on the left, or on top.</entry>
+	<entry key="second">The second pane: on the right, or below.</entry>
+	<entry key="collapsible">Buttons hide the panes</entry>
+	<entry key="none">none</entry>
+	<entry key="all">all</entry>
+</properties>

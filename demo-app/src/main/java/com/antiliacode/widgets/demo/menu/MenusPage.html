@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="menus-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+
+<wicket:fragment wicket:id="applicationCase">
+	<section>
+		<p class="menus-demo__intro"><wicket:message key="applicationIntro"/></p>
+		<div class="menus-demo__window">
+			<nav wicket:id="application" class="menus-demo__application"></nav>
+			<div class="menus-demo__document"><wicket:message key="documentText"/></div>
+		</div>
+		<p wicket:id="applicationStatus" class="menus-demo__status" role="status">[status]</p>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="navigationCase">
+	<section>
+		<p class="menus-demo__intro"><wicket:message key="navigationIntro"/></p>
+		<nav wicket:id="navigation" class="menus-demo__navigation"></nav>
+		<div class="menus-demo__page">
+			<h4 wicket:id="where" class="menus-demo__where">[where]</h4>
+			<p wicket:id="address" class="menus-demo__text">[address]</p>
+		</div>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="sidebarCase">
+	<section class="menus-demo__app">
+		<nav wicket:id="sidebar" class="menus-demo__sidebar"></nav>
+		<div wicket:id="content" class="menus-demo__content">
+			<h4 wicket:id="heading" class="menus-demo__where">[heading]</h4>
+			<p class="menus-demo__text"><wicket:message key="sidebarText"/></p>
+		</div>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="settingsCase">
+	<section>
+		<form wicket:id="form" class="menus-demo__controls">
+			<label class="menus-demo__control"><input type="checkbox" wicket:id="vertical"/> <wicket:message key="vertical"/></label>
+			<label class="menus-demo__control"><wicket:message key="design"/> <select wicket:id="design"></select></label>
+			<label class="menus-demo__control"><input type="checkbox" wicket:id="inline"/> <wicket:message key="inline"/></label>
+			<label class="menus-demo__control"><input type="checkbox" wicket:id="hover"/> <wicket:message key="hover"/></label>
+		</form>
+		<div wicket:id="preview" class="menus-demo__preview"><nav wicket:id="settings"></nav></div>
+		<p wicket:id="settingsStatus" class="menus-demo__status" role="status">[status]</p>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="galleryCase">
+	<section>
+		<h4 class="menus-demo__group"><wicket:message key="alongTheTop"/></h4>
+		<div class="menus-demo__gallery menus-demo__gallery--top">
+			<figure wicket:id="topDesigns" class="menus-demo__example"><figcaption wicket:id="name">[design]</figcaption><nav wicket:id="menu"></nav></figure>
+		</div>
+		<h4 class="menus-demo__group"><wicket:message key="downTheSide"/></h4>
+		<div class="menus-demo__gallery menus-demo__gallery--side">
+			<figure wicket:id="sideDesigns" class="menus-demo__example"><figcaption wicket:id="name">[design]</figcaption><nav wicket:id="menu"></nav></figure>
+		</div>
+	</section>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

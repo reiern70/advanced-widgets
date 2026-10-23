@@ -1,0 +1,367 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * The themes of ui-components. Each one sets these properties, which the style sheets of the
+ * components read:
+ *
+ *   --antilia-theme-primary          headers, the bar of a progress bar
+ *   --antilia-theme-primary-dark     borders and gradients next to the primary color
+ *   --antilia-theme-on-primary       text on the primary color
+ *   --antilia-theme-accent           links, focus and drag indicators
+ *   --antilia-theme-text             text
+ *   --antilia-theme-surface          background of content, such as rows
+ *   --antilia-theme-surface-alt      alternating background, such as every other row
+ *   --antilia-theme-hover            background of the content under the pointer
+ *   --antilia-theme-selected         background of selected content
+ *   --antilia-theme-highlight        background of notices, such as the selection bar of a table
+ *   --antilia-theme-toolbar          background of toolbars, such as the navigation of a table
+ *   --antilia-theme-border           borders
+ *   --antilia-theme-progress         the filled part of a progress bar
+ *   --antilia-theme-progress-dark    the gradient end of the filled part
+ *   --antilia-theme-track            the empty part of a progress bar
+ *   --antilia-theme-veil             the dimming over content blocked by a veil or an overlay
+ *   --antilia-theme-color-scheme     the color scheme of form controls, such as text fields and
+ *                                   check boxes, so they match the theme whatever the page uses
+ *   --antilia-theme-success          the color of what went well, such as a notification of success
+ *   --antilia-theme-error            the color of what went wrong, such as a notification of error
+ *   --antilia-theme-warning          the color of what asks for attention, such as a warning
+ *   --antilia-theme-info             the color of information, such as a notification of information
+ *
+ * The shapes are a look's (see antilia-look-bootstrap.css), not a theme's.
+ */
+.antilia-theme-default {
+	--antilia-theme-primary: #c2410c;
+	--antilia-theme-primary-dark: #9a3412;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #c2410c;
+	--antilia-theme-text: #2b1d12;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fff4ea;
+	--antilia-theme-hover: #ffe3cc;
+	--antilia-theme-selected: #fff3b0;
+	--antilia-theme-highlight: #fff7ed;
+	--antilia-theme-toolbar: #fff8f1;
+	--antilia-theme-border: #f2b98d;
+	--antilia-theme-progress: #f97316;
+	--antilia-theme-progress-dark: #c2410c;
+	--antilia-theme-track: #ffedd5;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #c53030;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #2b6cb0;
+}
+
+.antilia-theme-blue {
+	--antilia-theme-primary: #1565c0;
+	--antilia-theme-primary-dark: #0d47a1;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #1976d2;
+	--antilia-theme-text: #102a43;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #e3f2fd;
+	--antilia-theme-hover: #bbdefb;
+	--antilia-theme-selected: #fff59d;
+	--antilia-theme-highlight: #e1f5fe;
+	--antilia-theme-toolbar: #f1f8ff;
+	--antilia-theme-border: #90caf9;
+	--antilia-theme-progress: #42a5f5;
+	--antilia-theme-progress-dark: #1565c0;
+	--antilia-theme-track: #e3f2fd;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #ef6c00;
+	--antilia-theme-info: #1976d2;
+}
+
+.antilia-theme-red {
+	--antilia-theme-primary: #b71c1c;
+	--antilia-theme-primary-dark: #7f0000;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #c62828;
+	--antilia-theme-text: #2b1a1a;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fdecea;
+	--antilia-theme-hover: #f9d0cc;
+	--antilia-theme-selected: #ffe0b2;
+	--antilia-theme-highlight: #fff0f0;
+	--antilia-theme-toolbar: #fbf3f2;
+	--antilia-theme-border: #e6a9a3;
+	--antilia-theme-progress: #e53935;
+	--antilia-theme-progress-dark: #b71c1c;
+	--antilia-theme-track: #fdecea;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #b71c1c;
+	--antilia-theme-warning: #ef6c00;
+	--antilia-theme-info: #1565c0;
+}
+
+.antilia-theme-grey {
+	--antilia-theme-primary: #4a5258;
+	--antilia-theme-primary-dark: #30363a;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #455a64;
+	--antilia-theme-text: #263238;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #f2f4f5;
+	--antilia-theme-hover: #e4e8ea;
+	--antilia-theme-selected: #fff3c4;
+	--antilia-theme-highlight: #f5f5f5;
+	--antilia-theme-toolbar: #eceff1;
+	--antilia-theme-border: #b0bec5;
+	--antilia-theme-progress: #78909c;
+	--antilia-theme-progress-dark: #455a64;
+	--antilia-theme-track: #eceff1;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #4c7a4f;
+	--antilia-theme-error: #b23c3c;
+	--antilia-theme-warning: #c27c0e;
+	--antilia-theme-info: #4a6fa5;
+}
+
+.antilia-theme-green {
+	--antilia-theme-primary: #2e7d32;
+	--antilia-theme-primary-dark: #1b5e20;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #388e3c;
+	--antilia-theme-text: #1b2e1c;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #eef6ee;
+	--antilia-theme-hover: #dcedc8;
+	--antilia-theme-selected: #fff9c4;
+	--antilia-theme-highlight: #e8f5e9;
+	--antilia-theme-toolbar: #f1f8f1;
+	--antilia-theme-border: #a5d6a7;
+	--antilia-theme-progress: #43a047;
+	--antilia-theme-progress-dark: #2e7d32;
+	--antilia-theme-track: #e8f5e9;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #f57c00;
+	--antilia-theme-info: #0277bd;
+}
+
+.antilia-theme-navy {
+	--antilia-theme-primary: #1f3a68;
+	--antilia-theme-primary-dark: #142a4f;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #1f5fa8;
+	--antilia-theme-text: #1f2933;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #edf2f9;
+	--antilia-theme-hover: #dce7f5;
+	--antilia-theme-selected: #fff3c4;
+	--antilia-theme-highlight: #fff8dc;
+	--antilia-theme-toolbar: #f4f6f9;
+	--antilia-theme-border: #c5d0de;
+	--antilia-theme-progress: #2f80c9;
+	--antilia-theme-progress-dark: #1f5fa8;
+	--antilia-theme-track: #eef1f4;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #c53030;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #1f5fa8;
+}
+
+.antilia-theme-light-blue {
+	--antilia-theme-primary: #4a90c8;
+	--antilia-theme-primary-dark: #2f74ad;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #2f74ad;
+	--antilia-theme-text: #16324a;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #f2f8fd;
+	--antilia-theme-hover: #e0eef9;
+	--antilia-theme-selected: #fff6c2;
+	--antilia-theme-highlight: #eef7fd;
+	--antilia-theme-toolbar: #f6fbff;
+	--antilia-theme-border: #b7d6ee;
+	--antilia-theme-progress: #6db3e8;
+	--antilia-theme-progress-dark: #3b8fd0;
+	--antilia-theme-track: #e6f2fb;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #43a047;
+	--antilia-theme-error: #e53935;
+	--antilia-theme-warning: #fb8c00;
+	--antilia-theme-info: #2f74ad;
+}
+
+.antilia-theme-magenta {
+	--antilia-theme-primary: #a21caf;
+	--antilia-theme-primary-dark: #86198f;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #a21caf;
+	--antilia-theme-text: #2e1330;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fdf4ff;
+	--antilia-theme-hover: #fae8ff;
+	--antilia-theme-selected: #fff3b0;
+	--antilia-theme-highlight: #fdf4ff;
+	--antilia-theme-toolbar: #fdf7fe;
+	--antilia-theme-border: #e9a8f2;
+	--antilia-theme-progress: #c026d3;
+	--antilia-theme-progress-dark: #a21caf;
+	--antilia-theme-track: #fae8ff;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2e7d32;
+	--antilia-theme-error: #c62828;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #1d4ed8;
+}
+
+.antilia-theme-rose {
+	--antilia-theme-primary: #be4a6a;
+	--antilia-theme-primary-dark: #9f3654;
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: #b03a5b;
+	--antilia-theme-text: #3a1e26;
+	--antilia-theme-surface: #ffffff;
+	--antilia-theme-surface-alt: #fff4f6;
+	--antilia-theme-hover: #fde4ea;
+	--antilia-theme-selected: #fff3c4;
+	--antilia-theme-highlight: #fff1f4;
+	--antilia-theme-toolbar: #fff8f9;
+	--antilia-theme-border: #f2b8c6;
+	--antilia-theme-progress: #e8798f;
+	--antilia-theme-progress-dark: #be4a6a;
+	--antilia-theme-track: #fde4ea;
+	--antilia-theme-veil: rgba(255, 255, 255, 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: #2f855a;
+	--antilia-theme-error: #b91c1c;
+	--antilia-theme-warning: #d97706;
+	--antilia-theme-info: #2b6cb0;
+}
+
+.antilia-theme-dark {
+	--antilia-theme-primary: #34557a;
+	--antilia-theme-primary-dark: #24405f;
+	--antilia-theme-on-primary: #f1f4f8;
+	--antilia-theme-accent: #7cb7ff;
+	--antilia-theme-text: #e6eaf0;
+	--antilia-theme-surface: #1e242c;
+	--antilia-theme-surface-alt: #252c35;
+	--antilia-theme-hover: #313b47;
+	--antilia-theme-selected: #4a4325;
+	--antilia-theme-highlight: #2f3a2c;
+	--antilia-theme-toolbar: #262d36;
+	--antilia-theme-border: #3d4856;
+	--antilia-theme-progress: #4f9cf0;
+	--antilia-theme-progress-dark: #2f7ad0;
+	--antilia-theme-track: #333d4a;
+	--antilia-theme-veil: rgba(10, 14, 20, 0.6);
+	--antilia-theme-color-scheme: dark;
+	--antilia-theme-success: #51cf66;
+	--antilia-theme-error: #ff6b6b;
+	--antilia-theme-warning: #fcc419;
+	--antilia-theme-info: #7cb7ff;
+}
+
+/*
+ * The colors of the Bootstrap on the page: its custom properties (--bs-*), from Bootstrap 5.3 on,
+ * so a theme of Bootstrap's, such as one of Bootswatch or one of the application's own, colors the
+ * components too. The dark one is for a page in Bootstrap's dark mode; ThemeBehavior writes
+ * data-bs-theme on the element, which turns the mode on for Bootstrap's own components inside it.
+ * Without Bootstrap on the page the properties are missing, and the components take the colors
+ * they fall back to.
+ */
+.antilia-theme-bootstrap,
+.antilia-theme-bootstrap-dark,
+.antilia-theme-bootstrap [data-bs-theme],
+.antilia-theme-bootstrap-dark [data-bs-theme] {
+	--antilia-theme-primary: var(--bs-primary);
+	--antilia-theme-primary-dark: color-mix(in srgb, var(--bs-primary) 80%, #000000);
+	--antilia-theme-on-primary: #ffffff;
+	--antilia-theme-accent: var(--bs-link-color);
+	--antilia-theme-text: var(--bs-body-color);
+	--antilia-theme-surface: var(--bs-body-bg);
+	--antilia-theme-surface-alt: var(--bs-tertiary-bg);
+	--antilia-theme-hover: var(--bs-secondary-bg);
+	--antilia-theme-selected: var(--bs-warning-bg-subtle);
+	--antilia-theme-highlight: var(--bs-primary-bg-subtle);
+	--antilia-theme-toolbar: var(--bs-tertiary-bg);
+	--antilia-theme-border: var(--bs-border-color);
+	--antilia-theme-progress: var(--bs-primary);
+	--antilia-theme-progress-dark: color-mix(in srgb, var(--bs-primary) 80%, #000000);
+	--antilia-theme-track: var(--bs-secondary-bg);
+	--antilia-theme-veil: rgba(var(--bs-body-bg-rgb), 0.6);
+	--antilia-theme-color-scheme: light;
+	--antilia-theme-success: var(--bs-success);
+	--antilia-theme-error: var(--bs-danger);
+	--antilia-theme-warning: var(--bs-warning);
+	--antilia-theme-info: var(--bs-info);
+}
+
+.antilia-theme-bootstrap-dark,
+.antilia-theme-bootstrap [data-bs-theme="dark"],
+.antilia-theme-bootstrap-dark [data-bs-theme="dark"] {
+	--antilia-theme-color-scheme: dark;
+}
+
+.antilia-theme-bootstrap [data-bs-theme="light"],
+.antilia-theme-bootstrap-dark [data-bs-theme="light"] {
+	--antilia-theme-color-scheme: light;
+}
+
+/* inside a theme: the modal dialog of wicket-extensions and its optional header, body and footer */
+
+.antilia-theme .dialog-theme-default .modal-dialog {
+	color: var(--antilia-theme-text);
+	background: var(--antilia-theme-surface);
+	color-scheme: var(--antilia-theme-color-scheme);
+	border: 1px solid var(--antilia-theme-border);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	overflow: hidden;
+}
+
+.antilia-theme .dialog-theme-default .modal-dialog-overlay {
+	background: var(--antilia-theme-veil);
+}
+
+/* the links of a dialog, but those drawn as buttons, which keep the colors of their variant */
+.antilia-theme .dialog-theme-default .modal-dialog a:not(.ant-button) {
+	color: var(--antilia-theme-accent);
+}
+
+.antilia-theme .dialog-theme-default .modal-dialog-header {
+	margin: 0;
+	padding: 0.2em 0.6em;
+	border-radius: 0;
+	background: var(--antilia-theme-primary);
+	color: var(--antilia-theme-on-primary);
+	font-size: 0.9em;
+	text-align: left;
+}
+
+.antilia-theme .dialog-theme-default .modal-dialog-body {
+	padding: 1em;
+}
+
+.antilia-theme .dialog-theme-default .modal-dialog-footer {
+	padding: 0.3em 0.6em;
+	border-top: 1px solid var(--antilia-theme-border);
+	background: var(--antilia-theme-toolbar);
+}

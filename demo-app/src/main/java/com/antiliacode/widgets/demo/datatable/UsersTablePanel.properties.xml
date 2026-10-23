@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="phones">Phones</entry>
+	<entry key="id">ID</entry>
+	<entry key="firstName">First Name</entry>
+	<entry key="lastName">Last Name</entry>
+	<entry key="actions">Actions</entry>
+	<entry key="download">Download as jCard</entry>
+	<entry key="progress">Progress</entry>
+	<entry key="bornDate">Born</entry>
+	<entry key="filter">Filter</entry>
+	<entry key="filter.placeholder">first or last name</entry>
+	<entry key="edit">Edit</entry>
+	<entry key="delete">Delete</entry>
+	<entry key="delete.confirm">Delete ${firstName} ${lastName}?</entry>
+	<entry key="address">Address</entry>
+	<entry key="editUser">Edit ${firstName} ${lastName}</entry>
+	<entry key="newUser">New user</entry>
+	<entry key="slowAction">A slow action, taking two seconds</entry>
+	<entry key="slowAction.done">The slow action is done.</entry>
+	<entry key="homePhone">Home phone</entry>
+	<entry key="cellPhone">Cell phone</entry>
+	<entry key="city">City</entry>
+	<entry key="country">Country</entry>
+	<entry key="phones.home">Home:</entry>
+	<entry key="phones.cell">Cell:</entry>
+	<entry key="userGone">That user no longer exists.</entry>
+	<entry key="deleted">Deleted {0} {1}.</entry>
+	<entry key="added">Added {0} {1}.</entry>
+	<entry key="saved">Saved {0} {1}.</entry>
+	<entry key="failed">The users resource failed: {0}</entry>
+</properties>

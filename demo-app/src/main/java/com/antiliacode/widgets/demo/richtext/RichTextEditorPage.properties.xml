@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Rich Text Editor</entry>
+	<entry key="explanation">&lt;p&gt;RichTextEditor from ui-components is a text area shown as a rich text editor, Tiptap, in the colors of the theme and the look of the page. Its toolbar formats the text: headings, bold, italic, underline, strike, code, links, lists, task lists, quotes, code blocks, lines, tables, images and alignment. The usual keys work too, Ctrl+B, Ctrl+I or Ctrl+K for a link, and Markdown's marks as you type: # and a space for a heading, - for a list, **bold**. The toolbar is one stop of Tab: the arrow keys move along it. Escape, then Tab, leaves the editor, even in a list. A code block is in a language, which the menu of its tool chooses, and shows in its colors. An image comes from an address, or uploads: chosen in its form, or dropped or pasted into the text.&lt;/p&gt;&lt;p&gt;The server keeps the article in the session: its HTML, which it follows as you type, and the state of its editor, what you selected, how far you scrolled and the size you gave it by the bar along its bottom. It never trusts the HTML of the browser: it cleans it before it keeps it, keeping only what the features of the editor write. Below the editor, the article as a page shows it once saved, and the HTML the server keeps. Ctrl+S, or the button, saves it.&lt;/p&gt;&lt;p&gt;Below the second pill, the editor keeps Markdown instead of HTML. Below the third, HTML from anywhere, with scripts, handlers and styles, and what the cleaning leaves of it. Everything works under a strict Content Security Policy: the HTML has no style attribute, text aligns by classes.&lt;/p&gt;</entry>
+	<entry key="articleTitle">An article in HTML, cleaned on the server</entry>
+	<entry key="notesTitle">Notes in Markdown</entry>
+	<entry key="cleaningTitle">The cleaning on the server</entry>
+	<entry key="articleLabel">Article</entry>
+	<entry key="notesLabel">Notes</entry>
+	<entry key="placeholder">Write the article…</entry>
+	<entry key="toolbar">Toolbar</entry>
+	<entry key="toolbar.full">Full</entry>
+	<entry key="toolbar.compact">Compact</entry>
+	<entry key="toolbar.none">None</entry>
+	<entry key="bubbleMenu">Menu over the selection</entry>
+	<entry key="readOnly">Read only</entry>
+	<entry key="count">Count the words</entry>
+	<entry key="highlight">Highlight the code</entry>
+	<entry key="extras">Choose the language of a code block in the menu of its tool: Java, JavaScript, TypeScript, JSON or Markdown, in their colors. Upload an image from the form of the image, or drop or paste one into the text: PNG, JPEG, GIF or WebP, {0} at most.</entry>
+	<entry key="save">Save</entry>
+	<entry key="start">Type, select, scroll or resize: the server keeps it all.</entry>
+	<entry key="heardFocus">The server heard you entered the article.</entry>
+	<entry key="heardBlur">The server heard you left the article, with its text.</entry>
+	<entry key="heardSave">Saved the article.</entry>
+	<entry key="known">The server knows: {0} characters of HTML, {1} words; {2}; {3}; {4}.</entry>
+	<entry key="cursorAt">the cursor at {0}</entry>
+	<entry key="selected">selected from {0} to {1}</entry>
+	<entry key="sizeOfPage">the size the page gives it</entry>
+	<entry key="sizeGiven">{0} × {1} px</entry>
+	<entry key="unsaved">changes not saved</entry>
+	<entry key="allSaved">all saved</entry>
+	<entry key="asShown">As a page shows it</entry>
+	<entry key="htmlKept">The HTML the server keeps</entry>
+	<entry key="markdownKept">The Markdown the server keeps</entry>
+	<entry key="notesStart">Format the notes as you like: the server keeps them as Markdown.</entry>
+	<entry key="notesSaved">Saved the notes.</entry>
+	<entry key="cleaningExplanation">HTML from anywhere, pasted or sent by a browser that is not the editor: a script, handlers, a link to javascript:, a style covering the page and a frame. Clean it, and see what is left: only what the editor writes.</entry>
+	<entry key="unsafeLabel">HTML from anywhere</entry>
+	<entry key="clean">Clean</entry>
+	<entry key="cleanedHtml">What the cleaning leaves</entry>
+	<entry key="appStart">Type, select or resize: the app keeps the article and its state.</entry>
+	<entry key="appSaved">Saved the article.</entry>
+	<entry key="appNotClean">The HTML as the editor gives it. A server keeping it cleans it first, as Wicket's RichTextEditor does.</entry>
+	<entry key="appArticleTitle">An article in HTML</entry>
+	<entry key="appHtml">The HTML the editor gives</entry>
+	<entry key="appMarkdown">The Markdown the editor gives</entry>
+	<entry key="appKnown">The app keeps {0} characters; {1}.</entry>
+</properties>

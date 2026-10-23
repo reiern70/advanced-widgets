@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Downloads</entry>
+	<entry key="explanation">&lt;p&gt;Downloads of every kind, all from the buttons of the theme, in the look chosen in the top bar. The files are a report of the countries of the world in the language of the page, made on the server when they are asked for, in seven formats: a text, CSV, JSON, a chart as SVG and as PNG, a PDF, and a ZIP archive of them all.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Via Ajax&lt;/b&gt;: an AjaxDownloadButton from ui-components downloads with Wicket's AjaxDownloadBehavior: the page stays as it is and hears how the download ended, which a notification tells. Each button downloads in another Location of the behavior: into the browser, as a blob, through a hidden iframe, in a new tab or in the same window. While the file comes the button is busy: a spinner takes the place of its icon and it ignores clicks. Choose the file, and how the server answers: at once, slowly, to see the buttons busy, or with an error, to see which locations can tell.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Links&lt;/b&gt;: links the browser follows without Ajax, drawn as buttons by a ButtonBehavior: Wicket's DownloadLink of a file written on the server and deleted once downloaded, a ResourceLink to a resource of the page, a resource mounted at a URL of its own, which can be shared, the same resource showing a PDF in a new tab, and a file of the web application with the download attribute.&lt;/p&gt;&lt;p&gt;&lt;b&gt;After a form&lt;/b&gt;: the buttons of a form send it via Ajax and, once it is valid, download the report it describes, or open it in a new tab, each with a ButtonDownloadBehavior, which makes any button busy while its download runs. The errors of the form are notifications.&lt;/p&gt;</entry>
+	<entry key="ajax">Via Ajax</entry>
+	<entry key="links">Links</entry>
+	<entry key="form">After a form</entry>
+	<entry key="ajax.hint">Each button downloads the file chosen in another way, the page staying as it is; a notification tells how the download ended.</entry>
+	<entry key="links.hint">Links the browser follows without Ajax, drawn as buttons.</entry>
+	<entry key="form.hint">The buttons send the form and, once it is valid, download the report it describes or open it in a new tab.</entry>
+	<entry key="file">File</entry>
+	<entry key="answer">The server</entry>
+	<entry key="DemoFile.TEXT">Text (.txt)</entry>
+	<entry key="DemoFile.CSV">CSV (.csv)</entry>
+	<entry key="DemoFile.JSON">JSON (.json)</entry>
+	<entry key="DemoFile.SVG">Chart as SVG (.svg)</entry>
+	<entry key="DemoFile.PNG">Chart as PNG (.png)</entry>
+	<entry key="DemoFile.PDF">PDF (.pdf)</entry>
+	<entry key="DemoFile.ZIP">ZIP of them all (.zip)</entry>
+	<entry key="Answer.AT_ONCE">answers at once</entry>
+	<entry key="Answer.SLOWLY">takes three seconds</entry>
+	<entry key="Answer.FAILS">fails</entry>
+	<entry key="location.blob">Into the browser</entry>
+	<entry key="location.blob.help">The browser asks for the file with a request of its own into a blob, then saves it. The best choice for today's browsers: it tells whether the file came or the server failed.</entry>
+	<entry key="location.iframe">Through a hidden iframe</entry>
+	<entry key="location.iframe.help">A hidden iframe asks for the file, which the browser saves. The page never unloads, so its WebSockets stay open; it tells whether the file came or an error showed in the frame.</entry>
+	<entry key="location.newwindow">In a new tab</entry>
+	<entry key="location.newwindow.help">A new tab opens the file, which the server sends inline for the browser to show: a PDF, an image, a text; a ZIP is saved. A failure closes the tab again.</entry>
+	<entry key="location.samewindow">In the same window</entry>
+	<entry key="location.samewindow.help">The window itself goes to the file, which the server sends as an attachment, so the browser saves it and the page stays; the page hears unload, though, which closes its WebSockets. It tells when the file came, never a failure.</entry>
+	<entry key="location.samewindow.blocked">The button waits while the server fails: the error would take the place of the page.</entry>
+	<entry key="fileLink">countries.txt</entry>
+	<entry key="fileLink.help">Wicket's DownloadLink: the server writes the file into its temporary folder when the link is clicked, sends it and deletes it.</entry>
+	<entry key="resourceLink">countries.csv</entry>
+	<entry key="resourceLink.help">A ResourceLink to a resource of the page, which makes the file when the browser asks for it.</entry>
+	<entry key="mountedLink">countries.json</entry>
+	<entry key="mountedLink.help">A resource the application mounts at a URL of its own, which can be bookmarked and shared:</entry>
+	<entry key="openLink">countries.pdf in a new tab</entry>
+	<entry key="openLink.help">The same resource sends the PDF inline when asked to, and the link opens it in a new tab, which shows it.</entry>
+	<entry key="staticLink">downloads.png</entry>
+	<entry key="staticLink.help">A file of the web application, the picture of this demo, which the download attribute of the link saves instead of showing.</entry>
+	<entry key="report.title">Title</entry>
+	<entry key="report.format">Format</entry>
+	<entry key="report.rows">Countries</entry>
+	<entry key="report.download">Download</entry>
+	<entry key="report.open">Open in a new tab</entry>
+	<entry key="downloaded.title">Downloaded</entry>
+	<entry key="downloaded">${file}: ${where}.</entry>
+	<entry key="failed.title">Download failed</entry>
+	<entry key="failed">The server could not send ${file}: ${where}.</entry>
+</properties>

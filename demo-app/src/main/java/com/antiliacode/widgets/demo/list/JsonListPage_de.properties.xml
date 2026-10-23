@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">JsonBasedInfiniteList-Beispiel</entry>
+	<entry key="explanation">Dies ist eine Demo der JsonBasedInfiniteList: tausend Benutzer, jeder eine Karte, im Browser aus JSON erzeugt und beim Rollen geladen.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;Wicket erzeugt die Liste als ein leeres &amp;lt;div&amp;gt;: JsonBasedInfiniteList ist eine einzige Komponente ohne Kinder. Die Benutzer kommen als JSON vom eigenen Endpunkt der Liste, 24 auf einmal, und jede Karte ist die Vorlage UserCard.html neben dieser Seite, im Browser auf das JSON eines Benutzers angewandt; wer auf Deutsch oder Spanisch umschaltet, bekommt UserCard_de.html oder UserCard_es.html&lt;/li&gt; &lt;li&gt;Rollen Sie die Liste bis zur letzten Karte, und sie holt die nächsten 24 Benutzer und hängt sie an; unter den Karten sagt sie, dass sie lädt, und am Ende, dass alle angezeigt werden. Die Liste ist 70 % der Fensterhöhe hoch und rollt für sich, mit der schmalen Bildlaufleiste eines ScrollbarBehavior in den Farben des Farbschemas&lt;/li&gt; &lt;li&gt;Die Karten ordnet nur das CSS dieser Seite in einem Raster an; die Liste ordnet ihre Einträge standardmäßig untereinander an&lt;/li&gt; &lt;li&gt;Ein Klick auf eine Karte zeigt den Benutzer neben der Liste, der Stift bearbeitet ihn und der Mülleimer löscht ihn. Keines davon ist eine Komponente: Es ist einfaches Markup mit einem Attribut data-dt-action, und ein Klick geht an die Liste, die den Benutzer über seinen Schlüssel nachschlägt und ihn der für die Aktion registrierten IItemAction übergibt, so wie die JSON-Tabelle die Klicks auf ihre Zeilen verteilt&lt;/li&gt; &lt;li&gt;Da die Liste keine Kinder hat, erscheinen das Formular und die Bestätigung des Löschens im Modal von ui-components auf der Seite. Das Speichern eines bearbeiteten Benutzers zeichnet nur seine Karte neu, mit JsonBasedInfiniteList.updateItem; das Hinzufügen oder Löschen eines Benutzers lässt die Liste die angezeigten Benutzer neu holen, mit refresh&lt;/li&gt; &lt;li&gt;Löschen Sie einen Benutzer in einem Tab und klicken Sie ihn in einem anderen an: Der Klick erreicht trotzdem die Liste, die meldet, dass der Benutzer weg ist, statt an einer fehlenden Komponente zu scheitern&lt;/li&gt; &lt;li&gt;Filter und Sortierung beginnen wieder bei der ersten Seite Benutzer, nach oben gerollt, mit reset und refresh&lt;/li&gt; &lt;li&gt;Solange die Seite offen ist, lässt der Server den Fortschritt zufälliger Benutzer unter den angezeigten vorrücken und sendet die geänderten Benutzer alle 3 Sekunden über die WebSocket-Verbindung der Seite; jedes Senden zeichnet nur seine Karte neu. Die Liste meldet die Benutzer, die sie an den Browser schickt, sodass die anderen weder vorrücken noch gesendet werden. Die Nachrichten sind die der JSON-Tabelle&lt;/li&gt; &lt;li&gt;Die Liste ist ein Feed, wie Screenreader ihn kennen: Jede Karte ist ein Artikel, der seine Position und die Zahl der Benutzer nennt. Gehen Sie mit Tab zu einer Karte, drücken Sie Enter für ihre Details und Bild ab und Bild auf, um zwischen den Karten zu wechseln&lt;/li&gt; &lt;/ul&gt;&lt;p&gt;Die Reiter React und Svelte zeigen dieselben Karten mit der InfiniteList von @antilia/react und @antilia/svelte, aus derselben Vorlage, die Benutzer geladen von der eingebundenen Ressource /api/users. Die Details, das Bearbeitungsformular und die Bestätigung des Löschens gehören der App, und was die App ändert, bleibt in diesem Browser.&lt;/p&gt;</entry>
+	<entry key="users">Benutzer</entry>
+	<entry key="sortBy">Sortieren nach</entry>
+	<entry key="sort.firstName">Vorname</entry>
+	<entry key="sort.lastName">Nachname</entry>
+	<entry key="sort.bornDate">Geboren</entry>
+	<entry key="filter">Filter</entry>
+	<entry key="filter.placeholder">Vor- oder Nachname</entry>
+	<entry key="newUser">Neuer Benutzer</entry>
+	<entry key="editUser">${firstName} ${lastName} bearbeiten</entry>
+	<entry key="delete">Löschen</entry>
+	<entry key="cancel">Abbrechen</entry>
+	<entry key="delete.confirm">${firstName} ${lastName} löschen?</entry>
+	<entry key="deleted">{0} {1} gelöscht.</entry>
+	<entry key="added">{0} {1} hinzugefügt.</entry>
+	<entry key="userGone">Diesen Benutzer gibt es nicht mehr.</entry>
+	<entry key="noneSelected">Klicken Sie auf eine Karte, um den Benutzer hier zu sehen.</entry>
+	<entry key="selectedUser">Ausgewählter Benutzer</entry>
+	<entry key="id">ID</entry>
+	<entry key="firstName">Vorname</entry>
+	<entry key="lastName">Nachname</entry>
+	<entry key="homePhone">Telefon privat</entry>
+	<entry key="cellPhone">Mobiltelefon</entry>
+	<entry key="bornDate">Geboren</entry>
+</properties>

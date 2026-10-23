@@ -1,0 +1,32 @@
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="editor" class="theme-editor-properties">
+	<div wicket:id="grid" class="theme-editor-grid">
+		<div class="theme-editor-property" wicket:id="properties">
+			<div wicket:id="text" class="theme-editor-property-text"><code wicket:id="name"></code><small wicket:id="description"></small></div>
+			<div class="theme-editor-property-input" wicket:id="input"></div>
+		</div>
+	</div>
+	<div wicket:id="output" class="theme-editor-output">
+		<label class="theme-editor-output-name"><wicket:message key="className"/> <input wicket:id="className" type="text" class="theme-editor-class" value="my-theme" pattern="-?[a-zA-Z_][a-zA-Z0-9_-]*"/></label>
+		<label class="theme-editor-output-css"><span><wicket:message key="css"/></span>
+			<textarea wicket:id="css" class="theme-editor-css" readonly="readonly" rows="6" aria-label="CSS"></textarea></label>
+		<button wicket:id="copy" type="button" class="theme-editor-copy"><wicket:message key="copy"/></button>
+	</div>
+</div>
+<wicket:fragment wicket:id="color"><input type="color" wicket:id="field"/></wicket:fragment>
+<wicket:fragment wicket:id="text"><input type="text" size="18" wicket:id="field"/></wicket:fragment>
+<wicket:fragment wicket:id="scheme"><select wicket:id="field"><option value="light">light</option><option value="dark">dark</option></select></wicket:fragment>
+</wicket:panel>

@@ -1,0 +1,42 @@
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+		<div class="support-matrix">
+			<p class="support-matrix__lead"><wicket:message key="supportLead"/></p>
+			<div class="support-matrix__scroll">
+				<table class="support-matrix__table">
+					<thead>
+						<tr>
+							<th scope="col"><wicket:message key="supportComponent"/></th>
+							<th scope="col"><wicket:message key="supportCategory"/></th>
+							<th scope="col">Wicket</th>
+							<th scope="col">React</th>
+							<th scope="col">Svelte</th>
+							<th scope="col"><wicket:message key="supportThemes"/></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr wicket:id="support">
+							<th scope="row"><a wicket:id="link"><span wicket:id="name">JSON Grid</span></a></th>
+							<td wicket:id="category">Data</td>
+							<td><span wicket:id="wicket">Yes</span></td>
+							<td><span wicket:id="react">Yes</span></td>
+							<td><span wicket:id="svelte">Yes</span></td>
+							<td><span wicket:id="themes">Yes</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+</wicket:panel>

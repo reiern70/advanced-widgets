@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="Throttle.ajaxDelay">Ajax-Verzögerung</entry>
+	<entry key="Throttle.uploadSpeed">Upload-Geschwindigkeit</entry>
+	<entry key="Throttle.hint">Nur für diese Sitzung wartet der Server vor jeder Ajax-Anfrage und liest gesendete Dateien mit der gewählten Geschwindigkeit: die Seite wie in einem langsamen Netz.</entry>
+	<entry key="Throttle.notInstalled">Throttle.install(application) wurde nicht aufgerufen: nichts wird langsamer.</entry>
+	<entry key="AjaxDelay.NONE">Keine</entry>
+	<entry key="AjaxDelay.HALF_SECOND">0,5 s</entry>
+	<entry key="AjaxDelay.SECOND">1 s</entry>
+	<entry key="AjaxDelay.TWO_SECONDS">2 s</entry>
+	<entry key="AjaxDelay.FIVE_SECONDS">5 s</entry>
+	<entry key="UploadSpeed.FULL">Volle Geschwindigkeit</entry>
+	<entry key="UploadSpeed.MEGABYTE">1 MB/s</entry>
+	<entry key="UploadSpeed.QUARTER_MEGABYTE">256 kB/s</entry>
+	<entry key="UploadSpeed.SLOW">64 kB/s</entry>
+</properties>

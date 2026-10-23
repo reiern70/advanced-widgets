@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="popovers-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+<wicket:fragment wicket:id="placementsCase">
+	<section>
+		<p class="popovers-demo__text"><wicket:message key="placementsText"/></p>
+		<form wicket:id="controls" class="popovers-demo__controls">
+			<label class="popovers-demo__control"><wicket:message key="design"/> <select wicket:id="design"></select></label>
+			<label class="popovers-demo__control"><wicket:message key="variant"/> <select wicket:id="variant"></select></label>
+		</form>
+		<div class="popovers-demo__compass">
+			<div class="popovers-demo__target" aria-hidden="true"></div>
+			<wicket:container wicket:id="placements"><button wicket:id="button">[placement]</button></wicket:container>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="galleryCase">
+	<section>
+		<form wicket:id="galleryControls" class="popovers-demo__controls">
+			<label class="popovers-demo__control"><wicket:message key="position"/> <select wicket:id="position"></select></label>
+		</form>
+		<div wicket:id="gallery" class="popovers-demo__gallery">
+			<figure wicket:id="designs" class="popovers-demo__example">
+				<div class="popovers-demo__stage">
+					<div wicket:id="preview" class="antilia-popover" data-side="bottom" data-align="center">
+						<div wicket:id="arrow" class="antilia-popover-arrow"></div>
+						<div wicket:id="header" class="antilia-popover-header">
+							<div wicket:id="title" class="antilia-popover-title">[design]</div>
+							<span wicket:id="close" class="antilia-popover-close" aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" focusable="false"><path d="M6 6l12 12 M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+						</div>
+						<div wicket:id="text" class="antilia-popover-body">[text]</div>
+					</div>
+				</div>
+				<button wicket:id="try">[try]</button>
+			</figure>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="richCase">
+	<section>
+		<div class="popovers-demo__rich">
+			<button wicket:id="status">[status]</button>
+			<p class="popovers-demo__project"><wicket:message key="project"/> <strong wicket:id="project">[project]</strong> <button wicket:id="rename">[rename]</button></p>
+		</div>
+		<div wicket:id="statusContent">
+			<dl class="popovers-demo__facts"><wicket:container wicket:id="facts"><dt wicket:id="name">[name]</dt><dd wicket:id="value">[value]</dd></wicket:container></dl>
+		</div>
+		<div wicket:id="renameContent">
+			<form wicket:id="renameForm" class="popovers-demo__rename">
+				<label class="popovers-demo__rename-field"><wicket:message key="name"/> <input type="text" wicket:id="name" autofocus="autofocus"/></label>
+				<p wicket:id="error" class="popovers-demo__error" role="alert">[error]</p>
+				<div class="popovers-demo__actions"><button type="submit" wicket:id="save"><wicket:message key="save"/></button><button wicket:id="cancel">[cancel]</button></div>
+			</form>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="fieldsCase">
+	<section>
+		<form wicket:id="fields" class="popovers-demo__fields">
+			<div wicket:id="field" class="popovers-demo__field">
+				<div class="popovers-demo__label"><label wicket:id="label">[label]</label><button wicket:id="help">[help]</button></div>
+				<input type="text" wicket:id="input" class="popovers-demo__input"/>
+			</div>
+		</form>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="tableCase">
+	<section>
+		<div class="popovers-demo__scroll">
+			<table class="popovers-demo__table">
+				<thead><tr><th scope="col"><wicket:message key="country"/></th><th scope="col"><wicket:message key="language"/></th><th scope="col"><wicket:message key="currency"/></th><th scope="col"></th></tr></thead>
+				<tbody>
+					<tr wicket:id="countries"><td wicket:id="name">[name]</td><td wicket:id="language">[language]</td><td wicket:id="currency">[currency]</td><td class="popovers-demo__action"><button wicket:id="about">[about]</button></td></tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

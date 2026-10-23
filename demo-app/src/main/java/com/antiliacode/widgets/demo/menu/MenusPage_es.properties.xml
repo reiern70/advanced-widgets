@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Menús</entry>
+	<entry key="explanation">&lt;p&gt;Menu de ui-components muestra una barra de elementos, arriba o al lado. Cada elemento es un IMenuItem: su etiqueta, quizá un icono y un tooltip, y el enlace que el menú dibuja para él. ui-components tiene uno para cada clase de enlace: BookmarkableMenuItem lleva a una página, AjaxMenuItem llama al servidor por Ajax, LinkMenuItem con una petición propia. Un SubMenu abre más elementos, que pueden ser submenús a su vez, tan hondo como quiera, y MenuSeparator traza una línea entre ellos. MenuLinkPanel pone el icono y la etiqueta en el enlace de un elemento y su tooltip en él.&lt;/p&gt;&lt;p&gt;Haga clic en un elemento con flecha para abrir su submenú; mientras uno de la barra está abierto, el puntero abre los demás, y en un submenú detenerse en un elemento abre el suyo. Las teclas funcionan como en los menús de un escritorio: las flechas a lo largo de la barra y arriba y abajo en un submenú, la flecha que apunta hacia fuera abre un submenú, Escape lo cierra, Inicio y Fin, y una letra lleva al siguiente elemento que empieza por ella. Elegir un elemento, un clic fuera o Tab cierran los menús.&lt;/p&gt;&lt;p&gt;La navegación lleva a esta página con el parámetro section: el elemento de la página mostrada queda marcado como actual, igual que los que lo contienen; sus submenús se abren al detenerse el puntero en ellos, como en un sitio web. La barra lateral abre sus submenús en su sitio, los que contienen el elemento actual desde el principio, y el servidor marca el elemento elegido por Ajax. Los ajustes cambian la orientación, los cuatro diseños, barra, píldoras, subrayado y barra lateral, y cómo se abren los submenús. Todo toma sus colores del tema y sus clases del aspecto, nav y dropdown-menu de Bootstrap en el aspecto Bootstrap, y funciona bajo una Content Security Policy estricta, sin estilos en línea.&lt;/p&gt;</entry>
+	<entry key="applicationTitle">Menú de aplicación</entry>
+	<entry key="application">Aplicación</entry>
+	<entry key="applicationIntro">La mayoría de los elementos llaman al servidor por Ajax; Archivo › Empezar de nuevo lo llama con una petición propia, y Ayuda › Página de inicio lleva a una página. Algunos elementos están desactivados y algunos tienen tooltips.</entry>
+	<entry key="applicationStart">Elija un elemento: los que tienen flecha abren un submenú.</entry>
+	<entry key="documentText">notes.txt
+
+Comprar leche
+Llamar al banco
+Reservar los vuelos</entry>
+	<entry key="chose">Eligió {0}, por Ajax.</entry>
+	<entry key="linked">Eligió {0}, con una petición propia: la página se dibujó de nuevo.</entry>
+	<entry key="file">Archivo</entry>
+	<entry key="new">Nuevo</entry>
+	<entry key="recent">Abrir reciente</entry>
+	<entry key="notes">notes.txt</entry>
+	<entry key="todo">todo.txt</entry>
+	<entry key="report">report.md</entry>
+	<entry key="save">Guardar</entry>
+	<entry key="save.tooltip">Guardar el documento en el servidor</entry>
+	<entry key="export">Exportar</entry>
+	<entry key="pdf">PDF</entry>
+	<entry key="csv">CSV</entry>
+	<entry key="startAgain">Empezar de nuevo</entry>
+	<entry key="startAgain.tooltip">Un enlace: la página se dibuja de nuevo</entry>
+	<entry key="edit">Editar</entry>
+	<entry key="undo">Deshacer</entry>
+	<entry key="redo">Rehacer</entry>
+	<entry key="redo.tooltip">Nada que rehacer</entry>
+	<entry key="cut">Cortar</entry>
+	<entry key="copy">Copiar</entry>
+	<entry key="paste">Pegar</entry>
+	<entry key="paste.tooltip">El portapapeles está vacío</entry>
+	<entry key="view">Ver</entry>
+	<entry key="zoomIn">Ampliar</entry>
+	<entry key="zoomOut">Reducir</entry>
+	<entry key="help">Ayuda</entry>
+	<entry key="about">Acerca de esta demo</entry>
+	<entry key="homePage">Página de inicio</entry>
+	<entry key="homePage.tooltip">Una página para marcadores: la de inicio de las demos</entry>
+	<entry key="navigationTitle">Navegación de un sitio</entry>
+	<entry key="navigation">Sitio</entry>
+	<entry key="navigationIntro">Cada elemento lleva a esta página, con la sección en su dirección. Los submenús se abren al detenerse el puntero en sus elementos.</entry>
+	<entry key="at">Está en {0}.</entry>
+	<entry key="address">La dirección de la página nombra la sección: section={0}. Guárdela en marcadores y el menú marcará el mismo elemento cuando vuelva.</entry>
+	<entry key="welcome">Bienvenida</entry>
+	<entry key="products">Productos</entry>
+	<entry key="laptops">Portátiles</entry>
+	<entry key="phones">Teléfonos</entry>
+	<entry key="accessories">Accesorios</entry>
+	<entry key="chargers">Cargadores</entry>
+	<entry key="covers">Fundas</entry>
+	<entry key="services">Servicios</entry>
+	<entry key="support">Soporte</entry>
+	<entry key="training">Formación</entry>
+	<entry key="company">Empresa</entry>
+	<entry key="sidebarTitle">Barra lateral</entry>
+	<entry key="sidebar">Vistas</entry>
+	<entry key="sidebarText">El servidor dibujó de nuevo la barra lateral por Ajax, marcando como actual el elemento que eligió; los submenús que lo contienen siguen abiertos.</entry>
+	<entry key="dashboard">Panel</entry>
+	<entry key="reports">Informes</entry>
+	<entry key="sales">Ventas</entry>
+	<entry key="inventory">Inventario</entry>
+	<entry key="archive">Archivo</entry>
+	<entry key="lastYear">El año pasado</entry>
+	<entry key="thisYear">Este año</entry>
+	<entry key="people">Personas</entry>
+	<entry key="members">Miembros</entry>
+	<entry key="roles">Roles</entry>
+	<entry key="preferences">Preferencias</entry>
+	<entry key="settingsTitle">Cualquier diseño</entry>
+	<entry key="settingsStart">Cambie los ajustes: el servidor dibuja el menú de nuevo.</entry>
+	<entry key="vertical">Al lado</entry>
+	<entry key="design">Diseño</entry>
+	<entry key="inline">Submenús en su sitio</entry>
+	<entry key="hover">Abrir al pasar</entry>
+	<entry key="design.BAR">Barra</entry>
+	<entry key="design.PILLS">Píldoras</entry>
+	<entry key="design.UNDERLINE">Subrayado</entry>
+	<entry key="design.SIDEBAR">Barra lateral</entry>
+	<entry key="galleryTitle">Galería</entry>
+	<entry key="alongTheTop">Arriba</entry>
+	<entry key="downTheSide">Al lado</entry>
+	<entry key="applicationAppIntro">Cada elemento avisa a la app de que se eligió; Ayuda › Página de inicio lleva a una página. Algunos elementos están desactivados y algunos tienen tooltips.</entry>
+	<entry key="picked">Eligió {0}.</entry>
+	<entry key="navigationAppIntro">Cada elemento es un enlace que la app sigue por sí misma, como un enrutador. Los submenús se abren al detenerse el puntero en sus elementos.</entry>
+	<entry key="routed">La app guarda la sección, como un enrutador: {0}.</entry>
+	<entry key="sidebarAppText">La app marca como actual el elemento que eligió; los submenús que lo contienen siguen abiertos.</entry>
+	<entry key="settingsAppStart">Cambie los ajustes: el menú los sigue.</entry>
+</properties>

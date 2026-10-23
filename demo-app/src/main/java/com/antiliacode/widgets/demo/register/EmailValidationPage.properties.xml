@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Confirm your email</entry>
+	<entry key="validated.title">Your email is confirmed</entry>
+	<entry key="validated.text">Thank you: {0} is confirmed. Sign in with it and your password to try the demos.</entry>
+	<entry key="invalid.title">This link does not work</entry>
+	<entry key="invalid.text">It was used already, or it is older than 48 hours. If you confirmed your email already, sign in; else signing in sends you a new link.</entry>
+	<entry key="toSignIn">Sign in</entry>
+	<entry key="home">Back home</entry>
+</properties>

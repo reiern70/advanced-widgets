@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Code Editor</entry>
+	<entry key="explanation">&lt;p&gt;CodeEditor from ui-components is a text area shown as a code editor, CodeMirror, in the colors of the theme and the look of the page. Choose a language: Java, JavaScript, TypeScript, JSON and Markdown are built in, Markdown highlighting its fenced code blocks in their own languages, and the log is a grammar this page plugs in with a script of its own. Ctrl+F searches and replaces, Ctrl+Z undoes, Ctrl+S saves, Alt and the mouse select a rectangle, and the arrows in the gutter fold blocks. Tab indents: Escape, then Tab, leaves the editor.&lt;/p&gt;&lt;p&gt;The server keeps each sample in the session: its text, which it follows as you type, and the state of its editor, where the cursor is, what you selected, how far you scrolled and the size you gave it by the bar along its bottom. The sentence below the editor says what the server knows. Switch languages, or leave the page and come back, and each editor is where you left it. The check boxes and the drop-downs render the editor again via Ajax, and it goes on as it was.&lt;/p&gt;&lt;p&gt;Below the second pill, notes in Markdown show beside their preview, in a split panel: the preview follows the text as you type, with its tables, task lists and code blocks highlighted in their languages, and HTML in the text shows as text. Drag the divider to share the room, and the bar below to make both taller. The button hides the preview, giving the editor all the room, and shows it again. Tick Keep the preview in step, and the preview follows the place you are at in the editor: move the cursor, type or scroll, and the matching part of the preview comes into view. The session keeps it all.&lt;/p&gt;&lt;p&gt;Below the third pill the files of a project open in tabs, an editor in each. A file with changes not saved marks its tab, which the editor tells the tabs in the browser, and closing it asks first. Save it with Ctrl+S or the button. Switching tabs keeps where you were in each. Everything works under a strict Content Security Policy.&lt;/p&gt;</entry>
+	<entry key="editorTitle">Any language, kept on the server</entry>
+	<entry key="filesTitle">Files in tabs</entry>
+	<entry key="notesTitle">Markdown, with its preview</entry>
+	<entry key="hidePreview">Hide the preview</entry>
+	<entry key="showPreview">Show the preview</entry>
+	<entry key="inStep">Keep the preview in step</entry>
+	<entry key="notesStart">Type on the left, and the preview follows; the server keeps the notes and how they show.</entry>
+	<entry key="appNotesStart">Type on the left, and the preview follows; the app keeps the notes and how they show.</entry>
+	<entry key="previewHidden">The preview is hidden: the editor has all the room.</entry>
+	<entry key="editorHidden">The editor is hidden: the preview has all the room.</entry>
+	<entry key="bothShown">The editor and the preview share the room.</entry>
+	<entry key="language">Language</entry>
+	<entry key="language.java">Java</entry>
+	<entry key="language.javascript">JavaScript</entry>
+	<entry key="language.typescript">TypeScript</entry>
+	<entry key="language.json">JSON</entry>
+	<entry key="language.markdown">Markdown</entry>
+	<entry key="language.log">Log (the page's own grammar)</entry>
+	<entry key="resize">Resize</entry>
+	<entry key="resize.vertical">Its height</entry>
+	<entry key="resize.horizontal">Its width</entry>
+	<entry key="resize.both">Both</entry>
+	<entry key="resize.none">Not at all</entry>
+	<entry key="lineNumbers">Line numbers</entry>
+	<entry key="readOnly">Read only</entry>
+	<entry key="selectable">Selectable</entry>
+	<entry key="lineWrapping">Wrap long lines</entry>
+	<entry key="save">Save</entry>
+	<entry key="start">Type, select, scroll or resize: the server keeps it all.</entry>
+	<entry key="heardFocus">The server heard you entered {0}.</entry>
+	<entry key="heardBlur">The server heard you left {0}, with its text.</entry>
+	<entry key="heardSave">Saved {0}.</entry>
+	<entry key="known">The server knows: {0}, {1} lines; the cursor on line {2}, column {3}; {4} characters selected; {5}; {6}.</entry>
+	<entry key="sizeOfPage">the size the page gives it</entry>
+	<entry key="sizeGiven">{0} × {1} px</entry>
+	<entry key="unsaved">changes not saved</entry>
+	<entry key="allSaved">all saved</entry>
+	<entry key="filesLabel">Files</entry>
+	<entry key="filesStart">Edit a file and its tab is marked; Ctrl+S or Save saves it; closing one with changes asks first.</entry>
+	<entry key="closed">Closed {0}.</entry>
+	<entry key="saved">Saved {0}.</entry>
+	<entry key="appStart">Type, select, scroll or resize: the app keeps it all.</entry>
+	<entry key="appHeardFocus">The app heard you entered {0}.</entry>
+	<entry key="appHeardBlur">The app heard you left {0}.</entry>
+	<entry key="appKnown">The app knows: {0}, {1} lines; the cursor on line {2}, column {3}; {4} characters selected; {5}; {6}.</entry>
+</properties>

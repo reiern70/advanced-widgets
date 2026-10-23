@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="ACCOUNTANT">Buchhalter/in</entry>
+	<entry key="ARCHITECT">Architekt/in</entry>
+	<entry key="CHEF">Koch/Köchin</entry>
+	<entry key="DESIGNER">Designer/in</entry>
+	<entry key="ELECTRICIAN">Elektriker/in</entry>
+	<entry key="ENGINEER">Ingenieur/in</entry>
+	<entry key="JOURNALIST">Journalist/in</entry>
+	<entry key="LAWYER">Anwalt/Anwältin</entry>
+	<entry key="MARKETING_SPECIALIST">Marketingfachkraft</entry>
+	<entry key="NURSE">Pflegefachkraft</entry>
+	<entry key="PHARMACIST">Apotheker/in</entry>
+	<entry key="PHOTOGRAPHER">Fotograf/in</entry>
+	<entry key="PHYSICIAN">Arzt/Ärztin</entry>
+	<entry key="PILOT">Pilot/in</entry>
+	<entry key="RESEARCHER">Forscher/in</entry>
+	<entry key="SALES_MANAGER">Vertriebsleiter/in</entry>
+	<entry key="SOFTWARE_DEVELOPER">Softwareentwickler/in</entry>
+	<entry key="TEACHER">Lehrer/in</entry>
+</properties>

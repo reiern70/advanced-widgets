@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Popover</entry>
+	<entry key="explanation">&lt;p&gt;Popover aus ui-components zeigt eine Blase mit einem Pfeil, der auf die Schaltfläche zeigt, die sie geöffnet hat, und erzählt mehr darüber: einen Titel und einen Text oder Komponenten der Seite. Der Server zeigt sie in der Antwort auf den Klick, sodass das Gesagte genau dann vom Server kommen kann. Sie schließt sich mit ihrem ×, mit Escape, mit einem Klick außerhalb oder einem erneuten Klick auf die Schaltfläche und gibt der Schaltfläche den Fokus zurück; beim Scrollen folgt sie der Schaltfläche.&lt;/p&gt;&lt;p&gt;Sie öffnet sich, wo Sie es wünschen: auf jeder Seite der Schaltfläche, mittig oder an einer ihrer Kanten entlang, oder auf der Seite mit dem meisten Platz. Ohne Platz auf ihrer Seite öffnet sie sich auf der anderen und verschiebt sich, um im Fenster zu bleiben, ihr Pfeil zeigt weiter auf die Schaltfläche. Neun Designs, von einer Karte mit einem Streifen in ihrer Farbe bis zu Glas, Neon oder einer Comic-Sprechblase, jedes in fünf Varianten, nehmen ihre Farben aus dem Theme, hell oder dunkel. Die Galerie zeigt jedes Design geöffnet dort, wo seine Auswahl Position es sagt, und Öffnen öffnet es dort wirklich.&lt;/p&gt;&lt;p&gt;Ein Popover kann jede Komponente zeigen: Die Angaben unten rendert der Server, während sich das Popover öffnet, und das Formular zum Umbenennen des Projekts ist ein Wicket-Formular in einem Popover, das seinen Fehler darin zeigt. React und Svelte rendern ihre eigenen Inhalte hinein. Alles funktioniert unter einer strengen Content Security Policy, ohne Inline-Stile.&lt;/p&gt;</entry>
+	<entry key="placementsTitle">Wo es sich öffnet</entry>
+	<entry key="placementsText">Jede Schaltfläche öffnet ein Popover auf ihrer Seite des Ziels: von einer Kante aus, mittig oder von der anderen Kante aus; die in der Mitte öffnet es, wo am meisten Platz ist. Scrollen Sie mit einem offenen Popover und sehen Sie, wie es folgt oder auf die andere Seite wechselt.</entry>
+	<entry key="design">Design</entry>
+	<entry key="position">Position</entry>
+	<entry key="variant">Variante</entry>
+	<entry key="placementText">{0} geöffnet, im oben gewählten Design und in der Variante. Klicken Sie daneben, drücken Sie Escape oder klicken Sie erneut auf die Schaltfläche, um es zu schließen.</entry>
+	<entry key="placement.TOP_LEFT">Oben links</entry>
+	<entry key="placement.TOP_CENTER">Oben mittig</entry>
+	<entry key="placement.TOP_RIGHT">Oben rechts</entry>
+	<entry key="placement.RIGHT_TOP">Rechts oben</entry>
+	<entry key="placement.RIGHT_CENTER">Rechts mittig</entry>
+	<entry key="placement.RIGHT_BOTTOM">Rechts unten</entry>
+	<entry key="placement.BOTTOM_RIGHT">Unten rechts</entry>
+	<entry key="placement.BOTTOM_CENTER">Unten mittig</entry>
+	<entry key="placement.BOTTOM_LEFT">Unten links</entry>
+	<entry key="placement.LEFT_BOTTOM">Links unten</entry>
+	<entry key="placement.LEFT_CENTER">Links mittig</entry>
+	<entry key="placement.LEFT_TOP">Links oben</entry>
+	<entry key="placement.AUTO">Automatisch</entry>
+	<entry key="galleryTitle">Neun Darstellungen</entry>
+	<entry key="try">Öffnen</entry>
+	<entry key="design.CARD">Karte</entry>
+	<entry key="design.CARD.text">Die Fläche des Themes, oben ein Streifen in seiner Farbe.</entry>
+	<entry key="design.SOLID">Gefüllt</entry>
+	<entry key="design.SOLID.text">Ganz in seiner Farbe, für das, was niemand übersehen soll.</entry>
+	<entry key="design.OUTLINE">Kontur</entry>
+	<entry key="design.OUTLINE.text">Flach, von einer Linie in seiner Farbe gezeichnet, ohne Schatten.</entry>
+	<entry key="design.GLASS">Glas</entry>
+	<entry key="design.GLASS.text">Milchglas: Die Seite scheint verschwommen hindurch.</entry>
+	<entry key="design.INVERSE">Invertiert</entry>
+	<entry key="design.INVERSE.text">Die Farben des Themes umgekehrt, klein, wie ein Tooltip.</entry>
+	<entry key="design.CALLOUT">Hinweis</entry>
+	<entry key="design.CALLOUT.text">Getönt, mit einem Balken an der Seite und einem Abzeichen seiner Bedeutung.</entry>
+	<entry key="design.AURORA">Polarlicht</entry>
+	<entry key="design.AURORA.text">Ein Rand in seiner Farbe, der in den Akzent des Themes übergeht.</entry>
+	<entry key="design.COMIC">Comic</entry>
+	<entry key="design.COMIC.text">Eine Sprechblase, mit Tinte umrandet, mit hartem Schatten.</entry>
+	<entry key="design.NEON">Neon</entry>
+	<entry key="design.NEON.text">Eine Linie in seiner Farbe, die rundherum leuchtet; am besten im Dunkeln.</entry>
+	<entry key="variant.DEFAULT">Standard</entry>
+	<entry key="variant.INFO">Info</entry>
+	<entry key="variant.SUCCESS">Erfolg</entry>
+	<entry key="variant.WARNING">Warnung</entry>
+	<entry key="variant.ERROR">Fehler</entry>
+	<entry key="richTitle">Komponenten in einem Popover</entry>
+	<entry key="status.wicket">Den Server fragen</entry>
+	<entry key="status.app">Den Browser fragen</entry>
+	<entry key="statusTitle">Wie es gerade aussieht</entry>
+	<entry key="statusText">Eben gerendert, als sich das Popover öffnete:</entry>
+	<entry key="fact.time">Uhrzeit</entry>
+	<entry key="fact.wicket">Wicket</entry>
+	<entry key="fact.java">Java</entry>
+	<entry key="fact.uptime">Läuft seit</entry>
+	<entry key="fact.memory">Speicher</entry>
+	<entry key="fact.window">Fenster</entry>
+	<entry key="fact.language">Sprache</entry>
+	<entry key="fact.opened">Geöffnet</entry>
+	<entry key="minutes">{0} Min.</entry>
+	<entry key="megabytes">{0} von {1} MB</entry>
+	<entry key="project">Projekt</entry>
+	<entry key="rename">Projekt umbenennen</entry>
+	<entry key="renameTitle">Projekt umbenennen</entry>
+	<entry key="name">Name</entry>
+	<entry key="save">Speichern</entry>
+	<entry key="cancel">Abbrechen</entry>
+	<entry key="required">Geben Sie dem Projekt einen Namen.</entry>
+	<entry key="fieldsTitle">Hilfe zu den Feldern eines Formulars</entry>
+	<entry key="help">Hilfe zu {0}</entry>
+	<entry key="field.username">Benutzername</entry>
+	<entry key="field.username.help">3 bis 20 Buchstaben, Ziffern, Punkte oder Bindestriche. Andere sehen ihn neben dem, was Sie schreiben.</entry>
+	<entry key="field.password">Passwort</entry>
+	<entry key="field.password.help">Mindestens 12 Zeichen. Nie eines einer anderen Website verwenden: Ein langer Satz ist leichter zu merken.</entry>
+	<entry key="field.code">Aktionscode</entry>
+	<entry key="field.code.help">Der Code aus 8 Zeichen in der E-Mail, die wir Ihnen geschickt haben, falls Sie einen haben.</entry>
+	<entry key="tableTitle">Mehr zu den Zeilen einer Tabelle</entry>
+	<entry key="country">Land</entry>
+	<entry key="language">Sprache</entry>
+	<entry key="currency">Währung</entry>
+	<entry key="aboutCountry">Mehr über {0}</entry>
+	<entry key="countryInfo">In der eigenen Sprache: {0}. ISO-Codes {1}; bezahlt wird in {2}.</entry>
+</properties>

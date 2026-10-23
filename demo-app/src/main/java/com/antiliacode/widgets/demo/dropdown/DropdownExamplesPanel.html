@@ -1,0 +1,33 @@
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+	<form wicket:id="form" class="dropdown-demo__form">
+		<section>
+			<h3><wicket:message key="single"/></h3>
+			<label class="dropdown-demo__field"><wicket:message key="size"/> <select wicket:id="size"></select></label>
+			<label class="dropdown-demo__field"><wicket:message key="country"/> <select wicket:id="country"></select></label>
+		</section>
+		<section>
+			<h3><wicket:message key="multiple"/></h3>
+			<label class="dropdown-demo__field"><wicket:message key="skills"/> <select wicket:id="skills"></select></label>
+			<label class="dropdown-demo__field"><wicket:message key="languages"/> <select wicket:id="languages"></select></label>
+		</section>
+		<section>
+			<h3><wicket:message key="disabledTitle"/></h3>
+			<label class="dropdown-demo__field"><wicket:message key="size"/> <select wicket:id="disabled"></select></label>
+		</section>
+		<p><button type="submit" class="dropdown-demo__send"><wicket:message key="send"/></button></p>
+	</form>
+	<p wicket:id="choices" class="dropdown-demo__choices">[choices]</p>
+</wicket:panel>

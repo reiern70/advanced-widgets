@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="fungi">Pilze</entry>
+	<entry key="fungi.description">Weder Pflanzen noch Tiere: Pilze ernähren sich, indem sie zersetzen, was andere zurücklassen, mit einem Geflecht feiner Fäden, dem Myzel. Sie sind näher mit den Tieren verwandt als mit den Pflanzen.</entry>
+	<entry key="basidiomycetes">Ständerpilze</entry>
+	<entry key="basidiomycetes.description">Die Pilze der meisten Hutpilze und Baumschwämme, die ihre Sporen auf winzigen Keulen tragen, den Basidien.</entry>
+	<entry key="fly-agaric">Fliegenpilz</entry>
+	<entry key="fly-agaric.description">Der rote Pilz mit weißen Tupfen aus dem Märchen. Er ist giftig und lebt in Partnerschaft mit den Wurzeln von Birken und Kiefern.</entry>
+	<entry key="porcini">Steinpilz</entry>
+	<entry key="porcini.description">Ein begehrter Speisepilz mit dickem Stiel und braunem Hut, der jeden Herbst in den Wäldern Europas gesammelt wird.</entry>
+	<entry key="honey-fungus">Dunkler Hallimasch</entry>
+	<entry key="honey-fungus.description">Eines der größten Lebewesen der Erde: Ein einziger Pilz in Oregon breitet sich unter fast 10 Quadratkilometern Wald aus und ist womöglich Tausende Jahre alt.</entry>
+	<entry key="ascomycetes">Schlauchpilze</entry>
+	<entry key="ascomycetes.description">Die größte Gruppe der Pilze, die ihre Sporen in kleinen Schläuchen bilden. Zu ihr gehören Hefen, Schimmelpilze, Morcheln und Trüffel.</entry>
+	<entry key="yeast">Backhefe</entry>
+	<entry key="yeast.description">Ein einzelliger Pilz, der seit Jahrtausenden Brot aufgehen lässt und Bier und Wein vergärt, indem er Zucker in Alkohol und Kohlendioxid verwandelt.</entry>
+	<entry key="penicillium">Penicillium</entry>
+	<entry key="penicillium.description">Der blaugrüne Schimmel, in dem Alexander Fleming 1928 das Penicillin entdeckte, das erste Antibiotikum.</entry>
+	<entry key="truffle">Schwarze Trüffel</entry>
+	<entry key="truffle.description">Ein Pilz, der unter der Erde zwischen den Wurzeln von Eichen und Haselsträuchern Fruchtkörper bildet, mit abgerichteten Hunden gesucht wird und zu den teuersten Lebensmitteln der Welt gehört.</entry>
+	<entry key="prototaxites">Prototaxites</entry>
+	<entry key="prototaxites.description">Ein Riese des ersten Festlands: bis zu 8 Meter hohe Stämme, lange für Bäume gehalten, die sehr wahrscheinlich ein gewaltiger Pilz waren, als die Pflanzen noch klein waren.</entry>
+
+	<entry key="animals">Tiere</entry>
+	<entry key="animals.description">Vielzellige Lebewesen, die sich von anderen Lebewesen ernähren und sich meist fortbewegen. Sie erschienen vor mehr als 550 Millionen Jahren in den Meeren.</entry>
+	<entry key="ediacaran">Ediacara-Tiere</entry>
+	<entry key="ediacaran.description">Die ältesten bekannten großen Tiere, weichkörperige Wesen des Meeresbodens in Gestalt von Wedeln, Scheiben und Steppdecken, noch vor dem Kambrium.</entry>
+	<entry key="charnia">Charnia</entry>
+	<entry key="charnia.description">Ein am Boden der Tiefsee verankerter Wedel, 1957 in England von einem Schüler gefunden; lange hielt man ihn für eine Pflanze.</entry>
+	<entry key="dickinsonia">Dickinsonia</entry>
+	<entry key="dickinsonia.description">Ein flaches, geripptes Oval von bis zu einem Meter Länge. Cholesterinspuren in den Fossilien zeigen, dass es ein Tier war, eines der ältesten bekannten.</entry>
+	<entry key="cambrian">Kambrische Tiere</entry>
+	<entry key="cambrian.description">Die Tiere der kambrischen Explosion, als die meisten großen Tiergruppen innerhalb weniger Millionen Jahre erschienen, viele davon erhalten im Burgess-Schiefer in Kanada.</entry>
+	<entry key="anomalocaris">Anomalocaris</entry>
+	<entry key="anomalocaris.description">Der Spitzenräuber der kambrischen Meere, bis zu einem halben Meter lang, der mit seitlichen Lappen schwamm und seine Beute mit zwei stacheligen Armen packte.</entry>
+	<entry key="opabinia">Opabinia</entry>
+	<entry key="opabinia.description">Ein Tier mit fünf gestielten Augen und einem langen Rüssel mit Greifzange am Kopf, über das die Forscher, die es zuerst sahen, lachen mussten.</entry>
+	<entry key="hallucigenia">Hallucigenia</entry>
+	<entry key="hallucigenia.description">Ein kleiner Wurm mit Beinen und Stacheln auf dem Rücken, so seltsam, dass er zuerst auf dem Kopf stehend und verkehrt herum gezeichnet wurde.</entry>
+	<entry key="arthropods">Gliederfüßer</entry>
+	<entry key="arthropods.description">Tiere mit gegliederten Beinen und hartem Außenskelett: Insekten, Spinnen, Krebstiere und die ausgestorbenen Trilobiten. Mehr als drei Viertel der bekannten Tiere sind Gliederfüßer.</entry>
+	<entry key="paradoxides">Paradoxides</entry>
+	<entry key="paradoxides.description">Einer der größten Trilobiten, bis zu 37 Zentimeter lang, aus den Meeren des Kambriums. Trilobiten lebten fast 300 Millionen Jahre lang.</entry>
+	<entry key="meganeura">Meganeura</entry>
+	<entry key="meganeura.description">Ein libellenähnliches Insekt mit 70 Zentimetern Flügelspannweite, eines der größten Insekten aller Zeiten, in den Wäldern des Karbons.</entry>
+	<entry key="honey-bee">Westliche Honigbiene</entry>
+	<entry key="honey-bee.description">Ein staatenbildendes Insekt mit Völkern von Zehntausenden, das ein Drittel unserer Nutzpflanzen bestäubt und seinen Schwestern durch Tanzen zeigt, wo Blüten sind.</entry>
+	<entry key="vertebrates">Wirbeltiere</entry>
+	<entry key="vertebrates.description">Tiere mit Wirbelsäule und Schädel: Fische, Amphibien, Reptilien, Vögel und Säugetiere.</entry>
+	<entry key="fish">Fische</entry>
+	<entry key="fish.description">Die ersten Wirbeltiere und noch immer die zahlreichsten: Wassertiere, die mit Kiemen atmen. Alle anderen Wirbeltiere stammen von ihnen ab.</entry>
+	<entry key="dunkleosteus">Dunkleosteus</entry>
+	<entry key="dunkleosteus.description">Ein gepanzerter Fisch des Devons, bis zu 4 Meter lang, mit sich selbst schärfenden Knochenklingen anstelle von Zähnen und einem der kräftigsten Bisse aller Zeiten.</entry>
+	<entry key="megalodon">Megalodon</entry>
+	<entry key="megalodon.description">Der größte Hai aller Zeiten, vielleicht 15 Meter lang oder mehr, mit handgroßen Zähnen. Er jagte Wale.</entry>
+	<entry key="coelacanth">Quastenflosser</entry>
+	<entry key="coelacanth.description">Ein Fisch mit fleischigen, beinartigen Flossen, nur aus Fossilien bekannt und seit 66 Millionen Jahren für ausgestorben gehalten, bis 1938 vor Südafrika einer gefangen wurde.</entry>
+	<entry key="amphibians">Amphibien</entry>
+	<entry key="amphibians.description">Die ersten Wirbeltiere, die an Land gingen, und die ihre Eier noch immer ins Wasser legen: Frösche, Salamander und Blindwühlen.</entry>
+	<entry key="eryops">Eryops</entry>
+	<entry key="eryops.description">Ein schweres Amphibium von etwa 2 Metern mit breitem, flachem Schädel, das in den Sümpfen wie ein Krokodil Fische jagte.</entry>
+	<entry key="axolotl">Axolotl</entry>
+	<entry key="axolotl.description">Ein Schwanzlurch aus den Seen von Mexiko-Stadt, der nie erwachsen wird: Er behält sein Leben lang die Kiemen und kann verlorene Beine und sogar Teile seines Herzens nachwachsen lassen.</entry>
+	<entry key="synapsids">Synapsiden</entry>
+	<entry key="synapsids.description">Der Zweig der Landwirbeltiere, der zu den Säugetieren führt, mit einer Öffnung im Schädel hinter jedem Auge. Lange vor den Dinosauriern beherrschten sie das Land.</entry>
+	<entry key="dimetrodon">Dimetrodon</entry>
+	<entry key="dimetrodon.description">Ein Räuber mit einem großen Segel auf dem Rücken, oft für einen Dinosaurier gehalten, obwohl er Dutzende Millionen Jahre vor ihnen lebte und uns näher steht.</entry>
+	<entry key="lystrosaurus">Lystrosaurus</entry>
+	<entry key="lystrosaurus.description">Ein gedrungener Pflanzenfresser mit zwei Hauern, der das größte Massenaussterben überhaupt, am Ende des Perms, überlebte und sich danach über die ganze Welt verbreitete.</entry>
+	<entry key="early-mammals">Frühe Säugetiere</entry>
+	<entry key="early-mammals.description">Die ersten Säugetiere und ihre nächsten Verwandten, meist klein, behaart und nachtaktiv, die im Schatten der Dinosaurier lebten.</entry>
+	<entry key="morganucodon">Morganucodon</entry>
+	<entry key="morganucodon.description">Ein spitzmausgroßes Tier der späten Trias, eines der ersten säugetierähnlichen Wesen, das nachts Insekten jagte.</entry>
+	<entry key="repenomamus">Repenomamus</entry>
+	<entry key="repenomamus.description">Ein Säugetier aus China, dessen größere Art so groß wie ein Dachs war, das größte seiner Zeit; eines wurde mit den Knochen eines jungen Dinosauriers im Magen gefunden.</entry>
+	<entry key="mammals">Säugetiere</entry>
+	<entry key="mammals.description">Gleichwarme Wirbeltiere mit Haaren, die ihre Jungen mit Milch ernähren. Nach dem Aussterben der Dinosaurier nahmen sie jede Größe und Lebensweise an.</entry>
+	<entry key="platypus">Schnabeltier</entry>
+	<entry key="platypus.description">Ein Säugetier Australiens, das Eier legt, einen Entenschnabel hat, seine Beute über elektrische Felder findet und dessen Männchen giftige Sporne tragen.</entry>
+	<entry key="smilodon">Smilodon</entry>
+	<entry key="smilodon.description">Die Säbelzahnkatze Amerikas mit bis zu 28 Zentimeter langen Eckzähnen; Tausende von ihnen blieben in den Teergruben von Los Angeles stecken.</entry>
+	<entry key="mammoth">Wollhaarmammut</entry>
+	<entry key="mammoth.description">Ein Elefant der Eiszeit mit zottigem Fell und langen gebogenen Stoßzähnen, von Menschen gejagt. Die letzten lebten bis vor etwa 4000 Jahren auf der Wrangelinsel.</entry>
+	<entry key="blue-whale">Blauwal</entry>
+	<entry key="blue-whale.description">Das größte Tier, das je gelebt hat, bis zu 30 Meter lang und 190 Tonnen schwer, das sich von winzigem Krill ernährt.</entry>
+	<entry key="human">Mensch</entry>
+	<entry key="human.description">Ein aufrecht gehender Menschenaffe mit großem Gehirn, der vor etwa 300.000 Jahren in Afrika erschien und sich seither über den ganzen Planeten verbreitet hat.</entry>
+	<entry key="reptiles">Reptilien</entry>
+	<entry key="reptiles.description">Wirbeltiere, deren Eier eine Schale haben und daher an Land gelegt werden können: Echsen, Schlangen, Schildkröten, Krokodile und die Dinosaurier, Vögel eingeschlossen.</entry>
+	<entry key="ichthyosaurus">Ichthyosaurus</entry>
+	<entry key="ichthyosaurus.description">Ein delfinförmiges Meeresreptil, das im Meer lebende Junge gebar. Ichthyosaurier gehörten zu den ersten fossilen Reptilien, die gefunden wurden, von Mary Anning an der Küste Englands.</entry>
+	<entry key="plesiosaurus">Plesiosaurus</entry>
+	<entry key="plesiosaurus.description">Ein Meeresreptil mit langem Hals, kleinem Kopf und vier Flossen, das durch das Wasser „flog“. Mary Anning fand 1823 das erste vollständige.</entry>
+	<entry key="pterosaurs">Flugsaurier</entry>
+	<entry key="pterosaurs.description">Fliegende Reptilien, nahe Verwandte der Dinosaurier, aber keine Dinosaurier, deren Flügel aus Haut bestanden, die von einem sehr langen vierten Finger gespannt wurde.</entry>
+	<entry key="pteranodon">Pteranodon</entry>
+	<entry key="pteranodon.description">Ein zahnloser Flugsaurier mit Knochenkamm und bis zu 7 Metern Spannweite, der über dem Binnenmeer Nordamerikas segelte und Fische fing.</entry>
+	<entry key="quetzalcoatlus">Quetzalcoatlus</entry>
+	<entry key="quetzalcoatlus.description">Eines der größten fliegenden Tiere aller Zeiten, am Boden so groß wie eine Giraffe, mit etwa 10 Metern Spannweite.</entry>
+	<entry key="dinosaurs">Dinosaurier</entry>
+	<entry key="dinosaurs.description">Reptilien mit gerade unter dem Körper stehenden Beinen, die mehr als 160 Millionen Jahre das Land beherrschten. Der Asteroid vor 66 Millionen Jahren tötete sie alle außer den Vögeln, die ebenfalls Dinosaurier sind.</entry>
+	<entry key="theropods">Theropoden</entry>
+	<entry key="theropods.description">Die Dinosaurier, die auf zwei Beinen liefen, mit hohlen Knochen, meist Fleischfresser, von kleinen gefiederten Jägern bis zu den Riesen. Vögel sind Theropoden.</entry>
+	<entry key="tyrannosaurus">Tyrannosaurus rex</entry>
+	<entry key="tyrannosaurus.description">Der „Tyrannen-Echsenkönig“: 12 Meter lang und etwa 8 Tonnen schwer, mit dem stärksten Biss aller Landtiere und winzigen Armen mit zwei Fingern.</entry>
+	<entry key="allosaurus">Allosaurus</entry>
+	<entry key="allosaurus.description">Der große Jäger des Juras, etwa 9 Meter lang, der in Nordamerika Stegosaurier und junge Sauropoden erbeutete.</entry>
+	<entry key="spinosaurus">Spinosaurus</entry>
+	<entry key="spinosaurus.description">Ein Theropode mit einem Segel auf dem Rücken und einer Schnauze wie ein Krokodil, länger als T. rex, der in den Flüssen Nordafrikas Fische jagte.</entry>
+	<entry key="velociraptor">Velociraptor</entry>
+	<entry key="velociraptor.description">Ein gefiederter Jäger von der Größe eines Truthahns, mit einer sichelförmigen Kralle an jedem Fuß, viel kleiner als in den Filmen.</entry>
+	<entry key="birds">Vögel</entry>
+	<entry key="birds.description">Die heute lebenden Dinosaurier: gefiedert, zahnlos, mit Schnabel, und die meisten fliegen. Es gibt mehr als 10.000 Arten.</entry>
+	<entry key="archaeopteryx">Archaeopteryx</entry>
+	<entry key="archaeopteryx.description">Halb Vogel, halb Dinosaurier: Federn und Flügel, aber auch Zähne, Krallen an den Händen und ein langer knöcherner Schwanz. 1861 in Bayern gefunden, zwei Jahre nach Darwins Entstehung der Arten.</entry>
+	<entry key="dodo">Dodo</entry>
+	<entry key="dodo.description">Eine flugunfähige Taube von Mauritius, etwa einen Meter groß, ausgerottet weniger als ein Jahrhundert nachdem Seefahrer die Insel erreicht hatten, im 17. Jahrhundert.</entry>
+	<entry key="ostrich">Strauß</entry>
+	<entry key="ostrich.description">Der größte lebende Vogel, der nicht fliegen kann, aber 70 Kilometer pro Stunde läuft und die größten Eier legt.</entry>
+	<entry key="sauropodomorphs">Sauropodomorphen</entry>
+	<entry key="sauropodomorphs.description">Pflanzenfressende Dinosaurier mit langem Hals und Schwanz, aus denen die Sauropoden hervorgingen, die größten Tiere, die je über die Erde liefen.</entry>
+	<entry key="brachiosaurus">Brachiosaurus</entry>
+	<entry key="brachiosaurus.description">Ein Sauropode mit längeren Vorder- als Hinterbeinen, der seinen Kopf wie eine Giraffe 9 Meter über dem Boden trug, um in den Baumkronen zu fressen.</entry>
+	<entry key="diplodocus">Diplodocus</entry>
+	<entry key="diplodocus.description">Ein Sauropode von etwa 25 Metern mit peitschenartigem Schwanz. Abgüsse des Skeletts von „Dippy“ wurden Museen in aller Welt geschenkt, auch dem Berliner Naturkundemuseum.</entry>
+	<entry key="argentinosaurus">Argentinosaurus</entry>
+	<entry key="argentinosaurus.description">Eines der größten Landtiere aller Zeiten, etwa 35 Meter lang und bis zu 70 Tonnen schwer, gefunden in Patagonien.</entry>
+	<entry key="ornithischians">Vogelbeckensaurier</entry>
+	<entry key="ornithischians.description">Die Dinosaurier mit „Vogelbecken“, alle Pflanzenfresser, oft gepanzert, gehörnt oder mit Kamm: Stegosaurier, Ankylosaurier, Entenschnabel- und Horndinosaurier. Trotz des Namens stammen die Vögel nicht von ihnen ab.</entry>
+	<entry key="stegosaurus">Stegosaurus</entry>
+	<entry key="stegosaurus.description">Ein Pflanzenfresser mit zwei Reihen hoher Platten auf dem Rücken und vier Stacheln am Schwanz, und einem für seine Größe sehr kleinen Gehirn.</entry>
+	<entry key="parasaurolophus">Parasaurolophus</entry>
+	<entry key="parasaurolophus.description">Ein Entenschnabeldinosaurier mit einem langen hohlen Kamm, mit dem er tiefe, trompetenartige Rufe ausstoßen konnte.</entry>
+	<entry key="triceratops">Triceratops</entry>
+	<entry key="triceratops.description">Ein Horndinosaurier mit drei Hörnern und einem großen Knochenschild, der bis zum Ende der Kreidezeit neben T. rex lebte.</entry>
+	<entry key="ankylosaurus">Ankylosaurus</entry>
+	<entry key="ankylosaurus.description">Ein Dinosaurier, gepanzert wie ein Panzer, mit Knochenplatten auf dem Rücken und einer schweren Keule am Schwanzende.</entry>
+
+	<entry key="plants">Pflanzen</entry>
+	<entry key="plants.description">Lebewesen, die ihre Nahrung selbst aus Sonnenlicht, Wasser und Kohlendioxid herstellen und den Sauerstoff abgeben, den wir atmen. Sie eroberten vor etwa 470 Millionen Jahren das Land.</entry>
+	<entry key="mosses">Moose</entry>
+	<entry key="mosses.description">Kleine Pflanzen ohne Wurzeln, Blüten oder Samen, die Wasser wie ein Schwamm aufsaugen und sich durch Sporen vermehren. Sie gehören zu den ältesten Landpflanzen.</entry>
+	<entry key="peat-moss">Torfmoos</entry>
+	<entry key="peat-moss.description">Ein Moos, das Moore aufbaut und bis zum 20-Fachen seines Gewichts an Wasser speichert; die Moore speichern mehr Kohlenstoff als alle Wälder der Welt.</entry>
+	<entry key="haircap-moss">Goldenes Frauenhaarmoos</entry>
+	<entry key="haircap-moss.description">Eines der höchsten Moose, bis zu 40 Zentimeter, mit Stämmchen wie winzige Tannen, in Mooren und feuchten Wäldern.</entry>
+	<entry key="cooksonia">Cooksonia</entry>
+	<entry key="cooksonia.description">Eine der ersten Pflanzen mit einem Stängel, der Wasser leiten konnte: wenige Zentimeter hoch, gegabelt und blattlos, mit Sporenkapseln an den Spitzen.</entry>
+	<entry key="ferns">Farne</entry>
+	<entry key="ferns.description">Pflanzen mit Wurzeln und Blättern, aber ohne Samen oder Blüten, die sich durch Sporen vermehren. Mit ihren Verwandten bildeten sie die Steinkohlenwälder des Karbons.</entry>
+	<entry key="tree-fern">Taschenfarn</entry>
+	<entry key="tree-fern.description">Ein Baumfarn Australiens mit einem bis zu 15 Meter hohen Stamm, von Wedeln gekrönt, wie die Farne der Dinosaurierzeit.</entry>
+	<entry key="horsetail">Schachtelhalme</entry>
+	<entry key="horsetail.description">Lebende Fossilien mit hohlen, gegliederten Stängeln, die letzten einer Gruppe, die im Karbon 20 Meter hohe Bäume bildete.</entry>
+	<entry key="gymnosperms">Nacktsamer</entry>
+	<entry key="gymnosperms.description">Pflanzen mit „nackten Samen“, in Zapfen statt in Früchten: Nadelbäume, Palmfarne und der Ginkgo. Sie bedeckten das Land zur Zeit der Dinosaurier.</entry>
+	<entry key="ginkgo">Ginkgo</entry>
+	<entry key="ginkgo.description">Der letzte einer Baumgruppe, so alt wie die Dinosaurier, mit fächerförmigen Blättern. Mehrere Ginkgos überlebten die Atombombe von Hiroshima.</entry>
+	<entry key="giant-sequoia">Riesenmammutbaum</entry>
+	<entry key="giant-sequoia.description">Der mächtigste Baum der Erde: „General Sherman“ in Kalifornien ist 84 Meter hoch und mehr als 2000 Jahre alt.</entry>
+	<entry key="wollemi-pine">Wollemie</entry>
+	<entry key="wollemi-pine.description">Ein Nadelbaum, der nur aus Fossilien bekannt war, bis 1994 in einer Schlucht bei Sydney weniger als hundert Bäume gefunden wurden.</entry>
+	<entry key="flowering-plants">Blütenpflanzen</entry>
+	<entry key="flowering-plants.description">Pflanzen, deren Samen in Früchten heranwachsen, nachdem ihre Blüten bestäubt wurden, oft von Insekten. Neun von zehn Pflanzenarten sind Blütenpflanzen.</entry>
+	<entry key="archaefructus">Archaefructus</entry>
+	<entry key="archaefructus.description">Eine der ältesten bekannten Blütenpflanzen, eine Wasserpflanze aus China mit winzigen Blüten ohne Blütenblätter.</entry>
+	<entry key="oak">Stieleiche</entry>
+	<entry key="oak.description">Ein langlebiger Baum Europas, der tausend Jahre alt werden kann und mit seinen Eicheln und Blättern Hunderte Arten von Insekten, Vögeln und Säugetieren ernährt.</entry>
+	<entry key="sunflower">Sonnenblume</entry>
+	<entry key="sunflower.description">Eine Pflanze aus Amerika, deren Blütenkopf, der jung der Sonne folgt, aus Hunderten kleiner, in Spiralen angeordneter Blüten besteht.</entry>
+	<entry key="wheat">Weichweizen</entry>
+	<entry key="wheat.description">Ein Gras, das seit etwa 10.000 Jahren, seit der Jungsteinzeit, angebaut wird, eine der Pflanzen, die die Menschheit ernähren.</entry>
+</properties>

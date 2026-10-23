@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="tree-demo">
+	<div class="tree-demo__options tree-demo__options--wide">
+		<label wicket:for="icons"><wicket:message key="icons"/></label>
+		<select wicket:id="icons"></select>
+	</div>
+	<section>
+		<h2 class="tree-demo__title"><code>Tree</code> · <wicket:message key="section.wicket"/></h2>
+		<div wicket:id="tree" class="tree-demo__box"></div>
+	</section>
+	<section>
+		<h2 class="tree-demo__title"><code>JsonBasedTree</code> · <wicket:message key="section.json"/></h2>
+		<div wicket:id="jsonTree" class="tree-demo__box"></div>
+	</section>
+	<aside class="tree-demo__details"><div wicket:id="details"></div></aside>
+</div>
+</wicket:extend>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Barra de desplazamiento</entry>
+	<entry key="explanation">&lt;p&gt;Un ScrollbarBehavior de ui-components da a un componente que se desplaza barras de desplazamiento iguales en todos los navegadores: las nativas se ocultan y se dibujan barras finas en los colores del tema sobre los bordes del componente. Sigue desplazándose de forma nativa con la rueda, las teclas y el tacto; el cursor de la barra se puede arrastrar y un clic en la pista avanza una página hacia el clic.&lt;/p&gt;&lt;p&gt;El primer cuadro conserva la barra propia del navegador, para comparar. El comportamiento dibuja las barras en las direcciones en que el CSS del componente le deja desplazarse, o en las que se le indican: el tercer cuadro pide solo la horizontal. Las barras siguen los cambios del contenido: El botón + vuelve a generar el último cuadro por Ajax, su barra toma el nuevo tamaño y el comportamiento desplaza el cuadro a la primera de las líneas añadidas; los demás botones lo desplazan al inicio, al final, a una posición y a una línea. Cambie el tema en la barra superior y las barras lo siguen.&lt;/p&gt;</entry>
+	<entry key="native">Barra del navegador</entry>
+	<entry key="vertical">Vertical</entry>
+	<entry key="horizontal">Horizontal</entry>
+	<entry key="both">En ambos sentidos</entry>
+	<entry key="growing">Generado de nuevo por Ajax</entry>
+	<entry key="addLines">Añadir 20 líneas</entry>
+	<entry key="toTop">Inicio</entry>
+	<entry key="toBottom">Final</entry>
+	<entry key="toPosition">A 100 px</entry>
+	<entry key="toLine">A la línea 10</entry>
+	<entry key="line">Línea {0}</entry>
+	<entry key="line.long">Línea {0}: el veloz murciélago hindú comía feliz cardillo y kiwi, una y otra y otra vez.</entry>
+</properties>

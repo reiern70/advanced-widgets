@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Modal Dialog Example</entry>
+	<entry key="explanation">This is a demo of adding, editing and deleting in a modal dialog, the same in Wicket, React and Svelte.&lt;br/&gt; &lt;ul&gt; &lt;li&gt;The Wicket tab uses the Modal of ui-components, Wicket's ModalDialog in the colors of the theme of the page: Add member and Edit open the form of a member in it, Delete asks to confirm. Cancel and Save, made by button factories, are in the footer, on the right. Saving repaints the team through Ajax&lt;/li&gt; &lt;li&gt;The × in the top right corner closes the dialog, as Escape and Cancel do. A click on the dimmed page around it closes it too, an option on in this demo&lt;/li&gt; &lt;li&gt;Change a field, then try to close the dialog: it asks whether to discard the changes first, a function the dialog asks before it closes&lt;/li&gt; &lt;li&gt;Drag the title to move the dialog; double-click it to fold the dialog to its title, and again to unfold it, in the browser alone. Both can be turned off&lt;/li&gt; &lt;li&gt;While it is open the focus stays in it, Tab and Shift+Tab going round its fields and buttons, and when it closes the focus goes back to the button that opened it&lt;/li&gt; &lt;li&gt;The form is validated as Wicket validates it: the name and the email required, the email an address. Try saving it empty&lt;/li&gt; &lt;/ul&gt;&lt;p&gt;The React and Svelte tabs use the Modal of @antilia/react and @antilia/svelte: the same markup, style sheet and behaviors, from the core's ModalDialog. They add, edit and delete the same team, kept in your session, through the mounted resource /api/team, which validates with the messages of the Wicket form: a member changed in one tab shows in the others once they load the team again.&lt;/p&gt;&lt;p&gt;Below the team, Options of a dialog sets what a dialog does before opening it: whether Escape, the × in the corner or a click around it close it, whether its title drags and folds it, and its size, fitting its content, small, medium or large, or a width of its own such as 40em. Turn off Escape and the ×: Close in the footer still closes it. Open a nested dialog from it, and another from that one: each opens over the one below, takes Escape and the focus, and gives them back when it closes. The buttons of the footers are the buttons of the theme, small, with icons; the dialog of a member is medium, the question before a deletion small.&lt;/p&gt;</entry>
+</properties>

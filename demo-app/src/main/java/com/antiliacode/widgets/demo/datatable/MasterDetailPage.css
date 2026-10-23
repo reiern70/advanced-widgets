@@ -1,0 +1,52 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * The master and the detail table: stacked, or side by side.
+ */
+.master-detail__options {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em 0.75em;
+	margin-bottom: 1em;
+}
+
+.master-detail__options label {
+	font-weight: 600;
+}
+
+.master-detail__tables {
+	display: grid;
+	gap: 1.5em;
+}
+
+/* stacked: one column as wide as the page, each table scrolling sideways in it */
+.master-detail--stacked {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* side by side: each table scrolls sideways in its own column */
+.master-detail--sideBySide {
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	align-items: start;
+}
+
+.master-detail__tables > .master-detail__table {
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.master-detail__title {
+	margin: 0 0 0.5em 0;
+	font-size: 1.1em;
+}

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
-
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -21,7 +19,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.antilia.widgets</groupId>
+		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>antilia-widgets-parent</artifactId>
 		<version>${revision}</version>
 	</parent>
@@ -231,7 +229,7 @@
 							</includes>
 							<excludes>
 								<exclude>**/*.min.js</exclude>
-								<exclude>com/antilia/widgets/codeeditor/antilia-code-editor.js</exclude>
+								<exclude>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</exclude>
 							</excludes>
 						</configuration>
 					</execution>
@@ -249,7 +247,7 @@
 						</goals>
 						<configuration>
 							<includes>
-								<include>com/antilia/widgets/codeeditor/antilia-code-editor.js</include>
+								<include>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</include>
 							</includes>
 							<closureWarningLevels>
 								<suspiciousCode>OFF</suspiciousCode>

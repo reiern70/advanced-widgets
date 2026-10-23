@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Looks</entry>
+	<entry key="description">shows the components in the Bootstrap look beside their own, and in a look made of both</entry>
+	<entry key="explanation">&lt;p&gt;A theme gives the components their colors, a look the CSS classes of their parts. Every element a component draws is a part (LookPart): a dialog's header, a table's header, a dropdown's option... The Antilia look draws them with their own style sheets; the Bootstrap look gives each part Bootstrap's classes as well, such as btn btn-primary btn-sm for a button, modal-header for the header of a dialog, table for a data table or dropdown-item for an option. Only Bootstrap's style sheet is on the page, never its script: what the components do stays their own.&lt;/p&gt;&lt;p&gt;A look can be made of others, an aspect from each: what the parts are, their colors, their sizes and their states. Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA) gives the parts Bootstrap's classes with the colors and the sizes of the Antilia look, as the third column shows.&lt;/p&gt;&lt;p&gt;The colors stay the theme's. The Bootstrap themes take them from the custom properties of the Bootstrap on the page, so a theme of Bootswatch or of your own colors the components too; any other theme gives its colors to Bootstrap's components and custom properties, so the page's own Bootstrap markup inside it matches the components.&lt;/p&gt;&lt;p&gt;In Wicket a ThemeBehavior puts the look on a component and everything inside it, as the attribute data-antilia-look, which the scripts of the components read too. The look of the session, Looks.setSessionLook or the model Looks.sessionLook(), is that of every page once chosen on one, as with the Look of the top bar. React has LookProvider and Svelte setLook.&lt;/p&gt;</entry>
+	<entry key="intro">The same components in the looks of ui-components, in the theme chosen in the top bar. A theme gives the colors, a look the CSS classes of every part: in the Bootstrap look the buttons, dialogs, menus, tables, panels and notifications get Bootstrap's classes, while their behavior stays their own, as only Bootstrap's style sheet is on the page, never its script. Pick the Bootstrap theme to take the colors from Bootstrap too, or any other theme to give Bootstrap its colors.</entry>
+	<entry key="antilia">Antilia look</entry>
+	<entry key="antilia.help">The components' own style sheets, here on a page that has Bootstrap's too.</entry>
+	<entry key="bootstrap">Bootstrap look</entry>
+	<entry key="bootstrap.help">Bootstrap's classes for every part, the components' behavior.</entry>
+	<entry key="mixed">Bootstrap, Antilia's colors and sizes</entry>
+	<entry key="mixed.help">A look made of two: Bootstrap's classes, but the colors and the sizes of the Antilia look.</entry>
+	<entry key="native">Bootstrap's own markup</entry>
+	<entry key="native.help">Plain Bootstrap, no component of ours: in the Bootstrap look it takes the colors of the theme as well.</entry>
+	<entry key="native.alert">An alert of Bootstrap, in the colors of the theme.</entry>
+	<entry key="native.view">View</entry>
+	<entry key="native.day">Day</entry>
+	<entry key="native.week">Week</entry>
+	<entry key="native.month">Month</entry>
+	<entry key="native.email">Email</entry>
+	<entry key="native.remember">Remember me</entry>
+	<entry key="native.overview">Overview</entry>
+	<entry key="native.details">Details</entry>
+	<entry key="native.card">A card</entry>
+	<entry key="native.first">The active item</entry>
+	<entry key="native.second">Another item</entry>
+	<entry key="progress">Progress</entry>
+</properties>

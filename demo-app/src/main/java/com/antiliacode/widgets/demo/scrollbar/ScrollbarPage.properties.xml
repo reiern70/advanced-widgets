@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Scrollbar</entry>
+	<entry key="explanation">&lt;p&gt;A ScrollbarBehavior from ui-components gives a scrolling component scroll bars that look the same in every browser: the native ones are hidden and slim bars in the colors of the theme are drawn over the edges of the component. It keeps scrolling natively with the wheel, the keys and touch; the thumb can be dragged and a click on the track pages towards the click.&lt;/p&gt;&lt;p&gt;The first box keeps the browser's own scroll bar, to compare. The behavior draws the bars in the directions the CSS of the component lets it scroll, or in those given to it: the third box asks for the horizontal one only. The bars follow changes of the content: The + button re-renders the last box via Ajax, its bar picks up the new size and the behavior scrolls the box to the first of the lines added; the other buttons scroll it to its top, its bottom, a position and a line. Change the theme in the top bar and the bars follow it.&lt;/p&gt;</entry>
+	<entry key="native">Browser scroll bar</entry>
+	<entry key="vertical">Vertical</entry>
+	<entry key="horizontal">Horizontal</entry>
+	<entry key="both">Both ways</entry>
+	<entry key="growing">Re-rendered via Ajax</entry>
+	<entry key="addLines">Add 20 lines</entry>
+	<entry key="toTop">Top</entry>
+	<entry key="toBottom">Bottom</entry>
+	<entry key="toPosition">To 100 px</entry>
+	<entry key="toLine">To line 10</entry>
+	<entry key="line">Line {0}</entry>
+	<entry key="line.long">Line {0}: the quick brown fox jumps over the lazy dog, again and again and again.</entry>
+</properties>

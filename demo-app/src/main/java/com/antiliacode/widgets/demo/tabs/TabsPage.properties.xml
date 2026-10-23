@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Tabs</entry>
+	<entry key="explanation">&lt;p&gt;Tabs from ui-components shows a list of tabs, along the top of their panels or down their left side, and the panel of the tab selected. Click a tab, or give it the focus with Tab and move with the arrow keys, Home and End. The panels of all tabs are in the page, so switching needs no request and keeps what you typed in each.&lt;/p&gt;&lt;p&gt;The documents are closable: close one with its ×, with Delete while its tab has the focus, or with the middle button. Each change you make to a document reaches the server by the Ajax behavior of its text area, and the server marks its tab with a dot: changes not saved. Closing a tab with changes asks first, in a dialog, and closing it anyway puts its text back; the server then hears of the tab closed and forgets it. Save takes the mark away. The button before the × of a document is an action of the page: it shows what the server knows of the document in a popover, a bubble pointing at it, in the colors of the theme: in its main color when all is saved, amber with changes. A click outside, Escape or the button again closes it. New document adds a tab via Ajax without rendering the others, so what you typed in them stays.&lt;/p&gt;&lt;p&gt;The second tabs take any of nine designs, along the top or down the side: tabs, pills and underline; segmented, folder and lifted, made for tabs along the top; side bar, steps and cards, made for tabs down the side, which the gallery shows. All take their colors from the theme; with setSendToServer the server hears each tab you select, as the sentence below them says. Everything works under a strict Content Security Policy, without inline style.&lt;/p&gt;</entry>
+	<entry key="documentsTitle">Documents, edited on the server</entry>
+	<entry key="documents">Documents</entry>
+	<entry key="welcome">Welcome</entry>
+	<entry key="welcomeText">This tab cannot be closed. The others are documents: type in one and the server hears it and marks its tab; save it and the mark goes. Close a document with changes, and you are asked first.</entry>
+	<entry key="newDocument">New document</entry>
+	<entry key="save">Save</entry>
+	<entry key="about">About this document</entry>
+	<entry key="info">{0}: {1} lines, {2} characters; {3}.</entry>
+	<entry key="unsaved">changes not saved</entry>
+	<entry key="allSaved">all saved</entry>
+	<entry key="untitled">untitled-{0}.txt</entry>
+	<entry key="closed">The server forgot {0}, closed.</entry>
+	<entry key="saved">Saved {0}.</entry>
+	<entry key="opened">Opened {0}.</entry>
+	<entry key="start">Close a document with its ×, Delete or the middle button; one with changes asks first.</entry>
+	<entry key="settingsTitle">Any design, along the top or down the side</entry>
+	<entry key="settings">Settings</entry>
+	<entry key="vertical">Down the side</entry>
+	<entry key="design">Design</entry>
+	<entry key="design.TABS">Tabs</entry>
+	<entry key="design.PILLS">Pills</entry>
+	<entry key="design.UNDERLINE">Underline</entry>
+	<entry key="selected">The server knows the tab selected: {0}.</entry>
+	<entry key="profile">Profile</entry>
+	<entry key="profile.text">Your name, your picture and how others see you.</entry>
+	<entry key="alerts">Alerts</entry>
+	<entry key="alerts.text">What we tell you about, and whether by email or in the application.</entry>
+	<entry key="privacy">Privacy</entry>
+	<entry key="privacy.text">Who sees your activity, and what we keep of it.</entry>
+	<entry key="design.SEGMENTED">Segmented</entry>
+	<entry key="design.FOLDER">Folder</entry>
+	<entry key="design.LIFTED">Lifted</entry>
+	<entry key="design.SIDEBAR">Side bar</entry>
+	<entry key="design.STEPS">Steps</entry>
+	<entry key="design.CARDS">Cards</entry>
+	<entry key="galleryTitle">A gallery of designs</entry>
+	<entry key="alongTheTop">Made for tabs along the top</entry>
+	<entry key="downTheSide">Made for tabs down the side</entry>
+	<entry key="overview">Overview</entry>
+	<entry key="overview.text">A light, warm jacket for the city and the hills, filled with recycled down.</entry>
+	<entry key="specs">Specs</entry>
+	<entry key="specs.text">Weight 420 g. Water repellent. Two zipped pockets and an inner one. Packs into its own pocket.</entry>
+	<entry key="reviews">Reviews</entry>
+	<entry key="reviews.text">4.7 out of 5 from 128 reviews: "Warm without the bulk."</entry>
+	<entry key="account">Account</entry>
+	<entry key="account.text">Who you are: your name and your email address.</entry>
+	<entry key="shipping">Shipping</entry>
+	<entry key="shipping.text">Where it goes, and how fast: standard, express or pick up in a shop.</entry>
+	<entry key="payment">Payment</entry>
+	<entry key="payment.text">How you pay: a card, a transfer or on delivery. The steps before are done.</entry>
+	<entry key="review">Review</entry>
+	<entry key="review.text">Everything at a glance before you place the order.</entry>
+</properties>

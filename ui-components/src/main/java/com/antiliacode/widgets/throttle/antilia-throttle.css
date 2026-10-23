@@ -1,0 +1,77 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * The throttle components (ThrottlePanel, ThrottleButton), in the colors of the theme they are
+ * in (see antilia-theme.css), with fallbacks for pages without a theme.
+ */
+
+/* the settings, side by side where there is room, one above the other in a popover */
+.antilia-throttle {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 1rem;
+	color: var(--antilia-theme-text, inherit);
+}
+
+.antilia-throttle-setting {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem 0.5rem;
+}
+
+.antilia-throttle-label {
+	font-weight: 600;
+}
+
+.antilia-throttle-hint,
+.antilia-throttle-warning {
+	flex-basis: 100%;
+	margin: 0;
+	font-size: 0.875em;
+}
+
+.antilia-throttle-hint {
+	opacity: 0.8;
+}
+
+.antilia-throttle-warning {
+	color: var(--antilia-theme-error, #b91c1c);
+}
+
+/*
+ * the button, and a dot on it while the server slows down, which says how to screen readers and
+ * as its tooltip
+ */
+.antilia-throttle-button {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
+.antilia-throttle-state {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 0.6rem;
+	height: 0.6rem;
+	overflow: hidden;
+	border-radius: 50%;
+	background: var(--antilia-theme-warning, #d97706);
+	box-shadow: 0 0 0 2px var(--antilia-theme-surface, #ffffff);
+	white-space: nowrap;
+	text-indent: 1rem;
+}

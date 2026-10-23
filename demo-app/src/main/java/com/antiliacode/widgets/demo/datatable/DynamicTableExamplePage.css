@@ -1,0 +1,214 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+table.ant-dataview {
+	margin-bottom: 10px;
+	border-collapse: collapse;
+	font-size: 0.875em;
+}
+
+table.ant-dataview colgroup {
+	border: none;
+}
+
+table.ant-dataview thead th {
+	font-weight: bold;
+	text-align: left;
+	padding: 6px 8px;
+}
+
+table.ant-dataview thead th a[href]:hover {
+	text-decoration: underline;
+}
+
+table.ant-dataview td {
+	padding: 4px 8px;
+}
+
+table.ant-dataview tr.navigation td {
+	padding: 6px 8px;
+}
+
+table.ant-dataview tr.ant-data-table-selection-toolbar td {
+	padding: 2px 8px;
+}
+
+table.ant-dataview tr.ant-data-table-selection-toolbar a {
+	font-weight: bold;
+}
+
+/* the settings: as many columns as fit, small labels over the drop-downs */
+.ant-dataview-options {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+	gap: 0.45rem 1rem;
+	margin: 0 0 0.6rem 0;
+	font-size: 0.875rem;
+}
+
+.ant-dataview-option {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.ant-dataview-option-title {
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.ant-dataview-option-title > label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* the buttons acting on the grid as a whole, above it */
+.ant-dataview-actions {
+	margin: 0 0 0.6rem 0;
+}
+
+/* a button with a long label wraps it rather than sticking out of a phone */
+.ant-dataview-actions > .ant-button {
+	max-width: 100%;
+	white-space: normal;
+	text-align: start;
+}
+
+.ant-dataview-help {
+	position: static;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 1.2em;
+	height: 1.2em;
+	border-radius: 50%;
+	background: var(--antilia-theme-primary, #c2410c);
+	color: var(--antilia-theme-on-primary, #fff);
+	font: bold 0.75em/1 system-ui, sans-serif;
+	cursor: default;
+}
+
+/* the letter, centered in the circle whatever the font's line metrics */
+.ant-dataview-help > span[aria-hidden] {
+	display: block;
+	line-height: 1;
+	transform: translateY(0.04em);
+}
+
+.ant-dataview-help:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #c2410c);
+	outline-offset: 2px;
+}
+
+.ant-dataview-tooltip {
+	position: absolute;
+	z-index: 10;
+	top: 1.6rem;
+	white-space: normal;
+	left: 0;
+	right: 0;
+	width: auto;
+	padding: 0.5em 0.7em;
+	border-radius: 0.3em;
+	background: #2b1d12;
+	color: #fff;
+	font: normal 400 0.85rem/1.35 sans-serif;
+	text-align: left;
+	box-shadow: 0 0.2em 0.8em rgba(0, 0, 0, 0.3);
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.15s ease-in-out, visibility 0.15s;
+}
+
+.ant-dataview-help:hover .ant-dataview-tooltip,
+.ant-dataview-help:focus .ant-dataview-tooltip {
+	visibility: visible;
+	opacity: 1;
+}
+
+.ant-dataview-sized {
+	height: 600px;
+}
+
+.ant-dataview-options :is(select, input) {
+	width: 100%;
+	font-weight: normal;
+}
+
+/* the height, a number field as high as the drop-downs next to it */
+.ant-dataview-options input[type="number"] {
+	box-sizing: border-box;
+	min-height: 2.1em;
+	padding: 0.25em 0.6em;
+	border: 1px solid var(--antilia-theme-border, #c4c9d4);
+	border-radius: 0.35em;
+	background: var(--antilia-theme-surface, #fff);
+	color: var(--antilia-theme-text, inherit);
+	font: inherit;
+}
+
+.user-filter input {
+	width: 12em;
+}
+
+.user-edit {
+	min-width: 22em;
+}
+
+.user-edit label {
+	display: block;
+	margin-bottom: 0.6em;
+	font-weight: 400;
+}
+
+.user-edit input,
+.user-edit select {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: 0.2em;
+	padding: 0.25em 0.4em;
+	font: inherit;
+}
+
+/* the drop-down below its label and as wide as the fields, as they are */
+.user-edit .antilia-dropdown {
+	display: flex;
+	width: 100%;
+	margin-top: 0.2em;
+}
+
+.user-edit [aria-invalid="true"] {
+	border-color: #c62828;
+	outline: 1px solid #c62828;
+}
+
+.user-phones {
+	display: grid;
+	grid-template-columns: max-content minmax(0, max-content);
+	column-gap: 0.4em;
+}
+
+/* a number wider than its column ends in an ellipsis */
+.user-phones > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="captchaLead">Zu viele Fehlversuche: Geben Sie auch die Buchstaben des Bildes ein.</entry>
+	<entry key="captchaQuestionLead">Zu viele Fehlversuche: Beantworten Sie auch die Frage.</entry>
+	<entry key="captchaLetters">Die Buchstaben des Bildes</entry>
+	<entry key="captchaImage">Einzugebende Buchstaben</entry>
+	<entry key="captchaAnother">Andere Buchstaben zeigen</entry>
+	<entry key="captchaToQuestion">Schwer zu lesen? Stattdessen eine Frage beantworten</entry>
+	<entry key="captchaToLetters">Stattdessen die Buchstaben eines Bildes eingeben</entry>
+	<entry key="captchaAnswer">Die Antwort</entry>
+	<entry key="captchaPlus">Wie viel ist {0} plus {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaMinus">Wie viel ist {0} minus {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaNumbers">null, eins, zwei, drei, vier, fünf, sechs, sieben, acht, neun, zehn</entry>
+	<entry key="captchaLettersWrong">Die Buchstaben stimmen nicht mit dem Bild überein. Versuchen Sie es mit den neuen.</entry>
+	<entry key="captchaAnswerWrong">Die Antwort ist falsch. Versuchen Sie es mit der neuen Frage.</entry>
+</properties>

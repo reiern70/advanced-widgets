@@ -1,0 +1,215 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * The address book: the filters and the contacts in a split panel.
+ */
+.contacts__split {
+	min-height: 40em;
+	border: 1px solid var(--antilia-theme-border, #ddd);
+	border-radius: 0.4em;
+}
+
+.contacts__filters,
+.contacts__results {
+	box-sizing: border-box;
+	height: 100%;
+	padding: 0.75em;
+}
+
+.contacts__filters {
+	overflow-y: auto;
+	background: color-mix(in srgb, var(--antilia-theme-primary, #2f5bd3) 4%,
+		var(--antilia-theme-surface, #ffffff));
+}
+
+.contacts__results {
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.contacts__filters-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5em;
+	min-height: 2em;
+	margin-bottom: 0.5em;
+}
+
+.contacts__heading {
+	margin: 0;
+	font-size: 1.1em;
+}
+
+.contacts__facets {
+	display: grid;
+	gap: 0.75em;
+	margin: 0;
+}
+
+/* a facet: its autocomplete, then its most common values */
+.contacts-facet .antilia-collapsible-body {
+	display: grid;
+	gap: 0.5em;
+	padding: 0.6em;
+}
+
+/* the check boxes scroll below the find bar, whose suggestions are not cut off */
+.contacts-facet__list {
+	display: grid;
+	align-content: start;
+	gap: 0.15em;
+	max-height: 15em;
+	overflow-y: auto;
+	padding-right: 0.5em;
+}
+
+.contacts-facet__value {
+	display: flex;
+	align-items: center;
+	gap: 0.45em;
+	padding: 0.1em 0.2em;
+	border-radius: 0.25em;
+	cursor: pointer;
+}
+
+.contacts-facet__value:hover {
+	background: var(--antilia-theme-hover, rgba(0, 0, 0, 0.05));
+}
+
+.contacts-facet__label {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contacts-facet__count {
+	flex: none;
+	min-width: 2.2em;
+	padding: 0 0.45em;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--antilia-theme-primary, #2f5bd3) 12%, transparent);
+	font-size: 0.8em;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.contacts-facet__suggestion {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75em;
+}
+
+.contacts-facet__more {
+	margin: 0.2em 0 0;
+	font-size: 0.85em;
+	opacity: 0.75;
+}
+
+/* how many contacts pass, and the filters chosen as chips */
+.contacts__summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4em;
+	min-height: 2em;
+	margin-bottom: 0.5em;
+}
+
+.contacts__count {
+	margin-right: 0.5em;
+}
+
+.contacts__chip button.antilia-chip-remove {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+}
+
+.contacts__chip button.antilia-chip-remove:hover {
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+}
+
+.contacts__search input {
+	margin-left: 0.3em;
+	padding: 0.25em 0.5em;
+	border: 1px solid var(--antilia-theme-border, #bbb);
+	border-radius: 0.3em;
+	background: var(--antilia-theme-surface, Field);
+	color: var(--antilia-theme-text, FieldText);
+	font: inherit;
+}
+
+.contacts-nowrap {
+	white-space: nowrap;
+}
+
+.contacts-muted {
+	opacity: 0.7;
+}
+
+/* the initials of a contact, in a circle */
+.contacts-avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.9em;
+	height: 1.9em;
+	margin-right: 0.5em;
+	border-radius: 50%;
+	background: var(--antilia-theme-primary, #2f5bd3);
+	color: var(--antilia-theme-on-primary, #ffffff);
+	font-size: 0.75em;
+	font-weight: 600;
+	vertical-align: middle;
+}
+
+.contacts-avatar--large {
+	width: 3em;
+	height: 3em;
+	margin-right: 0;
+	font-size: 1.1em;
+}
+
+/* the card of a contact, in the dialog */
+.contact-card__head {
+	display: flex;
+	align-items: center;
+	gap: 0.9em;
+	margin-bottom: 1em;
+}
+
+.contact-card__name {
+	font-size: 1.2em;
+	font-weight: 600;
+}
+
+.contact-card__details {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.4em 1em;
+	margin: 0;
+}
+
+.contact-card__details dt {
+	font-weight: 600;
+}
+
+.contact-card__details dd {
+	margin: 0;
+}

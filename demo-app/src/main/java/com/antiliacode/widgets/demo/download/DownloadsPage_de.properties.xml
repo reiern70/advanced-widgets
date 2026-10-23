@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Downloads</entry>
+	<entry key="explanation">&lt;p&gt;Downloads jeder Art, alle über die Schaltflächen des Themes, im Aussehen, das oben in der Leiste gewählt ist. Die Dateien sind ein Bericht über die Länder der Welt in der Sprache der Seite, den der Server erstellt, wenn er angefordert wird, in sieben Formaten: Text, CSV, JSON, ein Diagramm als SVG und als PNG, ein PDF und ein ZIP-Archiv mit allen.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Per Ajax&lt;/b&gt;: ein AjaxDownloadButton aus ui-components lädt mit Wickets AjaxDownloadBehavior herunter: Die Seite bleibt, wie sie ist, und erfährt, wie der Download endete, was eine Benachrichtigung meldet. Jede Schaltfläche nutzt eine andere Location des Behaviors: in den Browser als Blob, über einen versteckten iframe, in einem neuen Tab oder im selben Fenster. Solange die Datei kommt, ist die Schaltfläche beschäftigt: Ein Spinner ersetzt ihr Symbol, und sie ignoriert Klicks. Wählen Sie die Datei und wie der Server antwortet: sofort, langsam, um die Schaltflächen beschäftigt zu sehen, oder mit einem Fehler, um zu sehen, welche Orte ihn erkennen.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Links&lt;/b&gt;: Links, denen der Browser ohne Ajax folgt, von einem ButtonBehavior als Schaltflächen gezeichnet: Wickets DownloadLink auf eine Datei, die der Server schreibt und nach dem Download löscht, ein ResourceLink auf eine Ressource der Seite, eine Ressource unter einer eigenen URL, die man teilen kann, dieselbe Ressource, die ein PDF in einem neuen Tab zeigt, und eine Datei der Webanwendung mit dem Attribut download.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Nach einem Formular&lt;/b&gt;: Die Schaltflächen eines Formulars senden es per Ajax und laden, sobald es gültig ist, den beschriebenen Bericht herunter oder öffnen ihn in einem neuen Tab, jede mit einem ButtonDownloadBehavior, das jede Schaltfläche beschäftigt zeigt, solange ihr Download läuft. Die Fehler des Formulars erscheinen als Benachrichtigungen.&lt;/p&gt;</entry>
+	<entry key="ajax">Per Ajax</entry>
+	<entry key="links">Links</entry>
+	<entry key="form">Nach einem Formular</entry>
+	<entry key="ajax.hint">Jede Schaltfläche lädt die gewählte Datei auf andere Weise herunter, die Seite bleibt, wie sie ist; eine Benachrichtigung meldet, wie der Download endete.</entry>
+	<entry key="links.hint">Links, denen der Browser ohne Ajax folgt, als Schaltflächen gezeichnet.</entry>
+	<entry key="form.hint">Die Schaltflächen senden das Formular und laden, sobald es gültig ist, den beschriebenen Bericht herunter oder öffnen ihn in einem neuen Tab.</entry>
+	<entry key="file">Datei</entry>
+	<entry key="answer">Der Server</entry>
+	<entry key="DemoFile.TEXT">Text (.txt)</entry>
+	<entry key="DemoFile.CSV">CSV (.csv)</entry>
+	<entry key="DemoFile.JSON">JSON (.json)</entry>
+	<entry key="DemoFile.SVG">Diagramm als SVG (.svg)</entry>
+	<entry key="DemoFile.PNG">Diagramm als PNG (.png)</entry>
+	<entry key="DemoFile.PDF">PDF (.pdf)</entry>
+	<entry key="DemoFile.ZIP">ZIP mit allen (.zip)</entry>
+	<entry key="Answer.AT_ONCE">antwortet sofort</entry>
+	<entry key="Answer.SLOWLY">braucht drei Sekunden</entry>
+	<entry key="Answer.FAILS">schlägt fehl</entry>
+	<entry key="location.blob">In den Browser</entry>
+	<entry key="location.blob.help">Der Browser fordert die Datei mit einer eigenen Anfrage als Blob an und speichert sie dann. Die beste Wahl für heutige Browser: Er erkennt, ob die Datei kam oder der Server einen Fehler hatte.</entry>
+	<entry key="location.iframe">Über einen versteckten iframe</entry>
+	<entry key="location.iframe.help">Ein versteckter iframe fordert die Datei an, die der Browser speichert. Die Seite wird nie entladen, ihre WebSockets bleiben also offen; er erkennt, ob die Datei kam oder ein Fehler im Frame erschien.</entry>
+	<entry key="location.newwindow">In einem neuen Tab</entry>
+	<entry key="location.newwindow.help">Ein neuer Tab öffnet die Datei, die der Server inline sendet, damit der Browser sie zeigt: ein PDF, ein Bild, einen Text; ein ZIP wird gespeichert. Ein Fehler schließt den Tab wieder.</entry>
+	<entry key="location.samewindow">Im selben Fenster</entry>
+	<entry key="location.samewindow.help">Das Fenster selbst geht zur Datei, die der Server als Anhang sendet, sodass der Browser sie speichert und die Seite bleibt; die Seite erhält aber unload, was ihre WebSockets schließt. Es erkennt, wann die Datei kam, nie einen Fehler.</entry>
+	<entry key="location.samewindow.blocked">Die Schaltfläche wartet, solange der Server fehlschlägt: Der Fehler würde die Seite ersetzen.</entry>
+	<entry key="fileLink">countries.txt</entry>
+	<entry key="fileLink.help">Wickets DownloadLink: Der Server schreibt die Datei beim Klick in seinen temporären Ordner, sendet sie und löscht sie.</entry>
+	<entry key="resourceLink">countries.csv</entry>
+	<entry key="resourceLink.help">Ein ResourceLink auf eine Ressource der Seite, die die Datei erstellt, wenn der Browser sie anfordert.</entry>
+	<entry key="mountedLink">countries.json</entry>
+	<entry key="mountedLink.help">Eine Ressource, die die Anwendung unter einer eigenen URL bereitstellt, die man als Lesezeichen speichern und teilen kann:</entry>
+	<entry key="openLink">countries.pdf in neuem Tab</entry>
+	<entry key="openLink.help">Dieselbe Ressource sendet das PDF auf Wunsch inline, und der Link öffnet es in einem neuen Tab, der es zeigt.</entry>
+	<entry key="staticLink">downloads.png</entry>
+	<entry key="staticLink.help">Eine Datei der Webanwendung, das Bild dieser Demo, die das Attribut download des Links speichert, statt sie zu zeigen.</entry>
+	<entry key="report.title">Titel</entry>
+	<entry key="report.format">Format</entry>
+	<entry key="report.rows">Länder</entry>
+	<entry key="report.download">Herunterladen</entry>
+	<entry key="report.open">In neuem Tab öffnen</entry>
+	<entry key="downloaded.title">Heruntergeladen</entry>
+	<entry key="downloaded">${file}: ${where}.</entry>
+	<entry key="failed.title">Download fehlgeschlagen</entry>
+	<entry key="failed">Der Server konnte ${file} nicht senden: ${where}.</entry>
+</properties>

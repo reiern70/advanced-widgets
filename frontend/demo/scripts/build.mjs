@@ -1,6 +1,4 @@
 /*
- * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,12 +25,10 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = join(root, 'dist', 'com', 'antilia', 'widgets', 'demo', 'frameworks');
+const out = join(root, 'dist', 'com', 'antiliacode', 'widgets', 'demo', 'frameworks');
 
 const BANNER = [
 	'/*',
-	' * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)',
-	' *',
 	' * Licensed under the Apache License, Version 2.0 (the "License");',
 	' * you may not use this file except in compliance with the License.',
 	' * You may obtain a copy of the License at',

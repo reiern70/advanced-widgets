@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Mitteilungen</entry>
+	<entry key="explanation">&lt;p&gt;Notifications aus ui-components zeigt kurze Mitteilungen als Toasts, gestapelt in einer Ecke des Fensters oder in der Mitte seines oberen oder unteren Rands. Jede hat eine Kopfzeile mit dem Symbol ihres Typs, einem Titel und einer Schaltfläche, die sie schließt, und einen Inhalt, Text oder HTML. Sie bleibt, bis der Benutzer sie schließt, oder verschwindet nach einer Zeit, die ein Balken an ihrem unteren Rand herunterzählt, standardmäßig 5 Sekunden, während Fehler bleiben, bis man sie schließt; der Countdown wartet, solange der Zeiger über der Mitteilung oder der Fokus in ihr ist, und Escape schließt die Mitteilung mit dem Fokus. Es gibt vier Typen, Erfolg, Fehler, Warnung und Information, und die Seite kann eigene haben: die Notiz unten ist violett und hat eine Glühbirne, aus einer Klasse im Stylesheet der Seite. Mitteilungen erscheinen in den Farben des Themas und funktionieren unter einer strikten Content Security Policy.&lt;/p&gt;&lt;p&gt;Wählen Sie im ersten Formular eine Mitteilung und zeigen Sie sie per Ajax mit show(Notification). In Wicket werden auch die Feedback-Meldungen der Seite zu Mitteilungen: Speichern Sie das zweite Formular ohne Namen, und der Fehler des Pflichtfelds erscheint als eine; mit Namen tut es success() der Seite. Jede Seite dieser Demo zeigt ihre Feedback-Meldungen so, mit den Notifications ihrer Basisseite. Die Reiter React und Svelte zeigen dasselbe mit ihren Notifications.&lt;/p&gt;&lt;p&gt;„Nach einer Weiterleitung zeigen“ behält die Mitteilung mit SessionNotifications.show(Notification) in der Session und geht zu einer neuen Seite, deren Notifications sie zeigen, wie nach einer Anmeldung anderswo und der Rückkehr. Die Feedback-Meldungen der Session, etwa getSession().success(), kommen ebenso über eine Weiterleitung. Das gibt es nur in Wicket: React und Svelte zeigen ihre Mitteilungen in der Seite, in der sie sind.&lt;/p&gt;</entry>
+	<entry key="showTitle">Eine Mitteilung zeigen</entry>
+	<entry key="feedbackTitle">Feedback-Meldungen als Mitteilungen</entry>
+	<entry key="type">Typ</entry>
+	<entry key="title.field">Titel</entry>
+	<entry key="message">Nachricht</entry>
+	<entry key="position">Position</entry>
+	<entry key="html">Die Nachricht ist HTML</entry>
+	<entry key="timeout">Dauer</entry>
+	<entry key="show">Zeigen</entry>
+	<entry key="showAfterRedirect">Nach einer Weiterleitung zeigen</entry>
+	<entry key="closeAll">Alle schließen</entry>
+	<entry key="name">Name</entry>
+	<entry key="save">Speichern</entry>
+	<entry key="Required">'${label}' ist ein Pflichtfeld.</entry>
+	<entry key="required">'{0}' ist ein Pflichtfeld.</entry>
+	<entry key="saved">Hallo, {0}! Ihr Name wurde gespeichert.</entry>
+	<entry key="defaultTitle">Gespeichert</entry>
+	<entry key="defaultMessage">Die Änderungen wurden gespeichert.</entry>
+	<entry key="type.success">Erfolg</entry>
+	<entry key="type.error">Fehler</entry>
+	<entry key="type.warning">Warnung</entry>
+	<entry key="type.info">Information</entry>
+	<entry key="type.note">Notiz</entry>
+	<entry key="position.top-left">Oben links</entry>
+	<entry key="position.top-center">Oben mittig</entry>
+	<entry key="position.top-right">Oben rechts</entry>
+	<entry key="position.bottom-left">Unten links</entry>
+	<entry key="position.bottom-center">Unten mittig</entry>
+	<entry key="position.bottom-right">Unten rechts</entry>
+	<entry key="timeout.-1">Standard: 5 Sekunden, Fehler bis geschlossen</entry>
+	<entry key="timeout.3000">3 Sekunden</entry>
+	<entry key="timeout.5000">5 Sekunden</entry>
+	<entry key="timeout.10000">10 Sekunden</entry>
+	<entry key="timeout.0">Bis geschlossen</entry>
+</properties>

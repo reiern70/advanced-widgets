@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="notifications-demo">
+	<section>
+		<h3><wicket:message key="showTitle"/></h3>
+		<form wicket:id="showForm" class="notifications-demo__form">
+			<label><wicket:message key="type"/> <select wicket:id="type"></select></label>
+			<label><wicket:message key="title.field"/> <input type="text" wicket:id="title"/></label>
+			<label class="notifications-demo__wide"><wicket:message key="message"/> <textarea wicket:id="message" rows="2"></textarea></label>
+			<label class="notifications-demo__check"><input type="checkbox" wicket:id="html"/> <wicket:message key="html"/></label>
+			<label><wicket:message key="position"/> <select wicket:id="position"></select></label>
+			<label><wicket:message key="timeout"/> <select wicket:id="timeout"></select></label>
+			<div class="notifications-demo__buttons">
+				<button type="submit" wicket:id="show" class="notifications-demo__show"><wicket:message key="show"/></button>
+				<button type="submit" wicket:id="showAfterRedirect" class="notifications-demo__show-after-redirect"><wicket:message key="showAfterRedirect"/></button>
+				<button type="button" wicket:id="closeAll" class="notifications-demo__close-all"><wicket:message key="closeAll"/></button>
+			</div>
+		</form>
+	</section>
+	<section>
+		<h3><wicket:message key="feedbackTitle"/></h3>
+		<form wicket:id="saveForm" class="notifications-demo__form">
+			<label><wicket:message key="name"/> <input type="text" wicket:id="name"/></label>
+			<div class="notifications-demo__buttons">
+				<button type="submit" wicket:id="save" class="notifications-demo__save"><wicket:message key="save"/></button>
+			</div>
+		</form>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>

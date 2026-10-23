@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Desktop</entry>
+	<entry key="explanation">&lt;p&gt;Desktop aus ui-components enthält schwebende Fenster, DesktopWindow, die nicht modal sind: viele zugleich, wie auf dem Desktop eines Betriebssystems. Ein Klick in ein Fenster holt es nach vorne; die anderen bleiben dahinter, wie sie waren. Ziehen Sie ein Fenster an seiner Titelleiste, mit der Maus, einem Stift oder dem Finger; ein Doppelklick auf die Titelleiste klappt das Fenster auf sie zusammen und wieder auf. Die Knöpfe der Titelleiste minimieren das Fenster in die Taskleiste und maximieren es auf den ganzen Desktop, wie es jedes Fenster erlaubt, und seine Kanten und Ecken ändern seine Größe. Solange der Fokus in einem Fenster ist, maximiert F11 es und stellt es wieder her, und Strg+F6 und Strg+Umschalt+F6 gehen reihum durch die Fenster.&lt;/p&gt;&lt;p&gt;Die Taskleiste hat einen Knopf für jedes Fenster: Er holt das Fenster nach vorne und stellt es wieder her, wenn es minimiert ist, und minimiert das Fenster, das schon vorne ist. Ist das vordere Fenster maximiert, wird das Fenster, das Sie nach vorne holen, ebenfalls maximiert und nimmt seinen Platz ein. Die Knöpfe am Ende der Taskleiste ordnen die Fenster als Kacheln, nebeneinander oder übereinander an, oder überlappend; der letzte lässt den Desktop die ganze Seite füllen und holt ihn wieder in die Seite zurück (Escape auf der Taskleiste ebenso). Ziehen Sie die Taskleiste an ihrem Griff oder dort, wo sie keinen Knopf hat, an eine andere Seite des Desktops, oder drücken Sie eine Pfeiltaste auf ihrem Griff: Die Fenster rücken und schrumpfen, um auf dem Desktop zu bleiben.&lt;/p&gt;&lt;p&gt;Die Fenster enthalten die Grids der Demos JSON-Grid und Bean-Grid, dieselben Panels mit denselben Aktionen: Verschieben Sie ihre Spalten per Drag and Drop, ändern Sie ihre Breite, bearbeiten, fügen Sie hinzu und löschen Sie Benutzer im Overlay des Grids. Das JSON-Grid gibt es dreimal, in Wicket, in React und in Svelte. Auch die Auswahllisten der Dropdown-Demo sind da, in Wicket, React und Svelte. Die Tabs React und Svelte haben eigene Desktops, mit der JSON-Tabelle, Notizen und den Dropdowns des Frameworks und sechs weiteren seiner Demos, jede in einem Fenster: Autovervollständigung, Schaltflächen, Datums- und Zeitauswahl, JSON-Endlosliste, Modaler Dialog und Fortschrittsbalken.&lt;/p&gt;&lt;p&gt;Jedes Fenster lässt sich schließen. Das Menü der Taskleiste, ihr Knopf nach dem Griff, listet die geöffneten Fenster, um eines nach vorne zu holen, und die geschlossenen, um eines wieder zu öffnen; der Knopf oben öffnet auch das Tastatur-Fenster. Wer ein Fenster mit ungespeicherten Änderungen schließt, einem bearbeiteten Benutzer oder nicht gesendeten Auswahllisten, wird zuerst gefragt: Schließt man es trotzdem, kehren seine Felder zu ihren Werten zurück.&lt;/p&gt;&lt;p&gt;Mit setSendToServer schickt der Browser per Ajax die Zustände der Fenster, die Seite der Taskleiste und ob der Desktop die Seite füllt, jedes Mal, wenn Sie sie ändern, und der Satz unter dem Desktop folgt; wählen Sie oben eine andere Seite für die Taskleiste, wird der Desktop neu gerendert, in dem Zustand, in dem Sie ihn verlassen haben. Alles funktioniert unter einer strengen Content Security Policy, ohne Inline-Stil.&lt;/p&gt;&lt;p&gt;Die Fenster liegen auf Arbeitsflächen, wie in Ubuntu: die Tabellen und das Tastaturfenster auf „Tabellen“, die Auswahllisten auf „Auswahllisten“. Die Schaltflächen nach denen der Fenster zeigen eine andere Arbeitsfläche; Strg+Umschalt und die Pfeiltasten wechseln von einer zur nächsten. + fügt eine Arbeitsfläche hinzu und fragt nach ihrem Namen, der Stift benennt die gezeigte um (F2 oder ein Doppelklick auf ihre Schaltfläche auch) und der Papierkorb entfernt sie; ihre Fenster kommen auf die erste Arbeitsfläche, die sich nicht entfernen lässt. Die erste Schaltfläche rechts in jeder Titelleiste verschiebt das Fenster auf eine andere Arbeitsfläche oder eine neue. Der Starter der Taskleiste, die Schaltfläche nach ihrem Menü, öffnet neue Fenster der Typen, die die Seite registriert: Notizen und Bean-Tabellen; geschlossen sind sie weg. Der Server behält auch die Arbeitsflächen.&lt;/p&gt;</entry>
+	<entry key="taskbar">Taskleiste</entry>
+	<entry key="taskbar.bottom">Unten</entry>
+	<entry key="taskbar.top">Oben</entry>
+	<entry key="taskbar.left">Links</entry>
+	<entry key="taskbar.right">Rechts</entry>
+	<entry key="openKeyboard">Das Tastatur-Fenster öffnen</entry>
+	<entry key="jsonUsers">JSON-Grid in Wicket</entry>
+	<entry key="beanUsers">Bean-Grid in Wicket</entry>
+	<entry key="reactUsers">JSON-Grid in React</entry>
+	<entry key="svelteUsers">JSON-Grid in Svelte</entry>
+	<entry key="wicketDropdowns">Auswahllisten in Wicket</entry>
+	<entry key="reactDropdowns">Auswahllisten in React</entry>
+	<entry key="svelteDropdowns">Auswahllisten in Svelte</entry>
+	<entry key="keyboard">Tastatur</entry>
+	<entry key="notes">Notizen</entry>
+	<entry key="notesText">Schreiben Sie hier. Das Fenster behält, was Sie schreiben, während Sie es verschieben, zusammenklappen oder minimieren.</entry>
+	<entry key="states">Der Server kennt: {0}.</entry>
+	<entry key="state">{0} bei {1}, {2}, {3} × {4}</entry>
+	<entry key="minimized">minimiert</entry>
+	<entry key="maximized">maximiert</entry>
+	<entry key="folded">zusammengeklappt</entry>
+	<entry key="closed">geschlossen</entry>
+	<entry key="nowhere">wo der Browser es hinsetzt</entry>
+	<entry key="layout">Taskleiste {0}</entry>
+	<entry key="filling">füllt die Seite</entry>
+	<entry key="key.f11">Maximiert das Fenster, in dem der Fokus ist, und stellt es wieder her.</entry>
+	<entry key="key.next">Holt das nächste Fenster nach vorne.</entry>
+	<entry key="key.previous">Holt das vorige Fenster nach vorne.</entry>
+	<entry key="key.doubleClick">Doppelklick auf eine Titelleiste</entry>
+	<entry key="key.fold">Klappt das Fenster auf seine Titelleiste zusammen und wieder auf.</entry>
+	<entry key="key.taskbar">Ein Knopf der Taskleiste</entry>
+	<entry key="key.taskbarHelp">Holt sein Fenster nach vorne oder minimiert es, wenn es schon vorne ist.</entry>
+	<entry key="key.menu">Das Menü der Taskleiste</entry>
+	<entry key="key.menuHelp">Listet die geöffneten und geschlossenen Fenster: holt eines nach vorne oder öffnet es wieder.</entry>
+	<entry key="key.close">Ein Fenster mit Änderungen schließen</entry>
+	<entry key="key.closeHelp">Fragt zuerst; schließt man es trotzdem, gehen die Änderungen verloren.</entry>
+	<entry key="key.dragTaskbar">Die Taskleiste ziehen</entry>
+	<entry key="key.dragTaskbarHelp">Verschiebt sie an die Seite des Desktops, an der sie losgelassen wird; die Pfeiltasten auf ihrem Griff ebenso.</entry>
+	<entry key="key.escape">Holt den Desktop, der die Seite füllt, von der Taskleiste aus in die Seite zurück.</entry>
+	<entry key="pane.grids">Tabellen</entry>
+	<entry key="pane.dropdowns">Auswahllisten</entry>
+	<entry key="pane.demos">Demos</entry>
+	<entry key="panes">Arbeitsflächen {0}, gezeigt {1}</entry>
+	<entry key="inPane">auf {0}</entry>
+	<entry key="key.previousPane">Zeigt die Arbeitsfläche davor.</entry>
+	<entry key="key.nextPane">Zeigt die Arbeitsfläche danach.</entry>
+	<entry key="key.panes">Die Arbeitsflächen der Taskleiste</entry>
+	<entry key="key.panesHelp">Zeigen eine Arbeitsfläche; + fügt eine hinzu, der Stift benennt die gezeigte um, F2 oder ein Doppelklick auch, der Papierkorb entfernt sie.</entry>
+	<entry key="key.moveToPane">Ein Fenster verschieben</entry>
+	<entry key="key.moveToPaneHelp">Die erste Schaltfläche rechts in seiner Titelleiste verschiebt es auf eine andere Arbeitsfläche oder eine neue.</entry>
+	<entry key="key.launcher">Der Starter der Taskleiste</entry>
+	<entry key="key.launcherHelp">Öffnet ein neues Fenster eines Typs auf der gezeigten Arbeitsfläche; geschlossen ist es weg.</entry>
+</properties>

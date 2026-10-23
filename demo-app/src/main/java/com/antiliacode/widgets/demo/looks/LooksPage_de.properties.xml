@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Aussehen</entry>
+	<entry key="description">zeigt die Komponenten im Bootstrap-Aussehen neben ihrem eigenen und in einem Aussehen aus beiden</entry>
+	<entry key="explanation">&lt;p&gt;Ein Farbschema gibt den Komponenten ihre Farben, ein Aussehen die CSS-Klassen ihrer Teile. Jedes Element, das eine Komponente zeichnet, ist ein Teil (LookPart): der Kopf eines Dialogs, der Kopf einer Tabelle, die Option einer Auswahlliste... Das Antilia-Aussehen zeichnet sie mit ihren eigenen Stylesheets; das Bootstrap-Aussehen gibt jedem Teil zusätzlich Bootstraps Klassen, etwa btn btn-primary btn-sm für eine Schaltfläche, modal-header für den Kopf eines Dialogs, table für eine Datentabelle oder dropdown-item für eine Option. Nur Bootstraps Stylesheet ist auf der Seite, nie sein Skript: was die Komponenten tun, bleibt ihr eigenes.&lt;/p&gt;&lt;p&gt;Ein Aussehen kann aus anderen bestehen, je einen Aspekt von jedem: was die Teile sind, ihre Farben, ihre Größen und ihre Zustände. Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA) gibt den Teilen Bootstraps Klassen mit den Farben und Größen des Antilia-Aussehens, wie die dritte Spalte zeigt.&lt;/p&gt;&lt;p&gt;Die Farben bleiben die des Farbschemas. Die Bootstrap-Farbschemas nehmen sie aus den Custom Properties des Bootstrap auf der Seite, sodass ein Bootswatch-Theme oder ein eigenes auch die Komponenten färbt; jedes andere Farbschema gibt seine Farben Bootstraps Komponenten und Custom Properties, sodass das eigene Bootstrap-Markup der Seite darin zu den Komponenten passt.&lt;/p&gt;&lt;p&gt;In Wicket legt ein ThemeBehavior das Aussehen auf eine Komponente und alles darin, als Attribut data-antilia-look, das auch die Skripte der Komponenten lesen. Das Aussehen der Sitzung, Looks.setSessionLook oder das Modell Looks.sessionLook(), gilt für jede Seite, sobald es auf einer gewählt wurde, wie mit dem Aussehen der oberen Leiste. React hat LookProvider und Svelte setLook.&lt;/p&gt;</entry>
+	<entry key="intro">Dieselben Komponenten in den Aussehen von ui-components, im Farbschema aus der oberen Leiste. Das Farbschema gibt die Farben, das Aussehen die CSS-Klassen jedes Teils: im Bootstrap-Aussehen bekommen Schaltflächen, Dialoge, Menüs, Tabellen, Panels und Benachrichtigungen Bootstraps Klassen, ihr Verhalten bleibt aber ihr eigenes, denn nur Bootstraps Stylesheet ist auf der Seite, nie sein Skript. Wählen Sie das Bootstrap-Farbschema, um auch die Farben von Bootstrap zu nehmen, oder ein anderes, um Bootstrap seine Farben zu geben.</entry>
+	<entry key="antilia">Antilia-Aussehen</entry>
+	<entry key="antilia.help">Die eigenen Stylesheets der Komponenten, hier auf einer Seite, die auch Bootstraps hat.</entry>
+	<entry key="bootstrap">Bootstrap-Aussehen</entry>
+	<entry key="bootstrap.help">Bootstraps Klassen für jeden Teil, das Verhalten der Komponenten.</entry>
+	<entry key="mixed">Bootstrap, Farben und Größen von Antilia</entry>
+	<entry key="mixed.help">Ein Aussehen aus zweien: Bootstraps Klassen, aber die Farben und Größen des Antilia-Aussehens.</entry>
+	<entry key="native">Bootstraps eigenes Markup</entry>
+	<entry key="native.help">Reines Bootstrap, keine Komponente von uns: im Bootstrap-Aussehen bekommt es ebenfalls die Farben des Farbschemas.</entry>
+	<entry key="native.alert">Ein Hinweis von Bootstrap, in den Farben des Farbschemas.</entry>
+	<entry key="native.view">Ansicht</entry>
+	<entry key="native.day">Tag</entry>
+	<entry key="native.week">Woche</entry>
+	<entry key="native.month">Monat</entry>
+	<entry key="native.email">E-Mail</entry>
+	<entry key="native.remember">Angemeldet bleiben</entry>
+	<entry key="native.overview">Übersicht</entry>
+	<entry key="native.details">Details</entry>
+	<entry key="native.card">Eine Karte</entry>
+	<entry key="native.first">Der aktive Eintrag</entry>
+	<entry key="native.second">Ein anderer Eintrag</entry>
+	<entry key="progress">Fortschritt</entry>
+</properties>

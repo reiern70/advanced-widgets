@@ -1,0 +1,70 @@
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:extend xmlns:wicket="http://wicket.apache.org">
+		<main>
+			<section class="showcase">
+				<div class="container showcase__inner">
+					<div class="showcase__text">
+						<h1>Antilia's Advanced Widgets</h1>
+						<p class="hero__lead"><wicket:message key="lead"/></p>
+						<p class="showcase__actions">
+							<a class="showcase__primary" href="#index"><wicket:message key="browse"/> &darr;</a>
+							<a class="showcase__secondary" href="#what-runs-where" data-browser-modal="what-runs-where"><wicket:message key="whatRunsWhere"/></a>
+						</p>
+					</div>
+					<div class="showcase__side">
+						<ul class="showcase__facts">
+							<li><strong wicket:id="demoCount">19</strong> <wicket:message key="factDemos"/></li>
+							<li><strong>3</strong> <wicket:message key="factFrameworks"/></li>
+							<li><strong wicket:id="themeCount">10</strong> <wicket:message key="factThemes"/></li>
+						</ul>
+						<p class="hero__meta">
+							<span class="ws-status" wicket:id="webSocketStatus" wicket:message="title:webSocket">Connecting</span>
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="container index" id="index">
+				<div class="sign-in-hint" wicket:id="signInHint">
+					<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+					<p><wicket:message key="signInHint"/> <a wicket:id="signIn"><wicket:message key="hint.signIn"/></a> <wicket:message key="hint.or"/> <a wicket:id="register"><wicket:message key="hint.register"/></a>.</p>
+				</div>
+				<h2 class="index__title"><wicket:message key="indexTitle"/></h2>
+				<p class="index__lead"><wicket:message key="indexLead"/></p>
+				<div class="index__body">
+					<div class="index__columns">
+						<div class="index__group" wicket:id="categories">
+							<h3 class="index__category" wicket:id="category">Data</h3>
+							<ul class="index__list">
+								<li wicket:id="demos">
+									<a class="index__link" wicket:id="link">
+										<span class="index__name" wicket:id="name">JSON Grid</span>
+										<span class="index__frameworks" wicket:id="frameworks" wicket:message="title:frameworks">R S</span>
+									</a>
+									<button type="button" class="index__details" wicket:id="details" wicket:message="title:details,aria-label:details"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg></button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<aside class="index__preview" aria-hidden="true">
+						<img class="index__preview-shot" alt="" width="640" height="400" hidden="hidden"/>
+						<p class="index__preview-name"></p>
+						<p class="index__preview-description"></p>
+					</aside>
+				</div>
+			</section>
+			<wicket:container wicket:id="demoDetails"><div wicket:id="details">[what a demo is about, in a dialog]</div></wicket:container>
+		</main>
+</wicket:extend>

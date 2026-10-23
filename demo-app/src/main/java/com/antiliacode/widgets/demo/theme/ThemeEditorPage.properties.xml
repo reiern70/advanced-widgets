@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Theme editor</entry>
+	<entry key="description">generates a theme of the components, with a live preview</entry>
+	<entry key="explanation">&lt;p&gt;The themes of the components are CSS classes setting the custom properties --antilia-theme-*, which the style sheets of the components read. The pickers of the ThemeEditorPanel start from the theme chosen for the page in the top bar or in the drop-down above them; change a color and the components in the tabs below follow: progress bars, the JSON and the bean based tables, a collapsible panel, a floating panel, styled tabs, a modal dialog and notifications, in the colors of success, error, warning and information.&lt;/p&gt;&lt;p&gt;The text area holds the CSS class defining your theme; put it into your style sheet and the classes antilia-theme and yours on a page or a component, and the components inside take its colors. The changes are made in the browser through the CSS object model, so the page needs no inline style and works under a strict Content Security Policy.&lt;/p&gt;</entry>
+	<entry key="tab.progress">Progress</entry>
+	<entry key="tab.jsonTable">JSON grid</entry>
+	<entry key="tab.beanTable">Bean grid</entry>
+	<entry key="tab.panels">Collapsible</entry>
+	<entry key="tab.notifications">Notifications</entry>
+	<entry key="progress.running">Running</entry>
+	<entry key="progress.finished">Finished</entry>
+	<entry key="progress.unknown">Unknown progress</entry>
+	<entry key="firstName">First Name</entry>
+	<entry key="lastName">Last Name</entry>
+	<entry key="city">City</entry>
+	<entry key="country">Country</entry>
+	<entry key="collapsible.title">A collapsible panel</entry>
+	<entry key="collapsible.body">Its title takes the theme's primary colors, like the headings of a table.</entry>
+	<entry key="floating.title">A floating panel</entry>
+	<entry key="floating.body">A window with a title bar, as the tables show their forms in.</entry>
+	<entry key="tabContent">Content of the tab</entry>
+	<entry key="openDialog">Open a modal dialog</entry>
+	<entry key="dialog.title">A themed dialog</entry>
+	<entry key="dialog.body">The dialog follows the colors of the preview.</entry>
+	<entry key="dialog.close">Close</entry>
+	<entry key="startFrom">Start from the theme</entry>
+	<entry key="filter">Filter</entry>
+	<entry key="filter.placeholder">first or last name</entry>
+	<entry key="nested.title">Nested collapsible panels</entry>
+	<entry key="nested.body">Collapsible panels inside each other, each opened and closed on its own.</entry>
+	<entry key="nested.first">The first inner panel</entry>
+	<entry key="nested.first.body">It holds one more level.</entry>
+	<entry key="nested.deeper">A panel two levels deep</entry>
+	<entry key="nested.deeper.body">The deepest panel, still in the theme's colors.</entry>
+	<entry key="nested.second">The second inner panel</entry>
+	<entry key="nested.second.body">Closed at first; open it to see its text.</entry>
+	<entry key="floating.section">Floating panel</entry>
+	<entry key="tabs.section">Tabs</entry>
+	<entry key="dialog.section">Modal dialog</entry>
+	<entry key="tab.first">First</entry>
+	<entry key="tab.second">Second</entry>
+	<entry key="tab.third">Third</entry>
+	<entry key="notification.success">In the --antilia-theme-success color of the theme.</entry>
+	<entry key="notification.error">In the --antilia-theme-error color of the theme.</entry>
+	<entry key="notification.warning">In the --antilia-theme-warning color of the theme.</entry>
+	<entry key="notification.info">In the --antilia-theme-info color of the theme.</entry>
+	<entry key="notification.again">Show them again</entry>
+</properties>

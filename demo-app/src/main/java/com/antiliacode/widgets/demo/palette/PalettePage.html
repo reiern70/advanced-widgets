@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="palette-demo">
+	<form wicket:id="form" class="palette-demo__form">
+		<div wicket:id="cases">[the cases, as pills]</div>
+		<p><button type="submit" class="palette-demo__send"><wicket:message key="send"/></button></p>
+	</form>
+	<p wicket:id="choices" class="palette-demo__choices">[choices]</p>
+</div>
+<wicket:fragment wicket:id="unorderedCase">
+	<section>
+		<label class="palette-demo__check"><input type="checkbox" wicket:id="filterable"/> <wicket:message key="filterable"/></label>
+		<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="skills"></select></div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="orderedCase">
+	<section>
+		<div class="palette-demo__checks">
+			<label class="palette-demo__check"><input type="checkbox" wicket:id="ordered"/> <wicket:message key="ordered"/></label>
+			<label class="palette-demo__check"><input type="checkbox" wicket:id="numbered"/> <wicket:message key="numbered"/></label>
+		</div>
+		<div class="palette-demo__field"><span><wicket:message key="columns"/></span> <select wicket:id="columns"></select></div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="manyCase">
+	<section>
+		<div class="palette-demo__field"><span><wicket:message key="countries"/></span> <select wicket:id="countries"></select></div>
+		<p wicket:id="countriesChosen" class="palette-demo__count">[countries chosen]</p>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="matchCase">
+	<section>
+		<p class="palette-demo__hint"><wicket:message key="matchHint"/></p>
+		<div class="palette-demo__matches">
+			<div class="palette-demo__field"><span><wicket:message key="matchStart"/></span> <select wicket:id="matchStart"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchAnywhere"/></span> <select wicket:id="matchAnywhere"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchEnd"/></span> <select wicket:id="matchEnd"></select></div>
+			<div class="palette-demo__field"><span><wicket:message key="matchWords"/></span> <select wicket:id="matchWords"></select></div>
+		</div>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="disabledCase">
+	<section>
+		<div class="palette-demo__field"><span><wicket:message key="skills"/></span> <select wicket:id="disabled"></select></div>
+	</section>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

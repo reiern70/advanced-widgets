@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="lead">Reusable components for Apache Wicket, React and Svelte, with Ajax and real-time (websocket) support.</entry>
+	<entry key="webSocket">WebSocket connection</entry>
+	<entry key="connecting">Connecting</entry>
+	<entry key="live">Live</entry>
+	<entry key="signInHint">The demos are for registered visitors.</entry>
+	<entry key="hint.signIn">Sign in</entry>
+	<entry key="hint.or">or</entry>
+	<entry key="hint.register">register</entry>
+	<entry key="browse">Browse the demos</entry>
+	<entry key="indexTitle">Every demo, by category</entry>
+	<entry key="indexLead">Point at a demo to preview it, click it to open it.</entry>
+	<entry key="factDemos">demos</entry>
+	<entry key="factFrameworks">frameworks</entry>
+	<entry key="factThemes">themes</entry>
+	<entry key="frameworks">In React and Svelte too</entry>
+	<entry key="details">Details</entry>
+</properties>

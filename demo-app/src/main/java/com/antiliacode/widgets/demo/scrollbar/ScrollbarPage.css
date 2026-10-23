@@ -1,0 +1,112 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.scrollbar-demo {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 16px 24px;
+}
+
+.scrollbar-demo h3 {
+	margin: 0 0 8px;
+	font-size: 16px;
+}
+
+.scrollbar-demo__box {
+	height: 240px;
+	overflow: auto;
+	padding: 0 16px 0 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	font-size: 14px;
+}
+
+.scrollbar-demo__box p {
+	margin: 6px 0;
+}
+
+.scrollbar-demo__box--short {
+	height: 160px;
+}
+
+.scrollbar-demo__box--x {
+	height: auto;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 12px 12px 18px;
+}
+
+.scrollbar-demo__strip {
+	display: flex;
+	gap: 12px;
+	width: max-content;
+}
+
+.scrollbar-demo__strip > span {
+	display: grid;
+	place-items: center;
+	width: 120px;
+	height: 120px;
+	border-radius: var(--radius);
+	background: var(--primary);
+	color: var(--on-primary, #fff);
+	font-size: 28px;
+	font-weight: 600;
+}
+
+/* lines that do not wrap, so the box scrolls both ways */
+.scrollbar-demo__box--both p {
+	width: max-content;
+	white-space: nowrap;
+}
+
+.scrollbar-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 10px 0 0;
+}
+
+.scrollbar-demo__actions button {
+	border: 1px solid var(--primary);
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.scrollbar-demo__actions button:hover {
+	filter: brightness(0.92);
+}
+
+/* the button adding lines: a round + */
+.scrollbar-demo__add {
+	display: inline-grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--primary);
+	color: var(--on-primary, #fff);
+	font-size: 22px;
+	line-height: 1;
+}
+
+.scrollbar-demo__to {
+	padding: 4px 12px;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--primary);
+	font-size: 13px;
+}

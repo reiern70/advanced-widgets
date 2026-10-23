@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Barra de progreso</entry>
+	<entry key="description">un componente de barra de progreso actualizado por Ajax</entry>
+	<entry key="explanation">&lt;p&gt;El componente ProgressBar de ui-components muestra un porcentaje como un elemento progress nativo, por lo que funciona bajo una Content Security Policy estricta. Iniciar la hace avanzar cada 300 ms con un temporizador Ajax.&lt;/p&gt;&lt;p&gt;Su parte llena está rayada y las rayas se mueven, salvo que su sistema pida menos movimiento. Una barra cuyo modelo contiene null es indeterminada: indica que algo está en marcha sin saber cuánto ha avanzado. Los colores vienen del tema elegido en la barra superior, los mismos temas que usa la DynamicDataTable.&lt;/p&gt;</entry>
+	<entry key="known">Progreso conocido</entry>
+	<entry key="unknown">Progreso desconocido</entry>
+	<entry key="finished">Terminado</entry>
+	<entry key="reset">Reiniciar</entry>
+	<entry key="start">Iniciar</entry>
+	<entry key="pause">Pausar</entry>
+</properties>

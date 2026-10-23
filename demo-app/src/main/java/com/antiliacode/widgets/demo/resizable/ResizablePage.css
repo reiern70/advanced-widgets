@@ -1,0 +1,109 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.resizable-demo {
+	display: grid;
+	gap: 16px;
+	/* one column as wide as the page, not as its widest content: a phone does not scroll sideways */
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.resizable-demo section {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.resizable-demo h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+}
+
+.resizable-demo__note,
+.resizable-demo__side,
+.resizable-demo__card {
+	box-sizing: border-box;
+	border: 1px solid var(--antilia-theme-border, var(--border));
+	border-radius: 8px;
+	background: var(--antilia-theme-surface-alt, var(--surface));
+	color: var(--antilia-theme-text, inherit);
+	/* the handle is in the box: a box scrolling its content would scroll the handle away */
+	overflow: hidden;
+}
+
+.resizable-demo__note {
+	height: 120px;
+	padding: 12px 16px 16px;
+	line-height: 1.5;
+}
+
+.resizable-demo__note p,
+.resizable-demo__card p {
+	margin: 0;
+}
+
+.resizable-demo__layout {
+	display: flex;
+	height: 180px;
+	border: 1px solid var(--antilia-theme-border, var(--border));
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.resizable-demo__side {
+	flex: 0 0 auto;
+	width: 200px;
+	border: 0;
+	border-right: 1px solid var(--antilia-theme-border, var(--border));
+	border-radius: 0;
+}
+
+.resizable-demo__side ul {
+	margin: 0;
+	padding: 8px 0;
+	list-style: none;
+}
+
+.resizable-demo__side li {
+	padding: 6px 16px;
+}
+
+.resizable-demo__main {
+	flex: 1 1 auto;
+	background: repeating-linear-gradient(135deg, transparent 0 12px,
+		color-mix(in srgb, var(--antilia-theme-border, #c9cfdb) 30%, transparent) 12px 13px);
+}
+
+.resizable-demo__heading {
+	display: flex;
+	justify-content: flex-end;
+	margin: -36px 0 12px;
+}
+
+.resizable-demo__place {
+	min-height: 40px;
+}
+
+.resizable-demo__card {
+	padding: 16px;
+	background: linear-gradient(135deg, var(--antilia-theme-highlight, #eef4ff),
+		var(--antilia-theme-surface, #ffffff));
+	line-height: 1.5;
+}
+
+.resizable-demo__sizes {
+	margin: 0;
+	color: var(--muted);
+	font-size: 14px;
+}

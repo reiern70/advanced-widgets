@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="autocomplete-demo">
+	<form wicket:id="form" class="autocomplete-demo__form">
+		<section>
+			<h3><wicket:message key="single"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="owner"/> <input type="hidden" wicket:id="owner"/></label>
+		</section>
+		<section>
+			<h3><wicket:message key="multiple"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="team"/> <input type="hidden" wicket:id="team"/></label>
+			<label class="autocomplete-demo__field"><wicket:message key="countries"/> <input type="hidden" wicket:id="countries"/></label>
+		</section>
+		<section>
+			<h3><wicket:message key="disabledTitle"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="reviewer"/> <input type="hidden" wicket:id="reviewer"/></label>
+			<label class="autocomplete-demo__field"><wicket:message key="markets"/> <input type="hidden" wicket:id="markets"/></label>
+		</section>
+		<section>
+			<h3><wicket:message key="find"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="visits"/> <input type="hidden" wicket:id="visitFind"/></label>
+			<div wicket:id="visits">
+				<ul class="autocomplete-demo__list">
+					<li wicket:id="visit"><span class="ac-country"><span class="ac-flag" aria-hidden="true" wicket:id="flag"></span><span wicket:id="name"></span></span><button type="button" class="autocomplete-demo__remove" wicket:id="remove">×</button></li>
+				</ul>
+				<p wicket:id="none" class="autocomplete-demo__none"></p>
+			</div>
+		</section>
+		<p><button type="submit" class="autocomplete-demo__send"><wicket:message key="send"/></button></p>
+	</form>
+	<p wicket:id="choices" class="autocomplete-demo__choices">[choices]</p>
+	<p wicket:id="calling" class="autocomplete-demo__calling" role="status">[calling]</p>
+</div>
+</wicket:extend>
+</body>
+</html>

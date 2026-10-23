@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Botones</entry>
+	<entry key="explanation">&lt;p&gt;Botones en los colores del tema elegido en la barra superior, iguales en Wicket, React y Svelte: una sola hoja de estilos, antilia-button.css, los dibuja todos.&lt;/p&gt;&lt;p&gt;En Wicket, un AjaxActionButton ejecuta una acción por Ajax y muestra un texto, un icono y un texto, o solo un icono, cuyo texto es entonces su descripción emergente y el nombre que leen los lectores de pantalla. Un ButtonBehavior dibuja cualquier enlace o botón de formulario como uno de ellos. Hay cuatro variantes, principal, secundario, discreto y peligro, y tres tamaños, pequeño, mediano y grande. React y Svelte tienen un componente Button con las mismas variantes y tamaños.&lt;/p&gt;&lt;p&gt;"Iconos" elige los iconos de los botones: los iconos de Font Awesome como SVG en línea (SvgIcon) o los mismos dibujados por la fuente Font Awesome (FontAwesomeIcon). Un botón acepta cualquier IIcon, y el Button de React y Svelte cualquier marcado.&lt;/p&gt;</entry>
+	<entry key="variant">Variante</entry>
+	<entry key="variant.primary">Principal</entry>
+	<entry key="variant.secondary">Secundario</entry>
+	<entry key="variant.ghost">Discreto</entry>
+	<entry key="variant.danger">Peligro</entry>
+	<entry key="size.small">Pequeño</entry>
+	<entry key="size.medium">Mediano</entry>
+	<entry key="size.large">Grande</entry>
+	<entry key="save">Guardar</entry>
+	<entry key="refresh">Actualizar</entry>
+	<entry key="settings">Ajustes</entry>
+	<entry key="delete">Eliminar</entry>
+	<entry key="clicked">Pulsado: {0}</entry>
+	<entry key="clicked.none">Pulse un botón.</entry>
+	<entry key="disabled">Desactivados</entry>
+	<entry key="asLink">Un enlace dibujado como botón</entry>
+	<entry key="asLink.text">Leer más</entry>
+</properties>

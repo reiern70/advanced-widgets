@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Aspectos</entry>
+	<entry key="description">muestra los componentes con el aspecto Bootstrap junto al suyo propio, y con un aspecto hecho de ambos</entry>
+	<entry key="explanation">&lt;p&gt;Un tema da a los componentes sus colores, un aspecto las clases CSS de sus partes. Cada elemento que dibuja un componente es una parte (LookPart): la cabecera de un diálogo, la cabecera de una tabla, la opción de un desplegable... El aspecto Antilia los dibuja con sus propias hojas de estilos; el aspecto Bootstrap da además a cada parte las clases de Bootstrap, como btn btn-primary btn-sm para un botón, modal-header para la cabecera de un diálogo, table para una tabla de datos o dropdown-item para una opción. Solo la hoja de estilos de Bootstrap está en la página, nunca su script: lo que hacen los componentes sigue siendo suyo.&lt;/p&gt;&lt;p&gt;Un aspecto puede estar hecho de otros, un aspecto de cada uno: lo que son las partes, sus colores, sus tamaños y sus estados. Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA) da a las partes las clases de Bootstrap con los colores y los tamaños del aspecto Antilia, como muestra la tercera columna.&lt;/p&gt;&lt;p&gt;Los colores siguen siendo los del tema. Los temas Bootstrap los toman de las propiedades personalizadas del Bootstrap de la página, así que un tema de Bootswatch o uno propio colorea también los componentes; cualquier otro tema da sus colores a los componentes y las propiedades personalizadas de Bootstrap, así que el marcado Bootstrap propio de la página dentro de él combina con los componentes.&lt;/p&gt;&lt;p&gt;En Wicket un ThemeBehavior pone el aspecto en un componente y todo lo que contiene, como el atributo data-antilia-look, que leen también los scripts de los componentes. El aspecto de la sesión, Looks.setSessionLook o el modelo Looks.sessionLook(), es el de todas las páginas una vez elegido en una, como con el aspecto de la barra superior. React tiene LookProvider y Svelte setLook.&lt;/p&gt;</entry>
+	<entry key="intro">Los mismos componentes en los aspectos de ui-components, con el tema elegido en la barra superior. El tema da los colores, el aspecto las clases CSS de cada parte: con el aspecto Bootstrap los botones, diálogos, menús, tablas, paneles y notificaciones toman las clases de Bootstrap, pero su comportamiento sigue siendo el suyo, pues solo la hoja de estilos de Bootstrap está en la página, nunca su script. Elija el tema Bootstrap para tomar también los colores de Bootstrap, o cualquier otro tema para dar a Bootstrap sus colores.</entry>
+	<entry key="antilia">Aspecto Antilia</entry>
+	<entry key="antilia.help">Las hojas de estilos propias de los componentes, aquí en una página que también tiene la de Bootstrap.</entry>
+	<entry key="bootstrap">Aspecto Bootstrap</entry>
+	<entry key="bootstrap.help">Las clases de Bootstrap para cada parte, el comportamiento de los componentes.</entry>
+	<entry key="mixed">Bootstrap, colores y tamaños de Antilia</entry>
+	<entry key="mixed.help">Un aspecto hecho de dos: las clases de Bootstrap, pero los colores y los tamaños del aspecto Antilia.</entry>
+	<entry key="native">Marcado propio de Bootstrap</entry>
+	<entry key="native.help">Bootstrap sin más, ningún componente nuestro: con el aspecto Bootstrap también toma los colores del tema.</entry>
+	<entry key="native.alert">Un aviso de Bootstrap, en los colores del tema.</entry>
+	<entry key="native.view">Vista</entry>
+	<entry key="native.day">Día</entry>
+	<entry key="native.week">Semana</entry>
+	<entry key="native.month">Mes</entry>
+	<entry key="native.email">Correo</entry>
+	<entry key="native.remember">Recordarme</entry>
+	<entry key="native.overview">Resumen</entry>
+	<entry key="native.details">Detalles</entry>
+	<entry key="native.card">Una tarjeta</entry>
+	<entry key="native.first">El elemento activo</entry>
+	<entry key="native.second">Otro elemento</entry>
+	<entry key="progress">Progreso</entry>
+</properties>

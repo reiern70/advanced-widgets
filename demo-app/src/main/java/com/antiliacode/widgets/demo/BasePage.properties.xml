@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="theme">Theme</entry>
+	<entry key="look">Look</entry>
+	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
+	<entry key="language">Language</entry>
+	<entry key="ajaxEngine">Ajax</entry>
+	<entry key="AjaxEngine.JQUERY">jQuery</entry>
+	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Plain JavaScript</entry>
+	<entry key="register">Register</entry>
+	<entry key="signIn">Sign in</entry>
+	<entry key="signOut">Sign out</entry>
+	<entry key="showPassword">Show password</entry>
+	<entry key="hidePassword">Hide password</entry>
+	<entry key="license">Licensed under the Apache License, Version 2.0.</entry>
+	<entry key="builtWith">Built with Apache Wicket</entry>
+	<entry key="category.examples">Examples</entry>
+	<entry key="category.data">Data</entry>
+	<entry key="category.feedback">Feedback</entry>
+	<entry key="category.forms">Forms</entry>
+	<entry key="category.layout">Layout</entry>
+	<entry key="category.themes">Themes</entry>
+	<entry key="category.realTime">Real-time</entry>
+	<entry key="demo.contacts">Address Book</entry>
+	<entry key="demo.contacts.description">A realistic application built only from these widgets: 2,500 contacts searched by facets with live counts, find bars, a split panel and a JSON grid you can sort, page, rearrange and export as CSV.</entry>
+	<entry key="demo.jsonTable">JSON Grid</entry>
+	<entry key="demo.jsonTable.description">A data grid whose rows are rendered in the browser from JSON and per-column HTML templates instead of Wicket components: one light component that sorts, pages, edits in a modal and repaints rows pushed live over a websocket. The same grid in React and Svelte.</entry>
+	<entry key="demo.beanTable">Bean Grid</entry>
+	<entry key="demo.beanTable.description">The same grid built the classic Wicket way: every row made of Wicket components and columns on the server and repainted via Ajax, looking and behaving exactly like the JSON grid.</entry>
+	<entry key="demo.jsonList">JSON Infinite List</entry>
+	<entry key="demo.jsonList.description">An infinite list of a thousand cards: the server sends the users as JSON, 24 at a time as you scroll, and the browser renders each card from an HTML template; clicks on a card reach the server as actions.</entry>
+	<entry key="demo.tree">Tree</entry>
+	<entry key="demo.tree.description">The tree of life twice: as a tree of Wicket components expanded via Ajax, and as one component rendered in the browser from JSON, loading its branches on demand and driven fully by the keyboard (WAI-ARIA).</entry>
+	<entry key="demo.treeGrid">Tree Grid</entry>
+	<entry key="demo.treeGrid.description">A tree with columns: the scientific names, ranks and periods of the tree of life, as a Wicket table tree or rendered in the browser from JSON as a WAI-ARIA tree grid, with lazily loaded branches and resizable columns.</entry>
+	<entry key="demo.masterDetail">Master and Detail</entry>
+	<entry key="demo.masterDetail.description">Two grids working together: choose a country in the master, rendered in the browser from JSON, and the detail, rendered on the server by Wicket components, shows its users via Ajax.</entry>
+	<entry key="demo.popovers">Popovers</entry>
+	<entry key="demo.popovers.description">A bubble with an arrow pointing at what opened it: on any side, centered or along an edge, in nine designs and five variants of the theme; with text from the server, or components such as a form, help on fields and more on table rows.</entry>
+	<entry key="demo.progressBar">Progress Bar</entry>
+	<entry key="demo.progressBar.description">Known and unknown progress driven by an Ajax timer, on the native progress element with moving stripes, so it works under a strict Content Security Policy.</entry>
+	<entry key="demo.notifications">Notifications</entry>
+	<entry key="demo.notifications.description">Toasts in any corner of the window, of four types or the page's own, closed by the user or after a countdown; in Wicket the page's feedback messages become notifications by themselves.</entry>
+	<entry key="demo.dropdown">Dropdown</entry>
+	<entry key="demo.dropdown.description">A drop-down in the colors of the theme that replaces the native select: one or many values as chips, opened, filtered and navigated by keyboard in the browser, while forms and Ajax work as with a plain select.</entry>
+	<entry key="demo.autocomplete">Autocomplete</entry>
+	<entry key="demo.autocomplete.description">Suggestions fetched via Ajax as JSON and rendered in the browser from templates, flags and all: one or many values as chips, or a find bar handing each pick to the page.</entry>
+	<entry key="demo.palette">Palette</entry>
+	<entry key="demo.palette.description">Choosing several values out of many, even thousands: two lists with a filter, drag and drop, keyboard moves and their own order, drawn lazily in the browser and posted like a plain select.</entry>
+	<entry key="demo.datePicker">Date and time pickers</entry>
+	<entry key="demo.datePicker.description">Date and time pickers that speak every locale: the format of the field, the language of the calendar, the first day of the week and the 12- or 24-hour clock; typed or picked, by mouse or keyboard, checked on the server.</entry>
+	<entry key="demo.buttons">Buttons</entry>
+	<entry key="demo.buttons.description">One look for the buttons of Wicket, React and Svelte: four variants, three sizes, a text, an icon or both, actions via Ajax, and any link or form button turned into one by a behavior.</entry>
+	<entry key="demo.downloads">Downloads</entry>
+	<entry key="demo.downloads.description">Files of every kind from the buttons of the theme: via Ajax into the browser, through a hidden iframe, in a new tab or the same window, busy while they come; links, a URL to share and the report a form describes.</entry>
+	<entry key="demo.upload">Upload</entry>
+	<entry key="demo.upload.description">Files sent in a form, by Ajax or to a resource, chosen with a button of the theme or dropped on a zone, with a progress bar of the theme, a guard keeping the user on the page, and a way to slow the uploads down.</entry>
+	<entry key="demo.codeEditor">Code Editor</entry>
+	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown or a grammar of your own, highlighted in the colors of the theme: the server keeps the text, the cursor, the selection and the size, and the tabs it is in know of its changes not saved. Markdown shows beside its live preview.</entry>
+	<entry key="demo.richTextEditor">Rich Text Editor</entry>
+	<entry key="demo.richTextEditor.description">Text with headings, lists, links, tables, images and alignment, from a toolbar of the components' own: Tiptap, in the colors of the theme. The server cleans the HTML before it keeps it, with the cursor, the selection and the size; or the editor keeps Markdown.</entry>
+	<entry key="demo.scrollbar">Scrollbar</entry>
+	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
+	<entry key="demo.splitPanel">Split Panel</entry>
+	<entry key="demo.splitPanel.description">Panes that share the space, nested as in an IDE: drag the divider or move it with the keyboard, collapse a pane, size in percent or pixels, and let the server know and remember the layout.</entry>
+	<entry key="demo.resizable">Resizable</entry>
+	<entry key="demo.resizable.description">Any element resized by its edge or its corner, with the mouse, a finger or the keyboard, within limits; the server remembers the size, also when the component is taken out of the page and put back.</entry>
+	<entry key="demo.tabs">Tabs</entry>
+	<entry key="demo.tabs.description">Tabs along the top or down the side, in nine designs: documents that close, asking first when the server says they have changes not saved, with actions of their own and new ones added via Ajax.</entry>
+	<entry key="demo.menus">Menus</entry>
+	<entry key="demo.menus.description">A bar of items along the top or down the side, in four designs: bookmarkable, Ajax and plain links with icons and tooltips, submenus as deep as you like that pop up or open in place, driven by the keys as on a desktop.</entry>
+	<entry key="demo.desktop">Desktop</entry>
+	<entry key="demo.desktop.description">A desktop inside the page: floating windows that are not modal, with a taskbar; they move, fold, resize, minimize, maximize, tile and cascade, each holding real components such as the grids.</entry>
+	<entry key="demo.modalDialog">Modal Dialog</entry>
+	<entry key="demo.modalDialog.description">Add, edit and delete in a modal dialog that keeps the focus, drags and folds by its title and asks before discarding changes; the same dialog in Wicket, React and Svelte over one shared REST resource.</entry>
+	<entry key="demo.themeEditor">Theme Editor</entry>
+	<entry key="demo.themeEditor.description">Make a theme of your own: pick its colors and watch grids, tabs, dialogs and notifications follow live, then copy the CSS class that defines it. No inline style, so it works under a strict Content Security Policy.</entry>
+	<entry key="demo.looks">Looks</entry>
+	<entry key="demo.looks.description">The components in the Bootstrap look beside their own: Bootstrap's classes and shapes, the components' behavior, in any theme. Bootstrap's own markup takes the colors of the theme too; only Bootstrap's style sheet is on the page, never its script.</entry>
+	<entry key="buildInfo">Branch {0} · {1}</entry>
+	<entry key="buildInfo.dirty">Branch {0} · {1}, with uncommitted changes</entry>
+	<entry key="buildInfo.commit">Commit {1}</entry>
+	<entry key="buildInfo.commit.dirty">Commit {1}, with uncommitted changes</entry>
+	<entry key="admin">Administration</entry>
+	<entry key="whatRunsWhere">What runs where</entry>
+	<entry key="github">GitHub: the code and the issues</entry>
+	<entry key="sourceCode">Code on GitHub</entry>
+	<entry key="issues">Issues</entry>
+</properties>

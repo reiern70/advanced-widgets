@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="id">ID</entry>
+	<entry key="firstName">First Name</entry>
+	<entry key="lastName">Last Name</entry>
+	<entry key="bornDate">Born</entry>
+	<entry key="aboutThisExample">About this example</entry>
+	<entry key="homePhone">Home phone</entry>
+	<entry key="cellPhone">Cell phone</entry>
+	<entry key="pushRows">Push the rows of this page in reverse order via web sockets</entry>
+	<entry key="pushed">Pushed the rows of this page in reverse order via web sockets.</entry>
+	<entry key="noWebSocket">The page has no open web socket connection.</entry>
+	<entry key="pushFailed">Pushing to the table via web sockets failed: {0}</entry>
+	<entry key="selectedUser">Selected user</entry>
+	<entry key="resetColumns">Reset the columns</entry>
+	<entry key="discard">Discard the changes?</entry>
+</properties>

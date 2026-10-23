@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Panel dividido</entry>
+	<entry key="explanation">&lt;p&gt;SplitPanel de ui-components muestra dos paneles, uno al lado del otro o uno encima del otro, con un divisor entre ellos. Arrastre el divisor con el ratón, un lápiz o el dedo para repartir el espacio de otra manera; o dele el foco con Tab y muévalo con las flechas, llévelo a sus límites con Inicio y Fin. Un doble clic lo devuelve a donde empezó. Los botones de un divisor plegable ocultan un panel, dando al otro todo el espacio, y lo vuelven a mostrar; con el teclado lo hace Intro. Los paneles divididos se ponen unos dentro de otros: el diseño de abajo son dos, los archivos al lado de un editor encima de su consola.&lt;/p&gt;&lt;p&gt;Los tamaños van en porcentaje o en píxeles. Los archivos miden 220 píxeles de ancho, de 140 píxeles a la mitad del ancho, y conservan su ancho cuando cambia la ventana; el editor ocupa el 65 por ciento del alto y deja a la consola al menos 60 píxeles. El divisor se mueve en el navegador, entre esos límites. Con setSendToServer el navegador envía cada cambio por Ajax, y la frase de debajo del diseño lo sigue. Dónde lo guarda el panel es su modelo: el panel de los archivos lo guarda en la sesión, así que la página lo vuelve a mostrar cuando la abre de nuevo; el del editor en la página, como por defecto. Las casillas vuelven a mostrar el tercer panel dividido por Ajax. Todo funciona con una Content Security Policy estricta, sin estilos en línea.&lt;/p&gt;</entry>
+	<entry key="layoutTitle">El diseño de un editor</entry>
+	<entry key="settingsTitle">Uno al lado del otro o uno encima del otro</entry>
+	<entry key="files">Archivos</entry>
+	<entry key="editor">HomePage.java</entry>
+	<entry key="console">Consola</entry>
+	<entry key="vertical">Uno encima del otro</entry>
+	<entry key="resizable">El divisor se mueve</entry>
+	<entry key="sizes">Los archivos ocupan {0} del ancho, el editor {1} del alto.</entry>
+	<entry key="first">El primer panel: a la izquierda, o arriba.</entry>
+	<entry key="second">El segundo panel: a la derecha, o abajo.</entry>
+	<entry key="collapsible">Los botones ocultan los paneles</entry>
+	<entry key="none">nada</entry>
+	<entry key="all">todo</entry>
+</properties>

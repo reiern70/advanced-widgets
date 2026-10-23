@@ -1,6 +1,4 @@
 /*
- * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,8 +31,6 @@ const out = join(root, 'dist', 'wicket');
 
 const BANNER = [
 	'/*',
-	' * Copyright 2026 Ernesto Reinaldo Barreiro (reiern70, reiern70@gmail.com)',
-	' *',
 	' * Licensed under the Apache License, Version 2.0 (the "License");',
 	' * you may not use this file except in compliance with the License.',
 	' * You may obtain a copy of the License at',
@@ -53,66 +49,66 @@ const BANNER = [
 
 /** The scripts: their entry in src/wicket and their path in ui-components. */
 const SCRIPTS = [
-	['src/wicket/autocomplete.ts', 'com/antilia/widgets/autocomplete/antilia-autocomplete.js'],
-	['src/wicket/button.ts', 'com/antilia/widgets/button/antilia-button.js'],
-	['src/wicket/chips.ts', 'com/antilia/widgets/chips/antilia-chips.js'],
-	['src/wicket/clipboard.ts', 'com/antilia/widgets/clipboard/antilia-clipboard.js'],
-	['src/wicket/code-editor.ts', 'com/antilia/widgets/codeeditor/antilia-code-editor.js'],
-	['src/wicket/date-picker.ts', 'com/antilia/widgets/datepicker/antilia-date-picker.js'],
-	['src/wicket/data-table.ts', 'com/antilia/widgets/dynamicdatatable/ant-data-table.js'],
-	['src/wicket/desktop.ts', 'com/antilia/widgets/desktop/antilia-desktop.js'],
-	['src/wicket/dropdown.ts', 'com/antilia/widgets/dropdown/antilia-dropdown.js'],
-	['src/wicket/floating-panel.ts', 'com/antilia/widgets/floating/antilia-floating-panel.js'],
-	['src/wicket/handlebars.ts', 'com/antilia/widgets/dynamicdatatable/handlebars-adapter.js'],
-	['src/wicket/infinite-list.ts', 'com/antilia/widgets/jsonlist/json-infinite-list.js'],
-	['src/wicket/menu.ts', 'com/antilia/widgets/menu/antilia-menu.js'],
-	['src/wicket/modal.ts', 'com/antilia/widgets/modal/antilia-modal.js'],
-	['src/wicket/movable-columns.ts', 'com/antilia/widgets/table/antilia-movable-columns.js'],
-	['src/wicket/notifications.ts', 'com/antilia/widgets/notification/antilia-notifications.js'],
-	['src/wicket/palette.ts', 'com/antilia/widgets/palette/antilia-palette.js'],
-	['src/wicket/popover.ts', 'com/antilia/widgets/popover/antilia-popover.js'],
-	['src/wicket/resizable-columns.ts', 'com/antilia/widgets/table/antilia-resizable-columns.js'],
-	['src/wicket/resizable.ts', 'com/antilia/widgets/resizable/antilia-resizable.js'],
-	['src/wicket/rich-text-editor.ts', 'com/antilia/widgets/richtext/antilia-rich-text-editor.js'],
+	['src/wicket/autocomplete.ts', 'com/antiliacode/widgets/autocomplete/antilia-autocomplete.js'],
+	['src/wicket/button.ts', 'com/antiliacode/widgets/button/antilia-button.js'],
+	['src/wicket/chips.ts', 'com/antiliacode/widgets/chips/antilia-chips.js'],
+	['src/wicket/clipboard.ts', 'com/antiliacode/widgets/clipboard/antilia-clipboard.js'],
+	['src/wicket/code-editor.ts', 'com/antiliacode/widgets/codeeditor/antilia-code-editor.js'],
+	['src/wicket/date-picker.ts', 'com/antiliacode/widgets/datepicker/antilia-date-picker.js'],
+	['src/wicket/data-table.ts', 'com/antiliacode/widgets/dynamicdatatable/ant-data-table.js'],
+	['src/wicket/desktop.ts', 'com/antiliacode/widgets/desktop/antilia-desktop.js'],
+	['src/wicket/dropdown.ts', 'com/antiliacode/widgets/dropdown/antilia-dropdown.js'],
+	['src/wicket/floating-panel.ts', 'com/antiliacode/widgets/floating/antilia-floating-panel.js'],
+	['src/wicket/handlebars.ts', 'com/antiliacode/widgets/dynamicdatatable/handlebars-adapter.js'],
+	['src/wicket/infinite-list.ts', 'com/antiliacode/widgets/jsonlist/json-infinite-list.js'],
+	['src/wicket/menu.ts', 'com/antiliacode/widgets/menu/antilia-menu.js'],
+	['src/wicket/modal.ts', 'com/antiliacode/widgets/modal/antilia-modal.js'],
+	['src/wicket/movable-columns.ts', 'com/antiliacode/widgets/table/antilia-movable-columns.js'],
+	['src/wicket/notifications.ts', 'com/antiliacode/widgets/notification/antilia-notifications.js'],
+	['src/wicket/palette.ts', 'com/antiliacode/widgets/palette/antilia-palette.js'],
+	['src/wicket/popover.ts', 'com/antiliacode/widgets/popover/antilia-popover.js'],
+	['src/wicket/resizable-columns.ts', 'com/antiliacode/widgets/table/antilia-resizable-columns.js'],
+	['src/wicket/resizable.ts', 'com/antiliacode/widgets/resizable/antilia-resizable.js'],
+	['src/wicket/rich-text-editor.ts', 'com/antiliacode/widgets/richtext/antilia-rich-text-editor.js'],
 	['src/wicket/rich-text-highlight.ts',
-		'com/antilia/widgets/richtext/antilia-rich-text-highlight.js'],
-	['src/wicket/scrollbar.ts', 'com/antilia/widgets/scrollbar/antilia-scrollbar.js'],
-	['src/wicket/split-panel.ts', 'com/antilia/widgets/split/antilia-split-panel.js'],
-	['src/wicket/tabs.ts', 'com/antilia/widgets/tabs/antilia-tabs.js'],
-	['src/wicket/templates.ts', 'com/antilia/widgets/template/antilia-templates.js'],
-	['src/wicket/tree.ts', 'com/antilia/widgets/tree/json-tree.js'],
-	['src/wicket/upload.ts', 'com/antilia/widgets/upload/antilia-upload.js']
+		'com/antiliacode/widgets/richtext/antilia-rich-text-highlight.js'],
+	['src/wicket/scrollbar.ts', 'com/antiliacode/widgets/scrollbar/antilia-scrollbar.js'],
+	['src/wicket/split-panel.ts', 'com/antiliacode/widgets/split/antilia-split-panel.js'],
+	['src/wicket/tabs.ts', 'com/antiliacode/widgets/tabs/antilia-tabs.js'],
+	['src/wicket/templates.ts', 'com/antiliacode/widgets/template/antilia-templates.js'],
+	['src/wicket/tree.ts', 'com/antiliacode/widgets/tree/json-tree.js'],
+	['src/wicket/upload.ts', 'com/antiliacode/widgets/upload/antilia-upload.js']
 ];
 
 /** The style sheets and the images they use: their file in styles and their path in ui-components. */
 const STYLES = [
-	['styles/autocomplete.css', 'com/antilia/widgets/autocomplete/antilia-autocomplete.css'],
-	['styles/button.css', 'com/antilia/widgets/button/antilia-button.css'],
-	['styles/chips.css', 'com/antilia/widgets/chips/antilia-chips.css'],
-	['styles/clipboard.css', 'com/antilia/widgets/clipboard/antilia-clipboard.css'],
-	['styles/code-editor.css', 'com/antilia/widgets/codeeditor/antilia-code-editor.css'],
-	['styles/data-table.css', 'com/antilia/widgets/dynamicdatatable/ant-data-table.css'],
-	['styles/data-table-check.svg', 'com/antilia/widgets/dynamicdatatable/data-table-check.svg'],
-	['styles/date-picker.css', 'com/antilia/widgets/datepicker/antilia-date-picker.css'],
-	['styles/desktop.css', 'com/antilia/widgets/desktop/antilia-desktop.css'],
-	['styles/dropdown.css', 'com/antilia/widgets/dropdown/antilia-dropdown.css'],
-	['styles/floating-panel.css', 'com/antilia/widgets/floating/antilia-floating-panel.css'],
-	['styles/infinite-list.css', 'com/antilia/widgets/jsonlist/json-infinite-list.css'],
-	['styles/menu.css', 'com/antilia/widgets/menu/antilia-menu.css'],
-	['styles/modal.css', 'com/antilia/widgets/modal/antilia-modal.css'],
-	['styles/movable-columns.css', 'com/antilia/widgets/table/antilia-movable-columns.css'],
-	['styles/notifications.css', 'com/antilia/widgets/notification/antilia-notifications.css'],
-	['styles/palette.css', 'com/antilia/widgets/palette/antilia-palette.css'],
-	['styles/popover.css', 'com/antilia/widgets/popover/antilia-popover.css'],
-	['styles/progress-bar.css', 'com/antilia/widgets/progress/antilia-progress-bar.css'],
-	['styles/resizable.css', 'com/antilia/widgets/resizable/antilia-resizable.css'],
-	['styles/resizable-columns.css', 'com/antilia/widgets/table/antilia-resizable-columns.css'],
-	['styles/rich-text-editor.css', 'com/antilia/widgets/richtext/antilia-rich-text-editor.css'],
-	['styles/scrollbar.css', 'com/antilia/widgets/scrollbar/antilia-scrollbar.css'],
-	['styles/split-panel.css', 'com/antilia/widgets/split/antilia-split-panel.css'],
-	['styles/tabs.css', 'com/antilia/widgets/tabs/antilia-tabs.css'],
-	['styles/tree.css', 'com/antilia/widgets/tree/antilia-tree.css'],
-	['styles/upload.css', 'com/antilia/widgets/upload/antilia-upload.css']
+	['styles/autocomplete.css', 'com/antiliacode/widgets/autocomplete/antilia-autocomplete.css'],
+	['styles/button.css', 'com/antiliacode/widgets/button/antilia-button.css'],
+	['styles/chips.css', 'com/antiliacode/widgets/chips/antilia-chips.css'],
+	['styles/clipboard.css', 'com/antiliacode/widgets/clipboard/antilia-clipboard.css'],
+	['styles/code-editor.css', 'com/antiliacode/widgets/codeeditor/antilia-code-editor.css'],
+	['styles/data-table.css', 'com/antiliacode/widgets/dynamicdatatable/ant-data-table.css'],
+	['styles/data-table-check.svg', 'com/antiliacode/widgets/dynamicdatatable/data-table-check.svg'],
+	['styles/date-picker.css', 'com/antiliacode/widgets/datepicker/antilia-date-picker.css'],
+	['styles/desktop.css', 'com/antiliacode/widgets/desktop/antilia-desktop.css'],
+	['styles/dropdown.css', 'com/antiliacode/widgets/dropdown/antilia-dropdown.css'],
+	['styles/floating-panel.css', 'com/antiliacode/widgets/floating/antilia-floating-panel.css'],
+	['styles/infinite-list.css', 'com/antiliacode/widgets/jsonlist/json-infinite-list.css'],
+	['styles/menu.css', 'com/antiliacode/widgets/menu/antilia-menu.css'],
+	['styles/modal.css', 'com/antiliacode/widgets/modal/antilia-modal.css'],
+	['styles/movable-columns.css', 'com/antiliacode/widgets/table/antilia-movable-columns.css'],
+	['styles/notifications.css', 'com/antiliacode/widgets/notification/antilia-notifications.css'],
+	['styles/palette.css', 'com/antiliacode/widgets/palette/antilia-palette.css'],
+	['styles/popover.css', 'com/antiliacode/widgets/popover/antilia-popover.css'],
+	['styles/progress-bar.css', 'com/antiliacode/widgets/progress/antilia-progress-bar.css'],
+	['styles/resizable.css', 'com/antiliacode/widgets/resizable/antilia-resizable.css'],
+	['styles/resizable-columns.css', 'com/antiliacode/widgets/table/antilia-resizable-columns.css'],
+	['styles/rich-text-editor.css', 'com/antiliacode/widgets/richtext/antilia-rich-text-editor.css'],
+	['styles/scrollbar.css', 'com/antiliacode/widgets/scrollbar/antilia-scrollbar.css'],
+	['styles/split-panel.css', 'com/antiliacode/widgets/split/antilia-split-panel.css'],
+	['styles/tabs.css', 'com/antiliacode/widgets/tabs/antilia-tabs.css'],
+	['styles/tree.css', 'com/antiliacode/widgets/tree/antilia-tree.css'],
+	['styles/upload.css', 'com/antiliacode/widgets/upload/antilia-upload.css']
 ];
 
 await rm(out, { recursive: true, force: true });
@@ -143,7 +139,7 @@ for (const [file, path] of STYLES) {
  */
 const { ANTILIA_LOOK, BOOTSTRAP_LOOK, LOOK_PARTS } = await import(
 	pathToFileURL(join(root, 'dist', 'look.js')).href);
-const looks = join(out, 'com/antilia/widgets/theme/antilia-looks.properties');
+const looks = join(out, 'com/antiliacode/widgets/theme/antilia-looks.properties');
 await mkdir(dirname(looks), { recursive: true });
 await writeFile(looks, ['# Built from frontend/core/src/look.ts, do not edit.',
 	...Object.entries(LOOK_PARTS).map(([part, aspect]) => `aspect.${part}=${aspect}`),

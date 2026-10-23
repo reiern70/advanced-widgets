@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Administration</entry>
+	<entry key="tab.users">Users</entry>
+	<entry key="tab.accesses">Accesses</entry>
+	<entry key="tab.oldAccesses">Old accesses</entry>
+	<entry key="users.lead">The accounts, the latest first. Accounts:</entry>
+	<entry key="accesses.lead">Who accessed the site, one row per session, the latest first. Sessions:</entry>
+	<entry key="oldAccesses.lead">The accesses older than {0} days, moved here every night, one row per session, the latest first. Sessions:</entry>
+	<entry key="account">Account</entry>
+	<entry key="email">Email</entry>
+	<entry key="firstName">First name</entry>
+	<entry key="lastName">Last name</entry>
+	<entry key="country">Country</entry>
+	<entry key="userLanguage">Language</entry>
+	<entry key="role">Access</entry>
+	<entry key="role.USER">User</entry>
+	<entry key="role.ADMIN">Administrator</entry>
+	<entry key="validated">Email confirmed</entry>
+	<entry key="created">Created</entry>
+	<entry key="yes">Yes</entry>
+	<entry key="no">No</entry>
+	<entry key="filter.name">Name</entry>
+	<entry key="filter.name.placeholder">Account or name</entry>
+	<entry key="filter.email">Email</entry>
+	<entry key="filter.email.placeholder">Part of the email</entry>
+	<entry key="filter.country">Country</entry>
+	<entry key="nullValid">All countries</entry>
+	<entry key="accessed">Accessed (server)</entry>
+	<entry key="user">User</entry>
+	<entry key="part">Part</entry>
+	<entry key="part.private">Private</entry>
+	<entry key="part.public">Public</entry>
+	<entry key="address">From</entry>
+	<entry key="localTime">Visitor's local time</entry>
+	<entry key="timeZone">Time zone</entry>
+	<entry key="browser">Browser</entry>
+	<entry key="filter.user">User</entry>
+	<entry key="filter.user.placeholder">Part of the user</entry>
+	<entry key="filter.part">Part</entry>
+	<entry key="part.nullValid">All parts</entry>
+	<entry key="filter.address">From</entry>
+	<entry key="filter.address.placeholder">Part of the address</entry>
+	<entry key="filter.accessed">Server time (UTC)</entry>
+	<entry key="filter.accessedFrom.placeholder">From</entry>
+	<entry key="filter.accessedUntil.placeholder">Until</entry>
+	<entry key="userInfo">About the account</entry>
+	<entry key="userInfo.none">There is no such account any more.</entry>
+	<entry key="jobRole">Role</entry>
+	<entry key="JobRole.DEVELOPER">Developer</entry>
+	<entry key="JobRole.ARCHITECT">Architect</entry>
+	<entry key="JobRole.DESIGNER">Designer</entry>
+	<entry key="JobRole.MANAGER">Manager</entry>
+	<entry key="JobRole.STUDENT">Student</entry>
+	<entry key="JobRole.OTHER">Other</entry>
+</properties>

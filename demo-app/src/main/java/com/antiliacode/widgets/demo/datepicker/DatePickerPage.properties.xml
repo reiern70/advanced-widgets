@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Date and time pickers</entry>
+	<entry key="explanation">&lt;p&gt;DatePicker and DateTimePicker from ui-components take a date, or a date with a time, from a calendar or typed into their field. Everything they show follows the locale: the field writes the date in its order and with its separators, 09.10.2026 in Germany and 10/09/2026 in the United States, and reads it back typed so, with or without separators and with a year of two digits; the calendar names the months and the days in its language and starts the week on its first day; the time has its clock, 24 hours or 12 with AM and PM. The texts of the buttons come from the bundles, in the language of the page. The input holds the value as ISO text, which the form posts and the server converts into a LocalDate or LocalDateTime, checking the bounds the calendar keeps to.&lt;/p&gt;&lt;p&gt;Open the calendar with its button, or with Alt+Down in the field. The arrow keys move by a day or a week, Page Up and Page Down by a month, with Shift by a year, Enter chooses and Escape closes; the title shows the months of the year, and then the years. Choose another locale below to see the calendars change: the language of the page stays. Text that is no date is reported by the server, below the form, which follows every change via Ajax.&lt;/p&gt;</entry>
+	<entry key="dates">A date</entry>
+	<entry key="datesAndTimes">A date and time</entry>
+	<entry key="localeTitle">Locale</entry>
+	<entry key="born">Born</entry>
+	<entry key="start">Contract starts</entry>
+	<entry key="appointment">Appointment</entry>
+	<entry key="departure">Departure</entry>
+	<entry key="calendarLocale">Calendars in</entry>
+	<entry key="calendarLocale.page">The language of the page</entry>
+	<entry key="disabledTitle">Disabled</entry>
+	<entry key="send">Send</entry>
+	<entry key="nothing">nothing</entry>
+	<entry key="choices">Born {0}; contract from {1}; appointment {2}; departure {3}.</entry>
+	<entry key="sent">Sent: {0}</entry>
+</properties>

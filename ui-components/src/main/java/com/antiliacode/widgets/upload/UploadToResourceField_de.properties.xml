@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The words of the errors of the uploads of an UploadToResourceField, which Wicket's
+  FileUploadToResourceField looks for with the limits of the field: ${maxSize}, ${fileMaxSize} and
+  ${fileCountMax}. uploadConnectionLost is what the field tells when the request got no answer, the
+  server and the progress alike.
+-->
+<properties>
+	<entry key="wicket.no.files.selected">Nichts hochzuladen: keine Dateien gewählt.</entry>
+	<entry key="uploadTooLarge">Die Dateien wiegen zusammen mehr als ${maxSize}, das Höchste auf einmal.</entry>
+	<entry key="uploadSingleFileTooLarge">Eine Datei wiegt mehr als ${fileMaxSize}, das Höchste für eine Datei.</entry>
+	<entry key="uploadTooManyFiles">Mehr als ${fileCountMax} Dateien, das Höchste auf einmal.</entry>
+	<entry key="uploadToResourceFailed">Der Upload ist fehlgeschlagen.</entry>
+	<entry key="uploadConnectionLost">Die Verbindung zum Server ist beim Upload abgebrochen.</entry>
+</properties>

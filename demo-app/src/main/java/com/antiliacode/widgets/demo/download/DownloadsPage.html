@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="downloads-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+<wicket:fragment wicket:id="ajaxCase">
+	<section>
+		<p class="downloads-demo__hint"><wicket:message key="ajax.hint"/></p>
+		<div class="downloads-demo__options">
+			<div class="downloads-demo__field"><label wicket:for="file"><wicket:message key="file"/></label> <select wicket:id="file"></select></div>
+			<div class="downloads-demo__field"><label wicket:for="answer"><wicket:message key="answer"/></label> <select wicket:id="answer"></select></div>
+		</div>
+		<ul wicket:id="locations" class="downloads-demo__list">
+			<li wicket:id="locations" class="downloads-demo__item">
+				<div class="downloads-demo__action"><button wicket:id="download">[download]</button></div>
+				<div class="downloads-demo__text">
+					<p wicket:id="help">[what the location does]</p>
+					<p wicket:id="blocked" class="downloads-demo__blocked">[why the button waits]</p>
+				</div>
+			</li>
+		</ul>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="linksCase">
+	<section>
+		<p class="downloads-demo__hint"><wicket:message key="links.hint"/></p>
+		<ul class="downloads-demo__list">
+			<li class="downloads-demo__item">
+				<div class="downloads-demo__action"><a wicket:id="fileLink">[DownloadLink]</a></div>
+				<div class="downloads-demo__text"><p><wicket:message key="fileLink.help"/></p></div>
+			</li>
+			<li class="downloads-demo__item">
+				<div class="downloads-demo__action"><a wicket:id="resourceLink">[ResourceLink]</a></div>
+				<div class="downloads-demo__text"><p><wicket:message key="resourceLink.help"/></p></div>
+			</li>
+			<li class="downloads-demo__item">
+				<div class="downloads-demo__action"><a wicket:id="mountedLink">[mounted resource]</a></div>
+				<div class="downloads-demo__text">
+					<p><wicket:message key="mountedLink.help"/></p>
+					<p><code wicket:id="mountedUrl" class="downloads-demo__url">[its URL]</code></p>
+				</div>
+			</li>
+			<li class="downloads-demo__item">
+				<div class="downloads-demo__action"><a wicket:id="openLink" target="_blank" rel="noopener">[opens in a new tab]</a></div>
+				<div class="downloads-demo__text"><p><wicket:message key="openLink.help"/></p></div>
+			</li>
+			<li class="downloads-demo__item">
+				<div class="downloads-demo__action"><a wicket:id="staticLink">[a file of the web application]</a></div>
+				<div class="downloads-demo__text"><p><wicket:message key="staticLink.help"/></p></div>
+			</li>
+		</ul>
+	</section>
+</wicket:fragment>
+<wicket:fragment wicket:id="formCase">
+	<section>
+		<p class="downloads-demo__hint"><wicket:message key="form.hint"/></p>
+		<form wicket:id="report" class="downloads-demo__form">
+			<div class="downloads-demo__field downloads-demo__field--wide"><label wicket:for="title"><wicket:message key="report.title"/></label> <input type="text" wicket:id="title"/></div>
+			<div class="downloads-demo__field"><label wicket:for="format"><wicket:message key="report.format"/></label> <select wicket:id="format"></select></div>
+			<div class="downloads-demo__field"><label wicket:for="rows"><wicket:message key="report.rows"/></label> <input type="number" wicket:id="rows"/></div>
+			<div class="ant-button-bar downloads-demo__buttons">
+				<button wicket:id="download">[download]</button>
+				<button wicket:id="open">[open in a new tab]</button>
+			</div>
+		</form>
+	</section>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

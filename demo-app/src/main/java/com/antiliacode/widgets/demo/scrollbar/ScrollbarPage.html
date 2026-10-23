@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="scrollbar-demo">
+	<section>
+		<h3><wicket:message key="native"/></h3>
+		<div wicket:id="native" class="scrollbar-demo__box"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="vertical"/></h3>
+		<div wicket:id="vertical" class="scrollbar-demo__box"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="horizontal"/></h3>
+		<div wicket:id="horizontal" class="scrollbar-demo__box scrollbar-demo__box--x"><div class="scrollbar-demo__strip"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span></div></div>
+	</section>
+	<section>
+		<h3><wicket:message key="both"/></h3>
+		<div wicket:id="both" class="scrollbar-demo__box scrollbar-demo__box--both"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+	</section>
+	<section>
+		<h3><wicket:message key="growing"/></h3>
+		<div wicket:id="growing" class="scrollbar-demo__box scrollbar-demo__box--short"><p wicket:id="lines"><span wicket:id="line"></span></p></div>
+		<div class="scrollbar-demo__actions">
+			<button type="button" wicket:id="addLines" class="scrollbar-demo__add" wicket:message="title:addLines,aria-label:addLines">+</button>
+			<button type="button" wicket:id="toTop" class="scrollbar-demo__to"><wicket:message key="toTop"/></button>
+			<button type="button" wicket:id="toBottom" class="scrollbar-demo__to"><wicket:message key="toBottom"/></button>
+			<button type="button" wicket:id="toPosition" class="scrollbar-demo__to"><wicket:message key="toPosition"/></button>
+			<button type="button" wicket:id="toLine" class="scrollbar-demo__to"><wicket:message key="toLine"/></button>
+		</div>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>
