@@ -35,8 +35,8 @@ import com.antiliacode.widgets.theme.Theme;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * The session of the demo application: remembers the {@link Theme} and the
- * {@link AjaxEngine} the user chose for every page, the account the user signed in with, the failed attempts to sign in,
+ * The session of the demo application: remembers the {@link Theme} the user chose for every
+ * page, the account the user signed in with, the failed attempts to sign in,
  * who a visitor who does not sign in told it is (see {@link #VISITOR_PARAMETER}) and the
  * {@link Access} recording the session, whose user is the account, the visitor, a robot or
  * unknown.
@@ -59,8 +59,6 @@ public class DemoSession extends WebSession
 	private static final Pattern VISITOR = Pattern.compile("[a-z0-9][a-z0-9.-]{0,39}");
 
 	private Theme theme = Theme.DEFAULT;
-
-	private AjaxEngine ajaxEngine = AjaxEngine.DEFAULT;
 
 	private TeamStore team;
 
@@ -112,24 +110,6 @@ public class DemoSession extends WebSession
 	public void setTheme(Theme theme)
 	{
 		this.theme = Args.notNull(theme, "theme");
-		keep();
-	}
-
-	/**
-	 * @return the script Wicket's Ajax runs on in the pages
-	 */
-	public AjaxEngine getAjaxEngine()
-	{
-		return ajaxEngine;
-	}
-
-	/**
-	 * @param ajaxEngine
-	 *            the script Wicket's Ajax runs on in the pages
-	 */
-	public void setAjaxEngine(AjaxEngine ajaxEngine)
-	{
-		this.ajaxEngine = Args.notNull(ajaxEngine, "ajaxEngine");
 		keep();
 	}
 

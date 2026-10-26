@@ -6,6 +6,10 @@ Portions of demo-app come from the Apache Wicket quickstart archetype, under the
 Version 2.0, as their headers say: src/test/java/com/antiliacode/widgets/demo/Start.java and the Jetty
 configuration in src/test/jetty.
 
+The Ajax veil of ui-components (com.antiliacode.widgets.veil) is a copy of the one of Apache Wicket
+11 (https://wicket.apache.org), under the Apache License, Version 2.0, as its headers say. Apache
+Wicket includes software developed at The Apache Software Foundation (https://www.apache.org/).
+
 The demo application uses Font Awesome Free (https://fontawesome.com), Copyright Fonticons, Inc.,
 from the web jar org.webjars.npm:fortawesome__fontawesome-free: its icons under the Creative
 Commons Attribution 4.0 International License, its fonts under the SIL Open Font License 1.1 and

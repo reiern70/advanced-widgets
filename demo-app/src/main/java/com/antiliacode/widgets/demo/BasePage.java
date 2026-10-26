@@ -28,7 +28,6 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
-import org.apache.wicket.markup.html.form.EnumChoiceRenderer;
 import org.apache.wicket.markup.html.form.StatelessForm;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.link.StatelessLink;
@@ -59,8 +58,8 @@ import com.antiliacode.widgets.throttle.ThrottleButton;
 
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
- * drop-downs choosing the theme, the {@link Look}, the language and the {@link AjaxEngine} of the
- * session, each on its own, and the links to sign in and to register, or the account signed in with and the link to
+ * drop-downs choosing the theme, the {@link Look} and the language of the session, each on its
+ * own, and the links to sign in and to register, or the account signed in with and the link to
  * sign out, and for an administrator the link to the administration; then the footer, and the
  * {@link Notifications} showing the feedback messages of the page, and the dialog telling what runs
  * where, which the link in the footer opens in the browser. Nothing of it keeps a page, so the
@@ -119,19 +118,6 @@ public abstract class BasePage extends WebPage
 		settings.add(newThemeChoice("theme"));
 		settings.add(newLookChoice("look"));
 		settings.add(newLanguageChoice("language"));
-		// the script of Wicket's Ajax is for the signed in only, not for the public pages
-		WebMarkupContainer ajaxEngine = new WebMarkupContainer("ajaxEngineSetting")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setVisible(DemoSession.get().isSignedIn());
-			}
-		};
-		settings.add(ajaxEngine.add(newAjaxEngineChoice("ajaxEngine")));
 		// a demo can be seen as on a slow network: the server slows down for the session
 		add(this instanceof DemoPage ? new ThrottleButton("throttle")
 			: new WebMarkupContainer("throttle").setVisible(false));
@@ -247,17 +233,6 @@ public abstract class BasePage extends WebPage
 			}
 		};
 		choice.add(new DropdownBehavior());
-		return choice;
-	}
-
-	private Dropdown<AjaxEngine> newAjaxEngineChoice(String id)
-	{
-		Dropdown<AjaxEngine> choice = new Dropdown<>(id,
-			LambdaModel.of(() -> DemoSession.get().getAjaxEngine(),
-				engine -> DemoSession.get().setAjaxEngine(engine)),
-			List.of(AjaxEngine.values()), new EnumChoiceRenderer<>(this));
-		choice.setRequired(true);
-		choice.add(reloadOnChange());
 		return choice;
 	}
 

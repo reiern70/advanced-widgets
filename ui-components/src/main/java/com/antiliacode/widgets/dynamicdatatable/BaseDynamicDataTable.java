@@ -44,7 +44,6 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
 import org.apache.wicket.extensions.ajax.markup.html.modal.TrapFocusBehavior;
-import org.apache.wicket.extensions.ajax.veil.LocalVeilBehavior;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.ISortState;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.ISortStateLocator;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
@@ -83,6 +82,7 @@ import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
+import com.antiliacode.widgets.veil.LocalVeilBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 

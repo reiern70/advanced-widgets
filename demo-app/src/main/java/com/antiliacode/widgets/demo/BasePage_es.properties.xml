@@ -18,9 +18,6 @@
 	<entry key="look">Aspecto</entry>
 	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Idioma</entry>
-	<entry key="ajaxEngine">Ajax</entry>
-	<entry key="AjaxEngine.JQUERY">jQuery</entry>
-	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">JavaScript puro</entry>
 	<entry key="register">Registrarse</entry>
 	<entry key="signIn">Iniciar sesión</entry>
 	<entry key="signOut">Cerrar sesión</entry>
@@ -68,7 +65,7 @@
 	<entry key="demo.downloads">Descargas</entry>
 	<entry key="demo.downloads.description">Archivos de todo tipo desde los botones del tema: por Ajax en el navegador, a través de un iframe oculto, en una pestaña nueva o en la misma ventana, ocupados mientras llegan; enlaces, una URL para compartir y el informe que describe un formulario.</entry>
 	<entry key="demo.upload">Subida de archivos</entry>
-	<entry key="demo.upload.description">Archivos enviados en un formulario, por Ajax o a un recurso, elegidos con un botón del tema o soltados sobre una zona, con una barra de progreso del tema, una guarda que mantiene al usuario en la página y una forma de ralentizar las subidas.</entry>
+	<entry key="demo.upload.description">Archivos enviados en un formulario, de la forma habitual o por Ajax, elegidos con un botón del tema o soltados sobre una zona, con una barra de progreso del tema y una forma de ralentizar las subidas.</entry>
 	<entry key="demo.codeEditor">Editor de código</entry>
 	<entry key="demo.codeEditor.description">Código en Java, JavaScript, TypeScript, JSON, Markdown o una gramática propia, resaltado en los colores del tema: el servidor guarda el texto, el cursor, la selección y el tamaño, y las pestañas en las que está saben de sus cambios sin guardar. El Markdown se muestra junto a su vista previa en vivo.</entry>
 	<entry key="demo.richTextEditor">Editor de texto enriquecido</entry>

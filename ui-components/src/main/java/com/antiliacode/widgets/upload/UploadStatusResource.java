@@ -38,7 +38,7 @@ import jakarta.servlet.http.HttpServletRequest;
  *
  * and {@code {"state": "none"}} before and after. Wicket keeps the progress of an upload only with
  * {@link org.apache.wicket.settings.ApplicationSettings#setUploadProgressUpdatesEnabled(boolean)}:
- * a form's under the id of its page, an {@link UploadToResourceField}'s under its markup id.
+ * a form's under the id of its page.
  * <p>
  * The resource is shared: the {@link com.antiliacode.widgets.Initializer} of ui-components registers
  * it under {@link #REFERENCE}. It never makes a session.

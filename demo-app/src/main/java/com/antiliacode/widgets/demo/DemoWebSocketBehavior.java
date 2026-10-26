@@ -18,11 +18,11 @@ import java.util.Map;
 import org.apache.wicket.protocol.ws.api.WebSocketBehavior;
 
 /**
- * The web socket behavior of the demos, which connects with either {@link AjaxEngine}.
+ * The web socket behavior of the demos.
  * <p>
- * The setup script of Wicket's web socket support calls {@code jQuery.extend(...)}, so with the
- * plain JavaScript engine, where there is no jQuery, the page never connects. This behavior sets
- * the same values with {@code Object.assign(...)}, which needs no library.
+ * The setup script of Wicket's web socket support calls {@code jQuery.extend(...)}. This behavior
+ * sets the same values with {@code Object.assign(...)}, which needs no library, as on the master
+ * branch, where Wicket's Ajax may run without jQuery.
  */
 public abstract class DemoWebSocketBehavior extends WebSocketBehavior
 {

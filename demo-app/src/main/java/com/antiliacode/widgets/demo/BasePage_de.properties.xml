@@ -18,9 +18,6 @@
 	<entry key="look">Aussehen</entry>
 	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Sprache</entry>
-	<entry key="ajaxEngine">Ajax</entry>
-	<entry key="AjaxEngine.JQUERY">jQuery</entry>
-	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Reines JavaScript</entry>
 	<entry key="register">Registrieren</entry>
 	<entry key="signIn">Anmelden</entry>
 	<entry key="signOut">Abmelden</entry>
@@ -68,7 +65,7 @@
 	<entry key="demo.downloads">Downloads</entry>
 	<entry key="demo.downloads.description">Dateien jeder Art über die Schaltflächen des Themes: per Ajax in den Browser, über einen versteckten iframe, in einem neuen Tab oder im selben Fenster, beschäftigt, solange sie kommen; Links, eine URL zum Teilen und der Bericht, den ein Formular beschreibt.</entry>
 	<entry key="demo.upload">Hochladen</entry>
-	<entry key="demo.upload.description">Dateien, in einem Formular, per Ajax oder an eine Ressource gesendet, mit einer Schaltfläche des Themes ausgewählt oder auf einer Fläche abgelegt, mit einem Fortschrittsbalken des Themes, einem Schutz, der den Benutzer auf der Seite hält, und einer Möglichkeit, die Uploads zu verlangsamen.</entry>
+	<entry key="demo.upload.description">Dateien, in einem Formular normal oder per Ajax gesendet, mit einer Schaltfläche des Themes ausgewählt oder auf einer Fläche abgelegt, mit einem Fortschrittsbalken des Themes und einer Möglichkeit, die Uploads zu verlangsamen.</entry>
 	<entry key="demo.codeEditor">Code-Editor</entry>
 	<entry key="demo.codeEditor.description">Code in Java, JavaScript, TypeScript, JSON, Markdown oder einer eigenen Grammatik, in den Farben des Themas hervorgehoben: Der Server behält Text, Cursor, Auswahl und Größe, und die Tabs, in denen er liegt, wissen von seinen ungespeicherten Änderungen. Markdown steht neben seiner Live-Vorschau.</entry>
 	<entry key="demo.richTextEditor">Rich-Text-Editor</entry>

@@ -22,18 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.WicketRuntimeException;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.feedback.FeedbackMessage;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
@@ -223,33 +218,6 @@ class UploadsTest extends WicketTestCase
 	}
 
 	@Test
-	void guardsTheUploadsOfAFieldUploadingToAResource()
-	{
-		TestField[] fields = new TestField[1];
-		tester.startPage(new TestPage("<input type=\"file\" wicket:id=\"file\"/>",
-			page -> page.add(fields[0] = new TestField("file"))));
-
-		TestField field = fields[0];
-		String id = JSONObject.quote(field.getMarkupId());
-		String page = tester.getLastResponseAsString();
-		assertTrue(page.contains("Wicket.Upload.guard(" + id +
-			", {\"leaving\":true,\"requests\":false});"), page);
-		// the hooks of Wicket's field stay its own, which the script wraps once the field is made
-		assertTrue(page.contains(field.hooks() + ");"), page);
-		assertTrue(page.indexOf("Wicket.Upload.field(" + id + ", {") >
-			page.indexOf("new Wicket.FileUploadToResourceField("), page);
-		assertTrue(field.isKeepingOnPage());
-		assertFalse(field.isBlockingRequests());
-
-		field.setBlockingRequests(true).setKeepingOnPage(false);
-		assertEquals("Wicket.Upload.guard(" + id + ", {\"leaving\":false,\"requests\":true});" +
-			"Wicket.Upload.upload(" + id + ");", field.getTriggerUploadScript());
-		field.setBlockingRequests(false);
-		assertTrue(field.getTriggerUploadScript().startsWith("Wicket.Upload.guard(" + id +
-			", null);"), field.getTriggerUploadScript());
-	}
-
-	@Test
 	void clearsThePickerAndTellsTheBarAnUploadFailedViaAjax()
 	{
 		tester.startPage(new TestPage("<form wicket:id=\"form\"><input type=\"file\" " +
@@ -294,89 +262,6 @@ class UploadsTest extends WicketTestCase
 	}
 
 	@Test
-	void wordsTheErrorsOfAFieldUploadingToAResource()
-	{
-		TestField[] fields = new TestField[1];
-		tester.startPage(new TestPage("<input type=\"file\" wicket:id=\"file\"/>", page -> {
-			fields[0] = new TestField("file");
-			fields[0].setMaxSize(Bytes.megabytes(20));
-			fields[0].setFileCountMax(10);
-			page.add(fields[0]);
-		}));
-
-		TestField field = fields[0];
-		JSONObject messages = options(tester.getLastResponseAsString(),
-			"Wicket.Upload.field(" + JSONObject.quote(field.getMarkupId()) + ", ");
-		assertEquals("The files weigh more than 20MB together, the most sent at once.",
-			messages.getString("uploadTooLarge"));
-		assertEquals("More than 10 files, the most sent at once.",
-			messages.getString("uploadTooManyFiles"));
-		assertEquals("The upload failed.", messages.getString("uploadFailed"));
-		assertEquals("Nothing to upload: no files were chosen.",
-			messages.getString("wicket.no.files.selected"));
-		assertEquals("The connection to the server broke off during the upload.",
-			messages.getString(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
-		assertEquals(6, messages.length(), messages.toString());
-
-		// the server words a connection broken off with the bar's words, any other failure as one,
-		// in the session's language
-		AbstractDefaultAjaxBehavior callback = field.getBehaviors(
-			AbstractDefaultAjaxBehavior.class).get(0);
-		Map<String, String> said = new LinkedHashMap<>();
-		said.put("uploadFailed", "The upload failed.");
-		said.put("Internal Server Error", "The upload failed.");
-		said.put(UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY,
-			"The connection to the server broke off during the upload.");
-		said.forEach((error, message) -> {
-			assertEquals(message, failure(field, callback, error));
-			assertEquals(1, field.failures);
-			field.failures = 0;
-		});
-		tester.getSession().setLocale(Locale.GERMAN);
-		assertEquals("Der Upload ist fehlgeschlagen.", failure(field, callback, "uploadFailed"));
-		assertEquals("Die Verbindung zum Server ist beim Upload abgebrochen.",
-			failure(field, callback, UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
-	}
-
-	/**
-	 * Tells the field that its upload failed, as its script does.
-	 *
-	 * @return the message the server words the error with
-	 */
-	private String failure(TestField field, AbstractDefaultAjaxBehavior callback, String error)
-	{
-		tester.getRequest().setParameter("error", "true");
-		tester.getRequest().setParameter("errorMessage", error);
-		tester.executeBehavior(callback);
-		List<FeedbackMessage> errors = field.getFeedbackMessages().toList();
-		return errors.get(errors.size() - 1).getMessage().toString();
-	}
-
-	@Test
-	void marksTheRequestsThatGoOnWhileAnUploadStopsTheOthers()
-	{
-		tester.startPage(new TestPage("<a wicket:id=\"marked\"></a><a wicket:id=\"link\"></a>",
-			page -> page.add(new TestLink("marked").add(UploadGuard.bypass()), new TestLink("link")
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-				{
-					super.updateAjaxAttributes(attributes);
-					UploadGuard.bypass(attributes);
-				}
-			})));
-
-		assertEquals("", tester.getTagByWicketId("marked").getAttribute(
-			UploadGuard.BYPASS_ATTRIBUTE));
-		assertNull(tester.getTagByWicketId("link").getAttribute(UploadGuard.BYPASS_ATTRIBUTE));
-		String page = tester.getLastResponseAsString();
-		assertTrue(page.contains("\"bh\":[function(attrs){" + UploadGuard.BYPASS_SCRIPT + "}]"),
-			page);
-	}
-
-	@Test
 	void tellsHowFarAnUploadOfTheSessionGot()
 	{
 		assertNotNull(tester.getApplication().getSharedResources().get(UploadStatusResource.NAME));
@@ -415,24 +300,14 @@ class UploadsTest extends WicketTestCase
 		return new JSONObject(page.substring(start, end));
 	}
 
-	private static class TestField extends UploadToResourceField
+	/** Wicket's field uploading to a resource; Wicket 10 has no UploadToResourceField. */
+	private static class TestField extends FileUploadToResourceField
 	{
 		private static final long serialVersionUID = 1L;
-
-		int failures;
 
 		TestField(String id)
 		{
 			super(id);
-		}
-
-		/**
-		 * @return the hooks of Wicket's field in the browser, as it renders them
-		 */
-		String hooks()
-		{
-			return getClientBeforeSendCallBack() + "," + getClientSideSuccessCallBack() + "," +
-				getClientSideCancelCallBack() + "," + getClientSideUploadErrorCallBack();
 		}
 
 		@Override
@@ -444,7 +319,6 @@ class UploadsTest extends WicketTestCase
 		@Override
 		protected void onUploadFailure(AjaxRequestTarget target, String errorInfo)
 		{
-			failures++;
 		}
 	}
 

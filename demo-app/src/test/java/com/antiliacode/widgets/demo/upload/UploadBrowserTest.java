@@ -21,7 +21,6 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -45,8 +44,7 @@ import com.antiliacode.widgets.throttle.UploadSpeed;
  * Drives {@link UploadPage} in Chrome and in Firefox, in deployment mode, so through the minified
  * script built from frontend/core: the files chosen in the pickers, the bars following the server
  * while it reads them slowly, a file breaking the limits held back until taken out of the list,
- * the guard stopping one Ajax button and letting the other go during an upload canceled via Ajax,
- * and the files dropped on the zones, two of one name among them. Runs with {@code -Pselenium}, see
+ * and the files dropped on the zone of a form. Runs with {@code -Pselenium}, see
  * {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -99,25 +97,6 @@ class UploadBrowserTest extends JettyTestCase
 	}
 
 	/**
-	 * @return the button of a text in the case shown
-	 */
-	private WebElement button(String text)
-	{
-		return driver.findElements(By.tagName("button")).stream()
-			.filter(button -> button.isDisplayed() && button.getText().trim().equals(text))
-			.findFirst().orElseThrow();
-	}
-
-	/**
-	 * @return the clicks of the Ajax button the guard stops (0) or lets go (1)
-	 */
-	private String clicks(int button)
-	{
-		return driver.findElements(By.cssSelector(".upload-demo__request > span")).get(button)
-			.getText();
-	}
-
-	/**
 	 * @return the box of the bar in the case shown
 	 */
 	private WebElement progress()
@@ -143,15 +122,6 @@ class UploadBrowserTest extends JettyTestCase
 	{
 		String value = progress().findElement(By.tagName("progress")).getDomAttribute("value");
 		return value != null ? Integer.parseInt(value) : -1;
-	}
-
-	/**
-	 * @return the hooks the field logged
-	 */
-	private List<String> hooks()
-	{
-		return driver.findElements(By.cssSelector(".upload-demo__hook")).stream()
-			.map(hook -> hook.getText().replaceAll("\\s+", " ")).toList();
 	}
 
 	private String received()
@@ -210,93 +180,22 @@ class UploadBrowserTest extends JettyTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void stopsTheOtherRequestsWhileUploadingToTheResource(SeleniumBrowser browser)
-		throws IOException
-	{
-		open(browser, UploadSpeed.SLOW);
-		Cases.selectInWicket(wait, driver, "Upload to a resource");
-		driver.findElement(By.cssSelector("input[type=checkbox][name$=blockRequests]")).click();
-		driver.findElement(By.cssSelector("input[type=file][id^=WRFUF_]"))
-			.sendKeys(file("video.mp4", 2 * 1024 * 1024));
-		button("Upload").click();
-		wait.until(d -> "running".equals(state()) && percent() > 0);
-		wait.until(d -> button("Cancel").isEnabled());
-
-		WebElement blocked = button("Stopped while uploading");
-		blocked.click();
-		wait.until(d -> blocked.getDomAttribute("data-antilia-upload-blocked") != null);
-		assertEquals("Wait for the upload to end: the request was stopped", status());
-		button("Goes on while uploading").click();
-		wait.until(d -> clicks(1).equals("Clicks: 1"));
-		assertEquals("Clicks: 0", clicks(0));
-
-		button("Cancel").click();
-		wait.until(d -> "canceled".equals(state()));
-		assertEquals("Upload canceled", status());
-		wait.until(d -> Toasts.latest(d).equals("The upload was canceled."));
-		// the hooks of the field, as they were called: in the browser, then on the server
-		wait.until(d -> hooks().size() == 3);
-		List<String> hooks = hooks();
-		assertTrue(hooks.get(0).matches(".+ Browser getClientBeforeSendCallBack\\(\\) the request " +
-			"is about to send the files"), hooks.get(0));
-		assertTrue(hooks.get(1).matches(".+ Browser getClientSideCancelCallBack\\(\\) the upload " +
-			"was canceled, before the server heard of it"), hooks.get(1));
-		assertTrue(hooks.get(2).matches(".+ Server onUploadCanceled\\(target\\) the upload was " +
-			"canceled"), hooks.get(2));
-		wait.until(d -> button("Upload").isEnabled());
-
-		// the guard ended with the upload
-		blocked.click();
-		wait.until(d -> clicks(0).equals("Clicks: 1"));
-	}
-
-	@ParameterizedTest
-	@EnumSource(SeleniumBrowser.class)
-	void uploadsTheFilesDroppedOnTheZones(SeleniumBrowser browser)
+	void sendsTheImagesDroppedOnTheZoneOfTheForm(SeleniumBrowser browser)
 	{
 		open(browser, UploadSpeed.QUARTER_MEGABYTE);
 		Cases.selectInWicket(wait, driver, "Drag and drop");
-		JavascriptExecutor script = (JavascriptExecutor)driver;
-		String zones = "document.querySelectorAll('.antilia-file-picker-drop-zone')";
 
-		// what a drop gives the picker: files the browser made, here in the page
-		script.executeScript("const input = " + zones + "[0].previousElementSibling;" +
-			"Wicket.Upload.FilePicker.of(input).drop([new File([new Uint8Array(300000)], " +
-			"'map.png', {type: 'image/png'}), new File(['hi'], 'notes.txt', {type: 'text/plain'})]);");
-		wait.until(d -> "running".equals(state()));
-		wait.until(d -> "done".equals(state()));
-		wait.until(d -> received().equals("notes.txt 2 byte text/plain Dropped, to a resource\n" +
-			"map.png 293 kB image/png Dropped, to a resource"));
-
-		// the zone of the form takes images only
-		script.executeScript("const input = " + zones + "[1].previousElementSibling;" +
+		// what a drop gives the picker: files the browser made, here in the page; the zone of the
+		// form takes images only
+		((JavascriptExecutor)driver).executeScript("const input = document.querySelector(" +
+			"'.antilia-file-picker-drop-zone').previousElementSibling;" +
 			"Wicket.Upload.FilePicker.of(input).drop([new File(['hi'], 'notes.txt', " +
 			"{type: 'text/plain'}), new File([new Uint8Array(2048)], 'logo.svg', " +
 			"{type: 'image/svg+xml'})]);");
-		WebElement zone = driver.findElements(By.cssSelector(".antilia-file-picker-drop-zone"))
-			.get(1);
+		WebElement zone = driver.findElement(By.cssSelector(".antilia-file-picker-drop-zone"));
 		wait.until(d -> zone.findElement(By.cssSelector(".antilia-file-picker-summary")).getText()
 			.equals("logo.svg (2 kB) · Not accepted: notes.txt"));
 		driver.findElement(By.cssSelector("button[name=send]")).click();
-		wait.until(d -> received().startsWith(
-			"logo.svg 2 kB image/svg+xml Dropped into a form\n"));
-	}
-
-	@ParameterizedTest
-	@EnumSource(SeleniumBrowser.class)
-	void uploadsFilesOfOneNameToTheResource(SeleniumBrowser browser)
-	{
-		open(browser, UploadSpeed.QUARTER_MEGABYTE);
-		Cases.selectInWicket(wait, driver, "Drag and drop");
-
-		// as from two folders: the picker sends both, and the server keeps them apart
-		((JavascriptExecutor)driver).executeScript("const input = document.querySelectorAll(" +
-			"'.antilia-file-picker-drop-zone')[0].previousElementSibling;" +
-			"Wicket.Upload.FilePicker.of(input).drop([new File(['hi'], 'notes.txt', " +
-			"{type: 'text/plain'}), new File(['hello'], 'notes.txt', {type: 'text/plain'})]);");
-		wait.until(d -> "done".equals(state()));
-		wait.until(d -> received().lines().sorted().toList().equals(List.of(
-			"notes.txt 2 byte text/plain Dropped, to a resource",
-			"notes.txt 5 byte text/plain Dropped, to a resource")));
+		wait.until(d -> received().equals("logo.svg 2 kB image/svg+xml Dropped into a form"));
 	}
 }

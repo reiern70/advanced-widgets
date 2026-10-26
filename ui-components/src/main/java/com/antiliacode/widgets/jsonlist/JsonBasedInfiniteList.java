@@ -33,7 +33,6 @@ import org.apache.wicket.ajax.attributes.CallbackParameter;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
-import org.apache.wicket.extensions.ajax.veil.LocalVeilBehavior;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -65,6 +64,7 @@ import com.antiliacode.widgets.template.Templates;
 import com.github.openjson.JSONObject;
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
+import com.antiliacode.widgets.veil.LocalVeilBehavior;
 
 /**
  * A list that scrolls infinitely, whose items are rendered in the browser from JSON, the way the

@@ -335,7 +335,7 @@ a.brand { color: inherit; text-decoration: none; }
 .demo__nav a:hover { text-decoration: underline; }
 .demo__steps { display: flex; gap: 16px; }
 
-/* the drop-downs choosing the theme, the language and the Ajax engine, and the link to register */
+/* the drop-downs choosing the theme and the language, and the link to register */
 .topbar__inner {
 	gap: 16px;
 }

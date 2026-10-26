@@ -34,7 +34,7 @@ import com.github.openjson.JSONObject;
 
 /**
  * Draws a file input, such as Wicket's {@link org.apache.wicket.markup.html.form.upload.FileUploadField
- * FileUploadField} or {@link UploadToResourceField}, as a picker that looks the same in every
+ * FileUploadField}, as a picker that looks the same in every
  * browser and takes the colors of the theme it is in: a button of the theme opening the browser's
  * dialog, or a zone the files are dropped on ({@link Design}), and what was chosen, the name and
  * the size of a file or the list of several.
@@ -50,7 +50,7 @@ import com.github.openjson.JSONObject;
  * added to them, and each can be taken out of the list again.
  * <p>
  * The picker knows the limits the server sets on uploads, those of the form, of its root form, or
- * of an {@link UploadToResourceField}: the most the files weigh together, the most a file weighs
+ * of a {@link FileUploadToResourceField}: the most the files weigh together, the most a file weighs
  * and the most files at once. It tells at once which the files chosen break, and keeps them from
  * being sent, with the form posted the usual way or by Ajax, or by the field, rather than letting
  * the server refuse them once they were sent, which a browser may not even hear of. While its files
