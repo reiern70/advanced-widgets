@@ -34,20 +34,19 @@ import com.github.openjson.JSONObject;
  * well. It is hidden until an upload starts, and stays as the upload left it until the next one.
  * <p>
  * Everything happens in the browser: {@code Wicket.Upload.UploadProgress} from {@link Uploads#JS}
- * draws the bar into the component's element and follows the uploads of its source:
- * <ul>
- * <li>a multipart form, posted the usual way or sent by Wicket's Ajax, such as by an
- * {@link org.apache.wicket.ajax.markup.html.form.AjaxButton AjaxButton}, when it holds files;</li>
- * <li>an {@link UploadToResourceField}, which tells its uploads by itself; a field of Wicket's own,
- * a {@link FileUploadToResourceField}, does not.</li>
- * </ul>
+ * draws the bar into the component's element and follows the uploads of its source, a multipart
+ * form, posted the usual way or sent by Wicket's Ajax, such as by an
+ * {@link org.apache.wicket.ajax.markup.html.form.AjaxButton AjaxButton}, when it holds files. A
+ * {@link FileUploadToResourceField} does not tell its uploads: with Wicket 10 the bar does not
+ * follow it.
+ * <p>
  * The bar asks the server every {@link #setPollMillis(int) half a second} how far Wicket got
  * reading the upload (see {@link UploadStatusResource}), which Wicket knows with
  * {@link org.apache.wicket.settings.ApplicationSettings#setUploadProgressUpdatesEnabled(boolean)}:
  * that is what arrived. Without it, or {@link #setFollowingServer(boolean) if told not to ask},
  * the bar follows the progress events of the request sending the files, where the browser has
- * them: those of an {@link UploadToResourceField}, and of a form sent by Wicket's Ajax in plain
- * JavaScript. They count what the browser handed to the network, whose buffers may hold megabytes
+ * them: those of a form sent by Wicket's Ajax in plain JavaScript, which Wicket 10 does not have.
+ * They count what the browser handed to the network, whose buffers may hold megabytes
  * the server did not read yet. Without either, the bar only shows that something is going on.
  * <p>
  * Attach it to a {@code <div>}, which the bar fills. The texts are those of the resources
@@ -81,8 +80,7 @@ public class UploadProgressBar extends WebComponent
 	}
 
 	/**
-	 * The progress of the uploads of a field: of an {@link UploadToResourceField}, or of the form
-	 * of any other {@link FileUploadField}.
+	 * The progress of the uploads of a field: of the form of a {@link FileUploadField}.
 	 *
 	 * @param id
 	 *            component id

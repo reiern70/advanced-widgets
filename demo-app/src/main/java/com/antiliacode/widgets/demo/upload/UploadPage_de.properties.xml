@@ -15,9 +15,8 @@
 -->
 <properties>
 	<entry key="title">Hochladen</entry>
-	<entry key="explanation">&lt;p&gt;Wicket lädt Dateien auf zwei Arten hoch, beide hier zu sehen: in einem Formular, normal abgeschickt oder per Ajax gesendet, und an eine eingebundene Ressource mit einem FileUploadToResourceField, das kein Formular braucht. Jedes Beispiel nutzt dafür die Komponenten von ui-components.&lt;/p&gt;&lt;p&gt;Ein FilePickerBehavior zeichnet ein Dateifeld als Schaltfläche des Themes, in jedem Browser gleich, oder als Fläche zum Ablegen von Dateien. Das Feld bleibt verborgen in der Seite und hält die Dateien: ein Formular und ein Ajax-Behavior erhalten abgelegte Dateien, als wären sie im Dialog des Browsers ausgewählt worden. Eine UploadProgressBar verfolgt jeden Upload in den Farben des Themes: was gesendet wurde, wie schnell und wie lange es noch dauert. Sie hört auf den Fortschritt der Anfrage, wo der Browser ihn liefert, sonst fragt sie den Server, der ihn kennt, sobald die Anwendung setUploadProgressUpdatesEnabled(true) aufruft.&lt;/p&gt;&lt;p&gt;Ein UploadToResourceField ist das FileUploadToResourceField von Wicket, das seine Uploads der Seite mitteilt. Während es hochlädt, fragt es vor dem Verlassen der Seite und hält, wenn gewünscht, die anderen Ajax-Anfragen der Seite an: die mit UploadGuard.bypass() markierten laufen weiter, etwa die Schaltfläche, die den Upload abbricht. Klicken Sie beide Schaltflächen unter dem Upload, während er läuft.&lt;/p&gt;&lt;p&gt;Die Auswahl kennt die Grenzen des Formulars oder des Felds: sie sagt sofort, welche die gewählten Dateien überschreiten, und sendet sie nicht. Bei einer Auswahl mehrerer Dateien kommen später gewählte oder abgelegte Dateien zu den vorher gewählten hinzu, und jede lässt sich wieder aus der Liste nehmen. Scheitert ein Upload trotzdem, sagt die Leiste, warum: was der Server geantwortet hat, oder dass die Verbindung abgebrochen ist.&lt;/p&gt;&lt;p&gt;Die Einstellungen über den Beispielen, die auch der Tacho in der oberen Leiste jeder Demo öffnet, verlangsamen den Server für diese Sitzung: er liest die Dateien mit der gewählten Upload-Geschwindigkeit, damit der Fortschritt auch in einem schnellen Netz zu sehen ist, und wartet vor jeder Ajax-Anfrage. Sie sind ein ThrottlePanel von ui-components, der Tacho ein ThrottleButton. Unter den Beispielen zeigt der Server, was er erhalten hat; er behält keine Datei.&lt;/p&gt;</entry>
+	<entry key="explanation">&lt;p&gt;Wicket lädt Dateien in einem Formular hoch, normal abgeschickt oder per Ajax gesendet, hier mit den Komponenten von ui-components. Die Uploads an eine eingebundene Ressource ohne Formular, mit einem FileUploadToResourceField, brauchen Wicket 11 und gehören nicht zum Zweig 10.x.&lt;/p&gt;&lt;p&gt;Ein FilePickerBehavior zeichnet ein Dateifeld als Schaltfläche des Themes, in jedem Browser gleich, oder als Fläche zum Ablegen von Dateien. Das Feld bleibt verborgen in der Seite und hält die Dateien: ein Formular und ein Ajax-Behavior erhalten abgelegte Dateien, als wären sie im Dialog des Browsers ausgewählt worden. Eine UploadProgressBar verfolgt jeden Upload in den Farben des Themes: was gesendet wurde, wie schnell und wie lange es noch dauert. Sie hört auf den Fortschritt der Anfrage, wo der Browser ihn liefert, sonst fragt sie den Server, der ihn kennt, sobald die Anwendung setUploadProgressUpdatesEnabled(true) aufruft.&lt;/p&gt;&lt;p&gt;Die Auswahl kennt die Grenzen des Formulars: sie sagt sofort, welche die gewählten Dateien überschreiten, und sendet sie nicht. Bei einer Auswahl mehrerer Dateien kommen später gewählte oder abgelegte Dateien zu den vorher gewählten hinzu, und jede lässt sich wieder aus der Liste nehmen. Scheitert ein Upload trotzdem, sagt die Leiste, warum: was der Server geantwortet hat, oder dass die Verbindung abgebrochen ist.&lt;/p&gt;&lt;p&gt;Die Einstellungen über den Beispielen, die auch der Tacho in der oberen Leiste jeder Demo öffnet, verlangsamen den Server für diese Sitzung: er liest die Dateien mit der gewählten Upload-Geschwindigkeit, damit der Fortschritt auch in einem schnellen Netz zu sehen ist, und wartet vor jeder Ajax-Anfrage. Sie sind ein ThrottlePanel von ui-components, der Tacho ein ThrottleButton. Unter den Beispielen zeigt der Server, was er erhalten hat; er behält keine Datei.&lt;/p&gt;</entry>
 	<entry key="form">Formular</entry>
-	<entry key="resource">Upload an eine Ressource</entry>
 	<entry key="drop">Ziehen und Ablegen</entry>
 	<entry key="form.hint">Ein Formular mit einem Text und Dateien, normal abgeschickt oder per Ajax. Sobald Dateien ausgewählt sind, teilt das FilesSelectedBehavior von Wicket sie dem Server mit, bevor sie gesendet werden. Erneut gewählte Dateien kommen hinzu.</entry>
 	<entry key="description">Beschreibung</entry>
@@ -29,17 +28,6 @@
 	<entry key="form.submit">Abschicken</entry>
 	<entry key="form.ajaxSubmit">Per Ajax senden</entry>
 	<entry key="refused">Der Server hat die Dateien abgelehnt</entry>
-	<entry key="resource.hint">Die Dateien gehen ohne Formular an eine eingebundene Ressource, während die Seite weiterläuft. Das Ajax von Wicket meldet dem Feld, sobald sie angekommen sind. Unter den Schaltflächen sagt jeder Hook des Felds, wann er aufgerufen wird.</entry>
-	<entry key="keepOnPage">Vor dem Verlassen der Seite fragen, solange hochgeladen wird</entry>
-	<entry key="blockRequests">Andere Ajax-Anfragen anhalten, solange hochgeladen wird</entry>
-	<entry key="upload">Hochladen</entry>
-	<entry key="cancel">Abbrechen</entry>
-	<entry key="requests.hint">Zwei Ajax-Schaltflächen zum Klicken, während ein Upload läuft: sein Schutz hält die erste an und lässt die zweite durch.</entry>
-	<entry key="blocked">Beim Hochladen angehalten</entry>
-	<entry key="bypassing">Läuft beim Hochladen weiter</entry>
-	<entry key="clicks">Klicks: ${count}</entry>
-	<entry key="drop.resource">Sofort gesendet</entry>
-	<entry key="drop.resource.hint">Dateien auf die Fläche ziehen oder sie anklicken: sie gehen sofort an eine Ressource.</entry>
 	<entry key="drop.form">In ein Formular abgelegt</entry>
 	<entry key="drop.form.hint">Bilder auf die Fläche ziehen, dann das Formular per Ajax senden. Andere Dateien bleiben draußen.</entry>
 	<entry key="drop.send">Senden</entry>
@@ -51,22 +39,8 @@
 	<entry key="received.none">Noch nichts: hier stehen die Dateien, die der Server erhält.</entry>
 	<entry key="received.count">Erhaltene Dateien: ${count}.</entry>
 	<entry key="nothingSent">Es wurde keine Datei gesendet.</entry>
-	<entry key="canceled">Der Upload wurde abgebrochen.</entry>
-	<entry key="hooks">Hooks des Felds</entry>
-	<entry key="hooks.hint">Die Hooks des FileUploadToResourceField von Wicket, wie sie aufgerufen werden: im Browser die Funktionen von getClientBeforeSendCallBack(), getClientSideSuccessCallBack(), getClientSideUploadErrorCallBack() und getClientSideCancelCallBack(), dann auf dem Server onUploadSuccess(), onUploadFailure() und onUploadCanceled().</entry>
-	<entry key="hook.browser">Browser</entry>
-	<entry key="hook.server">Server</entry>
-	<entry key="hook.beforeSend">die Anfrage sendet gleich die Dateien</entry>
-	<entry key="hook.success">die Ressource hat die Dateien angenommen</entry>
-	<entry key="hook.error">der Upload ist fehlgeschlagen: {0}</entry>
-	<entry key="hook.cancel">der Upload wurde abgebrochen, bevor der Server davon erfuhr</entry>
-	<entry key="hook.uploadSuccess">{0} Dateien erhalten</entry>
-	<entry key="hook.uploadFailure">dem Benutzer wird gesagt: {0}</entry>
-	<entry key="hook.uploadCanceled">der Upload wurde abgebrochen</entry>
 	<entry key="way.FORM">Formular, abgeschickt</entry>
 	<entry key="way.AJAX_FORM">Formular, per Ajax</entry>
-	<entry key="way.RESOURCE">Ressource</entry>
-	<entry key="way.DROPPED">Abgelegt, an eine Ressource</entry>
 	<entry key="way.DROPPED_IN_FORM">In ein Formular abgelegt</entry>
 	<entry key="unit.byte">Byte</entry>
 </properties>

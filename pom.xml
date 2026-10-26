@@ -57,10 +57,10 @@
 		<!--
 		  The version of the modules. A worktree building another branch sets its own one, so its
 		  snapshots do not overwrite those of the other worktrees in the local repository: put
-		  -Drevision=1.0.0-<branch>-SNAPSHOT into the worktree's .mvn/maven.config.
+		  -Drevision=10.11.0-<branch>-SNAPSHOT into the worktree's .mvn/maven.config.
 		-->
-		<revision>1.0.0-SNAPSHOT</revision>
-		<wicket.version>11.0.0-SNAPSHOT</wicket.version>
+		<revision>10.11.0-SNAPSHOT</revision>
+		<wicket.version>10.11.0</wicket.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<!-- as in deploy/Dockerfile; its ASM reads the Java 24 classes of Spring 7 -->
 		<jetty.version>11.0.26</jetty.version>

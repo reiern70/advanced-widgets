@@ -22,15 +22,12 @@ import org.apache.wicket.csp.CSPDirectiveSrcValue;
 import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
-import org.apache.wicket.markup.html.form.upload.resource.FileUploadResourceReference;
 import org.apache.wicket.pageStore.IPageStore;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
 import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
-import org.apache.wicket.request.resource.ResourceReference;
-import org.apache.wicket.settings.JavaScriptLibrarySettings;
 import org.apache.wicket.settings.StoreSettings;
 import org.apache.wicket.util.string.Strings;
 import org.springframework.context.ApplicationContext;
@@ -88,7 +85,6 @@ import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
 import com.antiliacode.widgets.demo.tree.TreeGridPage;
 import com.antiliacode.widgets.demo.tree.TreeOfLifeResource;
-import com.antiliacode.widgets.demo.upload.DemoUploadsFileManager;
 import com.antiliacode.widgets.demo.upload.UploadPage;
 import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.throttle.Throttle;
@@ -238,11 +234,8 @@ public class WicketApplication extends WebApplication
 			}
 		});
 
-		// the upload demo: the progress of uploads the browser cannot follow is asked of the
-		// server, and the files sent to a resource go to a folder only until the page told of them
+		// the upload demo: the progress of uploads the browser cannot follow is asked of the server
 		getApplicationSettings().setUploadProgressUpdatesEnabled(true);
-		mountResource("uploads", FileUploadResourceReference.createNewInstance(
-			new DemoUploadsFileManager(DemoUploadsFileManager.defaultFolder())));
 		// the session that asks for it waits before its Ajax requests and sends files slowly, to
 		// see the demos as on a slow network: the button of the top bar of a demo opens the
 		// settings, which the upload demo shows too
@@ -250,17 +243,6 @@ public class WicketApplication extends WebApplication
 
 		// leave out <wicket:child> and the like also in development, they would break the layout
 		getMarkupSettings().setStripWicketTags(true);
-
-		// Wicket's Ajax runs on the engine the session chose, plain JavaScript by default
-		setJavaScriptLibrarySettings(new JavaScriptLibrarySettings()
-		{
-			@Override
-			public ResourceReference getWicketAjaxReference()
-			{
-				return (Session.exists() ? DemoSession.get().getAjaxEngine() : AjaxEngine.DEFAULT)
-					.getReference();
-			}
-		});
 
 		// allow the application stylesheet (BasePage.css) served from this origin, and the images
 		// Bootstrap's style sheet writes as data: URLs, such as the tick of its check boxes, for

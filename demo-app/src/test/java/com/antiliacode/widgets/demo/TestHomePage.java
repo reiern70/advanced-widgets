@@ -106,26 +106,14 @@ public class TestHomePage
 	}
 
 	@Test
-	public void wicketsAjaxRunsOnPlainJavaScriptByDefault()
+	public void wicketsAjaxRunsOnJQuery()
 	{
 		tester.startPage(HomePage.class);
 
-		tester.assertContains("res/js/wicket-ajax-ver-");
-		String page = tester.getLastResponseAsString();
-		assertFalse(page.contains("jquery/jquery-") || page.contains("wicket-ajax-jquery"), page);
-		// the setup of the websocket needs no jQuery either
-		tester.assertContains("Object\\.assign\\(Wicket\\.WebSocket");
-	}
-
-	@Test
-	public void wicketsAjaxRunsOnJQueryWhenChosen()
-	{
-		tester.startPage(HomePage.class);
-		DemoSession.get().setAjaxEngine(AjaxEngine.JQUERY);
-		tester.startPage(HomePage.class);
-
-		tester.assertContains("jquery/jquery-4");
+		tester.assertContains("jquery/jquery-3");
 		tester.assertContains("res/js/wicket-ajax-jquery-ver-");
+		// the setup of the websocket needs no jQuery
+		tester.assertContains("Object\\.assign\\(Wicket\\.WebSocket");
 	}
 
 	@Test

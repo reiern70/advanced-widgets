@@ -33,8 +33,6 @@ import com.antiliacode.widgets.progress.ProgressBar;
  *
  * @see FilePickerBehavior
  * @see UploadProgressBar
- * @see UploadToResourceField
- * @see UploadGuard
  * @since 11.0.0
  */
 public final class Uploads

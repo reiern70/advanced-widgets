@@ -22,18 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.ajax.markup.html.form.AjaxCheckBox;
-import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.feedback.ErrorLevelFeedbackMessageFilter;
 import org.apache.wicket.feedback.FeedbackCollector;
 import org.apache.wicket.feedback.FeedbackMessage;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.JavaScriptHeaderItem;
-import org.apache.wicket.markup.head.OnEventHeaderItem;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Button;
@@ -43,7 +39,6 @@ import org.apache.wicket.markup.html.form.upload.FileDescription;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.markup.html.form.upload.FileUploadField;
 import org.apache.wicket.markup.html.form.upload.FilesSelectedBehavior;
-import org.apache.wicket.markup.html.form.upload.resource.IUploadsFileManager;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Fragment;
@@ -52,44 +47,35 @@ import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
-import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.util.lang.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.antiliacode.widgets.button.AjaxActionButton;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.button.ButtonBehavior.Size;
 import com.antiliacode.widgets.button.ButtonBehavior.Variant;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
-import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.upload.FilePickerBehavior;
 import com.antiliacode.widgets.upload.FilePickerBehavior.Design;
-import com.antiliacode.widgets.upload.UploadGuard;
 import com.antiliacode.widgets.upload.UploadProgressBar;
 import com.antiliacode.widgets.throttle.ThrottlePanel;
-import com.antiliacode.widgets.upload.UploadToResourceField;
-import com.github.openjson.JSONObject;
 
 /**
- * Uploads in Wicket, each way Wicket has, drawn by the components of ui-components, as cases of one
- * page:
+ * Uploads in Wicket, drawn by the components of ui-components, as cases of one page:
  * <ul>
  * <li>a form posting its files the usual way or via Ajax, which the browser tells of the files
  * chosen before it sends them ({@link FilesSelectedBehavior});</li>
- * <li>a field sending its files to a mounted resource without a form, as Wicket's
- * {@link org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField} does: the
- * user is asked before leaving the page while an upload runs and, if chosen, the other Ajax
- * requests are stopped meanwhile, but those marked to go on, such as the button canceling it;
- * every hook of the field, in the browser and on the server, tells when it is called;</li>
- * <li>zones to drop files on, one sending them at once to a resource, one into a form.</li>
+ * <li>a zone to drop files on, in a form sent via Ajax.</li>
  * </ul>
  * The files are chosen with a {@link FilePickerBehavior}, a button or a zone of the theme rather
  * than the browser's own field, and an {@link UploadProgressBar} of the theme follows each upload.
  * The {@link ThrottlePanel} slows the server down reading them, to watch the progress on a fast
  * network, and waiting before the Ajax requests. The server tells what it received below the
  * cases, and keeps no file.
+ * <p>
+ * The uploads to a resource, without a form, need the FileUploadToResourceField of Wicket 11 and
+ * are not part of the 10.x branch.
  */
 public class UploadPage extends DemoPage
 {
@@ -97,7 +83,7 @@ public class UploadPage extends DemoPage
 
 	private static final Logger LOG = LoggerFactory.getLogger(UploadPage.class);
 
-	/** The most a form or a field takes at once. */
+	/** The most a form takes at once. */
 	static final Bytes MAX_SIZE = Bytes.megabytes(20);
 
 	/** The most each file may weigh. */
@@ -116,10 +102,6 @@ public class UploadPage extends DemoPage
 		FORM,
 		/** In a form sent via Ajax. */
 		AJAX_FORM,
-		/** Sent to a resource. */
-		RESOURCE,
-		/** Dropped on a zone sending it to a resource at once. */
-		DROPPED,
 		/** Dropped into a form sent via Ajax. */
 		DROPPED_IN_FORM
 	}
@@ -138,13 +120,6 @@ public class UploadPage extends DemoPage
 	/** What the browser told of the files chosen in the form, before sending them. */
 	private String selection;
 
-	/** Whether the field of the resource case sends its files. */
-	private boolean uploading;
-
-	private int blockedClicks;
-
-	private int bypassingClicks;
-
 	/**
 	 * Constructor.
 	 */
@@ -157,7 +132,6 @@ public class UploadPage extends DemoPage
 		DemoCases cases = new DemoCases("cases", this);
 		themed.add(cases);
 		formCase(cases.addCase("form", "formCase"));
-		resourceCase(cases.addCase("resource", "resourceCase"));
 		dropCase(cases.addCase("drop", "dropCase"));
 
 		receivedBox = new WebMarkupContainer("received");
@@ -268,132 +242,10 @@ public class UploadPage extends DemoPage
 	}
 
 	/**
-	 * A field sending its files to a resource, guarding the page meanwhile, with buttons whose Ajax
-	 * requests the guard stops or lets go, and the log of the hooks of the field.
-	 */
-	private void resourceCase(Fragment fragment)
-	{
-		WebMarkupContainer buttons = new WebMarkupContainer("buttons");
-		buttons.setOutputMarkupId(true);
-		WebMarkupContainer hookLog = new WebMarkupContainer("hookLog");
-		hookLog.setOutputMarkupId(true);
-		UploadToResourceField field = new HookedUploadField("resourceFiles", hookLog)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUploaded(AjaxRequestTarget target)
-			{
-				uploading = false;
-				target.add(buttons);
-			}
-		};
-		field.add(new FilePickerBehavior());
-		fragment.add(field, new Label("resourceLimits", limits()), severalFiles("several", field));
-
-		fragment.add(new AjaxCheckBox("keepOnPage", LambdaModel.of(field::isKeepingOnPage,
-			field::setKeepingOnPage))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-			}
-		});
-		fragment.add(new AjaxCheckBox("blockRequests", LambdaModel.of(field::isBlockingRequests,
-			field::setBlockingRequests))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-			}
-		});
-		fragment.add(new UploadProgressBar("resourceProgress", field));
-
-		fragment.add(buttons, hookLog);
-		buttons.add(new AjaxActionButton("upload", new ResourceModel("upload"))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				uploading = true;
-				// the hooks of this upload only
-				target.appendJavaScript("UploadDemo.clear(" +
-					JSONObject.quote(hookLog.getMarkupId()) + ");");
-				field.startUpload(target);
-				target.add(buttons);
-			}
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setEnabled(!uploading);
-			}
-		}.setIcon(SvgIcon.UPLOAD).setVariant(Variant.PRIMARY));
-		buttons.add(new AjaxActionButton("cancel", new ResourceModel("cancel"))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				field.cancelUpload(target);
-			}
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setEnabled(uploading);
-			}
-		}.setIcon(SvgIcon.XMARK).setVariant(Variant.DANGER).add(UploadGuard.bypass()));
-
-		Label blockedCount = new Label("blockedCount", () -> clicks(blockedClicks));
-		Label bypassingCount = new Label("bypassingCount", () -> clicks(bypassingClicks));
-		fragment.add(blockedCount.setOutputMarkupId(true),
-			bypassingCount.setOutputMarkupId(true));
-		fragment.add(new AjaxActionButton("blocked", new ResourceModel("blocked"))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				blockedClicks++;
-				target.add(blockedCount);
-			}
-		}.setSize(Size.SMALL));
-		fragment.add(new AjaxActionButton("bypassing", new ResourceModel("bypassing"))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void onClick(AjaxRequestTarget target)
-			{
-				bypassingClicks++;
-				target.add(bypassingCount);
-			}
-		}.setSize(Size.SMALL).add(UploadGuard.bypass()));
-	}
-
-	/**
-	 * Zones to drop files on: one sending them to a resource as soon as they are dropped, one in a
-	 * form sent via Ajax.
+	 * A zone to drop files on, in a form sent via Ajax.
 	 */
 	private void dropCase(Fragment fragment)
 	{
-		UploadToResourceField dropped = new DemoUploadField("dropFiles", Way.DROPPED);
-		dropped.add(new FilePickerBehavior().setDesign(Design.DROP_ZONE));
-		dropped.add(new UploadOnChoice());
-		fragment.add(dropped, new UploadProgressBar("dropProgress", dropped),
-			severalFiles("severalDropped", dropped));
-
 		Form<Void> form = newUploadForm("dropForm");
 		fragment.add(form);
 		FileUploadField images = new FileUploadField("images");
@@ -471,7 +323,7 @@ public class UploadPage extends DemoPage
 	}
 
 	/**
-	 * @return what a form or a field takes at most
+	 * @return what a form takes at most
 	 */
 	private String limits()
 	{
@@ -512,11 +364,6 @@ public class UploadPage extends DemoPage
 		return format.format(value) + " " + units[unit];
 	}
 
-	private String clicks(int count)
-	{
-		return getString("clicks", Model.ofMap(Map.of("count", count)));
-	}
-
 	/**
 	 * Lists the files a form sent and lets them go.
 	 */
@@ -555,175 +402,5 @@ public class UploadPage extends DemoPage
 		super.renderHead(response);
 		response.render(CssHeaderItem.forReference(new CssResourceReference(UploadPage.class,
 			"UploadPage.css")));
-		response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(
-			UploadPage.class, "UploadPage.js")));
-	}
-
-	/**
-	 * A field of the demo sending its files to the resource of the application: it lists what
-	 * the server received, deletes the files, and clears the files chosen.
-	 */
-	private class DemoUploadField extends UploadToResourceField
-	{
-		private static final long serialVersionUID = 1L;
-
-		private final Way way;
-
-		DemoUploadField(String id, Way way)
-		{
-			super(id);
-			this.way = way;
-			setMaxSize(MAX_SIZE);
-			setFileMaxSize(FILE_MAX_SIZE);
-			setFileCountMax(FILE_COUNT_MAX);
-		}
-
-		@Override
-		protected void onUploadSuccess(AjaxRequestTarget target, List<UploadInfo> infos)
-		{
-			IUploadsFileManager files = fileManager();
-			for (UploadInfo info : infos)
-			{
-				record(new ReceivedFile(info.getClientFileName(), info.getSize(),
-					info.getContentType(), way));
-				if (files instanceof DemoUploadsFileManager demo)
-				{
-					demo.delete(info.getFile());
-				}
-			}
-			info(UploadPage.this.getString("received.count", Model.ofMap(Map.of("count",
-				infos.size()))));
-			FilePickerBehavior.clear(this, target);
-			target.add(receivedBox);
-			hooked(target, "onUploadSuccess(target, fileInfos)", UploadPage.this.getString(
-				"hook.uploadSuccess").replace("{0}", String.valueOf(infos.size())));
-			onUploaded(target);
-		}
-
-		@Override
-		protected void onUploadFailure(AjaxRequestTarget target, String errorInfo)
-		{
-			hooked(target, "onUploadFailure(target, errorInfo)", UploadPage.this.getString(
-				"hook.uploadFailure").replace("{0}", String.valueOf(errorInfo)));
-			onUploaded(target);
-		}
-
-		@Override
-		protected void onUploadCanceled(AjaxRequestTarget target)
-		{
-			info(UploadPage.this.getString("canceled"));
-			hooked(target, "onUploadCanceled(target)",
-				UploadPage.this.getString("hook.uploadCanceled"));
-			onUploaded(target);
-		}
-
-		/**
-		 * Called once an upload ended, however it did.
-		 */
-		protected void onUploaded(AjaxRequestTarget target)
-		{
-		}
-
-		/**
-		 * Called once a hook of the field was called on the server.
-		 *
-		 * @param hook
-		 *            the hook
-		 * @param text
-		 *            what happened
-		 */
-		protected void hooked(AjaxRequestTarget target, String hook, String text)
-		{
-		}
-	}
-
-	/**
-	 * The field of the resource case, logging every hook of Wicket's field as it is called: those
-	 * of its script in the browser, which Wicket calls as the request is about to be sent, once the
-	 * files arrived, once the upload failed or was canceled, and those on the server, once the
-	 * page heard of it.
-	 */
-	private class HookedUploadField extends DemoUploadField
-	{
-		private static final long serialVersionUID = 1L;
-
-		private final Component log;
-
-		HookedUploadField(String id, Component log)
-		{
-			super(id, Way.RESOURCE);
-			this.log = log;
-		}
-
-		/**
-		 * @param side
-		 *            where the hook was called, browser or server
-		 * @param text
-		 *            the script of what happened
-		 * @return the script logging that a hook was called
-		 */
-		private String log(String side, String hook, String text)
-		{
-			return "UploadDemo.hook(" + JSONObject.quote(log.getMarkupId()) + ", '" + side + "', " +
-				JSONObject.quote(UploadPage.this.getString("hook." + side)) + ", " +
-				JSONObject.quote(hook) + ", " + text + ");";
-		}
-
-		private String text(String key)
-		{
-			return JSONObject.quote(UploadPage.this.getString(key));
-		}
-
-		@Override
-		protected CharSequence getClientBeforeSendCallBack()
-		{
-			return "function (xhr, settings) { " + log("browser", "getClientBeforeSendCallBack()",
-				text("hook.beforeSend")) + " return true; }";
-		}
-
-		@Override
-		protected CharSequence getClientSideSuccessCallBack()
-		{
-			return "function () { " + log("browser", "getClientSideSuccessCallBack()",
-				text("hook.success")) + " }";
-		}
-
-		@Override
-		protected CharSequence getClientSideUploadErrorCallBack()
-		{
-			// the error the server is told next
-			return "function (res) { " + log("browser", "getClientSideUploadErrorCallBack()",
-				text("hook.error") + ".replace('{0}', res.errorMessage)") + " }";
-		}
-
-		@Override
-		protected CharSequence getClientSideCancelCallBack()
-		{
-			return "function () { " + log("browser", "getClientSideCancelCallBack()",
-				text("hook.cancel")) + " }";
-		}
-
-		@Override
-		protected void hooked(AjaxRequestTarget target, String hook, String text)
-		{
-			target.appendJavaScript(log("server", hook, JSONObject.quote(text)));
-		}
-	}
-
-	/**
-	 * Starts the upload of a field as soon as files are chosen or dropped.
-	 */
-	private static class UploadOnChoice extends Behavior
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public void renderHead(Component component, IHeaderResponse response)
-		{
-			super.renderHead(component, response);
-			response.render(OnEventHeaderItem.forComponent(component, "change",
-				"if (event.target.files && event.target.files.length) { " +
-					((UploadToResourceField)component).getTriggerUploadScript() + " }"));
-		}
 	}
 }

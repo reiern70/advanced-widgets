@@ -105,14 +105,13 @@ class ThemedDemosTest extends WicketTestCase
 	}
 
 	@Test
-	void thePublicPagesChooseTheThemeTheLookAndTheLanguageButNotTheScriptOfAjax()
+	void thePublicPagesChooseTheThemeTheLookAndTheLanguage()
 	{
 		tester.startPage(HomePage.class);
 
 		tester.assertVisible("settings:theme");
 		tester.assertVisible("settings:look");
 		tester.assertVisible("settings:language");
-		tester.assertInvisible("settings:ajaxEngineSetting");
 	}
 
 	@Test
