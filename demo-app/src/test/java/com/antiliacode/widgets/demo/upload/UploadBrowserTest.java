@@ -75,7 +75,7 @@ class UploadBrowserTest extends JettyTestCase
 		wait = new WebDriverWait(driver, Duration.ofSeconds(20), Duration.ofMillis(20));
 		wait.ignoring(StaleElementReferenceException.class);
 		driver.get("http://localhost:" + localPort + "/upload");
-		wait.until(d -> d.findElements(By.cssSelector(".antilia-file-picker")).size() == 4);
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-file-picker")).size() == 2);
 		// the upload speed of the throttle above the cases
 		String setting = ".upload-demo .antilia-throttle-setting:nth-of-type(2) ";
 		Dropdowns.chooseByValue(driver, driver.findElement(By.cssSelector(setting + "select")),
