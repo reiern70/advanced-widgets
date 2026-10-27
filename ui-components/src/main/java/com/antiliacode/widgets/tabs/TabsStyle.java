@@ -17,9 +17,11 @@ import com.antiliacode.widgets.theme.Look;
 import com.antiliacode.widgets.theme.LookPart;
 
 /**
- * A look for the tabs of a {@link TabbedPanel}, applied by a {@link TabsStyleBehavior}. Every
- * look takes its colors from the {@link com.antiliacode.widgets.theme.Theme theme} the panel
- * is in, and has colors of its own outside a theme.
+ * A look for the tabs of a
+ * {@link org.apache.wicket.extensions.markup.html.tabs.TabbedPanel TabbedPanel}, applied by a
+ * {@link TabsStyleBehavior}. Every look takes its colors from the
+ * {@link com.antiliacode.widgets.theme.Theme theme} the panel is in, and has colors of its own
+ * outside a theme.
  *
  * @since 11.0.0
  */

@@ -28,6 +28,7 @@
 	<packaging>jar</packaging>
 
 	<name>Advanced Widgets :: UI Components</name>
+	<description>Wicket components in the colors of a theme: tables, trees, editors of code and of rich text, drop-downs, date pickers, uploads, tabs, windows and more</description>
 
 	<dependencies>
 		<!-- WICKET DEPENDENCIES -->

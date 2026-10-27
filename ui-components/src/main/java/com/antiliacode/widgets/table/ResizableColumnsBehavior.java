@@ -42,9 +42,8 @@ import com.github.openjson.JSONObject;
  * shows where the edge will land, and the new width is applied when the mouse is released.
  * <p>
  * Works on any {@code <table>} whose head has a row of {@code <th>} cells, such as a
- * {@link DataTable} or a
- * {@link
- * com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable}.
+ * {@link org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable DataTable} or a
+ * {@link com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable BaseDynamicDataTable}.
  * The widths are applied in the browser, in a {@code <colgroup>} the behavior adds, so they survive
  * the header row being re-rendered by Ajax. A table implementing {@link IResizableColumnsTable}
  * keeps them on the server too: the behavior hands them to the browser whenever the table is

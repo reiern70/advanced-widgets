@@ -373,5 +373,25 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- the demo is an application, not a library: Maven Central does not get it -->
+		<profile>
+			<id>release</id>
+			<properties>
+				<maven.source.skip>true</maven.source.skip>
+				<maven.javadoc.skip>true</maven.javadoc.skip>
+				<gpg.skip>true</gpg.skip>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<configuration>
+							<skipPublishing>true</skipPublishing>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 </project>
