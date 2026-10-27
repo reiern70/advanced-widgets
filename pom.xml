@@ -47,6 +47,12 @@
 		</developer>
 	</developers>
 
+	<scm>
+		<connection>scm:git:https://github.com/reiern70/advanced-widgets.git</connection>
+		<developerConnection>scm:git:git@github.com:reiern70/advanced-widgets.git</developerConnection>
+		<url>https://github.com/reiern70/advanced-widgets</url>
+	</scm>
+
 	<modules>
 		<module>ui-components</module>
 		<module>demo-app</module>
@@ -404,6 +410,78 @@
 			<properties>
 				<jacoco.skip>true</jacoco.skip>
 			</properties>
+		</profile>
+		<!--
+		  Publishes the library to Maven Central, from a clean checkout of the branch to release:
+
+		    mvn deploy -Prelease -Drevision=10.11.0 -pl ui-components -am
+
+		  It adds the sources and javadoc jars Central asks for, signs every file with the GPG key of
+		  the gpg agent and uploads them to the Central Portal (central.sonatype.com) with the token of
+		  the server "central" in ~/.m2/settings.xml. The upload waits there, validated, until it is
+		  published by hand: a version on Central can never be removed or replaced. The demo
+		  application is not published. -Prelease -DskipUpload=true only writes the bundle into
+		  target/central-publishing, to look at.
+		-->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.4.0</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>3.12.0</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.8</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.12.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+							<excludeArtifacts>
+								<excludeArtifact>demo-app</excludeArtifact>
+							</excludeArtifacts>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 </project>
