@@ -26,10 +26,10 @@ import org.apache.wicket.util.lang.Args;
 import com.antiliacode.widgets.icon.IIcon;
 
 /**
- * A tab of {@link Tabs}: its title, maybe with an icon and {@link TabAction actions}, and its
- * panel, the component {@link #newPanel(String)} returns. {@link Tabs#addTab(Tab) Add it} to the
- * tabs, which create its panel then and render it with the others, hidden until the tab is
- * selected.
+ * A tab of {@link TabbedPanel}: its title, maybe with an icon and {@link TabAction actions}, and
+ * its panel, the component {@link #newPanel(String)} returns. {@link TabbedPanel#addTab(Tab) Add
+ * it} to the tabs, which create its panel then and render it with the others, hidden until the tab
+ * is selected.
  * <p>
  * The tabs know a tab by its name, which they give it when it has none; one of the page's own
  * suits a page that finds its tabs again by it, the name of a document for example. A name is a
@@ -38,8 +38,8 @@ import com.antiliacode.widgets.icon.IIcon;
  * A {@link #setClosable(boolean) closable} tab has a button closing it. Closing a tab whose panel
  * has changes not saved asks the user first: the panel has changes when a field in it holds
  * another value than the one it was rendered with, or as {@link #setModified(Boolean)} says,
- * which {@link Tabs#setModified(Tab, Boolean, org.apache.wicket.ajax.AjaxRequestTarget)} changes
- * via Ajax too. Its tab shows a mark meanwhile.
+ * which {@link TabbedPanel#setModified(Tab, Boolean, org.apache.wicket.ajax.AjaxRequestTarget)}
+ * changes via Ajax too. Its tab shows a mark meanwhile.
  *
  * @since 11.0.0
  */
@@ -173,7 +173,7 @@ public abstract class Tab implements IClusterable, IDetachable
 	 * @param modified
 	 *            whether the panel has changes not saved; {@code null} for the browser to tell
 	 * @return {@code this}
-	 * @see Tabs#setModified(Tab, Boolean, org.apache.wicket.ajax.AjaxRequestTarget)
+	 * @see TabbedPanel#setModified(Tab, Boolean, org.apache.wicket.ajax.AjaxRequestTarget)
 	 */
 	public Tab setModified(Boolean modified)
 	{

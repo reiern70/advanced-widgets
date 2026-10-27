@@ -60,7 +60,7 @@ import com.antiliacode.widgets.split.SplitPane;
 import com.antiliacode.widgets.split.SplitPanel;
 import com.antiliacode.widgets.split.SplitState;
 import com.antiliacode.widgets.tabs.Tab;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -82,10 +82,10 @@ import com.github.openjson.JSONObject;
  * notes, the state of their editor, where the divider is, which pane is collapsed, the height given
  * and whether the preview keeps in step.
  * <p>
- * The files of a small project open in closable {@link Tabs}, an editor in each: a tab is marked
- * while its file has changes not saved, which the editor tells the tabs in the browser, and
- * closing it asks first; switching tabs keeps where the cursor of each was. The React and Svelte
- * tabs show the same in those frameworks.
+ * The files of a small project open in closable tabs of a {@link TabbedPanel}, an editor in each:
+ * a tab is marked while its file has changes not saved, which the editor tells the tabs in the
+ * browser, and closing it asks first; switching tabs keeps where the cursor of each was. The React
+ * and Svelte tabs show the same in those frameworks.
  */
 public class CodeEditorPage extends DemoPage
 {
@@ -108,7 +108,7 @@ public class CodeEditorPage extends DemoPage
 
 	private final Label filesStatus;
 
-	private final Tabs files;
+	private final TabbedPanel files;
 
 	private final CodeEditor notesEditor;
 
@@ -443,7 +443,7 @@ public class CodeEditorPage extends DemoPage
 		filesStatus.setOutputMarkupId(true);
 		filesCase.add(filesStatus);
 
-		files = new Tabs("files")
+		files = new TabbedPanel("files")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -650,7 +650,7 @@ public class CodeEditorPage extends DemoPage
 		for (String name : new String[] { "close", "modified", "closeModifiedTitle", "closeModified",
 			"discard", "keep" })
 		{
-			tabs.put(name, getString("Tabs." + name));
+			tabs.put(name, getString("TabbedPanel." + name));
 		}
 		CodeDocument notes = CodeSamples.notes();
 		JSONObject split = new JSONObject();
@@ -678,7 +678,7 @@ public class CodeEditorPage extends DemoPage
 	{
 		super.renderHead(response);
 		CodeEditor.renderHeadItems(response);
-		Tabs.renderHeadItems(response);
+		TabbedPanel.renderHeadItems(response);
 		response.render(CssHeaderItem.forReference(
 			new CssResourceReference(CodeEditorPage.class, "CodeEditorPage.css")));
 	}

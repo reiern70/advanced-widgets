@@ -30,7 +30,6 @@ import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
-import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -40,8 +39,6 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.resource.CssResourceReference;
-import org.apache.wicket.request.resource.JavaScriptPackageResource;
-import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
@@ -57,6 +54,7 @@ import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 
 /**
  * A text area shown as a rich text editor, Tiptap, in the colors of the
@@ -97,7 +95,7 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * allowed} as its bytes say, has the store keep it and answers the address it is served at, which
  * the image takes and the cleaning checks as any other (see {@link RichTextImageUploadBehavior}).
  * <p>
- * The editor tells the {@link com.antiliacode.widgets.tabs.Tabs tabs} and the
+ * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
@@ -127,19 +125,8 @@ public class RichTextEditor extends TextArea<String>
 	 * build minifies it already: Wicket's own compressor, which in deployment mode strips the
 	 * scripts named without {@code .min.}, would break its regular expressions.
 	 */
-	public static final ResourceReference JS = new JavaScriptResourceReference(
-		RichTextEditor.class, "antilia-rich-text-editor.js")
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public JavaScriptPackageResource getResource()
-		{
-			JavaScriptPackageResource resource = super.getResource();
-			resource.setCompress(false);
-			return resource;
-		}
-	};
+	public static final ResourceReference JS = new AlreadyCompressedJavaScriptResourceReference(
+		RichTextEditor.class, "antilia-rich-text-editor.js");
 
 	/** The style sheet of the editor, and of the text a {@link RichTextView} shows. */
 	public static final ResourceReference CSS = new CssResourceReference(RichTextEditor.class,
@@ -150,27 +137,9 @@ public class RichTextEditor extends TextArea<String>
 	 * which a page renders only where an editor {@link #setHighlighting(boolean) highlights}:
 	 * {@link #JS} does not hold them. Minified by the build, as {@link #JS}.
 	 */
-	public static final ResourceReference HIGHLIGHT_JS = new JavaScriptResourceReference(
-		RichTextEditor.class, "antilia-rich-text-highlight.js")
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public JavaScriptPackageResource getResource()
-		{
-			JavaScriptPackageResource resource = super.getResource();
-			resource.setCompress(false);
-			return resource;
-		}
-
-		@Override
-		public List<HeaderItem> getDependencies()
-		{
-			List<HeaderItem> dependencies = new ArrayList<>(super.getDependencies());
-			dependencies.add(JavaScriptHeaderItem.forReference(JS));
-			return dependencies;
-		}
-	};
+	public static final ResourceReference HIGHLIGHT_JS =
+		new AlreadyCompressedJavaScriptResourceReference(RichTextEditor.class,
+			"antilia-rich-text-highlight.js", JS);
 
 	/**
 	 * The class of the text area until the script makes the editor of it. While scripts run,

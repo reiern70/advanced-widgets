@@ -32,8 +32,6 @@ import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.CssResourceReference;
-import org.apache.wicket.request.resource.JavaScriptPackageResource;
-import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
@@ -43,6 +41,7 @@ import com.github.openjson.JSONObject;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 
 /**
  * A text area shown as a code editor, CodeMirror, in the colors of the
@@ -58,7 +57,7 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * focus got and lost, the selection, Ctrl+S, the size changed. Without JavaScript the text area is
  * shown.
  * <p>
- * The editor tells the {@link com.antiliacode.widgets.tabs.Tabs tabs} and the
+ * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
@@ -73,7 +72,8 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * is sent, as a text area keeps what the user typed when the form did not validate. Rendered again,
  * or shown again after the user came back to the page with a state model of the session, the
  * editor takes the state up again: the cursor, the selection, the scrolling and the size. In a tab
- * of {@link com.antiliacode.widgets.tabs.Tabs} not selected, the editor keeps them in the browser.
+ * of {@link com.antiliacode.widgets.tabs.TabbedPanel} not selected, the editor keeps them in the
+ * browser.
  * <p>
  * {@code Wicket.CodeEditor} from {@link #JS} makes the editor in the browser; its sizes are CSS
  * custom properties set through the CSSOM. CodeMirror writes its style sheet into the page in a
@@ -91,19 +91,8 @@ public class CodeEditor extends TextArea<String>
 	 * build minifies it already: Wicket's own compressor, which in deployment mode strips the
 	 * scripts named without {@code .min.}, would break the regular expressions of the grammars.
 	 */
-	public static final ResourceReference JS = new JavaScriptResourceReference(CodeEditor.class,
-		"antilia-code-editor.js")
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public JavaScriptPackageResource getResource()
-		{
-			JavaScriptPackageResource resource = super.getResource();
-			resource.setCompress(false);
-			return resource;
-		}
-	};
+	public static final ResourceReference JS = new AlreadyCompressedJavaScriptResourceReference(
+		CodeEditor.class, "antilia-code-editor.js");
 
 	/** The style sheet of the editor. */
 	public static final ResourceReference CSS = new CssResourceReference(CodeEditor.class,

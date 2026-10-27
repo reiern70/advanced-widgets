@@ -39,14 +39,14 @@ import com.antiliacode.widgets.demo.SeleniumBrowser;
 import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
- * Drives {@link TabsPage} in Chrome and in Firefox, in Wicket, React and Svelte, Wicket in
+ * Drives {@link TabbedPanelPage} in Chrome and in Firefox, in Wicket, React and Svelte, Wicket in
  * deployment mode so through the minified script built from frontend/core: selecting tabs with the
  * mouse and the keyboard, the mark of changes, closing tabs with and without asking, the action of
  * a document, new documents and the second tabs switched by the form. Runs with
  * {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
-class TabsBrowserTest extends FrameworkAppsTestCase
+class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 {
 	private static final String START = "Close a document with its ×, Delete or the middle " +
 		"button; one with changes asks first.";

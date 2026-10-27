@@ -42,7 +42,7 @@ import com.antiliacode.widgets.demo.resizable.ResizablePage;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
 import com.antiliacode.widgets.demo.scrollbar.ScrollbarPage;
 import com.antiliacode.widgets.demo.split.SplitPanelPage;
-import com.antiliacode.widgets.demo.tabs.TabsPage;
+import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
 import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
 import com.antiliacode.widgets.demo.tree.TreeGridPage;
@@ -127,7 +127,7 @@ public final class Demos
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true),
 		new Demo("resizable", "layout", ResizablePage.class, true),
-		new Demo("tabs", "layout", TabsPage.class, true),
+		new Demo("tabs", "layout", TabbedPanelPage.class, true),
 		new Demo("menus", "layout", MenusPage.class, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
 		new Demo("desktop", "layout", DesktopPage.class, true),

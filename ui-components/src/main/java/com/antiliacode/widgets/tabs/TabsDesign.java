@@ -19,10 +19,10 @@ import com.antiliacode.widgets.theme.Look;
 import com.antiliacode.widgets.theme.LookPart;
 
 /**
- * The designs of the tabs of {@link Tabs}, in the colors of the {@link com.antiliacode.widgets.theme.Theme
- * theme} they are in. Every design works in both {@link TabsOrientation orientations}; some are made
- * for tabs along the top, others for tabs down the side. The first three are those
- * {@link TabsStyle} gives Wicket's TabbedPanel too.
+ * The designs of the tabs of {@link TabbedPanel}, in the colors of the
+ * {@link com.antiliacode.widgets.theme.Theme theme} they are in. Every design works in both
+ * {@link TabsOrientation orientations}; some are made for tabs along the top, others for tabs down
+ * the side. The first three are those {@link TabsStyle} gives Wicket's TabbedPanel too.
  *
  * @since 11.0.0
  */
