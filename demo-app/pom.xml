@@ -181,6 +181,10 @@
 		<!-- without -Pselenium the browser tests are skipped, so these hold for the plain build -->
 		<jacoco.minimum.lines>0.75</jacoco.minimum.lines>
 		<jacoco.minimum.branches>0.65</jacoco.minimum.branches>
+		<!-- the release profile publishes the library only -->
+		<maven.source.skip>true</maven.source.skip>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
+		<gpg.skip>true</gpg.skip>
 	</properties>
 
 	<build>
