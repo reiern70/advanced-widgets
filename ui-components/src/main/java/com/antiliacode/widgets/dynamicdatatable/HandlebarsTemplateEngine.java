@@ -13,14 +13,11 @@
  */
 package com.antiliacode.widgets.dynamicdatatable;
 
-import java.util.List;
-
-import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
-import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
+import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.template.Templates;
 
 /**
@@ -36,19 +33,9 @@ public class HandlebarsTemplateEngine implements ITemplateEngine
 {
 	private static final long serialVersionUID = 1L;
 
-	private static final ResourceReference ADAPTER = new JavaScriptResourceReference(
-		HandlebarsTemplateEngine.class, "handlebars-adapter.js")
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public List<HeaderItem> getDependencies()
-		{
-			List<HeaderItem> dependencies = super.getDependencies();
-			dependencies.add(JavaScriptHeaderItem.forReference(Templates.JS));
-			return dependencies;
-		}
-	};
+	private static final ResourceReference ADAPTER =
+		new AlreadyCompressedJavaScriptResourceReference(HandlebarsTemplateEngine.class,
+			"handlebars-adapter.js", Templates.JS);
 
 	@Override
 	public String getName()
