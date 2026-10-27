@@ -18,7 +18,7 @@ import java.util.Locale;
 import com.antiliacode.widgets.theme.LookPart;
 
 /**
- * Where the tabs of {@link Tabs} are.
+ * Where the tabs of {@link TabbedPanel} are.
  *
  * @since 11.0.0
  */

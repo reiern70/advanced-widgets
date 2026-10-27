@@ -57,7 +57,7 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * focus got and lost, the selection, Ctrl+S, the size changed. Without JavaScript the text area is
  * shown.
  * <p>
- * The editor tells the {@link com.antiliacode.widgets.tabs.Tabs tabs} and the
+ * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
@@ -72,7 +72,8 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * is sent, as a text area keeps what the user typed when the form did not validate. Rendered again,
  * or shown again after the user came back to the page with a state model of the session, the
  * editor takes the state up again: the cursor, the selection, the scrolling and the size. In a tab
- * of {@link com.antiliacode.widgets.tabs.Tabs} not selected, the editor keeps them in the browser.
+ * of {@link com.antiliacode.widgets.tabs.TabbedPanel} not selected, the editor keeps them in the
+ * browser.
  * <p>
  * {@code Wicket.CodeEditor} from {@link #JS} makes the editor in the browser; its sizes are CSS
  * custom properties set through the CSSOM. CodeMirror writes its style sheet into the page in a

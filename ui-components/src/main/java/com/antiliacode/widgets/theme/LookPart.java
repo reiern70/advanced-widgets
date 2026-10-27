@@ -290,10 +290,10 @@ public enum LookPart
 	TAB_ROW_PILLS(LookAspect.BASE),
 	TAB_ROW_UNDERLINE(LookAspect.BASE),
 
-	// Tabs, along the top of their panels or down their side, in a design of TabsDesign: tabs,
-	// pills and underline (above, as TabbedPanel's) are Bootstrap's navs, the others the
-	// components' own; the selected tab is marked data-selected, which the look's style sheet
-	// shows as Bootstrap's active link
+	// The components' TabbedPanel, along the top of its panels or down its side, in a design of
+	// TabsDesign: tabs, pills and underline (above, as Wicket's TabbedPanel's) are Bootstrap's navs,
+	// the others the components' own; the selected tab is marked data-selected, which the look's
+	// style sheet shows as Bootstrap's active link
 	TABS_SEGMENTED(LookAspect.BASE),
 	TABS_FOLDER(LookAspect.BASE),
 	TABS_LIFTED(LookAspect.BASE),

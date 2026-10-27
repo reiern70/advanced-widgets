@@ -210,9 +210,9 @@ posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the an
 checks the size again, tells the type by the first bytes of the file, has the store keep it, and
 checks the address the store answers; a page adds one for its React and Svelte editors.
 
-The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `Tabs`) show a list of tabs, along
-the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of the
-tab selected, in one of nine designs (`design`, `TABS_DESIGNS`, `TabsDesign` in Wicket), all in the colors
+The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `TabbedPanel`) show a list of tabs,
+along the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of
+the tab selected, in one of nine designs (`design`, `TABS_DESIGNS`, `TabsDesign` in Wicket), all in the colors
 of the theme: `tabs` joined to the panel, `pills` and `underline`, those `TabsStyle` gives Wicket's
 `TabbedPanel` too; `segmented`, `folder` and `lifted`, made for tabs along the top; `sidebar`,
 `steps` (numbered, those before the selected one done) and `cards` (pointing at the panel), made for

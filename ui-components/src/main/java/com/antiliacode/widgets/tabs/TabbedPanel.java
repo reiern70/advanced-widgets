@@ -52,13 +52,13 @@ import com.antiliacode.widgets.theme.Looks;
 import com.github.openjson.JSONObject;
 
 /**
- * Tabs: a list of {@link Tab}s, {@link #setOrientation(TabsOrientation) along the top of their
- * panels or down their left side}, and the panel of the tab selected. A WAI-ARIA tab list: a click
- * selects a tab, and while the focus is on one the arrow keys select the next or the previous,
- * Home and End the first and the last. The design is one of {@link TabsDesign}, in the colors of
- * the {@link com.antiliacode.widgets.theme.Theme theme} the tabs are in and with the classes of its
- * {@link com.antiliacode.widgets.theme.ILook look}: in Bootstrap's, tabs, pills and underline are its
- * navs.
+ * TabbedPanel: a list of {@link Tab}s, {@link #setOrientation(TabsOrientation) along the top of
+ * their panels or down their left side}, and the panel of the tab selected. A WAI-ARIA tab list: a
+ * click selects a tab, and while the focus is on one the arrow keys select the next or the
+ * previous, Home and End the first and the last. The design is one of {@link TabsDesign}, in the
+ * colors of the {@link com.antiliacode.widgets.theme.Theme theme} the tabs are in and with the
+ * classes of its {@link com.antiliacode.widgets.theme.ILook look}: in Bootstrap's, tabs, pills and
+ * underline are its navs.
  * <p>
  * A {@link Tab#setClosable(boolean) closable} tab has a button closing it; Delete closes the tab
  * that has the focus, and so does a click with the middle button. Closing a tab whose panel has
@@ -85,12 +85,12 @@ import com.github.openjson.JSONObject;
  *
  * @since 11.0.0
  */
-public class Tabs extends Panel
+public class TabbedPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
 	/** The script of the tabs, {@code Wicket.Tabs}. */
-	public static final ResourceReference JS = new JavaScriptResourceReference(Tabs.class,
+	public static final ResourceReference JS = new JavaScriptResourceReference(TabbedPanel.class,
 		"antilia-tabs.js");
 
 	/** The style sheet of the tabs, with the designs of {@link TabsDesign}. */
@@ -100,7 +100,7 @@ public class Tabs extends Panel
 
 	private static final String TAB_PARAMETER = "tab";
 
-	/** The texts of the tabs, by their names in the script; their keys are Tabs.name. */
+	/** The texts of the tabs, by their names in the script; their keys are TabbedPanel.name. */
 	private static final String[] TEXTS = { "close", "modified", "closeModifiedTitle",
 		"closeModified", "discard", "keep" };
 
@@ -127,12 +127,12 @@ public class Tabs extends Panel
 	private boolean sendToServer;
 
 	/**
-	 * Tabs keeping the tab selected in the page.
+	 * A tabbed panel keeping the tab selected in the page.
 	 *
 	 * @param id
 	 *            component id
 	 */
-	public Tabs(String id)
+	public TabbedPanel(String id)
 	{
 		this(id, null);
 	}
@@ -144,7 +144,7 @@ public class Tabs extends Panel
 	 *            where the tabs keep the name of the tab selected, empty for the first one; in the
 	 *            page when {@code null}
 	 */
-	public Tabs(String id, IModel<String> model)
+	public TabbedPanel(String id, IModel<String> model)
 	{
 		super(id, model == null ? Model.of((String)null) : model);
 
@@ -217,7 +217,7 @@ public class Tabs extends Panel
 	 *            the tab; given a name when it has none
 	 * @return {@code this}
 	 */
-	public Tabs addTab(Tab tab)
+	public TabbedPanel addTab(Tab tab)
 	{
 		Args.notNull(tab, "tab");
 		if (Strings.isEmpty(tab.getName()))
@@ -247,7 +247,7 @@ public class Tabs extends Panel
 	 *            the Ajax request target
 	 * @return {@code this}
 	 */
-	public Tabs addTab(Tab tab, AjaxRequestTarget target)
+	public TabbedPanel addTab(Tab tab, AjaxRequestTarget target)
 	{
 		addTab(tab);
 		Component header = headers.get(tab.getName());
@@ -273,7 +273,7 @@ public class Tabs extends Panel
 	 *            the tab
 	 * @return {@code this}
 	 */
-	public Tabs removeTab(Tab tab)
+	public TabbedPanel removeTab(Tab tab)
 	{
 		int index = tabs.indexOf(tab);
 		if (index < 0)
@@ -301,7 +301,7 @@ public class Tabs extends Panel
 	 *            the Ajax request target
 	 * @return {@code this}
 	 */
-	public Tabs removeTab(Tab tab, AjaxRequestTarget target)
+	public TabbedPanel removeTab(Tab tab, AjaxRequestTarget target)
 	{
 		if (!tabs.contains(tab))
 		{
@@ -361,7 +361,7 @@ public class Tabs extends Panel
 	 *            the name of the tab selected, {@code null} for the first one
 	 * @return {@code this}
 	 */
-	public Tabs setModelObject(String name)
+	public TabbedPanel setModelObject(String name)
 	{
 		setDefaultModelObject(name);
 		return this;
@@ -384,7 +384,7 @@ public class Tabs extends Panel
 	 *            the tab
 	 * @return {@code this}
 	 */
-	public Tabs select(Tab tab)
+	public TabbedPanel select(Tab tab)
 	{
 		return setModelObject(tab != null ? tab.getName() : null);
 	}
@@ -398,7 +398,7 @@ public class Tabs extends Panel
 	 *            the Ajax request target
 	 * @return {@code this}
 	 */
-	public Tabs select(Tab tab, AjaxRequestTarget target)
+	public TabbedPanel select(Tab tab, AjaxRequestTarget target)
 	{
 		select(tab);
 		if (tab != null)
@@ -421,7 +421,7 @@ public class Tabs extends Panel
 	 *            the Ajax request target
 	 * @return {@code this}
 	 */
-	public Tabs setModified(Tab tab, Boolean modified, AjaxRequestTarget target)
+	public TabbedPanel setModified(Tab tab, Boolean modified, AjaxRequestTarget target)
 	{
 		tab.setModified(modified);
 		target.appendJavaScript(script("setModified(" + JSONObject.quote(tab.getName()) + "," +
@@ -502,7 +502,7 @@ public class Tabs extends Panel
 	 *            where the tabs are: along the top of the panels or down their left side
 	 * @return {@code this}
 	 */
-	public Tabs setOrientation(TabsOrientation orientation)
+	public TabbedPanel setOrientation(TabsOrientation orientation)
 	{
 		this.orientation = orientation == null ? TabsOrientation.HORIZONTAL : orientation;
 		return this;
@@ -521,7 +521,7 @@ public class Tabs extends Panel
 	 *            the design of the tabs
 	 * @return {@code this}
 	 */
-	public Tabs setDesign(TabsDesign design)
+	public TabbedPanel setDesign(TabsDesign design)
 	{
 		this.design = design == null ? TabsDesign.TABS : design;
 		return this;
@@ -532,7 +532,7 @@ public class Tabs extends Panel
 	 *            the accessible name of the list of tabs, {@code null} for none
 	 * @return {@code this}
 	 */
-	public Tabs setLabel(IModel<String> label)
+	public TabbedPanel setLabel(IModel<String> label)
 	{
 		this.label = assigned(label, this);
 		return this;
@@ -565,7 +565,7 @@ public class Tabs extends Panel
 	 *            whether the browser tells the server each tab the user selects
 	 * @return {@code this}
 	 */
-	public Tabs setSendToServer(boolean sendToServer)
+	public TabbedPanel setSendToServer(boolean sendToServer)
 	{
 		this.sendToServer = sendToServer;
 		return this;
@@ -618,7 +618,7 @@ public class Tabs extends Panel
 		JSONObject texts = new JSONObject();
 		for (String name : TEXTS)
 		{
-			String text = getString("Tabs." + name, null, "");
+			String text = getString("TabbedPanel." + name, null, "");
 			if (!Strings.isEmpty(text))
 			{
 				texts.put(name, text);

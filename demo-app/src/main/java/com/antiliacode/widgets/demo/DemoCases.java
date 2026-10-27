@@ -19,7 +19,7 @@ import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.model.ResourceModel;
 
 import com.antiliacode.widgets.tabs.Tab;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 import com.antiliacode.widgets.tabs.TabsDesign;
 
 /**
@@ -30,7 +30,7 @@ import com.antiliacode.widgets.tabs.TabsDesign;
  * case the user selects, so that the page shows it again when rendered anew, after the form is
  * sent for example. A case has no changes to save: its pill never shows the mark of them.
  */
-public class DemoCases extends Tabs
+public class DemoCases extends TabbedPanel
 {
 	private static final long serialVersionUID = 1L;
 

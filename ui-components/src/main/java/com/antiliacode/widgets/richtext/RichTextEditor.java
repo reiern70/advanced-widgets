@@ -95,7 +95,7 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * allowed} as its bytes say, has the store keep it and answers the address it is served at, which
  * the image takes and the cleaning checks as any other (see {@link RichTextImageUploadBehavior}).
  * <p>
- * The editor tells the {@link com.antiliacode.widgets.tabs.Tabs tabs} and the
+ * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
