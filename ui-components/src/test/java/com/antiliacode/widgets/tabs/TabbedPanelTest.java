@@ -45,7 +45,7 @@ import com.antiliacode.widgets.theme.Look;
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
 
-class TabsTest extends WicketTestCase
+class TabbedPanelTest extends WicketTestCase
 {
 	private static final IIcon ICON = () -> "<svg class=\"icon\"></svg>";
 
@@ -71,7 +71,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void rendersTheTabsAndTheirPanelsTheFirstOneShown()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one").setIcon(ICON)).addTab(tab(null, "two"));
 		tabs.setLabel(Model.of("Documents"));
 		tester.startPage(new TestPage(tabs));
@@ -126,7 +126,7 @@ class TabsTest extends WicketTestCase
 	void givesItsPartsTheClassesOfTheLookTheyAreIn()
 	{
 		Looks.setSessionLook(Look.BOOTSTRAP);
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one").setIcon(ICON)).addTab(tab("two", "two"));
 		tester.startPage(new TestPage(tabs));
 		String html = tester.getLastResponseAsString();
@@ -152,7 +152,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void rendersTheTabTheModelNamesSelectedVerticalInTheDesignGiven()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one")).addTab(tab("two", "two"))
 			.setOrientation(TabsOrientation.VERTICAL).setDesign(TabsDesign.PILLS)
 			.setModelObject("two");
@@ -173,7 +173,7 @@ class TabsTest extends WicketTestCase
 		tabs.setOrientation(null).setDesign(null);
 		assertEquals(TabsOrientation.HORIZONTAL, tabs.getOrientation());
 		assertEquals(TabsDesign.TABS, tabs.getDesign());
-		assertNull(new TestTabs().getSelectedTab());
+		assertNull(new TestTabbedPanel().getSelectedTab());
 
 		tabs.setDesign(TabsDesign.STEPS).setOrientation(TabsOrientation.VERTICAL);
 		tester.startPage(new TestPage(tabs));
@@ -185,7 +185,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void callsBackOnlyWhenTheServerIsTold()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one"));
 		tester.startPage(new TestPage(tabs));
 		assertFalse(tester.getLastResponseAsString().contains("function (tab)"),
@@ -202,7 +202,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void takesTheTabsTheUserSelectsWhenTold()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one")).addTab(tab("two", "two")).setSendToServer(true);
 		tester.startPage(new TestPage(tabs));
 		tester.assertContains("\\}, function \\(tab\\)");
@@ -224,7 +224,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void takesAwayATabTheUserCloses()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one").setClosable(true)).addTab(tab("two", "two"))
 			.addTab(tab("three", "three").setClosable(true));
 		tester.startPage(new TestPage(tabs));
@@ -248,7 +248,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void addsAndRemovesTabsViaAjaxWithoutRenderingTheOthers()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		Tab one = tab("one", "one");
 		tabs.addTab(one);
 		tester.startPage(new TestPage(tabs));
@@ -281,7 +281,7 @@ class TabsTest extends WicketTestCase
 	@Test
 	void tellsTheBrowserAPanelHasChanges()
 	{
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		Tab one = tab("one", "one").setClosable(true).setModified(false);
 		tabs.addTab(one);
 		tester.startPage(new TestPage(tabs));
@@ -299,7 +299,7 @@ class TabsTest extends WicketTestCase
 	void rendersTheActionsOfATabCallingThemBack()
 	{
 		List<String> clicks = new ArrayList<>();
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		Tab one = tab("one", "one").setClosable(true).addAction(new TabAction(ICON,
 			Model.of("About it"))
 		{
@@ -331,7 +331,7 @@ class TabsTest extends WicketTestCase
 	void saysTheTextsInTheSessionsLanguage()
 	{
 		tester.getSession().setLocale(Locale.GERMAN);
-		TestTabs tabs = new TestTabs();
+		TestTabbedPanel tabs = new TestTabbedPanel();
 		tabs.addTab(tab("one", "one"));
 		tester.startPage(new TestPage(tabs));
 		tester.assertContains("\"close\":\"Schließen\"");
@@ -342,7 +342,7 @@ class TabsTest extends WicketTestCase
 		tester.assertContains("\"closeModifiedTitle\":\"¿Cerrar \\{0\\}\\?\"");
 	}
 
-	private void send(TestTabs tabs, String event, String name)
+	private void send(TestTabbedPanel tabs, String event, String name)
 	{
 		tester.getRequest().setParameter("event", event);
 		tester.getRequest().setParameter("tab", name);
@@ -350,13 +350,13 @@ class TabsTest extends WicketTestCase
 			.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
 	}
 
-	private void runAjax(TestTabs tabs, Consumer<AjaxRequestTarget> work)
+	private void runAjax(TestTabbedPanel tabs, Consumer<AjaxRequestTarget> work)
 	{
 		tabs.work = work;
 		tester.executeBehavior(tabs.getBehaviors(WorkBehavior.class).get(0));
 	}
 
-	private static List<String> names(Tabs tabs)
+	private static List<String> names(TabbedPanel tabs)
 	{
 		return tabs.getTabs().stream().map(Tab::getName).toList();
 	}
@@ -369,11 +369,11 @@ class TabsTest extends WicketTestCase
 		@Override
 		protected void respond(AjaxRequestTarget target)
 		{
-			((TestTabs)getComponent()).work.accept(target);
+			((TestTabbedPanel)getComponent()).work.accept(target);
 		}
 	}
 
-	private static class TestTabs extends Tabs
+	private static class TestTabbedPanel extends TabbedPanel
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -383,7 +383,7 @@ class TabsTest extends WicketTestCase
 
 		transient Consumer<AjaxRequestTarget> work;
 
-		TestTabs()
+		TestTabbedPanel()
 		{
 			super("tabs");
 			add(new WorkBehavior());
@@ -416,7 +416,7 @@ class TabsTest extends WicketTestCase
 	{
 		private static final long serialVersionUID = 1L;
 
-		TestPage(Tabs tabs)
+		TestPage(TabbedPanel tabs)
 		{
 			add(tabs);
 		}

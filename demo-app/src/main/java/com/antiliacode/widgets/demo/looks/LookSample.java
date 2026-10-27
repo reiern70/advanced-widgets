@@ -49,7 +49,7 @@ import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.popover.PopoverPlacement;
 import com.antiliacode.widgets.progress.ProgressBar;
 import com.antiliacode.widgets.tabs.Tab;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 
 /**
  * The same components in each look of the {@link LooksPage}: a button of every variant and small
@@ -106,7 +106,7 @@ class LookSample extends Panel
 			}
 		}.setExpanded(true));
 
-		Tabs tabs = new Tabs("tabs");
+		TabbedPanel tabs = new TabbedPanel("tabs");
 		tabs.setLabel(new ResourceModel("tabs"));
 		tabs.addTab(tab("general", false));
 		tabs.addTab(tab("notes", true));

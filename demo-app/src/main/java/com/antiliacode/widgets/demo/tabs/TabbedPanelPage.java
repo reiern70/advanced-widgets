@@ -56,24 +56,24 @@ import com.antiliacode.widgets.popover.PopoverPlacement;
 import com.antiliacode.widgets.popover.PopoverVariant;
 import com.antiliacode.widgets.tabs.Tab;
 import com.antiliacode.widgets.tabs.TabAction;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 import com.antiliacode.widgets.tabs.TabsOrientation;
 import com.antiliacode.widgets.tabs.TabsDesign;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
- * {@link Tabs}: documents in closable tabs, after a welcome tab that is not. The server hears each
- * change of a document, by the Ajax behavior of its text area, and marks its tab as having changes
- * not saved, which Save takes away again; closing a tab with changes asks first, and the server
- * hears of the tab closed. Each document has an action, before the button closing it, showing what
- * the server knows of it in a popover pointing at the action, and a button opens a new document via Ajax, leaving the
- * others as they are in the browser. A second tabs' orientation and design a check box and a drop-down
- * switch, and the server hears of the tab the user selects. A gallery shows the designs made for tabs
- * along the top and those made for tabs down the side. The React and Svelte tabs show the same in
- * those frameworks.
+ * {@link TabbedPanel}: documents in closable tabs, after a welcome tab that is not. The server
+ * hears each change of a document, by the Ajax behavior of its text area, and marks its tab as
+ * having changes not saved, which Save takes away again; closing a tab with changes asks first, and
+ * the server hears of the tab closed. Each document has an action, before the button closing it,
+ * showing what the server knows of it in a popover pointing at the action, and a button opens a new
+ * document via Ajax, leaving the others as they are in the browser. A second tabs' orientation and
+ * design a check box and a drop-down switch, and the server hears of the tab the user selects. A
+ * gallery shows the designs made for tabs along the top and those made for tabs down the side. The
+ * React and Svelte tabs show the same in those frameworks.
  */
-public class TabsPage extends DemoPage
+public class TabbedPanelPage extends DemoPage
 {
 	private static final long serialVersionUID = 1L;
 
@@ -108,11 +108,11 @@ public class TabsPage extends DemoPage
 
 	static final IIcon INFO_ICON = SvgIcon.CIRCLE_INFO;
 
-	private final Tabs documents;
+	private final TabbedPanel documents;
 
 	private final Label status;
 
-	private final Tabs settings;
+	private final TabbedPanel settings;
 
 	private String message;
 
@@ -125,7 +125,7 @@ public class TabsPage extends DemoPage
 	/**
 	 * Constructor.
 	 */
-	public TabsPage()
+	public TabbedPanelPage()
 	{
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
@@ -140,7 +140,7 @@ public class TabsPage extends DemoPage
 		status.setOutputMarkupId(true);
 		documentsCase.add(status);
 
-		documents = new Tabs("documents")
+		documents = new TabbedPanel("documents")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -158,7 +158,7 @@ public class TabsPage extends DemoPage
 			@Override
 			protected Component newPanel(String id)
 			{
-				return new Fragment(id, "welcomePanel", TabsPage.this);
+				return new Fragment(id, "welcomePanel", TabbedPanelPage.this);
 			}
 		}.setIcon(WELCOME_ICON));
 		DOCUMENTS.forEach(document -> documents.addTab(new DocumentTab(document.copy())));
@@ -183,7 +183,7 @@ public class TabsPage extends DemoPage
 		selected.setOutputMarkupId(true);
 		settingsCase.add(selected);
 
-		settings = new Tabs("settings")
+		settings = new TabbedPanel("settings")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -266,7 +266,7 @@ public class TabsPage extends DemoPage
 			{
 				TabsDesign shown = item.getModelObject();
 				item.add(new Label("name", getString("design." + shown.name())));
-				Tabs example = new Tabs("tabs", Model.of(selected));
+				TabbedPanel example = new TabbedPanel("tabs", Model.of(selected));
 				example.setDesign(shown).setOrientation(orientation)
 					.setLabel(Model.of(getString("design." + shown.name())));
 				tabs.forEach((name, icon) -> example.addTab(new Tab(name, new ResourceModel(name))
@@ -378,7 +378,7 @@ public class TabsPage extends DemoPage
 		for (String name : new String[] { "close", "modified", "closeModifiedTitle", "closeModified",
 			"discard", "keep" })
 		{
-			tabs.put(name, getString("Tabs." + name));
+			tabs.put(name, getString("TabbedPanel." + name));
 		}
 		JSONArray documentsConfig = new JSONArray();
 		DOCUMENTS.forEach(document -> documentsConfig.put(new JSONObject()
@@ -425,10 +425,10 @@ public class TabsPage extends DemoPage
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		Tabs.renderHeadItems(response);
+		TabbedPanel.renderHeadItems(response);
 		Popover.renderHeadItems(response);
 		response.render(CssHeaderItem.forReference(
-			new CssResourceReference(TabsPage.class, "TabsPage.css")));
+			new CssResourceReference(TabbedPanelPage.class, "TabbedPanelPage.css")));
 	}
 
 	/**
@@ -503,7 +503,7 @@ public class TabsPage extends DemoPage
 		@Override
 		protected Component newPanel(String id)
 		{
-			Fragment panel = new Fragment(id, "documentPanel", TabsPage.this);
+			Fragment panel = new Fragment(id, "documentPanel", TabbedPanelPage.this);
 			Form<Void> form = new Form<>("form");
 			panel.add(form);
 			TextArea<String> text = new TextArea<>("text", new PropertyModel<>(document, "text"));

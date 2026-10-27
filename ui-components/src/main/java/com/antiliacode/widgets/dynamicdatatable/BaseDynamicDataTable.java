@@ -50,7 +50,6 @@ import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
-import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -65,12 +64,12 @@ import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.resource.CssResourceReference;
-import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.antiliacode.widgets.table.IMovableColumn;
 import com.antiliacode.widgets.table.IMovableColumnsTable;
@@ -165,19 +164,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 {
 	private static final long serialVersionUID = 1L;
 
-	private static final ResourceReference JAVASCRIPT = new JavaScriptResourceReference(
-		BaseDynamicDataTable.class, "ant-data-table.js")
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public List<HeaderItem> getDependencies()
-		{
-			List<HeaderItem> dependencies = super.getDependencies();
-			dependencies.add(JavaScriptHeaderItem.forReference(Templates.JS));
-			return dependencies;
-		}
-	};
+	private static final ResourceReference JAVASCRIPT =
+		new AlreadyCompressedJavaScriptResourceReference(BaseDynamicDataTable.class,
+			"ant-data-table.js", Templates.JS);
 
 	private static final String ACTION_PARAMETER = "action";
 

@@ -33,19 +33,19 @@ import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
-import com.antiliacode.widgets.demo.tabs.TabsPage.Document;
+import com.antiliacode.widgets.demo.tabs.TabbedPanelPage.Document;
 import com.antiliacode.widgets.tabs.Tab;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 import com.antiliacode.widgets.tabs.TabsOrientation;
 import com.antiliacode.widgets.tabs.TabsDesign;
 import com.github.openjson.JSONObject;
 
 /**
- * Checks {@link TabsPage}: the documents whose changes the server hears and marks, saves and
+ * Checks {@link TabbedPanelPage}: the documents whose changes the server hears and marks, saves and
  * describes, the tabs closed and opened, the second tabs switched by the form and telling the
  * server the tab selected, and the configuration of the React and Svelte apps.
  */
-class TabsPageTest
+class TabbedPanelPageTest
 {
 	private static final String DOCUMENTS = inCase("documentsTitle", "documents");
 
@@ -53,7 +53,7 @@ class TabsPageTest
 
 	private WicketTester tester;
 
-	private TabsPage page;
+	private TabbedPanelPage page;
 
 	/**
 	 * @return the path of a component of a case
@@ -67,7 +67,7 @@ class TabsPageTest
 	void startPage()
 	{
 		tester = new WicketTester(new WicketApplication());
-		page = tester.startPage(TabsPage.class);
+		page = tester.startPage(TabbedPanelPage.class);
 	}
 
 	@AfterEach
@@ -76,9 +76,9 @@ class TabsPageTest
 		tester.destroy();
 	}
 
-	private Tabs tabs(String path)
+	private TabbedPanel tabs(String path)
 	{
-		return (Tabs)tester.getComponentFromLastRenderedPage(path);
+		return (TabbedPanel)tester.getComponentFromLastRenderedPage(path);
 	}
 
 	/**
@@ -89,7 +89,7 @@ class TabsPageTest
 		return DOCUMENTS + ":element:panels:items:" + tab.getName() + ":panel:" + path;
 	}
 
-	private void send(Tabs tabs, String event, String name)
+	private void send(TabbedPanel tabs, String event, String name)
 	{
 		tester.getRequest().setParameter("event", event);
 		tester.getRequest().setParameter("tab", name);
@@ -100,7 +100,7 @@ class TabsPageTest
 	@Test
 	void showsTheWelcomeTabThenTheDocuments()
 	{
-		Tabs documents = tabs(DOCUMENTS);
+		TabbedPanel documents = tabs(DOCUMENTS);
 		assertEquals(3, documents.getTabs().size());
 		tester.assertContains("class=\"antilia-tab-title\">Welcome</span>");
 		assertEquals(List.of("notes.txt", "todo.txt"), page.getDocuments().stream()
@@ -160,7 +160,7 @@ class TabsPageTest
 	@Test
 	void forgetsTheDocumentClosedAndOpensNewOnes()
 	{
-		Tabs documents = tabs(DOCUMENTS);
+		TabbedPanel documents = tabs(DOCUMENTS);
 		Tab notes = documents.getTabs().get(1);
 
 		send(documents, "close", notes.getName());
@@ -182,7 +182,7 @@ class TabsPageTest
 	@Test
 	void switchesTheSecondTabsAndHearsTheTabSelected()
 	{
-		Tabs settings = tabs(SETTINGS);
+		TabbedPanel settings = tabs(SETTINGS);
 		assertEquals(TabsOrientation.VERTICAL, settings.getOrientation());
 		assertEquals(TabsDesign.PILLS, settings.getDesign());
 		tester.assertLabel(inCase("settingsTitle", "selected"),
@@ -207,11 +207,11 @@ class TabsPageTest
 	@Test
 	void showsTheGalleryOfDesigns()
 	{
-		Tabs segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
+		TabbedPanel segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
 		assertEquals(TabsDesign.SEGMENTED, segmented.getDesign());
 		assertEquals(TabsOrientation.HORIZONTAL, segmented.getOrientation());
 		assertEquals("overview", segmented.getSelectedTab().getName());
-		Tabs steps = tabs(inCase("galleryTitle", "sideDesigns:1:tabs"));
+		TabbedPanel steps = tabs(inCase("galleryTitle", "sideDesigns:1:tabs"));
 		assertEquals(TabsDesign.STEPS, steps.getDesign());
 		assertEquals(TabsOrientation.VERTICAL, steps.getOrientation());
 		assertEquals("payment", steps.getSelectedTab().getName());
@@ -251,11 +251,11 @@ class TabsPageTest
 	void speaksGermanAndSpanish()
 	{
 		tester.getSession().setLocale(Locale.GERMAN);
-		tester.startPage(TabsPage.class);
+		tester.startPage(TabbedPanelPage.class);
 		tester.assertContains("Dokumente, auf dem Server bearbeitet");
 
 		tester.getSession().setLocale(Locale.of("es"));
-		tester.startPage(TabsPage.class);
+		tester.startPage(TabbedPanelPage.class);
 		tester.assertContains("Documentos, editados en el servidor");
 		Component selected = tester.getComponentFromLastRenderedPage(inCase("settingsTitle",
 			"selected"));

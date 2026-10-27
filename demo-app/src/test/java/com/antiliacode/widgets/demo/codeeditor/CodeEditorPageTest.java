@@ -46,7 +46,7 @@ import com.antiliacode.widgets.split.SplitPane;
 import com.antiliacode.widgets.split.SplitPanel;
 import com.antiliacode.widgets.split.SplitSize;
 import com.antiliacode.widgets.tabs.Tab;
-import com.antiliacode.widgets.tabs.Tabs;
+import com.antiliacode.widgets.tabs.TabbedPanel;
 import com.github.openjson.JSONObject;
 
 /**
@@ -275,7 +275,7 @@ class CodeEditorPageTest
 	@Test
 	void opensTheFilesInTabsEachInAnEditor()
 	{
-		Tabs files = (Tabs)tester.getComponentFromLastRenderedPage(FILES);
+		TabbedPanel files = (TabbedPanel)tester.getComponentFromLastRenderedPage(FILES);
 		assertEquals(List.of("Order.java", "words.js", "package.json", "README.md"),
 			page.getFiles().stream().map(CodeDocument::getName).toList());
 		Tab first = files.getTabs().get(0);
