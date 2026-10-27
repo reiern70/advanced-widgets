@@ -129,15 +129,158 @@ shows the branch and the commit in the footer.
 
 ## Using the components in a Wicket application
 
-The library is not published yet: install it with `mvn install` and depend on it.
+The components for Wicket 10 are published, built from the `line-10.x` branch on Wicket
+10.11.0, without what needs Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery):
+
+- the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository of snapshots;
+- the release candidates, `10.11.0-RC1`, on GitHub Packages.
+
+The releases will be on Maven Central, which needs no repository, only the dependency. The
+Wicket 11 line, `master`, is not published yet: install it with `mvn install` and depend on
+`1.0.0-SNAPSHOT`.
+
+### The snapshots, from Maven Central
+
+Maven Central serves the snapshots from a repository of their own, which needs no token. In
+`build.gradle.kts`:
+
+```kotlin
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+        mavenContent {
+            snapshotsOnly()
+            includeGroup("com.antiliacode.widgets")
+        }
+    }
+}
+
+dependencies {
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-SNAPSHOT")
+}
+```
+
+or in the `pom.xml`:
 
 ```xml
-<dependency>
-	<groupId>com.antiliacode.widgets</groupId>
-	<artifactId>ui-components</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-</dependency>
+<repositories>
+	<repository>
+		<id>central-snapshots</id>
+		<url>https://central.sonatype.com/repository/maven-snapshots/</url>
+		<releases>
+			<enabled>false</enabled>
+		</releases>
+		<snapshots>
+			<enabled>true</enabled>
+		</snapshots>
+	</repository>
+</repositories>
+
+<dependencies>
+	<dependency>
+		<groupId>com.antiliacode.widgets</groupId>
+		<artifactId>ui-components</artifactId>
+		<version>10.11.0-SNAPSHOT</version>
+	</dependency>
+</dependencies>
 ```
+
+### The release candidates, from GitHub Packages
+
+GitHub Packages asks for a token even to read public packages: a GitHub personal access token
+(classic) with the scope `read:packages`.
+
+#### Gradle
+
+Put your GitHub user and the token into `~/.gradle/gradle.properties`, out of the project:
+
+```properties
+gpr.user=<your GitHub user>
+gpr.key=<the token>
+```
+
+Then, in `build.gradle.kts`:
+
+```kotlin
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/reiern70/advanced-widgets")
+        credentials {
+            username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+            password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
+        }
+        // ask GitHub only for the components, the rest comes from Maven Central
+        content {
+            includeGroup("com.antiliacode.widgets")
+        }
+    }
+}
+
+dependencies {
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC1")
+}
+```
+
+or in `build.gradle`:
+
+```groovy
+repositories {
+    mavenCentral()
+    maven {
+        url = uri('https://maven.pkg.github.com/reiern70/advanced-widgets')
+        credentials {
+            username = findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+            password = findProperty('gpr.key') ?: System.getenv('GITHUB_TOKEN')
+        }
+        content {
+            includeGroup 'com.antiliacode.widgets'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC1'
+}
+```
+
+#### Maven
+
+Put the token into `~/.m2/settings.xml`:
+
+```xml
+<settings>
+	<servers>
+		<server>
+			<id>antilia-widgets</id>
+			<username>your GitHub user</username>
+			<password>the token</password>
+		</server>
+	</servers>
+</settings>
+```
+
+and the repository, under the same id, and the dependency into the `pom.xml`:
+
+```xml
+<repositories>
+	<repository>
+		<id>antilia-widgets</id>
+		<url>https://maven.pkg.github.com/reiern70/advanced-widgets</url>
+	</repository>
+</repositories>
+
+<dependencies>
+	<dependency>
+		<groupId>com.antiliacode.widgets</groupId>
+		<artifactId>ui-components</artifactId>
+		<version>10.11.0-RC1</version>
+	</dependency>
+</dependencies>
+```
+
+### A page
 
 Give the page a theme and use the components as any other Wicket component:
 
@@ -175,6 +318,12 @@ public class EditPage extends WebPage
 
 Each component brings its scripts and style sheets; the classes, under `com.antiliacode.widgets`,
 describe their options in their Javadoc.
+
+The library holds every script twice: as the build wrote it, readable, and minified beside it
+(`.min.js`, and `.min.css` for the style sheets). Wicket serves the readable ones in development
+mode, so that what fails can be read and debugged in the browser, and the minified ones in
+deployment mode. `getResourceSettings().setUseMinifiedResources(false)` in the application's
+`init()` serves the readable ones in deployment mode too.
 
 ## Using the components in React and Svelte
 
