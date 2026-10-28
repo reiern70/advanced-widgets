@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -34,9 +35,12 @@ import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IAjaxEvent;
+import com.antiliacode.widgets.event.IAjaxSubmitEvent;
+import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.richtext.RichTextEditor;
-import com.antiliacode.widgets.richtext.RichTextEditorEvent;
-import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
@@ -94,18 +98,25 @@ class RichTextEditorPageTest
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
 		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
-			.filter(behavior -> !(behavior instanceof RichTextEditorEventBehavior)).findFirst()
+			.filter(behavior -> !(behavior instanceof AjaxEventBehavior)).findFirst()
 			.orElseThrow());
 	}
 
 	/**
 	 * Fires an event of the editor with its text, as the browser does.
 	 */
-	private void fire(RichTextEditor editor, RichTextEditorEvent event, String text)
+	private void fire(RichTextEditor editor, String event, String text)
 	{
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
-		tester.executeBehavior(editor.getBehaviors(RichTextEditorEventBehavior.class).stream()
-			.filter(each -> each.getRichTextEditorEvent() == event).findFirst().orElseThrow());
+		List<IClientEvent> events = editor.getEvents();
+		IClientEvent found = events.stream().filter(each -> each.getId().equals(event) &&
+			(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent)).findFirst()
+			.orElseThrow();
+		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, event);
+		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
+			String.valueOf(events.indexOf(found)));
+		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
+			.getAjaxBehavior(found));
 	}
 
 	@Test
@@ -137,7 +148,7 @@ class RichTextEditorPageTest
 		String html = "<p onclick=\"steal()\">New <b>text</b></p><script>steal()</script>";
 		sendState(editor, "{\"selection\":{\"anchor\":3,\"head\":7},\"scrollTop\":40," +
 			"\"height\":420}", html);
-		fire(editor, RichTextEditorEvent.INPUT, html);
+		fire(editor, RichTextEditorEvents.INPUT, html);
 
 		RichTextDocument article = RichTextEditorPage.article();
 		assertEquals("<p>New <b>text</b></p>", article.getText());
@@ -157,7 +168,7 @@ class RichTextEditorPageTest
 	void savesWithCtrlSAndTheButton()
 	{
 		RichTextEditor editor = editor(EDITOR);
-		fire(editor, RichTextEditorEvent.SAVE, "<p>Saved <em>now</em></p>");
+		fire(editor, RichTextEditorEvents.SAVE, "<p>Saved <em>now</em></p>");
 
 		RichTextDocument article = RichTextEditorPage.article();
 		assertEquals("<p>Saved <em>now</em></p>", article.getSaved());
@@ -177,12 +188,39 @@ class RichTextEditorPageTest
 	void hearsOfTheFocus()
 	{
 		RichTextEditor editor = editor(EDITOR);
-		fire(editor, RichTextEditorEvent.FOCUS, RichTextSamples.ARTICLE);
+		fire(editor, RichTextEditorEvents.FOCUS, RichTextSamples.ARTICLE);
 		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
 			"The server heard you entered the article.");
-		fire(editor, RichTextEditorEvent.BLUR, RichTextSamples.ARTICLE);
+		// the text the server has: unchanged
+		fire(editor, RichTextEditorEvents.BLUR, editor.getModelObject());
 		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
 			"The server heard you left the article, with its text.");
+		// another text, which the model gets
+		int before = editor.getModelObject().length();
+		fire(editor, RichTextEditorEvents.BLUR, "<p>Short</p>");
+		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
+			"The server heard you left the article, with its text changed: " + before +
+				" characters before, 12 now.");
+		assertEquals("<p>Short</p>", editor.getModelObject());
+	}
+
+	@Test
+	void hearsOfTheSizeTheUserGaveTheArticle()
+	{
+		RichTextEditor editor = editor(EDITOR);
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"width\":null,\"height\":320.4}");
+		fire(editor, RichTextEditorEvents.RESIZE, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
+			"The server heard you resized the article to auto × 320 px.");
+	}
+
+	@Test
+	void marksTheTitleWithTheChangesNotSavedInTheBrowser()
+	{
+		editor(EDITOR);
+		tester.assertContains("\\{id:\"antilia-rich-text-editor:modified\",index:\\d+," +
+			"kind:'client',delay:-1,fn:function\\(event\\)\\{var title=document.title");
 	}
 
 	@Test
@@ -224,12 +262,12 @@ class RichTextEditorPageTest
 		assertEquals(RichTextSamples.NOTES, tester.getComponentFromLastRenderedPage(
 			inCase("notesTitle", "kept:markdown")).getDefaultModelObject());
 
-		fire(notes, RichTextEditorEvent.INPUT, "# Packing\n\nOnly <b>this</b>");
+		fire(notes, RichTextEditorEvents.INPUT, "# Packing\n\nOnly <b>this</b>");
 		assertEquals("# Packing\n\nOnly <b>this</b>", RichTextEditorPage.notes().getText(),
 			"Markdown is text: the page escapes it");
 		tester.assertContains("# Packing\n\nOnly &lt;b&gt;this&lt;/b&gt;");
 
-		fire(notes, RichTextEditorEvent.SAVE, "# Packing\n\nDone");
+		fire(notes, RichTextEditorEvents.SAVE, "# Packing\n\nDone");
 		assertFalse(RichTextEditorPage.notes().isModified());
 		tester.assertLabel(inCase("notesTitle", "notesForm:notesStatus"), "Saved the notes.");
 

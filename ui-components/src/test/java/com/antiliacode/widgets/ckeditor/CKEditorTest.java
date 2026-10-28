@@ -55,10 +55,11 @@ import org.junit.jupiter.api.Test;
 
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.event.AjaxSubmitEvent;
+import com.antiliacode.widgets.event.ClientEventsTester;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
-import com.antiliacode.widgets.richtext.RichTextEditorEvent;
-import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFeature;
 import com.antiliacode.widgets.richtext.RichTextFormat;
@@ -385,24 +386,18 @@ class CKEditorTest extends WicketTestCase
 		List<String> saved = new ArrayList<>();
 		IModel<String> text = Model.of(HTML);
 		CKEditor editor = new CKEditor("editor", text);
-		RichTextEditorEventBehavior save = new RichTextEditorEventBehavior(RichTextEditorEvent.SAVE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				saved.add(editor.getModelObject());
-				editor.markSaved(target);
-			}
-		};
-		editor.add(save);
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE, (eventId, values, form,
+			target) -> {
+			saved.add(editor.getModelObject());
+			editor.markSaved(target);
+		}));
 		tester.startPage(new TestPage(editor));
 
-		tester.assertContains("\"e\":\"antilia-rich-text-editor:save\"");
+		tester.assertContains("\\{id:\"antilia-rich-text-editor:save\",index:0,kind:'submit'");
+		tester.assertContains("Wicket.CKEditor&&Wicket.CKEditor.of\\(element.id\\)");
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"<p>Saved <img src=x onerror=steal()></p>");
-		tester.executeBehavior(save);
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SAVE);
 		assertEquals(List.of("<p>Saved <img src=\"x\" /></p>"), saved);
 		assertEquals("<p>Saved <img src=\"x\" /></p>", text.getObject());
 	}

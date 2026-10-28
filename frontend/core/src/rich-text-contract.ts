@@ -14,8 +14,8 @@
 
 /*
  * What the rich text editors share, Tiptap's and CKEditor's, without either: the state they keep
- * besides their text and the events they fire, which Wicket's RichTextEditorEventBehavior hears
- * of for both.
+ * besides their text and the events they fire, which the events of Wicket's editors listen to,
+ * for both.
  */
 
 /** What is selected: from where the selection starts to where its head, the cursor, is. */

@@ -129,6 +129,21 @@ public final class ResizableSize implements Serializable
 	}
 
 	/**
+	 * @param size
+	 *            a size the browser sent, as a script tells it: {@code width} and {@code height}
+	 *            in pixels, either missing or not a number for none; {@code null} for none
+	 * @return the size
+	 */
+	public static ResizableSize of(JSONObject size)
+	{
+		if (size == null)
+		{
+			return NONE;
+		}
+		return of(parsePixels(size.opt("width")), parsePixels(size.opt("height")));
+	}
+
+	/**
 	 * @return the pixels of a number the browser sent, rounded; {@code null} for none
 	 */
 	static Integer parsePixels(Object value)

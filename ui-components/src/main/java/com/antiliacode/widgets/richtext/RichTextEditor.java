@@ -19,9 +19,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -78,8 +77,10 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * The text area stays in the page, hidden, and holds the text: a form posts it as always, and it
  * fires {@code input} as the user types and {@code change} once the editor loses the focus, as a
  * text area does, so the Ajax behaviors listening to them work as with one. The editor fires its
- * own events too, {@link RichTextEditorEvent}, which {@link RichTextEditorEventBehavior}s hear of:
- * the focus got and lost, the selection, Ctrl+S, the size changed. Until the script makes the
+ * own events too, {@link RichTextEditorEvents}: the focus got and lost, the selection, Ctrl+S, the
+ * size changed. It listens to the {@link #addEvent(com.antiliacode.widgets.event.IClientEvent)
+ * events it is given}, in the browser or on the server, with the form or without, and to those
+ * of its features, through two Ajax behaviors whatever their number. Until the script makes the
  * editor, the text area is hidden in the room the editor takes ({@link #LOADING_CLASS}), so that a
  * page arriving slowly does not show the HTML of the text. Without JavaScript the text area is
  * shown.
@@ -158,56 +159,23 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	/** What the name of a language of code blocks may be, as their class holds it. */
 	private static final Pattern LANGUAGE = Pattern.compile("[A-Za-z0-9_+#.-]{1,40}");
 
-	/** The texts of the editor in the browser, by the keys of their translations in the bundles. */
-	private static final Map<String, String> TEXTS = new LinkedHashMap<>();
-
-	static
-	{
-		String[][] texts = { { "toolbar", "Formatting" },
-				{ "bubble", "Formatting of the selection" }, { "heading", "Text style" },
-				{ "bold", "Bold" }, { "italic", "Italic" }, { "underline", "Underline" },
-				{ "strike", "Strikethrough" }, { "code", "Code" },
-				{ "textColor", "Text color" }, { "textBackground", "Background color" },
-				{ "link", "Link" },
-				{ "bulletList", "Bulleted list" }, { "orderedList", "Numbered list" },
-				{ "taskList", "Task list" }, { "blockquote", "Quote" },
-				{ "codeBlock", "Code block" }, { "horizontalRule", "Horizontal line" },
-				{ "table", "Table" }, { "image", "Image" }, { "alignLeft", "Align left" },
-				{ "alignCenter", "Center" }, { "alignRight", "Align right" },
-				{ "alignJustify", "Justify" }, { "clearFormatting", "Clear formatting" },
-				{ "undo", "Undo" }, { "redo", "Redo" }, { "paragraph", "Paragraph" },
-				{ "headingLevel", "Heading {0}" }, { "insertTable", "Insert a table" },
-				{ "addRowBefore", "Add a row above" }, { "addRowAfter", "Add a row below" },
-				{ "addColumnBefore", "Add a column before" },
-				{ "addColumnAfter", "Add a column after" }, { "deleteRow", "Delete the row" },
-				{ "deleteColumn", "Delete the column" }, { "toggleHeaderRow", "Header row" },
-				{ "deleteTable", "Delete the table" }, { "linkUrl", "Address" },
-				{ "linkNewTab", "Open in a new tab" }, { "removeLink", "Remove the link" },
-				{ "imageUrl", "Address of the image" },
-				{ "imageAlt", "Text in place of the image" }, { "apply", "Apply" },
-				{ "close", "Close" },
-				{ "invalidUrl",
-						"Give an address starting with http://, https:// or mailto:, or a relative one." },
-				{ "characters", "{0} characters" }, { "character", "{0} character" },
-				{ "charactersOfLimit", "{0} of {1} characters" }, { "words", "{0} words" },
-				{ "word", "{0} word" },
-				{ "resize", "Drag, or use the arrow keys, to resize the editor" },
-				{ "plainText", "Plain text" }, { "defaultColor", "Default" },
-				{ "noBackground", "None" }, { "colorGray", "Gray" }, { "colorBrown", "Brown" },
-				{ "colorRed", "Red" }, { "colorOrange", "Orange" }, { "colorYellow", "Yellow" },
-				{ "colorLime", "Lime" }, { "colorGreen", "Green" }, { "colorTeal", "Teal" },
-				{ "colorCyan", "Cyan" }, { "colorBlue", "Blue" }, { "colorIndigo", "Indigo" },
-				{ "colorPurple", "Purple" }, { "colorPink", "Pink" },
-				{ "uploadImage", "Upload an image…" },
-				{ "uploading", "Uploading {0}…" }, { "theImage", "The image" },
-				{ "uploadFailed", "{0} could not be uploaded." },
-				{ "uploadTooLarge", "{0} is larger than {1}." },
-				{ "uploadType", "{0} is not an image of a type the editor takes: {1}." } };
-		for (String[] text : texts)
-		{
-			TEXTS.put(text[0], text[1]);
-		}
-	}
+	/**
+	 * The names of the texts of the editor in the browser: each the translation of
+	 * {@code RichTextEditor.} followed by its name, in the bundles of {@code Initializer}, English
+	 * among them.
+	 */
+	static final List<String> TEXT_NAMES = List.of(
+		"toolbar", "bubble", "heading", "bold", "italic", "underline", "strike", "code", "textColor",
+		"textBackground", "link", "bulletList", "orderedList", "taskList", "blockquote", "codeBlock",
+		"horizontalRule", "table", "image", "alignLeft", "alignCenter", "alignRight", "alignJustify",
+		"clearFormatting", "undo", "redo", "paragraph", "headingLevel", "insertTable", "addRowBefore",
+		"addRowAfter", "addColumnBefore", "addColumnAfter", "deleteRow", "deleteColumn",
+		"toggleHeaderRow", "deleteTable", "linkUrl", "linkNewTab", "removeLink", "imageUrl",
+		"imageAlt", "apply", "close", "invalidUrl", "characters", "character", "charactersOfLimit",
+		"words", "word", "resize", "plainText", "defaultColor", "noBackground", "colorGray",
+		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen", "colorTeal",
+		"colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink", "uploadImage",
+		"uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;
@@ -810,7 +778,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	public static JSONObject texts(Component component)
 	{
 		JSONObject texts = new JSONObject();
-		TEXTS.keySet().forEach(name -> texts.put(name, text(component, name)));
+		TEXT_NAMES.forEach(name -> texts.put(name, text(component, name)));
 		return texts;
 	}
 
@@ -869,18 +837,13 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * @return what the menus call a color of that name: the translation of
-	 *         {@code RichTextEditor.colorRed} for red, else its English name, else its name
+	 *         {@code RichTextEditor.colorRed} for red, else its name
 	 */
 	private static String colorLabel(Component component, String name)
 	{
-		String key = "color" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
-		String english = TEXTS.getOrDefault(key, name);
-		if (component == null)
-		{
-			return english;
-		}
-		String translation = component.getString("RichTextEditor." + key, null, english);
-		return Strings.isEmpty(translation) ? english : translation;
+		String label = translation(component, "color" + Character.toUpperCase(name.charAt(0)) +
+			name.substring(1));
+		return label == null ? name : label;
 	}
 
 	/**
@@ -892,13 +855,36 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	static String text(Component component, String name)
 	{
-		String english = TEXTS.getOrDefault(name, name);
-		if (component == null)
+		String text = translation(component, name);
+		return text == null ? name : text;
+	}
+
+	/**
+	 * @param component
+	 *            the component whose resources translate the text, {@code null} for English
+	 * @param name
+	 *            the name of a text of the editor
+	 * @return the translation of {@code RichTextEditor.} followed by the name, in the language of
+	 *         the component, else in English; {@code null} for none, or outside an application
+	 */
+	private static String translation(Component component, String name)
+	{
+		String key = "RichTextEditor." + name;
+		String text;
+		if (component != null)
 		{
-			return english;
+			text = component.getString(key, null, "");
 		}
-		String translation = component.getString("RichTextEditor." + name, null, english);
-		return Strings.isEmpty(translation) ? english : translation;
+		else if (Application.exists())
+		{
+			text = Application.get().getResourceSettings().getLocalizer().getString(key, null, null,
+				Locale.ENGLISH, null, "");
+		}
+		else
+		{
+			text = null;
+		}
+		return Strings.isEmpty(text) ? null : text;
 	}
 
 	/**

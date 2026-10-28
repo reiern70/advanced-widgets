@@ -23,10 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.wicket.core.util.lang.WicketObjects;
 import org.junit.jupiter.api.Test;
+
+import com.antiliacode.widgets.ckeditor.CKEditorPolicy;
 
 /**
  * The cleaning of the HTML: what each feature writes passes, what an attacker writes does not.
@@ -83,6 +86,46 @@ class RichTextPolicyTest
 				"<label><input type=\"checkbox\" checked=\"checked\"><span></span></label><div>" +
 				"<p>Done</p></div></li><li data-type=\"taskItem\" data-checked=\"false\"><label>" +
 				"<input type=\"checkbox\"><span></span></label><div><p>To do</p></div></li></ul>"));
+	}
+
+	@Test
+	void dropsWhatRunsScriptsHoweverHidden()
+	{
+		String[] attacks = { "<svg onload=\"steal()\"><circle /></svg>",
+			"<img src=\"x\" onerror=\"steal()\" />",
+			"<img src=\"https://example.org/a.png\" srcset=\"javascript:steal() 1x\" />",
+			"<a href=\"&#106;avascript:steal()\">entity</a>",
+			"<a href=\"&#x6A;&#x61;&#x76;&#x61;script&#x3A;steal()\">hex</a>",
+			"<a href=\"jav&#x09;ascript:steal()\">tab</a>",
+			"<a href=\"JaVaScRiPt:steal()\">case</a>",
+			"<img src=\"vbscript:steal()\" />",
+			"<object data=\"javascript:steal()\"></object><embed src=\"x.swf\" />",
+			"<form action=\"https://evil.example\"><button formaction=\"javascript:steal()\">" +
+				"Go</button></form>",
+			"<base href=\"https://evil.example/\" />",
+			"<meta http-equiv=\"refresh\" content=\"0;url=javascript:steal()\" />",
+			"<math><mtext><table><mglyph><style><img src=x onerror=steal()></style></mglyph>" +
+				"</table></mtext></math>",
+			"<a href=\"https://example.org\" onmouseover=\"steal()\">over</a>",
+			"<p style=\"background:url(javascript:steal())\">styled</p>",
+			"<noscript><p title=\"</noscript><img src=x onerror=steal()>\"></p></noscript>" };
+		// both editors' cleanings, Tiptap's and CKEditor's
+		List<IRichTextSanitizer> policies = List.of(RichTextPolicy.ALL, CKEditorPolicy.ALL);
+		String[] banned = { "javascript", "vbscript", "onerror", "onload", "onmouseover", "<svg",
+			"<object", "<embed", "<form", "formaction", "<base", "<meta", "<math", "<style",
+			"<noscript", "srcset", "style=" };
+		for (IRichTextSanitizer policy : policies)
+		{
+			for (String attack : attacks)
+			{
+				String cleaned = policy.sanitize("<p>Before</p>" + attack);
+				String lower = cleaned == null ? "" : cleaned.toLowerCase(Locale.ROOT);
+				for (String word : banned)
+				{
+					assertFalse(lower.contains(word), attack + " -> " + cleaned);
+				}
+			}
+		}
 	}
 
 	@Test
