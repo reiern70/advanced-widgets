@@ -42,7 +42,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Downloads via Ajax, an iframe or a new tab, with a busy button | ✓ | |
 | | Uploads in a form, by Ajax or to a resource, with a drop zone and a progress bar | ✓ | |
 | | Code editor (CodeMirror): Java, JavaScript, TypeScript, JSON, Markdown with its preview | ✓ | ✓ |
-| | Rich text editor (Tiptap), its HTML cleaned on the server, or Markdown | ✓ | ✓ |
+| | Rich text editor (Tiptap), with text colors, its HTML cleaned on the server, or Markdown | ✓ | ✓ |
 | Feedback | Progress bar | ✓ | ✓ |
 | | Notifications; Wicket's feedback messages become notifications by themselves | ✓ | ✓ |
 | | Popovers | ✓ | ✓ |

@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 import org.apache.wicket.AttributeModifier;
@@ -20,6 +21,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
+import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
@@ -37,6 +39,9 @@ import com.github.openjson.JSONObject;
  * A demo that has React and Svelte apps too names them with {@link #getFrameworkDemo()} and gives
  * them their configuration with {@link #getFrameworkConfig()}: the page then shows the
  * {@link FrameworkTabs} below the title, its own components in the Wicket tab.
+ * <p>
+ * A demo of components based on a JavaScript library says so below the title, with the version it
+ * runs and a link to it, {@link #getBasedOn()}.
  */
 public abstract class DemoPage extends BasePage
 {
@@ -71,9 +76,54 @@ public abstract class DemoPage extends BasePage
 		super.onInitialize();
 		// the session opened the private part
 		DemoSession.get().recordPrivatePart();
+		add(newBasedOn("basedOn", getBasedOn()));
 		String demo = getFrameworkDemo();
 		add(demo != null ? new FrameworkTabs("frameworkTabs", demo, this::getFrameworkConfig)
 			: new WebMarkupContainer("frameworkTabs").setVisible(false));
+	}
+
+	/**
+	 * @return the JavaScript library the components of the demo are based on, shown below the
+	 *         title; {@code null}, the default, for none
+	 */
+	protected BasedOn getBasedOn()
+	{
+		return null;
+	}
+
+	/**
+	 * A JavaScript library the components of a demo are based on.
+	 *
+	 * @param name
+	 *            the name of the library
+	 * @param version
+	 *            the version the demo runs
+	 * @param url
+	 *            the site of the library
+	 * @param on
+	 *            the library it runs on in turn, {@code null} for none
+	 */
+	public record BasedOn(String name, String version, String url, String on)
+		implements Serializable
+	{
+	}
+
+	/**
+	 * @return the line telling the library the demo is based on, hidden without one
+	 */
+	private Component newBasedOn(String id, BasedOn basedOn)
+	{
+		WebMarkupContainer line = new WebMarkupContainer(id);
+		if (basedOn == null)
+		{
+			line.add(new WebMarkupContainer("library"), new WebMarkupContainer("on"));
+			return line.setVisible(false);
+		}
+		line.add(new ExternalLink("library", basedOn.url(), basedOn.name() + " " +
+			basedOn.version()));
+		line.add(new Label("on", () -> getString("basedOnToo").replace("{0}", basedOn.on()))
+			.setRenderBodyOnly(true).setVisible(basedOn.on() != null));
+		return line;
 	}
 
 	/**

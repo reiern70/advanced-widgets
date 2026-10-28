@@ -134,6 +134,8 @@ class RichTextEditorTest extends WicketTestCase
 		String features = options.getJSONArray("features").toString();
 		assertFalse(features.contains("\"underline\""), "Markdown has no syntax for it");
 		assertFalse(features.contains("\"textAlign\""));
+		assertFalse(features.contains("\"textColor\""));
+		assertFalse(features.contains("\"textBackground\""));
 		assertTrue(features.contains("\"table\""));
 		assertEquals("[1,3]", options.getJSONArray("headingLevels").toString());
 		assertEquals("[[\"bold\",\"link\"]]", options.getJSONArray("toolbar").toString());
@@ -301,10 +303,14 @@ class RichTextEditorTest extends WicketTestCase
 			texts.getString("resize"));
 		assertEquals("Texto sin formato", texts.getString("plainText"));
 		assertEquals("{0} pesa más de {1}.", texts.getString("uploadTooLarge"));
+		assertEquals("Color del texto", texts.getString("textColor"));
+		assertEquals("Rojo", texts.getString("colorRed"));
 
 		tester.getSession().setLocale(Locale.of("de"));
 		tester.startPage(page);
 		assertEquals("Fett", options(page.editor).getJSONObject("texts").getString("bold"));
+		assertEquals("Hintergrundfarbe", options(page.editor).getJSONObject("texts")
+			.getString("textBackground"));
 	}
 
 	@Test
@@ -549,6 +555,9 @@ class RichTextEditorTest extends WicketTestCase
 		assertEquals("bulletList", RichTextFeature.BULLET_LIST.getName());
 		assertEquals("textAlign", RichTextFeature.TEXT_ALIGN.getName());
 		assertEquals("alignJustify", RichTextTool.ALIGN_JUSTIFY.getName());
+		assertEquals("textBackground", RichTextFeature.TEXT_BACKGROUND.getName());
+		assertSame(RichTextFeature.TEXT_COLOR, RichTextTool.TEXT_COLOR.getFeature());
+		assertEquals("pink", RichTextColor.PINK.getName());
 		assertSame(RichTextFeature.TEXT_ALIGN, RichTextTool.ALIGN_CENTER.getFeature());
 		assertNull(RichTextTool.UNDO.getFeature());
 		assertEquals("json", RichTextFormat.JSON.getName());
@@ -556,6 +565,16 @@ class RichTextEditorTest extends WicketTestCase
 			RichTextFormat.HTML));
 		assertEquals(EnumSet.allOf(RichTextFeature.class), RichTextFeature.defaults(
 			RichTextFormat.JSON));
+	}
+
+	@Test
+	void tellsTheLibraryItIsBasedOn()
+	{
+		RichTextLibrary library = RichTextLibrary.get();
+		assertEquals("Tiptap", library.name());
+		assertTrue(library.version().matches("[0-9]+\\.[0-9]+\\.[0-9]+.*"), library.version());
+		assertEquals("https://tiptap.dev", library.url());
+		assertEquals("Tiptap " + library.version(), library.toString());
 	}
 
 	@Test

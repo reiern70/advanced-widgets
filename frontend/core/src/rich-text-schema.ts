@@ -14,20 +14,24 @@
 
 /*
  * What the rich text editor lets a text hold, its features, as the Tiptap extensions making them:
- * paragraphs, headings, the marks of the text, links, lists, quotes, code blocks, rules, tables,
- * images and alignment. A feature left out is not in the editor's schema: pasting it brings its
- * text alone.
+ * paragraphs, headings, the marks of the text, its colors, links, lists, quotes, code blocks,
+ * rules, tables, images and alignment. A feature left out is not in the editor's schema: pasting
+ * it brings its text alone.
  *
  * The HTML the editor writes has no style attribute, which a Content Security Policy without
  * 'unsafe-inline' would block: text aligns by the classes of RICH_TEXT_ALIGN_CLASSES, on
  * paragraphs, headings and the cells of tables, and tables have no widths. The editor reads the
- * alignment of pasted HTML from its style or its align attribute too.
+ * alignment of pasted HTML from its style or its align attribute too. Colors are classes as well,
+ * of a palette (RICH_TEXT_COLORS): <span class="antilia-color-red"> colors the text,
+ * <mark class="antilia-background-yellow"> its background; rich-text-editor.css colors them from
+ * the theme.
  *
  * Links go only to http, https and mailto addresses, or relative ones (isSafeUrl), as the cleaning
  * of the HTML on the server allows: the editor drops the others, javascript: for example.
  */
 
-import { Extension, mergeAttributes, type AnyExtension } from '@tiptap/core';
+import { Extension, Mark, mergeAttributes, type AnyExtension,
+	type CommandProps } from '@tiptap/core';
 import { Image } from '@tiptap/extension-image';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
@@ -37,20 +41,34 @@ import { StarterKit } from '@tiptap/starter-kit';
 
 /** What a text may hold. */
 export type RichTextFeature = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
-	'link' | 'bulletList' | 'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' |
-	'horizontalRule' | 'table' | 'image' | 'textAlign';
+	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
+	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign';
 
 /** The features, all of them: those of an editor of HTML when left out. */
 export const RICH_TEXT_FEATURES: readonly RichTextFeature[] = Object.freeze(['heading', 'bold',
-	'italic', 'underline', 'strike', 'code', 'link', 'bulletList', 'orderedList', 'taskList',
-	'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image', 'textAlign']);
+	'italic', 'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
+	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
+	'textAlign']);
 
 /**
  * The features Markdown has no syntax for, which an editor of Markdown leaves out unless told
- * otherwise: underlined text and alignment.
+ * otherwise: underlined text, colors and alignment.
  */
 export const RICH_TEXT_NOT_IN_MARKDOWN: readonly RichTextFeature[] = Object.freeze(['underline',
-	'textAlign']);
+	'textColor', 'textBackground', 'textAlign']);
+
+/** The colors of the text and of its background, a palette the theme colors. */
+export type RichTextColor = 'gray' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' |
+	'pink';
+
+export const RICH_TEXT_COLORS: readonly RichTextColor[] = Object.freeze(['gray', 'red', 'orange',
+	'yellow', 'green', 'blue', 'purple', 'pink']);
+
+/** The start of the class coloring text, antilia-color-red for example. */
+export const RICH_TEXT_COLOR_CLASS = 'antilia-color-';
+
+/** The start of the class coloring the background of text, antilia-background-yellow. */
+export const RICH_TEXT_BACKGROUND_CLASS = 'antilia-background-';
 
 /** How the editor keeps the text: as HTML, as Markdown or as Tiptap's JSON. */
 export type RichTextFormat = 'html' | 'markdown' | 'json';
@@ -188,6 +206,18 @@ function alignAttribute(name: string) {
 
 declare module '@tiptap/core' {
 	interface Commands<ReturnType> {
+		textColor: {
+			/** Colors the text selected, or the text typed next, in a color of the palette. */
+			setTextColor: (color: RichTextColor) => ReturnType;
+			/** Gives the text selected its default color. */
+			unsetTextColor: () => ReturnType;
+		};
+		textBackground: {
+			/** Colors the background of the text selected, or of the text typed next. */
+			setTextBackground: (color: RichTextColor) => ReturnType;
+			/** Takes away the background of the text selected. */
+			unsetTextBackground: () => ReturnType;
+		};
 		antiliaTextAlign: {
 			/** Aligns the paragraphs and headings of the selection. */
 			setTextAlign: (alignment: RichTextAlignment) => ReturnType;
@@ -234,6 +264,64 @@ export const TextAlignClass = Extension.create({
 		};
 	}
 });
+
+/**
+ * @returns the color of the palette a class of an element names, null for none
+ */
+function colorOf(element: HTMLElement, prefix: string): RichTextColor | null {
+	return RICH_TEXT_COLORS.find((color) => element.classList.contains(prefix + color)) ?? null;
+}
+
+/**
+ * @returns a mark coloring text by the classes of a prefix, written in a tag: a span for the
+ *          color of the text, a mark for its background. A tag of the mark without a class of the
+ *          palette takes the color given, if any: a pasted <mark> is yellow, unless an extension
+ *          of the page reads <mark> its own way.
+ */
+function colorMark(name: 'textColor' | 'textBackground', tag: string, prefix: string,
+	untagged: RichTextColor | null) {
+	return Mark.create({
+		name,
+
+		addAttributes() {
+			return {
+				color: {
+					default: null,
+					parseHTML: (element: HTMLElement) => colorOf(element, prefix) ?? untagged,
+					renderHTML: (attributes: Record<string, unknown>) =>
+						RICH_TEXT_COLORS.includes(attributes.color as RichTextColor) ?
+							{ class: prefix + attributes.color } : {}
+				}
+			};
+		},
+
+		parseHTML() {
+			const classed = { tag, getAttrs: (element: HTMLElement) =>
+				colorOf(element, prefix) ? null : false };
+			// below the default priority, 50, of the rules of other extensions
+			return untagged ? [classed, { tag, priority: 40 }] : [classed];
+		},
+
+		renderHTML({ HTMLAttributes }) {
+			return [tag, mergeAttributes(HTMLAttributes), 0];
+		},
+
+		addCommands() {
+			const set = (color: RichTextColor) => ({ commands }: CommandProps) =>
+				RICH_TEXT_COLORS.includes(color) && commands.setMark(name, { color });
+			const unset = () => ({ commands }: CommandProps) => commands.unsetMark(name);
+			return name === 'textColor' ? { setTextColor: set, unsetTextColor: unset } :
+				{ setTextBackground: set, unsetTextBackground: unset };
+		}
+	});
+}
+
+/** The color of text: <span class="antilia-color-red">. */
+export const TextColorClass = colorMark('textColor', 'span', RICH_TEXT_COLOR_CLASS, null);
+
+/** The background of text: <mark class="antilia-background-yellow">. */
+export const TextBackgroundClass = colorMark('textBackground', 'mark', RICH_TEXT_BACKGROUND_CLASS,
+	'yellow');
 
 /** A table without widths: no style on the table, no columns. */
 const PlainTable = Table.extend({
@@ -322,6 +410,12 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 	}
 	if (has('image')) {
 		extensions.push(SafeImage.configure({ inline: false, allowBase64: false }));
+	}
+	if (has('textColor')) {
+		extensions.push(TextColorClass);
+	}
+	if (has('textBackground')) {
+		extensions.push(TextBackgroundClass);
 	}
 	if (has('textAlign')) {
 		extensions.push(TextAlignClass);

@@ -116,6 +116,49 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void colorsTheTextAndItsBackgroundFromTheirMenus(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		selectWord("oystercatchers");
+		tool("textColor").click();
+		WebElement red = wait.until(d -> toolbar().findElements(By.cssSelector(
+			"[role=menu]:not([hidden]) [data-item='red']")).stream().findFirst().orElse(null));
+		red.click();
+		By colored = By.xpath(".//span[@class='antilia-color-red'][contains(., 'oystercatchers')]");
+		wait.until(d -> !content().findElements(colored).isEmpty());
+		assertEquals("red", tool("textColor").getDomAttribute("data-color"));
+		// in a color of the theme, not that of the text around
+		assertNotEquals(content().findElement(By.cssSelector("p")).getCssValue("color"),
+			content().findElement(colored).getCssValue("color"));
+
+		// the background with the keys: the menu opens on None, Y goes to Yellow
+		selectWord("oystercatchers");
+		tool("textBackground").sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> "None".equals(d.switchTo().activeElement().getText().trim()));
+		driver.switchTo().activeElement().sendKeys("y");
+		wait.until(d -> "Yellow".equals(d.switchTo().activeElement().getText().trim()));
+		driver.switchTo().activeElement().sendKeys(Keys.ENTER);
+		By marked = By.xpath(".//mark[@class='antilia-background-yellow']" +
+			"[contains(., 'oystercatchers')]");
+		wait.until(d -> !content().findElements(marked).isEmpty());
+		// classes, no style
+		assertTrue(value().contains("<span class=\"antilia-color-red\"><mark " +
+			"class=\"antilia-background-yellow\">oystercatchers</mark></span>"), value());
+		assertFalse(value().contains("style="), value());
+
+		if ("wicket".equals(framework))
+		{
+			// the server keeps the colors, and the page shows them
+			content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+			wait.until(d -> !app().findElements(By.cssSelector(".rich-text-demo__view " +
+				".antilia-color-red mark.antilia-background-yellow, .rich-text-demo__view " +
+				"mark.antilia-background-yellow .antilia-color-red")).isEmpty());
+		}
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void linksTheTextInAFormOfItsOwn(SeleniumBrowser browser, String framework)
 	{
 		openEditor(browser, framework);

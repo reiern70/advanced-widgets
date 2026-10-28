@@ -57,11 +57,13 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 
 /**
- * A text area shown as a rich text editor, Tiptap, in the colors of the
+ * A text area shown as a rich text editor, Tiptap ({@link RichTextLibrary}), in the colors of the
  * {@link com.antiliacode.widgets.theme.Theme theme} it is in and the look of the page: a toolbar of
  * the components' own formats the text, with headings, bold, italic, underlined, struck and code
- * text, links, lists, task lists, quotes, code blocks, rules, tables, images and alignment, the
- * {@link RichTextFeature features}, all of them unless {@link #setFeatures(Set) told otherwise}.
+ * text, the colors of the text and of its background, links, lists, task lists, quotes, code
+ * blocks, rules, tables, images and alignment, the {@link RichTextFeature features}, all of them
+ * unless {@link #setFeatures(Set) told otherwise}. The page chooses the tools of the toolbar, and
+ * their groups, with {@link #setToolbar(List)}.
  * The usual keys format too (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types (# a
  * heading, - a list, **bold**), Ctrl+K edits the link and Ctrl+S tells the page to save. Attach it
  * to a {@code <textarea>}.
@@ -71,7 +73,8 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * editor {@link #setSanitizer(RichTextSanitizer) cleans} it before the model gets it, keeping what
  * its features write, with {@link RichTextPolicy} by default; {@link RichTextView} shows it in a
  * page, cleaned the same way. The HTML has no style attribute, which a Content Security Policy
- * without {@code 'unsafe-inline'} would block: text aligns by classes.
+ * without {@code 'unsafe-inline'} would block: text aligns by classes, and takes the
+ * {@link RichTextColor colors} of a palette by classes too.
  * <p>
  * The text area stays in the page, hidden, and holds the text: a form posts it as always, and it
  * fires {@code input} as the user types and {@code change} once the editor loses the focus, as a
@@ -167,7 +170,9 @@ public class RichTextEditor extends TextArea<String>
 		String[][] texts = { { "toolbar", "Formatting" },
 				{ "bubble", "Formatting of the selection" }, { "heading", "Text style" },
 				{ "bold", "Bold" }, { "italic", "Italic" }, { "underline", "Underline" },
-				{ "strike", "Strikethrough" }, { "code", "Code" }, { "link", "Link" },
+				{ "strike", "Strikethrough" }, { "code", "Code" },
+				{ "textColor", "Text color" }, { "textBackground", "Background color" },
+				{ "link", "Link" },
 				{ "bulletList", "Bulleted list" }, { "orderedList", "Numbered list" },
 				{ "taskList", "Task list" }, { "blockquote", "Quote" },
 				{ "codeBlock", "Code block" }, { "horizontalRule", "Horizontal line" },
@@ -191,7 +196,12 @@ public class RichTextEditor extends TextArea<String>
 				{ "charactersOfLimit", "{0} of {1} characters" }, { "words", "{0} words" },
 				{ "word", "{0} word" },
 				{ "resize", "Drag, or use the arrow keys, to resize the editor" },
-				{ "plainText", "Plain text" }, { "uploadImage", "Upload an image…" },
+				{ "plainText", "Plain text" }, { "defaultColor", "Default" },
+				{ "noBackground", "None" }, { "colorGray", "Gray" }, { "colorRed", "Red" },
+				{ "colorOrange", "Orange" }, { "colorYellow", "Yellow" },
+				{ "colorGreen", "Green" }, { "colorBlue", "Blue" },
+				{ "colorPurple", "Purple" }, { "colorPink", "Pink" },
+				{ "uploadImage", "Upload an image…" },
 				{ "uploading", "Uploading {0}…" }, { "theImage", "The image" },
 				{ "uploadFailed", "{0} could not be uploaded." },
 				{ "uploadTooLarge", "{0} is larger than {1}." },

@@ -528,7 +528,7 @@ describe('RichTextEditor', () => {
 });
 
 describe('the formats', () => {
-	it('keeps Markdown, without underlined text and alignment', () => {
+	it('keeps Markdown, without underlined text, colors and alignment', () => {
 		const editor = new RichTextEditor(textArea('# Title\n\nSome **bold** text\n\n- one\n- two'),
 			{ format: 'markdown' });
 
@@ -537,7 +537,10 @@ describe('the formats', () => {
 		expect(editor.isModified()).toBe(false);
 		expect(editor.features().has('underline')).toBe(false);
 		expect(editor.features().has('textAlign')).toBe(false);
+		expect(editor.features().has('textColor')).toBe(false);
+		expect(editor.features().has('textBackground')).toBe(false);
 		expect(tool(editor, 'underline')).toBeNull();
+		expect(tool(editor, 'textColor')).toBeNull();
 		expect(tool(editor, 'alignCenter')).toBeNull();
 		expect(tool(editor, 'bold')).not.toBeNull();
 
@@ -633,6 +636,38 @@ describe('the features', () => {
 			'<p>Start</p><table><tbody><tr><th class="antilia-text-right"><p>A</p></th>' +
 			'<td class="antilia-text-center"><p>B</p></td></tr></tbody></table>');
 		expect(editor.editor.view.dom.querySelector('[style*="text-align"]')).toBeNull();
+	});
+
+	it('color the text and its background by the classes of a palette', () => {
+		const editor = new RichTextEditor(textArea('<p><span class="antilia-color-red">red</span> ' +
+			'<mark class="antilia-background-green">green</mark> <mark>marked</mark> ' +
+			'<span class="antilia-color-teal">teal</span> <span style="color: red">styled</span> ' +
+			'<mark class="antilia-background-blue"><span class="antilia-color-pink">both</span>' +
+			'</mark></p>'));
+
+		expect(editor.getValue()).toBe('<p><span class="antilia-color-red">red</span> ' +
+			'<mark class="antilia-background-green">green</mark> ' +
+			'<mark class="antilia-background-yellow">marked</mark> teal styled ' +
+			'<span class="antilia-color-pink"><mark class="antilia-background-blue">both</mark>' +
+			'</span></p>');
+		expect(editor.editor.view.dom.querySelector('[style]')).toBeNull();
+
+		select(editor, 1, 4);
+		expect(editor.editor.commands.setTextColor('blue')).toBe(true);
+		expect(editor.editor.commands.setTextColor('teal' as 'red')).toBe(false);
+		select(editor, 5, 10);
+		editor.editor.commands.unsetTextBackground();
+		select(editor, 11, 17);
+		editor.editor.commands.setTextBackground('orange');
+		expect(editor.getValue()).toBe('<p><span class="antilia-color-blue">red</span> green ' +
+			'<mark class="antilia-background-orange">marked</mark> teal styled ' +
+			'<span class="antilia-color-pink"><mark class="antilia-background-blue">both</mark>' +
+			'</span></p>');
+
+		select(editor, 1, editor.editor.state.doc.content.size - 1);
+		editor.editor.commands.unsetTextColor();
+		expect(editor.getValue()).toBe('<p>red green <mark class="antilia-background-orange">marked' +
+			'</mark> teal styled <mark class="antilia-background-blue">both</mark></p>');
 	});
 
 	it('take only safe addresses for links and images', () => {
@@ -906,6 +941,93 @@ describe('the menu of the text style', () => {
 		// the editor loses the focus to the menu: a transaction of Tiptap's
 		editor.editor.view.dispatch(editor.editor.state.tr.setMeta('blur', true));
 		expect(document.activeElement).toBe(item);
+	});
+});
+
+describe('the menus of the colors', () => {
+	const menuOf = (editor: RichTextEditor, button: HTMLButtonElement) =>
+		editor.element.querySelector<HTMLElement>('#' + button.getAttribute('aria-controls'))!;
+	const itemsOf = (menu: HTMLElement) => Array.from(menu.querySelectorAll<HTMLButtonElement>(
+		'[role="menuitemradio"]'));
+
+	it('color the text selected, the bar under the tool showing the color', () => {
+		const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
+		select(editor, 1, 6);
+		const button = tool(editor, 'textColor');
+		expect(button.getAttribute('aria-label')).toBe('Text color');
+		expect(button.getAttribute('aria-haspopup')).toBe('menu');
+		expect(button.querySelector('.antilia-rich-text-tool-bar')).not.toBeNull();
+		expect(button.dataset.color).toBeUndefined();
+		button.click();
+
+		const menu = menuOf(editor, button);
+		expect(menu.hidden).toBe(false);
+		let items = itemsOf(menu);
+		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Gray', 'Red', 'Orange',
+			'Yellow', 'Green', 'Blue', 'Purple', 'Pink']);
+		expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false',
+			'false', 'false', 'false', 'false', 'false', 'false', 'false']);
+		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-text');
+		expect(items[2]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-text antilia-color-red');
+		expect(items[2]!.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+		expect(document.activeElement).toBe(items[0]);
+		key(items[0]!, 'r');
+		expect(document.activeElement).toBe(items[2]);
+
+		items[2]!.click();
+		expect(menu.hidden).toBe(true);
+		expect(editor.getValue()).toBe('<p><span class="antilia-color-red">Hello</span> world</p>');
+		expect(button.dataset.color).toBe('red');
+		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar'))
+			.toBe('var(--antilia-rich-text-color-red)');
+
+		button.click();
+		items = itemsOf(menu);
+		expect(document.activeElement).toBe(items[2]);
+		expect(items[2]!.getAttribute('aria-checked')).toBe('true');
+		items[0]!.click();
+		expect(editor.getValue()).toBe('<p>Hello world</p>');
+		expect(button.dataset.color).toBeUndefined();
+		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar')).toBe('');
+	});
+
+	it('color the background of the text selected', () => {
+		const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
+		select(editor, 7, 12);
+		const button = tool(editor, 'textBackground');
+		expect(button.getAttribute('aria-label')).toBe('Background color');
+		button.click();
+
+		const items = itemsOf(menuOf(editor, button));
+		expect(items.map((item) => item.textContent)).toEqual(['None', 'Gray', 'Red', 'Orange',
+			'Yellow', 'Green', 'Blue', 'Purple', 'Pink']);
+		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-background antilia-rich-text-swatch-none');
+		expect(items[4]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-background antilia-background-yellow');
+		items[4]!.click();
+		expect(editor.getValue()).toBe('<p>Hello <mark class="antilia-background-yellow">world' +
+			'</mark></p>');
+		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar'))
+			.toBe('var(--antilia-rich-text-yellow)');
+
+		tool(editor, 'clearFormatting').click();
+		expect(editor.getValue()).toBe('<p>Hello world</p>');
+	});
+
+	it('cannot color code, and are left out with their features', () => {
+		const editor = new RichTextEditor(textArea('<p><code>a = 1</code> text</p>'));
+		select(editor, 2, 4);
+		expect(tool(editor, 'textColor').getAttribute('aria-disabled')).toBe('true');
+		expect(tool(editor, 'textBackground').getAttribute('aria-disabled')).toBe('true');
+		select(editor, 8, 10);
+		expect(tool(editor, 'textColor').getAttribute('aria-disabled')).toBe('false');
+
+		editor.configure({ features: ['bold', 'textBackground'] });
+		expect(tool(editor, 'textColor')).toBeNull();
+		expect(tool(editor, 'textBackground')).not.toBeNull();
 	});
 });
 
