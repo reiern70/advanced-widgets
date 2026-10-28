@@ -136,11 +136,11 @@ The components for Wicket 10 are published, built from the `line-10.x` branch on
 10.11.0, without what needs Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery):
 
 - the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository of snapshots;
-- the release candidates, `10.11.0-RC1`, on GitHub Packages.
+- the release candidates, `10.11.0-RC2` the last, on Maven Central, and on GitHub Packages too.
 
-The releases will be on Maven Central, which needs no repository, only the dependency. The
+Maven Central needs no repository, only the dependency; the releases will be there too. The
 Wicket 11 line, `master`, is not published yet: install it with `mvn install` and depend on
-`1.0.0-SNAPSHOT`.
+`1.0.0-SNAPSHOT`. `./install.sh <version>` releases a version: see the script.
 
 ### The snapshots, from Maven Central
 
@@ -189,10 +189,30 @@ or in the `pom.xml`:
 </dependencies>
 ```
 
+### The release candidates, from Maven Central
+
+The dependency alone, in `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC2")
+}
+```
+
+or in the `pom.xml`:
+
+```xml
+<dependency>
+	<groupId>com.antiliacode.widgets</groupId>
+	<artifactId>ui-components</artifactId>
+	<version>10.11.0-RC2</version>
+</dependency>
+```
+
 ### The release candidates, from GitHub Packages
 
-GitHub Packages asks for a token even to read public packages: a GitHub personal access token
-(classic) with the scope `read:packages`.
+The same release candidates are on GitHub Packages, which asks for a token even to read public
+packages: a GitHub personal access token (classic) with the scope `read:packages`.
 
 #### Gradle
 
@@ -222,7 +242,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC1")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC2")
 }
 ```
 
@@ -244,7 +264,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC1'
+    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC2'
 }
 ```
 
@@ -278,7 +298,7 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 	<dependency>
 		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>ui-components</artifactId>
-		<version>10.11.0-RC1</version>
+		<version>10.11.0-RC2</version>
 	</dependency>
 </dependencies>
 ```

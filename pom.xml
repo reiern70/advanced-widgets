@@ -66,6 +66,8 @@
 		  -Drevision=10.11.0-<branch>-SNAPSHOT into the worktree's .mvn/maven.config.
 		-->
 		<revision>10.11.0-SNAPSHOT</revision>
+		<!-- whether Central publishes a release once validated, see the profile release -->
+		<central.autoPublish>false</central.autoPublish>
 		<wicket.version>10.11.0</wicket.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<!-- as in deploy/Dockerfile; its ASM reads the Java 24 classes of Spring 7 -->
@@ -416,6 +418,9 @@
 
 		    mvn deploy -Prelease -Drevision=10.11.0 -pl ui-components -am
 
+		  or ./install.sh 10.11.0, which runs the tests first, asks for the passwords, uploads to
+		  GitHub Packages too and tags the commit released.
+
 		  It adds the sources and javadoc jars Central asks for, signs every file with the GPG key of
 		  the gpg agent and uploads them to the Central Portal (central.sonatype.com) with the token of
 		  the server "central" in ~/.m2/settings.xml. The upload waits there, validated, until it is
@@ -474,7 +479,8 @@
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
-							<autoPublish>false</autoPublish>
+							<!-- published by hand in the portal, unless install.sh is told otherwise -->
+							<autoPublish>${central.autoPublish}</autoPublish>
 							<excludeArtifacts>
 								<excludeArtifact>demo-app</excludeArtifact>
 							</excludeArtifacts>
