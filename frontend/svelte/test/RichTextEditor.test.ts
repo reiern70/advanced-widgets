@@ -16,7 +16,8 @@ import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_RICH_TEXT_COLORS, lezerHighlighter, RichTextEditor } from '@antilia/core';
+import { DEFAULT_RICH_TEXT_COLORS, lezerHighlighter, RichTextEditor, type RichTextProofreader,
+	type RichTextSuggester } from '@antilia/core';
 import { Slice } from '@tiptap/pm/model';
 
 import BoundRichTextEditor from './BoundRichTextEditor.svelte';
@@ -58,6 +59,40 @@ describe('RichTextEditor', () => {
 		expect(element.querySelector('.ProseMirror')?.getAttribute('aria-label')).toBe('Notes');
 		expect(element.querySelector('.ProseMirror')?.textContent).toBe('Hello world');
 		expect(container.querySelector('.modified')?.textContent).toBe('false');
+	});
+
+	it('gives the text the spellcheck and the language given, the browser\'s once they go',
+		async () => {
+			const { container, rerender } = render(BoundRichTextEditor, { spellcheck: false,
+				textLanguage: 'en-GB' });
+			const text = editorOf(container).querySelector('.ProseMirror')!;
+			expect(text.getAttribute('spellcheck')).toBe('false');
+			expect(text.getAttribute('lang')).toBe('en-GB');
+
+			await rerender({ spellcheck: undefined, textLanguage: undefined });
+			flushSync();
+			const after = editorOf(container).querySelector('.ProseMirror')!;
+			expect(after.hasAttribute('spellcheck')).toBe(false);
+			expect(after.hasAttribute('lang')).toBe(false);
+		});
+
+	it('underlines what its proofreader finds, and lists what its suggesters offer', async () => {
+		const proofreader: RichTextProofreader = { check: async (texts) => texts.map(() =>
+			[{ from: 0, to: 5, kind: 'spelling' as const }]) };
+		const suggester: RichTextSuggester = { name: 'users', char: '@',
+			items: async () => [{ id: '1', label: 'Ann' }] };
+		const { container } = render(BoundRichTextEditor, { proofreader,
+			suggesters: [suggester] });
+		await tick();
+		expect(editorOf(container).querySelector('.antilia-rich-text-issue-spelling')?.textContent)
+			.toBe('Hello');
+
+		const tiptap = core(container).editor;
+		tiptap.commands.setTextSelection(tiptap.state.doc.content.size - 1);
+		tiptap.view.dispatch(tiptap.state.tr.insertText(' @'));
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(editorOf(container).querySelector('.antilia-rich-text-suggestions')?.textContent)
+			.toBe('Ann');
 	});
 
 	it('binds the text the user changes, and whether it has changes not saved', () => {

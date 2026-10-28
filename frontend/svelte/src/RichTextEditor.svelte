@@ -34,6 +34,7 @@
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
+		type RichTextProofreader, type RichTextSuggester,
 		type RichTextTool } from '@antilia/core';
 
 	import { getLook } from './look.js';
@@ -79,6 +80,28 @@
 		placeholder?: string;
 		/** The accessible name of the text. */
 		label?: string;
+		/**
+		 * Whether the browser checks the spelling of the text: as it does by default when left out
+		 * or null.
+		 */
+		spellcheck?: boolean | null;
+		/**
+		 * The language of the text, a tag of BCP 47 (en-GB, de), which the browser checks its
+		 * spelling in: that of the page when left out or null.
+		 */
+		textLanguage?: string | null;
+		/**
+		 * What checks the spelling, the grammar and the style of the text, which the editor underlines:
+		 * languageToolProofreader(), proofreadAt() or one of the page's own; none when left out.
+		 */
+		proofreader?: RichTextProofreader | null;
+		/** How long after the user stopped typing the proofreader checks the text, 600 ms when left out. */
+		proofreadDelay?: number;
+		/**
+		 * What offers items for what the user types: users to mention after @, words to complete on
+		 * Ctrl+Space (suggestAt() for a Wicket page); none when left out.
+		 */
+		suggesters?: readonly RichTextSuggester[];
 		/** The most characters the text may have, none when left out. */
 		limit?: number | null;
 		/** Whether the editor counts the characters and the words below the text, false when left out. */
@@ -144,6 +167,11 @@
 		readOnly,
 		placeholder,
 		label,
+		spellcheck,
+		textLanguage,
+		proofreader,
+		proofreadDelay,
+		suggesters,
 		limit,
 		count,
 		resizable,
@@ -194,8 +222,9 @@
 		const made = new RichTextEditor(element, untrack(() => ({
 			value, saved, format, features, featureOptions, headingLevels, colors, backgroundColors,
 			toolbar,
-			bubbleMenu, readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight,
-			maxWidth, maxHeight, state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
+			bubbleMenu, readOnly, placeholder, label, spellcheck, textLanguage, proofreader,
+			proofreadDelay, suggesters, limit, count,
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
 			codeLanguages, uploadTypes, uploadMaxSize, onUpload: uploader(),
 			onChange: (next: string) => {
 				value = next;
@@ -231,8 +260,9 @@
 		const next = { format, features, featureOptions, headingLevels, colors, backgroundColors,
 			toolbar,
 			bubbleMenu, readOnly,
-			placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			stateDelay, texts };
+			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
+			proofreader: proofreader ?? null, proofreadDelay, suggesters: suggesters ?? [],
+			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts };
 		untrack(() => instance?.configure(next));
 	});
 

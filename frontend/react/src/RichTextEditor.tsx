@@ -20,6 +20,7 @@ import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLev
 	type RichTextEditorTexts,
 	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
+	type RichTextProofreader, type RichTextSuggester,
 	type RichTextTool } from '@antilia/core';
 
 import { useLook } from './Look.js';
@@ -66,6 +67,28 @@ export interface RichTextEditorProps {
 	placeholder?: string;
 	/** The accessible name of the text. */
 	label?: string;
+	/**
+	 * Whether the browser checks the spelling of the text: as it does by default when left out or
+	 * null.
+	 */
+	spellcheck?: boolean | null;
+	/**
+	 * The language of the text, a tag of BCP 47 (en-GB, de), which the browser checks its spelling
+	 * in: that of the page when left out or null.
+	 */
+	textLanguage?: string | null;
+	/**
+	 * What checks the spelling, the grammar and the style of the text, which the editor underlines:
+	 * languageToolProofreader(), proofreadAt() or one of the page's own; none when left out.
+	 */
+	proofreader?: RichTextProofreader | null;
+	/** How long after the user stopped typing the proofreader checks the text, 600 ms when left out. */
+	proofreadDelay?: number;
+	/**
+	 * What offers items for what the user types: users to mention after @, words to complete on
+	 * Ctrl+Space (suggestAt() for a Wicket page); none when left out.
+	 */
+	suggesters?: readonly RichTextSuggester[];
 	/** The most characters the text may have, none when left out. */
 	limit?: number | null;
 	/** Whether the editor counts the characters and the words below the text, false when left out. */
@@ -161,9 +184,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 		const { value, saved, format, features, featureOptions, headingLevels, colors,
 			backgroundColors, toolbar,
 			bubbleMenu,
-			readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth,
-			maxHeight, stateDelay, extensions, texts, highlight, codeLanguages, uploadTypes,
-			uploadMaxSize, name, id, className } = props;
+			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
+			suggesters, limit, count, resizable, minWidth,
+			minHeight, maxWidth, maxHeight, stateDelay, extensions, texts, highlight, codeLanguages,
+			uploadTypes, uploadMaxSize, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
@@ -193,7 +217,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				colors: current.colors, backgroundColors: current.backgroundColors,
 				toolbar: current.toolbar, bubbleMenu: current.bubbleMenu,
 				readOnly: current.readOnly,
-				placeholder: current.placeholder, label: current.label, limit: current.limit,
+				placeholder: current.placeholder, label: current.label,
+				spellcheck: current.spellcheck, textLanguage: current.textLanguage,
+				proofreader: current.proofreader, proofreadDelay: current.proofreadDelay,
+				suggesters: current.suggesters, limit: current.limit,
 				count: current.count, resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, stateDelay: current.stateDelay, extensions: current.extensions,
@@ -219,12 +246,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 		useLayoutEffect(() => {
 			instance.current?.configure({ format, features, featureOptions, headingLevels, colors,
 				backgroundColors,
-				toolbar, bubbleMenu, readOnly, placeholder, label, limit, count, resizable, minWidth,
-				minHeight, maxWidth, maxHeight, stateDelay, texts });
+				toolbar, bubbleMenu, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
+				textLanguage: textLanguage ?? null, proofreader: proofreader ?? null, proofreadDelay,
+				suggesters: suggesters ?? [], limit, count, resizable, minWidth, minHeight,
+				maxWidth, maxHeight, stateDelay, texts });
 		}, [format, features, featureOptions, headingLevels, colors, backgroundColors, toolbar,
 			bubbleMenu,
-			readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth,
-			maxHeight, stateDelay, texts]);
+			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
+			suggesters, limit, count, resizable,
+			minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts]);
 
 		useLayoutEffect(() => {
 			if (extensions !== undefined) {

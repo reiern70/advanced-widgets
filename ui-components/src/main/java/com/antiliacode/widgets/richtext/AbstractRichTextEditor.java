@@ -16,6 +16,7 @@ package com.antiliacode.widgets.richtext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
@@ -120,6 +121,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	private IModel<String> savedModel;
 
 	private IModel<String> placeholder;
+
+	private Boolean spellcheck;
+
+	private Locale textLanguage;
 
 	private RichTextFormat format = RichTextFormat.HTML;
 
@@ -533,6 +538,58 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
+	 * @return whether the browser checks the spelling of the text, {@code null} for its default
+	 */
+	public Boolean getSpellcheck()
+	{
+		return spellcheck;
+	}
+
+	/**
+	 * @param spellcheck
+	 *            whether the browser checks the spelling of the text, underlining the words its
+	 *            dictionaries do not know; {@code null}, the default, leaves it to the browser, which
+	 *            mostly does
+	 * @return {@code this}
+	 */
+	public T setSpellcheck(Boolean spellcheck)
+	{
+		this.spellcheck = spellcheck;
+		return self();
+	}
+
+	/**
+	 * @return the language of the text, {@code null} for that of the page
+	 */
+	public Locale getTextLanguage()
+	{
+		return textLanguage;
+	}
+
+	/**
+	 * @param textLanguage
+	 *            the language of the text, which the text gets as its {@code lang}: the browser
+	 *            checks its spelling in it; {@code null}, the default, for that of the page. The
+	 *            editor's own texts stay in the language of the page.
+	 * @return {@code this}
+	 */
+	public T setTextLanguage(Locale textLanguage)
+	{
+		this.textLanguage = textLanguage;
+		return self();
+	}
+
+	/**
+	 * @return the language of the text as a tag of BCP 47, {@code en-GB} for example; {@code null}
+	 *         for that of the page
+	 */
+	protected String getTextLanguageTag()
+	{
+		String tag = textLanguage == null ? null : textLanguage.toLanguageTag();
+		return tag == null || "und".equals(tag) ? null : tag;
+	}
+
+	/**
 	 * @return whether the editor counts the characters and the words below the text
 	 */
 	public boolean isCount()
@@ -723,6 +780,15 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		if (!Strings.isEmpty(text))
 		{
 			options.put("placeholder", text);
+		}
+		if (spellcheck != null)
+		{
+			options.put("spellcheck", spellcheck.booleanValue());
+		}
+		String language = getTextLanguageTag();
+		if (language != null)
+		{
+			options.put("textLanguage", language);
 		}
 		IModel<String> label = getLabel();
 		String name = label == null ? null : label.getObject();

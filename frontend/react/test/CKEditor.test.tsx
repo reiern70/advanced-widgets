@@ -72,6 +72,19 @@ describe('CKEditor', () => {
 			expect(build.editors.filter((editor) => !editor.destroyed)).toEqual([fake]);
 		});
 
+	it('gives the text the spellcheck and the language given', async () => {
+		const build = fakeBuild();
+		const ref = createRef<CKEditorHandle>();
+		const { rerender } = render(<CKEditor ref={ref} build={build} value="<p>a</p>"
+			spellcheck={false} textLanguage="en-GB" />);
+		const fake = await started(ref);
+		expect(fake.config.language).toEqual({ ui: 'en', content: 'en-GB' });
+		expect(fake.ui.view.editable.element?.getAttribute('spellcheck')).toBe('false');
+
+		rerender(<CKEditor ref={ref} build={build} value="<p>a</p>" textLanguage="en-GB" />);
+		expect(fake.ui.view.editable.element?.hasAttribute('spellcheck')).toBe(false);
+	});
+
 	it('uses the global CKEDITOR of the browser build without one given', async () => {
 		const build = fakeBuild();
 		(globalThis as { CKEDITOR?: unknown }).CKEDITOR = build;

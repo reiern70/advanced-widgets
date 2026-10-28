@@ -19,6 +19,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { lezerHighlighter } from '@antilia/core';
 import { Slice } from '@tiptap/pm/model';
 
+import type { RichTextProofreader, RichTextSuggester } from '@antilia/core';
+
 import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_COLORS, LookProvider, RichTextEditor,
 	type RichTextEditorHandle } from '../src/index.js';
 
@@ -64,6 +66,38 @@ describe('RichTextEditor', () => {
 		expect(ref.current?.getValue()).toBe('<p>Hello</p>');
 		expect(ref.current?.editor?.element).toBe(element);
 		expect(element.querySelector('textarea')).toBeNull();
+	});
+
+	it('gives the text the spellcheck and the language given, the browser\'s once they go', () => {
+		const { container, rerender } = render(<RichTextEditor value="<p>a</p>" spellcheck={false}
+			textLanguage="en-GB" />);
+		const text = editorOf(container).querySelector('.ProseMirror')!;
+		expect(text.getAttribute('spellcheck')).toBe('false');
+		expect(text.getAttribute('lang')).toBe('en-GB');
+
+		rerender(<RichTextEditor value="<p>a</p>" />);
+		expect(text.hasAttribute('spellcheck')).toBe(false);
+		expect(text.hasAttribute('lang')).toBe(false);
+	});
+
+	it('underlines what its proofreader finds, and lists what its suggesters offer', async () => {
+		const proofreader: RichTextProofreader = { check: async (texts) => texts.map(() =>
+			[{ from: 0, to: 3, kind: 'spelling' as const, replacements: ['The'] }]) };
+		const suggester: RichTextSuggester = { name: 'users', char: '@',
+			items: async () => [{ id: '1', label: 'Ann' }] };
+		const ref = createRef<RichTextEditorHandle>();
+		const { container } = render(<RichTextEditor ref={ref} value="<p>Teh</p>"
+			proofreader={proofreader} proofreadDelay={0} suggesters={[suggester]} />);
+		await tick();
+		expect(editorOf(container).querySelector('.antilia-rich-text-issue-spelling')?.textContent)
+			.toBe('Teh');
+		expect(editorOf(container).querySelector('.ProseMirror')?.getAttribute('spellcheck'))
+			.toBe('false');
+
+		type(ref, ' @');
+		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+		expect(editorOf(container).querySelector('.antilia-rich-text-suggestions')?.textContent)
+			.toBe('Ann');
 	});
 
 	it('takes the look of the page', () => {

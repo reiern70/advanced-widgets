@@ -60,7 +60,7 @@
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
-import { RICH_TEXT_EDITOR_EVENTS, sameState, type RichTextEditorSelection,
+import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
 import { RichTextEventTypes } from './rich-text-events.js';
 import { quietHtml, RICH_TEXT_ALIGN_CLASSES } from './rich-text-html.js';
@@ -136,7 +136,7 @@ export interface CKEditorInstance {
 		parse(data: string): unknown;
 		stringify(fragment: unknown): string;
 	};
-	readonly editing: { readonly view: { focus(): void; readonly document: CKEditorEmitter } };
+	readonly editing: { readonly view: CKEditorEditingView };
 	readonly conversion: {
 		for(group: string): { add(helper: (dispatcher: CKEditorEmitter) => void): unknown };
 	};
@@ -153,6 +153,22 @@ export interface CKEditorInstance {
 	enableReadOnlyMode(lockId: string): void;
 	disableReadOnlyMode(lockId: string): void;
 	destroy(): Promise<unknown>;
+}
+
+/** The view of CKEditor's editing: the text as the user sees it. */
+export interface CKEditorEditingView {
+	focus(): void;
+	readonly document: CKEditorEmitter & {
+		/** The element of the text, as the view has it. */
+		getRoot(): unknown;
+	};
+	change(callback: (writer: CKEditorViewWriter) => void): void;
+}
+
+/** What changes the view of CKEditor's editing. */
+export interface CKEditorViewWriter {
+	setAttribute(key: string, value: string, element: unknown): void;
+	removeAttribute(key: string, element: unknown): void;
 }
 
 /** CKEditor's ClassicEditor: an editor with a toolbar above the text. */
@@ -283,6 +299,17 @@ export interface CKEditorOptions {
 	placeholder?: string;
 	/** The accessible name of the text; that of the labels of the text area when left out. */
 	label?: string;
+	/**
+	 * Whether the browser checks the spelling of the text, underlining the words its dictionaries
+	 * do not know: as the browser does by default when left out or null.
+	 */
+	spellcheck?: boolean | null;
+	/**
+	 * The language of the text, a tag of BCP 47 (en-GB, de), which the text gets as its lang: the
+	 * browser checks its spelling in it; that of the page when left out, null or no such tag.
+	 * CKEditor's texts stay in their language (language).
+	 */
+	textLanguage?: string | null;
 	/** Whether the editor counts the characters and the words below the text, false when left out. */
 	count?: boolean;
 	/** The dimensions the user resizes the editor in, vertical when left out; false for none. */
@@ -355,7 +382,7 @@ const READ_ONLY_LOCK = 'antilia-ck-editor';
 
 /** The options that make CKEditor's configuration: changing one makes it anew. */
 const CONFIG_OPTIONS: readonly (keyof CKEditorOptions)[] = ['format', 'features',
-	'headingLevels', 'toolbar', 'licenseKey', 'language', 'placeholder', 'label'];
+	'headingLevels', 'toolbar', 'licenseKey', 'language', 'textLanguage', 'placeholder', 'label'];
 
 /** The options compared by what they are, not by their value. */
 const OBJECT_OPTIONS: readonly (keyof CKEditorOptions)[] = ['build', 'plugins', 'config',
@@ -910,7 +937,11 @@ export class CKEditor {
 		if (options.licenseKey !== undefined) {
 			config.licenseKey = options.licenseKey;
 		}
-		if (options.language) {
+		const content = textLanguage(options.textLanguage);
+		if (content) {
+			// CKEditor gives the text the language of its content as its lang
+			config.language = { ui: options.language || 'en', content };
+		} else if (options.language) {
 			config.language = options.language;
 		}
 		if (options.translations) {
@@ -1030,6 +1061,7 @@ export class CKEditor {
 			this.savedCanonical = true;
 		}
 		this.renderReadOnly();
+		this.renderSpellcheck();
 		this.applySelection(this.pendingSelection ?? this.selected);
 		this.pendingSelection = null;
 		this.selected = this.selection();
@@ -1232,6 +1264,27 @@ export class CKEditor {
 		} else {
 			editor.disableReadOnlyMode(READ_ONLY_LOCK);
 		}
+	}
+
+	/**
+	 * Gives the text the spellcheck of the options, through CKEditor's view, which would write
+	 * over an attribute set on the element; none for the browser's default.
+	 */
+	private renderSpellcheck(): void {
+		const editor = this.editor;
+		if (!editor) {
+			return;
+		}
+		const spellcheck = this.options.spellcheck;
+		const view = editor.editing.view;
+		view.change((writer) => {
+			const root = view.document.getRoot();
+			if (spellcheck === true || spellcheck === false) {
+				writer.setAttribute('spellcheck', String(spellcheck), root);
+			} else {
+				writer.removeAttribute('spellcheck', root);
+			}
+		});
 	}
 
 	private listen<E extends Event>(target: EventTarget, type: string,
@@ -1705,6 +1758,9 @@ export class CKEditor {
 			this.restartWith(this.value);
 		} else {
 			this.renderReadOnly();
+			if (changed('spellcheck')) {
+				this.renderSpellcheck();
+			}
 		}
 		this.renderStatus();
 		this.renderResizable();

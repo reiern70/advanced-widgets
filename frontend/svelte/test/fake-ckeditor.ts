@@ -17,7 +17,7 @@
  * core's glue uses of them, their model a root of blocks of plain text, read from the HTML.
  */
 
-import type { CKEditorBuild, CKEditorInstance } from '@antilia/core';
+import type { CKEditorBuild, CKEditorInstance, CKEditorViewWriter } from '@antilia/core';
 
 type Callback = (...args: any[]) => void;
 
@@ -199,7 +199,12 @@ export class FakeEditor {
 	readonly editing = {
 		view: {
 			focus: () => this.setFocused(true),
-			document: { on: (event: string, callback: Callback) => this.viewEmitter.on(event, callback) }
+			document: { on: (event: string, callback: Callback) => this.viewEmitter.on(event, callback),
+				getRoot: () => this.ui.view.editable.element },
+			change: (callback: (writer: CKEditorViewWriter) => void) => callback({
+				setAttribute: (key, value, element) => (element as HTMLElement).setAttribute(key, value),
+				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key)
+			})
 		}
 	};
 

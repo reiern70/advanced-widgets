@@ -103,6 +103,8 @@ class RichTextEditorTest extends WicketTestCase
 		assertFalse(options.has("saved"));
 		assertFalse(options.has("placeholder"));
 		assertFalse(options.has("label"));
+		assertFalse(options.has("spellcheck"), "the browser's default");
+		assertFalse(options.has("textLanguage"), "the page's");
 		assertFalse(options.has("extensions"));
 		assertEquals("vertical", options.getString("resizable"));
 		assertEquals(RichTextEditor.DEFAULT_MIN_HEIGHT, options.getInt("minHeight"));
@@ -120,6 +122,22 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void hasTheServerCheckTheTextWithAProofreader()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		editor.setProofreader((texts, language) -> List.of());
+		tester.startPage(new TestPage(editor));
+		JSONObject options = options(editor);
+		assertTrue(options.getString("proofreadUrl").endsWith("-form-editor"));
+		assertEquals("Spelling", options.getJSONObject("texts").getString("proofreadSpelling"));
+
+		RichTextEditor readOnly = new RichTextEditor("editor", Model.of(HTML));
+		readOnly.setProofreader((texts, language) -> List.of()).setReadOnly(true);
+		tester.startPage(new TestPage(readOnly));
+		assertFalse(options(readOnly).has("proofreadUrl"));
+	}
+
+	@Test
 	void leavesTheScriptAsTheBuildMinifiedIt()
 	{
 		assertFalse(((JavaScriptPackageResource)RichTextEditor.JS.getResource()).getCompress());
@@ -134,12 +152,17 @@ class RichTextEditorTest extends WicketTestCase
 			.setBubbleMenu(true).setReadOnly(true).setLimit(500).setCount(true)
 			.setPlaceholder(Model.of("Write here")).setResizable(ResizeAxis.BOTH)
 			.setMinHeight(100).setMaxHeight(600).setMinWidth(200).setMaxWidth(900)
-			.setSavedModel(Model.of("Before"));
+			.setSavedModel(Model.of("Before")).setSpellcheck(false)
+			.setTextLanguage(Locale.forLanguageTag("en-GB"));
 		editor.setLabel(Model.of("Article"));
 		tester.startPage(new TestPage(editor));
 
 		JSONObject options = options(editor);
 		assertEquals("markdown", options.getString("format"));
+		assertFalse(options.getBoolean("spellcheck"));
+		assertEquals("en-GB", options.getString("textLanguage"));
+		assertEquals(Boolean.FALSE, editor.getSpellcheck());
+		assertEquals(Locale.UK, editor.getTextLanguage());
 		String features = options.getJSONArray("features").toString();
 		assertFalse(features.contains("\"underline\""), "Markdown has no syntax for it");
 		assertFalse(features.contains("\"textAlign\""));

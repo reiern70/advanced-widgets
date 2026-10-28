@@ -99,6 +99,19 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * the address it is served at, which the image takes and the cleaning checks as any other (see
  * {@link RichTextImageUploadBehavior}).
  * <p>
+ * The browser checks the spelling of the text unless {@link #setSpellcheck(Boolean) told
+ * otherwise}, in {@link #setTextLanguage(Locale) its language}. With
+ * {@link #setProofreader(IRichTextProofreader) a proofreader}, such as
+ * {@link LanguageToolProofreader LanguageTool}, the server checks the spelling, the grammar and the
+ * style of the text instead: the editor underlines what it finds, and offers the replacements in a
+ * popover, by a click or Ctrl+. (see {@link RichTextProofreadBehavior}).
+ * <p>
+ * With {@link #addSuggester(IRichTextSuggester) suggesters}, the server offers items for what the
+ * user types, in a list under the cursor: the users to mention after {@code @}, the words
+ * completing the one before the cursor on Ctrl+Space (see {@link RichTextSuggester} and
+ * {@link RichTextSuggestBehavior}). A mention keeps the id of its item
+ * ({@link RichTextFeature#MENTION}, {@link RichTextMention}).
+ * <p>
  * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
@@ -175,7 +188,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"words", "word", "resize", "plainText", "defaultColor", "noBackground", "colorGray",
 		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen", "colorTeal",
 		"colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink", "uploadImage",
-		"uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType");
+		"uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType", "proofreadSpelling",
+		"proofreadGrammar", "proofreadStyle", "proofreadReplacements", "proofreadNoSuggestions",
+		"proofreadIgnore", "suggestions", "suggestLoading", "suggestNone");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;
@@ -200,6 +215,14 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
 
 	private Set<RichTextImageType> imageTypes = EnumSet.allOf(RichTextImageType.class);
+
+	private IRichTextProofreader proofreader;
+
+	/** The behavior checking the texts, made with the first proofreader. */
+	private RichTextProofreadBehavior proofreading;
+
+	/** The behavior answering the suggesters, made with the first of them. */
+	private RichTextSuggestBehavior suggesting;
 
 	private Set<IRichTextColor> colors = RichTextColor.PALETTE;
 
@@ -663,6 +686,140 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return what checks the spelling, the grammar and the style of the text, {@code null} for none
+	 */
+	public IRichTextProofreader getProofreader()
+	{
+		return proofreader;
+	}
+
+	/**
+	 * @param proofreader
+	 *            what checks the spelling, the grammar and the style of the text, through the
+	 *            server; {@code null}, the default, for none: the browser checks the spelling then,
+	 *            unless {@link #setSpellcheck(Boolean) told otherwise}
+	 * @return {@code this}
+	 */
+	public RichTextEditor setProofreader(IRichTextProofreader proofreader)
+	{
+		this.proofreader = proofreader;
+		if (proofreader != null && proofreading == null)
+		{
+			proofreading = new RichTextProofreadBehavior(this::proofread)
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected boolean isProofreadAllowed()
+				{
+					return isProofreading();
+				}
+
+				@Override
+				protected Locale getLanguage(Locale requested)
+				{
+					Locale own = getTextLanguage();
+					return own == null ? requested : own;
+				}
+			};
+			add(proofreading);
+		}
+		return this;
+	}
+
+	/**
+	 * @return the behavior checking the texts, {@code null} until the editor has a proofreader:
+	 *         its limits are set there
+	 */
+	public RichTextProofreadBehavior getProofreadBehavior()
+	{
+		return proofreading;
+	}
+
+	private List<List<RichTextIssue>> proofread(List<String> texts, Locale language)
+		throws IOException
+	{
+		if (proofreader == null)
+		{
+			throw new IOException("The editor has no proofreader");
+		}
+		return proofreader.check(texts, language);
+	}
+
+	/**
+	 * @return whether the server checks the text now: the editor has a proofreader, and is
+	 *         enabled, not read only
+	 */
+	public boolean isProofreading()
+	{
+		return proofreader != null && !isReadOnly() && isEnabledInHierarchy();
+	}
+
+	/**
+	 * @param suggester
+	 *            what offers items for what the user types, of a name of its own in the editor
+	 * @return {@code this}
+	 */
+	public RichTextEditor addSuggester(IRichTextSuggester suggester)
+	{
+		if (suggesting == null)
+		{
+			suggesting = new RichTextSuggestBehavior()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected boolean isSuggestAllowed()
+				{
+					return isSuggesting();
+				}
+			};
+			add(suggesting);
+		}
+		suggesting.add(suggester);
+		return this;
+	}
+
+	/**
+	 * @param suggester
+	 *            a suggester to take away
+	 * @return {@code this}
+	 */
+	public RichTextEditor removeSuggester(IRichTextSuggester suggester)
+	{
+		if (suggesting != null)
+		{
+			suggesting.remove(suggester);
+		}
+		return this;
+	}
+
+	/**
+	 * @return the suggesters, in their order
+	 */
+	public List<IRichTextSuggester> getSuggesters()
+	{
+		return suggesting == null ? List.of() : suggesting.getSuggesters();
+	}
+
+	/**
+	 * @return the behavior answering the suggesters, {@code null} until the editor has one
+	 */
+	public RichTextSuggestBehavior getSuggestBehavior()
+	{
+		return suggesting;
+	}
+
+	/**
+	 * @return whether the server offers items now: the editor has suggesters, and is enabled, not
+	 *         read only
+	 */
+	public boolean isSuggesting()
+	{
+		return !getSuggesters().isEmpty() && !isReadOnly() && isEnabledInHierarchy();
+	}
+
+	/**
 	 * @return whether the user uploads images now: the editor has a store, and is enabled, not read
 	 *         only, with the feature image
 	 */
@@ -745,6 +902,15 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			options.put("uploadUrl", imageUpload.getUploadUrl());
 			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
 			options.put("uploadMaxSize", imageMaxSize.bytes());
+		}
+		if (isProofreading())
+		{
+			options.put("proofreadUrl", proofreading.getProofreadUrl());
+		}
+		if (isSuggesting())
+		{
+			options.put("suggestUrl", suggesting.getSuggestUrl());
+			options.put("suggesters", suggesting.toJson());
 		}
 	}
 

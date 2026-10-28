@@ -121,6 +121,8 @@ class CKEditorTest extends WicketTestCase
 		assertFalse(options.getBoolean("count"));
 		assertFalse(options.has("saved"));
 		assertFalse(options.has("placeholder"));
+		assertFalse(options.has("spellcheck"));
+		assertFalse(options.has("textLanguage"));
 		assertEquals("vertical", options.getString("resizable"));
 		assertEquals(CKEditor.DEFAULT_MIN_HEIGHT, options.getInt("minHeight"));
 		assertEquals("{\"selection\":{\"anchor\":0,\"head\":0},\"scrollTop\":0,\"scrollLeft\":0}",
@@ -183,12 +185,15 @@ class CKEditorTest extends WicketTestCase
 			.setConfig(new JSONObject().put("codeBlock", new JSONObject().put("indentSequence", "  ")))
 			.setReadOnly(true).setCount(true).setPlaceholder(Model.of("Write here"))
 			.setResizable(ResizeAxis.BOTH).setMinHeight(100).setMaxHeight(600).setMinWidth(200)
-			.setMaxWidth(900).setSavedModel(Model.of("Before"));
+			.setMaxWidth(900).setSavedModel(Model.of("Before")).setSpellcheck(true)
+			.setTextLanguage(Locale.GERMAN);
 		editor.setLabel(Model.of("Article"));
 		tester.startPage(new TestPage(editor));
 
 		JSONObject options = options(editor);
 		assertEquals("markdown", options.getString("format"));
+		assertTrue(options.getBoolean("spellcheck"));
+		assertEquals("de", options.getString("textLanguage"));
 		String features = options.getJSONArray("features").toString();
 		assertFalse(features.contains("\"underline\""), "Markdown has no syntax for it");
 		assertFalse(features.contains("\"textAlign\""));

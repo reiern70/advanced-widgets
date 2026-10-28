@@ -353,6 +353,76 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
+	void proofreadsOnTheServerAndSuggestsMentionsAndTerms(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		selectCase("Writing: spelling, mentions, completions");
+		WebElement text = wait.until(d -> app().findElements(By.cssSelector(
+			".rich-text-demo__editor .ProseMirror")).stream().filter(WebElement::isDisplayed)
+			.filter(each -> each.getText().startsWith("Writing")).findFirst().orElse(null));
+		assertEquals("false", text.getDomAttribute("spellcheck"), "two underlines else");
+
+		// the demo's proofreader, on the server, underlines what it knows
+		WebElement wrong = wait.until(d -> text.findElements(By.cssSelector(
+			".antilia-rich-text-issue-spelling")).stream().filter(each -> each.getText()
+			.equals("Teh")).findFirst().orElse(null));
+		assertFalse(text.findElements(By.cssSelector(".antilia-rich-text-issue-grammar")).isEmpty());
+		wrong.click();
+		WebElement popover = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-rich-text-issue-popover")).stream().filter(WebElement::isDisplayed).findFirst()
+			.orElse(null));
+		assertTrue(popover.getText().contains("This word may be spelled wrong."), popover.getText());
+		popover.findElement(By.xpath(".//button[normalize-space()='the']")).click();
+		wait.until(d -> text.findElement(By.cssSelector("p")).getText().startsWith(
+			"the proofreader"));
+
+		// @ and a name: the people, from the server; Enter mentions the one chosen
+		clickAtEnd(text.findElements(By.cssSelector("p")).get(1));
+		text.sendKeys(" and @lov");
+		WebElement list = wait.until(d -> app().findElements(By.cssSelector(
+			".antilia-rich-text-suggestions")).stream().filter(each -> each.getText()
+			.contains("Ada Lovelace")).findFirst().orElse(null));
+		assertEquals(list.getDomAttribute("id"), text.getDomAttribute("aria-controls"));
+		text.sendKeys(Keys.ENTER);
+		wait.until(d -> text.findElements(By.cssSelector(".antilia-mention")).size() == 2);
+
+		// the start of a term and Ctrl+Space: the terms completing it
+		text.sendKeys("Tip");
+		text.sendKeys(Keys.chord(Keys.CONTROL, Keys.SPACE));
+		wait.until(d -> app().findElements(By.cssSelector(".antilia-rich-text-suggestions"))
+			.stream().anyMatch(each -> each.getText().equals("Tiptap")));
+		text.sendKeys(Keys.TAB);
+		wait.until(d -> text.getText().contains("@Ada Lovelace Tiptap"));
+
+		// the server reads the mentions of the text it keeps
+		text.sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__saved p")).stream()
+			.anyMatch(each -> each.getText().equals("Mentions the server reads: @Ada Lovelace " +
+				"(people: ada), @Ada Lovelace (people: ada)")));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
+	void hasTheAppsCheckedAndSuggestedByThePage(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		content().sendKeys(" Teh @lov");
+		WebElement list = wait.until(d -> app().findElements(By.cssSelector(
+			".antilia-rich-text-suggestions")).stream().filter(each -> each.getText()
+			.contains("Ada Lovelace")).findFirst().orElse(null));
+		assertEquals(list.getDomAttribute("id"), content().getDomAttribute("aria-controls"));
+		content().sendKeys(Keys.ENTER);
+		wait.until(d -> !content().findElements(By.cssSelector(".antilia-mention")).isEmpty());
+		// the page's proofreader, through the server
+		wait.until(d -> content().findElements(By.cssSelector(".antilia-rich-text-issue-spelling"))
+			.stream().anyMatch(each -> each.getText().equals("Teh")));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
 	void hearsOfTheTextSelectedAndOfTheHeadings(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");

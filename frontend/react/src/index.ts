@@ -48,6 +48,9 @@ export type { HeadingLevel, RichTextBackgroundColor, RichTextColor, RichTextEdit
 	RichTextEventCause, RichTextEventDefinition, RichTextEventEditor, RichTextFormat,
 	RichTextMenuItem, RichTextTool, RichTextToolContext, RichTextToolDefinition,
 	RichTextTrigger } from '@antilia/core';
+export { languageToolProofreader, proofreadAt, suggestAt } from '@antilia/core';
+export type { LanguageToolOptions, RichTextIssue, RichTextIssueKind, RichTextProofreader,
+	RichTextSuggester, RichTextSuggestion, RichTextSuggestionInsert } from '@antilia/core';
 export { Resizable } from './Resizable.js';
 export type { ResizableHandle, ResizableProps } from './Resizable.js';
 export type { ResizableSize, ResizeAxis } from '@antilia/core';

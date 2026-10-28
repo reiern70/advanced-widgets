@@ -28,9 +28,10 @@ export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
 export type { MarkdownPreviewOptions } from './markdown-preview.js';
 export { CK_EDITOR_BASE_PLUGINS, CK_EDITOR_CLASSES, CK_EDITOR_FEATURE_PLUGINS, CK_EDITOR_FEATURES,
 	CKEditor, ckEditor, DEFAULT_CK_EDITOR_TEXTS } from './ck-editor.js';
-export type { CKEditorBuild, CKEditorClass, CKEditorEventDetail, CKEditorFeature, CKEditorInstance,
-	CKEditorOptions, CKEditorPlugin, CKEditorTexts } from './ck-editor.js';
-export { canonicalState, sameState } from './rich-text-contract.js';
+export type { CKEditorBuild, CKEditorClass, CKEditorEditingView, CKEditorEventDetail,
+	CKEditorFeature, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
+	CKEditorViewWriter } from './ck-editor.js';
+export { canonicalState, sameState, textLanguage } from './rich-text-contract.js';
 export { RICH_TEXT_BUILT_IN_EVENTS, RICH_TEXT_EVENT_SOURCES, RICH_TEXT_EVENT_TRIGGER,
 	registerRichTextEvent, richTextEvent, richTextEvents } from './rich-text-events.js';
 export type { RichTextEventCause, RichTextEventDefinition,
@@ -62,6 +63,14 @@ export { lezerHighlighter } from './rich-text-highlight.js';
 export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText,
 	uploadImageTo } from './rich-text-upload.js';
 export type { RichTextUploader } from './rich-text-upload.js';
+export { issuesOf, languageToolKind, languageToolProofreader, proofreadAt, proofreadBlocks,
+	proofreadIssues, RICH_TEXT_ISSUE_CLASSES, RICH_TEXT_ISSUE_KINDS } from './rich-text-proofreading.js';
+export type { LanguageToolOptions, RichTextIssue, RichTextIssueFound, RichTextIssueKind,
+	RichTextProofreader } from './rich-text-proofreading.js';
+export { MENTION_ATTRIBUTES, openSuggestions, RICH_TEXT_SUGGESTION_CLASSES, suggestAt,
+	suggestionItems } from './rich-text-suggestions.js';
+export type { RichTextSuggester, RichTextSuggestion,
+	RichTextSuggestionInsert } from './rich-text-suggestions.js';
 export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,

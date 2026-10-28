@@ -258,4 +258,13 @@
 	<entry key="RichTextEditor.uploadFailed">{0} could not be uploaded.</entry>
 	<entry key="RichTextEditor.uploadTooLarge">{0} is larger than {1}.</entry>
 	<entry key="RichTextEditor.uploadType">{0} is not an image of a type the editor takes: {1}.</entry>
+	<entry key="RichTextEditor.proofreadSpelling">Spelling</entry>
+	<entry key="RichTextEditor.proofreadGrammar">Grammar</entry>
+	<entry key="RichTextEditor.proofreadStyle">Style</entry>
+	<entry key="RichTextEditor.proofreadReplacements">Replacements</entry>
+	<entry key="RichTextEditor.proofreadNoSuggestions">No suggestions</entry>
+	<entry key="RichTextEditor.proofreadIgnore">Ignore</entry>
+	<entry key="RichTextEditor.suggestions">Suggestions</entry>
+	<entry key="RichTextEditor.suggestLoading">Searching…</entry>
+	<entry key="RichTextEditor.suggestNone">Nothing found</entry>
 </properties>

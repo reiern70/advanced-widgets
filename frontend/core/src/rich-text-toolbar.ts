@@ -175,6 +175,17 @@ export interface RichTextEditorTexts {
 	word: string;
 	/** The accessible name of the handle resizing the editor. */
 	resize: string;
+	/** The popover of an issue a proofreader found: its title by its kind, and what it offers. */
+	proofreadSpelling: string;
+	proofreadGrammar: string;
+	proofreadStyle: string;
+	proofreadReplacements: string;
+	proofreadNoSuggestions: string;
+	proofreadIgnore: string;
+	/** The list of suggestions: its accessible name, while asking, and when nothing matches. */
+	suggestions: string;
+	suggestLoading: string;
+	suggestNone: string;
 }
 
 export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Object.freeze({
@@ -250,7 +261,16 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	charactersOfLimit: '{0} of {1} characters',
 	words: '{0} words',
 	word: '{0} word',
-	resize: 'Drag, or use the arrow keys, to resize the editor'
+	resize: 'Drag, or use the arrow keys, to resize the editor',
+	proofreadSpelling: 'Spelling',
+	proofreadGrammar: 'Grammar',
+	proofreadStyle: 'Style',
+	proofreadReplacements: 'Replacements',
+	proofreadNoSuggestions: 'No suggestions',
+	proofreadIgnore: 'Ignore',
+	suggestions: 'Suggestions',
+	suggestLoading: 'Searching…',
+	suggestNone: 'Nothing found'
 });
 
 /** The bar under the icon of a tool of colors, the color where the cursor is. */

@@ -69,6 +69,16 @@ final class RichTextSamples
 		"> Check the forecast the night before.",
 		"");
 
+	/**
+	 * The text of the writing case: words the demo's proofreader knows spelled wrong, a word said
+	 * twice, two blanks, and a mention; written as the cleaning writes it, @ as &amp;#64;.
+	 */
+	static final String WRITING = "<h2>Writing, checked as you type</h2>" +
+		"<p>Teh proofreader of this demo knows a few words spelled wrong: recieve, seperate, " +
+		"definately. It sees a word said said twice, and  two blanks between words.</p>" +
+		"<p>Ask <span class=\"antilia-mention\" data-mention=\"people\" data-id=\"ada\">" +
+		"&#64;Ada Lovelace</span> what she thinks.</p>";
+
 	/** HTML from somewhere else, with what a page must never show. */
 	static final String UNSAFE = String.join("\n",
 		"<h2 onclick=\"alert('heading')\">A heading that runs a script when clicked</h2>",
