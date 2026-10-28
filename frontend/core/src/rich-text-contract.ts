@@ -68,6 +68,18 @@ export const RICH_TEXT_EDITOR_EVENTS = Object.freeze({
 	text: 'antilia-rich-text-editor:text'
 });
 
+/** A language tag of BCP 47: en, en-GB, zh-Hant-TW, de-CH-1996. */
+const LANGUAGE_TAG = /^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/;
+
+/**
+ * @returns the language of a text as the editors take it, a tag of BCP 47 (en-GB, de) without the
+ *          blanks around it; null for none, or for one that is no such tag
+ */
+export function textLanguage(language: string | null | undefined): string | null {
+	const tag = language?.trim();
+	return tag && LANGUAGE_TAG.test(tag) ? tag : null;
+}
+
 /**
  * @returns a state in one shape whatever its source: no selection is a cursor at the start, no
  *          scrolling none and no size the page's

@@ -43,7 +43,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Downloads via Ajax, an iframe or a new tab, with a busy button | ✓ | |
 | | Uploads in a form, by Ajax or to a resource, with a drop zone and a progress bar | ✓ | |
 | | Code editor (CodeMirror): Java, JavaScript, TypeScript, JSON, Markdown with its preview | ✓ | ✓ |
-| | Rich text editor (Tiptap), with text colors, its HTML cleaned on the server, or Markdown | ✓ | ✓ |
+| | Rich text editor (Tiptap), with text colors, its HTML cleaned on the server, or Markdown; spelling and grammar checked on the server, mentions and completions from it | ✓ | ✓ |
 | | CKEditor 5, which the application brings with its license, with the contract of the rich text editor | ✓ | ✓ |
 | Feedback | Progress bar | ✓ | ✓ |
 | | Notifications; Wicket's feedback messages become notifications by themselves | ✓ | ✓ |
@@ -327,6 +327,46 @@ The library holds every script twice: as the build wrote it, readable, and minif
 mode, so that what fails can be read and debugged in the browser, and the minified ones in
 deployment mode. `getResourceSettings().setUseMinifiedResources(false)` in the application's
 `init()` serves the readable ones in deployment mode too.
+
+### Spelling, grammar and suggestions in the rich text editor
+
+The browser checks the spelling of a `RichTextEditor` as it does, unless told otherwise, in the
+language of the page or of the text. A proofreader on the server checks the spelling, the grammar and
+the style instead; the editor underlines what it finds and offers the replacements, by a click or
+Ctrl+. Suggesters offer, from the server, the users to mention after `@`, the topics after `#`, the
+words completing the one before the cursor on Ctrl+Space:
+
+```java
+RichTextEditor editor = new RichTextEditor("text", model);
+editor.setTextLanguage(Locale.UK);
+// LanguageTool, open source, on a server of the application's own:
+// java -cp languagetool-server.jar org.languagetool.server.HTTPServer --port 8081
+editor.setProofreader(new LanguageToolProofreader(URI.create("http://localhost:8081/v2/check")));
+editor.addSuggester(RichTextSuggester.mentions("users", "@", (query, max) ->
+	users.find(query, max).stream().map(user -> new RichTextSuggestion(user.getId(),
+		user.getName(), user.getEmail(), null)).toList()));
+editor.addSuggester(RichTextSuggester.words("terms", List.of("Wicket", "Tiptap")));
+```
+
+A mention keeps the id of its item: `RichTextMention.of(html)` reads them in the text saved. The HTML
+comes from the browser, so check each id again before acting on it, telling the users mentioned for
+example. `IRichTextProofreader` and `IRichTextSuggester` plug in anything else, a dictionary of the
+application's own or a service with a key, which stays on the server.
+
+LanguageTool's public server (`LanguageToolProofreader.PUBLIC_API`) is for trying only: it takes
+about 20 requests a minute and hands the texts to a third party. Commercial proofreaders run in the
+browser as Tiptap extensions the page adds; WProofreader, for one, with a subscription
+(`npm install @webspellchecker/wproofreader-tiptap`):
+
+```js
+Wicket.RichTextEditor.registerExtension('wproofreader', () =>
+	WProofreader.configure({ wproofreader: { serviceId: 'your-service-ID' } }));
+```
+
+and `editor.setExtensions(RichTextExtension.of("wproofreader", script))`, the script being the page's
+bundle of it. Self-hosted, WProofreader takes the address of its server instead of a service id:
+`serviceProtocol`, `serviceHost`, `servicePort`, `servicePath` and `srcUrl`
+(`https://host/wscservice/wscbundle/wscbundle.js`).
 
 ## Using the components in React and Svelte
 
