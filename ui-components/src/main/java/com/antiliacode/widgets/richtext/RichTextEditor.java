@@ -16,6 +16,7 @@ package com.antiliacode.widgets.richtext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -63,11 +64,16 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * <p>
  * The model is the text, HTML by default, or Markdown or Tiptap's JSON
  * ({@link #setFormat(RichTextFormat)}). The HTML comes from the browser and is never trusted: the
- * editor {@link #setSanitizer(RichTextSanitizer) cleans} it before the model gets it, keeping what
+ * editor {@link #setSanitizer(IRichTextSanitizer) cleans} it before the model gets it, keeping what
  * its features write, with {@link RichTextPolicy} by default; {@link RichTextView} shows it in a
  * page, cleaned the same way. The HTML has no style attribute, which a Content Security Policy
- * without {@code 'unsafe-inline'} would block: text aligns by classes, and takes the
- * {@link RichTextColor colors} of a palette by classes too.
+ * without {@code 'unsafe-inline'} would block: text aligns by classes, and takes colors by classes
+ * too, from two palettes apart: the {@link IRichTextColor colors of the text},
+ * {@link RichTextColor#PALETTE} or the page's own ({@link #setColors(Collection)}), and the
+ * {@link IRichTextBackgroundColor colors of its background},
+ * {@link RichTextBackgroundColor#PALETTE} or the page's own
+ * ({@link #setBackgroundColors(Collection)}). The cleaning keeps the classes of those palettes
+ * alone.
  * <p>
  * The text area stays in the page, hidden, and holds the text: a form posts it as always, and it
  * fires {@code input} as the user types and {@code change} once the editor loses the focus, as a
@@ -85,11 +91,12 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * Markdown: the editor then renders {@link #HIGHLIGHT_JS}, which holds them, and the style sheet of
  * the code editor. The HTML stays plain: the colors are the editor's alone.
  * <p>
- * With {@link #setImageStore(RichTextImageStore) a store of images}, the user uploads images: chosen
- * in the form of the image, dropped into the text or pasted. A behavior of the editor takes each,
- * no larger than {@link #setImageMaxSize(Bytes) allowed} and of {@link #setImageTypes(Set) a type
- * allowed} as its bytes say, has the store keep it and answers the address it is served at, which
- * the image takes and the cleaning checks as any other (see {@link RichTextImageUploadBehavior}).
+ * With {@link #setImageStore(IRichTextImageStore) a store of images}, the user uploads images:
+ * chosen in the form of the image, dropped into the text or pasted. A behavior of the editor takes
+ * each, no larger than {@link #setImageMaxSize(Bytes) allowed} and of
+ * {@link #setImageTypes(Set) a type allowed} as its bytes say, has the store keep it and answers
+ * the address it is served at, which the image takes and the cleaning checks as any other (see
+ * {@link RichTextImageUploadBehavior}).
  * <p>
  * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -186,9 +193,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 				{ "word", "{0} word" },
 				{ "resize", "Drag, or use the arrow keys, to resize the editor" },
 				{ "plainText", "Plain text" }, { "defaultColor", "Default" },
-				{ "noBackground", "None" }, { "colorGray", "Gray" }, { "colorRed", "Red" },
-				{ "colorOrange", "Orange" }, { "colorYellow", "Yellow" },
-				{ "colorGreen", "Green" }, { "colorBlue", "Blue" },
+				{ "noBackground", "None" }, { "colorGray", "Gray" }, { "colorBrown", "Brown" },
+				{ "colorRed", "Red" }, { "colorOrange", "Orange" }, { "colorYellow", "Yellow" },
+				{ "colorLime", "Lime" }, { "colorGreen", "Green" }, { "colorTeal", "Teal" },
+				{ "colorCyan", "Cyan" }, { "colorBlue", "Blue" }, { "colorIndigo", "Indigo" },
 				{ "colorPurple", "Purple" }, { "colorPink", "Pink" },
 				{ "uploadImage", "Upload an image…" },
 				{ "uploading", "Uploading {0}…" }, { "theImage", "The image" },
@@ -201,7 +209,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		}
 	}
 
-	private List<List<RichTextTool>> toolbar = RichTextTool.DEFAULT_TOOLBAR;
+	/** The features set, {@code null} for those of the format. */
+	private Set<IRichTextFeature> features;
+
+	private List<List<IRichTextTool>> toolbar = groups(RichTextTool.DEFAULT_TOOLBAR);
 
 	private boolean bubbleMenu;
 
@@ -213,7 +224,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private List<String> codeLanguages;
 
-	private RichTextImageStore imageStore;
+	private IRichTextImageStore imageStore;
 
 	/** The behavior taking the images, made with the first store. */
 	private RichTextImageUploadBehavior imageUpload;
@@ -221,6 +232,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
 
 	private Set<RichTextImageType> imageTypes = EnumSet.allOf(RichTextImageType.class);
+
+	private Set<IRichTextColor> colors = RichTextColor.PALETTE;
+
+	private Set<IRichTextBackgroundColor> backgroundColors = RichTextBackgroundColor.PALETTE;
 
 	/**
 	 * An editor whose model is inherited, for example from a {@code CompoundPropertyModel}, keeping
@@ -274,36 +289,199 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	@Override
-	protected RichTextSanitizer getDefaultSanitizer()
+	protected IRichTextSanitizer getDefaultSanitizer()
 	{
-		return RichTextPolicy.of(getFeatures());
+		return RichTextPolicy.of(getFeatures(), colors, backgroundColors);
+	}
+
+	/**
+	 * @return what the text may hold: the features set, or those of
+	 *         {@link RichTextFeature#defaults(RichTextFormat) the format}, all the built-in ones for
+	 *         HTML
+	 */
+	@Override
+	public Set<IRichTextFeature> getFeatures()
+	{
+		return features == null ? RichTextFeature.defaults(getFormat()) : features;
+	}
+
+	/**
+	 * @param features
+	 *            what the text may hold: built-in {@link RichTextFeature}s and features of the
+	 *            page's own, each by a name of its own; {@code null} for those of the format
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for features {@link IRichTextFeature#checked(Collection)} does not take: one
+	 *             missing, or two of the same name
+	 */
+	public RichTextEditor setFeatures(Collection<? extends IRichTextFeature> features)
+	{
+		this.features = features == null ? null : IRichTextFeature.checked(features);
+		return this;
+	}
+
+	/**
+	 * Adds a feature to those of the editor, the features of the format until the page sets
+	 * others: its tools show, and the cleaning lets through what it writes.
+	 *
+	 * @param feature
+	 *            the feature, by a name no other feature of the editor has
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for a feature missing, or of the name of another
+	 */
+	public RichTextEditor addFeature(IRichTextFeature feature)
+	{
+		List<IRichTextFeature> all = new ArrayList<>(getFeatures());
+		all.add(feature);
+		return setFeatures(all);
+	}
+
+	/**
+	 * Takes a feature away from those of the editor, the features of the format until the page
+	 * sets others: its tools no longer show, and the cleaning drops what it writes, but for its
+	 * text.
+	 *
+	 * @param feature
+	 *            the feature
+	 * @return {@code this}
+	 */
+	public RichTextEditor removeFeature(IRichTextFeature feature)
+	{
+		List<IRichTextFeature> all = new ArrayList<>(getFeatures());
+		all.remove(feature);
+		return setFeatures(all);
+	}
+
+	/**
+	 * @return the palette of the colors of the text, in the order of its menu; unmodifiable:
+	 *         {@link #setColors(Collection)} and {@link #addColor(IRichTextColor)} change it
+	 */
+	public Set<IRichTextColor> getColors()
+	{
+		return colors;
+	}
+
+	/**
+	 * Adds a color at the end of the palette of the colors of the text, {@link RichTextColor#PALETTE}
+	 * until the page sets one, or none. The page's style sheets color its class; the
+	 * {@link #getDefaultSanitizer() cleaning} keeps it. An editor already in the page shows it once
+	 * rendered again.
+	 *
+	 * @param color
+	 *            the color, by a name no other color of the palette has
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for a color {@link IRichTextColor#palette(Collection)} does not take: missing, a
+	 *             name or a class not allowed, or one another color of the palette has
+	 */
+	public RichTextEditor addColor(IRichTextColor color)
+	{
+		List<IRichTextColor> palette = new ArrayList<>(colors);
+		palette.add(color);
+		return setColors(palette);
+	}
+
+	/**
+	 * @param colors
+	 *            the palette of the colors of the text, in the order of its menu (a {@link List} or
+	 *            a {@link java.util.LinkedHashSet} keeps it), each by a name unique in it,
+	 *            {@link RichTextColor#PALETTE} by default; {@code null} or empty for none, the editor
+	 *            then without the tool of the color of the text. The page's style sheets color the
+	 *            classes of colors of its own; the {@link #getDefaultSanitizer() cleaning} keeps
+	 *            those classes, and no others.
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for a palette {@link IRichTextColor#palette(Collection)} does not take: a color
+	 *             missing, a name or a class not allowed, or one twice
+	 */
+	public RichTextEditor setColors(Collection<? extends IRichTextColor> colors)
+	{
+		this.colors = colors == null ? Collections.emptySet() : IRichTextColor.palette(colors);
+		return this;
+	}
+
+	/**
+	 * @return the palette of the colors of the background, in the order of its menu; unmodifiable:
+	 *         {@link #setBackgroundColors(Collection)} and
+	 *         {@link #addBackgroundColor(IRichTextBackgroundColor)} change it
+	 */
+	public Set<IRichTextBackgroundColor> getBackgroundColors()
+	{
+		return backgroundColors;
+	}
+
+	/**
+	 * Adds a color at the end of the palette of the colors of the background,
+	 * {@link RichTextBackgroundColor#PALETTE} until the page sets one, or none. The page's style
+	 * sheets color its class; the {@link #getDefaultSanitizer() cleaning} keeps it. An editor
+	 * already in the page shows it once rendered again.
+	 *
+	 * @param color
+	 *            the color, by a name no other color of the palette has
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for a color {@link IRichTextBackgroundColor#palette(Collection)} does not take:
+	 *             missing, a name or a class not allowed, or one another color of the palette has
+	 */
+	public RichTextEditor addBackgroundColor(IRichTextBackgroundColor color)
+	{
+		List<IRichTextBackgroundColor> palette = new ArrayList<>(backgroundColors);
+		palette.add(color);
+		return setBackgroundColors(palette);
+	}
+
+	/**
+	 * @param backgroundColors
+	 *            the palette of the colors of the background, in the order of its menu (a
+	 *            {@link List} or a {@link java.util.LinkedHashSet} keeps it), each by a name unique
+	 *            in it, {@link RichTextBackgroundColor#PALETTE} by default; {@code null} or empty
+	 *            for none, the editor then without the tool of the background. The page's style
+	 *            sheets color the classes of colors of its own; the
+	 *            {@link #getDefaultSanitizer() cleaning} keeps those classes, and no others.
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             for a palette {@link IRichTextBackgroundColor#palette(Collection)} does not take
+	 */
+	public RichTextEditor setBackgroundColors(
+		Collection<? extends IRichTextBackgroundColor> backgroundColors)
+	{
+		this.backgroundColors = backgroundColors == null ? Collections.emptySet() :
+			IRichTextBackgroundColor.palette(backgroundColors);
+		return this;
 	}
 
 	/**
 	 * @return the tools of the toolbar, in groups; empty for no toolbar
 	 */
-	public List<List<RichTextTool>> getToolbar()
+	public List<List<IRichTextTool>> getToolbar()
 	{
 		return toolbar;
 	}
 
 	/**
 	 * @param toolbar
-	 *            the tools of the toolbar, in groups; {@link RichTextTool#DEFAULT_TOOLBAR} by
-	 *            default, {@code null} or empty for no toolbar. The tools of features left out do
-	 *            not show.
+	 *            the tools of the toolbar, in groups: built-in {@link RichTextTool}s and those of
+	 *            the features of the page's own; {@link RichTextTool#DEFAULT_TOOLBAR} by default,
+	 *            {@code null} or empty for no toolbar. The tools of features left out do not show.
 	 * @return {@code this}
 	 */
-	public RichTextEditor setToolbar(List<List<RichTextTool>> toolbar)
+	public RichTextEditor setToolbar(List<? extends List<? extends IRichTextTool>> toolbar)
 	{
-		List<List<RichTextTool>> groups = new ArrayList<>();
+		this.toolbar = groups(toolbar);
+		return this;
+	}
+
+	private static List<List<IRichTextTool>> groups(
+		List<? extends List<? extends IRichTextTool>> toolbar)
+	{
+		List<List<IRichTextTool>> groups = new ArrayList<>();
 		if (toolbar != null)
 		{
 			toolbar.stream().filter(group -> group != null && !group.isEmpty())
-				.forEach(group -> groups.add(List.copyOf(group)));
+				.forEach(group -> groups.add(List.<IRichTextTool>copyOf(group)));
 		}
-		this.toolbar = List.copyOf(groups);
-		return this;
+		return List.copyOf(groups);
 	}
 
 	/**
@@ -426,7 +604,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	/**
 	 * @return what keeps the images the user uploads, {@code null} for none
 	 */
-	public RichTextImageStore getImageStore()
+	public IRichTextImageStore getImageStore()
 	{
 		return imageStore;
 	}
@@ -437,7 +615,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 *            for no uploads, as by default: an image is an address the user gives
 	 * @return {@code this}
 	 */
-	public RichTextEditor setImageStore(RichTextImageStore imageStore)
+	public RichTextEditor setImageStore(IRichTextImageStore imageStore)
 	{
 		this.imageStore = imageStore;
 		if (imageStore != null && imageUpload == null)
@@ -545,12 +723,22 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * Puts the options of Tiptap's editor: the toolbar, the bubble menu, the limit, the
-	 * extensions, the highlighting, the languages of the code blocks and the uploads of images.
+	 * extensions, the palettes, the highlighting, the languages of the code blocks and the uploads
+	 * of images.
 	 */
 	@Override
 	protected void putEditorOptions(JSONObject options)
 	{
 		options.put("bubbleMenu", bubbleMenu);
+		Set<IRichTextFeature> features = getFeatures();
+		if (features.contains(RichTextFeature.TEXT_COLOR))
+		{
+			options.put("colors", colors(this, colors));
+		}
+		if (features.contains(RichTextFeature.TEXT_BACKGROUND))
+		{
+			options.put("backgroundColors", backgroundColors(this, backgroundColors));
+		}
 		if (toolbar.isEmpty())
 		{
 			options.put("toolbar", false);
@@ -595,7 +783,19 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	@Override
 	protected JSONObject getTexts()
 	{
-		return texts(this);
+		JSONObject texts = texts(this);
+		// the tools of the features of the page's own, named as their scripts do unless translated
+		toolbar.forEach(group -> group.forEach(tool -> {
+			if (!(tool instanceof RichTextTool))
+			{
+				String name = getString("RichTextEditor." + tool.getName(), null, "");
+				if (!Strings.isEmpty(name))
+				{
+					texts.put(tool.getName(), name);
+				}
+			}
+		}));
+		return texts;
 	}
 
 	/**
@@ -612,6 +812,75 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		JSONObject texts = new JSONObject();
 		TEXTS.keySet().forEach(name -> texts.put(name, text(component, name)));
 		return texts;
+	}
+
+	/**
+	 * A palette of the colors of the text as the editors in the browser take it, its colors named in
+	 * the language of a component: the option {@code colors} of this editor, and of the React and
+	 * Svelte editors.
+	 *
+	 * @param component
+	 *            the component whose resources translate the names of the colors,
+	 *            {@code RichTextEditor.colorRed} for {@code red}; {@code null} for English
+	 * @param colors
+	 *            the palette, checked as {@link IRichTextColor#palette(Collection)} does
+	 * @return the colors, each with its name, its class and its label
+	 */
+	public static JSONArray colors(Component component, Collection<? extends IRichTextColor> colors)
+	{
+		JSONArray palette = new JSONArray();
+		for (IRichTextColor color : IRichTextColor.palette(colors))
+		{
+			JSONObject json = new JSONObject();
+			json.put("name", color.getName());
+			json.put("colorClass", color.getColorClass());
+			json.put("label", colorLabel(component, color.getName()));
+			palette.put(json);
+		}
+		return palette;
+	}
+
+	/**
+	 * A palette of the colors of the background as the editors in the browser take it, its colors
+	 * named in the language of a component: the option {@code backgroundColors} of this editor, and
+	 * of the React and Svelte editors.
+	 *
+	 * @param component
+	 *            the component whose resources translate the names of the colors,
+	 *            {@code RichTextEditor.colorRed} for {@code red}; {@code null} for English
+	 * @param colors
+	 *            the palette, checked as {@link IRichTextBackgroundColor#palette(Collection)} does
+	 * @return the colors, each with its name, its class and its label
+	 */
+	public static JSONArray backgroundColors(Component component,
+		Collection<? extends IRichTextBackgroundColor> colors)
+	{
+		JSONArray palette = new JSONArray();
+		for (IRichTextBackgroundColor color : IRichTextBackgroundColor.palette(colors))
+		{
+			JSONObject json = new JSONObject();
+			json.put("name", color.getName());
+			json.put("backgroundClass", color.getBackgroundClass());
+			json.put("label", colorLabel(component, color.getName()));
+			palette.put(json);
+		}
+		return palette;
+	}
+
+	/**
+	 * @return what the menus call a color of that name: the translation of
+	 *         {@code RichTextEditor.colorRed} for red, else its English name, else its name
+	 */
+	private static String colorLabel(Component component, String name)
+	{
+		String key = "color" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+		String english = TEXTS.getOrDefault(key, name);
+		if (component == null)
+		{
+			return english;
+		}
+		String translation = component.getString("RichTextEditor." + key, null, english);
+		return Strings.isEmpty(translation) ? english : translation;
 	}
 
 	/**

@@ -321,7 +321,7 @@ public class DownloadsPage extends DemoPage
 	 *         bundles; it tells the server each choice, and then updates the page if told to
 	 */
 	private <T extends Enum<T>> Dropdown<T> choice(String id, IModel<T> model, List<T> choices,
-		ChoiceUpdate update)
+		IChoiceUpdate update)
 	{
 		Dropdown<T> choice = new Dropdown<>(id, model, choices, new EnumChoiceRenderer<>(this));
 		choice.setRequired(true);
@@ -412,7 +412,7 @@ public class DownloadsPage extends DemoPage
 	 * What a drop-down does once the server has its choice.
 	 */
 	@FunctionalInterface
-	private interface ChoiceUpdate extends Serializable
+	private interface IChoiceUpdate extends Serializable
 	{
 		void onUpdate(AjaxRequestTarget target);
 	}

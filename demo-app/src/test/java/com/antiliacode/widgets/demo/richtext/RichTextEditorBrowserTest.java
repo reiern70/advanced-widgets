@@ -130,6 +130,13 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		// in a color of the theme, not that of the text around
 		assertNotEquals(content().findElement(By.cssSelector("p")).getCssValue("color"),
 			content().findElement(colored).getCssValue("color"));
+		// the bar under the tool in that color, showing on the toolbar
+		WebElement textBar = tool("textColor").findElement(By.cssSelector(
+			".antilia-rich-text-tool-bar"));
+		assertEquals(content().findElement(colored).getCssValue("color"),
+			textBar.getCssValue("background-color"));
+		assertTrue(textBar.getSize().getWidth() > 5 && textBar.getSize().getHeight() > 0,
+			textBar.getSize().toString());
 
 		// the background with the keys: the menu opens on None, Y goes to Yellow
 		selectWord("oystercatchers");
@@ -141,6 +148,11 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		By marked = By.xpath(".//mark[@class='antilia-background-yellow']" +
 			"[contains(., 'oystercatchers')]");
 		wait.until(d -> !content().findElements(marked).isEmpty());
+		// the bar under the tool in the color of the background
+		wait.until(d -> "yellow".equals(tool("textBackground").getDomAttribute("data-color")));
+		assertEquals(content().findElement(marked).getCssValue("background-color"),
+			tool("textBackground").findElement(By.cssSelector(".antilia-rich-text-tool-bar"))
+				.getCssValue("background-color"));
 		// classes, no style
 		assertTrue(value().contains("<span class=\"antilia-color-red\"><mark " +
 			"class=\"antilia-background-yellow\">oystercatchers</mark></span>"), value());

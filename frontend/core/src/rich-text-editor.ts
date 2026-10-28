@@ -76,10 +76,12 @@ import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
 import { CodeBlocks, redrawCodeBlocks, richTextHighlighter } from './rich-text-code-blocks.js';
+import { onRichTextFeature, richTextFeature } from './rich-text-features.js';
 import { codeLanguage, RICH_TEXT_CODE_LANGUAGES,
 	type RichTextHighlighter } from './rich-text-languages.js';
 import { DEFAULT_HEADING_LEVELS, isSafeUrl, quietHtml, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
-	RICH_TEXT_NOT_IN_MARKDOWN, schemaExtensions, type HeadingLevel, type RichTextFeature,
+	RICH_TEXT_NOT_IN_MARKDOWN, richTextBackgroundColors, richTextColors, schemaExtensions,
+	type HeadingLevel, type RichTextBackgroundColor, type RichTextColor, type RichTextFeature,
 	type RichTextFormat } from './rich-text-schema.js';
 import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH_TEXT_BUBBLE_TOOLS,
 	RichTextToolbar, type RichTextCodeLanguage, type RichTextEditorTexts, type RichTextTool,
@@ -187,12 +189,34 @@ export interface RichTextEditorOptions {
 	/** How the editor keeps the text: html when left out, markdown or json. */
 	format?: RichTextFormat;
 	/**
-	 * What the text may hold: all the features when left out, but for Markdown underlined text
-	 * and alignment, which Markdown has no syntax for.
+	 * What the text may hold: the features built in and those registered
+	 * (registerRichTextFeature), by their names; all the built-in ones when left out, but for
+	 * Markdown underlined text, colors and alignment, which Markdown has no syntax for. A feature
+	 * not registered yet comes in as it registers, the editor made anew.
 	 */
 	features?: readonly RichTextFeature[];
+	/**
+	 * The options of the features registered, by their names, which make their extensions
+	 * (RichTextFeatureContext.options); in Wicket, IRichTextFeature.putOptions().
+	 */
+	featureOptions?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
 	/** The levels of the headings, 1 to 4 when left out. */
 	headingLevels?: readonly HeadingLevel[];
+	/**
+	 * The palette of the colors of the text, in the order of its menu: DEFAULT_RICH_TEXT_COLORS
+	 * when left out; null or empty for none, the text then without colors and the toolbar without
+	 * their tool. Each color is named once; those whose name or class the editor does not take
+	 * (see richTextColors) are left out. The style sheets of the page color the classes of colors
+	 * of its own.
+	 */
+	colors?: readonly RichTextColor[] | null;
+	/**
+	 * The palette of the colors of the background, apart from those of the text, in the order of
+	 * its menu: DEFAULT_RICH_TEXT_BACKGROUND_COLORS when left out; null or empty for none, as for
+	 * the colors of the text. Checked as the colors of the text are (see
+	 * richTextBackgroundColors).
+	 */
+	backgroundColors?: readonly RichTextBackgroundColor[] | null;
 	/**
 	 * The tools of the toolbar, in groups; DEFAULT_RICH_TEXT_TOOLBAR when left out, false for no
 	 * toolbar. The tools of features left out do not show.
@@ -298,7 +322,8 @@ const EXTERNAL = 'antilia-rich-text-editor:external';
 
 /** The options that make the schema: changing one makes the editor anew. */
 const SCHEMA_OPTIONS: readonly (keyof RichTextEditorOptions)[] = ['format', 'features',
-	'headingLevels', 'limit', 'extensions', 'bubbleMenu'];
+	'headingLevels', 'colors', 'backgroundColors', 'featureOptions', 'limit', 'extensions',
+	'bubbleMenu'];
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
 	return typeof target === 'string' ? document.getElementById(target) : target;
@@ -404,6 +429,12 @@ export class RichTextEditor {
 	/** Whether Tiptap's editor is being made anew, its toolbars not yet. */
 	private rebuilding = false;
 
+	/** The features the options name that are not registered yet. */
+	private missing = new Set<string>();
+
+	/** Stops hearing of the features registered. */
+	private stopHearing: (() => void) | null = null;
+
 	/** Whether Escape was the last key: Tab then leaves the editor, even in a list. */
 	private escaped = false;
 
@@ -468,6 +499,13 @@ export class RichTextEditor {
 			instances.set(field, this);
 			this.fieldHidden = field.hidden;
 		}
+		// a feature it names, registered late, or anew: Tiptap's editor is made anew with it
+		this.stopHearing = onRichTextFeature((name) => {
+			if (!this.destroyed && (this.missing.has(name) || this.features().has(name))) {
+				this.render();
+				this.rebuild(false);
+			}
+		});
 
 		const given = options.value ?? field?.value ?? '';
 		const content = document.createElement('div');
@@ -555,21 +593,39 @@ export class RichTextEditor {
 	}
 
 	/**
-	 * @returns what the text may hold
+	 * @returns what the text may hold: the features given, built in or registered, or the built-in
+	 *          ones of the format; the color of the text, or of its background, not without a
+	 *          color in its palette
 	 */
 	features(): ReadonlySet<RichTextFeature> {
 		const given = this.options.features;
-		if (given) {
-			return new Set(given.filter((feature) => RICH_TEXT_FEATURES.includes(feature)));
+		const known = (feature: RichTextFeature) =>
+			(RICH_TEXT_FEATURES as readonly string[]).includes(feature) || !!richTextFeature(feature);
+		this.missing = new Set(given ? given.filter((feature) => !known(feature)) : []);
+		const features = new Set<RichTextFeature>(given ? given.filter(known) :
+			this.format() === 'markdown' ? RICH_TEXT_FEATURES.filter((feature) =>
+				!RICH_TEXT_NOT_IN_MARKDOWN.includes(feature)) : RICH_TEXT_FEATURES);
+		if (this.colors().length === 0) {
+			features.delete('textColor');
 		}
-		return new Set(this.format() === 'markdown' ? RICH_TEXT_FEATURES.filter((feature) =>
-			!RICH_TEXT_NOT_IN_MARKDOWN.includes(feature)) : RICH_TEXT_FEATURES);
+		if (this.backgroundColors().length === 0) {
+			features.delete('textBackground');
+		}
+		return features;
 	}
 
 	private headingLevels(): readonly HeadingLevel[] {
 		const given = this.options.headingLevels;
 		return given ? [...new Set(given.filter((level) => Number.isInteger(level) && level >= 1 &&
 			level <= 6))].sort() : DEFAULT_HEADING_LEVELS;
+	}
+
+	private colors(): readonly RichTextColor[] {
+		return richTextColors(this.options.colors);
+	}
+
+	private backgroundColors(): readonly RichTextBackgroundColor[] {
+		return richTextBackgroundColors(this.options.backgroundColors);
 	}
 
 	private texts(): RichTextEditorTexts {
@@ -662,7 +718,12 @@ export class RichTextEditor {
 				format: textFormat,
 				headingLevels: this.headingLevels(),
 				placeholder: () => this.options.placeholder ?? '',
-				limit: this.options.limit ?? null
+				limit: this.options.limit ?? null,
+				colors: this.colors(),
+				backgroundColors: this.backgroundColors(),
+				kit: RICH_TEXT_EDITOR_KIT,
+				featureOptions: this.options.featureOptions ?? {},
+				log: (message, error) => getHost().log.error(message, error)
 			}),
 			behavior,
 			...(this.options.extensions ?? []).flatMap((extension) =>
@@ -775,6 +836,8 @@ export class RichTextEditor {
 			texts: () => this.texts(),
 			features: () => this.features(),
 			headingLevels: () => this.headingLevels(),
+			colors: () => this.colors(),
+			backgroundColors: () => this.backgroundColors(),
 			codeLanguages: () => this.codeLanguages(),
 			uploads: () => this.uploadHost(),
 			onForm: (open) => {
@@ -1487,8 +1550,12 @@ export class RichTextEditor {
 			.filter(([, value]) => value !== undefined)) as RichTextEditorOptions;
 		const before = this.options;
 		this.options = { ...before, ...defined };
+		// a palette left out is the default one, null none
+		const value = (options: RichTextEditorOptions, name: keyof RichTextEditorOptions) =>
+			name === 'colors' ? richTextColors(options.colors) : name === 'backgroundColors' ?
+				richTextBackgroundColors(options.backgroundColors) : options[name] ?? null;
 		const changed = (...names: (keyof RichTextEditorOptions)[]) => names.some((name) =>
-			JSON.stringify(before[name] ?? null) !== JSON.stringify(this.options[name] ?? null));
+			JSON.stringify(value(before, name)) !== JSON.stringify(value(this.options, name)));
 		this.render();
 		const readOnly = this.isReadOnly();
 		// read only now, or no longer: the options, or the text area
@@ -1618,6 +1685,8 @@ export class RichTextEditor {
 			return;
 		}
 		this.destroyed = true;
+		this.stopHearing?.();
+		this.stopHearing = null;
 		if (this.timer !== null) {
 			clearTimeout(this.timer);
 			this.timer = null;

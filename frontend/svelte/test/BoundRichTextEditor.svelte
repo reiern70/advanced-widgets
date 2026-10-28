@@ -13,21 +13,24 @@
 -->
 <!-- A RichTextEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
-	import type { RichTextHighlighter } from '@antilia/core';
+	import type { RichTextBackgroundColor, RichTextColor, RichTextHighlighter } from '@antilia/core';
 
 	import { RichTextEditor, type RichTextEditorState, type RichTextFormat,
 		type RichTextTool } from '../src/index.js';
 
 	let { value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved, name,
 		format, readOnly, toolbar, count, className = 'rich', onsave, onfocus, onblur, onresize,
-		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload }: {
+		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, colors,
+		backgroundColors }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
 		format?: RichTextFormat; readOnly?: boolean; toolbar?: RichTextTool[][] | false;
 		count?: boolean; className?: string; onsave?: (value: string) => void;
 		onfocus?: () => void; onblur?: (value: string) => void; onresize?: (size: unknown) => void;
 		onselectionchange?: (selection: unknown) => void;
 		highlight?: boolean | RichTextHighlighter; codeLanguages?: string[] | false;
-		uploadMaxSize?: number; onupload?: (file: File) => Promise<string> } = $props();
+		uploadMaxSize?: number; onupload?: (file: File) => Promise<string>;
+		colors?: readonly RichTextColor[] | null;
+		backgroundColors?: readonly RichTextBackgroundColor[] | null } = $props();
 	let modified = $state(false);
 </script>
 
@@ -35,7 +38,7 @@
 	<RichTextEditor id="e" class={className} bind:value bind:state={editorState} bind:modified
 		{saved} {name} {format} {readOnly} {toolbar} {count} stateDelay={0} minHeight={100}
 		label="Notes" {onsave} {onfocus} {onblur} {onresize} {onselectionchange} {highlight}
-		{codeLanguages} {uploadMaxSize} {onupload} />
+		{codeLanguages} {uploadMaxSize} {onupload} {colors} {backgroundColors} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

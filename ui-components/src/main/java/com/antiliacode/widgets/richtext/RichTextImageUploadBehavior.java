@@ -47,13 +47,13 @@ import com.github.openjson.JSONObject;
  * {@value #FILE_PARAMETER}. It answers JSON, {@code {"url": "..."}}, or {@code {"error": "..."}}
  * saying why not, in the language of the page, which the editor shows.
  * <p>
- * It checks the file before a {@link RichTextImageStore} keeps it: no larger than
+ * It checks the file before a {@link IRichTextImageStore} keeps it: no larger than
  * {@link #setMaxSize(Bytes) the size allowed}, which the request is cut at, and of
  * {@link #setTypes(Set) a type allowed} as its first bytes say, whatever its name and the type the
  * browser gave. The address the store answers must be one the editor and its cleaning take
  * ({@link RichTextPolicy#isSafeUrl(String)}): never {@code data:} nor {@code javascript:}.
  * <p>
- * A {@link RichTextEditor} with {@link RichTextEditor#setImageStore(RichTextImageStore) a store}
+ * A {@link RichTextEditor} with {@link RichTextEditor#setImageStore(IRichTextImageStore) a store}
  * has one already. Add one to a page for the editors of React and Svelte in it, and give them
  * {@code uploadImageTo(}{@link #getUploadUrl()}{@code )} as their {@code onUpload}.
  *
@@ -77,7 +77,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	/** The name of the upload, for the progress Wicket keeps of uploads. */
 	private static final String UPLOAD_ID = "antilia-rich-text-image";
 
-	private final RichTextImageStore store;
+	private final IRichTextImageStore store;
 
 	private Bytes maxSize = DEFAULT_MAX_SIZE;
 
@@ -87,7 +87,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	 * @param store
 	 *            what keeps the images and tells their addresses
 	 */
-	public RichTextImageUploadBehavior(RichTextImageStore store)
+	public RichTextImageUploadBehavior(IRichTextImageStore store)
 	{
 		this.store = Args.notNull(store, "store");
 	}
@@ -95,7 +95,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	/**
 	 * @return what keeps the images
 	 */
-	public RichTextImageStore getStore()
+	public IRichTextImageStore getStore()
 	{
 		return store;
 	}

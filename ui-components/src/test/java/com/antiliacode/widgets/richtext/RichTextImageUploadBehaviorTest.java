@@ -251,7 +251,7 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 
 		final RichTextImageUploadBehavior upload;
 
-		TestPage(RichTextImageStore store)
+		TestPage(IRichTextImageStore store)
 		{
 			upload = new RichTextImageUploadBehavior(store);
 			add(upload);

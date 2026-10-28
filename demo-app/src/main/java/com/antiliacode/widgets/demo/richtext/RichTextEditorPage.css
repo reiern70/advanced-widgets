@@ -176,3 +176,13 @@
 	font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	resize: vertical;
 }
+
+/* the keys of the feature of the page's own, KbdFeature, in the editor and as the page shows them */
+:is(.antilia-rich-text-editor, .rich-text-demo__view) kbd {
+	padding: 0.05em 0.4em;
+	border: 1px solid var(--border);
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.85em;
+}

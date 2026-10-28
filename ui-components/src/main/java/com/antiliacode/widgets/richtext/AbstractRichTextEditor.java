@@ -15,8 +15,6 @@ package com.antiliacode.widgets.richtext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,8 +43,10 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * HTML or Markdown, which a form posts as always.
  * <p>
  * The HTML comes from the browser and is never trusted: the editor
- * {@link #setSanitizer(RichTextSanitizer) cleans} it before the model gets it, keeping what its
- * {@link RichTextFeature features} write.
+ * {@link #setSanitizer(IRichTextSanitizer) cleans} it before the model gets it, keeping what its
+ * {@link #getFeatures() features} write. Each editor has features of its own kind,
+ * {@link IRichTextFeature}s: {@link RichTextFeature} and those of a page for {@link RichTextEditor},
+ * {@link com.antiliacode.widgets.ckeditor.CKEditorFeature} for CKEditor, of the same names.
  * <p>
  * The text area stays in the page, hidden, and holds the text: it fires {@code input} as the user
  * types and {@code change} once the editor loses the focus, as a text area does, and the editors
@@ -95,8 +95,6 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private RichTextFormat format = RichTextFormat.HTML;
 
-	private Set<RichTextFeature> features;
-
 	private List<Integer> headingLevels = DEFAULT_HEADING_LEVELS;
 
 	private boolean readOnly;
@@ -115,7 +113,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private boolean sendToServer = true;
 
-	private RichTextSanitizer sanitizer;
+	private IRichTextSanitizer sanitizer;
 
 	/**
 	 * @param id
@@ -167,10 +165,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	public abstract String getLoadingClass();
 
 	/**
-	 * @return what cleans the HTML unless {@link #setSanitizer(RichTextSanitizer) set otherwise}:
+	 * @return what cleans the HTML unless {@link #setSanitizer(IRichTextSanitizer) set otherwise}:
 	 *         the policy of the features of the editor
 	 */
-	protected abstract RichTextSanitizer getDefaultSanitizer();
+	protected abstract IRichTextSanitizer getDefaultSanitizer();
 
 	/**
 	 * Renders what the editor needs in the browser, before the script making it.
@@ -383,27 +381,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * @return what the text may hold: those set, or the {@link RichTextFeature#defaults(RichTextFormat)
-	 *         defaults of the format}
+	 * @return what the text may hold: the features set, or those of the editor by default for its
+	 *         format; their names go to the browser, and each renders what it needs there
 	 */
-	public Set<RichTextFeature> getFeatures()
-	{
-		return features == null ? RichTextFeature.defaults(format) :
-			Collections.unmodifiableSet(features);
-	}
-
-	/**
-	 * @param features
-	 *            what the text may hold; {@code null} for the defaults of the format, all the
-	 *            features for HTML
-	 * @return {@code this}
-	 */
-	public T setFeatures(Set<RichTextFeature> features)
-	{
-		this.features = features == null ? null : features.isEmpty() ?
-			EnumSet.noneOf(RichTextFeature.class) : EnumSet.copyOf(features);
-		return self();
-	}
+	public abstract Set<? extends IRichTextFeature> getFeatures();
 
 	/**
 	 * @return the levels of the headings
@@ -577,7 +558,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 * @return what cleans the HTML: the one set, or the {@link #getDefaultSanitizer() policy of the
 	 *         features}
 	 */
-	public RichTextSanitizer getSanitizer()
+	public IRichTextSanitizer getSanitizer()
 	{
 		return sanitizer != null ? sanitizer : getDefaultSanitizer();
 	}
@@ -589,7 +570,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *            extension's or a plugin's, needs one letting it through.
 	 * @return {@code this}
 	 */
-	public T setSanitizer(RichTextSanitizer sanitizer)
+	public T setSanitizer(IRichTextSanitizer sanitizer)
 	{
 		this.sanitizer = sanitizer;
 		return self();
@@ -607,20 +588,32 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	{
 		super.renderHead(response);
 		renderEditorHead(response);
+		// after the editor's script, which the scripts of the features register with
+		getFeatures().forEach(feature -> feature.renderHead(this, response));
 		response.render(OnDomReadyHeaderItem.forScript(getScriptObject() + ".attach(" +
 			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
 	}
 
 	/**
-	 * @return the options the editor is attached with in the browser: those the editors share,
-	 *         {@link #putEditorOptions(JSONObject) its own}, the texts and where the server hears
-	 *         of the state
+	 * @return the options the editor is attached with in the browser: those the editors share, the
+	 *         names of the features and {@link IRichTextFeature#putOptions(org.apache.wicket.Component,
+	 *         JSONObject) their options}, {@link #putEditorOptions(JSONObject) its own}, the texts and
+	 *         where the server hears of the state
 	 */
 	protected JSONObject getOptions()
 	{
 		RichTextEditorState state = getState();
 		JSONArray featureNames = new JSONArray();
-		getFeatures().forEach(feature -> featureNames.put(feature.getName()));
+		JSONObject featureOptions = new JSONObject();
+		getFeatures().forEach(feature -> {
+			featureNames.put(feature.getName());
+			JSONObject own = new JSONObject();
+			feature.putOptions(this, own);
+			if (own.length() > 0)
+			{
+				featureOptions.put(feature.getName(), own);
+			}
+		});
 		JSONObject options = new JSONObject()
 			.put("format", format.getName())
 			.put("features", featureNames)
@@ -629,6 +622,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 			.put("count", count)
 			.put("state", state.withSize(resizable == null ? ResizableSize.NONE :
 				state.getSize().along(resizable)).toJson());
+		if (featureOptions.length() > 0)
+		{
+			options.put("featureOptions", featureOptions);
+		}
 		putEditorOptions(options);
 		if (savedModel != null)
 		{

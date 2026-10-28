@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.ckeditor;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -39,15 +40,14 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
 import com.antiliacode.widgets.richtext.AbstractRichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
-import com.antiliacode.widgets.richtext.RichTextFeature;
 import com.antiliacode.widgets.richtext.RichTextFormat;
-import com.antiliacode.widgets.richtext.RichTextSanitizer;
+import com.antiliacode.widgets.richtext.IRichTextSanitizer;
 
 /**
  * A text area shown as CKEditor 5, a rich text editor with its own toolbar, balloons and dialogs,
  * in the colors of the {@link com.antiliacode.widgets.theme.Theme theme} it is in: the
- * {@link RichTextFeature features} of the text, all of them but the colors ({@link #FEATURES})
- * unless {@link #setFeatures(java.util.Set) told otherwise}, are CKEditor's plugins, and its
+ * {@link CKEditorFeature features} of the text, all of them ({@link #FEATURES}) unless
+ * {@link #setFeatures(Collection) told otherwise}, are CKEditor's plugins, and its
  * toolbar has their tools unless {@link #setToolbar(List) set otherwise}. Attach it to a
  * {@code <textarea>}.
  * <p>
@@ -59,7 +59,7 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
  * It has the contract of {@link RichTextEditor}, Tiptap's, so that a page can switch between the
  * two, from {@link AbstractRichTextEditor}: the model is the text, HTML by default, or Markdown
  * with CKEditor's Markdown plugin ({@link #setFormat(RichTextFormat)}); the HTML is
- * {@link #setSanitizer(RichTextSanitizer) cleaned} before the model gets it, with the
+ * {@link #setSanitizer(IRichTextSanitizer) cleaned} before the model gets it, with the
  * {@link CKEditorPolicy} of the features by default, and {@link CKEditorView} shows it in a page,
  * cleaned the same way. The text area stays in the page, hidden, and holds the text; the editor
  * fires the events of {@link com.antiliacode.widgets.richtext.RichTextEditorEvent}, which
@@ -71,7 +71,7 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
  * would block: text aligns by classes, those of {@link RichTextEditor}, and images have no width
  * or height. More plugins of the build ({@link #setPlugins(String...)}) and CKEditor's
  * configuration of the page's own ({@link #setConfig(JSONObject)}) may write more: a
- * {@link #setSanitizer(RichTextSanitizer) sanitizer} of the page lets it through. Those writing
+ * {@link #setSanitizer(IRichTextSanitizer) sanitizer} of the page lets it through. Those writing
  * styles, {@code FontFamily}, {@code FontSize} in pixels, {@code FontColor},
  * {@code FontBackgroundColor}, {@code ListProperties}, {@code ImageResize},
  * {@code TableProperties} and {@code TableCellProperties}, are left out by default: they need
@@ -109,17 +109,19 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	public static final String LOADING_CLASS = "antilia-ck-editor-loading";
 
 	/**
-	 * The features CKEditor has: all but the colors of the text and of its background, which
-	 * CKEditor's {@code FontColor} and {@code FontBackgroundColor} write as styles, where
-	 * {@link RichTextEditor} writes the classes of its palette.
+	 * The features CKEditor has: those of {@link RichTextEditor} but the colors of the text and of
+	 * its background, which CKEditor's {@code FontColor} and {@code FontBackgroundColor} write as
+	 * styles, where {@link RichTextEditor} writes the classes of its palette.
 	 */
-	public static final Set<RichTextFeature> FEATURES = Collections.unmodifiableSet(
-		EnumSet.complementOf(EnumSet.of(RichTextFeature.TEXT_COLOR,
-			RichTextFeature.TEXT_BACKGROUND)));
+	public static final Set<CKEditorFeature> FEATURES = Collections.unmodifiableSet(
+		EnumSet.allOf(CKEditorFeature.class));
 
 	/** The texts of the editor's own, those of {@link RichTextEditor} of the same names. */
 	private static final List<String> TEXTS = List.of("characters", "character", "words", "word",
 		"resize", "linkNewTab");
+
+	/** The features set, {@code null} for those of the format. */
+	private Set<CKEditorFeature> features;
 
 	private CKEditorLibrary library;
 
@@ -182,22 +184,60 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	}
 
 	@Override
-	protected RichTextSanitizer getDefaultSanitizer()
+	protected IRichTextSanitizer getDefaultSanitizer()
 	{
 		return CKEditorPolicy.of(getFeatures());
 	}
 
 	/**
-	 * @return what the text may hold: those set, or the defaults of the format, but only the
-	 *         {@link #FEATURES} CKEditor has
+	 * @return what the text may hold: the features set, or
+	 *         {@link CKEditorFeature#defaults(RichTextFormat) those of the format}
 	 */
 	@Override
-	public Set<RichTextFeature> getFeatures()
+	public Set<CKEditorFeature> getFeatures()
 	{
-		Set<RichTextFeature> features = EnumSet.noneOf(RichTextFeature.class);
-		features.addAll(super.getFeatures());
-		features.retainAll(FEATURES);
-		return Collections.unmodifiableSet(features);
+		return features == null ? CKEditorFeature.defaults(getFormat()) :
+			Collections.unmodifiableSet(features);
+	}
+
+	/**
+	 * @param features
+	 *            what the text may hold; {@code null} for the features of the format, all of them
+	 *            for HTML. {@link CKEditorFeature#of(String)} gives CKEditor's feature of the name
+	 *            of one of {@link RichTextEditor}.
+	 * @return {@code this}
+	 */
+	public CKEditor setFeatures(Collection<CKEditorFeature> features)
+	{
+		this.features = features == null ? null : features.isEmpty() ?
+			EnumSet.noneOf(CKEditorFeature.class) : EnumSet.copyOf(features);
+		return this;
+	}
+
+	/**
+	 * @param feature
+	 *            a feature the editor gets, besides those of the format until the page sets others
+	 * @return {@code this}
+	 */
+	public CKEditor addFeature(CKEditorFeature feature)
+	{
+		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
+		all.addAll(getFeatures());
+		all.add(Args.notNull(feature, "feature"));
+		return setFeatures(all);
+	}
+
+	/**
+	 * @param feature
+	 *            a feature the editor no longer has
+	 * @return {@code this}
+	 */
+	public CKEditor removeFeature(CKEditorFeature feature)
+	{
+		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
+		all.addAll(getFeatures());
+		all.remove(feature);
+		return setFeatures(all);
 	}
 
 	/**
@@ -286,7 +326,7 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	 * @param plugins
 	 *            the names of plugins of CKEditor's build besides those of the features,
 	 *            {@code FindAndReplace} for example; none by default. What they write needs a
-	 *            {@link #setSanitizer(RichTextSanitizer) sanitizer} letting it through.
+	 *            {@link #setSanitizer(IRichTextSanitizer) sanitizer} letting it through.
 	 * @return {@code this}
 	 */
 	public CKEditor setPlugins(String... plugins)

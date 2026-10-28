@@ -213,7 +213,7 @@ class CKEditorTest extends WicketTestCase
 
 		// no toolbar, and back to the features'
 		editor.setToolbar(List.of()).setPlugins((String[])null).setConfig(null).setResizable(null)
-			.setFeatures(EnumSet.of(RichTextFeature.BOLD));
+			.setFeatures(EnumSet.of(CKEditorFeature.BOLD));
 		tester.startPage(new TestPage(editor));
 		options = options(editor);
 		assertFalse(options.getBoolean("toolbar"));
@@ -221,7 +221,7 @@ class CKEditorTest extends WicketTestCase
 		assertFalse(options.has("config"));
 		assertFalse(options.getBoolean("resizable"));
 		assertEquals("[\"bold\"]", options.getJSONArray("features").toString());
-		assertEquals(CKEditorPolicy.of(EnumSet.of(RichTextFeature.BOLD)), editor.getSanitizer());
+		assertEquals(CKEditorPolicy.of(EnumSet.of(CKEditorFeature.BOLD)), editor.getSanitizer());
 		editor.setToolbar((List<String>)null);
 		assertNull(editor.getToolbar());
 		assertNull(editor.getConfig());
@@ -231,11 +231,12 @@ class CKEditorTest extends WicketTestCase
 	void hasNoColorsWhichCKEditorWritesAsStyles()
 	{
 		CKEditor editor = new CKEditor("editor", Model.of(HTML));
-		assertFalse(editor.getFeatures().contains(RichTextFeature.TEXT_COLOR));
-		assertFalse(editor.getFeatures().contains(RichTextFeature.TEXT_BACKGROUND));
+		assertNull(CKEditorFeature.of(RichTextFeature.TEXT_COLOR.getName()));
+		assertNull(CKEditorFeature.of(RichTextFeature.TEXT_BACKGROUND.getName()));
+		assertEquals(CKEditorFeature.BOLD, CKEditorFeature.of(RichTextFeature.BOLD.getName()));
 		assertEquals(CKEditor.FEATURES, editor.getFeatures());
-		editor.setFeatures(EnumSet.of(RichTextFeature.BOLD, RichTextFeature.TEXT_COLOR));
-		assertEquals(EnumSet.of(RichTextFeature.BOLD), editor.getFeatures());
+		editor.setFeatures(EnumSet.of(CKEditorFeature.BOLD));
+		assertEquals(EnumSet.of(CKEditorFeature.BOLD), editor.getFeatures());
 		tester.startPage(new TestPage(editor));
 		assertEquals("[\"bold\"]", options(editor).getJSONArray("features").toString());
 	}
@@ -410,7 +411,7 @@ class CKEditorTest extends WicketTestCase
 	void goesToThePageStoreAndBack()
 	{
 		CKEditor editor = new CKEditor("editor", Model.of(HTML));
-		editor.setFeatures(EnumSet.of(RichTextFeature.BOLD, RichTextFeature.LINK))
+		editor.setFeatures(EnumSet.of(CKEditorFeature.BOLD, CKEditorFeature.LINK))
 			.setConfig(new JSONObject().put("a", 1)).setLibrary(LIBRARY.withLicenseKey("k"))
 			.setToolbar("bold").setState(RichTextEditorState.selecting(2, 5));
 		TestPage page = new TestPage(editor);

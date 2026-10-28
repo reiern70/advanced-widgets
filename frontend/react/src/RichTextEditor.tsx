@@ -16,7 +16,9 @@ import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 
 import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLevel,
 	type ResizableSize, type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
-	type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
+	type RichTextBackgroundColor, type RichTextColor, type RichTextEditorStateChange,
+	type RichTextEditorTexts,
+	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
 	type RichTextTool } from '@antilia/core';
 
@@ -36,6 +38,24 @@ export interface RichTextEditorProps {
 	features?: readonly RichTextFeature[];
 	/** The levels of the headings, 1 to 4 when left out. */
 	headingLevels?: readonly HeadingLevel[];
+	/**
+	 * The palette of the colors of the text, in the order of its menu: DEFAULT_RICH_TEXT_COLORS
+	 * when left out; null or empty for none, without the tool. The page's style sheets color the
+	 * classes of colors of its own; Wicket's RichTextEditor.colors() gives a palette with its
+	 * labels translated.
+	 */
+	colors?: readonly RichTextColor[] | null;
+	/**
+	 * The palette of the colors of the background, apart from those of the text:
+	 * DEFAULT_RICH_TEXT_BACKGROUND_COLORS when left out; null or empty for none, without the tool.
+	 * Wicket's RichTextEditor.backgroundColors() gives one with its labels translated.
+	 */
+	backgroundColors?: readonly RichTextBackgroundColor[] | null;
+	/**
+	 * The options of the features registered (registerRichTextFeature), by their names, which
+	 * make their extensions.
+	 */
+	featureOptions?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
 	/** The tools of the toolbar, in groups; the default toolbar when left out, false for none. */
 	toolbar?: readonly (readonly RichTextTool[])[] | false;
 	/** Whether a menu of the inline formats shows over the text selected, false when left out. */
@@ -138,10 +158,12 @@ export interface RichTextEditorHandle {
  */
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
 	function RichTextEditor(props, ref) {
-		const { value, saved, format, features, headingLevels, toolbar, bubbleMenu, readOnly,
-			placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			stateDelay, extensions, texts, highlight, codeLanguages, uploadTypes, uploadMaxSize, name,
-			id, className } = props;
+		const { value, saved, format, features, featureOptions, headingLevels, colors,
+			backgroundColors, toolbar,
+			bubbleMenu,
+			readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth,
+			maxHeight, stateDelay, extensions, texts, highlight, codeLanguages, uploadTypes,
+			uploadMaxSize, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
@@ -167,7 +189,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			const editor = new CoreRichTextEditor(element.current!, {
 				value: current.value ?? '', saved: current.saved, format: current.format,
 				features: current.features, headingLevels: current.headingLevels,
-				toolbar: current.toolbar, bubbleMenu: current.bubbleMenu, readOnly: current.readOnly,
+				featureOptions: current.featureOptions,
+				colors: current.colors, backgroundColors: current.backgroundColors,
+				toolbar: current.toolbar, bubbleMenu: current.bubbleMenu,
+				readOnly: current.readOnly,
 				placeholder: current.placeholder, label: current.label, limit: current.limit,
 				count: current.count, resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
@@ -192,11 +217,14 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 		}, [look, name]);
 
 		useLayoutEffect(() => {
-			instance.current?.configure({ format, features, headingLevels, toolbar, bubbleMenu,
-				readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth,
-				maxHeight, stateDelay, texts });
-		}, [format, features, headingLevels, toolbar, bubbleMenu, readOnly, placeholder, label,
-			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts]);
+			instance.current?.configure({ format, features, featureOptions, headingLevels, colors,
+				backgroundColors,
+				toolbar, bubbleMenu, readOnly, placeholder, label, limit, count, resizable, minWidth,
+				minHeight, maxWidth, maxHeight, stateDelay, texts });
+		}, [format, features, featureOptions, headingLevels, colors, backgroundColors, toolbar,
+			bubbleMenu,
+			readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth,
+			maxHeight, stateDelay, texts]);
 
 		useLayoutEffect(() => {
 			if (extensions !== undefined) {

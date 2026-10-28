@@ -35,7 +35,7 @@ import org.apache.wicket.util.lang.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.antiliacode.widgets.richtext.RichTextImageStore;
+import com.antiliacode.widgets.richtext.IRichTextImageStore;
 import com.antiliacode.widgets.richtext.RichTextImageType;
 
 /**
@@ -47,7 +47,7 @@ import com.antiliacode.widgets.richtext.RichTextImageType;
  * Each image is named anew, by a random name and the extension of its type, which the resource
  * serves it as: the name the browser gave is never a path on the server.
  */
-public final class RichTextImages implements RichTextImageStore
+public final class RichTextImages implements IRichTextImageStore
 {
 	private static final long serialVersionUID = 1L;
 
