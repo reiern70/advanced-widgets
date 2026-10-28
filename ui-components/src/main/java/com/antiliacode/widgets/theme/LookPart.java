@@ -436,6 +436,13 @@ public enum LookPart
 	RICH_TEXT_FORM_BUTTONS(LookAspect.BASE),
 	RICH_TEXT_VIEW(LookAspect.BASE),
 
+	// CKEditor 5: its toolbar, balloons and dialogs are its own; the count below the text, and
+	// the HTML as a page shows it
+	CK_EDITOR(LookAspect.BASE),
+	CK_EDITOR_FIELD(LookAspect.BASE),
+	CK_EDITOR_STATUS(LookAspect.BASE),
+	CK_EDITOR_VIEW(LookAspect.BASE),
+
 	// desktops and their windows
 	DESKTOP(LookAspect.BASE),
 	DESKTOP_AREA(LookAspect.BASE),

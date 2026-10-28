@@ -84,8 +84,13 @@ import { DEFAULT_HEADING_LEVELS, isSafeUrl, quietHtml, RICH_TEXT_FEATURES, RICH_
 import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH_TEXT_BUBBLE_TOOLS,
 	RichTextToolbar, type RichTextCodeLanguage, type RichTextEditorTexts, type RichTextTool,
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
+import { RICH_TEXT_EDITOR_EVENTS, sameState, type RichTextEditorSelection,
+	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
 import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText, uploadExtension,
 	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
+
+export { RICH_TEXT_EDITOR_EVENTS, type RichTextEditorSelection, type RichTextEditorState,
+	type RichTextEditorStateChange };
 
 /**
  * The classes of Tiptap and ProseMirror a function registering an extension is given, for a page
@@ -169,33 +174,6 @@ function extensionsNamed(name: string): AnyExtension[] {
 		getHost().log.error('The extension ' + name + ' of the rich text editor failed', error);
 		return [];
 	}
-}
-
-/** What is selected: from where the selection starts to where its head, the cursor, is. */
-export interface RichTextEditorSelection {
-	anchor: number;
-	head: number;
-}
-
-/**
- * The state of an editor besides its text: what is selected, how far it is scrolled, in pixels,
- * and the size the user gave it, null for the size the page's style sheets give it. The positions
- * of the selection are those of ProseMirror, which count the places between the nodes too.
- */
-export interface RichTextEditorState {
-	selection?: RichTextEditorSelection;
-	scrollTop?: number;
-	scrollLeft?: number;
-	width?: number | null;
-	height?: number | null;
-}
-
-/** What onStateChange is told besides the state. */
-export interface RichTextEditorStateChange {
-	/** Whether the page is going: the last chance to keep the state. */
-	leaving: boolean;
-	/** Whether the text changed since the state was last reported. */
-	changed: boolean;
 }
 
 /**
@@ -292,28 +270,6 @@ export interface RichTextEditorOptions {
 	onResize?: (size: ResizableSize) => void;
 }
 
-/** The events the editor fires, on its text area or its element, which bubble. */
-export const RICH_TEXT_EDITOR_EVENTS = Object.freeze({
-	/** The user changed the text. */
-	change: 'antilia-rich-text-editor:change',
-	/** The editor got the focus. */
-	focus: 'antilia-rich-text-editor:focus',
-	/** The editor lost the focus. */
-	blur: 'antilia-rich-text-editor:blur',
-	/** The user moved the cursor or selected text. */
-	select: 'antilia-rich-text-editor:select',
-	/** The user pressed Ctrl+S, or Cmd+S. */
-	save: 'antilia-rich-text-editor:save',
-	/** The user resized the editor. */
-	resize: 'antilia-rich-text-editor:resize',
-	/** The text came to have changes not saved, or no longer has. */
-	modified: 'antilia-rich-text-editor:modified',
-	/** The state was reported: what onStateChange is given. */
-	state: 'antilia-rich-text-editor:state',
-	/** The editor has a text: it started, or its text changed, by the user or by the page. */
-	text: 'antilia-rich-text-editor:text'
-});
-
 /** What the events of the editor carry, besides what each tells. */
 export interface RichTextEditorEventDetail {
 	editor: RichTextEditor;
@@ -346,24 +302,6 @@ const SCHEMA_OPTIONS: readonly (keyof RichTextEditorOptions)[] = ['format', 'fea
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
 	return typeof target === 'string' ? document.getElementById(target) : target;
-}
-
-/**
- * @returns a state in one shape whatever its source: no selection is a cursor at the start, no
- *          scrolling none and no size the page's
- */
-function canonicalState(state: RichTextEditorState | null | undefined): string {
-	if (!state) {
-		return 'null';
-	}
-	return JSON.stringify([state.selection?.anchor ?? 0, state.selection?.head ?? 0,
-		Math.round(state.scrollTop ?? 0), Math.round(state.scrollLeft ?? 0), state.width ?? null,
-		state.height ?? null]);
-}
-
-function sameState(one: RichTextEditorState | null | undefined,
-	other: RichTextEditorState | null | undefined): boolean {
-	return canonicalState(one) === canonicalState(other);
 }
 
 /**

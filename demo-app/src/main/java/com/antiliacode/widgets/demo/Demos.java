@@ -21,6 +21,7 @@ import org.apache.wicket.Page;
 
 import com.antiliacode.widgets.demo.autocomplete.AutocompletePage;
 import com.antiliacode.widgets.demo.button.ButtonsPage;
+import com.antiliacode.widgets.demo.ckeditor.CKEditorPage;
 import com.antiliacode.widgets.demo.codeeditor.CodeEditorPage;
 import com.antiliacode.widgets.demo.contacts.ContactsPage;
 import com.antiliacode.widgets.demo.datatable.BeanDynamicDataTablePage;
@@ -124,6 +125,7 @@ public final class Demos
 		new Demo("upload", "forms", UploadPage.class, false),
 		new Demo("codeEditor", "forms", CodeEditorPage.class, true),
 		new Demo("richTextEditor", "forms", RichTextEditorPage.class, true),
+		new Demo("ckEditor", "forms", CKEditorPage.class, true),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true),
 		new Demo("resizable", "layout", ResizablePage.class, true),

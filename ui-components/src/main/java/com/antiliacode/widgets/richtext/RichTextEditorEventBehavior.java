@@ -21,8 +21,9 @@ import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * Hears on the server of what a {@link RichTextEditor} tells, a {@link RichTextEditorEvent}: the
- * focus lost, Ctrl+S pressed and so on. As the behaviors updating form components via Ajax do, it
+ * Hears on the server of what a {@link RichTextEditor} tells, or a
+ * {@link com.antiliacode.widgets.ckeditor.CKEditor}, which fires the same events, a
+ * {@link RichTextEditorEvent}: the focus lost, Ctrl+S pressed and so on. As the behaviors updating form components via Ajax do, it
  * sends the text with the event, which the editor cleans, validates and gives its model, then calls
  * {@link #onUpdate(org.apache.wicket.ajax.AjaxRequestTarget)}, or
  * {@link #onError(org.apache.wicket.ajax.AjaxRequestTarget, RuntimeException)} when the text is not

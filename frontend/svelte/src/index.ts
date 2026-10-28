@@ -14,6 +14,7 @@
 
 export { default as Autocomplete } from './Autocomplete.svelte';
 export { default as Button } from './Button.svelte';
+export { default as CKEditor } from './CKEditor.svelte';
 export { default as CodeEditor } from './CodeEditor.svelte';
 export { default as DataTable } from './DataTable.svelte';
 export { default as DatePicker } from './DatePicker.svelte';
@@ -39,13 +40,14 @@ export { default as TreeGrid } from './TreeGrid.svelte';
 export type { DesktopWindowType, DropdownOption, MenuEntry, MenuItem, MenuSeparator,
 	TabItem } from './types.js';
 export { getLook, LOOK_CONTEXT, setLook } from './look.js';
-export { BOOTSTRAP_LOOK, buttonClasses, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT,
-	CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker, desktop, dropdown,
+export { BOOTSTRAP_LOOK, buttonClasses, CK_EDITOR_FEATURES, ckEditor, CODE_EDITOR_EVENTS,
+	CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker, desktop, dropdown,
 	localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS,
 	registerLanguage, registerLook, registerRichTextExtension, resizable, DEFAULT_RICH_TEXT_TOOLBAR,
 	isSafeUrl, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RICH_TEXT_TOOLS,
 	richTextEditor, scrollbar, splitPanel, tabs } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
+	CKEditorBuild, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
 	CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader, CodeEditorOptions,
 	CodeEditorSelection, CodeEditorState, CodeEditorStateChange, CodeEditorTexts, Extension,
 	DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
