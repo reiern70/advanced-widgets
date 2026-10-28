@@ -23,12 +23,12 @@ import org.apache.wicket.util.io.IClusterable;
  * at, which the image of the text then takes: in a folder, a database or a store of files, served
  * by a resource of the application's own for example.
  *
- * @see RichTextEditor#setImageStore(RichTextImageStore)
+ * @see RichTextEditor#setImageStore(IRichTextImageStore)
  * @see RichTextImageUploadBehavior
  * @since 11.0.0
  */
 @FunctionalInterface
-public interface RichTextImageStore extends IClusterable
+public interface IRichTextImageStore extends IClusterable
 {
 	/**
 	 * Keeps an image a user uploaded. The image is checked already: one of the types allowed, as

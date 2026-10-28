@@ -34,7 +34,7 @@ import com.antiliacode.widgets.theme.LookPart;
  * code, tables, colors and alignment drawn as in the editor, by {@link RichTextEditor#CSS}. Attach
  * it to a {@code <div>}, whose body it replaces.
  * <p>
- * The HTML is {@link #setSanitizer(RichTextSanitizer) cleaned} as it is written into the page,
+ * The HTML is {@link #setSanitizer(IRichTextSanitizer) cleaned} as it is written into the page,
  * whatever the model holds: HTML saved before the editor cleaned it, or from somewhere else, shows
  * no script. By default with the {@link RichTextPolicy policy} of all the features and the
  * palettes of the view, those of the editor the HTML comes from: of the colors of the text,
@@ -48,7 +48,7 @@ public class RichTextView extends WebComponent
 {
 	private static final long serialVersionUID = 1L;
 
-	private RichTextSanitizer sanitizer;
+	private IRichTextSanitizer sanitizer;
 
 	/** The features set, {@code null} for all those of {@link RichTextFeature}. */
 	private Set<IRichTextFeature> features;
@@ -76,7 +76,7 @@ public class RichTextView extends WebComponent
 	 * @return what cleans the HTML as the page shows it: the one set, or the policy of all the
 	 *         features with the palettes of the view
 	 */
-	public RichTextSanitizer getSanitizer()
+	public IRichTextSanitizer getSanitizer()
 	{
 		if (sanitizer != null)
 		{
@@ -96,7 +96,7 @@ public class RichTextView extends WebComponent
 	 *            the features with the palettes of the view, as by default
 	 * @return {@code this}
 	 */
-	public RichTextView setSanitizer(RichTextSanitizer sanitizer)
+	public RichTextView setSanitizer(IRichTextSanitizer sanitizer)
 	{
 		this.sanitizer = sanitizer;
 		return this;

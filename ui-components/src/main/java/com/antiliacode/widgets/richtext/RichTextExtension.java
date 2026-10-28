@@ -36,7 +36,7 @@ import org.apache.wicket.util.lang.Args;
  * The kit holds the editor's classes of Tiptap and ProseMirror ({@code Extension}, {@code Node},
  * {@code Mark}, {@code mergeAttributes}, the input rules, {@code Plugin}...), so a page needs none of
  * its own. An extension writing elements of its own into the HTML needs a
- * {@link RichTextEditor#setSanitizer(RichTextSanitizer) cleaning} letting them through.
+ * {@link RichTextEditor#setSanitizer(IRichTextSanitizer) cleaning} letting them through.
  *
  * @since 11.0.0
  */

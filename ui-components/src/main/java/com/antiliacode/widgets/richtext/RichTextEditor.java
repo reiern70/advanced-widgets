@@ -64,7 +64,7 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * <p>
  * The model is the text, HTML by default, or Markdown or Tiptap's JSON
  * ({@link #setFormat(RichTextFormat)}). The HTML comes from the browser and is never trusted: the
- * editor {@link #setSanitizer(RichTextSanitizer) cleans} it before the model gets it, keeping what
+ * editor {@link #setSanitizer(IRichTextSanitizer) cleans} it before the model gets it, keeping what
  * its features write, with {@link RichTextPolicy} by default; {@link RichTextView} shows it in a
  * page, cleaned the same way. The HTML has no style attribute, which a Content Security Policy
  * without {@code 'unsafe-inline'} would block: text aligns by classes, and takes colors by classes
@@ -91,11 +91,12 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * Markdown: the editor then renders {@link #HIGHLIGHT_JS}, which holds them, and the style sheet of
  * the code editor. The HTML stays plain: the colors are the editor's alone.
  * <p>
- * With {@link #setImageStore(RichTextImageStore) a store of images}, the user uploads images: chosen
- * in the form of the image, dropped into the text or pasted. A behavior of the editor takes each,
- * no larger than {@link #setImageMaxSize(Bytes) allowed} and of {@link #setImageTypes(Set) a type
- * allowed} as its bytes say, has the store keep it and answers the address it is served at, which
- * the image takes and the cleaning checks as any other (see {@link RichTextImageUploadBehavior}).
+ * With {@link #setImageStore(IRichTextImageStore) a store of images}, the user uploads images:
+ * chosen in the form of the image, dropped into the text or pasted. A behavior of the editor takes
+ * each, no larger than {@link #setImageMaxSize(Bytes) allowed} and of
+ * {@link #setImageTypes(Set) a type allowed} as its bytes say, has the store keep it and answers
+ * the address it is served at, which the image takes and the cleaning checks as any other (see
+ * {@link RichTextImageUploadBehavior}).
  * <p>
  * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -223,7 +224,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private List<String> codeLanguages;
 
-	private RichTextImageStore imageStore;
+	private IRichTextImageStore imageStore;
 
 	/** The behavior taking the images, made with the first store. */
 	private RichTextImageUploadBehavior imageUpload;
@@ -288,7 +289,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	@Override
-	protected RichTextSanitizer getDefaultSanitizer()
+	protected IRichTextSanitizer getDefaultSanitizer()
 	{
 		return RichTextPolicy.of(getFeatures(), colors, backgroundColors);
 	}
@@ -603,7 +604,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	/**
 	 * @return what keeps the images the user uploads, {@code null} for none
 	 */
-	public RichTextImageStore getImageStore()
+	public IRichTextImageStore getImageStore()
 	{
 		return imageStore;
 	}
@@ -614,7 +615,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 *            for no uploads, as by default: an image is an address the user gives
 	 * @return {@code this}
 	 */
-	public RichTextEditor setImageStore(RichTextImageStore imageStore)
+	public RichTextEditor setImageStore(IRichTextImageStore imageStore)
 	{
 		this.imageStore = imageStore;
 		if (imageStore != null && imageUpload == null)

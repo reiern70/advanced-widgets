@@ -43,7 +43,7 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * HTML or Markdown, which a form posts as always.
  * <p>
  * The HTML comes from the browser and is never trusted: the editor
- * {@link #setSanitizer(RichTextSanitizer) cleans} it before the model gets it, keeping what its
+ * {@link #setSanitizer(IRichTextSanitizer) cleans} it before the model gets it, keeping what its
  * {@link #getFeatures() features} write. Each editor has features of its own kind,
  * {@link IRichTextFeature}s: {@link RichTextFeature} and those of a page for {@link RichTextEditor},
  * {@link com.antiliacode.widgets.ckeditor.CKEditorFeature} for CKEditor, of the same names.
@@ -113,7 +113,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private boolean sendToServer = true;
 
-	private RichTextSanitizer sanitizer;
+	private IRichTextSanitizer sanitizer;
 
 	/**
 	 * @param id
@@ -165,10 +165,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	public abstract String getLoadingClass();
 
 	/**
-	 * @return what cleans the HTML unless {@link #setSanitizer(RichTextSanitizer) set otherwise}:
+	 * @return what cleans the HTML unless {@link #setSanitizer(IRichTextSanitizer) set otherwise}:
 	 *         the policy of the features of the editor
 	 */
-	protected abstract RichTextSanitizer getDefaultSanitizer();
+	protected abstract IRichTextSanitizer getDefaultSanitizer();
 
 	/**
 	 * Renders what the editor needs in the browser, before the script making it.
@@ -558,7 +558,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 * @return what cleans the HTML: the one set, or the {@link #getDefaultSanitizer() policy of the
 	 *         features}
 	 */
-	public RichTextSanitizer getSanitizer()
+	public IRichTextSanitizer getSanitizer()
 	{
 		return sanitizer != null ? sanitizer : getDefaultSanitizer();
 	}
@@ -570,7 +570,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *            extension's or a plugin's, needs one letting it through.
 	 * @return {@code this}
 	 */
-	public T setSanitizer(RichTextSanitizer sanitizer)
+	public T setSanitizer(IRichTextSanitizer sanitizer)
 	{
 		this.sanitizer = sanitizer;
 		return self();

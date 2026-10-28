@@ -258,7 +258,7 @@ address, which the image then takes, or a message above the text says why not. T
 the type (`uploadTypes`: PNG, JPEG, GIF and WebP by default, no SVG) and the size (`uploadMaxSize`)
 first, and the address the page answers goes through `isSafeUrl`: never `data:`. `uploadImageTo(url)`
 posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as Wicket's
-`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `RichTextImageStore` has one, which
+`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `IRichTextImageStore` has one, which
 checks the size again, tells the type by the first bytes of the file, has the store keep it, and
 checks the address the store answers; a page adds one for its React and Svelte editors.
 

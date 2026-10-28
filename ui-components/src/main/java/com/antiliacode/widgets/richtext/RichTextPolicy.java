@@ -49,7 +49,7 @@ import org.owasp.html.PolicyFactory;
  *
  * @since 11.0.0
  */
-public final class RichTextPolicy implements RichTextSanitizer
+public final class RichTextPolicy implements IRichTextSanitizer
 {
 	private static final long serialVersionUID = 1L;
 

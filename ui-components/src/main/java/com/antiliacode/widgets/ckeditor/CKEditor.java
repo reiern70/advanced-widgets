@@ -41,7 +41,7 @@ import com.antiliacode.widgets.richtext.AbstractRichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
-import com.antiliacode.widgets.richtext.RichTextSanitizer;
+import com.antiliacode.widgets.richtext.IRichTextSanitizer;
 
 /**
  * A text area shown as CKEditor 5, a rich text editor with its own toolbar, balloons and dialogs,
@@ -59,7 +59,7 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
  * It has the contract of {@link RichTextEditor}, Tiptap's, so that a page can switch between the
  * two, from {@link AbstractRichTextEditor}: the model is the text, HTML by default, or Markdown
  * with CKEditor's Markdown plugin ({@link #setFormat(RichTextFormat)}); the HTML is
- * {@link #setSanitizer(RichTextSanitizer) cleaned} before the model gets it, with the
+ * {@link #setSanitizer(IRichTextSanitizer) cleaned} before the model gets it, with the
  * {@link CKEditorPolicy} of the features by default, and {@link CKEditorView} shows it in a page,
  * cleaned the same way. The text area stays in the page, hidden, and holds the text; the editor
  * fires the events of {@link com.antiliacode.widgets.richtext.RichTextEditorEvent}, which
@@ -71,7 +71,7 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
  * would block: text aligns by classes, those of {@link RichTextEditor}, and images have no width
  * or height. More plugins of the build ({@link #setPlugins(String...)}) and CKEditor's
  * configuration of the page's own ({@link #setConfig(JSONObject)}) may write more: a
- * {@link #setSanitizer(RichTextSanitizer) sanitizer} of the page lets it through. Those writing
+ * {@link #setSanitizer(IRichTextSanitizer) sanitizer} of the page lets it through. Those writing
  * styles, {@code FontFamily}, {@code FontSize} in pixels, {@code FontColor},
  * {@code FontBackgroundColor}, {@code ListProperties}, {@code ImageResize},
  * {@code TableProperties} and {@code TableCellProperties}, are left out by default: they need
@@ -184,7 +184,7 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	}
 
 	@Override
-	protected RichTextSanitizer getDefaultSanitizer()
+	protected IRichTextSanitizer getDefaultSanitizer()
 	{
 		return CKEditorPolicy.of(getFeatures());
 	}
@@ -326,7 +326,7 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	 * @param plugins
 	 *            the names of plugins of CKEditor's build besides those of the features,
 	 *            {@code FindAndReplace} for example; none by default. What they write needs a
-	 *            {@link #setSanitizer(RichTextSanitizer) sanitizer} letting it through.
+	 *            {@link #setSanitizer(IRichTextSanitizer) sanitizer} letting it through.
 	 * @return {@code this}
 	 */
 	public CKEditor setPlugins(String... plugins)

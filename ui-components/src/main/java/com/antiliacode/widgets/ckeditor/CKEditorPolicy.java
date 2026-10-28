@@ -22,7 +22,7 @@ import org.owasp.html.PolicyFactory;
 
 import com.antiliacode.widgets.richtext.RichTextHtmlRules;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
-import com.antiliacode.widgets.richtext.RichTextSanitizer;
+import com.antiliacode.widgets.richtext.IRichTextSanitizer;
 
 /**
  * The cleaning of the HTML of a {@link CKEditor}, with the OWASP Java HTML Sanitizer: it keeps the
@@ -48,7 +48,7 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
  *
  * @since 11.0.0
  */
-public final class CKEditorPolicy implements RichTextSanitizer
+public final class CKEditorPolicy implements IRichTextSanitizer
 {
 	private static final long serialVersionUID = 1L;
 
