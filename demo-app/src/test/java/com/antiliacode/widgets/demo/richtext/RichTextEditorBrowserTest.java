@@ -319,6 +319,40 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
+	void hearsOfTheEventsTheEditorIsGiven(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		String title = driver.getTitle();
+
+		// the focus got goes to the server alone
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		wait.until(d -> heard().contains("entered the article"));
+
+		// the changes not saved mark the title, in the browser alone
+		content().sendKeys(" Wading.");
+		wait.until(d -> d.getTitle().equals("* " + title));
+
+		// Ctrl+S submits the form with the text, which the server cleans and keeps
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> heard().contains("Saved the article"));
+		wait.until(d -> d.getTitle().equals(title));
+		wait.until(d -> app().findElement(By.cssSelector(".rich-text-demo__view")).getText()
+			.contains("Wading."));
+
+		// the size the user gives the editor by the keys of its handle, sent once done: the
+		// height given, the width measured
+		WebElement handle = editor().findElement(By.cssSelector(".antilia-resizable-handle"));
+		int width = editor().getRect().getWidth();
+		handle.sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> heard().matches("The server heard you resized the article to " +
+			"\\d+ × \\d+ px\\."));
+		int heardWidth = Integer.parseInt(heard().replaceAll("\\D*(\\d+) × .*", "$1"));
+		assertEquals(width, heardWidth, 1, heard());
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
 	void theServerKeepsTheTextAndTheSelection(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");
@@ -572,6 +606,11 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	{
 		return "wicket".equals(framework) ? known() : app().findElement(By.cssSelector(
 			".rich-text-demo__editor + .rich-text-demo__status")).getText();
+	}
+
+	private String heard()
+	{
+		return app().findElement(By.cssSelector(".rich-text-demo__heard")).getText();
 	}
 
 	private String known()

@@ -30,7 +30,9 @@
 	<entry key="start">Tippen, auswählen, scrollen oder die Größe ändern: Der Server behält alles.</entry>
 	<entry key="heardFocus">Der Server hat gehört, dass Sie den Artikel betreten haben.</entry>
 	<entry key="heardBlur">Der Server hat gehört, dass Sie den Artikel verlassen haben, mit seinem Text.</entry>
+	<entry key="heardBlurChanged">Der Server hat gehört, dass Sie den Artikel verlassen haben, mit geändertem Text: {0} Zeichen vorher, {1} jetzt.</entry>
 	<entry key="heardSave">Artikel gespeichert.</entry>
+	<entry key="heardResize">Der Server hat gehört, dass Sie den Artikel auf {0} gebracht haben.</entry>
 	<entry key="known">Der Server weiß: {0} Zeichen HTML, {1} Wörter; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">der Cursor bei {0}</entry>
 	<entry key="selected">ausgewählt von {0} bis {1}</entry>
