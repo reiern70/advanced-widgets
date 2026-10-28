@@ -191,6 +191,8 @@
 	<entry key="RichTextEditor.underline">Unterstrichen</entry>
 	<entry key="RichTextEditor.strike">Durchgestrichen</entry>
 	<entry key="RichTextEditor.code">Code</entry>
+	<entry key="RichTextEditor.textColor">Textfarbe</entry>
+	<entry key="RichTextEditor.textBackground">Hintergrundfarbe</entry>
 	<entry key="RichTextEditor.link">Link</entry>
 	<entry key="RichTextEditor.bulletList">Aufzählung</entry>
 	<entry key="RichTextEditor.orderedList">Nummerierte Liste</entry>
@@ -233,6 +235,16 @@
 	<entry key="RichTextEditor.word">{0} Wort</entry>
 	<entry key="RichTextEditor.resize">Ziehen oder die Pfeiltasten benutzen, um die Größe des Editors anzupassen</entry>
 	<entry key="RichTextEditor.plainText">Nur Text</entry>
+	<entry key="RichTextEditor.defaultColor">Standard</entry>
+	<entry key="RichTextEditor.noBackground">Keine</entry>
+	<entry key="RichTextEditor.colorGray">Grau</entry>
+	<entry key="RichTextEditor.colorRed">Rot</entry>
+	<entry key="RichTextEditor.colorOrange">Orange</entry>
+	<entry key="RichTextEditor.colorYellow">Gelb</entry>
+	<entry key="RichTextEditor.colorGreen">Grün</entry>
+	<entry key="RichTextEditor.colorBlue">Blau</entry>
+	<entry key="RichTextEditor.colorPurple">Lila</entry>
+	<entry key="RichTextEditor.colorPink">Rosa</entry>
 	<entry key="RichTextEditor.uploadImage">Bild hochladen…</entry>
 	<entry key="RichTextEditor.uploading">{0} wird hochgeladen…</entry>
 	<entry key="RichTextEditor.theImage">Das Bild</entry>

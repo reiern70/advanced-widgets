@@ -17,8 +17,8 @@ import java.util.List;
 
 /**
  * A tool of the toolbar of a {@link RichTextEditor}: a button formatting the text, opening a menu
- * (the text style, the table) or a form (a link, an image), or undoing. A tool needs its
- * {@link #getFeature() feature}: without it, it does not show.
+ * (the text style, the colors, the table) or a form (a link, an image), or undoing. A tool needs
+ * its {@link #getFeature() feature}: without it, it does not show.
  *
  * @since 11.0.0
  */
@@ -36,6 +36,12 @@ public enum RichTextTool
 	STRIKE("strike", RichTextFeature.STRIKE),
 
 	CODE("code", RichTextFeature.CODE),
+
+	/** The color of the text selected, in a menu of the {@link RichTextColor palette}. */
+	TEXT_COLOR("textColor", RichTextFeature.TEXT_COLOR),
+
+	/** The color of the background of the text selected, in a menu of the palette. */
+	TEXT_BACKGROUND("textBackground", RichTextFeature.TEXT_BACKGROUND),
 
 	/** The link at the cursor, in a form: its address and whether it opens in a new tab. */
 	LINK("link", RichTextFeature.LINK),
@@ -75,7 +81,8 @@ public enum RichTextTool
 
 	/** The toolbar of an editor not told otherwise, in groups. */
 	public static final List<List<RichTextTool>> DEFAULT_TOOLBAR = List.of(List.of(HEADING),
-		List.of(BOLD, ITALIC, UNDERLINE, STRIKE, CODE), List.of(LINK),
+		List.of(BOLD, ITALIC, UNDERLINE, STRIKE, CODE), List.of(TEXT_COLOR, TEXT_BACKGROUND),
+		List.of(LINK),
 		List.of(BULLET_LIST, ORDERED_LIST, TASK_LIST), List.of(BLOCKQUOTE, CODE_BLOCK,
 			HORIZONTAL_RULE), List.of(TABLE, IMAGE), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,
 				ALIGN_JUSTIFY), List.of(CLEAR_FORMATTING), List.of(UNDO, REDO));

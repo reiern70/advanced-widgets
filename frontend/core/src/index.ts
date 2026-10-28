@@ -37,9 +37,10 @@ export type { RichTextEditorEventDetail, RichTextEditorKit, RichTextEditorOption
 	RichTextEditorSelection, RichTextEditorState, RichTextEditorStateChange, RichTextExtension,
 	RichTextExtensionLoader } from './rich-text-editor.js';
 export { DEFAULT_HEADING_LEVELS, isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml,
-	RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
+	RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS, RICH_TEXT_BACKGROUND_CLASS, RICH_TEXT_COLOR_CLASS,
+	RICH_TEXT_COLORS, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
 	RICH_TEXT_NOT_IN_MARKDOWN } from './rich-text-schema.js';
-export type { HeadingLevel, RichTextAlignment, RichTextFeature,
+export type { HeadingLevel, RichTextAlignment, RichTextColor, RichTextFeature,
 	RichTextFormat } from './rich-text-schema.js';
 export { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, RICH_TEXT_BUBBLE_TOOLS,
 	RICH_TEXT_ICONS, RICH_TEXT_TOOLS, shortcutText } from './rich-text-toolbar.js';

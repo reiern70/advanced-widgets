@@ -39,13 +39,15 @@ import com.antiliacode.widgets.richtext.RichTextEditorEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
+import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextTool;
 import com.github.openjson.JSONObject;
 
 /**
  * Checks {@link RichTextEditorPage}: the article whose HTML and state the session keeps, cleaned,
- * the options the form switches, saving, the notes in Markdown, the cleaning of HTML from anywhere
- * and the configuration of the React and Svelte apps.
+ * the options the form switches, the toolbar chosen tool by tool, saving, the notes in Markdown,
+ * the cleaning of HTML from anywhere, the configuration of the React and Svelte apps and the library
+ * the editor is based on.
  */
 class RichTextEditorPageTest
 {
@@ -235,6 +237,59 @@ class RichTextEditorPageTest
 		form.setValue("editor", "# Again");
 		tester.executeAjaxEvent(inCase("notesTitle", "notesForm:save"), "click");
 		assertEquals("# Again", RichTextEditorPage.notes().getSaved());
+	}
+
+	@Test
+	void choosesTheToolsOfTheToolbarOneByOne()
+	{
+		String controls = inCase("articleTitle", "controls");
+		String java = inCase("articleTitle", "toolbarJava:java");
+		tester.assertInvisible(controls + ":chooser");
+		assertEquals("editor.setToolbar(RichTextTool.DEFAULT_TOOLBAR);",
+			tester.getComponentFromLastRenderedPage(java).getDefaultModelObjectAsString());
+
+		FormTester form = tester.newFormTester(controls);
+		form.select("toolbar", 1);
+		tester.executeAjaxEvent(controls + ":toolbar", "change");
+		assertEquals("import static com.antiliacode.widgets.richtext.RichTextTool.*;\n\n" +
+			"editor.setToolbar(List.of(\n\tList.of(HEADING),\n\tList.of(BOLD, ITALIC, LINK),\n" +
+			"\tList.of(BULLET_LIST, ORDERED_LIST),\n\tList.of(UNDO, REDO)));",
+			tester.getComponentFromLastRenderedPage(java).getDefaultModelObjectAsString());
+
+		// choosing starts from the tools of the toolbar shown
+		form = tester.newFormTester(controls);
+		form.select("toolbar", 3);
+		tester.executeAjaxEvent(controls + ":toolbar", "change");
+		tester.assertVisible(controls + ":chooser");
+		tester.assertComponentOnAjaxResponse(controls + ":chooser");
+		RichTextEditorPage page = (RichTextEditorPage)tester.getLastRenderedPage();
+		assertEquals(RichTextEditorPage.COMPACT.stream().flatMap(List::stream).toList(),
+			page.getTools());
+		tester.assertContains("<label><input name=\"[^\"]*\" type=\"checkbox\" " +
+			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
+
+		form = tester.newFormTester(controls);
+		form.selectMultiple("chooser:tools", new int[] { 1, 6, 7, 23 }, true);
+		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
+		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
+			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());
+		tester.assertComponentOnAjaxResponse(java.replace(":java", ""));
+		tester.assertContains("\"toolbar\":\\[\\[\"bold\"\\],\\[\"textColor\"," +
+			"\"textBackground\"\\],\\[\"redo\"\\]\\]");
+		assertEquals("editor.setToolbar(List.of());", RichTextEditorPage.javaOf(List.of()));
+		assertEquals(List.of(), RichTextEditorPage.toolbarOf(RichTextEditorPage.CHOSEN, List.of()));
+	}
+
+	@Test
+	void tellsTheLibraryTheEditorIsBasedOn()
+	{
+		RichTextLibrary library = RichTextLibrary.get();
+		tester.assertContains("Based on <a[^>]*href=\"https://tiptap.dev\"[^>]*>Tiptap " +
+			Pattern.quote(library.version()) + "</a>, which runs on ProseMirror.");
+
+		tester.getSession().setLocale(Locale.of("de"));
+		tester.startPage(RichTextEditorPage.class);
+		tester.assertContains("Basiert auf <a[^>]*>Tiptap [^<]*</a>, das auf ProseMirror aufbaut.");
 	}
 
 	@Test

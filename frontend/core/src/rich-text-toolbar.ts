@@ -22,7 +22,9 @@
  * reachable. Pressing a tool keeps the focus and the selection in the text.
  *
  * The text style (paragraph, headings) and the table open a menu of their own, a WAI-ARIA menu:
- * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. So does the
+ * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. So do the
+ * color of the text and its background, a menu of the colors of the palette, each with a swatch,
+ * the default first; a bar under their icon shows the color where the cursor is. So does the
  * code block when the editor has languages for it: the menu makes the block a paragraph again, or
  * a block in plain text or in one of the languages. Without them, the tool makes a code block, or
  * takes it away. The link and the image open a form in a popover: the address, and whether the link
@@ -38,26 +40,28 @@ import type { Editor } from '@tiptap/core';
 import { lookClasses, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Popover } from './popover.js';
 import { codeLanguage } from './rich-text-languages.js';
-import { isSafeUrl, type HeadingLevel, type RichTextAlignment,
+import { isSafeUrl, RICH_TEXT_BACKGROUND_CLASS, RICH_TEXT_COLOR_CLASS, RICH_TEXT_COLORS,
+	type HeadingLevel, type RichTextAlignment, type RichTextColor,
 	type RichTextFeature } from './rich-text-schema.js';
 import type { UploadHost } from './rich-text-upload.js';
 
 /** A tool of the toolbar. */
 export type RichTextTool = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
-	'link' | 'bulletList' | 'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' |
-	'horizontalRule' | 'table' | 'image' | 'alignLeft' | 'alignCenter' | 'alignRight' |
-	'alignJustify' | 'undo' | 'redo' | 'clearFormatting';
+	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
+	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'alignLeft' |
+	'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' | 'clearFormatting';
 
 /** The tools, in the order of the toolbar by default. */
 export const RICH_TEXT_TOOLS: readonly RichTextTool[] = Object.freeze(['heading', 'bold', 'italic',
-	'underline', 'strike', 'code', 'link', 'bulletList', 'orderedList', 'taskList', 'blockquote',
-	'codeBlock', 'horizontalRule', 'table', 'image', 'alignLeft', 'alignCenter', 'alignRight',
-	'alignJustify', 'clearFormatting', 'undo', 'redo']);
+	'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
+	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
+	'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting', 'undo', 'redo']);
 
 /** The toolbar when the page gives none: the tools in groups. */
 export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextTool[])[] = Object.freeze([
 	['heading'],
 	['bold', 'italic', 'underline', 'strike', 'code'],
+	['textColor', 'textBackground'],
 	['link'],
 	['bulletList', 'orderedList', 'taskList'],
 	['blockquote', 'codeBlock', 'horizontalRule'],
@@ -83,6 +87,8 @@ export interface RichTextEditorTexts {
 	underline: string;
 	strike: string;
 	code: string;
+	textColor: string;
+	textBackground: string;
 	link: string;
 	bulletList: string;
 	orderedList: string;
@@ -125,6 +131,18 @@ export interface RichTextEditorTexts {
 	invalidUrl: string;
 	/** The item of the menu of the code block for a block without a language. */
 	plainText: string;
+	/** The first items of the menus of the colors: the default color, no background. */
+	defaultColor: string;
+	noBackground: string;
+	/** The colors of the palette. */
+	colorGray: string;
+	colorRed: string;
+	colorOrange: string;
+	colorYellow: string;
+	colorGreen: string;
+	colorBlue: string;
+	colorPurple: string;
+	colorPink: string;
 	/** The button of the form of an image choosing a file to upload. */
 	uploadImage: string;
 	/** The mark of an image uploading; {0} the name of its file. */
@@ -154,6 +172,8 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	underline: 'Underline',
 	strike: 'Strikethrough',
 	code: 'Code',
+	textColor: 'Text color',
+	textBackground: 'Background color',
 	link: 'Link',
 	bulletList: 'Bulleted list',
 	orderedList: 'Numbered list',
@@ -190,6 +210,16 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	close: 'Close',
 	invalidUrl: 'Give an address starting with http://, https:// or mailto:, or a relative one.',
 	plainText: 'Plain text',
+	defaultColor: 'Default',
+	noBackground: 'None',
+	colorGray: 'Gray',
+	colorRed: 'Red',
+	colorOrange: 'Orange',
+	colorYellow: 'Yellow',
+	colorGreen: 'Green',
+	colorBlue: 'Blue',
+	colorPurple: 'Purple',
+	colorPink: 'Pink',
 	uploadImage: 'Upload an image…',
 	uploading: 'Uploading {0}…',
 	theImage: 'The image',
@@ -218,6 +248,13 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextTool, 'heading'> |
 		strike: svg('<path d="M16.5 7A4 4 0 0 0 13 5h-2a3.5 3.5 0 0 0-1.6 6.6M4 12h16M7.5 17a4 4 0 0 ' +
 			'0 3.5 2h2a3.5 3.5 0 0 0 3-5.3"/>'),
 		code: svg('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
+		// a letter, and a marker, over the bar of the color where the cursor is
+		textColor: svg('<path d="m6 16 6-13 6 13M8.3 11h7.4"/>' +
+			'<rect class="antilia-rich-text-tool-bar" x="3" y="18.5" width="18" height="3.5" rx="1" ' +
+			'stroke="none" fill="currentColor"/>'),
+		textBackground: svg('<path d="m14.5 4.5 4 4-7 7H7.5v-4zM7.5 15.5 5 16l.5-2.5"/>' +
+			'<rect class="antilia-rich-text-tool-bar" x="3" y="18.5" width="18" height="3.5" rx="1" ' +
+			'stroke="none" fill="currentColor"/>'),
 		link: svg('<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>' +
 			'<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>'),
 		bulletList: svg('<path d="M9 6h11M9 12h11M9 18h11"/>' +
@@ -303,6 +340,8 @@ const SPECS: Readonly<Record<RichTextTool, ToolSpec>> = {
 		active: (editor) => editor.isActive('code'),
 		enabled: (editor) => editor.can().toggleCode(),
 		run: (editor) => editor.chain().focus().toggleCode().run() },
+	textColor: { feature: 'textColor', kind: 'menu' },
+	textBackground: { feature: 'textBackground', kind: 'menu' },
 	link: { feature: 'link', kind: 'form', shortcut: 'Mod-K',
 		active: (editor) => editor.isActive('link'),
 		enabled: (editor) => editor.isActive('link') || editor.can().setLink({ href: '#' }) },
@@ -379,6 +418,12 @@ function isMac(): boolean {
 	return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
 }
 
+/** The text naming a color of the palette: colorRed for red. */
+function colorText(color: RichTextColor): `color${Capitalize<RichTextColor>}` {
+	return ('color' + color[0]!.toUpperCase() + color.slice(1)) as
+		`color${Capitalize<RichTextColor>}`;
+}
+
 /** {0}, {1}... in a text, by what stands for them. */
 export function format(text: string, ...values: (string | number)[]): string {
 	return text.replace(/\{(\d)\}/g, (all, index: string) => {
@@ -392,6 +437,8 @@ interface MenuEntry {
 	id: string;
 	label: string;
 	level?: number;
+	/** The classes of a swatch before the label, for a menu of colors. */
+	swatch?: string;
 	/** Whether the item is the one in force, for a menu of choices. */
 	checked?: (editor: Editor) => boolean;
 	enabled: (editor: Editor) => boolean;
@@ -649,9 +696,29 @@ export class RichTextToolbar {
 			if (drawn.label) {
 				drawn.label.textContent = this.blockLabel(texts);
 			}
+			if (drawn.tool === 'textColor' || drawn.tool === 'textBackground') {
+				this.showColor(drawn.button, drawn.tool);
+			}
 		});
 		if (this.opened) {
 			this.refreshMenu(this.opened);
+		}
+	}
+
+	/**
+	 * Colors the bar under the icon of a tool of colors as the text is where the cursor is: by a
+	 * custom property set through the CSSOM, which a Content Security Policy allows.
+	 */
+	private showColor(button: HTMLButtonElement, mark: 'textColor' | 'textBackground'): void {
+		const color = this.editor.getAttributes(mark).color as RichTextColor | undefined;
+		if (color && RICH_TEXT_COLORS.includes(color)) {
+			// the text in its color; the background in its hue, which shows on the toolbar
+			button.style.setProperty('--antilia-rich-text-tool-bar', 'var(--antilia-rich-text-' +
+				(mark === 'textColor' ? 'color-' : '') + color + ')');
+			button.dataset.color = color;
+		} else {
+			button.style.removeProperty('--antilia-rich-text-tool-bar');
+			delete button.dataset.color;
 		}
 	}
 
@@ -663,7 +730,8 @@ export class RichTextToolbar {
 		if (tool === 'heading') {
 			return this.blockEntries().some((entry) => entry.enabled(editor));
 		}
-		if (tool === 'table' || (tool === 'codeBlock' && this.kindOf(tool) === 'menu')) {
+		if (tool === 'table' || tool === 'textColor' || tool === 'textBackground' ||
+			(tool === 'codeBlock' && this.kindOf(tool) === 'menu')) {
 			return this.menuLines(this.tools.find((drawn) => drawn.tool === tool) ??
 				{ tool }).some((entry) => entry !== 'separator' && entry.enabled(editor));
 		}
@@ -758,12 +826,46 @@ export class RichTextToolbar {
 		];
 	}
 
+	/**
+	 * @returns the items of the menu of the color of the text, or of its background: the default,
+	 *          then the colors of the palette
+	 */
+	private colorEntries(mark: 'textColor' | 'textBackground'): MenuEntry[] {
+		const texts = this.context.texts();
+		const text = mark === 'textColor';
+		const swatch = 'antilia-rich-text-swatch antilia-rich-text-swatch-' +
+			(text ? 'text' : 'background');
+		const prefix = text ? RICH_TEXT_COLOR_CLASS : RICH_TEXT_BACKGROUND_CLASS;
+		const set = (editor: Editor, color: RichTextColor) => text ?
+			editor.chain().focus().setTextColor(color).run() :
+			editor.chain().focus().setTextBackground(color).run();
+		return [
+			{ id: 'default', label: text ? texts.defaultColor : texts.noBackground,
+				swatch: text ? swatch : swatch + ' antilia-rich-text-swatch-none',
+				checked: (editor) => !editor.isActive(mark),
+				// where a color may be set at all: not in code
+				enabled: (editor) => editor.isActive(mark) || (text ?
+					editor.can().setTextColor('gray') : editor.can().setTextBackground('yellow')),
+				run: (editor) => text ? editor.chain().focus().unsetTextColor().run() :
+					editor.chain().focus().unsetTextBackground().run() },
+			...RICH_TEXT_COLORS.map((color): MenuEntry => ({
+				id: color, label: texts[colorText(color)], swatch: swatch + ' ' + prefix + color,
+				checked: (editor) => editor.isActive(mark, { color }),
+				enabled: (editor) => editor.isActive(mark, { color }) || (text ?
+					editor.can().setTextColor(color) : editor.can().setTextBackground(color)),
+				run: (editor) => set(editor, color) }))
+		];
+	}
+
 	private menuLines(drawn: Pick<DrawnTool, 'tool'>): MenuLine[] {
 		switch (drawn.tool) {
 		case 'heading':
 			return this.blockEntries();
 		case 'codeBlock':
 			return this.codeEntries();
+		case 'textColor':
+		case 'textBackground':
+			return this.colorEntries(drawn.tool);
 		default:
 			return this.tableEntries();
 		}
@@ -813,6 +915,12 @@ export class RichTextToolbar {
 			button.dataset.item = line.id;
 			button.tabIndex = -1;
 			button.textContent = line.label;
+			if (line.swatch) {
+				const swatch = document.createElement('span');
+				swatch.className = line.swatch;
+				swatch.setAttribute('aria-hidden', 'true');
+				button.prepend(swatch);
+			}
 			if (line.level) {
 				button.dataset.level = String(line.level);
 			}

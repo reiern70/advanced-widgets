@@ -13,19 +13,25 @@
  */
 package com.antiliacode.widgets.demo.richtext;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.form.AjaxFormChoiceComponentUpdatingBehavior;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.AbstractChoice.LabelPosition;
 import org.apache.wicket.markup.html.form.CheckBox;
+import org.apache.wicket.markup.html.form.CheckBoxMultipleChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -49,6 +55,7 @@ import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
+import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
 import com.antiliacode.widgets.richtext.RichTextTool;
 import com.antiliacode.widgets.richtext.RichTextView;
@@ -62,8 +69,10 @@ import com.github.openjson.JSONObject;
  * cleans before it keeps it; below it, the article as a page shows it, a {@link RichTextView}, and
  * the HTML the server keeps. Check boxes and a drop-down switch the toolbar, the bubble menu,
  * reading only, the count of the words and the colors of the code blocks, rendering the editor
- * again via Ajax. Ctrl+S, and the button, save the article. The code blocks are in a language,
- * which the menu of their tool chooses; the images upload, kept by {@link RichTextImages}.
+ * again via Ajax; the toolbar may be chosen tool by tool, and the Java making it shows below.
+ * Ctrl+S, and the button, save the article. The code blocks are in a language, which the menu of
+ * their tool chooses; the images upload, kept by {@link RichTextImages}. Below the title, the
+ * library the editor is based on, {@link RichTextLibrary}.
  * <p>
  * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it.
  * <p>
@@ -81,8 +90,14 @@ public class RichTextEditorPage extends DemoPage
 	/** The session attribute keeping the notes in Markdown. */
 	static final String NOTES_ATTRIBUTE = "rich-text-demo.notes";
 
-	/** The toolbars of the drop-down. */
+	/** The toolbars of the drop-down, those of the React and Svelte apps too. */
 	static final List<String> TOOLBARS = List.of("full", "compact", "none");
+
+	/** The toolbar chosen tool by tool, with the check boxes of the tools. */
+	static final String CHOSEN = "chosen";
+
+	/** The toolbars of the drop-down of the Wicket editor. */
+	static final List<String> CHOICES = List.of("full", "compact", "none", CHOSEN);
 
 	/** The compact toolbar. */
 	static final List<List<RichTextTool>> COMPACT = List.of(List.of(RichTextTool.HEADING),
@@ -107,6 +122,9 @@ public class RichTextEditorPage extends DemoPage
 	private final Component cleaned;
 
 	private String toolbar = "full";
+
+	/** The tools of the toolbar chosen tool by tool. */
+	private List<RichTextTool> tools = tools(RichTextTool.DEFAULT_TOOLBAR);
 
 	private boolean bubbleMenu = true;
 
@@ -167,7 +185,7 @@ public class RichTextEditorPage extends DemoPage
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setToolbar(toolbarOf(toolbar));
+				setToolbar(toolbarOf(toolbar, tools));
 				setBubbleMenu(bubbleMenu);
 				setReadOnly(readOnly);
 				setCount(count);
@@ -250,7 +268,56 @@ public class RichTextEditorPage extends DemoPage
 
 		Form<Void> controls = new Form<>("controls");
 		articleCase.add(controls);
-		controls.add(new Dropdown<>("toolbar", new PropertyModel<>(this, "toolbar"), TOOLBARS,
+		WebMarkupContainer toolbarJava = new WebMarkupContainer("toolbarJava");
+		toolbarJava.setOutputMarkupId(true);
+		toolbarJava.add(new Label("java", () -> javaOf(toolbarOf(toolbar, tools))));
+		articleCase.add(toolbarJava);
+		WebMarkupContainer chooser = new WebMarkupContainer("chooser")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(CHOSEN.equals(toolbar));
+			}
+		};
+		chooser.setOutputMarkupPlaceholderTag(true);
+		controls.add(chooser);
+		CheckBoxMultipleChoice<RichTextTool> toolChoice = new CheckBoxMultipleChoice<>("tools",
+			new PropertyModel<>(this, "tools"), List.of(RichTextTool.values()),
+			new IChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(RichTextTool tool)
+				{
+					// the name the editor gives the tool, in the language of the page
+					return getString("RichTextEditor." + tool.getName(), null, tool.getName());
+				}
+
+				@Override
+				public String getIdValue(RichTextTool tool, int index)
+				{
+					return tool.getName();
+				}
+			});
+		toolChoice.setLabelPosition(LabelPosition.WRAP_AFTER)
+			.setPrefix("<span class=\"rich-text-demo__tool\">").setSuffix("</span>");
+		toolChoice.add(new AjaxFormChoiceComponentUpdatingBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				target.add(editorForm, known, toolbarJava);
+			}
+		});
+		chooser.add(toolChoice);
+		controls.add(new Dropdown<>("toolbar", new PropertyModel<>(this, "toolbar"), CHOICES,
 			new IChoiceRenderer<>()
 			{
 				private static final long serialVersionUID = 1L;
@@ -266,7 +333,7 @@ public class RichTextEditorPage extends DemoPage
 				{
 					return each;
 				}
-			}).setRequired(true).add(rerender(editorForm)));
+			}).setRequired(true).add(rerender(editorForm, chooser, toolbarJava)));
 		articleCase.add(new Label("extras", getString("extras").replace("{0}",
 			sizeText(RichTextImages.MAX_SIZE))));
 		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight"))
@@ -375,15 +442,61 @@ public class RichTextEditorPage extends DemoPage
 	 */
 	static List<List<RichTextTool>> toolbarOf(String name)
 	{
+		return toolbarOf(name, tools(RichTextTool.DEFAULT_TOOLBAR));
+	}
+
+	/**
+	 * @param name
+	 *            a toolbar of the drop-down
+	 * @param chosen
+	 *            the tools chosen one by one, for the toolbar {@link #CHOSEN}
+	 * @return the tools of the toolbar, in groups
+	 */
+	static List<List<RichTextTool>> toolbarOf(String name, Collection<RichTextTool> chosen)
+	{
 		return switch (name == null ? "full" : name)
 		{
 			case "compact" -> COMPACT;
 			case "none" -> List.of();
+			// in the groups of the default toolbar, those left empty left out
+			case CHOSEN -> RichTextTool.DEFAULT_TOOLBAR.stream()
+				.map(group -> group.stream().filter(chosen::contains).toList())
+				.filter(group -> !group.isEmpty())
+				.toList();
 			default -> RichTextTool.DEFAULT_TOOLBAR;
 		};
 	}
 
-	private AjaxFormComponentUpdatingBehavior rerender(Component component)
+	/**
+	 * @return the tools of a toolbar, in a list the check boxes change
+	 */
+	private static List<RichTextTool> tools(List<List<RichTextTool>> toolbar)
+	{
+		return toolbar.stream().flatMap(List::stream).collect(Collectors.toCollection(
+			ArrayList::new));
+	}
+
+	/**
+	 * @return the Java giving an editor a toolbar
+	 */
+	static String javaOf(List<List<RichTextTool>> toolbar)
+	{
+		if (toolbar.equals(RichTextTool.DEFAULT_TOOLBAR))
+		{
+			return "editor.setToolbar(RichTextTool.DEFAULT_TOOLBAR);";
+		}
+		if (toolbar.isEmpty())
+		{
+			return "editor.setToolbar(List.of());";
+		}
+		return "import static com.antiliacode.widgets.richtext.RichTextTool.*;\n\n" +
+			"editor.setToolbar(List.of(\n" + toolbar.stream()
+				.map(group -> group.stream().map(RichTextTool::name).collect(Collectors.joining(
+					", ", "\tList.of(", ")")))
+				.collect(Collectors.joining(",\n")) + "));";
+	}
+
+	private AjaxFormComponentUpdatingBehavior rerender(Component... components)
 	{
 		return new AjaxFormComponentUpdatingBehavior("change")
 		{
@@ -392,7 +505,8 @@ public class RichTextEditorPage extends DemoPage
 			@Override
 			protected void onUpdate(AjaxRequestTarget target)
 			{
-				target.add(component, known);
+				target.add(components);
+				target.add(known);
 			}
 		};
 	}
@@ -483,6 +597,13 @@ public class RichTextEditorPage extends DemoPage
 	}
 
 	@Override
+	protected BasedOn getBasedOn()
+	{
+		RichTextLibrary library = RichTextLibrary.get();
+		return new BasedOn(library.name(), library.version(), library.url(), "ProseMirror");
+	}
+
+	@Override
 	protected String getFrameworkDemo()
 	{
 		return "richTextEditor";
@@ -529,9 +650,28 @@ public class RichTextEditorPage extends DemoPage
 		return toolbar;
 	}
 
+	/**
+	 * @param toolbar
+	 *            a toolbar of the drop-down; choosing tool by tool starts from the tools of the
+	 *            toolbar shown
+	 */
 	public void setToolbar(String toolbar)
 	{
+		if (CHOSEN.equals(toolbar) && !CHOSEN.equals(this.toolbar))
+		{
+			tools = tools(toolbarOf(this.toolbar));
+		}
 		this.toolbar = toolbar;
+	}
+
+	public List<RichTextTool> getTools()
+	{
+		return tools;
+	}
+
+	public void setTools(List<RichTextTool> tools)
+	{
+		this.tools = tools;
 	}
 
 	public boolean isBubbleMenu()

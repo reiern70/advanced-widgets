@@ -14,8 +14,11 @@
 package com.antiliacode.widgets.ckeditor;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
@@ -43,9 +46,10 @@ import com.antiliacode.widgets.richtext.RichTextSanitizer;
 /**
  * A text area shown as CKEditor 5, a rich text editor with its own toolbar, balloons and dialogs,
  * in the colors of the {@link com.antiliacode.widgets.theme.Theme theme} it is in: the
- * {@link RichTextFeature features} of the text, all of them unless
- * {@link #setFeatures(java.util.Set) told otherwise}, are CKEditor's plugins, and its toolbar has
- * their tools unless {@link #setToolbar(List) set otherwise}. Attach it to a {@code <textarea>}.
+ * {@link RichTextFeature features} of the text, all of them but the colors ({@link #FEATURES})
+ * unless {@link #setFeatures(java.util.Set) told otherwise}, are CKEditor's plugins, and its
+ * toolbar has their tools unless {@link #setToolbar(List) set otherwise}. Attach it to a
+ * {@code <textarea>}.
  * <p>
  * ui-components holds no code of CKEditor, which is licensed under the GPL 2 or later, or under the
  * commercial terms of CKSource: the application brings it, its style sheet, its translations and
@@ -103,6 +107,15 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	 * a page arriving slowly shows no HTML; without scripts the text area is shown.
 	 */
 	public static final String LOADING_CLASS = "antilia-ck-editor-loading";
+
+	/**
+	 * The features CKEditor has: all but the colors of the text and of its background, which
+	 * CKEditor's {@code FontColor} and {@code FontBackgroundColor} write as styles, where
+	 * {@link RichTextEditor} writes the classes of its palette.
+	 */
+	public static final Set<RichTextFeature> FEATURES = Collections.unmodifiableSet(
+		EnumSet.complementOf(EnumSet.of(RichTextFeature.TEXT_COLOR,
+			RichTextFeature.TEXT_BACKGROUND)));
 
 	/** The texts of the editor's own, those of {@link RichTextEditor} of the same names. */
 	private static final List<String> TEXTS = List.of("characters", "character", "words", "word",
@@ -172,6 +185,19 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	protected RichTextSanitizer getDefaultSanitizer()
 	{
 		return CKEditorPolicy.of(getFeatures());
+	}
+
+	/**
+	 * @return what the text may hold: those set, or the defaults of the format, but only the
+	 *         {@link #FEATURES} CKEditor has
+	 */
+	@Override
+	public Set<RichTextFeature> getFeatures()
+	{
+		Set<RichTextFeature> features = EnumSet.noneOf(RichTextFeature.class);
+		features.addAll(super.getFeatures());
+		features.retainAll(FEATURES);
+		return Collections.unmodifiableSet(features);
 	}
 
 	/**

@@ -112,6 +112,17 @@ class CKEditorPolicyTest
 	}
 
 	@Test
+	void dropsTheColorsOfTiptapsPalette()
+	{
+		assertEquals(CKEditor.FEATURES, CKEditorPolicy.ALL.getFeatures());
+		assertEquals(CKEditorPolicy.of(Set.of(RichTextFeature.BOLD)), CKEditorPolicy.of(Set.of(
+			RichTextFeature.BOLD, RichTextFeature.TEXT_COLOR, RichTextFeature.TEXT_BACKGROUND)));
+		assertEquals("<p>red and yellow</p>", CKEditorPolicy.ALL.sanitize(
+			"<p><span class=\"antilia-color-red\">red</span> and " +
+				"<mark class=\"antilia-background-yellow\">yellow</mark></p>"));
+	}
+
+	@Test
 	void isOnePolicyPerSetOfFeatures()
 	{
 		assertSame(CKEditorPolicy.ALL, CKEditorPolicy.of(null));

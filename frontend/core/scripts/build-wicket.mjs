@@ -22,7 +22,8 @@
  */
 
 import { build } from 'esbuild';
-import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -147,5 +148,27 @@ await writeFile(looks, ['# Built from frontend/core/src/look.ts, do not edit.',
 	...Object.entries(LOOK_PARTS).map(([part, aspect]) => `aspect.${part}=${aspect}`),
 	...[ANTILIA_LOOK, BOOTSTRAP_LOOK].flatMap((look) => Object.entries(look.classes)
 		.map(([part, classes]) => `${look.name}.${part}=${classes}`))].join('\n') + '\n');
+
+// the library the rich text editor is based on, as the bundle holds it, for the page to tell
+const require = createRequire(join(root, 'package.json'));
+const version = async (name) => {
+	let folder = dirname(require.resolve(name));
+	while (folder !== dirname(folder)) {
+		try {
+			const found = JSON.parse(await readFile(join(folder, 'package.json'), 'utf8'));
+			if (found.name === name) {
+				return found.version;
+			}
+		} catch {
+			// no package.json here: one folder up
+		}
+		folder = dirname(folder);
+	}
+	throw new Error('No version of ' + name);
+};
+const library = join(out, 'com/antiliacode/widgets/richtext/antilia-rich-text-library.properties');
+await writeFile(library, ['# Built from frontend/core/package.json, do not edit.',
+	'name=Tiptap', `version=${await version('@tiptap/core')}`, 'url=https://tiptap.dev']
+	.join('\n') + '\n');
 
 console.log(`Built ${SCRIPTS.length} scripts and ${STYLES.length} style sheets for Wicket into ${out}`);

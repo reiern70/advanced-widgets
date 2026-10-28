@@ -13,12 +13,14 @@
  */
 package com.antiliacode.widgets.richtext;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -30,7 +32,9 @@ import org.owasp.html.PolicyFactory;
  * out; links and images only to http, https and mailto addresses, or relative ones, and links with
  * {@code rel="noopener noreferrer nofollow"}. Classes only where the editor writes them: the
  * alignment of paragraphs, headings and cells ({@code antilia-text-center}, {@code -right},
- * {@code -justify}) and the language of a code block ({@code language-java}).
+ * {@code -justify}), the language of a code block ({@code language-java}) and the
+ * {@link RichTextColor colors} of the text, on a {@code span} ({@code antilia-color-red}), and of
+ * its background, on a {@code mark} ({@code antilia-background-yellow}).
  * <p>
  * What the editor writes passes unchanged, but for the way the sanitizer writes the HTML: its
  * empty elements, {@code <br />}, and its entities, such as {@code &#39;}. The editor reads it back
@@ -49,6 +53,18 @@ public final class RichTextPolicy implements RichTextSanitizer
 	/** The classes aligning text. */
 	private static final Pattern ALIGN_CLASS = Pattern.compile(
 		"antilia-text-(?:center|right|justify)");
+
+	/** The names of the colors of the palette, as their classes end. */
+	private static final String COLORS = Arrays.stream(RichTextColor.values())
+		.map(RichTextColor::getName).collect(Collectors.joining("|", "(?:", ")"));
+
+	/** The class of a color of the text. */
+	private static final Pattern COLOR_CLASS = Pattern.compile(Pattern.quote(
+		RichTextColor.COLOR_CLASS) + COLORS);
+
+	/** The class of a color of the background. */
+	private static final Pattern BACKGROUND_CLASS = Pattern.compile(Pattern.quote(
+		RichTextColor.BACKGROUND_CLASS) + COLORS);
 
 	/** The class of the language of a code block. */
 	private static final Pattern LANGUAGE_CLASS = Pattern.compile("language-[A-Za-z0-9_+#.-]{1,40}");
@@ -161,6 +177,16 @@ public final class RichTextPolicy implements RichTextSanitizer
 		allow(builder, features, RichTextFeature.UNDERLINE, "u");
 		allow(builder, features, RichTextFeature.STRIKE, "s", "del");
 		allow(builder, features, RichTextFeature.CODE, "code");
+		if (features.contains(RichTextFeature.TEXT_COLOR))
+		{
+			builder.allowElements("span")
+				.allowAttributes("class").matching(COLOR_CLASS).onElements("span");
+		}
+		if (features.contains(RichTextFeature.TEXT_BACKGROUND))
+		{
+			builder.allowElements("mark")
+				.allowAttributes("class").matching(BACKGROUND_CLASS).onElements("mark");
+		}
 		allow(builder, features, RichTextFeature.BLOCKQUOTE, "blockquote");
 		allow(builder, features, RichTextFeature.HORIZONTAL_RULE, "hr");
 		if (features.contains(RichTextFeature.LINK))

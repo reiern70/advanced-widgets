@@ -54,9 +54,8 @@ public final class CKEditorPolicy implements RichTextSanitizer
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The policy of all the features. */
-	public static final CKEditorPolicy ALL = new CKEditorPolicy(EnumSet.allOf(
-		RichTextFeature.class));
+	/** The policy of all the features of CKEditor, {@link CKEditor#FEATURES}. */
+	public static final CKEditorPolicy ALL = new CKEditorPolicy(CKEditor.FEATURES);
 
 	/** The classes aligning text. */
 	private static final Pattern ALIGN_CLASS = Pattern.compile(
@@ -80,13 +79,15 @@ public final class CKEditorPolicy implements RichTextSanitizer
 
 	private CKEditorPolicy(Set<RichTextFeature> features)
 	{
-		this.features = features.isEmpty() ? EnumSet.noneOf(RichTextFeature.class) :
-			EnumSet.copyOf(features);
+		this.features = EnumSet.noneOf(RichTextFeature.class);
+		this.features.addAll(features);
+		this.features.retainAll(CKEditor.FEATURES);
 	}
 
 	/**
 	 * @param features
-	 *            the features of the editor; {@code null} for all of them
+	 *            the features of the editor, of which those CKEditor has count; {@code null} for
+	 *            all of them
 	 * @return the policy keeping what CKEditor writes for those features
 	 */
 	public static CKEditorPolicy of(Set<RichTextFeature> features)

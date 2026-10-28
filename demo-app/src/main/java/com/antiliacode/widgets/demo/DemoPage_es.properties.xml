@@ -16,6 +16,8 @@
 <properties>
 	<entry key="aboutThisDemo">Acerca de esta demo</entry>
 	<entry key="backToHome">Todas las demos</entry>
+	<entry key="basedOn">Basado en</entry>
+	<entry key="basedOnToo">, que funciona sobre {0}</entry>
 	<entry key="icons">Iconos</entry>
 	<entry key="cases">Los ejemplos de la demo</entry>
 	<entry key="ActionIcons.BUILT_IN">incorporados</entry>

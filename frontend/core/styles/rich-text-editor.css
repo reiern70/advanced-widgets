@@ -32,7 +32,14 @@
  * language of a block shows in its corner here.
  *
  * The text as a page shows it, out of the editor, is .antilia-rich-text-view: the same headings,
- * lists, quotes, code, tables and alignment.
+ * lists, quotes, code, tables, colors and alignment.
+ *
+ * The colors of the text and of its background are classes, antilia-color-red and
+ * antilia-background-yellow, of a palette of mid tones, --antilia-rich-text-red and so on: a color
+ * of the text is its tone mixed with the color of the text of the theme, darker in a light theme
+ * and lighter in a dark one; a background is its tone mixed with the surface. Both read in any
+ * theme; a page sets the tones, or the colors mixed, --antilia-rich-text-color-red and
+ * --antilia-rich-text-background-red, to change them.
  */
 .antilia-rich-text-editor,
 .antilia-rich-text-view {
@@ -47,6 +54,48 @@
 		transparent);
 	--antilia-rich-text-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas,
 		'Liberation Mono', monospace;
+
+	/* the palette: mid tones, mixed below with the text and the surface of the theme */
+	--antilia-rich-text-gray: #868e96;
+	--antilia-rich-text-red: #e03131;
+	--antilia-rich-text-orange: #f76707;
+	--antilia-rich-text-yellow: #f2b705;
+	--antilia-rich-text-green: #2f9e44;
+	--antilia-rich-text-blue: #1c7ed6;
+	--antilia-rich-text-purple: #9c36b5;
+	--antilia-rich-text-pink: #d6336c;
+	--antilia-rich-text-color-gray: color-mix(in oklab, var(--antilia-rich-text-gray) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-red: color-mix(in oklab, var(--antilia-rich-text-red) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-orange: color-mix(in oklab, var(--antilia-rich-text-orange) 70%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-yellow: color-mix(in oklab, var(--antilia-rich-text-yellow) 60%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-green: color-mix(in oklab, var(--antilia-rich-text-green) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-blue: color-mix(in oklab, var(--antilia-rich-text-blue) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-purple: color-mix(in oklab, var(--antilia-rich-text-purple) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-color-pink: color-mix(in oklab, var(--antilia-rich-text-pink) 75%,
+		var(--antilia-rich-text-text));
+	--antilia-rich-text-background-gray: color-mix(in oklab, var(--antilia-rich-text-gray) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-red: color-mix(in oklab, var(--antilia-rich-text-red) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-orange: color-mix(in oklab, var(--antilia-rich-text-orange) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-yellow: color-mix(in oklab, var(--antilia-rich-text-yellow) 35%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-green: color-mix(in oklab, var(--antilia-rich-text-green) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-blue: color-mix(in oklab, var(--antilia-rich-text-blue) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-purple: color-mix(in oklab, var(--antilia-rich-text-purple) 25%,
+		var(--antilia-rich-text-background));
+	--antilia-rich-text-background-pink: color-mix(in oklab, var(--antilia-rich-text-pink) 25%,
+		var(--antilia-rich-text-background));
 }
 
 .antilia-rich-text-editor {
@@ -781,4 +830,122 @@
 
 :is(.antilia-rich-text-text, .antilia-rich-text-view) .antilia-text-justify {
 	text-align: justify;
+}
+
+/*
+ * the colors of the text and of its background, by the classes the editor writes; in the menus of
+ * the colors too, whose swatches show them
+ */
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-gray {
+	color: var(--antilia-rich-text-color-gray);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-red {
+	color: var(--antilia-rich-text-color-red);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-orange {
+	color: var(--antilia-rich-text-color-orange);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-yellow {
+	color: var(--antilia-rich-text-color-yellow);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-green {
+	color: var(--antilia-rich-text-color-green);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-blue {
+	color: var(--antilia-rich-text-color-blue);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-purple {
+	color: var(--antilia-rich-text-color-purple);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-color-pink {
+	color: var(--antilia-rich-text-color-pink);
+}
+
+/* a mark of no color of the palette, from elsewhere, is yellow, in the colors of the theme */
+:is(.antilia-rich-text-text, .antilia-rich-text-view) mark {
+	padding: 0 0.1em;
+	border-radius: 0.2em;
+	background-color: var(--antilia-rich-text-background-yellow);
+	color: inherit;
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-gray {
+	background-color: var(--antilia-rich-text-background-gray);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-red {
+	background-color: var(--antilia-rich-text-background-red);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-orange {
+	background-color: var(--antilia-rich-text-background-orange);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-yellow {
+	background-color: var(--antilia-rich-text-background-yellow);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-green {
+	background-color: var(--antilia-rich-text-background-green);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-blue {
+	background-color: var(--antilia-rich-text-background-blue);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-purple {
+	background-color: var(--antilia-rich-text-background-purple);
+}
+
+:is(.antilia-rich-text-editor, .antilia-rich-text-view) .antilia-background-pink {
+	background-color: var(--antilia-rich-text-background-pink);
+}
+
+/* the swatch before each item of a menu of colors: a letter in the color, or a background */
+.antilia-rich-text-swatch {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 1.5em;
+	height: 1.5em;
+	margin-inline-end: 0.6em;
+	border: 1px solid var(--antilia-rich-text-border);
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	font-weight: 700;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.antilia-rich-text-swatch-text::before {
+	content: 'A';
+}
+
+.antilia-rich-text-swatch-text:not([class*="antilia-color-"]) {
+	color: var(--antilia-rich-text-text);
+}
+
+/* no background: the swatch struck through */
+.antilia-rich-text-swatch-none {
+	background: linear-gradient(to top right, transparent calc(50% - 0.75px),
+		var(--antilia-rich-text-muted) calc(50% - 0.75px), var(--antilia-rich-text-muted)
+		calc(50% + 0.75px), transparent calc(50% + 0.75px));
+}
+
+/* the bar under the icon of a tool of colors: the color where the cursor is */
+.antilia-rich-text-tool .antilia-rich-text-tool-bar {
+	fill: var(--antilia-rich-text-tool-bar, currentColor);
+}
+
+.antilia-rich-text-tool[data-tool="textBackground"] .antilia-rich-text-tool-bar {
+	fill: var(--antilia-rich-text-tool-bar, transparent);
 }

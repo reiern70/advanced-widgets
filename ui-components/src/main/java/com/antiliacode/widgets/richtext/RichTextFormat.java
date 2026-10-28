@@ -23,7 +23,10 @@ public enum RichTextFormat
 	/** HTML, which the editor {@link RichTextPolicy cleans} on the server. */
 	HTML("html"),
 
-	/** Markdown: underlined text and alignment are left out, Markdown has no syntax for them. */
+	/**
+	 * Markdown: underlined text, colors and alignment are left out, Markdown has no syntax for
+	 * them.
+	 */
 	MARKDOWN("markdown"),
 
 	/** Tiptap's JSON, the document as ProseMirror has it. */

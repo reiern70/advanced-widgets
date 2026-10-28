@@ -108,7 +108,7 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("GPL", options.getString("licenseKey"));
 		assertFalse(options.has("language"), "English");
 		assertEquals("html", options.getString("format"));
-		assertEquals(RichTextFeature.values().length, options.getJSONArray("features").length());
+		assertEquals(CKEditor.FEATURES.size(), options.getJSONArray("features").length());
 		assertEquals("[1,2,3,4]", options.getJSONArray("headingLevels").toString());
 		assertFalse(options.has("toolbar"), "the tools of the features");
 		assertFalse(options.has("plugins"));
@@ -225,6 +225,19 @@ class CKEditorTest extends WicketTestCase
 		editor.setToolbar((List<String>)null);
 		assertNull(editor.getToolbar());
 		assertNull(editor.getConfig());
+	}
+
+	@Test
+	void hasNoColorsWhichCKEditorWritesAsStyles()
+	{
+		CKEditor editor = new CKEditor("editor", Model.of(HTML));
+		assertFalse(editor.getFeatures().contains(RichTextFeature.TEXT_COLOR));
+		assertFalse(editor.getFeatures().contains(RichTextFeature.TEXT_BACKGROUND));
+		assertEquals(CKEditor.FEATURES, editor.getFeatures());
+		editor.setFeatures(EnumSet.of(RichTextFeature.BOLD, RichTextFeature.TEXT_COLOR));
+		assertEquals(EnumSet.of(RichTextFeature.BOLD), editor.getFeatures());
+		tester.startPage(new TestPage(editor));
+		assertEquals("[\"bold\"]", options(editor).getJSONArray("features").toString());
 	}
 
 	@Test
