@@ -33,6 +33,8 @@ import org.apache.wicket.util.string.Strings;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 
@@ -50,9 +52,29 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * <p>
  * The text area stays in the page, hidden, and holds the text: it fires {@code input} as the user
  * types and {@code change} once the editor loses the focus, as a text area does, and the editors
- * fire the same events of their own, {@link RichTextEditorEvent}, which
- * {@link RichTextEditorEventBehavior}s hear of. Until the script makes the editor, the text area is
- * hidden in the room the editor takes ({@link #getLoadingClass()}).
+ * fire the same events of their own, {@link RichTextEditorEvents}. The editor listens to the
+ * {@link IClientEvent events} it is {@link #addEvent(IClientEvent) given}, of those names or of
+ * any other, and to those of its {@link IRichTextFeature#getEvents(org.apache.wicket.Component)
+ * features}: each runs its function in the browser, and goes to the server when it is an
+ * {@link com.antiliacode.widgets.event.IAjaxEvent}, alone, or an
+ * {@link com.antiliacode.widgets.event.IAjaxSubmitEvent}, submitting the form, through the two
+ * Ajax behaviors of a {@link ClientEventsBehavior}, whatever the number of events:
+ *
+ * <pre>
+ * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE)
+ * {
+ *     public void onEvent(String eventId, JSONObject values, Form&lt;?&gt; form,
+ *         AjaxRequestTarget target)
+ *     {
+ *         articles.save(editor.getModelObject());
+ *         editor.markSaved(target);
+ *     }
+ * });
+ * editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -&gt; ...));
+ * </pre>
+ *
+ * Until the script makes the editor, the text area is hidden in the room the editor takes
+ * ({@link #getLoadingClass()}). The editor is attached to a {@code <textarea>}.
  * <p>
  * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -86,6 +108,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	private static final String STATE_PARAMETER = "state";
 
 	private final AbstractDefaultAjaxBehavior stateBehavior;
+
+	private final ClientEventsBehavior events;
 
 	private IModel<RichTextEditorState> stateModel;
 
@@ -141,6 +165,29 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 			}
 		};
 		add(stateBehavior);
+		events = new ClientEventsBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public List<IClientEvent> getEvents()
+			{
+				List<IClientEvent> all = new ArrayList<>(getAddedEvents());
+				getFeatures().forEach(feature -> all.addAll(feature.getEvents(
+					AbstractRichTextEditor.this)));
+				return all;
+			}
+
+			@Override
+			protected String getClientObject()
+			{
+				// the editor, once its script made it
+				String global = getScriptObject();
+				return "function(element){return " + global + "&&" + global +
+					".of(element.id);}";
+			}
+		};
+		add(events);
 	}
 
 	/**
@@ -252,6 +299,40 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 */
 	protected void onStateChanged(AjaxRequestTarget target)
 	{
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor listens to, after those it listens to already: one of
+	 *            {@link RichTextEditorEvents}, or of any other name
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             when the event goes to the server both ways, or stays in the browser without a
+	 *             function
+	 */
+	public T addEvent(IClientEvent event)
+	{
+		events.add(event);
+		return self();
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor no longer listens to
+	 * @return {@code this}
+	 */
+	public T removeEvent(IClientEvent event)
+	{
+		events.remove(event);
+		return self();
+	}
+
+	/**
+	 * @return the events the editor listens to: those it was given, then those of its features
+	 */
+	public List<IClientEvent> getEvents()
+	{
+		return events.getEvents();
 	}
 
 	/**
@@ -579,6 +660,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	@Override
 	protected void onComponentTag(ComponentTag tag)
 	{
+		// also for a tag without a body, which the text area does not check
+		checkComponentTag(tag, "textarea");
 		super.onComponentTag(tag);
 		tag.append("class", getLoadingClass(), " ");
 	}

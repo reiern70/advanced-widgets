@@ -18,9 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Locale;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -31,8 +33,11 @@ import com.antiliacode.widgets.ckeditor.CKEditor;
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
-import com.antiliacode.widgets.richtext.RichTextEditorEvent;
-import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
+import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IAjaxEvent;
+import com.antiliacode.widgets.event.IAjaxSubmitEvent;
+import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.github.openjson.JSONObject;
 
@@ -88,18 +93,25 @@ class CKEditorPageTest
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
 		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
-			.filter(behavior -> !(behavior instanceof RichTextEditorEventBehavior)).findFirst()
+			.filter(behavior -> !(behavior instanceof AjaxEventBehavior)).findFirst()
 			.orElseThrow());
 	}
 
 	/**
 	 * Fires an event of the editor with its text, as the browser does.
 	 */
-	private void fire(CKEditor editor, RichTextEditorEvent event, String text)
+	private void fire(CKEditor editor, String event, String text)
 	{
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
-		tester.executeBehavior(editor.getBehaviors(RichTextEditorEventBehavior.class).stream()
-			.filter(each -> each.getRichTextEditorEvent() == event).findFirst().orElseThrow());
+		List<IClientEvent> events = editor.getEvents();
+		IClientEvent found = events.stream().filter(each -> each.getId().equals(event) &&
+			(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent)).findFirst()
+			.orElseThrow();
+		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, event);
+		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
+			String.valueOf(events.indexOf(found)));
+		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
+			.getAjaxBehavior(found));
 	}
 
 	@Test
@@ -148,7 +160,7 @@ class CKEditorPageTest
 			"<ul><li data-list-item-id=\"e1\">one</li></ul><script>steal()</script>";
 		sendState(editor, "{\"selection\":{\"anchor\":3,\"head\":7},\"scrollTop\":40," +
 			"\"height\":420}", html);
-		fire(editor, RichTextEditorEvent.INPUT, html);
+		fire(editor, RichTextEditorEvents.INPUT, html);
 
 		CKEditorDocument article = CKEditorPage.article();
 		assertEquals("<p>New <strong>text</strong></p><ul><li>one</li></ul>", article.getText());
@@ -168,7 +180,7 @@ class CKEditorPageTest
 	void savesWithCtrlSAndTheButton()
 	{
 		CKEditor editor = editor(EDITOR);
-		fire(editor, RichTextEditorEvent.SAVE, "<p>Saved <i>now</i></p>");
+		fire(editor, RichTextEditorEvents.SAVE, "<p>Saved <i>now</i></p>");
 
 		CKEditorDocument article = CKEditorPage.article();
 		assertEquals("<p>Saved <i>now</i></p>", article.getSaved());
@@ -187,13 +199,32 @@ class CKEditorPageTest
 	void hearsOfTheFocus()
 	{
 		CKEditor editor = editor(EDITOR);
-		fire(editor, RichTextEditorEvent.FOCUS, CKEditorSamples.ARTICLE);
+		fire(editor, RichTextEditorEvents.FOCUS, CKEditorSamples.ARTICLE);
 		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
 			"The server heard you entered the article.");
-		fire(editor, RichTextEditorEvent.BLUR, CKEditorSamples.ARTICLE);
+		// the text the server has: unchanged
+		fire(editor, RichTextEditorEvents.BLUR, editor.getModelObject());
 		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
 			"The server heard you left the article, with its text.");
 		assertFalse(CKEditorPage.article().isModified(), "the sample is as CKEditor writes it");
+		// another text, which the model gets
+		int before = editor.getModelObject().length();
+		fire(editor, RichTextEditorEvents.BLUR, "<p>Short</p>");
+		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
+			"The server heard you left the article, with its text changed: " + before +
+				" characters before, 12 now.");
+		assertEquals("<p>Short</p>", editor.getModelObject());
+	}
+
+	@Test
+	void hearsOfTheSizeTheUserGaveTheArticle()
+	{
+		CKEditor editor = editor(EDITOR);
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"width\":null,\"height\":320.4}");
+		fire(editor, RichTextEditorEvents.RESIZE, CKEditorSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
+			"The server heard you resized the article to auto × 320 px.");
 	}
 
 	@Test
@@ -220,12 +251,12 @@ class CKEditorPageTest
 		assertEquals(CKEditorSamples.NOTES, tester.getComponentFromLastRenderedPage(
 			inCase("notesTitle", "kept:markdown")).getDefaultModelObject());
 
-		fire(notes, RichTextEditorEvent.INPUT, "# Packing\n\nOnly <b>this</b>");
+		fire(notes, RichTextEditorEvents.INPUT, "# Packing\n\nOnly <b>this</b>");
 		assertEquals("# Packing\n\nOnly <b>this</b>", CKEditorPage.notes().getText(),
 			"Markdown is text: the page escapes it");
 		tester.assertContains("# Packing\n\nOnly &lt;b&gt;this&lt;/b&gt;");
 
-		fire(notes, RichTextEditorEvent.SAVE, "# Packing\n\nDone");
+		fire(notes, RichTextEditorEvents.SAVE, "# Packing\n\nDone");
 		assertFalse(CKEditorPage.notes().isModified());
 		tester.assertLabel(inCase("notesTitle", "notesForm:notesStatus"), "Saved the notes.");
 	}

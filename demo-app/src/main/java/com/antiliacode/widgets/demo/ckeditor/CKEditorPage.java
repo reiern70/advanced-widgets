@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.demo.ckeditor;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
@@ -45,8 +46,11 @@ import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
-import com.antiliacode.widgets.richtext.RichTextEditorEvent;
-import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
+import com.antiliacode.widgets.event.AjaxEvent;
+import com.antiliacode.widgets.event.AjaxSubmitEvent;
+import com.antiliacode.widgets.richtext.RichTextEditorChangeEvent;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
+import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.resizable.ResizableSize;
@@ -167,47 +171,20 @@ public class CKEditorPage extends DemoPage
 			CKEditorDocument::setSaved));
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
-		editor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.FOCUS)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				hear(target, "heardFocus");
-			}
-		});
-		editor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.BLUR)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				hear(target, "heardBlur");
-			}
-		});
-		editor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.SAVE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				save(target);
-			}
-		});
+		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
+			(eventId, values, target) -> hear(target, "heardFocus")));
+		// the text before and the text now, which the model gets, without the rest of the form
+		editor.addEvent(RichTextEditorChangeEvent.of(editor, RichTextEditorEvents.BLUR,
+			(previousText, currentText, target) -> hearBlur(target, previousText, currentText)));
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
+			(eventId, values, form, target) -> save(target)));
 		// the server follows the text as the user types, a moment after each pause
-		editor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.INPUT)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				target.add(known);
-			}
-		});
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+			(eventId, values, form, target) -> target.add(known))
+			.setDelay(RichTextEditorEvents.TYPING_DELAY));
+		// the size the user gave the article, which the browser sends once they let go
+		editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -> hearSize(target,
+			width, height)));
 		editorForm.add(editor);
 		// a lambda, not editor::getMarkupId: see CodeEditorPage
 		editorForm.add(new Label("articleName", getString("articleLabel"))
@@ -257,26 +234,11 @@ public class CKEditorPage extends DemoPage
 			.setSavedModel(LambdaModel.of(notes, CKEditorDocument::getSaved,
 				CKEditorDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));
-		notesEditor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.SAVE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				saveNotes(target);
-			}
-		});
-		notesEditor.add(new RichTextEditorEventBehavior(RichTextEditorEvent.INPUT)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				target.add(notesKept);
-			}
-		});
+		notesEditor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
+			(eventId, values, form, target) -> saveNotes(target)));
+		notesEditor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+			(eventId, values, form, target) -> showNotesKept(target))
+			.setDelay(RichTextEditorEvents.TYPING_DELAY));
 		notesForm.add(notesEditor);
 		notesForm.add(new Label("notesName", getString("notesLabel"))
 			.add(AttributeModifier.replace("for", () -> notesEditor.getMarkupId())));
@@ -387,6 +349,42 @@ public class CKEditorPage extends DemoPage
 	{
 		heardMessage = getString(key);
 		target.add(heard, known);
+	}
+
+	/**
+	 * Shows what the server keeps of the notes, as the user types.
+	 */
+	private void showNotesKept(AjaxRequestTarget target)
+	{
+		// a method, not a lambda: the field is set after the event is made
+		target.add(notesKept);
+	}
+
+	/**
+	 * Says the user left the article, and whether its text changed since the server last had it.
+	 */
+	private void hearBlur(AjaxRequestTarget target, String previousText, String currentText)
+	{
+		if (Objects.equals(previousText, currentText))
+		{
+			hear(target, "heardBlur");
+			return;
+		}
+		heardMessage = getString("heardBlurChanged")
+			.replace("{0}", String.valueOf(previousText == null ? 0 : previousText.length()))
+			.replace("{1}", String.valueOf(currentText == null ? 0 : currentText.length()));
+		target.add(heard, known);
+	}
+
+	/**
+	 * Says the size the user resized the article to, which the browser sent with the event.
+	 */
+	private void hearSize(AjaxRequestTarget target, int width, int height)
+	{
+		heardMessage = getString("heardResize").replace("{0}", getString("sizeGiven")
+			.replace("{0}", width < 0 ? "auto" : String.valueOf(width))
+			.replace("{1}", height < 0 ? "auto" : String.valueOf(height)));
+		target.add(heard);
 	}
 
 	/**

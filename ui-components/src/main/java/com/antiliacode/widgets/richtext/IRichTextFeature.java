@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.wicket.Component;
@@ -24,6 +25,8 @@ import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.util.io.IClusterable;
 
 import com.github.openjson.JSONObject;
+
+import com.antiliacode.widgets.event.IClientEvent;
 
 /**
  * What the text of a {@link RichTextEditor} may hold: headings, bold text, links, tables... An
@@ -59,6 +62,8 @@ import com.github.openjson.JSONObject;
  * ({@link #allowHtml(RichTextHtmlRules)}), and nothing else;</li>
  * <li>the {@link IRichTextTool tools} of the toolbar needing it, which do not show without it.</li>
  * </ul>
+ * A feature may also bring {@link #getEvents(Component) events} the editor listens to while it
+ * has the feature: those its script fires, for example, which the server hears of.
  * A feature is kept in the page with the editor: it is serializable, and two features of the same
  * name are the same feature, as a {@code record} or an {@code enum} is.
  *
@@ -119,6 +124,17 @@ public interface IRichTextFeature extends IClusterable
 	 */
 	default void putOptions(Component editor, JSONObject options)
 	{
+	}
+
+	/**
+	 * @param editor
+	 *            the editor
+	 * @return the events the editor listens to while it has the feature, after its own, in the
+	 *         same order each time: the server finds them by it. None by default.
+	 */
+	default List<? extends IClientEvent> getEvents(Component editor)
+	{
+		return List.of();
 	}
 
 	/**
