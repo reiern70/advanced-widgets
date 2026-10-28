@@ -25,7 +25,7 @@ import org.apache.wicket.util.io.IClusterable;
  * @since 11.0.0
  */
 @FunctionalInterface
-public interface RichTextSanitizer extends IClusterable
+public interface IRichTextSanitizer extends IClusterable
 {
 	/**
 	 * @param html

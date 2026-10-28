@@ -16,11 +16,11 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { TextSelection } from '@tiptap/pm/state';
 
-import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml,
-	registerRichTextExtension, RICH_TEXT_EDITOR_CLASSES,
-	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RichTextEditor,
-	richTextEditor, richTextExtensions, setHost, shortcutText, standaloneHost,
-	type Host } from '../src/index.js';
+import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS,
+	DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml, registerRichTextExtension,
+	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES,
+	richTextBackgroundColors, richTextColors, RichTextEditor, richTextEditor, richTextExtensions,
+	setHost, shortcutText, standaloneHost, type Host } from '../src/index.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -641,33 +641,34 @@ describe('the features', () => {
 	it('color the text and its background by the classes of a palette', () => {
 		const editor = new RichTextEditor(textArea('<p><span class="antilia-color-red">red</span> ' +
 			'<mark class="antilia-background-green">green</mark> <mark>marked</mark> ' +
-			'<span class="antilia-color-teal">teal</span> <span style="color: red">styled</span> ' +
+			'<span class="antilia-color-lime">lime</span> <span style="color: red">styled</span> ' +
 			'<mark class="antilia-background-blue"><span class="antilia-color-pink">both</span>' +
 			'</mark></p>'));
 
 		expect(editor.getValue()).toBe('<p><span class="antilia-color-red">red</span> ' +
 			'<mark class="antilia-background-green">green</mark> ' +
-			'<mark class="antilia-background-yellow">marked</mark> teal styled ' +
+			'<mark class="antilia-background-yellow">marked</mark> lime styled ' +
 			'<span class="antilia-color-pink"><mark class="antilia-background-blue">both</mark>' +
 			'</span></p>');
 		expect(editor.editor.view.dom.querySelector('[style]')).toBeNull();
 
 		select(editor, 1, 4);
 		expect(editor.editor.commands.setTextColor('blue')).toBe(true);
-		expect(editor.editor.commands.setTextColor('teal' as 'red')).toBe(false);
+		// lime colors backgrounds alone
+		expect(editor.editor.commands.setTextColor('lime')).toBe(false);
 		select(editor, 5, 10);
 		editor.editor.commands.unsetTextBackground();
 		select(editor, 11, 17);
 		editor.editor.commands.setTextBackground('orange');
 		expect(editor.getValue()).toBe('<p><span class="antilia-color-blue">red</span> green ' +
-			'<mark class="antilia-background-orange">marked</mark> teal styled ' +
+			'<mark class="antilia-background-orange">marked</mark> lime styled ' +
 			'<span class="antilia-color-pink"><mark class="antilia-background-blue">both</mark>' +
 			'</span></p>');
 
 		select(editor, 1, editor.editor.state.doc.content.size - 1);
 		editor.editor.commands.unsetTextColor();
 		expect(editor.getValue()).toBe('<p>red green <mark class="antilia-background-orange">marked' +
-			'</mark> teal styled <mark class="antilia-background-blue">both</mark></p>');
+			'</mark> lime styled <mark class="antilia-background-blue">both</mark></p>');
 	});
 
 	it('take only safe addresses for links and images', () => {
@@ -963,34 +964,35 @@ describe('the menus of the colors', () => {
 		const menu = menuOf(editor, button);
 		expect(menu.hidden).toBe(false);
 		let items = itemsOf(menu);
-		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Gray', 'Red', 'Orange',
-			'Yellow', 'Green', 'Blue', 'Purple', 'Pink']);
-		expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true', 'false',
-			'false', 'false', 'false', 'false', 'false', 'false', 'false']);
+		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Gray', 'Brown', 'Red',
+			'Orange', 'Yellow', 'Green', 'Teal', 'Cyan', 'Blue', 'Indigo', 'Purple', 'Pink']);
+		expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true',
+			...Array<string>(12).fill('false')]);
 		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
-			'antilia-rich-text-swatch-text');
-		expect(items[2]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-text antilia-rich-text-swatch-default');
+		expect(items[3]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-text antilia-color-red');
-		expect(items[2]!.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+		expect(items[3]!.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
 		expect(document.activeElement).toBe(items[0]);
 		key(items[0]!, 'r');
-		expect(document.activeElement).toBe(items[2]);
+		expect(document.activeElement).toBe(items[3]);
 
-		items[2]!.click();
+		items[3]!.click();
 		expect(menu.hidden).toBe(true);
 		expect(editor.getValue()).toBe('<p><span class="antilia-color-red">Hello</span> world</p>');
 		expect(button.dataset.color).toBe('red');
-		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar'))
-			.toBe('var(--antilia-rich-text-color-red)');
+		expect(button.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
+			.toBe('antilia-rich-text-tool-bar antilia-color-red');
 
 		button.click();
 		items = itemsOf(menu);
-		expect(document.activeElement).toBe(items[2]);
-		expect(items[2]!.getAttribute('aria-checked')).toBe('true');
+		expect(document.activeElement).toBe(items[3]);
+		expect(items[3]!.getAttribute('aria-checked')).toBe('true');
 		items[0]!.click();
 		expect(editor.getValue()).toBe('<p>Hello world</p>');
 		expect(button.dataset.color).toBeUndefined();
-		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar')).toBe('');
+		expect(button.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
+			.toBe('antilia-rich-text-tool-bar');
 	});
 
 	it('color the background of the text selected', () => {
@@ -1001,17 +1003,19 @@ describe('the menus of the colors', () => {
 		button.click();
 
 		const items = itemsOf(menuOf(editor, button));
-		expect(items.map((item) => item.textContent)).toEqual(['None', 'Gray', 'Red', 'Orange',
-			'Yellow', 'Green', 'Blue', 'Purple', 'Pink']);
+		expect(items.map((item) => item.textContent)).toEqual(['None', 'Gray', 'Brown', 'Red',
+			'Orange', 'Yellow', 'Lime', 'Green', 'Teal', 'Cyan', 'Blue', 'Purple', 'Pink']);
 		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-background antilia-rich-text-swatch-none');
-		expect(items[4]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+		expect(items[5]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-background antilia-background-yellow');
-		items[4]!.click();
+		items[5]!.click();
 		expect(editor.getValue()).toBe('<p>Hello <mark class="antilia-background-yellow">world' +
 			'</mark></p>');
-		expect(button.style.getPropertyValue('--antilia-rich-text-tool-bar'))
-			.toBe('var(--antilia-rich-text-yellow)');
+		// the bar in the color of the background
+		expect(button.dataset.color).toBe('yellow');
+		expect(button.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
+			.toBe('antilia-rich-text-tool-bar antilia-background-yellow');
 
 		tool(editor, 'clearFormatting').click();
 		expect(editor.getValue()).toBe('<p>Hello world</p>');
@@ -1028,6 +1032,139 @@ describe('the menus of the colors', () => {
 		editor.configure({ features: ['bold', 'textBackground'] });
 		expect(tool(editor, 'textColor')).toBeNull();
 		expect(tool(editor, 'textBackground')).not.toBeNull();
+	});
+
+	it('take palettes of the page\'s own, of the text and of the background apart', () => {
+		const brand = { name: 'brand', colorClass: 'brand-text', label: 'Brand' };
+		const mint = { name: 'mint', colorClass: 'mint-text' };
+		// named as a color of the text, which is another
+		const glow = { name: 'brand', backgroundClass: 'glow', label: 'Glow' };
+		const editor = new RichTextEditor(textArea('<p><span class="brand-text">Hello</span> ' +
+			'<span class="antilia-color-red">red</span> <mark>world</mark> <mark class="glow">lit' +
+			'</mark></p>'), {
+			colors: [brand, mint, { name: 'brand', colorClass: 'other-text' },
+				{ name: 'evil', colorClass: 'two classes' }, { name: 'same', colorClass: 'brand-text' }],
+			backgroundColors: [glow, { name: 'other', backgroundClass: 'glow' }]
+		});
+		// a mark without a class of the palette has no color named yellow to take
+		expect(editor.getValue()).toBe('<p><span class="brand-text">Hello</span> red world ' +
+			'<mark class="glow">lit</mark></p>');
+
+		select(editor, 1, 6);
+		const button = tool(editor, 'textColor');
+		expect(button.dataset.color).toBe('brand');
+		expect(button.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
+			.toBe('antilia-rich-text-tool-bar brand-text');
+		button.click();
+		const items = itemsOf(menuOf(editor, button));
+		// a color without a label is named by the texts, else by its name
+		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Brand', 'mint']);
+		expect(items[2]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-text mint-text');
+		items[2]!.click();
+		expect(editor.getValue()).toBe('<p><span class="mint-text">Hello</span> red world ' +
+			'<mark class="glow">lit</mark></p>');
+		expect(editor.editor.commands.setTextColor('red')).toBe(false);
+
+		select(editor, 7, 10);
+		const background = tool(editor, 'textBackground');
+		background.click();
+		const backgrounds = itemsOf(menuOf(editor, background));
+		expect(backgrounds.map((item) => item.textContent)).toEqual(['None', 'Glow']);
+		expect(backgrounds[1]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
+			'antilia-rich-text-swatch-background glow');
+		backgrounds[1]!.click();
+		expect(background.dataset.color).toBe('brand');
+		expect(background.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
+			.toBe('antilia-rich-text-tool-bar glow');
+		expect(editor.editor.commands.setTextBackground('mint')).toBe(false);
+		expect(editor.editor.commands.setTextBackground('yellow')).toBe(false);
+		// a text takes a color of each
+		select(editor, 17, 20);
+		editor.editor.commands.setTextColor('brand');
+		expect(editor.getValue()).toBe('<p><span class="mint-text">Hello</span> ' +
+			'<mark class="glow">red</mark> world <span class="brand-text"><mark class="glow">lit' +
+			'</mark></span></p>');
+
+		editor.configure({ texts: { colorRed: 'Rot' }, colors: [brand, mint,
+			DEFAULT_RICH_TEXT_COLORS[2]!] });
+		tool(editor, 'textColor').click();
+		expect(itemsOf(menuOf(editor, tool(editor, 'textColor'))).map((item) => item.textContent))
+			.toEqual(['Default', 'Brand', 'mint', 'Rot']);
+
+		// another palette makes the editor anew: the colors it has not go
+		editor.configure({ colors: [brand] });
+		expect(editor.getValue()).toBe('<p>Hello <mark class="glow">red</mark> world ' +
+			'<span class="brand-text"><mark class="glow">lit</mark></span></p>');
+		// a mark of a class not of the palette is yellow then
+		editor.configure({ backgroundColors: DEFAULT_RICH_TEXT_BACKGROUND_COLORS });
+		expect(editor.getValue()).toBe('<p>Hello <mark class="antilia-background-yellow">red</mark> ' +
+			'world <span class="brand-text"><mark class="antilia-background-yellow">lit</mark></span>' +
+			'</p>');
+		expect(editor.editor.commands.setTextBackground('yellow')).toBe(true);
+		editor.configure({ colors: DEFAULT_RICH_TEXT_COLORS });
+		expect(editor.editor.commands.setTextColor('red')).toBe(true);
+	});
+
+	it('are left out with no colors in their palette', () => {
+		const editor = new RichTextEditor(textArea('<p><span class="antilia-color-red">red</span> ' +
+			'<mark class="antilia-background-red">marked</mark> <mark>pasted</mark></p>'),
+		{ colors: null });
+		expect(tool(editor, 'textColor')).toBeNull();
+		expect(tool(editor, 'textBackground')).not.toBeNull();
+		expect(editor.features().has('textColor')).toBe(false);
+		expect(editor.editor.schema.marks.textColor).toBeUndefined();
+		expect(editor.getValue()).toBe('<p>red <mark class="antilia-background-red">marked</mark> ' +
+			'<mark class="antilia-background-yellow">pasted</mark></p>');
+
+		editor.configure({ colors: DEFAULT_RICH_TEXT_COLORS, backgroundColors: [] });
+		expect(tool(editor, 'textColor')).not.toBeNull();
+		expect(tool(editor, 'textBackground')).toBeNull();
+		expect(editor.features().has('textBackground')).toBe(false);
+		expect(editor.getValue()).toBe('<p>red marked pasted</p>');
+		expect(editor.editor.schema.marks.textBackground).toBeUndefined();
+
+		editor.configure({ backgroundColors: [{ name: 'evil', backgroundClass: 'two classes' }] });
+		expect(tool(editor, 'textBackground')).toBeNull();
+		editor.configure({ backgroundColors: null });
+		expect(tool(editor, 'textBackground')).toBeNull();
+		editor.configure({ backgroundColors: DEFAULT_RICH_TEXT_BACKGROUND_COLORS });
+		expect(tool(editor, 'textBackground')).not.toBeNull();
+		editor.configure({ colors: null });
+		expect(tool(editor, 'textColor')).toBeNull();
+		expect(editor.getValue()).toBe('<p>red marked pasted</p>');
+	});
+});
+
+describe('the palettes', () => {
+	it('keep the colors whose name and class fit, each once', () => {
+		const teal = { name: 'teal', colorClass: 'teal-text' };
+		expect(richTextColors(undefined)).toBe(DEFAULT_RICH_TEXT_COLORS);
+		expect(richTextColors(null)).toEqual([]);
+		expect(DEFAULT_RICH_TEXT_COLORS.map((color) => color.name)).toEqual(['gray', 'brown', 'red',
+			'orange', 'yellow', 'green', 'teal', 'cyan', 'blue', 'indigo', 'purple', 'pink']);
+		expect(DEFAULT_RICH_TEXT_COLORS[2]).toEqual({ name: 'red', colorClass: 'antilia-color-red' });
+		expect(richTextColors([teal, { ...teal, colorClass: 'x' }, { ...teal, name: 'other' },
+			{ name: '1st', colorClass: 'a' }, { name: 'a"b', colorClass: 'a' },
+			{ name: 'quote', colorClass: 'a"b' }, null as unknown as typeof teal,
+			{ name: 'fine', colorClass: '-fine_1' }]))
+			.toEqual([teal, { name: 'fine', colorClass: '-fine_1' }]);
+	});
+
+	it('of the background apart from those of the text', () => {
+		const mint = { name: 'mint', backgroundClass: 'mint-mark' };
+		expect(richTextBackgroundColors(undefined)).toBe(DEFAULT_RICH_TEXT_BACKGROUND_COLORS);
+		expect(richTextBackgroundColors(null)).toEqual([]);
+		expect(DEFAULT_RICH_TEXT_BACKGROUND_COLORS.map((color) => color.name)).toEqual(['gray',
+			'brown', 'red', 'orange', 'yellow', 'lime', 'green', 'teal', 'cyan', 'blue', 'purple',
+			'pink']);
+		expect(DEFAULT_RICH_TEXT_BACKGROUND_COLORS[4]).toEqual({ name: 'yellow',
+			backgroundClass: 'antilia-background-yellow' });
+		expect(richTextBackgroundColors([mint, { ...mint, backgroundClass: 'x' },
+			{ ...mint, name: 'other' }, { name: 'bad', backgroundClass: 'two classes' },
+			{ name: 'text', colorClass: 'text' } as unknown as typeof mint,
+			{ name: 'same', backgroundClass: 'same' }]))
+			.toEqual([mint, { name: 'same', backgroundClass: 'same' }]);
 	});
 });
 

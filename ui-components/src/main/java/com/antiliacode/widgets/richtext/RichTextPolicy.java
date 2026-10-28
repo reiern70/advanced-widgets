@@ -13,28 +13,35 @@
  */
 package com.antiliacode.widgets.richtext;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 
 /**
  * The cleaning of the HTML of a {@link RichTextEditor}, with the OWASP Java HTML Sanitizer: it
- * keeps the elements and the attributes the {@link RichTextFeature features} of the editor write,
- * and nothing else. No script, no event handler, no style attribute, no element of a feature left
+ * keeps the elements and the attributes the {@link IRichTextFeature features} of the editor write,
+ * each {@link IRichTextFeature#allowHtml(RichTextHtmlRules) letting through its own}, and nothing
+ * else. No script, no event handler, no style attribute, no element of a feature left
  * out; links and images only to http, https and mailto addresses, or relative ones, and links with
  * {@code rel="noopener noreferrer nofollow"}. Classes only where the editor writes them: the
  * alignment of paragraphs, headings and cells ({@code antilia-text-center}, {@code -right},
- * {@code -justify}), the language of a code block ({@code language-java}) and the
- * {@link RichTextColor colors} of the text, on a {@code span} ({@code antilia-color-red}), and of
- * its background, on a {@code mark} ({@code antilia-background-yellow}).
+ * {@code -justify}), the language of a code block ({@code language-java}) and the colors of the
+ * palettes of the editor: {@link IRichTextColor of the text}, on a {@code span}
+ * ({@code antilia-color-red}), and {@link IRichTextBackgroundColor of its background}, on a
+ * {@code mark} ({@code antilia-background-yellow}).
+ * <p>
+ * Classes are not harmless: one of the page's own style sheets, a box fixed over the page or text
+ * hidden for example, would let the HTML of a user dress itself as the page. So the policy keeps
+ * the classes of the colors of its palettes alone, as they are, on those elements.
  * <p>
  * What the editor writes passes unchanged, but for the way the sanitizer writes the HTML: its
  * empty elements, {@code <br />}, and its entities, such as {@code &#39;}. The editor reads it back
@@ -42,37 +49,16 @@ import org.owasp.html.PolicyFactory;
  *
  * @since 11.0.0
  */
-public final class RichTextPolicy implements RichTextSanitizer
+public final class RichTextPolicy implements IRichTextSanitizer
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The policy of all the features. */
-	public static final RichTextPolicy ALL = new RichTextPolicy(EnumSet.allOf(
-		RichTextFeature.class));
-
-	/** The classes aligning text. */
-	private static final Pattern ALIGN_CLASS = Pattern.compile(
-		"antilia-text-(?:center|right|justify)");
-
-	/** The names of the colors of the palette, as their classes end. */
-	private static final String COLORS = Arrays.stream(RichTextColor.values())
-		.map(RichTextColor::getName).collect(Collectors.joining("|", "(?:", ")"));
-
-	/** The class of a color of the text. */
-	private static final Pattern COLOR_CLASS = Pattern.compile(Pattern.quote(
-		RichTextColor.COLOR_CLASS) + COLORS);
-
-	/** The class of a color of the background. */
-	private static final Pattern BACKGROUND_CLASS = Pattern.compile(Pattern.quote(
-		RichTextColor.BACKGROUND_CLASS) + COLORS);
-
-	/** The class of the language of a code block. */
-	private static final Pattern LANGUAGE_CLASS = Pattern.compile("language-[A-Za-z0-9_+#.-]{1,40}");
-
-	private static final Pattern NUMBER = Pattern.compile("[0-9]{1,6}");
-
-	/** The widths of the columns a cell spans. */
-	private static final Pattern WIDTHS = Pattern.compile("[0-9]{1,5}(?:,[0-9]{1,5}){0,20}");
+	/**
+	 * The policy of all the features of {@link RichTextFeature}, with the colors of
+	 * {@link RichTextColor#PALETTE} and {@link RichTextBackgroundColor#PALETTE}.
+	 */
+	public static final RichTextPolicy ALL = new RichTextPolicy(List.of(RichTextFeature.values()),
+		RichTextColor.PALETTE, RichTextBackgroundColor.PALETTE);
 
 	/** What the browser ignores in an address, which does not hide its scheme then. */
 	private static final Pattern IGNORED = Pattern.compile(
@@ -81,31 +67,65 @@ public final class RichTextPolicy implements RichTextSanitizer
 	/** The scheme of an address. */
 	private static final Pattern SCHEME = Pattern.compile("^([a-zA-Z][a-zA-Z0-9+.-]*):");
 
-	private static final String[] HEADINGS = { "h1", "h2", "h3", "h4", "h5", "h6" };
+	private final Set<IRichTextFeature> features;
 
-	private final Set<RichTextFeature> features;
+	/** The classes of the colors of the text. */
+	private final Set<String> colorClasses;
+
+	/** The classes of the colors of the background. */
+	private final Set<String> backgroundClasses;
 
 	/** Made the first time it cleans: OWASP's policies are not serializable. */
 	private transient PolicyFactory factory;
 
-	private RichTextPolicy(Set<RichTextFeature> features)
+	private RichTextPolicy(Collection<? extends IRichTextFeature> features,
+		Set<IRichTextColor> colors, Set<IRichTextBackgroundColor> backgroundColors)
 	{
-		this.features = features.isEmpty() ? EnumSet.noneOf(RichTextFeature.class) :
-			EnumSet.copyOf(features);
+		this.features = IRichTextFeature.checked(features);
+		this.colorClasses = classes(colors, IRichTextColor::getColorClass);
+		this.backgroundClasses = classes(backgroundColors,
+			IRichTextBackgroundColor::getBackgroundClass);
+	}
+
+	private static <C> Set<String> classes(Set<C> colors, Function<C, String> css)
+	{
+		Set<String> classes = new LinkedHashSet<>();
+		colors.forEach(color -> classes.add(css.apply(color)));
+		return Collections.unmodifiableSet(classes);
 	}
 
 	/**
 	 * @param features
-	 *            the features of the editor; {@code null} for all of them
-	 * @return the policy keeping what those features write
+	 *            the features of the editor; {@code null} for all those of {@link RichTextFeature}
+	 * @return the policy keeping what those features write, with the colors of
+	 *         {@link RichTextColor#PALETTE} and {@link RichTextBackgroundColor#PALETTE}
 	 */
-	public static RichTextPolicy of(Set<RichTextFeature> features)
+	public static RichTextPolicy of(Collection<? extends IRichTextFeature> features)
 	{
-		if (features == null || features.containsAll(ALL.features))
-		{
-			return ALL;
-		}
-		return new RichTextPolicy(features);
+		return of(features, RichTextColor.PALETTE, RichTextBackgroundColor.PALETTE);
+	}
+
+	/**
+	 * @param features
+	 *            the features of the editor, checked as
+	 *            {@link IRichTextFeature#checked(Collection)} does; {@code null} for all those of
+	 *            {@link RichTextFeature}
+	 * @param colors
+	 *            the palette of the colors of the text of the editor, checked as
+	 *            {@link IRichTextColor#palette(Collection)} does; {@code null} for none
+	 * @param backgroundColors
+	 *            the palette of the colors of the background, checked as
+	 *            {@link IRichTextBackgroundColor#palette(Collection)} does; {@code null} for none
+	 * @return the policy keeping what those features write, with the classes of those colors
+	 */
+	public static RichTextPolicy of(Collection<? extends IRichTextFeature> features,
+		Collection<? extends IRichTextColor> colors,
+		Collection<? extends IRichTextBackgroundColor> backgroundColors)
+	{
+		RichTextPolicy policy = new RichTextPolicy(features == null ? ALL.features : features,
+			colors == null ? Set.of() : IRichTextColor.palette(colors),
+			backgroundColors == null ? Set.of() : IRichTextBackgroundColor.palette(backgroundColors));
+		return policy.equals(ALL) ? ALL : policy;
 	}
 
 	/**
@@ -141,9 +161,25 @@ public final class RichTextPolicy implements RichTextSanitizer
 	/**
 	 * @return the features whose HTML the policy keeps
 	 */
-	public Set<RichTextFeature> getFeatures()
+	public Set<IRichTextFeature> getFeatures()
 	{
-		return Collections.unmodifiableSet(features);
+		return features;
+	}
+
+	/**
+	 * @return the classes of the colors of the text the policy keeps, on a {@code span}
+	 */
+	public Set<String> getColorClasses()
+	{
+		return colorClasses;
+	}
+
+	/**
+	 * @return the classes of the colors of the background the policy keeps, on a {@code mark}
+	 */
+	public Set<String> getBackgroundClasses()
+	{
+		return backgroundClasses;
 	}
 
 	@Override
@@ -155,130 +191,28 @@ public final class RichTextPolicy implements RichTextSanitizer
 		}
 		if (factory == null)
 		{
-			factory = build(features);
+			factory = RichTextHtmlRules.toPolicy(features, colorClasses, backgroundClasses);
 		}
 		return factory.sanitize(html);
-	}
-
-	/**
-	 * @return OWASP's policy of the features
-	 */
-	private static PolicyFactory build(Set<RichTextFeature> features)
-	{
-		HtmlPolicyBuilder builder = new HtmlPolicyBuilder()
-			.allowElements("p", "br")
-			.allowStandardUrlProtocols();
-		if (features.contains(RichTextFeature.HEADING))
-		{
-			builder.allowElements(HEADINGS);
-		}
-		allow(builder, features, RichTextFeature.BOLD, "strong", "b");
-		allow(builder, features, RichTextFeature.ITALIC, "em", "i");
-		allow(builder, features, RichTextFeature.UNDERLINE, "u");
-		allow(builder, features, RichTextFeature.STRIKE, "s", "del");
-		allow(builder, features, RichTextFeature.CODE, "code");
-		if (features.contains(RichTextFeature.TEXT_COLOR))
-		{
-			builder.allowElements("span")
-				.allowAttributes("class").matching(COLOR_CLASS).onElements("span");
-		}
-		if (features.contains(RichTextFeature.TEXT_BACKGROUND))
-		{
-			builder.allowElements("mark")
-				.allowAttributes("class").matching(BACKGROUND_CLASS).onElements("mark");
-		}
-		allow(builder, features, RichTextFeature.BLOCKQUOTE, "blockquote");
-		allow(builder, features, RichTextFeature.HORIZONTAL_RULE, "hr");
-		if (features.contains(RichTextFeature.LINK))
-		{
-			builder.allowElements("a")
-				.allowAttributes("href").onElements("a")
-				.allowAttributes("target").matching(true, "_blank").onElements("a")
-				.requireRelsOnLinks("noopener", "noreferrer", "nofollow");
-		}
-		boolean bullets = features.contains(RichTextFeature.BULLET_LIST) ||
-			features.contains(RichTextFeature.TASK_LIST);
-		boolean numbers = features.contains(RichTextFeature.ORDERED_LIST);
-		if (bullets)
-		{
-			builder.allowElements("ul");
-		}
-		if (numbers)
-		{
-			builder.allowElements("ol")
-				.allowAttributes("start").matching(NUMBER).onElements("ol")
-				.allowAttributes("type").matching(false, "1", "a", "A", "i", "I").onElements("ol");
-		}
-		if (bullets || numbers)
-		{
-			builder.allowElements("li");
-		}
-		if (features.contains(RichTextFeature.TASK_LIST))
-		{
-			// <ul data-type="taskList"><li data-type="taskItem" data-checked="true"><label>
-			// <input type="checkbox" checked="checked"><span></span></label><div>...</div></li>
-			builder.allowElements("label", "input", "span", "div")
-				.allowWithoutAttributes("span")
-				.allowAttributes("data-type").matching(false, "taskList").onElements("ul")
-				.allowAttributes("data-type").matching(false, "taskItem").onElements("li")
-				.allowAttributes("data-checked").matching(false, "true", "false").onElements("li")
-				.allowAttributes("type").matching(false, "checkbox").onElements("input")
-				.allowAttributes("checked").matching(true, "checked", "").onElements("input");
-		}
-		if (features.contains(RichTextFeature.CODE_BLOCK))
-		{
-			builder.allowElements("pre", "code")
-				.allowAttributes("class").matching(LANGUAGE_CLASS).onElements("code");
-		}
-		if (features.contains(RichTextFeature.TABLE))
-		{
-			builder.allowElements("table", "thead", "tbody", "tr", "th", "td")
-				.allowAttributes("colspan", "rowspan").matching(NUMBER).onElements("th", "td")
-				.allowAttributes("colwidth").matching(WIDTHS).onElements("th", "td")
-				// the alignment of the columns comes with the table, as in Markdown
-				.allowAttributes("class").matching(ALIGN_CLASS).onElements("th", "td");
-		}
-		if (features.contains(RichTextFeature.IMAGE))
-		{
-			builder.allowElements("img")
-				.allowAttributes("src").onElements("img")
-				.allowAttributes("alt", "title").onElements("img")
-				.allowAttributes("width", "height").matching(NUMBER).onElements("img");
-		}
-		if (features.contains(RichTextFeature.TEXT_ALIGN))
-		{
-			String[] aligned = new String[HEADINGS.length + 1];
-			aligned[0] = "p";
-			System.arraycopy(HEADINGS, 0, aligned, 1, HEADINGS.length);
-			builder.allowAttributes("class").matching(ALIGN_CLASS).onElements(aligned);
-		}
-		return builder.toFactory();
-	}
-
-	private static void allow(HtmlPolicyBuilder builder, Set<RichTextFeature> features,
-		RichTextFeature feature, String... elements)
-	{
-		if (features.contains(feature))
-		{
-			builder.allowElements(elements);
-		}
 	}
 
 	@Override
 	public boolean equals(Object other)
 	{
-		return other instanceof RichTextPolicy policy && policy.features.equals(features);
+		return other instanceof RichTextPolicy policy && policy.features.equals(features) &&
+			policy.colorClasses.equals(colorClasses) &&
+			policy.backgroundClasses.equals(backgroundClasses);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return features.hashCode();
+		return Objects.hash(features, colorClasses, backgroundClasses);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "RichTextPolicy" + features;
+		return "RichTextPolicy" + features + colorClasses + backgroundClasses;
 	}
 }

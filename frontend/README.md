@@ -167,9 +167,15 @@ Ctrl+K edits the link, Ctrl+S calls `onSave`, and Escape, then Tab, leaves the e
 list. The text is HTML by default, or Markdown (`format: 'markdown'`, Tiptap's Markdown extension;
 underlined text, colors and alignment are then left out, Markdown has no syntax for them) or
 Tiptap's JSON. The HTML has no style attribute: text aligns by classes (`RICH_TEXT_ALIGN_CLASSES`),
-and takes the colors of a palette (`RICH_TEXT_COLORS`) by classes too, `<span
-class="antilia-color-red">` and `<mark class="antilia-background-yellow">`, which
-`rich-text-editor.css` mixes with the colors of the theme so that they read in light and dark; tables
+and takes colors by classes too, from two palettes apart, each color a name unique in its palette
+and a class: `colors` for the text (`RichTextColor`, `<span class="antilia-color-red">`,
+`DEFAULT_RICH_TEXT_COLORS` when left out) and `backgroundColors` for its background
+(`RichTextBackgroundColor`, `<mark class="antilia-background-yellow">`,
+`DEFAULT_RICH_TEXT_BACKGROUND_COLORS` when left out). `null` or an empty palette means no colors,
+and no tool for them. `rich-text-editor.css` mixes the default colors with those of the theme so
+that they read in light and dark; the page's style sheets color the classes of palettes of its
+own, and Wicket's `RichTextEditor.colors()` and `RichTextEditor.backgroundColors()` give them with
+their names translated, as the server cleans them; tables
 have no widths, and Tiptap's own style sheet is in `rich-text-editor.css` instead of a style element,
 so the editor needs no `'unsafe-inline'`. Links and images go only to http, https and mailto
 addresses, or relative ones (`isSafeUrl`). The editor writes the text its own way, `<b>` as
@@ -177,7 +183,14 @@ addresses, or relative ones (`isSafeUrl`). The editor writes the text its own wa
 `limit` and `count` (the characters and the words below the text) do as their names say;
 `extensions` take Tiptap's extensions or the names of those `registerRichTextExtension(name,
 loader)` registered, the loader given the classes of Tiptap of the editor (`RICH_TEXT_EDITOR_KIT`),
-from which a Wicket page builds a `Mark` or a `Node`. As the code editor does, it keeps the text in a
+from which a Wicket page builds a `Mark` or a `Node`. Features are pluggable too:
+`registerRichTextFeature(name, { extensions, tools })` makes one known to the editors, its
+extensions made from the kit for each editor (`RichTextFeatureContext`, with the feature's own
+`featureOptions`) and its tools of the toolbar (`RichTextToolDefinition`: a toggle, an action or a
+menu, with its label and icon); `features` and `toolbar` then name it as a built-in one. One
+registered under a built-in name replaces it, and an editor naming a feature not registered yet is
+made anew as it registers. In Wicket, an `IRichTextFeature` renders the script registering it and
+lets through the cleaning the HTML it writes. As the code editor does, it keeps the text in a
 text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
 `data-modified`, keeps its state (`RichTextEditorState`: the selection, the scrolling and the size)
 while hidden and gives it to `onStateChange`, and goes on as it was when Wicket renders it anew.
@@ -245,7 +258,7 @@ address, which the image then takes, or a message above the text says why not. T
 the type (`uploadTypes`: PNG, JPEG, GIF and WebP by default, no SVG) and the size (`uploadMaxSize`)
 first, and the address the page answers goes through `isSafeUrl`: never `data:`. `uploadImageTo(url)`
 posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as Wicket's
-`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `RichTextImageStore` has one, which
+`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `IRichTextImageStore` has one, which
 checks the size again, tells the type by the first bytes of the file, has the store keep it, and
 checks the address the store answers; a page adds one for its React and Svelte editors.
 

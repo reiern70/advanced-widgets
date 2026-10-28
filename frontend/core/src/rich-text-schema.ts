@@ -22,9 +22,12 @@
  * 'unsafe-inline' would block: text aligns by the classes of RICH_TEXT_ALIGN_CLASSES, on
  * paragraphs, headings and the cells of tables, and tables have no widths. The editor reads the
  * alignment of pasted HTML from its style or its align attribute too. Colors are classes as well,
- * of a palette (RICH_TEXT_COLORS): <span class="antilia-color-red"> colors the text,
- * <mark class="antilia-background-yellow"> its background; rich-text-editor.css colors them from
- * the theme.
+ * of two palettes apart: <span class="antilia-color-red"> colors the text, by a color of the text
+ * (RichTextColor), of DEFAULT_RICH_TEXT_COLORS unless the page has its own, and
+ * <mark class="antilia-background-yellow"> its background, by a color of the background
+ * (RichTextBackgroundColor), of DEFAULT_RICH_TEXT_BACKGROUND_COLORS unless the page has its own.
+ * rich-text-editor.css colors those of the default palettes from the theme, the page's style
+ * sheets its own.
  *
  * Links go only to http, https and mailto addresses, or relative ones (isSafeUrl), as the cleaning
  * of the HTML on the server allows: the editor drops the others, javascript: for example.
@@ -39,19 +42,27 @@ import { CharacterCount, Placeholder } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { StarterKit } from '@tiptap/starter-kit';
 
+import type { RichTextEditorKit } from './rich-text-editor.js';
+import { featureExtensions, richTextFeature } from './rich-text-features.js';
 import { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
 	type RichTextAlignment } from './rich-text-html.js';
 
 export { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
 	type RichTextAlignment };
 
-/** What a text may hold. */
-export type RichTextFeature = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
+/** The features built in the editor. */
+export type RichTextFeatureName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
 	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign';
 
-/** The features, all of them: those of an editor of HTML when left out. */
-export const RICH_TEXT_FEATURES: readonly RichTextFeature[] = Object.freeze(['heading', 'bold',
+/**
+ * What a text may hold: a feature built in the editor, or the name of one registered
+ * (registerRichTextFeature).
+ */
+export type RichTextFeature = RichTextFeatureName | (string & {});
+
+/** The features built in the editor, all of them: those of an editor of HTML when left out. */
+export const RICH_TEXT_FEATURES: readonly RichTextFeatureName[] = Object.freeze(['heading', 'bold',
 	'italic', 'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
 	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
 	'textAlign']);
@@ -60,21 +71,125 @@ export const RICH_TEXT_FEATURES: readonly RichTextFeature[] = Object.freeze(['he
  * The features Markdown has no syntax for, which an editor of Markdown leaves out unless told
  * otherwise: underlined text, colors and alignment.
  */
-export const RICH_TEXT_NOT_IN_MARKDOWN: readonly RichTextFeature[] = Object.freeze(['underline',
+export const RICH_TEXT_NOT_IN_MARKDOWN: readonly RichTextFeatureName[] = Object.freeze(['underline',
 	'textColor', 'textBackground', 'textAlign']);
 
-/** The colors of the text and of its background, a palette the theme colors. */
-export type RichTextColor = 'gray' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' |
-	'pink';
+/**
+ * A color of the text, of the palette of the colors of the text. The style sheets of the page color
+ * its class; the cleaning of the HTML on the server keeps those of the palette alone.
+ */
+export interface RichTextColor {
+	/** Its name, unique in the palette: what Tiptap's JSON keeps of it. */
+	name: string;
+	/** The class coloring the text, on a <span>. */
+	colorClass: string;
+	/**
+	 * What the menu calls it; when left out, the text of the editor named color and its name
+	 * capitalized, colorRed for red, else its name.
+	 */
+	label?: string;
+}
 
-export const RICH_TEXT_COLORS: readonly RichTextColor[] = Object.freeze(['gray', 'red', 'orange',
-	'yellow', 'green', 'blue', 'purple', 'pink']);
+/**
+ * A color of the background of text, of a palette of its own, apart from the colors of the text:
+ * a text takes one of each, or either. The style sheets of the page color its class; the cleaning
+ * of the HTML on the server keeps those of the palette alone.
+ */
+export interface RichTextBackgroundColor {
+	/** Its name, unique in the palette: what Tiptap's JSON keeps of it. */
+	name: string;
+	/** The class coloring the background of the text, on a <mark>. */
+	backgroundClass: string;
+	/**
+	 * What the menu calls it; when left out, the text of the editor named color and its name
+	 * capitalized, colorRed for red, else its name.
+	 */
+	label?: string;
+}
+
+/** The names of the colors of DEFAULT_RICH_TEXT_COLORS, those of RichTextColor in Wicket. */
+export type RichTextColorName = 'gray' | 'brown' | 'red' | 'orange' | 'yellow' | 'green' | 'teal' |
+	'cyan' | 'blue' | 'indigo' | 'purple' | 'pink';
+
+/**
+ * The names of the colors of DEFAULT_RICH_TEXT_BACKGROUND_COLORS, those of RichTextBackgroundColor
+ * in Wicket.
+ */
+export type RichTextBackgroundColorName = 'gray' | 'brown' | 'red' | 'orange' | 'yellow' | 'lime' |
+	'green' | 'teal' | 'cyan' | 'blue' | 'purple' | 'pink';
 
 /** The start of the class coloring text, antilia-color-red for example. */
 export const RICH_TEXT_COLOR_CLASS = 'antilia-color-';
 
 /** The start of the class coloring the background of text, antilia-background-yellow. */
 export const RICH_TEXT_BACKGROUND_CLASS = 'antilia-background-';
+
+/** The colors of the text when left out, those rich-text-editor.css colors from the theme. */
+export const DEFAULT_RICH_TEXT_COLORS: readonly RichTextColor[] = Object.freeze((['gray', 'brown',
+	'red', 'orange', 'yellow', 'green', 'teal', 'cyan', 'blue', 'indigo', 'purple',
+	'pink'] satisfies RichTextColorName[]).map((name) => Object.freeze({ name,
+	colorClass: RICH_TEXT_COLOR_CLASS + name })));
+
+/** The colors of the background when left out, those rich-text-editor.css colors from the theme. */
+export const DEFAULT_RICH_TEXT_BACKGROUND_COLORS: readonly RichTextBackgroundColor[] =
+	Object.freeze((['gray', 'brown', 'red', 'orange', 'yellow', 'lime', 'green', 'teal', 'cyan',
+		'blue', 'purple', 'pink'] satisfies RichTextBackgroundColorName[]).map((name) =>
+		Object.freeze({ name, backgroundClass: RICH_TEXT_BACKGROUND_CLASS + name })));
+
+/** What a name of a color may be, as on the server: letters, digits, - and _, from a letter. */
+const COLOR_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/;
+
+/** What a class of a color may be: one CSS class, without escapes. */
+const COLOR_CLASS = /^-?[_A-Za-z][_A-Za-z0-9-]{0,99}$/;
+
+/**
+ * @returns the colors of a palette the editor takes, the defaults when left out, none for null:
+ *          those with a name and a class it allows, each name and each class once, the first of
+ *          them
+ */
+function palette<C extends { name: string }>(colors: readonly C[] | null | undefined,
+	classOf: (color: C) => unknown, defaults: readonly C[]): readonly C[] {
+	if (colors === undefined) {
+		return defaults;
+	}
+	if (!colors) {
+		return [];
+	}
+	const names = new Set<string>();
+	const classes = new Set<string>();
+	return colors.filter((color) => {
+		const css = color ? classOf(color) : undefined;
+		const fits = !!color && typeof color.name === 'string' && COLOR_NAME.test(color.name) &&
+			!names.has(color.name) && typeof css === 'string' && COLOR_CLASS.test(css) &&
+			!classes.has(css);
+		if (fits) {
+			names.add(color.name);
+			classes.add(css);
+		}
+		return fits;
+	});
+}
+
+/**
+ * @returns the colors of the text the editor takes of a palette, DEFAULT_RICH_TEXT_COLORS when left
+ *          out, none for null: those with a name and a class it allows, each name and each class
+ *          once, the first of them
+ */
+export function richTextColors(colors: readonly RichTextColor[] | null | undefined):
+	readonly RichTextColor[] {
+	return palette(colors, (color) => color.colorClass, DEFAULT_RICH_TEXT_COLORS);
+}
+
+/**
+ * @returns the colors of the background the editor takes of a palette,
+ *          DEFAULT_RICH_TEXT_BACKGROUND_COLORS when left out, none for null, checked as
+ *          richTextColors() checks those of the text
+ */
+export function richTextBackgroundColors(
+	colors: readonly RichTextBackgroundColor[] | null | undefined):
+	readonly RichTextBackgroundColor[] {
+	return palette(colors, (color) => color.backgroundClass, DEFAULT_RICH_TEXT_BACKGROUND_COLORS);
+}
 
 /** How the editor keeps the text: as HTML, as Markdown or as Tiptap's JSON. */
 export type RichTextFormat = 'html' | 'markdown' | 'json';
@@ -123,13 +238,13 @@ declare module '@tiptap/core' {
 	interface Commands<ReturnType> {
 		textColor: {
 			/** Colors the text selected, or the text typed next, in a color of the palette. */
-			setTextColor: (color: RichTextColor) => ReturnType;
+			setTextColor: (color: string) => ReturnType;
 			/** Gives the text selected its default color. */
 			unsetTextColor: () => ReturnType;
 		};
 		textBackground: {
 			/** Colors the background of the text selected, or of the text typed next. */
-			setTextBackground: (color: RichTextColor) => ReturnType;
+			setTextBackground: (color: string) => ReturnType;
 			/** Takes away the background of the text selected. */
 			unsetTextBackground: () => ReturnType;
 		};
@@ -181,20 +296,16 @@ export const TextAlignClass = Extension.create({
 });
 
 /**
- * @returns the color of the palette a class of an element names, null for none
+ * @returns a mark coloring text by the classes of the colors of a palette, written in a tag: a
+ *          span for the color of the text, a mark for its background. A tag of the mark without a
+ *          class of the palette takes the color given, if any: a pasted <mark> is yellow, unless an
+ *          extension of the page reads <mark> its own way.
  */
-function colorOf(element: HTMLElement, prefix: string): RichTextColor | null {
-	return RICH_TEXT_COLORS.find((color) => element.classList.contains(prefix + color)) ?? null;
-}
-
-/**
- * @returns a mark coloring text by the classes of a prefix, written in a tag: a span for the
- *          color of the text, a mark for its background. A tag of the mark without a class of the
- *          palette takes the color given, if any: a pasted <mark> is yellow, unless an extension
- *          of the page reads <mark> its own way.
- */
-function colorMark(name: 'textColor' | 'textBackground', tag: string, prefix: string,
-	untagged: RichTextColor | null) {
+function colorMark<C extends { name: string }>(name: 'textColor' | 'textBackground',
+	tag: string, classOf: (color: C) => string, colors: readonly C[], untagged: string | null) {
+	const named = (value: unknown) => colors.find((color) => color.name === value);
+	const colorOf = (element: HTMLElement) => colors.find((color) =>
+		element.classList.contains(classOf(color)))?.name ?? null;
 	return Mark.create({
 		name,
 
@@ -202,17 +313,18 @@ function colorMark(name: 'textColor' | 'textBackground', tag: string, prefix: st
 			return {
 				color: {
 					default: null,
-					parseHTML: (element: HTMLElement) => colorOf(element, prefix) ?? untagged,
-					renderHTML: (attributes: Record<string, unknown>) =>
-						RICH_TEXT_COLORS.includes(attributes.color as RichTextColor) ?
-							{ class: prefix + attributes.color } : {}
+					parseHTML: (element: HTMLElement) => colorOf(element) ?? untagged,
+					renderHTML: (attributes: Record<string, unknown>) => {
+						const color = named(attributes.color);
+						return color ? { class: classOf(color) } : {};
+					}
 				}
 			};
 		},
 
 		parseHTML() {
 			const classed = { tag, getAttrs: (element: HTMLElement) =>
-				colorOf(element, prefix) ? null : false };
+				colorOf(element) ? null : false };
 			// below the default priority, 50, of the rules of other extensions
 			return untagged ? [classed, { tag, priority: 40 }] : [classed];
 		},
@@ -222,8 +334,8 @@ function colorMark(name: 'textColor' | 'textBackground', tag: string, prefix: st
 		},
 
 		addCommands() {
-			const set = (color: RichTextColor) => ({ commands }: CommandProps) =>
-				RICH_TEXT_COLORS.includes(color) && commands.setMark(name, { color });
+			const set = (color: string) => ({ commands }: CommandProps) =>
+				!!named(color) && commands.setMark(name, { color });
 			const unset = () => ({ commands }: CommandProps) => commands.unsetMark(name);
 			return name === 'textColor' ? { setTextColor: set, unsetTextColor: unset } :
 				{ setTextBackground: set, unsetTextBackground: unset };
@@ -231,12 +343,19 @@ function colorMark(name: 'textColor' | 'textBackground', tag: string, prefix: st
 	});
 }
 
-/** The color of text: <span class="antilia-color-red">. */
-export const TextColorClass = colorMark('textColor', 'span', RICH_TEXT_COLOR_CLASS, null);
+/** The color of text, of a palette: <span class="antilia-color-red">. */
+export function textColorMark(colors: readonly RichTextColor[]) {
+	return colorMark('textColor', 'span', (color) => color.colorClass, colors, null);
+}
 
-/** The background of text: <mark class="antilia-background-yellow">. */
-export const TextBackgroundClass = colorMark('textBackground', 'mark', RICH_TEXT_BACKGROUND_CLASS,
-	'yellow');
+/**
+ * The background of text, of a palette: <mark class="antilia-background-yellow">. A pasted <mark>
+ * without a class of the palette takes the color named yellow, if the palette has one.
+ */
+export function textBackgroundMark(colors: readonly RichTextBackgroundColor[]) {
+	return colorMark('textBackground', 'mark', (color) => color.backgroundClass, colors,
+		colors.some((color) => color.name === 'yellow') ? 'yellow' : null);
+}
 
 /** A table without widths: no style on the table, no columns. */
 const PlainTable = Table.extend({
@@ -269,6 +388,7 @@ const PlainHeader = TableHeader.extend({
 
 /** What makes the schema of an editor. */
 export interface RichTextSchemaOptions {
+	/** The features: those built in, and those registered (registerRichTextFeature). */
 	features: ReadonlySet<RichTextFeature>;
 	format: RichTextFormat;
 	headingLevels: readonly HeadingLevel[];
@@ -276,14 +396,26 @@ export interface RichTextSchemaOptions {
 	placeholder: () => string;
 	/** The most characters the text may have, none for null. */
 	limit: number | null;
+	/** The palette of the colors of the text, checked (richTextColors). */
+	colors: readonly RichTextColor[];
+	/** The palette of the colors of the background, checked (richTextBackgroundColors). */
+	backgroundColors: readonly RichTextBackgroundColor[];
+	/** The classes of Tiptap the features registered are made with. */
+	kit: RichTextEditorKit;
+	/** The options of the features registered, by their names. */
+	featureOptions: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+	/** Tells what failed. */
+	log: (message: string, error: unknown) => void;
 }
 
 /**
  * @returns the extensions of an editor with the features asked for
  */
 export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[] {
-	const has = (feature: RichTextFeature) => options.features.has(feature);
-	const on = <T extends object>(feature: RichTextFeature, settings = {} as T): T | false =>
+	// a feature registered under a built-in name replaces it
+	const has = (feature: RichTextFeatureName) => options.features.has(feature) &&
+		!richTextFeature(feature);
+	const on = <T extends object>(feature: RichTextFeatureName, settings = {} as T): T | false =>
 		has(feature) ? settings : false;
 	const lists = has('bulletList') || has('orderedList');
 	const extensions: AnyExtension[] = [
@@ -327,13 +459,22 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 		extensions.push(SafeImage.configure({ inline: false, allowBase64: false }));
 	}
 	if (has('textColor')) {
-		extensions.push(TextColorClass);
+		extensions.push(textColorMark(options.colors));
 	}
 	if (has('textBackground')) {
-		extensions.push(TextBackgroundClass);
+		extensions.push(textBackgroundMark(options.backgroundColors));
 	}
 	if (has('textAlign')) {
 		extensions.push(TextAlignClass);
+	}
+	for (const feature of options.features) {
+		const definition = richTextFeature(feature);
+		if (definition) {
+			extensions.push(...featureExtensions(definition, { kit: options.kit,
+				format: options.format, features: options.features,
+				headingLevels: options.headingLevels,
+				options: options.featureOptions[feature] ?? {} }, options.log));
+		}
 	}
 	if (options.format === 'markdown') {
 		extensions.push(Markdown);

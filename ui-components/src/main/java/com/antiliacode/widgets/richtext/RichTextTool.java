@@ -16,13 +16,14 @@ package com.antiliacode.widgets.richtext;
 import java.util.List;
 
 /**
- * A tool of the toolbar of a {@link RichTextEditor}: a button formatting the text, opening a menu
- * (the text style, the colors, the table) or a form (a link, an image), or undoing. A tool needs
- * its {@link #getFeature() feature}: without it, it does not show.
+ * The tools of the toolbar of a {@link RichTextEditor} built in its script: a button formatting the
+ * text, opening a menu (the text style, the colors, the table) or a form (a link, an image), or
+ * undoing. A tool needs its {@link #getFeature() feature}: without it, it does not show. A
+ * {@link IRichTextFeature feature} of a page's own brings tools of its own, {@link IRichTextTool}.
  *
  * @since 11.0.0
  */
-public enum RichTextTool
+public enum RichTextTool implements IRichTextTool
 {
 	/** The text style: a paragraph or a heading, in a menu. */
 	HEADING("heading", RichTextFeature.HEADING),
@@ -37,10 +38,16 @@ public enum RichTextTool
 
 	CODE("code", RichTextFeature.CODE),
 
-	/** The color of the text selected, in a menu of the {@link RichTextColor palette}. */
+	/**
+	 * The color of the text selected, in a menu of the
+	 * {@link RichTextEditor#setColors(java.util.Collection) palette}.
+	 */
 	TEXT_COLOR("textColor", RichTextFeature.TEXT_COLOR),
 
-	/** The color of the background of the text selected, in a menu of the palette. */
+	/**
+	 * The color of the background of the text selected, in a menu of the
+	 * {@link RichTextEditor#setBackgroundColors(java.util.Collection) palette} of the backgrounds.
+	 */
 	TEXT_BACKGROUND("textBackground", RichTextFeature.TEXT_BACKGROUND),
 
 	/** The link at the cursor, in a form: its address and whether it opens in a new tab. */
@@ -100,6 +107,7 @@ public enum RichTextTool
 	/**
 	 * @return the name of the tool in the browser
 	 */
+	@Override
 	public String getName()
 	{
 		return name;
@@ -108,6 +116,7 @@ public enum RichTextTool
 	/**
 	 * @return the feature the tool needs, {@code null} for none
 	 */
+	@Override
 	public RichTextFeature getFeature()
 	{
 		return feature;

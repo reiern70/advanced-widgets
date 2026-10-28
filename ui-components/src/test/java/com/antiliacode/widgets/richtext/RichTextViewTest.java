@@ -66,7 +66,86 @@ class RichTextViewTest extends WicketTestCase
 		assertEquals("", view.getHtml());
 		view.setSanitizer(RichTextPolicy.of(java.util.Set.of()));
 		assertEquals("<p>a</p>", view.getHtml());
-		assertThrows(IllegalArgumentException.class, () -> view.setSanitizer(null));
+		view.setSanitizer(null);
+		assertSame(RichTextPolicy.ALL, view.getSanitizer());
+	}
+
+	@Test
+	void keepsTheClassesOfItsPalettes()
+	{
+		String html = "<p><span class=\"brand-text\">brand</span> <mark class=\"brand-mark\">" +
+			"marked</mark> <span class=\"antilia-color-red\">red</span> " +
+			"<mark class=\"antilia-background-red\">on red</mark></p>";
+		RichTextView view = new RichTextView("view", Model.of(html));
+		assertEquals("<p><span>brand</span> <mark>marked</mark> " +
+			"<span class=\"antilia-color-red\">red</span> " +
+			"<mark class=\"antilia-background-red\">on red</mark></p>", view.getHtml());
+
+		view.setColors(java.util.List.of(new Brand()));
+		assertEquals("<p><span class=\"brand-text\">brand</span> <mark>marked</mark> " +
+			"<span>red</span> <mark class=\"antilia-background-red\">on red</mark></p>",
+			view.getHtml(), "the colors of the text apart from those of the background");
+		assertEquals(java.util.Set.of(new Brand()), view.getColors());
+		assertSame(RichTextBackgroundColor.PALETTE, view.getBackgroundColors());
+
+		view.setBackgroundColors(java.util.List.of(new Brand()));
+		assertEquals("<p><span class=\"brand-text\">brand</span> <mark class=\"brand-mark\">" +
+			"marked</mark> <span>red</span> <mark>on red</mark></p>", view.getHtml());
+		assertEquals(java.util.Set.of(new Brand()), view.getBackgroundColors());
+
+		view.setColors(null).setBackgroundColors(null);
+		assertEquals(java.util.Set.of(), view.getColors(), "null for no colors");
+		assertEquals(java.util.Set.of(), view.getBackgroundColors());
+		assertEquals("<p><span>brand</span> <mark>marked</mark> <span>red</span> <mark>on red" +
+			"</mark></p>", view.getHtml());
+
+		view.setColors(RichTextColor.PALETTE).setBackgroundColors(RichTextBackgroundColor.PALETTE);
+		assertSame(RichTextPolicy.ALL, view.getSanitizer());
+		assertThrows(IllegalArgumentException.class, () -> view.setColors(java.util.List.of(
+			new Brand(), new Brand())));
+		assertThrows(IllegalArgumentException.class, () -> view.setBackgroundColors(
+			java.util.List.of(new Brand(), new Brand())));
+		assertThrows(UnsupportedOperationException.class,
+			() -> view.getColors().add(new Brand()));
+		assertThrows(UnsupportedOperationException.class,
+			() -> view.getBackgroundColors().add(new Brand()));
+
+		assertSame(view, view.addColor(new Brand()));
+		assertEquals("<p><span class=\"brand-text\">brand</span> <mark>marked</mark> " +
+			"<span class=\"antilia-color-red\">red</span> " +
+			"<mark class=\"antilia-background-red\">on red</mark></p>", view.getHtml(),
+			"a color added keeps those of the palette");
+		assertSame(view, view.addBackgroundColor(new Brand()));
+		assertEquals("<p><span class=\"brand-text\">brand</span> <mark class=\"brand-mark\">" +
+			"marked</mark> <span class=\"antilia-color-red\">red</span> " +
+			"<mark class=\"antilia-background-red\">on red</mark></p>", view.getHtml());
+		assertEquals(RichTextColor.values().length + 1, view.getColors().size());
+		assertEquals(RichTextBackgroundColor.values().length + 1,
+			view.getBackgroundColors().size());
+		assertThrows(IllegalArgumentException.class, () -> view.addColor(new Brand()));
+		assertThrows(IllegalArgumentException.class, () -> view.addBackgroundColor(new Brand()));
+	}
+
+	/** A color of the page's own. */
+	record Brand() implements IRichTextColor, IRichTextBackgroundColor
+	{
+		@Override
+		public String getName()
+		{
+			return "brand";
+		}
+
+		@Override
+		public String getColorClass()
+		{
+			return "brand-text";
+		}
+
+		@Override
+		public String getBackgroundClass()
+		{
+			return "brand-mark";
+		}
 	}
 
 	@Test

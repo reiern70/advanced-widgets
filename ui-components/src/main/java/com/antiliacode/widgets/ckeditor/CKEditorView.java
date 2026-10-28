@@ -22,7 +22,7 @@ import org.apache.wicket.markup.parser.XmlTag;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
-import com.antiliacode.widgets.richtext.RichTextSanitizer;
+import com.antiliacode.widgets.richtext.IRichTextSanitizer;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookPart;
 
@@ -32,7 +32,7 @@ import com.antiliacode.widgets.theme.LookPart;
  * {@link CKEditorLibrary library}, {@code ckeditor5-content.css}, styles, and the colors of the
  * theme come from {@link CKEditor#CSS}. Attach it to a {@code <div>}, whose body it replaces.
  * <p>
- * The HTML is {@link #setSanitizer(RichTextSanitizer) cleaned} before it is written into the page,
+ * The HTML is {@link #setSanitizer(IRichTextSanitizer) cleaned} before it is written into the page,
  * with {@link CKEditorPolicy#ALL} by default, whatever the model holds: HTML saved before the
  * editor cleaned it, or from somewhere else, shows no script.
  *
@@ -42,7 +42,7 @@ public class CKEditorView extends WebComponent
 {
 	private static final long serialVersionUID = 1L;
 
-	private RichTextSanitizer sanitizer = CKEditorPolicy.ALL;
+	private IRichTextSanitizer sanitizer = CKEditorPolicy.ALL;
 
 	private CKEditorLibrary library;
 
@@ -61,7 +61,7 @@ public class CKEditorView extends WebComponent
 	/**
 	 * @return what cleans the HTML before the page shows it
 	 */
-	public RichTextSanitizer getSanitizer()
+	public IRichTextSanitizer getSanitizer()
 	{
 		return sanitizer;
 	}
@@ -72,7 +72,7 @@ public class CKEditorView extends WebComponent
 	 *            from, for one keeping what its features write
 	 * @return {@code this}
 	 */
-	public CKEditorView setSanitizer(RichTextSanitizer sanitizer)
+	public CKEditorView setSanitizer(IRichTextSanitizer sanitizer)
 	{
 		this.sanitizer = Args.notNull(sanitizer, "sanitizer");
 		return this;

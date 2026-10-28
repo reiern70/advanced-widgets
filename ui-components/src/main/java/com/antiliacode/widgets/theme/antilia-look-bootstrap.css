@@ -308,7 +308,8 @@
 	--bs-btn-border-radius: var(--bs-border-radius-sm);
 }
 
-.antilia-look-bootstrap .antilia-rich-text-tool.btn > svg {
+.antilia-look-bootstrap .antilia-rich-text-tool.btn > svg,
+.antilia-look-bootstrap .antilia-rich-text-tool.btn > .antilia-rich-text-tool-icon {
 	width: 1rem;
 	height: 1rem;
 }

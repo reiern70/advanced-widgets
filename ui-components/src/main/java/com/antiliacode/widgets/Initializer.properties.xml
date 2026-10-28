@@ -240,11 +240,16 @@
 	<entry key="RichTextEditor.defaultColor">Default</entry>
 	<entry key="RichTextEditor.noBackground">None</entry>
 	<entry key="RichTextEditor.colorGray">Gray</entry>
+	<entry key="RichTextEditor.colorBrown">Brown</entry>
 	<entry key="RichTextEditor.colorRed">Red</entry>
 	<entry key="RichTextEditor.colorOrange">Orange</entry>
 	<entry key="RichTextEditor.colorYellow">Yellow</entry>
+	<entry key="RichTextEditor.colorLime">Lime</entry>
 	<entry key="RichTextEditor.colorGreen">Green</entry>
+	<entry key="RichTextEditor.colorTeal">Teal</entry>
+	<entry key="RichTextEditor.colorCyan">Cyan</entry>
 	<entry key="RichTextEditor.colorBlue">Blue</entry>
+	<entry key="RichTextEditor.colorIndigo">Indigo</entry>
 	<entry key="RichTextEditor.colorPurple">Purple</entry>
 	<entry key="RichTextEditor.colorPink">Pink</entry>
 	<entry key="RichTextEditor.uploadImage">Upload an image…</entry>

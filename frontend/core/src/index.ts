@@ -36,15 +36,20 @@ export { RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT
 export type { RichTextEditorEventDetail, RichTextEditorKit, RichTextEditorOptions,
 	RichTextEditorSelection, RichTextEditorState, RichTextEditorStateChange, RichTextExtension,
 	RichTextExtensionLoader } from './rich-text-editor.js';
-export { DEFAULT_HEADING_LEVELS, isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml,
-	RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS, RICH_TEXT_BACKGROUND_CLASS, RICH_TEXT_COLOR_CLASS,
-	RICH_TEXT_COLORS, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
-	RICH_TEXT_NOT_IN_MARKDOWN } from './rich-text-schema.js';
-export type { HeadingLevel, RichTextAlignment, RichTextColor, RichTextFeature,
+export { DEFAULT_HEADING_LEVELS, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS,
+	isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
+	RICH_TEXT_BACKGROUND_CLASS, RICH_TEXT_COLOR_CLASS, RICH_TEXT_FEATURES, RICH_TEXT_FORMATS,
+	RICH_TEXT_NOT_IN_MARKDOWN, richTextBackgroundColors, richTextColors } from './rich-text-schema.js';
+export type { HeadingLevel, RichTextAlignment, RichTextBackgroundColor, RichTextColor,
+	RichTextBackgroundColorName, RichTextColorName, RichTextFeature, RichTextFeatureName,
 	RichTextFormat } from './rich-text-schema.js';
+export { registerRichTextFeature, richTextFeature, richTextFeatures } from './rich-text-features.js';
+export type { RichTextFeatureContext, RichTextFeatureDefinition, RichTextMenuItem,
+	RichTextToolDefinition } from './rich-text-features.js';
 export { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, RICH_TEXT_BUBBLE_TOOLS,
 	RICH_TEXT_ICONS, RICH_TEXT_TOOLS, shortcutText } from './rich-text-toolbar.js';
-export type { RichTextCodeLanguage, RichTextEditorTexts, RichTextTool } from './rich-text-toolbar.js';
+export type { RichTextCodeLanguage, RichTextEditorTexts, RichTextTool,
+	RichTextToolName } from './rich-text-toolbar.js';
 export { CODE_BLOCK_LANGUAGE_ATTRIBUTE, registerRichTextHighlighter,
 	richTextHighlighter } from './rich-text-code-blocks.js';
 export { codeLanguage, RICH_TEXT_CODE_LANGUAGES } from './rich-text-languages.js';

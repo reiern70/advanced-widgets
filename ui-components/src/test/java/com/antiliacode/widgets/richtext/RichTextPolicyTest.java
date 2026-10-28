@@ -18,9 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.wicket.core.util.lang.WicketObjects;
@@ -112,24 +114,167 @@ class RichTextPolicyTest
 	{
 		for (RichTextColor color : RichTextColor.values())
 		{
-			String html = "<p><span class=\"" + color.getColorClass() + "\">a</span><mark " +
-				"class=\"" + color.getBackgroundClass() + "\">b</mark></p>";
+			String html = "<p><span class=\"" + color.getColorClass() + "\">a</span></p>";
 			assertEquals(html, clean(html));
 		}
-		String others = "<p><span class=\"antilia-color-teal\">teal</span>, <span " +
+		for (RichTextBackgroundColor color : RichTextBackgroundColor.values())
+		{
+			String html = "<p><mark class=\"" + color.getBackgroundClass() + "\">b</mark></p>";
+			assertEquals(html, clean(html));
+		}
+		// lime colors backgrounds alone, indigo text alone
+		String others = "<p><span class=\"antilia-color-lime\">lime</span>, <span " +
 			"style=\"color: red\">styled</span>, <mark class=\"antilia-background-red evil\" " +
 			"style=\"background: url(x)\">evil</mark>, <mark>pasted</mark></p>";
 		// the spans of task lists stay bare
-		assertEquals("<p><span>teal</span>, <span>styled</span>, <mark>evil</mark>, " +
+		assertEquals("<p><span>lime</span>, <span>styled</span>, <mark>evil</mark>, " +
 			"<mark>pasted</mark></p>", clean(others));
-		assertEquals("<p>teal, styled, <mark>evil</mark>, <mark>pasted</mark></p>",
+		assertEquals("<p><mark>indigo</mark></p>", clean(
+			"<p><mark class=\"antilia-background-indigo\">indigo</mark></p>"));
+		assertEquals("<p>lime, styled, <mark>evil</mark>, <mark>pasted</mark></p>",
 			RichTextPolicy.of(EnumSet.of(RichTextFeature.TEXT_COLOR,
 				RichTextFeature.TEXT_BACKGROUND)).sanitize(others));
 		assertEquals("<p>a <strong>b</strong></p>", RichTextPolicy.of(EnumSet.of(
 			RichTextFeature.BOLD)).sanitize("<p><span class=\"antilia-color-red\">a</span> " +
 				"<mark class=\"antilia-background-red\"><strong>b</strong></mark></p>"));
 		assertEquals("antilia-color-red", RichTextColor.RED.getColorClass());
-		assertEquals("antilia-background-yellow", RichTextColor.YELLOW.getBackgroundClass());
+		assertEquals("antilia-background-yellow",
+			RichTextBackgroundColor.YELLOW.getBackgroundClass());
+	}
+
+	@Test
+	void keepsTheClassesOfThePaletteGiven()
+	{
+		RichTextPolicy policy = RichTextPolicy.of(null, List.of(new RichTextViewTest.Brand(),
+			RichTextColor.GREEN), List.of(new RichTextViewTest.Brand(),
+				RichTextBackgroundColor.GREEN));
+		assertEquals(Set.of("brand-text", "antilia-color-green"), policy.getColorClasses());
+		assertEquals(Set.of("brand-mark", "antilia-background-green"),
+			policy.getBackgroundClasses());
+		assertEquals("<p><span class=\"brand-text\">a</span><mark class=\"brand-mark\">b</mark>" +
+			"<span class=\"antilia-color-green\">c</span><span>d</span><mark>e</mark>" +
+			"<span>f</span></p>", policy.sanitize("<p><span class=\"brand-text\">a</span>" +
+				"<mark class=\"brand-mark\">b</mark><span class=\"antilia-color-green\">c</span>" +
+				"<span class=\"antilia-color-red\">d</span><mark class=\"brand-text\">e</mark>" +
+				"<span class=\"brand-text evil\">f</span></p>"));
+		assertNotEquals(RichTextPolicy.ALL, policy);
+		assertSame(RichTextPolicy.ALL, RichTextPolicy.of(null, List.of(RichTextColor.values()),
+			List.of(RichTextBackgroundColor.values())));
+		assertEquals("<p>a</p>", RichTextPolicy.of(EnumSet.of(RichTextFeature.TEXT_COLOR),
+			List.of(), null).sanitize("<p><span class=\"antilia-color-red\">a</span></p>"));
+	}
+
+	@Test
+	void keepsTheColorsOfTheTextAndOfTheBackgroundApart()
+	{
+		RichTextPolicy policy = RichTextPolicy.of(null, List.of(text("ink", "ink")),
+			List.of(background("ink", "glow"), RichTextBackgroundColor.YELLOW));
+		assertEquals(Set.of("ink"), policy.getColorClasses());
+		assertEquals(Set.of("glow", "antilia-background-yellow"), policy.getBackgroundClasses());
+		assertEquals("<p><span class=\"ink\"><mark class=\"glow\">a</mark></span><mark>b</mark>" +
+			"<span>c</span><mark class=\"antilia-background-yellow\">d</mark><span>e</span></p>",
+			policy.sanitize("<p><span class=\"ink\"><mark class=\"glow\">a</mark></span>" +
+				"<mark class=\"ink\">b</mark><span class=\"glow\">c</span>" +
+				"<mark class=\"antilia-background-yellow\">d</mark>" +
+				"<span class=\"antilia-color-yellow\">e</span></p>"));
+
+		RichTextPolicy colorsOnly = RichTextPolicy.of(null, RichTextColor.PALETTE, List.of());
+		assertEquals(RichTextPolicy.ALL.getColorClasses(), colorsOnly.getColorClasses());
+		assertEquals(Set.of(), colorsOnly.getBackgroundClasses());
+		assertEquals("<p><span class=\"antilia-color-red\">a</span><mark>b</mark></p>",
+			colorsOnly.sanitize("<p><span class=\"antilia-color-red\">a</span>" +
+				"<mark class=\"antilia-background-red\">b</mark></p>"));
+
+		RichTextPolicy none = RichTextPolicy.of(null, null, null);
+		assertEquals(Set.of(), none.getColorClasses(), "null for no colors");
+		assertEquals(Set.of(), none.getBackgroundClasses());
+		assertEquals(none, RichTextPolicy.of(null, List.of(), List.of()));
+		// the spans of task lists stay bare
+		assertEquals("<p><span>a</span><mark>b</mark></p>", none.sanitize("<p><span class=\"antilia-color-red\">" +
+			"a</span><mark class=\"antilia-background-red\">b</mark></p>"));
+	}
+
+	@Test
+	void takesPalettesOfColorsNamedOnce()
+	{
+		IRichTextColor teal = text("teal", "teal-text");
+		assertEquals(List.of(teal, RichTextColor.RED), List.copyOf(IRichTextColor.palette(
+			List.of(teal, RichTextColor.RED))));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(null));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(
+			java.util.Arrays.asList(teal, null)));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(List.of(teal,
+			text("teal", "other-text"))));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(List.of(teal,
+			text("other", "teal-text"))));
+		for (String name : new String[] { null, "", "1st", "with space", "a\"b", "a".repeat(41) })
+		{
+			assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(List.of(
+				text(name, "a-text"))), name);
+			assertThrows(IllegalArgumentException.class, () -> IRichTextBackgroundColor.palette(
+				List.of(background(name, "a-mark"))), name);
+		}
+		for (String css : new String[] { null, "", "two classes", "a\"b", "9a", "a.b" })
+		{
+			assertThrows(IllegalArgumentException.class, () -> IRichTextColor.palette(List.of(
+				text("a", css))), css);
+			assertThrows(IllegalArgumentException.class, () -> IRichTextBackgroundColor.palette(
+				List.of(background("a", css))), css);
+		}
+		assertThrows(UnsupportedOperationException.class, () -> RichTextColor.PALETTE.add(teal));
+
+		IRichTextBackgroundColor mint = background("mint", "mint-mark");
+		assertEquals(List.of(RichTextBackgroundColor.RED, mint), List.copyOf(
+			IRichTextBackgroundColor.palette(List.of(RichTextBackgroundColor.RED, mint))));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextBackgroundColor.palette(null));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextBackgroundColor.palette(
+			List.of(mint, background("mint", "other-mark"))));
+		assertThrows(IllegalArgumentException.class, () -> IRichTextBackgroundColor.palette(
+			List.of(mint, background("other", "mint-mark"))));
+		assertThrows(UnsupportedOperationException.class,
+			() -> RichTextBackgroundColor.PALETTE.add(mint));
+	}
+
+	/** A color of the text alone. */
+	static IRichTextColor text(String name, String colorClass)
+	{
+		return new IRichTextColor()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String getName()
+			{
+				return name;
+			}
+
+			@Override
+			public String getColorClass()
+			{
+				return colorClass;
+			}
+		};
+	}
+
+	/** A color of the background alone. */
+	static IRichTextBackgroundColor background(String name, String backgroundClass)
+	{
+		return new IRichTextBackgroundColor()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String getName()
+			{
+				return name;
+			}
+
+			@Override
+			public String getBackgroundClass()
+			{
+				return backgroundClass;
+			}
+		};
 	}
 
 	@Test
@@ -188,6 +333,16 @@ class RichTextPolicyTest
 			copy.sanitize("<p><a href=\"/x\">x</a></p>"));
 		assertNotEquals(policy, RichTextPolicy.ALL);
 		assertNotEquals(policy, "policy");
-		assertEquals("RichTextPolicy[LINK]", policy.toString());
+		assertEquals("RichTextPolicy[LINK]" + RichTextPolicy.ALL.getColorClasses() +
+			RichTextPolicy.ALL.getBackgroundClasses(), policy.toString());
+
+		RichTextPolicy own = RichTextPolicy.of(null, List.of(new RichTextViewTest.Brand()),
+			List.of(new RichTextViewTest.Brand()));
+		own.sanitize("<p>made</p>");
+		RichTextPolicy ownCopy = WicketObjects.cloneObject(own);
+		assertEquals(own, ownCopy);
+		assertEquals("<p><span class=\"brand-text\">a</span><mark class=\"brand-mark\">b</mark>" +
+			"</p>", ownCopy.sanitize("<p><span class=\"brand-text\">a</span>" +
+				"<mark class=\"brand-mark\">b</mark></p>"));
 	}
 }

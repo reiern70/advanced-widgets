@@ -40,8 +40,10 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.util.lang.Bytes;
+import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
@@ -49,6 +51,10 @@ import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.dropdown.Dropdown;
+import com.antiliacode.widgets.dropdown.MultiDropdown;
+import com.antiliacode.widgets.richtext.IRichTextTool;
+import com.antiliacode.widgets.richtext.RichTextBackgroundColor;
+import com.antiliacode.widgets.richtext.RichTextColor;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEventBehavior;
@@ -69,7 +75,10 @@ import com.github.openjson.JSONObject;
  * cleans before it keeps it; below it, the article as a page shows it, a {@link RichTextView}, and
  * the HTML the server keeps. Check boxes and a drop-down switch the toolbar, the bubble menu,
  * reading only, the count of the words and the colors of the code blocks, rendering the editor
- * again via Ajax; the toolbar may be chosen tool by tool, and the Java making it shows below.
+ * again via Ajax; the toolbar may be chosen tool by tool, and the Java making it shows below. Two
+ * {@link MultiDropdown}s choose the colors of the text and those of the background, palettes
+ * apart, of the editor and of the view; none chosen, the editor has no tool for them. A check box
+ * adds a feature of the page's own, {@link KbdFeature}: keys of the keyboard, with their tool.
  * Ctrl+S, and the button, save the article. The code blocks are in a language, which the menu of
  * their tool chooses; the images upload, kept by {@link RichTextImages}. Below the title, the
  * library the editor is based on, {@link RichTextLibrary}.
@@ -134,6 +143,16 @@ public class RichTextEditorPage extends DemoPage
 
 	private boolean highlight = true;
 
+	/** Whether the editor has the feature of the page's own, {@link KbdFeature}. */
+	private boolean keys;
+
+	/** The colors of the text of the editor and of the view, all of them at first. */
+	private List<RichTextColor> colors = new ArrayList<>(List.of(RichTextColor.values()));
+
+	/** The colors of the background of the editor and of the view, all of them at first. */
+	private List<RichTextBackgroundColor> backgroundColors = new ArrayList<>(List.of(
+		RichTextBackgroundColor.values()));
+
 	/** Takes the images the editors of the React and Svelte apps upload. */
 	private final RichTextImageUploadBehavior appUploads;
 
@@ -185,11 +204,28 @@ public class RichTextEditorPage extends DemoPage
 			protected void onConfigure()
 			{
 				super.onConfigure();
-				setToolbar(toolbarOf(toolbar, tools));
+				// the feature of the page's own, and its tool after the inline formats
+				List<List<? extends IRichTextTool>> groups = new ArrayList<>(toolbarOf(toolbar,
+					tools));
+				if (keys)
+				{
+					addFeature(KbdFeature.KBD);
+					int bold = groups.indexOf(groups.stream().filter(group -> group.contains(
+						RichTextTool.BOLD)).findFirst().orElse(null));
+					groups.add(bold < 0 ? groups.size() : bold + 1, List.of(KbdFeature.TOOL));
+				}
+				else
+				{
+					removeFeature(KbdFeature.KBD);
+				}
+				setToolbar(groups);
 				setBubbleMenu(bubbleMenu);
 				setReadOnly(readOnly);
 				setCount(count);
 				setHighlighting(highlight);
+				// none chosen, no tool
+				setColors(RichTextEditorPage.this.colors);
+				setBackgroundColors(RichTextEditorPage.this.backgroundColors);
 			}
 
 			@Override
@@ -261,7 +297,20 @@ public class RichTextEditorPage extends DemoPage
 
 		WebMarkupContainer savedBox = new WebMarkupContainer("saved");
 		savedBox.setOutputMarkupId(true);
-		savedBox.add(new RichTextView("view", () -> article().getSaved()));
+		savedBox.add(new RichTextView("view", () -> article().getSaved())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				// the features and the palettes of the editor the HTML comes from
+				setFeatures(editor.getFeatures());
+				setColors(RichTextEditorPage.this.colors);
+				setBackgroundColors(RichTextEditorPage.this.backgroundColors);
+			}
+		});
 		savedBox.add(new Label("html", () -> article().getSaved()));
 		articleCase.add(savedBox);
 		saved = savedBox;
@@ -334,9 +383,13 @@ public class RichTextEditorPage extends DemoPage
 					return each;
 				}
 			}).setRequired(true).add(rerender(editorForm, chooser, toolbarJava)));
+		controls.add(paletteChoice("colors", List.of(RichTextColor.values()),
+			RichTextColor::getName, editorForm, savedBox));
+		controls.add(paletteChoice("backgroundColors", List.of(RichTextBackgroundColor.values()),
+			RichTextBackgroundColor::getName, editorForm, savedBox));
 		articleCase.add(new Label("extras", getString("extras").replace("{0}",
 			sizeText(RichTextImages.MAX_SIZE))));
-		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight"))
+		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight", "keys"))
 		{
 			controls.add(new CheckBox(option, new PropertyModel<>(this, option))
 				.add(rerender(editorForm)));
@@ -494,6 +547,37 @@ public class RichTextEditorPage extends DemoPage
 				.map(group -> group.stream().map(RichTextTool::name).collect(Collectors.joining(
 					", ", "\tList.of(", ")")))
 				.collect(Collectors.joining(",\n")) + "));";
+	}
+
+	/**
+	 * @return the drop-down choosing the colors of a palette, each named as the menus of the editor
+	 *         name it, in the language of the page; none chosen, none in the palette
+	 */
+	private <C> MultiDropdown<C> paletteChoice(String id, List<C> colors,
+		SerializableFunction<C, String> nameOf, Component... rerendered)
+	{
+		MultiDropdown<C> choice = new MultiDropdown<>(id, new PropertyModel<>(this, id), colors,
+			new IChoiceRenderer<>()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public Object getDisplayValue(C color)
+				{
+					String name = nameOf.apply(color);
+					String capitalized = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+					return getString("RichTextEditor.color" + capitalized, null, capitalized);
+				}
+
+				@Override
+				public String getIdValue(C color, int index)
+				{
+					return nameOf.apply(color);
+				}
+			});
+		choice.getDropdownBehavior().setPlaceholder(new ResourceModel("colors.none"));
+		choice.add(rerender(rerendered));
+		return choice;
 	}
 
 	private AjaxFormComponentUpdatingBehavior rerender(Component... components)
@@ -712,6 +796,37 @@ public class RichTextEditorPage extends DemoPage
 	public void setHighlight(boolean highlight)
 	{
 		this.highlight = highlight;
+	}
+
+	public List<RichTextColor> getColors()
+	{
+		return colors;
+	}
+
+	public void setColors(List<RichTextColor> colors)
+	{
+		this.colors = colors == null ? new ArrayList<>() : new ArrayList<>(colors);
+	}
+
+	public List<RichTextBackgroundColor> getBackgroundColors()
+	{
+		return backgroundColors;
+	}
+
+	public void setBackgroundColors(List<RichTextBackgroundColor> backgroundColors)
+	{
+		this.backgroundColors = backgroundColors == null ? new ArrayList<>() :
+			new ArrayList<>(backgroundColors);
+	}
+
+	public boolean isKeys()
+	{
+		return keys;
+	}
+
+	public void setKeys(boolean keys)
+	{
+		this.keys = keys;
 	}
 
 	public String getUnsafe()

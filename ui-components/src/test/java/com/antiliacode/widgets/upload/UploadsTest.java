@@ -337,7 +337,7 @@ class UploadsTest extends WicketTestCase
 		}
 	}
 
-	private interface Content extends java.io.Serializable
+	private interface IContent extends java.io.Serializable
 	{
 		void addTo(TestPage page);
 	}
@@ -348,7 +348,7 @@ class UploadsTest extends WicketTestCase
 
 		private final String body;
 
-		TestPage(String body, Content content)
+		TestPage(String body, IContent content)
 		{
 			this.body = body;
 			content.addTo(this);

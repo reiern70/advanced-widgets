@@ -21,6 +21,9 @@
  *
  * Wicket.RichTextEditor.registerExtension(name, function (kit) {...}) plugs in an extension of the
  * page's own, built from the Tiptap classes of the kit, a Mark or a Node for example.
+ * Wicket.RichTextEditor.registerFeature(name, { extensions, tools }) plugs in a feature of the
+ * page's own, which an IRichTextFeature of that name renders the script of: its extensions, made
+ * from the kit, and the tools of the toolbar acting on it (see rich-text-features.ts).
  *
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
  * chooses, drops or pastes there, and the server answers their addresses. The grammars of the code
@@ -29,6 +32,7 @@
  */
 
 import { registerRichTextHighlighter } from '../rich-text-code-blocks.js';
+import { registerRichTextFeature, richTextFeatures } from '../rich-text-features.js';
 import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTextExtensions,
 	type RichTextEditorOptions, type RichTextEditorState,
 	type RichTextEditorStateChange } from '../rich-text-editor.js';
@@ -84,6 +88,15 @@ const WicketRichTextEditor = {
 
 	/** Plugs in an extension: see registerRichTextExtension() of the core. */
 	registerExtension: registerRichTextExtension,
+
+	/**
+	 * Plugs in a feature, its extensions and its tools, which IRichTextFeature names: see
+	 * registerRichTextFeature() of the core.
+	 */
+	registerFeature: registerRichTextFeature,
+
+	/** @returns the names of the features registered */
+	features: richTextFeatures,
 
 	/** @returns the names of the extensions registered */
 	extensions: richTextExtensions,

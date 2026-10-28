@@ -23,10 +23,13 @@
 	<section>
 		<form wicket:id="controls" class="rich-text-demo__controls">
 			<label class="rich-text-demo__control"><wicket:message key="toolbar"/> <select wicket:id="toolbar"></select></label>
+			<label class="rich-text-demo__control"><wicket:message key="colors"/> <select wicket:id="colors"></select></label>
+			<label class="rich-text-demo__control"><wicket:message key="backgroundColors"/> <select wicket:id="backgroundColors"></select></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="bubbleMenu"/> <wicket:message key="bubbleMenu"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="readOnly"/> <wicket:message key="readOnly"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="count"/> <wicket:message key="count"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="highlight"/> <wicket:message key="highlight"/></label>
+			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="keys"/> <wicket:message key="keys"/></label>
 			<fieldset wicket:id="chooser" class="rich-text-demo__tools">
 				<legend><wicket:message key="tools"/></legend>
 				<span wicket:id="tools" class="rich-text-demo__tool-list">[a check box for each tool]</span>

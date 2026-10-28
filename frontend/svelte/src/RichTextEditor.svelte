@@ -30,7 +30,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { lezerHighlighter, RichTextEditor, type HeadingLevel, type ResizableSize,
-		type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
+		type ResizeAxis, type RichTextBackgroundColor, type RichTextColor,
+		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
 		type RichTextTool } from '@antilia/core';
@@ -50,6 +51,24 @@
 		features?: readonly RichTextFeature[];
 		/** The levels of the headings, 1 to 4 when left out. */
 		headingLevels?: readonly HeadingLevel[];
+		/**
+		 * The palette of the colors of the text, in the order of its menu: DEFAULT_RICH_TEXT_COLORS
+		 * when left out; null or empty for none, without the tool. The page's style sheets color
+		 * the classes of colors of its own; Wicket's RichTextEditor.colors() gives a palette with
+		 * its labels translated.
+		 */
+		colors?: readonly RichTextColor[] | null;
+		/**
+		 * The palette of the colors of the background, apart from those of the text:
+		 * DEFAULT_RICH_TEXT_BACKGROUND_COLORS when left out; null or empty for none, without the
+		 * tool. Wicket's RichTextEditor.backgroundColors() gives one with its labels translated.
+		 */
+		backgroundColors?: readonly RichTextBackgroundColor[] | null;
+		/**
+		 * The options of the features registered (registerRichTextFeature), by their names, which
+		 * make their extensions.
+		 */
+		featureOptions?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
 		/** The tools of the toolbar, in groups; the default toolbar when left out, false for none. */
 		toolbar?: readonly (readonly RichTextTool[])[] | false;
 		/** Whether a menu of the inline formats shows over the text selected, false when left out. */
@@ -117,6 +136,9 @@
 		format,
 		features,
 		headingLevels,
+		colors,
+		backgroundColors,
+		featureOptions,
 		toolbar,
 		bubbleMenu,
 		readOnly,
@@ -170,9 +192,10 @@
 		}
 		void name;
 		const made = new RichTextEditor(element, untrack(() => ({
-			value, saved, format, features, headingLevels, toolbar, bubbleMenu, readOnly, placeholder,
-			label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
+			value, saved, format, features, featureOptions, headingLevels, colors, backgroundColors,
+			toolbar,
+			bubbleMenu, readOnly, placeholder, label, limit, count, resizable, minWidth, minHeight,
+			maxWidth, maxHeight, state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
 			codeLanguages, uploadTypes, uploadMaxSize, onUpload: uploader(),
 			onChange: (next: string) => {
 				value = next;
@@ -205,9 +228,11 @@
 	});
 
 	$effect(() => {
-		const next = { format, features, headingLevels, toolbar, bubbleMenu, readOnly, placeholder,
-			label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
-			texts };
+		const next = { format, features, featureOptions, headingLevels, colors, backgroundColors,
+			toolbar,
+			bubbleMenu, readOnly,
+			placeholder, label, limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
+			stateDelay, texts };
 		untrack(() => instance?.configure(next));
 	});
 

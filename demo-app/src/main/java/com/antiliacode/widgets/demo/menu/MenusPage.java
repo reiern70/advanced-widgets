@@ -299,12 +299,12 @@ public class MenusPage extends DemoPage
 	/**
 	 * @return the items of a menu of entries, those of submenus made here, the others by a leaf
 	 */
-	private List<IMenuItem> items(List<Entry> entries, Leaf leaf)
+	private List<IMenuItem> items(List<Entry> entries, ILeaf leaf)
 	{
 		return entries.stream().map(entry -> item(entry, List.of(), leaf)).toList();
 	}
 
-	private IMenuItem item(Entry entry, List<String> path, Leaf leaf)
+	private IMenuItem item(Entry entry, List<String> path, ILeaf leaf)
 	{
 		if (entry.isSeparator())
 		{
@@ -547,7 +547,7 @@ public class MenusPage extends DemoPage
 	 * Makes the item of an entry without a submenu.
 	 */
 	@FunctionalInterface
-	interface Leaf extends Serializable
+	interface ILeaf extends Serializable
 	{
 		/**
 		 * @param entry
