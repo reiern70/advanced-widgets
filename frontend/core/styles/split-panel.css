@@ -20,7 +20,8 @@
  * takes --antilia-split-first-size and the second the rest. The limits the script gives in
  * --antilia-split-first-min, --antilia-split-first-max and --antilia-split-second-min hold when
  * the split panel grows or shrinks. Give the split panel a height, or put it in a box that has
- * one, for the vertical one.
+ * one, for the vertical one. Stacked, while narrower than its stackBelow, the panes side by side
+ * are one above the other, each as high as its content.
  */
 .antilia-split {
 	--antilia-split-divider-size: 8px;
@@ -265,6 +266,40 @@
 
 .antilia-split-vertical > .antilia-split-divider > .antilia-split-collapse-second::before {
 	clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/*
+ * stacked: the panes one above the other, each as high as its content whatever the position and
+ * the limits, which are those of the panes side by side; a collapsed pane takes no room
+ */
+.antilia-split.antilia-split-stacked {
+	overflow: auto;
+}
+
+.antilia-split.antilia-split-stacked > .antilia-split-pane {
+	flex: none;
+	min-width: 0;
+	max-width: none;
+	min-height: 0;
+	max-height: none;
+}
+
+.antilia-split.antilia-split-stacked.antilia-split-collapsed-first > .antilia-split-first,
+.antilia-split.antilia-split-stacked.antilia-split-collapsed-second > .antilia-split-second {
+	display: none;
+}
+
+/* the divider does not move while stacked: no grip, and its buttons alone react */
+.antilia-split.antilia-split-stacked > .antilia-split-divider {
+	cursor: default;
+}
+
+.antilia-split.antilia-split-stacked > .antilia-split-divider::after {
+	display: none;
+}
+
+.antilia-split.antilia-split-stacked > .antilia-split-divider:hover {
+	background: var(--antilia-theme-surface-alt, #f5f7fb);
 }
 
 @media (prefers-reduced-motion: reduce) {

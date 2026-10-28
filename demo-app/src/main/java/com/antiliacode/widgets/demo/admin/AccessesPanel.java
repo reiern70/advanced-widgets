@@ -131,6 +131,8 @@ class AccessesPanel extends Panel
 		// wide enough for the emails of the users, the addresses and the times, the rest for the
 		// browser
 		table.setColumnProportions(2.2, 0.8, 1.4, 2, 1.6, 1.4, 3.6);
+		// on a phone, the table scrolls sideways rather than squeezing the columns to a letter
+		table.setColumnMinWidths(130, 70, 110, 160, 140, 110, 200);
 		add(AdminTables.configure(table, old ? "old-accesses.csv" : "accesses.csv"));
 	}
 

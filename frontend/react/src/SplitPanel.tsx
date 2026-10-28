@@ -52,6 +52,15 @@ export interface SplitPanelProps {
 	collapseSecondLabel?: string;
 	/** The title of the button restoring a collapsed pane. */
 	restoreLabel?: string;
+	/**
+	 * The width, in pixels, below which panes side by side go one above the other, each as high
+	 * as its content: on a phone, for example. Never when left out.
+	 */
+	stackBelow?: number;
+	/** The title of the button collapsing the first pane, the top one, while stacked. */
+	stackedCollapseFirstLabel?: string;
+	/** The title of the button collapsing the second pane, the bottom one, while stacked. */
+	stackedCollapseSecondLabel?: string;
 	/** Called with the position while the user moves the divider, in the unit it was given. */
 	onResize?(position: SplitSize): void;
 	/** Called with the position once the user has moved the divider. */
@@ -72,7 +81,8 @@ export interface SplitPanelProps {
 export function SplitPanel(props: SplitPanelProps) {
 	const { children, orientation = 'horizontal', position, min, max, minSecond, step,
 		resizable = true, collapsible = false, collapsed, label, collapseFirstLabel,
-		collapseSecondLabel, restoreLabel, id, className } = props;
+		collapseSecondLabel, restoreLabel, stackBelow, stackedCollapseFirstLabel,
+		stackedCollapseSecondLabel, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreSplitPanel | null>(null);
 	const look = useLook();
@@ -89,7 +99,8 @@ export function SplitPanel(props: SplitPanelProps) {
 	useLayoutEffect(() => {
 		const split = new CoreSplitPanel(element.current!, {
 			orientation, position, min, max, minSecond, step, resizable, collapsible, collapsed,
-			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, look,
+			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, stackBelow,
+			stackedCollapseFirstLabel, stackedCollapseSecondLabel, look,
 			onResize: (next) => latest.current.onResize?.(next),
 			onResized: (next) => latest.current.onResized?.(next),
 			onCollapse: (next) => latest.current.onCollapse?.(next)
@@ -102,10 +113,13 @@ export function SplitPanel(props: SplitPanelProps) {
 	}, [look]);
 
 	useLayoutEffect(() => {
+		// 0 rather than undefined, which configure would leave as it was
 		instance.current?.configure({ orientation, min, max, minSecond, step, resizable,
-			collapsible, label, collapseFirstLabel, collapseSecondLabel, restoreLabel });
+			collapsible, label, collapseFirstLabel, collapseSecondLabel, restoreLabel,
+			stackBelow: stackBelow ?? 0, stackedCollapseFirstLabel, stackedCollapseSecondLabel });
 	}, [orientation, min, max, minSecond, step, resizable, collapsible, label, collapseFirstLabel,
-		collapseSecondLabel, restoreLabel]);
+		collapseSecondLabel, restoreLabel, stackBelow, stackedCollapseFirstLabel,
+		stackedCollapseSecondLabel]);
 
 	useLayoutEffect(() => {
 		if (position !== undefined) {

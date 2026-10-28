@@ -20,6 +20,15 @@
  * in 'stretch' mode a column grows or shrinks on its own and the table follows. While dragging, a
  * vertical guide with arrows shows where the edge will land, a band the extent of the column and a
  * label its new width; the width is applied on release.
+ *
+ * In 'stretch' mode a header cell with data-min-width="120" keeps its column at least that many
+ * pixels wide when the table is laid out for the width of its parent: on a phone, the table is
+ * then wider than its parent, rather than squeezing every column to a letter. A table wider than
+ * its parent, by those widths or by a column the user stretched, gets the class
+ * antilia-resizable-columns-wider and the width of the parent in the custom property
+ * --antilia-resizable-columns-parent-width, which keep the navigation of a data table in view
+ * while the page scrolls sideways; or the parent, given overflow-x: auto, perhaps only while
+ * :has(> .antilia-resizable-columns-wider).
  */
 
 import { getHost, type Host, type Unsubscribe } from './host.js';
@@ -85,8 +94,17 @@ const RESIZING_CLASS = 'antilia-resizing';
 const COLGROUP_CLASS = 'antilia-resizable-colgroup';
 /** Marks a header cell that is not a column of its own, and its col. */
 const SKIP_ATTRIBUTE = 'data-resizable-skip';
+/**
+ * Holds, on a header cell, the narrowest its column gets, in pixels, when the table is laid out
+ * for the width of its parent in 'stretch' mode.
+ */
+export const COLUMN_MIN_WIDTH_ATTRIBUTE = 'data-min-width';
 /** Marks a table whose columns were laid out, which no longer follows the width of its parent. */
 const LAID_OUT_CLASS = 'antilia-resizable-columns-laid-out';
+/** Marks a table wider than its parent, which the page or the parent scrolls sideways. */
+export const RESIZABLE_COLUMNS_WIDER_CLASS = 'antilia-resizable-columns-wider';
+/** Holds, on a table wider than its parent, the width of the parent's content, in pixels. */
+export const RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY = '--antilia-resizable-columns-parent-width';
 
 /** The widths a table keeping them had when it was detached, with its mode and header cells. */
 interface KeptWidths {
@@ -234,6 +252,9 @@ export class ResizableColumns {
 		if (this.adjustToParent && !this.sized) {
 			this.onWindowResize = () => this.refit();
 			window.addEventListener('resize', this.onWindowResize);
+		}
+		// in 'stretch' mode, to tell whether the table is wider than its parent too
+		if ((this.adjustToParent && !this.sized) || this.mode === 'stretch') {
 			this.followParent();
 		}
 	}
@@ -342,6 +363,47 @@ export class ResizableColumns {
 			result[neighbour] -= allowed;
 		}
 		return result;
+	}
+
+	/**
+	 * Shares a width among columns by their base widths, keeping each at least its minimum: those
+	 * that would get less keep their minimum, and the others share what is left. The widths add
+	 * up to more than the total when the minimums do.
+	 *
+	 * @param base the base widths, or proportions, of the columns
+	 * @param total the width to share, in pixels
+	 * @param minimums the narrowest each column gets, in pixels
+	 * @returns the widths, in pixels
+	 */
+	static fitWithin(base: number[], total: number, minimums: number[]): number[] {
+		const floor = (index: number) => Math.max(minimums[index] || 0, 0);
+		const fixed = base.map(() => false);
+		const widths = base.slice();
+		for (;;) {
+			let room = total;
+			let shares = 0;
+			base.forEach((width, index) => {
+				if (fixed[index]) {
+					room -= floor(index);
+				} else {
+					shares += width;
+				}
+			});
+			let changed = false;
+			base.forEach((width, index) => {
+				widths[index] = fixed[index] ? floor(index) :
+					shares > 0 ? Math.max(room, 0) * width / shares : 0;
+			});
+			base.forEach((_, index) => {
+				if (!fixed[index] && widths[index] < floor(index)) {
+					fixed[index] = true;
+					changed = true;
+				}
+			});
+			if (!changed) {
+				return widths;
+			}
+		}
 	}
 
 	/**
@@ -502,9 +564,22 @@ export class ResizableColumns {
 	}
 
 	/**
+	 * @returns the narrowest each column gets when laid out, in pixels, as its header cell's
+	 *          data-min-width says; 0 for none
+	 */
+	minimums(): number[] {
+		return this.headerCells().map((cell) => {
+			const value = parseFloat(cell.getAttribute(COLUMN_MIN_WIDTH_ATTRIBUTE) ?? '');
+			return Number.isFinite(value) && value > 0 ? value : 0;
+		});
+	}
+
+	/**
 	 * @returns the widths for base widths or proportions: in 'stretch' mode scaled to the width of
 	 *          the parent if the table adjusts to it, and proportions scaled to the width the table
-	 *          has
+	 *          has, no column narrower than its data-min-width. Columns given one take what they
+	 *          need from the others, which get no narrower for it than they would anyway, nor
+	 *          than the narrowest the user can resize a column to.
 	 */
 	layout(base: number[]): number[] {
 		if (this.mode !== 'stretch') {
@@ -517,7 +592,13 @@ export class ResizableColumns {
 			total = this.table.getBoundingClientRect().width;
 		}
 		total -= this.skipped();
-		return total > 0 ? scale(base, total) : base.slice();
+		const minimums = this.minimums();
+		if (total <= 0) {
+			return base.map((width, index) => Math.max(width, minimums[index] ?? 0));
+		}
+		const plain = scale(base, total);
+		return ResizableColumns.fitWithin(base, total, minimums.map((minimum, index) =>
+			minimum > 0 ? minimum : Math.min(plain[index], this.minWidth)));
 	}
 
 	/**
@@ -543,6 +624,24 @@ export class ResizableColumns {
 	refit(): void {
 		if (!this.sized && this.base) {
 			this.apply(this.layout(this.base));
+		} else {
+			this.markWider();
+		}
+	}
+
+	/**
+	 * Marks the table as wider than its parent, giving it the parent's width, or no longer: in
+	 * 'stretch' mode, where the table takes the width of its columns.
+	 */
+	private markWider(): void {
+		const parent = this.mode === 'stretch' && this.widths ? this.parentWidth() : 0;
+		const wider = parent > 0 && sum(this.widths!) + this.skipped() > parent + 0.5;
+		this.table.classList.toggle(RESIZABLE_COLUMNS_WIDER_CLASS, wider);
+		if (wider) {
+			this.table.style.setProperty(RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY,
+				Math.floor(parent) + 'px');
+		} else {
+			this.table.style.removeProperty(RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY);
 		}
 	}
 
@@ -617,6 +716,7 @@ export class ResizableColumns {
 		});
 		this.table.style.width = fit ? '100%' : (total + skipped) + 'px';
 		this.table.classList.add(LAID_OUT_CLASS);
+		this.markWider();
 	}
 
 	/**
@@ -875,7 +975,8 @@ export class ResizableColumns {
 	restore(): void {
 		this.table.querySelector(':scope > colgroup.' + COLGROUP_CLASS)?.remove();
 		this.table.classList.remove('antilia-resizable-columns',
-			'antilia-resizable-columns-' + this.mode, LAID_OUT_CLASS);
+			'antilia-resizable-columns-' + this.mode, LAID_OUT_CLASS, RESIZABLE_COLUMNS_WIDER_CLASS);
+		this.table.style.removeProperty(RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY);
 		this.table.style.width = '';
 		this.table.style.tableLayout = '';
 	}

@@ -56,6 +56,14 @@ import com.github.openjson.JSONObject;
  * grows or shrinks on its own and the table becomes as wide as its columns. No column gets
  * narrower than the {@link #setMinColumnWidth(int) minimum width}. Assistive technologies call the
  * edges by the resource {@code ResizableColumnsBehavior.resizeColumn}.
+ * <p>
+ * In {@link Mode#STRETCH}, a header cell with {@code data-min-width} keeps its column at least that
+ * many pixels wide when the table is laid out for the width of its parent, as
+ * {@link com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable#setColumnMinWidths(double...)}
+ * gives them. A table wider than its parent, on a phone for example, gets the CSS class
+ * {@code antilia-resizable-columns-wider}, and the navigation of a data table stays in view while
+ * the page scrolls it sideways; to scroll it in its parent instead, give the parent
+ * {@code overflow-x: auto}, perhaps only while it {@code :has(> .antilia-resizable-columns-wider)}.
  *
  * @since 11.0.0
  */

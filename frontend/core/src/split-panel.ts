@@ -20,6 +20,10 @@
  * where it started. A collapsible split panel has two buttons on its divider, which collapse a
  * pane, giving the other all the space, and restore it.
  *
+ * Panes side by side may go one above the other while the split panel is narrower than stackBelow
+ * pixels, on a phone for example: each is then as high as its content, the page scrolling them,
+ * and the divider, which no longer moves, keeps its buttons collapsing a pane and restoring it.
+ *
  * Sizes are numbers, in percent, or strings in percent or in pixels: 30, '30%' or '250px'. The
  * position, the size of the first pane, is in percent of the space the divider leaves, and the
  * panes keep their shares when the split panel grows or shrinks; or in pixels, and the first pane
@@ -84,6 +88,16 @@ export interface SplitPanelOptions {
 	/** The title of the button restoring a collapsed pane. */
 	restoreLabel?: string;
 	/**
+	 * The width, in pixels, below which panes side by side go one above the other, each as high
+	 * as its content: on a phone, for example. While they are stacked, the divider does not move,
+	 * and its buttons, and Enter, still collapse a pane and restore it. Never when left out.
+	 */
+	stackBelow?: number;
+	/** The title of the button collapsing the first pane, the top one, while stacked. */
+	stackedCollapseFirstLabel?: string;
+	/** The title of the button collapsing the second pane, the bottom one, while stacked. */
+	stackedCollapseSecondLabel?: string;
+	/**
 	 * Called with the position while the user moves the divider: a number in percent, or a
 	 * string in pixels such as '260px' when the position was given in pixels.
 	 */
@@ -112,6 +126,8 @@ const DRAGGING_CLASS = 'antilia-split-dragging';
 const FIXED_CLASS = 'antilia-split-fixed';
 const PIXELS_CLASS = 'antilia-split-pixels';
 const COLLAPSIBLE_CLASS = 'antilia-split-collapsible';
+/** Marks a split panel whose panes, side by side, are one above the other while it is narrow. */
+const STACKED_CLASS = 'antilia-split-stacked';
 const BUTTON_CLASS = 'antilia-split-collapse';
 const ORIENTATION_CLASSES: Record<SplitOrientation, string> = {
 	horizontal: 'antilia-split-horizontal',
@@ -137,7 +153,9 @@ const PROPERTIES = [SPLIT_FIRST_PROPERTY, SPLIT_SECOND_PROPERTY, SPLIT_FIRST_SIZ
 
 const DEFAULTS = { orientation: 'horizontal' as SplitOrientation, position: 50, step: 5,
 	pixelStep: 20, resizable: true, collapsible: false, collapseFirstLabel: 'Collapse the first pane',
-	collapseSecondLabel: 'Collapse the second pane', restoreLabel: 'Restore both panes' };
+	collapseSecondLabel: 'Collapse the second pane', restoreLabel: 'Restore both panes',
+	stackedCollapseFirstLabel: 'Collapse the top pane',
+	stackedCollapseSecondLabel: 'Collapse the bottom pane' };
 
 /** The split panels by their element. */
 const instances = new WeakMap<Element, SplitPanel>();
@@ -208,6 +226,12 @@ export class SplitPanel {
 	/** The collapse buttons on the divider, when collapsible. */
 	private buttons: Record<SplitPane, HTMLElement> | null = null;
 
+	/** Whether the panes, side by side, are one above the other, the split panel being narrow. */
+	private stacked = false;
+
+	/** Watches the width of the split panel, to stack its panes below stackBelow. */
+	private widthObserver: ResizeObserver | null = null;
+
 	/**
 	 * @param element the element of the panes: its first and last child elements are the panes,
 	 *        and one between them with the class antilia-split-divider, if any, the divider
@@ -220,10 +244,12 @@ export class SplitPanel {
 		instances.get(element)?.destroy();
 		instances.set(element, this);
 		this.findParts();
+		this.stacked = this.shouldStack();
 		this.place(options.position);
 		this.collapsed = this.collapsible() ? options.collapsed ?? null : null;
 		this.render();
 		this.bind();
+		this.watchWidth();
 		this.stopWatchingRemoval = onRemoving(element, () => this.detach());
 	}
 
@@ -279,12 +305,95 @@ export class SplitPanel {
 		this.position = this.initial;
 	}
 
+	/**
+	 * @returns how the panes are laid out: vertical while stacked
+	 */
 	orientation(): SplitOrientation {
-		return this.options.orientation === 'vertical' ? 'vertical' : 'horizontal';
+		return this.options.orientation === 'vertical' || this.stacked ? 'vertical' : 'horizontal';
+	}
+
+	/**
+	 * @returns whether the panes, side by side, are one above the other, the split panel being
+	 *          narrower than stackBelow
+	 */
+	isStacked(): boolean {
+		return this.stacked;
 	}
 
 	isResizable(): boolean {
 		return this.options.resizable ?? DEFAULTS.resizable;
+	}
+
+	/**
+	 * @returns whether the user can move the divider: when resizable, unless the panes are stacked
+	 */
+	private movable(): boolean {
+		return this.isResizable() && !this.stacked;
+	}
+
+	/**
+	 * @returns whether the divider takes the focus: when it moves, or collapses a pane on Enter
+	 */
+	private focusable(): boolean {
+		return this.movable() || (this.stacked && this.isResizable() && this.collapsible());
+	}
+
+	/**
+	 * @returns whether the panes should be stacked: side by side, in a split panel narrower than
+	 *          stackBelow; as they are while the split panel is not laid out
+	 */
+	private shouldStack(): boolean {
+		const below = this.options.stackBelow;
+		if (!below || below <= 0 || this.options.orientation === 'vertical') {
+			return false;
+		}
+		const width = this.element.getBoundingClientRect().width;
+		return width > 0 ? width < below : this.stacked;
+	}
+
+	/**
+	 * Watches the width of the split panel while it has stackBelow, stacking the panes or putting
+	 * them side by side again as it crosses it.
+	 */
+	private watchWidth(): void {
+		const watch = (this.options.stackBelow ?? 0) > 0 && typeof ResizeObserver !== 'undefined';
+		if (!watch) {
+			this.widthObserver?.disconnect();
+			this.widthObserver = null;
+			return;
+		}
+		if (!this.widthObserver) {
+			this.widthObserver = new ResizeObserver(() => this.restack());
+			this.widthObserver.observe(this.element);
+		}
+	}
+
+	/**
+	 * Stacks the panes, or puts them side by side again, when the width of the split panel tells
+	 * so.
+	 */
+	private restack(): void {
+		const stacked = this.shouldStack();
+		if (stacked === this.stacked) {
+			return;
+		}
+		this.stopDragging?.();
+		this.stacked = stacked;
+		this.render();
+		if (!stacked) {
+			this.relimit();
+		}
+	}
+
+	/**
+	 * Keeps the position within the limits of the panes side by side, once they are again.
+	 */
+	private relimit(): void {
+		const limited = this.limit(this.position);
+		if (limited !== this.position) {
+			this.position = limited;
+			this.show();
+		}
 	}
 
 	private collapsible(): boolean {
@@ -352,6 +461,10 @@ export class SplitPanel {
 	 * @returns the position within the limits, rounded to two decimals
 	 */
 	private limit(position: number): number {
+		if (this.stacked) {
+			// the limits are those of the panes side by side, kept when they are again
+			return round(Number.isFinite(position) ? position : this.initial);
+		}
 		const { min, max } = this.bounds();
 		return round(clamp(Number.isFinite(position) ? position : min, min, max));
 	}
@@ -390,6 +503,7 @@ export class SplitPanel {
 		element.classList.toggle(FIXED_CLASS, !this.isResizable());
 		element.classList.toggle(PIXELS_CLASS, this.unit === 'px');
 		element.classList.toggle(COLLAPSIBLE_CLASS, this.collapsible());
+		element.classList.toggle(STACKED_CLASS, this.stacked);
 		element.classList.toggle(DRAGGING_CLASS, this.stopDragging !== null);
 		this.add(this.first, 'split-pane', 'split-first');
 		this.add(this.second, 'split-pane', 'split-second');
@@ -409,7 +523,7 @@ export class SplitPanel {
 		} else {
 			divider.removeAttribute('aria-label');
 		}
-		if (this.isResizable()) {
+		if (this.focusable()) {
 			divider.tabIndex = 0;
 			divider.removeAttribute('aria-disabled');
 		} else {
@@ -489,25 +603,22 @@ export class SplitPanel {
 		this.element.classList.toggle(COLLAPSED_CLASSES.second, this.collapsed === 'second');
 		if (this.buttons) {
 			const labels = this.options;
+			const collapseFirst = this.stacked ?
+				labels.stackedCollapseFirstLabel ?? DEFAULTS.stackedCollapseFirstLabel :
+				labels.collapseFirstLabel ?? DEFAULTS.collapseFirstLabel;
+			const collapseSecond = this.stacked ?
+				labels.stackedCollapseSecondLabel ?? DEFAULTS.stackedCollapseSecondLabel :
+				labels.collapseSecondLabel ?? DEFAULTS.collapseSecondLabel;
 			// a button towards a collapsed pane restores it, and the other one is not needed
 			this.buttons.first.title = this.collapsed === 'second' ?
-				labels.restoreLabel ?? DEFAULTS.restoreLabel :
-				labels.collapseFirstLabel ?? DEFAULTS.collapseFirstLabel;
+				labels.restoreLabel ?? DEFAULTS.restoreLabel : collapseFirst;
 			this.buttons.second.title = this.collapsed === 'first' ?
-				labels.restoreLabel ?? DEFAULTS.restoreLabel :
-				labels.collapseSecondLabel ?? DEFAULTS.collapseSecondLabel;
+				labels.restoreLabel ?? DEFAULTS.restoreLabel : collapseSecond;
 			this.buttons.first.hidden = this.collapsed === 'first';
 			this.buttons.second.hidden = this.collapsed === 'second';
 		}
 
-		const space = this.space().size;
 		const divider = this.divider;
-		const bounds = this.bounds(space);
-		const collapsible = this.collapsible();
-		const min = collapsible ? 0 : this.percent(bounds.min, space);
-		const max = collapsible ? 100 : this.percent(bounds.max, space);
-		const now = this.collapsed === 'first' ? 0 : this.collapsed === 'second' ? 100 :
-			this.percent(this.position, space);
 		const attribute = (name: string, value: number | null) => {
 			if (value === null || !Number.isFinite(value)) {
 				divider.removeAttribute(name);
@@ -515,6 +626,23 @@ export class SplitPanel {
 				divider.setAttribute(name, String(Math.round(value)));
 			}
 		};
+		if (this.stacked) {
+			// the share of the height the first pane takes, from 0 collapsed to 100
+			const first = this.first.getBoundingClientRect().height;
+			const both = first + this.second.getBoundingClientRect().height;
+			attribute('aria-valuenow', this.collapsed === 'first' ? 0 :
+				this.collapsed === 'second' ? 100 : both > 0 ? first / both * 100 : null);
+			attribute('aria-valuemin', this.focusable() ? 0 : null);
+			attribute('aria-valuemax', this.focusable() ? 100 : null);
+			return;
+		}
+		const space = this.space().size;
+		const bounds = this.bounds(space);
+		const collapsible = this.collapsible();
+		const min = collapsible ? 0 : this.percent(bounds.min, space);
+		const max = collapsible ? 100 : this.percent(bounds.max, space);
+		const now = this.collapsed === 'first' ? 0 : this.collapsed === 'second' ? 100 :
+			this.percent(this.position, space);
 		attribute('aria-valuenow', now);
 		attribute('aria-valuemin', this.isResizable() ? min : null);
 		attribute('aria-valuemax', this.isResizable() ? max : null);
@@ -531,7 +659,7 @@ export class SplitPanel {
 		this.listen<KeyboardEvent>(this.divider, 'keydown', (event) => this.onKeyDown(event));
 		this.listen<MouseEvent>(this.divider, 'click', (event) => this.onClick(event));
 		this.listen<MouseEvent>(this.divider, 'dblclick', (event) => {
-			if (this.isResizable() && !this.button(event)) {
+			if (this.movable() && !this.button(event)) {
 				this.moveTo(this.initial, true);
 			}
 		});
@@ -561,7 +689,7 @@ export class SplitPanel {
 	}
 
 	private onPointerDown(event: PointerEvent): void {
-		if (!this.isResizable() || event.button !== 0 || this.button(event)) {
+		if (!this.movable() || event.button !== 0 || this.button(event)) {
 			return;
 		}
 		event.preventDefault();
@@ -630,6 +758,9 @@ export class SplitPanel {
 
 	private onKeyDown(event: KeyboardEvent): void {
 		if (!this.isResizable() || event.altKey || event.ctrlKey || event.metaKey) {
+			return;
+		}
+		if (this.stacked && event.key !== 'Enter') {
 			return;
 		}
 		const horizontal = this.orientation() === 'horizontal';
@@ -751,7 +882,10 @@ export class SplitPanel {
 		const defined = Object.fromEntries(Object.entries(options)
 			.filter(([, value]) => value !== undefined)) as SplitPanelOptions;
 		this.options = { ...this.options, ...defined };
-		if (!this.isResizable()) {
+		const wasStacked = this.stacked;
+		this.stacked = this.shouldStack();
+		this.watchWidth();
+		if (!this.movable()) {
 			this.stopDragging?.();
 		}
 		if (defined.position !== undefined) {
@@ -765,6 +899,9 @@ export class SplitPanel {
 			this.collapsed = options.collapsed;
 		}
 		this.render();
+		if (wasStacked && !this.stacked) {
+			this.relimit();
+		}
 	}
 
 	/**
@@ -776,7 +913,7 @@ export class SplitPanel {
 		this.removeButtons();
 		const element = this.element;
 		element.classList.remove(CLASS, FIXED_CLASS, DRAGGING_CLASS, PIXELS_CLASS, COLLAPSIBLE_CLASS,
-			...Object.values(ORIENTATION_CLASSES), ...Object.values(COLLAPSED_CLASSES));
+			STACKED_CLASS, ...Object.values(ORIENTATION_CLASSES), ...Object.values(COLLAPSED_CLASSES));
 		if (!element.classList.length) {
 			element.removeAttribute('class');
 		}
@@ -800,6 +937,8 @@ export class SplitPanel {
 			target.removeEventListener(type, listener);
 		});
 		this.listeners = [];
+		this.widthObserver?.disconnect();
+		this.widthObserver = null;
 		this.stopWatchingRemoval?.();
 		this.stopWatchingRemoval = null;
 	}

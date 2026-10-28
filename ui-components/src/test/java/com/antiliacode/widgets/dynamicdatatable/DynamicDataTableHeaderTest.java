@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
@@ -40,6 +41,7 @@ import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
+import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
 
@@ -309,6 +311,48 @@ class DynamicDataTableHeaderTest extends WicketTestCase
 		tester.assertContains(
 			Pattern.quote("\"layout\":{\"proportions\":[1,2.5,1],\"adjustToParent\":true}"));
 		assertArrayEquals(new double[] { 1, 2.5, 1 }, table.getColumnProportions());
+	}
+
+	@Test
+	void minimumWidthsGoOnTheHeaderCellsOfTheirColumns()
+	{
+		JsonBasedDynamicDataTable<Person, String> table = resizable(table(new PeopleProvider(), 10));
+		table.setColumnMinWidths(160, 0, 72.5).setAdjustToParentWidth(true);
+		tester.startPage(new TablePage(table));
+
+		assertEquals(List.of("160", "72.5"), minWidths());
+		assertArrayEquals(new double[] { 160, 0, 72.5 }, table.getColumnMinWidths());
+
+		table.moveColumn(table.getColumns().get(0), 2);
+		assertArrayEquals(new double[] { 0, 72.5, 160 }, table.getColumnMinWidths());
+		tester.startPage(new TablePage(table));
+		assertEquals(List.of("72.5", "160"), minWidths());
+	}
+
+	@Test
+	void minimumWidthsArePositiveOrZeroAndOnePerColumn()
+	{
+		JsonBasedDynamicDataTable<Person, String> table = table(new PeopleProvider(), 10);
+
+		assertThrows(IllegalArgumentException.class, () -> table.setColumnMinWidths(100, 100));
+		assertThrows(IllegalArgumentException.class, () -> table.setColumnMinWidths(100, -1, 0));
+		assertThrows(IllegalArgumentException.class,
+			() -> table.setColumnMinWidths(100, Double.POSITIVE_INFINITY, 0));
+		assertNull(table.setColumnMinWidths((double[])null).getColumnMinWidths());
+		tester.startPage(new TablePage(table));
+		assertEquals(List.of(), minWidths());
+	}
+
+	/**
+	 * @return the minimum widths of the header cells rendered last, of those that have one
+	 */
+	private List<String> minWidths()
+	{
+		return TagTester.createTags(tester.getLastResponseAsString(),
+			tag -> "th".equalsIgnoreCase(tag.getName()), false).stream()
+			.map(cell -> cell.getAttribute("data-min-width"))
+			.filter(Objects::nonNull)
+			.toList();
 	}
 
 	@Test

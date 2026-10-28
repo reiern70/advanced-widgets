@@ -36,6 +36,12 @@ export interface DataTableColumnDef {
 	movable?: boolean;
 	/** Whether the user can resize the column; true by default. */
 	resizable?: boolean;
+	/**
+	 * The narrowest the column gets, in pixels, when the columns are resized in 'stretch' mode and
+	 * laid out for the width of the parent: a narrower parent, a phone for example, scrolls the
+	 * table sideways rather than squeezing its columns.
+	 */
+	minWidth?: number;
 	/** Whether the user can hide and show the column with the column chooser. */
 	hideable?: boolean;
 	/** Whether the column is shown at first; true by default. */

@@ -511,6 +511,7 @@
 					{@const sorting = sorted(column)}
 					<th data-movable={movableColumns && column.movable ? 'true' : undefined}
 						data-resizable={column.resizable === false ? 'false' : undefined}
+						data-min-width={column.minWidth}
 						aria-sort={sorting} class={sorting ? css(ORDER_PARTS[sorting]) : undefined}>
 						<div class={css('table-header')}>
 							{#if movableColumns && column.movable}

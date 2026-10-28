@@ -83,6 +83,16 @@ describe('DataTable', () => {
 			filter: undefined });
 	});
 
+	it('gives the header cells of the columns their minimum widths', async () => {
+		const columns = [{ ...COLUMNS[0], minWidth: 160 }, ...COLUMNS.slice(1)];
+		const { container } = render(DataTable, { columns, loadRows, resizableColumns: 'stretch',
+			adjustToParent: true });
+		await waitFor(() => expect(rows(container).length).toBe(25));
+
+		const cells = Array.from(container.querySelectorAll('thead tr:last-child th'));
+		expect(cells.map((cell) => cell.getAttribute('data-min-width'))).toEqual(['160', null]);
+	});
+
 	it('pages, sorts and filters through loadRows', async () => {
 		const load = vi.fn(loadRows);
 		const { container, rerender } = render(DataTable, { columns: COLUMNS, loadRows: load });

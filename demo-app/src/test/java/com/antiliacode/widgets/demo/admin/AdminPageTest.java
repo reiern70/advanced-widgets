@@ -78,6 +78,9 @@ class AdminPageTest
 		tester.assertContains("United States");
 		tester.assertContains(">Administrator<");
 		tester.assertContains("Other: Mathematician");
+		// on a phone, the columns keep a width to read them by, the table scrolling sideways
+		tester.assertContains("<th [^>]*data-min-width=\"170\"");
+		tester.assertContains("<div class=\"admin__table\"><table ");
 	}
 
 	@Test
@@ -127,6 +130,7 @@ class AdminPageTest
 
 		tester.assertComponent("tabs:panel", AccessesPanel.class);
 		tester.assertContains("Old accesses");
+		tester.assertContains("<th [^>]*data-min-width=\"200\"");
 		tester.assertLabel("tabs:panel:count", "0");
 	}
 
