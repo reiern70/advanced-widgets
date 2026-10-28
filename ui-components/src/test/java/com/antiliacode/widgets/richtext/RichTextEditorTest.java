@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -311,6 +312,155 @@ class RichTextEditorTest extends WicketTestCase
 		assertEquals("Fett", options(page.editor).getJSONObject("texts").getString("bold"));
 		assertEquals("Hintergrundfarbe", options(page.editor).getJSONObject("texts")
 			.getString("textBackground"));
+	}
+
+	@Test
+	void sendsItsPalettesNamedInTheLanguageOfThePage()
+	{
+		tester.getSession().setLocale(Locale.of("es"));
+		TestPage page = new TestPage(new RichTextEditor("editor", Model.of(HTML)));
+		tester.startPage(page);
+
+		JSONArray colors = options(page.editor).getJSONArray("colors");
+		assertEquals(RichTextColor.values().length, colors.length());
+		assertEquals("{\"name\":\"red\",\"colorClass\":\"antilia-color-red\",\"label\":\"Rojo\"}",
+			colors.getJSONObject(2).toString());
+		JSONArray backgrounds = options(page.editor).getJSONArray("backgroundColors");
+		assertEquals(RichTextBackgroundColor.values().length, backgrounds.length());
+		assertEquals("{\"name\":\"red\",\"backgroundClass\":\"antilia-background-red\"," +
+			"\"label\":\"Rojo\"}", backgrounds.getJSONObject(2).toString());
+		assertSame(RichTextColor.PALETTE, page.editor.getColors());
+		assertSame(RichTextBackgroundColor.PALETTE, page.editor.getBackgroundColors());
+
+		page.editor.setColors(List.of(new RichTextViewTest.Brand(), RichTextColor.BLUE));
+		page.editor.setBackgroundColors(List.of(RichTextBackgroundColor.GREEN));
+		tester.getSession().setLocale(Locale.ENGLISH);
+		tester.startPage(page);
+		assertEquals("[{\"name\":\"brand\",\"colorClass\":\"brand-text\",\"label\":\"brand\"}," +
+			"{\"name\":\"blue\",\"colorClass\":\"antilia-color-blue\",\"label\":\"Blue\"}]",
+			options(page.editor).getJSONArray("colors").toString());
+		assertEquals("[{\"name\":\"green\",\"backgroundClass\":\"antilia-background-green\"," +
+			"\"label\":\"Green\"}]", options(page.editor).getJSONArray("backgroundColors")
+				.toString());
+
+		page.editor.setFeatures(EnumSet.of(RichTextFeature.TEXT_BACKGROUND));
+		tester.startPage(page);
+		assertFalse(options(page.editor).has("colors"));
+		assertTrue(options(page.editor).has("backgroundColors"));
+
+		page.editor.setFeatures(EnumSet.of(RichTextFeature.TEXT_COLOR));
+		tester.startPage(page);
+		assertTrue(options(page.editor).has("colors"));
+		assertFalse(options(page.editor).has("backgroundColors"));
+
+		page.editor.setFeatures(EnumSet.of(RichTextFeature.BOLD));
+		tester.startPage(page);
+		assertFalse(options(page.editor).has("colors"));
+		assertFalse(options(page.editor).has("backgroundColors"));
+	}
+
+	@Test
+	void cleansWithTheClassesOfItsPalettes()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		String html = "<p><span class=\"brand-text\">a</span><mark class=\"brand-mark\">b</mark>" +
+			"<span class=\"antilia-color-red\">c</span><mark class=\"antilia-background-red\">d" +
+			"</mark></p>";
+		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+
+		editor.setColors(List.of(new RichTextViewTest.Brand()));
+		assertEquals("<p><span class=\"brand-text\">a</span><mark>b</mark><span>c</span>" +
+			"<mark class=\"antilia-background-red\">d</mark></p>",
+			editor.getSanitizer().sanitize(html));
+		assertEquals(List.of(new RichTextViewTest.Brand()), List.copyOf(editor.getColors()));
+
+		editor.setBackgroundColors(List.of(new RichTextViewTest.Brand()));
+		assertEquals("<p><span class=\"brand-text\">a</span><mark class=\"brand-mark\">b</mark>" +
+			"<span>c</span><mark>d</mark></p>", editor.getSanitizer().sanitize(html));
+		assertEquals(List.of(new RichTextViewTest.Brand()),
+			List.copyOf(editor.getBackgroundColors()));
+
+		editor.setColors(null).setBackgroundColors(List.of());
+		assertEquals(Set.of(), editor.getColors(), "null for no colors");
+		assertEquals(Set.of(), editor.getBackgroundColors());
+		assertEquals("<p><span>a</span><mark>b</mark><span>c</span><mark>d</mark></p>",
+			editor.getSanitizer().sanitize(html));
+
+		editor.setColors(RichTextColor.PALETTE).setBackgroundColors(RichTextBackgroundColor.PALETTE);
+		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+		assertThrows(IllegalArgumentException.class, () -> editor.setColors(List.of(
+			RichTextColor.RED, new RichTextViewTest.Brand(), RichTextColor.RED)));
+		assertThrows(IllegalArgumentException.class, () -> editor.setBackgroundColors(List.of(
+			RichTextBackgroundColor.RED, RichTextBackgroundColor.RED)));
+		assertEquals(RichTextColor.PALETTE, editor.getColors(), "a palette refused changes nothing");
+		assertEquals(RichTextBackgroundColor.PALETTE, editor.getBackgroundColors());
+	}
+
+	@Test
+	void sendsNoColorsWithoutAPalette()
+	{
+		TestPage page = new TestPage(new RichTextEditor("editor", Model.of(HTML)));
+		page.editor.setColors(null);
+		tester.startPage(page);
+		// the editor in the browser leaves the tool out
+		assertEquals("[]", options(page.editor).getJSONArray("colors").toString());
+		assertEquals(RichTextBackgroundColor.values().length,
+			options(page.editor).getJSONArray("backgroundColors").length());
+
+		page.editor.setColors(RichTextColor.PALETTE).setBackgroundColors(null);
+		tester.startPage(page);
+		assertEquals(RichTextColor.values().length,
+			options(page.editor).getJSONArray("colors").length());
+		assertEquals("[]", options(page.editor).getJSONArray("backgroundColors").toString());
+
+		page.editor.addBackgroundColor(RichTextBackgroundColor.YELLOW);
+		tester.startPage(page);
+		assertEquals("[{\"name\":\"yellow\",\"backgroundClass\":\"antilia-background-yellow\"," +
+			"\"label\":\"Yellow\"}]", options(page.editor).getJSONArray("backgroundColors")
+				.toString());
+	}
+
+	@Test
+	void addsColorsAtTheEndOfItsPalettes()
+	{
+		TestPage page = new TestPage(new RichTextEditor("editor", Model.of(HTML)));
+		RichTextViewTest.Brand brand = new RichTextViewTest.Brand();
+		IRichTextBackgroundColor glow = RichTextPolicyTest.background("glow", "glow");
+		assertSame(page.editor, page.editor.addColor(brand));
+		assertSame(page.editor, page.editor.addBackgroundColor(glow));
+		tester.startPage(page);
+
+		List<IRichTextColor> palette = new ArrayList<>(RichTextColor.PALETTE);
+		palette.add(brand);
+		assertEquals(palette, List.copyOf(page.editor.getColors()));
+		List<IRichTextBackgroundColor> backgrounds = new ArrayList<>(
+			RichTextBackgroundColor.PALETTE);
+		backgrounds.add(glow);
+		assertEquals(backgrounds, List.copyOf(page.editor.getBackgroundColors()));
+
+		JSONArray colors = options(page.editor).getJSONArray("colors");
+		assertEquals(palette.size(), colors.length());
+		assertEquals("brand", colors.getJSONObject(palette.size() - 1).getString("name"));
+		JSONArray sent = options(page.editor).getJSONArray("backgroundColors");
+		assertEquals(backgrounds.size(), sent.length());
+		assertEquals("glow", sent.getJSONObject(backgrounds.size() - 1).getString("name"));
+		assertEquals("<p><span class=\"brand-text\">a</span><span class=\"antilia-color-red\">b" +
+			"</span><mark class=\"glow\">c</mark><mark>d</mark></p>", page.editor.getSanitizer()
+				.sanitize("<p><span class=\"brand-text\">a</span><span class=\"antilia-color-red\">b" +
+					"</span><mark class=\"glow\">c</mark><mark class=\"brand-mark\">d</mark></p>"));
+
+		assertThrows(UnsupportedOperationException.class,
+			() -> page.editor.getColors().add(RichTextColor.RED));
+		assertThrows(UnsupportedOperationException.class,
+			() -> page.editor.getBackgroundColors().add(RichTextBackgroundColor.RED));
+		assertThrows(IllegalArgumentException.class, () -> page.editor.addColor(brand));
+		assertThrows(IllegalArgumentException.class, () -> page.editor.addColor(null));
+		assertThrows(IllegalArgumentException.class, () -> page.editor.addBackgroundColor(glow));
+		assertThrows(IllegalArgumentException.class, () -> page.editor.addBackgroundColor(
+			RichTextPolicyTest.background("other", "glow")));
+		assertEquals(palette, List.copyOf(page.editor.getColors()),
+			"a color refused changes nothing");
+		assertEquals(backgrounds, List.copyOf(page.editor.getBackgroundColors()));
 	}
 
 	@Test

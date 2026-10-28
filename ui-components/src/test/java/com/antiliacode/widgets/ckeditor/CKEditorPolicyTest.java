@@ -25,7 +25,6 @@ import java.util.Set;
 import org.apache.wicket.core.util.lang.WicketObjects;
 import org.junit.jupiter.api.Test;
 
-import com.antiliacode.widgets.richtext.RichTextFeature;
 
 /**
  * The cleaning of the HTML of CKEditor: what CKEditor 5 writes for each feature passes, what an
@@ -93,20 +92,20 @@ class CKEditorPolicyTest
 	@Test
 	void leavesOutWhatTheFeaturesLeftOutWrite()
 	{
-		CKEditorPolicy bold = CKEditorPolicy.of(EnumSet.of(RichTextFeature.BOLD));
+		CKEditorPolicy bold = CKEditorPolicy.of(EnumSet.of(CKEditorFeature.BOLD));
 		assertEquals("<p><strong>b</strong> i</p>cell<p>a</p>caption",
 			bold.sanitize("<p><strong>b</strong> <i>i</i></p><figure class=\"table\"><table>" +
 				"<tbody><tr><td>cell</td></tr></tbody></table></figure><ul><li><p>a</p></li></ul>" +
 				"<figure class=\"image\"><img src=\"/a.png\" /><figcaption>caption</figcaption>" +
 				"</figure>"));
 		// tables without images: their figure only
-		CKEditorPolicy tables = CKEditorPolicy.of(EnumSet.of(RichTextFeature.TABLE));
+		CKEditorPolicy tables = CKEditorPolicy.of(EnumSet.of(CKEditorFeature.TABLE));
 		assertEquals("<figure class=\"table\"><table><tbody><tr><td>c</td></tr></tbody></table>" +
 			"</figure><figure></figure>", tables.sanitize("<figure class=\"table\"><table><tbody>" +
 				"<tr><td>c</td></tr></tbody></table></figure><figure class=\"image\"><img " +
 				"src=\"/a.png\" /></figure>"));
 		// no alignment: no class
-		CKEditorPolicy paragraphs = CKEditorPolicy.of(EnumSet.of(RichTextFeature.HEADING));
+		CKEditorPolicy paragraphs = CKEditorPolicy.of(EnumSet.of(CKEditorFeature.HEADING));
 		assertEquals("<h2>T</h2><p>p</p>", paragraphs.sanitize(
 			"<h2 class=\"antilia-text-center\">T</h2><p class=\"antilia-text-right\">p</p>"));
 	}
@@ -115,8 +114,8 @@ class CKEditorPolicyTest
 	void dropsTheColorsOfTiptapsPalette()
 	{
 		assertEquals(CKEditor.FEATURES, CKEditorPolicy.ALL.getFeatures());
-		assertEquals(CKEditorPolicy.of(Set.of(RichTextFeature.BOLD)), CKEditorPolicy.of(Set.of(
-			RichTextFeature.BOLD, RichTextFeature.TEXT_COLOR, RichTextFeature.TEXT_BACKGROUND)));
+		assertEquals(CKEditorPolicy.of(Set.of(CKEditorFeature.BOLD)), CKEditorPolicy.of(Set.of(
+			CKEditorFeature.BOLD)));
 		assertEquals("<p>red and yellow</p>", CKEditorPolicy.ALL.sanitize(
 			"<p><span class=\"antilia-color-red\">red</span> and " +
 				"<mark class=\"antilia-background-yellow\">yellow</mark></p>"));
@@ -126,24 +125,24 @@ class CKEditorPolicyTest
 	void isOnePolicyPerSetOfFeatures()
 	{
 		assertSame(CKEditorPolicy.ALL, CKEditorPolicy.of(null));
-		assertSame(CKEditorPolicy.ALL, CKEditorPolicy.of(EnumSet.allOf(RichTextFeature.class)));
+		assertSame(CKEditorPolicy.ALL, CKEditorPolicy.of(EnumSet.allOf(CKEditorFeature.class)));
 		CKEditorPolicy none = CKEditorPolicy.of(Set.of());
 		assertEquals("<p>x</p>", none.sanitize("<p><strong>x</strong></p>"));
 		assertEquals(Set.of(), none.getFeatures());
-		assertEquals(CKEditorPolicy.of(EnumSet.of(RichTextFeature.BOLD)),
-			CKEditorPolicy.of(Set.of(RichTextFeature.BOLD)));
-		assertEquals(CKEditorPolicy.of(EnumSet.of(RichTextFeature.BOLD)).hashCode(),
-			CKEditorPolicy.of(Set.of(RichTextFeature.BOLD)).hashCode());
+		assertEquals(CKEditorPolicy.of(EnumSet.of(CKEditorFeature.BOLD)),
+			CKEditorPolicy.of(Set.of(CKEditorFeature.BOLD)));
+		assertEquals(CKEditorPolicy.of(EnumSet.of(CKEditorFeature.BOLD)).hashCode(),
+			CKEditorPolicy.of(Set.of(CKEditorFeature.BOLD)).hashCode());
 		assertNotEquals(none, CKEditorPolicy.ALL);
 		assertNotEquals(CKEditorPolicy.ALL, "ALL");
-		assertEquals("CKEditorPolicy[BOLD]", CKEditorPolicy.of(Set.of(RichTextFeature.BOLD))
+		assertEquals("CKEditorPolicy[BOLD]", CKEditorPolicy.of(Set.of(CKEditorFeature.BOLD))
 			.toString());
 		assertThrows(UnsupportedOperationException.class, () -> CKEditorPolicy.ALL.getFeatures()
 			.clear());
 
 		// serialized, it makes OWASP's policy anew
 		CKEditorPolicy copy = WicketObjects.cloneObject(CKEditorPolicy.of(Set.of(
-			RichTextFeature.ITALIC)));
+			CKEditorFeature.ITALIC)));
 		assertEquals("<p><i>i</i>b</p>", copy.sanitize("<p><i>i</i><b>b</b></p>"));
 	}
 }

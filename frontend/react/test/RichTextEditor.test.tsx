@@ -19,7 +19,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { lezerHighlighter } from '@antilia/core';
 import { Slice } from '@tiptap/pm/model';
 
-import { BOOTSTRAP_LOOK, LookProvider, RichTextEditor,
+import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_COLORS, LookProvider, RichTextEditor,
 	type RichTextEditorHandle } from '../src/index.js';
 
 beforeAll(() => {
@@ -161,6 +161,36 @@ describe('RichTextEditor', () => {
 		expect(element.querySelector<HTMLElement>('[role="toolbar"]')?.hidden).toBe(true);
 		expect(element.querySelector('.antilia-rich-text-status')?.textContent)
 			.toBe('1 character · 1 word');
+	});
+
+	it('colors the text from the palette given', () => {
+		const ref = createRef<RichTextEditorHandle>();
+		const value = '<p><span class="brand-text">a</span> ' +
+			'<span class="antilia-color-red">b</span></p>';
+		const brand = [{ name: 'brand', colorClass: 'brand-text' }];
+		const { rerender } = render(<RichTextEditor ref={ref} value={value} colors={brand} />);
+		expect(ref.current?.getValue()).toBe('<p><span class="brand-text">a</span> b</p>');
+
+		// made anew, the editor keeps the colors of the new palette alone
+		rerender(<RichTextEditor ref={ref} value={value} colors={DEFAULT_RICH_TEXT_COLORS} />);
+		expect(ref.current?.getValue()).toBe('<p>a b</p>');
+		expect(ref.current?.editor?.editor.commands.setTextColor('red')).toBe(true);
+	});
+
+	it('colors the background from a palette of its own, or not at all', () => {
+		const ref = createRef<RichTextEditorHandle>();
+		const value = '<p><mark class="glow">a</mark> <span class="antilia-color-red">b</span></p>';
+		const glow = [{ name: 'glow', backgroundClass: 'glow' }];
+		const { container, rerender } = render(<RichTextEditor ref={ref} value={value}
+			backgroundColors={glow} />);
+		expect(ref.current?.getValue()).toBe(value);
+		const tool = (name: string) => container.querySelector(`[data-tool="${name}"]`);
+		expect(tool('textBackground')).not.toBeNull();
+
+		rerender(<RichTextEditor ref={ref} value={value} backgroundColors={glow} colors={null} />);
+		expect(ref.current?.getValue()).toBe('<p><mark class="glow">a</mark> b</p>');
+		expect(tool('textColor')).toBeNull();
+		expect(tool('textBackground')).not.toBeNull();
 	});
 
 	it('posts the text in a hidden text area under a name', () => {

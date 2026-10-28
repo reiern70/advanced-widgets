@@ -13,21 +13,25 @@
  */
 package com.antiliacode.widgets.richtext;
 
+import java.util.List;
+import java.util.Set;
+
 /**
- * A color of the palette of a {@link RichTextEditor}, for the text
- * ({@link RichTextFeature#TEXT_COLOR}) and for its background
- * ({@link RichTextFeature#TEXT_BACKGROUND}). The HTML has classes, not styles, which a Content
- * Security Policy without {@code 'unsafe-inline'} would block:
- * {@code <span class="antilia-color-red">} and {@code <mark class="antilia-background-yellow">}.
- * {@link RichTextEditor#CSS} colors them from the theme, in the editor and in a
- * {@link RichTextView}: a color of the text is its tone mixed with the color of the text of the
- * theme, a background its tone mixed with the surface, so that both read in light and dark themes.
+ * The colors of the text of a {@link RichTextEditor} unless it is given its own
+ * ({@link RichTextEditor#setColors(java.util.Collection)}): gray, brown, red, orange, yellow,
+ * green, teal, cyan, blue, indigo, purple and pink, {@link IRichTextColor colors of the text} of
+ * the class {@code antilia-color-red} for example. {@link RichTextEditor#CSS} colors them from the
+ * theme, in the editor and in a {@link RichTextView}: each is its tone mixed with the color of the
+ * text of the theme, so that it reads in light and dark themes. The colors of the background are another
+ * palette, {@link RichTextBackgroundColor}.
  *
  * @since 11.0.0
  */
-public enum RichTextColor
+public enum RichTextColor implements IRichTextColor
 {
 	GRAY("gray"),
+
+	BROWN("brown"),
 
 	RED("red"),
 
@@ -37,17 +41,23 @@ public enum RichTextColor
 
 	GREEN("green"),
 
+	TEAL("teal"),
+
+	CYAN("cyan"),
+
 	BLUE("blue"),
+
+	INDIGO("indigo"),
 
 	PURPLE("purple"),
 
 	PINK("pink");
 
-	/** The start of the class of a color of the text. */
+	/** The start of the class of a color. */
 	public static final String COLOR_CLASS = "antilia-color-";
 
-	/** The start of the class of a color of the background. */
-	public static final String BACKGROUND_CLASS = "antilia-background-";
+	/** All the colors, the palette of the colors of the text of an editor by default. */
+	public static final Set<IRichTextColor> PALETTE = IRichTextColor.palette(List.of(values()));
 
 	private final String name;
 
@@ -57,8 +67,9 @@ public enum RichTextColor
 	}
 
 	/**
-	 * @return the name of the color in the browser and in its classes
+	 * @return the name of the color in the browser and in its class
 	 */
+	@Override
 	public String getName()
 	{
 		return name;
@@ -67,16 +78,9 @@ public enum RichTextColor
 	/**
 	 * @return the class coloring the text, {@code antilia-color-red}
 	 */
+	@Override
 	public String getColorClass()
 	{
 		return COLOR_CLASS + name;
-	}
-
-	/**
-	 * @return the class coloring the background of the text, {@code antilia-background-red}
-	 */
-	public String getBackgroundClass()
-	{
-		return BACKGROUND_CLASS + name;
 	}
 }

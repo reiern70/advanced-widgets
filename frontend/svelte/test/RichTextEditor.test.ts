@@ -16,7 +16,7 @@ import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { lezerHighlighter, RichTextEditor } from '@antilia/core';
+import { DEFAULT_RICH_TEXT_COLORS, lezerHighlighter, RichTextEditor } from '@antilia/core';
 import { Slice } from '@tiptap/pm/model';
 
 import BoundRichTextEditor from './BoundRichTextEditor.svelte';
@@ -136,6 +136,35 @@ describe('RichTextEditor', () => {
 		tiptap.view.dispatch(tiptap.state.tr.insertText('A '));
 		flushSync();
 		expect(container.querySelector('output')?.textContent).toBe('# A Title\n\nSome **bold**');
+	});
+
+	it('colors the text from the palette given', async () => {
+		const value = '<p><span class="brand-text">a</span> ' +
+			'<span class="antilia-color-red">b</span></p>';
+		const brand = [{ name: 'brand', colorClass: 'brand-text' }];
+		const { container, rerender } = render(BoundRichTextEditor, { value, colors: brand });
+		expect(core(container).getValue()).toBe('<p><span class="brand-text">a</span> b</p>');
+
+		// the text bound shows again, in the colors of the new palette
+		await rerender({ colors: DEFAULT_RICH_TEXT_COLORS });
+		expect(core(container).getValue()).toBe('<p>a <span class="antilia-color-red">b</span>' +
+			'</p>');
+		expect(core(container).editor.commands.setTextColor('red')).toBe(true);
+	});
+
+	it('colors the background from a palette of its own, or not at all', async () => {
+		const value = '<p><mark class="glow">a</mark> <span class="antilia-color-red">b</span></p>';
+		const glow = [{ name: 'glow', backgroundClass: 'glow' }];
+		const { container, rerender } = render(BoundRichTextEditor, { value,
+			backgroundColors: glow });
+		expect(core(container).getValue()).toBe(value);
+		const tool = (name: string) => container.querySelector(`[data-tool="${name}"]`);
+		expect(tool('textBackground')).not.toBeNull();
+
+		await rerender({ colors: null });
+		expect(tool('textColor')).toBeNull();
+		expect(tool('textBackground')).not.toBeNull();
+		expect(core(container).editor.schema.marks.textColor).toBeUndefined();
 	});
 
 	it('posts the text in a hidden text area under a name', () => {
