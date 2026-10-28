@@ -1,0 +1,321 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * CKEditor 5 in the colors of the theme it is in and the look of the page (see ck-editor.ts):
+ * CKEditor's own style sheet, ckeditor5.css, which the page brings with CKEditor, draws the
+ * editor; this one gives its custom properties the values of the theme, light or dark, and lays
+ * the editor out in the room it has, resizable by the bar along its bottom.
+ *
+ * CKEditor declares its custom properties on :root, where those made of others are resolved
+ * already: each is declared again here, in the editor, where the theme's are. CKEditor's balloons
+ * and dialogs are in its body wrapper, a child of the body, which has the theme of the body.
+ */
+
+.antilia-ck-editor,
+.antilia-ck-editor-view,
+.ck-body-wrapper {
+	/* the colors of the theme */
+	--ck-color-base-foreground: var(--antilia-theme-surface-alt, #f7f7f7);
+	--ck-color-base-background: var(--antilia-theme-surface, #fff);
+	--ck-color-base-border: var(--antilia-theme-border, #c9d1dc);
+	--ck-color-base-border-light: color-mix(in srgb, var(--ck-color-base-border) 55%,
+		var(--ck-color-base-background));
+	--ck-color-base-text: var(--antilia-theme-text, #121c2b);
+	--ck-color-base-text-light: color-mix(in srgb, var(--ck-color-base-text) 70%,
+		var(--ck-color-base-background));
+	--ck-color-base-focus: var(--antilia-theme-accent, #4865d5);
+	--ck-color-base-focus-shadow: color-mix(in srgb, var(--ck-color-base-focus) 22%, transparent);
+	--ck-color-base-focus-shadow-faded: color-mix(in srgb, var(--ck-color-base-focus) 10%,
+		transparent);
+	--ck-color-base-active: var(--antilia-theme-accent, #4865d5);
+	--ck-color-base-active-focus: var(--antilia-theme-primary-dark, #3454c5);
+	--ck-color-base-action: var(--antilia-theme-primary, #4865d5);
+	--ck-color-base-action-hover: var(--antilia-theme-primary-dark, #3454c5);
+	--ck-color-base-action-muted: color-mix(in srgb, var(--ck-color-base-action) 15%,
+		var(--ck-color-base-background));
+	--ck-color-base-action-disabled: color-mix(in srgb, var(--ck-color-base-action) 45%,
+		var(--ck-color-base-background));
+	--ck-color-base-hover: var(--antilia-theme-hover, #f3f4f7);
+	--ck-color-base-hover-strong: color-mix(in srgb, var(--ck-color-base-hover) 80%,
+		var(--ck-color-base-text));
+	--ck-color-base-selected: color-mix(in srgb, var(--ck-color-base-active) 14%,
+		var(--ck-color-base-background));
+	--ck-color-base-selected-hover: color-mix(in srgb, var(--ck-color-base-active) 22%,
+		var(--ck-color-base-background));
+	--ck-color-base-error: var(--antilia-theme-error, #d11e1e);
+	--ck-color-base-error-shadow: color-mix(in srgb, var(--ck-color-base-error) 15%, transparent);
+	--ck-color-base-success: var(--antilia-theme-success, #107c53);
+	--ck-color-base-warning: var(--antilia-theme-warning, #e79818);
+	--ck-color-base-attention: var(--antilia-theme-warning, #f0b429);
+	--ck-color-base-highlight: var(--antilia-theme-selected, #ff0);
+	--ck-focus-border-color: var(--ck-color-base-focus);
+	--ck-color-engine-placeholder-text: color-mix(in srgb, var(--ck-color-base-text) 55%,
+		var(--ck-color-base-background));
+	--ck-color-link-default: var(--antilia-theme-primary, #0000f0);
+	--ck-color-shadow-drop: color-mix(in srgb, #000 13%, transparent);
+	--ck-color-shadow-inner: color-mix(in srgb, #000 10%, transparent);
+
+	/* the look */
+	--ck-border-radius: var(--antilia-look-radius, 4px);
+
+	/* the text, CKEditor's content, whose font is the page's (see below) */
+	--ck-content-font-color: var(--ck-color-base-text);
+	--ck-content-list-marker-color: var(--ck-content-font-color);
+	--ck-content-color-image-caption-background: var(--ck-color-base-foreground);
+	--ck-content-color-image-caption-text: var(--ck-color-base-text);
+
+	/* those made of the others, resolved here */
+	--ck-color-surface-canvas: var(--ck-color-base-background);
+	--ck-color-surface-control: var(--ck-color-surface-canvas);
+	--ck-color-surface-container: var(--ck-color-surface-canvas);
+	--ck-color-surface-inverse: var(--ck-color-base-text);
+	--ck-color-border-control: var(--ck-color-base-border);
+	--ck-color-border-container: var(--ck-color-base-border);
+	--ck-color-divider: var(--ck-color-base-border);
+	--ck-color-feedback-error: var(--ck-color-base-error);
+	--ck-color-feedback-success: var(--ck-color-base-success);
+	--ck-color-feedback-warning: var(--ck-color-base-warning);
+	--ck-color-feedback-highlight: var(--ck-color-base-highlight);
+	--ck-color-text-primary: var(--ck-color-base-text);
+	--ck-color-text-secondary: var(--ck-color-base-text-light);
+	--ck-color-text-disabled: var(--ck-color-text-secondary);
+	--ck-color-text-inverse: var(--ck-color-base-background);
+	--ck-color-text-error: var(--ck-color-feedback-error);
+	--ck-color-text: var(--ck-color-text-primary);
+	--ck-color-interactive-focus-border: var(--ck-focus-border-color);
+	--ck-color-interactive-focus-shadow: var(--ck-color-base-focus-shadow);
+	--ck-color-interactive-focus-disabled-shadow: var(--ck-color-base-focus-shadow-faded);
+	--ck-color-interactive-focus-error-shadow: var(--ck-color-base-error-shadow);
+	--ck-color-interactive-hover-surface: var(--ck-color-base-hover);
+	--ck-color-interactive-hover-surface-strong: var(--ck-color-base-hover-strong);
+	--ck-color-interactive-active-surface: var(--ck-color-base-hover);
+	--ck-color-interactive-selected-surface: var(--ck-color-base-selected);
+	--ck-color-interactive-selected-surface-hover: var(--ck-color-base-selected-hover);
+	--ck-color-interactive-selected-text: var(--ck-color-base-active);
+	--ck-color-interactive-primary-surface: var(--ck-color-base-action);
+	--ck-color-interactive-primary-surface-hover: var(--ck-color-base-action-hover);
+	--ck-color-interactive-primary-surface-muted: var(--ck-color-base-action-muted);
+	--ck-color-interactive-primary-surface-disabled: var(--ck-color-base-action-disabled);
+	--ck-color-interactive-primary-text: var(--antilia-theme-on-primary, var(--ck-color-text-inverse));
+	--ck-color-focus-border: var(--ck-color-interactive-focus-border);
+	--ck-color-focus-outer-shadow: var(--ck-color-interactive-focus-shadow);
+	--ck-color-focus-disabled-shadow: var(--ck-color-interactive-focus-disabled-shadow);
+	--ck-color-focus-error-shadow: var(--ck-color-interactive-focus-error-shadow);
+	--ck-color-upload-bar-background: var(--ck-color-base-focus);
+	--ck-color-highlight-background: var(--ck-color-feedback-highlight);
+	--ck-focus-shadow: var(--ck-focus-outer-shadow-geometry, var(--ck-focus-shadow-geometry))
+		var(--ck-color-focus-outer-shadow);
+	--ck-focus-shadow-disabled: var(--ck-focus-outer-shadow-geometry,
+		var(--ck-focus-shadow-geometry)) var(--ck-color-focus-disabled-shadow);
+	--ck-focus-shadow-error: var(--ck-focus-outer-shadow-geometry,
+		var(--ck-focus-shadow-geometry)) var(--ck-color-focus-error-shadow);
+	--ck-shadow-md: 0 1px 2px 1px var(--ck-color-shadow-drop);
+	--ck-border-surface: var(--ck-border-width-surface) solid var(--ck-color-border-container);
+	--ck-powered-by-border-color: var(--ck-color-focus-border);
+	--ck-button-default-hover-background-color: var(--ck-color-interactive-hover-surface);
+	--ck-button-default-active-background-color: var(--ck-color-interactive-active-surface);
+	--ck-button-on-background-color: var(--ck-color-interactive-selected-surface);
+	--ck-button-on-hover-background-color: var(--ck-color-interactive-selected-surface-hover);
+	--ck-button-on-active-background-color: var(--ck-color-interactive-selected-surface-hover);
+	--ck-button-on-text-color: var(--ck-color-interactive-selected-text);
+	--ck-button-action-background-color: var(--ck-color-interactive-primary-surface);
+	--ck-button-action-hover-background-color: var(--ck-color-interactive-primary-surface-hover);
+	--ck-button-action-active-background-color: var(--ck-color-interactive-primary-surface-hover);
+	--ck-button-action-disabled-background-color:
+		var(--ck-color-interactive-primary-surface-disabled);
+	--ck-button-action-text-color: var(--ck-color-interactive-primary-text);
+	--ck-button-save-color: var(--ck-color-feedback-success);
+	--ck-button-cancel-color: var(--ck-color-feedback-error);
+	--ck-switch-button-off-background-color: var(--ck-color-text-secondary);
+	--ck-switch-button-off-hover-background-color: var(--ck-color-base-text-light);
+	--ck-switch-button-on-background-color: var(--ck-button-action-background-color);
+	--ck-switch-button-on-hover-background-color: var(--ck-color-interactive-primary-surface-hover);
+	--ck-switch-button-inner-background-color: var(--ck-color-surface-canvas);
+	--ck-dialog-background-color: var(--ck-color-surface-container);
+	--ck-dropdown-panel-background-color: var(--ck-color-surface-container);
+	--ck-dropdown-panel-border-color: var(--ck-color-border-container);
+	--ck-editor-frame-border-color: var(--ck-color-border-container);
+	--ck-input-background-color: var(--ck-color-surface-control);
+	--ck-input-border-color: var(--ck-color-border-control);
+	--ck-input-error-border-color: var(--ck-color-feedback-error);
+	--ck-input-text-color: var(--ck-color-text-primary);
+	--ck-input-disabled-border-color: var(--ck-color-border-control);
+	--ck-input-disabled-text-color: var(--ck-color-text-disabled);
+	--ck-labeled-field-label-background-color: var(--ck-color-surface-control);
+	--ck-list-background-color: var(--ck-color-surface-control);
+	--ck-list-button-hover-background-color: var(--ck-button-default-hover-background-color);
+	--ck-list-button-on-background-color: var(--ck-button-on-text-color);
+	--ck-list-button-on-text-color: var(--ck-color-text-inverse);
+	--ck-list-divider-color: var(--ck-color-divider);
+	--ck-balloon-panel-background-color: var(--ck-color-surface-container);
+	--ck-balloon-panel-border-color: var(--ck-color-border-container);
+	--ck-autocomplete-results-background-color: var(--ck-color-surface-container);
+	--ck-tooltip-background-color: var(--ck-color-surface-inverse);
+	--ck-tooltip-text-color: var(--ck-color-text-inverse);
+	--ck-toolbar-background-color: var(--antilia-theme-toolbar, var(--ck-color-surface-container));
+	--ck-toolbar-border-color: var(--ck-color-border-container);
+	--ck-tab-button-icon-color: var(--ck-color-base-text-light);
+	--ck-tab-button-active-icon-color: var(--ck-color-base-action);
+	--ck-clipboard-drop-target-color: var(--ck-color-focus-border);
+	--ck-color-code-block-label-background: var(--ck-color-base-text-light);
+	--ck-color-image-upload-icon: var(--ck-color-base-background);
+	--ck-color-image-upload-icon-background: var(--ck-color-base-success);
+	--ck-color-table-column-resizer-hover: var(--ck-color-base-active);
+	--ck-color-widget-blurred-border: var(--ck-color-base-border-light);
+	--ck-color-widget-hover-border: var(--ck-color-base-attention);
+	--ck-color-widget-editable-focus-background: var(--ck-color-base-background);
+	--ck-color-widget-drag-handler-icon-color: var(--ck-color-base-background);
+	--ck-color-resizer: var(--ck-color-focus-border);
+	--ck-color-resizer-tooltip-background: var(--ck-color-surface-inverse);
+	--ck-color-resizer-tooltip-text: var(--ck-color-text-inverse);
+	--ck-color-widget-type-around-button-active: var(--ck-color-focus-border);
+	--ck-color-widget-type-around-button-hover: var(--ck-color-widget-hover-border);
+	--ck-color-widget-type-around-button-blurred-editable: var(--ck-color-widget-blurred-border);
+	--ck-color-widget-type-around-button-icon: var(--ck-color-base-background);
+
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+/*
+ * The editor: CKEditor's toolbar and text fill the room it has, 20em high unless the page or the
+ * user says otherwise, and the text scrolls in it.
+ */
+.antilia-ck-editor {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	height: var(--antilia-ck-editor-height, 20em);
+	min-height: 6em;
+	/* room for the bar resizing the editor, which resizable.css draws */
+	padding: 0 var(--antilia-ck-editor-bar-right, 0) var(--antilia-ck-editor-bar-bottom, 0) 0;
+	color: var(--ck-color-base-text);
+	text-align: start;
+}
+
+.antilia-ck-editor > .ck.ck-editor {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.antilia-ck-editor > .ck.ck-editor > .ck-editor__main {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.antilia-ck-editor > .ck.ck-editor > .ck-editor__main > .ck-editor__editable {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	scrollbar-width: thin;
+}
+
+/* the text area the editor keeps the text in, should a style sheet show hidden elements */
+.antilia-ck-editor > .antilia-ck-editor-field,
+.antilia-ck-editor > .antilia-ck-editor-source {
+	display: none;
+}
+
+/*
+ * the text area a server rendered, until the script makes the editor of it: hidden in the room
+ * the editor will take, so that a page arriving slowly shows no HTML and nothing moves once the
+ * editor is there. Without scripts the text area is shown, to type the text in.
+ */
+@media (scripting: enabled) {
+	textarea.antilia-ck-editor-loading {
+		display: block;
+		box-sizing: border-box;
+		width: 100%;
+		font: inherit;
+		height: var(--antilia-ck-editor-height, 20em);
+		min-height: 6em;
+		visibility: hidden;
+	}
+}
+
+/* rendered anew via Ajax inside the editor, which has its room already */
+.antilia-ck-editor > textarea.antilia-ck-editor-loading {
+	display: none;
+}
+
+/* read only: CKEditor's toolbar has nothing to do */
+.antilia-ck-editor-readonly > .ck.ck-editor > .ck-editor__top {
+	display: none;
+}
+
+.antilia-ck-editor-disabled {
+	opacity: 0.65;
+}
+
+/* the bar along the bottom, or the right edge, by which the user resizes the editor */
+.antilia-ck-editor.antilia-resizable-vertical,
+.antilia-ck-editor.antilia-resizable-both {
+	--antilia-ck-editor-bar-bottom: 10px;
+}
+
+.antilia-ck-editor.antilia-resizable-horizontal {
+	--antilia-ck-editor-bar-right: 10px;
+}
+
+.antilia-ck-editor.antilia-resizable-both > .antilia-resizable-handle {
+	width: 14px;
+	height: 10px;
+}
+
+/* the count of the characters and the words, below the text, at its start: CKEditor's badge, if
+   any, is at its end */
+.antilia-ck-editor-status {
+	flex: none;
+	padding: 0.2rem 0.5rem;
+	font-size: 0.8em;
+	color: var(--ck-color-base-text-light);
+	text-align: start;
+}
+
+/*
+ * The text in the font of the page: CKEditor's content has a font of its own, a custom property
+ * of :root, which a custom property of the editor set to inherit would take again.
+ */
+.antilia-ck-editor .ck-content,
+.antilia-ck-editor-view.ck-content {
+	font-family: inherit;
+	font-size: inherit;
+}
+
+/*
+ * The HTML of the editor as a page shows it, read only: CKEditor's content style sheet,
+ * ckeditor5-content.css, styles .ck-content.
+ */
+.antilia-ck-editor-view {
+	color: var(--ck-content-font-color);
+	overflow-wrap: break-word;
+}
+
+/* text aligned by the classes the editor writes, as the Tiptap editor's */
+:is(.antilia-ck-editor, .antilia-ck-editor-view) .antilia-text-center {
+	text-align: center;
+}
+
+:is(.antilia-ck-editor, .antilia-ck-editor-view) .antilia-text-right {
+	text-align: right;
+}
+
+:is(.antilia-ck-editor, .antilia-ck-editor-view) .antilia-text-justify {
+	text-align: justify;
+}

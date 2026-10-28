@@ -12,6 +12,10 @@
  * limitations under the License.
  */
 
+export { CKEditor } from './CKEditor.js';
+export type { CKEditorHandle, CKEditorProps } from './CKEditor.js';
+export { CK_EDITOR_FEATURES } from '@antilia/core';
+export type { CKEditorBuild, CKEditorInstance, CKEditorPlugin, CKEditorTexts } from '@antilia/core';
 export { CodeEditor } from './CodeEditor.js';
 export type { CodeEditorHandle, CodeEditorProps } from './CodeEditor.js';
 export { CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditorLanguages,

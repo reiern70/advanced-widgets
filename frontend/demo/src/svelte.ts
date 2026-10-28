@@ -24,6 +24,7 @@ import { LOOK_CONTEXT, lookOf } from '@antilia/svelte';
 import { startApps, type Mount } from './apps.js';
 import AutocompleteDemo from './svelte/AutocompleteDemo.svelte';
 import ButtonsDemo from './svelte/ButtonsDemo.svelte';
+import CKEditorDemo from './svelte/CKEditorDemo.svelte';
 import CodeEditorDemo from './svelte/CodeEditorDemo.svelte';
 import DatePickerDemo from './svelte/DatePickerDemo.svelte';
 import DesktopDemo from './svelte/DesktopDemo.svelte';
@@ -67,6 +68,7 @@ startApps('svelte', {
 	resizable: app(ResizableDemo),
 	codeEditor: app(CodeEditorDemo),
 	richTextEditor: app(RichTextEditorDemo),
+	ckEditor: app(CKEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

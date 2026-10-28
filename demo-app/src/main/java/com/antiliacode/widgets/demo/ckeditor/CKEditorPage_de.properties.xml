@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">CKEditor 5</entry>
+	<entry key="explanation">&lt;p&gt;CKEditor aus ui-components ist ein Textbereich, der als CKEditor 5 erscheint, ein vollständiger Editor mit eigener Werkzeugleiste, eigenen Sprechblasen und Dialogen, in den Farben des Themas. Er hält den Vertrag des Rich-Text-Editors, Tiptap, ein, sodass eine Anwendung zwischen beiden wechseln kann: Der Text ist HTML oder Markdown, gehalten in einem Textbereich, den ein Formular sendet; er kann schreibgeschützt sein, einen Platzhalter zeigen, die Wörter zählen und über die Leiste an seinem unteren Rand in der Größe verändert werden; der Server behält seinen Zustand, was Sie ausgewählt haben, wie weit Sie gescrollt haben und welche Größe Sie ihm gegeben haben; Strg+S speichert, und die Tabs und der Desktop zeigen nicht gespeicherte Änderungen an.&lt;/p&gt;&lt;p&gt;Die Bibliothek enthält keinen Code von CKEditor, der unter der GPL 2 oder später oder unter den kommerziellen Bedingungen von CKSource lizenziert ist. Die Anwendung bringt ihn mit, den Browser-Build des npm-Pakets ckeditor5 oder einen eigenen Build, und seinen Lizenzschlüssel, eine Einstellung der Anwendung. Diese Demo bringt den Browser-Build mit und betreibt ihn unter der GPL, mit dem Lizenzschlüssel GPL: CKEditor zeigt dann sein Powered-by-Abzeichen.&lt;/p&gt;&lt;p&gt;Der Server traut dem HTML des Browsers nie: Er bereinigt es, bevor er es behält, und behält nur, was die Plugins des Editors schreiben. Alles funktioniert unter einer strengen Content Security Policy: Das HTML hat kein style-Attribut, Text wird über Klassen ausgerichtet, und Bilder haben weder Breite noch Höhe.&lt;/p&gt;</entry>
+	<entry key="license.gpl">läuft hier unter der GPL 2 oder später, mit dem Lizenzschlüssel GPL. Die Komponenten enthalten keinen Code von CKEditor: Die Demo bringt ihn mit, wie jede Anwendung.</entry>
+	<entry key="license.commercial">läuft hier mit einem kommerziellen Lizenzschlüssel von CKSource. Die Komponenten enthalten keinen Code von CKEditor: Die Demo bringt ihn mit, wie jede Anwendung.</entry>
+	<entry key="articleTitle">Ein Artikel in HTML, auf dem Server bereinigt</entry>
+	<entry key="notesTitle">Notizen in Markdown</entry>
+	<entry key="cleaningTitle">Die Bereinigung auf dem Server</entry>
+	<entry key="articleLabel">Artikel</entry>
+	<entry key="notesLabel">Notizen</entry>
+	<entry key="placeholder">Den Artikel schreiben…</entry>
+	<entry key="readOnly">Schreibgeschützt</entry>
+	<entry key="count">Wörter zählen</entry>
+	<entry key="save">Speichern</entry>
+	<entry key="start">Tippen, auswählen, scrollen oder die Größe ändern: Der Server behält alles.</entry>
+	<entry key="heardFocus">Der Server hat gehört, dass Sie den Artikel betreten haben.</entry>
+	<entry key="heardBlur">Der Server hat gehört, dass Sie den Artikel verlassen haben, mit seinem Text.</entry>
+	<entry key="heardSave">Artikel gespeichert.</entry>
+	<entry key="known">Der Server weiß: {0} Zeichen HTML, {1} Wörter; {2}; {3}; {4}.</entry>
+	<entry key="cursorAt">der Cursor bei {0}</entry>
+	<entry key="selected">ausgewählt von {0} bis {1}</entry>
+	<entry key="sizeOfPage">die Größe, die die Seite ihm gibt</entry>
+	<entry key="sizeGiven">{0} × {1} px</entry>
+	<entry key="unsaved">Änderungen nicht gespeichert</entry>
+	<entry key="allSaved">alles gespeichert</entry>
+	<entry key="asShown">Wie eine Seite ihn zeigt</entry>
+	<entry key="htmlKept">Das HTML, das der Server behält</entry>
+	<entry key="markdownKept">Das Markdown, das der Server behält</entry>
+	<entry key="notesStart">Formatieren Sie die Notizen nach Belieben: Der Server behält sie als Markdown.</entry>
+	<entry key="notesSaved">Notizen gespeichert.</entry>
+	<entry key="cleaningExplanation">HTML von irgendwoher, eingefügt oder von einem Browser gesendet, der nicht der Editor ist: ein Skript, Handler, ein Link auf javascript:, ein Stil, der die Seite überdeckt, ein Bild mit Größe und ein Frame. Bereinigen Sie es und sehen Sie, was übrig bleibt: nur, was die Plugins von CKEditor schreiben.</entry>
+	<entry key="unsafeLabel">HTML von irgendwoher</entry>
+	<entry key="clean">Bereinigen</entry>
+	<entry key="cleanedHtml">Was die Bereinigung übrig lässt</entry>
+	<entry key="appStart">Tippen, auswählen oder die Größe ändern: Die App behält den Artikel und seinen Zustand.</entry>
+	<entry key="appSaved">Artikel gespeichert.</entry>
+	<entry key="appNotClean">Das HTML, wie der Editor es liefert. Ein Server, der es behält, bereinigt es zuerst, wie es Wickets CKEditor tut.</entry>
+	<entry key="appArticleTitle">Ein Artikel in HTML</entry>
+	<entry key="appHtml">Das HTML, das der Editor liefert</entry>
+	<entry key="appKnown">Die App behält {0} Zeichen; {1}.</entry>
+	<entry key="appLicense">Die App gibt CKEditor das globale CKEDITOR seines Browser-Builds, das die Seite geladen hat, und den Lizenzschlüssel der Seite.</entry>
+</properties>

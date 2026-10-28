@@ -14,8 +14,8 @@
 package com.antiliacode.widgets.richtext;
 
 /**
- * What a {@link RichTextEditor} tells the page of, by the events the browser fires on its text
- * area: those a text area fires itself, {@code input} and {@code change}, and those of the editor.
+ * What a {@link RichTextEditor} or a {@link com.antiliacode.widgets.ckeditor.CKEditor} tells the
+ * page of, by the events the browser fires on its text area: those a text area fires itself, {@code input} and {@code change}, and those of the editor.
  * A {@link RichTextEditorEventBehavior} hears of one on the server, as any Ajax behavior listening
  * to {@link #getEventName() its name} does.
  *

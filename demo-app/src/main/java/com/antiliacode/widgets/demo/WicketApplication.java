@@ -35,6 +35,7 @@ import org.apache.wicket.settings.StoreSettings;
 import org.apache.wicket.util.string.Strings;
 import org.springframework.context.ApplicationContext;
 
+import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.demo.account.SignInAttempts;
@@ -46,6 +47,8 @@ import com.antiliacode.widgets.demo.admin.UsersApiResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
 import com.antiliacode.widgets.demo.autocomplete.AutocompletePage;
 import com.antiliacode.widgets.demo.button.ButtonsPage;
+import com.antiliacode.widgets.demo.ckeditor.CKEditorAssets;
+import com.antiliacode.widgets.demo.ckeditor.CKEditorPage;
 import com.antiliacode.widgets.demo.contacts.ContactsPage;
 import com.antiliacode.widgets.demo.datatable.BeanDynamicDataTablePage;
 import com.antiliacode.widgets.demo.datatable.DynamicDataTablePage;
@@ -269,6 +272,10 @@ public class WicketApplication extends WebApplication
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF)
 			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"));
 
+		// CKEditor as the demo brings it, the browser build of ckeditor5 under the GPL, with the
+		// license key of the application: the components hold no code of CKEditor
+		CKEditorLibrary.set(this, CKEditorAssets.library());
+
 		mountPage("address-book", ContactsPage.class);
 		mountPage("dynamic-data-table", DynamicDataTablePage.class);
 		mountPage("bean-dynamic-data-table", BeanDynamicDataTablePage.class);
@@ -288,6 +295,7 @@ public class WicketApplication extends WebApplication
 		mountPage("upload", UploadPage.class);
 		mountPage("code-editor", CodeEditorPage.class);
 		mountPage("rich-text-editor", RichTextEditorPage.class);
+		mountPage("ckeditor", CKEditorPage.class);
 		mountPage("scrollbar", ScrollbarPage.class);
 		mountPage("split-panel", SplitPanelPage.class);
 		mountPage("resizable", ResizablePage.class);

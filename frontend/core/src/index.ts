@@ -26,6 +26,11 @@ export type { CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage, CodeEdit
 export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
 	renderMarkdown } from './markdown-preview.js';
 export type { MarkdownPreviewOptions } from './markdown-preview.js';
+export { CK_EDITOR_BASE_PLUGINS, CK_EDITOR_CLASSES, CK_EDITOR_FEATURE_PLUGINS, CK_EDITOR_FEATURES,
+	CKEditor, ckEditor, DEFAULT_CK_EDITOR_TEXTS } from './ck-editor.js';
+export type { CKEditorBuild, CKEditorClass, CKEditorEventDetail, CKEditorFeature, CKEditorInstance,
+	CKEditorOptions, CKEditorPlugin, CKEditorTexts } from './ck-editor.js';
+export { canonicalState, sameState } from './rich-text-contract.js';
 export { RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RichTextEditor,
 	richTextEditor, richTextExtensions, registerRichTextExtension } from './rich-text-editor.js';
 export type { RichTextEditorEventDetail, RichTextEditorKit, RichTextEditorOptions,

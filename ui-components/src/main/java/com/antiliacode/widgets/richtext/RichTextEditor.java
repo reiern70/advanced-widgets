@@ -26,18 +26,12 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
-import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
-import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.Model;
-import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
@@ -52,7 +46,6 @@ import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
 import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
-import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 
@@ -113,10 +106,14 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * {@code Wicket.RichTextEditor} from {@link #JS} makes the editor in the browser, with Tiptap and
  * ProseMirror; its sizes are CSS custom properties set through the CSSOM, and it writes no style
  * element. The look comes from {@link #CSS}.
+ * <p>
+ * What it shares with {@link com.antiliacode.widgets.ckeditor.CKEditor}, made with CKEditor 5, is
+ * {@link AbstractRichTextEditor}'s: the model, the cleaning, the state, the events and the text
+ * saved, so that a page can switch between the two.
  *
  * @since 11.0.0
  */
-public class RichTextEditor extends TextArea<String>
+public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -147,14 +144,6 @@ public class RichTextEditor extends TextArea<String>
 	 * a page arriving slowly shows no HTML; without scripts the text area is shown.
 	 */
 	public static final String LOADING_CLASS = "antilia-rich-text-editor-loading";
-
-	/** The height the user resizes the editor from at least, in pixels, unless set otherwise. */
-	public static final int DEFAULT_MIN_HEIGHT = 96;
-
-	/** The levels of the headings, unless set otherwise. */
-	public static final List<Integer> DEFAULT_HEADING_LEVELS = List.of(1, 2, 3, 4);
-
-	private static final String STATE_PARAMETER = "state";
 
 	/** What the name of a language of code blocks may be, as their class holds it. */
 	private static final Pattern LANGUAGE = Pattern.compile("[A-Za-z0-9_+#.-]{1,40}");
@@ -202,45 +191,13 @@ public class RichTextEditor extends TextArea<String>
 		}
 	}
 
-	private final AbstractDefaultAjaxBehavior stateBehavior;
-
-	private IModel<RichTextEditorState> stateModel;
-
-	private IModel<String> savedModel;
-
-	private IModel<String> placeholder;
-
-	private RichTextFormat format = RichTextFormat.HTML;
-
-	private Set<RichTextFeature> features;
-
-	private List<Integer> headingLevels = DEFAULT_HEADING_LEVELS;
-
 	private List<List<RichTextTool>> toolbar = RichTextTool.DEFAULT_TOOLBAR;
 
 	private boolean bubbleMenu;
 
-	private boolean readOnly;
-
 	private Integer limit;
 
-	private boolean count;
-
-	private ResizeAxis resizable = ResizeAxis.VERTICAL;
-
-	private Integer minHeight;
-
-	private Integer maxHeight;
-
-	private Integer minWidth;
-
-	private Integer maxWidth;
-
-	private boolean sendToServer = true;
-
 	private List<RichTextExtension> extensions = List.of();
-
-	private RichTextSanitizer sanitizer;
 
 	private boolean highlighting;
 
@@ -291,247 +248,25 @@ public class RichTextEditor extends TextArea<String>
 	 */
 	public RichTextEditor(String id, IModel<String> model, IModel<RichTextEditorState> stateModel)
 	{
-		super(id, model);
-		this.stateModel = stateModel == null ? Model.of((RichTextEditorState)null) : stateModel;
-		setOutputMarkupId(true);
-		stateBehavior = new AbstractDefaultAjaxBehavior()
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void respond(AjaxRequestTarget target)
-			{
-				onStateSent(target, getRequest().getRequestParameters());
-			}
-		};
-		add(stateBehavior);
+		super(id, model, stateModel);
 	}
 
-	/**
-	 * Takes what the browser sent: the state, which the state model gets, and the text when the
-	 * user changed it, which the editor keeps as its input.
-	 */
-	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters)
-	{
-		if (!sendToServer)
-		{
-			return;
-		}
-		RichTextEditorState state = RichTextEditorState.parse(parameters.getParameterValue(
-			STATE_PARAMETER).toOptionalString());
-		if (state != null)
-		{
-			state = state.withSize(resizable == null ? ResizableSize.NONE :
-				state.getSize().along(resizable));
-			if (!state.equals(stateModel.getObject()))
-			{
-				stateModel.setObject(state);
-			}
-		}
-		// read where the text area's input is: among what the form posts
-		String[] input = getInputAsArray();
-		if (input != null && input.length > 0 && input[0] != null && !readOnly)
-		{
-			inputChanged();
-		}
-		onStateChanged(target);
-	}
-
-	/**
-	 * Cleans the HTML the browser sent, before it is validated and the model gets it.
-	 */
 	@Override
-	public void convertInput()
+	protected String getScriptObject()
 	{
-		super.convertInput();
-		if (format == RichTextFormat.HTML && isValid())
-		{
-			String html = getConvertedInput();
-			if (html != null)
-			{
-				String clean = getSanitizer().sanitize(html);
-				setConvertedInput(Strings.isEmpty(clean) ? null : clean);
-			}
-		}
+		return "Wicket.RichTextEditor";
 	}
 
-	/**
-	 * Called when the browser sent the state, and maybe the text, after the state model took it.
-	 * Does nothing by default.
-	 *
-	 * @param target
-	 *            the Ajax request target
-	 */
-	protected void onStateChanged(AjaxRequestTarget target)
+	@Override
+	public String getLoadingClass()
 	{
+		return LOADING_CLASS;
 	}
 
-	/**
-	 * @return the model keeping the selection, the scrolling and the size
-	 */
-	public IModel<RichTextEditorState> getStateModel()
+	@Override
+	protected RichTextSanitizer getDefaultSanitizer()
 	{
-		return stateModel;
-	}
-
-	/**
-	 * @param stateModel
-	 *            where the editor keeps the selection, the scrolling and the size; in the editor
-	 *            when {@code null}
-	 * @return {@code this}
-	 */
-	public RichTextEditor setStateModel(IModel<RichTextEditorState> stateModel)
-	{
-		this.stateModel = stateModel == null ? Model.of((RichTextEditorState)null) : stateModel;
-		return this;
-	}
-
-	/**
-	 * @return the selection, the scrolling and the size, as the state model has them;
-	 *         {@link RichTextEditorState#NONE} while it is empty
-	 */
-	public RichTextEditorState getState()
-	{
-		RichTextEditorState state = stateModel.getObject();
-		return state == null ? RichTextEditorState.NONE : state;
-	}
-
-	/**
-	 * @param state
-	 *            the state the state model gets, which the editor shows when rendered again
-	 * @return {@code this}
-	 */
-	public RichTextEditor setState(RichTextEditorState state)
-	{
-		stateModel.setObject(state);
-		return this;
-	}
-
-	/**
-	 * @return the model of the text last saved, {@code null} for the text the editor is rendered
-	 *         with
-	 */
-	public IModel<String> getSavedModel()
-	{
-		return savedModel;
-	}
-
-	/**
-	 * @param savedModel
-	 *            the text last saved, against which the editor tells whether the text has changes;
-	 *            {@code null} for the text the editor is rendered with, as by default
-	 * @return {@code this}
-	 */
-	public RichTextEditor setSavedModel(IModel<String> savedModel)
-	{
-		this.savedModel = savedModel;
-		return this;
-	}
-
-	/**
-	 * Tells the browser the text of the model was saved: the editor no longer has changes, unless
-	 * the user changed the text since. The model of the text last saved, if any, takes it.
-	 *
-	 * @param target
-	 *            the Ajax request target
-	 * @return {@code this}
-	 */
-	public RichTextEditor markSaved(AjaxRequestTarget target)
-	{
-		String text = getModelObject();
-		if (savedModel != null)
-		{
-			savedModel.setObject(text);
-		}
-		target.appendJavaScript(script("markSaved(" + JSONObject.quote(text == null ? "" : text) +
-			")"));
-		return this;
-	}
-
-	/**
-	 * Puts the focus in the editor, where the cursor is.
-	 *
-	 * @param target
-	 *            the Ajax request target
-	 * @return {@code this}
-	 */
-	public RichTextEditor focus(AjaxRequestTarget target)
-	{
-		target.appendJavaScript(script("focus()"));
-		return this;
-	}
-
-	/**
-	 * @return a script calling the editor in the browser, when it is there
-	 */
-	private String script(String call)
-	{
-		return "(function(){var e=Wicket.RichTextEditor&&Wicket.RichTextEditor.of(" +
-			JSONObject.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
-	}
-
-	/**
-	 * @return how the editor keeps the text
-	 */
-	public RichTextFormat getFormat()
-	{
-		return format;
-	}
-
-	/**
-	 * @param format
-	 *            how the editor keeps the text: {@link RichTextFormat#HTML} by default
-	 * @return {@code this}
-	 */
-	public RichTextEditor setFormat(RichTextFormat format)
-	{
-		this.format = Args.notNull(format, "format");
-		return this;
-	}
-
-	/**
-	 * @return what the text may hold: those set, or the {@link RichTextFeature#defaults(RichTextFormat)
-	 *         defaults of the format}
-	 */
-	public Set<RichTextFeature> getFeatures()
-	{
-		return features == null ? RichTextFeature.defaults(format) :
-			Collections.unmodifiableSet(features);
-	}
-
-	/**
-	 * @param features
-	 *            what the text may hold; {@code null} for the defaults of the format, all the
-	 *            features for HTML
-	 * @return {@code this}
-	 */
-	public RichTextEditor setFeatures(Set<RichTextFeature> features)
-	{
-		this.features = features == null ? null : features.isEmpty() ?
-			EnumSet.noneOf(RichTextFeature.class) : EnumSet.copyOf(features);
-		return this;
-	}
-
-	/**
-	 * @return the levels of the headings
-	 */
-	public List<Integer> getHeadingLevels()
-	{
-		return headingLevels;
-	}
-
-	/**
-	 * @param levels
-	 *            the levels of the headings, from 1 to 6; 1 to 4 by default
-	 * @return {@code this}
-	 */
-	public RichTextEditor setHeadingLevels(int... levels)
-	{
-		List<Integer> list = new ArrayList<>();
-		Arrays.stream(levels).filter(level -> level >= 1 && level <= 6).distinct().sorted()
-			.forEach(list::add);
-		this.headingLevels = List.copyOf(list);
-		return this;
+		return RichTextPolicy.of(getFeatures());
 	}
 
 	/**
@@ -582,37 +317,6 @@ public class RichTextEditor extends TextArea<String>
 	}
 
 	/**
-	 * @return whether the user cannot change the text, {@code false} unless set otherwise
-	 */
-	public boolean isReadOnly()
-	{
-		return readOnly;
-	}
-
-	/**
-	 * @param readOnly
-	 *            whether the user cannot change the text, but can read, select and copy it; the
-	 *            toolbar does not show then
-	 * @return {@code this}
-	 */
-	public RichTextEditor setReadOnly(boolean readOnly)
-	{
-		this.readOnly = readOnly;
-		return this;
-	}
-
-	/**
-	 * @param placeholder
-	 *            the text shown while the editor is empty, {@code null} for none
-	 * @return {@code this}
-	 */
-	public RichTextEditor setPlaceholder(IModel<String> placeholder)
-	{
-		this.placeholder = placeholder;
-		return this;
-	}
-
-	/**
 	 * @return the most characters the user can give the text, {@code null} for no limit
 	 */
 	public Integer getLimit()
@@ -630,113 +334,6 @@ public class RichTextEditor extends TextArea<String>
 	public RichTextEditor setLimit(Integer limit)
 	{
 		this.limit = limit == null ? null : Math.max(limit, 0);
-		return this;
-	}
-
-	/**
-	 * @return whether the editor counts the characters and the words below the text
-	 */
-	public boolean isCount()
-	{
-		return count;
-	}
-
-	/**
-	 * @param count
-	 *            whether the editor counts the characters and the words below the text,
-	 *            {@code false} by default; it does with a {@link #setLimit(Integer) limit}
-	 * @return {@code this}
-	 */
-	public RichTextEditor setCount(boolean count)
-	{
-		this.count = count;
-		return this;
-	}
-
-	/**
-	 * @return the dimensions the user resizes the editor in, {@code null} for none
-	 */
-	public ResizeAxis getResizable()
-	{
-		return resizable;
-	}
-
-	/**
-	 * @param resizable
-	 *            the dimensions the user resizes the editor in: {@link ResizeAxis#VERTICAL} by
-	 *            default, by the bar along its bottom; {@code null} for none
-	 * @return {@code this}
-	 */
-	public RichTextEditor setResizable(ResizeAxis resizable)
-	{
-		this.resizable = resizable;
-		return this;
-	}
-
-	/**
-	 * @param minHeight
-	 *            the smallest height the user gives the editor, in pixels; {@code null} for
-	 *            {@value #DEFAULT_MIN_HEIGHT}
-	 * @return {@code this}
-	 */
-	public RichTextEditor setMinHeight(Integer minHeight)
-	{
-		this.minHeight = minHeight;
-		return this;
-	}
-
-	/**
-	 * @param maxHeight
-	 *            the largest height the user gives the editor, in pixels; {@code null} for none
-	 * @return {@code this}
-	 */
-	public RichTextEditor setMaxHeight(Integer maxHeight)
-	{
-		this.maxHeight = maxHeight;
-		return this;
-	}
-
-	/**
-	 * @param minWidth
-	 *            the smallest width the user gives the editor, in pixels; {@code null} for 200
-	 * @return {@code this}
-	 */
-	public RichTextEditor setMinWidth(Integer minWidth)
-	{
-		this.minWidth = minWidth;
-		return this;
-	}
-
-	/**
-	 * @param maxWidth
-	 *            the largest width the user gives the editor, in pixels; {@code null} for none
-	 * @return {@code this}
-	 */
-	public RichTextEditor setMaxWidth(Integer maxWidth)
-	{
-		this.maxWidth = maxWidth;
-		return this;
-	}
-
-	/**
-	 * @return whether the browser sends the server the state and the text the user changed,
-	 *         {@code true} unless set otherwise
-	 */
-	public boolean isSendToServer()
-	{
-		return sendToServer;
-	}
-
-	/**
-	 * @param sendToServer
-	 *            whether the browser sends the server the selection, the scrolling, the size and
-	 *            the text the user changed, which the state model and the input of the editor
-	 *            take
-	 * @return {@code this}
-	 */
-	public RichTextEditor setSendToServer(boolean sendToServer)
-	{
-		this.sendToServer = sendToServer;
 		return this;
 	}
 
@@ -915,42 +512,13 @@ public class RichTextEditor extends TextArea<String>
 	 */
 	public boolean isImageUploading()
 	{
-		return imageStore != null && !readOnly && getFeatures().contains(RichTextFeature.IMAGE) &&
+		return imageStore != null && !isReadOnly() && getFeatures().contains(RichTextFeature.IMAGE) &&
 			isEnabledInHierarchy();
 	}
 
-	/**
-	 * @return what cleans the HTML: the one set, or the {@link RichTextPolicy} of the features
-	 */
-	public RichTextSanitizer getSanitizer()
-	{
-		return sanitizer != null ? sanitizer : RichTextPolicy.of(getFeatures());
-	}
-
-	/**
-	 * @param sanitizer
-	 *            what cleans the HTML the browser sends, before the model gets it; {@code null}
-	 *            for the {@link RichTextPolicy} of the features, as by default. An extension
-	 *            writing elements of its own needs one letting them through.
-	 * @return {@code this}
-	 */
-	public RichTextEditor setSanitizer(RichTextSanitizer sanitizer)
-	{
-		this.sanitizer = sanitizer;
-		return this;
-	}
-
 	@Override
-	protected void onComponentTag(ComponentTag tag)
+	protected void renderEditorHead(IHeaderResponse response)
 	{
-		super.onComponentTag(tag);
-		tag.append("class", LOADING_CLASS, " ");
-	}
-
-	@Override
-	public void renderHead(IHeaderResponse response)
-	{
-		super.renderHead(response);
 		renderHeadItems(response);
 		if (highlighting)
 		{
@@ -963,27 +531,16 @@ public class RichTextEditor extends TextArea<String>
 				response.render(JavaScriptHeaderItem.forReference(extension.getScript()));
 			}
 		}
-		response.render(OnDomReadyHeaderItem.forScript("Wicket.RichTextEditor.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
 	}
 
 	/**
-	 * @return the options of {@code Wicket.RichTextEditor.attach}
+	 * Puts the options of Tiptap's editor: the toolbar, the bubble menu, the limit, the
+	 * extensions, the highlighting, the languages of the code blocks and the uploads of images.
 	 */
-	JSONObject getOptions()
+	@Override
+	protected void putEditorOptions(JSONObject options)
 	{
-		RichTextEditorState state = getState();
-		JSONArray featureNames = new JSONArray();
-		getFeatures().forEach(feature -> featureNames.put(feature.getName()));
-		JSONObject options = new JSONObject()
-			.put("format", format.getName())
-			.put("features", featureNames)
-			.put("headingLevels", new JSONArray(headingLevels))
-			.put("bubbleMenu", bubbleMenu)
-			.put("readOnly", readOnly)
-			.put("count", count)
-			.put("state", state.withSize(resizable == null ? ResizableSize.NONE :
-				state.getSize().along(resizable)).toJson());
+		options.put("bubbleMenu", bubbleMenu);
 		if (toolbar.isEmpty())
 		{
 			options.put("toolbar", false);
@@ -1001,34 +558,6 @@ public class RichTextEditor extends TextArea<String>
 		if (limit != null)
 		{
 			options.put("limit", limit.intValue());
-		}
-		if (savedModel != null)
-		{
-			String saved = savedModel.getObject();
-			options.put("saved", saved == null ? "" : saved);
-		}
-		String text = placeholder == null ? null : placeholder.getObject();
-		if (!Strings.isEmpty(text))
-		{
-			options.put("placeholder", text);
-		}
-		IModel<String> label = getLabel();
-		String name = label == null ? null : label.getObject();
-		if (!Strings.isEmpty(name))
-		{
-			options.put("label", name);
-		}
-		if (resizable == null)
-		{
-			options.put("resizable", false);
-		}
-		else
-		{
-			options.put("resizable", resizable.cssName());
-			options.put("minHeight", minHeight == null ? DEFAULT_MIN_HEIGHT : minHeight);
-			putPixels(options, "maxHeight", maxHeight);
-			putPixels(options, "minWidth", minWidth);
-			putPixels(options, "maxWidth", maxWidth);
 		}
 		if (!extensions.isEmpty())
 		{
@@ -1051,13 +580,12 @@ public class RichTextEditor extends TextArea<String>
 			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
 			options.put("uploadMaxSize", imageMaxSize.bytes());
 		}
-		options.put("texts", texts(this));
-		if (sendToServer)
-		{
-			options.put("stateUrl", stateBehavior.getCallbackUrl().toString());
-			options.put("inputName", getInputName());
-		}
-		return options;
+	}
+
+	@Override
+	protected JSONObject getTexts()
+	{
+		return texts(this);
 	}
 
 	/**
@@ -1092,29 +620,6 @@ public class RichTextEditor extends TextArea<String>
 		}
 		String translation = component.getString("RichTextEditor." + name, null, english);
 		return Strings.isEmpty(translation) ? english : translation;
-	}
-
-	private static void putPixels(JSONObject options, String name, Integer pixels)
-	{
-		if (pixels != null)
-		{
-			options.put(name, pixels.intValue());
-		}
-	}
-
-	@Override
-	protected void onDetach()
-	{
-		super.onDetach();
-		stateModel.detach();
-		if (savedModel != null)
-		{
-			savedModel.detach();
-		}
-		if (placeholder != null)
-		{
-			placeholder.detach();
-		}
 	}
 
 	/**
