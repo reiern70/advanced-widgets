@@ -13,7 +13,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setHost, standaloneHost, type Host } from '../src/index.js';
+import { registerRichTextEvent, RichTextEditor, setHost, standaloneHost,
+	type Host } from '../src/index.js';
 import { attachClientEvents, CLIENT_EVENTS_AJAX, CLIENT_EVENTS_SUBMIT, plainValues,
 	type ClientEventRequest } from '../src/wicket/client-events.js';
 
@@ -54,6 +55,20 @@ describe('client events', () => {
 			editor: new (class Editor {})(), size: { width: 640, height: 320 } } }));
 		expect(heard).toEqual([{ type: CLIENT_EVENTS_AJAX, event: 'antilia:resize', index: 2,
 			values: '{"size":{"width":640,"height":320}}' }]);
+	});
+
+	it('sends the events of a type of the rich text editors as any other, without the editor', () => {
+		registerRichTextEvent('test-client:asked', { fire: (editor, _state, cause) =>
+			({ asked: cause.detail.what, length: editor.getText().length, node: document.body }) });
+		element.defaultValue = '<p>Text</p>';
+		const editor = new RichTextEditor(element);
+		const heard = requests(element);
+		attachClientEvents('editor', [{ id: 'test-client:asked', index: 0, kind: 'ajax' }],
+			(found) => RichTextEditor.of(found.id));
+
+		editor.trigger('test-client:asked', { what: 'size' });
+		expect(heard).toEqual([{ type: CLIENT_EVENTS_AJAX, event: 'test-client:asked', index: 0,
+			values: '{"asked":"size","length":4}' }]);
 	});
 
 	it('runs the function, which sends what it chooses, submitting the form', () => {

@@ -47,7 +47,8 @@
  *
  * Besides its callbacks, the editor fires events on the text area, or its element without one,
  * which bubble: RICH_TEXT_EDITOR_EVENTS, for listeners of the page's own, and Wicket's Ajax
- * behaviors.
+ * behaviors; and those of the types of events registered (registerRichTextEvent, see
+ * rich-text-events.ts), from its own or by trigger(), which a page, a tool or a key calls.
  *
  * Tiptap's own style sheet is not written into the page: rich-text-editor.css has its rules, so
  * that the editor needs no style element under a Content Security Policy. Its sizes are custom
@@ -88,6 +89,7 @@ import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
 import { RICH_TEXT_EDITOR_EVENTS, sameState, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
+import { RichTextEventTypes } from './rich-text-events.js';
 import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText, uploadExtension,
 	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
 
@@ -451,6 +453,10 @@ export class RichTextEditor {
 
 	private destroyed = false;
 
+	/** The types of events registered, which fire on the editor, and what each keeps for it. */
+	private readonly eventTypes = new RichTextEventTypes(this, (name, detail) =>
+		!this.destroyed && this.emit(name, detail));
+
 	/**
 	 * @param target a text area, or an element: the editor's, with the text area to keep the text
 	 *        in, if any
@@ -723,6 +729,7 @@ export class RichTextEditor {
 				backgroundColors: this.backgroundColors(),
 				kit: RICH_TEXT_EDITOR_KIT,
 				featureOptions: this.options.featureOptions ?? {},
+				trigger: (name, values) => this.trigger(name, values),
 				log: (message, error) => getHost().log.error(message, error)
 			}),
 			behavior,
@@ -840,6 +847,7 @@ export class RichTextEditor {
 			backgroundColors: () => this.backgroundColors(),
 			codeLanguages: () => this.codeLanguages(),
 			uploads: () => this.uploadHost(),
+			trigger: (name, values) => this.trigger(name, values),
 			onForm: (open) => {
 				if (!open) {
 					setTimeout(() => {
@@ -1309,32 +1317,63 @@ export class RichTextEditor {
 	}
 
 	/**
-	 * Fires an event of the editor on its text area, or its element without one.
+	 * Fires an event of the editor's own, then the types of events firing from it.
 	 */
 	private dispatch(name: keyof typeof RICH_TEXT_EDITOR_EVENTS,
 		detail: Omit<RichTextEditorEventDetail, 'editor'> = {}): void {
-		const target = this.field ?? this.element;
-		this.dispatching = true;
-		try {
-			target.dispatchEvent(new CustomEvent<RichTextEditorEventDetail>(
-				RICH_TEXT_EDITOR_EVENTS[name], { bubbles: true, detail: { editor: this, ...detail } }));
-		} finally {
-			this.dispatching = false;
-		}
+		const type = RICH_TEXT_EDITOR_EVENTS[name];
+		this.emit(type, detail);
+		this.eventTypes.from(type, detail);
 	}
 
 	/**
-	 * Fires input or change on the text area, as a text area does when the user changes it.
+	 * Fires an event on the text area, or the element without one, which bubbles: its detail
+	 * what it tells and the editor.
+	 *
+	 * @returns true, the event fired
+	 */
+	private emit(type: string, detail: Readonly<Record<string, unknown>>): boolean {
+		const target = this.field ?? this.element;
+		// a listener may fire another event meanwhile: the editor still does not hear it
+		const dispatching = this.dispatching;
+		this.dispatching = true;
+		try {
+			target.dispatchEvent(new CustomEvent(type, { bubbles: true,
+				detail: { ...detail, editor: this } }));
+		} finally {
+			this.dispatching = dispatching;
+		}
+		return true;
+	}
+
+	/**
+	 * Fires input or change on the text area, as a text area does when the user changes it, then
+	 * the types of events firing from it, also without a text area.
 	 */
 	private fieldEvent(type: 'input' | 'change'): void {
 		if (this.field) {
+			const dispatching = this.dispatching;
 			this.dispatching = true;
 			try {
 				this.field.dispatchEvent(new Event(type, { bubbles: true }));
 			} finally {
-				this.dispatching = false;
+				this.dispatching = dispatching;
 			}
 		}
+		this.eventTypes.from(type);
+	}
+
+	/**
+	 * Fires a type of events registered (registerRichTextEvent), from the page, a tool or a key:
+	 * its fire() decides what the event tells, or whether it fires.
+	 *
+	 * @param name the name of the type, <owner>:<event>
+	 * @param values what the type is told, as the detail of its cause; what the event tells for a
+	 *        type without fire()
+	 * @returns whether the event fired: not for a type not registered, nor while it is firing
+	 */
+	trigger(name: string, values?: Readonly<Record<string, unknown>>): boolean {
+		return !this.destroyed && this.eventTypes.trigger(name, values);
 	}
 
 	/**
@@ -1430,6 +1469,14 @@ export class RichTextEditor {
 	 */
 	getText(): string {
 		return this.editor.getText();
+	}
+
+	/**
+	 * @returns the text selected, as plain text, a line for each block; '' for none
+	 */
+	getSelectedText(): string {
+		const { from, to } = this.editor.state.selection;
+		return this.editor.state.doc.textBetween(from, to, '\n');
 	}
 
 	/**

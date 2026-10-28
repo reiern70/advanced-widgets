@@ -45,12 +45,14 @@ import com.antiliacode.widgets.ckeditor.CKEditorView;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
+import com.antiliacode.widgets.demo.richtext.OutlineEvent;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorChangeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
+import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.resizable.ResizableSize;
@@ -87,6 +89,10 @@ public class CKEditorPage extends DemoPage
 
 	private final Label heard;
 
+	private final Label selection;
+
+	private final Label outline;
+
 	private final Component saved;
 
 	private final CKEditor notesEditor;
@@ -102,6 +108,10 @@ public class CKEditorPage extends DemoPage
 	private boolean count = true;
 
 	private String heardMessage;
+
+	private String selectionMessage;
+
+	private String outlineMessage;
 
 	private String notesMessage;
 
@@ -132,6 +142,14 @@ public class CKEditorPage extends DemoPage
 		known = new Label("known", this::describe);
 		known.setOutputMarkupId(true);
 		articleCase.add(known);
+		selection = new Label("selection", () -> selectionMessage != null ? selectionMessage :
+			getString("selectionStart"));
+		selection.setOutputMarkupId(true);
+		articleCase.add(selection);
+		outline = new Label("outline", () -> outlineMessage != null ? outlineMessage :
+			getString("outlineStart"));
+		outline.setOutputMarkupId(true);
+		articleCase.add(outline);
 
 		Form<Void> editorForm = new Form<>("editorForm");
 		editorForm.setOutputMarkupId(true);
@@ -185,6 +203,11 @@ public class CKEditorPage extends DemoPage
 		// the size the user gave the article, which the browser sends once they let go
 		editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -> hearSize(target,
 			width, height)));
+		// the types of events of the Tiptap editor, which CKEditor fires too: the text the user
+		// selected, built in, and the headings, of the page's own
+		editor.addEvent(RichTextEditorSelectedTextEvent.of((text, target) -> hearSelection(target,
+			text)).setDelay(RichTextEditorEvents.TYPING_DELAY));
+		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
 		editorForm.add(editor);
 		// a lambda, not editor::getMarkupId: see CodeEditorPage
 		editorForm.add(new Label("articleName", getString("articleLabel"))
@@ -374,6 +397,29 @@ public class CKEditorPage extends DemoPage
 			.replace("{0}", String.valueOf(previousText == null ? 0 : previousText.length()))
 			.replace("{1}", String.valueOf(currentText == null ? 0 : currentText.length()));
 		target.add(heard, known);
+	}
+
+	/**
+	 * Shows the text the user selected, which the browser sent: the start of it, escaped as the
+	 * label escapes what it shows.
+	 */
+	private void hearSelection(AjaxRequestTarget target, String text)
+	{
+		String shown = text.replaceAll("\\s+", " ").strip();
+		selectionMessage = shown.isEmpty() ? getString("selectionNone") :
+			getString("selectionHeard").replace("{0}", shown.length() > RichTextEditorPage.SHOWN_SELECTION ?
+				shown.substring(0, RichTextEditorPage.SHOWN_SELECTION) + "…" : shown);
+		target.add(selection);
+	}
+
+	/**
+	 * Shows the headings of the article, which the browser sent each time they changed.
+	 */
+	private void hearOutline(AjaxRequestTarget target, List<String> headings)
+	{
+		outlineMessage = headings.isEmpty() ? getString("outlineNone") :
+			getString("outlineHeard").replace("{0}", String.join(" · ", headings));
+		target.add(outline);
 	}
 
 	/**

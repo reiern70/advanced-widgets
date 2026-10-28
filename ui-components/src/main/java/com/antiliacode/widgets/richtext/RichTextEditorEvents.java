@@ -20,10 +20,34 @@ import com.antiliacode.widgets.resizable.ResizableSize;
 /**
  * The names of the events a {@link RichTextEditor} or a
  * {@link com.antiliacode.widgets.ckeditor.CKEditor} fires on its text area: those a text area fires
- * itself, {@link #INPUT} and {@link #CHANGE}, and those of the editor, whose {@code detail} holds
- * the editor and what the event tells. An editor listens to those it is
+ * itself, {@link #INPUT} and {@link #CHANGE}, those of the editor, whose {@code detail} holds
+ * the editor and what the event tells, and those of the built-in types of events,
+ * {@link #SELECTED_TEXT}. An editor listens to those it is
  * {@link AbstractRichTextEditor#addEvent(com.antiliacode.widgets.event.IClientEvent) given}, and
  * to those of any other name, which the scripts of its features fire for example.
+ * <p>
+ * A type of events of a page's own, or of a library's, fires on both editors as their own do: a
+ * script registers it in the browser, by a name {@code <owner>:<event>}, with the events of the
+ * editor it fires from, or none for one fired by hand, what it keeps for each editor and what each
+ * event tells:
+ *
+ * <pre>
+ * Wicket.RichTextEvents.register('antilia-text:headings', {
+ *     from: [Wicket.RichTextEvents.events.text],
+ *     init: function (editor) { return { headings: null }; },
+ *     fire: function (editor, state, cause) {
+ *         ... // what the event tells, or undefined for nothing
+ *     }
+ * });
+ * Wicket.RichTextEvents.trigger(editorMarkupId, 'antilia-text:headings'); // by hand
+ * </pre>
+ *
+ * An {@link com.antiliacode.widgets.event.IClientEvent} of that name renders the script
+ * ({@link com.antiliacode.widgets.event.IClientEvent#renderHead(org.apache.wicket.Component,
+ * org.apache.wicket.markup.head.IHeaderResponse)}) and reads what the event tells, as
+ * {@link RichTextEditorSelectedTextEvent} does for {@link #SELECTED_TEXT}. A name registers once,
+ * the owner {@code antilia-rich-text-editor} is the editors' own, and a type fires from the
+ * events of the editors alone, not from other types.
  *
  * <pre>
  * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE) { ... });
@@ -76,8 +100,17 @@ public final class RichTextEditorEvents
 	public static final String MODIFIED = "antilia-rich-text-editor:modified";
 
 	/**
-	 * How long an event coming often, {@link #INPUT} or {@link #SELECT}, may wait for the user to
-	 * pause, in milliseconds: see {@link com.antiliacode.widgets.event.AbstractClientEvent#setDelay(int)}.
+	 * The text the user selected changed, a built-in type of events; {@code detail.text} has it,
+	 * as plain text, a line for each block, {@code ''} once nothing is selected. Fires once for
+	 * each text, not as the cursor moves with nothing selected.
+	 * {@link RichTextEditorSelectedTextEvent} hears of it on the server.
+	 */
+	public static final String SELECTED_TEXT = "antilia-rich-text-editor:selected-text";
+
+	/**
+	 * How long an event coming often, {@link #INPUT}, {@link #SELECT} or {@link #SELECTED_TEXT},
+	 * may wait for the user to pause, in milliseconds: see
+	 * {@link com.antiliacode.widgets.event.AbstractClientEvent#setDelay(int)}.
 	 */
 	public static final int TYPING_DELAY = 500;
 

@@ -63,6 +63,7 @@ import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorChangeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
+import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
@@ -110,6 +111,9 @@ public class RichTextEditorPage extends DemoPage
 	/** The toolbar chosen tool by tool, with the check boxes of the tools. */
 	static final String CHOSEN = "chosen";
 
+	/** The most characters of the text the user selected the page shows. */
+	public static final int SHOWN_SELECTION = 60;
+
 	/** The toolbars of the drop-down of the Wicket editor. */
 	static final List<String> CHOICES = List.of("full", "compact", "none", CHOSEN);
 
@@ -124,6 +128,10 @@ public class RichTextEditorPage extends DemoPage
 	private final Label known;
 
 	private final Label heard;
+
+	private final Label selection;
+
+	private final Label outline;
 
 	private final Component saved;
 
@@ -163,6 +171,10 @@ public class RichTextEditorPage extends DemoPage
 
 	private String heardMessage;
 
+	private String selectionMessage;
+
+	private String outlineMessage;
+
 	private String notesMessage;
 
 	private String unsafe = RichTextSamples.UNSAFE;
@@ -184,6 +196,14 @@ public class RichTextEditorPage extends DemoPage
 		known = new Label("known", this::describe);
 		known.setOutputMarkupId(true);
 		articleCase.add(known);
+		selection = new Label("selection", () -> selectionMessage != null ? selectionMessage :
+			getString("selectionStart"));
+		selection.setOutputMarkupId(true);
+		articleCase.add(selection);
+		outline = new Label("outline", () -> outlineMessage != null ? outlineMessage :
+			getString("outlineStart"));
+		outline.setOutputMarkupId(true);
+		articleCase.add(outline);
 
 		Form<Void> editorForm = new Form<>("editorForm");
 		editorForm.setOutputMarkupId(true);
@@ -258,6 +278,11 @@ public class RichTextEditorPage extends DemoPage
 		// the size the user gave the article, which the browser sends once they let go
 		editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -> hearSize(target,
 			width, height)));
+		// a built-in type of events of the editors: the text the user selected, once they paused
+		editor.addEvent(RichTextEditorSelectedTextEvent.of((text, target) -> hearSelection(target,
+			text)).setDelay(RichTextEditorEvents.TYPING_DELAY));
+		// a type of events of the page's own, which its script registers: the headings
+		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
 		// stays in the browser: the title of the page marks the changes not saved
 		editor.addEvent(new ClientEvent(RichTextEditorEvents.MODIFIED,
 			"function(event){var title=document.title.replace(/^\\* /,'');" +
@@ -643,6 +668,29 @@ public class RichTextEditorPage extends DemoPage
 			.replace("{0}", String.valueOf(previousText == null ? 0 : previousText.length()))
 			.replace("{1}", String.valueOf(currentText == null ? 0 : currentText.length()));
 		target.add(heard, known);
+	}
+
+	/**
+	 * Shows the text the user selected, which the browser sent: the start of it, escaped as the
+	 * label escapes what it shows.
+	 */
+	private void hearSelection(AjaxRequestTarget target, String text)
+	{
+		String shown = text.replaceAll("\\s+", " ").strip();
+		selectionMessage = shown.isEmpty() ? getString("selectionNone") :
+			getString("selectionHeard").replace("{0}", shown.length() > SHOWN_SELECTION ?
+				shown.substring(0, SHOWN_SELECTION) + "…" : shown);
+		target.add(selection);
+	}
+
+	/**
+	 * Shows the headings of the article, which the browser sent each time they changed.
+	 */
+	private void hearOutline(AjaxRequestTarget target, List<String> headings)
+	{
+		outlineMessage = headings.isEmpty() ? getString("outlineNone") :
+			getString("outlineHeard").replace("{0}", String.join(" · ", headings));
+		target.add(outline);
 	}
 
 	/**
