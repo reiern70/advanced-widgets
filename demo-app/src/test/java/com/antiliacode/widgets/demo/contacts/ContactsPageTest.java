@@ -35,6 +35,7 @@ import com.antiliacode.widgets.autocomplete.FindAutocomplete;
 import com.antiliacode.widgets.button.AjaxActionButton;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
+import com.antiliacode.widgets.split.SplitPanel;
 
 class ContactsPageTest
 {
@@ -67,6 +68,18 @@ class ContactsPageTest
 		assertEquals(3, tester.getLastResponseAsString().split("class=\"contacts-facet\"").length - 1);
 		tester.assertContains("<details [^>]*open=\"open\"");
 		tester.assertContains("Year of birth");
+	}
+
+	@Test
+	void onAPhoneTheFiltersGoAboveTheTableWhoseColumnsKeepAWidth()
+	{
+		SplitPanel split = find(SplitPanel.class, component -> true);
+		assertEquals(ContactsPage.STACK_BELOW, split.getStackBelow());
+		tester.assertContains("\"stackBelow\":" + ContactsPage.STACK_BELOW);
+		tester.assertContains("\"stackedCollapseFirstLabel\":\"Hide the top pane\"");
+
+		assertEquals(table.getColumns().size(), table.getColumnMinWidths().length);
+		tester.assertContains("<th [^>]*data-min-width=\"160\"");
 	}
 
 	@Test

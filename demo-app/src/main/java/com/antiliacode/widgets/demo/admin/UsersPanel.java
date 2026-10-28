@@ -67,6 +67,8 @@ class UsersPanel extends Panel
 			}
 		};
 		table.setColumnProportions(1.5, 1.9, 1, 1, 1.1, 1, 0.9, 1, 1.2, 1.5);
+		// on a phone, the table scrolls sideways rather than squeezing the columns to a letter
+		table.setColumnMinWidths(100, 170, 90, 90, 100, 100, 90, 80, 90, 150);
 		add(AdminTables.configure(table, "users.csv"));
 	}
 

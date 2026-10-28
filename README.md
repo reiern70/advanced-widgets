@@ -49,7 +49,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Notifications; Wicket's feedback messages become notifications by themselves | ✓ | ✓ |
 | | Popovers | ✓ | ✓ |
 | Layout | Scroll bars in the colors of the theme | ✓ | ✓ |
-| | Split panel, nested, collapsible, its layout remembered by the server | ✓ | ✓ |
+| | Split panel, nested, collapsible, its panes one above the other on a phone, its layout remembered by the server | ✓ | ✓ |
 | | Resizable elements | ✓ | ✓ |
 | | Tabs that close, asking first when they hold changes not saved | ✓ | ✓ |
 | | Menus, horizontal or vertical, with submenus | ✓ | ✓ |

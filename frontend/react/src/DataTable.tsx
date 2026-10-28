@@ -488,7 +488,8 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 							return (
 								<th key={column.id} data-movable={movableColumns && column.movable ?
 									'true' : undefined} data-resizable={column.resizable === false ?
-									'false' : undefined} aria-sort={sorted}
+									'false' : undefined} data-min-width={column.minWidth}
+									aria-sort={sorted}
 									className={sorted ? css(({ none: 'table-header-unsorted', ascending:
 										'table-header-ascending', descending: 'table-header-descending' } as
 										const)[sorted]) : undefined}>

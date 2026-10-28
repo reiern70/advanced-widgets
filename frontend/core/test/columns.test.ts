@@ -204,11 +204,12 @@ describe('ResizableColumns', () => {
 		const cells = Array.from(element.tHead!.rows[0].cells);
 		cells.forEach((cell, i) => vi.spyOn(cell, 'getBoundingClientRect').mockImplementation(() =>
 			({ width: shown ? 100 * (i + 1) : 0 }) as DOMRect));
-		let observed: (() => void) | undefined;
+		// the table's own, waiting for it to be shown, and the one following its parent
+		const observed: (() => void)[] = [];
 		const disconnect = vi.fn();
 		vi.stubGlobal('ResizeObserver', class {
 			constructor(callback: () => void) {
-				observed = callback;
+				observed.push(callback);
 			}
 
 			observe(): void {}
@@ -222,7 +223,7 @@ describe('ResizableColumns', () => {
 			expect(element.style.width).toBe('');
 
 			shown = true;
-			observed!();
+			observed.forEach((callback) => callback());
 
 			expect(Array.from(element.querySelectorAll('col')).map((col) => col.style.width))
 				.toEqual(['100px', '200px']);
@@ -267,6 +268,74 @@ describe('ResizableColumns', () => {
 		} finally {
 			vi.unstubAllGlobals();
 		}
+	});
+
+	it('shares a width among columns, none narrower than its minimum', () => {
+		expect(ResizableColumns.fitWithin([1, 1, 2], 400, [0, 0, 0])).toEqual([100, 100, 200]);
+		const widths = ResizableColumns.fitWithin([1, 1, 2], 400, [160, 0, 0]);
+		expect(widths.map(Math.round)).toEqual([160, 80, 160]);
+		// the minimums need more than there is: the table gets wider
+		expect(ResizableColumns.fitWithin([1, 3], 100, [80, 90])).toEqual([80, 90]);
+	});
+
+	it('keeps the columns at their data-min-width, the table getting wider than its parent', () => {
+		const element = table(['A', 'B', 'C'], ['data-min-width="150"', '', 'data-min-width="x"']);
+		const parent = element.parentElement!;
+		let width = 300;
+		vi.spyOn(parent, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+		ResizableColumns.attach('t', { mode: 'stretch', adjustToParent: true,
+			proportions: [1, 1, 1] });
+		const widths = () => Array.from(element.querySelectorAll('col'), (col) => col.style.width);
+
+		expect(ResizableColumns.instances.t.minimums()).toEqual([150, 0, 0]);
+		// the others give what the first needs, down to the narrowest a column is resized to
+		expect(widths()).toEqual(['150px', '80px', '80px']);
+		expect(element.style.width).toBe('310px');
+		// wider than its parent, which scrolls it
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(true);
+		expect(element.style.getPropertyValue('--antilia-resizable-columns-parent-width'))
+			.toBe('300px');
+
+		width = 900;
+		ResizableColumns.instances.t.refit();
+		expect(widths()).toEqual(['300px', '300px', '300px']);
+		expect(element.style.width).toBe('900px');
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(false);
+		expect(element.style.getPropertyValue('--antilia-resizable-columns-parent-width'))
+			.toBe('');
+	});
+
+	it('marks a table the user stretched wider than its parent, until it is restored', () => {
+		const element = table(['A', 'B']);
+		const parent = element.parentElement!;
+		let width = 500;
+		vi.spyOn(parent, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+		ResizableColumns.attach('t', { mode: 'stretch', widths: [200, 200] });
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(false);
+
+		width = 350;
+		ResizableColumns.instances.t.refit();
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(true);
+		expect(element.style.getPropertyValue('--antilia-resizable-columns-parent-width'))
+			.toBe('350px');
+
+		ResizableColumns.detach('t', true);
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(false);
+		expect(element.style.getPropertyValue('--antilia-resizable-columns-parent-width'))
+			.toBe('');
+
+		// in 'fit' mode the table keeps the width of its parent
+		ResizableColumns.attach('t', { mode: 'fit', widths: [200, 200] });
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(false);
+	});
+
+	it('keeps the columns laid out by their content at their data-min-width', () => {
+		const element = table(['A', 'B'], ['data-min-width="120"', '']);
+		vi.spyOn(ResizableColumns, 'measure').mockReturnValue(50);
+		ResizableColumns.attach('t', { mode: 'stretch' });
+
+		expect(Array.from(element.querySelectorAll('col'), (col) => col.style.width))
+			.toEqual(['120px', '50px']);
 	});
 
 	it('gives a skipped cell a col of its pixels, and the columns shares without calc()', () => {

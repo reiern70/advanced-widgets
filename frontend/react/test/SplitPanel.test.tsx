@@ -162,6 +162,32 @@ describe('SplitPanel', () => {
 		expect(split(container).classList.contains('antilia-split-collapsed-second')).toBe(false);
 	});
 
+	it('puts the panes one above the other while narrower than stackBelow', () => {
+		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+			{ left: 0, top: 0, width: 380, height: 0, right: 380, bottom: 0 } as DOMRect);
+		try {
+			const { container, rerender } = render(<SplitPanel stackBelow={600} collapsible
+				stackedCollapseFirstLabel="Hide the filters">
+				<p>One</p>
+				<p>Two</p>
+			</SplitPanel>);
+
+			expect(split(container).classList.contains('antilia-split-stacked')).toBe(true);
+			expect(split(container).classList.contains('antilia-split-vertical')).toBe(true);
+			expect((divider(container).firstElementChild as HTMLElement).title)
+				.toBe('Hide the filters');
+
+			rerender(<SplitPanel collapsible stackedCollapseFirstLabel="Hide the filters">
+				<p>One</p>
+				<p>Two</p>
+			</SplitPanel>);
+			expect(Array.from(split(container).classList).sort()).toEqual(['antilia-split',
+				'antilia-split-collapsible', 'antilia-split-horizontal']);
+		} finally {
+			vi.restoreAllMocks();
+		}
+	});
+
 	it('keeps the first pane in pixels', () => {
 		const onResized = vi.fn();
 		const { container } = render(<SplitPanel position="250px" step="10px" min="100px"

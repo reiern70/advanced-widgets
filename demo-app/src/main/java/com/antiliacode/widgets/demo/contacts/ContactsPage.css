@@ -37,6 +37,11 @@
 	overflow-x: auto;
 }
 
+/* on a phone, the filters above the table: as high as half the screen at most, then scrolling */
+.contacts .antilia-split-stacked > .antilia-split-first {
+	max-height: min(26em, 50vh);
+}
+
 .contacts__filters-head {
 	display: flex;
 	align-items: center;
@@ -118,8 +123,10 @@
 	opacity: 0.75;
 }
 
-/* how many contacts pass, and the filters chosen as chips */
+/* how many contacts pass, and the filters chosen as chips, in view while a wide table scrolls */
 .contacts__summary {
+	position: sticky;
+	left: 0;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;

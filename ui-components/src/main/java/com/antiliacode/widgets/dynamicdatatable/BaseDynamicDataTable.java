@@ -357,6 +357,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	private double[] columnProportions;
 
+	private double[] columnMinWidths;
+
 	private boolean adjustToParentWidth;
 
 	private int bodyHeight = -1;
@@ -1057,7 +1059,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	/**
 	 * Moves a column to another place, whether or not it is {@link #isMovable(IDetachable)
-	 * movable}, taking its width and proportion along. Re-render the table for the change to show.
+	 * movable}, taking its width, proportion and minimum width along. Re-render the table for the change to show.
 	 *
 	 * @param column
 	 *            a column of the table
@@ -1073,7 +1075,25 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		columns.add(index, columns.remove(from));
 		columnWidths = move(columnWidths, from, index);
 		columnProportions = move(columnProportions, from, index);
+		columnMinWidths = move(columnMinWidths, from, index);
 		return this;
+	}
+
+	/**
+	 * @return the values given for every column, in the order of the columns arranged
+	 */
+	private double[] arrange(double[] values, List<C> arranged)
+	{
+		if (values == null)
+		{
+			return null;
+		}
+		double[] result = new double[columns.size()];
+		for (int i = 0; i < arranged.size(); i++)
+		{
+			result[i] = values[indexOfColumn(arranged.get(i))];
+		}
+		return result;
 	}
 
 	private static double[] move(double[] values, int from, int to)
@@ -1270,15 +1290,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				anyWidth |= widths[i] > 0;
 			}
 		}
-		if (columnProportions != null)
-		{
-			double[] proportions = new double[columns.size()];
-			for (int i = 0; i < arranged.size(); i++)
-			{
-				proportions[i] = columnProportions[indexOfColumn(arranged.get(i))];
-			}
-			columnProportions = proportions;
-		}
+		columnProportions = arrange(columnProportions, arranged);
+		columnMinWidths = arrange(columnMinWidths, arranged);
 		columnWidths = anyWidth ? widths : null;
 		columns.clear();
 		columns.addAll(arranged);
@@ -1615,6 +1628,48 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			}
 		}
 		columnProportions = proportions != null ? proportions.clone() : null;
+		return this;
+	}
+
+	/**
+	 * @return the narrowest each column gets when laid out, in pixels, 0 for no minimum, or
+	 *         {@code null} for none at all
+	 * @since 11.0.0
+	 */
+	public double[] getColumnMinWidths()
+	{
+		return columnMinWidths != null ? columnMinWidths.clone() : null;
+	}
+
+	/**
+	 * Keeps the columns from getting narrower than the given widths when they are laid out for
+	 * the width of the parent, with {@link #setAdjustToParentWidth(boolean)} and columns resized
+	 * by a {@link com.antiliacode.widgets.table.ResizableColumnsBehavior} in
+	 * {@link com.antiliacode.widgets.table.ResizableColumnsBehavior.Mode#STRETCH STRETCH} mode. On
+	 * a narrow screen, a phone for example, the table is then wider than its parent, rather than
+	 * squeezing every column to a letter, and the page scrolls it sideways, its navigation staying
+	 * in view; give the parent {@code overflow-x: auto} to scroll it there instead. The columns
+	 * given a minimum take what they need from the others. Each header cell carries its column's
+	 * in {@code data-min-width}.
+	 *
+	 * @param minWidths
+	 *            one number of pixels per column of {@link #getColumns()}, 0 for no minimum;
+	 *            {@code null} for none at all
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public BaseDynamicDataTable<T, K, C> setColumnMinWidths(double... minWidths)
+	{
+		if (minWidths != null)
+		{
+			Args.isTrue(minWidths.length == columns.size(), "one minimum width per column is needed");
+			for (double minWidth : minWidths)
+			{
+				Args.isTrue(Double.isFinite(minWidth) && minWidth >= 0,
+					"minimum widths have to be positive numbers or 0");
+			}
+		}
+		columnMinWidths = minWidths != null ? minWidths.clone() : null;
 		return this;
 	}
 
@@ -2231,10 +2286,30 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		});
 		item.add(AttributeModifier.replace("data-resizable",
 			() -> isColumnResizable(column) ? null : "false"));
+		item.add(AttributeModifier.replace("data-min-width", () -> getColumnMinWidth(column)));
 		item.add(AttributeModifier.replace("data-movable",
 			() -> isMoving() && isMovable(column) ? "true" : null));
 		item.add(AttributeModifier.replace("aria-sort",
 			() -> ARIA_SORT.get(getSortOrder(column))));
+	}
+
+	/**
+	 * @return the narrowest the column gets, as {@code data-min-width} of its header cell, or
+	 *         {@code null} for no minimum
+	 */
+	private String getColumnMinWidth(C column)
+	{
+		if (columnMinWidths == null)
+		{
+			return null;
+		}
+		double minWidth = columnMinWidths[indexOfColumn(column)];
+		if (minWidth <= 0)
+		{
+			return null;
+		}
+		return minWidth == Math.rint(minWidth) ? String.valueOf((long)minWidth)
+			: String.valueOf(minWidth);
 	}
 
 	/**
