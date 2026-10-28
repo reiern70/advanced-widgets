@@ -74,24 +74,14 @@ obstacle.
 ## Requirements
 
 - Java 21 and Maven 3.9 or later.
-- **Wicket 11.0.0-SNAPSHOT** in your local Maven repository: no repository serves it, so build it
-  from [apache/wicket](https://github.com/apache/wicket) (see below).
+- Wicket 11.0.0, which the build downloads: from the staging repository of its vote, which the pom
+  names, until it is on Maven Central.
 - Nothing else: the build downloads Node and npm for the frontend into `frontend/node`.
 - For the browser tests, Chrome and Firefox.
 
 ## Building
 
-Build and install the Wicket modules the project uses, once and whenever Wicket's master moves
-on:
-
-```sh
-git clone --depth 1 https://github.com/apache/wicket.git
-mvn -f wicket/pom.xml install -DskipTests --also-make \
-  --projects wicket-core,wicket-extensions,wicket-tester,wicket-native-websocket/wicket-native-websocket-core,wicket-native-websocket/wicket-native-websocket-javax,wicket-native-websocket/wicket-native-websocket-tester \
-  -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -Djacoco.skip=true -Djapicmp.skip=true -Drat.skip=true
-```
-
-Then build this project, with its tests:
+Build the project, with its tests:
 
 ```sh
 mvn install
@@ -100,6 +90,19 @@ mvn install
 or without them, `mvn install -DskipTests`. The build compiles the frontend, runs its tests
 (Vitest), minifies the scripts and style sheets, and builds the Java modules and their tests
 (WicketTester, and Jetty for what needs a server).
+
+To build against Wicket's master instead, install the Wicket modules the project uses from
+[apache/wicket](https://github.com/apache/wicket), then give their version:
+
+```sh
+git clone --depth 1 https://github.com/apache/wicket.git
+mvn -f wicket/pom.xml install -DskipTests --also-make \
+  --projects wicket-core,wicket-extensions,wicket-tester,wicket-native-websocket/wicket-native-websocket-core,wicket-native-websocket/wicket-native-websocket-javax,wicket-native-websocket/wicket-native-websocket-tester \
+  -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -Djacoco.skip=true -Djapicmp.skip=true -Drat.skip=true
+mvn install -Dwicket.version=11.0.0-SNAPSHOT
+```
+
+The workflow of GitHub does so when run by hand with a branch or tag of Wicket.
 
 Working on several branches at once, for example in git worktrees, give each its own version so
 their snapshots don't overwrite each other in the local repository: put

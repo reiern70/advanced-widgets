@@ -2,13 +2,14 @@
 # machine: the Java modules with their tests, and the frontend with its own, which the Maven build
 # runs with the Node it installs.
 #
-# The project depends on Wicket 11.0.0-SNAPSHOT, which no repository serves, so the first step
-# builds the Wicket modules it uses from apache/wicket and installs them into the Maven repository.
-# The cache keeps that repository with the commit Wicket was built from, so Wicket is built again
-# only when its branch moves on; it is saved even when the tests fail, as building Wicket is the
-# slow part. When the build fails, its errors are also given as annotations of the run, which
-# show on the pull request and are readable through the API without downloading the log. To build against another branch or tag of Wicket, run the workflow
-# by hand (Actions, Build, Run workflow).
+# The project depends on Wicket 11.0.0, which the pom takes from the staging repository of its vote
+# until it is on Maven Central. Run by hand (Actions, Build, Run workflow) with a branch or tag of
+# apache/wicket, master for example, the workflow first builds the Wicket modules the project uses
+# from it, installs them into the Maven repository and builds the project against their version.
+# The cache keeps that repository, with the commit Wicket was built from, so Wicket is built again
+# only when its branch moves on; it is saved even when the tests fail. When the build fails, its
+# errors are also given as annotations of the run, which show on the pull request and are readable
+# through the API without downloading the log.
 
 name: Build
 
@@ -19,8 +20,8 @@ on:
   workflow_dispatch:
     inputs:
       wicket-ref:
-        description: The branch or tag of apache/wicket to build against
-        default: master
+        description: A branch or tag of apache/wicket to build and test against; the pom's Wicket when empty
+        default: ''
 
 permissions:
   contents: read
@@ -35,7 +36,7 @@ jobs:
     timeout-minutes: 60
     env:
       WICKET_REPOSITORY: https://github.com/apache/wicket.git
-      WICKET_REF: ${{ inputs.wicket-ref || 'master' }}
+      WICKET_REF: ${{ inputs.wicket-ref }}
       # read by every mvn run (Maven 3.9+)
       MAVEN_ARGS: --batch-mode --errors --no-transfer-progress
     steps:
@@ -48,6 +49,7 @@ jobs:
 
       - name: Find the commit of Wicket to build against
         id: wicket
+        if: env.WICKET_REF != ''
         run: |
           commit=$(git ls-remote "$WICKET_REPOSITORY" "refs/heads/$WICKET_REF" "refs/tags/$WICKET_REF" | head -n 1 | cut -f 1)
           if [ -z "$commit" ]; then
@@ -61,35 +63,41 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.m2/repository
-          key: maven-${{ steps.wicket.outputs.commit }}-${{ hashFiles('**/pom.xml') }}
+          key: maven-${{ steps.wicket.outputs.commit || 'pom' }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            maven-${{ steps.wicket.outputs.commit }}-
+            maven-${{ steps.wicket.outputs.commit || 'pom' }}-
             maven-
 
       - name: Build Wicket ${{ env.WICKET_REF }}
         id: build-wicket
+        if: env.WICKET_REF != ''
         env:
           COMMIT: ${{ steps.wicket.outputs.commit }}
         run: |
           built=~/.m2/repository/.wicket-built
-          if [ "$(cat "$built" 2> /dev/null)" = "$COMMIT" ]; then
-            echo "Wicket $COMMIT is in the cache already"
-            exit 0
+          { read -r cached version < "$built"; } 2> /dev/null || true
+          if [ "$cached" = "$COMMIT" ] && [ -n "$version" ]; then
+            echo "Wicket $COMMIT is in the cache already, as $version"
+          else
+            git clone --quiet --depth 1 --branch "$WICKET_REF" "$WICKET_REPOSITORY" "$RUNNER_TEMP/wicket"
+            # the modules the project uses, and those they need (-am)
+            mvn -f "$RUNNER_TEMP/wicket/pom.xml" install -DskipTests --also-make \
+              --projects wicket-core,wicket-extensions,wicket-tester,wicket-native-websocket/wicket-native-websocket-core,wicket-native-websocket/wicket-native-websocket-javax,wicket-native-websocket/wicket-native-websocket-tester \
+              -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -Djacoco.skip=true -Djapicmp.skip=true -Drat.skip=true
+            version=$(mvn -q -f "$RUNNER_TEMP/wicket/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)
+            echo "$COMMIT $version" > "$built"
           fi
-          git clone --quiet --depth 1 --branch "$WICKET_REF" "$WICKET_REPOSITORY" "$RUNNER_TEMP/wicket"
-          # the modules the project uses, and those they need (-am)
-          mvn -f "$RUNNER_TEMP/wicket/pom.xml" install -DskipTests --also-make \
-            --projects wicket-core,wicket-extensions,wicket-tester,wicket-native-websocket/wicket-native-websocket-core,wicket-native-websocket/wicket-native-websocket-javax,wicket-native-websocket/wicket-native-websocket-tester \
-            -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -Djacoco.skip=true -Djapicmp.skip=true -Drat.skip=true
-          echo "$COMMIT" > "$built"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Build and test
+        env:
+          WICKET_VERSION: ${{ steps.build-wicket.outputs.version }}
         run: |
           set -o pipefail
-          mvn verify 2>&1 | tee "$RUNNER_TEMP/build.log"
+          mvn verify ${WICKET_VERSION:+-Dwicket.version=$WICKET_VERSION} 2>&1 | tee "$RUNNER_TEMP/build.log"
 
       - name: Save the Maven repository
-        if: always() && steps.build-wicket.outcome == 'success' && steps.cache.outputs.cache-hit != 'true'
+        if: always() && steps.build-wicket.outcome != 'failure' && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.m2/repository

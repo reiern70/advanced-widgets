@@ -1,8 +1,8 @@
 #!/bin/sh
 # Builds the demo application here and puts it online:
 #   deploy/deploy.sh ubuntu@<static-ip>
-# The WAR is built on this machine (Wicket 11 is a snapshot built here), copied with the files
-# of this folder to /opt/antilia-widgets on the instance, and started there with Docker Compose.
+# The WAR is built on this machine, copied with the files of this folder to /opt/antilia-widgets
+# on the instance, and started there with Docker Compose.
 # The image running before is kept as antilia-widgets:previous, to go back to (see README.md), and
 # the database is dumped first, so that the data before the migrations of the new version is kept.
 set -eu

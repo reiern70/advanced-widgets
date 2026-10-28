@@ -1,5 +1,5 @@
 # The demo application on Jetty 11 and Java 21. deploy.sh builds the WAR on the developer's
-# machine (Wicket 11 is a snapshot built there) and copies it next to this file as ROOT.war.
+# machine and copies it next to this file as ROOT.war.
 FROM jetty:11.0.26-jre21
 
 # websockets for Wicket's native websockets; X-Forwarded-* from Caddy, so Wicket sees https;

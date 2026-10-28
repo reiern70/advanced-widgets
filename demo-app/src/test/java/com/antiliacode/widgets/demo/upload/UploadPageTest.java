@@ -336,12 +336,20 @@ class UploadPageTest
 	}
 
 	@Test
-	void listsTheFilesDroppedOnTheZoneOfTheResource()
+	void listsTheFilesDroppedOnTheZoneOfTheResource() throws IOException
 	{
+		// the file the resource stored, which Wicket takes the details from, not the browser
+		UploadToResourceField field = (UploadToResourceField)component("drop", "dropFiles");
+		Path stored = DemoUploadsFileManager.defaultFolder().toPath()
+			.resolve(field.getMarkupId()).resolve("b.png");
+		Files.createDirectories(stored.getParent());
+		Files.write(stored, new byte[2048]);
+
 		uploaded("drop", "dropFiles", "error", "false", "filesInfo",
 			"[{\"clientFileName\":\"b.png\",\"size\":2048,\"contentType\":\"image/png\"}]");
 
 		tester.assertLabel("themed:received:table:files:0:way", "Dropped, to a resource");
+		assertFalse(Files.exists(stored), "the page keeps no file");
 	}
 
 	@Test
