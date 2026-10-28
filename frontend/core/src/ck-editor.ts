@@ -52,8 +52,9 @@
  * the size the user gave it, by the bar along its bottom; it tells whether the text has changes
  * not saved, as data-modified on its element, which tabs and windows of the desktop show; Ctrl+S
  * tells the page to save; and it fires the events of RICH_TEXT_EDITOR_EVENTS, which the events
- * of Wicket's editor listen to. The positions of the selection count the places between
- * the nodes too, as ProseMirror's do.
+ * of Wicket's editor listen to, and those of the types of events registered, shared with the
+ * Tiptap editor (registerRichTextEvent, see rich-text-events.ts), from its own or by trigger().
+ * The positions of the selection count the places between the nodes too, as ProseMirror's do.
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
@@ -61,6 +62,7 @@ import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
 import { RICH_TEXT_EDITOR_EVENTS, sameState, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
+import { RichTextEventTypes } from './rich-text-events.js';
 import { quietHtml, RICH_TEXT_ALIGN_CLASSES } from './rich-text-html.js';
 import type { HeadingLevel, RichTextFeature } from './rich-text-schema.js';
 
@@ -479,6 +481,45 @@ function textOf(element: CKEditorModelElement, parts: string[] = []): string[] {
 }
 
 /**
+ * @returns the characters of an element of the model between two places, counted as ProseMirror
+ *          counts, a separator between the texts of two blocks
+ */
+function textBetween(element: CKEditorModelElement, from: number, to: number,
+	separator: string): string {
+	let text = '';
+	// whether a block started or ended since the last characters
+	let apart = false;
+	const walk = (parent: CKEditorModelElement, start: number) => {
+		let offset = start;
+		for (const child of parent.getChildren()) {
+			if (offset >= to) {
+				return;
+			}
+			if (child.is('$text')) {
+				const data = child.data ?? '';
+				const first = Math.max(from - offset, 0);
+				const last = Math.min(to - offset, data.length);
+				if (first < last) {
+					text += (apart && text ? separator : '') + data.slice(first, last);
+					apart = false;
+				}
+				offset += child.offsetSize;
+				continue;
+			}
+			const size = sizeOf(child);
+			if (offset + size > from) {
+				apart = true;
+				walk(child as CKEditorModelElement, offset + 1);
+				apart = true;
+			}
+			offset += size;
+		}
+	};
+	walk(element, 0);
+	return text;
+}
+
+/**
  * What an editor rendered anew in the same place goes on with: its text, the text last saved,
  * its state, and the state it last reported.
  */
@@ -583,6 +624,10 @@ export class CKEditor {
 	private dispatching = false;
 
 	private destroyed = false;
+
+	/** The types of events registered, which fire on the editor, and what each keeps for it. */
+	private readonly eventTypes = new RichTextEventTypes(this, (name, detail) =>
+		!this.destroyed && this.emit(name, detail));
 
 	/**
 	 * @param target a text area, or an element: the editor's, with the text area to keep the text
@@ -1317,32 +1362,63 @@ export class CKEditor {
 	}
 
 	/**
-	 * Fires an event of the editor on its text area, or its element without one.
+	 * Fires an event of the editor's own, then the types of events firing from it.
 	 */
 	private dispatch(name: keyof typeof RICH_TEXT_EDITOR_EVENTS,
 		detail: Omit<CKEditorEventDetail, 'editor'> = {}): void {
-		const target = this.field ?? this.element;
-		this.dispatching = true;
-		try {
-			target.dispatchEvent(new CustomEvent<CKEditorEventDetail>(
-				RICH_TEXT_EDITOR_EVENTS[name], { bubbles: true, detail: { editor: this, ...detail } }));
-		} finally {
-			this.dispatching = false;
-		}
+		const type = RICH_TEXT_EDITOR_EVENTS[name];
+		this.emit(type, detail);
+		this.eventTypes.from(type, detail);
 	}
 
 	/**
-	 * Fires input or change on the text area, as a text area does when the user changes it.
+	 * Fires an event on the text area, or the element without one, which bubbles: its detail
+	 * what it tells and the editor.
+	 *
+	 * @returns true, the event fired
+	 */
+	private emit(type: string, detail: Readonly<Record<string, unknown>>): boolean {
+		const target = this.field ?? this.element;
+		// a listener may fire another event meanwhile: the editor still does not hear it
+		const dispatching = this.dispatching;
+		this.dispatching = true;
+		try {
+			target.dispatchEvent(new CustomEvent(type, { bubbles: true,
+				detail: { ...detail, editor: this } }));
+		} finally {
+			this.dispatching = dispatching;
+		}
+		return true;
+	}
+
+	/**
+	 * Fires input or change on the text area, as a text area does when the user changes it, then
+	 * the types of events firing from it, also without a text area.
 	 */
 	private fieldEvent(type: 'input' | 'change'): void {
 		if (this.field) {
+			const dispatching = this.dispatching;
 			this.dispatching = true;
 			try {
 				this.field.dispatchEvent(new Event(type, { bubbles: true }));
 			} finally {
-				this.dispatching = false;
+				this.dispatching = dispatching;
 			}
 		}
+		this.eventTypes.from(type);
+	}
+
+	/**
+	 * Fires a type of events registered (registerRichTextEvent), from the page, a plugin or a key,
+	 * as the Tiptap editor does.
+	 *
+	 * @param name the name of the type, <owner>:<event>
+	 * @param values what the type is told, as the detail of its cause; what the event tells for a
+	 *        type without fire()
+	 * @returns whether the event fired: not for a type not registered, nor while it is firing
+	 */
+	trigger(name: string, values?: Readonly<Record<string, unknown>>): boolean {
+		return !this.destroyed && this.eventTypes.trigger(name, values);
 	}
 
 	/**
@@ -1457,6 +1533,28 @@ export class CKEditor {
 	 */
 	getValue(): string {
 		return this.value;
+	}
+
+	/**
+	 * @returns the text, as plain text, a blank line between its blocks, as the Tiptap editor
+	 *          writes it; '' until CKEditor started
+	 */
+	getText(): string {
+		const root = this.editor?.model.document.getRoot();
+		return root ? textBetween(root, 0, Infinity, '\n\n') : '';
+	}
+
+	/**
+	 * @returns the text selected, as plain text, a line for each block; '' for none, and until
+	 *          CKEditor started
+	 */
+	getSelectedText(): string {
+		const root = this.editor?.model.document.getRoot();
+		if (!root) {
+			return '';
+		}
+		const { anchor, head } = this.selection();
+		return textBetween(root, Math.min(anchor, head), Math.max(anchor, head), '\n');
 	}
 
 	/**

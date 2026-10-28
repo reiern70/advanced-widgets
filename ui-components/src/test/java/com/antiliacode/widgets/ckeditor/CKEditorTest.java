@@ -60,6 +60,7 @@ import com.antiliacode.widgets.event.ClientEventsTester;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
+import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFeature;
 import com.antiliacode.widgets.richtext.RichTextFormat;
@@ -400,6 +401,22 @@ class CKEditorTest extends WicketTestCase
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SAVE);
 		assertEquals(List.of("<p>Saved <img src=\"x\" /></p>"), saved);
 		assertEquals("<p>Saved <img src=\"x\" /></p>", text.getObject());
+	}
+
+	@Test
+	void hearsOfTheTextSelectedAsTheTiptapEditorDoes()
+	{
+		List<String> heard = new ArrayList<>();
+		CKEditor editor = new CKEditor("editor", Model.of(HTML));
+		editor.addEvent(RichTextEditorSelectedTextEvent.of((selectedText, target) -> heard.add(
+			selectedText)));
+		tester.startPage(new TestPage(editor));
+
+		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:0," +
+			"kind:'ajax',delay:-1\\}");
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
+			new JSONObject().put("text", "Hello"));
+		assertEquals(List.of("Hello"), heard);
 	}
 
 	@Test

@@ -46,6 +46,12 @@
 	<entry key="heardBlurChanged">Der Server hat gehört, dass Sie den Artikel verlassen haben, mit geändertem Text: {0} Zeichen vorher, {1} jetzt.</entry>
 	<entry key="heardSave">Artikel gespeichert.</entry>
 	<entry key="heardResize">Der Server hat gehört, dass Sie den Artikel auf {0} gebracht haben.</entry>
+	<entry key="selectionStart">Wählen Sie Text im Artikel aus: Der Server hört, welchen Text Sie ausgewählt haben.</entry>
+	<entry key="selectionHeard">Der Server hat gehört, dass Sie „{0}“ ausgewählt haben.</entry>
+	<entry key="selectionNone">Der Server hat gehört, dass nichts ausgewählt ist.</entry>
+	<entry key="outlineStart">Ändern Sie die Überschriften des Artikels: Der Server hört seine Gliederung.</entry>
+	<entry key="outlineHeard">Die Gliederung, die der Server gehört hat: {0}.</entry>
+	<entry key="outlineNone">Der Server hat gehört, dass der Artikel keine Überschriften hat.</entry>
 	<entry key="known">Der Server weiß: {0} Zeichen HTML, {1} Wörter; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">der Cursor bei {0}</entry>
 	<entry key="selected">ausgewählt von {0} bis {1}</entry>

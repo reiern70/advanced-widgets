@@ -25,6 +25,7 @@
 import { CKEditor, type CKEditorOptions } from '../ck-editor.js';
 import type { RichTextEditorState, RichTextEditorStateChange } from '../rich-text-contract.js';
 import { useWicketHost, wicket } from './host.js';
+import { useRichTextEvents } from './rich-text-events.js';
 import { sendState, type Parameter } from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and where the server hears of the state. */
@@ -74,4 +75,5 @@ const Wicket = wicket();
 if (Wicket.CKEditor === undefined) {
 	useWicketHost();
 	Wicket.CKEditor = WicketCKEditor;
+	useRichTextEvents();
 }

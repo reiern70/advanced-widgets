@@ -35,12 +35,30 @@
  *
  * The server keeps only the HTML its cleaning lets through: in Wicket, the feature's
  * IRichTextFeature.allowHtml().
+ *
+ * A feature fires the types of events registered (registerRichTextEvent) on its editor, by
+ * trigger(): the context of its extensions has it, a key of theirs calling it for example, and so
+ * does the run of its tools and of the items of their menus, their second argument.
  */
 
 import type { AnyExtension, Editor } from '@tiptap/core';
 
 import type { RichTextEditorKit } from './rich-text-editor.js';
 import type { HeadingLevel, RichTextFormat } from './rich-text-schema.js';
+
+/**
+ * Fires a type of events registered (registerRichTextEvent) on the editor, with what it is told:
+ * see RichTextEditor.trigger().
+ *
+ * @returns whether the event fired
+ */
+export type RichTextTrigger = (name: string, values?: Readonly<Record<string, unknown>>) => boolean;
+
+/** What the run of a tool, or of an item of its menu, has of the editor besides Tiptap's. */
+export interface RichTextToolContext {
+	/** Fires a type of events registered on the editor. */
+	trigger: RichTextTrigger;
+}
 
 /** What the extensions of a feature are made with, for an editor. */
 export interface RichTextFeatureContext {
@@ -52,6 +70,8 @@ export interface RichTextFeatureContext {
 	headingLevels: readonly HeadingLevel[];
 	/** The options of the feature, from the editor's featureOptions: in Wicket, putOptions(). */
 	options: Readonly<Record<string, unknown>>;
+	/** Fires a type of events registered on the editor, a key of the extensions for example. */
+	trigger: RichTextTrigger;
 }
 
 /** An item of the menu of a tool of a feature. */
@@ -62,7 +82,7 @@ export interface RichTextMenuItem {
 	/** Whether it is the one in force, for a menu of choices. */
 	checked?: (editor: Editor) => boolean;
 	enabled?: (editor: Editor) => boolean;
-	run: (editor: Editor) => void;
+	run: (editor: Editor, context: RichTextToolContext) => void;
 }
 
 /** A tool of the toolbar a feature brings. */
@@ -85,7 +105,7 @@ export interface RichTextToolDefinition {
 	shortcut?: string;
 	active?: (editor: Editor) => boolean;
 	enabled?: (editor: Editor) => boolean;
-	run?: (editor: Editor) => void;
+	run?: (editor: Editor, context: RichTextToolContext) => void;
 	/** The items of its menu, for a menu. */
 	items?: (editor: Editor) => readonly RichTextMenuItem[];
 }

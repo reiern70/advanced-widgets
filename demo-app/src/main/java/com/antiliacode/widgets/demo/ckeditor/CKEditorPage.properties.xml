@@ -33,6 +33,12 @@
 	<entry key="heardBlurChanged">The server heard you left the article, with its text changed: {0} characters before, {1} now.</entry>
 	<entry key="heardSave">Saved the article.</entry>
 	<entry key="heardResize">The server heard you resized the article to {0}.</entry>
+	<entry key="selectionStart">Select some of the article: the server hears of the text you selected.</entry>
+	<entry key="selectionHeard">The server heard you selected “{0}”.</entry>
+	<entry key="selectionNone">The server heard nothing is selected.</entry>
+	<entry key="outlineStart">Change the headings of the article: the server hears of its outline.</entry>
+	<entry key="outlineHeard">The outline the server heard: {0}.</entry>
+	<entry key="outlineNone">The server heard the article has no headings.</entry>
 	<entry key="known">The server knows: {0} characters of HTML, {1} words; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">the cursor at {0}</entry>
 	<entry key="selected">selected from {0} to {1}</entry>

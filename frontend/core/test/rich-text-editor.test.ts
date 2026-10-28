@@ -17,10 +17,12 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TextSelection } from '@tiptap/pm/state';
 
 import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS,
-	DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml, registerRichTextExtension,
-	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES,
-	richTextBackgroundColors, richTextColors, RichTextEditor, richTextEditor, richTextExtensions,
-	setHost, shortcutText, standaloneHost, type Host } from '../src/index.js';
+	DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml, registerRichTextEvent,
+	registerRichTextExtension, registerRichTextFeature, RICH_TEXT_BUILT_IN_EVENTS,
+	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_EVENT_SOURCES,
+	RICH_TEXT_EVENT_TRIGGER, RICH_TEXT_FEATURES, richTextBackgroundColors, richTextColors,
+	RichTextEditor, richTextEditor, richTextEvent, richTextEvents, richTextExtensions, setHost,
+	shortcutText, standaloneHost, type Host } from '../src/index.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1406,6 +1408,224 @@ describe('the extensions', () => {
 	});
 });
 
+describe('the types of events', () => {
+	/** The details of the events of a name the text area fired, without the editor. */
+	function heard(field: HTMLElement, name: string): Array<Record<string, unknown>> {
+		const details: Array<Record<string, unknown>> = [];
+		field.addEventListener(name, (event) => {
+			const { editor, ...rest } = (event as CustomEvent<Record<string, unknown>>).detail;
+			expect(editor).toBe(RichTextEditor.of(field as HTMLTextAreaElement));
+			details.push(rest);
+		});
+		return details;
+	}
+
+	it('are named <owner>:<event> once, not by the editors\' owner, firing from their events', () => {
+		const definition = { from: [RICH_TEXT_EDITOR_EVENTS.save, RICH_TEXT_EDITOR_EVENTS.save] };
+		registerRichTextEvent('test-names:saved', definition);
+		expect(richTextEvents()).toEqual(expect.arrayContaining(['test-names:saved',
+			RICH_TEXT_BUILT_IN_EVENTS.selectedText]));
+		const registered = richTextEvent('test-names:saved')!;
+		expect(registered.from).toEqual([RICH_TEXT_EDITOR_EVENTS.save]);
+		expect(Object.isFrozen(registered)).toBe(true);
+		expect(registered).not.toBe(definition);
+
+		expect(() => registerRichTextEvent('test-names:saved', {})).toThrow(/already/);
+		for (const name of ['saved', 'Test:saved', 'test names:saved', 'test:', ':saved', 'a:b:c']) {
+			expect(() => registerRichTextEvent(name, {})).toThrow(/<owner>:<event>/);
+		}
+		expect(() => registerRichTextEvent('antilia-rich-text-editor:mine', {})).toThrow(/own/);
+		expect(() => registerRichTextEvent('antilia-client-events:mine', {})).toThrow(/own/);
+		// from the editors' events alone: not from another type, which could loop
+		expect(() => registerRichTextEvent('test-names:twice', { from: ['test-names:saved'] }))
+			.toThrow(/alone/);
+		expect(RICH_TEXT_EVENT_SOURCES).toEqual(expect.arrayContaining(['input', 'change',
+			RICH_TEXT_EDITOR_EVENTS.blur]));
+		expect(richTextEvent('test-names:twice')).toBeUndefined();
+	});
+
+	it('are one registry for the page, whichever script of an editor registers', () => {
+		registerRichTextEvent('test-registry:one', {});
+		const shared = (globalThis as unknown as Record<symbol, { types: Map<string, unknown> }>)[
+			Symbol.for('antilia.rich-text-events')]!;
+		expect(shared.types.has('test-registry:one')).toBe(true);
+		// another copy of the module, as the script of CKEditor holds
+		shared.types.set('test-registry:other', Object.freeze({ from: [] }));
+		expect(richTextEvents()).toContain('test-registry:other');
+	});
+
+	it('fire from the events of the editor, keeping a state for each editor', async () => {
+		registerRichTextEvent<{ previous: string }>('test-left:text', {
+			from: ['change', RICH_TEXT_EDITOR_EVENTS.blur],
+			init: (editor) => ({ previous: editor.getValue() }),
+			fire(editor, state, cause) {
+				const current = editor.getValue();
+				// blur and change both come when the user leaves: once
+				if (current === state.previous) {
+					return undefined;
+				}
+				const detail = { previous: state.previous, current, cause: cause.type };
+				state.previous = current;
+				return detail;
+			}
+		});
+		const field = textArea();
+		const details = heard(field, 'test-left:text');
+		const bubbled = vi.fn();
+		document.addEventListener('test-left:text', bubbled);
+		const editor = new RichTextEditor(field);
+
+		editor.editor.view.dom.focus();
+		editor.editor.view.dom.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		select(editor, 8);
+		type(editor, '!');
+		document.getElementById('other')!.focus();
+		await tick();
+		expect(details).toEqual([{ previous: ARTICLE, current: editor.getValue(), cause: 'change' }]);
+		expect(bubbled).toHaveBeenCalledTimes(1);
+
+		// left again, unchanged: nothing
+		editor.focus();
+		editor.editor.view.dom.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		document.getElementById('other')!.focus();
+		await tick();
+		expect(details).toHaveLength(1);
+		document.removeEventListener('test-left:text', bubbled);
+	});
+
+	it('fire by trigger(), with the values given, or as the type tells', () => {
+		registerRichTextEvent('test-trigger:plain', {});
+		registerRichTextEvent<{ count: number }>('test-trigger:counted', {
+			init: () => ({ count: 0 }),
+			fire: (editor, state, cause) => cause.detail.skip ? undefined :
+				{ count: ++state.count, cause: cause.type, text: editor.getText() }
+		});
+		const field = textArea('<p>Some text</p>');
+		const plain = heard(field, 'test-trigger:plain');
+		const counted = heard(field, 'test-trigger:counted');
+		const editor = new RichTextEditor(field);
+
+		expect(editor.trigger('test-trigger:plain', { a: 1, editor: 'not the editor' })).toBe(true);
+		expect(plain).toEqual([{ a: 1 }]);
+		expect(editor.trigger('test-trigger:counted')).toBe(true);
+		expect(editor.trigger('test-trigger:counted', { skip: true })).toBe(false);
+		expect(editor.trigger('test-trigger:counted')).toBe(true);
+		expect(counted).toEqual([{ count: 1, cause: RICH_TEXT_EVENT_TRIGGER, text: 'Some text' },
+			{ count: 2, cause: RICH_TEXT_EVENT_TRIGGER, text: 'Some text' }]);
+
+		// each editor its own state
+		const other = new RichTextEditor(textArea('<p>Other</p>'));
+		const others = heard(other.field!, 'test-trigger:counted');
+		other.trigger('test-trigger:counted');
+		expect(others).toEqual([{ count: 1, cause: RICH_TEXT_EVENT_TRIGGER, text: 'Other' }]);
+
+		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		expect(other.trigger('test-trigger:missing')).toBe(false);
+		expect(error).toHaveBeenCalledTimes(1);
+		other.destroy();
+		expect(other.trigger('test-trigger:counted')).toBe(false);
+		expect(others).toHaveLength(1);
+	});
+
+	it('do not fire while they are firing, nor break the editor when they fail', () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		registerRichTextEvent('test-loop:again', {});
+		registerRichTextEvent('test-loop:failing', {
+			from: [RICH_TEXT_EDITOR_EVENTS.save],
+			fire: () => {
+				throw new Error('no');
+			}
+		});
+		const field = textArea();
+		const again = heard(field, 'test-loop:again');
+		const editor = new RichTextEditor(field);
+		const answers: boolean[] = [];
+		field.addEventListener('test-loop:again', () => answers.push(editor.trigger('test-loop:again')));
+
+		expect(editor.trigger('test-loop:again')).toBe(true);
+		expect(again).toHaveLength(1);
+		expect(answers).toEqual([false]);
+		expect(error).toHaveBeenCalledTimes(1);
+
+		const saved = vi.fn();
+		field.addEventListener(RICH_TEXT_EDITOR_EVENTS.save, saved);
+		editor.save();
+		expect(saved).toHaveBeenCalledTimes(1);
+		expect(error).toHaveBeenCalledTimes(2);
+	});
+
+	it('registered after the editor started fire there too', () => {
+		const field = textArea('<p>Late</p>');
+		const editor = new RichTextEditor(field);
+		registerRichTextEvent('test-late:saved', {
+			from: [RICH_TEXT_EDITOR_EVENTS.save],
+			init: (editor) => ({ before: editor.getValue() }),
+			fire: (_editor, state: { before: string }) => ({ before: state.before })
+		});
+		const saved = heard(field, 'test-late:saved');
+		editor.save();
+		expect(saved).toEqual([{ before: '<p>Late</p>' }]);
+	});
+
+	it('fire without a text area, on the element of the editor', () => {
+		registerRichTextEvent('test-element:changed', { from: ['input'] });
+		document.body.innerHTML = '<div id="own"></div>';
+		const element = document.getElementById('own')!;
+		const changed = vi.fn();
+		element.addEventListener('test-element:changed', changed);
+		const editor = new RichTextEditor(element, { value: '<p>a</p>' });
+		type(editor, 'b');
+		expect(changed).toHaveBeenCalledTimes(1);
+		expect((changed.mock.calls[0]![0] as CustomEvent).detail.editor).toBe(editor);
+	});
+
+	it('include the text selected, once for each text', () => {
+		const field = textArea();
+		const selected = heard(field, RICH_TEXT_BUILT_IN_EVENTS.selectedText);
+		const editor = new RichTextEditor(field);
+
+		select(editor, 8, 13);
+		expect(editor.getSelectedText()).toBe('Hello');
+		select(editor, 13, 8);
+		select(editor, 3, 10);
+		// the cursor alone: nothing selected, once
+		select(editor, 9);
+		select(editor, 10);
+		expect(selected).toEqual([{ text: 'Hello' }, { text: 'tle\nHe' }, { text: '' }]);
+		expect(editor.getSelectedText()).toBe('');
+	});
+
+	it('fire from the extensions and the tools of the features registered', () => {
+		registerRichTextEvent('test-feature:asked', {});
+		registerRichTextFeature('asking', {
+			extensions: (context) => context.kit.Extension.create({
+				name: 'asking',
+				addKeyboardShortcuts: () => ({
+					'Mod-Enter': () => context.trigger('test-feature:asked', { by: 'key' })
+				})
+			}),
+			tools: {
+				ask: { kind: 'action', label: 'Ask',
+					run: (_editor, context) => context.trigger('test-feature:asked', { by: 'tool' }) },
+				askMenu: { kind: 'menu', label: 'Ask more',
+					items: () => [{ id: 'item', label: 'Item',
+						run: (_editor, context) => context.trigger('test-feature:asked', { by: 'item' })
+					}] }
+			}
+		});
+		const field = textArea('<p>a</p>');
+		const asked = heard(field, 'test-feature:asked');
+		const editor = new RichTextEditor(field, { features: ['paragraph' as never, 'asking'],
+			toolbar: [['ask', 'askMenu']] });
+
+		key(editor.editor.view.dom, 'Enter', { ctrlKey: true });
+		tool(editor, 'ask').click();
+		tool(editor, 'askMenu').click();
+		editor.element.querySelector<HTMLButtonElement>('[data-item="item"]')!.click();
+		expect(asked).toEqual([{ by: 'key' }, { by: 'tool' }, { by: 'item' }]);
+	});
+});
+
 describe('Wicket.RichTextEditor', () => {
 	interface WicketRichTextEditor {
 		attach(id: string, options?: Record<string, unknown>): RichTextEditor | null;
@@ -1471,5 +1691,25 @@ describe('Wicket.RichTextEditor', () => {
 		select(plain, 3);
 		await tick();
 		expect(onStateChange).toHaveBeenCalled();
+	});
+	it('defines Wicket.RichTextEvents, registering the types and triggering them by the id', async () => {
+		await wicket();
+		const events = (window as unknown as { Wicket: { RichTextEvents: {
+			register: typeof registerRichTextEvent; types(): string[];
+			trigger(id: string, name: string, values?: Record<string, unknown>): boolean;
+			builtIn: typeof RICH_TEXT_BUILT_IN_EVENTS } } }).Wicket.RichTextEvents;
+		expect(events.register).toBe(registerRichTextEvent);
+		expect(events.builtIn).toBe(RICH_TEXT_BUILT_IN_EVENTS);
+		events.register('test-wicket:asked', {});
+		expect(events.types()).toContain('test-wicket:asked');
+		const field = textArea();
+		const asked = vi.fn();
+		field.addEventListener('test-wicket:asked', asked);
+		(await wicket()).attach('notes');
+		expect(events.trigger('notes', 'test-wicket:asked', { a: 1 })).toBe(true);
+		expect((asked.mock.calls[0]![0] as CustomEvent).detail.a).toBe(1);
+		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		expect(events.trigger('missing', 'test-wicket:asked')).toBe(false);
+		expect(error).toHaveBeenCalledTimes(1);
 	});
 });

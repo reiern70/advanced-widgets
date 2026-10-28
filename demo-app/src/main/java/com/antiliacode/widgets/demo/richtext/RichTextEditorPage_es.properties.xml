@@ -46,6 +46,12 @@
 	<entry key="heardBlurChanged">El servidor supo que salió del artículo, con su texto cambiado: {0} caracteres antes, {1} ahora.</entry>
 	<entry key="heardSave">Artículo guardado.</entry>
 	<entry key="heardResize">El servidor supo que llevó el artículo a {0}.</entry>
+	<entry key="selectionStart">Seleccione parte del artículo: el servidor sabrá qué texto seleccionó.</entry>
+	<entry key="selectionHeard">El servidor supo que seleccionó «{0}».</entry>
+	<entry key="selectionNone">El servidor supo que no hay nada seleccionado.</entry>
+	<entry key="outlineStart">Cambie los títulos del artículo: el servidor sabrá su esquema.</entry>
+	<entry key="outlineHeard">El esquema que supo el servidor: {0}.</entry>
+	<entry key="outlineNone">El servidor supo que el artículo no tiene títulos.</entry>
 	<entry key="known">El servidor sabe: {0} caracteres de HTML, {1} palabras; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">el cursor en {0}</entry>
 	<entry key="selected">seleccionado de {0} a {1}</entry>

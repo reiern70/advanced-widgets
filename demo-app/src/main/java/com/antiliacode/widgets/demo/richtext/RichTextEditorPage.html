@@ -49,6 +49,10 @@
 			</div>
 		</form>
 		<p wicket:id="known" class="rich-text-demo__status">[what the server knows]</p>
+		<p class="rich-text-demo__status">
+			<span wicket:id="selection" class="rich-text-demo__selection" role="status">[the text the server heard you selected]</span>
+			<span wicket:id="outline" class="rich-text-demo__outline" role="status">[the outline the server heard]</span>
+		</p>
 		<div wicket:id="saved" class="rich-text-demo__saved">
 			<h3 class="rich-text-demo__subtitle"><wicket:message key="asShown"/></h3>
 			<div wicket:id="view" class="rich-text-demo__view"></div>

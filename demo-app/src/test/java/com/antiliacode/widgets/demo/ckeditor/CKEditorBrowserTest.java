@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -188,6 +189,32 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
+	void hearsOfTheTextSelectedAndOfTheHeadingsAsTheTiptapEditorDoes(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		// the built-in type of events and the page's own, which its script registered
+		@SuppressWarnings("unchecked")
+		List<String> types = (List<String>)script("return Wicket.RichTextEvents.types();");
+		assertTrue(types.containsAll(List.of("antilia-rich-text-editor:selected-text",
+			"rich-text-demo:outline")), types.toString());
+
+		// the text selected, once the user paused
+		selectWord("mud");
+		wait.until(d -> status(".rich-text-demo__selection").equals(
+			"The server heard you selected “mud”."));
+
+		// the headings, as one of them changes
+		clickAtEnd(content().findElement(By.cssSelector("h3")));
+		content().sendKeys(" here");
+		wait.until(d -> status(".rich-text-demo__outline").startsWith(
+			"The outline the server heard: Field notes from the coast · What we counted here · "));
+		wait.until(d -> status(".rich-text-demo__selection").equals(
+			"The server heard nothing is selected."));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
 	void theServerKeepsTheSelectionThroughTheTabsAndBack(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");
@@ -334,6 +361,14 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 	{
 		return app().findElements(By.cssSelector(".rich-text-demo__editor + .rich-text-demo__status"))
 			.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow().getText();
+	}
+
+	/**
+	 * @return the text of a status of the page, which the server rendered
+	 */
+	private String status(String css)
+	{
+		return app().findElement(By.cssSelector(css)).getText();
 	}
 
 	private String known()
