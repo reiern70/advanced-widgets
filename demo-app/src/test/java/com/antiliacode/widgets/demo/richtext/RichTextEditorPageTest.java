@@ -16,6 +16,7 @@ package com.antiliacode.widgets.demo.richtext;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -39,11 +40,14 @@ import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
 import com.antiliacode.widgets.event.IAjaxSubmitEvent;
 import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.richtext.IRichTextSuggester;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
+import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
+import com.antiliacode.widgets.richtext.RichTextSuggestBehavior;
 import com.antiliacode.widgets.richtext.RichTextTool;
 import com.github.openjson.JSONObject;
 
@@ -319,6 +323,68 @@ class RichTextEditorPageTest
 		form.setValue("editor", "# Again");
 		tester.executeAjaxEvent(inCase("notesTitle", "notesForm:save"), "click");
 		assertEquals("# Again", RichTextEditorPage.notes().getSaved());
+	}
+
+	@Test
+	void checksTheWritingAndSuggestsFromTheServer()
+	{
+		String writing = inCase("writingTitle", "writing");
+		RichTextEditor editor = editor(writing + ":writingForm:editor");
+		assertTrue(editor.isProofreading());
+		assertTrue(editor.isSuggesting());
+		assertEquals(List.of("people", "topics", "terms"), editor.getSuggesters().stream()
+			.map(IRichTextSuggester::getName).toList());
+		assertNull(editor.getSpellcheck());
+		assertNull(editor.getTextLanguage());
+		tester.assertContains("\"proofreadUrl\"");
+		tester.assertContains("\"suggesters\":\\[\\{\"name\":\"people\",\"insert\":\"mention\"," +
+			"\"char\":\"@\"}");
+		tester.assertLabel(writing + ":writingKept:mentions",
+			"Mentions the server reads: @Ada Lovelace (people: ada)");
+
+		// the demo's proofreader, through the server
+		tester.getRequest().setMethod("POST");
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextProofreadBehavior.TEXTS_PARAMETER, "[\"Teh word word,  ok\"]");
+		tester.executeBehavior(editor.getProofreadBehavior());
+		assertEquals("{\"issues\":[[{\"from\":0,\"to\":3,\"kind\":\"spelling\"," +
+			"\"message\":\"This word may be spelled wrong.\",\"replacements\":[\"the\"]," +
+			"\"rule\":\"DEMO_SPELLING\"},{\"from\":4,\"to\":13,\"kind\":\"grammar\"," +
+			"\"message\":\"A word said twice.\",\"replacements\":[\"word\"]," +
+			"\"rule\":\"DEMO_REPEATED\"},{\"from\":14,\"to\":16,\"kind\":\"style\"," +
+			"\"message\":\"Two blanks between words.\",\"replacements\":[\" \"]," +
+			"\"rule\":\"DEMO_BLANKS\"}]]}", tester.getLastResponseAsString());
+
+		// the people, the topics and the terms
+		assertEquals("[{\"id\":\"ada\",\"label\":\"Ada Lovelace\",\"detail\":" +
+			"\"ada@example.org\"}]", suggest(editor, "people", "lov"));
+		assertEquals("[{\"id\":\"tiptap\",\"label\":\"tiptap\"}]", suggest(editor, "topics",
+			"ti"));
+		assertEquals("[{\"id\":\"9\",\"label\":\"Tiptap\",\"text\":\"Tiptap\"}," +
+			"{\"id\":\"10\",\"label\":\"TypeScript\",\"text\":\"TypeScript\"}]",
+			suggest(editor, "terms", "t"));
+
+		RichTextWritingPanel panel = (RichTextWritingPanel)tester.getComponentFromLastRenderedPage(
+			writing);
+		panel.setSpellcheck("off");
+		panel.setTextLanguage("de");
+		panel.setProofreading("none");
+		tester.startPage(tester.getLastRenderedPage());
+		assertEquals(Boolean.FALSE, editor.getSpellcheck());
+		assertEquals(Locale.GERMAN, editor.getTextLanguage());
+		assertFalse(editor.isProofreading());
+		tester.assertContains("\"textLanguage\":\"de\"");
+	}
+
+	private String suggest(RichTextEditor editor, String name, String query)
+	{
+		tester.getRequest().setMethod("POST");
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextSuggestBehavior.NAME_PARAMETER, name);
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextSuggestBehavior.QUERY_PARAMETER, query);
+		tester.executeBehavior(editor.getSuggestBehavior());
+		return new JSONObject(tester.getLastResponseAsString()).getJSONArray("items").toString();
 	}
 
 	@Test

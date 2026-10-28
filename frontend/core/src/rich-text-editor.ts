@@ -87,9 +87,12 @@ import { DEFAULT_HEADING_LEVELS, isSafeUrl, quietHtml, RICH_TEXT_FEATURES, RICH_
 import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH_TEXT_BUBBLE_TOOLS,
 	RichTextToolbar, type RichTextCodeLanguage, type RichTextEditorTexts, type RichTextTool,
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
-import { RICH_TEXT_EDITOR_EVENTS, sameState, type RichTextEditorSelection,
+import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
 import { RichTextEventTypes } from './rich-text-events.js';
+import { issuePopoverOf, Proofreading, refreshProofreading,
+	type RichTextProofreader } from './rich-text-proofreading.js';
+import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
 import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText, uploadExtension,
 	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
 
@@ -232,6 +235,33 @@ export interface RichTextEditorOptions {
 	placeholder?: string;
 	/** The accessible name of the text; that of the labels of the text area when left out. */
 	label?: string;
+	/**
+	 * Whether the browser checks the spelling of the text, underlining the words its dictionaries
+	 * do not know: as the browser does by default when left out or null, but for an editor with a
+	 * proofreader, which it would underline twice.
+	 */
+	spellcheck?: boolean | null;
+	/**
+	 * The language of the text, a tag of BCP 47 (en-GB, de), which the text gets as its lang: the
+	 * browser checks its spelling in it; that of the page when left out, null or no such tag.
+	 */
+	textLanguage?: string | null;
+	/**
+	 * What checks the spelling, the grammar and the style of the text, which the editor underlines,
+	 * offering the replacements: languageToolProofreader(), proofreadAt() or one of the page's own;
+	 * none when left out or null. It checks in the language of the text. A read only editor is not
+	 * checked.
+	 */
+	proofreader?: RichTextProofreader | null;
+	/** How long after the user stopped typing the proofreader checks the text, 600 ms when left out. */
+	proofreadDelay?: number;
+	/**
+	 * What offers items for what the user types, in a list under the cursor: users to mention after
+	 * @, words to complete on Ctrl+Space (see RichTextSuggester); none when left out. Read only,
+	 * the editor offers none. A mention needs the feature mention, and HTML: in Markdown, or
+	 * without the feature, its text is inserted.
+	 */
+	suggesters?: readonly RichTextSuggester[];
 	/** The most characters the text may have, none when left out or null. */
 	limit?: number | null;
 	/** Whether the editor counts the characters and the words below the text, false when left out. */
@@ -317,7 +347,7 @@ export const RICH_TEXT_EDITOR_CLASSES = Object.freeze({
 });
 
 const DEFAULTS = { stateDelay: 400, resizable: 'vertical' as ResizeAxis, minWidth: 200,
-	minHeight: 96 };
+	minHeight: 96, proofreadDelay: 600, suggestDelay: 150 };
 
 /** Marks the transactions of the page, not the user's, which fire no events. */
 const EXTERNAL = 'antilia-rich-text-editor:external';
@@ -694,6 +724,16 @@ export class RichTextEditor {
 		if (this.isReadOnly()) {
 			attributes['aria-readonly'] = 'true';
 		}
+		const spellcheck = this.options.spellcheck;
+		if (spellcheck === true || spellcheck === false) {
+			attributes.spellcheck = String(spellcheck);
+		} else if (this.options.proofreader) {
+			attributes.spellcheck = 'false';
+		}
+		const language = textLanguage(this.options.textLanguage);
+		if (language) {
+			attributes.lang = language;
+		}
 		return attributes;
 	}
 
@@ -744,6 +784,28 @@ export class RichTextEditor {
 		if (features.has('image')) {
 			extensions.push(uploadExtension(this.uploadHost()));
 		}
+		extensions.push(Suggestions.configure({
+			suggesters: () => this.isReadOnly() ? [] : this.options.suggesters ?? [],
+			mentions: () => !!this.editor?.schema.nodes.mention,
+			delay: () => DEFAULTS.suggestDelay,
+			container: () => this.element,
+			texts: () => this.texts(),
+			look: () => this.look,
+			log: (message, error) => getHost().log.error(message, error)
+		}));
+		extensions.push(Proofreading.configure({
+			proofreader: () => this.isReadOnly() ? null : this.options.proofreader ?? null,
+			language: () => this.proofreadLanguage(),
+			delay: () => Math.max(0, this.options.proofreadDelay ?? DEFAULTS.proofreadDelay),
+			texts: () => this.texts(),
+			look: () => this.look,
+			onPopover: (open) => {
+				if (!open) {
+					setTimeout(() => this.checkFocus());
+				}
+			},
+			log: (message, error) => getHost().log.error(message, error)
+		}));
 		if (this.options.bubbleMenu) {
 			const bubble = new RichTextToolbar(this.toolbarContext(), [RICH_TEXT_BUBBLE_TOOLS],
 				'rich-text-bubble');
@@ -860,6 +922,16 @@ export class RichTextEditor {
 				}
 			}
 		};
+	}
+
+	/**
+	 * @returns the language the text is checked in: that of the options, or the one the text is in
+	 *          in the page; null for none
+	 */
+	private proofreadLanguage(): string | null {
+		return textLanguage(this.options.textLanguage) ?? textLanguage(this.editor?.view.dom
+			.closest('[lang]')?.getAttribute('lang') ?? this.element.closest('[lang]')
+			?.getAttribute('lang'));
 	}
 
 	/**
@@ -1204,7 +1276,7 @@ export class RichTextEditor {
 		}
 		return this.element.contains(active) || !!this.toolbar?.formElement()?.contains(active) ||
 			!!this.bubble?.formElement()?.contains(active) || !!this.toolbar?.isFormOpen() ||
-			!!this.bubble?.isFormOpen();
+			!!this.bubble?.isFormOpen() || !!issuePopoverOf(this.editor.view)?.contains(active);
 	}
 
 	private onFocusIn(): void {
@@ -1608,14 +1680,19 @@ export class RichTextEditor {
 		// read only now, or no longer: the options, or the text area
 		const editableChanged = this.editor.isEditable === readOnly;
 		const rebuilt = changed(...SCHEMA_OPTIONS) || before.extensions !== this.options.extensions;
+		const proofreadChanged = before.proofreader !== this.options.proofreader;
 		if (rebuilt) {
 			this.rebuild(before.format !== this.options.format);
-		} else if (changed('placeholder', 'label') || editableChanged) {
+		} else if (changed('placeholder', 'label', 'spellcheck', 'textLanguage') ||
+			editableChanged || proofreadChanged) {
 			this.editor.setEditable(!readOnly, false);
 			this.editor.setOptions({ editorProps: { attributes: this.contentAttributes(),
 				transformPastedHTML: (html: string) => quietHtml(html) } });
 			// the placeholder shows anew
 			this.editor.view.dispatch(this.editor.state.tr.setMeta(EXTERNAL, true));
+		}
+		if (!rebuilt && (proofreadChanged || editableChanged || changed('textLanguage'))) {
+			refreshProofreading(this.editor.view);
 		}
 		const codeChanged = before.highlight !== this.options.highlight ||
 			changed('codeLanguages');

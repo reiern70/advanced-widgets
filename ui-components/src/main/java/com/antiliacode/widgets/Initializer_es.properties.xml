@@ -258,4 +258,13 @@
 	<entry key="RichTextEditor.uploadFailed">{0} no se pudo subir.</entry>
 	<entry key="RichTextEditor.uploadTooLarge">{0} pesa más de {1}.</entry>
 	<entry key="RichTextEditor.uploadType">{0} no es una imagen de un tipo que el editor acepte: {1}.</entry>
+	<entry key="RichTextEditor.proofreadSpelling">Ortografía</entry>
+	<entry key="RichTextEditor.proofreadGrammar">Gramática</entry>
+	<entry key="RichTextEditor.proofreadStyle">Estilo</entry>
+	<entry key="RichTextEditor.proofreadReplacements">Sustituciones</entry>
+	<entry key="RichTextEditor.proofreadNoSuggestions">Sin sugerencias</entry>
+	<entry key="RichTextEditor.proofreadIgnore">Ignorar</entry>
+	<entry key="RichTextEditor.suggestions">Sugerencias</entry>
+	<entry key="RichTextEditor.suggestLoading">Buscando…</entry>
+	<entry key="RichTextEditor.suggestNone">No se encontró nada</entry>
 </properties>

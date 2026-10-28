@@ -238,7 +238,27 @@ public enum RichTextFeature implements IRichTextFeature
 			rules.allowAttribute("class", ALIGN_CLASS, "p").allowAttribute("class", ALIGN_CLASS,
 				HEADINGS);
 		}
+	},
+
+	/**
+	 * Mentions of users, or of what a {@link IRichTextSuggester suggester} mentions,
+	 * {@code <span class="antilia-mention" data-mention="users" data-id="42">@Ann</span>}; not in
+	 * Markdown, where the editor inserts the text of a mention. The ids come back from the
+	 * browser: check each again before acting on it (see {@link RichTextMention#of(String)}).
+	 */
+	MENTION("mention", false)
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("span").allowAttribute("class", MENTION_CLASS, "span")
+				.allowAttribute("data-mention", RichTextSuggestion.NAME, "span")
+				.allowAttribute("data-id", RichTextSuggestion.ID, "span");
+		}
 	};
+
+	/** The class of a mention. */
+	private static final Pattern MENTION_CLASS = Pattern.compile(RichTextMention.CLASS);
 
 	/** The classes aligning text. */
 	private static final Pattern ALIGN_CLASS = Pattern.compile(

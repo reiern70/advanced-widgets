@@ -272,6 +272,29 @@ posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the an
 checks the size again, tells the type by the first bytes of the file, has the store keep it, and
 checks the address the store answers; a page adds one for its React and Svelte editors.
 
+The browser checks the spelling of the text as it does unless `spellcheck` says otherwise (`true`,
+`false`), in the language of the page or `textLanguage` (a BCP 47 tag, the text's `lang`), in both
+editors. A `proofreader` (`rich-text-proofreading.ts`) checks the spelling, the grammar and the style
+instead: `check(texts, language, signal)` answers the issues of each text (`from`, `to`, `kind`:
+`spelling`, `grammar` or `style`, `message`, `replacements`, `rule`). The editor asks it about the
+blocks it has not checked yet, a moment after the typing stops (`proofreadDelay`, 600 ms), several in
+a request and one request at a time, keeps what each text was found to have, and underlines the issues
+as decorations, never in the text, with the browser's own spell check off. A click on one, or Mod-.
+for the next, opens a popover of its replacements and *Ignore*. `languageToolProofreader({ url })`
+asks LanguageTool (`POST /v2/check`, the texts as paragraphs), `proofreadAt(url)` Wicket's
+`RichTextProofreadBehavior`, which a `RichTextEditor` given an `IRichTextProofreader` has, such as
+`LanguageToolProofreader`. Commercial proofreaders, WProofreader (`@webspellchecker/wproofreader-tiptap`)
+for one, are Tiptap extensions a page adds through `extensions`.
+
+`suggesters` (`rich-text-suggestions.ts`) offer items for what the user types, in a list under the
+cursor: one with a `char`, `@` for the users, lists them as the user types after it at the start of a
+word, one without completes the word before the cursor on Ctrl+Space. Up and Down move, Enter or Tab
+choose, Escape closes; the text keeps the focus and says `aria-activedescendant`. An item of a mention
+becomes a mention, `<span class="antilia-mention" data-mention="users" data-id="42">@Ann</span>`, the
+feature `mention` (not in Markdown, where its text is inserted); a completion inserts its text.
+`suggestAt(url, { name, char, insert })` asks Wicket's `RichTextSuggestBehavior`, which a
+`RichTextEditor` with suggesters (`addSuggester`, `RichTextSuggester.mentions(...)`, `.words(...)`) has.
+
 The tabs (`tabs.ts`, built as `antilia-tabs.js` for Wicket's `TabbedPanel`) show a list of tabs,
 along the top of their panels (`horizontal`) or down their left side (`vertical`), and the panel of
 the tab selected, in one of nine designs (`design`, `TABS_DESIGNS`, `TabsDesign` in Wicket), all in the colors

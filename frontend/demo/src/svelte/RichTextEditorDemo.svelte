@@ -21,7 +21,8 @@
 	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
-	import { describe, richText, toolbarOf, uploader, type RichText,
+	import { describe, proofreader as proofreaderOf, richText, suggesters as suggestersOf,
+		toolbarOf, uploader, type RichText,
 		type RichTextEditorConfig } from '../rich-text-editor.js';
 
 	let { config }: { config: RichTextEditorConfig } = $props();
@@ -37,6 +38,8 @@
 	let count = $state(true);
 	let highlight = $state(true);
 	const onupload = uploader(initial);
+	const proofreader = proofreaderOf(initial);
+	const suggesters = suggestersOf(initial);
 	let heard = $state(initial.texts.appStart);
 
 	// the cases, one at a time
@@ -88,7 +91,8 @@
 							saved={article.saved} label={texts.articleLabel} placeholder={texts.placeholder}
 							toolbar={toolbarOf(toolbar)} {bubbleMenu} {readOnly} {count} texts={config.editor}
 							{highlight} {onupload} uploadTypes={config.uploadTypes}
-							uploadMaxSize={config.uploadMaxSize} onsave={saveArticle} />
+							uploadMaxSize={config.uploadMaxSize} {proofreader} {suggesters}
+							onsave={saveArticle} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">

@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CK_EDITOR_CLASSES, CKEditor, ckEditor, registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
-	type CKEditorInstance, type Host } from '../src/index.js';
+	type CKEditorInstance, type CKEditorViewWriter, type Host } from '../src/index.js';
 import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorModelPosition,
 	type CKEditorModelWriter } from '../src/ck-editor.js';
 
@@ -221,7 +221,11 @@ class FakeEditor implements CKEditorInstance {
 					this.focusTracker.fire('change:isFocused', 'isFocused', true);
 				}
 			},
-			document: this.viewDocument
+			document: Object.assign(this.viewDocument, { getRoot: () => this.editable }),
+			change: (callback: (writer: CKEditorViewWriter) => void) => callback({
+				setAttribute: (key, value, element) => (element as HTMLElement).setAttribute(key, value),
+				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key)
+			})
 		}
 	};
 	readonly uiElement = document.createElement('div');
@@ -408,6 +412,38 @@ describe('CKEditor', () => {
 		expect(editor.element.querySelector(':scope > .ck-editor')).toBe(fake.uiElement);
 		expect(editor.element.getAttribute('data-modified')).toBe('false');
 	});
+
+	it('gives the text the spellcheck and the language of the options, its texts staying in theirs',
+		async () => {
+			const build = fakeBuild();
+			const plain = new CKEditor(textArea(), { build, language: 'de' });
+			await plain.ready;
+			expect(build.editors[0]!.config.language).toBe('de');
+			expect(build.editors[0]!.editable.hasAttribute('spellcheck')).toBe(false);
+			plain.destroy();
+
+			const editor = new CKEditor(textArea(), { build, spellcheck: false,
+				textLanguage: ' en-GB ' });
+			await editor.ready;
+			const fake = build.editors[1]!;
+			expect(fake.config.language).toEqual({ ui: 'en', content: 'en-GB' });
+			expect(fake.editable.getAttribute('spellcheck')).toBe('false');
+
+			// without starting CKEditor anew
+			editor.configure({ spellcheck: true });
+			expect(editor.editor).toBe(fake);
+			expect(fake.editable.getAttribute('spellcheck')).toBe('true');
+			editor.configure({ spellcheck: null });
+			expect(fake.editable.hasAttribute('spellcheck')).toBe(false);
+
+			// another language starts it anew; no language tag is none
+			editor.configure({ textLanguage: 'es', language: 'de' });
+			await editor.ready;
+			expect(build.editors[2]!.config.language).toEqual({ ui: 'de', content: 'es' });
+			editor.configure({ textLanguage: '"><script>' });
+			await editor.ready;
+			expect(build.editors[3]!.config.language).toBe('de');
+		});
 
 	it('leaves out what Markdown has no syntax for, and makes the toolbar and the headings given',
 		async () => {

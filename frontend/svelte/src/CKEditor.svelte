@@ -78,6 +78,16 @@
 		placeholder?: string;
 		/** The accessible name of the text. */
 		label?: string;
+		/**
+		 * Whether the browser checks the spelling of the text: as it does by default when left out
+		 * or null.
+		 */
+		spellcheck?: boolean | null;
+		/**
+		 * The language of the text, a tag of BCP 47 (en-GB, de), which the browser checks its
+		 * spelling in: that of the page when left out or null.
+		 */
+		textLanguage?: string | null;
 		/** Whether the editor counts the characters and the words below the text, false when left out. */
 		count?: boolean;
 		/** The dimensions the user resizes the editor in, vertical when left out; false for none. */
@@ -129,6 +139,8 @@
 		readOnly,
 		placeholder,
 		label,
+		spellcheck,
+		textLanguage,
 		count,
 		resizable,
 		minWidth,
@@ -169,8 +181,8 @@
 		void formName;
 		const made = new CKEditor(element, untrack(() => ({
 			build, licenseKey, language, translations, value, saved, format, features, headingLevels,
-			toolbar, plugins, config, readOnly, placeholder, label, count, resizable, minWidth,
-			minHeight, maxWidth, maxHeight, state: editorState, stateDelay, texts, look,
+			toolbar, plugins, config, readOnly, placeholder, label, spellcheck, textLanguage, count,
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, texts, look,
 			onReady: (next: CKEditorInstance) => onready?.(next),
 			onError: (error: unknown) => onerror?.(error),
 			onChange: (next: string) => {
@@ -205,8 +217,8 @@
 
 	$effect(() => {
 		const next = { licenseKey, language, format, features, headingLevels, toolbar, readOnly,
-			placeholder, label, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			stateDelay, texts };
+			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
+			count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts };
 		untrack(() => instance?.configure(next));
 	});
 

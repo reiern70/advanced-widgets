@@ -491,6 +491,94 @@
 	margin-top: 0.25rem;
 }
 
+/*
+ * The issues a proofreader found in the text: a wavy line under their words, in the color of
+ * their kind, which a page or a theme sets by --antilia-rich-text-spelling, -grammar and -style.
+ * The popover of an issue points at an element of its own over its first line, which the text
+ * scrolls with.
+ */
+.antilia-rich-text-editor {
+	--antilia-rich-text-spelling: var(--antilia-theme-error, #e03131);
+	--antilia-rich-text-grammar: var(--antilia-theme-info, #1c7ed6);
+	--antilia-rich-text-style: var(--antilia-theme-warning, #e8590c);
+}
+
+.antilia-rich-text-issue {
+	text-decoration-line: underline;
+	text-decoration-style: wavy;
+	text-decoration-thickness: 1px;
+	text-decoration-skip-ink: none;
+	text-underline-offset: 0.2em;
+}
+
+.antilia-rich-text-issue-spelling {
+	text-decoration-color: var(--antilia-rich-text-spelling);
+}
+
+.antilia-rich-text-issue-grammar {
+	text-decoration-color: var(--antilia-rich-text-grammar);
+}
+
+.antilia-rich-text-issue-style {
+	text-decoration-color: var(--antilia-rich-text-style);
+}
+
+.antilia-rich-text-issue-anchor {
+	position: absolute;
+	pointer-events: none;
+}
+
+.antilia-rich-text-issue-body {
+	display: grid;
+	gap: 0.5rem;
+	min-width: min(14rem, 80vw);
+}
+
+.antilia-rich-text-issue-message,
+.antilia-rich-text-issue-none {
+	margin: 0;
+}
+
+.antilia-rich-text-issue-none {
+	font-style: italic;
+}
+
+.antilia-rich-text-issue-replacements {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+/*
+ * The mentions, in the editor and in the view: the name of a user, or of what the page mentions,
+ * on a tint of the accent; and the list of the suggestions under the cursor, a menu of the editor.
+ */
+.antilia-mention {
+	padding: 0 0.2em;
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	background: color-mix(in srgb, var(--antilia-theme-accent, #2f6fde) 14%, transparent);
+	color: var(--antilia-theme-accent, #2f6fde);
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.antilia-rich-text-suggestions {
+	min-width: 12em;
+	max-width: min(24em, 90vw);
+}
+
+.antilia-rich-text-suggestion-detail {
+	margin-left: 0.5em;
+	color: var(--antilia-rich-text-muted);
+	font-size: 0.875em;
+}
+
+.antilia-rich-text-suggestion-status {
+	padding: 0.4em 0.75em;
+	color: var(--antilia-rich-text-muted);
+	font-style: italic;
+}
+
 /* the button choosing an image to upload, below the address, and the line telling the upload */
 .antilia-rich-text-form-upload {
 	display: grid;
@@ -510,6 +598,8 @@
 
 /* the text, scrolling below the toolbar */
 .antilia-rich-text-content {
+	/* for the element over an issue, which scrolls with the text */
+	position: relative;
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
