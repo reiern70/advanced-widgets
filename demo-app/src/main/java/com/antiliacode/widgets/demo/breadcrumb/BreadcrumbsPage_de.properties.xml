@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Brotkrümelnavigation</entry>
+	<entry key="explanation">&lt;p&gt;Breadcrumb aus ui-components zeigt, wo die Seite ist: eine Reihe von Krümeln von der Startseite bis zur gezeigten Seite, dem letzten Krümel, der ihre Beschriftung ist und kein Link. Die Krümel sind die Einträge der Menüs: BookmarkableMenuItem führt zu einer Seite, AjaxMenuItem ruft den Server per Ajax auf, LinkMenuItem mit einer eigenen Anfrage, und ein Eintrag ohne Link, etwa ein SubMenu, ist ein Krümel, der nirgendwohin führt. Ihre Symbole und Tooltips erscheinen, und die Einträge, die nicht sichtbar sind, fehlen.&lt;/p&gt;&lt;p&gt;Sie ist ein nav mit Namen um eine geordnete Liste, wie es das WAI-ARIA-Muster für Brotkrümel will; das Stylesheet zeichnet die Trenner, einen Winkel, einen Schrägstrich oder einen Pfeil, die Screenreader nicht vorlesen. Mit setMaxItems zeigt ein langer Pfad seinen ersten Krümel und seine letzten, die anderen hinter einer Schaltfläche, …, die sie an Ort und Stelle zeigt und dem ersten von ihnen den Fokus gibt. Der Server rendert sie schon verborgen, damit sich beim Laden nichts verschiebt; auf einem Telefon bricht der Pfad um.&lt;/p&gt;&lt;p&gt;Die Website führt zu dieser Seite mit dem Parameter path, wie ihre Seiten es täten. Die Ordner gehen per Ajax tiefer: Der Server fügt einen Krümel hinzu, und ein gewählter Krümel kehrt zu seinem Ordner zurück. Die Einstellungen wählen den Trenner und wie viele Krümel erscheinen. Alles nimmt die Farben des Themas und die Klassen des Looks, im Bootstrap-Look Bootstraps breadcrumb, und funktioniert unter einer strengen Content Security Policy, ohne Inline-Style.&lt;/p&gt;</entry>
+	<entry key="siteTitle">Website</entry>
+	<entry key="siteIntro">Jeder Krümel führt zu dieser Seite mit dem Parameter path, wie die Seiten einer Website es täten. Wählen Sie unten eine Seite, um tiefer zu gehen, einen Krümel, um zurückzugehen.</entry>
+	<entry key="siteAppIntro">Jeder Krümel führt zu einer Seite der App, die seinem Link folgt wie ein Router. Wählen Sie unten eine Seite, um tiefer zu gehen, einen Krümel, um zurückzugehen.</entry>
+	<entry key="siteBelow">Die Seiten in {0}:</entry>
+	<entry key="siteLeaf">Unter {0} gibt es keine Seiten.</entry>
+	<entry key="foldersTitle">Ordner</entry>
+	<entry key="folders">Ordner</entry>
+	<entry key="foldersIntro">Öffnen Sie unten einen Ordner: Der Server fügt seinen Krümel per Ajax hinzu. Wählen Sie einen Krümel, um zu seinem Ordner zurückzukehren. Höchstens vier Krümel erscheinen: Die Schaltfläche … zeigt die anderen.</entry>
+	<entry key="foldersAppIntro">Öffnen Sie unten einen Ordner: Die App fügt seinen Krümel hinzu. Wählen Sie einen Krümel, um zu seinem Ordner zurückzukehren. Höchstens vier Krümel erscheinen: Die Schaltfläche … zeigt die anderen.</entry>
+	<entry key="empty">Dieser Ordner ist leer.</entry>
+	<entry key="settingsTitle">Einstellungen</entry>
+	<entry key="settingsIntro">Ein langer Pfad: Wählen Sie den Trenner und wie viele Krümel höchstens erscheinen.</entry>
+	<entry key="settingsAppIntro">Ein langer Pfad: Wählen Sie den Trenner und wie viele Krümel höchstens erscheinen.</entry>
+	<entry key="separator">Trenner</entry>
+	<entry key="maxItems">Gezeigte Krümel</entry>
+	<entry key="all">Alle</entry>
+	<entry key="separator.CHEVRON">Winkel ›</entry>
+	<entry key="separator.SLASH">Schrägstrich /</entry>
+	<entry key="separator.ARROW">Pfeil →</entry>
+	<entry key="settingsStart">Wählen Sie einen Krümel.</entry>
+	<entry key="settingsAppStart">Wählen Sie einen Krümel.</entry>
+	<entry key="chose">Sie haben {0} gewählt, per Ajax.</entry>
+	<entry key="picked">Sie haben {0} gewählt.</entry>
+	<entry key="place.home">Start</entry>
+	<entry key="place.products">Produkte</entry>
+	<entry key="place.computers">Computer</entry>
+	<entry key="place.laptops">Laptops</entry>
+	<entry key="place.desktops">Desktops</entry>
+	<entry key="place.phones">Telefone</entry>
+	<entry key="place.smartphones">Smartphones</entry>
+	<entry key="place.phoneCases">Hüllen</entry>
+	<entry key="place.services">Dienste</entry>
+	<entry key="place.support">Support</entry>
+	<entry key="place.training">Schulungen</entry>
+	<entry key="place.files">Mein Laufwerk</entry>
+	<entry key="place.documents">Dokumente</entry>
+	<entry key="place.projects">Projekte</entry>
+	<entry key="place.widgets">widgets</entry>
+	<entry key="place.src">src</entry>
+	<entry key="place.main">main</entry>
+	<entry key="place.java">java</entry>
+	<entry key="place.test">test</entry>
+	<entry key="place.website">Website</entry>
+	<entry key="place.invoices">Rechnungen</entry>
+	<entry key="place.year2025">2025</entry>
+	<entry key="place.year2026">2026</entry>
+	<entry key="place.pictures">Bilder</entry>
+	<entry key="place.holidays">Urlaub</entry>
+	<entry key="place.beach">Strand</entry>
+	<entry key="place.mountains">Berge</entry>
+	<entry key="place.music">Musik</entry>
+</properties>

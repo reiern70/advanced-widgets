@@ -84,6 +84,8 @@
 	<entry key="demo.menus.description">Una barra de elementos arriba o al lado, en cuatro diseños: enlaces para marcadores, por Ajax o simples, con iconos y tooltips, submenús tan hondos como quiera que se despliegan o se abren en su sitio, manejados con las teclas como en un escritorio.</entry>
 	<entry key="demo.desktop">Escritorio</entry>
 	<entry key="demo.desktop.description">Un escritorio dentro de la página: ventanas flotantes no modales con una barra de tareas; se mueven, pliegan, redimensionan, minimizan, maximizan, se colocan en mosaico y en cascada, y cada una tiene componentes reales como las tablas.</entry>
+	<entry key="demo.breadcrumbs">Migas de pan</entry>
+	<entry key="demo.breadcrumbs.description">La ruta hasta la página mostrada, una fila de migas desde la página de inicio: enlaces para marcadores, por Ajax o simples, con iconos y tooltips, las migas de una ruta larga ocultas tras un botón que las muestra, con tres separadores.</entry>
 	<entry key="demo.modalDialog">Diálogo modal</entry>
 	<entry key="demo.modalDialog.description">Añadir, editar y borrar en un diálogo modal que retiene el foco, se arrastra y pliega por su título y pregunta antes de descartar cambios; el mismo diálogo en Wicket, React y Svelte sobre un mismo recurso REST.</entry>
 	<entry key="demo.themeEditor">Editor de temas</entry>

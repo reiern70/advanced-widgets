@@ -19,17 +19,17 @@ as `ant-data-table.js`) and Handlebars as one of their template engines (`handle
 built as `handlebars-adapter.js`), the drop-down and its chips, the palette, the autocomplete, the date
 picker (`date-picker.ts`, built as `antilia-date-picker.js`), the infinite list
 and the template engines they render with, the clipboard, the floating panel, the scroll bars, the
-split panel, the tabs, the menus, the popovers, the notifications, the desktop, the uploads (`upload.ts`, built as
+split panel, the tabs, the menus, the breadcrumbs, the popovers, the notifications, the desktop, the uploads (`upload.ts`, built as
 `antilia-upload.js`), the resizable elements, the code editor and the preview of Markdown, the rich text editor, and the movable and resizable columns. The style sheets of the table and the progress bar have moved
 too, and the buttons' (`button.css`, built as `antilia-button.css`, which Wicket's `ButtonBehavior`
 and `AjaxActionButton` use; `setButtonBusy()` in `button.ts`, built as `antilia-button.js`, shows a
 button busy with a spinner while it ignores clicks, for the downloads of Wicket's `AjaxDownloadButton`
 and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `TabsStyleBehavior` gives
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
-`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Notifications`, `Desktop` with its
+`DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Breadcrumb`, `Notifications`, `Desktop` with its
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
 `RichTextEditor`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
-`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `desktop`, `resizable`, `codeEditor`,
+`palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `breadcrumb`, `desktop`, `resizable`, `codeEditor`,
 `markdownPreview` and `richTextEditor` also work as Svelte actions, and `Clipboard.install()` and
 `FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
 
@@ -308,6 +308,24 @@ parameters), `AjaxMenuItem`, `LinkMenuItem`, `SubMenu` and `MenuSeparator`, an i
 returning any link; `MenuLinkPanel` puts the icon and the label in the link of an item and its
 tooltip on it. The ids of the items stay the same each time the menu renders, so the item with the
 focus keeps it when Ajax renders the menu again.
+
+The breadcrumbs (`breadcrumb.ts`, built as `antilia-breadcrumb.js` for Wicket's `Breadcrumb`) show
+where the page is: a row of crumbs from the home page down to the page shown, the last crumb, its
+label with `aria-current="page"` and no link. A `nav`, named "Breadcrumb" (`texts.label`), around an
+ordered list, as the WAI-ARIA breadcrumb pattern has it; `breadcrumb.css` draws the separator between
+the crumbs, `chevron`, `slash` or `arrow` (`separator`, `BREADCRUMB_SEPARATORS`,
+`BreadcrumbSeparator` in Wicket), with an empty alternative text so that screen readers skip it, and
+by a class, so no inline style. With `maxItems` a longer trail shows its first crumb and its last
+`maxItems - 1`, the others hidden (`hidden` and `data-antilia-collapsed`) behind a button, "…",
+labelled by `texts.more`, which shows them in place and gives the focus to the first of them; the
+trail collapses again when its crumbs change. Wicket renders the crumbs hidden and the button
+already, which the core takes over; the core makes the button when the markup has none. In the
+Bootstrap look the list is Bootstrap's `breadcrumb`, its crumbs `breadcrumb-item`s and the last one
+`active`, the separator through `--bs-breadcrumb-divider`. React's and Svelte's `Breadcrumb` take the
+crumbs, `items`: a link with `href`, a button with `onClick` (`onclick` in Svelte), or a label alone;
+`onSelect` hears each crumb chosen and `onExpand` the crumbs hidden shown. In Wicket, `Breadcrumb`
+takes the `IMenuItem`s of the menus: `BookmarkableMenuItem`, `AjaxMenuItem`, `LinkMenuItem`, and an
+item without a link, such as a `SubMenu`, is a crumb leading nowhere.
 
 The popovers (`popover.ts`, built as `antilia-popover.js` for Wicket's `Popover`) are bubbles with
 an arrow pointing at the element that opened them, their trigger, telling more about it: a `title`

@@ -84,6 +84,8 @@
 	<entry key="demo.menus.description">Eine Leiste von Einträgen oben oder an der Seite, in vier Designs: Links mit Lesezeichen, per Ajax oder einfach, mit Symbolen und Tooltips, Untermenüs so tief Sie wollen, die aufklappen oder sich an Ort und Stelle öffnen, mit den Tasten bedient wie auf einem Desktop.</entry>
 	<entry key="demo.desktop">Desktop</entry>
 	<entry key="demo.desktop.description">Ein Desktop in der Seite: schwebende, nicht modale Fenster mit einer Taskleiste; sie lassen sich verschieben, einklappen, in der Größe ändern, minimieren, maximieren, nebeneinander und überlappend anordnen, und jedes enthält echte Komponenten wie die Grids.</entry>
+	<entry key="demo.breadcrumbs">Brotkrümelnavigation</entry>
+	<entry key="demo.breadcrumbs.description">Der Pfad zur gezeigten Seite, eine Reihe von Krümeln ab der Startseite: Links mit Lesezeichen, per Ajax oder einfach, mit Symbolen und Tooltips, die Krümel eines langen Pfads hinter einer Schaltfläche verborgen, die sie zeigt, mit drei Trennern.</entry>
 	<entry key="demo.modalDialog">Modaler Dialog</entry>
 	<entry key="demo.modalDialog.description">Hinzufügen, bearbeiten und löschen in einem modalen Dialog, der den Fokus hält, sich am Titel verschieben und einklappen lässt und vor dem Verwerfen von Änderungen fragt; derselbe Dialog in Wicket, React und Svelte über eine gemeinsame REST-Ressource.</entry>
 	<entry key="demo.themeEditor">Farbschema-Editor</entry>

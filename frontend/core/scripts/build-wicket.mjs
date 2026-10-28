@@ -51,6 +51,7 @@ const BANNER = [
 /** The scripts: their entry in src/wicket and their path in ui-components. */
 const SCRIPTS = [
 	['src/wicket/autocomplete.ts', 'com/antiliacode/widgets/autocomplete/antilia-autocomplete.js'],
+	['src/wicket/breadcrumb.ts', 'com/antiliacode/widgets/breadcrumb/antilia-breadcrumb.js'],
 	['src/wicket/button.ts', 'com/antiliacode/widgets/button/antilia-button.js'],
 	['src/wicket/chips.ts', 'com/antiliacode/widgets/chips/antilia-chips.js'],
 	['src/wicket/ck-editor.ts', 'com/antiliacode/widgets/ckeditor/antilia-ckeditor.js'],
@@ -85,6 +86,7 @@ const SCRIPTS = [
 /** The style sheets and the images they use: their file in styles and their path in ui-components. */
 const STYLES = [
 	['styles/autocomplete.css', 'com/antiliacode/widgets/autocomplete/antilia-autocomplete.css'],
+	['styles/breadcrumb.css', 'com/antiliacode/widgets/breadcrumb/antilia-breadcrumb.css'],
 	['styles/button.css', 'com/antiliacode/widgets/button/antilia-button.css'],
 	['styles/chips.css', 'com/antiliacode/widgets/chips/antilia-chips.css'],
 	['styles/ck-editor.css', 'com/antiliacode/widgets/ckeditor/antilia-ckeditor.css'],

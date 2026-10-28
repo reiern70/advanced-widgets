@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.apache.wicket.Page;
 
 import com.antiliacode.widgets.demo.autocomplete.AutocompletePage;
+import com.antiliacode.widgets.demo.breadcrumb.BreadcrumbsPage;
 import com.antiliacode.widgets.demo.button.ButtonsPage;
 import com.antiliacode.widgets.demo.ckeditor.CKEditorPage;
 import com.antiliacode.widgets.demo.codeeditor.CodeEditorPage;
@@ -131,6 +132,7 @@ public final class Demos
 		new Demo("resizable", "layout", ResizablePage.class, true),
 		new Demo("tabs", "layout", TabbedPanelPage.class, true),
 		new Demo("menus", "layout", MenusPage.class, true),
+		new Demo("breadcrumbs", "layout", BreadcrumbsPage.class, true),
 		new Demo("modalDialog", "layout", ModalDialogPage.class, true),
 		new Demo("desktop", "layout", DesktopPage.class, true),
 		new Demo("themeEditor", "themes", ThemeEditorPage.class, false),

@@ -390,6 +390,24 @@ const PARTS = {
 	'menu-current': ['state', 'antilia-menu-current', 'active'],
 	'menu-current-parent': ['state', 'antilia-menu-current-parent', ''],
 
+	// breadcrumbs: the path to the page shown, the separator drawn between the crumbs one of
+	// BreadcrumbSeparator; in Bootstrap's look the list is its breadcrumb, the crumbs
+	// breadcrumb-items and the last one active
+	'breadcrumb': ['base', 'antilia-breadcrumb', ''],
+	'breadcrumb-chevron': ['base', 'antilia-breadcrumb-chevron', ''],
+	'breadcrumb-slash': ['base', 'antilia-breadcrumb-slash', ''],
+	'breadcrumb-arrow': ['base', 'antilia-breadcrumb-arrow', ''],
+	'breadcrumb-list': ['base', 'antilia-breadcrumb-list', 'breadcrumb'],
+	'breadcrumb-item': ['base', 'antilia-breadcrumb-item', 'breadcrumb-item'],
+	'breadcrumb-link': ['base', 'antilia-breadcrumb-link', ''],
+	'breadcrumb-page': ['base', 'antilia-breadcrumb-page', ''],
+	'breadcrumb-text': ['base', 'antilia-breadcrumb-text', ''],
+	'breadcrumb-icon': ['base', 'antilia-breadcrumb-icon', ''],
+	'breadcrumb-label': ['base', 'antilia-breadcrumb-label', ''],
+	'breadcrumb-more': ['base', 'antilia-breadcrumb-more', ''],
+	'breadcrumb-more-button': ['base', 'antilia-breadcrumb-more-button', ''],
+	'breadcrumb-current': ['state', 'antilia-breadcrumb-current', 'active'],
+
 	// trees and tree grids
 	'tree': ['base', 'antilia-tree', ''],
 	'tree-json': ['base', 'json-tree', ''],

@@ -84,6 +84,8 @@
 	<entry key="demo.menus.description">A bar of items along the top or down the side, in four designs: bookmarkable, Ajax and plain links with icons and tooltips, submenus as deep as you like that pop up or open in place, driven by the keys as on a desktop.</entry>
 	<entry key="demo.desktop">Desktop</entry>
 	<entry key="demo.desktop.description">A desktop inside the page: floating windows that are not modal, with a taskbar; they move, fold, resize, minimize, maximize, tile and cascade, each holding real components such as the grids.</entry>
+	<entry key="demo.breadcrumbs">Breadcrumbs</entry>
+	<entry key="demo.breadcrumbs.description">The path to the page shown, a row of crumbs from the home page: bookmarkable, Ajax and plain links with icons and tooltips, the crumbs of a long trail hidden behind a button that shows them, in three separators.</entry>
 	<entry key="demo.modalDialog">Modal Dialog</entry>
 	<entry key="demo.modalDialog.description">Add, edit and delete in a modal dialog that keeps the focus, drags and folds by its title and asks before discarding changes; the same dialog in Wicket, React and Svelte over one shared REST resource.</entry>
 	<entry key="demo.themeEditor">Theme Editor</entry>

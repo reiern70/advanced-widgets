@@ -67,6 +67,7 @@ import com.antiliacode.widgets.demo.error.PageExpiredPage;
 import com.antiliacode.widgets.demo.list.JsonListPage;
 import com.antiliacode.widgets.demo.looks.LooksPage;
 import com.antiliacode.widgets.demo.mail.IMailer;
+import com.antiliacode.widgets.demo.breadcrumb.BreadcrumbsPage;
 import com.antiliacode.widgets.demo.menu.MenusPage;
 import com.antiliacode.widgets.demo.modal.ModalDialogPage;
 import com.antiliacode.widgets.demo.notification.NotificationsPage;
@@ -283,6 +284,7 @@ public class WicketApplication extends WebApplication
 		mountPage("resizable", ResizablePage.class);
 		mountPage("tabs", TabbedPanelPage.class);
 		mountPage("menus", MenusPage.class);
+		mountPage("breadcrumbs", BreadcrumbsPage.class);
 		mountPage("popovers", PopoversPage.class);
 		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
