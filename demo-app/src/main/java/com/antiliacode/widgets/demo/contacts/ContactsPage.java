@@ -14,16 +14,12 @@
 package com.antiliacode.widgets.demo.contacts;
 
 import java.io.Serializable;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
-import org.apache.wicket.ajax.attributes.ThrottlingSettings;
-import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.extensions.ajax.AjaxDownloadBehavior.Location;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -67,6 +63,7 @@ import com.antiliacode.widgets.dynamicdatatable.RowNumberColumn;
 import com.antiliacode.widgets.dynamicdatatable.SelectionColumn;
 import com.antiliacode.widgets.dynamicdatatable.SelectionCountToolbarAction;
 import com.antiliacode.widgets.dynamicdatatable.SortableDynamicColumn;
+import com.antiliacode.widgets.filter.FilterBehavior;
 import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.modal.IModalButtonFactory;
 import com.antiliacode.widgets.modal.Modal;
@@ -339,24 +336,7 @@ public class ContactsPage extends DemoPage
 	{
 		Fragment search = new Fragment(id, "search", this);
 		TextField<String> text = new TextField<>("text", new PropertyModel<>(filter, "text"));
-		text.add(new AjaxFormComponentUpdatingBehavior("input")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				super.updateAjaxAttributes(attributes);
-				attributes.setThrottlingSettings(
-					new ThrottlingSettings(Duration.ofMillis(300), true));
-			}
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				onFilterChanged(target, null, false);
-			}
-		});
+		text.add(FilterBehavior.onFilter(target -> onFilterChanged(target, null, false)));
 		search.add(text);
 		return search;
 	}

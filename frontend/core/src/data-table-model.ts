@@ -158,6 +158,14 @@ export interface DataTableRows {
  */
 export type DataTableFilter = (data: unknown, filter: string) => boolean;
 
+/**
+ * How long a filter whose rows come from the server waits for the user to pause typing, in
+ * milliseconds, as Wicket's FilterBehavior does: each key within it puts the request off again, so
+ * a word typed quickly costs one request. A filter over rows the browser already has filters at
+ * once.
+ */
+export const FILTER_DELAY = 150;
+
 /** Whether a text or number of the data contains the filter, ignoring case. */
 const containsFilter: DataTableFilter = (data, filter) => {
 	const wanted = filter.toLocaleLowerCase();
