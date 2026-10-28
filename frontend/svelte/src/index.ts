@@ -13,6 +13,7 @@
  */
 
 export { default as Autocomplete } from './Autocomplete.svelte';
+export { default as Breadcrumb } from './Breadcrumb.svelte';
 export { default as Button } from './Button.svelte';
 export { default as CKEditor } from './CKEditor.svelte';
 export { default as CodeEditor } from './CodeEditor.svelte';
@@ -37,16 +38,18 @@ export { default as SplitPanel } from './SplitPanel.svelte';
 export { default as Tabs } from './Tabs.svelte';
 export { default as Tree } from './Tree.svelte';
 export { default as TreeGrid } from './TreeGrid.svelte';
-export type { DesktopWindowType, DropdownOption, MenuEntry, MenuItem, MenuSeparator,
+export type { BreadcrumbItem, DesktopWindowType, DropdownOption, MenuEntry, MenuItem, MenuSeparator,
 	TabItem } from './types.js';
 export { getLook, LOOK_CONTEXT, setLook } from './look.js';
-export { BOOTSTRAP_LOOK, buttonClasses, CK_EDITOR_FEATURES, ckEditor, CODE_EDITOR_EVENTS,
-	CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker, desktop, dropdown,
-	FILTER_DELAY, localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS,
+export { BOOTSTRAP_LOOK, breadcrumb, BREADCRUMB_SEPARATORS, buttonClasses, CK_EDITOR_FEATURES, ckEditor,
+	CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker,
+	desktop, dropdown, FILTER_DELAY, localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover,
+	POPOVER_DESIGNS, POPOVER_PLACEMENTS,
 	registerLanguage, registerLook, registerRichTextExtension, resizable, DEFAULT_RICH_TEXT_TOOLBAR,
 	isSafeUrl, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RICH_TEXT_TOOLS,
 	richTextEditor, scrollbar, splitPanel, tabs } from '@antilia/core';
-export type { AutocompleteSuggestion, AutocompleteValue, ButtonSize, ButtonVariant,
+export type { AutocompleteSuggestion, AutocompleteValue, BreadcrumbOptions, BreadcrumbSeparator,
+	BreadcrumbTexts, ButtonSize, ButtonVariant,
 	CKEditorBuild, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
 	CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader, CodeEditorOptions,
 	CodeEditorSelection, CodeEditorState, CodeEditorStateChange, CodeEditorTexts, Extension,

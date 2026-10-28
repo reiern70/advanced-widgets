@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="breadcrumbs-demo">
+	<div wicket:id="cases">[the cases, as pills]</div>
+</div>
+
+<wicket:fragment wicket:id="siteCase">
+	<section>
+		<p class="breadcrumbs-demo__intro"><wicket:message key="siteIntro"/></p>
+		<div wicket:id="siteTrail"></div>
+		<div class="breadcrumbs-demo__page">
+			<h4 wicket:id="siteHeading" class="breadcrumbs-demo__heading">[heading]</h4>
+			<p wicket:id="siteBelow" class="breadcrumbs-demo__text">[below]</p>
+			<ul class="breadcrumbs-demo__places">
+				<li wicket:id="sitePages"><a wicket:id="link" class="breadcrumbs-demo__place"><span wicket:id="icon" class="breadcrumbs-demo__icon">[icon]</span><span wicket:id="label">[label]</span></a></li>
+			</ul>
+		</div>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="foldersCase">
+	<section>
+		<p class="breadcrumbs-demo__intro"><wicket:message key="foldersIntro"/></p>
+		<div wicket:id="folderView" class="breadcrumbs-demo__view">
+			<div wicket:id="folderTrail"></div>
+			<div class="breadcrumbs-demo__page">
+				<h4 wicket:id="folderHeading" class="breadcrumbs-demo__heading">[heading]</h4>
+				<ul class="breadcrumbs-demo__places">
+					<li wicket:id="subfolders"><a wicket:id="link" class="breadcrumbs-demo__place"><span wicket:id="icon" class="breadcrumbs-demo__icon">[icon]</span><span wicket:id="label">[label]</span></a></li>
+				</ul>
+				<p wicket:id="emptyFolder" class="breadcrumbs-demo__text">[empty]</p>
+			</div>
+		</div>
+	</section>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="settingsCase">
+	<section>
+		<p class="breadcrumbs-demo__intro"><wicket:message key="settingsIntro"/></p>
+		<form wicket:id="form" class="breadcrumbs-demo__controls">
+			<label class="breadcrumbs-demo__control"><wicket:message key="separator"/> <select wicket:id="separator"></select></label>
+			<label class="breadcrumbs-demo__control"><wicket:message key="maxItems"/> <select wicket:id="maxItems"></select></label>
+		</form>
+		<div wicket:id="preview" class="breadcrumbs-demo__preview"><div wicket:id="settingsTrail"></div></div>
+		<p wicket:id="settingsStatus" class="breadcrumbs-demo__status" role="status">[status]</p>
+	</section>
+</wicket:fragment>
+</wicket:extend>
+</body>
+</html>

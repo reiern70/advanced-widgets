@@ -1017,6 +1017,50 @@
 }
 
 /*
+ * Breadcrumbs: the list is Bootstrap's breadcrumb, which spaces the crumbs and colors the
+ * separators and the page shown, Bootstrap's active crumb; the links are Bootstrap's links. The
+ * separator is the one of the breadcrumb's class, which sets --bs-breadcrumb-divider.
+ */
+
+.antilia-look-bootstrap .antilia-breadcrumb-list.breadcrumb {
+	align-items: center;
+}
+
+.antilia-look-bootstrap .antilia-breadcrumb-item.breadcrumb-item + .breadcrumb-item::before {
+	padding: 0 var(--bs-breadcrumb-item-padding-x) 0 0;
+	color: var(--bs-breadcrumb-divider-color);
+	font-size: inherit;
+}
+
+.antilia-look-bootstrap :is(.antilia-breadcrumb-link, .antilia-breadcrumb-more-button) {
+	padding: 0;
+	border-radius: var(--bs-border-radius-sm);
+	color: var(--bs-link-color);
+	text-decoration: underline;
+}
+
+.antilia-look-bootstrap :is(.antilia-breadcrumb-link, .antilia-breadcrumb-more-button):hover {
+	background: transparent;
+	color: var(--bs-link-hover-color);
+}
+
+.antilia-look-bootstrap :is(.antilia-breadcrumb-link, .antilia-breadcrumb-more-button):focus-visible {
+	outline: 0;
+	box-shadow: var(--antilia-look-focus-ring);
+}
+
+.antilia-look-bootstrap .antilia-breadcrumb-link:is([aria-disabled='true'], :disabled, a:not([href])) {
+	color: var(--bs-secondary-color);
+	text-decoration: none;
+}
+
+.antilia-look-bootstrap .antilia-breadcrumb-current.active > .antilia-breadcrumb-page {
+	padding: 0;
+	color: var(--bs-breadcrumb-item-active-color);
+	font-weight: inherit;
+}
+
+/*
  * The close buttons of the tabs and the popovers: Bootstrap's x, in the color of the text around
  * it, as their designs are light or dark, the selected pill for one; its image is the mask of
  * the button's ::before, so the button keeps its own ring of the focus

@@ -1,0 +1,161 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Breadcrumbs, in the colors of the theme they are in (see antilia-theme.css) and with colors of
+ * their own outside one: a row of crumbs, links in the theme's primary color, the last crumb, the
+ * page shown, in the color of the text. A separator between the crumbs, by the class of the
+ * breadcrumb: › (antilia-breadcrumb-chevron), / (antilia-breadcrumb-slash) or →
+ * (antilia-breadcrumb-arrow), with an empty alternative text, so that screen readers skip it. The
+ * row wraps onto more lines when it has no room.
+ *
+ * In Bootstrap's look the list is Bootstrap's breadcrumb, which lays it out; the separator is the
+ * one of the class, through --bs-breadcrumb-divider.
+ */
+
+.antilia-breadcrumb {
+	color: var(--antilia-theme-text, #1c2333);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+.antilia-breadcrumb-chevron {
+	--bs-breadcrumb-divider: '›';
+}
+
+.antilia-breadcrumb-slash {
+	--bs-breadcrumb-divider: '/';
+}
+
+.antilia-breadcrumb-arrow {
+	--bs-breadcrumb-divider: '→';
+}
+
+.antilia-breadcrumb-list {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	row-gap: 0.25em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-breadcrumb-item {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.antilia-breadcrumb-item[hidden] {
+	display: none;
+}
+
+/* the separators, drawn before every crumb but the first */
+
+.antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	flex: none;
+	padding: 0 0.5em;
+	color: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 55%, transparent);
+}
+
+.antilia-breadcrumb-chevron .antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	content: '›';
+	content: '›' / '';
+	font-size: 1.15em;
+	line-height: 1;
+}
+
+.antilia-breadcrumb-slash .antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	content: '/';
+	content: '/' / '';
+}
+
+.antilia-breadcrumb-arrow .antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	content: '→';
+	content: '→' / '';
+}
+
+/* the crumbs: links, buttons doing something, crumbs leading nowhere and the page shown */
+
+.antilia-breadcrumb-link,
+.antilia-breadcrumb-page,
+.antilia-breadcrumb-text,
+.antilia-breadcrumb-more-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	min-width: 0;
+	margin: 0;
+	padding: 0.15em 0.25em;
+	border: 0;
+	border-radius: var(--antilia-look-radius-sm, 0.25em);
+	background: transparent;
+	font: inherit;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+.antilia-breadcrumb-link,
+.antilia-breadcrumb-more-button {
+	color: var(--antilia-theme-primary, #1d4ed8);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.antilia-breadcrumb-link:hover,
+.antilia-breadcrumb-more-button:hover {
+	background: var(--antilia-theme-hover, #e8edf7);
+	text-decoration: underline;
+}
+
+.antilia-breadcrumb-link:focus-visible,
+.antilia-breadcrumb-more-button:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2563eb);
+	outline-offset: 1px;
+}
+
+/* a crumb the user cannot choose: Wicket's disabled link has no href */
+.antilia-breadcrumb-link[aria-disabled='true'],
+.antilia-breadcrumb-link:disabled,
+a.antilia-breadcrumb-link:not([href]) {
+	background: transparent;
+	color: inherit;
+	opacity: 0.6;
+	text-decoration: none;
+	cursor: default;
+}
+
+.antilia-breadcrumb-current > .antilia-breadcrumb-page {
+	color: inherit;
+	font-weight: 600;
+}
+
+.antilia-breadcrumb-icon {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+}
+
+.antilia-breadcrumb-icon > svg {
+	width: 1em;
+	height: 1em;
+}
+
+.antilia-breadcrumb-more-button {
+	padding: 0.15em 0.45em;
+	letter-spacing: 0.05em;
+}

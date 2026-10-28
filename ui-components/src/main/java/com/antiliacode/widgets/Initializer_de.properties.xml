@@ -111,6 +111,8 @@
 	<entry key="TabbedPanel.closeModified">Die Änderungen in {0} sind nicht gespeichert. Den Tab schließen und sie verlieren?</entry>
 	<entry key="TabbedPanel.discard">Schließen und verlieren</entry>
 	<entry key="TabbedPanel.keep">Geöffnet lassen</entry>
+	<entry key="Breadcrumb.label">Brotkrümelnavigation</entry>
+	<entry key="Breadcrumb.more">Den ganzen Pfad zeigen ({0} weitere)</entry>
 	<entry key="Popover.close">Schließen</entry>
 	<entry key="Autocomplete.placeholder">Tippen zum Suchen…</entry>
 	<entry key="Autocomplete.noMatch">Keine Treffer</entry>
