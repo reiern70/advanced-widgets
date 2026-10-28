@@ -13,18 +13,15 @@
  */
 package com.antiliacode.widgets.demo.datatable;
 
-import java.time.Duration;
-
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
-import org.apache.wicket.ajax.attributes.ThrottlingSettings;
-import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
+import com.antiliacode.widgets.filter.FilterBehavior;
+
 /**
- * A text field filtering users while the user types, shown in front of the navigation of the
+ * A text field filtering users once the user pauses typing, shown in front of the navigation of the
  * dynamic table examples.
  */
 public abstract class UserFilterPanel extends Panel
@@ -36,24 +33,7 @@ public abstract class UserFilterPanel extends Panel
 		super(id);
 
 		TextField<String> field = new TextField<>("filter", filter);
-		field.add(new AjaxFormComponentUpdatingBehavior("input")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				super.updateAjaxAttributes(attributes);
-				attributes.setThrottlingSettings(
-					new ThrottlingSettings(Duration.ofMillis(300), true));
-			}
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				onFilter(target);
-			}
-		});
+		field.add(FilterBehavior.onFilter(this::onFilter));
 		add(field);
 	}
 

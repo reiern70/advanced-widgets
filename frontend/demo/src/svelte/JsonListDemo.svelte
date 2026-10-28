@@ -18,7 +18,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Dropdown, InfiniteList } from '@antilia/svelte';
+	import { Dropdown, FILTER_DELAY, InfiniteList } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice, type User } from '../data.js';
 	import { interpolate, Users, type JsonListConfig, type UserFields } from '../json-list.js';
@@ -26,9 +26,6 @@
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
 	import UserForm from './UserForm.svelte';
-
-	/** The time the filter waits for more typing, as the Wicket filter throttles. */
-	const FILTER_DELAY = 300;
 
 	let { config }: { config: JsonListConfig } = $props();
 

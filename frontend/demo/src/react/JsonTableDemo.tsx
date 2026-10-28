@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Button, DataTable, Dropdown, type DataTableHandle } from '@antilia/react';
+import { Button, DataTable, Dropdown, FILTER_DELAY, type DataTableHandle } from '@antilia/react';
 
 import { format, loadChoices, type Choice } from '../data.js';
 import { interpolate, type UserFields } from '../json-list.js';
@@ -26,9 +26,6 @@ import { UserForm } from './UserForm.js';
 
 /** What the dialog shows: the form of a user, new when its key is null, or a deletion. */
 type Shown = { form: string | null } | { deletion: string } | null;
-
-/** The time the filter waits for more typing, as the Wicket filter throttles. */
-const FILTER_DELAY = 300;
 
 function AddIcon() {
 	return (
@@ -67,6 +64,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 			(error) => console.error(error));
 	}, [config.choicesUrl]);
 
+	// rows from the server are asked for once typing pauses; the local ones filter at once
 	useEffect(() => {
 		const timer = window.setTimeout(() => setFilter(typed), FILTER_DELAY);
 		return () => window.clearTimeout(timer);
@@ -160,7 +158,7 @@ export function JsonTableDemo({ config }: { config: JsonTableConfig }) {
 					infinite={settings.infinite} selection={settings.selection}
 					selectionCount={settings.selectionCount} navigationPosition={settings.navigation}
 					clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
-					onAction={action} filter={filter}
+					onAction={action} filter={fromResource ? filter : typed}
 					resizableColumns={settings.resizable ? 'stretch' : false}
 					bodyHeight={config.bodyHeight} adjustToParent={config.adjustToParent ?? true}
 					texts={texts.table}
