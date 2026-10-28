@@ -62,8 +62,8 @@ import com.antiliacode.widgets.richtext.IRichTextSanitizer;
  * {@link #setSanitizer(IRichTextSanitizer) cleaned} before the model gets it, with the
  * {@link CKEditorPolicy} of the features by default, and {@link CKEditorView} shows it in a page,
  * cleaned the same way. The text area stays in the page, hidden, and holds the text; the editor
- * fires the events of {@link com.antiliacode.widgets.richtext.RichTextEditorEvent}, which
- * {@link com.antiliacode.widgets.richtext.RichTextEditorEventBehavior}s hear of; it keeps its
+ * fires the events of {@link com.antiliacode.widgets.richtext.RichTextEditorEvents} and listens to
+ * those it is {@link #addEvent(com.antiliacode.widgets.event.IClientEvent) given}; it keeps its
  * {@link RichTextEditorState state} on the server; it tells the tabs and the desktop it is in
  * whether its text has changes not saved.
  * <p>

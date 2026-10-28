@@ -30,7 +30,9 @@
 	<entry key="start">Type, select, scroll or resize: the server keeps it all.</entry>
 	<entry key="heardFocus">The server heard you entered the article.</entry>
 	<entry key="heardBlur">The server heard you left the article, with its text.</entry>
+	<entry key="heardBlurChanged">The server heard you left the article, with its text changed: {0} characters before, {1} now.</entry>
 	<entry key="heardSave">Saved the article.</entry>
+	<entry key="heardResize">The server heard you resized the article to {0}.</entry>
 	<entry key="known">The server knows: {0} characters of HTML, {1} words; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">the cursor at {0}</entry>
 	<entry key="selected">selected from {0} to {1}</entry>

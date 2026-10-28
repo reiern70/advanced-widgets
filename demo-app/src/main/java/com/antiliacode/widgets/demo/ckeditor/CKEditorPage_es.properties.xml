@@ -30,7 +30,9 @@
 	<entry key="start">Escriba, seleccione, desplace o cambie el tamaño: el servidor lo guarda todo.</entry>
 	<entry key="heardFocus">El servidor supo que entró en el artículo.</entry>
 	<entry key="heardBlur">El servidor supo que salió del artículo, con su texto.</entry>
+	<entry key="heardBlurChanged">El servidor supo que salió del artículo, con su texto cambiado: {0} caracteres antes, {1} ahora.</entry>
 	<entry key="heardSave">Artículo guardado.</entry>
+	<entry key="heardResize">El servidor supo que llevó el artículo a {0}.</entry>
 	<entry key="known">El servidor sabe: {0} caracteres de HTML, {1} palabras; {2}; {3}; {4}.</entry>
 	<entry key="cursorAt">el cursor en {0}</entry>
 	<entry key="selected">seleccionado de {0} a {1}</entry>

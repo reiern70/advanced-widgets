@@ -51,8 +51,8 @@
  * As the Tiptap editor, it keeps its state, what is selected, how far the text is scrolled and
  * the size the user gave it, by the bar along its bottom; it tells whether the text has changes
  * not saved, as data-modified on its element, which tabs and windows of the desktop show; Ctrl+S
- * tells the page to save; and it fires the events of RICH_TEXT_EDITOR_EVENTS, which Wicket's
- * RichTextEditorEventBehavior hears of. The positions of the selection count the places between
+ * tells the page to save; and it fires the events of RICH_TEXT_EDITOR_EVENTS, which the events
+ * of Wicket's editor listen to. The positions of the selection count the places between
  * the nodes too, as ProseMirror's do.
  */
 

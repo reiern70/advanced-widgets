@@ -55,6 +55,7 @@ const SCRIPTS = [
 	['src/wicket/button.ts', 'com/antiliacode/widgets/button/antilia-button.js'],
 	['src/wicket/chips.ts', 'com/antiliacode/widgets/chips/antilia-chips.js'],
 	['src/wicket/ck-editor.ts', 'com/antiliacode/widgets/ckeditor/antilia-ckeditor.js'],
+	['src/wicket/client-events.ts', 'com/antiliacode/widgets/event/antilia-client-events.js'],
 	['src/wicket/clipboard.ts', 'com/antiliacode/widgets/clipboard/antilia-clipboard.js'],
 	['src/wicket/code-editor.ts', 'com/antiliacode/widgets/codeeditor/antilia-code-editor.js'],
 	['src/wicket/date-picker.ts', 'com/antiliacode/widgets/datepicker/antilia-date-picker.js'],
