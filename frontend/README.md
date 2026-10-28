@@ -146,18 +146,22 @@ without rendering its panes again: the demo's button hiding the preview beside t
 The rich text editor (`rich-text-editor.ts`, built as `antilia-rich-text-editor.js` for Wicket's
 `RichTextEditor`) is Tiptap, on ProseMirror, with a toolbar of the components' own
 (`rich-text-toolbar.ts`), in the colors of the theme and the look of the page: Tiptap has none.
-The text holds headings, bold, italic, underlined, struck and code text, links, bulleted, numbered
-and task lists, quotes, code blocks, rules, tables, images and alignment, the features
+The text holds headings, bold, italic, underlined, struck and code text, the colors of the text and
+of its background, links, bulleted, numbered and task lists, quotes, code blocks, rules, tables,
+images and alignment, the features
 (`RICH_TEXT_FEATURES`, `rich-text-schema.ts`), all of them unless the page gives fewer
 (`features`); a feature left out is not in the schema, so a paste brings its text alone, and its
 tools do not show. The toolbar is the page's, in groups (`toolbar`, `DEFAULT_RICH_TEXT_TOOLBAR`;
-false for none), a WAI-ARIA toolbar the arrow keys move along; the text style and the table open a
-menu, the link and the image a form in a popover; `bubbleMenu` adds the inline formats over a
+false for none), a WAI-ARIA toolbar the arrow keys move along; the text style, the colors and the
+table open a menu, the link and the image a form in a popover; `bubbleMenu` adds the inline formats over a
 selection. The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types,
 Ctrl+K edits the link, Ctrl+S calls `onSave`, and Escape, then Tab, leaves the editor even in a
 list. The text is HTML by default, or Markdown (`format: 'markdown'`, Tiptap's Markdown extension;
-underlined text and alignment are then left out, Markdown has no syntax for them) or Tiptap's
-JSON. The HTML has no style attribute: text aligns by classes (`RICH_TEXT_ALIGN_CLASSES`), tables
+underlined text, colors and alignment are then left out, Markdown has no syntax for them) or
+Tiptap's JSON. The HTML has no style attribute: text aligns by classes (`RICH_TEXT_ALIGN_CLASSES`),
+and takes the colors of a palette (`RICH_TEXT_COLORS`) by classes too, `<span
+class="antilia-color-red">` and `<mark class="antilia-background-yellow">`, which
+`rich-text-editor.css` mixes with the colors of the theme so that they read in light and dark; tables
 have no widths, and Tiptap's own style sheet is in `rich-text-editor.css` instead of a style element,
 so the editor needs no `'unsafe-inline'`. Links and images go only to http, https and mailto
 addresses, or relative ones (`isSafeUrl`). The editor writes the text its own way, `<b>` as

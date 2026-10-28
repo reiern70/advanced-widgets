@@ -26,8 +26,8 @@ import com.antiliacode.widgets.theme.LookPart;
 
 /**
  * The HTML of a {@link RichTextEditor} as a page shows it, read only: its headings, lists, quotes,
- * code, tables and alignment drawn as in the editor, by {@link RichTextEditor#CSS}. Attach it to a
- * {@code <div>}, whose body it replaces.
+ * code, tables, colors and alignment drawn as in the editor, by {@link RichTextEditor#CSS}. Attach
+ * it to a {@code <div>}, whose body it replaces.
  * <p>
  * The HTML is {@link #setSanitizer(RichTextSanitizer) cleaned} before it is written into the page,
  * with {@link RichTextPolicy#ALL} by default, whatever the model holds: HTML saved before the

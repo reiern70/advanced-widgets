@@ -42,6 +42,10 @@ class RichTextPolicyTest
 		String html = "<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5>" +
 			"<h6>Six</h6><p>Some <strong>bold</strong>, <em>italic</em>, <u>underlined</u>, " +
 			"<s>struck</s> and <code>code</code> text.<br />A new line.</p>" +
+			"<p><span class=\"antilia-color-red\">Red</span>, <mark " +
+			"class=\"antilia-background-yellow\">marked</mark> and <span " +
+			"class=\"antilia-color-pink\"><mark class=\"antilia-background-blue\">both</mark>" +
+			"</span></p>" +
 			"<blockquote><p>A quote</p></blockquote><hr />" +
 			"<ul><li><p>One</p><ul><li><p>Nested</p></li></ul></li></ul>" +
 			"<ol start=\"3\" type=\"a\"><li><p>Three</p></li></ol>" +
@@ -101,6 +105,31 @@ class RichTextPolicyTest
 			"</ol>"));
 		assertEquals("<p><a href=\"https://example.org\" rel=\"noopener noreferrer nofollow\">" +
 			"A</a></p>", clean("<p><a href=\"https://example.org\" target=\"_top\">A</a></p>"));
+	}
+
+	@Test
+	void keepsTheColorsOfThePaletteOnly()
+	{
+		for (RichTextColor color : RichTextColor.values())
+		{
+			String html = "<p><span class=\"" + color.getColorClass() + "\">a</span><mark " +
+				"class=\"" + color.getBackgroundClass() + "\">b</mark></p>";
+			assertEquals(html, clean(html));
+		}
+		String others = "<p><span class=\"antilia-color-teal\">teal</span>, <span " +
+			"style=\"color: red\">styled</span>, <mark class=\"antilia-background-red evil\" " +
+			"style=\"background: url(x)\">evil</mark>, <mark>pasted</mark></p>";
+		// the spans of task lists stay bare
+		assertEquals("<p><span>teal</span>, <span>styled</span>, <mark>evil</mark>, " +
+			"<mark>pasted</mark></p>", clean(others));
+		assertEquals("<p>teal, styled, <mark>evil</mark>, <mark>pasted</mark></p>",
+			RichTextPolicy.of(EnumSet.of(RichTextFeature.TEXT_COLOR,
+				RichTextFeature.TEXT_BACKGROUND)).sanitize(others));
+		assertEquals("<p>a <strong>b</strong></p>", RichTextPolicy.of(EnumSet.of(
+			RichTextFeature.BOLD)).sanitize("<p><span class=\"antilia-color-red\">a</span> " +
+				"<mark class=\"antilia-background-red\"><strong>b</strong></mark></p>"));
+		assertEquals("antilia-color-red", RichTextColor.RED.getColorClass());
+		assertEquals("antilia-background-yellow", RichTextColor.YELLOW.getBackgroundClass());
 	}
 
 	@Test

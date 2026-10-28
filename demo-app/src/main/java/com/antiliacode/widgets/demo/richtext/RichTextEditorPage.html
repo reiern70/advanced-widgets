@@ -27,7 +27,15 @@
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="readOnly"/> <wicket:message key="readOnly"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="count"/> <wicket:message key="count"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="highlight"/> <wicket:message key="highlight"/></label>
+			<fieldset wicket:id="chooser" class="rich-text-demo__tools">
+				<legend><wicket:message key="tools"/></legend>
+				<span wicket:id="tools" class="rich-text-demo__tool-list">[a check box for each tool]</span>
+			</fieldset>
 		</form>
+		<div wicket:id="toolbarJava" class="rich-text-demo__java">
+			<h3 class="rich-text-demo__subtitle"><wicket:message key="toolbarJava"/></h3>
+			<pre><code wicket:id="java">[the Java making the toolbar]</code></pre>
+		</div>
 		<p wicket:id="extras" class="rich-text-demo__status">[the languages of the code blocks and the uploads]</p>
 		<form wicket:id="editorForm" class="rich-text-demo__editor">
 			<label wicket:id="articleName" class="rich-text-demo__name">[article]</label>

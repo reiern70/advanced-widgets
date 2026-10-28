@@ -44,6 +44,17 @@ public enum RichTextFeature
 	/** Code in the text. */
 	CODE("code"),
 
+	/**
+	 * The color of text, of the {@link RichTextColor palette}, by a class; not in Markdown.
+	 */
+	TEXT_COLOR("textColor"),
+
+	/**
+	 * The color of the background of text, of the {@link RichTextColor palette}, by a class; not
+	 * in Markdown.
+	 */
+	TEXT_BACKGROUND("textBackground"),
+
 	/** Links, to http, https and mailto addresses, or relative ones. */
 	LINK("link"),
 
@@ -92,8 +103,8 @@ public enum RichTextFeature
 	/**
 	 * @param format
 	 *            how the editor keeps the text
-	 * @return the features of an editor not told otherwise: all of them, but underlined text and
-	 *         alignment for Markdown
+	 * @return the features of an editor not told otherwise: all of them, but underlined text,
+	 *         colors and alignment for Markdown
 	 */
 	public static Set<RichTextFeature> defaults(RichTextFormat format)
 	{
@@ -101,6 +112,8 @@ public enum RichTextFeature
 		if (format == RichTextFormat.MARKDOWN)
 		{
 			features.remove(UNDERLINE);
+			features.remove(TEXT_COLOR);
+			features.remove(TEXT_BACKGROUND);
 			features.remove(TEXT_ALIGN);
 		}
 		return Collections.unmodifiableSet(features);

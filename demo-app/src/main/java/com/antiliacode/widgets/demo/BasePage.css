@@ -266,6 +266,14 @@ a { color: var(--accent, var(--primary)); }
 	margin-bottom: 8px;
 }
 .demo .demo__heading h1 { margin: 0; }
+/* the library the components of a demo are based on, below its title */
+.demo__based-on {
+	margin: 0 0 16px;
+	color: var(--muted);
+	font-size: 14px;
+}
+.demo__based-on a { color: inherit; font-weight: 600; }
+.demo__based-on a:hover { color: var(--primary); }
 .demo__about {
 	display: inline-flex;
 	align-items: center;

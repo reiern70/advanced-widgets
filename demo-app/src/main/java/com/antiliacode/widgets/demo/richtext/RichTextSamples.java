@@ -26,6 +26,11 @@ final class RichTextSamples
 		"<em>oystercatchers</em> working the mud flats. Read more about them on ",
 		"<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" ",
 		"href=\"https://en.wikipedia.org/wiki/Oystercatcher\">Wikipedia</a>.</p>",
+		"<p>Their bills are <span class=\"antilia-color-orange\">bright orange</span>, the sea was ",
+		"<span class=\"antilia-color-blue\">calm</span>, and the ",
+		"<mark class=\"antilia-background-yellow\">best spot</mark> is past the ",
+		"<mark class=\"antilia-background-green\"><span class=\"antilia-color-gray\">old pier",
+		"</span></mark>.</p>",
 		"<h3>What we counted</h3>",
 		"<table><tbody><tr><th><p>Bird</p></th><th class=\"antilia-text-right\"><p>Count</p></th></tr>",
 		"<tr><td><p>Oystercatcher</p></td><td class=\"antilia-text-right\"><p>42</p></td></tr>",
@@ -76,6 +81,9 @@ final class RichTextSamples
 		"<p style=\"color: red; position: fixed; inset: 0\">A paragraph styled to cover the page.</p>",
 		"<iframe src=\"https://example.org\"></iframe>",
 		"<p class=\"antilia-text-center evil\">A class of the page's own, and an alignment.</p>",
+		"<p><span class=\"antilia-color-green\">A color of the palette</span>, ",
+		"<span style=\"color: #ff00ff\">a color of its own</span> and ",
+		"<mark class=\"antilia-background-yellow\">a background</mark>.</p>",
 		"<p class=\"antilia-text-right\">Aligned to the right.</p>");
 
 	private RichTextSamples()

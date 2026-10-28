@@ -191,6 +191,8 @@
 	<entry key="RichTextEditor.underline">Underline</entry>
 	<entry key="RichTextEditor.strike">Strikethrough</entry>
 	<entry key="RichTextEditor.code">Code</entry>
+	<entry key="RichTextEditor.textColor">Text color</entry>
+	<entry key="RichTextEditor.textBackground">Background color</entry>
 	<entry key="RichTextEditor.link">Link</entry>
 	<entry key="RichTextEditor.bulletList">Bulleted list</entry>
 	<entry key="RichTextEditor.orderedList">Numbered list</entry>
@@ -233,6 +235,16 @@
 	<entry key="RichTextEditor.word">{0} word</entry>
 	<entry key="RichTextEditor.resize">Drag, or use the arrow keys, to resize the editor</entry>
 	<entry key="RichTextEditor.plainText">Plain text</entry>
+	<entry key="RichTextEditor.defaultColor">Default</entry>
+	<entry key="RichTextEditor.noBackground">None</entry>
+	<entry key="RichTextEditor.colorGray">Gray</entry>
+	<entry key="RichTextEditor.colorRed">Red</entry>
+	<entry key="RichTextEditor.colorOrange">Orange</entry>
+	<entry key="RichTextEditor.colorYellow">Yellow</entry>
+	<entry key="RichTextEditor.colorGreen">Green</entry>
+	<entry key="RichTextEditor.colorBlue">Blue</entry>
+	<entry key="RichTextEditor.colorPurple">Purple</entry>
+	<entry key="RichTextEditor.colorPink">Pink</entry>
 	<entry key="RichTextEditor.uploadImage">Upload an image…</entry>
 	<entry key="RichTextEditor.uploading">Uploading {0}…</entry>
 	<entry key="RichTextEditor.theImage">The image</entry>
