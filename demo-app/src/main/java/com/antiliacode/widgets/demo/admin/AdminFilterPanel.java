@@ -13,14 +13,11 @@
  */
 package com.antiliacode.widgets.demo.admin;
 
-import java.time.Duration;
-
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
-import org.apache.wicket.ajax.attributes.ThrottlingSettings;
-import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.panel.Panel;
+
+import com.antiliacode.widgets.filter.FilterBehavior;
 
 /**
  * The filter of a table of the administration, shown in front of its navigation (see
@@ -36,7 +33,8 @@ abstract class AdminFilterPanel extends Panel
 	}
 
 	/**
-	 * Makes the field filter on the event, a moment after the last one.
+	 * Makes the field filter on the event, a moment after the last one (see
+	 * {@link FilterBehavior}).
 	 *
 	 * @param field
 	 *            a field of the filter
@@ -46,24 +44,7 @@ abstract class AdminFilterPanel extends Panel
 	 */
 	protected <T> FormComponent<T> filtering(FormComponent<T> field, String event)
 	{
-		field.add(new AjaxFormComponentUpdatingBehavior(event)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				super.updateAjaxAttributes(attributes);
-				attributes.setThrottlingSettings(
-					new ThrottlingSettings(Duration.ofMillis(300), true));
-			}
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				onFilter(target);
-			}
-		});
+		field.add(FilterBehavior.onFilter(event, this::onFilter));
 		return field;
 	}
 

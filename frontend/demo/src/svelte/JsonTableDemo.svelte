@@ -19,7 +19,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, DataTable, Dropdown } from '@antilia/svelte';
+	import { Button, DataTable, Dropdown, FILTER_DELAY } from '@antilia/svelte';
 
 	import { format, loadChoices, type Choice } from '../data.js';
 	import { interpolate, type UserFields } from '../json-list.js';
@@ -29,9 +29,6 @@
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
 	import UserForm from './UserForm.svelte';
-
-	/** The time the filter waits for more typing, as the Wicket filter throttles. */
-	const FILTER_DELAY = 300;
 
 	let { config }: { config: JsonTableConfig } = $props();
 
@@ -57,8 +54,14 @@
 			(error) => console.error(error));
 	});
 
+	// the rows of the resource are filtered once typing pauses, the local ones at once; the
+	// filter keeps up with the local rows, so that switching to the resource loads them only once
 	$effect(() => {
 		const next = typed;
+		if (!fromResource) {
+			filter = next;
+			return;
+		}
 		const timer = window.setTimeout(() => (filter = next), FILTER_DELAY);
 		return () => window.clearTimeout(timer);
 	});
@@ -174,7 +177,7 @@
 			infinite={settings.infinite} selection={settings.selection}
 			selectionCount={settings.selectionCount} navigationPosition={settings.navigation}
 			clearSelectionOnNavigation={settings.clearSelectionOnNavigation}
-			onaction={action} {filter}
+			onaction={action} filter={fromResource ? filter : typed}
 			resizableColumns={settings.resizable ? 'stretch' : false} bodyHeight={config.bodyHeight}
 			adjustToParent={config.adjustToParent ?? true} texts={texts.table} {toolbar} {actions} />
 	{/key}

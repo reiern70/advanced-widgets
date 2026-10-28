@@ -51,7 +51,7 @@ export { Clipboard } from './clipboard.js';
 export { DynamicDataTable } from './data-table.js';
 export type { Bars, DataTableColumn, DataTableConfig, DataTableData, DataTableLayout, DataTableMessage,
 	DataTableRow, ResizableColumnsRegistry, Veil } from './data-table.js';
-export { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, localRows, PAGE_LINKS,
+export { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, FILTER_DELAY, localRows, PAGE_LINKS,
 	pageLinks, SELECTION_ACTIONS, selectionColumn, SHOW_COLUMNS } from './data-table-model.js';
 export type { DataTableColumnDef, DataTableFilter, DataTablePush, DataTableQuery, DataTableRows,
 	DataTableSort, DataTableTexts } from './data-table-model.js';
