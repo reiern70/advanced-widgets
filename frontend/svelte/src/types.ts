@@ -103,3 +103,28 @@ export interface MenuSeparator {
 
 /** An item or a separator of a Menu. */
 export type MenuEntry = MenuItem | MenuSeparator;
+
+/**
+ * A crumb of a Breadcrumb: a link when it has href, a button calling onclick otherwise, its label
+ * alone when it has neither. The last crumb is the page shown, its label alone whatever it has.
+ */
+export interface BreadcrumbItem {
+	/** The name of the crumb, the key Svelte knows it by; its place in the trail when left out. */
+	id?: string;
+	/** The label of the crumb. */
+	label: string;
+	/** The markup of an icon before the label, an svg, written as is. */
+	icon?: string;
+	/** The tooltip of the crumb, its title. */
+	tooltip?: string;
+	/** Where the crumb leads: it is a link then. */
+	href?: string;
+	/** Where the link opens, _blank for a new window. */
+	target?: string;
+	/** Called when the user chose the crumb, a link or a button. */
+	onclick?: (event: MouseEvent) => void;
+	/** Whether the user cannot choose the crumb, which shows dimmed; false when left out. */
+	disabled?: boolean;
+	/** CSS classes of the link or the button of the crumb. */
+	class?: string;
+}

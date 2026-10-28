@@ -12,6 +12,10 @@
  * limitations under the License.
  */
 
+export { Breadcrumb } from './Breadcrumb.js';
+export type { BreadcrumbHandle, BreadcrumbItem, BreadcrumbProps } from './Breadcrumb.js';
+export type { BreadcrumbSeparator, BreadcrumbTexts } from '@antilia/core';
+export { BREADCRUMB_SEPARATORS } from '@antilia/core';
 export { CodeEditor } from './CodeEditor.js';
 export type { CodeEditorHandle, CodeEditorProps } from './CodeEditor.js';
 export { CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditorLanguages,

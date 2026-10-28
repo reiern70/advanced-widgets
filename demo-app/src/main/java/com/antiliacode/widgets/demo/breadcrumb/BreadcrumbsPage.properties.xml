@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Breadcrumbs</entry>
+	<entry key="explanation">&lt;p&gt;Breadcrumb from ui-components shows where the page is: a row of crumbs from the home page down to the page shown, the last crumb, which is its label and no link. The crumbs are the items of the menus: BookmarkableMenuItem leads to a page, AjaxMenuItem calls the server via Ajax, LinkMenuItem with a request of its own, and an item without a link, such as a SubMenu, is a crumb leading nowhere. Their icons and tooltips show, and the items that do not show are left out.&lt;/p&gt;&lt;p&gt;It is a nav, named, around an ordered list, as the WAI-ARIA breadcrumb pattern has it; the style sheet draws the separators, a chevron, a slash or an arrow, which screen readers do not read. With setMaxItems a long trail shows its first crumb and its last ones, the others behind a button, …, which shows them in place and gives the focus to the first of them. The server renders them hidden already, so nothing moves while the page loads; on a phone the trail wraps.&lt;/p&gt;&lt;p&gt;The site leads to this page with the parameter path, as its pages would. The folders go deeper via Ajax: the server adds a crumb, and a crumb chosen goes back to its folder. The settings choose the separator and how many crumbs show. Everything takes its colors from the theme and its classes from the look, Bootstrap's breadcrumb in the Bootstrap look, and works under a strict Content Security Policy, without inline style.&lt;/p&gt;</entry>
+	<entry key="siteTitle">Site</entry>
+	<entry key="siteIntro">Each crumb leads to this page with the parameter path, as the pages of a site would. Choose a page below to go deeper, a crumb to go back.</entry>
+	<entry key="siteAppIntro">Each crumb leads to a page of the app, which follows its link as a router does. Choose a page below to go deeper, a crumb to go back.</entry>
+	<entry key="siteBelow">The pages in {0}:</entry>
+	<entry key="siteLeaf">There are no pages below {0}.</entry>
+	<entry key="foldersTitle">Folders</entry>
+	<entry key="folders">Folders</entry>
+	<entry key="foldersIntro">Open a folder below: the server adds its crumb via Ajax. Choose a crumb to go back to its folder. Four crumbs show at most: the button … shows the others.</entry>
+	<entry key="foldersAppIntro">Open a folder below: the app adds its crumb. Choose a crumb to go back to its folder. Four crumbs show at most: the button … shows the others.</entry>
+	<entry key="empty">This folder is empty.</entry>
+	<entry key="settingsTitle">Settings</entry>
+	<entry key="settingsIntro">A long trail: choose the separator and how many crumbs show at most.</entry>
+	<entry key="settingsAppIntro">A long trail: choose the separator and how many crumbs show at most.</entry>
+	<entry key="separator">Separator</entry>
+	<entry key="maxItems">Crumbs shown</entry>
+	<entry key="all">All</entry>
+	<entry key="separator.CHEVRON">Chevron ›</entry>
+	<entry key="separator.SLASH">Slash /</entry>
+	<entry key="separator.ARROW">Arrow →</entry>
+	<entry key="settingsStart">Choose a crumb.</entry>
+	<entry key="settingsAppStart">Choose a crumb.</entry>
+	<entry key="chose">You chose {0}, via Ajax.</entry>
+	<entry key="picked">You chose {0}.</entry>
+	<entry key="place.home">Home</entry>
+	<entry key="place.products">Products</entry>
+	<entry key="place.computers">Computers</entry>
+	<entry key="place.laptops">Laptops</entry>
+	<entry key="place.desktops">Desktops</entry>
+	<entry key="place.phones">Phones</entry>
+	<entry key="place.smartphones">Smartphones</entry>
+	<entry key="place.phoneCases">Cases</entry>
+	<entry key="place.services">Services</entry>
+	<entry key="place.support">Support</entry>
+	<entry key="place.training">Training</entry>
+	<entry key="place.files">My drive</entry>
+	<entry key="place.documents">Documents</entry>
+	<entry key="place.projects">Projects</entry>
+	<entry key="place.widgets">widgets</entry>
+	<entry key="place.src">src</entry>
+	<entry key="place.main">main</entry>
+	<entry key="place.java">java</entry>
+	<entry key="place.test">test</entry>
+	<entry key="place.website">Website</entry>
+	<entry key="place.invoices">Invoices</entry>
+	<entry key="place.year2025">2025</entry>
+	<entry key="place.year2026">2026</entry>
+	<entry key="place.pictures">Pictures</entry>
+	<entry key="place.holidays">Holidays</entry>
+	<entry key="place.beach">Beach</entry>
+	<entry key="place.mountains">Mountains</entry>
+	<entry key="place.music">Music</entry>
+</properties>

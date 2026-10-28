@@ -72,6 +72,10 @@ export { DEFAULT_DESKTOP_TEXTS, DEFAULT_PANE, Desktop, desktop, DESKTOP_CLASSES,
 	WINDOW_HEIGHT_PROPERTY, WINDOW_WIDTH_PROPERTY, WINDOW_X_PROPERTY, WINDOW_Y_PROPERTY, WINDOW_Z_PROPERTY } from './desktop.js';
 export type { DesktopOptions, DesktopPane, DesktopTexts, TaskbarPosition, TileLayout, WindowState,
 	WindowType } from './desktop.js';
+export { Breadcrumb, breadcrumb, BREADCRUMB_CLASSES, BREADCRUMB_COLLAPSED_ATTRIBUTE,
+	BREADCRUMB_SEPARATOR_CLASSES, BREADCRUMB_SEPARATORS, collapsedCrumbs,
+	DEFAULT_BREADCRUMB_TEXTS } from './breadcrumb.js';
+export type { BreadcrumbOptions, BreadcrumbSeparator, BreadcrumbTexts } from './breadcrumb.js';
 export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
 export { Menu, menu, MENU_CLASSES, MENU_DESIGN_CLASSES, MENU_DESIGNS, MENU_MAX_HEIGHT_PROPERTY,

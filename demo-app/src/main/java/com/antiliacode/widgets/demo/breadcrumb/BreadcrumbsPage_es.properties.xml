@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Migas de pan</entry>
+	<entry key="explanation">&lt;p&gt;Breadcrumb de ui-components muestra dónde está la página: una fila de migas desde la página de inicio hasta la página mostrada, la última miga, que es su etiqueta y no un enlace. Las migas son los elementos de los menús: BookmarkableMenuItem lleva a una página, AjaxMenuItem llama al servidor por Ajax, LinkMenuItem con una petición propia, y un elemento sin enlace, como un SubMenu, es una miga que no lleva a ninguna parte. Sus iconos y tooltips se muestran, y los elementos que no se muestran quedan fuera.&lt;/p&gt;&lt;p&gt;Es un nav, con nombre, alrededor de una lista ordenada, como pide el patrón de migas de pan de WAI-ARIA; la hoja de estilos dibuja los separadores, un ángulo, una barra o una flecha, que los lectores de pantalla no leen. Con setMaxItems una ruta larga muestra su primera miga y las últimas, las demás tras un botón, …, que las muestra en su sitio y da el foco a la primera de ellas. El servidor ya las renderiza ocultas, para que nada se mueva mientras carga la página; en un teléfono la ruta pasa a varias líneas.&lt;/p&gt;&lt;p&gt;El sitio lleva a esta página con el parámetro path, como lo harían sus páginas. Las carpetas bajan por Ajax: el servidor añade una miga, y una miga elegida vuelve a su carpeta. Los ajustes eligen el separador y cuántas migas se muestran. Todo toma sus colores del tema y sus clases del aspecto, el breadcrumb de Bootstrap en el aspecto Bootstrap, y funciona bajo una Content Security Policy estricta, sin estilos en línea.&lt;/p&gt;</entry>
+	<entry key="siteTitle">Sitio</entry>
+	<entry key="siteIntro">Cada miga lleva a esta página con el parámetro path, como lo harían las páginas de un sitio. Elija abajo una página para bajar, una miga para volver.</entry>
+	<entry key="siteAppIntro">Cada miga lleva a una página de la app, que sigue su enlace como un router. Elija abajo una página para bajar, una miga para volver.</entry>
+	<entry key="siteBelow">Las páginas de {0}:</entry>
+	<entry key="siteLeaf">No hay páginas bajo {0}.</entry>
+	<entry key="foldersTitle">Carpetas</entry>
+	<entry key="folders">Carpetas</entry>
+	<entry key="foldersIntro">Abra una carpeta abajo: el servidor añade su miga por Ajax. Elija una miga para volver a su carpeta. Se muestran cuatro migas como mucho: el botón … muestra las demás.</entry>
+	<entry key="foldersAppIntro">Abra una carpeta abajo: la app añade su miga. Elija una miga para volver a su carpeta. Se muestran cuatro migas como mucho: el botón … muestra las demás.</entry>
+	<entry key="empty">Esta carpeta está vacía.</entry>
+	<entry key="settingsTitle">Ajustes</entry>
+	<entry key="settingsIntro">Una ruta larga: elija el separador y cuántas migas se muestran como mucho.</entry>
+	<entry key="settingsAppIntro">Una ruta larga: elija el separador y cuántas migas se muestran como mucho.</entry>
+	<entry key="separator">Separador</entry>
+	<entry key="maxItems">Migas mostradas</entry>
+	<entry key="all">Todas</entry>
+	<entry key="separator.CHEVRON">Ángulo ›</entry>
+	<entry key="separator.SLASH">Barra /</entry>
+	<entry key="separator.ARROW">Flecha →</entry>
+	<entry key="settingsStart">Elija una miga.</entry>
+	<entry key="settingsAppStart">Elija una miga.</entry>
+	<entry key="chose">Eligió {0}, por Ajax.</entry>
+	<entry key="picked">Eligió {0}.</entry>
+	<entry key="place.home">Inicio</entry>
+	<entry key="place.products">Productos</entry>
+	<entry key="place.computers">Ordenadores</entry>
+	<entry key="place.laptops">Portátiles</entry>
+	<entry key="place.desktops">Sobremesa</entry>
+	<entry key="place.phones">Teléfonos</entry>
+	<entry key="place.smartphones">Smartphones</entry>
+	<entry key="place.phoneCases">Fundas</entry>
+	<entry key="place.services">Servicios</entry>
+	<entry key="place.support">Soporte</entry>
+	<entry key="place.training">Formación</entry>
+	<entry key="place.files">Mi unidad</entry>
+	<entry key="place.documents">Documentos</entry>
+	<entry key="place.projects">Proyectos</entry>
+	<entry key="place.widgets">widgets</entry>
+	<entry key="place.src">src</entry>
+	<entry key="place.main">main</entry>
+	<entry key="place.java">java</entry>
+	<entry key="place.test">test</entry>
+	<entry key="place.website">Sitio web</entry>
+	<entry key="place.invoices">Facturas</entry>
+	<entry key="place.year2025">2025</entry>
+	<entry key="place.year2026">2026</entry>
+	<entry key="place.pictures">Imágenes</entry>
+	<entry key="place.holidays">Vacaciones</entry>
+	<entry key="place.beach">Playa</entry>
+	<entry key="place.mountains">Montaña</entry>
+	<entry key="place.music">Música</entry>
+</properties>

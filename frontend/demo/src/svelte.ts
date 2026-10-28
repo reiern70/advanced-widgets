@@ -30,6 +30,7 @@ import DesktopDemo from './svelte/DesktopDemo.svelte';
 import DropdownDemo from './svelte/DropdownDemo.svelte';
 import JsonListDemo from './svelte/JsonListDemo.svelte';
 import JsonTableDemo from './svelte/JsonTableDemo.svelte';
+import BreadcrumbsDemo from './svelte/BreadcrumbsDemo.svelte';
 import MenusDemo from './svelte/MenusDemo.svelte';
 import ModalDemo from './svelte/ModalDemo.svelte';
 import NotificationsDemo from './svelte/NotificationsDemo.svelte';
@@ -69,6 +70,7 @@ startApps('svelte', {
 	richTextEditor: app(RichTextEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
+	breadcrumbs: app(BreadcrumbsDemo),
 	popovers: app(PopoversDemo),
 	desktop: app(DesktopDemo),
 	buttons: app(ButtonsDemo),

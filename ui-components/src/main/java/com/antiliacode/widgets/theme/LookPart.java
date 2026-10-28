@@ -369,6 +369,24 @@ public enum LookPart
 	MENU_CURRENT(LookAspect.STATE),
 	MENU_CURRENT_PARENT(LookAspect.STATE),
 
+	// breadcrumbs: the path to the page shown, the separator drawn between the crumbs one of
+	// BreadcrumbSeparator; in Bootstrap's look the list is its breadcrumb, the crumbs
+	// breadcrumb-items and the last one active
+	BREADCRUMB(LookAspect.BASE),
+	BREADCRUMB_CHEVRON(LookAspect.BASE),
+	BREADCRUMB_SLASH(LookAspect.BASE),
+	BREADCRUMB_ARROW(LookAspect.BASE),
+	BREADCRUMB_LIST(LookAspect.BASE),
+	BREADCRUMB_ITEM(LookAspect.BASE),
+	BREADCRUMB_LINK(LookAspect.BASE),
+	BREADCRUMB_PAGE(LookAspect.BASE),
+	BREADCRUMB_TEXT(LookAspect.BASE),
+	BREADCRUMB_ICON(LookAspect.BASE),
+	BREADCRUMB_LABEL(LookAspect.BASE),
+	BREADCRUMB_MORE(LookAspect.BASE),
+	BREADCRUMB_MORE_BUTTON(LookAspect.BASE),
+	BREADCRUMB_CURRENT(LookAspect.STATE),
+
 	// trees and tree grids
 	TREE(LookAspect.BASE),
 	TREE_JSON(LookAspect.BASE),

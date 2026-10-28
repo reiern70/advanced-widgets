@@ -51,6 +51,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Resizable elements | ✓ | ✓ |
 | | Tabs that close, asking first when they hold changes not saved | ✓ | ✓ |
 | | Menus, horizontal or vertical, with submenus | ✓ | ✓ |
+| | Breadcrumbs, the middle of a long trail hidden behind a button that shows it | ✓ | ✓ |
 | | Modal dialog that keeps the focus, drags and folds | ✓ | ✓ |
 | | Desktop of floating windows with a taskbar | ✓ | ✓ |
 | Themes | Twelve themes, a theme editor, and a Bootstrap look beside the components' own | ✓ | ✓ |
