@@ -25,6 +25,7 @@ import { LookProvider, lookOf } from '@antilia/react';
 import { startApps, type Mount } from './apps.js';
 import { AutocompleteDemo } from './react/AutocompleteDemo.js';
 import { ButtonsDemo } from './react/ButtonsDemo.js';
+import { CKEditorDemo } from './react/CKEditorDemo.js';
 import { CodeEditorDemo } from './react/CodeEditorDemo.js';
 import { DatePickerDemo } from './react/DatePickerDemo.js';
 import { DesktopDemo } from './react/DesktopDemo.js';
@@ -66,6 +67,7 @@ startApps('react', {
 	resizable: app(ResizableDemo),
 	codeEditor: app(CodeEditorDemo),
 	richTextEditor: app(RichTextEditorDemo),
+	ckEditor: app(CKEditorDemo),
 	tabs: app(TabsDemo),
 	menus: app(MenusDemo),
 	popovers: app(PopoversDemo),

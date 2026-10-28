@@ -458,6 +458,13 @@ const PARTS = {
 	'rich-text-form-buttons': ['base', 'antilia-rich-text-form-buttons', ''],
 	// the HTML of a rich text editor shown in a page, read only
 	'rich-text-view': ['base', 'antilia-rich-text-view', ''],
+	// CKEditor 5: its toolbar, balloons and dialogs are its own; the count of the characters and
+	// the words is Bootstrap's text of a field
+	'ck-editor': ['base', 'antilia-ck-editor', ''],
+	'ck-editor-field': ['base', 'antilia-ck-editor-field', ''],
+	'ck-editor-status': ['base', 'antilia-ck-editor-status', 'form-text'],
+	// the HTML of CKEditor shown in a page, read only, in the style of CKEditor's content
+	'ck-editor-view': ['base', 'antilia-ck-editor-view ck-content', ''],
 
 	// desktops and their windows
 	'desktop': ['base', 'antilia-desktop', ''],

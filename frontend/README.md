@@ -178,6 +178,33 @@ the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its mode
 what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what
 the React or Svelte editor gives cleans it so.
 
+CKEditor 5 (`ck-editor.ts`, built as `antilia-ckeditor.js` for Wicket's `CKEditor`) is a second
+rich text editor, with the contract of the first: the text in a text area a form posts, HTML or
+Markdown (`format`, CKEditor's Markdown plugin), the features of `RICH_TEXT_FEATURES` that CKEditor
+has plugins for (`CK_EDITOR_FEATURE_PLUGINS`), `placeholder`, `readOnly`, `count`, the bar resizing
+it, the state and the events of `RICH_TEXT_EDITOR_EVENTS`, `data-modified`, `markSaved()`, Ctrl+S,
+and going on as it was when Wicket renders it anew. It is CKEditor's ClassicEditor, with its own
+toolbar, balloons and dialogs (`toolbar` takes CKEditor's names of its tools, `plugins` and `config`
+more of CKEditor), in the colors of the theme: `ck-editor.css` gives CKEditor's custom properties
+the theme's values, in the editor and in CKEditor's body wrapper, where its balloons are.
+
+None of CKEditor's code is in the core or in ui-components: CKEditor is licensed under the GPL 2 or
+later, or under the commercial terms of CKSource, and the components are under the Apache License.
+The page brings it: the browser build of the npm package `ckeditor5`, whose `ckeditor5.umd.js`
+defines the global `CKEDITOR` the editor takes by default, or the classes of a build of its own
+(`build`), with CKEditor's style sheet, `ckeditor5.css`, and its translations; and its license key
+(`licenseKey`): `'GPL'` for the open-source distribution, or the key CKSource gave. CKEditor starts
+asynchronously: `ready` resolves once it has, and should it not start, without CKEditor in the page
+or with a key it refuses, the text area shows again and `onError` tells why. The HTML has no style
+attribute: text aligns by the classes of the Tiptap editor, images have no width or height, for
+which CKEditor writes a style, and the HTML a page gives or the user pastes is made quiet first
+(`quietHtml`), as the Tiptap editor's. The selection counts the places between the nodes too, as
+ProseMirror's does, so `RichTextEditorState` fits both editors. React's `CKEditor` and Svelte's are
+our own wrappers, as for the other components, not `@ckeditor/ckeditor5-react`. Wicket's `CKEditor`
+renders the CKEditor of the application's `CKEditorLibrary`, with its license key, and cleans the
+HTML with `CKEditorPolicy`, which keeps what CKEditor's plugins write; `CKEditorView` shows it in
+CKEditor's content style, `ckeditor5-content.css`.
+
 A code block is in a language, `<pre><code class="language-java">`, which the menu of the tool
 code block chooses while the editor has languages (`codeLanguages`, or those of the highlighter):
 the block made a paragraph again, or in plain text, Java, JavaScript, TypeScript, JSON or Markdown;

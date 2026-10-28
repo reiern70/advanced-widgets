@@ -20,3 +20,10 @@ contributors: all under the MIT License. Its highlighting of code blocks
 Haverbeke and others, under the MIT License. ui-components cleans the HTML of that editor with the
 OWASP Java HTML Sanitizer (https://github.com/OWASP/java-html-sanitizer), under the Apache License,
 Version 2.0.
+
+ui-components holds no code of CKEditor 5: its CKEditor component (antilia-ckeditor.js, built from
+frontend/core) works with the CKEditor an application brings, under the license the application
+has. The demo application brings the browser build of CKEditor 5 (https://ckeditor.com/ckeditor-5/),
+from the npm package ckeditor5, Copyright CKSource Holding sp. z o.o., under the GNU General Public
+License, version 2 or later: its license, LICENSE.md and COPYING.GPL, is served beside it, under
+com/antiliacode/widgets/demo/ckeditor/ckeditor5.

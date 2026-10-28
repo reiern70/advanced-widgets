@@ -16,9 +16,11 @@ package com.antiliacode.widgets.richtext;
 import org.apache.wicket.util.io.IClusterable;
 
 /**
- * Cleans the HTML of a {@link RichTextEditor}, which comes from the browser and is never to be
- * trusted: what it gives back is what the model gets and a page shows. {@link RichTextPolicy}
- * keeps what the features of the editor write.
+ * Cleans the HTML of a {@link RichTextEditor}, or of a
+ * {@link com.antiliacode.widgets.ckeditor.CKEditor}, which comes from the browser and is never to be
+ * trusted: what it gives back is what the model gets and a page shows. {@link RichTextPolicy} and
+ * {@link com.antiliacode.widgets.ckeditor.CKEditorPolicy} keep what the features of each editor
+ * write.
  *
  * @since 11.0.0
  */

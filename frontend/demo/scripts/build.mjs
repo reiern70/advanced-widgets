@@ -15,11 +15,17 @@
 /*
  * Builds react-demo.js and svelte-demo.js, each a script with its framework inside, into the
  * package of the demo application's FrameworkTabs: dist is a resource directory of demo-app.
+ *
+ * It copies CKEditor 5's browser build there too, with its style sheets, its German and Spanish
+ * translations and its license, for the demo of the CKEditor component: the library holds no code
+ * of CKEditor, licensed under the GPL or CKSource's commercial terms, and the demo brings it, as
+ * any application does. Its version goes beside it, for the demo to tell.
  */
 
 import react from '@vitejs/plugin-react';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { rm } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
@@ -77,4 +83,28 @@ for (const demo of DEMOS) {
 	});
 }
 
-console.log(`Built ${DEMOS.map((demo) => demo.name + '.js').join(' and ')} into ${out}`);
+/** CKEditor's files the demo serves: their path in the package and in the demo's. */
+const CKEDITOR_FILES = [
+	['dist/browser/ckeditor5.umd.js', 'ckeditor5.umd.js'],
+	['dist/browser/ckeditor5.css', 'ckeditor5.css'],
+	['dist/browser/ckeditor5-content.css', 'ckeditor5-content.css'],
+	['dist/translations/de.umd.js', 'translations/de.umd.js'],
+	['dist/translations/es.umd.js', 'translations/es.umd.js'],
+	['LICENSE.md', 'LICENSE.md'],
+	['COPYING.GPL', 'COPYING.GPL']
+];
+
+const ckeditor = dirname(createRequire(import.meta.url).resolve('ckeditor5/package.json'));
+const ckeditorOut = join(root, 'dist', 'com', 'antiliacode', 'widgets', 'demo', 'ckeditor',
+	'ckeditor5');
+for (const [from, to] of CKEDITOR_FILES) {
+	await mkdir(dirname(join(ckeditorOut, to)), { recursive: true });
+	await copyFile(join(ckeditor, from), join(ckeditorOut, to));
+}
+const { version } = JSON.parse(await readFile(join(ckeditor, 'package.json'), 'utf8'));
+await writeFile(join(ckeditorOut, 'ckeditor5.properties'),
+	'# Built from frontend/demo, do not edit.\nname=CKEditor 5\nversion=' + version +
+	'\nurl=https://ckeditor.com/ckeditor-5/\n');
+
+console.log(`Built ${DEMOS.map((demo) => demo.name + '.js').join(' and ')} into ${out}, and ` +
+	`copied CKEditor ${version} into ${ckeditorOut}`);

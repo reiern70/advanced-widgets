@@ -12,6 +12,7 @@
 		"@antilia/core": "1.0.0-SNAPSHOT",
 		"@antilia/react": "1.0.0-SNAPSHOT",
 		"@antilia/svelte": "1.0.0-SNAPSHOT",
+		"ckeditor5": "49.0.0",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
 		"svelte": "^5.57.2"
