@@ -76,7 +76,7 @@ export { DataTable } from './DataTable.js';
 export type { DataTableColumnDef, DataTableFilter, DataTableHandle, DataTableProps, DataTablePush,
 	DataTableQuery, DataTableSort, DataTableTexts } from './DataTable.js';
 export { Button } from './Button.js';
-export { localRows, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS } from '@antilia/core';
+export { FILTER_DELAY, localRows, Popover, POPOVER_DESIGNS, POPOVER_PLACEMENTS } from '@antilia/core';
 export type { PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide,
 	PopoverVariant } from '@antilia/core';
 export { PopoverButton } from './PopoverButton.js';

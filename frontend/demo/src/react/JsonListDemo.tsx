@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Dropdown, InfiniteList, type InfiniteListHandle } from '@antilia/react';
+import { Dropdown, FILTER_DELAY, InfiniteList, type InfiniteListHandle } from '@antilia/react';
 
 import { format, loadChoices, type Choice, type User } from '../data.js';
 import { interpolate, Users, type JsonListConfig, type JsonListTexts,
@@ -25,9 +25,6 @@ import { UserForm } from './UserForm.js';
 
 /** What the dialog shows: the form of a user, new when its key is null, or a deletion. */
 type Shown = { form: string | null } | { deletion: string } | null;
-
-/** The time the filter waits for more typing, as the Wicket filter throttles. */
-const FILTER_DELAY = 300;
 
 function UserDetails({ texts, user }: { texts: JsonListTexts; user: User }) {
 	const rows: Array<[string, unknown]> = [[texts.id, user.id], [texts.firstName, user.firstName],

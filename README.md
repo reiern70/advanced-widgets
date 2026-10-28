@@ -33,6 +33,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | Data | JSON grid: sorting, paging, editing in a dialog, rows pushed over a websocket, movable and resizable columns, CSV export | ✓ | ✓ |
 | | Bean grid: the same grid built from Wicket components | ✓ | |
 | | Infinite list of cards rendered from JSON | ✓ | ✓ |
+| | Filters above the grids and lists that ask the server once the typing pauses | ✓ | ✓ |
 | | Tree and tree grid, from Wicket components or from JSON loaded on demand (WAI-ARIA) | ✓ | ✓ |
 | Forms | Drop-down, one or many values as chips | ✓ | ✓ |
 | | Autocomplete | ✓ | ✓ |
