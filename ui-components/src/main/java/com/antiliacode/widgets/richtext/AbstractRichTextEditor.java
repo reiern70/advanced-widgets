@@ -73,6 +73,10 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -&gt; ...));
  * </pre>
  *
+ * The editors fire the events of the types of events registered in the browser too, by the page or
+ * a library, from their own events or by hand, and the built-in ones,
+ * {@link RichTextEditorEvents#SELECTED_TEXT} for example: see {@link RichTextEditorEvents}.
+ *
  * Until the script makes the editor, the text area is hidden in the room the editor takes
  * ({@link #getLoadingClass()}). The editor is attached to a {@code <textarea>}.
  * <p>

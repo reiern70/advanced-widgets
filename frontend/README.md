@@ -190,7 +190,17 @@ extensions made from the kit for each editor (`RichTextFeatureContext`, with the
 menu, with its label and icon); `features` and `toolbar` then name it as a built-in one. One
 registered under a built-in name replaces it, and an editor naming a feature not registered yet is
 made anew as it registers. In Wicket, an `IRichTextFeature` renders the script registering it and
-lets through the cleaning the HTML it writes. As the code editor does, it keeps the text in a
+lets through the cleaning the HTML it writes. Events are pluggable as well, for both editors:
+`registerRichTextEvent('<owner>:<event>', { from, init, fire })` makes a type of events known to
+the Tiptap and the CKEditor editors (`rich-text-events.ts`, one registry for the page), which fires
+from their own events (`from`, among `RICH_TEXT_EVENT_SOURCES`), keeping a state for each editor
+(`init`) and telling what `fire` returns, or by hand with `editor.trigger(name, values)`, which the
+context of a feature and the run of its tools have too. The editors fire it on their text area as
+their own events, its detail with the editor; a name registers once, `antilia-rich-text-editor`
+is the editors' own, and a type fires from the editors' events alone, never while it is firing.
+`RICH_TEXT_BUILT_IN_EVENTS.selectedText` is built in: the text the user selected, as plain text.
+In Wicket, `Wicket.RichTextEvents` registers and triggers them, and an `IClientEvent` of the type's
+name renders its script and hears of it on the server. As the code editor does, it keeps the text in a
 text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
 `data-modified`, keeps its state (`RichTextEditorState`: the selection, the scrolling and the size)
 while hidden and gives it to `onStateChange`, and goes on as it was when Wicket renders it anew.

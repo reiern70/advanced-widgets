@@ -24,6 +24,8 @@
  * Wicket.RichTextEditor.registerFeature(name, { extensions, tools }) plugs in a feature of the
  * page's own, which an IRichTextFeature of that name renders the script of: its extensions, made
  * from the kit, and the tools of the toolbar acting on it (see rich-text-features.ts).
+ * Wicket.RichTextEvents.register(name, { from, init, fire }) plugs in a type of events, shared
+ * with CKEditor's script (see rich-text-events.ts).
  *
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
  * chooses, drops or pastes there, and the server answers their addresses. The grammars of the code
@@ -39,6 +41,7 @@ import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTe
 import type { RichTextHighlighter } from '../rich-text-languages.js';
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
+import { useRichTextEvents } from './rich-text-events.js';
 import { sendState, type Parameter } from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and where the server hears of the state. */
@@ -112,6 +115,7 @@ const Wicket = wicket();
 if (Wicket.RichTextEditor === undefined) {
 	useWicketHost();
 	Wicket.RichTextEditor = WicketRichTextEditor;
+	useRichTextEvents();
 	// antilia-rich-text-highlight.js came first
 	const highlighter = Wicket.RichTextHighlighter as RichTextHighlighter | undefined;
 	if (highlighter) {

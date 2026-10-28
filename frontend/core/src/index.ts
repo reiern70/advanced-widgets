@@ -31,6 +31,10 @@ export { CK_EDITOR_BASE_PLUGINS, CK_EDITOR_CLASSES, CK_EDITOR_FEATURE_PLUGINS, C
 export type { CKEditorBuild, CKEditorClass, CKEditorEventDetail, CKEditorFeature, CKEditorInstance,
 	CKEditorOptions, CKEditorPlugin, CKEditorTexts } from './ck-editor.js';
 export { canonicalState, sameState } from './rich-text-contract.js';
+export { RICH_TEXT_BUILT_IN_EVENTS, RICH_TEXT_EVENT_SOURCES, RICH_TEXT_EVENT_TRIGGER,
+	registerRichTextEvent, richTextEvent, richTextEvents } from './rich-text-events.js';
+export type { RichTextEventCause, RichTextEventDefinition,
+	RichTextEventEditor } from './rich-text-events.js';
 export { RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RichTextEditor,
 	richTextEditor, richTextExtensions, registerRichTextExtension } from './rich-text-editor.js';
 export type { RichTextEditorEventDetail, RichTextEditorKit, RichTextEditorOptions,
@@ -45,7 +49,7 @@ export type { HeadingLevel, RichTextAlignment, RichTextBackgroundColor, RichText
 	RichTextFormat } from './rich-text-schema.js';
 export { registerRichTextFeature, richTextFeature, richTextFeatures } from './rich-text-features.js';
 export type { RichTextFeatureContext, RichTextFeatureDefinition, RichTextMenuItem,
-	RichTextToolDefinition } from './rich-text-features.js';
+	RichTextToolContext, RichTextToolDefinition, RichTextTrigger } from './rich-text-features.js';
 export { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, RICH_TEXT_BUBBLE_TOOLS,
 	RICH_TEXT_ICONS, RICH_TEXT_TOOLS, shortcutText } from './rich-text-toolbar.js';
 export type { RichTextCodeLanguage, RichTextEditorTexts, RichTextTool,

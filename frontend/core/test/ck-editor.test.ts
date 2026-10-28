@@ -14,8 +14,9 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CK_EDITOR_CLASSES, CKEditor, ckEditor, RICH_TEXT_EDITOR_EVENTS, setHost, standaloneHost,
-	type CKEditorBuild, type CKEditorInstance, type Host } from '../src/index.js';
+import { CK_EDITOR_CLASSES, CKEditor, ckEditor, registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
+	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
+	type CKEditorInstance, type Host } from '../src/index.js';
 import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorModelPosition,
 	type CKEditorModelWriter } from '../src/ck-editor.js';
 
@@ -776,5 +777,89 @@ describe('CKEditor', () => {
 		build.editors[0]!.blur();
 		(document.querySelector('label') as HTMLLabelElement).click();
 		expect(build.editors[0]!.focusTracker.isFocused).toBe(true);
+	});
+});
+
+describe('the types of events of CKEditor', () => {
+	/** The details of the events of a name the text area fired, without the editor. */
+	function heard(field: HTMLElement, name: string): Array<Record<string, unknown>> {
+		const details: Array<Record<string, unknown>> = [];
+		field.addEventListener(name, (event) => {
+			const { editor, ...rest } = (event as CustomEvent<Record<string, unknown>>).detail;
+			expect(editor).toBe(CKEditor.of(field as HTMLTextAreaElement));
+			details.push(rest);
+		});
+		return details;
+	}
+
+	it('fire from the events of the editor as the Tiptap editor\'s do, once CKEditor started',
+		async () => {
+			registerRichTextEvent<{ previous: string }>('test-ck:left', {
+				from: ['change', RICH_TEXT_EDITOR_EVENTS.blur],
+				init: (editor) => ({ previous: editor.getValue() }),
+				fire(editor, state, cause) {
+					const current = editor.getValue();
+					if (current === state.previous) {
+						return undefined;
+					}
+					const detail = { previous: state.previous, current, cause: cause.type,
+						text: editor.getText() };
+					state.previous = current;
+					return detail;
+				}
+			});
+			const build = fakeBuild();
+			const field = textArea('<h2>Title</h2><p>Hello world</p>');
+			const left = heard(field, 'test-ck:left');
+			const editor = new CKEditor(field, { build });
+			expect(editor.getText()).toBe('');
+			await editor.ready;
+			const fake = build.editors[0]!;
+			expect(editor.getText()).toBe('Title\n\nHello world');
+
+			editor.focus();
+			fake.type('!');
+			fake.blur();
+			expect(left).toEqual([{ previous: '<h2>Title</h2><p>Hello world</p>',
+				current: '<h2>Title</h2><p>Hello world!</p>', cause: 'change',
+				text: 'Title\n\nHello world!' }]);
+			editor.focus();
+			fake.blur();
+			expect(left).toHaveLength(1);
+		});
+
+	it('fire by trigger(), not once the editor is gone', async () => {
+		registerRichTextEvent('test-ck:asked', {});
+		const build = fakeBuild();
+		const field = textArea();
+		const asked = heard(field, 'test-ck:asked');
+		const editor = new CKEditor(field, { build });
+		await editor.ready;
+		expect(editor.trigger('test-ck:asked', { a: 1 })).toBe(true);
+		expect(asked).toEqual([{ a: 1 }]);
+		editor.destroy();
+		expect(editor.trigger('test-ck:asked')).toBe(false);
+		expect(asked).toHaveLength(1);
+		expect(RICH_TEXT_EVENT_TRIGGER).toBe('trigger');
+	});
+
+	it('include the text selected, once for each text', async () => {
+		const build = fakeBuild();
+		const field = textArea('<h2>Title</h2><p>Hello world</p>');
+		const selected = heard(field, RICH_TEXT_BUILT_IN_EVENTS.selectedText);
+		const editor = new CKEditor(field, { build });
+		expect(editor.getSelectedText()).toBe('');
+		await editor.ready;
+		const fake = build.editors[0]!;
+		const select = (anchor: number[], head: number[]) => fake.model.change((writer) =>
+			writer.setSelection(fake.model.createRange(new Position(anchor), new Position(head))));
+
+		select([1, 0], [1, 5]);
+		expect(editor.getSelectedText()).toBe('Hello');
+		select([0, 2], [1, 5]);
+		expect(editor.getSelectedText()).toBe('tle\nHello');
+		select([1, 1], [1, 1]);
+		select([1, 2], [1, 2]);
+		expect(selected).toEqual([{ text: 'Hello' }, { text: 'tle\nHello' }, { text: '' }]);
 	});
 });

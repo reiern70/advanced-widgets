@@ -43,7 +43,7 @@ import { Markdown } from '@tiptap/markdown';
 import { StarterKit } from '@tiptap/starter-kit';
 
 import type { RichTextEditorKit } from './rich-text-editor.js';
-import { featureExtensions, richTextFeature } from './rich-text-features.js';
+import { featureExtensions, richTextFeature, type RichTextTrigger } from './rich-text-features.js';
 import { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
 	type RichTextAlignment } from './rich-text-html.js';
 
@@ -404,6 +404,8 @@ export interface RichTextSchemaOptions {
 	kit: RichTextEditorKit;
 	/** The options of the features registered, by their names. */
 	featureOptions: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+	/** Fires a type of events registered on the editor, for the features registered. */
+	trigger: RichTextTrigger;
 	/** Tells what failed. */
 	log: (message: string, error: unknown) => void;
 }
@@ -473,7 +475,8 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 			extensions.push(...featureExtensions(definition, { kit: options.kit,
 				format: options.format, features: options.features,
 				headingLevels: options.headingLevels,
-				options: options.featureOptions[feature] ?? {} }, options.log));
+				options: options.featureOptions[feature] ?? {}, trigger: options.trigger },
+				options.log));
 		}
 	}
 	if (options.format === 'markdown') {

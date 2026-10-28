@@ -44,7 +44,8 @@ import { codeLanguage } from './rich-text-languages.js';
 import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUrl,
 	type HeadingLevel, type RichTextAlignment, type RichTextBackgroundColor, type RichTextColor,
 	type RichTextFeature } from './rich-text-schema.js';
-import { registeredTool, type RichTextMenuItem } from './rich-text-features.js';
+import { registeredTool, type RichTextMenuItem, type RichTextToolContext,
+	type RichTextTrigger } from './rich-text-features.js';
 import type { UploadHost } from './rich-text-upload.js';
 
 /** The tools built in the toolbar. */
@@ -315,7 +316,7 @@ interface ToolSpec {
 	shortcut?: string | undefined;
 	active?: ((editor: Editor) => boolean) | undefined;
 	enabled?: ((editor: Editor) => boolean) | undefined;
-	run?: ((editor: Editor) => void) | undefined;
+	run?: ((editor: Editor, context: RichTextToolContext) => void) | undefined;
 	/** For a tool of a feature registered: what the toolbar calls it, unless the texts do. */
 	label?: string | undefined;
 	/** For a tool of a feature registered: its icon, its label when none. */
@@ -509,7 +510,7 @@ interface MenuEntry {
 	/** Whether the item is the one in force, for a menu of choices. */
 	checked?: (editor: Editor) => boolean;
 	enabled: (editor: Editor) => boolean;
-	run: (editor: Editor) => void;
+	run: (editor: Editor, context: RichTextToolContext) => void;
 }
 
 type MenuLine = MenuEntry | 'separator';
@@ -548,6 +549,11 @@ export interface RichTextToolbarContext {
 	uploads?: () => UploadHost | null;
 	/** Called as a form opens and once it closed. */
 	onForm?: (open: boolean) => void;
+	/**
+	 * Fires a type of events registered on the editor, for the tools of the features registered;
+	 * none fires when left out.
+	 */
+	trigger?: RichTextTrigger;
 }
 
 /** A tool drawn: its button, and its menu if it has one. */
@@ -613,6 +619,11 @@ export class RichTextToolbar {
 	/** Tiptap's editor, there once the toolbar acts. */
 	private get editor(): Editor {
 		return this.context.editor()!;
+	}
+
+	/** What the run of a tool, or of an item of its menu, has of the editor besides Tiptap's. */
+	private get toolContext(): RichTextToolContext {
+		return { trigger: (name, values) => this.context.trigger?.(name, values) ?? false };
 	}
 
 	private css(...parts: LookPart[]): string {
@@ -762,7 +773,7 @@ export class RichTextToolbar {
 			}
 			return;
 		}
-		spec.run?.(this.editor);
+		spec.run?.(this.editor, this.toolContext);
 	}
 
 	/**
@@ -1057,7 +1068,7 @@ export class RichTextToolbar {
 			button.addEventListener('click', () => {
 				if (button.getAttribute('aria-disabled') !== 'true') {
 					this.closeMenu(false);
-					line.run(this.editor);
+					line.run(this.editor, this.toolContext);
 				}
 			});
 			item.append(button);

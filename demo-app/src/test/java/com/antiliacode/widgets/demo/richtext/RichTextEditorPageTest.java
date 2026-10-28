@@ -216,6 +216,50 @@ class RichTextEditorPageTest
 	}
 
 	@Test
+	void hearsOfTheTextSelectedAndOfTheHeadings()
+	{
+		RichTextEditor editor = editor(EDITOR);
+		tester.assertLabel(inCase("articleTitle", "selection"),
+			"Select some of the article: the server hears of the text you selected.");
+		tester.assertLabel(inCase("articleTitle", "outline"),
+			"Change the headings of the article: the server hears of its outline.");
+		// the built-in type waits for the user to finish selecting; the page's own has a script
+		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:\\d+," +
+			"kind:'ajax',delay:500\\}");
+		tester.assertContains("\\{id:\"rich-text-demo:outline\",index:\\d+,kind:'ajax'," +
+			"delay:-1\\}");
+		tester.assertContains("OutlineEvent/outline-event");
+
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			new JSONObject().put("text", "Hello\n  world").toString());
+		fire(editor, RichTextEditorEvents.SELECTED_TEXT, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "selection"),
+			"The server heard you selected “Hello world”.");
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			new JSONObject().put("text", "a".repeat(70)).toString());
+		fire(editor, RichTextEditorEvents.SELECTED_TEXT, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "selection"),
+			"The server heard you selected “" + "a".repeat(60) + "…”.");
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER, "{\"text\":\"\"}");
+		fire(editor, RichTextEditorEvents.SELECTED_TEXT, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "selection"),
+			"The server heard nothing is selected.");
+
+		// the headings the browser sent: texts alone, each cut short
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"headings\":[\"Intro\",7,\" \",\" Usage \",\"" + "b".repeat(300) + "\"]}");
+		fire(editor, OutlineEvent.NAME, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "outline"),
+			"The outline the server heard: Intro · Usage · " + "b".repeat(OutlineEvent.MAX_LENGTH) +
+				".");
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"headings\":\"none\"}");
+		fire(editor, OutlineEvent.NAME, RichTextSamples.ARTICLE);
+		tester.assertLabel(inCase("articleTitle", "outline"),
+			"The server heard the article has no headings.");
+	}
+
+	@Test
 	void marksTheTitleWithTheChangesNotSavedInTheBrowser()
 	{
 		editor(EDITOR);

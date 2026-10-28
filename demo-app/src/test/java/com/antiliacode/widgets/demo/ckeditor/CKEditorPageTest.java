@@ -33,6 +33,7 @@ import com.antiliacode.widgets.ckeditor.CKEditor;
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.demo.richtext.OutlineEvent;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
 import com.antiliacode.widgets.event.IAjaxSubmitEvent;
@@ -214,6 +215,23 @@ class CKEditorPageTest
 			"The server heard you left the article, with its text changed: " + before +
 				" characters before, 12 now.");
 		assertEquals("<p>Short</p>", editor.getModelObject());
+	}
+
+	@Test
+	void hearsOfTheTextSelectedAndOfTheHeadingsAsTheTiptapEditorDoes()
+	{
+		CKEditor editor = editor(EDITOR);
+		tester.assertContains("OutlineEvent/outline-event");
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"text\":\"Hello\"}");
+		fire(editor, RichTextEditorEvents.SELECTED_TEXT, editor.getModelObject());
+		tester.assertLabel(inCase("articleTitle", "selection"),
+			"The server heard you selected “Hello”.");
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"headings\":[\"One\",\"Two\"]}");
+		fire(editor, OutlineEvent.NAME, editor.getModelObject());
+		tester.assertLabel(inCase("articleTitle", "outline"),
+			"The outline the server heard: One · Two.");
 	}
 
 	@Test

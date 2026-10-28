@@ -28,11 +28,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.MarkupException;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
@@ -700,6 +703,49 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void hearsOfTheTextSelected()
+	{
+		List<String> heard = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		editor.addEvent(RichTextEditorSelectedTextEvent.of((selectedText, target) -> heard.add(
+			"[" + selectedText + "]")).setDelay(RichTextEditorEvents.TYPING_DELAY));
+		tester.startPage(new TestPage(editor));
+
+		// a built-in type of events of the editors: the browser sends what it tells
+		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:0," +
+			"kind:'ajax',delay:500\\}");
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
+			new JSONObject().put("text", "Hello\nworld"));
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
+			new JSONObject().put("text", ""));
+		// what is not a text: none
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
+			new JSONObject().put("text", 42));
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
+			new JSONObject());
+		assertEquals(List.of("[Hello\nworld]", "[]", "[]", "[]"), heard);
+	}
+
+	@Test
+	void rendersTheScriptOfATypeOfEventsAfterTheEditorsAndBeforeListening()
+	{
+		List<String> heard = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		editor.addEvent(new HeadingsEvent(heard));
+		tester.startPage(new TestPage(editor));
+
+		// Wicket.RichTextEvents is there, and the type before the editor listens to it
+		String page = tester.getLastResponseAsString();
+		int script = page.indexOf("RichTextEditor/antilia-rich-text-editor.js");
+		int registered = page.indexOf("Wicket.RichTextEvents.register('antilia-test:headings'");
+		int listening = page.indexOf("Wicket.ClientEvents.attach(");
+		assertTrue(script >= 0 && script < registered && registered < listening, page);
+		ClientEventsTester.fire(tester, editor, HeadingsEvent.NAME, new JSONObject().put(
+			"headings", new JSONArray().put("One").put(2).put("Two")));
+		assertEquals(List.of("One", "Two"), heard);
+	}
+
+	@Test
 	void hearsOfTheTextBeforeAndNow()
 	{
 		List<String> heard = new ArrayList<>();
@@ -808,6 +854,42 @@ class RichTextEditorTest extends WicketTestCase
 		// a tag without a body, which TextArea would not check
 		assertThrows(MarkupException.class, () -> tester.startPage(new TestPage(editor,
 			"<div wicket:id=\"editor\"/>")));
+	}
+
+	/** A type of events of a page's own, whose script registers it in the browser. */
+	private static final class HeadingsEvent extends AjaxEvent
+	{
+		private static final long serialVersionUID = 1L;
+
+		static final String NAME = "antilia-test:headings";
+
+		private final List<String> heard;
+
+		HeadingsEvent(List<String> heard)
+		{
+			super(NAME);
+			this.heard = heard;
+		}
+
+		@Override
+		public void renderHead(Component component, IHeaderResponse response)
+		{
+			response.render(JavaScriptHeaderItem.forScript("Wicket.RichTextEvents.register('" +
+				NAME + "',{from:[Wicket.RichTextEvents.events.text]});", NAME));
+		}
+
+		@Override
+		public void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+		{
+			JSONArray headings = values.optJSONArray("headings");
+			for (int index = 0; headings != null && index < headings.length(); index++)
+			{
+				if (headings.opt(index) instanceof String heading)
+				{
+					heard.add(heading);
+				}
+			}
+		}
 	}
 
 	/** A feature of a page's own, which a script fires an event of. */
