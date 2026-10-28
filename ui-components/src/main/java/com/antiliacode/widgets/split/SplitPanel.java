@@ -35,6 +35,7 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
+import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
 import com.github.openjson.JSONObject;
@@ -56,6 +57,9 @@ import com.antiliacode.widgets.theme.LookPart;
  * keep their shares when the split panel grows or shrinks; in pixels, the first pane keeps its
  * size. The limits, {@link #setMin(SplitSize)} and {@link #setMax(SplitSize)} of the first pane
  * and {@link #setMinSecond(SplitSize)} of the second, may be in either.
+ * <p>
+ * Panes side by side may go one above the other on a narrow screen, a phone for example, with
+ * {@link #setStackBelow(int)}.
  * <p>
  * {@code Wicket.SplitPanel} from {@link #JS} moves the divider in the browser; it sets the sizes
  * of the panes as CSS custom properties through the CSSOM, without an inline style, so the split
@@ -120,6 +124,8 @@ public abstract class SplitPanel extends Panel
 	private boolean collapsible;
 
 	private boolean sendToServer;
+
+	private int stackBelow;
 
 	/**
 	 * A split panel with the panes side by side, keeping its state in the page.
@@ -569,6 +575,33 @@ public abstract class SplitPanel extends Panel
 	}
 
 	/**
+	 * @return the width, in pixels, below which the panes side by side go one above the other;
+	 *         0, never, by default
+	 */
+	public int getStackBelow()
+	{
+		return stackBelow;
+	}
+
+	/**
+	 * Lays the panes side by side one above the other while the split panel is narrower than the
+	 * given width, on a phone for example: each pane is then as high as its content, the page
+	 * scrolling them, and the divider, which no longer moves, keeps its buttons collapsing a pane
+	 * and restoring it. The browser decides, from the width the split panel has there, and goes
+	 * back to side by side when it gets wider. While stacked, the split panel has the CSS class
+	 * {@code antilia-split-stacked}. Only for {@link SplitOrientation#HORIZONTAL}.
+	 *
+	 * @param stackBelow
+	 *            the width in pixels, 0 for never
+	 * @return {@code this}
+	 */
+	public SplitPanel setStackBelow(int stackBelow)
+	{
+		this.stackBelow = Args.withinRange(0, Integer.MAX_VALUE, stackBelow, "stackBelow");
+		return this;
+	}
+
+	/**
 	 * @return whether the browser sends the server what the user changes, {@code false} by
 	 *         default
 	 */
@@ -710,6 +743,11 @@ public abstract class SplitPanel extends Panel
 		putSize(options, "max", max);
 		putSize(options, "minSecond", minSecond);
 		putSize(options, "step", step);
+		boolean stacks = stackBelow > 0 && orientation == SplitOrientation.HORIZONTAL;
+		if (stacks)
+		{
+			options.put("stackBelow", stackBelow);
+		}
 		if (collapsible)
 		{
 			if (state.getCollapsed() != null)
@@ -722,6 +760,11 @@ public abstract class SplitPanel extends Panel
 			putLabel(options, "collapseSecondLabel", horizontal ? "SplitPanel.collapseRight" :
 				"SplitPanel.collapseBottom");
 			putLabel(options, "restoreLabel", "SplitPanel.restore");
+			if (stacks)
+			{
+				putLabel(options, "stackedCollapseFirstLabel", "SplitPanel.collapseTop");
+				putLabel(options, "stackedCollapseSecondLabel", "SplitPanel.collapseBottom");
+			}
 		}
 		putLabel(options, "label", "SplitPanel.divider");
 		String json = options.toString();

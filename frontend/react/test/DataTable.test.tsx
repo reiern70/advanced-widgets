@@ -210,6 +210,16 @@ describe('DataTable', () => {
 		expect(container.querySelector('tfoot tr.navigation')).not.toBeNull();
 	});
 
+	it('gives the header cells of the columns their minimum widths', async () => {
+		const columns = [{ ...COLUMNS[0], minWidth: 160 }, ...COLUMNS.slice(1)];
+		const { container } = render(<DataTable columns={columns} loadRows={loadRows}
+			resizableColumns="stretch" adjustToParent />);
+		await waitFor(() => expect(rows(container).length).toBe(25));
+
+		const cells = Array.from(container.querySelectorAll('thead tr:last-child th'));
+		expect(cells.map((cell) => cell.getAttribute('data-min-width'))).toEqual(['160', null]);
+	});
+
 	it('shows and hides the hideable columns with the column chooser', async () => {
 		const { container } = render(<DataTable columns={COLUMNS} loadRows={loadRows} />);
 		await waitFor(() => expect(rows(container).length).toBe(25));

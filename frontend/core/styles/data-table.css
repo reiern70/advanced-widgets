@@ -109,6 +109,18 @@ table.ant-data-table.ant-data-table-rows > tbody > tr > td {
 	display: inline-block;
 }
 
+/*
+ * a table wider than its parent keeps its navigation in view while the page, or the parent, scrolls
+ * it sideways: at the left, no wider than the parent, and over the header cells
+ */
+table.antilia-resizable-columns-wider .ant-data-table-navigation {
+	position: sticky;
+	left: 0;
+	z-index: 2;
+	box-sizing: border-box;
+	max-width: var(--antilia-resizable-columns-parent-width, none);
+}
+
 .ant-data-table-navigation > .ant-data-table-paging {
 	display: flex;
 	flex-wrap: wrap;

@@ -66,7 +66,8 @@ export { handlebarsEngine, registerHandlebars } from './handlebars.js';
 export type { HandlebarsLike } from './handlebars.js';
 export { MovableColumns, headerCells } from './movable-columns.js';
 export type { MovableColumnsOptions } from './movable-columns.js';
-export { ResizableColumns } from './resizable-columns.js';
+export { COLUMN_MIN_WIDTH_ATTRIBUTE, RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY,
+	RESIZABLE_COLUMNS_WIDER_CLASS, ResizableColumns } from './resizable-columns.js';
 export type { ResizableColumnsOptions, ResizeMode } from './resizable-columns.js';
 export { getHost, onRemoving, setHost, standaloneHost } from './host.js';
 export type { Host, Unsubscribe } from './host.js';

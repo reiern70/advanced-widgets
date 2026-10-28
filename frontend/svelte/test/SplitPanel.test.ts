@@ -104,6 +104,26 @@ describe('SplitPanel', () => {
 			'antilia-split-collapsible antilia-split-collapsed-first');
 	});
 
+	it('puts the panes one above the other while narrower than stackBelow', async () => {
+		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+			{ left: 0, top: 0, width: 380, height: 0, right: 380, bottom: 0 } as DOMRect);
+		try {
+			const { container, rerender } = render(BoundSplitPanel, { stackBelow: 600,
+				collapsible: true });
+
+			expect(split(container).classList.contains('antilia-split-stacked')).toBe(true);
+			expect(split(container).classList.contains('antilia-split-vertical')).toBe(true);
+			expect((divider(container).firstElementChild as HTMLElement).title)
+				.toBe('Hide the filters');
+
+			await rerender({ stackBelow: undefined });
+			expect(Array.from(split(container).classList).sort()).toEqual(['antilia-split',
+				'antilia-split-collapsible', 'antilia-split-horizontal']);
+		} finally {
+			vi.restoreAllMocks();
+		}
+	});
+
 	it('binds a position in pixels', async () => {
 		const { container } = render(BoundSplitPanel, { position: '200px' });
 

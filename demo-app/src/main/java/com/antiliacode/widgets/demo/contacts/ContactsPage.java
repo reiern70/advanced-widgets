@@ -76,7 +76,8 @@ import com.antiliacode.widgets.table.ResizableColumnsBehavior;
 /**
  * A realistic example: an address book searched by facets. A {@link SplitPanel} holds the filters
  * on the left, a {@link CollapsiblePanel collapsible} {@link FacetPanel} for each {@link Facet},
- * and the contacts they leave on the right, in a {@link JsonBasedDynamicDataTable} with
+ * and the contacts they leave on the right, or below them on a phone, in a
+ * {@link JsonBasedDynamicDataTable} with
  * everything it offers: selection, sorting, paging, a search in its navigation, columns to
  * resize, move, hide and export, and row actions showing a contact's card and saving it as a
  * vCard.
@@ -90,6 +91,12 @@ public class ContactsPage extends DemoPage
 
 	/** The height of the body of the table, in pixels. */
 	static final int BODY_HEIGHT = 560;
+
+	/**
+	 * The width, in pixels, below which the filters go above the table: they would leave it too
+	 * little room beside them, on a phone for example.
+	 */
+	static final int STACK_BELOW = 760;
 
 	private final ContactFilter filter = new ContactFilter();
 
@@ -133,7 +140,8 @@ public class ContactsPage extends DemoPage
 			.setMin(SplitSize.pixels(220))
 			.setMax(50)
 			.setMinSecond(SplitSize.pixels(420))
-			.setCollapsible(true);
+			.setCollapsible(true)
+			.setStackBelow(STACK_BELOW);
 		themed.add(split);
 
 		dialog = new Modal("dialog");
@@ -310,6 +318,8 @@ public class ContactsPage extends DemoPage
 		contactsTable.setColumnVisible(city, false);
 		// selection, number, actions, name, email, phone, profession, country, born and city
 		contactsTable.setColumnProportions(0.35, 0.45, 0.75, 1.7, 2.2, 1.3, 1.3, 1.5, 1.5, 1.0);
+		// on a phone, the table scrolls sideways rather than squeezing the columns to a letter
+		contactsTable.setColumnMinWidths(32, 40, 72, 130, 160, 110, 100, 110, 110, 100);
 		contactsTable.setNavigationPosition(ToolbarPosition.TOP);
 		contactsTable.setItemsPerPageOptions(25L, 50L, 100L);
 		contactsTable.setAdjustToParentWidth(true);

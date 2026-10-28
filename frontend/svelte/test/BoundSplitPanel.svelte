@@ -17,13 +17,14 @@
 		from '../src/index.js';
 
 	let { position = $bindable(40), collapsed = $bindable(null), orientation = 'horizontal',
-		resizable = true, collapsible = false, onresized }: { position?: SplitSize;
+		resizable = true, collapsible = false, stackBelow, onresized }: { position?: SplitSize;
 			collapsed?: SplitPane | null; orientation?: SplitOrientation; resizable?: boolean;
-			collapsible?: boolean; onresized?: (position: SplitSize) => void } = $props();
+			collapsible?: boolean; stackBelow?: number;
+			onresized?: (position: SplitSize) => void } = $props();
 </script>
 
 <SplitPanel id="s" bind:position bind:collapsed {orientation} {resizable} {collapsible}
-	{onresized} label="Resize">
+	{stackBelow} {onresized} label="Resize" stackedCollapseFirstLabel="Hide the filters">
 	{#snippet first()}<p>One</p>{/snippet}
 	{#snippet second()}<p>Two</p>{/snippet}
 </SplitPanel>

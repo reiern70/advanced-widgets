@@ -64,6 +64,15 @@
 		collapseSecondLabel?: string;
 		/** The title of the button restoring a collapsed pane. */
 		restoreLabel?: string;
+		/**
+		 * The width, in pixels, below which panes side by side go one above the other, each as
+		 * high as its content: on a phone, for example. Never when left out.
+		 */
+		stackBelow?: number;
+		/** The title of the button collapsing the first pane, the top one, while stacked. */
+		stackedCollapseFirstLabel?: string;
+		/** The title of the button collapsing the second pane, the bottom one, while stacked. */
+		stackedCollapseSecondLabel?: string;
 		id?: string;
 		/** CSS classes of the split panel, next to antilia-split. */
 		class?: string;
@@ -91,6 +100,9 @@
 		collapseFirstLabel,
 		collapseSecondLabel,
 		restoreLabel,
+		stackBelow,
+		stackedCollapseFirstLabel,
+		stackedCollapseSecondLabel,
 		id,
 		class: className = '',
 		onresize,
@@ -113,7 +125,8 @@
 		}
 		const split = new SplitPanel(element, untrack(() => ({
 			orientation, position, min, max, minSecond, step, resizable, collapsible, collapsed,
-			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, look,
+			label, collapseFirstLabel, collapseSecondLabel, restoreLabel, stackBelow,
+			stackedCollapseFirstLabel, stackedCollapseSecondLabel, look,
 			onResize: (next: SplitSize) => onresize?.(next),
 			onResized: (next: SplitSize) => {
 				position = next;
@@ -132,8 +145,10 @@
 	});
 
 	$effect(() => {
+		// 0 rather than undefined, which configure would leave as it was
 		const next = { orientation, min, max, minSecond, step, resizable, collapsible, label,
-			collapseFirstLabel, collapseSecondLabel, restoreLabel };
+			collapseFirstLabel, collapseSecondLabel, restoreLabel, stackBelow: stackBelow ?? 0,
+			stackedCollapseFirstLabel, stackedCollapseSecondLabel };
 		untrack(() => instance?.configure(next));
 	});
 

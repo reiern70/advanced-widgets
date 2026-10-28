@@ -37,6 +37,11 @@ A `DataTable` loads its rows with `loadRows`, from a mounted resource for exampl
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
 `localRows`. The JSON grid demo does both: its rows come from `/api/users`, a `JsonRowsResource`
 that also creates, changes and deletes rows (POST, PUT and DELETE), or from a list the page gave.
+A column's `minWidth` (`setColumnMinWidths` in Wicket, `data-min-width` on a header cell) is the
+narrowest it gets when resizable columns in `'stretch'` mode are laid out for the width of the
+parent: on a phone the table is then wider than its parent, rather than every column being
+squeezed to a letter, and its navigation stays in view while the page, or the parent given
+`overflow-x: auto`, scrolls it sideways.
 
 The palette (`palette.ts`, built as `antilia-palette.js` for Wicket's `Palette`) shows the
 available choices on the left and the chosen ones on the right, with arrows between them; a double
@@ -65,7 +70,10 @@ by default; with `setSendToServer(true)` the browser sends each change via Ajax 
 gives its model the new state, so a model of one's own can keep it in the session or with the
 user's preferences. The core works on markup with both panes and the divider, which React, Svelte
 and Wicket all render, and sets the sizes as CSS custom properties through the CSSOM, so it needs
-no inline style. Split panels go in each other's panes.
+no inline style. Split panels go in each other's panes. With `stackBelow` (`setStackBelow` in
+Wicket), panes side by side go one above the other while the split panel is narrower than that
+many pixels, on a phone for example: each is as high as its content, and the divider keeps its
+collapse buttons; the split panel then has the class `antilia-split-stacked`.
 
 A resizable element (`resizable.ts`, built as `antilia-resizable.js` for Wicket's
 `ResizableBehavior`) is resized by the user by its bottom edge (`axis: 'vertical'`), its right edge

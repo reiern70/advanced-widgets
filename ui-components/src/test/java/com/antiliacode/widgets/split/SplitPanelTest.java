@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
@@ -155,6 +156,40 @@ class SplitPanelTest extends WicketTestCase
 		tester.assertContains("\"collapseFirstLabel\":\"Oberen Bereich ausblenden\"");
 		tester.assertContains("\"collapseSecondLabel\":\"Unteren Bereich ausblenden\"");
 		tester.assertContains("\"restoreLabel\":\"Beide Bereiche zeigen\"");
+	}
+
+	@Test
+	void stacksThePanesSideBySideBelowAWidth()
+	{
+		TestPanel panel = new TestPanel(SplitOrientation.HORIZONTAL);
+		panel.setStackBelow(720).setCollapsible(true);
+		assertEquals(720, panel.getStackBelow());
+		tester.startPage(new TestPage(panel));
+
+		// the browser stacks them, from the width the split panel has there
+		assertEquals("antilia-split antilia-split-horizontal antilia-split-collapsible",
+			tester.getTagByWicketId("split").getAttribute("class"));
+		tester.assertContains("\"stackBelow\":720");
+		tester.assertContains("\"collapseFirstLabel\":\"Hide the left pane\"");
+		tester.assertContains("\"stackedCollapseFirstLabel\":\"Hide the top pane\"");
+		tester.assertContains("\"stackedCollapseSecondLabel\":\"Hide the bottom pane\"");
+
+		panel.setStackBelow(0);
+		tester.startPage(new TestPage(panel));
+		assertFalse(tester.getLastResponseAsString().contains("stackBelow"));
+		assertFalse(tester.getLastResponseAsString().contains("stackedCollapseFirstLabel"));
+
+		assertThrows(IllegalArgumentException.class, () -> panel.setStackBelow(-1));
+	}
+
+	@Test
+	void stacksNoPanesOneAboveTheOtherAlready()
+	{
+		TestPanel panel = new TestPanel(SplitOrientation.VERTICAL);
+		panel.setStackBelow(720);
+		tester.startPage(new TestPage(panel));
+
+		assertFalse(tester.getLastResponseAsString().contains("stackBelow"));
 	}
 
 	@Test

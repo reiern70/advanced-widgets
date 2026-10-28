@@ -535,3 +535,160 @@ describe('SplitPanel', () => {
 		expect(split.divider.hasAttribute('aria-valuemin')).toBe(false);
 	});
 });
+
+describe('SplitPanel stacked', () => {
+	/** The callbacks of the ResizeObservers, and whether they were disconnected. */
+	let observers: { callback: () => void; disconnected: boolean }[] = [];
+
+	function observeSizes(): void {
+		observers = [];
+		vi.stubGlobal('ResizeObserver', class {
+			private readonly entry: { callback: () => void; disconnected: boolean };
+
+			constructor(callback: () => void) {
+				this.entry = { callback, disconnected: false };
+				observers.push(this.entry);
+			}
+
+			observe(): void {}
+
+			disconnect(): void {
+				this.entry.disconnected = true;
+			}
+		});
+	}
+
+	/** Gives the split panel another width, and tells its observer. */
+	function resize(split: SplitPanel, width: number): void {
+		box(split.element, { width, height: 500 });
+		observers.filter((observer) => !observer.disconnected)
+			.forEach((observer) => observer.callback());
+	}
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('puts the panes one above the other while narrower than stackBelow, and back', () => {
+		observeSizes();
+		const target = element();
+		box(target, { width: 1008, height: 500 });
+		const split = new SplitPanel(target, { stackBelow: 600 });
+
+		expect(split.isStacked()).toBe(false);
+		expect(target.className).toBe('antilia-split antilia-split-horizontal');
+
+		resize(split, 380);
+		expect(split.isStacked()).toBe(true);
+		expect(split.orientation()).toBe('vertical');
+		expect(target.className)
+			.toBe('antilia-split antilia-split-vertical antilia-split-stacked');
+		expect(split.divider.getAttribute('aria-orientation')).toBe('horizontal');
+
+		resize(split, 600);
+		expect(split.isStacked()).toBe(false);
+		expect(target.className).toBe('antilia-split antilia-split-horizontal');
+		expect(split.divider.getAttribute('aria-orientation')).toBe('vertical');
+	});
+
+	it('stacks at once when it starts narrow, and stays as it is while not laid out', () => {
+		observeSizes();
+		const target = element();
+		box(target, { width: 380, height: 500 });
+		const split = new SplitPanel(target, { stackBelow: 600 });
+		expect(split.isStacked()).toBe(true);
+
+		// hidden, in a tab not shown for example
+		resize(split, 0);
+		expect(split.isStacked()).toBe(true);
+	});
+
+	it('never stacks panes one above the other already, nor without stackBelow', () => {
+		const vertical = element();
+		box(vertical, { width: 380, height: 500 });
+		expect(new SplitPanel(vertical, { orientation: 'vertical', stackBelow: 600 }).isStacked())
+			.toBe(false);
+		expect(vertical.classList.contains('antilia-split-stacked')).toBe(false);
+
+		const plain = element();
+		box(plain, { width: 380, height: 500 });
+		expect(new SplitPanel(plain).isStacked()).toBe(false);
+	});
+
+	it('does not move the divider while stacked, keeping the position for side by side', () => {
+		observeSizes();
+		const onResized = vi.fn();
+		const target = element();
+		box(target, { width: 380, height: 500 });
+		const split = new SplitPanel(target, { stackBelow: 600, position: 30, min: 20, onResized });
+		split.divider.setPointerCapture = () => undefined;
+
+		expect(split.divider.hasAttribute('tabindex')).toBe(false);
+		expect(split.divider.getAttribute('aria-disabled')).toBe('true');
+		pointer(split.divider, 'pointerdown', 100, 100);
+		expect(target.classList.contains('antilia-split-dragging')).toBe(false);
+		expect(key(split.divider, 'ArrowDown').defaultPrevented).toBe(false);
+		expect(key(split.divider, 'Home').defaultPrevented).toBe(false);
+		split.divider.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+		expect(onResized).not.toHaveBeenCalled();
+
+		resize(split, 1008);
+		box(split.divider, { width: 8, height: 500 });
+		expect(split.position).toBe(30);
+		expect(shares(split)).toEqual(['30', '70']);
+		expect(split.divider.tabIndex).toBe(0);
+	});
+
+	it('collapses a pane and restores it while stacked, with the buttons and Enter', () => {
+		observeSizes();
+		const onCollapse = vi.fn();
+		const target = element();
+		box(target, { width: 380, height: 500 });
+		const split = new SplitPanel(target, { stackBelow: 600, collapsible: true,
+			collapseFirstLabel: 'Hide the filters on the left',
+			stackedCollapseFirstLabel: 'Hide the filters above', onCollapse });
+		box(split.first, { height: 300 });
+		box(split.second, { height: 900 });
+		split.configure({});
+		const [first, second] = Array.from(split.divider.children) as HTMLElement[];
+
+		expect(first.title).toBe('Hide the filters above');
+		expect(second.title).toBe('Collapse the bottom pane');
+		expect(split.divider.tabIndex).toBe(0);
+		expect(split.divider.getAttribute('aria-valuenow')).toBe('25');
+		expect(split.divider.getAttribute('aria-valuemin')).toBe('0');
+		expect(split.divider.getAttribute('aria-valuemax')).toBe('100');
+
+		first.click();
+		expect(split.collapsed).toBe('first');
+		expect(target.classList.contains('antilia-split-collapsed-first')).toBe(true);
+		expect(split.divider.getAttribute('aria-valuenow')).toBe('0');
+		expect(key(split.divider, 'Enter').defaultPrevented).toBe(true);
+		expect(split.collapsed).toBeNull();
+		expect(onCollapse.mock.calls).toEqual([['first'], [null]]);
+
+		resize(split, 1008);
+		expect(first.title).toBe('Hide the filters on the left');
+	});
+
+	it('takes stackBelow from other options, and its class and observer away when destroyed', () => {
+		observeSizes();
+		const target = element();
+		box(target, { width: 380, height: 500 });
+		const split = new SplitPanel(target);
+		expect(observers).toHaveLength(0);
+
+		split.configure({ stackBelow: 600 });
+		expect(split.isStacked()).toBe(true);
+		expect(observers).toHaveLength(1);
+
+		split.configure({ stackBelow: 0 });
+		expect(split.isStacked()).toBe(false);
+		expect(observers[0].disconnected).toBe(true);
+
+		split.configure({ stackBelow: 600 });
+		split.destroy();
+		expect(target.hasAttribute('class')).toBe(false);
+		expect(observers[1].disconnected).toBe(true);
+	});
+});
