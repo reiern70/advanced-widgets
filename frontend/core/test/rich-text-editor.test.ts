@@ -22,7 +22,7 @@ import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_
 	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_EVENT_SOURCES,
 	RICH_TEXT_EVENT_TRIGGER, RICH_TEXT_FEATURES, richTextBackgroundColors, richTextColors,
 	RichTextEditor, richTextEditor, richTextEvent, richTextEvents, richTextExtensions, setHost,
-	shortcutText, standaloneHost, type Host } from '../src/index.js';
+	shortcutText, standaloneHost, textLanguage, type Host } from '../src/index.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -156,6 +156,39 @@ describe('RichTextEditor', () => {
 		editor.configure({ placeholder: 'Another' });
 		expect(editor.editor.view.dom.querySelector('p')!.getAttribute('data-placeholder'))
 			.toBe('Another');
+	});
+
+	it('gives the text the spellcheck and the language of the options, the browser\'s otherwise',
+		() => {
+			const editor = new RichTextEditor(textArea());
+			const text = editor.editor.view.dom;
+			expect(text.hasAttribute('spellcheck')).toBe(false);
+			expect(text.hasAttribute('lang')).toBe(false);
+
+			editor.configure({ spellcheck: false, textLanguage: ' en-GB ' });
+			expect(text.getAttribute('spellcheck')).toBe('false');
+			expect(text.getAttribute('lang')).toBe('en-GB');
+			expect(text.getAttribute('aria-label')).toBe('Notes');
+
+			editor.configure({ spellcheck: true, textLanguage: 'de' });
+			expect(text.getAttribute('spellcheck')).toBe('true');
+			expect(text.getAttribute('lang')).toBe('de');
+
+			// none: the browser's default, and the language of the page
+			editor.configure({ spellcheck: null, textLanguage: '"><b>' });
+			expect(text.hasAttribute('spellcheck')).toBe(false);
+			expect(text.hasAttribute('lang')).toBe(false);
+			expect(editor.getValue()).toBe(ARTICLE);
+		});
+
+	it('takes the language of a text only as a tag of BCP 47', () => {
+		expect(textLanguage(' de-CH-1996 ')).toBe('de-CH-1996');
+		expect(textLanguage('zh-Hant-TW')).toBe('zh-Hant-TW');
+		expect(textLanguage('en_GB')).toBeNull();
+		expect(textLanguage('e')).toBeNull();
+		expect(textLanguage('')).toBeNull();
+		expect(textLanguage(null)).toBeNull();
+		expect(textLanguage(undefined)).toBeNull();
 	});
 
 	it('works in an element of its own, keeping the text in a text area in it, if any', () => {

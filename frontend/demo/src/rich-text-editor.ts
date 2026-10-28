@@ -17,10 +17,13 @@
  * editor in, with a drop-down and check boxes switching the toolbar, the bubble menu, reading only,
  * the count of the words and the colors of the code blocks, and the HTML the editor gives; notes
  * in Markdown, and the Markdown the editor gives. The images the user uploads go to the Wicket
- * page, which keeps them and answers their addresses.
+ * page, which keeps them and answers their addresses; the page checks the article too, with the
+ * proofreader of its writing case, and offers its people after @, its topics after # and its terms
+ * on Ctrl+Space.
  */
 
-import { uploadImageTo, type RichTextEditorState, type RichTextEditorTexts,
+import { proofreadAt, suggestAt, uploadImageTo, type RichTextEditorState,
+	type RichTextEditorTexts, type RichTextProofreader, type RichTextSuggester,
 	type RichTextTool } from '@antilia/core';
 
 import { format, type DropdownTexts } from './data.js';
@@ -68,6 +71,25 @@ export interface RichTextEditorConfig {
 	uploadUrl: string;
 	uploadTypes: string[];
 	uploadMaxSize: number;
+	/** Where the apps have their texts checked: the page's own behavior. */
+	proofreadUrl: string;
+	/** Where the apps ask for suggestions, and the suggesters of the page. */
+	suggestUrl: string;
+	suggesters: Omit<RichTextSuggester, 'items'>[];
+}
+
+/**
+ * @returns what checks the texts of the apps: the page
+ */
+export function proofreader(config: RichTextEditorConfig): RichTextProofreader {
+	return proofreadAt(config.proofreadUrl);
+}
+
+/**
+ * @returns what offers the apps the people, the topics and the terms: the page
+ */
+export function suggesters(config: RichTextEditorConfig): RichTextSuggester[] {
+	return (config.suggesters ?? []).map((suggester) => suggestAt(config.suggestUrl, suggester));
 }
 
 /**

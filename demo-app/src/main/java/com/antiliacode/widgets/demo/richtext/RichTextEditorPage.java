@@ -69,6 +69,8 @@ import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
+import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
+import com.antiliacode.widgets.richtext.RichTextSuggestBehavior;
 import com.antiliacode.widgets.richtext.RichTextTool;
 import com.antiliacode.widgets.richtext.RichTextView;
 import com.antiliacode.widgets.resizable.ResizableSize;
@@ -92,7 +94,10 @@ import com.github.openjson.JSONObject;
  * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it.
  * <p>
  * The cleaning on the server: HTML from anywhere, with scripts, handlers and styles, and what
- * {@link RichTextPolicy} leaves of it. The React and Svelte tabs show the editor in those
+ * {@link RichTextPolicy} leaves of it.
+ * <p>
+ * Writing: the spell check of the browser, a proofreader on the server, mentions and completions
+ * from the server ({@link RichTextWritingPanel}). The React and Svelte tabs show the editor in those
  * frameworks.
  */
 public class RichTextEditorPage extends DemoPage
@@ -169,6 +174,12 @@ public class RichTextEditorPage extends DemoPage
 	/** Takes the images the editors of the React and Svelte apps upload. */
 	private final RichTextImageUploadBehavior appUploads;
 
+	/** Checks the texts of the editors of the React and Svelte apps, as the writing case does. */
+	private final RichTextProofreadBehavior appProofreading;
+
+	/** Offers the people, the topics and the terms to the editors of the apps. */
+	private final RichTextSuggestBehavior appSuggestions;
+
 	private String heardMessage;
 
 	private String selectionMessage;
@@ -192,6 +203,7 @@ public class RichTextEditorPage extends DemoPage
 		Fragment articleCase = cases.addCase("articleTitle", "articleCase");
 		Fragment notesCase = cases.addCase("notesTitle", "notesCase");
 		Fragment cleaningCase = cases.addCase("cleaningTitle", "cleaningCase");
+		cases.addCase("writingTitle", "writingCase").add(new RichTextWritingPanel("writing"));
 
 		known = new Label("known", this::describe);
 		known.setOutputMarkupId(true);
@@ -471,6 +483,12 @@ public class RichTextEditorPage extends DemoPage
 		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
 			.setMaxSize(RichTextImages.MAX_SIZE);
 		add(appUploads);
+		appProofreading = new RichTextProofreadBehavior(RichTextWriting.proofreader(
+			getString("misspelled"), getString("repeated"), getString("twoBlanks")));
+		add(appProofreading);
+		appSuggestions = new RichTextSuggestBehavior(RichTextWriting.people(),
+			RichTextWriting.topics(), RichTextWriting.terms());
+		add(appSuggestions);
 	}
 
 	/**
@@ -766,7 +784,10 @@ public class RichTextEditorPage extends DemoPage
 			.put("toolbars", new JSONArray(TOOLBARS))
 			.put("uploadUrl", appUploads.getUploadUrl())
 			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
-			.put("uploadMaxSize", appUploads.getMaxSize().bytes());
+			.put("uploadMaxSize", appUploads.getMaxSize().bytes())
+			.put("proofreadUrl", appProofreading.getProofreadUrl())
+			.put("suggestUrl", appSuggestions.getSuggestUrl())
+			.put("suggesters", appSuggestions.toJson());
 	}
 
 	@Override

@@ -44,6 +44,7 @@ import { StarterKit } from '@tiptap/starter-kit';
 
 import type { RichTextEditorKit } from './rich-text-editor.js';
 import { featureExtensions, richTextFeature, type RichTextTrigger } from './rich-text-features.js';
+import { Mention } from './rich-text-suggestions.js';
 import { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
 	type RichTextAlignment } from './rich-text-html.js';
 
@@ -53,7 +54,7 @@ export { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, 
 /** The features built in the editor. */
 export type RichTextFeatureName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
-	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign';
+	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign' | 'mention';
 
 /**
  * What a text may hold: a feature built in the editor, or the name of one registered
@@ -65,14 +66,14 @@ export type RichTextFeature = RichTextFeatureName | (string & {});
 export const RICH_TEXT_FEATURES: readonly RichTextFeatureName[] = Object.freeze(['heading', 'bold',
 	'italic', 'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
 	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
-	'textAlign']);
+	'textAlign', 'mention']);
 
 /**
  * The features Markdown has no syntax for, which an editor of Markdown leaves out unless told
- * otherwise: underlined text, colors and alignment.
+ * otherwise: underlined text, colors, alignment and mentions.
  */
 export const RICH_TEXT_NOT_IN_MARKDOWN: readonly RichTextFeatureName[] = Object.freeze(['underline',
-	'textColor', 'textBackground', 'textAlign']);
+	'textColor', 'textBackground', 'textAlign', 'mention']);
 
 /**
  * A color of the text, of the palette of the colors of the text. The style sheets of the page color
@@ -468,6 +469,9 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 	}
 	if (has('textAlign')) {
 		extensions.push(TextAlignClass);
+	}
+	if (has('mention') && options.format !== 'markdown') {
+		extensions.push(Mention);
 	}
 	for (const feature of options.features) {
 		const definition = richTextFeature(feature);

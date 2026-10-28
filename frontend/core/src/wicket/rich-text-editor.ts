@@ -28,7 +28,10 @@
  * with CKEditor's script (see rich-text-events.ts).
  *
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
- * chooses, drops or pastes there, and the server answers their addresses. The grammars of the code
+ * chooses, drops or pastes there, and the server answers their addresses. With proofreadUrl, that
+ * of its proofreading behavior, the server checks the text, which the editor underlines. With
+ * suggestUrl and suggesters, the names, characters and insertions of the editor's suggesters, the
+ * server offers what the user types: the users to mention, the words to complete. The grammars of the code
  * blocks are not here: antilia-rich-text-highlight.js, which a page loads only where an editor
  * highlights, registers them as Wicket.RichTextHighlighter, before this script or after it.
  */
@@ -39,19 +42,27 @@ import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTe
 	type RichTextEditorOptions, type RichTextEditorState,
 	type RichTextEditorStateChange } from '../rich-text-editor.js';
 import type { RichTextHighlighter } from '../rich-text-languages.js';
+import { proofreadAt } from '../rich-text-proofreading.js';
+import { suggestAt, type RichTextSuggester } from '../rich-text-suggestions.js';
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
 import { sendState, type Parameter } from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and where the server hears of the state. */
-interface WicketRichTextEditorOptions extends RichTextEditorOptions {
+interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'suggesters'> {
 	/** The URL of the Ajax behavior keeping the state on the server. */
 	stateUrl?: string;
 	/** The name the text area posts the text under, which the text goes to the server under too. */
 	inputName?: string;
 	/** The URL of the behavior taking the images the user uploads, and answering their addresses. */
 	uploadUrl?: string;
+	/** The URL of the behavior checking the text, and answering its issues. */
+	proofreadUrl?: string;
+	/** The URL of the behavior answering the items of the suggesters. */
+	suggestUrl?: string;
+	/** The suggesters of the server, without their items, which suggestUrl answers. */
+	suggesters?: readonly (RichTextSuggester | Omit<RichTextSuggester, 'items'>)[];
 }
 
 const WicketRichTextEditor = {
@@ -65,7 +76,8 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { stateUrl, inputName, uploadUrl, ...rest } = options;
+		const { stateUrl, inputName, uploadUrl, proofreadUrl, suggestUrl, suggesters,
+			...rest } = options;
 		let editor: RichTextEditor | null = null;
 		const onStateChange = stateUrl ? (state: RichTextEditorState,
 			change: RichTextEditorStateChange) => {
@@ -77,7 +89,12 @@ const WicketRichTextEditor = {
 			rest.onStateChange?.(state, change);
 		} : rest.onStateChange;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
-		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload });
+		const proofreader = proofreadUrl ? proofreadAt(proofreadUrl) : rest.proofreader;
+		const asked = suggesters?.map((suggester) => 'items' in suggester ? suggester :
+			suggestUrl ? suggestAt(suggestUrl, suggester) : null)
+			.filter((suggester): suggester is RichTextSuggester => !!suggester);
+		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload, proofreader,
+			suggesters: asked });
 		return editor;
 	},
 

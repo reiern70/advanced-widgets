@@ -17,7 +17,8 @@ import { useState } from 'react';
 import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
-import { describe, richText, toolbarOf, uploader, type RichText,
+import { describe, proofreader as proofreaderOf, richText, suggesters as suggestersOf,
+	toolbarOf, uploader, type RichText,
 	type RichTextEditorConfig } from '../rich-text-editor.js';
 
 /**
@@ -35,6 +36,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const [count, setCount] = useState(true);
 	const [highlight, setHighlight] = useState(true);
 	const [onUpload] = useState(() => uploader(config));
+	const [proofreader] = useState(() => proofreaderOf(config));
+	const [suggesters] = useState(() => suggestersOf(config));
 	const [heard, setHeard] = useState(texts.appStart);
 	const check = (label: string, checked: boolean, change: (checked: boolean) => void) => (
 		<label className="rich-text-demo__control">
@@ -77,6 +80,7 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 								toolbar={toolbarOf(toolbar)} bubbleMenu={bubbleMenu} readOnly={readOnly}
 								count={count} texts={config.editor} highlight={highlight} onUpload={onUpload}
 								uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
+								proofreader={proofreader} suggesters={suggesters}
 								onChange={(text) => setArticle((all) => ({ ...all, text }))}
 								onStateChange={(state) => setArticle((all) => ({ ...all, state }))}
 								onSave={saveArticle} />

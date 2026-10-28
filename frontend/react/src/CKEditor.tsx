@@ -62,6 +62,16 @@ export interface CKEditorProps {
 	placeholder?: string;
 	/** The accessible name of the text. */
 	label?: string;
+	/**
+	 * Whether the browser checks the spelling of the text: as it does by default when left out or
+	 * null.
+	 */
+	spellcheck?: boolean | null;
+	/**
+	 * The language of the text, a tag of BCP 47 (en-GB, de), which the browser checks its spelling
+	 * in: that of the page when left out or null.
+	 */
+	textLanguage?: string | null;
 	/** Whether the editor counts the characters and the words below the text, false when left out. */
 	count?: boolean;
 	/** The dimensions the user resizes the editor in, vertical when left out; false for none. */
@@ -136,9 +146,9 @@ export interface CKEditorHandle {
 export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 	function CKEditor(props, ref) {
 		const { value, saved, build, licenseKey, language, translations, format, features,
-			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, count, resizable,
-			minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts, name, id,
-			className } = props;
+			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
+			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts,
+			name, id, className } = props;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
 		const look = useLook();
@@ -166,7 +176,8 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				format: current.format, features: current.features,
 				headingLevels: current.headingLevels, toolbar: current.toolbar,
 				plugins: current.plugins, config: current.config, readOnly: current.readOnly,
-				placeholder: current.placeholder, label: current.label, count: current.count,
+				placeholder: current.placeholder, label: current.label,
+				spellcheck: current.spellcheck, textLanguage: current.textLanguage, count: current.count,
 				resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, stateDelay: current.stateDelay, texts: current.texts, look,
@@ -190,10 +201,12 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 
 		useLayoutEffect(() => {
 			instance.current?.configure({ licenseKey, language, format, features, headingLevels,
-				toolbar, readOnly, placeholder, label, count, resizable, minWidth, minHeight,
-				maxWidth, maxHeight, stateDelay, texts });
+				toolbar, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
+				textLanguage: textLanguage ?? null, count, resizable, minWidth, minHeight, maxWidth,
+				maxHeight, stateDelay, texts });
 		}, [licenseKey, language, format, features, headingLevels, toolbar, readOnly, placeholder,
-			label, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts]);
+			label, spellcheck, textLanguage, count, resizable, minWidth, minHeight, maxWidth,
+			maxHeight, stateDelay, texts]);
 
 		// compared by what they are: another one makes CKEditor anew
 		useLayoutEffect(() => {

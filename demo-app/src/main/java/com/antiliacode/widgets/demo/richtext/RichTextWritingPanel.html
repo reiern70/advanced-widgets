@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:panel>
+	<form wicket:id="writingControls" class="rich-text-demo__controls">
+		<label class="rich-text-demo__control"><wicket:message key="spellcheck"/> <select wicket:id="spellcheck"></select></label>
+		<label class="rich-text-demo__control"><wicket:message key="textLanguage"/> <select wicket:id="textLanguage"></select></label>
+		<label class="rich-text-demo__control"><wicket:message key="proofreading"/> <select wicket:id="proofreading"></select></label>
+	</form>
+	<p class="rich-text-demo__status"><wicket:message key="writingExplanation"/></p>
+	<form wicket:id="writingForm" class="rich-text-demo__editor">
+		<label wicket:id="writingName" class="rich-text-demo__name">[text]</label>
+		<textarea wicket:id="editor"></textarea>
+		<div class="rich-text-demo__actions">
+			<button type="submit" wicket:id="save"><wicket:message key="save"/></button>
+			<span wicket:id="writingStatus" class="rich-text-demo__heard" role="status">[status]</span>
+		</div>
+	</form>
+	<div wicket:id="writingKept" class="rich-text-demo__saved">
+		<h3 class="rich-text-demo__subtitle"><wicket:message key="asTyped"/></h3>
+		<div wicket:id="view" class="rich-text-demo__view"></div>
+		<p wicket:id="mentions" class="rich-text-demo__status">[the mentions the server reads]</p>
+	</div>
+</wicket:panel>
+</body>
+</html>
