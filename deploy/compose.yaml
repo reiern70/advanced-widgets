@@ -18,10 +18,11 @@ services:
     restart: unless-stopped
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
-      # the PostgreSQL of this file, unless .env names another one (a managed database)
+      # the PostgreSQL of this file, unless .env names another one (a managed database), with
+      # the role of the application, which is no superuser (see database-role.sql)
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/widgets}
-      DATABASE_USER: ${DATABASE_USER:-widgets}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+      DATABASE_USER: ${DATABASE_APP_USER:-widgets_app}
+      DATABASE_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
       ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
       # the passwords of the accounts the demo always has; one without a password is not added
       ANTILIA_WIDGETS_ADMIN_PASSWORD: ${ANTILIA_WIDGETS_ADMIN_PASSWORD:-}
@@ -71,10 +72,16 @@ services:
     logging: *logging
     environment:
       POSTGRES_DB: widgets
+      # the superuser, who keeps the database, makes the backups and the role of the application
       POSTGRES_USER: ${DATABASE_USER:-widgets}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+      # the role of the application, made by database-role.sql when the database is created and
+      # again by start.sh before every start of the application
+      DATABASE_APP_USER: ${DATABASE_APP_USER:-widgets_app}
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
     volumes:
       - database:/var/lib/postgresql/data
+      - ./database-role.sql:/docker-entrypoint-initdb.d/database-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d widgets"]
       interval: 5s
