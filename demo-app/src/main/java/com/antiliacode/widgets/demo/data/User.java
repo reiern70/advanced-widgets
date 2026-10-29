@@ -86,6 +86,10 @@ public class User implements Serializable, IIdentifiable<Long>
 	@Column(nullable = false)
 	private boolean validated;
 
+	/** Whether the account is one of those the server is started with. */
+	@Column(nullable = false)
+	private boolean configured;
+
 	/** The SHA-256 of the token in the link of the confirmation email, in hex. */
 	@Column(name = "validation_token", length = 64)
 	private String validationToken;
@@ -245,6 +249,20 @@ public class User implements Serializable, IIdentifiable<Long>
 	public void setValidated(boolean validated)
 	{
 		this.validated = validated;
+	}
+
+	/**
+	 * @return whether the account is one of those the server is started with, which it keeps in
+	 *         step with the setting, see {@link com.antiliacode.widgets.demo.account.Accounts}
+	 */
+	public boolean isConfigured()
+	{
+		return configured;
+	}
+
+	public void setConfigured(boolean configured)
+	{
+		this.configured = configured;
 	}
 
 	public String getValidationToken()
