@@ -12,7 +12,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS for the subdomains too, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`), no `Server`, and an access log |
 | `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
-| `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
+| `setup-server.sh` | Prepares an instance: Docker, swap, `/opt/antilia-widgets`, the firewall `ufw`, SSH with keys only, security updates that restart when needed, age; runs again on an instance set up before |
 | `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
 | `start.sh` | On the instance: checks `.env`, dumps the database, pulls and builds the images, gives the application its role in PostgreSQL and starts them |
 | `database-role.sql` | The application's own role in PostgreSQL, no superuser, owning the tables; run when the database is created and by `start.sh` |
@@ -100,6 +100,16 @@ instance, checks it before touching anything, without printing any of its values
   `false`: switches for a developer's machine.
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
+
+**The instance.** Besides Lightsail's firewall, `setup-server.sh` turns on `ufw`, letting in only
+SSH (22/tcp), HTTP (80/tcp) and HTTPS (443/tcp, and 443/udp for HTTP/3); it allows SSH before it
+turns the firewall on, so the session running it goes on. Docker opens the ports it publishes, 80
+and 443, past `ufw` by itself; no other container publishes a port. SSH takes keys only and no
+root (`/etc/ssh/sshd_config.d/10-antilia-widgets.conf`: `PasswordAuthentication no`,
+`PermitRootLogin no`), checked with `sshd -t` before SSH reloads, and set only while the user has a
+key in `~/.ssh/authorized_keys`. The security updates install every day, and when one needs a
+restart (a new kernel), the instance restarts at 04:00 UTC, after the backup of 03:30; the
+containers start again by themselves.
 
 **Headers and the access log.** Every answer, the redirects of `www` too, carries HSTS for a
 year with `includeSubDomains` (so every subdomain of the domain has to serve HTTPS),
@@ -383,7 +393,28 @@ before or while deploying again:
    application as that role. Nothing is dropped or deleted, and the data stays as it is.
    `start.sh` stops before doing anything while the password is missing.
 
-3. **Encrypted backups**: install age on the server (running `setup-server.sh` again does it, see
-   the next step, or `sudo apt-get install age`), make a key pair on your own machine and put its
-   public key into `.env` as described under *Backups* above. The private key never goes to the
-   server. The dumps made before stay plain until they are 14 days old and deleted.
+3. **The instance**: run `setup-server.sh` again; every step checks first, so it only adds what
+   is missing: age, the firewall `ufw` (SSH, HTTP and HTTPS only; SSH is allowed before it turns
+   on), SSH with keys only and no root, and restarts after security updates at 04:00 UTC. Keep the
+   session open and try a second `ssh` before closing it:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'sh -s' < deploy/setup-server.sh
+   ssh ubuntu@<static-ip> 'sudo ufw status verbose; sudo sshd -T | grep -Ei "^(passwordauthentication|permitrootlogin) "'
+   ```
+
+4. **Encrypted backups**: make a key pair on your own machine and put its public key into `.env`
+   as described under *Backups* above; step 3 installed age on the server. The private key never
+   goes to the server. The dumps made before stay plain until they are 14 days old and deleted.
+
+5. **Deploy**: `deploy/deploy.sh ubuntu@<static-ip>`. Before it, check that the server's
+   PostgreSQL runs on Debian trixie, as `postgres:17.11` does
+   (`ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec db grep VERSION_CODENAME /etc/os-release'`);
+   on `bookworm`, pin `postgres:17.11-bookworm` with its digest in `compose.yaml` instead, so the
+   collation of the text in the database stays the same. The heap in `JAVA_OPTIONS` must stay at
+   `-Xmx1g` or below, which the limit of memory of the container, 1400 MB, holds. This first
+   deployment recreates the three containers, PostgreSQL now as the user `postgres` on a
+   read-only file system, so the site is away for a minute or two; `start.sh` dumps the database
+   before. Then check that
+   `docker compose logs app | grep -i mode` says `DEPLOYMENT mode`, that the home page shows
+   *Live*, and that `docker compose ps` shows the three containers up.
