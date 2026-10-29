@@ -27,7 +27,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
-import com.github.openjson.JSONObject;
+import com.antiliacode.widgets.ScriptJson;
 
 /**
  * Copies a text to the clipboard when the user clicks, or double clicks, the component, and
@@ -146,7 +146,7 @@ public class ClipboardCopyBehavior extends Behavior
 		String copied = Application.get().getResourceSettings().getLocalizer().getString(
 			"ClipboardCopyBehavior.copied", null, "Copied");
 		response.render(OnDomReadyHeaderItem.forScript(
-			"Wicket.Clipboard.copiedMessage = " + JSONObject.quote(copied) + ";"));
+			"Wicket.Clipboard.copiedMessage = " + ScriptJson.quote(copied) + ";"));
 	}
 
 	@Override

@@ -30,6 +30,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.theme.ILook;
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
@@ -311,7 +312,7 @@ public class Popover implements Serializable
 	 */
 	public Popover show(AjaxRequestTarget target, Component trigger)
 	{
-		target.appendJavaScript("Wicket.Popover.show(" + JSONObject.quote(trigger.getMarkupId()) +
+		target.appendJavaScript("Wicket.Popover.show(" + ScriptJson.quote(trigger.getMarkupId()) +
 			", " + toJson(trigger) + ");");
 		return this;
 	}
@@ -319,7 +320,8 @@ public class Popover implements Serializable
 	/**
 	 * @param context
 	 *            the component whose bundles have the title of the close button
-	 * @return the options of {@code Wicket.Popover.show}, as a JavaScript object
+	 * @return the options of {@code Wicket.Popover.show}, as JSON safe in an inline script, see
+	 *         {@link ScriptJson}
 	 */
 	public String toJson(Component context)
 	{
@@ -350,7 +352,7 @@ public class Popover implements Serializable
 		{
 			options.put("closeLabel", close);
 		}
-		return options.toString();
+		return ScriptJson.of(options);
 	}
 
 	/**

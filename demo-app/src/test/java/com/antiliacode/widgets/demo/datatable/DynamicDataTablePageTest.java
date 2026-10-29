@@ -424,7 +424,7 @@ class DynamicDataTablePageTest
 		JsonBasedDynamicDataTable<?, ?> table = (JsonBasedDynamicDataTable<?, ?>)page.getTable();
 		table.setRowsSource(JsonBasedDynamicDataTable.RowsSource.RESOURCE);
 		tester.startPage(page);
-		tester.assertContains("\"dataUrl\":\"[^\"]*/api/users\\?first=0&count=25");
+		tester.assertContains("\"dataUrl\":\"[^\"]*/api/users\\?first=0\\\\u0026count=25");
 
 		tester.getRequest().setMethod("GET");
 		tester.executeUrl("api/users?first=0&count=3&sort=lastName&ascending=true&filter=jans");

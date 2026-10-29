@@ -29,7 +29,7 @@ import org.apache.wicket.request.resource.IResource;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
-import com.github.openjson.JSONObject;
+import com.antiliacode.widgets.ScriptJson;
 
 import jakarta.servlet.http.Cookie;
 
@@ -192,7 +192,7 @@ public class ButtonDownloadBehavior extends AjaxDownloadBehavior
 	 */
 	public static String busy(Component component, boolean busy)
 	{
-		return "Wicket.Button.busy(" + JSONObject.quote(component.getMarkupId()) + "," + busy +
+		return "Wicket.Button.busy(" + ScriptJson.quote(component.getMarkupId()) + "," + busy +
 			");";
 	}
 

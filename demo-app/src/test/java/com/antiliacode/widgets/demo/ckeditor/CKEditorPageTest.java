@@ -174,7 +174,7 @@ class CKEditorPageTest
 		tester.startPage(CKEditorPage.class);
 		tester.assertContains("\"state\":\\{\"selection\":\\{\"anchor\":3,\"head\":7\\}," +
 			"\"scrollTop\":40,\"scrollLeft\":0,\"height\":420\\}");
-		tester.assertContains("\"saved\":\"<h2>Field notes from the coast");
+		tester.assertContains("\"saved\":\"\\\\u003ch2\\\\u003eField notes from the coast");
 	}
 
 	@Test
@@ -186,7 +186,8 @@ class CKEditorPageTest
 		CKEditorDocument article = CKEditorPage.article();
 		assertEquals("<p>Saved <i>now</i></p>", article.getSaved());
 		assertFalse(article.isModified());
-		tester.assertContains("e.markSaved\\(\"<p>Saved <i>now<\\\\/i><\\\\/p>\"\\)");
+		tester.assertContains("e.markSaved\\(\"\\\\u003cp\\\\u003eSaved \\\\u003ci\\\\u003enow" +
+			"\\\\u003c\\\\/i\\\\u003e\\\\u003c\\\\/p\\\\u003e\"\\)");
 		tester.assertContains("Saved the article.");
 		tester.assertContains("antilia-ck-editor-view ck-content\"[^>]*><p>Saved <i>now</i></p>");
 

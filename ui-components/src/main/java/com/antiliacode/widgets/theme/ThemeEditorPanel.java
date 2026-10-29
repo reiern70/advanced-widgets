@@ -34,6 +34,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.clipboard.ClipboardCopyBehavior;
 import com.antiliacode.widgets.dropdown.DropdownBehavior;
 import com.github.openjson.JSONObject;
@@ -120,7 +121,7 @@ public class ThemeEditorPanel extends Panel
 	public void reload(IPartialPageRequestHandler target)
 	{
 		target.appendJavaScript(
-			"Wicket.ThemeEditor.load(" + JSONObject.quote(editor.getMarkupId()) + ");");
+			"Wicket.ThemeEditor.load(" + ScriptJson.quote(editor.getMarkupId()) + ");");
 	}
 
 	private Component newInput(String id, String property)
@@ -164,6 +165,7 @@ public class ThemeEditorPanel extends Panel
 		JSONObject config = new JSONObject();
 		config.put("editor", editor.getMarkupId());
 		config.put("preview", preview.getMarkupId());
-		response.render(OnDomReadyHeaderItem.forScript("Wicket.ThemeEditor.init(" + config + ");"));
+		response.render(OnDomReadyHeaderItem.forScript("Wicket.ThemeEditor.init(" +
+			ScriptJson.of(config) + ");"));
 	}
 }

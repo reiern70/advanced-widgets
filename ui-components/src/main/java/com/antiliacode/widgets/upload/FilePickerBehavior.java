@@ -27,6 +27,7 @@ import org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceFi
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.lang.Bytes;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.ButtonBehavior.Size;
 import com.antiliacode.widgets.button.ButtonBehavior.Variant;
 import com.antiliacode.widgets.theme.Looks;
@@ -164,7 +165,7 @@ public class FilePickerBehavior extends Behavior
 	public static void clear(Component input, IPartialPageRequestHandler target)
 	{
 		target.appendJavaScript("Wicket.Upload.FilePicker.of(" +
-			JSONObject.quote(input.getMarkupId()) + ")?.clear();");
+			ScriptJson.quote(input.getMarkupId()) + ")?.clear();");
 	}
 
 	@Override
@@ -194,7 +195,8 @@ public class FilePickerBehavior extends Behavior
 		Uploads.renderHeadItems(response);
 		Looks.of(component).renderHead(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Upload.FilePicker.attach(" +
-			JSONObject.quote(component.getMarkupId()) + ", " + newOptions(component) + ");"));
+			ScriptJson.quote(component.getMarkupId()) + ", " +
+			ScriptJson.of(newOptions(component)) + ");"));
 	}
 
 	/**

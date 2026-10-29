@@ -86,7 +86,8 @@ class DynamicDataTableTest extends WicketTestCase
 		assertTrue(page.contains("new Wicket.DynamicDataTable({"), page);
 		assertFalse(page.contains("\"m\":\"GET\""), "the table posts its requests");
 		assertTrue(page.contains("\"m\":\"POST\""), page);
-		assertTrue(page.contains("\"template\":\"<b>{{name}}<\\/b>\""), page);
+		assertTrue(page.contains("\"template\":\"\\u003cb\\u003e{{name}}\\u003c\\/b\\u003e\""),
+			page);
 	}
 
 	@Test

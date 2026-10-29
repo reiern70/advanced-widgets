@@ -23,6 +23,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookBehavior;
@@ -209,8 +210,10 @@ public class MarkdownPreview extends WebMarkupContainer
 	{
 		setScrollWithEditor(scrollWithEditor);
 		target.appendJavaScript("(function(){var p=Wicket.MarkdownPreview&&" +
-			"Wicket.MarkdownPreview.of(" + JSONObject.quote(getMarkupId()) + ");if(p){p.configure(" +
-			new JSONObject().put("scrollWithEditor", scrollWithEditor) + ");}})();");
+			"Wicket.MarkdownPreview.of(" + ScriptJson.quote(getMarkupId()) +
+			");if(p){p.configure(" +
+			ScriptJson.of(new JSONObject().put("scrollWithEditor", scrollWithEditor)) +
+			");}})();");
 		return this;
 	}
 
@@ -235,7 +238,7 @@ public class MarkdownPreview extends WebMarkupContainer
 		super.renderHead(response);
 		CodeEditor.renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.MarkdownPreview.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}
 
 	/**

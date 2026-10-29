@@ -41,6 +41,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.icon.IIcon;
 import com.antiliacode.widgets.menu.AjaxMenuItem;
 import com.antiliacode.widgets.menu.BookmarkableMenuItem;
@@ -480,7 +481,7 @@ public class Breadcrumb extends Panel
 		super.renderHead(response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Breadcrumb.attach(" +
-			JSONObject.quote(element.getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(element.getMarkupId()) + ", " + getOptions() + ");"));
 	}
 
 	/**
@@ -488,13 +489,12 @@ public class Breadcrumb extends Panel
 	 */
 	private String getOptions()
 	{
-		return new JSONObject()
+		return ScriptJson.of(new JSONObject()
 			.put("separator", separator.cssName())
 			.put("maxItems", maxItems)
 			.put("texts", new JSONObject()
 				.put("label", getLabelText())
-				.put("more", getString("Breadcrumb.more")))
-			.toString();
+				.put("more", getString("Breadcrumb.more"))));
 	}
 
 	@Override

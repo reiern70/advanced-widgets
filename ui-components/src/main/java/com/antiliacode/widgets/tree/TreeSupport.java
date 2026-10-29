@@ -26,10 +26,10 @@ import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antiliacode.widgets.icon.IIcon;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
-import com.github.openjson.JSONObject;
 
 /**
  * What a {@link Tree} and a {@link TreeGrid} share: the node selected, kept as the model the
@@ -118,8 +118,8 @@ final class TreeSupport<T> implements IDetachable
 		if (height > 0)
 		{
 			response.render(OnDomReadyHeaderItem.forScript("(function (tree) { if (tree) { " +
-				"tree.style.height = " + JSONObject.quote(height + heightUnits.getCssUnit()) +
-				"; } })(document.getElementById(" + JSONObject.quote(tree.getMarkupId()) + "));"));
+				"tree.style.height = " + ScriptJson.quote(height + heightUnits.getCssUnit()) +
+				"; } })(document.getElementById(" + ScriptJson.quote(tree.getMarkupId()) + "));"));
 		}
 	}
 

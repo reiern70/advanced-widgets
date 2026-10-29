@@ -69,6 +69,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.antiliacode.widgets.table.IMovableColumn;
@@ -443,7 +444,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				super.renderHead(response);
 				response.render(JavaScriptHeaderItem.forReference(JAVASCRIPT));
 				response.render(OnDomReadyHeaderItem.forScript(
-					"Wicket.DynamicDataTable.placeOverlay(" + JSONObject.quote(getMarkupId()) + ");"));
+					"Wicket.DynamicDataTable.placeOverlay(" + ScriptJson.quote(getMarkupId()) +
+						");"));
 			}
 		};
 		overlayWindow.setOutputMarkupId(true);
@@ -2448,8 +2450,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 		JSONObject config = buildConfig();
 		configure(config);
-		response.render(OnDomReadyHeaderItem.forScript("new Wicket.DynamicDataTable(" + config +
-			", " +
+		response.render(OnDomReadyHeaderItem.forScript("new Wicket.DynamicDataTable(" +
+			ScriptJson.of(config) + ", " +
 			actionBehavior.getCallbackFunction(CallbackParameter.explicit(ACTION_PARAMETER),
 				CallbackParameter.explicit(KEY_PARAMETER)) +
 			", " + navigationBehavior.getCallbackFunction() + getScriptArguments() + ");"));
@@ -2508,7 +2510,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 */
 	protected final String getVarName()
 	{
-		return "Wicket.DynamicDataTable.instances[" + JSONObject.quote(getMarkupId()) + "]";
+		return "Wicket.DynamicDataTable.instances[" + ScriptJson.quote(getMarkupId()) + "]";
 	}
 
 	private JSONObject buildConfig()

@@ -395,7 +395,7 @@ class DesktopTest extends WicketTestCase
 		}.setIcon(SvgIcon.KEYBOARD));
 		tester.startPage(new TestPage(desktop));
 		tester.assertContains("\"windowTypes\":\\[\\{\"type\":\"notes\",\"title\":\"Notes\"," +
-			"\"icon\":\"<svg");
+			"\"icon\":\"\\\\u003csvg");
 		// no states sent, but the windows of types
 		tester.assertContains("\\}, null, function \\(action,type,pane,window\\)");
 

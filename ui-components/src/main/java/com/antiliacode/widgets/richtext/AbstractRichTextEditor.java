@@ -31,6 +31,7 @@ import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -421,7 +422,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		{
 			savedModel.setObject(text);
 		}
-		target.appendJavaScript(script("markSaved(" + JSONObject.quote(text == null ? "" : text) +
+		target.appendJavaScript(script("markSaved(" + ScriptJson.quote(text == null ? "" : text) +
 			")"));
 		return self();
 	}
@@ -448,7 +449,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	{
 		String global = getScriptObject();
 		return "(function(){var e=" + global + "&&" + global + ".of(" +
-			JSONObject.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
+			ScriptJson.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
 	}
 
 	/**
@@ -735,7 +736,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		// after the editor's script, which the scripts of the features register with
 		getFeatures().forEach(feature -> feature.renderHead(this, response));
 		response.render(OnDomReadyHeaderItem.forScript(getScriptObject() + ".attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}
 
 	/**

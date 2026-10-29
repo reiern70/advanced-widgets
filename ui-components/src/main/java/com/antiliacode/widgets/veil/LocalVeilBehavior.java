@@ -19,7 +19,7 @@ package com.antiliacode.widgets.veil;
 import org.apache.wicket.Component;
 import org.apache.wicket.core.request.handler.IPartialPageRequestHandler;
 
-import com.github.openjson.JSONObject;
+import com.antiliacode.widgets.ScriptJson;
 
 /**
  * Veils a single component while an Ajax request fired from inside it is in flight, see
@@ -148,13 +148,13 @@ public class LocalVeilBehavior extends AbstractVeilBehavior
 			throw new IllegalStateException(
 				LocalVeilBehavior.class.getSimpleName() + " is not bound to a component");
 		}
-		return JSONObject.quote(component.getMarkupId());
+		return ScriptJson.quote(component.getMarkupId());
 	}
 
 	@Override
 	protected CharSequence getInitScript(Component component)
 	{
-		return "Wicket.Veil.local(" + JSONObject.quote(component.getMarkupId()) + ", " +
+		return "Wicket.Veil.local(" + ScriptJson.quote(component.getMarkupId()) + ", " +
 			getOptions() + ");";
 	}
 }

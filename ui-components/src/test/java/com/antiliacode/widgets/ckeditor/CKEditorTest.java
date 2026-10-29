@@ -384,7 +384,8 @@ class CKEditorTest extends WicketTestCase
 
 		assertEquals("<p>new</p>", saved.getObject());
 		tester.assertContains("Wicket.CKEditor&&Wicket.CKEditor.of\\(\"" + editor.getMarkupId() +
-			"\"\\);if\\(e\\)\\{e.markSaved\\(\"<p>new<\\\\/p>\"\\);");
+			"\"\\);if\\(e\\)\\{e.markSaved\\(\"\\\\u003cp\\\\u003enew\\\\u003c\\\\/p\\\\u003e" +
+			"\"\\);");
 		tester.assertContains("if\\(e\\)\\{e.focus\\(\\);");
 	}
 

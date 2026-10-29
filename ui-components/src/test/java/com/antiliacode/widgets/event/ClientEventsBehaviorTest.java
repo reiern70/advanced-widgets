@@ -75,8 +75,9 @@ class ClientEventsBehaviorTest extends WicketTestCase
 			"x\"</script><script>alert(1)</script>", (eventId, values, target) -> {
 			}))));
 
-		// the name cannot close the script: JSON writes <\/ for </
-		tester.assertContains("id:\"x\\\\\"<\\\\/script><script>alert\\(1\\)<\\\\/script>\"");
+		// the name cannot close the script: < and > go in as unicode escapes
+		tester.assertContains("id:\"x\\\\\"\\\\u003c\\\\/script\\\\u003e\\\\u003cscript\\\\u003e" +
+			"alert\\(1\\)\\\\u003c\\\\/script\\\\u003e\"");
 		tester.assertContainsNot("x\"</script><script>alert");
 	}
 
