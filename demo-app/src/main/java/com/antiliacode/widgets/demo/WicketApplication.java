@@ -23,9 +23,12 @@ import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.pageStore.IPageStore;
+import org.apache.wicket.protocol.http.ResourceIsolationRequestCycleListener.CsrfAction;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.protocol.ws.WebSocketAwareResourceIsolationRequestCycleListener;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
+import org.apache.wicket.request.component.IRequestablePage;
 import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.settings.StoreSettings;
@@ -93,6 +96,8 @@ import com.antiliacode.widgets.demo.tree.TreeOfLifeResource;
 import com.antiliacode.widgets.demo.upload.UploadPage;
 import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.throttle.Throttle;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Application object for your web application.
@@ -228,6 +233,17 @@ public class WicketApplication extends WebApplication
 				}
 			}
 		});
+		// the components of a page answer the site's own pages only: a page of another site
+		// neither signs out nor sends a form; a request telling nothing of where it comes from is
+		// no browser's, and goes through
+		getRequestCycleListeners().add(new WebSocketAwareResourceIsolationRequestCycleListener()
+		{
+			@Override
+			protected void allowHandler(HttpServletRequest request, IRequestablePage page)
+			{
+				// not logged: every client but a browser sends such requests
+			}
+		}.setUnknownOutcomeAction(CsrfAction.ALLOW));
 		// at most SignedInUsers.MAXIMUM users are signed in at once: the ended sessions are not
 		getSessionStore().registerUnboundListener(signedInUsers::signedOut);
 

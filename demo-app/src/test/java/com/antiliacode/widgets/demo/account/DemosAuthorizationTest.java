@@ -145,7 +145,7 @@ class DemosAuthorizationTest
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 
-		tester.clickLink("signOut");
+		tester.newFormTester("signOut").submit();
 
 		tester.assertRenderedPage(HomePage.class);
 		assertFalse(DemoSession.get().isSignedIn());
