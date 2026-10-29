@@ -38,6 +38,12 @@ public enum RichTextTool implements IRichTextTool
 
 	CODE("code", RichTextFeature.CODE),
 
+	/** Raises the text selected, x², or lowers it back to the line; Ctrl+Shift+. too. */
+	SUPERSCRIPT("superscript", RichTextFeature.SUPERSCRIPT),
+
+	/** Lowers the text selected, H₂O, or raises it back to the line; Ctrl+Shift+, too. */
+	SUBSCRIPT("subscript", RichTextFeature.SUBSCRIPT),
+
 	/**
 	 * The color of the text selected, in a menu of the
 	 * {@link RichTextEditor#setColors(java.util.Collection) palette}.
@@ -88,7 +94,8 @@ public enum RichTextTool implements IRichTextTool
 
 	/** The toolbar of an editor not told otherwise, in groups. */
 	public static final List<List<RichTextTool>> DEFAULT_TOOLBAR = List.of(List.of(HEADING),
-		List.of(BOLD, ITALIC, UNDERLINE, STRIKE, CODE), List.of(TEXT_COLOR, TEXT_BACKGROUND),
+		List.of(BOLD, ITALIC, UNDERLINE, STRIKE, CODE, SUPERSCRIPT, SUBSCRIPT),
+		List.of(TEXT_COLOR, TEXT_BACKGROUND),
 		List.of(LINK),
 		List.of(BULLET_LIST, ORDERED_LIST, TASK_LIST), List.of(BLOCKQUOTE, CODE_BLOCK,
 			HORIZONTAL_RULE), List.of(TABLE, IMAGE), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,

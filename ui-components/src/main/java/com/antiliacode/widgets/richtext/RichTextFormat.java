@@ -24,8 +24,8 @@ public enum RichTextFormat
 	HTML("html"),
 
 	/**
-	 * Markdown: underlined text, colors and alignment are left out, Markdown has no syntax for
-	 * them.
+	 * Markdown: underlined text, superscript, subscript, colors and alignment are left out,
+	 * Markdown has no syntax for them.
 	 */
 	MARKDOWN("markdown"),
 

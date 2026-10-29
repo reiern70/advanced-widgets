@@ -564,7 +564,8 @@ describe('RichTextEditor', () => {
 });
 
 describe('the formats', () => {
-	it('keeps Markdown, without underlined text, colors and alignment', () => {
+	it('keeps Markdown, without underlined text, superscript, subscript, colors and alignment',
+		() => {
 		const editor = new RichTextEditor(textArea('# Title\n\nSome **bold** text\n\n- one\n- two'),
 			{ format: 'markdown' });
 
@@ -572,10 +573,14 @@ describe('the formats', () => {
 		expect(editor.getValue()).toBe('# Title\n\nSome **bold** text\n\n- one\n- two');
 		expect(editor.isModified()).toBe(false);
 		expect(editor.features().has('underline')).toBe(false);
+		expect(editor.features().has('superscript')).toBe(false);
+		expect(editor.features().has('subscript')).toBe(false);
 		expect(editor.features().has('textAlign')).toBe(false);
 		expect(editor.features().has('textColor')).toBe(false);
 		expect(editor.features().has('textBackground')).toBe(false);
 		expect(tool(editor, 'underline')).toBeNull();
+		expect(tool(editor, 'superscript')).toBeNull();
+		expect(tool(editor, 'subscript')).toBeNull();
 		expect(tool(editor, 'textColor')).toBeNull();
 		expect(tool(editor, 'alignCenter')).toBeNull();
 		expect(tool(editor, 'bold')).not.toBeNull();
@@ -751,6 +756,23 @@ describe('a paste', () => {
 		expect(editor.getValue()).toContain('<h2 class="antilia-text-right">Two</h2>');
 	});
 
+	it('brings text raised or lowered by its style as superscript and subscript', () => {
+		const editor = new RichTextEditor(textArea('<p>Start</p>'));
+		select(editor, 6);
+		// Google Docs: spans of styles, the position among them
+		editor.editor.view.pasteHTML('<p><span style="font-size:11pt;vertical-align:super;">' +
+			'2</span> and H<span style="vertical-align: sub">2</span>O, <span style="' +
+			'vertical-align: baseline">level</span></p>', new Event('paste') as ClipboardEvent);
+		expect(editor.getValue()).toBe('<p>Start<sup>2</sup> and H<sub>2</sub>O, level</p>');
+
+		// Word: the tags
+		editor.setValue('<p>x</p>');
+		select(editor, 2);
+		editor.editor.view.pasteHTML('<p>m<sup>3</sup> of CO<sub>2</sub></p>',
+			new Event('paste') as ClipboardEvent);
+		expect(editor.getValue()).toBe('<p>xm<sup>3</sup> of CO<sub>2</sub></p>');
+	});
+
 	it('of HTML with no style is read as it is', () => {
 		expect(quietHtml('<p>plain</p>')).toBe('<p>plain</p>');
 		expect(quietHtml('<p title="a style=b">x</p>')).toBe('<p title="a style=b">x</p>');
@@ -844,6 +866,55 @@ describe('the toolbar', () => {
 		expect(editor.getValue()).not.toContain('<hr>');
 		tool(editor, 'redo').click();
 		expect(editor.getValue()).toContain('<hr>');
+	});
+
+	it('raises and lowers the text, one or the other, by the tools and by the keys', () => {
+		const editor = new RichTextEditor(textArea('<p>x2 H2O</p>'));
+		expect(tool(editor, 'superscript').title).toBe('Superscript (Ctrl+Shift+.)');
+		expect(tool(editor, 'subscript').title).toBe('Subscript (Ctrl+Shift+,)');
+		expect(tool(editor, 'superscript').getAttribute('aria-pressed')).toBe('false');
+
+		select(editor, 2, 3);
+		tool(editor, 'superscript').click();
+		expect(editor.getValue()).toBe('<p>x<sup>2</sup> H2O</p>');
+		expect(tool(editor, 'superscript').getAttribute('aria-pressed')).toBe('true');
+		expect(tool(editor, 'subscript').getAttribute('aria-pressed')).toBe('false');
+
+		// subscript takes superscript away, and the other way round
+		tool(editor, 'subscript').click();
+		expect(editor.getValue()).toBe('<p>x<sub>2</sub> H2O</p>');
+		expect(tool(editor, 'superscript').getAttribute('aria-pressed')).toBe('false');
+		expect(tool(editor, 'subscript').getAttribute('aria-pressed')).toBe('true');
+		tool(editor, 'subscript').click();
+		expect(editor.getValue()).toBe('<p>x2 H2O</p>');
+
+		select(editor, 5, 6);
+		expect(key(editor.editor.view.dom, ',', { ctrlKey: true, shiftKey: true })
+			.defaultPrevented).toBe(true);
+		expect(editor.getValue()).toBe('<p>x2 H<sub>2</sub>O</p>');
+		key(editor.editor.view.dom, '.', { ctrlKey: true, shiftKey: true });
+		expect(editor.getValue()).toBe('<p>x2 H<sup>2</sup>O</p>');
+		key(editor.editor.view.dom, '.', { ctrlKey: true, shiftKey: true });
+		expect(editor.getValue()).toBe('<p>x2 H2O</p>');
+
+		// clearing the formats takes them away too
+		editor.setValue('<p>x<sup>2</sup> H<sub>2</sub>O</p>');
+		expect(editor.getValue()).toBe('<p>x<sup>2</sup> H<sub>2</sub>O</p>');
+		select(editor, 1, 8);
+		tool(editor, 'clearFormatting').click();
+		expect(editor.getValue()).toBe('<p>x2 H2O</p>');
+	});
+
+	it('leaves superscript and subscript out with their features', () => {
+		const editor = new RichTextEditor(textArea('<p>x<sup>2</sup> H<sub>2</sub>O</p>'),
+			{ features: ['bold', 'superscript'] });
+		expect(editor.getValue()).toBe('<p>x<sup>2</sup> H2O</p>');
+		expect(tool(editor, 'superscript')).not.toBeNull();
+		expect(tool(editor, 'subscript')).toBeNull();
+		// Ctrl+Shift+, does nothing then
+		select(editor, 5, 6);
+		key(editor.editor.view.dom, ',', { ctrlKey: true, shiftKey: true });
+		expect(editor.getValue()).toBe('<p>x<sup>2</sup> H2O</p>');
 	});
 
 	it('does nothing for a tool that cannot act', () => {
@@ -1555,7 +1626,7 @@ describe('the bubble menu', () => {
 		expect(bubble!.getAttribute('aria-label')).toBe('Formatting of the selection');
 		expect(Array.from(bubble!.querySelectorAll<HTMLElement>('[data-tool]'))
 			.map((each) => each.dataset.tool)).toEqual(['bold', 'italic', 'underline', 'strike',
-			'code', 'link']);
+			'code', 'superscript', 'subscript', 'link']);
 
 		bubble!.querySelector<HTMLButtonElement>('[data-tool="italic"]')!.click();
 		expect(editor.getValue()).toBe('<p><em>Hello</em> world</p>');

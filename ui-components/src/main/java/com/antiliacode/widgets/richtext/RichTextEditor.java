@@ -53,13 +53,14 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * A text area shown as a rich text editor, Tiptap ({@link RichTextLibrary}), in the colors of the
  * {@link com.antiliacode.widgets.theme.Theme theme} it is in and the look of the page: a toolbar of
  * the components' own formats the text, with headings, bold, italic, underlined, struck and code
- * text, the colors of the text and of its background, links, lists, task lists, quotes, code
- * blocks, rules, tables, images and alignment, the {@link RichTextFeature features}, all of them
- * unless {@link #setFeatures(Collection) told otherwise}. The page chooses the tools of the
- * toolbar, and their groups, with {@link #setToolbar(List)}.
- * The usual keys format too (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types (# a
- * heading, - a list, **bold**), Ctrl+K edits the link and Ctrl+S tells the page to save. Attach it
- * to a {@code <textarea>}.
+ * text, superscript and subscript, the colors of the text and of its background, links, lists,
+ * task lists, quotes, code blocks, rules, tables, images and alignment, the
+ * {@link RichTextFeature features}, all of them unless {@link #setFeatures(Collection) told
+ * otherwise}. The page chooses the tools of the toolbar, and their groups, with
+ * {@link #setToolbar(List)}.
+ * The usual keys format too (Ctrl+B, Ctrl+I..., Ctrl+Shift+. raises and Ctrl+Shift+, lowers),
+ * Markdown's marks do as the user types (# a heading, - a list, **bold**), Ctrl+K edits the link
+ * and Ctrl+S tells the page to save. Attach it to a {@code <textarea>}.
  * <p>
  * The model is the text, HTML by default, or Markdown or Tiptap's JSON
  * ({@link #setFormat(RichTextFormat)}). The HTML comes from the browser and is never trusted: the
@@ -178,20 +179,20 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 * among them.
 	 */
 	static final List<String> TEXT_NAMES = List.of(
-		"toolbar", "bubble", "heading", "bold", "italic", "underline", "strike", "code", "textColor",
-		"textBackground", "link", "bulletList", "orderedList", "taskList", "blockquote", "codeBlock",
-		"horizontalRule", "table", "image", "alignLeft", "alignCenter", "alignRight", "alignJustify",
-		"clearFormatting", "undo", "redo", "paragraph", "headingLevel", "insertTable", "addRowBefore",
-		"addRowAfter", "addColumnBefore", "addColumnAfter", "deleteRow", "deleteColumn",
-		"toggleHeaderRow", "deleteTable", "linkUrl", "linkNewTab", "removeLink", "imageUrl",
-		"imageAlt", "apply", "close", "invalidUrl", "characters", "character", "charactersOfLimit",
-		"words", "word", "resize", "plainText", "defaultColor", "noBackground", "recentColors",
-		"colorGray", "colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime",
-		"colorGreen", "colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple",
-		"colorPink", "uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge",
-		"uploadType", "proofreadSpelling", "proofreadGrammar", "proofreadStyle",
-		"proofreadReplacements", "proofreadNoSuggestions", "proofreadIgnore", "suggestions",
-		"suggestLoading", "suggestNone");
+		"toolbar", "bubble", "heading", "bold", "italic", "underline", "strike", "code",
+		"superscript", "subscript", "textColor", "textBackground", "link", "bulletList",
+		"orderedList", "taskList", "blockquote", "codeBlock", "horizontalRule", "table", "image",
+		"alignLeft", "alignCenter", "alignRight", "alignJustify", "clearFormatting", "undo", "redo",
+		"paragraph", "headingLevel", "insertTable", "addRowBefore", "addRowAfter",
+		"addColumnBefore", "addColumnAfter", "deleteRow", "deleteColumn", "toggleHeaderRow",
+		"deleteTable", "linkUrl", "linkNewTab", "removeLink", "imageUrl", "imageAlt", "apply",
+		"close", "invalidUrl", "characters", "character", "charactersOfLimit", "words", "word",
+		"resize", "plainText", "defaultColor", "noBackground", "recentColors", "colorGray",
+		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen",
+		"colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink",
+		"uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType",
+		"proofreadSpelling", "proofreadGrammar", "proofreadStyle", "proofreadReplacements",
+		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;
@@ -486,8 +487,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * @param bubbleMenu
-	 *            whether a menu of the inline formats (bold, italic, underline, strike, code and
-	 *            link) shows over the text selected, {@code false} by default
+	 *            whether a menu of the inline formats (bold, italic, underline, strike, code,
+	 *            superscript, subscript and link) shows over the text selected, {@code false} by
+	 *            default
 	 * @return {@code this}
 	 */
 	public RichTextEditor setBubbleMenu(boolean bubbleMenu)
