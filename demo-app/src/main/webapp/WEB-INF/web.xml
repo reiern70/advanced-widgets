@@ -70,4 +70,14 @@
 		<!-- never ;jsessionid= in the URLs, where links copied and Referers would give it away -->
 		<tracking-mode>COOKIE</tracking-mode>
 	</session-config>
+
+	<!--
+		A folder without a page, such as /images/, answers 403 rather than the list of its files:
+		Jetty's default servlet reads its init-param dirAllowed from this context-param too, in
+		the image, in jetty:run and in the tests alike.
+	-->
+	<context-param>
+		<param-name>org.eclipse.jetty.servlet.Default.dirAllowed</param-name>
+		<param-value>false</param-value>
+	</context-param>
 </web-app>
