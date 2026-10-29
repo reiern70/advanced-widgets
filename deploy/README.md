@@ -9,7 +9,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
-| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
+| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS for the subdomains too, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`), no `Server`, and an access log |
 | `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
@@ -98,6 +98,17 @@ instance, checks it before touching anything, without printing any of its values
   `false`: switches for a developer's machine.
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
+
+**Headers and the access log.** Every answer, the redirects of `www` too, carries HSTS for a
+year with `includeSubDomains` (so every subdomain of the domain has to serve HTTPS),
+`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`X-Frame-Options: SAMEORIGIN` (no framing by other sites; the application's CSP says
+`frame-ancestors 'self'` too) and a `Permissions-Policy` that turns off the browser's features the
+site does not use: camera, microphone, geolocation, payment, USB, serial, HID, MIDI, the sensors,
+fullscreen, reading the clipboard and more. Writing to the clipboard, which the click-to-copy of
+the demos does, stays allowed to the site's own pages. Caddy logs every request as a line of
+JSON, cookies and credentials left out, on its standard output, rotated with the other logs of
+the containers: `docker compose logs caddy`.
 
 **The client's address.** Jetty takes the address of the client, the host and the scheme
 (https) from the `X-Forwarded-For`, `-Host` and `-Proto` headers Caddy sets, replacing those a

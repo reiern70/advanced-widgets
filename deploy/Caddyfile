@@ -2,12 +2,34 @@
 	email {$ACME_EMAIL}
 }
 
+# What every answer carries, the redirects of www too: HTTPS only from now on, for the subdomains
+# too; no guessing of types; the address of a page to other sites only as its origin; no framing
+# by other sites; none of the browser's features the site does not use (it writes to the
+# clipboard, which stays allowed to its own pages); no names of servers. And an access log on the
+# standard output, which the logging limits of compose.yaml rotate.
+(common) {
+	log {
+		output stdout
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		Permissions-Policy "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), clipboard-read=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()"
+		-Server
+		-Via
+	}
+}
+
 # www goes to the bare domain
 www.{$DOMAIN} {
+	import common
 	redir https://{$DOMAIN}{uri} permanent
 }
 
 {$DOMAIN} {
+	import common
 	# no body larger than the uploads of the demo (20 MB at most, see UploadPage) reaches Jetty:
 	# a larger one is answered 413
 	request_body {
@@ -25,14 +47,5 @@ www.{$DOMAIN} {
 		header_up -X-Proxied-Https
 		header_up -Proxy-Auth-Cert
 		header_up -Proxy-Ssl-Id
-	}
-	# HTTPS only from now on, no guessing of types, the address of a page to other sites only
-	# as its origin, and no names of servers
-	header {
-		Strict-Transport-Security "max-age=31536000"
-		X-Content-Type-Options "nosniff"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		-Server
-		-Via
 	}
 }
