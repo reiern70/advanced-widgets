@@ -1,12 +1,12 @@
 # Production deployment
 
 The demo site runs on **Amazon Lightsail**: one Linux instance with Docker, where Caddy serves
-HTTPS and passes the requests, websockets included, to Jetty 11 with the WAR, and PostgreSQL
+HTTPS and passes the requests, websockets included, to Jetty 12 with the WAR, and PostgreSQL
 keeps the users and the accesses. The domain is registered in Lightsail too.
 
 | File | What it does |
 |---|---|
-| `Dockerfile` | Jetty 11 on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on |
+| `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
