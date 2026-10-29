@@ -11,11 +11,23 @@ x-logging: &logging
     max-size: "10m"
     max-file: "3"
 
+# Every container runs on a read-only file system, writing only into its volumes and tmpfs, with
+# no capabilities of Linux beyond those it needs, gains no privileges (no setuid), and has a limit
+# of memory, the three together fitting the 2 GB instance.
+
 services:
   app:
     build: .
     image: antilia-widgets:latest
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # a heap of 1 GB at most (-Xmx1g, see .env.example) and what the JVM needs besides it
+    mem_limit: 1400m
+    tmpfs:
+      # the command line Jetty starts with, made anew from JAVA_OPTIONS at every start
+      - /run/jetty:size=1m,mode=1777
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
       # the PostgreSQL of this file, unless .env names another one (a managed database), with
@@ -38,6 +50,9 @@ services:
       SITE_URL: https://${DOMAIN}
     volumes:
       - page-store:/var/lib/antilia-widgets
+      # the temporary folder of Jetty and of the demo, the uploads and the images of the rich
+      # text editors (up to some 200 MB): on the disk, not in memory as a tmpfs would hold it
+      - temporary:/tmp
     expose:
       - "8080"
     logging: *logging
@@ -51,6 +66,17 @@ services:
   db:
     image: postgres:17.11@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
     restart: unless-stopped
+    # as the user postgres from the start, who owns the data: the image's script needs no root
+    # then, nor the capabilities to change owners and users
+    user: postgres
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # shared_buffers of 192 MB, 20 connections at most
+    mem_limit: 512m
+    tmpfs:
+      - /var/run/postgresql:size=1m,mode=1777
+      - /tmp:size=16m,mode=1777
     command:
       - postgres
       - -c
@@ -91,6 +117,15 @@ services:
   caddy:
     image: caddy:2.11.7@sha256:5e5286cb37d44086d651a5363f05f43a692ce4d649d88fb1bd844579f45fa9e8
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    # the ports 80 and 443; the binary of Caddy carries this capability, which it cannot start
+    # without once the others are dropped
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    tmpfs:
+      - /tmp:size=16m,mode=1777
     logging: *logging
     environment:
       DOMAIN: ${DOMAIN}
@@ -109,5 +144,6 @@ services:
 volumes:
   database:
   page-store:
+  temporary:
   caddy-data:
   caddy-config:

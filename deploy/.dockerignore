@@ -1,0 +1,5 @@
+# The image of the demo needs the Dockerfile and ROOT.war alone: nothing else of the folder, .env
+# with its passwords least of all, goes to the build.
+*
+!Dockerfile
+!ROOT.war

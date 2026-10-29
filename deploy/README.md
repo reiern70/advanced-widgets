@@ -6,8 +6,9 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 
 | File | What it does |
 |---|---|
-| `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
-| `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
+| `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR unpacked as `webapps/ROOT`, owned by root, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
+| `.dockerignore` | Only `Dockerfile` and `ROOT.war` go to the build of the image, never `.env` |
+| `compose.yaml` | Jetty, Caddy and PostgreSQL, each on a read-only file system, without capabilities and with a limit of memory; the page store, the temporary folder, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS for the subdomains too, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`), no `Server`, and an access log |
 | `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
@@ -116,6 +117,19 @@ the containers: `docker compose logs caddy`.
 client sends. Caddy drops the other headers of the kind that Jetty's `forwarded` module reads
 (`Forwarded`, `X-Forwarded-Port`, `X-Forwarded-Server`, `X-Proxied-Https`, `Proxy-Auth-Cert`,
 `Proxy-Ssl-Id`), so the address in the accesses is the one Caddy saw.
+
+**Containers.** Each container runs on a read-only file system and writes only into its volumes
+and a few small tmpfs; it has no capabilities of Linux (Caddy keeps `NET_BIND_SERVICE`, for the
+ports 80 and 443), cannot gain privileges (`no-new-privileges`), and has a limit of memory sized
+for the 2 GB instance: Jetty 1400 MB (a heap of 1 GB and what the JVM needs besides),
+PostgreSQL 512 MB, Caddy 128 MB. Jetty runs as the user `jetty`, which owns neither Jetty's base
+nor the web application (unpacked from the WAR into the image, owned by root), so it can change
+neither even without the read-only file system. Its temporary folder, with the uploads and the
+images of the rich text editors, is the volume `temporary`, on the disk rather than in memory.
+PostgreSQL runs as the user `postgres` from the start, so its image's script needs no root. Only
+`Dockerfile` and `ROOT.war` go to the build of the image (`.dockerignore`), never `.env`. The
+settings of `.env` stay environment variables of the containers: Docker secrets would need the
+application to read files, which is left for later.
 
 **Memory.** Caddy answers 413 to a request body over 25 MB (the uploads of the demo take 20 MB at
 most), so such a body never reaches Jetty. A JVM that runs out of memory ends
@@ -279,6 +293,10 @@ change is a new one. Before starting the new version, `deploy.sh` dumps the data
 ```sh
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker tag antilia-widgets:previous antilia-widgets:latest && docker compose up -d --no-build app'
 ```
+
+An image built before the containers became read-only (issue #86) writes into Jetty's base at
+start and fails on a read-only file system: going back to one of those needs `read_only: true`
+taken out of the service `app` in the server's `compose.yaml` for the while.
 
 **Later, a managed database** ($15/month: daily backups and 7 days of point-in-time restore,
 updates done by AWS): *Databases → Create database*, the same region, PostgreSQL 17, *Standard*,
