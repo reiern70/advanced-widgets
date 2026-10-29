@@ -131,6 +131,55 @@ class AccountsTest
 	}
 
 	@Test
+	void aNameOfNoAccountTakesAsLongAsAWrongPassword()
+	{
+		accounts.authenticate("wicket", "warming-up");
+		long wrongPassword = fastest(() -> accounts.authenticate("wicket", "wrong-password"));
+		long noAccount = fastest(() -> accounts.authenticate("nobody", "wrong-password"));
+		long locked = fastest(() -> {
+			User wicket = accounts.find("wicket").orElseThrow();
+			wicket.setPasswordHash(Accounts.LOCKED);
+			TestDatabase.context().getBean(IUserRepository.class).save(wicket);
+			accounts.authenticate("wicket", "wrong-password");
+		});
+
+		// both hash the password: without hashing a name of no account took a fraction of it
+		assertTrue(noAccount * 2 > wrongPassword, noAccount + " ms for no account, " +
+			wrongPassword + " ms for a wrong password");
+		assertTrue(locked * 2 > wrongPassword, locked + " ms for a locked account, " +
+			wrongPassword + " ms for a wrong password");
+	}
+
+	@Test
+	void registeringAnEmailRegisteredAlreadyTakesAsLongAsANewOne()
+	{
+		accounts.register("ada@example.com", "warming-up", user -> {});
+		long registered = fastest(() -> accounts.register("ada@example.com", "again", user -> {}));
+		int[] next = { 0 };
+		long fresh = fastest(() -> accounts.register("new-" + next[0]++ + "@example.com", "again",
+			user -> {}));
+
+		assertTrue(registered * 2 > fresh, registered + " ms registered already, " + fresh +
+			" ms new");
+	}
+
+	/**
+	 * @return the fewest milliseconds the task took in five runs, which a pause of the JVM in one
+	 *         of them does not change
+	 */
+	private static long fastest(Runnable task)
+	{
+		long fastest = Long.MAX_VALUE;
+		for (int run = 0; run < 5; run++)
+		{
+			long start = System.nanoTime();
+			task.run();
+			fastest = Math.min(fastest, (System.nanoTime() - start) / 1_000_000);
+		}
+		return fastest;
+	}
+
+	@Test
 	void anAccountIsRegisteredOnlyOnce()
 	{
 		accounts.addConfigured("client:secret-one");

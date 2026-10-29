@@ -208,8 +208,10 @@ public class Accounts
 	}
 
 	/**
-	 * Checks the password of an account. A hash of an earlier version that matches is made anew,
-	 * in the format of today (see {@link #hash(String)}).
+	 * Checks the password of an account. A name of no account takes as long, the password being
+	 * hashed all the same, so that the time does not tell whether the account exists. A hash of an
+	 * earlier version that matches is made anew, in the format of today (see
+	 * {@link #hash(String)}).
 	 *
 	 * @param name
 	 *            the name of an account or the email a visitor registered with
@@ -223,10 +225,11 @@ public class Accounts
 		{
 			return Optional.empty();
 		}
-		Optional<User> user = users.findByName(accountName(name))
-			.filter(found -> matches(password, found.getPasswordHash()));
-		user.filter(found -> isOutdated(found.getPasswordHash()))
-			.ifPresent(found -> setPasswordHash(found, hash(password)));
+		Optional<User> found = users.findByName(accountName(name));
+		boolean matches = matches(password, found.map(User::getPasswordHash).orElse(null));
+		Optional<User> user = found.filter(account -> matches);
+		user.filter(account -> isOutdated(account.getPasswordHash()))
+			.ifPresent(account -> setPasswordHash(account, hash(password)));
 		return user;
 	}
 
@@ -282,13 +285,14 @@ public class Accounts
 	 * @param details
 	 *            puts the other details of the visitor in the account
 	 * @return the token of the link of the confirmation email; empty if there is an account by
-	 *         that name already
+	 *         that name already, which takes as long, the password being hashed all the same
 	 */
 	public Optional<String> register(String email, String password, Consumer<User> details)
 	{
 		String key = accountName(email);
 		if (users.existsByName(key))
 		{
+			hash(password);
 			return Optional.empty();
 		}
 		User user = new User(key, hash(password), Role.USER);

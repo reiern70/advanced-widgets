@@ -239,17 +239,44 @@ class RegisterPageTest
 	}
 
 	@Test
-	void anEmailRegisteredAlreadyIsTurnedAway()
+	void anEmailRegisteredAlreadyGetsTheSameAnswerAndItsOwnerAnEmail()
 	{
-		accounts.register("ada@example.com", "another-password", user -> {});
+		accounts.register("ada@example.com", "another-password",
+			user -> user.setLanguage(Language.GERMAN));
 		clock.advance(Duration.ofSeconds(20));
 		fillIn(page.getExpectedAnswer()).submit();
 
-		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertErrorMessages(page.getString("taken"));
+		// as for a new account
+		tester.assertRenderedPage(EmailConfirmationPage.class);
+		tester.assertContains("ada@example.com");
 		assertFalse(DemoSession.get().isSignedIn());
+		// the account is as it was
 		assertTrue(accounts.authenticate("ada@example.com", "another-password").isPresent());
-		assertTrue(mailer.getMails().isEmpty());
+		assertFalse(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
+		assertNull(accounts.find("ada@example.com").orElseThrow().getFirstName());
+
+		// its owner learns that it exists, in the language of the account
+		Mail mail = mailer.last();
+		assertEquals(1, mailer.getMails().size());
+		assertEquals("ada@example.com", mail.to());
+		assertEquals("Ihr Konto bei Antilia Widgets", mail.subject());
+		assertTrue(mail.text().contains("Sie haben schon ein Konto"), mail.text());
+		assertTrue(mail.html().contains("href=\"http://localhost/context/servlet/sign-in\""),
+			mail.html());
+		assertFalse(mail.text().contains("token="), mail.text());
+		assertFalse(mail.html().contains("Ada"), mail.html());
+	}
+
+	@Test
+	void theEmailOfAnAccountRegisteredAgainIsInTheLanguageChosenWithoutOneOfItsOwn()
+	{
+		accounts.register("ada@example.com", "another-password", user -> {});
+		clock.advance(Duration.ofSeconds(20));
+		FormTester form = fillIn(page.getExpectedAnswer());
+		form.select("language", Language.SPANISH.ordinal());
+		form.submit();
+
+		assertEquals("Su cuenta en Antilia Widgets", mailer.last().subject());
 	}
 
 	@Test

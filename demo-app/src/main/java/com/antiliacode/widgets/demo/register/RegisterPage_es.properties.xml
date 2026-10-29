@@ -29,7 +29,6 @@
 	<entry key="EmailAddressValidator">${label} no es una dirección de correo válida.</entry>
 	<entry key="password">Contraseña</entry>
 	<entry key="repeatedPassword">Repita la contraseña</entry>
-	<entry key="taken">Ya hay una cuenta con este correo. Inicie sesión con ella o regístrese con otro correo.</entry>
 	<entry key="EqualPasswordInputValidator">Las contraseñas no coinciden.</entry>
 	<entry key="closed">El registro está cerrado por ahora. Vuelva más tarde, o inicie sesión si ya tiene una cuenta.</entry>
 	<entry key="emailLanguage">Idioma de los correos</entry>
