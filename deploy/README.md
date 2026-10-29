@@ -18,6 +18,19 @@ The WAR is built on the developer's machine, not on the server, because Wicket 1
 built locally. Each deployment uploads the WAR (about 55 MB, Hibernate and the JDBC drivers
 included) and rebuilds the small image on the instance; `rsync` only sends what changed.
 
+The images are pinned by their digests, the tag kept to be read: `jetty:12.1.14-jdk21@sha256:…`
+in `Dockerfile`, `postgres:17.11@sha256:…` and `caddy:2.11.7@sha256:…` in `compose.yaml`. Dependabot
+(`.github/dependabot.yml`) proposes the next ones every week as pull requests; every deployment
+pulls the images again (`docker compose pull`, `docker compose build --pull`), so a merged update
+goes online with the next deployment. To move one by hand, look its digest up and replace both:
+
+```sh
+docker buildx imagetools inspect postgres:17.12 | grep -m1 Digest
+```
+
+A new major version of PostgreSQL is no such update: it cannot open the data of the old one, which
+has to be moved over with a dump or `pg_upgrade`, so Dependabot leaves it out.
+
 ## Why Lightsail
 
 | Requirement | Lightsail |

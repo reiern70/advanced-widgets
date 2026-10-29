@@ -5,6 +5,8 @@
 # of this folder to /opt/antilia-widgets on the instance, and started there with Docker Compose.
 # The image running before is kept as antilia-widgets:previous, to go back to (see README.md), and
 # the database is dumped first, so that the data before the migrations of the new version is kept.
+# The images of PostgreSQL and Caddy, and the one of Jetty the image of the demo starts from, are
+# pulled again every time: they are pinned by digest, which Dependabot moves on.
 set -eu
 
 TARGET=${1:?usage: deploy/deploy.sh user@host}
@@ -34,7 +36,9 @@ ssh "$TARGET" "cd $REMOTE \
 	&& if [ ! -f .env ]; then cp .env.example .env; echo 'Fill in $REMOTE/.env, then deploy again.'; exit 1; fi \
 	&& if docker compose ps --status running --services | grep -qx db; then ./backup.sh; fi \
 	&& if docker image inspect antilia-widgets:latest >/dev/null 2>&1; then docker tag antilia-widgets:latest antilia-widgets:previous; fi \
-	&& docker compose up -d --build \
+	&& docker compose pull --quiet db caddy \
+	&& docker compose build --pull app \
+	&& docker compose up -d \
 	&& if ! docker compose exec -T caddy cat /etc/caddy/Caddyfile | cmp -s - Caddyfile; then \
 		docker compose run --rm --no-deps -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile \
 		&& docker compose up -d --force-recreate --no-deps caddy; fi \

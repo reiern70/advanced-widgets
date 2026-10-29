@@ -1,8 +1,9 @@
 # The demo application on Jetty 12, in its Jakarta EE 10 environment (ee10, Servlet 6), and Java
 # 21: the Jetty of jetty:run and of the tests. deploy.sh builds the WAR on the developer's machine
 # (Wicket 11 is a snapshot built there) and copies it next to this file as ROOT.war. Jetty 12.1
-# comes with a JDK only, there is no image of it with a JRE.
-FROM jetty:12.1.14-jdk21
+# comes with a JDK only, there is no image of it with a JRE. The image is pinned by its digest, so
+# a build takes the same one until Dependabot proposes the next (see .github/dependabot.yml).
+FROM jetty:12.1.14-jdk21@sha256:c84e5d8ac021fe32b34382c40dd35846f9eb3beff36b76287607cd2bf57aaa73
 
 # the WARs of webapps deployed as ee10 web applications; websockets for Wicket's native
 # websockets; X-Forwarded-* from Caddy, so Wicket sees https; no version of Jetty in the Server
