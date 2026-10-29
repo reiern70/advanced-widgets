@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import javax.crypto.Mac;
@@ -173,6 +174,9 @@ public class Accounts
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
+
+	/** How often accounts were removed or locked, see {@link #changes()}. */
+	private static final AtomicLong CHANGES = new AtomicLong();
 
 	static
 	{
@@ -352,8 +356,8 @@ public class Accounts
 	}
 
 	/**
-	 * Removes an account; who signed in with it stays until the session ends, and its accesses
-	 * are kept.
+	 * Removes an account; who signed in with it is signed out at the next request (see
+	 * {@link #isStillSignedIn(String, Role)}), and its accesses are kept.
 	 *
 	 * @param user
 	 *            the account
@@ -361,6 +365,41 @@ public class Accounts
 	public void remove(User user)
 	{
 		users.delete(user);
+		CHANGES.incrementAndGet();
+	}
+
+	/**
+	 * Locks an account: its hash is replaced by {@link #LOCKED}, which matches no password, and
+	 * who signed in with it is signed out at the next request.
+	 */
+	private void lock(User user)
+	{
+		setPasswordHash(user, LOCKED);
+		CHANGES.incrementAndGet();
+	}
+
+	/**
+	 * @return how often accounts were removed or locked since the start of the JVM, so that a
+	 *         session signed in looks at its account again after such a change
+	 */
+	public static long changes()
+	{
+		return CHANGES.get();
+	}
+
+	/**
+	 * @param name
+	 *            the name of the account a session signed in with
+	 * @param role
+	 *            what the account could do then
+	 * @return whether the session may stay signed in: the account still exists, is not locked,
+	 *         and has the same role
+	 */
+	public boolean isStillSignedIn(String name, Role role)
+	{
+		return !Strings.isEmpty(name) && users.findByName(accountName(name))
+			.filter(user -> !LOCKED.equals(user.getPasswordHash()) && user.getRole() == role)
+			.isPresent();
 	}
 
 	/**
@@ -485,7 +524,7 @@ public class Accounts
 		if (Strings.isEmpty(password))
 		{
 			existing.filter(user -> PUBLISHED_HASHES.contains(user.getPasswordHash()))
-				.ifPresent(user -> setPasswordHash(user, LOCKED));
+				.ifPresent(this::lock);
 		}
 		else if (existing.isEmpty())
 		{
@@ -566,7 +605,7 @@ public class Accounts
 			{
 				LOG.warn("{} no longer lists the account {}: it is locked",
 					ACCOUNTS_ENVIRONMENT_VARIABLE, user.getName());
-				setPasswordHash(user, LOCKED);
+				lock(user);
 			}
 		}
 	}

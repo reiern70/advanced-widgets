@@ -188,6 +188,20 @@ public class WicketApplication extends WebApplication
 		// the fields that failed their validation say so, to assistive technologies and the eye
 		getComponentInitializationListeners().add(InvalidFieldMarker::install);
 
+		// a session does not outlive its account: removed, locked or given another role, it is
+		// signed out
+		getRequestCycleListeners().add(new IRequestCycleListener()
+		{
+			@Override
+			public void onBeginRequest(RequestCycle cycle)
+			{
+				if (Session.exists() && DemoSession.get().isSignedIn())
+				{
+					DemoSession.get().checkAccount();
+				}
+			}
+		});
+
 		// a visitor who does not sign in, such as a script checking the site, tells who it is with
 		// ?visitor=, which the accesses show
 		getRequestCycleListeners().add(new IRequestCycleListener()
