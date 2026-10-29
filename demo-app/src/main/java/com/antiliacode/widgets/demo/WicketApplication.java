@@ -167,9 +167,9 @@ public class WicketApplication extends WebApplication
 	{
 		super.init();
 
-		// the users and the accesses are in the database; the accounts the demo always has get the
-		// passwords the server is started with, and the other accounts it is started with are added
-		// when missing
+		// the users and the accesses are in the database; the accounts the demo always has and the
+		// other accounts the server is started with get the passwords it is started with, and those
+		// no longer listed are locked
 		ApplicationContext database = newDatabase();
 		accounts = database.getBean(Accounts.class);
 		accesses = database.getBean(Accesses.class);

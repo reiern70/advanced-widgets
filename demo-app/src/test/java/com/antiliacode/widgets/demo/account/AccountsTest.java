@@ -99,6 +99,92 @@ class AccountsTest
 	}
 
 	@Test
+	void theFirstHashTheSourceGaveSemedyIsLockedToo()
+	{
+		User semedy = accounts.find("semedy").orElseThrow();
+		semedy.setPasswordHash("hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=");
+		TestDatabase.context().getBean(IUserRepository.class).save(semedy);
+
+		accounts.addDefault("semedy", Role.USER, "");
+
+		assertEquals(Accounts.LOCKED, accounts.find("semedy").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void configuredAccountsTakeThePasswordsOfTheSettingAtEveryStart()
+	{
+		accounts.addConfigured("client:secret-one");
+		assertTrue(accounts.find("client").orElseThrow().isConfigured());
+
+		accounts.addConfigured("client:secret-two");
+
+		assertTrue(accounts.authenticate("client", "secret-two").isPresent());
+		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
+		String hash = accounts.find("client").orElseThrow().getPasswordHash();
+		// the same password keeps its hash
+		accounts.addConfigured("client:secret-two");
+		assertEquals(hash, accounts.find("client").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void anAccountNoLongerConfiguredIsLockedNotDeleted()
+	{
+		accounts.addConfigured("client:secret-one, other:secret-two");
+
+		accounts.addConfigured("other:secret-two");
+
+		User client = accounts.find("client").orElseThrow();
+		assertEquals(Accounts.LOCKED, client.getPasswordHash());
+		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
+		assertTrue(accounts.authenticate("other", "secret-two").isPresent());
+
+		// none configured: every one is locked, none deleted
+		accounts.addConfigured("");
+		assertEquals(Accounts.LOCKED, accounts.find("other").orElseThrow().getPasswordHash());
+		assertEquals(5, TestDatabase.users().size());
+
+		// listed again, it opens again
+		accounts.addConfigured("client:secret-three");
+		assertTrue(accounts.authenticate("client", "secret-three").isPresent());
+		assertEquals(client.getId(), accounts.find("client").orElseThrow().getId());
+	}
+
+	@Test
+	void theOtherAccountsAreNotTouchedByTheSetting()
+	{
+		accounts.register("ada@example.com", "analytical-engine", user -> {});
+		accounts.create("grace", "compiler-1952", Role.USER, user -> {});
+
+		accounts.addConfigured("");
+
+		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		assertTrue(accounts.authenticate("grace", "compiler-1952").isPresent());
+		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
+	}
+
+	@Test
+	void theSettingDoesNotSetThePasswordsOfTheAccountsTheDemoAlwaysHas()
+	{
+		accounts.addConfigured("admin:taken-over, client:secret-one");
+
+		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
+		assertFalse(accounts.authenticate("admin", "taken-over").isPresent());
+		assertFalse(accounts.find("admin").orElseThrow().isConfigured());
+		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
+	}
+
+	@Test
+	void aConfiguredAccountRemovedComesBackAtTheNextStart()
+	{
+		accounts.addConfigured("client:secret-one");
+		accounts.remove(accounts.find("client").orElseThrow());
+
+		accounts.addConfigured("client:secret-one");
+
+		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
+	}
+
+	@Test
 	void configuredAccountsSignInWithTheirPasswords()
 	{
 		accounts.addConfigured("client:secret-one, other:secret-two");

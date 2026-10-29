@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +43,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.wicket.Application;
 import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.util.string.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -116,6 +119,7 @@ public class Accounts
 	 * holding one is locked at start, unless the server gives it a password.
 	 */
 	private static final Set<String> PUBLISHED_HASHES = Set.of(
+		"hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=",
 		"zzSQ5U6FuRjZX1kcQ7BROA==:enhhgrdSQjvzJbTxhO3DHG7jeLDKE1Y/aQwcU5jqQeo=",
 		"6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=",
 		"zabicgAmDuftSxuCXCT8aQ==:7k9JpQBWu3u+lPkJ59dmmO7NMkhLm81FpIshwiwVrwM=",
@@ -167,6 +171,8 @@ public class Accounts
 	public static final Duration RESEND_AFTER = Duration.ofMinutes(10);
 
 	private static final SecureRandom RANDOM = new SecureRandom();
+
+	private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
 
 	static
 	{
@@ -507,8 +513,8 @@ public class Accounts
 	}
 
 	/**
-	 * Adds the accounts the server is started with and those of earlier versions, those that are
-	 * missing.
+	 * Keeps the accounts the server is started with in step with the setting (see
+	 * {@link #addConfigured(String)}), and adds those of earlier versions that are missing.
 	 */
 	public void addFromSettings()
 	{
@@ -521,26 +527,97 @@ public class Accounts
 	}
 
 	/**
-	 * Adds the accounts the server is started with, those that are missing.
+	 * Keeps the accounts the server is started with in step with the setting: an account it lists
+	 * is added when missing, and gets the password the setting gives when it holds another; an
+	 * account it listed before and no longer lists is locked, never deleted, and opens again once
+	 * listed again. An account it lists that an administrator removed comes back. The accounts the
+	 * demo always has are left out, as their passwords have settings of their own (see
+	 * {@link #addDefaults()}).
 	 *
 	 * @param accounts
-	 *            {@code name:password} separated by commas; may be empty
+	 *            {@code name:password} separated by commas; may be empty, which locks every
+	 *            account listed before
 	 */
 	public void addConfigured(String accounts)
 	{
-		if (Strings.isEmpty(accounts))
+		Map<String, String> listed = new LinkedHashMap<>();
+		if (!Strings.isEmpty(accounts))
+		{
+			for (String account : accounts.split(","))
+			{
+				int colon = account.indexOf(':');
+				String key = colon > 0 ? accountName(account.substring(0, colon)) : "";
+				String password = colon > 0 ? account.substring(colon + 1).strip() : "";
+				if (isDefault(key))
+				{
+					LOG.warn("{} lists {}, which takes its password from a setting of its own",
+						ACCOUNTS_ENVIRONMENT_VARIABLE, key);
+				}
+				else if (!key.isEmpty() && !password.isEmpty())
+				{
+					listed.put(key, password);
+				}
+			}
+		}
+		listed.forEach(this::configure);
+		for (User user : users.findByConfiguredTrue())
+		{
+			if (!listed.containsKey(user.getName()) && !LOCKED.equals(user.getPasswordHash()))
+			{
+				LOG.warn("{} no longer lists the account {}: it is locked",
+					ACCOUNTS_ENVIRONMENT_VARIABLE, user.getName());
+				setPasswordHash(user, LOCKED);
+			}
+		}
+	}
+
+	/**
+	 * Gives an account the server is started with its password, adding it when missing.
+	 */
+	private void configure(String key, String password)
+	{
+		User user = users.findByName(key).orElse(null);
+		if (user == null)
+		{
+			user = new User(key, hash(password), Role.USER);
+		}
+		else if (!matches(password, user.getPasswordHash()) || isOutdated(user.getPasswordHash()))
+		{
+			user.setPasswordHash(hash(password));
+		}
+		else if (user.isConfigured() && user.isValidated())
 		{
 			return;
 		}
-		for (String account : accounts.split(","))
+		user.setConfigured(true);
+		// configured accounts have no email to confirm
+		user.setValidated(true);
+		try
 		{
-			int colon = account.indexOf(':');
-			if (colon > 0 && colon < account.length() - 1)
+			users.save(user);
+		}
+		catch (DataIntegrityViolationException e)
+		{
+			// another start added it in between
+			LOG.warn("Cannot add the account {}", key, e);
+		}
+	}
+
+	/**
+	 * @param key
+	 *            the name of an account, as {@link #accountName(String)} makes it
+	 * @return whether it is one of the accounts the demo always has, see {@link #addDefaults()}
+	 */
+	static boolean isDefault(String key)
+	{
+		for (String[] account : DEFAULTS)
+		{
+			if (account[0].equals(key))
 			{
-				add(account.substring(0, colon), hash(account.substring(colon + 1).strip()),
-					Role.USER);
+				return true;
 			}
 		}
+		return false;
 	}
 
 	/**
