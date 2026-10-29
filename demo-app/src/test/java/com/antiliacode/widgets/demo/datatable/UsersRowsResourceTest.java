@@ -118,6 +118,9 @@ class UsersRowsResourceTest
 			.getString("error"));
 		body = "[1, 2]";
 		request("POST", "test/users", 400);
+		body = "{\"firstName\":" + "[".repeat(5000) + "]".repeat(5000) + "}";
+		assertEquals("The user is not JSON", request("POST", "test/users", 400)
+			.getString("error"), "nested too deep");
 
 		assertEquals(lastName, DatabaseLocator.getLargeDatabase().get(1).getLastName(),
 			"a refused change leaves the user as it was");
