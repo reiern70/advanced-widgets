@@ -37,6 +37,7 @@
 	<entry key="deleted">Deleted {0}.</entry>
 	<entry key="gone">That member no longer exists.</entry>
 	<entry key="empty">The team has no members.</entry>
+	<entry key="full">The team has at most {0} members: delete one first.</entry>
 	<entry key="role.developer">Development</entry>
 	<entry key="role.designer">Design</entry>
 	<entry key="role.tester">Testing</entry>
