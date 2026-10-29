@@ -145,10 +145,9 @@ public class SignInPage extends BasePage
 			 */
 			private void notValidated(User user)
 			{
-				Accounts accounts = Accounts.get();
-				if (accounts.isValidationResent(user))
+				if (Accounts.get().isValidationResent(user))
 				{
-					ConfirmationMail.send(user, accounts.renewValidation(user));
+					ConfirmationMail.resend(user);
 				}
 				error(new StringResourceModel("notValidated", SignInPage.this)
 					.setParameters(user.getName()).getString());

@@ -44,4 +44,5 @@
 	<entry key="JobRole.MANAGER">Manager</entry>
 	<entry key="JobRole.STUDENT">Student</entry>
 	<entry key="JobRole.OTHER">Andere</entry>
+	<entry key="tooMany">Gerade gibt es zu viele Registrierungen. Bitte versuchen Sie es in einer Stunde noch einmal.</entry>
 </properties>

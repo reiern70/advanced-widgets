@@ -22,9 +22,10 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.model.StringResourceModel;
 
 /**
- * The body of the {@link ConfirmationMail}, a Wicket template rendered to HTML: a greeting, the
- * link to the {@link EmailValidationPage} and how long it works, in the language of the account
- * rather than the one of the request. The styles are inline, as email programs want them.
+ * The body of the {@link ConfirmationMail}, a Wicket template rendered to HTML: a greeting, without
+ * the name the visitor typed, the link to the {@link EmailValidationPage} and how long it works,
+ * in the language of the account rather than the one of the request. The styles are inline, as
+ * email programs want them.
  */
 class ConfirmationMailPanel extends Panel
 {
@@ -37,19 +38,15 @@ class ConfirmationMailPanel extends Panel
 	 *            the id of the panel
 	 * @param locale
 	 *            the language of the email
-	 * @param name
-	 *            how the email greets the visitor
 	 * @param link
 	 *            the full address of the link
 	 * @param hours
 	 *            how many hours the link works
 	 */
-	ConfirmationMailPanel(String id, Locale locale, String name, String link, long hours)
+	ConfirmationMailPanel(String id, Locale locale, String link, long hours)
 	{
 		super(id);
 		this.locale = locale;
-		add(new Label("greeting", new StringResourceModel("greeting", this)
-			.setParameters(Model.of(name))));
 		add(new ExternalLink("link", link, link));
 		add(new ExternalLink("button", link));
 		add(new Label("validity", new StringResourceModel("validity", this)

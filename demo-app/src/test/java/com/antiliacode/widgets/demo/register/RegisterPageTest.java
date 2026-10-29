@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo.register;
 
+import java.io.Serializable;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
+import org.apache.wicket.core.util.lang.WicketObjects;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
@@ -37,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.antiliacode.widgets.demo.Countries;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.RecordingMailer;
+import com.antiliacode.widgets.demo.TestClock;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
@@ -56,6 +59,9 @@ class RegisterPageTest
 
 	private final MutableClock clock = new MutableClock();
 
+	/** The clock of the limits of registering. */
+	private final TestClock limitsClock = new TestClock();
+
 	private WicketTester tester;
 
 	private RegisterPage page;
@@ -69,7 +75,15 @@ class RegisterPageTest
 	{
 		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
 		TestDatabase.clear();
-		WicketApplication application = new WicketApplication();
+		RegistrationLimits limits = new RegistrationLimits(limitsClock);
+		WicketApplication application = new WicketApplication()
+		{
+			@Override
+			public RegistrationLimits getRegistrationLimits()
+			{
+				return limits;
+			}
+		};
 		tester = new WicketTester(application);
 		mailer = RecordingMailer.install(application);
 		accounts = Accounts.get();
@@ -141,7 +155,9 @@ class RegisterPageTest
 		Mail mail = mailer.last();
 		assertEquals("ada@example.com", mail.to());
 		assertEquals("Confirm your email for Antilia Widgets", mail.subject());
-		assertTrue(mail.text().contains("Hello Ada,"), mail.text());
+		assertTrue(mail.text().contains("Hello,"), mail.text());
+		// nothing the visitor typed, not even the name
+		assertFalse(mail.html().contains("Ada"), mail.html());
 		assertTrue(mail.text().contains("validate-email?token=" + mailer.lastToken()));
 		assertTrue(mail.html().contains("href=\"http://localhost/context/servlet/validate-email?token=" +
 			mailer.lastToken() + "\""), mail.html());
@@ -219,7 +235,7 @@ class RegisterPageTest
 		assertEquals(Language.GERMAN, accounts.find("ada@example.com").orElseThrow().getLanguage());
 		Mail mail = mailer.last();
 		assertEquals("Bestätigen Sie Ihre E-Mail-Adresse für Antilia Widgets", mail.subject());
-		assertTrue(mail.text().contains("Hallo Ada,"), mail.text());
+		assertTrue(mail.text().contains("Hallo,"), mail.text());
 	}
 
 	@Test
@@ -234,6 +250,71 @@ class RegisterPageTest
 		assertFalse(DemoSession.get().isSignedIn());
 		assertTrue(accounts.authenticate("ada@example.com", "another-password").isPresent());
 		assertTrue(mailer.getMails().isEmpty());
+	}
+
+	@Test
+	void aFormSentOnceIsNotTakenAgain()
+	{
+		clock.advance(Duration.ofSeconds(20));
+		// the page as the browser has it, which it may send again
+		RegisterPage sent = WicketObjects.cloneObject(page);
+		fillIn(page.getExpectedAnswer()).submit();
+		tester.assertRenderedPage(EmailConfirmationPage.class);
+
+		// the same form with the same sum, for another email
+		tester.startPage(sent);
+		FormTester form = fillIn(sent.getExpectedAnswer());
+		form.setValue("email", "grace@example.com");
+		form.submit();
+
+		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertErrorMessages(sent.getString("robot"));
+		assertFalse(accounts.find("grace@example.com").isPresent());
+		assertEquals(1, mailer.getMails().size());
+	}
+
+	@Test
+	void eachSubmitAsksANewSum()
+	{
+		clock.advance(Duration.ofSeconds(20));
+		String challenge = page.getChallenge();
+		FormTester form = fillIn(page.getExpectedAnswer());
+		form.setValue("repeatedPassword", "something else");
+		form.submit();
+		assertFalse(challenge.equals(page.getChallenge()));
+
+		challenge = page.getChallenge();
+		clock.advance(Duration.ofSeconds(20));
+		fillIn(page.getExpectedAnswer() + 1).submit();
+		assertFalse(challenge.equals(page.getChallenge()));
+	}
+
+	@Test
+	void anAddressRegistersAFewTimesAnHour()
+	{
+		for (int i = 0; i < RegistrationLimits.REGISTRATIONS_PER_ADDRESS; i++)
+		{
+			registerAs("person" + i + "@example.com");
+			tester.assertRenderedPage(EmailConfirmationPage.class);
+		}
+
+		registerAs("one-more@example.com");
+		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertErrorMessages(page.getString("tooMany"));
+		assertFalse(accounts.find("one-more@example.com").isPresent());
+
+		limitsClock.advance(RegistrationLimits.WINDOW);
+		registerAs("one-more@example.com");
+		tester.assertRenderedPage(EmailConfirmationPage.class);
+	}
+
+	private void registerAs(String email)
+	{
+		page = tester.startPage(new RegisterPage(clock));
+		clock.advance(Duration.ofSeconds(20));
+		FormTester form = fillIn(page.getExpectedAnswer());
+		form.setValue("email", email);
+		form.submit();
 	}
 
 	@Test
@@ -364,8 +445,10 @@ class RegisterPageTest
 		return Countries.codes().getObject().indexOf(code);
 	}
 
-	private static class MutableClock extends Clock
+	private static class MutableClock extends Clock implements Serializable
 	{
+		private static final long serialVersionUID = 1L;
+
 		private Instant now = Instant.parse("2026-10-07T12:00:00Z");
 
 		void advance(Duration duration)

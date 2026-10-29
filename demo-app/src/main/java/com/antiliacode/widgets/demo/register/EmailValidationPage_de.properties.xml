@@ -15,6 +15,9 @@
 -->
 <properties>
 	<entry key="title">E-Mail-Adresse bestätigen</entry>
+	<entry key="confirm.title">Bestätigen Sie Ihre E-Mail-Adresse</entry>
+	<entry key="confirm.text">Drücken Sie die Schaltfläche, um {0} zu bestätigen und die Registrierung abzuschließen.</entry>
+	<entry key="confirm.button">E-Mail-Adresse bestätigen</entry>
 	<entry key="validated.title">Ihre E-Mail-Adresse ist bestätigt</entry>
 	<entry key="validated.text">Danke: {0} ist bestätigt. Melden Sie sich damit und Ihrem Passwort an, um die Demos auszuprobieren.</entry>
 	<entry key="invalid.title">Dieser Link funktioniert nicht</entry>

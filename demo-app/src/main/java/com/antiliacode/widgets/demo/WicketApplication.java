@@ -87,6 +87,7 @@ import com.antiliacode.widgets.demo.frameworks.ChoicesResource;
 import com.antiliacode.widgets.demo.progress.ProgressBarPage;
 import com.antiliacode.widgets.demo.register.EmailValidationPage;
 import com.antiliacode.widgets.demo.register.RegisterPage;
+import com.antiliacode.widgets.demo.register.RegistrationLimits;
 import com.antiliacode.widgets.demo.scrollbar.ScrollbarPage;
 import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
@@ -131,6 +132,8 @@ public class WicketApplication extends WebApplication
 	private final SignInAttempts signInAttempts = new SignInAttempts();
 
 	private final SignedInUsers signedInUsers = new SignedInUsers();
+
+	private final RegistrationLimits registrationLimits = new RegistrationLimits();
 
 	private IMailer mailer = IMailer.fromSettings();
 
@@ -375,6 +378,14 @@ public class WicketApplication extends WebApplication
 	public SignInAttempts getSignInAttempts()
 	{
 		return signInAttempts;
+	}
+
+	/**
+	 * @return the limits of registering and of the emails sent
+	 */
+	public RegistrationLimits getRegistrationLimits()
+	{
+		return registrationLimits;
 	}
 
 	/**

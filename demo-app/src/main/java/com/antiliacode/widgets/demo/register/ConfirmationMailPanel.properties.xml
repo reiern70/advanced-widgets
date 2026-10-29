@@ -16,7 +16,7 @@
 <properties>
 	<entry key="subject">Confirm your email for Antilia Widgets</entry>
 	<entry key="title">Confirm your email</entry>
-	<entry key="greeting">Hello {0},</entry>
+	<entry key="greeting">Hello,</entry>
 	<entry key="thanks">Thank you for registering to try the demos of Antilia Widgets. Please confirm that this is your email.</entry>
 	<entry key="confirm">Confirm my email</entry>
 	<entry key="orCopy">If the button does not work, open this link:</entry>
