@@ -417,7 +417,7 @@ class RichTextEditorPageTest
 			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
 
 		form = tester.newFormTester(controls);
-		form.selectMultiple("chooser:tools", new int[] { 1, 6, 7, 23 }, true);
+		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 25 }, true);
 		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
 		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
 			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());

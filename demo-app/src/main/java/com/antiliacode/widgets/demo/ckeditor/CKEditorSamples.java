@@ -26,6 +26,7 @@ final class CKEditorSamples
 		"<i>oystercatchers</i> working the mud flats. Read more about them on ",
 		"<a target=\"_blank\" href=\"https://en.wikipedia.org/wiki/Oystercatcher\" ",
 		"rel=\"noopener noreferrer nofollow\">Wikipedia</a>.</p>",
+		"<p>The mud smelled of H<sub>2</sub>S, over flats of some 3 km<sup>2</sup>.</p>",
 		"<h3>What we counted</h3>",
 		"<figure class=\"table\"><table><thead><tr><th>Bird</th><th>Count</th></tr></thead>",
 		"<tbody><tr><td>Oystercatcher</td><td>42</td></tr>",

@@ -53,9 +53,10 @@ import type { UploadHost } from './rich-text-upload.js';
 
 /** The tools built in the toolbar. */
 export type RichTextToolName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
-	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
-	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'alignLeft' |
-	'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' | 'clearFormatting';
+	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
+	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
+	'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' |
+	'clearFormatting';
 
 /**
  * A tool of the toolbar: a built-in one, or one of a feature registered
@@ -65,14 +66,15 @@ export type RichTextTool = RichTextToolName | (string & {});
 
 /** The built-in tools, in the order of the toolbar by default. */
 export const RICH_TEXT_TOOLS: readonly RichTextToolName[] = Object.freeze(['heading', 'bold', 'italic',
-	'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
-	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
-	'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting', 'undo', 'redo']);
+	'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor', 'textBackground', 'link',
+	'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table',
+	'image', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting', 'undo',
+	'redo']);
 
 /** The toolbar when the page gives none: the tools in groups. */
 export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[] = Object.freeze([
 	['heading'],
-	['bold', 'italic', 'underline', 'strike', 'code'],
+	['bold', 'italic', 'underline', 'strike', 'code', 'superscript', 'subscript'],
 	['textColor', 'textBackground'],
 	['link'],
 	['bulletList', 'orderedList', 'taskList'],
@@ -85,7 +87,7 @@ export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[]
 
 /** The tools of the bubble menu over a selection. */
 export const RICH_TEXT_BUBBLE_TOOLS: readonly RichTextToolName[] = Object.freeze(['bold', 'italic',
-	'underline', 'strike', 'code', 'link']);
+	'underline', 'strike', 'code', 'superscript', 'subscript', 'link']);
 
 /** What the editor says, in the language of the page. */
 export interface RichTextEditorTexts {
@@ -99,6 +101,8 @@ export interface RichTextEditorTexts {
 	underline: string;
 	strike: string;
 	code: string;
+	superscript: string;
+	subscript: string;
 	textColor: string;
 	textBackground: string;
 	link: string;
@@ -202,6 +206,8 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	underline: 'Underline',
 	strike: 'Strikethrough',
 	code: 'Code',
+	superscript: 'Superscript',
+	subscript: 'Subscript',
 	textColor: 'Text color',
 	textBackground: 'Background color',
 	link: 'Link',
@@ -372,6 +378,11 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading
 		strike: svg('<path d="M16.5 7A4 4 0 0 0 13 5h-2a3.5 3.5 0 0 0-1.6 6.6M4 12h16M7.5 17a4 4 0 0 ' +
 			'0 3.5 2h2a3.5 3.5 0 0 0 3-5.3"/>'),
 		code: svg('<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>'),
+		// an x, and a small 2 raised or lowered beside it
+		superscript: svg('<path d="m4 8 9 11M13 8l-9 11"/>' +
+			'<path d="M16 4.7a1.5 1.5 0 0 1 2.9.4c0 1-2.9 1.9-2.9 3.4h3" stroke-width="1.5"/>'),
+		subscript: svg('<path d="m4 5 9 11M13 5l-9 11"/>' +
+			'<path d="M16 15.7a1.5 1.5 0 0 1 2.9.4c0 1-2.9 1.9-2.9 3.4h3" stroke-width="1.5"/>'),
 		// a letter, and a marker, over the bar of the color where the cursor is
 		textColor: colorIcon('<path d="m6 16 6-13 6 13M8.3 11h7.4"/>'),
 		textBackground: colorIcon('<path d="m14.5 4.5 4 4-7 7H7.5v-4zM7.5 15.5 5 16l.5-2.5"/>'),
@@ -468,6 +479,14 @@ const SPECS: Readonly<Record<RichTextToolName, ToolSpec>> = {
 		active: (editor) => editor.isActive('code'),
 		enabled: (editor) => editor.can().toggleCode(),
 		run: (editor) => editor.chain().focus().toggleCode().run() },
+	superscript: { feature: 'superscript', kind: 'toggle', shortcut: 'Mod-Shift-.',
+		active: (editor) => editor.isActive('superscript'),
+		enabled: (editor) => editor.can().toggleSuperscript(),
+		run: (editor) => editor.chain().focus().toggleSuperscript().run() },
+	subscript: { feature: 'subscript', kind: 'toggle', shortcut: 'Mod-Shift-,',
+		active: (editor) => editor.isActive('subscript'),
+		enabled: (editor) => editor.can().toggleSubscript(),
+		run: (editor) => editor.chain().focus().toggleSubscript().run() },
 	textColor: { feature: 'textColor', kind: 'menu' },
 	textBackground: { feature: 'textBackground', kind: 'menu' },
 	link: { feature: 'link', kind: 'form', shortcut: 'Mod-K',

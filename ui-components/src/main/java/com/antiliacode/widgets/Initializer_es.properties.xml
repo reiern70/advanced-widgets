@@ -193,6 +193,8 @@
 	<entry key="RichTextEditor.underline">Subrayado</entry>
 	<entry key="RichTextEditor.strike">Tachado</entry>
 	<entry key="RichTextEditor.code">Código</entry>
+	<entry key="RichTextEditor.superscript">Superíndice</entry>
+	<entry key="RichTextEditor.subscript">Subíndice</entry>
 	<entry key="RichTextEditor.textColor">Color del texto</entry>
 	<entry key="RichTextEditor.textBackground">Color de fondo</entry>
 	<entry key="RichTextEditor.link">Enlace</entry>

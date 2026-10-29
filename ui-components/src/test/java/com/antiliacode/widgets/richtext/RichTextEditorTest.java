@@ -94,8 +94,8 @@ class RichTextEditorTest extends WicketTestCase
 		assertEquals("[1,2,3,4]", options.getJSONArray("headingLevels").toString());
 		JSONArray toolbar = options.getJSONArray("toolbar");
 		assertEquals(RichTextTool.DEFAULT_TOOLBAR.size(), toolbar.length());
-		assertEquals("[\"bold\",\"italic\",\"underline\",\"strike\",\"code\"]",
-			toolbar.getJSONArray(1).toString());
+		assertEquals("[\"bold\",\"italic\",\"underline\",\"strike\",\"code\",\"superscript\"," +
+			"\"subscript\"]", toolbar.getJSONArray(1).toString());
 		assertFalse(options.getBoolean("bubbleMenu"));
 		assertFalse(options.getBoolean("readOnly"));
 		assertFalse(options.getBoolean("count"));
@@ -979,6 +979,13 @@ class RichTextEditorTest extends WicketTestCase
 			RichTextFormat.HTML));
 		assertEquals(EnumSet.allOf(RichTextFeature.class), RichTextFeature.defaults(
 			RichTextFormat.JSON));
+		assertEquals("superscript", RichTextTool.SUPERSCRIPT.getName());
+		assertSame(RichTextFeature.SUBSCRIPT, RichTextTool.SUBSCRIPT.getFeature());
+		// Markdown has no syntax for them
+		assertFalse(RichTextFeature.defaults(RichTextFormat.MARKDOWN).contains(
+			RichTextFeature.SUPERSCRIPT));
+		assertFalse(RichTextFeature.defaults(RichTextFormat.MARKDOWN).contains(
+			RichTextFeature.SUBSCRIPT));
 	}
 
 	@Test

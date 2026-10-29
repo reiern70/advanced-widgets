@@ -154,9 +154,9 @@ without rendering its panes again: the demo's button hiding the preview beside t
 The rich text editor (`rich-text-editor.ts`, built as `antilia-rich-text-editor.js` for Wicket's
 `RichTextEditor`) is Tiptap, on ProseMirror, with a toolbar of the components' own
 (`rich-text-toolbar.ts`), in the colors of the theme and the look of the page: Tiptap has none.
-The text holds headings, bold, italic, underlined, struck and code text, the colors of the text and
-of its background, links, bulleted, numbered and task lists, quotes, code blocks, rules, tables,
-images and alignment, the features
+The text holds headings, bold, italic, underlined, struck and code text, superscript and subscript
+(one or the other), the colors of the text and of its background, links, bulleted, numbered and
+task lists, quotes, code blocks, rules, tables, images and alignment, the features
 (`RICH_TEXT_FEATURES`, `rich-text-schema.ts`), all of them unless the page gives fewer
 (`features`); a feature left out is not in the schema, so a paste brings its text alone, and its
 tools do not show. The toolbar is the page's, in groups (`toolbar`, `DEFAULT_RICH_TEXT_TOOLBAR`;
@@ -168,10 +168,11 @@ grid of six columns at most, named by their colors, and below them the last four
 the palette has, under *Recent*; the color where the cursor is has a tick, and the arrow keys move
 through the grid by columns and by rows. The last colors chosen are kept apart for the text and the
 background, for the editors of the site, in `localStorage` (in memory while the browser keeps none;
-`recentRichTextColors` in `rich-text-toolbar.ts`). The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types,
+`recentRichTextColors` in `rich-text-toolbar.ts`). The usual keys format (Ctrl+B, Ctrl+I..., Ctrl+Shift+. raises and Ctrl+Shift+, lowers), Markdown's marks do as the user types,
 Ctrl+K edits the link, Ctrl+S calls `onSave`, and Escape, then Tab, leaves the editor even in a
 list. The text is HTML by default, or Markdown (`format: 'markdown'`, Tiptap's Markdown extension;
-underlined text, colors and alignment are then left out, Markdown has no syntax for them) or
+underlined text, superscript, subscript, colors and alignment are then left out, Markdown has no
+syntax for them) or
 Tiptap's JSON. The HTML has no style attribute: text aligns by classes (`RICH_TEXT_ALIGN_CLASSES`),
 and takes colors by classes too, from two palettes apart, each color a name unique in its palette
 and a class: `colors` for the text (`RichTextColor`, `<span class="antilia-color-red">`,

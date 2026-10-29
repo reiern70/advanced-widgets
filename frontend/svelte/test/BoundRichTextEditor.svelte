@@ -16,13 +16,13 @@
 	import type { RichTextBackgroundColor, RichTextColor, RichTextHighlighter, RichTextProofreader,
 		RichTextSuggester } from '@antilia/core';
 
-	import { RichTextEditor, type RichTextEditorState, type RichTextFormat,
+	import { RichTextEditor, type RichTextEditorState, type RichTextFeature, type RichTextFormat,
 		type RichTextTool } from '../src/index.js';
 
 	let { value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved, name,
 		format, readOnly, toolbar, count, className = 'rich', onsave, onfocus, onblur, onresize,
 		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, colors,
-		backgroundColors, spellcheck, textLanguage, proofreader, suggesters }: {
+		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
 		format?: RichTextFormat; readOnly?: boolean; toolbar?: RichTextTool[][] | false;
 		count?: boolean; className?: string; onsave?: (value: string) => void;
@@ -33,7 +33,8 @@
 		colors?: readonly RichTextColor[] | null;
 		backgroundColors?: readonly RichTextBackgroundColor[] | null;
 		spellcheck?: boolean | null; textLanguage?: string | null;
-		proofreader?: RichTextProofreader; suggesters?: RichTextSuggester[] } = $props();
+		proofreader?: RichTextProofreader; suggesters?: RichTextSuggester[];
+		features?: RichTextFeature[] } = $props();
 	let modified = $state(false);
 </script>
 
@@ -42,7 +43,7 @@
 		{saved} {name} {format} {readOnly} {toolbar} {count} stateDelay={0} minHeight={100}
 		label="Notes" {onsave} {onfocus} {onblur} {onresize} {onselectionchange} {highlight}
 		{codeLanguages} {uploadMaxSize} {onupload} {colors} {backgroundColors} {spellcheck}
-		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} />
+		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

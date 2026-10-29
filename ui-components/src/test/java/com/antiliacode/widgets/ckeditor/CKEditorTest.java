@@ -196,6 +196,8 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("de", options.getString("textLanguage"));
 		String features = options.getJSONArray("features").toString();
 		assertFalse(features.contains("\"underline\""), "Markdown has no syntax for it");
+		assertFalse(features.contains("\"superscript\""));
+		assertFalse(features.contains("\"subscript\""));
 		assertFalse(features.contains("\"textAlign\""));
 		assertTrue(features.contains("\"table\""));
 		assertEquals("[2,3]", options.getJSONArray("headingLevels").toString());

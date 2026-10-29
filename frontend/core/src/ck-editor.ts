@@ -129,9 +129,20 @@ export interface CKEditorModel {
 	createRange(start: CKEditorModelPosition, end?: CKEditorModelPosition): CKEditorModelRange;
 }
 
+/**
+ * A command of CKEditor, bold or superscript for example: whether it is on where the selection is,
+ * and its execute(), which fires the event execute first.
+ */
+export interface CKEditorCommand extends CKEditorEmitter {
+	readonly value: unknown;
+	execute(...args: unknown[]): unknown;
+}
+
 /** An editor of CKEditor, as ClassicEditor.create() makes it. */
 export interface CKEditorInstance {
 	readonly model: CKEditorModel;
+	/** CKEditor's commands, by their names. */
+	readonly commands?: { get(name: string): CKEditorCommand | undefined };
 	readonly data: {
 		parse(data: string): unknown;
 		stringify(fragment: unknown): string;
@@ -190,8 +201,9 @@ export type CKEditorPlugin = string | object;
 
 /** The features CKEditor makes: those of the Tiptap editor it has plugins for. */
 export type CKEditorFeature = Extract<RichTextFeature, 'heading' | 'bold' | 'italic' |
-	'underline' | 'strike' | 'code' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
-	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign'>;
+	'underline' | 'strike' | 'code' | 'superscript' | 'subscript' | 'link' | 'bulletList' |
+	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
+	'textAlign'>;
 
 /** The plugins of CKEditor making each feature, by their names in the build. */
 export const CK_EDITOR_FEATURE_PLUGINS: Readonly<Record<CKEditorFeature, readonly string[]>> =
@@ -202,6 +214,8 @@ export const CK_EDITOR_FEATURE_PLUGINS: Readonly<Record<CKEditorFeature, readonl
 		underline: ['Underline'],
 		strike: ['Strikethrough'],
 		code: ['Code'],
+		superscript: ['Superscript'],
+		subscript: ['Subscript'],
 		link: ['Link', 'AutoLink'],
 		bulletList: ['List'],
 		orderedList: ['List'],
@@ -220,7 +234,39 @@ export const CK_EDITOR_FEATURES = Object.freeze(Object.keys(CK_EDITOR_FEATURE_PL
 	readonly CKEditorFeature[];
 
 /** The features Markdown has no syntax for, which an editor of Markdown leaves out. */
-const NOT_IN_MARKDOWN: readonly CKEditorFeature[] = ['underline', 'textAlign'];
+const NOT_IN_MARKDOWN: readonly CKEditorFeature[] = ['underline', 'superscript', 'subscript',
+	'textAlign'];
+
+/**
+ * Makes a command of CKEditor setting a mark of text take another one away first, in the same step
+ * of undo: superscript takes subscript away, as in the Tiptap editor, where CKEditor lets text be
+ * both. Nothing without either command.
+ */
+function takesAway(editor: CKEditorInstance, name: string, other: string): void {
+	const command = editor.commands?.get(name);
+	const opposite = editor.commands?.get(other);
+	if (!command || !opposite) {
+		return;
+	}
+	let inside = false;
+	// before the command, which runs at the normal priority, and after its check of being enabled
+	command.on('execute', (event: { stop(): void }, args: unknown[] = []) => {
+		const forced = (args[0] as { forceValue?: unknown } | undefined)?.forceValue;
+		if (inside || !(forced === undefined ? !command.value : forced)) {
+			return;
+		}
+		event.stop();
+		inside = true;
+		try {
+			editor.model.change(() => {
+				opposite.execute({ forceValue: false });
+				command.execute(...args);
+			});
+		} finally {
+			inside = false;
+		}
+	}, { priority: 'high' });
+}
 
 /** The plugins of every editor: typing, the clipboard, undo, paragraphs, Markdown's marks. */
 export const CK_EDITOR_BASE_PLUGINS: readonly string[] = Object.freeze(['Essentials', 'Paragraph',
@@ -230,7 +276,8 @@ export const CK_EDITOR_BASE_PLUGINS: readonly string[] = Object.freeze(['Essenti
 const TOOLBAR: readonly (readonly (readonly [CKEditorFeature | null, string])[])[] = [
 	[['heading', 'heading']],
 	[['bold', 'bold'], ['italic', 'italic'], ['underline', 'underline'],
-		['strike', 'strikethrough'], ['code', 'code']],
+		['strike', 'strikethrough'], ['code', 'code'], ['superscript', 'superscript'],
+		['subscript', 'subscript']],
 	[['link', 'link']],
 	[['bulletList', 'bulletedList'], ['orderedList', 'numberedList'], ['taskList', 'todoList']],
 	[['blockquote', 'blockQuote'], ['codeBlock', 'codeBlock'], ['horizontalRule', 'horizontalLine'],
@@ -278,8 +325,10 @@ export interface CKEditorOptions {
 	/** How the editor keeps the text: html when left out, or markdown. */
 	format?: 'html' | 'markdown';
 	/**
-	 * What the text may hold: all the features when left out, but for Markdown underlined text
-	 * and alignment, which Markdown has no syntax for. Those CKEditor does not make are left out.
+	 * What the text may hold: all the features when left out, but for Markdown underlined text,
+	 * superscript, subscript and alignment, which Markdown has no syntax for. Those CKEditor does
+	 * not make are left out. Superscript and subscript take each other away, as in the Tiptap
+	 * editor.
 	 */
 	features?: readonly RichTextFeature[];
 	/** The levels of the headings, 1 to 4 when left out. */
@@ -1045,6 +1094,8 @@ export class CKEditor {
 				});
 			}
 		}, { priority: 'highest' });
+		takesAway(editor, 'superscript', 'subscript');
+		takesAway(editor, 'subscript', 'superscript');
 		editor.keystrokes.set('Ctrl+S', (_data, cancel) => {
 			this.save();
 			cancel();
