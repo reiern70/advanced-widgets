@@ -36,6 +36,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.resizable.ResizableBehavior;
@@ -341,7 +342,7 @@ public class CodeEditor extends TextArea<String>
 		{
 			savedModel.setObject(text);
 		}
-		target.appendJavaScript(script("markSaved(" + JSONObject.quote(text) + ")"));
+		target.appendJavaScript(script("markSaved(" + ScriptJson.quote(text) + ")"));
 		return this;
 	}
 
@@ -364,7 +365,7 @@ public class CodeEditor extends TextArea<String>
 	private String script(String call)
 	{
 		return "(function(){var e=Wicket.CodeEditor&&Wicket.CodeEditor.of(" +
-			JSONObject.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
+			ScriptJson.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
 	}
 
 	/**
@@ -611,7 +612,7 @@ public class CodeEditor extends TextArea<String>
 			response.render(JavaScriptHeaderItem.forReference(language.getScript()));
 		}
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.CodeEditor.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}
 
 	/**

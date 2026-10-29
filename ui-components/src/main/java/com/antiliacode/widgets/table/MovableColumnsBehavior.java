@@ -30,6 +30,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -106,11 +107,11 @@ public class MovableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		options.put("movable", movable);
 		options.put("label", component.getString("MovableColumnsBehavior.moveColumn", null,
 			"Move the column: drag it, or use the arrow keys"));
-		response.render(OnDomReadyHeaderItem.forScript("var options = " + options + ";" +
-			"options.onMove = " +
+		response.render(OnDomReadyHeaderItem.forScript("var options = " +
+			ScriptJson.of(options) + ";options.onMove = " +
 			getCallbackFunction(CallbackParameter.explicit(FROM_PARAMETER),
 				CallbackParameter.explicit(TO_PARAMETER)) +
-			";Wicket.MovableColumns.attach(" + JSONObject.quote(component.getMarkupId()) +
+			";Wicket.MovableColumns.attach(" + ScriptJson.quote(component.getMarkupId()) +
 			", options);"));
 	}
 

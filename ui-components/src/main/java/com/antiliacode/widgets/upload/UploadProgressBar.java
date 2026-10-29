@@ -24,6 +24,7 @@ import org.apache.wicket.markup.html.form.upload.FileUploadField;
 import org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.theme.Looks;
 import com.github.openjson.JSONObject;
 
@@ -165,8 +166,8 @@ public class UploadProgressBar extends WebComponent
 	public void fail(IPartialPageRequestHandler target, String message)
 	{
 		target.appendJavaScript("Wicket.Upload.UploadProgress.of(" +
-			JSONObject.quote(getMarkupId()) + ")?.fail(" +
-			(message != null ? JSONObject.quote(message) : "") + ");");
+			ScriptJson.quote(getMarkupId()) + ")?.fail(" +
+			(message != null ? ScriptJson.quote(message) : "") + ");");
 	}
 
 	/**
@@ -221,7 +222,7 @@ public class UploadProgressBar extends WebComponent
 		Uploads.renderHeadItems(response);
 		Looks.of(this).renderHead(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Upload.UploadProgress.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + newOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(newOptions()) + ");"));
 	}
 
 	/**

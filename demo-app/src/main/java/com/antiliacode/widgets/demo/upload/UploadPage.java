@@ -57,6 +57,7 @@ import org.apache.wicket.util.lang.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.AjaxActionButton;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.button.ButtonBehavior.Size;
@@ -70,7 +71,6 @@ import com.antiliacode.widgets.upload.UploadGuard;
 import com.antiliacode.widgets.upload.UploadProgressBar;
 import com.antiliacode.widgets.throttle.ThrottlePanel;
 import com.antiliacode.widgets.upload.UploadToResourceField;
-import com.github.openjson.JSONObject;
 
 /**
  * Uploads in Wicket, each way Wicket has, drawn by the components of ui-components, as cases of one
@@ -324,7 +324,7 @@ public class UploadPage extends DemoPage
 				uploading = true;
 				// the hooks of this upload only
 				target.appendJavaScript("UploadDemo.clear(" +
-					JSONObject.quote(hookLog.getMarkupId()) + ");");
+					ScriptJson.quote(hookLog.getMarkupId()) + ");");
 				field.startUpload(target);
 				target.add(buttons);
 			}
@@ -664,14 +664,14 @@ public class UploadPage extends DemoPage
 		 */
 		private String log(String side, String hook, String text)
 		{
-			return "UploadDemo.hook(" + JSONObject.quote(log.getMarkupId()) + ", '" + side + "', " +
-				JSONObject.quote(UploadPage.this.getString("hook." + side)) + ", " +
-				JSONObject.quote(hook) + ", " + text + ");";
+			return "UploadDemo.hook(" + ScriptJson.quote(log.getMarkupId()) + ", '" + side + "', " +
+				ScriptJson.quote(UploadPage.this.getString("hook." + side)) + ", " +
+				ScriptJson.quote(hook) + ", " + text + ");";
 		}
 
 		private String text(String key)
 		{
-			return JSONObject.quote(UploadPage.this.getString(key));
+			return ScriptJson.quote(UploadPage.this.getString(key));
 		}
 
 		@Override
@@ -706,7 +706,7 @@ public class UploadPage extends DemoPage
 		@Override
 		protected void hooked(AjaxRequestTarget target, String hook, String text)
 		{
-			target.appendJavaScript(log("server", hook, JSONObject.quote(text)));
+			target.appendJavaScript(log("server", hook, ScriptJson.quote(text)));
 		}
 	}
 

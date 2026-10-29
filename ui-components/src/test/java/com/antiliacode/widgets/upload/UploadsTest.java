@@ -51,6 +51,7 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.ButtonBehavior.Size;
 import com.antiliacode.widgets.button.ButtonBehavior.Variant;
 import com.antiliacode.widgets.upload.FilePickerBehavior.Design;
@@ -336,6 +337,27 @@ class UploadsTest extends WicketTestCase
 		assertEquals("Der Upload ist fehlgeschlagen.", failure(field, callback, "uploadFailed"));
 		assertEquals("Die Verbindung zum Server ist beim Upload abgebrochen.",
 			failure(field, callback, UploadToResourceField.CONNECTION_LOST_RESOURCE_KEY));
+	}
+
+	@Test
+	void escapesTheMessagesOfAFieldUploadingToAResourceInItsScript()
+	{
+		String value = "<!--<script>";
+		tester.startPage(new TestPage("<input type=\"file\" wicket:id=\"file\"/>",
+			page -> page.add(new TestField("file")
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected JSONObject newMessages()
+				{
+					return super.newMessages().put("uploadFailed", value);
+				}
+			})));
+
+		String page = tester.getLastResponseAsString();
+		assertFalse(page.contains(value), page);
+		assertTrue(page.contains(ScriptJson.escape(JSONObject.quote(value))), page);
 	}
 
 	/**

@@ -42,6 +42,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.chips.Chips;
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
@@ -392,20 +393,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Autocomplete.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + scriptSafe(newOptions().toString()) + ");"));
-	}
-
-	/**
-	 * Escapes every {@code <} of JSON, which only its strings hold, so that no text in it, such as a
-	 * label, closes the script it is written into or opens a comment there.
-	 *
-	 * @param json
-	 *            the JSON
-	 * @return the same JSON, read the same by the script
-	 */
-	static String scriptSafe(String json)
-	{
-		return json.replace("<", "\\u003c");
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(newOptions()) + ");"));
 	}
 
 	/**

@@ -636,7 +636,8 @@ class RichTextEditorTest extends WicketTestCase
 
 		assertEquals("<p>new</p>", saved.getObject());
 		assertSame(saved, editor.getSavedModel());
-		tester.assertContains("e.markSaved\\(\"<p>new<\\\\/p>\"\\);");
+		tester.assertContains(
+			"e.markSaved\\(\"\\\\u003cp\\\\u003enew\\\\u003c\\\\/p\\\\u003e\"\\);");
 		tester.assertContains("Wicket.RichTextEditor.of\\(\"" + editor.getMarkupId() +
 			"\"\\);if\\(e\\)\\{e.focus\\(\\);");
 

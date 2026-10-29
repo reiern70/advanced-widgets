@@ -73,7 +73,8 @@ class JsonBasedInfiniteListTest extends WicketTestCase
 		assertTrue(tag.getAttributeContains("class", JsonBasedInfiniteList.CSS_CLASS));
 		assertEquals("", tag.getValue(), "the list has no children");
 		tester.assertContains(Pattern.quote("new Wicket.JsonInfiniteList({"));
-		tester.assertContains(Pattern.quote("\"template\":\"<p data-dt-action=\\\"open\\\">{{name}}<\\/p>\""));
+		tester.assertContains(Pattern.quote("\"template\":\"\\u003cp data-dt-action=\\\"open\\\"" +
+			"\\u003e{{name}}\\u003c\\/p\\u003e\""));
 		tester.assertContains(Pattern.quote("\"m\":\"POST\""));
 		tester.assertContains(Pattern.quote("\"end\":\"All ${count} shown\""));
 		tester.assertContainsNot(Pattern.quote("\"height\""));
@@ -198,7 +199,8 @@ class JsonBasedInfiniteListTest extends WicketTestCase
 		TestList named = new NamedList("list");
 		tester.startPage(new TestPage(named));
 
-		tester.assertContains(Pattern.quote("\"template\":\"<span>{{name}}<\\/span>\""));
+		tester.assertContains(Pattern.quote(
+			"\"template\":\"\\u003cspan\\u003e{{name}}\\u003c\\/span\\u003e\""));
 	}
 
 	@Test

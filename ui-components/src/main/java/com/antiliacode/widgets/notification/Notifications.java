@@ -41,6 +41,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.visit.IVisit;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookPart;
@@ -154,7 +155,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	{
 		pending.clear();
 		RequestCycle.get().find(AjaxRequestTarget.class).ifPresent(target -> target.appendJavaScript(
-			"Wicket.Notifications.closeAll(" + JSONObject.quote(getMarkupId()) + ");"));
+			"Wicket.Notifications.closeAll(" + ScriptJson.quote(getMarkupId()) + ");"));
 		return this;
 	}
 
@@ -438,7 +439,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 		super.renderHead(response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Notifications.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 		List<Notification> notifications = new ArrayList<>(pending);
 		pending.clear();
 		notifications.addAll(SessionNotifications.take());
@@ -454,8 +455,8 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	 */
 	private String getShowScript(Notification notification)
 	{
-		return "Wicket.Notifications.show(" + JSONObject.quote(getMarkupId()) + ", " +
-			notification.toJson() + ");";
+		return "Wicket.Notifications.show(" + ScriptJson.quote(getMarkupId()) + ", " +
+			ScriptJson.of(notification.toJson()) + ");";
 	}
 
 	/**

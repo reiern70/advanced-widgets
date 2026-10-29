@@ -32,6 +32,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 /**
@@ -234,7 +235,8 @@ public class DatePickerBehavior extends Behavior
 		super.renderHead(component, response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.DatePicker.attach(" +
-			JSONObject.quote(component.getMarkupId()) + ", " + newOptions(component) + ");"));
+			ScriptJson.quote(component.getMarkupId()) + ", " +
+			ScriptJson.of(newOptions(component)) + ");"));
 	}
 
 	@Override

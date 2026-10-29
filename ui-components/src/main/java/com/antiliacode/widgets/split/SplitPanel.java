@@ -38,6 +38,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookBehavior;
@@ -414,8 +415,8 @@ public abstract class SplitPanel extends Panel
 		}
 		setModelObject(getState().withCollapsed(pane));
 		target.appendJavaScript("(function (split) { if (split) { split.setCollapsed(" +
-			(pane == null ? "null" : JSONObject.quote(pane.cssName())) + "); } })(" +
-			"Wicket.SplitPanel.of(" + JSONObject.quote(split.getMarkupId()) + "));");
+			(pane == null ? "null" : ScriptJson.quote(pane.cssName())) + "); } })(" +
+			"Wicket.SplitPanel.of(" + ScriptJson.quote(split.getMarkupId()) + "));");
 		return this;
 	}
 
@@ -658,7 +659,7 @@ public abstract class SplitPanel extends Panel
 		super.renderHead(response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.SplitPanel.attach(" +
-			JSONObject.quote(split.getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(split.getMarkupId()) + ", " + getOptions() + ");"));
 	}
 
 	/**
@@ -767,7 +768,7 @@ public abstract class SplitPanel extends Panel
 			}
 		}
 		putLabel(options, "label", "SplitPanel.divider");
-		String json = options.toString();
+		String json = ScriptJson.of(options);
 		if (!sendToServer || !resizable)
 		{
 			return json;

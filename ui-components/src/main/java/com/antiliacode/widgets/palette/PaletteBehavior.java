@@ -30,6 +30,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -286,7 +287,8 @@ public class PaletteBehavior extends Behavior
 		renderHeadItems(response);
 		matcher.renderHead(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Palette.attach(" +
-			JSONObject.quote(component.getMarkupId()) + ", " + newOptions(component) + ");"));
+			ScriptJson.quote(component.getMarkupId()) + ", " +
+			ScriptJson.of(newOptions(component)) + ");"));
 	}
 
 	/**
