@@ -9,7 +9,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
-| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
+| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
 | `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
@@ -98,6 +98,12 @@ instance, checks it before touching anything, without printing any of its values
   `false`: switches for a developer's machine.
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
+
+**The client's address.** Jetty takes the address of the client, the host and the scheme
+(https) from the `X-Forwarded-For`, `-Host` and `-Proto` headers Caddy sets, replacing those a
+client sends. Caddy drops the other headers of the kind that Jetty's `forwarded` module reads
+(`Forwarded`, `X-Forwarded-Port`, `X-Forwarded-Server`, `X-Proxied-Https`, `Proxy-Auth-Cert`,
+`Proxy-Ssl-Id`), so the address in the accesses is the one Caddy saw.
 
 **Memory.** Caddy answers 413 to a request body over 25 MB (the uploads of the demo take 20 MB at
 most), so such a body never reaches Jetty. A JVM that runs out of memory ends
