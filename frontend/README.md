@@ -367,7 +367,9 @@ on markup of lists, the bar of the class `antilia-menu-list`, each item a link o
 children of its element with its submenu next to it, which React, Svelte and Wicket render, and
 change as they please. React's and Svelte's `Menu` take the tree of items, `items`: a link with
 `href`, a button with `onClick` (`onclick` in Svelte), a submenu with `items`, a separator
-`{ separator: true }`; `onSelect` hears each item chosen. In Wicket, `Menu` takes `IMenuItem`s, or an
+`{ separator: true }`; `onSelect` hears each item chosen. The `icon` of an item is a React node, or
+in Svelte a text, written as text, or a snippet; `iconMarkup` is markup written as is, an svg, for
+markup the page trusts only. In Wicket, `Menu` takes `IMenuItem`s, or an
 `IMenu` whose label names the bar: `BookmarkableMenuItem` (current on its page with the same
 parameters), `AjaxMenuItem`, `LinkMenuItem`, `SubMenu` and `MenuSeparator`, an item of one's own
 returning any link; `MenuLinkPanel` puts the icon and the label in the link of an item and its
@@ -387,7 +389,8 @@ trail collapses again when its crumbs change. Wicket renders the crumbs hidden a
 already, which the core takes over; the core makes the button when the markup has none. In the
 Bootstrap look the list is Bootstrap's `breadcrumb`, its crumbs `breadcrumb-item`s and the last one
 `active`, the separator through `--bs-breadcrumb-divider`. React's and Svelte's `Breadcrumb` take the
-crumbs, `items`: a link with `href`, a button with `onClick` (`onclick` in Svelte), or a label alone;
+crumbs, `items`: a link with `href`, a button with `onClick` (`onclick` in Svelte), or a label alone,
+with an `icon` or an `iconMarkup` as the items of the menus;
 `onSelect` hears each crumb chosen and `onExpand` the crumbs hidden shown. In Wicket, `Breadcrumb`
 takes the `IMenuItem`s of the menus: `BookmarkableMenuItem`, `AjaxMenuItem`, `LinkMenuItem`, and an
 item without a link, such as a `SubMenu`, is a crumb leading nowhere.

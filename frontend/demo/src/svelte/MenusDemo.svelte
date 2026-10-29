@@ -46,7 +46,7 @@
 	/** @returns the items of a menu of the demo as Svelte's Menu takes them */
 	function entries(items: DemoEntry[]): MenuEntry[] {
 		return items.map((item): MenuEntry => item.separator ? { id: item.id, separator: true } : {
-			id: item.id, label: item.label ?? '', icon: item.icon, tooltip: item.tooltip,
+			id: item.id, label: item.label ?? '', iconMarkup: item.icon, tooltip: item.tooltip,
 			disabled: item.disabled, href: item.href, current: item.current, onclick: item.action,
 			items: item.items && entries(item.items)
 		});

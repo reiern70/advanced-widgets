@@ -30,6 +30,11 @@ export interface MenuItem {
 	label: ReactNode;
 	/** An icon before the label; an svg, for example. */
 	icon?: ReactNode;
+	/**
+	 * The markup of an icon before the label, an svg, written as is, instead of icon: only markup
+	 * the page trusts, never text from users or data.
+	 */
+	iconMarkup?: string;
 	/** The tooltip of the item, its title. */
 	tooltip?: string;
 	/** Where the item leads: it is a link then. */
@@ -144,7 +149,9 @@ export const Menu = forwardRef<MenuHandle, MenuProps>(function Menu(props, ref) 
 		const classes = [partClasses(look, top ? 'menu-link' : 'menu-submenu-link',
 			entry.current && 'menu-current'), entry.className].filter(Boolean).join(' ');
 		const content = <>
-			{entry.icon && <span className={partClasses(look, 'menu-icon')}>{entry.icon}</span>}
+			{entry.iconMarkup ? <span className={partClasses(look, 'menu-icon')}
+				dangerouslySetInnerHTML={{ __html: entry.iconMarkup }} /> :
+				entry.icon && <span className={partClasses(look, 'menu-icon')}>{entry.icon}</span>}
 			<span className={partClasses(look, 'menu-label')}>{entry.label}</span>
 		</>;
 		const disabled = entry.disabled ? 'true' : undefined;
