@@ -175,6 +175,8 @@
 	</dependencies>
 
 	<properties>
+		<!-- jetty:run runs in development; -Dwicket.configuration=deployment runs it as production does -->
+		<wicket.configuration>development</wicket.configuration>
 		<!-- the account every session of jetty:run is signed in with; -Dantilia-widgets.sign-in-as= to sign in yourself -->
 		<antilia-widgets.sign-in-as>admin</antilia-widgets.sign-in-as>
 		<frontend.directory>${project.basedir}/../frontend</frontend.directory>
@@ -337,6 +339,8 @@
 				<configuration>
 					<systemProperties>
 						<maven.project.build.directory.test-classes>${project.build.directory}/test-classes</maven.project.build.directory.test-classes>
+						<!-- development, while web.xml says deployment for production -->
+						<wicket.configuration>${wicket.configuration}</wicket.configuration>
 						<!-- locally nobody signs in: every session is the administrator's, see WicketApplication -->
 						<antilia-widgets.sign-in-as>${antilia-widgets.sign-in-as}</antilia-widgets.sign-in-as>
 						<!-- locally registering is open, and the emails go to the log, see RegisterPage -->

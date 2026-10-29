@@ -135,6 +135,11 @@ as production does. Locally:
 `-Djetty.port=<port>` and `-Djetty.https.port=<port>` change the ports, and `-Dwicket.demo=true`
 shows the branch and the commit in the footer.
 
+`jetty:run` runs in development mode, where the demos are open to everybody. The WAR runs in
+deployment mode, as its `web.xml` says, and so does `jetty:run -Dwicket.configuration=deployment`:
+there `antilia-widgets.sign-in-as` and `antilia-widgets.open-registration=true` are ignored, with
+a warning in the log.
+
 ## Using the components in a Wicket application
 
 The components for Wicket 10 are published, built from the `line-10.x` branch on Wicket

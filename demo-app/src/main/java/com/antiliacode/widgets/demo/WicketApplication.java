@@ -120,8 +120,8 @@ public class WicketApplication extends WebApplication
 
 	/**
 	 * The system property naming the account every new session is signed in with, so that nobody
-	 * signs in on a development machine; {@code jetty:run} sets it to {@code admin}. Never set in
-	 * production.
+	 * signs in on a development machine; {@code jetty:run} sets it to {@code admin}. It counts in
+	 * development only, see {@link DevelopmentSwitches}.
 	 */
 	public static final String SIGN_IN_AS_PROPERTY = "antilia-widgets.sign-in-as";
 
@@ -150,7 +150,7 @@ public class WicketApplication extends WebApplication
 	public Session newSession(Request request, Response response)
 	{
 		DemoSession session = new DemoSession(request);
-		String account = System.getProperty(SIGN_IN_AS_PROPERTY);
+		String account = DevelopmentSwitches.get(SIGN_IN_AS_PROPERTY);
 		if (!Strings.isEmpty(account))
 		{
 			accounts.find(account)
@@ -166,6 +166,7 @@ public class WicketApplication extends WebApplication
 	public void init()
 	{
 		super.init();
+		DevelopmentSwitches.warnOfIgnored(this);
 
 		// the users and the accesses are in the database; the accounts the demo always has and the
 		// other accounts the server is started with get the passwords it is started with, and those
