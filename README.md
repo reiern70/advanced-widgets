@@ -99,7 +99,7 @@ mvn install
 
 or without them, `mvn install -DskipTests`. The build compiles the frontend, runs its tests
 (Vitest), minifies the scripts and style sheets, and builds the Java modules and their tests
-(WicketTester, and Jetty for what needs a server).
+(WicketTester, and Jetty 12, the Jetty of production, for what needs a server).
 
 Working on several branches at once, for example in git worktrees, give each its own version so
 their snapshots don't overwrite each other in the local repository: put
@@ -113,7 +113,8 @@ cd demo-app
 mvn jetty:run -Dantilia-widgets.admin.password=<a password of your choice>
 ```
 
-and open <http://localhost:8080> (or <https://localhost:8443>, with a test certificate). Locally:
+and open <http://localhost:8080> (or <https://localhost:8443>, with a test certificate). It runs
+in Jetty 12, in its Jakarta EE 10 environment (ee10), as production does. Locally:
 
 - every session is signed in as `admin`, the account the password above creates; to sign in
   yourself instead, add `-Dantilia-widgets.sign-in-as=`;

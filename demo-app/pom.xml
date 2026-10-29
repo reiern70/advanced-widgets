@@ -158,8 +158,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-webapp</artifactId>
+			<groupId>org.eclipse.jetty.ee10</groupId>
+			<artifactId>jetty-ee10-webapp</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -168,8 +168,8 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse.jetty.websocket</groupId>
-			<artifactId>websocket-jakarta-server</artifactId>
+			<groupId>org.eclipse.jetty.ee10.websocket</groupId>
+			<artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -330,11 +330,11 @@
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
+			<!-- jetty:run, with Jakarta websockets, which the plugin of ee10 brings along -->
 			<plugin>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-maven-plugin</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-maven-plugin</artifactId>
 				<configuration>
-					<!-- a map: the plugin of Jetty 11 ignores nested <systemProperty> elements -->
 					<systemProperties>
 						<maven.project.build.directory.test-classes>${project.build.directory}/test-classes</maven.project.build.directory.test-classes>
 						<!-- locally nobody signs in: every session is the administrator's, see WicketApplication -->
@@ -346,15 +346,13 @@
 					<jettyProperties>
 						<jetty.base>${project.basedir}</jetty.base>
 					</jettyProperties>
-					<jettyXmls>${project.basedir}/src/test/jetty/jetty.xml,${project.basedir}/src/test/jetty/jetty-ssl.xml,${project.basedir}/src/test/jetty/jetty-http.xml,${project.basedir}/src/test/jetty/jetty-https.xml</jettyXmls>
+					<jettyXmls>
+						<jettyXml>${project.basedir}/src/test/jetty/jetty.xml</jettyXml>
+						<jettyXml>${project.basedir}/src/test/jetty/jetty-ssl.xml</jettyXml>
+						<jettyXml>${project.basedir}/src/test/jetty/jetty-http.xml</jettyXml>
+						<jettyXml>${project.basedir}/src/test/jetty/jetty-https.xml</jettyXml>
+					</jettyXmls>
 				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.eclipse.jetty.websocket</groupId>
-						<artifactId>websocket-jakarta-server</artifactId>
-						<version>${jetty.version}</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
