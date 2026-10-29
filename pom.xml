@@ -70,14 +70,14 @@
 		<central.autoPublish>false</central.autoPublish>
 		<!-- Wicket 11.0.0, being voted: from its staging repository until it is on Maven Central -->
 		<wicket.version>11.0.0</wicket.version>
-		<slf4j.version>2.0.17</slf4j.version>
+		<slf4j.version>2.0.20</slf4j.version>
 		<!--
 		  Jetty 12 with its Jakarta EE 11 environment (ee11, Servlet 6.1), the one Wicket 11 is built
 		  for, as in deploy/Dockerfile, for jetty:run, Start and the tests; its ASM reads the Java 24
 		  classes of Spring 7
 		-->
 		<jetty.version>12.1.14</jetty.version>
-		<jackson.version>3.2.3</jackson.version>
+		<jackson.version>3.2.4</jackson.version>
 		<!-- cleans the HTML of the rich text editor on the server -->
 		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
@@ -86,11 +86,11 @@
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
 		<selenium.version>4.51.0</selenium.version>
 		<!-- the database of the demo: Spring Data JPA on Hibernate, PostgreSQL in production -->
-		<spring.version>7.0.9</spring.version>
-		<spring-data-jpa.version>4.0.7</spring-data-jpa.version>
-		<hibernate.version>7.2.25.Final</hibernate.version>
+		<spring.version>7.0.10</spring.version>
+		<spring-data-jpa.version>4.1.2</spring-data-jpa.version>
+		<hibernate.version>7.4.14.Final</hibernate.version>
 		<hikaricp.version>7.1.0</hikaricp.version>
-		<flyway.version>13.10.0</flyway.version>
+		<flyway.version>13.11.1</flyway.version>
 		<postgresql.version>42.7.14</postgresql.version>
 		<h2.version>2.5.252</h2.version>
 		<!-- the emails confirming a registration, sent over SMTP -->
@@ -300,7 +300,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.14.1</version>
+					<version>3.16.0</version>
 					<configuration>
 						<release>${java.version}</release>
 						<encoding>UTF-8</encoding>
@@ -311,12 +311,12 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.5.4</version>
+					<version>3.6.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.4.2</version>
+					<version>3.5.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -335,7 +335,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>flatten-maven-plugin</artifactId>
-				<version>1.7.0</version>
+				<version>1.8.0</version>
 				<configuration>
 					<flattenMode>resolveCiFriendliesOnly</flattenMode>
 					<updatePomFile>true</updatePomFile>
@@ -360,7 +360,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.15</version>
+				<version>0.8.16</version>
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
