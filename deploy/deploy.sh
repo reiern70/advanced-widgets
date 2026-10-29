@@ -20,9 +20,9 @@ mvn -q -pl demo-app -am clean package -DskipTests
 WAR=$(ls -t demo-app/target/demo-app-*.war | head -n 1)
 
 rsync -az --checksum "$WAR" "$TARGET:$REMOTE/ROOT.war"
-rsync -az "$DEPLOY/Dockerfile" "$DEPLOY/compose.yaml" "$DEPLOY/Caddyfile" \
-	"$DEPLOY/.env.example" "$DEPLOY/backup.sh" "$DEPLOY/start.sh" "$DEPLOY/database-role.sql" \
-	"$TARGET:$REMOTE/"
+rsync -az "$DEPLOY/Dockerfile" "$DEPLOY/.dockerignore" "$DEPLOY/compose.yaml" \
+	"$DEPLOY/Caddyfile" "$DEPLOY/.env.example" "$DEPLOY/backup.sh" "$DEPLOY/start.sh" \
+	"$DEPLOY/database-role.sql" "$TARGET:$REMOTE/"
 
 # the nightly backup of the database, see backup.sh
 ssh "$TARGET" "sudo install -d -o \$USER -g \$USER -m 700 /var/backups/antilia-widgets \
