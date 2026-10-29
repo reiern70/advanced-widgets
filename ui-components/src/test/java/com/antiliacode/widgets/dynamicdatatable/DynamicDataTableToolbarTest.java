@@ -15,6 +15,7 @@ package com.antiliacode.widgets.dynamicdatatable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -271,6 +272,39 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 		assertEquals(csv(1), exportCsv());
 	}
 
+	@Test
+	void csvExportKeepsSpreadsheetsFromReadingFormulas()
+	{
+		start(3, false);
+		provider.rows.get(0).name = "=1+2";
+		provider.rows.get(1).name = "-12.5";
+		provider.rows.get(2).name = "@x";
+
+		assertEquals("\"Id\",\"Name\",\"Born\"\r\n" + "\"1\",\"'=1+2\",\"2001-01-01\"\r\n" +
+			"\"2\",\"-12.5\",\"2001-01-02\"\r\n" + "\"3\",\"'@x\",\"2001-01-03\"\r\n", exportCsv());
+
+		table.csv.setEscapeFormulas(false);
+		tester.startPage(table.getPage());
+		assertTrue(exportCsv().contains("\"=1+2\""), "as it is, when told to");
+	}
+
+	@Test
+	void anApostropheGoesBeforeAFieldASpreadsheetCouldReadAsAFormula()
+	{
+		for (String formula : List.of("=1+2", "+1+2", "-1+2", "@x", "\tx", "\rx", "\nx", "-",
+			"+A1", "-1e5+1", "=-1"))
+		{
+			assertEquals("'" + formula, CsvExportToolbarAction.escapeFormula(formula), formula);
+		}
+		for (String text : List.of("", "x", "1+2", "a=b", " =1", "-12.5", "+1,234.50", "-3%",
+			"-1 234,5", "-1e5", "12"))
+		{
+			assertEquals(text, CsvExportToolbarAction.escapeFormula(text), text);
+		}
+		assertNull(CsvExportToolbarAction.escapeFormula(null));
+		assertTrue(new CsvExportToolbarAction<Row, Long>().isEscapeFormulas(), "by default");
+	}
+
 	private static String csv(int... ids)
 	{
 		StringBuilder csv = new StringBuilder("\"Id\",\"Name\",\"Born\"\r\n");
@@ -387,6 +421,8 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 
 		private final long id;
 
+		String name;
+
 		Row(long id)
 		{
 			this.id = id;
@@ -399,7 +435,7 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 
 		public String getName()
 		{
-			return "Row \"" + id + "\"";
+			return name != null ? name : "Row \"" + id + "\"";
 		}
 
 		public LocalDate getBorn()
@@ -463,11 +499,14 @@ class DynamicDataTableToolbarTest extends WicketTestCase
 
 		List<Long> sent;
 
+		final CsvExportToolbarAction<Row, Long> csv = new CsvExportToolbarAction<Row, Long>()
+			.setFileName("rows.csv");
+
 		TestTable(RowsProvider provider, boolean withPrefix)
 		{
 			super("table", columns(), provider, 2);
 			this.withPrefix = withPrefix;
-			addToolbarAction(new CsvExportToolbarAction<Row, Long>().setFileName("rows.csv"));
+			addToolbarAction(csv);
 		}
 
 		@Override
