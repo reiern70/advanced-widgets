@@ -20,6 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.text.MessageFormat;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import org.apache.wicket.util.tester.FormTester;
@@ -30,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoSession;
+import com.antiliacode.widgets.demo.TestClock;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 
@@ -43,13 +48,25 @@ class SignInCaptchaTest
 	private static final String LETTERS_WRONG =
 		"The letters are not those of the image. Try the new ones.";
 
+	private final TestClock clock = new TestClock();
+
+	/** The failed attempts of the application, on the clock of the test. */
+	private final SignInAttempts attempts = new SignInAttempts(clock);
+
 	private WicketTester tester;
 
 	@BeforeEach
 	void start()
 	{
 		TestDatabase.clear();
-		tester = new WicketTester(new WicketApplication());
+		tester = new WicketTester(new WicketApplication()
+		{
+			@Override
+			public SignInAttempts getSignInAttempts()
+			{
+				return attempts;
+			}
+		});
 		tester.startPage(SignInPage.class);
 	}
 
@@ -221,9 +238,15 @@ class SignInCaptchaTest
 		Captcha.Question question = page().getCaptcha().getQuestion();
 		String[] numbers = { "zero", "one", "two", "three", "four", "five", "six", "seven",
 				"eight", "nine", "ten" };
-		tester.assertLabel("form:captcha:label", "How much is " + numbers[question.first()] +
-			(question.sum() ? " plus " : " minus ") + numbers[question.second()] +
-			"? Write it in digits.");
+		String[] sums = { "How much is {0} plus {1}? Write it in digits.",
+				"Add {1} to {0}: how much do you get? Write it in digits.",
+				"What is the sum of {0} and {1}? Write it in digits." };
+		String[] differences = { "How much is {0} minus {1}? Write it in digits.",
+				"Take {1} away from {0}: how much is left? Write it in digits.",
+				"Subtract {1} from {0}: how much do you get? Write it in digits." };
+		tester.assertLabel("form:captcha:label",
+			MessageFormat.format((question.sum() ? sums : differences)[question.wording()],
+				numbers[question.first()], numbers[question.second()]));
 		assertEquals("numeric", tag("form:captcha:answer").getAttribute("inputmode"));
 		assertFocusOn("form:captcha:answer");
 		assertEquals(question.sum() ? question.first() + question.second()
@@ -269,9 +292,103 @@ class SignInCaptchaTest
 		Captcha.Question question = page().getCaptcha().getQuestion();
 		String[] numbers = { "cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete",
 				"ocho", "nueve", "diez" };
-		tester.assertLabel("form:captcha:label", "¿Cuánto es " + numbers[question.first()] +
-			(question.sum() ? " más " : " menos ") + numbers[question.second()] +
-			"? Escríbalo en cifras.");
+		String[] sums = { "¿Cuánto es {0} más {1}? Escríbalo en cifras.",
+				"Sume {1} a {0}: ¿cuánto da? Escríbalo en cifras.",
+				"¿Cuál es la suma de {0} y {1}? Escríbalo en cifras." };
+		String[] differences = { "¿Cuánto es {0} menos {1}? Escríbalo en cifras.",
+				"Quite {1} a {0}: ¿cuánto queda? Escríbalo en cifras.",
+				"Reste {1} de {0}: ¿cuánto da? Escríbalo en cifras." };
+		tester.assertLabel("form:captcha:label",
+			MessageFormat.format((question.sum() ? sums : differences)[question.wording()],
+				numbers[question.first()], numbers[question.second()]));
 		tester.assertContains("Demasiados intentos fallidos: responda también a la pregunta.");
+	}
+
+	@Test
+	void aSessionThatDidNotSeeTheCaptchaIsAskedItWithoutCheckingThePassword()
+	{
+		// failures of other sessions
+		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
+		{
+			attempts.failed("wicket", null, true);
+		}
+		tester.assertInvisible("form:captcha");
+
+		// the right password, without the captcha this session was not shown
+		send("wicket", TestDatabase.WICKET_PASSWORD, null);
+
+		tester.assertErrorMessages("Too many failed attempts: please solve the check below too.");
+		assertFalse(DemoSession.get().isSignedIn());
+		assertTrue(drawn("form:captcha"));
+		tester.assertVisible("form:captcha");
+		assertFalse(drawn("form:password"));
+		assertFocusOn("form:captcha:answer");
+		// it was not counted as a wrong password
+		assertEquals(Duration.ZERO, attempts.retryAfter("wicket", null));
+
+		send("wicket", TestDatabase.WICKET_PASSWORD, page().getChallenge());
+		assertTrue(DemoSession.get().isSignedIn());
+	}
+
+	@Test
+	void anAccountGuessedTooOftenWaitsWhateverIsSent()
+	{
+		failUntilTheCaptchaIsAsked();
+		for (int attempt = SignInAttempts.BEFORE_CAPTCHA; attempt < SignInAttempts.BEFORE_WAITING;
+			attempt++)
+		{
+			send("wicket", "wrong-" + attempt, page().getChallenge());
+			tester.assertErrorMessages("The account or the password is wrong.");
+		}
+
+		// the right password and captcha are turned away without checking them
+		send("wicket", TestDatabase.WICKET_PASSWORD, page().getChallenge());
+		tester.assertErrorMessages("Too many failed attempts: please try again in a second.");
+		assertFalse(DemoSession.get().isSignedIn());
+
+		clock.advance(Duration.ofSeconds(1));
+		send("wicket", "wrong-again", page().getChallenge());
+		tester.assertErrorMessages("The account or the password is wrong.");
+		send("wicket", TestDatabase.WICKET_PASSWORD, page().getChallenge());
+		tester.assertErrorMessages("Too many failed attempts: please try again in 2 seconds.");
+		for (int attempt = 0; attempt < 6; attempt++)
+		{
+			attempts.failed("wicket", null, true);
+		}
+		send("wicket", TestDatabase.WICKET_PASSWORD, page().getChallenge());
+		tester.assertErrorMessages("Too many failed attempts: please try again in 3 minutes.");
+
+		clock.advance(Duration.ofMinutes(3));
+		send("wicket", TestDatabase.WICKET_PASSWORD, page().getChallenge());
+		assertTrue(DemoSession.get().isSignedIn());
+	}
+
+	@Test
+	void everyWordingOfTheQuestionIsInEveryLanguage()
+	{
+		failUntilTheCaptchaIsAsked();
+		Captcha captcha = page().getCaptcha();
+		List<String> english = new ArrayList<>();
+		for (String language : List.of("en", "de", "es"))
+		{
+			tester.getSession().setLocale(Locale.forLanguageTag(language));
+			for (int wording = 0; wording < Captcha.WORDINGS; wording++)
+			{
+				for (String key : List.of("captchaPlus", "captchaMinus"))
+				{
+					String text = captcha.getString(key + wording);
+					assertTrue(text.contains("{0}") && text.contains("{1}"), text);
+					if ("en".equals(language))
+					{
+						english.add(text);
+					}
+					else
+					{
+						assertFalse(english.contains(text), language + ": " + text);
+					}
+				}
+			}
+		}
+		assertEquals(Captcha.WORDINGS * 2, english.stream().distinct().count());
 	}
 }

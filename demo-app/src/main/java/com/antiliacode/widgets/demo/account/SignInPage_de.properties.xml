@@ -25,4 +25,7 @@
 	<entry key="register">Registrieren</entry>
 	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
 	<entry key="notValidated">Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse: Öffnen Sie den Link, den wir an {0} gesendet haben. Keine E-Mail? Schauen Sie im Spam-Ordner nach; eine erneute Anmeldung nach einigen Minuten sendet einen neuen Link.</entry>
+	<entry key="captchaNeeded">Zu viele Fehlversuche: Bitte lösen Sie auch die Aufgabe unten.</entry>
+	<entry key="waitSeconds">Zu viele Fehlversuche: Bitte versuchen Sie es in {0,choice,1#einer Sekunde|1&lt;{0} Sekunden} noch einmal.</entry>
+	<entry key="waitMinutes">Zu viele Fehlversuche: Bitte versuchen Sie es in {0} Minuten noch einmal.</entry>
 </properties>

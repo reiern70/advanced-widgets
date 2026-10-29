@@ -45,11 +45,57 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class SignInCaptchaBrowserTest extends FrameworkAppsTestCase
 {
-	private static final Pattern QUESTION = Pattern
-		.compile("How much is (\\w+) (plus|minus) (\\w+)\\? Write it in digits\\.");
+	/**
+	 * The questions of the captcha in English, each way it words them: a sum of the two numbers,
+	 * or the first taken away from the second, or the second from the first.
+	 */
+	private static final List<Pattern> SUMS = List.of(
+		Pattern.compile("How much is (\\w+) plus (\\w+)\\? Write it in digits\\."),
+		Pattern.compile("Add (\\w+) to (\\w+): how much do you get\\? Write it in digits\\."),
+		Pattern.compile("What is the sum of (\\w+) and (\\w+)\\? Write it in digits\\."));
+
+	private static final List<Pattern> SECOND_MINUS_FIRST = List.of(
+		Pattern.compile("Take (\\w+) away from (\\w+): how much is left\\? Write it in digits\\."),
+		Pattern.compile("Subtract (\\w+) from (\\w+): how much do you get\\? Write it in digits\\."));
+
+	private static final Pattern FIRST_MINUS_SECOND = Pattern
+		.compile("How much is (\\w+) minus (\\w+)\\? Write it in digits\\.");
 
 	private static final List<String> NUMBERS = List.of("zero", "one", "two", "three", "four",
 		"five", "six", "seven", "eight", "nine", "ten");
+
+	/**
+	 * @return the number answering a question of the captcha
+	 */
+	private static int answer(String question)
+	{
+		for (Pattern sum : SUMS)
+		{
+			Matcher matcher = sum.matcher(question);
+			if (matcher.matches())
+			{
+				return number(matcher, 1) + number(matcher, 2);
+			}
+		}
+		for (Pattern difference : SECOND_MINUS_FIRST)
+		{
+			Matcher matcher = difference.matcher(question);
+			if (matcher.matches())
+			{
+				return number(matcher, 2) - number(matcher, 1);
+			}
+		}
+		Matcher matcher = FIRST_MINUS_SECOND.matcher(question);
+		assertTrue(matcher.matches(), question);
+		return number(matcher, 1) - number(matcher, 2);
+	}
+
+	private static int number(Matcher matcher, int group)
+	{
+		int number = NUMBERS.indexOf(matcher.group(group));
+		assertTrue(number >= 0, matcher.group(group));
+		return number;
+	}
 
 	private void open(SeleniumBrowser browser)
 	{
@@ -143,11 +189,7 @@ class SignInCaptchaBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> d.findElements(By.cssSelector(".register__captcha-image")).isEmpty());
 		String question = driver.findElement(By.cssSelector(".register__captcha label span"))
 			.getText();
-		Matcher matcher = QUESTION.matcher(question);
-		assertTrue(matcher.matches(), question);
-		int first = NUMBERS.indexOf(matcher.group(1));
-		int second = NUMBERS.indexOf(matcher.group(3));
-		int number = "plus".equals(matcher.group(2)) ? first + second : first - second;
+		int number = answer(question);
 		wait.until(d -> answer().equals(d.switchTo().activeElement()));
 		assertEquals(TestDatabase.WICKET_PASSWORD, password.getDomProperty("value"));
 		answer().sendKeys(number + "", Keys.ENTER);
