@@ -10,9 +10,10 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
 | `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
-| `.env.example` | The settings; copied to `.env` on the server, never committed |
+| `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
-| `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |
+| `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
+| `start.sh` | On the instance: checks `.env`, dumps the database, pulls and builds the images and starts them |
 
 The WAR is built on the developer's machine, not on the server, because Wicket 11 is a snapshot
 built locally. Each deployment uploads the WAR (about 55 MB, Hibernate and the JDBC drivers
@@ -84,6 +85,18 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 6. Open `https://<domain>`: the certificate is there within a minute, the home page shows the
    websocket status *Live*.
 
+`.env` is made from `.env.example` with `install -m 600`, readable by its owner alone from the
+start, and holds no password until one is made up. `start.sh`, which `deploy.sh` runs on the
+instance, checks it before touching anything, without printing any of its values, and stops when:
+
+- a value is still `change-me` (the placeholder of earlier examples);
+- the last `JAVA_OPTIONS` lack `-Dwicket.configuration=deployment`, or set another
+  `wicket.configuration`: in DEVELOPMENT mode every demo is open to anonymous visitors and errors
+  show their stack traces;
+- they set `-Dantilia-widgets.sign-in-as` (every visitor signed in as that account) or
+  `-Dantilia-widgets.open-demos`, or `-Dantilia-widgets.open-registration` to anything but
+  `false`: switches for a developer's machine.
+
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
 **Memory.** Caddy answers 413 to a request body over 25 MB (the uploads of the demo take 20 MB at
@@ -99,7 +112,12 @@ The demo always has `semedy`, `wicket` and `admin` (the administrator, who sees 
 missing and its password changed when `.env` gives another. Their passwords are never in the source. An account
 without a password in `.env` is not added, and one still holding a password the source once gave it is locked.
 Accounts for people such as a client go into `.env` as
-`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again. The
+`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again: the
+list is synced at every start. A changed password takes effect; an account no longer listed is
+locked, not deleted, and listing it again opens it again; an account deleted through the API comes
+back at the next start while it is still listed. The names of the built-in accounts, `admin`,
+`semedy` and `wicket`, are ignored in the list, with a warning in the log. So a start with
+`ANTILIA_WIDGETS_ACCOUNTS` empty or missing locks every account it listed before. The
 accounts registered with earlier versions, in `/var/lib/antilia-widgets/accounts`, are copied into
 the table at start.
 
@@ -107,8 +125,10 @@ the table at start.
 
 The resources below answer JSON to administrators, leaving out the fields without a value: requests
 send the account and password of an administrator with HTTP Basic authentication
-(`curl -u admin:...`), or, to read only, come from a browser signed in as one. After three wrong
-passwords for an account they answer 429 until it signs in on the site.
+(`curl -u admin:...`), or, to read only, come from a browser signed in as one. From the 5th wrong
+password for an account, or the 20th from one address, they answer 429 with `Retry-After`, as the
+sign-in form makes the user wait: the wait starts at 1 s, doubles with each failure and stops
+growing at 15 minutes. Nothing locks an account for good.
 
 | Request | What it does |
 |---|---|
@@ -243,3 +263,29 @@ emails go to the log, where the link is taken from). Set in `.env`:
 | `SITE_URL` | `antilia-widgets.site-url` | The address the links point at; `compose.yaml` sets `https://${DOMAIN}` |
 
 `-Dantilia-widgets.open-registration=false` closes registering even with a server.
+
+## 6. One-time steps on the existing server
+
+The deployments since issue #86 need these steps once on a server set up before, in this order,
+before or while deploying again:
+
+1. **`.env`**: `JAVA_OPTIONS` must hold `-Dwicket.configuration=deployment`, and should hold
+   `-XX:+ExitOnOutOfMemoryError` (the image sets it anyway); no
+   `-Dantilia-widgets.sign-in-as`, `open-demos` or `open-registration` (but `=false`); no value
+   `change-me` (an `ANTILIA_WIDGETS_ACCOUNTS=client:change-me` from the old example has to go, or
+   get a real password). `start.sh` refuses to deploy otherwise.
+
+   `ANTILIA_WIDGETS_ACCOUNTS` is synced at every start from this version on: an account no longer
+   listed is locked, so **a start with it empty or missing locks every account it listed before**
+   (taking out `client:change-me` locks `client`, as it should). Accounts taken out of `.env`
+   before this version are still open: list them through the administration's API
+   (`GET /api/admin/users`) and remove the ones that should go. The migration that marks the
+   configured accounts, V8, only adds a column and runs by itself.
+
+   Check `.env` without showing the values:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && grep -v "^ *#" .env | grep -c change-me; grep -c "^ *JAVA_OPTIONS=.*-Dwicket.configuration=deployment" .env'
+   ```
+
+   The first count must be 0, the second at least 1.
