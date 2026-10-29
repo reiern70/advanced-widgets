@@ -13,7 +13,8 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
-| `start.sh` | On the instance: checks `.env`, dumps the database, pulls and builds the images and starts them |
+| `start.sh` | On the instance: checks `.env`, dumps the database, pulls and builds the images, gives the application its role in PostgreSQL and starts them |
+| `database-role.sql` | The application's own role in PostgreSQL, no superuser, owning the tables; run when the database is created and by `start.sh` |
 
 The WAR is built on the developer's machine, not on the server, because Wicket 11 is a snapshot
 built locally. Each deployment uploads the WAR (about 55 MB, Hibernate and the JDBC drivers
@@ -195,14 +196,31 @@ settings are sized for the 2 GB instance next to a JVM of 1 GB: `shared_buffers`
 `effective_cache_size` 512 MB, at most 20 connections (the application's pool uses 5); queries
 slower than a second are logged. The logs of every container are rotated, 3 files of 10 MB.
 
-Before the first deployment with it, add a password to `.env` on the server:
+Before the first deployment with it, add two passwords to `.env` on the server, made up there:
 
 ```sh
-ssh ubuntu@<static-ip> "echo DATABASE_PASSWORD=$(openssl rand -hex 24) >> /opt/antilia-widgets/.env"
+ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && echo "DATABASE_PASSWORD=$(openssl rand -hex 24)" >> .env && echo "DATABASE_APP_PASSWORD=$(openssl rand -hex 24)" >> .env'
 deploy/deploy.sh ubuntu@<static-ip>
 ```
 
 Flyway makes the tables at the first start; the demo adds `semedy`, `wicket` and `admin`.
+
+**The application's role.** The application does not log in as the superuser the image of
+PostgreSQL creates (`widgets`, or `DATABASE_USER`, with `DATABASE_PASSWORD`): that one keeps the
+database and makes the backups. The application has a role of its own, `widgets_app` (or
+`DATABASE_APP_USER`) with `DATABASE_APP_PASSWORD`, which is no superuser, can create neither
+databases nor roles, and owns the schema `public` with its tables and sequences, so that Flyway's
+migrations run. `database-role.sql` makes it: PostgreSQL runs it when it creates the database,
+and `start.sh` runs it again before every start of the application. On a database that exists it
+only adds: it makes the role when missing, sets its password to the one of `.env` (so changing it
+there and deploying again changes it), and hands it, table by table and sequence by sequence,
+what it does not own yet. It never drops, deletes or empties anything. `start.sh` refuses to go on
+without `DATABASE_APP_PASSWORD`. To run it by hand, on the server:
+
+```sh
+cd /opt/antilia-widgets
+docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -' < database-role.sql
+```
 
 **Backups.** `deploy.sh` installs `/etc/cron.d/antilia-widgets`: every night at 03:30 (the
 server's clock, UTC) `backup.sh` dumps the database to `/var/backups/antilia-widgets`, keeps it
@@ -221,6 +239,9 @@ To restore a dump:
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'' < /var/backups/antilia-widgets/widgets-<date>.dump'
 ```
 
+A dump made before the application had its own role restores tables owned by the superuser: run
+`database-role.sql` again afterwards, as above, or deploy again.
+
 **Upgrading keeps the data.** The data in production is never thrown away: no volume is removed
 and Flyway never cleans (`cleanDisabled`). The migrations in `db/migration` only add: new tables,
 columns and indexes, and rows filled in from what is there; none drops a table or a column or
@@ -237,9 +258,11 @@ ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker tag antilia-widgets:pr
 
 **Later, a managed database** ($15/month: daily backups and 7 days of point-in-time restore,
 updates done by AWS): *Databases → Create database*, the same region, PostgreSQL 17, *Standard*,
-name `widgets`, master user `widgets`, public mode off. Put its endpoint into `.env` as
-`DATABASE_URL` (with `DATABASE_USER` and `DATABASE_PASSWORD`), move the data over with
-`pg_dump | psql`, and deploy again; the `db` container may then be removed from `compose.yaml`.
+name `widgets`, master user `widgets`, public mode off. Make the application's role there as
+`database-role.sql` does, put the endpoint into `.env` as `DATABASE_URL` and the role as
+`DATABASE_APP_USER` and `DATABASE_APP_PASSWORD`, move the data over with `pg_dump | psql`, and
+deploy again; the `db` container may then be removed from `compose.yaml`, and the role step from
+`start.sh`.
 
 ### On a development machine
 
@@ -306,3 +329,14 @@ before or while deploying again:
    ```
 
    The first count must be 0, the second at least 1.
+
+2. **The application's role in PostgreSQL**: add its password to `.env`, made up on the server:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'echo "DATABASE_APP_PASSWORD=$(openssl rand -hex 24)" >> /opt/antilia-widgets/.env'
+   ```
+
+   The next deployment dumps the database, makes the role `widgets_app`, hands it the schema
+   `public` with its tables and sequences (`flyway_schema_history` included), and starts the
+   application as that role. Nothing is dropped or deleted, and the data stays as it is.
+   `start.sh` stops before doing anything while the password is missing.
