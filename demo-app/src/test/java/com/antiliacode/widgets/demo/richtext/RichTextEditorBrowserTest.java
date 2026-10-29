@@ -116,7 +116,7 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
-	void colorsTheTextAndItsBackgroundFromTheirMenus(SeleniumBrowser browser, String framework)
+	void colorsTheTextAndItsBackgroundFromTheirPickers(SeleniumBrowser browser, String framework)
 	{
 		openEditor(browser, framework);
 		selectWord("oystercatchers");
@@ -138,12 +138,34 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		assertTrue(textBar.getSize().getWidth() > 5 && textBar.getSize().getHeight() > 0,
 			textBar.getSize().toString());
 
-		// the background with the keys: the menu opens on None, Y goes to Yellow
+		// the picker again: red ticked in the grid, and first of the last colors chosen below it
+		tool("textColor").click();
+		WebElement square = wait.until(d -> toolbar().findElements(By.cssSelector(
+			"[role=menu]:not([hidden]) .antilia-rich-text-palette-grid [data-item='red']")).stream()
+			.findFirst().orElse(null));
+		assertEquals(square, driver.switchTo().activeElement());
+		assertEquals("Red", square.getDomAttribute("aria-label"));
+		By tick = By.cssSelector(".antilia-rich-text-palette-tick");
+		assertTrue(square.findElement(tick).isDisplayed());
+		assertFalse(toolbar().findElement(By.cssSelector("[role=menu]:not([hidden]) " +
+			".antilia-rich-text-palette-grid [data-item='blue'] .antilia-rich-text-palette-tick"))
+			.isDisplayed());
+		WebElement recent = toolbar().findElements(By.cssSelector("[role=menu]:not([hidden]) " +
+			".antilia-rich-text-palette-recent [role=menuitemradio]")).get(0);
+		assertEquals("red", recent.getDomAttribute("data-item"));
+		assertTrue(recent.findElement(tick).isDisplayed());
+		// squares, in a grid
+		assertEquals(square.getSize().getWidth(), square.getSize().getHeight());
+		square.sendKeys(Keys.ESCAPE);
+		wait.until(d -> toolbar().findElements(By.cssSelector("[role=menu]:not([hidden])"))
+			.isEmpty());
+
+		// the background with the keys: the picker opens on None, Y goes to Yellow
 		selectWord("oystercatchers");
 		tool("textBackground").sendKeys(Keys.ARROW_DOWN);
 		wait.until(d -> "None".equals(d.switchTo().activeElement().getText().trim()));
 		driver.switchTo().activeElement().sendKeys("y");
-		wait.until(d -> "Yellow".equals(d.switchTo().activeElement().getText().trim()));
+		wait.until(d -> "Yellow".equals(d.switchTo().activeElement().getDomAttribute("aria-label")));
 		driver.switchTo().activeElement().sendKeys(Keys.ENTER);
 		By marked = By.xpath(".//mark[@class='antilia-background-yellow']" +
 			"[contains(., 'oystercatchers')]");
