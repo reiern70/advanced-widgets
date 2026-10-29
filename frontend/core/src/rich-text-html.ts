@@ -64,9 +64,9 @@ const STYLE_IN_TAG = /(<[a-zA-Z][^\s>/]*(?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[
  *          Under a Content Security Policy without 'unsafe-inline', the browser reports every
  *          style attribute it parses, even out of the page, and reads none: pasted from another
  *          page, the HTML would fill the console. What the styles say the editor has a mark or an
- *          alignment for comes along: bold, italic, underlined and struck text, as the spans of
- *          Google Docs have it, and alignment; the bold wrapper of all Google Docs pastes, a b of a
- *          normal weight, goes.
+ *          alignment for comes along: bold, italic, underlined and struck text, superscript and
+ *          subscript, as the spans of Google Docs have it, and alignment; the bold wrapper of all
+ *          Google Docs pastes, a b of a normal weight, goes.
  */
 export function quietHtml(html: string): string {
 	if (!STYLE_IN_TAG.test(html) || typeof document === 'undefined') {
@@ -104,6 +104,10 @@ export function quietHtml(html: string): string {
 			}
 			if (inline && /text-decoration[a-z-]*\s*:[^;]*line-through/i.test(style)) {
 				wrap('s');
+			}
+			const raised = /vertical-align\s*:\s*(super|sub)\b/i.exec(style)?.[1]?.toLowerCase();
+			if (inline && raised) {
+				wrap(raised === 'super' ? 'sup' : 'sub');
 			}
 		});
 	return template.innerHTML;

@@ -227,6 +227,21 @@ describe('RichTextEditor', () => {
 		expect(tool('textBackground')).not.toBeNull();
 	});
 
+	it('raises and lowers text, unless it leaves superscript and subscript out', () => {
+		const ref = createRef<RichTextEditorHandle>();
+		const value = '<p>x<sup>2</sup> H<sub>2</sub>O</p>';
+		const { container, rerender } = render(<RichTextEditor ref={ref} value={value} />);
+		expect(ref.current?.getValue()).toBe(value);
+		const tool = (name: string) => container.querySelector(`[data-tool="${name}"]`);
+		expect(tool('superscript')).not.toBeNull();
+		expect(tool('subscript')).not.toBeNull();
+
+		rerender(<RichTextEditor ref={ref} value={value} features={['bold']} />);
+		expect(ref.current?.getValue()).toBe('<p>x2 H2O</p>');
+		expect(tool('superscript')).toBeNull();
+		expect(tool('subscript')).toBeNull();
+	});
+
 	it('posts the text in a hidden text area under a name', () => {
 		const ref = createRef<RichTextEditorHandle>();
 		const { container } = render(<form><RichTextEditor ref={ref} name="body"

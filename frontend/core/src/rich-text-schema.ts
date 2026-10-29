@@ -14,9 +14,9 @@
 
 /*
  * What the rich text editor lets a text hold, its features, as the Tiptap extensions making them:
- * paragraphs, headings, the marks of the text, its colors, links, lists, quotes, code blocks,
- * rules, tables, images and alignment. A feature left out is not in the editor's schema: pasting
- * it brings its text alone.
+ * paragraphs, headings, the marks of the text (superscript and subscript among them, one or the
+ * other), its colors, links, lists, quotes, code blocks, rules, tables, images and alignment. A
+ * feature left out is not in the editor's schema: pasting it brings its text alone.
  *
  * The HTML the editor writes has no style attribute, which a Content Security Policy without
  * 'unsafe-inline' would block: text aligns by the classes of RICH_TEXT_ALIGN_CLASSES, on
@@ -53,8 +53,9 @@ export { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, 
 
 /** The features built in the editor. */
 export type RichTextFeatureName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
-	'textColor' | 'textBackground' | 'link' | 'bulletList' | 'orderedList' | 'taskList' |
-	'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' | 'textAlign' | 'mention';
+	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
+	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
+	'textAlign' | 'mention';
 
 /**
  * What a text may hold: a feature built in the editor, or the name of one registered
@@ -64,16 +65,16 @@ export type RichTextFeature = RichTextFeatureName | (string & {});
 
 /** The features built in the editor, all of them: those of an editor of HTML when left out. */
 export const RICH_TEXT_FEATURES: readonly RichTextFeatureName[] = Object.freeze(['heading', 'bold',
-	'italic', 'underline', 'strike', 'code', 'textColor', 'textBackground', 'link', 'bulletList',
-	'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table', 'image',
-	'textAlign', 'mention']);
+	'italic', 'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor',
+	'textBackground', 'link', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock',
+	'horizontalRule', 'table', 'image', 'textAlign', 'mention']);
 
 /**
  * The features Markdown has no syntax for, which an editor of Markdown leaves out unless told
- * otherwise: underlined text, colors, alignment and mentions.
+ * otherwise: underlined text, superscript and subscript, colors, alignment and mentions.
  */
 export const RICH_TEXT_NOT_IN_MARKDOWN: readonly RichTextFeatureName[] = Object.freeze(['underline',
-	'textColor', 'textBackground', 'textAlign', 'mention']);
+	'superscript', 'subscript', 'textColor', 'textBackground', 'textAlign', 'mention']);
 
 /**
  * A color of the text, of the palette of the colors of the text. The style sheets of the page color
@@ -249,6 +250,22 @@ declare module '@tiptap/core' {
 			/** Takes away the background of the text selected. */
 			unsetTextBackground: () => ReturnType;
 		};
+		superscript: {
+			/** Raises the text selected, or the text typed next, taking subscript away. */
+			setSuperscript: () => ReturnType;
+			/** Raises the text selected, or lowers it back to the line. */
+			toggleSuperscript: () => ReturnType;
+			/** Lowers the text selected back to the line. */
+			unsetSuperscript: () => ReturnType;
+		};
+		subscript: {
+			/** Lowers the text selected, or the text typed next, taking superscript away. */
+			setSubscript: () => ReturnType;
+			/** Lowers the text selected, or raises it back to the line. */
+			toggleSubscript: () => ReturnType;
+			/** Raises the text selected back to the line. */
+			unsetSubscript: () => ReturnType;
+		};
 		antiliaTextAlign: {
 			/** Aligns the paragraphs and headings of the selection. */
 			setTextAlign: (alignment: RichTextAlignment) => ReturnType;
@@ -358,6 +375,54 @@ export function textBackgroundMark(colors: readonly RichTextBackgroundColor[]) {
 		colors.some((color) => color.name === 'yellow') ? 'yellow' : null);
 }
 
+/**
+ * @returns a mark raising or lowering text, written in its tag: <sup> or <sub>. Setting it takes
+ *          the other away from the text, if the editor has it: text is raised or lowered, not
+ *          both. Pasted text raised or lowered by its style comes as the tag (quietHtml).
+ */
+function scriptMark(name: 'superscript' | 'subscript', tag: 'sup' | 'sub',
+	other: 'superscript' | 'subscript', shortcut: string) {
+	// the other one goes first; not with Tiptap's excludes, whose setMark then refuses the mark
+	const without = ({ commands, state }: CommandProps) => !state.schema.marks[other] ||
+		commands.unsetMark(other);
+	return Mark.create({
+		name,
+
+		parseHTML() {
+			return [{ tag }];
+		},
+
+		renderHTML({ HTMLAttributes }) {
+			return [tag, mergeAttributes(HTMLAttributes), 0];
+		},
+
+		addCommands() {
+			const set = () => (props: CommandProps) => without(props) &&
+				props.commands.setMark(name);
+			const toggle = () => (props: CommandProps) => without(props) &&
+				props.commands.toggleMark(name);
+			const unset = () => ({ commands }: CommandProps) => commands.unsetMark(name);
+			return name === 'superscript' ?
+				{ setSuperscript: set, toggleSuperscript: toggle, unsetSuperscript: unset } :
+				{ setSubscript: set, toggleSubscript: toggle, unsetSubscript: unset };
+		},
+
+		addKeyboardShortcuts() {
+			return { [shortcut]: () => name === 'superscript' ?
+				this.editor.commands.toggleSuperscript() : this.editor.commands.toggleSubscript() };
+		}
+	});
+}
+
+/**
+ * Text raised above the line, <sup>: x², with Ctrl+Shift+. (⌘⇧. on a Mac); Ctrl+. alone goes to
+ * the next issue a proofreader found.
+ */
+export const Superscript = scriptMark('superscript', 'sup', 'subscript', 'Mod-Shift-.');
+
+/** Text lowered under the line, <sub>: H₂O, with Ctrl+Shift+, (⌘⇧, on a Mac). */
+export const Subscript = scriptMark('subscript', 'sub', 'superscript', 'Mod-Shift-,');
+
 /** A table without widths: no style on the table, no columns. */
 const PlainTable = Table.extend({
 	renderHTML({ HTMLAttributes }) {
@@ -460,6 +525,12 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 	}
 	if (has('image')) {
 		extensions.push(SafeImage.configure({ inline: false, allowBase64: false }));
+	}
+	if (has('superscript')) {
+		extensions.push(Superscript);
+	}
+	if (has('subscript')) {
+		extensions.push(Subscript);
 	}
 	if (has('textColor')) {
 		extensions.push(textColorMark(options.colors));

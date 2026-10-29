@@ -281,10 +281,10 @@ export function fakeBuild(): FakeBuild {
 	const editors: FakeEditor[] = [];
 	const plugin = (name: string) => ({ pluginName: name });
 	const names = ['Essentials', 'Paragraph', 'Autoformat', 'PasteFromOffice', 'Heading', 'Bold',
-		'Italic', 'Underline', 'Strikethrough', 'Code', 'Link', 'AutoLink', 'List', 'TodoList',
-		'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table', 'TableToolbar', 'Image',
-		'ImageToolbar', 'ImageCaption', 'ImageTextAlternative', 'ImageInsertViaUrl', 'AutoImage',
-		'Alignment', 'Markdown'];
+		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
+		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
+		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown'];
 	return {
 		...Object.fromEntries(names.map((name) => [name, plugin(name)])),
 		editors,
