@@ -9,15 +9,18 @@
 # "central" or "github", and the passphrase of the GPG key, through gpg, whose agent keeps it for
 # the signing. Then it:
 #
-#   1. builds everything and runs every test, with the version (skipped with --skip-tests);
+#   1. builds everything and runs every test, with the version (the tests skipped with
+#      --skip-tests), before any password reaches a process;
 #   2. signs and uploads the library to Maven Central (-Prelease), where it waits, validated, at
 #      https://central.sonatype.com/publishing/deployments until published there; or is published
 #      at once, if told so. A version on Central can never be removed or replaced;
 #   3. uploads it to GitHub Packages, unless told not to;
 #   4. tags the commit released, v<version>, and pushes the tag.
 #
-# The passwords are kept in the environment of this script alone: a settings file it writes for
-# Maven, deleted at the end, only refers to them.
+# The passwords are kept in variables of this script, out of the environment of the build: a
+# settings file it writes for Maven, deleted at the end, only refers to them, and only the uploads
+# of steps 2 and 3 get them, after the build, as the GPG key is unlocked only for step 2. The
+# uploads build nothing with npm again, so no package of the frontend runs while they are there.
 set -euo pipefail
 
 usage() {
@@ -101,8 +104,13 @@ if ! ask "Upload it to GitHub Packages too?"; then
 fi
 ask "Go on with $VERSION?" || fail "stopped, nothing done"
 
-# the tokens ~/.m2/settings.xml has not, in a settings file of this run referring to them
+# the tokens ~/.m2/settings.xml has not, in a settings file of this run referring to them; the
+# tokens themselves stay in variables of this script, not exported, until with_tokens
 MAVEN_SETTINGS=()
+central_user=
+central_password=
+github_user=
+github_token=
 MISSING=()
 has_server central || MISSING+=(central)
 [[ $GITHUB == false ]] || has_server github || MISSING+=(github)
@@ -114,18 +122,16 @@ if (( ${#MISSING[@]} )); then
 		case $server in
 			central)
 				echo "Maven Central: a user token of https://central.sonatype.com/account"
-				read -r -p "  Its user name: " INSTALL_CENTRAL_USER
-				read -r -s -p "  Its password: " INSTALL_CENTRAL_PASSWORD
+				read -r -p "  Its user name: " central_user
+				read -r -s -p "  Its password: " central_password
 				echo
-				export INSTALL_CENTRAL_USER INSTALL_CENTRAL_PASSWORD
 				SERVERS+="<server><id>central</id><username>\${env.INSTALL_CENTRAL_USER}</username><password>\${env.INSTALL_CENTRAL_PASSWORD}</password></server>"
 				;;
 			github)
 				echo "GitHub Packages: a personal access token (classic) with write:packages"
-				read -r -p "  Your GitHub user: " INSTALL_GITHUB_USER
-				read -r -s -p "  The token: " INSTALL_GITHUB_TOKEN
+				read -r -p "  Your GitHub user: " github_user
+				read -r -s -p "  The token: " github_token
 				echo
-				export INSTALL_GITHUB_USER INSTALL_GITHUB_TOKEN
 				SERVERS+="<server><id>github</id><username>\${env.INSTALL_GITHUB_USER}</username><password>\${env.INSTALL_GITHUB_TOKEN}</password></server>"
 				;;
 		esac
@@ -145,11 +151,20 @@ fi
 
 # the settings of this run, if any; an empty array is unbound to an older bash under set -u
 MAVEN=(mvn -B ${MAVEN_SETTINGS[@]+"${MAVEN_SETTINGS[@]}"} "-Drevision=$VERSION")
+# the uploads: what step 1 built, without installing Node or running npm again
+UPLOAD=("${MAVEN[@]}" -DskipTests -Dskip.installnodenpm=true -Dskip.npm=true -pl ui-components -am)
+
+# runs a command with the tokens asked for in its environment, and in no other's
+with_tokens() {
+	INSTALL_CENTRAL_USER=$central_user INSTALL_CENTRAL_PASSWORD=$central_password \
+		INSTALL_GITHUB_USER=$github_user INSTALL_GITHUB_TOKEN=$github_token "$@"
+}
 
 # --- 1. the build, with every test
 
 if [[ $SKIP_TESTS == true ]]; then
-	step "1. The build and the tests: skipped"
+	step "1. Building $VERSION, without the tests"
+	"${MAVEN[@]}" -DskipTests clean install
 else
 	step "1. Building $VERSION and running every test"
 	"${MAVEN[@]}" clean install
@@ -162,14 +177,13 @@ export GPG_TTY
 GPG_TTY=$(tty)
 echo "The passphrase of the GPG key, which signs every file (gpg keeps it while this runs):"
 echo "$VERSION" | gpg --clearsign > /dev/null || fail "gpg could not sign"
-"${MAVEN[@]}" -Prelease "-Dcentral.autoPublish=$PUBLISH" -DskipTests -pl ui-components -am deploy
+with_tokens "${UPLOAD[@]}" -Prelease "-Dcentral.autoPublish=$PUBLISH" deploy
 
 # --- 3. GitHub Packages
 
 if [[ $GITHUB == true ]]; then
 	step "3. Uploading to GitHub Packages"
-	"${MAVEN[@]}" -DskipTests -pl ui-components -am deploy \
-		"-DaltDeploymentRepository=github::$GITHUB_URL"
+	with_tokens "${UPLOAD[@]}" deploy "-DaltDeploymentRepository=github::$GITHUB_URL"
 else
 	step "3. GitHub Packages: not asked"
 fi
