@@ -322,6 +322,16 @@
 	display: block;
 }
 
+/* the grid of a color picker and its label in line with the items of a dropdown menu */
+.antilia-look-bootstrap .antilia-rich-text-palette :is(.antilia-rich-text-palette-grid,
+	.antilia-rich-text-palette-label) {
+	padding-inline: var(--bs-dropdown-item-padding-x, 1rem);
+}
+
+.antilia-look-bootstrap .antilia-rich-text-palette-color {
+	border-radius: var(--bs-border-radius-sm);
+}
+
 /* the buttons in the header of a collapsible panel, on its primary color */
 .antilia-look-bootstrap .antilia-collapsible-actions .btn {
 	--bs-btn-color: var(--antilia-theme-on-primary);

@@ -22,16 +22,19 @@
  * reachable. Pressing a tool keeps the focus and the selection in the text.
  *
  * The text style (paragraph, headings) and the table open a menu of their own, a WAI-ARIA menu:
- * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. So do the
- * color of the text and its background, a menu of the colors of their palette, each with a swatch,
- * the default first; a bar under their icon shows the color where the cursor is, by the class of
- * the color: that of the text, or that of the background. So does the
- * code block when the editor has languages for it: the menu makes the block a paragraph again, or
- * a block in plain text or in one of the languages. Without them, the tool makes a code block, or
- * takes it away. The link and the image open a form in a popover: the address, and whether the link
- * opens in a new tab or the text in place of the image. An address must be safe (see isSafeUrl):
- * http, https, mailto or a relative one. While the page uploads images, the form of the image has
- * a button choosing a file to upload, whose address the image then takes.
+ * the arrow keys go through its items, Enter or a click chooses one, Escape closes it. The color
+ * of the text and its background open a menu too, a color picker: the default (none for the
+ * background) on a line of its own, then the colors of their palette as squares in a grid, then
+ * the last colors chosen (recentRichTextColors); the color where the cursor is has a tick, and the
+ * arrow keys move through the grid by columns and by rows. A bar under their icon shows the color
+ * where the cursor is, by the class of the color: that of the text, or that of the background. So
+ * does the code block open a menu when the editor has languages for it: the menu makes the block a
+ * paragraph again, or a block in plain text or in one of the languages. Without them, the tool
+ * makes a code block, or takes it away. The link and the image open a form in a popover: the
+ * address, and whether the link opens in a new tab or the text in place of the image. An address
+ * must be safe (see isSafeUrl): http, https, mailto or a relative one. While the page uploads
+ * images, the form of the image has a button choosing a file to upload, whose address the image
+ * then takes.
  *
  * The same class draws the bubble menu over a selection, with the tools of the inline formats.
  */
@@ -143,6 +146,8 @@ export interface RichTextEditorTexts {
 	/** The first items of the menus of the colors: the default color, no background. */
 	defaultColor: string;
 	noBackground: string;
+	/** The label of the last colors chosen, under the grid of the colors. */
+	recentColors: string;
 	/** The colors of the default palettes, unless their palette names them (RichTextColor). */
 	colorGray: string;
 	colorBrown: string;
@@ -237,6 +242,7 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	plainText: 'Plain text',
 	defaultColor: 'Default',
 	noBackground: 'None',
+	recentColors: 'Recent',
 	colorGray: 'Gray',
 	colorBrown: 'Brown',
 	colorRed: 'Red',
@@ -276,6 +282,65 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 /** The bar under the icon of a tool of colors, the color where the cursor is. */
 const BAR_CLASS = 'antilia-rich-text-tool-bar';
 
+/** The tools of colors, whose menus are color pickers, by the marks they set. */
+type ColorMark = 'textColor' | 'textBackground';
+
+/** The columns of the grid of a color picker, at most. */
+const PALETTE_COLUMNS = 6;
+
+/** The last colors chosen a color picker shows below its grid, at most. */
+const RECENT_COLORS = 4;
+
+/**
+ * The last colors chosen kept, at most: more than a picker shows, so that one whose palette has
+ * not all of them still has some to show.
+ */
+const RECENT_COLORS_KEPT = 12;
+
+/** Where the browser keeps the last colors chosen, for the editors of the site. */
+const RECENT_COLORS_KEY = 'antilia-rich-text-recent-colors';
+
+/** The last colors chosen, while the browser keeps none: no localStorage, or none allowed. */
+const recentInMemory: Record<ColorMark, readonly string[]> = { textColor: [], textBackground: [] };
+
+/**
+ * @returns the last colors chosen kept by the browser, by their marks; null when it keeps none
+ */
+function keptRecentColors(): Partial<Record<ColorMark, unknown>> | null {
+	try {
+		const kept = JSON.parse(localStorage.getItem(RECENT_COLORS_KEY) ?? '{}') as unknown;
+		return kept && typeof kept === 'object' ? kept as Partial<Record<ColorMark, unknown>> : {};
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * @param mark the color of the text, or of its background
+ * @returns the names of the last colors chosen in the color pickers of the editors of the site,
+ *          the last first: kept by the browser (localStorage), in memory while it keeps none
+ */
+export function recentRichTextColors(mark: ColorMark): readonly string[] {
+	const kept = keptRecentColors();
+	const names = kept ? kept[mark] : recentInMemory[mark];
+	return Array.isArray(names) ? names.filter((name): name is string => typeof name === 'string')
+		.slice(0, RECENT_COLORS_KEPT) : [];
+}
+
+/**
+ * Keeps a color chosen in a color picker first among the last ones.
+ */
+function rememberRichTextColor(mark: ColorMark, name: string): void {
+	const names = [name, ...recentRichTextColors(mark).filter((each) => each !== name)]
+		.slice(0, RECENT_COLORS_KEPT);
+	try {
+		localStorage.setItem(RECENT_COLORS_KEY, JSON.stringify({ ...keptRecentColors(),
+			[mark]: names }));
+	} catch {
+		recentInMemory[mark] = names;
+	}
+}
+
 const svg = (paths: string) => '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" ' +
 	'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
 	'aria-hidden="true" focusable="false">' + paths + '</svg>';
@@ -286,6 +351,16 @@ const svg = (paths: string) => '<svg viewBox="0 0 24 24" width="1em" height="1em
  */
 const colorIcon = (paths: string) => '<span class="antilia-rich-text-tool-icon" ' +
 	'aria-hidden="true">' + svg(paths) + '<span class="' + BAR_CLASS + '"></span></span>';
+
+/**
+ * The tick on the color where the cursor is, in a color picker: a light mark on a dark halo, which
+ * reads on light and dark colors alike.
+ */
+const TICK = '<svg class="antilia-rich-text-palette-tick" viewBox="0 0 24 24" width="1em" ' +
+	'height="1em" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+	'focusable="false"><path class="antilia-rich-text-palette-tick-halo" ' +
+	'd="m5 12.5 4.5 4.5 9.5-10"/><path class="antilia-rich-text-palette-tick-mark" ' +
+	'd="m5 12.5 4.5 4.5 9.5-10"/></svg>';
 
 /** The icons of the tools, and the arrow of a menu. */
 export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading'> | 'menu', string>> =
@@ -606,6 +681,9 @@ export class RichTextToolbar {
 	/** The tool whose menu is open, if any. */
 	private opened: DrawnTool | null = null;
 
+	/** The items of the color picker open, by rows, for the arrow keys; none for another menu. */
+	private paletteRows: HTMLButtonElement[][] = [];
+
 	private listeners: Array<[EventTarget, string, EventListener, boolean]> = [];
 
 	/**
@@ -659,6 +737,13 @@ export class RichTextToolbar {
 			return 'menu';
 		}
 		return spec?.kind ?? 'action';
+	}
+
+	/**
+	 * @returns whether a tool is one of colors built in, whose menu is a color picker
+	 */
+	private isPalette(tool: RichTextTool): tool is ColorMark {
+		return (tool === 'textColor' || tool === 'textBackground') && !toolSpec(tool)?.registered;
 	}
 
 	private codeLanguages(): readonly RichTextCodeLanguage[] {
@@ -754,8 +839,9 @@ export class RichTextToolbar {
 		button.setAttribute('aria-expanded', 'false');
 		const box = document.createElement('div');
 		box.className = 'antilia-rich-text-tool-box';
-		const menu = document.createElement('ul');
-		menu.className = this.css('rich-text-menu');
+		const palette = this.isPalette(tool);
+		const menu: HTMLElement = document.createElement(palette ? 'div' : 'ul');
+		menu.className = this.css('rich-text-menu') + (palette ? ' antilia-rich-text-palette' : '');
 		menu.id = 'antilia-rich-text-menu-' + (++menus);
 		menu.setAttribute('role', 'menu');
 		menu.setAttribute('aria-label', name);
@@ -824,9 +910,8 @@ export class RichTextToolbar {
 			if (drawn.label) {
 				drawn.label.textContent = this.blockLabel(texts);
 			}
-			if (!spec.registered && (drawn.tool === 'textColor' ||
-				drawn.tool === 'textBackground')) {
-				this.showColor(drawn.button, drawn.tool as 'textColor' | 'textBackground');
+			if (this.isPalette(drawn.tool)) {
+				this.showColor(drawn.button, drawn.tool);
 			}
 		});
 		if (this.opened) {
@@ -998,7 +1083,10 @@ export class RichTextToolbar {
 				checked: (editor) => editor.isActive(mark, { color: color.name }),
 				enabled: (editor) => editor.isActive(mark, { color: color.name }) ||
 					can(editor, color.name),
-				run: (editor) => set(editor, color.name) }))
+				run: (editor) => {
+					rememberRichTextColor(mark, color.name);
+					set(editor, color.name);
+				} }))
 		];
 	}
 
@@ -1048,9 +1136,13 @@ export class RichTextToolbar {
 	 * Draws the items of a menu as the cursor stands.
 	 */
 	private renderMenu(drawn: DrawnTool): void {
+		if (this.isPalette(drawn.tool)) {
+			this.renderPalette(drawn, drawn.tool);
+			return;
+		}
 		const menu = drawn.menu!;
-		const editor = this.editor;
 		menu.replaceChildren();
+		this.paletteRows = [];
 		for (const line of this.menuLines(drawn)) {
 			const item = document.createElement('li');
 			if (line === 'separator') {
@@ -1060,40 +1152,121 @@ export class RichTextToolbar {
 				continue;
 			}
 			item.setAttribute('role', 'none');
-			const button = document.createElement('button');
-			button.type = 'button';
-			button.className = this.css('rich-text-menu-item');
-			button.dataset.item = line.id;
-			button.tabIndex = -1;
+			const button = this.menuButton(line, this.css('rich-text-menu-item'));
 			button.textContent = line.label;
 			if (line.swatch) {
-				const swatch = document.createElement('span');
-				swatch.className = line.swatch;
-				swatch.setAttribute('aria-hidden', 'true');
-				button.prepend(swatch);
+				button.prepend(this.swatch(line.swatch));
 			}
 			if (line.level) {
 				button.dataset.level = String(line.level);
 			}
-			if (line.checked) {
-				const checked = line.checked(editor);
-				button.setAttribute('role', 'menuitemradio');
-				button.setAttribute('aria-checked', String(checked));
-				toggleParts(button, this.context.look, checked, 'rich-text-menu-item-active');
-			} else {
-				button.setAttribute('role', 'menuitem');
-			}
-			const enabled = line.enabled(editor);
-			button.setAttribute('aria-disabled', String(!enabled));
-			button.addEventListener('click', () => {
-				if (button.getAttribute('aria-disabled') !== 'true') {
-					this.closeMenu(false);
-					line.run(this.editor, this.toolContext);
-				}
-			});
 			item.append(button);
 			menu.append(item);
 		}
+	}
+
+	/**
+	 * @returns the button of an item of a menu, as the cursor stands, choosing it when pressed
+	 */
+	private menuButton(line: MenuEntry, className: string): HTMLButtonElement {
+		const editor = this.editor;
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = className;
+		button.dataset.item = line.id;
+		button.tabIndex = -1;
+		if (line.checked) {
+			const checked = line.checked(editor);
+			button.setAttribute('role', 'menuitemradio');
+			button.setAttribute('aria-checked', String(checked));
+			toggleParts(button, this.context.look, checked, 'rich-text-menu-item-active');
+		} else {
+			button.setAttribute('role', 'menuitem');
+		}
+		button.setAttribute('aria-disabled', String(!line.enabled(editor)));
+		button.addEventListener('click', () => {
+			if (button.getAttribute('aria-disabled') !== 'true') {
+				this.closeMenu(false);
+				line.run(this.editor, this.toolContext);
+			}
+		});
+		return button;
+	}
+
+	private swatch(className: string): HTMLElement {
+		const swatch = document.createElement('span');
+		swatch.className = className;
+		swatch.setAttribute('aria-hidden', 'true');
+		return swatch;
+	}
+
+	/**
+	 * Draws the color picker of a tool of colors as the cursor stands: the default on a line of
+	 * its own, the colors of the palette as squares in a grid, then the last colors chosen that the
+	 * palette has, under a label. Each square is named by its color; the color where the cursor is
+	 * has a tick. The squares of the last colors are items of the menu too, of the same colors.
+	 */
+	private renderPalette(drawn: DrawnTool, mark: ColorMark): void {
+		const menu = drawn.menu!;
+		const texts = this.context.texts();
+		const [reset, ...colors] = this.colorEntries(mark);
+		menu.replaceChildren();
+		const first = this.menuButton(reset!, this.css('rich-text-menu-item') +
+			' antilia-rich-text-palette-default');
+		const name = document.createElement('span');
+		name.className = 'antilia-rich-text-palette-name';
+		name.textContent = reset!.label;
+		first.append(this.swatch(reset!.swatch!), name);
+		first.insertAdjacentHTML('beforeend', TICK);
+		menu.append(first);
+		const rows: HTMLButtonElement[][] = [[first]];
+		const columns = Math.max(Math.min(PALETTE_COLUMNS, colors.length), 1);
+		// the columns of the grid; a property set by the script, which a strict policy allows
+		menu.style.setProperty('--antilia-rich-text-palette-columns', String(columns));
+		if (colors.length) {
+			menu.append(this.paletteGrid(colors, columns, rows));
+		}
+		const recent = recentRichTextColors(mark).map((each) => colors.find((color) =>
+			color.id === each)).filter((color): color is MenuEntry => !!color)
+			.slice(0, RECENT_COLORS);
+		if (recent.length) {
+			const separator = document.createElement('div');
+			separator.className = this.css('rich-text-menu-separator');
+			separator.setAttribute('role', 'separator');
+			const label = document.createElement('div');
+			label.className = 'antilia-rich-text-palette-label';
+			label.id = menu.id + '-recent';
+			label.textContent = texts.recentColors;
+			const grid = this.paletteGrid(recent, columns, rows);
+			grid.classList.add('antilia-rich-text-palette-recent');
+			grid.setAttribute('aria-labelledby', label.id);
+			menu.append(separator, label, grid);
+		}
+		this.paletteRows = rows;
+	}
+
+	/**
+	 * @returns a grid of the squares of colors, whose rows it adds to those of the color picker
+	 */
+	private paletteGrid(colors: readonly MenuEntry[], columns: number,
+		rows: HTMLButtonElement[][]): HTMLElement {
+		const grid = document.createElement('div');
+		grid.className = 'antilia-rich-text-palette-grid';
+		grid.setAttribute('role', 'group');
+		colors.forEach((color, index) => {
+			const button = this.menuButton(color, 'antilia-rich-text-palette-color');
+			button.setAttribute('aria-label', color.label);
+			button.title = color.label;
+			const swatch = this.swatch(color.swatch!);
+			swatch.insertAdjacentHTML('beforeend', TICK);
+			button.append(swatch);
+			if (index % columns === 0) {
+				rows.push([]);
+			}
+			rows[rows.length - 1]!.push(button);
+			grid.append(button);
+		});
+		return grid;
 	}
 
 	private menuItems(): HTMLButtonElement[] {
@@ -1129,6 +1302,7 @@ export class RichTextToolbar {
 			return;
 		}
 		this.opened = null;
+		this.paletteRows = [];
 		drawn.menu!.hidden = true;
 		drawn.menu!.replaceChildren();
 		drawn.button.setAttribute('aria-expanded', 'false');
@@ -1146,10 +1320,25 @@ export class RichTextToolbar {
 		};
 		switch (event.key) {
 		case 'ArrowDown':
-			move(index + 1);
+			if (!this.moveInPalette(event, 1)) {
+				move(index + 1);
+			}
 			break;
 		case 'ArrowUp':
-			move(index - 1);
+			if (!this.moveInPalette(event, -1)) {
+				move(index - 1);
+			}
+			break;
+		case 'ArrowRight':
+			// along the grid of a color picker
+			if (this.paletteRows.length) {
+				move(index + 1);
+			}
+			break;
+		case 'ArrowLeft':
+			if (this.paletteRows.length) {
+				move(index - 1);
+			}
 			break;
 		case 'Home':
 			move(0);
@@ -1168,8 +1357,10 @@ export class RichTextToolbar {
 		default:
 			if (event.key.length === 1 && /\S/.test(event.key)) {
 				const letter = event.key.toLowerCase();
+				// by the names of the items, those of the squares of a color picker too
 				const next = [...items.slice(index + 1), ...items.slice(0, index + 1)].find(
-					(item) => item.textContent?.trim().toLowerCase().startsWith(letter));
+					(item) => (item.getAttribute('aria-label') ?? item.textContent ?? '').trim()
+						.toLowerCase().startsWith(letter));
 				if (next) {
 					event.preventDefault();
 					next.focus();
@@ -1177,6 +1368,26 @@ export class RichTextToolbar {
 			}
 		}
 		event.stopPropagation();
+	}
+
+	/**
+	 * Moves the focus to the row below or above in a color picker, to the same column or the
+	 * last of a shorter row, from the last row to the first and back.
+	 *
+	 * @returns whether the menu open is a color picker
+	 */
+	private moveInPalette(event: KeyboardEvent, step: 1 | -1): boolean {
+		const rows = this.paletteRows;
+		const focused = document.activeElement as HTMLButtonElement;
+		const row = rows.findIndex((each) => each.includes(focused));
+		if (row < 0) {
+			return false;
+		}
+		event.preventDefault();
+		const column = rows[row]!.indexOf(focused);
+		const next = rows[(row + step + rows.length) % rows.length]!;
+		next[Math.min(column, next.length - 1)]!.focus();
+		return true;
 	}
 
 	private setCurrent(index: number): void {

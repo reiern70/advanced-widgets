@@ -423,6 +423,15 @@
 	box-shadow: var(--antilia-look-shadow, 0 8px 24px rgb(0 0 0 / 0.16));
 }
 
+/*
+ * while a menu of the toolbar is open, the bubble menu does not cover it: hidden, keeping its
+ * place, over the visibility Tiptap writes in its style
+ */
+.antilia-rich-text-editor:has(.antilia-rich-text-toolbar [aria-expanded="true"])
+	.antilia-rich-text-bubble {
+	visibility: hidden !important;
+}
+
 .antilia-rich-text-bubble > .antilia-rich-text-group + .antilia-rich-text-group {
 	padding-left: 0;
 	border-left: 0;
@@ -1098,6 +1107,130 @@
 	background: linear-gradient(to top right, transparent calc(50% - 0.75px),
 		var(--antilia-rich-text-muted) calc(50% - 0.75px), var(--antilia-rich-text-muted)
 		calc(50% + 0.75px), transparent calc(50% + 0.75px));
+}
+
+/*
+ * the color picker of the color of the text and of its background: the default on a line of its
+ * own, the colors of the palette as squares in a grid, as many columns as the script says, and the
+ * last colors chosen below, under a label
+ */
+.antilia-rich-text-menu.antilia-rich-text-palette {
+	width: max-content;
+	min-width: 0;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-palette-default {
+	display: flex;
+	align-items: center;
+}
+
+.antilia-rich-text-palette-name {
+	flex: 1 1 auto;
+}
+
+.antilia-rich-text-palette-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--antilia-rich-text-palette-columns, 6), 1.75em);
+	gap: 0.375em;
+	padding: 0.375em 0.75em;
+}
+
+.antilia-rich-text-palette-label {
+	padding: 0.25em 0.75em 0;
+	font-size: 0.8em;
+	line-height: 1.3;
+}
+
+:where(.antilia-rich-text-palette-label) {
+	color: var(--antilia-rich-text-muted);
+}
+
+.antilia-rich-text-palette-color {
+	display: block;
+	box-sizing: border-box;
+	width: 1.75em;
+	height: 1.75em;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+:where(.antilia-rich-text-palette-color) {
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+}
+
+:where(.antilia-rich-text-palette-color):hover {
+	outline: 2px solid var(--antilia-rich-text-border);
+	outline-offset: 1px;
+}
+
+:where(.antilia-rich-text-palette-color):focus-visible {
+	outline: 2px solid var(--antilia-rich-text-accent);
+	outline-offset: 2px;
+}
+
+.antilia-rich-text-palette-color[aria-disabled="true"] {
+	opacity: 0.45;
+	outline: none;
+	cursor: default;
+}
+
+/* the square: the swatch filling its button, a color of the text filling it too */
+.antilia-rich-text-palette-color > .antilia-rich-text-swatch {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	border-radius: inherit;
+}
+
+.antilia-rich-text-palette-color > .antilia-rich-text-swatch-text {
+	background-color: currentColor;
+}
+
+.antilia-rich-text-palette-color > .antilia-rich-text-swatch-text::before {
+	content: none;
+}
+
+/*
+ * the tick on the color where the cursor is: a light mark on a dark halo on a square, which reads
+ * on light and dark colors alike, the color of the item at the end of the line of the default
+ */
+.antilia-rich-text-palette-tick {
+	flex: none;
+	width: 1.1em;
+	height: 1.1em;
+	visibility: hidden;
+}
+
+[aria-checked="true"] .antilia-rich-text-palette-tick {
+	visibility: visible;
+}
+
+.antilia-rich-text-palette-tick-halo {
+	stroke: rgb(0 0 0 / 0.55);
+	stroke-width: 5.5;
+}
+
+.antilia-rich-text-palette-tick-mark {
+	stroke: #fff;
+	stroke-width: 2.75;
+}
+
+.antilia-rich-text-palette-default .antilia-rich-text-palette-tick {
+	margin-inline-start: 0.75em;
+}
+
+.antilia-rich-text-palette-default .antilia-rich-text-palette-tick-halo {
+	stroke: none;
+}
+
+.antilia-rich-text-palette-default .antilia-rich-text-palette-tick-mark {
+	stroke: currentColor;
 }
 
 /*

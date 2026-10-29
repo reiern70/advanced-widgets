@@ -239,6 +239,7 @@
 	<entry key="RichTextEditor.plainText">Plain text</entry>
 	<entry key="RichTextEditor.defaultColor">Default</entry>
 	<entry key="RichTextEditor.noBackground">None</entry>
+	<entry key="RichTextEditor.recentColors">Recent</entry>
 	<entry key="RichTextEditor.colorGray">Gray</entry>
 	<entry key="RichTextEditor.colorBrown">Brown</entry>
 	<entry key="RichTextEditor.colorRed">Red</entry>

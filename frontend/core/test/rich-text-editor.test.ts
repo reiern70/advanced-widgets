@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TextSelection } from '@tiptap/pm/state';
 
@@ -23,6 +23,7 @@ import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_
 	RICH_TEXT_EVENT_TRIGGER, RICH_TEXT_FEATURES, richTextBackgroundColors, richTextColors,
 	RichTextEditor, richTextEditor, richTextEvent, richTextEvents, richTextExtensions, setHost,
 	shortcutText, standaloneHost, textLanguage, type Host } from '../src/index.js';
+import { recentRichTextColors } from '../src/rich-text-toolbar.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -985,6 +986,13 @@ describe('the menus of the colors', () => {
 		editor.element.querySelector<HTMLElement>('#' + button.getAttribute('aria-controls'))!;
 	const itemsOf = (menu: HTMLElement) => Array.from(menu.querySelectorAll<HTMLButtonElement>(
 		'[role="menuitemradio"]'));
+	// the default by its text, the squares of the colors by their names
+	const namesOf = (items: HTMLButtonElement[]) => items.map((item) =>
+		item.getAttribute('aria-label') ?? item.textContent);
+	const recentOf = (menu: HTMLElement) => Array.from(menu.querySelectorAll<HTMLButtonElement>(
+		'.antilia-rich-text-palette-recent [role="menuitemradio"]'));
+
+	beforeEach(() => localStorage.clear());
 
 	it('color the text selected, the bar under the tool showing the color', () => {
 		const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
@@ -998,16 +1006,32 @@ describe('the menus of the colors', () => {
 
 		const menu = menuOf(editor, button);
 		expect(menu.hidden).toBe(false);
+		expect(menu.getAttribute('role')).toBe('menu');
+		expect(menu.classList.contains('antilia-rich-text-palette')).toBe(true);
 		let items = itemsOf(menu);
-		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Gray', 'Brown', 'Red',
-			'Orange', 'Yellow', 'Green', 'Teal', 'Cyan', 'Blue', 'Indigo', 'Purple', 'Pink']);
+		expect(namesOf(items)).toEqual(['Default', 'Gray', 'Brown', 'Red', 'Orange', 'Yellow',
+			'Green', 'Teal', 'Cyan', 'Blue', 'Indigo', 'Purple', 'Pink']);
 		expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['true',
 			...Array<string>(12).fill('false')]);
+		// the default on a line of its own, the colors as squares in a grid of six columns
+		expect(items[0]!.classList.contains('antilia-rich-text-palette-default')).toBe(true);
 		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-text antilia-rich-text-swatch-default');
+		expect(items[0]!.querySelector('.antilia-rich-text-palette-tick')).not.toBeNull();
+		expect(items.slice(1).every((item) => item.parentElement!.matches(
+			'.antilia-rich-text-palette-grid[role="group"]'))).toBe(true);
+		expect(menu.style.getPropertyValue('--antilia-rich-text-palette-columns')).toBe('6');
+		expect(items[3]!.className).toBe('antilia-rich-text-palette-color');
+		expect(items[3]!.title).toBe('Red');
+		expect(items[3]!.textContent).toBe('');
 		expect(items[3]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-text antilia-color-red');
 		expect(items[3]!.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+		expect(items[3]!.querySelector('.antilia-rich-text-swatch .antilia-rich-text-palette-tick'))
+			.not.toBeNull();
+		// no colors chosen yet: none below the grid
+		expect(menu.querySelector('.antilia-rich-text-palette-label')).toBeNull();
+		expect(recentOf(menu)).toEqual([]);
 		expect(document.activeElement).toBe(items[0]);
 		key(items[0]!, 'r');
 		expect(document.activeElement).toBe(items[3]);
@@ -1023,11 +1047,149 @@ describe('the menus of the colors', () => {
 		items = itemsOf(menu);
 		expect(document.activeElement).toBe(items[3]);
 		expect(items[3]!.getAttribute('aria-checked')).toBe('true');
+		// red is the last color chosen, below the grid, ticked too
+		const label = menu.querySelector('.antilia-rich-text-palette-label')!;
+		expect(label.textContent).toBe('Recent');
+		const recent = recentOf(menu);
+		expect(namesOf(recent)).toEqual(['Red']);
+		expect(recent[0]!.getAttribute('aria-checked')).toBe('true');
+		expect(recent[0]!.parentElement!.getAttribute('aria-labelledby')).toBe(label.id);
+		expect(items).toHaveLength(14);
 		items[0]!.click();
 		expect(editor.getValue()).toBe('<p>Hello world</p>');
 		expect(button.dataset.color).toBeUndefined();
 		expect(button.querySelector('.antilia-rich-text-tool-bar')?.getAttribute('class'))
 			.toBe('antilia-rich-text-tool-bar');
+		// the default is no color to remember
+		expect(recentRichTextColors('textColor')).toEqual(['red']);
+	});
+
+	it('show the last four colors chosen below the grid, the last first, apart for the text and ' +
+		'the background, and those of the palette alone', () => {
+		const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
+		const choose = (name: string, color: string) => {
+			select(editor, 1, 6);
+			tool(editor, name).click();
+			const menu = menuOf(editor, tool(editor, name));
+			const square = itemsOf(menu).find((item) => item.dataset.item === color)!;
+			square.click();
+		};
+		for (const color of ['red', 'blue', 'green', 'orange', 'pink']) {
+			choose('textColor', color);
+		}
+		// again: first again, once
+		choose('textColor', 'green');
+		expect(recentRichTextColors('textColor')).toEqual(['green', 'pink', 'orange', 'blue',
+			'red']);
+		expect(JSON.parse(localStorage.getItem('antilia-rich-text-recent-colors')!)).toEqual({
+			textColor: ['green', 'pink', 'orange', 'blue', 'red'] });
+
+		select(editor, 1, 6);
+		tool(editor, 'textColor').click();
+		const menu = menuOf(editor, tool(editor, 'textColor'));
+		expect(namesOf(recentOf(menu))).toEqual(['Green', 'Pink', 'Orange', 'Blue']);
+		expect(recentOf(menu).map((item) => item.getAttribute('aria-checked'))).toEqual(['true',
+			'false', 'false', 'false']);
+		// the recent ones choose their colors too
+		recentOf(menu)[2]!.click();
+		expect(editor.getValue()).toBe('<p><span class="antilia-color-orange">Hello</span> world' +
+			'</p>');
+		expect(recentRichTextColors('textColor').slice(0, 2)).toEqual(['orange', 'green']);
+
+		// the background has its own
+		select(editor, 7, 12);
+		tool(editor, 'textBackground').click();
+		expect(recentOf(menuOf(editor, tool(editor, 'textBackground')))).toEqual([]);
+		key(document.activeElement!, 'Escape');
+		choose('textBackground', 'lime');
+		expect(recentRichTextColors('textBackground')).toEqual(['lime']);
+
+		// another editor of the site shows them, those of its palette alone
+		const other = new RichTextEditor(textArea('<p>Other</p>'), { colors: [
+			DEFAULT_RICH_TEXT_COLORS[2]!, DEFAULT_RICH_TEXT_COLORS[8]!] });
+		select(other, 1, 3);
+		tool(other, 'textColor').click();
+		const otherMenu = menuOf(other, tool(other, 'textColor'));
+		expect(namesOf(itemsOf(otherMenu))).toEqual(['Default', 'Red', 'Blue', 'Blue', 'Red']);
+		expect(namesOf(recentOf(otherMenu))).toEqual(['Blue', 'Red']);
+		expect(otherMenu.style.getPropertyValue('--antilia-rich-text-palette-columns')).toBe('2');
+	});
+
+	it('keep the last colors chosen in memory while the browser keeps none', () => {
+		const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+			throw new DOMException('denied', 'SecurityError');
+		});
+		const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+			throw new DOMException('denied', 'SecurityError');
+		});
+		try {
+			const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
+			select(editor, 1, 6);
+			tool(editor, 'textBackground').click();
+			itemsOf(menuOf(editor, tool(editor, 'textBackground'))).find((item) =>
+				item.dataset.item === 'cyan')!.click();
+			expect(editor.getValue()).toBe('<p><mark class="antilia-background-cyan">Hello</mark> ' +
+				'world</p>');
+			expect(recentRichTextColors('textBackground')).toEqual(['cyan']);
+			tool(editor, 'textBackground').click();
+			expect(namesOf(recentOf(menuOf(editor, tool(editor, 'textBackground'))))).toEqual([
+				'Cyan']);
+		} finally {
+			getItem.mockRestore();
+			setItem.mockRestore();
+		}
+	});
+
+	it('move through the grid with the arrow keys, by columns and by rows', () => {
+		localStorage.setItem('antilia-rich-text-recent-colors', JSON.stringify({
+			textColor: ['blue', 'red', 'unknown', 7] }));
+		expect(recentRichTextColors('textColor')).toEqual(['blue', 'red', 'unknown']);
+		const editor = new RichTextEditor(textArea('<p>Hello world</p>'));
+		select(editor, 1, 6);
+		tool(editor, 'textColor').focus();
+		key(tool(editor, 'textColor'), 'ArrowDown');
+		const menu = menuOf(editor, tool(editor, 'textColor'));
+		const items = itemsOf(menu);
+		const focused = () => namesOf([document.activeElement as HTMLButtonElement])[0];
+		// Default; Gray Brown Red Orange Yellow Green; Teal Cyan Blue Indigo Purple Pink; Blue Red
+		expect(focused()).toBe('Default');
+		key(document.activeElement!, 'ArrowDown');
+		expect(focused()).toBe('Gray');
+		key(document.activeElement!, 'ArrowRight');
+		key(document.activeElement!, 'ArrowRight');
+		expect(focused()).toBe('Red');
+		key(document.activeElement!, 'ArrowDown');
+		expect(focused()).toBe('Blue');
+		expect(document.activeElement).toBe(items[9]);
+		// to the recent ones, the last of a shorter row
+		key(document.activeElement!, 'ArrowDown');
+		expect(document.activeElement).toBe(recentOf(menu)[1]);
+		// from the last row to the first
+		key(document.activeElement!, 'ArrowDown');
+		expect(focused()).toBe('Default');
+		key(document.activeElement!, 'ArrowUp');
+		expect(document.activeElement).toBe(recentOf(menu)[0]);
+		key(document.activeElement!, 'ArrowUp');
+		expect(focused()).toBe('Teal');
+		key(document.activeElement!, 'ArrowLeft');
+		expect(focused()).toBe('Green');
+		key(document.activeElement!, 'End');
+		expect(document.activeElement).toBe(recentOf(menu)[1]);
+		key(document.activeElement!, 'ArrowRight');
+		expect(focused()).toBe('Default');
+		key(document.activeElement!, 'p');
+		expect(focused()).toBe('Purple');
+		(document.activeElement as HTMLButtonElement).click();
+		expect(editor.getValue()).toBe('<p><span class="antilia-color-purple">Hello</span> world' +
+			'</p>');
+		tool(editor, 'textColor').focus();
+		key(tool(editor, 'textColor'), 'ArrowUp');
+		const recent = recentOf(menuOf(editor, tool(editor, 'textColor')));
+		expect(namesOf(recent)).toEqual(['Purple', 'Blue', 'Red']);
+		expect(document.activeElement).toBe(recent[recent.length - 1]);
+		key(document.activeElement!, 'Escape');
+		expect(menu.hidden).toBe(true);
+		expect(document.activeElement).toBe(tool(editor, 'textColor'));
 	});
 
 	it('color the background of the text selected', () => {
@@ -1038,8 +1200,8 @@ describe('the menus of the colors', () => {
 		button.click();
 
 		const items = itemsOf(menuOf(editor, button));
-		expect(items.map((item) => item.textContent)).toEqual(['None', 'Gray', 'Brown', 'Red',
-			'Orange', 'Yellow', 'Lime', 'Green', 'Teal', 'Cyan', 'Blue', 'Purple', 'Pink']);
+		expect(namesOf(items)).toEqual(['None', 'Gray', 'Brown', 'Red', 'Orange', 'Yellow', 'Lime',
+			'Green', 'Teal', 'Cyan', 'Blue', 'Purple', 'Pink']);
 		expect(items[0]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-background antilia-rich-text-swatch-none');
 		expect(items[5]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
@@ -1093,7 +1255,7 @@ describe('the menus of the colors', () => {
 		button.click();
 		const items = itemsOf(menuOf(editor, button));
 		// a color without a label is named by the texts, else by its name
-		expect(items.map((item) => item.textContent)).toEqual(['Default', 'Brand', 'mint']);
+		expect(namesOf(items)).toEqual(['Default', 'Brand', 'mint']);
 		expect(items[2]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-text mint-text');
 		items[2]!.click();
@@ -1105,7 +1267,7 @@ describe('the menus of the colors', () => {
 		const background = tool(editor, 'textBackground');
 		background.click();
 		const backgrounds = itemsOf(menuOf(editor, background));
-		expect(backgrounds.map((item) => item.textContent)).toEqual(['None', 'Glow']);
+		expect(namesOf(backgrounds)).toEqual(['None', 'Glow']);
 		expect(backgrounds[1]!.firstElementChild?.className).toBe('antilia-rich-text-swatch ' +
 			'antilia-rich-text-swatch-background glow');
 		backgrounds[1]!.click();
@@ -1124,8 +1286,9 @@ describe('the menus of the colors', () => {
 		editor.configure({ texts: { colorRed: 'Rot' }, colors: [brand, mint,
 			DEFAULT_RICH_TEXT_COLORS[2]!] });
 		tool(editor, 'textColor').click();
-		expect(itemsOf(menuOf(editor, tool(editor, 'textColor'))).map((item) => item.textContent))
-			.toEqual(['Default', 'Brand', 'mint', 'Rot']);
+		// mint was chosen: below the grid too
+		expect(namesOf(itemsOf(menuOf(editor, tool(editor, 'textColor'))))).toEqual(['Default',
+			'Brand', 'mint', 'Rot', 'mint']);
 
 		// another palette makes the editor anew: the colors it has not go
 		editor.configure({ colors: [brand] });
