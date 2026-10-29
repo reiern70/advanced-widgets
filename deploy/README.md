@@ -225,15 +225,39 @@ docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "$POSTGRES_USER" 
 **Backups.** `deploy.sh` installs `/etc/cron.d/antilia-widgets`: every night at 03:30 (the
 server's clock, UTC) `backup.sh` dumps the database to `/var/backups/antilia-widgets`, keeps it
 once `pg_restore` reads it, and deletes dumps older than 14 days; it logs to `backup.log` there.
-Those dumps are on the instance's disk: the **automatic snapshots** of the instance (Lightsail
-console → the instance → *Snapshots* → *Automatic snapshots*, about $2/month) keep the disk too,
-for 7 days. For a copy outside AWS, now and then:
+The dumps hold emails, names, addresses and password hashes, so they are **encrypted** with
+[age](https://age-encryption.org) to a public key, `BACKUP_AGE_RECIPIENT` in `.env`, as
+`widgets-<date>.dump.age`; only the private key, which never goes to the server, reads them.
+Without a key the dumps stay plain, and every run writes a warning into `backup.log`.
+`setup-server.sh` installs age on the server.
+
+Make the key pair on your own machine, once, and keep the private key safe and off the server (a
+password manager and an offline copy: without it no encrypted dump can be read):
 
 ```sh
-scp 'ubuntu@<static-ip>:/var/backups/antilia-widgets/widgets-*.dump' .
+age-keygen -o ~/antilia-widgets-backup.key      # prints the public key, age1...
+ssh ubuntu@<static-ip> 'echo BACKUP_AGE_RECIPIENT=age1... >> /opt/antilia-widgets/.env'
 ```
 
-To restore a dump:
+Those dumps are on the instance's disk: the **automatic snapshots** of the instance (Lightsail
+console → the instance → *Snapshots* → *Automatic snapshots*, about $2/month) keep the disk too,
+for 7 days. Copying them off AWS automatically, and an alert when a backup fails, are not set up:
+`backup.log` tells. For a copy outside AWS, now and then:
+
+```sh
+scp 'ubuntu@<static-ip>:/var/backups/antilia-widgets/widgets-*.dump.age' .
+```
+
+To restore an encrypted dump, decrypt it on your machine, where the private key is, and stream it
+to the database:
+
+```sh
+age -d -i ~/antilia-widgets-backup.key widgets-<date>.dump.age \
+	| ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'''
+```
+
+(for one still on the server only, read it with `ssh ubuntu@<static-ip> cat /var/backups/antilia-widgets/widgets-<date>.dump.age | age -d ...`).
+A plain dump, from before the key, restores on the server itself:
 
 ```sh
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'' < /var/backups/antilia-widgets/widgets-<date>.dump'
@@ -248,7 +272,7 @@ columns and indexes, and rows filled in from what is there; none drops a table o
 deletes rows, which `MigrationsTest` checks along with a database of the first version keeping
 its users and accesses through all of them. A migration, once deployed, is never changed: a
 change is a new one. Before starting the new version, `deploy.sh` dumps the database with
-`backup.sh`, so the data from before its migrations can be restored as below.
+`backup.sh`, so the data from before its migrations can be restored as above.
 
 **Going back.** Every deployment keeps the image that ran before as `antilia-widgets:previous`:
 
@@ -340,3 +364,8 @@ before or while deploying again:
    `public` with its tables and sequences (`flyway_schema_history` included), and starts the
    application as that role. Nothing is dropped or deleted, and the data stays as it is.
    `start.sh` stops before doing anything while the password is missing.
+
+3. **Encrypted backups**: install age on the server (running `setup-server.sh` again does it, see
+   the next step, or `sudo apt-get install age`), make a key pair on your own machine and put its
+   public key into `.env` as described under *Backups* above. The private key never goes to the
+   server. The dumps made before stay plain until they are 14 days old and deleted.

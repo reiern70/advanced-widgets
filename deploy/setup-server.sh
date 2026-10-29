@@ -18,9 +18,9 @@ if [ ! -f /swapfile ]; then
 	echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 fi
 
-# security updates install by themselves
+# security updates install by themselves; age encrypts the backups (see backup.sh)
 sudo apt-get update
-sudo apt-get install -y unattended-upgrades rsync
+sudo apt-get install -y unattended-upgrades rsync age
 
 sudo mkdir -p /opt/antilia-widgets
 sudo chown "$USER:$USER" /opt/antilia-widgets
