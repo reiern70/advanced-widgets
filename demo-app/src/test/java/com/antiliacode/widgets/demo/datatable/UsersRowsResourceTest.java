@@ -16,6 +16,9 @@ package com.antiliacode.widgets.demo.datatable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.wicket.request.resource.IResource;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.tester.WicketTester;
@@ -118,6 +121,31 @@ class UsersRowsResourceTest
 
 		assertEquals(lastName, DatabaseLocator.getLargeDatabase().get(1).getLastName(),
 			"a refused change leaves the user as it was");
+	}
+
+	@Test
+	void refusesAUserMoreThanTheDemoKeeps()
+	{
+		UsersDatabase database = DatabaseLocator.getLargeDatabase();
+		List<User> added = new ArrayList<>();
+		try
+		{
+			while (!database.isFull())
+			{
+				User user = UserGenerator.getInstance().generate();
+				database.save(user);
+				added.add(user);
+			}
+			body = "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"country\":\"GB\"," +
+				"\"city\":\"London\",\"address\":\"1 St James's Square\"}";
+			assertEquals("The demo keeps at most " + UsersDatabase.MAX_USERS +
+				" users: delete some first", request("POST", "test/users", 400).getString("error"));
+			assertEquals(UsersDatabase.MAX_USERS, database.getCount());
+		}
+		finally
+		{
+			added.forEach(database::delete);
+		}
 	}
 
 	private JSONObject request(String method, String path, int status)
