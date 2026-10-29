@@ -33,6 +33,7 @@ import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.modal.TeamStore;
 import com.antiliacode.widgets.theme.Theme;
+import com.antiliacode.widgets.throttle.Throttle;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -263,7 +264,8 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * Signs the user out, keeping the theme and the other choices.
+	 * Signs the user out, keeping the theme and the other choices, but for those of the
+	 * {@link Throttle}, which are for the demos.
 	 */
 	public void signOut()
 	{
@@ -274,6 +276,12 @@ public class DemoSession extends WebSession
 		account = null;
 		role = null;
 		dirty();
+		RequestCycle cycle = RequestCycle.get();
+		if (cycle != null &&
+			cycle.getRequest().getContainerRequest() instanceof HttpServletRequest request)
+		{
+			Throttle.reset(request);
+		}
 	}
 
 	/**
