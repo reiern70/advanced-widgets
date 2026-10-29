@@ -36,6 +36,10 @@ import com.antiliacode.widgets.demo.DemoSession;
  * those who cannot read it, by answering a question about two numbers written in words, which a
  * screen reader reads out. A link turns one into the other; another link shows other letters
  * without sending the form, so what the visitor typed in it stays.
+ * <p>
+ * The question is worded in one of {@value #WORDINGS} ways, some naming the second number first,
+ * so that a script reading it needs more than one pattern. It is only a speed bump: what keeps
+ * guessing passwords slow is the wait of {@link SignInAttempts}.
  */
 public class Captcha extends Panel
 {
@@ -46,6 +50,9 @@ public class Captcha extends Panel
 
 	/** How many letters the image has. */
 	static final int LENGTH = 5;
+
+	/** In how many ways a question is worded. */
+	static final int WORDINGS = 3;
 
 	private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -211,7 +218,8 @@ public class Captcha extends Panel
 	private String word(Question asked)
 	{
 		String[] numbers = getString("captchaNumbers").split(",");
-		return new StringResourceModel(asked.sum() ? "captchaPlus" : "captchaMinus", this)
+		return new StringResourceModel(
+			(asked.sum() ? "captchaPlus" : "captchaMinus") + asked.wording(), this)
 			.setParameters(numbers[asked.first()].strip(), numbers[asked.second()].strip())
 			.getString();
 	}
@@ -227,16 +235,18 @@ public class Captcha extends Panel
 	}
 
 	/**
-	 * @return the sum of two numbers from one to nine, or the difference of two up to ten
+	 * @return the sum of two numbers from one to nine, or the difference of two up to ten, worded
+	 *         in one of the ways
 	 */
 	static Question newQuestion()
 	{
+		int wording = RANDOM.nextInt(WORDINGS);
 		if (RANDOM.nextBoolean())
 		{
-			return new Question(1 + RANDOM.nextInt(9), 1 + RANDOM.nextInt(9), true);
+			return new Question(1 + RANDOM.nextInt(9), 1 + RANDOM.nextInt(9), true, wording);
 		}
 		int first = 2 + RANDOM.nextInt(9);
-		return new Question(first, 1 + RANDOM.nextInt(first - 1), false);
+		return new Question(first, 1 + RANDOM.nextInt(first - 1), false, wording);
 	}
 
 	/**
@@ -245,11 +255,13 @@ public class Captcha extends Panel
 	 * @param first
 	 *            the first number
 	 * @param second
-	 *            the second number
+	 *            the second number, which the difference takes away from the first
 	 * @param sum
 	 *            whether the question asks for the sum, else for the difference
+	 * @param wording
+	 *            which of the {@value Captcha#WORDINGS} ways of wording it, from 0
 	 */
-	record Question(int first, int second, boolean sum) implements IClusterable
+	record Question(int first, int second, boolean sum, int wording) implements IClusterable
 	{
 		/**
 		 * @return the number answering the question

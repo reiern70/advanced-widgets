@@ -22,8 +22,12 @@
 	<entry key="captchaToQuestion">¿Cuesta leerlas? Responda a una pregunta</entry>
 	<entry key="captchaToLetters">Escribir las letras de una imagen</entry>
 	<entry key="captchaAnswer">La respuesta</entry>
-	<entry key="captchaPlus">¿Cuánto es {0} más {1}? Escríbalo en cifras.</entry>
-	<entry key="captchaMinus">¿Cuánto es {0} menos {1}? Escríbalo en cifras.</entry>
+	<entry key="captchaPlus0">¿Cuánto es {0} más {1}? Escríbalo en cifras.</entry>
+	<entry key="captchaPlus1">Sume {1} a {0}: ¿cuánto da? Escríbalo en cifras.</entry>
+	<entry key="captchaPlus2">¿Cuál es la suma de {0} y {1}? Escríbalo en cifras.</entry>
+	<entry key="captchaMinus0">¿Cuánto es {0} menos {1}? Escríbalo en cifras.</entry>
+	<entry key="captchaMinus1">Quite {1} a {0}: ¿cuánto queda? Escríbalo en cifras.</entry>
+	<entry key="captchaMinus2">Reste {1} de {0}: ¿cuánto da? Escríbalo en cifras.</entry>
 	<entry key="captchaNumbers">cero, uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez</entry>
 	<entry key="captchaLettersWrong">Las letras no son las de la imagen. Pruebe con las nuevas.</entry>
 	<entry key="captchaAnswerWrong">La respuesta no es correcta. Pruebe con la nueva pregunta.</entry>

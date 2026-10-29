@@ -25,4 +25,7 @@
 	<entry key="register">Register</entry>
 	<entry key="Required">${label} is required.</entry>
 	<entry key="notValidated">Please confirm your email first: open the link we sent to {0}. No email? Look in the spam folder; signing in again after a few minutes sends a new one.</entry>
+	<entry key="captchaNeeded">Too many failed attempts: please solve the check below too.</entry>
+	<entry key="waitSeconds">Too many failed attempts: please try again in {0,choice,1#a second|1&lt;{0} seconds}.</entry>
+	<entry key="waitMinutes">Too many failed attempts: please try again in {0} minutes.</entry>
 </properties>

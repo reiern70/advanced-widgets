@@ -16,6 +16,7 @@ package com.antiliacode.widgets.demo.admin;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
@@ -41,9 +42,10 @@ import jakarta.servlet.http.HttpServletRequest;
  * A resource of the administration's API, answering JSON to administrators only: a request sends
  * the name and the password of an administrator's account with HTTP Basic authentication, or, to
  * read only, comes from a session signed in as an administrator. A wrong password counts as a
- * failed attempt to sign in to the account (see {@link SignInAttempts}); after
- * {@value SignInAttempts#BEFORE_CAPTCHA} of them the API answers 429 until the account signs in
- * on the site. A change is sent as JSON, which no form of another site can send.
+ * failed attempt to sign in to the account, from the address of the request, as on the site (see
+ * {@link SignInAttempts}): while the account or the address waits after too many failures, the
+ * API answers 429 with {@code Retry-After}, the seconds to wait, without checking the password.
+ * A change is sent as JSON, which no form of another site can send.
  * <p>
  * A field without a value is left out of the JSON. An error is answered with its status and
  * {@code {"error": "..."}}.
@@ -70,10 +72,19 @@ abstract class AdminApiResource extends AbstractResource
 
 		private final int status;
 
+		/** How long to wait before asking again, {@code null} if it is not said. */
+		private final Duration retryAfter;
+
 		Refusal(int status, String message)
+		{
+			this(status, message, null);
+		}
+
+		Refusal(int status, String message, Duration retryAfter)
 		{
 			super(message, null, false, false);
 			this.status = status;
+			this.retryAfter = retryAfter;
 		}
 	}
 
@@ -97,6 +108,7 @@ abstract class AdminApiResource extends AbstractResource
 			.getContainerRequest();
 		String method = request.getMethod();
 		Answer answer;
+		Duration retryAfter = null;
 		try
 		{
 			authorize(request, method);
@@ -106,8 +118,9 @@ abstract class AdminApiResource extends AbstractResource
 		{
 			answer = new Answer(refusal.status,
 				new JSONObject().put("error", refusal.getMessage()));
+			retryAfter = refusal.retryAfter;
 		}
-		return respond(attributes, answer);
+		return respond(attributes, answer, retryAfter);
 	}
 
 	/**
@@ -149,14 +162,17 @@ abstract class AdminApiResource extends AbstractResource
 		String name = colon < 0 ? credentials : credentials.substring(0, colon);
 		String password = colon < 0 ? "" : credentials.substring(colon + 1);
 		SignInAttempts attempts = ((WicketApplication)WicketApplication.get()).getSignInAttempts();
-		if (attempts.needsCaptcha(name))
+		String address = SignInAttempts.address();
+		Duration wait = attempts.retryAfter(name, address);
+		if (wait.isPositive())
 		{
-			throw new Refusal(429, "Too many failed attempts: sign in on the site first");
+			throw new Refusal(429, "Too many failed attempts: try again later", wait);
 		}
-		Optional<User> user = Accounts.get().authenticate(name, password);
+		Accounts accounts = Accounts.get();
+		Optional<User> user = accounts.authenticate(name, password);
 		if (user.isEmpty())
 		{
-			attempts.failed(name);
+			attempts.failed(name, address, accounts.find(name).isPresent());
 			throw new Refusal(401, "The account or the password is wrong");
 		}
 		if (user.get().getRole() != Role.ADMIN)
@@ -286,7 +302,13 @@ abstract class AdminApiResource extends AbstractResource
 		return value == null ? null : value.toString();
 	}
 
-	private static ResourceResponse respond(Attributes attributes, Answer answer)
+	/**
+	 * @param retryAfter
+	 *            how long to wait before asking again, said in seconds in {@code Retry-After};
+	 *            {@code null} to say nothing
+	 */
+	private static ResourceResponse respond(Attributes attributes, Answer answer,
+		Duration retryAfter)
 	{
 		ResourceResponse response = new ResourceResponse();
 		response.setStatusCode(answer.status());
@@ -295,6 +317,11 @@ abstract class AdminApiResource extends AbstractResource
 		{
 			response.getHeaders().addHeader("WWW-Authenticate",
 				"Basic realm=\"antilia-widgets\", charset=\"UTF-8\"");
+		}
+		if (retryAfter != null)
+		{
+			long seconds = Math.max(1, (retryAfter.toMillis() + 999) / 1000);
+			response.getHeaders().addHeader("Retry-After", String.valueOf(seconds));
 		}
 		byte[] bytes = answer.json() == null ? null
 			: answer.json().toString().getBytes(StandardCharsets.UTF_8);

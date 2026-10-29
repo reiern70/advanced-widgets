@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
@@ -32,9 +33,11 @@ import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
+import com.antiliacode.widgets.demo.TestClock;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.SignInAttempts;
 import com.antiliacode.widgets.demo.data.Access;
 import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.Role;
@@ -53,6 +56,11 @@ class AdminApiTest
 	/** The body the next request sends. */
 	private static String body = "";
 
+	private final TestClock clock = new TestClock();
+
+	/** The failed attempts of the application, on the clock of the test. */
+	private final SignInAttempts attempts = new SignInAttempts(clock);
+
 	private WicketTester tester;
 
 	@BeforeEach
@@ -65,6 +73,12 @@ class AdminApiTest
 			public RuntimeConfigurationType getConfigurationType()
 			{
 				return RuntimeConfigurationType.DEPLOYMENT;
+			}
+
+			@Override
+			public SignInAttempts getSignInAttempts()
+			{
+				return attempts;
 			}
 		});
 		// the users as mounted, reading the body this test sends
@@ -180,13 +194,46 @@ class AdminApiTest
 	}
 
 	@Test
-	void guessingThePasswordStops()
+	void guessingThePasswordWaitsLongerAfterEachFailure()
 	{
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < SignInAttempts.BEFORE_WAITING; i++)
 		{
 			request("GET", UsersApiResource.PATH, "admin:guess-" + i, 401);
 		}
+		// the right password too waits, without being checked
 		request("GET", UsersApiResource.PATH, ADMIN, 429);
+		assertEquals("1", tester.getLastResponse().getHeader("Retry-After"));
+
+		clock.advance(Duration.ofSeconds(1));
+		request("GET", UsersApiResource.PATH, "admin:guess-again", 401);
+		request("GET", UsersApiResource.PATH, ADMIN, 429);
+		assertEquals("2", tester.getLastResponse().getHeader("Retry-After"));
+
+		// the wait has an end: no lockout
+		clock.advance(Duration.ofSeconds(2));
+		request("GET", UsersApiResource.PATH, ADMIN, 200);
+		assertEquals(Duration.ZERO, attempts.retryAfter("admin", null));
+	}
+
+	@Test
+	void guessingOnTheSiteWaitsOnTheApiToo()
+	{
+		for (int i = 0; i < SignInAttempts.BEFORE_WAITING; i++)
+		{
+			attempts.failed("admin", null, true);
+		}
+		request("GET", UsersApiResource.PATH, ADMIN, 429);
+	}
+
+	@Test
+	void anAddressGuessingManyAccountsWaits()
+	{
+		for (int i = 0; i < SignInAttempts.BEFORE_ADDRESS_WAITING; i++)
+		{
+			request("GET", UsersApiResource.PATH, "nobody-" + i + ":guess", 401);
+		}
+		request("GET", UsersApiResource.PATH, ADMIN, 429);
+		assertEquals("1", tester.getLastResponse().getHeader("Retry-After"));
 	}
 
 	@Test
