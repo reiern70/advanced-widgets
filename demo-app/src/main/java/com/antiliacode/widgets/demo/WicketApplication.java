@@ -27,6 +27,7 @@ import org.apache.wicket.pageStore.IPageStore;
 import org.apache.wicket.protocol.http.ResourceIsolationRequestCycleListener.CsrfAction;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.protocol.ws.WebSocketAwareResourceIsolationRequestCycleListener;
+import org.apache.wicket.protocol.ws.WebSocketSettings;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
 import org.apache.wicket.request.component.IRequestablePage;
@@ -253,6 +254,8 @@ public class WicketApplication extends WebApplication
 
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());
+		// the websockets connect from the site's own pages only
+		WebSocketSettings.Holder.get(this).setConnectionFilter(new WebSocketOriginFilter());
 
 		// the demos are the private part: only visitors who signed in see them, and get the
 		// resources of the demos, such as the JSON of /api/...
