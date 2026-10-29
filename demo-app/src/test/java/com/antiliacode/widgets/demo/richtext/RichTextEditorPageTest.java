@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoCases;
+import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
@@ -523,6 +524,8 @@ class RichTextEditorPageTest
 		}
 		String url = new JSONObject(tester.getLastResponseAsString()).getString("url");
 		assertTrue(url.matches(".*/rich-text-images/[0-9a-f]{32}\\.png"), url);
+		assertTrue(url.contains("/rich-text-images/" +
+			RichTextImages.markOf("session:" + DemoSession.get().getId())), "the user's");
 
 		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals("image/png", tester.getLastResponse().getContentType());

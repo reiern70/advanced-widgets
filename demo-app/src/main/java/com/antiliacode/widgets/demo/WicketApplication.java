@@ -205,6 +205,9 @@ public class WicketApplication extends WebApplication
 			}
 		});
 
+		// a parameter or a body that cannot be read is the client's mistake: 400, not 500
+		getRequestCycleListeners().add(new BadRequests());
+
 		// a visitor who does not sign in, such as a script checking the site, tells who it is with
 		// ?visitor=, which the accesses show: it names the session there is, a request alone
 		// makes none
