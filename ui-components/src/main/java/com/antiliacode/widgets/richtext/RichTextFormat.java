@@ -25,11 +25,15 @@ public enum RichTextFormat
 
 	/**
 	 * Markdown: underlined text, superscript, subscript, colors and alignment are left out,
-	 * Markdown has no syntax for them.
+	 * Markdown has no syntax for them. The editor cleans the addresses of its links and images
+	 * ({@link RichTextMarkdownSanitizer}), not the HTML written in it.
 	 */
 	MARKDOWN("markdown"),
 
-	/** Tiptap's JSON, the document as ProseMirror has it. */
+	/**
+	 * Tiptap's JSON, the document as ProseMirror has it, whose links and images the editor cleans
+	 * ({@link RichTextJsonSanitizer}).
+	 */
 	JSON("json");
 
 	private final String name;

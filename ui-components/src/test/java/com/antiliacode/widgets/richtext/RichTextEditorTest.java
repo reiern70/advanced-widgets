@@ -543,6 +543,60 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void cleansTheAddressesOfTheLinksOfMarkdown()
+	{
+		IModel<String> text = Model.of("");
+		RichTextEditor editor = new RichTextEditor("editor", text)
+			.setFormat(RichTextFormat.MARKDOWN);
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "[a](javascript:steal()) and [b](https://example.com)");
+		form.submit();
+		assertEquals("[a](#) and [b](https://example.com)", text.getObject());
+		assertSame(RichTextMarkdownSanitizer.INSTANCE, editor.getMarkdownSanitizer());
+	}
+
+	@Test
+	void cleansTheLinksOfJsonAndTakesNoTextThatIsNoDocument()
+	{
+		IModel<String> text = Model.of("");
+		RichTextEditor editor = new RichTextEditor("editor", text).setFormat(RichTextFormat.JSON);
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "{\"type\":\"doc\",\"content\":[{\"type\":\"image\"," +
+			"\"attrs\":{\"src\":\"javascript:steal()\"}}]}");
+		form.submit();
+		assertEquals("{\"type\":\"doc\",\"content\":[]}", text.getObject());
+
+		form = tester.newFormTester("form");
+		form.setValue("editor", "<p>no JSON</p>");
+		form.submit();
+		assertNull(text.getObject());
+		assertSame(RichTextJsonSanitizer.INSTANCE, editor.getJsonSanitizer());
+	}
+
+	@Test
+	void cleansMarkdownAndJsonWithTheSanitizersOfThePage()
+	{
+		IModel<String> text = Model.of("");
+		RichTextEditor editor = new RichTextEditor("editor", text)
+			.setFormat(RichTextFormat.MARKDOWN)
+			.setMarkdownSanitizer(markdown -> markdown.replace("<b>", "").replace("</b>", ""))
+			.setJsonSanitizer(json -> "{}");
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "Some <b>HTML</b>");
+		form.submit();
+		assertEquals("Some HTML", text.getObject());
+		assertEquals("{}", editor.getJsonSanitizer().sanitize("[]"));
+		assertSame(RichTextMarkdownSanitizer.INSTANCE,
+			editor.setMarkdownSanitizer(null).getMarkdownSanitizer());
+	}
+
+	@Test
 	void keepsTheStateTheBrowserSendsAndShowsItAgain()
 	{
 		List<RichTextEditorState> heard = new ArrayList<>();

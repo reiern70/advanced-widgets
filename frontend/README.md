@@ -218,7 +218,11 @@ scripts it is shown. React's `RichTextEditor` takes `value` and `state` and call
 and `modified`. The browser's HTML is never to be trusted: Wicket's `RichTextEditor` cleans it on
 the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its model gets it, keeping
 what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what
-the React or Svelte editor gives cleans it so.
+the React or Svelte editor gives cleans it so. Markdown and Tiptap's JSON are cleaned of the links
+and images to addresses other than http, https, mailto or relative ones (`RichTextMarkdownSanitizer`,
+`RichTextJsonSanitizer`), but HTML written in Markdown stays as it is: render Markdown with a
+renderer that shows HTML as text or leaves it out, as `MarkdownPreview` does, or give the editor a
+sanitizer of Markdown that cleans it (`setMarkdownSanitizer`).
 
 CKEditor 5 (`ck-editor.ts`, built as `antilia-ckeditor.js` for Wicket's `CKEditor`) is a second
 rich text editor, with the contract of the first: the text in a text area a form posts, HTML or
