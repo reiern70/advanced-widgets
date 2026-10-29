@@ -604,6 +604,23 @@ public class Accounts
 	}
 
 	/**
+	 * @param name
+	 *            the name of an account
+	 * @return whether it is one of the accounts the demo always has or of those the server is
+	 *         started with, which sign in however many registered accounts are signed in, see
+	 *         {@link SignedInUsers}
+	 */
+	public boolean isAlwaysSignedIn(String name)
+	{
+		if (Strings.isEmpty(name))
+		{
+			return false;
+		}
+		String key = accountName(name);
+		return isDefault(key) || users.findByName(key).map(User::isConfigured).orElse(false);
+	}
+
+	/**
 	 * @param key
 	 *            the name of an account, as {@link #accountName(String)} makes it
 	 * @return whether it is one of the accounts the demo always has, see {@link #addDefaults()}
