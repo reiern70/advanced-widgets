@@ -14,7 +14,9 @@
 
 /*
  * antilia-clipboard.js: registers Wicket.Clipboard for ClipboardCopyBehavior, which sets its
- * copiedMessage, and for the theme editor, which calls Wicket.Clipboard.copy(text, element).
+ * copiedMessage and attaches the elements that copy (attach, attachWithin), and for the theme
+ * editor, which calls Wicket.Clipboard.copy(text, element). It installs nothing on the whole
+ * document: an element carrying data-antilia-copy that no behavior attached copies nothing.
  */
 
 import { Clipboard } from '../clipboard.js';
@@ -24,5 +26,4 @@ const Wicket = wicket();
 if (Wicket.Clipboard === undefined) {
 	useWicketHost();
 	Wicket.Clipboard = Clipboard;
-	Clipboard.install();
 }
