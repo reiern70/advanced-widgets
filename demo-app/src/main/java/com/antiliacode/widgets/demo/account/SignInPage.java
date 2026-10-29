@@ -41,9 +41,11 @@ import com.github.openjson.JSONObject;
 
 /**
  * Signs a visitor in with the name of an account and its password, while fewer than
- * {@value SignedInUsers#MAXIMUM} other users are signed in; then goes on to the demo the
- * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA}
- * failed attempts in the session, or on the account, it asks for a {@link Captcha} too: an attempt
+ * {@value SignedInUsers#MAXIMUM} other registered accounts are signed in, the accounts the demo
+ * always has and those the server is started with signing in whenever (see
+ * {@link SignedInUsers}); then goes on to the demo the visitor wanted to see, or to the
+ * {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA} failed attempts in the session,
+ * or on the account, it asks for a {@link Captcha} too: an attempt
  * without it, from a session that has not seen it yet, is turned away and shown the captcha,
  * without checking the password. While the account or the address waits after too many failures
  * (see {@link SignInAttempts}), attempts are turned away and told how long to wait.

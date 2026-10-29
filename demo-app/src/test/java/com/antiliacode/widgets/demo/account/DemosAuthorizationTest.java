@@ -248,9 +248,12 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void atMostFiveUsersAreSignedInAtOnce()
+	void atMostFiveRegisteredAccountsAreSignedInAtOnce()
 	{
 		start(RuntimeConfigurationType.DEPLOYMENT);
+		Accounts.get().validate(Accounts.get()
+			.register("ada@example.com", "Analytical-Engine-1843", user -> {})
+			.orElseThrow());
 		SignedInUsers users = SignedInUsers.get();
 		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
 		{
@@ -259,22 +262,29 @@ class DemosAuthorizationTest
 		}
 
 		tester.startPage(SignInPage.class);
-		signIn("client", "secret-one");
+		signIn("ada@example.com", "Analytical-Engine-1843");
 		tester.assertRenderedPage(SignInPage.class);
 		tester.assertErrorMessages("Too many users are signed in right now: at most 5 at once. " +
 			"Please try again in a few minutes.");
 		assertFalse(DemoSession.get().isSignedIn());
 
-		// an administrator always signs in
-		tester.startPage(SignInPage.class);
-		signIn("admin", TestDatabase.ADMIN_PASSWORD);
-		tester.assertRenderedPage(HomePage.class);
-		DemoSession.get().signOut();
+		// an administrator, an account the demo always has and one the server is started with
+		// always sign in, and take no place
+		for (String[] account : new String[][] { { "admin", TestDatabase.ADMIN_PASSWORD },
+			{ "wicket", TestDatabase.WICKET_PASSWORD }, { "client", "secret-one" } })
+		{
+			tester.startPage(SignInPage.class);
+			signIn(account[0], account[1]);
+			tester.assertRenderedPage(HomePage.class);
+			assertEquals(account[0], DemoSession.get().getAccount());
+			DemoSession.get().signOut();
+		}
+		assertEquals(SignedInUsers.MAXIMUM, users.count());
 
 		// a user signing out makes room
 		users.signedOut("session-1");
 		tester.startPage(SignInPage.class);
-		signIn("client", "secret-one");
+		signIn("ada@example.com", "Analytical-Engine-1843");
 		tester.assertRenderedPage(HomePage.class);
 		assertEquals(SignedInUsers.MAXIMUM, users.count());
 	}
