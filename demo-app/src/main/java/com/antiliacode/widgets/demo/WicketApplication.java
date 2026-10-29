@@ -273,7 +273,9 @@ public class WicketApplication extends WebApplication
 		// the pages in its look
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF)
-			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"));
+			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"))
+			// and no page in a frame of another site, where it could be clicked unseen
+			.add(CSPDirective.FRAME_ANCESTORS, CSPDirectiveSrcValue.SELF);
 
 		// CKEditor as the demo brings it, the browser build of ckeditor5 under the GPL, with the
 		// license key of the application: the components hold no code of CKEditor
