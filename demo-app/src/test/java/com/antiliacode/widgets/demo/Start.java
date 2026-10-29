@@ -21,8 +21,8 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 
 import org.apache.wicket.protocol.ws.javax.WicketServerEndpointConfig;
-import org.eclipse.jetty.ee10.webapp.WebAppContext;
-import org.eclipse.jetty.ee10.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
+import org.eclipse.jetty.ee11.webapp.WebAppContext;
+import org.eclipse.jetty.ee11.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;

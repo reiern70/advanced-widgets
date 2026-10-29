@@ -6,7 +6,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 
 | File | What it does |
 |---|---|
-| `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR unpacked as `webapps/ROOT`, owned by root, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
+| `Dockerfile` | Jetty 12 (ee11, Servlet 6.1) on Java 21 with the WAR unpacked as `webapps/ROOT`, owned by root, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
 | `.dockerignore` | Only `Dockerfile` and `ROOT.war` go to the build of the image, never `.env` |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL, each on a read-only file system, without capabilities and with a limit of memory; the page store, the temporary folder, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |

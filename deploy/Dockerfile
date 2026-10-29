@@ -1,8 +1,8 @@
-# The demo application on Jetty 12, in its Jakarta EE 10 environment (ee10, Servlet 6), and Java
-# 21: the Jetty of jetty:run and of the tests. deploy.sh builds the WAR on the developer's machine
-# and copies it next to this file as ROOT.war. Jetty 12.1 comes with a JDK only, there is no image
-# of it with a JRE. The image is pinned by its digest, so a build takes the same one until
-# Dependabot proposes the next (see .github/dependabot.yml).
+# The demo application on Jetty 12, in its Jakarta EE 11 environment (ee11, Servlet 6.1, which
+# Wicket 11 is built for), and Java 21: the Jetty of jetty:run and of the tests. deploy.sh builds
+# the WAR on the developer's machine and copies it next to this file as ROOT.war. Jetty 12.1 comes
+# with a JDK only, there is no image of it with a JRE. The image is pinned by its digest, so a
+# build takes the same one until Dependabot proposes the next (see .github/dependabot.yml).
 FROM jetty:12.1.14-jdk21@sha256:c84e5d8ac021fe32b34382c40dd35846f9eb3beff36b76287607cd2bf57aaa73 AS base
 
 # The WAR unpacked here, so that Jetty serves the web application from a folder of the image it
@@ -13,10 +13,10 @@ RUN mkdir /tmp/ROOT && cd /tmp/ROOT && jar -xf /tmp/ROOT.war
 
 FROM base
 
-# the web applications of webapps deployed as ee10 web applications; websockets for Wicket's
+# the web applications of webapps deployed as ee11 web applications; websockets for Wicket's
 # native websockets; X-Forwarded-* from Caddy, so Wicket sees https; no version of Jetty in the
 # Server header and on its error pages
-RUN java -jar "$JETTY_HOME/start.jar" --add-modules=ee10-deploy,ee10-websocket-jakarta,forwarded \
+RUN java -jar "$JETTY_HOME/start.jar" --add-modules=ee11-deploy,ee11-websocket-jakarta,forwarded \
 	&& echo "jetty.httpConfig.sendServerVersion=false" > "$JETTY_BASE/start.d/server-version.ini"
 
 # Jetty's base and the web application belong to root, so that the user jetty, which runs Jetty,

@@ -117,7 +117,8 @@ mvn jetty:run -Dantilia-widgets.admin.password=<a password of your choice>
 ```
 
 and open <http://localhost:8080> (or <https://localhost:8443>, with a test certificate). It runs
-in Jetty 12, in its Jakarta EE 10 environment (ee10), as production does. Locally:
+in Jetty 12, in its Jakarta EE 11 environment (ee11, Servlet 6.1, which Wicket 11 is built for),
+as production does. Locally:
 
 - every session is signed in as `admin`, the account the password above creates; to sign in
   yourself instead, add `-Dantilia-widgets.sign-in-as=`;
