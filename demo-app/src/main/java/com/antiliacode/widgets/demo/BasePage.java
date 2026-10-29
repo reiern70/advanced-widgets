@@ -30,7 +30,6 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.StatelessForm;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
-import org.apache.wicket.markup.html.link.StatelessLink;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.ResourceModel;
@@ -312,17 +311,18 @@ public abstract class BasePage extends WebPage
 	}
 
 	/**
-	 * @return the name of the account the visitor signed in with and the link signing out, back to
-	 *         the {@link HomePage}; only shown to visitors who signed in
+	 * @return the name of the account the visitor signed in with and the button signing out, back
+	 *         to the {@link HomePage}; only shown to visitors who signed in. A form sent by POST,
+	 *         stateless, so that a link cannot sign out.
 	 */
 	private Component newSignOut(String id)
 	{
-		StatelessLink<Void> signOut = new StatelessLink<>(id)
+		StatelessForm<Void> signOut = new StatelessForm<>(id)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onClick()
+			protected void onSubmit()
 			{
 				DemoSession.get().signOut();
 				setResponsePage(HomePage.class);

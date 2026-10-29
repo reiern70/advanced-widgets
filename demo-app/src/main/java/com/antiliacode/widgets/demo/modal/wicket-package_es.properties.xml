@@ -35,6 +35,7 @@
 	<entry key="deleted">Se eliminó a {0}.</entry>
 	<entry key="gone">Ese miembro ya no existe.</entry>
 	<entry key="empty">El equipo no tiene miembros.</entry>
+	<entry key="full">El equipo tiene como mucho {0} miembros: borre uno primero.</entry>
 	<entry key="role.developer">Desarrollo</entry>
 	<entry key="role.designer">Diseño</entry>
 	<entry key="role.tester">Pruebas</entry>

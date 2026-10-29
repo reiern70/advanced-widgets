@@ -71,9 +71,9 @@ class MigrationsTest
 			Statement statement = connection.createStatement())
 		{
 			assertEquals(List.of(
-				"ada@example.com|salt:hash-of-ada|USER|true|ada@example.com",
-				"client|salt:hash-of-client|USER|true|null"),
-				rows(statement, "SELECT name, password_hash, role, validated, email FROM users ORDER BY name"));
+				"ada@example.com|salt:hash-of-ada|USER|true|ada@example.com|false",
+				"client|salt:hash-of-client|USER|true|null|false"),
+				rows(statement, "SELECT name, password_hash, role, validated, email, configured FROM users ORDER BY name"));
 			assertEquals(List.of(
 				"s1|unknown|false|66.249.66.5|Googlebot|UTC|2026-10-01 11:00:00",
 				"s2|ada@example.com|true|200.46.55.1|Firefox|Europe/Madrid|2026-10-01 14:00:00"),

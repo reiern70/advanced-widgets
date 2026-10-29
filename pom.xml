@@ -70,8 +70,11 @@
 		<central.autoPublish>false</central.autoPublish>
 		<wicket.version>10.11.0</wicket.version>
 		<slf4j.version>2.0.17</slf4j.version>
-		<!-- as in deploy/Dockerfile; its ASM reads the Java 24 classes of Spring 7 -->
-		<jetty.version>11.0.26</jetty.version>
+		<!--
+		  Jetty 12 with its Jakarta EE 10 environment (ee10, Servlet 6), as in deploy/Dockerfile, for
+		  jetty:run, Start and the tests; its ASM reads the Java 24 classes of Spring 7
+		-->
+		<jetty.version>12.1.14</jetty.version>
 		<jackson.version>3.2.3</jackson.version>
 		<!-- cleans the HTML of the rich text editor on the server -->
 		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
@@ -254,8 +257,8 @@
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-webapp</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-webapp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
@@ -264,8 +267,8 @@
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty.websocket</groupId>
-				<artifactId>websocket-jakarta-server</artifactId>
+				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
+				<artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 		</dependencies>
@@ -301,8 +304,8 @@
 					<version>3.5.1</version>
 				</plugin>
 				<plugin>
-					<groupId>org.eclipse.jetty</groupId>
-					<artifactId>jetty-maven-plugin</artifactId>
+					<groupId>org.eclipse.jetty.ee10</groupId>
+					<artifactId>jetty-ee10-maven-plugin</artifactId>
 					<version>${jetty.version}</version>
 				</plugin>
 			</plugins>

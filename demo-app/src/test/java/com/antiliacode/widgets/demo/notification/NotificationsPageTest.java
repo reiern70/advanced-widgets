@@ -101,7 +101,8 @@ class NotificationsPageTest
 		tester.executeAjaxEvent("themed:showForm:show", "click");
 
 		tester.assertContains("\\{\"type\":\"success\",\"title\":\"Saved\",\"body\":\"The user " +
-			"<strong>Ada<\\\\/strong> was saved.\",\"html\":true,\"position\":\"top-right\"\\}");
+			"\\\\u003cstrong\\\\u003eAda\\\\u003c\\\\/strong\\\\u003e was saved.\",\"html\":true," +
+			"\"position\":\"top-right\"\\}");
 	}
 
 	@Test

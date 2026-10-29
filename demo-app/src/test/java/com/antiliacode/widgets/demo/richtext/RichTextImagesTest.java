@@ -101,4 +101,29 @@ class RichTextImagesTest
 
 		new RichTextImages(folder.resolve("missing")).prune(0);
 	}
+
+	@Test
+	void aUserKeepsItsOwnImagesWithoutPushingOutTheOthers() throws IOException
+	{
+		RichTextImages images = new RichTextImages(folder);
+		String ada = RichTextImages.markOf("account:ada");
+		String grace = RichTextImages.markOf("account:grace");
+		assertTrue(ada.matches("[0-9a-f]{8}"), ada);
+		assertEquals(ada, RichTextImages.markOf("account:ada"));
+		for (int i = 0; i < 3; i++)
+		{
+			image(grace + String.format("%024x", i) + ".png", Duration.ofHours(2));
+		}
+		for (int i = 0; i < 15; i++)
+		{
+			image(ada + String.format("%024x", i) + ".png", Duration.ofMinutes(60 - i));
+		}
+
+		images.prune(file -> file.getFileName().toString().startsWith(ada), 9);
+
+		assertEquals(12, count(), "Ada's nine newest, and Grace's older three");
+		assertTrue(Files.exists(folder.resolve(ada + String.format("%024x", 14) + ".png")));
+		assertFalse(Files.exists(folder.resolve(ada + String.format("%024x", 5) + ".png")));
+		assertTrue(Files.exists(folder.resolve(grace + String.format("%024x", 0) + ".png")));
+	}
 }

@@ -61,7 +61,9 @@ import com.antiliacode.widgets.richtext.IRichTextSanitizer;
  * with CKEditor's Markdown plugin ({@link #setFormat(RichTextFormat)}); the HTML is
  * {@link #setSanitizer(IRichTextSanitizer) cleaned} before the model gets it, with the
  * {@link CKEditorPolicy} of the features by default, and {@link CKEditorView} shows it in a page,
- * cleaned the same way. The text area stays in the page, hidden, and holds the text; the editor
+ * cleaned the same way; the Markdown is cleaned of the addresses of links and images that are not
+ * safe, not of HTML ({@link #setMarkdownSanitizer(IRichTextSanitizer)}). The text area stays in
+ * the page, hidden, and holds the text; the editor
  * fires the events of {@link com.antiliacode.widgets.richtext.RichTextEditorEvents} and listens to
  * those it is {@link #addEvent(com.antiliacode.widgets.event.IClientEvent) given}; it keeps its
  * {@link RichTextEditorState state} on the server; it tells the tabs and the desktop it is in

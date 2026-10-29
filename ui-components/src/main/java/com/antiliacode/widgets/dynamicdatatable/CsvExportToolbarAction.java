@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.dynamicdatatable;
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.extensions.ajax.AjaxDownloadBehavior.Location;
@@ -33,9 +34,13 @@ import org.apache.wicket.util.lang.Args;
  * {@code 1957-10-17}, so other tools read them unambiguously; other values are converted with the
  * table's converters for its locale. Every field is quoted.
  * <p>
- * The values are written as they are. A spreadsheet application may treat a value starting with
- * {@code =}, {@code +}, {@code -} or {@code @} as a formula, so an application exporting values
- * entered by users should make sure the export values are safe for its users' tools.
+ * A spreadsheet reads a field starting with {@code =}, {@code +}, {@code -} or {@code @} as a
+ * formula, and some read one starting with a tab or a line break the same way once they trim it.
+ * Values entered by users, written as they are, could then run as formulas on the computer of
+ * whoever opens the file. So, by default, such a field gets an apostrophe before it, which
+ * spreadsheets take as the mark of a text: see {@link #escapeFormula(String)}. Numbers, such as
+ * {@code -12.5}, stay as they are. {@link #setEscapeFormulas(boolean)} turns this off, for files
+ * read by tools that take no formulas.
  *
  * @param <T>
  *            the type of the rows
@@ -49,6 +54,13 @@ public class CsvExportToolbarAction<T, K extends Serializable>
 {
 	private static final long serialVersionUID = 1L;
 
+	/** The characters a spreadsheet may start a formula with, or trims before one. */
+	private static final String FORMULA_START = "=+-@\t\r\n";
+
+	/** A number: a sign, digits in groups, maybe a fraction, an exponent and a percent sign. */
+	private static final Pattern NUMBER = Pattern
+		.compile("[+-]?\\d+(?:[.,' \\x{00A0}\\x{202F}]\\d+)*(?:[eE][+-]?\\d+)?%?");
+
 	private IModel<String> label = new ResourceModel("DynamicDataTable.exportCsv", "Export to CSV");
 
 	private String fileName = "export.csv";
@@ -56,6 +68,8 @@ public class CsvExportToolbarAction<T, K extends Serializable>
 	private char delimiter = ',';
 
 	private Location location = Location.Blob;
+
+	private boolean escapeFormulas = true;
 
 	@Override
 	public Component newComponent(String id, BaseDynamicDataTable<T, K, ?> table)
@@ -138,5 +152,49 @@ public class CsvExportToolbarAction<T, K extends Serializable>
 	{
 		this.location = Args.notNull(location, "location");
 		return this;
+	}
+
+	/**
+	 * @return whether a field a spreadsheet could read as a formula gets an apostrophe before it,
+	 *         {@code true} by default
+	 * @see #escapeFormula(String)
+	 */
+	public boolean isEscapeFormulas()
+	{
+		return escapeFormulas;
+	}
+
+	/**
+	 * @param escapeFormulas
+	 *            whether a field a spreadsheet could read as a formula gets an apostrophe before
+	 *            it, see {@link #escapeFormula(String)}; turn it off only when no value of the file
+	 *            comes from users, or when no spreadsheet reads the file
+	 * @return {@code this}
+	 */
+	public CsvExportToolbarAction<T, K> setEscapeFormulas(boolean escapeFormulas)
+	{
+		this.escapeFormulas = escapeFormulas;
+		return this;
+	}
+
+	/**
+	 * Keeps a spreadsheet from reading a field of a CSV file as a formula: a value starting with
+	 * {@code =}, {@code +}, {@code -}, {@code @}, a tab, a carriage return or a line feed gets an
+	 * apostrophe before it, which spreadsheets take as the mark of a text. A number, such as
+	 * {@code -12.5}, {@code +1,234.50} or {@code -3%}, stays as it is: it cannot be a formula. For
+	 * other writers of CSV files too.
+	 *
+	 * @param value
+	 *            the value of a field, may be {@code null}
+	 * @return the value, with an apostrophe before it when a spreadsheet could read it as a formula
+	 */
+	public static String escapeFormula(String value)
+	{
+		if (value == null || value.isEmpty() || FORMULA_START.indexOf(value.charAt(0)) < 0 ||
+			NUMBER.matcher(value).matches())
+		{
+			return value;
+		}
+		return "'" + value;
 	}
 }

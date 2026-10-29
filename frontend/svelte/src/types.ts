@@ -74,8 +74,13 @@ export interface MenuItem {
 	id?: string;
 	/** The label of the item. */
 	label: string;
-	/** The markup of an icon before the label, an svg, written as is. */
-	icon?: string;
+	/** An icon before the label: a text, written as text, or a snippet, rendering an svg say. */
+	icon?: string | Snippet;
+	/**
+	 * The markup of an icon before the label, an svg, written as is, instead of icon: only markup
+	 * the page trusts, never text from users or data.
+	 */
+	iconMarkup?: string;
 	/** The tooltip of the item, its title. */
 	tooltip?: string;
 	/** Where the item leads: it is a link then. */
@@ -113,8 +118,13 @@ export interface BreadcrumbItem {
 	id?: string;
 	/** The label of the crumb. */
 	label: string;
-	/** The markup of an icon before the label, an svg, written as is. */
-	icon?: string;
+	/** An icon before the label: a text, written as text, or a snippet, rendering an svg say. */
+	icon?: string | Snippet;
+	/**
+	 * The markup of an icon before the label, an svg, written as is, instead of icon: only markup
+	 * the page trusts, never text from users or data.
+	 */
+	iconMarkup?: string;
 	/** The tooltip of the crumb, its title. */
 	tooltip?: string;
 	/** Where the crumb leads: it is a link then. */

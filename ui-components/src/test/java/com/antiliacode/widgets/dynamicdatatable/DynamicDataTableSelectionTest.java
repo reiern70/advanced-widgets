@@ -77,7 +77,7 @@ class DynamicDataTableSelectionTest extends WicketTestCase
 			"aria-label=\"Select all rows on this page\">"), page);
 		assertTrue(page.contains("class=\\\"ant-data-table-select\\\" data-dt-action=" +
 			"\\\"_antilia-select\\\" data-dt-action-unchecked=\\\"_antilia-deselect\\\" " +
-			"aria-label=\\\"Select row\\\">"), page);
+			"aria-label=\\\"Select row\\\"\\u003e"), page);
 		assertTrue(page.contains("data-resizable=\"false\""), page);
 		tester.assertInvisible(TOOLBAR);
 	}

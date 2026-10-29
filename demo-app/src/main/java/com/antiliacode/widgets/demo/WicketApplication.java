@@ -23,9 +23,13 @@ import org.apache.wicket.csp.FixedCSPValue;
 import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.pageStore.IPageStore;
+import org.apache.wicket.protocol.http.ResourceIsolationRequestCycleListener.CsrfAction;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.protocol.ws.WebSocketAwareResourceIsolationRequestCycleListener;
+import org.apache.wicket.protocol.ws.WebSocketSettings;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.Response;
+import org.apache.wicket.request.component.IRequestablePage;
 import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.settings.StoreSettings;
@@ -84,6 +88,7 @@ import com.antiliacode.widgets.demo.frameworks.ChoicesResource;
 import com.antiliacode.widgets.demo.progress.ProgressBarPage;
 import com.antiliacode.widgets.demo.register.EmailValidationPage;
 import com.antiliacode.widgets.demo.register.RegisterPage;
+import com.antiliacode.widgets.demo.register.RegistrationLimits;
 import com.antiliacode.widgets.demo.scrollbar.ScrollbarPage;
 import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
@@ -92,6 +97,8 @@ import com.antiliacode.widgets.demo.tree.TreeOfLifeResource;
 import com.antiliacode.widgets.demo.upload.UploadPage;
 import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.throttle.Throttle;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Application object for your web application.
@@ -115,8 +122,8 @@ public class WicketApplication extends WebApplication
 
 	/**
 	 * The system property naming the account every new session is signed in with, so that nobody
-	 * signs in on a development machine; {@code jetty:run} sets it to {@code admin}. Never set in
-	 * production.
+	 * signs in on a development machine; {@code jetty:run} sets it to {@code admin}. It counts in
+	 * development only, see {@link DevelopmentSwitches}.
 	 */
 	public static final String SIGN_IN_AS_PROPERTY = "antilia-widgets.sign-in-as";
 
@@ -127,6 +134,8 @@ public class WicketApplication extends WebApplication
 	private final SignInAttempts signInAttempts = new SignInAttempts();
 
 	private final SignedInUsers signedInUsers = new SignedInUsers();
+
+	private final RegistrationLimits registrationLimits = new RegistrationLimits();
 
 	private IMailer mailer = IMailer.fromSettings();
 
@@ -143,7 +152,7 @@ public class WicketApplication extends WebApplication
 	public Session newSession(Request request, Response response)
 	{
 		DemoSession session = new DemoSession(request);
-		String account = System.getProperty(SIGN_IN_AS_PROPERTY);
+		String account = DevelopmentSwitches.get(SIGN_IN_AS_PROPERTY);
 		if (!Strings.isEmpty(account))
 		{
 			accounts.find(account)
@@ -159,10 +168,11 @@ public class WicketApplication extends WebApplication
 	public void init()
 	{
 		super.init();
+		DevelopmentSwitches.warnOfIgnored(this);
 
-		// the users and the accesses are in the database; the accounts the demo always has get the
-		// passwords the server is started with, and the other accounts it is started with are added
-		// when missing
+		// the users and the accesses are in the database; the accounts the demo always has and the
+		// other accounts the server is started with get the passwords it is started with, and those
+		// no longer listed are locked
 		ApplicationContext database = newDatabase();
 		accounts = database.getBean(Accounts.class);
 		accesses = database.getBean(Accesses.class);
@@ -181,8 +191,26 @@ public class WicketApplication extends WebApplication
 		// the fields that failed their validation say so, to assistive technologies and the eye
 		getComponentInitializationListeners().add(InvalidFieldMarker::install);
 
+		// a session does not outlive its account: removed, locked or given another role, it is
+		// signed out
+		getRequestCycleListeners().add(new IRequestCycleListener()
+		{
+			@Override
+			public void onBeginRequest(RequestCycle cycle)
+			{
+				if (Session.exists() && DemoSession.get().isSignedIn())
+				{
+					DemoSession.get().checkAccount();
+				}
+			}
+		});
+
+		// a parameter or a body that cannot be read is the client's mistake: 400, not 500
+		getRequestCycleListeners().add(new BadRequests());
+
 		// a visitor who does not sign in, such as a script checking the site, tells who it is with
-		// ?visitor=, which the accesses show
+		// ?visitor=, which the accesses show: it names the session there is, a request alone
+		// makes none
 		getRequestCycleListeners().add(new IRequestCycleListener()
 		{
 			@Override
@@ -192,7 +220,7 @@ public class WicketApplication extends WebApplication
 					.getQueryParameters()
 					.getParameterValue(DemoSession.VISITOR_PARAMETER)
 					.toOptionalString();
-				if (visitor != null)
+				if (visitor != null && !DemoSession.get().isTemporary())
 				{
 					DemoSession.get().identify(visitor);
 				}
@@ -209,16 +237,31 @@ public class WicketApplication extends WebApplication
 				}
 			}
 		});
+		// the components of a page answer the site's own pages only: a page of another site
+		// neither signs out nor sends a form; a request telling nothing of where it comes from is
+		// no browser's, and goes through
+		getRequestCycleListeners().add(new WebSocketAwareResourceIsolationRequestCycleListener()
+		{
+			@Override
+			protected void allowHandler(HttpServletRequest request, IRequestablePage page)
+			{
+				// not logged: every client but a browser sends such requests
+			}
+		}.setUnknownOutcomeAction(CsrfAction.ALLOW));
 		// at most SignedInUsers.MAXIMUM users are signed in at once: the ended sessions are not
 		getSessionStore().registerUnboundListener(signedInUsers::signedOut);
 
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());
+		// the websockets connect from the site's own pages only
+		WebSocketSettings.Holder.get(this).setConnectionFilter(new WebSocketOriginFilter());
 
-		// the demos are the private part: only visitors who signed in see them
+		// the demos are the private part: only visitors who signed in see them, and get the
+		// resources of the demos, such as the JSON of /api/...
 		DemosAuthorization authorization = new DemosAuthorization();
 		getSecuritySettings().setAuthorizationStrategy(authorization);
 		getSecuritySettings().setUnauthorizedComponentInstantiationListener(authorization);
+		getSecuritySettings().setUnauthorizedResourceRequestListener(authorization);
 
 		// the pages of the sessions go to this folder on disk, the servlet container's temporary
 		// folder by default; they last as long as the server runs, as the sessions do
@@ -253,7 +296,9 @@ public class WicketApplication extends WebApplication
 		// the pages in its look
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF)
-			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"));
+			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"))
+			// and no page in a frame of another site, where it could be clicked unseen
+			.add(CSPDirective.FRAME_ANCESTORS, CSPDirectiveSrcValue.SELF);
 
 		// CKEditor as the demo brings it, the browser build of ckeditor5 under the GPL, with the
 		// license key of the application: the components hold no code of CKEditor
@@ -357,6 +402,14 @@ public class WicketApplication extends WebApplication
 	public SignInAttempts getSignInAttempts()
 	{
 		return signInAttempts;
+	}
+
+	/**
+	 * @return the limits of registering and of the emails sent
+	 */
+	public RegistrationLimits getRegistrationLimits()
+	{
+		return registrationLimits;
 	}
 
 	/**

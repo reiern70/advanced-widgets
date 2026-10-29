@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoCases;
+import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
@@ -165,7 +166,7 @@ class RichTextEditorPageTest
 		tester.startPage(RichTextEditorPage.class);
 		tester.assertContains("\"state\":\\{\"selection\":\\{\"anchor\":3,\"head\":7\\}," +
 			"\"scrollTop\":40,\"scrollLeft\":0,\"height\":420\\}");
-		tester.assertContains("\"saved\":\"<h2>Field notes from the coast");
+		tester.assertContains("\"saved\":\"\\\\u003ch2\\\\u003eField notes from the coast");
 	}
 
 	@Test
@@ -177,7 +178,8 @@ class RichTextEditorPageTest
 		RichTextDocument article = RichTextEditorPage.article();
 		assertEquals("<p>Saved <em>now</em></p>", article.getSaved());
 		assertFalse(article.isModified());
-		tester.assertContains("e.markSaved\\(\"<p>Saved <em>now<\\\\/em><\\\\/p>\"\\)");
+		tester.assertContains("e.markSaved\\(\"\\\\u003cp\\\\u003eSaved \\\\u003cem\\\\u003enow" +
+			"\\\\u003c\\\\/em\\\\u003e\\\\u003c\\\\/p\\\\u003e\"\\)");
 		tester.assertContains("Saved the article.");
 		// the article as a page shows it, saved
 		tester.assertContains("antilia-rich-text-view\"[^>]*><p>Saved <em>now</em></p>");
@@ -522,6 +524,8 @@ class RichTextEditorPageTest
 		}
 		String url = new JSONObject(tester.getLastResponseAsString()).getString("url");
 		assertTrue(url.matches(".*/rich-text-images/[0-9a-f]{32}\\.png"), url);
+		assertTrue(url.contains("/rich-text-images/" +
+			RichTextImages.markOf("session:" + DemoSession.get().getId())), "the user's");
 
 		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals("image/png", tester.getLastResponse().getContentType());

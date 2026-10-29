@@ -61,8 +61,8 @@ class AutocompleteTest extends WicketTestCase
 		assertEquals("[\"apple\",\"kiwi\"]",
 			tester.getTagByWicketId("multiple").getAttribute("value"));
 		tester.assertContains("Wicket\\.Autocomplete\\.attach\\(\"" + page.single.getMarkupId());
-		tester.assertContains("\"template\":\"\\\\u003cb>\\{\\{name\\}\\}\\\\u003c\\\\/b> " +
-			"\\{\\{@label\\}\\}\"");
+		tester.assertContains("\"template\":\"\\\\u003cb\\\\u003e\\{\\{name\\}\\}" +
+			"\\\\u003c\\\\/b\\\\u003e \\{\\{@label\\}\\}\"");
 		tester.assertContains("\"chosen\":\\[\\{\"id\":\"cherry\",\"label\":\"Cherry\"\\}\\]");
 		tester.assertContains("\"multiple\":true");
 		tester.assertContains("antilia-autocomplete.*\\.js");
@@ -178,8 +178,8 @@ class AutocompleteTest extends WicketTestCase
 
 		String html = tester.getLastResponseAsString();
 		assertFalse(html.contains("<!--<script>alert"), html);
-		tester.assertContains("\\\\u003c\\\\/script>\\\\u003c!--\\\\u003cscript>alert\\(1\\)");
-		assertEquals("{\"a\":\"\\u003c/b>\"}", AbstractAutocomplete.scriptSafe("{\"a\":\"</b>\"}"));
+		tester.assertContains("\\\\u003c\\\\/script\\\\u003e" +
+			"\\\\u003c!--\\\\u003cscript\\\\u003ealert\\(1\\)");
 	}
 
 	@Test

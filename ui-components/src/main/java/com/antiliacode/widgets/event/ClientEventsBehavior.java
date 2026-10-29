@@ -34,6 +34,7 @@ import org.apache.wicket.util.string.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 
@@ -237,7 +238,7 @@ public class ClientEventsBehavior extends Behavior
 		}
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		StringBuilder script = new StringBuilder("Wicket.ClientEvents.attach(")
-			.append(JSONObject.quote(component.getMarkupId())).append(",[");
+			.append(ScriptJson.quote(component.getMarkupId())).append(",[");
 		for (int index = 0; index < all.size(); index++)
 		{
 			IClientEvent event = check(all.get(index));
@@ -246,7 +247,7 @@ public class ClientEventsBehavior extends Behavior
 			{
 				script.append(',');
 			}
-			script.append("{id:").append(JSONObject.quote(event.getId())).append(",index:")
+			script.append("{id:").append(ScriptJson.quote(event.getId())).append(",index:")
 				.append(index).append(",kind:'").append(kind(event).script).append("',delay:")
 				.append(event.getDelay() < 1 ? IClientEvent.NO_DELAY : event.getDelay());
 			String function = event.getClientFunction();

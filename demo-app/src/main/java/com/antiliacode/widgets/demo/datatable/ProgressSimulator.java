@@ -14,10 +14,13 @@
 package com.antiliacode.widgets.demo.datatable;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,7 +45,9 @@ import com.antiliacode.widgets.dynamicdatatable.UpdateRowMessageType;
  * table, or the infinite list, sends rows to the browser.
  * <p>
  * One simulator runs per page, from the opening of the page's web socket connection to its
- * closing.
+ * closing. The rows shown are kept for the last {@value #PAGES_PER_SESSION} pages of a session,
+ * and for {@link #STALE} after a page of the session showed or advanced them last, so that the
+ * pages whose web socket never connects leave nothing behind.
  */
 public final class ProgressSimulator
 {
@@ -64,7 +69,20 @@ public final class ProgressSimulator
 	private static final ConcurrentMap<String, ProgressSimulator> RUNNING =
 		new ConcurrentHashMap<>();
 
-	private static final ConcurrentMap<String, List<Long>> SHOWN = new ConcurrentHashMap<>();
+	/** The most pages of a session whose rows shown are kept. */
+	static final int PAGES_PER_SESSION = 10;
+
+	/** How long the rows shown are kept after a page of the session showed or advanced them. */
+	static final Duration STALE = Duration.ofMinutes(10);
+
+	/** The rows the pages show, by the id of their session. */
+	private static final ConcurrentMap<String, Pages> SHOWN = new ConcurrentHashMap<>();
+
+	static
+	{
+		TIMER.scheduleWithFixedDelay(() -> forget(System.currentTimeMillis()), 1, 1,
+			TimeUnit.MINUTES);
+	}
 
 	private final Application application;
 
@@ -119,7 +137,13 @@ public final class ProgressSimulator
 	public static void stop(String sessionId, int pageId)
 	{
 		ProgressSimulator simulator = RUNNING.remove(id(sessionId, pageId));
-		SHOWN.remove(id(sessionId, pageId));
+		SHOWN.computeIfPresent(String.valueOf(sessionId), (session, pages) -> {
+			synchronized (pages)
+			{
+				pages.remove(pageId);
+				return pages.isEmpty() ? null : pages;
+			}
+		});
 		if (simulator != null)
 		{
 			simulator.cancel();
@@ -131,7 +155,46 @@ public final class ProgressSimulator
 	 */
 	public static void show(String sessionId, int pageId, Collection<Long> ids)
 	{
-		SHOWN.put(id(sessionId, pageId), List.copyOf(ids));
+		List<Long> shown = List.copyOf(ids);
+		SHOWN.compute(String.valueOf(sessionId), (session, pages) -> {
+			Pages kept = pages != null ? pages : new Pages();
+			synchronized (kept)
+			{
+				kept.put(pageId, shown);
+				kept.touched = System.currentTimeMillis();
+			}
+			return kept;
+		});
+	}
+
+	/**
+	 * @return the users a page shows, as it recorded them last; none if it did not
+	 */
+	static List<Long> shown(String sessionId, int pageId)
+	{
+		Pages pages = SHOWN.get(String.valueOf(sessionId));
+		if (pages == null)
+		{
+			return List.of();
+		}
+		synchronized (pages)
+		{
+			pages.touched = System.currentTimeMillis();
+			return pages.getOrDefault(pageId, List.of());
+		}
+	}
+
+	/**
+	 * Forgets the rows shown by the sessions none of whose pages showed or advanced them for
+	 * {@link #STALE}, and that run no simulator.
+	 *
+	 * @param now
+	 *            the time now, in milliseconds
+	 */
+	static void forget(long now)
+	{
+		SHOWN.entrySet().removeIf(entry -> now - entry.getValue().touched > STALE.toMillis() &&
+			RUNNING.keySet().stream().noneMatch(id -> id.startsWith(entry.getKey() + '/')));
 	}
 
 	private static String id(String sessionId, int pageId)
@@ -141,7 +204,7 @@ public final class ProgressSimulator
 
 	private List<Long> shown()
 	{
-		return SHOWN.getOrDefault(id(sessionId, pageId), List.of());
+		return shown(sessionId, pageId);
 	}
 
 	private synchronized void schedule()
@@ -175,6 +238,28 @@ public final class ProgressSimulator
 			{
 				continue;
 			}
+		}
+	}
+
+	/**
+	 * The rows shown by the last pages of a session, the page shown or advanced last coming last.
+	 */
+	private static final class Pages extends LinkedHashMap<Integer, List<Long>>
+	{
+		private static final long serialVersionUID = 1L;
+
+		/** When a page of the session showed or advanced its rows last, in milliseconds. */
+		private volatile long touched = System.currentTimeMillis();
+
+		Pages()
+		{
+			super(16, 0.75f, true);
+		}
+
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<Integer, List<Long>> eldest)
+		{
+			return size() > PAGES_PER_SESSION;
 		}
 	}
 

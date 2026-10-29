@@ -47,6 +47,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IDynamicDataProvider;
@@ -335,7 +336,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 	{
 		forgetItems();
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".update(" +
-			escapeForScript(shownItemsJson()) + "); }");
+			ScriptJson.escape(shownItemsJson()) + "); }");
 	}
 
 	/**
@@ -351,8 +352,8 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 	{
 		Args.notNull(item, "item");
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".renderItem(" +
-			JSONObject.quote(getItemKey(item)) + ", " + escapeForScript(jsonSerializer.toJson(item)) +
-			"); }");
+			ScriptJson.quote(getItemKey(item)) + ", " +
+			ScriptJson.escape(jsonSerializer.toJson(item)) + "); }");
 	}
 
 	/**
@@ -673,11 +674,11 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 
 		boolean partial = getRequestCycle().find(IPartialPageRequestHandler.class).isPresent();
 		response.render(OnDomReadyHeaderItem.forScript("new Wicket.JsonInfiniteList(" +
-			buildConfig() + ", " +
+			ScriptJson.of(buildConfig()) + ", " +
 			actionBehavior.getCallbackFunction(CallbackParameter.explicit(ACTION_PARAMETER),
 				CallbackParameter.explicit(KEY_PARAMETER)) +
 			", " + buildMessageHandlers() +
-			(partial ? ", " + escapeForScript(shownItemsJson()) : "") + ");"));
+			(partial ? ", " + ScriptJson.escape(shownItemsJson()) : "") + ");"));
 	}
 
 	private JSONObject buildConfig()
@@ -714,19 +715,10 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 		StringJoiner handlers = new StringJoiner(", ", "{", "}");
 		for (IWebSocketMessageType messageType : messageTypes.values())
 		{
-			handlers.add(JSONObject.quote(messageType.getTypeId()) + ": " +
+			handlers.add(ScriptJson.quote(messageType.getTypeId()) + ": " +
 				messageType.getTypeFunction());
 		}
 		return handlers.toString();
-	}
-
-	/**
-	 * @return the JSON with {@code <}, {@code >} and {@code &} escaped, so it cannot end the script
-	 *         or the section of the Ajax response it is written into
-	 */
-	private static String escapeForScript(String json)
-	{
-		return json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
 	}
 
 	/**
@@ -835,7 +827,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 	 */
 	private String getVarName()
 	{
-		return "Wicket.JsonInfiniteList.instances[" + JSONObject.quote(getMarkupId()) + "]";
+		return "Wicket.JsonInfiniteList.instances[" + ScriptJson.quote(getMarkupId()) + "]";
 	}
 
 	@Override

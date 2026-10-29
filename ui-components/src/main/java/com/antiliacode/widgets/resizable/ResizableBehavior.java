@@ -32,6 +32,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookPart;
@@ -367,7 +368,8 @@ public class ResizableBehavior extends AbstractDefaultAjaxBehavior
 		super.renderHead(component, response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Resizable.attach(" +
-			JSONObject.quote(component.getMarkupId()) + ", " + getOptions(component) + ", " +
+			ScriptJson.quote(component.getMarkupId()) + ", " +
+			ScriptJson.of(getOptions(component)) + ", " +
 			(sendToServer && resizable ? getCallbackFunction(CallbackParameter.explicit(
 				WIDTH_PARAMETER), CallbackParameter.explicit(HEIGHT_PARAMETER)) : "null") + ");"));
 	}

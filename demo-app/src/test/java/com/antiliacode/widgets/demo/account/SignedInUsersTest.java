@@ -22,14 +22,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.data.Role;
 
 /**
- * At most {@value SignedInUsers#MAXIMUM} accounts are signed in at once, administrators apart; a
- * session stops counting when it signs out, ends or makes no request for the timeout.
+ * At most {@value SignedInUsers#MAXIMUM} accounts are signed in at once, administrators and the
+ * accounts always signed in apart; a session stops counting when it signs out, ends or makes no
+ * request for the timeout.
  */
 class SignedInUsersTest
 {
@@ -64,7 +66,11 @@ class SignedInUsersTest
 
 	private final TestClock clock = new TestClock();
 
-	private final SignedInUsers users = new SignedInUsers(clock, Duration.ofMinutes(5));
+	/** The accounts the demo always has and one the server is started with. */
+	private final Set<String> alwaysSignedIn = Set.of("semedy", "wicket", "client");
+
+	private final SignedInUsers users = new SignedInUsers(clock, Duration.ofMinutes(5),
+		alwaysSignedIn::contains);
 
 	private boolean signIn(String account, Role role, String sessionId)
 	{
@@ -106,6 +112,22 @@ class SignedInUsersTest
 
 		assertTrue(signIn("admin", Role.ADMIN, "admin-session"));
 		assertEquals(5, users.count());
+	}
+
+	@Test
+	void theAccountsOfTheDemoAndOfTheServerAlwaysSignInAndAreNotCounted()
+	{
+		fill();
+
+		assertTrue(users.hasRoomFor("client", Role.USER));
+		assertTrue(signIn("client", Role.USER, "client-session"));
+		assertTrue(signIn("wicket", Role.USER, "wicket-session"));
+		assertEquals(5, users.count());
+		assertFalse(signIn("user6", Role.USER, "s6"));
+
+		// nor do they take a place when there is room
+		users.signedOut("s1");
+		assertTrue(signIn("user6", Role.USER, "s6"));
 	}
 
 	@Test

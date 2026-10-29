@@ -1,6 +1,8 @@
 # The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
 # and passes everything, websockets included, to Jetty; PostgreSQL keeps the users and the
-# accesses. Settings come from .env, see .env.example.
+# accesses. Settings come from .env, see .env.example. The images are pinned by their digests, the
+# tag kept to be read; Dependabot proposes the next ones (see .github/dependabot.yml), and deploy.sh
+# pulls them.
 
 # the logs of every container: at most 3 files of 10 MB, so they never fill the disk
 x-logging: &logging
@@ -9,17 +11,30 @@ x-logging: &logging
     max-size: "10m"
     max-file: "3"
 
+# Every container runs on a read-only file system, writing only into its volumes and tmpfs, with
+# no capabilities of Linux beyond those it needs, gains no privileges (no setuid), and has a limit
+# of memory, the three together fitting the 2 GB instance.
+
 services:
   app:
     build: .
     image: antilia-widgets:latest
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # a heap of 1 GB at most (-Xmx1g, see .env.example) and what the JVM needs besides it
+    mem_limit: 1400m
+    tmpfs:
+      # the command line Jetty starts with, made anew from JAVA_OPTIONS at every start
+      - /run/jetty:size=1m,mode=1777
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
-      # the PostgreSQL of this file, unless .env names another one (a managed database)
+      # the PostgreSQL of this file, unless .env names another one (a managed database), with
+      # the role of the application, which is no superuser (see database-role.sql)
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/widgets}
-      DATABASE_USER: ${DATABASE_USER:-widgets}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+      DATABASE_USER: ${DATABASE_APP_USER:-widgets_app}
+      DATABASE_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
       ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
       # the passwords of the accounts the demo always has; one without a password is not added
       ANTILIA_WIDGETS_ADMIN_PASSWORD: ${ANTILIA_WIDGETS_ADMIN_PASSWORD:-}
@@ -35,6 +50,9 @@ services:
       SITE_URL: https://${DOMAIN}
     volumes:
       - page-store:/var/lib/antilia-widgets
+      # the temporary folder of Jetty and of the demo, the uploads and the images of the rich
+      # text editors (up to some 200 MB): on the disk, not in memory as a tmpfs would hold it
+      - temporary:/tmp
     expose:
       - "8080"
     logging: *logging
@@ -46,8 +64,19 @@ services:
   # the 2 GB instance next to a JVM of 1 GB: the pool of the app uses 5 connections at most.
   # Backed up every night by backup.sh, see README.md.
   db:
-    image: postgres:17
+    image: postgres:17.11@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
     restart: unless-stopped
+    # as the user postgres from the start, who owns the data: the image's script needs no root
+    # then, nor the capabilities to change owners and users
+    user: postgres
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # shared_buffers of 192 MB, 20 connections at most
+    mem_limit: 512m
+    tmpfs:
+      - /var/run/postgresql:size=1m,mode=1777
+      - /tmp:size=16m,mode=1777
     command:
       - postgres
       - -c
@@ -69,10 +98,16 @@ services:
     logging: *logging
     environment:
       POSTGRES_DB: widgets
+      # the superuser, who keeps the database, makes the backups and the role of the application
       POSTGRES_USER: ${DATABASE_USER:-widgets}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+      # the role of the application, made by database-role.sql when the database is created and
+      # again by start.sh before every start of the application
+      DATABASE_APP_USER: ${DATABASE_APP_USER:-widgets_app}
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
     volumes:
       - database:/var/lib/postgresql/data
+      - ./database-role.sql:/docker-entrypoint-initdb.d/database-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d widgets"]
       interval: 5s
@@ -80,8 +115,17 @@ services:
       retries: 12
 
   caddy:
-    image: caddy:2.11
+    image: caddy:2.11.7@sha256:5e5286cb37d44086d651a5363f05f43a692ce4d649d88fb1bd844579f45fa9e8
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    # the ports 80 and 443; the binary of Caddy carries this capability, which it cannot start
+    # without once the others are dropped
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    tmpfs:
+      - /tmp:size=16m,mode=1777
     logging: *logging
     environment:
       DOMAIN: ${DOMAIN}
@@ -100,5 +144,6 @@ services:
 volumes:
   database:
   page-store:
+  temporary:
   caddy-data:
   caddy-config:

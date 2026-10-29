@@ -40,6 +40,9 @@ public class TeamStore implements Serializable
 	/** The longest name and email a member takes. */
 	public static final int MAX_LENGTH = 80;
 
+	/** The most members a team has. */
+	public static final int MAX_MEMBERS = 50;
+
 	/** What Wicket's EmailAddressValidator takes for an email address, roughly. */
 	private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
@@ -83,11 +86,17 @@ public class TeamStore implements Serializable
 	 * @param member
 	 *            the member, new if its id is {@code 0}
 	 * @return a copy of the member saved, {@code null} if it was deleted meanwhile
+	 * @throws IllegalStateException
+	 *             if the member is new and the team has {@value #MAX_MEMBERS} members already
 	 */
 	public synchronized TeamMember save(TeamMember member)
 	{
 		if (member.getId() == 0)
 		{
+			if (members.size() >= MAX_MEMBERS)
+			{
+				throw new IllegalStateException("The team has " + MAX_MEMBERS + " members");
+			}
 			TeamMember added = member.copy();
 			added.setId(++lastId);
 			members.add(added);
@@ -143,6 +152,14 @@ public class TeamStore implements Serializable
 			errors.put("role", wicketMessage("Required", "role", locale));
 		}
 		return errors;
+	}
+
+	/**
+	 * @return the message saying that the team has as many members as it takes, in a language
+	 */
+	public static String full(Locale locale)
+	{
+		return text("full", locale).replace("{0}", String.valueOf(MAX_MEMBERS));
 	}
 
 	/**

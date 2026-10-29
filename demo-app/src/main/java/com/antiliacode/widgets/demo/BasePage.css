@@ -418,6 +418,21 @@ a.brand { color: inherit; text-decoration: none; }
 .topbar__admin:hover,
 .topbar__sign-in:hover,
 .topbar__sign-out:hover { color: var(--primary); }
+/* signing out is a form, sent by its button, which looks like the links beside it */
+.topbar__sign-out-form {
+	display: inline-flex;
+	min-width: 0;
+	margin: 0;
+}
+.topbar__sign-out {
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-family: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
 .topbar__account {
 	max-width: 14em;
 	overflow: hidden;

@@ -39,6 +39,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookPart;
 import com.github.openjson.JSONObject;
@@ -498,7 +499,7 @@ public class Menu extends Panel
 		super.renderHead(response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Menu.attach(" +
-			JSONObject.quote(element.getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(element.getMarkupId()) + ", " + getOptions() + ");"));
 	}
 
 	/**
@@ -516,7 +517,7 @@ public class Menu extends Panel
 		{
 			options.put("label", text);
 		}
-		return options.toString();
+		return ScriptJson.of(options);
 	}
 
 	@Override

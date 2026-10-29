@@ -27,7 +27,7 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.lang.Args;
 
-import com.github.openjson.JSONObject;
+import com.antiliacode.widgets.ScriptJson;
 
 /**
  * Copies a text to the clipboard when the user clicks, or double clicks, the component, and
@@ -35,12 +35,15 @@ import com.github.openjson.JSONObject;
  * <p>
  * The behavior writes the text into the component's {@code data-antilia-copy} attribute, escaped
  * like any attribute value, and the trigger into {@code data-antilia-copy-on}. The copying is done
- * in the browser by {@code Wicket.Clipboard} from {@link #JS}, which copies for every element
- * carrying these attributes, also for markup rendered in the browser, for example by a
- * BaseDynamicDataTable column template; such markup only needs the header items of
- * {@link #renderHeadItems(IHeaderResponse)}. {@code Wicket.Clipboard.copy(text, element)}
- * copies from any script. The browser lets a page write to the clipboard only in a secure context
- * (HTTPS or localhost) and in response to a user action.
+ * in the browser by {@code Wicket.Clipboard} from {@link #JS}, for the elements it attaches: the
+ * component of this behavior ({@code Wicket.Clipboard.attach}), and the elements carrying these
+ * attributes inside the component of a {@link #within()} behavior
+ * ({@code Wicket.Clipboard.attachWithin}), markup a BaseDynamicDataTable column template renders
+ * in the browser for example. Other elements carrying the attributes copy nothing, so that HTML
+ * a user wrote, shown in the page, cannot choose what lands on the clipboard.
+ * {@code Wicket.Clipboard.copy(text, element)} copies from any script. The browser lets a page
+ * write to the clipboard only in a secure context (HTTPS or localhost) and in response to a user
+ * action.
  *
  * @since 11.0.0
  */
@@ -115,6 +118,54 @@ public class ClipboardCopyBehavior extends Behavior
 		return trigger;
 	}
 
+	/**
+	 * A behavior making the elements inside its component that carry a {@code data-antilia-copy}
+	 * attribute copy, as a ClipboardCopyBehavior makes its own component: for markup of the
+	 * page's own that is rendered in the browser, by the column templates of a table for example,
+	 * or written as markup by a label. Not for a component showing HTML a user wrote.
+	 *
+	 * @return the behavior, for a component rendering its markup id
+	 */
+	public static Behavior within()
+	{
+		return new Behavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void bind(Component component)
+			{
+				super.bind(component);
+				component.setOutputMarkupId(true);
+			}
+
+			@Override
+			public void renderHead(Component component, IHeaderResponse response)
+			{
+				super.renderHead(component, response);
+				renderHeadItems(response);
+				response.render(OnDomReadyHeaderItem.forScript(attachScript("attachWithin",
+					component)));
+			}
+		};
+	}
+
+	/**
+	 * @return the script attaching the element of a component to {@code Wicket.Clipboard}
+	 */
+	private static String attachScript(String function, Component component)
+	{
+		return "Wicket.Clipboard." + function + "(document.getElementById(" +
+			ScriptJson.quote(component.getMarkupId()) + "));";
+	}
+
+	@Override
+	public void bind(Component component)
+	{
+		super.bind(component);
+		component.setOutputMarkupId(true);
+	}
+
 	@Override
 	public void onComponentTag(Component component, ComponentTag tag)
 	{
@@ -129,12 +180,14 @@ public class ClipboardCopyBehavior extends Behavior
 	{
 		super.renderHead(component, response);
 		renderHeadItems(response);
+		response.render(OnDomReadyHeaderItem.forScript(attachScript("attach", component)));
 	}
 
 	/**
 	 * Renders what copying needs in the browser: {@link #JS}, {@link #CSS} and the localized
 	 * message read to screen readers after a copy, from the resource
-	 * {@code ClipboardCopyBehavior.copied}.
+	 * {@code ClipboardCopyBehavior.copied}. Enough for {@code Wicket.Clipboard.copy}; an element
+	 * carrying {@code data-antilia-copy} copies once the behavior or {@link #within()} attaches it.
 	 *
 	 * @param response
 	 *            the header response
@@ -146,7 +199,7 @@ public class ClipboardCopyBehavior extends Behavior
 		String copied = Application.get().getResourceSettings().getLocalizer().getString(
 			"ClipboardCopyBehavior.copied", null, "Copied");
 		response.render(OnDomReadyHeaderItem.forScript(
-			"Wicket.Clipboard.copiedMessage = " + JSONObject.quote(copied) + ";"));
+			"Wicket.Clipboard.copiedMessage = " + ScriptJson.quote(copied) + ";"));
 	}
 
 	@Override

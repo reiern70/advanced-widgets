@@ -1,0 +1,53 @@
+# Proposes, once a week, the new versions of what the project depends on: the Maven dependencies
+# and plugins, the npm packages of the frontend, the actions of the workflows (pinned by commit)
+# and the images of the deployment (pinned by digest, in deploy/Dockerfile and deploy/compose.yaml).
+# The minor versions and patches of an ecosystem come together in one pull request; a new major
+# version comes in one of its own.
+
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      maven:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  # FROM jetty:...@sha256:... of the Dockerfile
+  - package-ecosystem: docker
+    directory: /deploy
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  # image: postgres:...@sha256:... and caddy of compose.yaml
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    ignore:
+      # a new major version of PostgreSQL cannot open the data of the old one: it is a move of its
+      # own, with a dump or pg_upgrade, never a new tag alone
+      - dependency-name: postgres
+        update-types: [version-update:semver-major]

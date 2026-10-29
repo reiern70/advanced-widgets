@@ -31,6 +31,7 @@ import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -45,9 +46,21 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * switch between them: a text area shown as an editor in the browser, whose model is the text,
  * HTML or Markdown, which a form posts as always.
  * <p>
- * The HTML comes from the browser and is never trusted: the editor
- * {@link #setSanitizer(IRichTextSanitizer) cleans} it before the model gets it, keeping what its
- * {@link #getFeatures() features} write. Each editor has features of its own kind,
+ * The text comes from the browser and is never trusted: the editor cleans it before the model
+ * gets it, by its {@link #getFormat() format}.
+ * <ul>
+ * <li>HTML: {@link #setSanitizer(IRichTextSanitizer) the sanitizer} keeps what the
+ * {@link #getFeatures() features} write, and nothing else.</li>
+ * <li>Markdown: {@link #setMarkdownSanitizer(IRichTextSanitizer) the sanitizer of Markdown},
+ * {@link RichTextMarkdownSanitizer} by default, takes out the addresses of links and images that
+ * are not safe, {@code javascript:} for example. It leaves HTML written in the Markdown as it is:
+ * render the Markdown with a renderer that shows HTML as text or leaves it out, or set a sanitizer
+ * that cleans it.</li>
+ * <li>Tiptap's JSON: {@link #setJsonSanitizer(IRichTextSanitizer) the sanitizer of JSON},
+ * {@link RichTextJsonSanitizer} by default, takes out the links and images to such addresses, and
+ * gives nothing for a text that is no document.</li>
+ * </ul>
+ * Each editor has features of its own kind,
  * {@link IRichTextFeature}s: {@link RichTextFeature} and those of a page for {@link RichTextEditor},
  * {@link com.antiliacode.widgets.ckeditor.CKEditorFeature} for CKEditor, of the same names.
  * <p>
@@ -147,6 +160,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	private boolean sendToServer = true;
 
 	private IRichTextSanitizer sanitizer;
+
+	private IRichTextSanitizer markdownSanitizer;
+
+	private IRichTextSanitizer jsonSanitizer;
 
 	/**
 	 * @param id
@@ -282,20 +299,25 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * Cleans the HTML the browser sent, before it is validated and the model gets it.
+	 * Cleans the text the browser sent, before it is validated and the model gets it, with the
+	 * sanitizer of its format: {@link #getSanitizer()} for HTML, {@link #getMarkdownSanitizer()} for
+	 * Markdown and {@link #getJsonSanitizer()} for JSON.
 	 */
 	@Override
 	public void convertInput()
 	{
 		super.convertInput();
-		if (format == RichTextFormat.HTML && isValid())
+		String text = getConvertedInput();
+		if (text != null && isValid())
 		{
-			String html = getConvertedInput();
-			if (html != null)
+			IRichTextSanitizer cleaning = switch (format)
 			{
-				String clean = getSanitizer().sanitize(html);
-				setConvertedInput(Strings.isEmpty(clean) ? null : clean);
-			}
+				case HTML -> getSanitizer();
+				case MARKDOWN -> getMarkdownSanitizer();
+				case JSON -> getJsonSanitizer();
+			};
+			String clean = cleaning.sanitize(text);
+			setConvertedInput(Strings.isEmpty(clean) ? null : clean);
 		}
 	}
 
@@ -421,7 +443,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		{
 			savedModel.setObject(text);
 		}
-		target.appendJavaScript(script("markSaved(" + JSONObject.quote(text == null ? "" : text) +
+		target.appendJavaScript(script("markSaved(" + ScriptJson.quote(text == null ? "" : text) +
 			")"));
 		return self();
 	}
@@ -448,7 +470,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	{
 		String global = getScriptObject();
 		return "(function(){var e=" + global + "&&" + global + ".of(" +
-			JSONObject.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
+			ScriptJson.quote(getMarkupId()) + ");if(e){e." + call + ";}})();";
 	}
 
 	/**
@@ -718,6 +740,50 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		return self();
 	}
 
+	/**
+	 * @return what cleans the Markdown: the one set, or {@link RichTextMarkdownSanitizer}, which
+	 *         takes out the addresses of links and images that are not safe but leaves HTML in the
+	 *         Markdown as it is
+	 */
+	public IRichTextSanitizer getMarkdownSanitizer()
+	{
+		return markdownSanitizer != null ? markdownSanitizer : RichTextMarkdownSanitizer.INSTANCE;
+	}
+
+	/**
+	 * @param markdownSanitizer
+	 *            what cleans the Markdown the browser sends, in {@link RichTextFormat#MARKDOWN},
+	 *            before the model gets it; {@code null} for {@link RichTextMarkdownSanitizer}, as by
+	 *            default. One that parses the Markdown, with the renderer of the application for
+	 *            example, may clean the HTML in it too.
+	 * @return {@code this}
+	 */
+	public T setMarkdownSanitizer(IRichTextSanitizer markdownSanitizer)
+	{
+		this.markdownSanitizer = markdownSanitizer;
+		return self();
+	}
+
+	/**
+	 * @return what cleans Tiptap's JSON: the one set, or {@link RichTextJsonSanitizer}
+	 */
+	public IRichTextSanitizer getJsonSanitizer()
+	{
+		return jsonSanitizer != null ? jsonSanitizer : RichTextJsonSanitizer.INSTANCE;
+	}
+
+	/**
+	 * @param jsonSanitizer
+	 *            what cleans the JSON the browser sends, in {@link RichTextFormat#JSON}, before the
+	 *            model gets it; {@code null} for {@link RichTextJsonSanitizer}, as by default
+	 * @return {@code this}
+	 */
+	public T setJsonSanitizer(IRichTextSanitizer jsonSanitizer)
+	{
+		this.jsonSanitizer = jsonSanitizer;
+		return self();
+	}
+
 	@Override
 	protected void onComponentTag(ComponentTag tag)
 	{
@@ -735,7 +801,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		// after the editor's script, which the scripts of the features register with
 		getFeatures().forEach(feature -> feature.renderHead(this, response));
 		response.render(OnDomReadyHeaderItem.forScript(getScriptObject() + ".attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}
 
 	/**

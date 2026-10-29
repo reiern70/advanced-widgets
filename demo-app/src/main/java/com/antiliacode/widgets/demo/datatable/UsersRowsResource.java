@@ -13,25 +13,36 @@
  */
 package com.antiliacode.widgets.demo.datatable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 import org.apache.wicket.Session;
+import org.apache.wicket.request.http.flow.AbortWithHttpErrorCodeException;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.IResource;
 import org.apache.wicket.request.resource.ResourceReference;
+import org.apache.wicket.util.string.StringValue;
 
+import com.antiliacode.widgets.demo.DemoSession;
+import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.dynamicdatatable.IDynamicDataProvider;
 import com.antiliacode.widgets.dynamicdatatable.JsonRowsResource;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Serves the users of the JSON grid demo from a mounted resource, {@value #PATH}, filtered by the
  * parameter {@value #FILTER} as the grid's filter does. It creates, changes and deletes users
  * too, as the React and Svelte grids do: a user sent is {@code {firstName, lastName, country,
  * city, address}}, every field required, the country an ISO 3166 code, the same fields the edit
- * form of the Wicket grid has.
+ * form of the Wicket grid has. The users are shared by every visitor, at most
+ * {@value UsersDatabase#MAX_USERS}: a user more is refused with 400, as is a sort by another
+ * property than the first name, the last name or the date of birth. Like the demos, the users are
+ * for visitors who signed in, unless the demos are open: the others are answered 403, here as
+ * by {@link DemosAuthorization}.
  */
 public class UsersRowsResource extends JsonRowsResource<User, Long>
 {
@@ -48,6 +59,9 @@ public class UsersRowsResource extends JsonRowsResource<User, Long>
 
 	private static final Set<String> COUNTRIES = Set.of(Locale.getISOCountries());
 
+	/** What the users are sorted by. */
+	private static final List<String> SORTS = List.of("firstName", "lastName", "bornDate");
+
 	/** The reference the application mounts and the table fetches from. */
 	public static final ResourceReference REFERENCE = new ResourceReference(
 		UsersRowsResource.class, "users")
@@ -62,8 +76,20 @@ public class UsersRowsResource extends JsonRowsResource<User, Long>
 	};
 
 	@Override
+	protected boolean isAllowed(Attributes attributes, String method)
+	{
+		return DemoSession.get().isSignedIn() || DemosAuthorization.isOpen();
+	}
+
+	@Override
 	protected IDynamicDataProvider<User, Long> newProvider(PageParameters parameters)
 	{
+		StringValue sort = parameters.get(SORT);
+		if (!sort.isEmpty() && !SORTS.contains(sort.toString()))
+		{
+			throw new AbortWithHttpErrorCodeException(HttpServletResponse.SC_BAD_REQUEST,
+				"The users are sorted by " + String.join(", ", SORTS));
+		}
 		// the session, if the browser has one, so that the countries are named in its language
 		Session.get();
 		UsersProvider provider = new UsersProvider();
@@ -75,7 +101,15 @@ public class UsersRowsResource extends JsonRowsResource<User, Long>
 	protected User createRow(String json)
 	{
 		User user = fill(new User(), json);
-		DatabaseLocator.getLargeDatabase().save(user);
+		try
+		{
+			DatabaseLocator.getLargeDatabase().save(user);
+		}
+		catch (IllegalStateException full)
+		{
+			throw new IllegalArgumentException("The demo keeps at most " +
+				UsersDatabase.MAX_USERS + " users: delete some first", full);
+		}
 		return user;
 	}
 

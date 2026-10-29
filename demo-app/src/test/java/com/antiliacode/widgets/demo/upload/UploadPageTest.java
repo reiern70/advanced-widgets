@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.antiliacode.widgets.demo.DemoCases;
+import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.Demos;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.throttle.AjaxDelay;
@@ -240,6 +241,18 @@ class UploadPageTest
 			assertTrue(tag.find(), place[1]);
 			assertFalse(tag.group().contains("multiple"), tag.group());
 		}
+	}
+
+	@Test
+	void signingOutUndoesTheSlowingDown()
+	{
+		DemoSession.get().signIn("wicket");
+		Throttle.setAjaxDelay(tester.getRequest(), AjaxDelay.FIVE_SECONDS);
+		Throttle.setUploadSpeed(tester.getRequest(), UploadSpeed.SLOW);
+
+		DemoSession.get().signOut();
+
+		assertFalse(Throttle.isSlowingDown(tester.getRequest()));
 	}
 
 	@Test

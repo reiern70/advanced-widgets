@@ -16,6 +16,9 @@ package com.antiliacode.widgets.demo.datatable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.wicket.request.resource.IResource;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.util.tester.WicketTester;
@@ -115,14 +118,44 @@ class UsersRowsResourceTest
 			.getString("error"));
 		body = "[1, 2]";
 		request("POST", "test/users", 400);
+		body = "{\"firstName\":" + "[".repeat(5000) + "]".repeat(5000) + "}";
+		assertEquals("The user is not JSON", request("POST", "test/users", 400)
+			.getString("error"), "nested too deep");
 
 		assertEquals(lastName, DatabaseLocator.getLargeDatabase().get(1).getLastName(),
 			"a refused change leaves the user as it was");
 	}
 
+	@Test
+	void refusesAUserMoreThanTheDemoKeeps()
+	{
+		UsersDatabase database = DatabaseLocator.getLargeDatabase();
+		List<User> added = new ArrayList<>();
+		try
+		{
+			while (!database.isFull())
+			{
+				User user = UserGenerator.getInstance().generate();
+				database.save(user);
+				added.add(user);
+			}
+			body = "{\"firstName\":\"Ada\",\"lastName\":\"Lovelace\",\"country\":\"GB\"," +
+				"\"city\":\"London\",\"address\":\"1 St James's Square\"}";
+			assertEquals("The demo keeps at most " + UsersDatabase.MAX_USERS +
+				" users: delete some first", request("POST", "test/users", 400).getString("error"));
+			assertEquals(UsersDatabase.MAX_USERS, database.getCount());
+		}
+		finally
+		{
+			added.forEach(database::delete);
+		}
+	}
+
 	private JSONObject request(String method, String path, int status)
 	{
 		tester.getRequest().setMethod(method);
+		// the rows go as JSON, as the resource requires
+		tester.getRequest().setHeader("Content-Type", "application/json");
 		tester.executeUrl(path);
 		assertEquals(status, tester.getLastResponse().getStatus(), tester.getLastResponseAsString());
 		return new JSONObject(tester.getLastResponseAsString());

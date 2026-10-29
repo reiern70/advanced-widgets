@@ -28,10 +28,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
 
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.core.request.handler.ListenerRequestHandler;
+import org.apache.wicket.core.request.handler.PageAndComponentProvider;
+import org.apache.wicket.core.request.handler.PageProvider;
+import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.FormComponent;
@@ -40,7 +45,10 @@ import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.protocol.http.servlet.AbstractRequestWrapperFactory;
 import org.apache.wicket.protocol.http.servlet.ServletWebRequest;
 import org.apache.wicket.protocol.http.servlet.ServletWebResponse;
+import org.apache.wicket.request.IRequestHandler;
 import org.apache.wicket.request.cycle.RequestCycle;
+import org.apache.wicket.request.handler.resource.ResourceReferenceRequestHandler;
+import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.WicketTestCase;
@@ -210,16 +218,32 @@ class ThrottleTest extends WicketTestCase
 		}
 	}
 
+	/** The handler of a request calling a component of a page. */
+	private static final IRequestHandler LISTENER = new ListenerRequestHandler(
+		new PageAndComponentProvider(TestPage.class, "button"));
+
+	/**
+	 * @return how long the listener of the throttle kept a request calling a component waiting,
+	 *         in milliseconds
+	 */
+	private long waited(MockHttpServletRequest request)
+	{
+		return waited(request, LISTENER);
+	}
+
 	/**
 	 * @return how long the listener of the throttle kept a request waiting, in milliseconds
 	 */
-	private long waited(MockHttpServletRequest request)
+	private long waited(MockHttpServletRequest request, IRequestHandler... handlers)
 	{
 		ServletWebRequest web = new ServletWebRequest(request, "");
 		RequestCycle cycle = tester.getApplication().createRequestCycle(web,
 			new ServletWebResponse(web, tester.getResponse()));
 		long started = System.nanoTime();
-		new Throttle.AjaxDelayListener().onBeginRequest(cycle);
+		for (IRequestHandler handler : handlers)
+		{
+			new Throttle.AjaxDelayListener().onRequestHandlerResolved(cycle, handler);
+		}
 		return (System.nanoTime() - started) / 1_000_000;
 	}
 
@@ -246,6 +270,68 @@ class ThrottleTest extends WicketTestCase
 		{
 			Thread.interrupted();
 		}
+	}
+
+	@Test
+	void keepsOnlyTheRequestsOfComponentsWaitingAndOnce()
+	{
+		MockHttpServletRequest request = tester.getRequest();
+		Throttle.setAjaxDelay(request, AjaxDelay.HALF_SECOND);
+		request.addHeader("Wicket-Ajax", "true");
+
+		assertTrue(waited(request, new ResourceReferenceRequestHandler(
+			new PackageResourceReference(ThrottleTest.class, "x.js"))) < 400, "a resource");
+		assertTrue(waited(request, new RenderPageRequestHandler(new PageProvider(TestPage.class))) < 400,
+			"a page rendered");
+		long both = waited(request, LISTENER, new ListenerRequestHandler(
+			new PageAndComponentProvider(TestPage.class, "panel")));
+		assertTrue(both >= 450 && both < 900, "a request waits once: " + both);
+	}
+
+	@Test
+	void slowsDownAtMostTwoRequestsOfASessionAtOnce() throws IOException
+	{
+		MockHttpServletRequest request = tester.getRequest();
+		Throttle.setAjaxDelay(request, AjaxDelay.HALF_SECOND);
+		Throttle.setUploadSpeed(request, UploadSpeed.MEGABYTE);
+		request.addHeader("Wicket-Ajax", "true");
+		Semaphore permits = Throttle.permits(request);
+		assertSame(permits, Throttle.permits(request), "one for the session");
+		assertEquals(Throttle.MAX_SLOWED, permits.availablePermits());
+
+		// two requests slowed down already, sending files say
+		HttpServletRequest first = Throttle.slowDown(multipart());
+		HttpServletRequest second = Throttle.slowDown(multipart());
+		assertInstanceOf(UploadSpeed.SlowRequest.class, first);
+		assertInstanceOf(UploadSpeed.SlowRequest.class, second);
+		assertEquals(0, permits.availablePermits());
+		assertSame(request, Throttle.slowDown(request), "a third one goes at full speed");
+		assertTrue(waited(request) < 400, "and so does an Ajax request");
+
+		// a request is done once its body is read, or at the latest when it ends
+		first.getInputStream().readAllBytes();
+		assertEquals(1, permits.availablePermits());
+		ServletWebRequest web = new ServletWebRequest(second, "");
+		RequestCycle cycle = tester.getApplication().createRequestCycle(web,
+			new ServletWebResponse(web, tester.getResponse()));
+		new Throttle.AjaxDelayListener().onDetach(cycle);
+		new Throttle.AjaxDelayListener().onDetach(cycle);
+		assertEquals(Throttle.MAX_SLOWED, permits.availablePermits(), "given back once");
+
+		assertTrue(waited(request) >= 450, "waiting again");
+		assertEquals(Throttle.MAX_SLOWED, permits.availablePermits());
+	}
+
+	@Test
+	void resetsTheSettings()
+	{
+		MockHttpServletRequest request = tester.getRequest();
+		Throttle.setAjaxDelay(request, AjaxDelay.FIVE_SECONDS);
+		Throttle.setUploadSpeed(request, UploadSpeed.SLOW);
+
+		Throttle.reset(request);
+
+		assertFalse(Throttle.isSlowingDown(request));
 	}
 
 	private String input(String path)

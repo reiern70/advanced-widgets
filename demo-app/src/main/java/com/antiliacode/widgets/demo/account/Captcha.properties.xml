@@ -22,8 +22,12 @@
 	<entry key="captchaToQuestion">Hard to read? Answer a question instead</entry>
 	<entry key="captchaToLetters">Type the letters of an image instead</entry>
 	<entry key="captchaAnswer">The answer</entry>
-	<entry key="captchaPlus">How much is {0} plus {1}? Write it in digits.</entry>
-	<entry key="captchaMinus">How much is {0} minus {1}? Write it in digits.</entry>
+	<entry key="captchaPlus0">How much is {0} plus {1}? Write it in digits.</entry>
+	<entry key="captchaPlus1">Add {1} to {0}: how much do you get? Write it in digits.</entry>
+	<entry key="captchaPlus2">What is the sum of {0} and {1}? Write it in digits.</entry>
+	<entry key="captchaMinus0">How much is {0} minus {1}? Write it in digits.</entry>
+	<entry key="captchaMinus1">Take {1} away from {0}: how much is left? Write it in digits.</entry>
+	<entry key="captchaMinus2">Subtract {1} from {0}: how much do you get? Write it in digits.</entry>
 	<entry key="captchaNumbers">zero, one, two, three, four, five, six, seven, eight, nine, ten</entry>
 	<entry key="captchaLettersWrong">The letters are not those of the image. Try the new ones.</entry>
 	<entry key="captchaAnswerWrong">The answer is wrong. Try the new question.</entry>

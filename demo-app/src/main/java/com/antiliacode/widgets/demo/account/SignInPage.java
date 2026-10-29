@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo.account;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -40,9 +41,14 @@ import com.github.openjson.JSONObject;
 
 /**
  * Signs a visitor in with the name of an account and its password, while fewer than
- * {@value SignedInUsers#MAXIMUM} other users are signed in; then goes on to the demo the
- * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA}
- * failed attempts in the session, or on the account, it asks for a {@link Captcha} too.
+ * {@value SignedInUsers#MAXIMUM} other registered accounts are signed in, the accounts the demo
+ * always has and those the server is started with signing in whenever (see
+ * {@link SignedInUsers}); then goes on to the demo the visitor wanted to see, or to the
+ * {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA} failed attempts in the session,
+ * or on the account, it asks for a {@link Captcha} too: an attempt
+ * without it, from a session that has not seen it yet, is turned away and shown the captcha,
+ * without checking the password. While the account or the address waits after too many failures
+ * (see {@link SignInAttempts}), attempts are turned away and told how long to wait.
  * A visitor who registered signs in only once the email is confirmed; until then signing in
  * sends a new {@link ConfirmationMail} when the last one is {@link Accounts#RESEND_AFTER} old.
  * <p>
@@ -85,15 +91,38 @@ public class SignInPage extends BasePage
 				SignInAttempts attempts = attempts();
 				DemoSession session = DemoSession.get();
 				String typed = name.getObject();
-				if (captcha.isVisibleInHierarchy() && !captcha.isSolved())
+				String address = SignInAttempts.address();
+				Duration wait = attempts.retryAfter(typed, address);
+				if (wait.isPositive())
 				{
-					fail(typed, captcha.getWrongMessage(), captcha.getAnswerField());
+					// the password is not checked while the account or the address waits
+					error(waitMessage(wait));
 					return;
 				}
-				Optional<User> user = Accounts.get().authenticate(typed, password.getObject());
+				if (isCaptchaNeeded() && !captcha.isVisibleInHierarchy())
+				{
+					// a session that did not see the captcha yet, a new one say, is asked it now
+					error(getString("captchaNeeded"));
+					wrong = captcha.getAnswerField();
+					return;
+				}
+				if (captcha.isVisibleInHierarchy() && !captcha.isSolved())
+				{
+					session.failedSignIn();
+					error(captcha.getWrongMessage());
+					captcha.renew();
+					wrong = captcha.getAnswerField();
+					return;
+				}
+				Accounts accounts = Accounts.get();
+				Optional<User> user = accounts.authenticate(typed, password.getObject());
 				if (user.isEmpty())
 				{
-					fail(typed, getString("wrong"), passwordField);
+					session.failedSignIn();
+					attempts.failed(typed, address, accounts.find(typed).isPresent());
+					error(getString("wrong"));
+					captcha.renew();
+					wrong = passwordField;
 					return;
 				}
 				attempts.succeeded(typed);
@@ -118,22 +147,12 @@ public class SignInPage extends BasePage
 			 */
 			private void notValidated(User user)
 			{
-				Accounts accounts = Accounts.get();
-				if (accounts.isValidationResent(user))
+				if (Accounts.get().isValidationResent(user))
 				{
-					ConfirmationMail.send(user, accounts.renewValidation(user));
+					ConfirmationMail.resend(user);
 				}
 				error(new StringResourceModel("notValidated", SignInPage.this)
 					.setParameters(user.getName()).getString());
-			}
-
-			private void fail(String typed, String message, FormComponent<?> field)
-			{
-				DemoSession.get().failedSignIn();
-				attempts().failed(typed);
-				error(message);
-				captcha.renew();
-				wrong = field;
 			}
 		};
 		add(form);
@@ -223,6 +242,21 @@ public class SignInPage extends BasePage
 	{
 		return DemoSession.get().getFailedSignIns() >= SignInAttempts.BEFORE_CAPTCHA ||
 			attempts().needsCaptcha(name.getObject());
+	}
+
+	/**
+	 * @return the message telling how long to wait before trying again, in seconds or, from two
+	 *         minutes on, in minutes, rounded up
+	 */
+	private String waitMessage(Duration wait)
+	{
+		long seconds = Math.max(1, (wait.toMillis() + 999) / 1000);
+		if (seconds < 120)
+		{
+			return new StringResourceModel("waitSeconds", this).setParameters(seconds).getString();
+		}
+		return new StringResourceModel("waitMinutes", this).setParameters((seconds + 59) / 60)
+			.getString();
 	}
 
 	/**

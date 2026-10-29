@@ -14,16 +14,19 @@
 package com.antiliacode.widgets.demo;
 
 import org.apache.wicket.protocol.ws.javax.WicketServerEndpointConfig;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import com.antiliacode.widgets.demo.account.DemosAuthorization;
+
 /**
  * Runs the demo application in Jetty on a free port for each test, at the root context and with
- * websockets, as {@link Start} does.
+ * websockets, as {@link Start} does, in deployment as production does, but with the demos open to
+ * everybody.
  */
 public abstract class JettyTestCase
 {
@@ -36,8 +39,6 @@ public abstract class JettyTestCase
 	public void before() throws Exception
 	{
 		System.setProperty("wicket.configuration", "deployment");
-		// the browser tests open the demos without signing in
-		System.setProperty("antilia-widgets.open-demos", "true");
 
 		server = new Server();
 		ServerConnector http = new ServerConnector(server);
@@ -47,6 +48,8 @@ public abstract class JettyTestCase
 		WebAppContext web = new WebAppContext();
 		web.setServer(server);
 		web.setContextPath("/");
+		// the browser tests open the demos without signing in, as production runs otherwise
+		web.setInitParameter(DemosAuthorization.OPEN_PARAMETER, "true");
 		String basedir = System.getProperty("basedir");
 		web.setWar((basedir != null ? basedir + "/" : "") + "src/main/webapp");
 		JakartaWebSocketServletContainerInitializer.configure(web,
@@ -62,9 +65,7 @@ public abstract class JettyTestCase
 	{
 		server.stop();
 		server.join();
-		// the tests run after this one in the same JVM start as without it: in development, and
-		// with the demos kept for the visitors who signed in, unless development opens them
+		// the tests run after this one in the same JVM start as without it: in development
 		System.clearProperty("wicket.configuration");
-		System.clearProperty("antilia-widgets.open-demos");
 	}
 }

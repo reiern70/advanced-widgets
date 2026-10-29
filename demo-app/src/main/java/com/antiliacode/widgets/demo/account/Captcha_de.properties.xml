@@ -22,8 +22,12 @@
 	<entry key="captchaToQuestion">Schwer zu lesen? Stattdessen eine Frage beantworten</entry>
 	<entry key="captchaToLetters">Stattdessen die Buchstaben eines Bildes eingeben</entry>
 	<entry key="captchaAnswer">Die Antwort</entry>
-	<entry key="captchaPlus">Wie viel ist {0} plus {1}? Schreiben Sie es in Ziffern.</entry>
-	<entry key="captchaMinus">Wie viel ist {0} minus {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaPlus0">Wie viel ist {0} plus {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaPlus1">Zählen Sie {1} zu {0} hinzu: Wie viel ergibt das? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaPlus2">Was ist die Summe von {0} und {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaMinus0">Wie viel ist {0} minus {1}? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaMinus1">Nehmen Sie {1} von {0} weg: Wie viel bleibt? Schreiben Sie es in Ziffern.</entry>
+	<entry key="captchaMinus2">Ziehen Sie {1} von {0} ab: Wie viel ergibt das? Schreiben Sie es in Ziffern.</entry>
 	<entry key="captchaNumbers">null, eins, zwei, drei, vier, fünf, sechs, sieben, acht, neun, zehn</entry>
 	<entry key="captchaLettersWrong">Die Buchstaben stimmen nicht mit dem Bild überein. Versuchen Sie es mit den neuen.</entry>
 	<entry key="captchaAnswerWrong">Die Antwort ist falsch. Versuchen Sie es mit der neuen Frage.</entry>

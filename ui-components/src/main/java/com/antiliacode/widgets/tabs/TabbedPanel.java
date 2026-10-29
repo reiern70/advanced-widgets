@@ -44,6 +44,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.modal.Modal;
 import com.antiliacode.widgets.theme.LookBehavior;
@@ -262,8 +263,8 @@ public class TabbedPanel extends Panel
 
 	private static String placeholder(String parent, String id)
 	{
-		return "var e=document.createElement('div');e.id=" + JSONObject.quote(id) +
-			";document.getElementById(" + JSONObject.quote(parent) + ").appendChild(e);";
+		return "var e=document.createElement('div');e.id=" + ScriptJson.quote(id) +
+			";document.getElementById(" + ScriptJson.quote(parent) + ").appendChild(e);";
 	}
 
 	/**
@@ -311,12 +312,12 @@ public class TabbedPanel extends Panel
 		String item = items.get(tab.getName()).getMarkupId();
 		removeTab(tab);
 		target.appendJavaScript("(function(){var r=function(i){var e=document.getElementById(i);" +
-			"if(e){e.remove();}};r(" + JSONObject.quote(header) + ");r(" + JSONObject.quote(item) +
+			"if(e){e.remove();}};r(" + ScriptJson.quote(header) + ");r(" + ScriptJson.quote(item) +
 			");})();");
 		Tab selected = getSelectedTab();
 		if (selected != null)
 		{
-			target.appendJavaScript(script("select(" + JSONObject.quote(selected.getName()) + ")"));
+			target.appendJavaScript(script("select(" + ScriptJson.quote(selected.getName()) + ")"));
 		}
 		return this;
 	}
@@ -403,7 +404,7 @@ public class TabbedPanel extends Panel
 		select(tab);
 		if (tab != null)
 		{
-			target.appendJavaScript(script("select(" + JSONObject.quote(tab.getName()) + ")"));
+			target.appendJavaScript(script("select(" + ScriptJson.quote(tab.getName()) + ")"));
 		}
 		return this;
 	}
@@ -424,7 +425,7 @@ public class TabbedPanel extends Panel
 	public TabbedPanel setModified(Tab tab, Boolean modified, AjaxRequestTarget target)
 	{
 		tab.setModified(modified);
-		target.appendJavaScript(script("setModified(" + JSONObject.quote(tab.getName()) + "," +
+		target.appendJavaScript(script("setModified(" + ScriptJson.quote(tab.getName()) + "," +
 			modified + ")"));
 		return this;
 	}
@@ -435,7 +436,7 @@ public class TabbedPanel extends Panel
 	private String script(String call)
 	{
 		return "(function(){var t=Wicket.Tabs&&Wicket.Tabs.of(" +
-			JSONObject.quote(element.getMarkupId()) + ");if(t){t." + call + ";}})();";
+			ScriptJson.quote(element.getMarkupId()) + ");if(t){t." + call + ";}})();";
 	}
 
 	/**
@@ -594,7 +595,7 @@ public class TabbedPanel extends Panel
 		super.renderHead(response);
 		renderHeadItems(response);
 		StringBuilder script = new StringBuilder("Wicket.Tabs.attach(")
-			.append(JSONObject.quote(element.getMarkupId())).append(", ").append(getOptions());
+			.append(ScriptJson.quote(element.getMarkupId())).append(", ").append(getOptions());
 		if (isCalledBack())
 		{
 			script.append(", ").append(sendToServer ? callbackFor("select") : "null")
@@ -606,7 +607,7 @@ public class TabbedPanel extends Panel
 	private CharSequence callbackFor(String event)
 	{
 		return callback.getCallbackFunction(
-			CallbackParameter.resolved(EVENT_PARAMETER, JSONObject.quote(event)),
+			CallbackParameter.resolved(EVENT_PARAMETER, ScriptJson.quote(event)),
 			CallbackParameter.explicit(TAB_PARAMETER));
 	}
 
@@ -638,7 +639,7 @@ public class TabbedPanel extends Panel
 		{
 			options.put("label", text);
 		}
-		return options.toString();
+		return ScriptJson.of(options);
 	}
 
 	/**

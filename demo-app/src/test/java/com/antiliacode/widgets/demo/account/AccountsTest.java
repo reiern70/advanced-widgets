@@ -20,6 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,6 +99,92 @@ class AccountsTest
 	}
 
 	@Test
+	void theFirstHashTheSourceGaveSemedyIsLockedToo()
+	{
+		User semedy = accounts.find("semedy").orElseThrow();
+		semedy.setPasswordHash("hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=");
+		TestDatabase.context().getBean(IUserRepository.class).save(semedy);
+
+		accounts.addDefault("semedy", Role.USER, "");
+
+		assertEquals(Accounts.LOCKED, accounts.find("semedy").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void configuredAccountsTakeThePasswordsOfTheSettingAtEveryStart()
+	{
+		accounts.addConfigured("client:secret-one");
+		assertTrue(accounts.find("client").orElseThrow().isConfigured());
+
+		accounts.addConfigured("client:secret-two");
+
+		assertTrue(accounts.authenticate("client", "secret-two").isPresent());
+		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
+		String hash = accounts.find("client").orElseThrow().getPasswordHash();
+		// the same password keeps its hash
+		accounts.addConfigured("client:secret-two");
+		assertEquals(hash, accounts.find("client").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void anAccountNoLongerConfiguredIsLockedNotDeleted()
+	{
+		accounts.addConfigured("client:secret-one, other:secret-two");
+
+		accounts.addConfigured("other:secret-two");
+
+		User client = accounts.find("client").orElseThrow();
+		assertEquals(Accounts.LOCKED, client.getPasswordHash());
+		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
+		assertTrue(accounts.authenticate("other", "secret-two").isPresent());
+
+		// none configured: every one is locked, none deleted
+		accounts.addConfigured("");
+		assertEquals(Accounts.LOCKED, accounts.find("other").orElseThrow().getPasswordHash());
+		assertEquals(5, TestDatabase.users().size());
+
+		// listed again, it opens again
+		accounts.addConfigured("client:secret-three");
+		assertTrue(accounts.authenticate("client", "secret-three").isPresent());
+		assertEquals(client.getId(), accounts.find("client").orElseThrow().getId());
+	}
+
+	@Test
+	void theOtherAccountsAreNotTouchedByTheSetting()
+	{
+		accounts.register("ada@example.com", "analytical-engine", user -> {});
+		accounts.create("grace", "compiler-1952", Role.USER, user -> {});
+
+		accounts.addConfigured("");
+
+		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		assertTrue(accounts.authenticate("grace", "compiler-1952").isPresent());
+		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
+	}
+
+	@Test
+	void theSettingDoesNotSetThePasswordsOfTheAccountsTheDemoAlwaysHas()
+	{
+		accounts.addConfigured("admin:taken-over, client:secret-one");
+
+		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
+		assertFalse(accounts.authenticate("admin", "taken-over").isPresent());
+		assertFalse(accounts.find("admin").orElseThrow().isConfigured());
+		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
+	}
+
+	@Test
+	void aConfiguredAccountRemovedComesBackAtTheNextStart()
+	{
+		accounts.addConfigured("client:secret-one");
+		accounts.remove(accounts.find("client").orElseThrow());
+
+		accounts.addConfigured("client:secret-one");
+
+		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
+	}
+
+	@Test
 	void configuredAccountsSignInWithTheirPasswords()
 	{
 		accounts.addConfigured("client:secret-one, other:secret-two");
@@ -125,6 +217,55 @@ class AccountsTest
 	}
 
 	@Test
+	void aNameOfNoAccountTakesAsLongAsAWrongPassword()
+	{
+		accounts.authenticate("wicket", "warming-up");
+		long wrongPassword = fastest(() -> accounts.authenticate("wicket", "wrong-password"));
+		long noAccount = fastest(() -> accounts.authenticate("nobody", "wrong-password"));
+		long locked = fastest(() -> {
+			User wicket = accounts.find("wicket").orElseThrow();
+			wicket.setPasswordHash(Accounts.LOCKED);
+			TestDatabase.context().getBean(IUserRepository.class).save(wicket);
+			accounts.authenticate("wicket", "wrong-password");
+		});
+
+		// both hash the password: without hashing a name of no account took a fraction of it
+		assertTrue(noAccount * 2 > wrongPassword, noAccount + " ms for no account, " +
+			wrongPassword + " ms for a wrong password");
+		assertTrue(locked * 2 > wrongPassword, locked + " ms for a locked account, " +
+			wrongPassword + " ms for a wrong password");
+	}
+
+	@Test
+	void registeringAnEmailRegisteredAlreadyTakesAsLongAsANewOne()
+	{
+		accounts.register("ada@example.com", "warming-up", user -> {});
+		long registered = fastest(() -> accounts.register("ada@example.com", "again", user -> {}));
+		int[] next = { 0 };
+		long fresh = fastest(() -> accounts.register("new-" + next[0]++ + "@example.com", "again",
+			user -> {}));
+
+		assertTrue(registered * 2 > fresh, registered + " ms registered already, " + fresh +
+			" ms new");
+	}
+
+	/**
+	 * @return the fewest milliseconds the task took in five runs, which a pause of the JVM in one
+	 *         of them does not change
+	 */
+	private static long fastest(Runnable task)
+	{
+		long fastest = Long.MAX_VALUE;
+		for (int run = 0; run < 5; run++)
+		{
+			long start = System.nanoTime();
+			task.run();
+			fastest = Math.min(fastest, (System.nanoTime() - start) / 1_000_000);
+		}
+		return fastest;
+	}
+
+	@Test
 	void anAccountIsRegisteredOnlyOnce()
 	{
 		accounts.addConfigured("client:secret-one");
@@ -142,7 +283,7 @@ class AccountsTest
 	{
 		File file = new File(folder.toFile(), "antilia-widgets-accounts.properties");
 		Files.writeString(file.toPath(), "grace@example.com=" +
-			Accounts.hash("compiler").replace(":", "\\:").replace("=", "\\=") + "\n");
+			legacyHash("compiler").replace(":", "\\:").replace("=", "\\=") + "\n");
 
 		accounts.importFile(file);
 		accounts.importFile(new File(folder.toFile(), "missing.properties"));
@@ -159,6 +300,92 @@ class AccountsTest
 		assertFalse(once.equals(twice));
 		assertTrue(Accounts.matches("same password", once));
 		assertTrue(Accounts.matches("same password", twice));
+		assertFalse(Accounts.matches("other password", once));
 		assertFalse(Accounts.matches("same password", "not a hash"));
+		assertFalse(Accounts.matches("same password", Accounts.LOCKED));
+		assertFalse(Accounts.matches("same password", null));
+	}
+
+	@Test
+	void hashesNameTheirAlgorithmAndIterations()
+	{
+		String hash = Accounts.hash("same password");
+
+		String[] parts = hash.split("\\$");
+		assertEquals(4, parts.length, hash);
+		assertEquals("pbkdf2-sha256", parts[0]);
+		assertEquals("600000", parts[1]);
+		assertEquals(16, Base64.getDecoder().decode(parts[2]).length);
+		assertEquals(32, Base64.getDecoder().decode(parts[3]).length);
+		assertFalse(Accounts.isOutdated(hash));
+		// the column password_hash holds it
+		assertTrue(hash.length() <= 200, hash);
+
+		// a hash naming iterations it cannot have matches nothing
+		assertFalse(Accounts.matches("same password", "pbkdf2-sha256$0$" + parts[2] + "$" +
+			parts[3]));
+		assertFalse(Accounts.matches("same password", "pbkdf2-sha256$x$" + parts[2] + "$" +
+			parts[3]));
+	}
+
+	@Test
+	void aHashOfAnEarlierVersionSignsInAndIsMadeAnew()
+	{
+		String legacy = legacyHash("analytical-engine");
+		assertTrue(Accounts.matches("analytical-engine", legacy));
+		assertFalse(Accounts.matches("difference-engine", legacy));
+		assertTrue(Accounts.isOutdated(legacy));
+
+		User ada = accounts.create("ada@example.com", "analytical-engine", Role.USER, user -> {})
+			.orElseThrow();
+		ada.setPasswordHash(legacy);
+		TestDatabase.context().getBean(IUserRepository.class).save(ada);
+
+		// a wrong password changes nothing
+		assertFalse(accounts.authenticate("ada@example.com", "difference-engine").isPresent());
+		assertEquals(legacy, accounts.find("ada@example.com").orElseThrow().getPasswordHash());
+
+		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		String renewed = accounts.find("ada@example.com").orElseThrow().getPasswordHash();
+		assertTrue(renewed.startsWith("pbkdf2-sha256$600000$"), renewed);
+		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
+		assertEquals(renewed, accounts.find("ada@example.com").orElseThrow().getPasswordHash());
+	}
+
+	@Test
+	void theAccountsTheDemoAlwaysHasGetHashesOfToday()
+	{
+		User wicket = accounts.find("wicket").orElseThrow();
+		wicket.setPasswordHash(legacyHash(TestDatabase.WICKET_PASSWORD));
+		TestDatabase.context().getBean(IUserRepository.class).save(wicket);
+
+		accounts.addDefaults();
+
+		String hash = accounts.find("wicket").orElseThrow().getPasswordHash();
+		assertTrue(hash.startsWith("pbkdf2-sha256$600000$"), hash);
+		assertTrue(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
+	}
+
+	/**
+	 * @return a hash as earlier versions made it: PBKDF2-HMAC-SHA256 with 210,000 iterations, as
+	 *         {@code <salt>:<hash>} in Base64
+	 */
+	private static String legacyHash(String password)
+	{
+		byte[] salt = new byte[16];
+		new SecureRandom().nextBytes(salt);
+		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 210_000, 256);
+		try
+		{
+			byte[] hash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+				.generateSecret(spec)
+				.getEncoded();
+			Base64.Encoder base64 = Base64.getEncoder();
+			return base64.encodeToString(salt) + ":" + base64.encodeToString(hash);
+		}
+		catch (GeneralSecurityException e)
+		{
+			throw new AssertionError(e);
+		}
 	}
 }
