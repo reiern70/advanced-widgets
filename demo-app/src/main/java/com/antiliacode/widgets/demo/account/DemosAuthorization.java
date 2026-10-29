@@ -21,9 +21,11 @@ import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.authorization.Action;
 import org.apache.wicket.authorization.IAuthorizationStrategy;
 import org.apache.wicket.authorization.IUnauthorizedComponentInstantiationListener;
+import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.component.IRequestableComponent;
 
 import com.antiliacode.widgets.demo.DemoPage;
+import com.antiliacode.widgets.demo.DevelopmentSwitches;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.admin.AdminPage;
 
@@ -36,14 +38,16 @@ import com.antiliacode.widgets.demo.admin.AdminPage;
  * neither renders again nor answers: Wicket checks a page when it makes one, not when it shows it
  * again.
  * <p>
- * The demos are open to everybody in development, and when the server is started with
- * {@code -D}{@value #OPEN_PROPERTY}{@code =true}, as the browser tests are.
+ * The demos are open to everybody in development, and when the web application has the init
+ * parameter {@value #OPEN_PARAMETER} set to {@code true}, as the browser tests have it: they run
+ * in deployment, as production does, whose {@code web.xml} never sets it. The system property of
+ * that name is ignored in deployment, see {@link DevelopmentSwitches}.
  */
 public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthorizationStrategy
 	implements IUnauthorizedComponentInstantiationListener
 {
-	/** The system property opening the demos to everybody. */
-	public static final String OPEN_PROPERTY = "antilia-widgets.open-demos";
+	/** The init parameter of the web application opening the demos to everybody. */
+	public static final String OPEN_PARAMETER = "antilia-widgets.open-demos";
 
 	@Override
 	public <T extends IRequestableComponent> boolean isInstantiationAuthorized(
@@ -86,11 +90,14 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 	}
 
 	/**
-	 * @return whether the demos are open to everybody, signed in or not
+	 * @return whether the demos are open to everybody, signed in or not: in development, or with
+	 *         the init parameter {@value #OPEN_PARAMETER} of the web application
 	 */
 	public static boolean isOpen()
 	{
-		return Application.get().getConfigurationType() == RuntimeConfigurationType.DEVELOPMENT
-			|| Boolean.getBoolean(OPEN_PROPERTY);
+		Application application = Application.get();
+		return application.getConfigurationType() == RuntimeConfigurationType.DEVELOPMENT ||
+			application instanceof WebApplication web && web.getServletContext() != null &&
+				Boolean.parseBoolean(web.getServletContext().getInitParameter(OPEN_PARAMETER));
 	}
 }

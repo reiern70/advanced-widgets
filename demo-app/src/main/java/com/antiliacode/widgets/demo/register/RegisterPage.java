@@ -82,7 +82,9 @@ public class RegisterPage extends BasePage
 	/**
 	 * The system property opening ({@code true}) or closing ({@code false}) the registration;
 	 * when it is not set registering is open if the confirmation emails are delivered, see
-	 * {@link com.antiliacode.widgets.demo.mail.SmtpMailer}.
+	 * {@link com.antiliacode.widgets.demo.mail.SmtpMailer}. It opens the registration in
+	 * development only, see {@link com.antiliacode.widgets.demo.DevelopmentSwitches}; it closes
+	 * it everywhere.
 	 */
 	public static final String OPEN_PROPERTY = "antilia-widgets.open-registration";
 
@@ -255,12 +257,13 @@ public class RegisterPage extends BasePage
 
 	/**
 	 * @return whether visitors may register: as the system property {@value #OPEN_PROPERTY}
-	 *         says, or else if the confirmation emails reach them
+	 *         says, opening it in development only, or else if the confirmation emails reach them
 	 */
 	public static boolean isOpen()
 	{
 		String open = System.getProperty(OPEN_PROPERTY);
-		if (!Strings.isEmpty(open))
+		if (!Strings.isEmpty(open) && (!Boolean.parseBoolean(open) ||
+			Application.get().usesDevelopmentConfig()))
 		{
 			return Boolean.parseBoolean(open);
 		}

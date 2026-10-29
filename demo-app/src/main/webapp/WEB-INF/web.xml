@@ -26,8 +26,18 @@
 		2) servlet specific <init-param> 
 		3) context specific <context-param>
 
-		The value might be either "development" (reloading when templates change) or 
+		The value might be either "development" (reloading when templates change) or
 		"deployment". If no configuration is found, "development" is the default. -->
+
+	<!--
+		Deployment, as production runs, unless the system property says otherwise: jetty:run and
+		Start pass -Dwicket.configuration=development. In development the demos are open to
+		everybody and the error pages show stack traces.
+	-->
+	<context-param>
+		<param-name>configuration</param-name>
+		<param-value>deployment</param-value>
+	</context-param>
 
 	<filter>
 		<filter-name>wicket.demo-app</filter-name>

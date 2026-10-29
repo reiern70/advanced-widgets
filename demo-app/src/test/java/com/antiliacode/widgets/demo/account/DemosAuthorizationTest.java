@@ -23,6 +23,7 @@ import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.core.request.handler.PageProvider;
 import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
+import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.apache.wicket.util.tester.WicketTesterHelper;
@@ -50,7 +51,7 @@ class DemosAuthorizationTest
 	void stop()
 	{
 		tester.destroy();
-		System.clearProperty(DemosAuthorization.OPEN_PROPERTY);
+		System.clearProperty(DemosAuthorization.OPEN_PARAMETER);
 		System.clearProperty(WicketApplication.SIGN_IN_AS_PROPERTY);
 	}
 
@@ -164,11 +165,16 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void theDemosAreOpenWithTheSystemProperty()
+	void theDemosAreOpenWithTheInitParameterButNotWithTheSystemProperty()
 	{
-		System.setProperty(DemosAuthorization.OPEN_PROPERTY, "true");
+		System.setProperty(DemosAuthorization.OPEN_PARAMETER, "true");
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
+		tester.startPage(DropdownPage.class);
+		tester.assertRenderedPage(SignInPage.class);
+
+		((MockServletContext)tester.getServletContext())
+			.addInitParameter(DemosAuthorization.OPEN_PARAMETER, "true");
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 	}
@@ -347,7 +353,7 @@ class DemosAuthorizationTest
 	void locallyEverySessionIsTheAdministrators()
 	{
 		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
-		start(RuntimeConfigurationType.DEPLOYMENT);
+		start(RuntimeConfigurationType.DEVELOPMENT);
 
 		tester.startPage(HomePage.class);
 		tester.assertLabel("signOut:account", "admin");
