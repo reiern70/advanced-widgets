@@ -55,8 +55,8 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * the components' own formats the text, with headings, bold, italic, underlined, struck and code
  * text, the colors of the text and of its background, links, lists, task lists, quotes, code
  * blocks, rules, tables, images and alignment, the {@link RichTextFeature features}, all of them
- * unless {@link #setFeatures(Set) told otherwise}. The page chooses the tools of the toolbar, and
- * their groups, with {@link #setToolbar(List)}.
+ * unless {@link #setFeatures(Collection) told otherwise}. The page chooses the tools of the
+ * toolbar, and their groups, with {@link #setToolbar(List)}.
  * The usual keys format too (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types (# a
  * heading, - a list, **bold**), Ctrl+K edits the link and Ctrl+S tells the page to save. Attach it
  * to a {@code <textarea>}.

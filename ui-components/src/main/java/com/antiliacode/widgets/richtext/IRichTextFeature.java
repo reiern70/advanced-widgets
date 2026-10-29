@@ -30,10 +30,10 @@ import com.antiliacode.widgets.event.IClientEvent;
 
 /**
  * What the text of a {@link RichTextEditor} may hold: headings, bold text, links, tables... An
- * editor has the features it is {@link AbstractRichTextEditor#setFeatures(java.util.Collection)
+ * editor has the features it is {@link RichTextEditor#setFeatures(java.util.Collection)
  * given}, those of {@link RichTextFeature} by default; a page adds features of its own, or takes
- * some away ({@link AbstractRichTextEditor#addFeature(IRichTextFeature)},
- * {@link AbstractRichTextEditor#removeFeature(IRichTextFeature)}).
+ * some away ({@link RichTextEditor#addFeature(IRichTextFeature)},
+ * {@link RichTextEditor#removeFeature(IRichTextFeature)}).
  * <p>
  * A feature is three things, by its {@link #getName() name}:
  * <ul>
