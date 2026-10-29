@@ -34,8 +34,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.WicketRuntimeException;
@@ -54,7 +56,9 @@ import com.antiliacode.widgets.demo.data.IUserRepository;
  * The accounts that may open the demos, in the table {@code users}: the ones the demo always has
  * (see {@link #addDefaults()}), the ones the server is started with, for the people the demos are
  * shown to (see {@link #ACCOUNTS_ENVIRONMENT_VARIABLE}), and the ones visitors register, once
- * registering is open. Only salted hashes of the passwords are kept.
+ * registering is open. Only salted hashes of the passwords are kept, PBKDF2 with HMAC-SHA256 (see
+ * {@link #hash(String)}); a hash of an earlier version, with fewer iterations, is made anew when
+ * the account signs in.
  * <p>
  * A visitor who registers opens the demos only after following the link of the confirmation
  * email, which works for {@link #VALIDATION_TIME}; only the SHA-256 of its token is kept.
@@ -123,14 +127,38 @@ public class Accounts
 	/**
 	 * The hashes of the accounts the demo always has that were found to match their passwords, so
 	 * that each start of the application in the same JVM, as in the tests, need not hash them again.
+	 * The password is kept as its {@link #fingerprint(String) fingerprint}, never as it is.
 	 */
 	private static final Map<String, String> CHECKED = new ConcurrentHashMap<>();
 
+	/** The key of the fingerprints in {@link #CHECKED}, new at every start of the JVM. */
+	private static final byte[] FINGERPRINT_KEY = new byte[32];
+
 	private static final String ALGORITHM = "PBKDF2WithHmacSHA256";
 
-	private static final int ITERATIONS = 210_000;
+	/**
+	 * What a hash starts with: the algorithm, PBKDF2 with HMAC-SHA256. The iterations, the salt and
+	 * the hash follow, separated by {@code $}: {@code pbkdf2-sha256$600000$<salt>$<hash>}, the salt
+	 * and the hash in Base64.
+	 */
+	static final String HASH_PREFIX = "pbkdf2-sha256$";
+
+	/** The iterations of the hashes made now, as OWASP suggests for PBKDF2-HMAC-SHA256. */
+	static final int ITERATIONS = 600_000;
+
+	/**
+	 * The iterations of the hashes of earlier versions, {@code <salt>:<hash>} in Base64, which
+	 * still match their passwords and are made anew at the next sign-in.
+	 */
+	static final int LEGACY_ITERATIONS = 210_000;
+
+	/** The most iterations a hash may name, so that a damaged one cannot hold a request. */
+	private static final int MAXIMUM_ITERATIONS = 10_000_000;
 
 	private static final int KEY_BITS = 256;
+
+	/** The salt of the hashing done for an account that is not there, or holds no hash. */
+	private static final byte[] DUMMY_SALT = new byte[16];
 
 	/** How long the link of a confirmation email works. */
 	public static final Duration VALIDATION_TIME = Duration.ofHours(48);
@@ -139,6 +167,12 @@ public class Accounts
 	public static final Duration RESEND_AFTER = Duration.ofMinutes(10);
 
 	private static final SecureRandom RANDOM = new SecureRandom();
+
+	static
+	{
+		RANDOM.nextBytes(FINGERPRINT_KEY);
+		RANDOM.nextBytes(DUMMY_SALT);
+	}
 
 	private final IUserRepository users;
 
@@ -174,6 +208,9 @@ public class Accounts
 	}
 
 	/**
+	 * Checks the password of an account. A hash of an earlier version that matches is made anew,
+	 * in the format of today (see {@link #hash(String)}).
+	 *
 	 * @param name
 	 *            the name of an account or the email a visitor registered with
 	 * @param password
@@ -186,8 +223,11 @@ public class Accounts
 		{
 			return Optional.empty();
 		}
-		return users.findByName(accountName(name))
-			.filter(user -> matches(password, user.getPasswordHash()));
+		Optional<User> user = users.findByName(accountName(name))
+			.filter(found -> matches(password, found.getPasswordHash()));
+		user.filter(found -> isOutdated(found.getPasswordHash()))
+			.ifPresent(found -> setPasswordHash(found, hash(password)));
+		return user;
 	}
 
 	/**
@@ -430,17 +470,18 @@ public class Accounts
 		{
 			String hash = hash(password);
 			add(key, hash, role);
-			CHECKED.put(hash, password);
+			CHECKED.put(hash, fingerprint(password));
 		}
 		else
 		{
 			String hash = existing.get().getPasswordHash();
-			if (!password.equals(CHECKED.get(hash)) && !matches(password, hash))
+			if (!fingerprint(password).equals(CHECKED.get(hash)) &&
+				(!matches(password, hash) || isOutdated(hash)))
 			{
 				hash = hash(password);
 				setPasswordHash(existing.get(), hash);
 			}
-			CHECKED.put(hash, password);
+			CHECKED.put(hash, fingerprint(password));
 		}
 	}
 
@@ -548,32 +589,59 @@ public class Accounts
 	}
 
 	/**
-	 * @return the salt and the hash of the password, in Base64 separated by a colon
+	 * @return the hash of the password, with a new salt: PBKDF2 with HMAC-SHA256 and
+	 *         {@value #ITERATIONS} iterations, as {@code pbkdf2-sha256$600000$<salt>$<hash>}, the
+	 *         salt and the hash in Base64
 	 */
 	public static String hash(String password)
 	{
 		byte[] salt = new byte[16];
 		RANDOM.nextBytes(salt);
 		Base64.Encoder base64 = Base64.getEncoder();
-		return base64.encodeToString(salt) + ":" + base64.encodeToString(derive(password, salt));
+		return HASH_PREFIX + ITERATIONS + "$" + base64.encodeToString(salt) + "$" +
+			base64.encodeToString(derive(password, salt, ITERATIONS));
 	}
 
+	/**
+	 * Checks a password against a hash, of today or of an earlier version. It takes as long as
+	 * hashing with {@value #ITERATIONS} iterations whatever the hash, also for a hash of fewer
+	 * iterations, a locked account or no hash at all, so that the time taken does not tell which.
+	 *
+	 * @param password
+	 *            the password
+	 * @param hash
+	 *            the hash, {@code null} for none
+	 * @return whether the password is the one of the hash
+	 */
 	static boolean matches(String password, String hash)
 	{
-		int colon = hash.indexOf(':');
-		if (colon < 0)
+		Hash parsed = Hash.parse(hash);
+		if (parsed == null)
 		{
+			derive(password, DUMMY_SALT, ITERATIONS);
 			return false;
 		}
-		Base64.Decoder base64 = Base64.getDecoder();
-		byte[] salt = base64.decode(hash.substring(0, colon));
-		byte[] expected = base64.decode(hash.substring(colon + 1));
-		return MessageDigest.isEqual(expected, derive(password, salt));
+		byte[] derived = derive(password, parsed.salt(), parsed.iterations());
+		if (parsed.iterations() < ITERATIONS)
+		{
+			derive(password, DUMMY_SALT, ITERATIONS - parsed.iterations());
+		}
+		return MessageDigest.isEqual(parsed.hash(), derived);
 	}
 
-	private static byte[] derive(String password, byte[] salt)
+	/**
+	 * @return whether the hash is of an earlier version, or of fewer iterations than today's, so
+	 *         that it is made anew once the password is known
+	 */
+	static boolean isOutdated(String hash)
 	{
-		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_BITS);
+		Hash parsed = Hash.parse(hash);
+		return parsed != null && (!hash.startsWith(HASH_PREFIX) || parsed.iterations() < ITERATIONS);
+	}
+
+	private static byte[] derive(String password, byte[] salt, int iterations)
+	{
+		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, KEY_BITS);
 		try
 		{
 			return SecretKeyFactory.getInstance(ALGORITHM).generateSecret(spec).getEncoded();
@@ -585,6 +653,68 @@ public class Accounts
 		finally
 		{
 			spec.clearPassword();
+		}
+	}
+
+	/**
+	 * @return a fingerprint of the password, HMAC-SHA256 with a key of this JVM, which tells
+	 *         whether a password is the same as before without keeping it
+	 */
+	private static String fingerprint(String password)
+	{
+		try
+		{
+			Mac mac = Mac.getInstance("HmacSHA256");
+			mac.init(new SecretKeySpec(FINGERPRINT_KEY, "HmacSHA256"));
+			return Base64.getEncoder()
+				.encodeToString(mac.doFinal(password.getBytes(StandardCharsets.UTF_8)));
+		}
+		catch (GeneralSecurityException e)
+		{
+			throw new WicketRuntimeException(e);
+		}
+	}
+
+	/**
+	 * A hash read from the table: the iterations, the salt and the hash of the password.
+	 */
+	private record Hash(int iterations, byte[] salt, byte[] hash)
+	{
+		/**
+		 * @return the hash, {@code null} if it is none, as {@link Accounts#LOCKED}
+		 */
+		static Hash parse(String text)
+		{
+			if (text == null)
+			{
+				return null;
+			}
+			try
+			{
+				Base64.Decoder base64 = Base64.getDecoder();
+				if (text.startsWith(HASH_PREFIX))
+				{
+					String[] parts = text.substring(HASH_PREFIX.length()).split("\\$");
+					int iterations = Integer.parseInt(parts[0]);
+					if (parts.length != 3 || iterations < 1 || iterations > MAXIMUM_ITERATIONS)
+					{
+						return null;
+					}
+					return new Hash(iterations, base64.decode(parts[1]), base64.decode(parts[2]));
+				}
+				int colon = text.indexOf(':');
+				if (colon < 0)
+				{
+					return null;
+				}
+				return new Hash(LEGACY_ITERATIONS, base64.decode(text.substring(0, colon)),
+					base64.decode(text.substring(colon + 1)));
+			}
+			catch (IllegalArgumentException e)
+			{
+				// not Base64, or not a number
+				return null;
+			}
 		}
 	}
 
