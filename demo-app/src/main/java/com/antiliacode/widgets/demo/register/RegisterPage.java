@@ -53,6 +53,7 @@ import com.antiliacode.widgets.demo.FormErrors;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.ShowPasswordBehavior;
+import com.antiliacode.widgets.demo.account.SignInAttempts;
 import com.antiliacode.widgets.demo.data.JobRole;
 import com.antiliacode.widgets.demo.data.Language;
 import com.antiliacode.widgets.dropdown.Dropdown;
@@ -67,7 +68,9 @@ import com.antiliacode.widgets.dropdown.Dropdown;
  * <p>
  * It keeps robots out in three ways, none needing an outside service: a field hidden from people
  * that robots fill in (a honeypot), a minimum time between showing the form and sending it, and
- * a small sum to work out.
+ * a small sum to work out, a new one after every submit, as the form sent once is not taken again.
+ * Registrations are limited too, from one address and from everybody (see
+ * {@link RegistrationLimits}).
  */
 public class RegisterPage extends BasePage
 {
@@ -90,6 +93,9 @@ public class RegisterPage extends BasePage
 	private int first;
 
 	private int second;
+
+	/** The challenge of the sum asked, which answers once, see {@link RegistrationLimits}. */
+	private String challenge;
 
 	private final Registration registration = new Registration();
 
@@ -122,11 +128,18 @@ public class RegisterPage extends BasePage
 				{
 					return;
 				}
-				if (isRobot())
+				boolean robot = isRobot();
+				// a new sum after every submit: the form sent cannot be sent again
+				newChallenge();
+				registration.setAnswer(null);
+				if (robot)
 				{
 					error(getString("robot"));
-					newChallenge();
-					registration.setAnswer(null);
+					return;
+				}
+				if (!RegistrationLimits.get().register(SignInAttempts.address()))
+				{
+					error(getString("tooMany"));
 					return;
 				}
 				String email = Accounts.accountName(registration.getEmail());
@@ -136,8 +149,6 @@ public class RegisterPage extends BasePage
 				if (token.isEmpty())
 				{
 					error(getString("taken"));
-					newChallenge();
-					registration.setAnswer(null);
 					return;
 				}
 				Accounts.get().find(email)
@@ -251,24 +262,30 @@ public class RegisterPage extends BasePage
 
 	/**
 	 * @return whether the form was sent by a robot: it filled in the honeypot, sent the form too
-	 *         soon or got the sum wrong
+	 *         soon, got the sum wrong or answered a sum already answered
 	 */
 	boolean isRobot()
 	{
+		boolean answeredBefore = !RegistrationLimits.get().answer(challenge);
+		challenge = null;
 		String website = registration.getWebsite();
 		boolean filledHoneypot = website != null && !website.isBlank();
 		boolean tooSoon = Duration.between(shownAt, clock.instant())
 			.compareTo(MINIMUM_FILL_TIME) < 0;
 		Integer answer = registration.getAnswer();
 		boolean wrongSum = answer == null || answer != first + second;
-		return filledHoneypot || tooSoon || wrongSum;
+		return answeredBefore || filledHoneypot || tooSoon || wrongSum;
 	}
 
 	/**
-	 * Asks a new sum and starts timing anew.
+	 * Asks a new sum, with a new challenge, and starts timing anew; the challenge before answers
+	 * no more.
 	 */
 	private void newChallenge()
 	{
+		RegistrationLimits limits = RegistrationLimits.get();
+		limits.answer(challenge);
+		challenge = limits.newChallenge();
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 		first = random.nextInt(1, 10);
 		second = random.nextInt(1, 10);
@@ -281,6 +298,14 @@ public class RegisterPage extends BasePage
 	int getExpectedAnswer()
 	{
 		return first + second;
+	}
+
+	/**
+	 * @return the challenge of the sum asked, for tests
+	 */
+	String getChallenge()
+	{
+		return challenge;
 	}
 
 	/**

@@ -390,19 +390,30 @@ public class Accounts
 	 */
 	public Optional<User> validate(String token)
 	{
-		if (Strings.isEmpty(token) || token.length() > 100)
-		{
-			return Optional.empty();
-		}
-		Optional<User> user = users.findByValidationToken(sha256(token))
-			.filter(found -> found.getValidationExpires() != null &&
-				clock.instant().isBefore(found.getValidationExpires()));
+		Optional<User> user = findValidation(token);
 		user.ifPresent(found -> {
 			found.setValidated(true);
 			found.setValidation(null, null);
 			users.save(found);
 		});
 		return user;
+	}
+
+	/**
+	 * @param token
+	 *            the token of the link of a confirmation email, as the visitor sent it
+	 * @return the account whose email the link validates, if the link still works; the link
+	 *         keeps working
+	 */
+	public Optional<User> findValidation(String token)
+	{
+		if (Strings.isEmpty(token) || token.length() > 100)
+		{
+			return Optional.empty();
+		}
+		return users.findByValidationToken(sha256(token))
+			.filter(found -> found.getValidationExpires() != null &&
+				clock.instant().isBefore(found.getValidationExpires()));
 	}
 
 	/**

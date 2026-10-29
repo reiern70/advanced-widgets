@@ -44,4 +44,5 @@
 	<entry key="JobRole.MANAGER">Gerente</entry>
 	<entry key="JobRole.STUDENT">Estudiante</entry>
 	<entry key="JobRole.OTHER">Otra</entry>
+	<entry key="tooMany">Hay demasiados registros en este momento. Vuelva a intentarlo dentro de una hora.</entry>
 </properties>

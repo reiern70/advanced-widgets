@@ -44,4 +44,5 @@
 	<entry key="JobRole.MANAGER">Manager</entry>
 	<entry key="JobRole.STUDENT">Student</entry>
 	<entry key="JobRole.OTHER">Other</entry>
+	<entry key="tooMany">Too many registrations right now. Please try again in an hour.</entry>
 </properties>

@@ -17,13 +17,18 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.StringResourceModel;
+import org.apache.wicket.request.http.flow.AbortWithHttpErrorCodeException;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antiliacode.widgets.demo.BasePage;
 import com.antiliacode.widgets.demo.HomePage;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Tells a visitor who registered on the {@link RegisterPage} to open the link of the
- * {@link ConfirmationMail}, which leads to the {@link EmailValidationPage}.
+ * {@link ConfirmationMail}, which leads to the {@link EmailValidationPage}. It is shown only after
+ * registering: asked for by its address, without an email, it answers 400.
  */
 public class EmailConfirmationPage extends BasePage
 {
@@ -35,8 +40,23 @@ public class EmailConfirmationPage extends BasePage
 	 */
 	public EmailConfirmationPage(String email)
 	{
+		// kept in the session, so that it is not made anew from its class, without the email
+		setStatelessHint(false);
 		add(new Label("sent", new StringResourceModel("sent", this).setParameters(Model.of(email))));
 		add(new BookmarkablePageLink<>("backHome", HomePage.class));
+	}
+
+	/**
+	 * The page asked for by its address, which it has nothing to show for.
+	 *
+	 * @param parameters
+	 *            the parameters of the request
+	 * @throws AbortWithHttpErrorCodeException
+	 *             always, with 400
+	 */
+	public EmailConfirmationPage(PageParameters parameters)
+	{
+		throw new AbortWithHttpErrorCodeException(HttpServletResponse.SC_BAD_REQUEST);
 	}
 
 	@Override

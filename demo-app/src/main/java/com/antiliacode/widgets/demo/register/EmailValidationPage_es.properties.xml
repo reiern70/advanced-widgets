@@ -15,6 +15,9 @@
 -->
 <properties>
 	<entry key="title">Confirme su correo</entry>
+	<entry key="confirm.title">Confirme su correo</entry>
+	<entry key="confirm.text">Pulse el botón para confirmar {0} y terminar el registro.</entry>
+	<entry key="confirm.button">Confirmar mi correo</entry>
 	<entry key="validated.title">Su correo está confirmado</entry>
 	<entry key="validated.text">Gracias: {0} está confirmado. Inicie sesión con él y su contraseña para probar las demos.</entry>
 	<entry key="invalid.title">Este enlace no funciona</entry>
