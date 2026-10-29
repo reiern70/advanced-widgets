@@ -18,8 +18,9 @@
   separators. A long trail collapses: maxItems crumbs show, the others behind a button "…" that
   shows them in place. Svelte renders the crumbs, from the list items, which may change, the core
   collapses them, in the look of the closest setLook. A crumb is a link when it has href, a button
-  calling onclick otherwise, its label alone when it has neither; its icon is markup, an svg,
-  written as is. bind:this gets the functions below.
+  calling onclick otherwise, its label alone when it has neither; its icon is a text or a snippet,
+  as in React, and its iconMarkup markup the page trusts, written as is. bind:this gets the
+  functions below.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -113,7 +114,9 @@
 </script>
 
 {#snippet content(item: BreadcrumbItem)}
-	{#if item.icon}<span class={partClasses(look, 'breadcrumb-icon')}>{@html item.icon}</span>{/if}
+	{#if item.iconMarkup}<span class={partClasses(look, 'breadcrumb-icon')}>{@html item.iconMarkup}</span>
+	{:else if typeof item.icon === 'function'}<span class={partClasses(look, 'breadcrumb-icon')}>{@render item.icon()}</span>
+	{:else if item.icon}<span class={partClasses(look, 'breadcrumb-icon')}>{item.icon}</span>{/if}
 	<span class={partClasses(look, 'breadcrumb-label')}>{item.label}</span>
 {/snippet}
 

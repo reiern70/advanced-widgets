@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
-import { flushSync } from 'svelte';
+import { createRawSnippet, flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BOOTSTRAP_LOOK, Breadcrumb, LOOK_CONTEXT, type BreadcrumbItem } from '../src/index.js';
@@ -40,7 +40,7 @@ describe('Breadcrumb', () => {
 		const onclick = vi.fn();
 		const onselect = vi.fn();
 		const { container } = render(Breadcrumb, { props: { id: 'b', class: 'mine', onselect, items: [
-			{ id: 'home', label: 'Home', href: '#home', icon: '<svg data-icon="home"></svg>',
+			{ id: 'home', label: 'Home', href: '#home', iconMarkup: '<svg data-icon="home"></svg>',
 				tooltip: 'Go home' },
 			{ id: 'all', label: 'All', onclick },
 			{ id: 'group', label: 'Group' },
@@ -102,5 +102,23 @@ describe('Breadcrumb', () => {
 		await rerender({ separator: 'slash' });
 		expect(container.querySelector('nav')!.className)
 			.toBe('antilia-breadcrumb antilia-breadcrumb-slash');
+	});
+
+	it('writes an icon of text as text, renders one of a snippet, and iconMarkup as markup', () => {
+		const { container } = render(Breadcrumb, { props: { items: [
+			{ id: 'text', label: 'Text', href: '#text', icon: '<svg data-icon="text"></svg>' },
+			{ id: 'snippet', label: 'Snippet', href: '#snippet', icon: createRawSnippet(() =>
+				({ render: () => '<svg data-icon="snippet"></svg>' })) },
+			{ id: 'markup', label: 'Markup', href: '#markup',
+				iconMarkup: '<svg data-icon="markup"></svg>' }
+		] } });
+
+		const text = container.querySelector('a[href="#text"] .antilia-breadcrumb-icon')!;
+		expect(text.textContent).toBe('<svg data-icon="text"></svg>');
+		expect(text.querySelector('svg')).toBeNull();
+		expect(container.querySelector('a[href="#snippet"] .antilia-breadcrumb-icon ' +
+			'svg[data-icon="snippet"]')).not.toBeNull();
+		expect(container.querySelector('.antilia-breadcrumb-icon svg[data-icon="markup"]'))
+			.not.toBeNull();
 	});
 });

@@ -19,7 +19,8 @@
   submenus pop up, or open in place down the side. Svelte renders the items, from the list items,
   which may change, the core opens and closes the submenus, in the look of the closest setLook. An
   item is a link when it has href, a button calling onclick otherwise, and opens a submenu when it
-  has items; its icon is markup, an svg, written as is. bind:this gets the functions below.
+  has items; its icon is a text or a snippet, as in React, and its iconMarkup markup the page
+  trusts, written as is. bind:this gets the functions below.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -123,7 +124,9 @@
 </script>
 
 {#snippet content(item: MenuItem)}
-	{#if item.icon}<span class={partClasses(look, 'menu-icon')}>{@html item.icon}</span>{/if}
+	{#if item.iconMarkup}<span class={partClasses(look, 'menu-icon')}>{@html item.iconMarkup}</span>
+	{:else if typeof item.icon === 'function'}<span class={partClasses(look, 'menu-icon')}>{@render item.icon()}</span>
+	{:else if item.icon}<span class={partClasses(look, 'menu-icon')}>{item.icon}</span>{/if}
 	<span class={partClasses(look, 'menu-label')}>{item.label}</span>
 {/snippet}
 

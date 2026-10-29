@@ -31,6 +31,11 @@ export interface BreadcrumbItem {
 	label: ReactNode;
 	/** An icon before the label; an svg, for example. */
 	icon?: ReactNode;
+	/**
+	 * The markup of an icon before the label, an svg, written as is, instead of icon: only markup
+	 * the page trusts, never text from users or data.
+	 */
+	iconMarkup?: string;
 	/** The tooltip of the crumb, its title. */
 	tooltip?: string;
 	/** Where the crumb leads: it is a link then. */
@@ -123,7 +128,9 @@ export const Breadcrumb = forwardRef<BreadcrumbHandle, BreadcrumbProps>(function
 	const crumbs = items.map((item, index) => {
 		const current = index === items.length - 1;
 		const content = <>
-			{item.icon && <span className={partClasses(look, 'breadcrumb-icon')}>{item.icon}</span>}
+			{item.iconMarkup ? <span className={partClasses(look, 'breadcrumb-icon')}
+				dangerouslySetInnerHTML={{ __html: item.iconMarkup }} /> :
+				item.icon && <span className={partClasses(look, 'breadcrumb-icon')}>{item.icon}</span>}
 			<span className={partClasses(look, 'breadcrumb-label')}>{item.label}</span>
 		</>;
 		const classes = [partClasses(look, 'breadcrumb-link'), item.className].filter(Boolean)

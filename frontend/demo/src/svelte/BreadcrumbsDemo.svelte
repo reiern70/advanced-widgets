@@ -41,7 +41,7 @@
 
 	/** @returns the crumbs of the demo as Svelte's Breadcrumb takes them */
 	function items(crumbs: DemoCrumb[]): BreadcrumbItem[] {
-		return crumbs.map((crumb) => ({ id: crumb.id, label: crumb.label, icon: crumb.icon,
+		return crumbs.map((crumb) => ({ id: crumb.id, label: crumb.label, iconMarkup: crumb.icon,
 			href: crumb.href, onclick: crumb.action }));
 	}
 
