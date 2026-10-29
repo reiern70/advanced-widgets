@@ -19,6 +19,10 @@ RUN mkdir -p /var/lib/antilia-widgets/page-store /var/lib/antilia-widgets/accoun
 	&& chown -R jetty:jetty /var/lib/antilia-widgets
 USER jetty
 ENV ANTILIA_WIDGETS_PAGE_STORE=/var/lib/antilia-widgets/page-store
+# a JVM out of memory ends, whatever JAVA_OPTIONS of .env say, so that Docker starts it again
+# (restart: unless-stopped) instead of leaving it up but broken; the java launcher reads this
+# variable by itself
+ENV JDK_JAVA_OPTIONS=-XX:+ExitOnOutOfMemoryError
 ENV ANTILIA_WIDGETS_ACCOUNTS_FOLDER=/var/lib/antilia-widgets/accounts
 
 COPY --chown=jetty:jetty ROOT.war /var/lib/jetty/webapps/ROOT.war
