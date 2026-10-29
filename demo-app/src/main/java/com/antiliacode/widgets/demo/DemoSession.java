@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -25,6 +26,7 @@ import org.apache.wicket.util.lang.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
 import com.antiliacode.widgets.demo.data.Access;
 import com.antiliacode.widgets.demo.data.Accesses;
@@ -58,6 +60,12 @@ public class DemoSession extends WebSession
 	/** What a visitor may tell it is: a few letters, digits, dots and dashes. */
 	private static final Pattern VISITOR = Pattern.compile("[a-z0-9][a-z0-9.-]{0,39}");
 
+	/**
+	 * How long a session signed in goes at most without looking at its account, see
+	 * {@link #checkAccount()}.
+	 */
+	public static final Duration ACCOUNT_CHECK = Duration.ofSeconds(5);
+
 	private Theme theme = Theme.DEFAULT;
 
 	private TeamStore team;
@@ -81,6 +89,15 @@ public class DemoSession extends WebSession
 
 	/** Whether the access knows that the session opened the private part. */
 	private boolean privatePartRecorded;
+
+	/**
+	 * When the account was last found as the session signed in with it, in milliseconds, see
+	 * {@link #checkAccount()}.
+	 */
+	private transient long accountChecked;
+
+	/** The {@link Accounts#changes()} then. */
+	private transient long accountChanges;
 
 	public DemoSession(Request request)
 	{
@@ -186,6 +203,8 @@ public class DemoSession extends WebSession
 			this.account = account;
 			this.role = role;
 			failedSignIns = 0;
+			accountChecked = System.currentTimeMillis();
+			accountChanges = Accounts.changes();
 			dirty();
 			return getId();
 		});
@@ -213,6 +232,34 @@ public class DemoSession extends WebSession
 	{
 		this.account = Args.notEmpty(account, "account");
 		this.role = Args.notNull(role, "role");
+	}
+
+	/**
+	 * Signs the user out when the account was removed or locked, or has another role than when
+	 * the user signed in with it, so that the session does not outlive the account. It looks at
+	 * the account at the first request after accounts were removed or locked, else at most every
+	 * {@link #ACCOUNT_CHECK}.
+	 */
+	public void checkAccount()
+	{
+		if (account == null)
+		{
+			return;
+		}
+		long now = System.currentTimeMillis();
+		long changes = Accounts.changes();
+		if (changes == accountChanges && now - accountChecked < ACCOUNT_CHECK.toMillis())
+		{
+			return;
+		}
+		accountChecked = now;
+		accountChanges = changes;
+		if (!Accounts.get().isStillSignedIn(account, role))
+		{
+			LOG.info("The account {} is gone, locked or changed: session {} is signed out",
+				account, getId());
+			signOut();
+		}
 	}
 
 	/**
