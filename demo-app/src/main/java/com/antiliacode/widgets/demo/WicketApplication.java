@@ -200,7 +200,8 @@ public class WicketApplication extends WebApplication
 		});
 
 		// a visitor who does not sign in, such as a script checking the site, tells who it is with
-		// ?visitor=, which the accesses show
+		// ?visitor=, which the accesses show: it names the session there is, a request alone
+		// makes none
 		getRequestCycleListeners().add(new IRequestCycleListener()
 		{
 			@Override
@@ -210,7 +211,7 @@ public class WicketApplication extends WebApplication
 					.getQueryParameters()
 					.getParameterValue(DemoSession.VISITOR_PARAMETER)
 					.toOptionalString();
-				if (visitor != null)
+				if (visitor != null && !DemoSession.get().isTemporary())
 				{
 					DemoSession.get().identify(visitor);
 				}
