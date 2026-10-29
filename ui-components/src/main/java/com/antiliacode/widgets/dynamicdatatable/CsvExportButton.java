@@ -120,9 +120,16 @@ class CsvExportButton<T, K extends Serializable, C extends IDetachable> extends 
 		return converter.convertToString(value, table.getLocale());
 	}
 
+	/**
+	 * @return the value as a quoted field, with an apostrophe before it when the action
+	 *         {@link CsvExportToolbarAction#isEscapeFormulas() escapes formulas} and a spreadsheet
+	 *         could read it as one
+	 */
 	private String quote(String value)
 	{
-		return '"' + (value != null ? value.replace("\"", "\"\"") : "") + '"';
+		String field = action.isEscapeFormulas() ? CsvExportToolbarAction.escapeFormula(value)
+			: value;
+		return '"' + (field != null ? field.replace("\"", "\"\"") : "") + '"';
 	}
 
 	private void write(Writer writer) throws IOException

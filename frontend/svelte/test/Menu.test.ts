@@ -13,14 +13,14 @@
  */
 
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
-import { flushSync } from 'svelte';
+import { createRawSnippet, flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BOOTSTRAP_LOOK, LOOK_CONTEXT, Menu, type MenuEntry } from '../src/index.js';
 
 function items(onclick = vi.fn()): MenuEntry[] {
 	return [
-		{ id: 'home', label: 'Home', href: '#home', icon: '<svg data-icon="home"></svg>',
+		{ id: 'home', label: 'Home', href: '#home', iconMarkup: '<svg data-icon="home"></svg>',
 			tooltip: 'Go home' },
 		{ id: 'file', label: 'File', items: [
 			{ id: 'new', label: 'New', onclick },
@@ -126,5 +126,22 @@ describe('Menu', () => {
 		expect(component.core()!.isOpen(file)).toBe(true);
 		component.closeAll();
 		expect(file.getAttribute('aria-expanded')).toBe('false');
+	});
+
+	it('writes an icon of text as text, renders one of a snippet, and iconMarkup as markup', () => {
+		const { container } = render(Menu, { props: { items: [
+			{ id: 'text', label: 'Text', icon: '<svg data-icon="text"></svg>' },
+			{ id: 'snippet', label: 'Snippet', icon: createRawSnippet(() =>
+				({ render: () => '<svg data-icon="snippet"></svg>' })) },
+			{ id: 'markup', label: 'Markup', iconMarkup: '<svg data-icon="markup"></svg>' }
+		] } });
+
+		const text = byText(container, 'Text').querySelector('.antilia-menu-icon')!;
+		expect(text.textContent).toBe('<svg data-icon="text"></svg>');
+		expect(text.querySelector('svg')).toBeNull();
+		expect(byText(container, 'Snippet')
+			.querySelector('.antilia-menu-icon svg[data-icon="snippet"]')).not.toBeNull();
+		expect(byText(container, 'Markup')
+			.querySelector('.antilia-menu-icon svg[data-icon="markup"]')).not.toBeNull();
 	});
 });

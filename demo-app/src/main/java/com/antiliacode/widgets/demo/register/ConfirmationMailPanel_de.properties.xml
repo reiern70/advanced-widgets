@@ -16,7 +16,7 @@
 <properties>
 	<entry key="subject">Bestätigen Sie Ihre E-Mail-Adresse für Antilia Widgets</entry>
 	<entry key="title">Bestätigen Sie Ihre E-Mail-Adresse</entry>
-	<entry key="greeting">Hallo {0},</entry>
+	<entry key="greeting">Hallo,</entry>
 	<entry key="thanks">danke für Ihre Registrierung, um die Demos von Antilia Widgets auszuprobieren. Bitte bestätigen Sie, dass dies Ihre E-Mail-Adresse ist.</entry>
 	<entry key="confirm">E-Mail-Adresse bestätigen</entry>
 	<entry key="orCopy">Falls die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:</entry>

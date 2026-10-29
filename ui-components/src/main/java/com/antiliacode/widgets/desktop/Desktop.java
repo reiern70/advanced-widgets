@@ -42,6 +42,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.modal.Modal;
 import com.github.openjson.JSONArray;
@@ -276,8 +277,8 @@ public class Desktop extends Panel
 		window.setPane(getPane(pane) != null ? pane : activePane).setDisposable(true)
 			.setClosable(true);
 		addWindow(window);
-		String desktopId = JSONObject.quote(desktop.getMarkupId());
-		String windowId = JSONObject.quote(window.getMarkupId());
+		String desktopId = ScriptJson.quote(desktop.getMarkupId());
+		String windowId = ScriptJson.quote(window.getMarkupId());
 		// an element for Wicket to replace by the window, in the area of the windows
 		target.prependJavaScript("(function(){var desktop=Wicket.Desktop.of(" + desktopId +
 			");if(desktop){var window=document.createElement('section');window.id=" + windowId +
@@ -299,7 +300,7 @@ public class Desktop extends Panel
 			{
 				windows.remove(window);
 				target.appendJavaScript("(function(){var window=document.getElementById(" +
-					JSONObject.quote(markupId) + ");if(window){window.remove();}})();");
+					ScriptJson.quote(markupId) + ");if(window){window.remove();}})();");
 				onWindowDisposed(target, window);
 				return;
 			}
@@ -800,7 +801,7 @@ public class Desktop extends Panel
 		super.renderHead(response);
 		renderHeadItems(response);
 		StringBuilder script = new StringBuilder("Wicket.Desktop.attach(")
-			.append(JSONObject.quote(desktop.getMarkupId())).append(", ").append(getOptions());
+			.append(ScriptJson.quote(desktop.getMarkupId())).append(", ").append(getOptions());
 		if (sendToServer || !windowTypes.isEmpty())
 		{
 			script.append(", ").append(sendToServer ? changed.getCallbackFunction(
@@ -855,7 +856,7 @@ public class Desktop extends Panel
 			}
 			types.put(json);
 		}
-		return new JSONObject()
+		return ScriptJson.of(new JSONObject()
 			.put("taskbar", taskbarPosition.cssName())
 			.put("tiling", tiling)
 			.put("expandable", expandable)
@@ -867,8 +868,7 @@ public class Desktop extends Panel
 			.put("paneSwitcher", paneSwitcher)
 			.put("editablePanes", editablePanes)
 			.put("windowTypes", types)
-			.put("texts", texts)
-			.toString();
+			.put("texts", texts));
 	}
 
 	/**

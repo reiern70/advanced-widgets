@@ -33,6 +33,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -224,13 +225,15 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		{
 			options.put("keepWidths", true);
 		}
-		StringBuilder script = new StringBuilder("var options = ").append(options).append(";");
+		StringBuilder script = new StringBuilder("var options = ").append(ScriptJson.of(options))
+			.append(";");
 		if (component instanceof IResizableColumnsTable table)
 		{
 			double[] widths = table.getShownColumnWidths();
 			if (widths != null && Arrays.stream(widths).allMatch(width -> width > 0))
 			{
-				script.append("options.widths = ").append(new JSONArray(widths)).append(";");
+				script.append("options.widths = ").append(ScriptJson.of(new JSONArray(widths)))
+					.append(";");
 			}
 			script.append("options.onResize = function (widths) { (")
 				.append(getCallbackFunction(CallbackParameter.explicit(WIDTHS_PARAMETER)))
@@ -238,7 +241,7 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 				.append(".join(',')); };");
 		}
 		script.append("Wicket.ResizableColumns.attach(")
-			.append(JSONObject.quote(component.getMarkupId()))
+			.append(ScriptJson.quote(component.getMarkupId()))
 			.append(", options);");
 		response.render(OnDomReadyHeaderItem.forScript(script));
 	}

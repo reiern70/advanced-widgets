@@ -53,6 +53,7 @@ import com.antiliacode.widgets.demo.FormErrors;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.ShowPasswordBehavior;
+import com.antiliacode.widgets.demo.account.SignInAttempts;
 import com.antiliacode.widgets.demo.data.JobRole;
 import com.antiliacode.widgets.demo.data.Language;
 import com.antiliacode.widgets.dropdown.Dropdown;
@@ -61,13 +62,18 @@ import com.antiliacode.widgets.dropdown.Dropdown;
  * Lets a visitor register, once registering is open (see {@link #isOpen()}); until then it says
  * that registering is closed and the form is disabled. A visitor registers with: first and last
  * name, email, a strong password typed twice (see {@link StrongPasswordValidator}), country, what
- * the visitor does (a {@link JobRole}, in words with Other) and the language of the emails. On success the account is made, but opens the demos only once the
- * visitor followed the link of the {@link ConfirmationMail} to the {@link EmailValidationPage};
- * the visitor is sent to the {@link EmailConfirmationPage}, which says so.
+ * the visitor does (a {@link JobRole}, in words with Other) and the language of the emails. On
+ * success the account is made, but opens the demos only once the visitor followed the link of the
+ * {@link ConfirmationMail} to the {@link EmailValidationPage}; the visitor is sent to the
+ * {@link EmailConfirmationPage}, which says so. An email that has an account already gets the
+ * same answer, so that the page does not tell which emails have one, and the
+ * {@link AccountExistsMail} instead.
  * <p>
  * It keeps robots out in three ways, none needing an outside service: a field hidden from people
  * that robots fill in (a honeypot), a minimum time between showing the form and sending it, and
- * a small sum to work out.
+ * a small sum to work out, a new one after every submit, as the form sent once is not taken again.
+ * Registrations are limited too, from one address and from everybody (see
+ * {@link RegistrationLimits}).
  */
 public class RegisterPage extends BasePage
 {
@@ -76,7 +82,9 @@ public class RegisterPage extends BasePage
 	/**
 	 * The system property opening ({@code true}) or closing ({@code false}) the registration;
 	 * when it is not set registering is open if the confirmation emails are delivered, see
-	 * {@link com.antiliacode.widgets.demo.mail.SmtpMailer}.
+	 * {@link com.antiliacode.widgets.demo.mail.SmtpMailer}. It opens the registration in
+	 * development only, see {@link com.antiliacode.widgets.demo.DevelopmentSwitches}; it closes
+	 * it everywhere.
 	 */
 	public static final String OPEN_PROPERTY = "antilia-widgets.open-registration";
 
@@ -90,6 +98,9 @@ public class RegisterPage extends BasePage
 	private int first;
 
 	private int second;
+
+	/** The challenge of the sum asked, which answers once, see {@link RegistrationLimits}. */
+	private String challenge;
 
 	private final Registration registration = new Registration();
 
@@ -122,26 +133,35 @@ public class RegisterPage extends BasePage
 				{
 					return;
 				}
-				if (isRobot())
+				boolean robot = isRobot();
+				// a new sum after every submit: the form sent cannot be sent again
+				newChallenge();
+				registration.setAnswer(null);
+				if (robot)
 				{
 					error(getString("robot"));
-					newChallenge();
-					registration.setAnswer(null);
 					return;
 				}
+				if (!RegistrationLimits.get().register(SignInAttempts.address()))
+				{
+					error(getString("tooMany"));
+					return;
+				}
+				// the same answer whether the email has an account or not: only its owner learns
 				String email = Accounts.accountName(registration.getEmail());
 				Optional<String> token = Accounts.get().register(email,
 					registration.getPassword(), registration::fill);
 				registration.setPassword(null);
-				if (token.isEmpty())
-				{
-					error(getString("taken"));
-					newChallenge();
-					registration.setAnswer(null);
-					return;
-				}
-				Accounts.get().find(email)
-					.ifPresent(user -> ConfirmationMail.send(user, token.get()));
+				Accounts.get().find(email).ifPresent(user -> {
+					if (token.isPresent())
+					{
+						ConfirmationMail.send(user, token.get());
+					}
+					else
+					{
+						AccountExistsMail.send(user, registration.getLanguage());
+					}
+				});
 				setResponsePage(new EmailConfirmationPage(email));
 			}
 
@@ -237,12 +257,13 @@ public class RegisterPage extends BasePage
 
 	/**
 	 * @return whether visitors may register: as the system property {@value #OPEN_PROPERTY}
-	 *         says, or else if the confirmation emails reach them
+	 *         says, opening it in development only, or else if the confirmation emails reach them
 	 */
 	public static boolean isOpen()
 	{
 		String open = System.getProperty(OPEN_PROPERTY);
-		if (!Strings.isEmpty(open))
+		if (!Strings.isEmpty(open) && (!Boolean.parseBoolean(open) ||
+			Application.get().usesDevelopmentConfig()))
 		{
 			return Boolean.parseBoolean(open);
 		}
@@ -251,24 +272,30 @@ public class RegisterPage extends BasePage
 
 	/**
 	 * @return whether the form was sent by a robot: it filled in the honeypot, sent the form too
-	 *         soon or got the sum wrong
+	 *         soon, got the sum wrong or answered a sum already answered
 	 */
 	boolean isRobot()
 	{
+		boolean answeredBefore = !RegistrationLimits.get().answer(challenge);
+		challenge = null;
 		String website = registration.getWebsite();
 		boolean filledHoneypot = website != null && !website.isBlank();
 		boolean tooSoon = Duration.between(shownAt, clock.instant())
 			.compareTo(MINIMUM_FILL_TIME) < 0;
 		Integer answer = registration.getAnswer();
 		boolean wrongSum = answer == null || answer != first + second;
-		return filledHoneypot || tooSoon || wrongSum;
+		return answeredBefore || filledHoneypot || tooSoon || wrongSum;
 	}
 
 	/**
-	 * Asks a new sum and starts timing anew.
+	 * Asks a new sum, with a new challenge, and starts timing anew; the challenge before answers
+	 * no more.
 	 */
 	private void newChallenge()
 	{
+		RegistrationLimits limits = RegistrationLimits.get();
+		limits.answer(challenge);
+		challenge = limits.newChallenge();
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 		first = random.nextInt(1, 10);
 		second = random.nextInt(1, 10);
@@ -281,6 +308,14 @@ public class RegisterPage extends BasePage
 	int getExpectedAnswer()
 	{
 		return first + second;
+	}
+
+	/**
+	 * @return the challenge of the sum asked, for tests
+	 */
+	String getChallenge()
+	{
+		return challenge;
 	}
 
 	/**

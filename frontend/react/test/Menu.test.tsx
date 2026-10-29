@@ -155,4 +155,17 @@ describe('Menu', () => {
 		act(() => ref.current!.closeAll());
 		expect(file.getAttribute('aria-expanded')).toBe('false');
 	});
+
+	it('writes an icon of text as text, and iconMarkup as markup', () => {
+		const { container } = render(<Menu items={[
+			{ id: 'text', label: 'Text', icon: '<svg data-icon="text"></svg>' },
+			{ id: 'markup', label: 'Markup', iconMarkup: '<svg data-icon="markup"></svg>' }
+		]} />);
+
+		const text = byText(container, 'Text').querySelector('.antilia-menu-icon')!;
+		expect(text.textContent).toBe('<svg data-icon="text"></svg>');
+		expect(text.querySelector('svg')).toBeNull();
+		expect(byText(container, 'Markup')
+			.querySelector('.antilia-menu-icon svg[data-icon="markup"]')).not.toBeNull();
+	});
 });

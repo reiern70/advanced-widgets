@@ -1,22 +1,38 @@
 # Production deployment
 
 The demo site runs on **Amazon Lightsail**: one Linux instance with Docker, where Caddy serves
-HTTPS and passes the requests, websockets included, to Jetty 11 with the WAR, and PostgreSQL
+HTTPS and passes the requests, websockets included, to Jetty 12 with the WAR, and PostgreSQL
 keeps the users and the accesses. The domain is registered in Lightsail too.
 
 | File | What it does |
 |---|---|
-| `Dockerfile` | Jetty 11 on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on |
-| `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
+| `Dockerfile` | Jetty 12 (ee11, Servlet 6.1) on Java 21 with the WAR unpacked as `webapps/ROOT`, owned by root, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
+| `.dockerignore` | Only `Dockerfile` and `ROOT.war` go to the build of the image, never `.env` |
+| `compose.yaml` | Jetty, Caddy and PostgreSQL, each on a read-only file system, without capabilities and with a limit of memory; the page store, the temporary folder, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
-| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
-| `.env.example` | The settings; copied to `.env` on the server, never committed |
-| `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
-| `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |
+| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the client's address passed on in `X-Forwarded-For` alone, the security headers (HSTS for the subdomains too, `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`), no `Server`, and an access log |
+| `.env.example` | The settings, without any password; copied to `.env` (mode 600) on the server, never committed |
+| `setup-server.sh` | Prepares an instance: Docker, swap, `/opt/antilia-widgets`, the firewall `ufw`, SSH with keys only, security updates that restart when needed, age; runs again on an instance set up before |
+| `deploy.sh` | Builds the WAR here, copies it with this folder to the instance and runs `start.sh` there: `deploy/deploy.sh ubuntu@<ip>` |
+| `start.sh` | On the instance: checks `.env`, dumps the database, pulls and builds the images, gives the application its role in PostgreSQL and starts them |
+| `database-role.sql` | The application's own role in PostgreSQL, no superuser, owning the tables; run when the database is created and by `start.sh` |
 
 The WAR is built on the developer's machine, not on the server, because Wicket 11 is a snapshot
 built locally. Each deployment uploads the WAR (about 55 MB, Hibernate and the JDBC drivers
 included) and rebuilds the small image on the instance; `rsync` only sends what changed.
+
+The images are pinned by their digests, the tag kept to be read: `jetty:12.1.14-jdk21@sha256:…`
+in `Dockerfile`, `postgres:17.11@sha256:…` and `caddy:2.11.7@sha256:…` in `compose.yaml`. Dependabot
+(`.github/dependabot.yml`) proposes the next ones every week as pull requests; every deployment
+pulls the images again (`docker compose pull`, `docker compose build --pull`), so a merged update
+goes online with the next deployment. To move one by hand, look its digest up and replace both:
+
+```sh
+docker buildx imagetools inspect postgres:17.12 | grep -m1 Digest
+```
+
+A new major version of PostgreSQL is no such update: it cannot open the data of the old one, which
+has to be moved over with a dump or `pg_upgrade`, so Dependabot leaves it out.
 
 ## Why Lightsail
 
@@ -71,7 +87,64 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
 6. Open `https://<domain>`: the certificate is there within a minute, the home page shows the
    websocket status *Live*.
 
+`.env` is made from `.env.example` with `install -m 600`, readable by its owner alone from the
+start, and holds no password until one is made up. `start.sh`, which `deploy.sh` runs on the
+instance, checks it before touching anything, without printing any of its values, and stops when:
+
+- a value is still `change-me` (the placeholder of earlier examples);
+- the last `JAVA_OPTIONS` lack `-Dwicket.configuration=deployment`, or set another
+  `wicket.configuration`: in DEVELOPMENT mode every demo is open to anonymous visitors and errors
+  show their stack traces;
+- they set `-Dantilia-widgets.sign-in-as` (every visitor signed in as that account) or
+  `-Dantilia-widgets.open-demos`, or `-Dantilia-widgets.open-registration` to anything but
+  `false`: switches for a developer's machine.
+
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
+
+**The instance.** Besides Lightsail's firewall, `setup-server.sh` turns on `ufw`, letting in only
+SSH (22/tcp), HTTP (80/tcp) and HTTPS (443/tcp, and 443/udp for HTTP/3); it allows SSH before it
+turns the firewall on, so the session running it goes on. Docker opens the ports it publishes, 80
+and 443, past `ufw` by itself; no other container publishes a port. SSH takes keys only and no
+root (`/etc/ssh/sshd_config.d/10-antilia-widgets.conf`: `PasswordAuthentication no`,
+`PermitRootLogin no`), checked with `sshd -t` before SSH reloads, and set only while the user has a
+key in `~/.ssh/authorized_keys`. The security updates install every day, and when one needs a
+restart (a new kernel), the instance restarts at 04:00 UTC, after the backup of 03:30; the
+containers start again by themselves.
+
+**Headers and the access log.** Every answer, the redirects of `www` too, carries HSTS for a
+year with `includeSubDomains` (so every subdomain of the domain has to serve HTTPS),
+`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`X-Frame-Options: SAMEORIGIN` (no framing by other sites; the application's CSP says
+`frame-ancestors 'self'` too) and a `Permissions-Policy` that turns off the browser's features the
+site does not use: camera, microphone, geolocation, payment, USB, serial, HID, MIDI, the sensors,
+fullscreen, reading the clipboard and more. Writing to the clipboard, which the click-to-copy of
+the demos does, stays allowed to the site's own pages. Caddy logs every request as a line of
+JSON, cookies and credentials left out, on its standard output, rotated with the other logs of
+the containers: `docker compose logs caddy`.
+
+**The client's address.** Jetty takes the address of the client, the host and the scheme
+(https) from the `X-Forwarded-For`, `-Host` and `-Proto` headers Caddy sets, replacing those a
+client sends. Caddy drops the other headers of the kind that Jetty's `forwarded` module reads
+(`Forwarded`, `X-Forwarded-Port`, `X-Forwarded-Server`, `X-Proxied-Https`, `Proxy-Auth-Cert`,
+`Proxy-Ssl-Id`), so the address in the accesses is the one Caddy saw.
+
+**Containers.** Each container runs on a read-only file system and writes only into its volumes
+and a few small tmpfs; it has no capabilities of Linux (Caddy keeps `NET_BIND_SERVICE`, for the
+ports 80 and 443), cannot gain privileges (`no-new-privileges`), and has a limit of memory sized
+for the 2 GB instance: Jetty 1400 MB (a heap of 1 GB and what the JVM needs besides),
+PostgreSQL 512 MB, Caddy 128 MB. Jetty runs as the user `jetty`, which owns neither Jetty's base
+nor the web application (unpacked from the WAR into the image, owned by root), so it can change
+neither even without the read-only file system. Its temporary folder, with the uploads and the
+images of the rich text editors, is the volume `temporary`, on the disk rather than in memory.
+PostgreSQL runs as the user `postgres` from the start, so its image's script needs no root. Only
+`Dockerfile` and `ROOT.war` go to the build of the image (`.dockerignore`), never `.env`. The
+settings of `.env` stay environment variables of the containers: Docker secrets would need the
+application to read files, which is left for later.
+
+**Memory.** Caddy answers 413 to a request body over 25 MB (the uploads of the demo take 20 MB at
+most), so such a body never reaches Jetty. A JVM that runs out of memory ends
+(`-XX:+ExitOnOutOfMemoryError`, set by the image in `JDK_JAVA_OPTIONS` whatever `JAVA_OPTIONS`
+say), and Docker starts it again (`restart: unless-stopped`) instead of leaving it up but broken.
 
 The demos are private: visitors sign in to open them, the home page is public. Registering is
 open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`.
@@ -81,7 +154,12 @@ The demo always has `semedy`, `wicket` and `admin` (the administrator, who sees 
 missing and its password changed when `.env` gives another. Their passwords are never in the source. An account
 without a password in `.env` is not added, and one still holding a password the source once gave it is locked.
 Accounts for people such as a client go into `.env` as
-`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again. The
+`ANTILIA_WIDGETS_ACCOUNTS=name:password` (several separated by commas), then deploy again: the
+list is synced at every start. A changed password takes effect; an account no longer listed is
+locked, not deleted, and listing it again opens it again; an account deleted through the API comes
+back at the next start while it is still listed. The names of the built-in accounts, `admin`,
+`semedy` and `wicket`, are ignored in the list, with a warning in the log. So a start with
+`ANTILIA_WIDGETS_ACCOUNTS` empty or missing locks every account it listed before. The
 accounts registered with earlier versions, in `/var/lib/antilia-widgets/accounts`, are copied into
 the table at start.
 
@@ -89,8 +167,10 @@ the table at start.
 
 The resources below answer JSON to administrators, leaving out the fields without a value: requests
 send the account and password of an administrator with HTTP Basic authentication
-(`curl -u admin:...`), or, to read only, come from a browser signed in as one. After three wrong
-passwords for an account they answer 429 until it signs in on the site.
+(`curl -u admin:...`), or, to read only, come from a browser signed in as one. From the 5th wrong
+password for an account, or the 20th from one address, they answer 429 with `Retry-After`, as the
+sign-in form makes the user wait: the wait starts at 1 s, doubles with each failure and stops
+growing at 15 minutes. Nothing locks an account for good.
 
 | Request | What it does |
 |---|---|
@@ -140,31 +220,75 @@ settings are sized for the 2 GB instance next to a JVM of 1 GB: `shared_buffers`
 `effective_cache_size` 512 MB, at most 20 connections (the application's pool uses 5); queries
 slower than a second are logged. The logs of every container are rotated, 3 files of 10 MB.
 
-Before the first deployment with it, add a password to `.env` on the server:
+Before the first deployment with it, add two passwords to `.env` on the server, made up there:
 
 ```sh
-ssh ubuntu@<static-ip> "echo DATABASE_PASSWORD=$(openssl rand -hex 24) >> /opt/antilia-widgets/.env"
+ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && echo "DATABASE_PASSWORD=$(openssl rand -hex 24)" >> .env && echo "DATABASE_APP_PASSWORD=$(openssl rand -hex 24)" >> .env'
 deploy/deploy.sh ubuntu@<static-ip>
 ```
 
 Flyway makes the tables at the first start; the demo adds `semedy`, `wicket` and `admin`.
 
+**The application's role.** The application does not log in as the superuser the image of
+PostgreSQL creates (`widgets`, or `DATABASE_USER`, with `DATABASE_PASSWORD`): that one keeps the
+database and makes the backups. The application has a role of its own, `widgets_app` (or
+`DATABASE_APP_USER`) with `DATABASE_APP_PASSWORD`, which is no superuser, can create neither
+databases nor roles, and owns the schema `public` with its tables and sequences, so that Flyway's
+migrations run. `database-role.sql` makes it: PostgreSQL runs it when it creates the database,
+and `start.sh` runs it again before every start of the application. On a database that exists it
+only adds: it makes the role when missing, sets its password to the one of `.env` (so changing it
+there and deploying again changes it), and hands it, table by table and sequence by sequence,
+what it does not own yet. It never drops, deletes or empties anything. `start.sh` refuses to go on
+without `DATABASE_APP_PASSWORD`. To run it by hand, on the server:
+
+```sh
+cd /opt/antilia-widgets
+docker compose exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -' < database-role.sql
+```
+
 **Backups.** `deploy.sh` installs `/etc/cron.d/antilia-widgets`: every night at 03:30 (the
 server's clock, UTC) `backup.sh` dumps the database to `/var/backups/antilia-widgets`, keeps it
 once `pg_restore` reads it, and deletes dumps older than 14 days; it logs to `backup.log` there.
-Those dumps are on the instance's disk: the **automatic snapshots** of the instance (Lightsail
-console → the instance → *Snapshots* → *Automatic snapshots*, about $2/month) keep the disk too,
-for 7 days. For a copy outside AWS, now and then:
+The dumps hold emails, names, addresses and password hashes, so they are **encrypted** with
+[age](https://age-encryption.org) to a public key, `BACKUP_AGE_RECIPIENT` in `.env`, as
+`widgets-<date>.dump.age`; only the private key, which never goes to the server, reads them.
+Without a key the dumps stay plain, and every run writes a warning into `backup.log`.
+`setup-server.sh` installs age on the server.
+
+Make the key pair on your own machine, once, and keep the private key safe and off the server (a
+password manager and an offline copy: without it no encrypted dump can be read):
 
 ```sh
-scp 'ubuntu@<static-ip>:/var/backups/antilia-widgets/widgets-*.dump' .
+age-keygen -o ~/antilia-widgets-backup.key      # prints the public key, age1...
+ssh ubuntu@<static-ip> 'echo BACKUP_AGE_RECIPIENT=age1... >> /opt/antilia-widgets/.env'
 ```
 
-To restore a dump:
+Those dumps are on the instance's disk: the **automatic snapshots** of the instance (Lightsail
+console → the instance → *Snapshots* → *Automatic snapshots*, about $2/month) keep the disk too,
+for 7 days. Copying them off AWS automatically, and an alert when a backup fails, are not set up:
+`backup.log` tells. For a copy outside AWS, now and then:
+
+```sh
+scp 'ubuntu@<static-ip>:/var/backups/antilia-widgets/widgets-*.dump.age' .
+```
+
+To restore an encrypted dump, decrypt it on your machine, where the private key is, and stream it
+to the database:
+
+```sh
+age -d -i ~/antilia-widgets-backup.key widgets-<date>.dump.age \
+	| ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'''
+```
+
+(for one still on the server only, read it with `ssh ubuntu@<static-ip> cat /var/backups/antilia-widgets/widgets-<date>.dump.age | age -d ...`).
+A plain dump, from before the key, restores on the server itself:
 
 ```sh
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec -T db sh -c '\''pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists'\'' < /var/backups/antilia-widgets/widgets-<date>.dump'
 ```
+
+A dump made before the application had its own role restores tables owned by the superuser: run
+`database-role.sql` again afterwards, as above, or deploy again.
 
 **Upgrading keeps the data.** The data in production is never thrown away: no volume is removed
 and Flyway never cleans (`cleanDisabled`). The migrations in `db/migration` only add: new tables,
@@ -172,7 +296,7 @@ columns and indexes, and rows filled in from what is there; none drops a table o
 deletes rows, which `MigrationsTest` checks along with a database of the first version keeping
 its users and accesses through all of them. A migration, once deployed, is never changed: a
 change is a new one. Before starting the new version, `deploy.sh` dumps the database with
-`backup.sh`, so the data from before its migrations can be restored as below.
+`backup.sh`, so the data from before its migrations can be restored as above.
 
 **Going back.** Every deployment keeps the image that ran before as `antilia-widgets:previous`:
 
@@ -180,11 +304,17 @@ change is a new one. Before starting the new version, `deploy.sh` dumps the data
 ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker tag antilia-widgets:previous antilia-widgets:latest && docker compose up -d --no-build app'
 ```
 
+An image built before the containers became read-only (issue #86) writes into Jetty's base at
+start and fails on a read-only file system: going back to one of those needs `read_only: true`
+taken out of the service `app` in the server's `compose.yaml` for the while.
+
 **Later, a managed database** ($15/month: daily backups and 7 days of point-in-time restore,
 updates done by AWS): *Databases → Create database*, the same region, PostgreSQL 17, *Standard*,
-name `widgets`, master user `widgets`, public mode off. Put its endpoint into `.env` as
-`DATABASE_URL` (with `DATABASE_USER` and `DATABASE_PASSWORD`), move the data over with
-`pg_dump | psql`, and deploy again; the `db` container may then be removed from `compose.yaml`.
+name `widgets`, master user `widgets`, public mode off. Make the application's role there as
+`database-role.sql` does, put the endpoint into `.env` as `DATABASE_URL` and the role as
+`DATABASE_APP_USER` and `DATABASE_APP_PASSWORD`, move the data over with `pg_dump | psql`, and
+deploy again; the `db` container may then be removed from `compose.yaml`, and the role step from
+`start.sh`.
 
 ### On a development machine
 
@@ -225,3 +355,66 @@ emails go to the log, where the link is taken from). Set in `.env`:
 | `SITE_URL` | `antilia-widgets.site-url` | The address the links point at; `compose.yaml` sets `https://${DOMAIN}` |
 
 `-Dantilia-widgets.open-registration=false` closes registering even with a server.
+
+## 6. One-time steps on the existing server
+
+The deployments since issue #86 need these steps once on a server set up before, in this order,
+before or while deploying again:
+
+1. **`.env`**: `JAVA_OPTIONS` must hold `-Dwicket.configuration=deployment`, and should hold
+   `-XX:+ExitOnOutOfMemoryError` (the image sets it anyway); no
+   `-Dantilia-widgets.sign-in-as`, `open-demos` or `open-registration` (but `=false`); no value
+   `change-me` (an `ANTILIA_WIDGETS_ACCOUNTS=client:change-me` from the old example has to go, or
+   get a real password). `start.sh` refuses to deploy otherwise.
+
+   `ANTILIA_WIDGETS_ACCOUNTS` is synced at every start from this version on: an account no longer
+   listed is locked, so **a start with it empty or missing locks every account it listed before**
+   (taking out `client:change-me` locks `client`, as it should). Accounts taken out of `.env`
+   before this version are still open: list them through the administration's API
+   (`GET /api/admin/users`) and remove the ones that should go. The migration that marks the
+   configured accounts, V8, only adds a column and runs by itself.
+
+   Check `.env` without showing the values:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && grep -v "^ *#" .env | grep -c change-me; grep -c "^ *JAVA_OPTIONS=.*-Dwicket.configuration=deployment" .env'
+   ```
+
+   The first count must be 0, the second at least 1.
+
+2. **The application's role in PostgreSQL**: add its password to `.env`, made up on the server:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'echo "DATABASE_APP_PASSWORD=$(openssl rand -hex 24)" >> /opt/antilia-widgets/.env'
+   ```
+
+   The next deployment dumps the database, makes the role `widgets_app`, hands it the schema
+   `public` with its tables and sequences (`flyway_schema_history` included), and starts the
+   application as that role. Nothing is dropped or deleted, and the data stays as it is.
+   `start.sh` stops before doing anything while the password is missing.
+
+3. **The instance**: run `setup-server.sh` again; every step checks first, so it only adds what
+   is missing: age, the firewall `ufw` (SSH, HTTP and HTTPS only; SSH is allowed before it turns
+   on), SSH with keys only and no root, and restarts after security updates at 04:00 UTC. Keep the
+   session open and try a second `ssh` before closing it:
+
+   ```sh
+   ssh ubuntu@<static-ip> 'sh -s' < deploy/setup-server.sh
+   ssh ubuntu@<static-ip> 'sudo ufw status verbose; sudo sshd -T | grep -Ei "^(passwordauthentication|permitrootlogin) "'
+   ```
+
+4. **Encrypted backups**: make a key pair on your own machine and put its public key into `.env`
+   as described under *Backups* above; step 3 installed age on the server. The private key never
+   goes to the server. The dumps made before stay plain until they are 14 days old and deleted.
+
+5. **Deploy**: `deploy/deploy.sh ubuntu@<static-ip>`. Before it, check that the server's
+   PostgreSQL runs on Debian trixie, as `postgres:17.11` does
+   (`ssh ubuntu@<static-ip> 'cd /opt/antilia-widgets && docker compose exec db grep VERSION_CODENAME /etc/os-release'`);
+   on `bookworm`, pin `postgres:17.11-bookworm` with its digest in `compose.yaml` instead, so the
+   collation of the text in the database stays the same. The heap in `JAVA_OPTIONS` must stay at
+   `-Xmx1g` or below, which the limit of memory of the container, 1400 MB, holds. This first
+   deployment recreates the three containers, PostgreSQL now as the user `postgres` on a
+   read-only file system, so the site is away for a minute or two; `start.sh` dumps the database
+   before. Then check that
+   `docker compose logs app | grep -i mode` says `DEPLOYMENT mode`, that the home page shows
+   *Live*, and that `docker compose ps` shows the three containers up.

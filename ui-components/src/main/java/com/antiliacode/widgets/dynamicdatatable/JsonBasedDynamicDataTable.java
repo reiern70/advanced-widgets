@@ -36,6 +36,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.table.IMovableColumn;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -306,12 +307,12 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		if (isFromResource())
 		{
 			target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".reload(" +
-				resourceState() + "); }");
+				ScriptJson.of(resourceState()) + "); }");
 			onRowsSent(getCurrentPageKeys());
 			return;
 		}
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".update(" +
-			currentPageJson() + "); }");
+			ScriptJson.escape(currentPageJson()) + "); }");
 	}
 
 	/**
@@ -638,16 +639,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		boolean partial = getRequestCycle().find(IPartialPageRequestHandler.class).isPresent() &&
 			!isFromResource();
 		return ", " + buildMessageHandlers() +
-			(partial ? ", " + escapeForScript(currentPageJson()) : "");
-	}
-
-	/**
-	 * @return the JSON with {@code <}, {@code >} and {@code &} escaped, so it cannot end the script
-	 *         or the section of the Ajax response it is written into
-	 */
-	private static String escapeForScript(String json)
-	{
-		return json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
+			(partial ? ", " + ScriptJson.escape(currentPageJson()) : "");
 	}
 
 	private String buildMessageHandlers()
@@ -655,7 +647,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		StringJoiner handlers = new StringJoiner(", ", "{", "}");
 		for (IWebSocketMessageType messageType : messageTypes.values())
 		{
-			handlers.add(JSONObject.quote(messageType.getTypeId()) + ": " +
+			handlers.add(ScriptJson.quote(messageType.getTypeId()) + ": " +
 				messageType.getTypeFunction());
 		}
 		return handlers.toString();

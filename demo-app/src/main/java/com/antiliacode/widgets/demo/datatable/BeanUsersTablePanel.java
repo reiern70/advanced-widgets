@@ -117,6 +117,8 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			}
 		};
 		hidden.forEach(column -> table.setColumnVisible(column, false));
+		// the phone numbers copy on a double click
+		table.add(ClipboardCopyBehavior.within());
 		return table;
 	}
 

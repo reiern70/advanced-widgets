@@ -14,6 +14,8 @@
 package com.antiliacode.widgets.throttle;
 
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -54,18 +56,24 @@ public enum UploadSpeed
 	}
 
 	/**
-	 * A request whose body is read at a rate.
+	 * A request whose body is read at a rate, holding a permit of its session to be slowed down
+	 * until it is read or the request is done.
 	 */
 	static final class SlowRequest extends HttpServletRequestWrapper
 	{
 		private final long bytesPerSecond;
 
+		private final Semaphore permits;
+
+		private final AtomicBoolean released = new AtomicBoolean();
+
 		private ServletInputStream body;
 
-		SlowRequest(HttpServletRequest request, long bytesPerSecond)
+		SlowRequest(HttpServletRequest request, long bytesPerSecond, Semaphore permits)
 		{
 			super(request);
 			this.bytesPerSecond = bytesPerSecond;
+			this.permits = permits;
 		}
 
 		@Override
@@ -73,15 +81,34 @@ public enum UploadSpeed
 		{
 			if (body == null)
 			{
-				body = new SlowInputStream(super.getInputStream(), bytesPerSecond);
+				body = new SlowInputStream(super.getInputStream(), bytesPerSecond, this::release);
 			}
 			return body;
+		}
+
+		/**
+		 * @return whether the request holds its permit still
+		 */
+		boolean holdsPermit()
+		{
+			return permits != null && !released.get();
+		}
+
+		/**
+		 * Gives the permit back, once.
+		 */
+		void release()
+		{
+			if (permits != null && released.compareAndSet(false, true))
+			{
+				permits.release();
+			}
 		}
 	}
 
 	/**
 	 * A stream read at a rate: in chunks of a twentieth of a second's bytes, each waiting until
-	 * the rate allows it.
+	 * the rate allows it; it tells when its end is read or it is closed.
 	 */
 	static final class SlowInputStream extends ServletInputStream
 	{
@@ -91,14 +118,23 @@ public enum UploadSpeed
 
 		private final long chunk;
 
+		private final Runnable onEnd;
+
 		private final long started = System.nanoTime();
 
 		private long read;
 
 		SlowInputStream(ServletInputStream in, long bytesPerSecond)
 		{
+			this(in, bytesPerSecond, () -> {
+			});
+		}
+
+		SlowInputStream(ServletInputStream in, long bytesPerSecond, Runnable onEnd)
+		{
 			this.in = in;
 			this.bytesPerSecond = bytesPerSecond;
+			this.onEnd = onEnd;
 			chunk = Math.max(1, bytesPerSecond / 20);
 		}
 
@@ -129,6 +165,10 @@ public enum UploadSpeed
 			{
 				read++;
 			}
+			else
+			{
+				onEnd.run();
+			}
 			return b;
 		}
 
@@ -140,6 +180,10 @@ public enum UploadSpeed
 			if (count > 0)
 			{
 				read += count;
+			}
+			else if (count < 0)
+			{
+				onEnd.run();
 			}
 			return count;
 		}
@@ -165,6 +209,7 @@ public enum UploadSpeed
 		@Override
 		public void close() throws IOException
 		{
+			onEnd.run();
 			in.close();
 		}
 	}

@@ -78,6 +78,54 @@ describe('Clipboard', () => {
 		expect(written.length).toBe(3);
 	});
 
+	it('copies only for the elements attached, past those inside them that were not', async () => {
+		document.body.innerHTML = '<p id="own" data-antilia-copy="own"><b>own</b>' +
+			'<i data-antilia-copy="inner">inner</i></p>' +
+			'<p id="other" data-antilia-copy="other">x</p>';
+		const own = document.getElementById('own')!;
+
+		document.getElementById('other')!.click();
+		own.click();
+		await settle();
+		expect(written).toEqual([]);
+
+		const detach = Clipboard.attach(own);
+		document.getElementById('other')!.click();
+		document.querySelector('b')!.click();
+		document.querySelector('i')!.click();
+		await settle();
+		expect(written).toEqual(['own', 'own']);
+
+		detach();
+		own.click();
+		await settle();
+		expect(written).toEqual(['own', 'own']);
+		expect(Clipboard.attach(null)).toBeTypeOf('function');
+	});
+
+	it('copies for the elements inside a container attached, also those rendered later',
+		async () => {
+			document.body.innerHTML = '<div id="table">' +
+				'<span data-antilia-copy="one">one</span></div>' +
+				'<span id="outside" data-antilia-copy="outside">outside</span>';
+			const table = document.getElementById('table')!;
+			const detach = Clipboard.attachWithin(table);
+			table.insertAdjacentHTML('beforeend', '<span data-antilia-copy="two" ' +
+				'data-antilia-copy-on="dblclick"><b>two</b></span>');
+
+			table.querySelector('span')!.click();
+			document.getElementById('outside')!.click();
+			table.querySelector('b')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+			await settle();
+			expect(written).toEqual(['one', 'two']);
+
+			detach();
+			table.querySelector('span')!.click();
+			await settle();
+			expect(written).toEqual(['one', 'two']);
+			expect(Clipboard.attachWithin(undefined)).toBeTypeOf('function');
+		});
+
 	it('logs a failed copy through the host', async () => {
 		Object.defineProperty(navigator, 'clipboard', {
 			configurable: true,

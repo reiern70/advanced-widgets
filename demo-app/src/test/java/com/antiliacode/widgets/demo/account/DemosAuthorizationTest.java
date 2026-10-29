@@ -23,6 +23,7 @@ import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.core.request.handler.PageProvider;
 import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
+import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.apache.wicket.util.tester.WicketTesterHelper;
@@ -50,7 +51,7 @@ class DemosAuthorizationTest
 	void stop()
 	{
 		tester.destroy();
-		System.clearProperty(DemosAuthorization.OPEN_PROPERTY);
+		System.clearProperty(DemosAuthorization.OPEN_PARAMETER);
 		System.clearProperty(WicketApplication.SIGN_IN_AS_PROPERTY);
 	}
 
@@ -144,7 +145,7 @@ class DemosAuthorizationTest
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 
-		tester.clickLink("signOut");
+		tester.newFormTester("signOut").submit();
 
 		tester.assertRenderedPage(HomePage.class);
 		assertFalse(DemoSession.get().isSignedIn());
@@ -164,11 +165,16 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void theDemosAreOpenWithTheSystemProperty()
+	void theDemosAreOpenWithTheInitParameterButNotWithTheSystemProperty()
 	{
-		System.setProperty(DemosAuthorization.OPEN_PROPERTY, "true");
+		System.setProperty(DemosAuthorization.OPEN_PARAMETER, "true");
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
+		tester.startPage(DropdownPage.class);
+		tester.assertRenderedPage(SignInPage.class);
+
+		((MockServletContext)tester.getServletContext())
+			.addInitParameter(DemosAuthorization.OPEN_PARAMETER, "true");
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 	}
@@ -248,9 +254,12 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void atMostFiveUsersAreSignedInAtOnce()
+	void atMostFiveRegisteredAccountsAreSignedInAtOnce()
 	{
 		start(RuntimeConfigurationType.DEPLOYMENT);
+		Accounts.get().validate(Accounts.get()
+			.register("ada@example.com", "Analytical-Engine-1843", user -> {})
+			.orElseThrow());
 		SignedInUsers users = SignedInUsers.get();
 		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
 		{
@@ -259,22 +268,29 @@ class DemosAuthorizationTest
 		}
 
 		tester.startPage(SignInPage.class);
-		signIn("client", "secret-one");
+		signIn("ada@example.com", "Analytical-Engine-1843");
 		tester.assertRenderedPage(SignInPage.class);
 		tester.assertErrorMessages("Too many users are signed in right now: at most 5 at once. " +
 			"Please try again in a few minutes.");
 		assertFalse(DemoSession.get().isSignedIn());
 
-		// an administrator always signs in
-		tester.startPage(SignInPage.class);
-		signIn("admin", TestDatabase.ADMIN_PASSWORD);
-		tester.assertRenderedPage(HomePage.class);
-		DemoSession.get().signOut();
+		// an administrator, an account the demo always has and one the server is started with
+		// always sign in, and take no place
+		for (String[] account : new String[][] { { "admin", TestDatabase.ADMIN_PASSWORD },
+			{ "wicket", TestDatabase.WICKET_PASSWORD }, { "client", "secret-one" } })
+		{
+			tester.startPage(SignInPage.class);
+			signIn(account[0], account[1]);
+			tester.assertRenderedPage(HomePage.class);
+			assertEquals(account[0], DemoSession.get().getAccount());
+			DemoSession.get().signOut();
+		}
+		assertEquals(SignedInUsers.MAXIMUM, users.count());
 
 		// a user signing out makes room
 		users.signedOut("session-1");
 		tester.startPage(SignInPage.class);
-		signIn("client", "secret-one");
+		signIn("ada@example.com", "Analytical-Engine-1843");
 		tester.assertRenderedPage(HomePage.class);
 		assertEquals(SignedInUsers.MAXIMUM, users.count());
 	}
@@ -337,7 +353,7 @@ class DemosAuthorizationTest
 	void locallyEverySessionIsTheAdministrators()
 	{
 		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
-		start(RuntimeConfigurationType.DEPLOYMENT);
+		start(RuntimeConfigurationType.DEVELOPMENT);
 
 		tester.startPage(HomePage.class);
 		tester.assertLabel("signOut:account", "admin");

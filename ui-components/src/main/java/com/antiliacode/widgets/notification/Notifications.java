@@ -41,6 +41,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.visit.IVisit;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookPart;
@@ -73,6 +74,14 @@ import com.antiliacode.widgets.theme.Looks;
  * of the body for example: the notifications are in the colors of the
  * {@link com.antiliacode.widgets.theme.Theme theme} it is in.
  * Its tag is a {@code div}, which the script stacks the notifications in.
+ * <p>
+ * <strong>Escaping:</strong> the feedback messages are text while the component
+ * {@link #setEscapeModelStrings(boolean) escapes its model strings}, as by default. Turned off,
+ * every feedback message becomes markup, also those that hold what the user typed, the messages of
+ * validators for example, which then put the user's input into the page as HTML. Keep it on, and
+ * show the page's own markup in a notification of its own,
+ * {@link Notification#setEscapeBody(boolean)}, or override
+ * {@link #newNotification(FeedbackMessage)}. A {@link FeedbackPanel} does the same.
  *
  * @since 11.0.0
  */
@@ -154,7 +163,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	{
 		pending.clear();
 		RequestCycle.get().find(AjaxRequestTarget.class).ifPresent(target -> target.appendJavaScript(
-			"Wicket.Notifications.closeAll(" + JSONObject.quote(getMarkupId()) + ");"));
+			"Wicket.Notifications.closeAll(" + ScriptJson.quote(getMarkupId()) + ");"));
 		return this;
 	}
 
@@ -325,6 +334,10 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	 * titled by it, its text the message's, markup when the component does not
 	 * {@link #setEscapeModelStrings(boolean) escape its model strings}. Override it to give some
 	 * another timeout, for example.
+	 * <p>
+	 * <strong>Warning:</strong> with escaping off, every feedback message is markup, also one that
+	 * holds what the user typed, as the message of a validator may, which then goes into the page
+	 * as HTML. Escape the body of the messages that can hold input, or keep escaping on.
 	 *
 	 * @param message
 	 *            the feedback message
@@ -438,7 +451,7 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 		super.renderHead(response);
 		renderHeadItems(response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Notifications.attach(" +
-			JSONObject.quote(getMarkupId()) + ", " + getOptions() + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 		List<Notification> notifications = new ArrayList<>(pending);
 		pending.clear();
 		notifications.addAll(SessionNotifications.take());
@@ -454,8 +467,8 @@ public class Notifications extends WebMarkupContainer implements IFeedback
 	 */
 	private String getShowScript(Notification notification)
 	{
-		return "Wicket.Notifications.show(" + JSONObject.quote(getMarkupId()) + ", " +
-			notification.toJson() + ");";
+		return "Wicket.Notifications.show(" + ScriptJson.quote(getMarkupId()) + ", " +
+			ScriptJson.of(notification.toJson()) + ");";
 	}
 
 	/**

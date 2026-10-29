@@ -135,4 +135,18 @@ describe('Breadcrumb', () => {
 		act(() => ref.current!.expand());
 		expect(shown(container)).toEqual(['Home', 'Products', 'Laptops']);
 	});
+
+	it('writes an icon of text as text, and iconMarkup as markup', () => {
+		const { container } = render(<Breadcrumb items={[
+			{ id: 'text', label: 'Text', href: '#text', icon: '<svg data-icon="text"></svg>' },
+			{ id: 'markup', label: 'Markup', href: '#markup',
+				iconMarkup: '<svg data-icon="markup"></svg>' }
+		]} />);
+
+		const text = container.querySelector('a[href="#text"] .antilia-breadcrumb-icon')!;
+		expect(text.textContent).toBe('<svg data-icon="text"></svg>');
+		expect(text.querySelector('svg')).toBeNull();
+		expect(container.querySelector('.antilia-breadcrumb-icon svg[data-icon="markup"]'))
+			.not.toBeNull();
+	});
 });

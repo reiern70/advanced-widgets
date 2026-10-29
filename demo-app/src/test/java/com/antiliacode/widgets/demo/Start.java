@@ -21,6 +21,8 @@ import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 
 import org.apache.wicket.protocol.ws.javax.WicketServerEndpointConfig;
+import org.eclipse.jetty.ee11.webapp.WebAppContext;
+import org.eclipse.jetty.ee11.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -28,11 +30,9 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 
 /**
  * Separate startup class for people that want to run the examples directly. Use parameter
@@ -64,7 +64,7 @@ public class Start
 
 		server.addConnector(http);
 
-		Resource keystore = Resource.newClassPathResource("/keystore");
+		Resource keystore = ResourceFactory.of(server).newClassLoaderResource("keystore");
 		if (keystore != null && keystore.exists())
 		{
 			// if a keystore for a SSL certificate is available, start a SSL
@@ -101,14 +101,9 @@ public class Start
 		bb.setContextPath("/");
 		bb.setWar("src/main/webapp");
 
-		// uncomment the next two lines if you want to start Jetty with WebSocket (JSR-356) support
-		// you need org.apache.wicket:wicket-native-websocket-javax in the classpath!
-		// ServerContainer serverContainer = WebSocketServerContainerInitializer.configureContext(bb);
-		// serverContainer.addEndpoint(new WicketServerEndpointConfig());
-
-		ServletContextHandler contextHandler = ServletContextHandler.getServletContextHandler(bb.getServletContext());
-		JakartaWebSocketServletContainerInitializer.configure(contextHandler,
-				(servletContext, container) -> container.addEndpoint(new WicketServerEndpointConfig()));
+		// Wicket's native websockets (JSR-356), with org.apache.wicket:wicket-native-websocket-javax
+		JakartaWebSocketServletContainerInitializer.configure(bb,
+			(servletContext, container) -> container.addEndpoint(new WicketServerEndpointConfig()));
 		// uncomment next line if you want to test with JSESSIONID encoded in the urls
 		// ((AbstractSessionManager)
 		// bb.getSessionHandler().getSessionManager()).setUsingCookies(false);

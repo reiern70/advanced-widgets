@@ -30,13 +30,20 @@ and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `Tab
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
 `RichTextEditor`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
 `palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `breadcrumb`, `desktop`, `resizable`, `codeEditor`,
-`markdownPreview` and `richTextEditor` also work as Svelte actions, and `Clipboard.install()` and
-`FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
+`markdownPreview` and `richTextEditor` also work as Svelte actions, and `FloatingPanel.install()`
+makes the floating panel markup work in any page. An element carrying `data-antilia-copy` copies
+its value on a click once `Clipboard.attach(element)` attached it, and the elements inside a
+container once `Clipboard.attachWithin(container)` did, as Wicket's `ClipboardCopyBehavior` and
+`ClipboardCopyBehavior.within()` do; `Clipboard.install()` makes every such element of the document
+copy, for a page that shows no HTML a user wrote, which could otherwise choose what lands on the
+clipboard.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
 `localRows`. The JSON grid demo does both: its rows come from `/api/users`, a `JsonRowsResource`
-that also creates, changes and deletes rows (POST, PUT and DELETE), or from a list the page gave.
+that also creates, changes and deletes rows (POST, PUT and DELETE, the rows sent with the content
+type `application/json`, which the resource requires; `isAllowed` lets it refuse a request), or from
+a list the page gave.
 A column's `minWidth` (`setColumnMinWidths` in Wicket, `data-min-width` on a header cell) is the
 narrowest it gets when resizable columns in `'stretch'` mode are laid out for the width of the
 parent: on a phone the table is then wider than its parent, rather than every column being
@@ -218,7 +225,11 @@ scripts it is shown. React's `RichTextEditor` takes `value` and `state` and call
 and `modified`. The browser's HTML is never to be trusted: Wicket's `RichTextEditor` cleans it on
 the server with `RichTextPolicy` (the OWASP Java HTML Sanitizer) before its model gets it, keeping
 what the features write, and `RichTextView` shows it cleaned the same way; a server keeping what
-the React or Svelte editor gives cleans it so.
+the React or Svelte editor gives cleans it so. Markdown and Tiptap's JSON are cleaned of the links
+and images to addresses other than http, https, mailto or relative ones (`RichTextMarkdownSanitizer`,
+`RichTextJsonSanitizer`), but HTML written in Markdown stays as it is: render Markdown with a
+renderer that shows HTML as text or leaves it out, as `MarkdownPreview` does, or give the editor a
+sanitizer of Markdown that cleans it (`setMarkdownSanitizer`).
 
 CKEditor 5 (`ck-editor.ts`, built as `antilia-ckeditor.js` for Wicket's `CKEditor`) is a second
 rich text editor, with the contract of the first: the text in a text area a form posts, HTML or
@@ -363,7 +374,9 @@ on markup of lists, the bar of the class `antilia-menu-list`, each item a link o
 children of its element with its submenu next to it, which React, Svelte and Wicket render, and
 change as they please. React's and Svelte's `Menu` take the tree of items, `items`: a link with
 `href`, a button with `onClick` (`onclick` in Svelte), a submenu with `items`, a separator
-`{ separator: true }`; `onSelect` hears each item chosen. In Wicket, `Menu` takes `IMenuItem`s, or an
+`{ separator: true }`; `onSelect` hears each item chosen. The `icon` of an item is a React node, or
+in Svelte a text, written as text, or a snippet; `iconMarkup` is markup written as is, an svg, for
+markup the page trusts only. In Wicket, `Menu` takes `IMenuItem`s, or an
 `IMenu` whose label names the bar: `BookmarkableMenuItem` (current on its page with the same
 parameters), `AjaxMenuItem`, `LinkMenuItem`, `SubMenu` and `MenuSeparator`, an item of one's own
 returning any link; `MenuLinkPanel` puts the icon and the label in the link of an item and its
@@ -383,7 +396,8 @@ trail collapses again when its crumbs change. Wicket renders the crumbs hidden a
 already, which the core takes over; the core makes the button when the markup has none. In the
 Bootstrap look the list is Bootstrap's `breadcrumb`, its crumbs `breadcrumb-item`s and the last one
 `active`, the separator through `--bs-breadcrumb-divider`. React's and Svelte's `Breadcrumb` take the
-crumbs, `items`: a link with `href`, a button with `onClick` (`onclick` in Svelte), or a label alone;
+crumbs, `items`: a link with `href`, a button with `onClick` (`onclick` in Svelte), or a label alone,
+with an `icon` or an `iconMarkup` as the items of the menus;
 `onSelect` hears each crumb chosen and `onExpand` the crumbs hidden shown. In Wicket, `Breadcrumb`
 takes the `IMenuItem`s of the menus: `BookmarkableMenuItem`, `AjaxMenuItem`, `LinkMenuItem`, and an
 item without a link, such as a `SubMenu`, is a crumb leading nowhere.

@@ -16,10 +16,16 @@
  * Copies text to the clipboard and shows a check mark where the copy was made.
  *
  * Clipboard.copy(text, iconTarget) copies the text and briefly shows a check icon over the end of
- * iconTarget, inside its box, so a cell clipping its content does not hide it. Once
- * Clipboard.install() ran, every element carrying a data-antilia-copy attribute copies its value
- * when it is clicked, or double clicked if data-antilia-copy-on="dblclick", showing the icon in
- * itself.
+ * iconTarget, inside its box, so a cell clipping its content does not hide it.
+ *
+ * An element carrying a data-antilia-copy attribute copies its value when it is clicked, or double
+ * clicked if data-antilia-copy-on="dblclick", showing the icon in itself, once the page said it
+ * may: Clipboard.attach(element) for the element itself, as Wicket's ClipboardCopyBehavior does,
+ * and Clipboard.attachWithin(container) for the elements inside a container, markup a template
+ * rendered for example. Other elements carrying the attribute, in HTML a user wrote say, copy
+ * nothing: no markup of the page chooses on its own what lands on the clipboard.
+ * Clipboard.install() makes every element of the document carrying the attribute copy, for a page
+ * whose markup is all its own.
  */
 
 import { getHost } from './host.js';
@@ -99,7 +105,46 @@ function showIcon(target: Element | null | undefined): void {
 	}, Clipboard.iconMillis);
 }
 
+const SELECTOR = '[data-antilia-copy]';
+
+/** The elements that copy their own data-antilia-copy. */
+const attached = new WeakSet<Element>();
+
+/** The containers whose elements carrying data-antilia-copy copy. */
+const containers = new WeakSet<Element>();
+
+/** How many installations of the whole document there are. */
 let installed = 0;
+
+/** How many installations and attachments listen to the document. */
+let listening = 0;
+
+function listen(): () => void {
+	if (listening++ === 0) {
+		document.addEventListener('click', Clipboard.onEvent);
+		document.addEventListener('dblclick', Clipboard.onEvent);
+	}
+	let undone = false;
+	return () => {
+		if (!undone && (undone = true) && --listening === 0) {
+			document.removeEventListener('click', Clipboard.onEvent);
+			document.removeEventListener('dblclick', Clipboard.onEvent);
+		}
+	};
+}
+
+/** @returns whether an element carrying data-antilia-copy may copy */
+function mayCopy(element: Element): boolean {
+	if (installed > 0 || attached.has(element)) {
+		return true;
+	}
+	for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+		if (containers.has(parent)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 export const Clipboard = {
 
@@ -125,10 +170,14 @@ export const Clipboard = {
 
 	/**
 	 * Copies the value of the data-antilia-copy attribute of the element an event happened in, if
-	 * the event is the one the element copies on.
+	 * the event is the one the element copies on and the element may copy: the closest one that
+	 * may, past those that may not.
 	 */
 	onEvent(event: Event): void {
-		const element = (event.target as Element | null)?.closest?.('[data-antilia-copy]');
+		let element = (event.target as Element | null)?.closest?.(SELECTOR) ?? null;
+		while (element && !mayCopy(element)) {
+			element = element.parentElement?.closest(SELECTOR) ?? null;
+		}
 		if (!element) {
 			return;
 		}
@@ -144,21 +193,59 @@ export const Clipboard = {
 	},
 
 	/**
-	 * Makes the elements with a data-antilia-copy attribute copy on a click or a double click.
-	 * Installing again only counts; the listeners are removed when every installation was undone.
+	 * Makes an element carrying a data-antilia-copy attribute copy on a click or a double click.
+	 *
+	 * @param element the element, nothing when null
+	 * @returns undoes this attachment
+	 */
+	attach(element: Element | null | undefined): () => void {
+		if (!element) {
+			return () => {};
+		}
+		attached.add(element);
+		const unlisten = listen();
+		return () => {
+			attached.delete(element);
+			unlisten();
+		};
+	},
+
+	/**
+	 * Makes the elements carrying a data-antilia-copy attribute inside a container copy on a click
+	 * or a double click, those rendered later too: the markup of the page's templates, for
+	 * example. Only for a container whose markup is the page's own, not HTML a user wrote.
+	 *
+	 * @param container the container, nothing when null
+	 * @returns undoes this attachment
+	 */
+	attachWithin(container: Element | null | undefined): () => void {
+		if (!container) {
+			return () => {};
+		}
+		containers.add(container);
+		const unlisten = listen();
+		return () => {
+			containers.delete(container);
+			unlisten();
+		};
+	},
+
+	/**
+	 * Makes every element of the document carrying a data-antilia-copy attribute copy on a click
+	 * or a double click: only for a page whose markup is all its own, never one showing HTML a user
+	 * wrote, which could choose what lands on the clipboard. Installing again only counts; the
+	 * listeners are removed when every installation was undone.
 	 *
 	 * @returns undoes this installation
 	 */
 	install(): () => void {
-		if (installed++ === 0) {
-			document.addEventListener('click', Clipboard.onEvent);
-			document.addEventListener('dblclick', Clipboard.onEvent);
-		}
+		installed++;
+		const unlisten = listen();
 		let undone = false;
 		return () => {
-			if (!undone && (undone = true) && --installed === 0) {
-				document.removeEventListener('click', Clipboard.onEvent);
-				document.removeEventListener('dblclick', Clipboard.onEvent);
+			if (!undone && (undone = true)) {
+				installed--;
+				unlisten();
 			}
 		};
 	}

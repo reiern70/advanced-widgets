@@ -23,6 +23,7 @@ import org.apache.wicket.markup.html.form.upload.resource.AbstractFileUploadReso
 import org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField;
 import org.apache.wicket.model.Model;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 /**
@@ -127,8 +128,8 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 		JSONObject guard = new JSONObject();
 		guard.put("leaving", keepingOnPage);
 		guard.put("requests", blockingRequests);
-		return "Wicket.Upload.guard(" + JSONObject.quote(getMarkupId()) + ", " +
-			(keepingOnPage || blockingRequests ? guard.toString() : "null") + ");";
+		return "Wicket.Upload.guard(" + ScriptJson.quote(getMarkupId()) + ", " +
+			(keepingOnPage || blockingRequests ? ScriptJson.of(guard) : "null") + ");";
 	}
 
 	/**
@@ -138,7 +139,7 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 	@Override
 	public String getTriggerUploadScript()
 	{
-		return getGuardScript() + "Wicket.Upload.upload(" + JSONObject.quote(getMarkupId()) + ");";
+		return getGuardScript() + "Wicket.Upload.upload(" + ScriptJson.quote(getMarkupId()) + ");";
 	}
 
 	@Override
@@ -148,7 +149,8 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 		Uploads.renderHeadItems(response);
 		// after Wicket's field is made, whose hooks it wraps
 		response.render(OnDomReadyHeaderItem.forScript(getGuardScript() +
-			"Wicket.Upload.field(" + JSONObject.quote(getMarkupId()) + ", " + newMessages() + ");"));
+			"Wicket.Upload.field(" + ScriptJson.quote(getMarkupId()) + ", " +
+			ScriptJson.of(newMessages()) + ");"));
 	}
 
 	/**

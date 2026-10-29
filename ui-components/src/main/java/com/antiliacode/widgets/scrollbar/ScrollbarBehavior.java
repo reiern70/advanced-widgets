@@ -29,6 +29,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONObject;
 
 /**
@@ -230,7 +231,7 @@ public class ScrollbarBehavior extends Behavior
 	public void scrollToElement(IPartialPageRequestHandler target, String selector)
 	{
 		Args.notEmpty(selector, "selector");
-		scroll(target, "scrollToElement(" + JSONObject.quote(selector) + ", " + smooth + ")");
+		scroll(target, "scrollToElement(" + ScriptJson.quote(selector) + ", " + smooth + ")");
 	}
 
 	/**
@@ -255,7 +256,7 @@ public class ScrollbarBehavior extends Behavior
 			throw new IllegalStateException("The behavior is not bound to a component");
 		}
 		target.appendJavaScript("Wicket.Scrollbar.of(" +
-			JSONObject.quote(component.getMarkupId()) + ")?." + call + ";");
+			ScriptJson.quote(component.getMarkupId()) + ")?." + call + ";");
 	}
 
 	@Override
@@ -273,7 +274,7 @@ public class ScrollbarBehavior extends Behavior
 			options.put("header", header);
 		}
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Scrollbar.attach(" +
-			JSONObject.quote(component.getMarkupId()) + ", " + options + ");"));
+			ScriptJson.quote(component.getMarkupId()) + ", " + ScriptJson.of(options) + ");"));
 	}
 
 	/**

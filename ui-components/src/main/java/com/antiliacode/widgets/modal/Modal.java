@@ -36,6 +36,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.antiliacode.widgets.theme.LookBehavior;
@@ -510,7 +511,7 @@ public class Modal extends ModalDialog
 		if (discardQuestion != null)
 		{
 			return "function(dialog) { return !Wicket.Modal.isModified(dialog) || " +
-				"window.confirm(" + JSONObject.quote(discardQuestion.getObject()) + "); }";
+				"window.confirm(" + ScriptJson.quote(discardQuestion.getObject()) + "); }";
 		}
 		return canClose;
 	}
@@ -548,7 +549,7 @@ public class Modal extends ModalDialog
 		if (isOpen())
 		{
 			response.render(OnDomReadyHeaderItem.forScript("Wicket.Modal.attach(" +
-				JSONObject.quote(getOverlayMarkupId()) + ", " + getOptions() + ");"));
+				ScriptJson.quote(getOverlayMarkupId()) + ", " + getOptions() + ");"));
 		}
 	}
 
@@ -571,7 +572,7 @@ public class Modal extends ModalDialog
 		{
 			options.put("width", width);
 		}
-		String json = options.toString();
+		String json = ScriptJson.of(options);
 		StringBuilder script = new StringBuilder(json.substring(0, json.length() - 1));
 		script.append(",\"onClose\":function(){")
 			.append(closeRequest.getCallbackScript())
@@ -580,7 +581,7 @@ public class Modal extends ModalDialog
 		if (function != null)
 		{
 			script.append(",\"canClose\":function(){var dialog=document.getElementById(")
-				.append(JSONObject.quote(getOverlayMarkupId()))
+				.append(ScriptJson.quote(getOverlayMarkupId()))
 				.append(").querySelector('.modal-dialog');return (")
 				.append(function)
 				.append(").call(dialog,dialog)!==false;}");

@@ -13,20 +13,26 @@
  */
 package com.antiliacode.widgets.throttle;
 
+import java.io.Serializable;
 import java.util.Locale;
+import java.util.concurrent.Semaphore;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.MetaDataKey;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes.Method;
+import org.apache.wicket.core.request.handler.ListenerRequestHandler;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.protocol.http.servlet.AbstractRequestWrapperFactory;
+import org.apache.wicket.request.IRequestHandler;
+import org.apache.wicket.request.IRequestHandlerDelegate;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.http.WebRequest;
 import org.apache.wicket.util.lang.Args;
 
+import jakarta.servlet.ServletRequestWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
@@ -50,8 +56,13 @@ import jakarta.servlet.http.HttpSession;
  * wait: they carry the parameter {@value #EXEMPT_PARAMETER}, see
  * {@link #exempt(AjaxRequestAttributes)}.
  * <p>
- * A slowed down request holds a thread of the server while it waits: an application open to
- * anybody shows the components to those trusted with it only.
+ * Only the Ajax requests of the session's pages and their behaviors wait, the requests of the
+ * components and behaviors the session uses; not those of resources, websockets or pages
+ * rendered. A slowed down request holds a thread of the server while it waits, so at most
+ * {@value #MAX_SLOWED} requests of a session are slowed down at once, waiting or sending files;
+ * the others go at full speed. An application open to anybody shows the components to those
+ * trusted with it only, and {@link #reset(HttpServletRequest)} undoes the settings, when the user
+ * signs out for example.
  *
  * @since 11.0.0
  */
@@ -65,6 +76,18 @@ public final class Throttle
 
 	/** The attribute of the HTTP session holding the {@link UploadSpeed}. */
 	static final String UPLOAD_SPEED = UploadSpeed.class.getName();
+
+	/** How many requests of a session are slowed down at once, at most. */
+	public static final int MAX_SLOWED = 2;
+
+	/** The attribute of the HTTP session holding the permits of its requests to slow down. */
+	static final String PERMITS = Permits.class.getName();
+
+	/** The request was slowed down already: it waits once. */
+	private static final MetaDataKey<Boolean> DELAYED = new MetaDataKey<>()
+	{
+		private static final long serialVersionUID = 1L;
+	};
 
 	private static final MetaDataKey<Boolean> INSTALLED = new MetaDataKey<>()
 	{
@@ -156,6 +179,48 @@ public final class Throttle
 	}
 
 	/**
+	 * Undoes the settings of the session: nothing slows down any more.
+	 *
+	 * @param request
+	 *            a request of the session
+	 */
+	public static void reset(HttpServletRequest request)
+	{
+		setAjaxDelay(request, AjaxDelay.NONE);
+		setUploadSpeed(request, UploadSpeed.FULL);
+	}
+
+	/**
+	 * @param request
+	 *            a request of the session
+	 * @return the permits of the session's requests to slow down, {@value #MAX_SLOWED} at first;
+	 *         {@code null} without a session
+	 */
+	static Semaphore permits(HttpServletRequest request)
+	{
+		HttpSession session = request.getSession(false);
+		if (session == null)
+		{
+			return null;
+		}
+		Object permits = session.getAttribute(PERMITS);
+		if (!(permits instanceof Permits))
+		{
+			// the requests of a session making them at once share the first
+			synchronized (Permits.class)
+			{
+				permits = session.getAttribute(PERMITS);
+				if (!(permits instanceof Permits))
+				{
+					permits = new Permits();
+					session.setAttribute(PERMITS, permits);
+				}
+			}
+		}
+		return ((Permits)permits).get();
+	}
+
+	/**
 	 * Has an Ajax request never wait: it goes by GET, carrying {@value #EXEMPT_PARAMETER}, as
 	 * those of the throttle's own components do, so that slowing down can be undone at once.
 	 *
@@ -194,7 +259,8 @@ public final class Throttle
 	/**
 	 * @param request
 	 *            a request
-	 * @return the request, its body read at the upload speed of the session when it sends files
+	 * @return the request, its body read at the upload speed of the session when it sends files,
+	 *         unless {@value #MAX_SLOWED} requests of the session are slowed down already
 	 */
 	static HttpServletRequest slowDown(HttpServletRequest request)
 	{
@@ -203,8 +269,29 @@ public final class Throttle
 			return request;
 		}
 		UploadSpeed speed = getUploadSpeed(request);
-		return speed == UploadSpeed.FULL ? request
-			: new UploadSpeed.SlowRequest(request, speed.getBytesPerSecond());
+		Semaphore permits = speed == UploadSpeed.FULL ? null : permits(request);
+		if (permits == null || !permits.tryAcquire())
+		{
+			return request;
+		}
+		return new UploadSpeed.SlowRequest(request, speed.getBytesPerSecond(), permits);
+	}
+
+	/**
+	 * @return the request reading its body slowly, which holds a permit, {@code null} if none
+	 */
+	static UploadSpeed.SlowRequest slowRequest(Request request)
+	{
+		Object container = request != null ? request.getContainerRequest() : null;
+		while (container instanceof ServletRequestWrapper wrapper)
+		{
+			if (wrapper instanceof UploadSpeed.SlowRequest slow)
+			{
+				return slow;
+			}
+			container = wrapper.getRequest();
+		}
+		return null;
 	}
 
 	private static boolean isUpload(HttpServletRequest request)
@@ -215,33 +302,88 @@ public final class Throttle
 	}
 
 	/**
-	 * Waits for the {@link AjaxDelay} of the session before taking on each of its Ajax requests,
-	 * but those exempted.
+	 * Waits for the {@link AjaxDelay} of the session before calling the component or behavior
+	 * each of its Ajax requests calls, but those exempted, and frees the permits of the requests
+	 * slowed down once they are done.
 	 */
 	static final class AjaxDelayListener implements IRequestCycleListener
 	{
 		@Override
-		public void onBeginRequest(RequestCycle cycle)
+		public void onRequestHandlerResolved(RequestCycle cycle, IRequestHandler handler)
 		{
+			IRequestHandler resolved = handler;
+			while (resolved instanceof IRequestHandlerDelegate delegate)
+			{
+				resolved = delegate.getDelegateHandler();
+			}
 			Request request = cycle.getRequest();
-			if (!(request instanceof WebRequest web) || !web.isAjax() ||
+			if (!(resolved instanceof ListenerRequestHandler) ||
+				Boolean.TRUE.equals(cycle.getMetaData(DELAYED)) ||
+				!(request instanceof WebRequest web) || !web.isAjax() ||
 				!(web.getContainerRequest() instanceof HttpServletRequest http) ||
 				!web.getQueryParameters().getParameterValue(EXEMPT_PARAMETER).isEmpty())
 			{
 				return;
 			}
+			cycle.setMetaData(DELAYED, Boolean.TRUE);
 			long millis = getAjaxDelay(http).getDuration().toMillis();
-			if (millis > 0)
+			if (millis <= 0)
 			{
-				try
+				return;
+			}
+			// a request sending files slowly holds a permit already, for its thread
+			UploadSpeed.SlowRequest upload = slowRequest(request);
+			boolean holding = upload != null && upload.holdsPermit();
+			Semaphore permits = holding ? null : permits(http);
+			if (!holding && (permits == null || !permits.tryAcquire()))
+			{
+				return;
+			}
+			try
+			{
+				Thread.sleep(millis);
+			}
+			catch (InterruptedException e)
+			{
+				Thread.currentThread().interrupt();
+			}
+			finally
+			{
+				if (permits != null)
 				{
-					Thread.sleep(millis);
-				}
-				catch (InterruptedException e)
-				{
-					Thread.currentThread().interrupt();
+					permits.release();
 				}
 			}
+		}
+
+		@Override
+		public void onDetach(RequestCycle cycle)
+		{
+			UploadSpeed.SlowRequest upload = slowRequest(cycle.getRequest());
+			if (upload != null)
+			{
+				upload.release();
+			}
+		}
+	}
+
+	/**
+	 * The permits of the requests of a session to slow down, kept in the session: made anew when
+	 * the session is.
+	 */
+	static final class Permits implements Serializable
+	{
+		private static final long serialVersionUID = 1L;
+
+		private transient Semaphore semaphore;
+
+		synchronized Semaphore get()
+		{
+			if (semaphore == null)
+			{
+				semaphore = new Semaphore(MAX_SLOWED);
+			}
+			return semaphore;
 		}
 	}
 

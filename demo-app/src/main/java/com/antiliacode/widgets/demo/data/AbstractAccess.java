@@ -25,14 +25,24 @@ import jakarta.persistence.MappedSuperclass;
 /**
  * What is kept of a session on the site: who it was, from where, when on the server's and on the
  * visitor's clock, and whether it opened the private part, the demos. An {@link Access} while it is
- * recent, an {@link OldAccess} once {@link Accesses#archive(Instant) archived}.
+ * recent, an {@link OldAccess} once {@link Accesses#archive(Instant) archived}. What the visitor's
+ * request tells, the address and the browser, is cut to the length of its column.
  */
 @MappedSuperclass
 public abstract class AbstractAccess implements Serializable, IIdentifiable<Long>
 {
 	private static final long serialVersionUID = 1L;
 
-	@Column(name = "session_id", length = 100)
+	/** The longest session id kept. */
+	public static final int MAXIMUM_SESSION_ID = 100;
+
+	/** The longest address kept. */
+	public static final int MAXIMUM_ADDRESS = 100;
+
+	/** The longest description of the browser kept. */
+	public static final int MAXIMUM_USER_AGENT = 500;
+
+	@Column(name = "session_id", length = MAXIMUM_SESSION_ID)
 	private String sessionId;
 
 	@Column(name = "user_name", nullable = false, length = 254)
@@ -41,10 +51,10 @@ public abstract class AbstractAccess implements Serializable, IIdentifiable<Long
 	@Column(name = "private_part", nullable = false)
 	private boolean privatePart;
 
-	@Column(length = 100)
+	@Column(length = MAXIMUM_ADDRESS)
 	private String address;
 
-	@Column(name = "user_agent", length = 500)
+	@Column(name = "user_agent", length = MAXIMUM_USER_AGENT)
 	private String userAgent;
 
 	@Column(nullable = false)
@@ -64,18 +74,26 @@ public abstract class AbstractAccess implements Serializable, IIdentifiable<Long
 	 * @param sessionId
 	 *            the id of the session
 	 * @param address
-	 *            the address the visitor came from
+	 *            the address the visitor came from, cut to {@value #MAXIMUM_ADDRESS} characters
 	 * @param userAgent
-	 *            the visitor's browser
+	 *            the visitor's browser, cut to {@value #MAXIMUM_USER_AGENT} characters
 	 * @param accessed
 	 *            when, on the server's clock
 	 */
 	protected AbstractAccess(String sessionId, String address, String userAgent, Instant accessed)
 	{
-		this.sessionId = sessionId;
-		this.address = address;
-		this.userAgent = userAgent;
+		this.sessionId = cut(sessionId, MAXIMUM_SESSION_ID);
+		this.address = cut(address, MAXIMUM_ADDRESS);
+		this.userAgent = cut(userAgent, MAXIMUM_USER_AGENT);
 		this.accessed = accessed;
+	}
+
+	/**
+	 * @return the text, its first characters only if it is longer than the maximum
+	 */
+	static String cut(String text, int maximum)
+	{
+		return text == null || text.length() <= maximum ? text : text.substring(0, maximum);
 	}
 
 	public String getSessionId()
@@ -85,7 +103,7 @@ public abstract class AbstractAccess implements Serializable, IIdentifiable<Long
 
 	public void setSessionId(String sessionId)
 	{
-		this.sessionId = sessionId;
+		this.sessionId = cut(sessionId, MAXIMUM_SESSION_ID);
 	}
 
 	public String getUserName()

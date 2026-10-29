@@ -47,6 +47,7 @@ import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
+import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
@@ -353,8 +354,8 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	{
 		Args.notNull(node, "node");
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".renderNode(" +
-			JSONObject.quote(getNodeKey(node)) + ", " +
-			escapeForScript(jsonSerializer.toJson(getNodeData(node))) + "); }");
+			ScriptJson.quote(getNodeKey(node)) + ", " +
+			ScriptJson.escape(jsonSerializer.toJson(getNodeData(node))) + "); }");
 	}
 
 	/**
@@ -603,13 +604,14 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 			CallbackParameter.explicit(ACTION_PARAMETER), CallbackParameter.explicit(KEY_PARAMETER))
 			.toString();
 		String callbacks = "(function (send) { return { " +
-			"select: function (key) { send(" + JSONObject.quote(SELECT_ACTION) + ", key); }, " +
+			"select: function (key) { send(" + ScriptJson.quote(SELECT_ACTION) + ", key); }, " +
 			"action: function (action, key) { send(action, key); }, " +
-			"toggle: function (key, expanded) { send(expanded ? " + JSONObject.quote(EXPAND_ACTION) +
-			" : " + JSONObject.quote(COLLAPSE_ACTION) + ", key); } }; })(" + send + ")";
+			"toggle: function (key, expanded) { send(expanded ? " +
+			ScriptJson.quote(EXPAND_ACTION) + " : " + ScriptJson.quote(COLLAPSE_ACTION) +
+			", key); } }; })(" + send + ")";
 		response.render(OnDomReadyHeaderItem.forScript("new Wicket.JsonTree(" +
-			escapeForScript(buildConfig().toString()) + ", " + callbacks + ", " +
-			escapeForScript(jsonSerializer.toJson(toNodes(provider.getRoots()))) + ");"));
+			ScriptJson.of(buildConfig()) + ", " + callbacks + ", " +
+			ScriptJson.escape(jsonSerializer.toJson(toNodes(provider.getRoots()))) + ");"));
 	}
 
 	/**
@@ -695,20 +697,11 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
-	 * @return the JSON with {@code <}, {@code >} and {@code &} escaped, so it cannot end the script
-	 *         or the section of the Ajax response it is written into
-	 */
-	private static String escapeForScript(String json)
-	{
-		return json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026");
-	}
-
-	/**
 	 * @return the expression evaluating to the tree's client-side instance
 	 */
 	private String getVarName()
 	{
-		return "Wicket.JsonTree.instances[" + JSONObject.quote(getMarkupId()) + "]";
+		return "Wicket.JsonTree.instances[" + ScriptJson.quote(getMarkupId()) + "]";
 	}
 
 	@Override

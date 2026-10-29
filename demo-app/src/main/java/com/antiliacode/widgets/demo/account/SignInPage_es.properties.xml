@@ -25,4 +25,7 @@
 	<entry key="register">Regístrese</entry>
 	<entry key="Required">El campo «${label}» es obligatorio.</entry>
 	<entry key="notValidated">Primero confirme su correo: abra el enlace que enviamos a {0}. ¿No le llega? Mire en la carpeta de spam; si vuelve a iniciar sesión en unos minutos le enviaremos otro.</entry>
+	<entry key="captchaNeeded">Demasiados intentos fallidos: resuelva también la prueba de abajo.</entry>
+	<entry key="waitSeconds">Demasiados intentos fallidos: vuelva a intentarlo dentro de {0,choice,1#un segundo|1&lt;{0} segundos}.</entry>
+	<entry key="waitMinutes">Demasiados intentos fallidos: vuelva a intentarlo dentro de {0} minutos.</entry>
 </properties>

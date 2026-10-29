@@ -311,7 +311,8 @@ class NotificationsTest extends WicketTestCase
 		TestPage page = tester.startPage(new TestPage(test -> test.notifications.show(Notification
 			.success("<b>Ada</b> was saved.").setEscapeBody(false))));
 
-		tester.assertContains("\\{\"type\":\"success\",\"body\":\"<b>Ada<\\\\/b> was saved.\"," +
+		tester.assertContains("\\{\"type\":\"success\"," +
+			"\"body\":\"\\\\u003cb\\\\u003eAda\\\\u003c\\\\/b\\\\u003e was saved.\"," +
 			"\"html\":true\\}");
 		assertFalse(Notification.info("x").toJson().has("html"), "text by default");
 		assertFalse(Notification.info(null).setEscapeBody(false).toJson().has("html"), "no body");
@@ -321,7 +322,7 @@ class NotificationsTest extends WicketTestCase
 			page.info("<i>Note</i>");
 		};
 		tester.clickLink("link");
-		tester.assertContains("\"body\":\"<i>Note<\\\\/i>\",\"html\":true");
+		tester.assertContains("\"body\":\"\\\\u003ci\\\\u003eNote\\\\u003c\\\\/i\\\\u003e\",\"html\":true");
 	}
 
 	@Test

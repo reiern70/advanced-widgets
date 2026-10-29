@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -25,12 +26,14 @@ import org.apache.wicket.util.lang.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
 import com.antiliacode.widgets.demo.data.Access;
 import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.modal.TeamStore;
 import com.antiliacode.widgets.theme.Theme;
+import com.antiliacode.widgets.throttle.Throttle;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -51,12 +54,20 @@ public class DemoSession extends WebSession
 	/**
 	 * The query parameter with which a visitor who does not sign in, such as a script checking
 	 * the site, tells who it is: {@code ?visitor=claude-dev} on any page records the access of the
-	 * session as {@code user-claude-dev}.
+	 * session as {@code user-claude-dev}. It changes a session there is already; a visitor without
+	 * one gets it from the script of the page, which passes the name on, see
+	 * {@link com.antiliacode.widgets.demo.admin.AccessTimeResource}.
 	 */
 	public static final String VISITOR_PARAMETER = "visitor";
 
 	/** What a visitor may tell it is: a few letters, digits, dots and dashes. */
 	private static final Pattern VISITOR = Pattern.compile("[a-z0-9][a-z0-9.-]{0,39}");
+
+	/**
+	 * How long a session signed in goes at most without looking at its account, see
+	 * {@link #checkAccount()}.
+	 */
+	public static final Duration ACCOUNT_CHECK = Duration.ofSeconds(5);
 
 	private Theme theme = Theme.DEFAULT;
 
@@ -83,6 +94,15 @@ public class DemoSession extends WebSession
 
 	/** Whether the access knows that the session opened the private part. */
 	private boolean privatePartRecorded;
+
+	/**
+	 * When the account was last found as the session signed in with it, in milliseconds, see
+	 * {@link #checkAccount()}.
+	 */
+	private transient long accountChecked;
+
+	/** The {@link Accounts#changes()} then. */
+	private transient long accountChanges;
 
 	public DemoSession(Request request)
 	{
@@ -206,6 +226,8 @@ public class DemoSession extends WebSession
 			this.account = account;
 			this.role = role;
 			failedSignIns = 0;
+			accountChecked = System.currentTimeMillis();
+			accountChanges = Accounts.changes();
 			dirty();
 			return getId();
 		});
@@ -236,7 +258,36 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * Signs the user out, keeping the theme and the other choices.
+	 * Signs the user out when the account was removed or locked, or has another role than when
+	 * the user signed in with it, so that the session does not outlive the account. It looks at
+	 * the account at the first request after accounts were removed or locked, else at most every
+	 * {@link #ACCOUNT_CHECK}.
+	 */
+	public void checkAccount()
+	{
+		if (account == null)
+		{
+			return;
+		}
+		long now = System.currentTimeMillis();
+		long changes = Accounts.changes();
+		if (changes == accountChanges && now - accountChecked < ACCOUNT_CHECK.toMillis())
+		{
+			return;
+		}
+		accountChecked = now;
+		accountChanges = changes;
+		if (!Accounts.get().isStillSignedIn(account, role))
+		{
+			LOG.info("The account {} is gone, locked or changed: session {} is signed out",
+				account, getId());
+			signOut();
+		}
+	}
+
+	/**
+	 * Signs the user out, keeping the theme and the other choices, but for those of the
+	 * {@link Throttle}, which are for the demos.
 	 */
 	public void signOut()
 	{
@@ -247,6 +298,22 @@ public class DemoSession extends WebSession
 		account = null;
 		role = null;
 		dirty();
+		RequestCycle cycle = RequestCycle.get();
+		if (cycle != null &&
+			cycle.getRequest().getContainerRequest() instanceof HttpServletRequest request)
+		{
+			Throttle.reset(request);
+		}
+	}
+
+	/**
+	 * @param name
+	 *            what a visitor tells it is
+	 * @return whether it is a name a visitor may tell: a few letters, digits, dots and dashes
+	 */
+	public static boolean isVisitorName(String name)
+	{
+		return name != null && VISITOR.matcher(name).matches();
 	}
 
 	/**
@@ -259,7 +326,7 @@ public class DemoSession extends WebSession
 	 */
 	public void identify(String name)
 	{
-		if (name == null || !VISITOR.matcher(name).matches() || ("user-" + name).equals(visitor))
+		if (!isVisitorName(name) || ("user-" + name).equals(visitor))
 		{
 			return;
 		}
@@ -333,7 +400,7 @@ public class DemoSession extends WebSession
 
 	/**
 	 * Changes the access recording this session, made first if there is none. A failing database
-	 * is logged and does not fail the request.
+	 * is logged in a line, without the stack, and does not fail the request.
 	 *
 	 * @param change
 	 *            the change
@@ -348,8 +415,18 @@ public class DemoSession extends WebSession
 		}
 		catch (RuntimeException e)
 		{
-			LOG.warn("Cannot record the access of session {}", getId(), e);
+			LOG.warn("Cannot record the access of session {}: {}", getId(), firstLine(e));
 		}
+	}
+
+	/**
+	 * @return what went wrong, in a short line
+	 */
+	static String firstLine(Throwable e)
+	{
+		String line = e.getClass().getSimpleName() + ": " +
+			String.valueOf(e.getMessage()).lines().findFirst().orElse("");
+		return line.length() > 200 ? line.substring(0, 200) + "..." : line;
 	}
 
 	/**

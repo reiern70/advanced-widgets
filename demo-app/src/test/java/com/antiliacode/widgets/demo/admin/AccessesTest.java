@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.RuntimeConfigurationType;
@@ -41,6 +43,7 @@ import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.demo.data.AbstractAccess;
 import com.antiliacode.widgets.demo.data.Access;
 import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.OldAccess;
@@ -81,6 +84,10 @@ class AccessesTest
 		tester.startPage(HomePage.class);
 		tester.assertContains(AccessTimeResource.PATH);
 		assertNull(DemoSession.get().getAccessId());
+		Matcher shown = Pattern.compile(AccessTimeResource.SHOWN + ": '([^']+)'")
+			.matcher(tester.getLastResponseAsString());
+		assertTrue(shown.find(), "the script proves the page was shown");
+		assertTrue(AccessTimeResource.isShown(shown.group(1), Instant.now()));
 
 		postTime("Europe/Madrid", "2026-10-10T08:15:30.123");
 
@@ -135,6 +142,20 @@ class AccessesTest
 	}
 
 	@Test
+	void aLongDescriptionOfTheBrowserIsCutToItsColumn()
+	{
+		tester.startPage(HomePage.class);
+		tester.getRequest().setHeader("User-Agent", "Mozilla/5.0 " + "x".repeat(5000));
+		postTime("UTC", "2026-10-15T10:00:00");
+
+		Access access = access();
+		assertEquals(AbstractAccess.MAXIMUM_USER_AGENT, access.getUserAgent().length());
+		assertTrue(access.getUserAgent().startsWith("Mozilla/5.0 x"));
+		assertEquals("UTC", access.getTimeZone());
+		assertEquals(1, Accesses.get().count());
+	}
+
+	@Test
 	void theResourceOnlyTakesPosts()
 	{
 		tester.executeUrl(AccessTimeResource.PATH);
@@ -178,16 +199,55 @@ class AccessesTest
 	}
 
 	@Test
+	void aRequestAloneMakesNeitherASessionNorAnAccess()
+	{
+		Instant now = Instant.now();
+		for (String shown : new String[] { null, "", "12345", "x.y",
+			AccessTimeResource.shown(now).replaceFirst("\\..*", ".forged"),
+			AccessTimeResource.shown(now.minus(AccessTimeResource.SHOWN_VALID).minusSeconds(60)) })
+		{
+			MockHttpServletRequest request = tester.getRequest();
+			request.setMethod("POST");
+			request.setURL(request.getContextPath() + request.getServletPath() + "/" +
+				AccessTimeResource.PATH + "?" + DemoSession.VISITOR_PARAMETER + "=intruder");
+			request.getPostParameters().setParameterValue("zone", "UTC");
+			if (shown != null)
+			{
+				request.getPostParameters().setParameterValue(AccessTimeResource.SHOWN, shown);
+			}
+			tester.processRequest();
+
+			assertEquals(204, tester.getLastResponse().getStatus());
+			assertTrue(DemoSession.get().isTemporary(), shown);
+		}
+		tester.startPage(HomePage.class,
+			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "intruder"));
+		assertTrue(DemoSession.get().isTemporary());
+		assertEquals(0, Accesses.get().count());
+		assertFalse(AccessTimeResource.isShown(null, now));
+	}
+
+	@Test
 	void aVisitorTellsWhoItIs()
 	{
 		tester.startPage(HomePage.class,
 			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "claude-dev"));
 
-		// recorded at once, the script and robots alike
+		// without a session, the script of the page makes it and passes the name on; robots
+		// that run no scripts leave nothing behind
+		assertTrue(DemoSession.get().isTemporary());
+		Matcher url = Pattern.compile("fetch\\('[^']*" + AccessTimeResource.PATH + "\\?" +
+			DemoSession.VISITOR_PARAMETER + "=claude-dev'").matcher(tester.getLastResponseAsString());
+		assertTrue(url.find(), tester.getLastResponseAsString());
+		postTime("UTC", "2026-10-15T10:00:00",
+			"?" + DemoSession.VISITOR_PARAMETER + "=claude-dev");
 		assertEquals("user-claude-dev", access().getUserName());
-		assertFalse(DemoSession.get().isTemporary());
-		postTime("UTC", "2026-10-15T10:00:00");
-		assertEquals("user-claude-dev", access().getUserName());
+		assertEquals(1, Accesses.get().count());
+
+		// with a session, the name is taken at once
+		tester.startPage(HomePage.class,
+			new PageParameters().add(DemoSession.VISITOR_PARAMETER, "claude-ci"));
+		assertEquals("user-claude-ci", access().getUserName());
 		assertEquals(1, Accesses.get().count());
 
 		// the account signed in with wins
@@ -412,12 +472,22 @@ class AccessesTest
 
 	private void postTime(String zone, String local)
 	{
+		postTime(zone, local, "");
+	}
+
+	/**
+	 * Posts the visitor's clock as the script of a page shown now does.
+	 */
+	private void postTime(String zone, String local, String query)
+	{
 		MockHttpServletRequest request = tester.getRequest();
 		request.setMethod("POST");
 		request.setURL(request.getContextPath() + request.getServletPath() + "/" +
-			AccessTimeResource.PATH);
+			AccessTimeResource.PATH + query);
 		request.getPostParameters().setParameterValue("zone", zone);
 		request.getPostParameters().setParameterValue("local", local);
+		request.getPostParameters().setParameterValue(AccessTimeResource.SHOWN,
+			AccessTimeResource.shown(Instant.now()));
 		tester.processRequest();
 		assertEquals(204, tester.getLastResponse().getStatus());
 	}
