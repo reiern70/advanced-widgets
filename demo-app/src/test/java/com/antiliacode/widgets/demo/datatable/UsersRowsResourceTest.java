@@ -123,6 +123,8 @@ class UsersRowsResourceTest
 	private JSONObject request(String method, String path, int status)
 	{
 		tester.getRequest().setMethod(method);
+		// the rows go as JSON, as the resource requires
+		tester.getRequest().setHeader("Content-Type", "application/json");
 		tester.executeUrl(path);
 		assertEquals(status, tester.getLastResponse().getStatus(), tester.getLastResponseAsString());
 		return new JSONObject(tester.getLastResponseAsString());

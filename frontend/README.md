@@ -41,7 +41,9 @@ clipboard.
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's
 `localRows`. The JSON grid demo does both: its rows come from `/api/users`, a `JsonRowsResource`
-that also creates, changes and deletes rows (POST, PUT and DELETE), or from a list the page gave.
+that also creates, changes and deletes rows (POST, PUT and DELETE, the rows sent with the content
+type `application/json`, which the resource requires; `isAllowed` lets it refuse a request), or from
+a list the page gave.
 A column's `minWidth` (`setColumnMinWidths` in Wicket, `data-min-width` on a header cell) is the
 narrowest it gets when resizable columns in `'stretch'` mode are laid out for the width of the
 parent: on a phone the table is then wider than its parent, rather than every column being

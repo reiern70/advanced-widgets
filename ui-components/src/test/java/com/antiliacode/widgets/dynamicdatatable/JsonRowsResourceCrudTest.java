@@ -50,6 +50,9 @@ class JsonRowsResourceCrudTest extends WicketTestCase
 	/** The body the next request sends. */
 	private static String body = "";
 
+	/** The method the resource refuses, if any. */
+	private static String refused;
+
 	private static final ResourceReference NOTES_REFERENCE = new ResourceReference(
 		JsonRowsResourceCrudTest.class, "notes")
 	{
@@ -88,6 +91,7 @@ class JsonRowsResourceCrudTest extends WicketTestCase
 	{
 		NOTES.clear();
 		IDS.set(0);
+		refused = null;
 		for (String text : List.of("one", "two"))
 		{
 			Note note = new Note(IDS.incrementAndGet(), text);
@@ -167,9 +171,54 @@ class JsonRowsResourceCrudTest extends WicketTestCase
 		assertEquals(2, NOTES.size());
 	}
 
+	@Test
+	void answers415ForARowThatIsNotSentAsJson()
+	{
+		body = "{\"text\":\"three\"}";
+		for (String type : new String[] { null, "text/plain", "application/x-www-form-urlencoded",
+			"multipart/form-data; boundary=x", "application/jsonp" })
+		{
+			for (String method : new String[] { "POST", "PUT" })
+			{
+				tester.getRequest().setMethod(method);
+				if (type != null)
+				{
+					tester.getRequest().setHeader("Content-Type", type);
+				}
+				tester.executeUrl("api/notes?key=1");
+				assertEquals(415, tester.getLastResponse().getStatus(), method + " " + type);
+			}
+		}
+		assertEquals(2, NOTES.size());
+		assertEquals("one", NOTES.get(1L).getText());
+
+		tester.getRequest().setMethod("PUT");
+		tester.getRequest().setHeader("Content-Type", " Application/JSON ; charset=UTF-8");
+		tester.executeUrl("api/notes?key=1");
+		assertEquals(200, tester.getLastResponse().getStatus(), "with parameters");
+		assertEquals("three", NOTES.get(1L).getText());
+	}
+
+	@Test
+	void answers403WhenTheResourceRefuses()
+	{
+		refused = "DELETE";
+		request("DELETE", "api/notes?key=1", 403);
+		assertEquals(2, NOTES.size());
+		request("GET", "api/notes?key=1", 200);
+		refused = "GET";
+		assertEquals("Forbidden", request("GET", "api/notes?first=0", 403).getString("error"));
+		body = "{\"text\":\"three\"}";
+		request("POST", "api/notes", 201);
+	}
+
 	private JSONObject request(String method, String path, int status)
 	{
 		tester.getRequest().setMethod(method);
+		if ("POST".equals(method) || "PUT".equals(method))
+		{
+			tester.getRequest().setHeader("Content-Type", "application/json");
+		}
 		tester.executeUrl(path);
 		assertEquals(status, tester.getLastResponse().getStatus(), tester.getLastResponseAsString());
 		assertEquals("application/json", tester.getLastResponse().getContentType().split(";")[0]);
@@ -248,6 +297,12 @@ class JsonRowsResourceCrudTest extends WicketTestCase
 		protected String readBody(Attributes attributes)
 		{
 			return body;
+		}
+
+		@Override
+		protected boolean isAllowed(Attributes attributes, String method)
+		{
+			return !method.equals(refused);
 		}
 	}
 
