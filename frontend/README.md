@@ -160,9 +160,15 @@ images and alignment, the features
 (`RICH_TEXT_FEATURES`, `rich-text-schema.ts`), all of them unless the page gives fewer
 (`features`); a feature left out is not in the schema, so a paste brings its text alone, and its
 tools do not show. The toolbar is the page's, in groups (`toolbar`, `DEFAULT_RICH_TEXT_TOOLBAR`;
-false for none), a WAI-ARIA toolbar the arrow keys move along; the text style, the colors and the
-table open a menu, the link and the image a form in a popover; `bubbleMenu` adds the inline formats over a
-selection. The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types,
+false for none), a WAI-ARIA toolbar the arrow keys move along; the text style and the table open a
+menu, the link and the image a form in a popover; `bubbleMenu` adds the inline formats over a
+selection. The colors of the text and of its background open a color picker, a menu too: the
+default (none for the background) on a line of its own, the colors of the palette as squares in a
+grid of six columns at most, named by their colors, and below them the last four colors chosen that
+the palette has, under *Recent*; the color where the cursor is has a tick, and the arrow keys move
+through the grid by columns and by rows. The last colors chosen are kept apart for the text and the
+background, for the editors of the site, in `localStorage` (in memory while the browser keeps none;
+`recentRichTextColors` in `rich-text-toolbar.ts`). The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user types,
 Ctrl+K edits the link, Ctrl+S calls `onSave`, and Escape, then Tab, leaves the editor even in a
 list. The text is HTML by default, or Markdown (`format: 'markdown'`, Tiptap's Markdown extension;
 underlined text, colors and alignment are then left out, Markdown has no syntax for them) or

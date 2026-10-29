@@ -185,12 +185,13 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"addRowAfter", "addColumnBefore", "addColumnAfter", "deleteRow", "deleteColumn",
 		"toggleHeaderRow", "deleteTable", "linkUrl", "linkNewTab", "removeLink", "imageUrl",
 		"imageAlt", "apply", "close", "invalidUrl", "characters", "character", "charactersOfLimit",
-		"words", "word", "resize", "plainText", "defaultColor", "noBackground", "colorGray",
-		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen", "colorTeal",
-		"colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink", "uploadImage",
-		"uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType", "proofreadSpelling",
-		"proofreadGrammar", "proofreadStyle", "proofreadReplacements", "proofreadNoSuggestions",
-		"proofreadIgnore", "suggestions", "suggestLoading", "suggestNone");
+		"words", "word", "resize", "plainText", "defaultColor", "noBackground", "recentColors",
+		"colorGray", "colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime",
+		"colorGreen", "colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple",
+		"colorPink", "uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge",
+		"uploadType", "proofreadSpelling", "proofreadGrammar", "proofreadStyle",
+		"proofreadReplacements", "proofreadNoSuggestions", "proofreadIgnore", "suggestions",
+		"suggestLoading", "suggestNone");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;
