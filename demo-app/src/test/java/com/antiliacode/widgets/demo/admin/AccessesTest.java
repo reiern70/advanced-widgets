@@ -41,6 +41,7 @@ import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.demo.data.AbstractAccess;
 import com.antiliacode.widgets.demo.data.Access;
 import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.OldAccess;
@@ -132,6 +133,20 @@ class AccessesTest
 		assertNull(AccessTimeResource.zone(StringValue.valueOf("")));
 		assertNull(AccessTimeResource.zone(StringValue.valueOf("x".repeat(101))));
 		assertNull(AccessTimeResource.localTime(StringValue.valueOf((String)null)));
+	}
+
+	@Test
+	void aLongDescriptionOfTheBrowserIsCutToItsColumn()
+	{
+		tester.startPage(HomePage.class);
+		tester.getRequest().setHeader("User-Agent", "Mozilla/5.0 " + "x".repeat(5000));
+		postTime("UTC", "2026-10-15T10:00:00");
+
+		Access access = access();
+		assertEquals(AbstractAccess.MAXIMUM_USER_AGENT, access.getUserAgent().length());
+		assertTrue(access.getUserAgent().startsWith("Mozilla/5.0 x"));
+		assertEquals("UTC", access.getTimeZone());
+		assertEquals(1, Accesses.get().count());
 	}
 
 	@Test

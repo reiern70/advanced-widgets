@@ -368,7 +368,7 @@ public class DemoSession extends WebSession
 
 	/**
 	 * Changes the access recording this session, made first if there is none. A failing database
-	 * is logged and does not fail the request.
+	 * is logged in a line, without the stack, and does not fail the request.
 	 *
 	 * @param change
 	 *            the change
@@ -383,8 +383,18 @@ public class DemoSession extends WebSession
 		}
 		catch (RuntimeException e)
 		{
-			LOG.warn("Cannot record the access of session {}", getId(), e);
+			LOG.warn("Cannot record the access of session {}: {}", getId(), firstLine(e));
 		}
+	}
+
+	/**
+	 * @return what went wrong, in a short line
+	 */
+	static String firstLine(Throwable e)
+	{
+		String line = e.getClass().getSimpleName() + ": " +
+			String.valueOf(e.getMessage()).lines().findFirst().orElse("");
+		return line.length() > 200 ? line.substring(0, 200) + "..." : line;
 	}
 
 	/**
