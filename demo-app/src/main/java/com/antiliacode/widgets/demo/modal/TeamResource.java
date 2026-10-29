@@ -13,7 +13,9 @@
  */
 package com.antiliacode.widgets.demo.modal;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -44,8 +46,9 @@ import com.github.openjson.JSONObject;
  * DELETE api/team?id=1    -&gt; 204
  * </pre>
  *
- * A member that is not valid is answered with 400 and {@code { "errors": { "email": "..." } }}, a
- * member that is gone with 404.
+ * A member that is not valid is answered with 400 and {@code { "errors": { "email": "..." } }}, as
+ * is a member more than a team has ({@value TeamStore#MAX_MEMBERS}), a member that is gone with
+ * 404, and a body longer than {@value #MAX_BODY} bytes with 413, unread.
  */
 public class TeamResource implements IResource
 {
@@ -56,6 +59,9 @@ public class TeamResource implements IResource
 
 	/** The parameter holding the id of the member to edit or delete. */
 	public static final String ID = "id";
+
+	/** The longest body of a request, in bytes: a member is a few short fields. */
+	static final int MAX_BODY = 8 * 1024;
 
 	/** The reference of the resource, to mount it and to link to it. */
 	public static final ResourceReference REFERENCE = new ResourceReference(TeamResource.class,
@@ -87,21 +93,19 @@ public class TeamResource implements IResource
 	{
 		HttpServletRequest request = (HttpServletRequest)attributes.getRequest()
 			.getContainerRequest();
+		WebResponse response = (WebResponse)attributes.getResponse();
+		String body = readBody(request);
+		if (body == null)
+		{
+			response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			response.disableCaching();
+			return;
+		}
 		DemoSession session = DemoSession.get();
 		session.bind();
-		String body;
-		try
-		{
-			body = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-		}
-		catch (IOException e)
-		{
-			throw new UncheckedIOException(e);
-		}
 		Answer answer = answer(request.getMethod(), attributes.getParameters().get(ID).toLong(0),
 			body, session.getTeam(), session.getLocale());
 
-		WebResponse response = (WebResponse)attributes.getResponse();
 		response.setStatus(answer.status());
 		response.disableCaching();
 		if (answer.json() != null)
@@ -109,6 +113,43 @@ public class TeamResource implements IResource
 			response.setContentType("application/json;charset=UTF-8");
 			response.write(answer.json().toString().getBytes(StandardCharsets.UTF_8));
 		}
+	}
+
+	/**
+	 * Reads the body of a request that adds or updates a member, at most {@value #MAX_BODY} bytes.
+	 *
+	 * @return the body, empty for the other requests; {@code null} if it is longer
+	 */
+	static String readBody(HttpServletRequest request)
+	{
+		if (!"POST".equals(request.getMethod()) && !"PUT".equals(request.getMethod()))
+		{
+			return "";
+		}
+		// refused at once when the request says it is longer
+		if (request.getContentLengthLong() > MAX_BODY)
+		{
+			return null;
+		}
+		ByteArrayOutputStream body = new ByteArrayOutputStream();
+		byte[] buffer = new byte[4096];
+		try
+		{
+			InputStream in = request.getInputStream();
+			for (int read; (read = in.read(buffer)) >= 0;)
+			{
+				body.write(buffer, 0, read);
+				if (body.size() > MAX_BODY)
+				{
+					return null;
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			throw new UncheckedIOException(e);
+		}
+		return body.toString(StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -148,7 +189,17 @@ public class TeamResource implements IResource
 					return new Answer(HttpServletResponse.SC_BAD_REQUEST,
 						new JSONObject().put("errors", new JSONObject(errors)));
 				}
-				TeamMember saved = team.save(member);
+				TeamMember saved;
+				try
+				{
+					saved = team.save(member);
+				}
+				catch (IllegalStateException full)
+				{
+					// shown with the name, the first field of the form
+					return new Answer(HttpServletResponse.SC_BAD_REQUEST, new JSONObject()
+						.put("errors", new JSONObject().put("name", TeamStore.full(locale))));
+				}
 				if (saved == null)
 				{
 					return new Answer(HttpServletResponse.SC_NOT_FOUND, null);

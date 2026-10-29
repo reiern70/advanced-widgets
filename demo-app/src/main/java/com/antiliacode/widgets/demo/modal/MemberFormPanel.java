@@ -94,7 +94,17 @@ public abstract class MemberFormPanel extends Panel
 			@Override
 			protected void onSubmit(AjaxRequestTarget target)
 			{
-				TeamMember saved = DemoSession.get().getTeam().save(form.getModelObject());
+				TeamMember saved;
+				try
+				{
+					saved = DemoSession.get().getTeam().save(form.getModelObject());
+				}
+				catch (IllegalStateException full)
+				{
+					form.error(TeamStore.full(getLocale()));
+					target.add(form);
+					return;
+				}
 				onSaved(saved, target);
 			}
 
