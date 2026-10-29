@@ -95,6 +95,32 @@ public enum CKEditorFeature implements IRichTextFeature
 		}
 	},
 
+	/**
+	 * Text raised above the line, x²: {@code <sup>}; not in Markdown, which has no syntax for it.
+	 * Superscript takes subscript away from the text it raises.
+	 */
+	SUPERSCRIPT("superscript", false)
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("sup");
+		}
+	},
+
+	/**
+	 * Text lowered under the line, H₂O: {@code <sub>}; not in Markdown. Subscript takes
+	 * superscript away from the text it lowers.
+	 */
+	SUBSCRIPT("subscript", false)
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("sub");
+		}
+	},
+
 	/** Links, to http, https and mailto addresses, or relative ones. */
 	LINK("link")
 	{
@@ -284,8 +310,8 @@ public enum CKEditorFeature implements IRichTextFeature
 	/**
 	 * @param format
 	 *            how the editor keeps the text
-	 * @return the features of an editor not told otherwise: all of them, but underlined text and
-	 *         alignment for Markdown
+	 * @return the features of an editor not told otherwise: all of them, but underlined text,
+	 *         superscript, subscript and alignment for Markdown
 	 */
 	public static Set<CKEditorFeature> defaults(RichTextFormat format)
 	{

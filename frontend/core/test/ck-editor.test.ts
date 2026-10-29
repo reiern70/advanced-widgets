@@ -153,12 +153,54 @@ function written(html: string): string {
 	return trimmed === '<p></p>' ? '' : trimmed.replace(/<li>/g, '<li data-list-item-id="e1">');
 }
 
+/**
+ * A command setting a mark of text, as CKEditor's AttributeCommand: execute() fires its event, the
+ * listeners of a high priority first, which may stop it; then it sets the mark, or takes it away.
+ */
+class FakeCommand {
+	value = false;
+	private readonly first: Callback[] = [];
+
+	constructor(private readonly done: string[], readonly name: string) {}
+
+	on(_event: string, callback: Callback, options?: { priority?: string | number }): void {
+		expect(options?.priority).toBe('high');
+		this.first.push(callback);
+	}
+
+	execute(...args: unknown[]): void {
+		let stopped = false;
+		const event = { name: 'execute', stop: () => {
+			stopped = true;
+		} };
+		for (const callback of this.first) {
+			callback(event, args);
+			if (stopped) {
+				return;
+			}
+		}
+		const forced = (args[0] as { forceValue?: boolean } | undefined)?.forceValue;
+		this.value = forced ?? !this.value;
+		this.done.push(this.name + (this.value ? ' on' : ' off'));
+	}
+}
+
 class FakeEditor implements CKEditorInstance {
 	html = '';
 	root: FakeElement;
 	destroyed = false;
 	readonly locks = new Set<string>();
 	readonly keys = new Map<string, (data: unknown, cancel: () => void) => void>();
+	/** What the commands did, in order, and the changes of the model, the outer ones. */
+	readonly done: string[] = [];
+	changes = 0;
+	private changing = false;
+	readonly superscript = new FakeCommand(this.done, 'superscript');
+	readonly subscript = new FakeCommand(this.done, 'subscript');
+	readonly commands = {
+		get: (name: string) => name === 'superscript' ? this.superscript :
+			name === 'subscript' ? this.subscript : undefined
+	};
 	readonly checks: Array<(context: { endsWith(query: string): boolean },
 		attribute: string) => boolean | undefined> = [];
 	readonly selection = Object.assign(new Emitter(), {
@@ -194,13 +236,21 @@ class FakeEditor implements CKEditorInstance {
 			}
 		},
 		change: (callback: (writer: CKEditorModelWriter) => void) => {
-			callback({
-				setSelection: (range, options) => {
-					this.selection.anchor = options?.backward ? range.end : range.start;
-					this.selection.focus = options?.backward ? range.start : range.end;
-					this.selection.fire('change:range');
-				}
-			});
+			// a change in a change is part of it
+			const outer = !this.changing;
+			this.changes += outer ? 1 : 0;
+			this.changing = true;
+			try {
+				callback({
+					setSelection: (range, options) => {
+						this.selection.anchor = options?.backward ? range.end : range.start;
+						this.selection.focus = options?.backward ? range.start : range.end;
+						this.selection.fire('change:range');
+					}
+				});
+			} finally {
+				this.changing = !outer;
+			}
 		},
 		createPositionFromPath: (_root: CKEditorModelElement, path: readonly number[]) =>
 			new Position(path),
@@ -298,10 +348,10 @@ function fakeBuild(fail?: unknown) {
 	const editors: FakeEditor[] = [];
 	const plugin = (name: string) => ({ pluginName: name });
 	const names = ['Essentials', 'Paragraph', 'Autoformat', 'PasteFromOffice', 'Heading', 'Bold',
-		'Italic', 'Underline', 'Strikethrough', 'Code', 'Link', 'AutoLink', 'List', 'TodoList',
-		'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table', 'TableToolbar', 'Image', 'ImageToolbar',
-		'ImageCaption', 'ImageTextAlternative', 'ImageInsertViaUrl', 'AutoImage', 'Alignment',
-		'Markdown', 'Highlight'];
+		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
+		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
+		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight'];
 	const build: CKEditorBuild & { editors: FakeEditor[] } = Object.assign(
 		Object.fromEntries(names.map((name) => [name, plugin(name)])), {
 			editors,
@@ -401,9 +451,9 @@ describe('CKEditor', () => {
 			'Bold', 'Table', 'TodoList', 'Alignment', 'Image']));
 		expect(pluginNames(fake.config)).not.toContain('Markdown');
 		expect((fake.config.toolbar as { items: string[] }).items).toEqual(['heading', '|', 'bold',
-			'italic', 'underline', 'strikethrough', 'code', '|', 'link', '|', 'bulletedList',
-			'numberedList', 'todoList', '|', 'blockQuote', 'codeBlock', 'horizontalLine',
-			'insertTable', 'insertImage', '|', 'alignment', '|', 'undo', 'redo']);
+			'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript', '|', 'link',
+			'|', 'bulletedList', 'numberedList', 'todoList', '|', 'blockQuote', 'codeBlock',
+			'horizontalLine', 'insertTable', 'insertImage', '|', 'alignment', '|', 'undo', 'redo']);
 		expect((fake.config.alignment as { options: unknown[] }).options).toContainEqual(
 			{ name: 'center', className: 'antilia-text-center' });
 		// the style moved aside, which a Content Security Policy would report
@@ -463,9 +513,32 @@ describe('CKEditor', () => {
 			const markdown = new CKEditor(textArea('x'), { build, format: 'markdown' });
 			await markdown.ready;
 			expect([...markdown.features()]).not.toContain('underline');
+			expect([...markdown.features()]).not.toContain('superscript');
+			expect([...markdown.features()]).not.toContain('subscript');
 			expect([...markdown.features()]).not.toContain('textAlign');
 			expect(pluginNames(build.editors[1]!.config)).not.toContain('Alignment');
 		});
+
+	it('takes subscript away with superscript, and the other way round, in one change', async () => {
+		const build = fakeBuild();
+		const editor = new CKEditor(textArea(), { build });
+		await editor.ready;
+		const fake = build.editors[0]!;
+		const changes = fake.changes;
+
+		fake.subscript.execute();
+		expect(fake.done).toEqual(['superscript off', 'subscript on']);
+		fake.superscript.execute();
+		expect(fake.done.slice(2)).toEqual(['subscript off', 'superscript on']);
+		expect(fake.changes - changes).toBe(2);
+		// taking one away leaves the other alone
+		fake.superscript.execute();
+		fake.subscript.execute({ forceValue: false });
+		expect(fake.done.slice(4)).toEqual(['superscript off', 'subscript off']);
+		expect(fake.changes - changes).toBe(2);
+		fake.superscript.execute({ forceValue: true });
+		expect(fake.done.slice(6)).toEqual(['subscript off', 'superscript on']);
+	});
 
 	it('takes the plugins and the configuration of the page, and tells of plugins not there',
 		async () => {

@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.demo.ckeditor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -37,7 +38,7 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
  * Drives {@link CKEditorPage} in Chrome and in Firefox, in deployment mode, under the demo's strict
  * Content Security Policy, in Wicket and in the React and Svelte apps: CKEditor 5 started with the
  * license key the application gives, formatting from its toolbar, with the mouse and from the
- * keyboard, posting the form, a paste of unsafe HTML, the notes in Markdown, reading only, and the
+ * keyboard, superscript and subscript among it, posting the form, a paste of unsafe HTML, the notes in Markdown, reading only, and the
  * text and the selection the server keeps, through a switch of the tabs and Back. Chrome's console
  * shows no error, so no violation of the policy. Runs with {@code -Pselenium}, see
  * {@link SeleniumBrowser}.
@@ -79,6 +80,30 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 			.isEmpty());
 		wait.until(d -> status().contains("changes not saved"));
 		assertEquals("true", editor().getDomAttribute("data-modified"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void raisesAndLowersTheText(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		// the article has some already: H₂S, km²
+		assertFalse(content().findElements(By.xpath(".//sub[. = '2']")).isEmpty());
+		assertFalse(content().findElements(By.xpath(".//sup[. = '2']")).isEmpty());
+
+		selectWord("flats");
+		tool("Superscript").click();
+		wait.until(d -> !content().findElements(By.xpath(".//sup[. = 'flats']")).isEmpty());
+		assertEquals("true", tool("Superscript").getDomAttribute("aria-pressed"));
+		// subscript takes superscript away, in one step of undo
+		tool("Subscript").click();
+		wait.until(d -> !content().findElements(By.xpath(".//sub[. = 'flats']")).isEmpty());
+		assertTrue(content().findElements(By.xpath(".//sup[contains(., 'flats')]")).isEmpty());
+		assertEquals("false", tool("Superscript").getDomAttribute("aria-pressed"));
+		content().sendKeys(Keys.chord(Keys.CONTROL, "z"));
+		wait.until(d -> !content().findElements(By.xpath(".//sup[. = 'flats']")).isEmpty());
+		assertTrue(content().findElements(By.xpath(".//sub[contains(., 'flats')]")).isEmpty());
 		assertNoErrors();
 	}
 

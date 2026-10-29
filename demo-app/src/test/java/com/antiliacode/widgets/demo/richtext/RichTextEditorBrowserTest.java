@@ -43,12 +43,13 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 /**
  * Drives {@link RichTextEditorPage} in Chrome and in Firefox, in deployment mode, so through the
  * minified script built from frontend/core and under the demo's strict Content Security Policy, in
- * Wicket and in the React and Svelte apps: formatting from the toolbar and the keys, the menus of
- * the text style and the table from the keyboard, the form of a link, a paste of unsafe HTML, the
- * notes in Markdown, leaving a list with Escape and Tab, reading only, the text area hidden in the
- * room of the editor until the script makes it, and the text and the selection the server keeps,
- * which the page shows again when opened anew; the code blocks in the colors of the language their
- * menu chooses, and the images uploaded from the form of the image, dropped and pasted.
+ * Wicket and in the React and Svelte apps: formatting from the toolbar and the keys, superscript
+ * and subscript among it, the menus of the text style and the table from the keyboard, the form of
+ * a link, a paste of unsafe HTML, the notes in Markdown, leaving a list with Escape and Tab,
+ * reading only, the text area hidden in the room of the editor until the script makes it, and the
+ * text and the selection the server keeps, which the page shows again when opened anew; the code
+ * blocks in the colors of the language their menu chooses, and the images uploaded from the form
+ * of the image, dropped and pasted.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -75,6 +76,39 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 			.isEmpty());
 		wait.until(d -> status().contains("changes not saved"));
 		assertEquals("true", editor().getDomAttribute("data-modified"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void raisesAndLowersTheTextOneOrTheOther(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		// the article has some already: H₂S, km²
+		assertFalse(content().findElements(By.xpath(".//sub[. = '2']")).isEmpty());
+		assertFalse(content().findElements(By.xpath(".//sup[. = '2']")).isEmpty());
+
+		selectWord("flats");
+		wait.until(d -> "false".equals(tool("superscript").getDomAttribute("aria-pressed")));
+		tool("superscript").click();
+		wait.until(d -> !content().findElements(By.xpath(".//sup[. = 'flats']")).isEmpty());
+		assertEquals("true", tool("superscript").getDomAttribute("aria-pressed"));
+		// Ctrl+Shift+, lowers it instead
+		content().sendKeys(Keys.chord(Keys.CONTROL, Keys.SHIFT, ","));
+		wait.until(d -> !content().findElements(By.xpath(".//sub[. = 'flats']")).isEmpty());
+		assertTrue(content().findElements(By.xpath(".//sup[. = 'flats']")).isEmpty());
+		assertEquals("false", tool("superscript").getDomAttribute("aria-pressed"));
+		assertEquals("true", tool("subscript").getDomAttribute("aria-pressed"));
+
+		if ("wicket".equals(framework))
+		{
+			// the server keeps it, and the page shows it so
+			content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+			wait.until(d -> !app().findElements(By.xpath("//*[contains(@class, " +
+				"'rich-text-demo__view')]//sub[. = 'flats']")).isEmpty());
+		}
+		content().sendKeys(Keys.chord(Keys.CONTROL, Keys.SHIFT, ","));
+		wait.until(d -> content().findElements(By.xpath(".//sub[. = 'flats']")).isEmpty());
 		assertNoErrors();
 	}
 

@@ -15,10 +15,12 @@
 /*
  * A rich text editor: Tiptap, on ProseMirror, with a toolbar of the components' own, in the
  * colors of the theme it is in and the look of the page. The text has headings, bold, italic,
- * underlined, struck and code text, colors of the text and of its background, links, lists, task
- * lists, quotes, code blocks, rules, tables, images and alignment: the features (see
- * rich-text-schema.ts), all of them unless the page leaves some out. The usual keys format (Ctrl+B, Ctrl+I...), Markdown's marks do as the user
- * types (# a heading, - a list, **bold**), Ctrl+K edits the link and Ctrl+S tells the page to save.
+ * underlined, struck and code text, superscript and subscript, colors of the text and of its
+ * background, links, lists, task lists, quotes, code blocks, rules, tables, images and alignment:
+ * the features (see rich-text-schema.ts), all of them unless the page leaves some out. The usual
+ * keys format (Ctrl+B, Ctrl+I..., Ctrl+Shift+. raises and Ctrl+Shift+, lowers), Markdown's marks
+ * do as the user types (# a heading, - a list, **bold**), Ctrl+K edits the link and Ctrl+S tells
+ * the page to save.
  *
  * The text is HTML by default, Markdown or Tiptap's JSON if the page says so (format). The HTML
  * has no style attribute: alignment and colors are classes. The browser's HTML is never to be trusted by the
@@ -196,8 +198,8 @@ export interface RichTextEditorOptions {
 	/**
 	 * What the text may hold: the features built in and those registered
 	 * (registerRichTextFeature), by their names; all the built-in ones when left out, but for
-	 * Markdown underlined text, colors and alignment, which Markdown has no syntax for. A feature
-	 * not registered yet comes in as it registers, the editor made anew.
+	 * Markdown underlined text, superscript, subscript, colors and alignment, which Markdown has no
+	 * syntax for. A feature not registered yet comes in as it registers, the editor made anew.
 	 */
 	features?: readonly RichTextFeature[];
 	/**

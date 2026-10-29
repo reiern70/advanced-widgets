@@ -90,6 +90,32 @@ public enum RichTextFeature implements IRichTextFeature
 	},
 
 	/**
+	 * Text raised above the line, x²: {@code <sup>}; not in Markdown, which has no syntax for it.
+	 * Superscript takes subscript away from the text it raises.
+	 */
+	SUPERSCRIPT("superscript", false)
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("sup");
+		}
+	},
+
+	/**
+	 * Text lowered under the line, H₂O: {@code <sub>}; not in Markdown. Subscript takes
+	 * superscript away from the text it lowers.
+	 */
+	SUBSCRIPT("subscript", false)
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("sub");
+		}
+	},
+
+	/**
 	 * The color of text, of the {@link RichTextEditor#setColors(java.util.Collection) palette},
 	 * by a class; not in Markdown.
 	 */
@@ -310,7 +336,7 @@ public enum RichTextFeature implements IRichTextFeature
 	 * @param format
 	 *            how the editor keeps the text
 	 * @return the features of an editor not told otherwise: all of them, but underlined text,
-	 *         colors and alignment for Markdown
+	 *         superscript, subscript, colors and alignment for Markdown
 	 */
 	public static Set<IRichTextFeature> defaults(RichTextFormat format)
 	{

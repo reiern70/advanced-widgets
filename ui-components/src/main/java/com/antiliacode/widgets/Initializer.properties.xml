@@ -193,6 +193,8 @@
 	<entry key="RichTextEditor.underline">Underline</entry>
 	<entry key="RichTextEditor.strike">Strikethrough</entry>
 	<entry key="RichTextEditor.code">Code</entry>
+	<entry key="RichTextEditor.superscript">Superscript</entry>
+	<entry key="RichTextEditor.subscript">Subscript</entry>
 	<entry key="RichTextEditor.textColor">Text color</entry>
 	<entry key="RichTextEditor.textBackground">Background color</entry>
 	<entry key="RichTextEditor.link">Link</entry>

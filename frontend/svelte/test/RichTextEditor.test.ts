@@ -202,6 +202,20 @@ describe('RichTextEditor', () => {
 		expect(core(container).editor.schema.marks.textColor).toBeUndefined();
 	});
 
+	it('raises and lowers text, unless it leaves superscript and subscript out', async () => {
+		const value = '<p>x<sup>2</sup> H<sub>2</sub>O</p>';
+		const { container, rerender } = render(BoundRichTextEditor, { value });
+		expect(core(container).getValue()).toBe(value);
+		const tool = (name: string) => container.querySelector(`[data-tool="${name}"]`);
+		expect(tool('superscript')).not.toBeNull();
+		expect(tool('subscript')).not.toBeNull();
+
+		await rerender({ features: ['bold'] });
+		expect(core(container).getValue()).toBe('<p>x2 H2O</p>');
+		expect(tool('superscript')).toBeNull();
+		expect(tool('subscript')).toBeNull();
+	});
+
 	it('posts the text in a hidden text area under a name', () => {
 		const { container } = render(BoundRichTextEditor, { name: 'body' });
 		const field = container.querySelector<HTMLTextAreaElement>('textarea[name="body"]')!;

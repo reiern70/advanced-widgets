@@ -44,7 +44,7 @@ class CKEditorPolicyTest
 		String html = "<h1>One</h1><h2>Two</h2><h3 class=\"antilia-text-center\">Three</h3>" +
 			"<h4>Four</h4><h5>Five</h5><h6>Six</h6>" +
 			"<p class=\"antilia-text-right\">r <strong>b</strong> <i>i</i> <u>u</u> <s>s</s> " +
-			"<code>c</code><br />A new line.</p>" +
+			"<code>c</code> x<sup>2</sup> H<sub>2</sub>O<br />A new line.</p>" +
 			"<p class=\"antilia-text-justify\">Justified</p>" +
 			"<ul><li>a<ul><li>b</li></ul></li></ul><ol start=\"3\"><li>n</li></ol>" +
 			"<ul class=\"todo-list\"><li><label class=\"todo-list__label\"><input type=\"checkbox\" " +
@@ -93,8 +93,9 @@ class CKEditorPolicyTest
 	void leavesOutWhatTheFeaturesLeftOutWrite()
 	{
 		CKEditorPolicy bold = CKEditorPolicy.of(EnumSet.of(CKEditorFeature.BOLD));
-		assertEquals("<p><strong>b</strong> i</p>cell<p>a</p>caption",
-			bold.sanitize("<p><strong>b</strong> <i>i</i></p><figure class=\"table\"><table>" +
+		assertEquals("<p><strong>b</strong> i 2 2</p>cell<p>a</p>caption",
+			bold.sanitize("<p><strong>b</strong> <i>i</i> <sup>2</sup> <sub>2</sub></p>" +
+				"<figure class=\"table\"><table>" +
 				"<tbody><tr><td>cell</td></tr></tbody></table></figure><ul><li><p>a</p></li></ul>" +
 				"<figure class=\"image\"><img src=\"/a.png\" /><figcaption>caption</figcaption>" +
 				"</figure>"));

@@ -47,6 +47,7 @@ class RichTextPolicyTest
 		String html = "<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5>" +
 			"<h6>Six</h6><p>Some <strong>bold</strong>, <em>italic</em>, <u>underlined</u>, " +
 			"<s>struck</s> and <code>code</code> text.<br />A new line.</p>" +
+			"<p>x<sup>2</sup> and H<sub>2</sub>O</p>" +
 			"<p><span class=\"antilia-color-red\">Red</span>, <mark " +
 			"class=\"antilia-background-yellow\">marked</mark> and <span " +
 			"class=\"antilia-color-pink\"><mark class=\"antilia-background-blue\">both</mark>" +
@@ -332,6 +333,14 @@ class RichTextPolicyTest
 			"</ul><li></li>An image", policy.sanitize("<h1>Title</h1><p><strong>Bold</strong> and " +
 				"<em>italic</em>, <a href=\"/x\">a link</a></p><ul><li>One</li></ul>" +
 				"<ol><li></li></ol><img src=\"/a.png\" />An image"));
+
+		// superscript and subscript apart
+		RichTextPolicy raised = RichTextPolicy.of(EnumSet.of(RichTextFeature.SUPERSCRIPT));
+		assertEquals("<p>x<sup>2</sup> H2O</p>", raised.sanitize(
+			"<p>x<sup>2</sup> H<sub>2</sub>O</p>"));
+		RichTextPolicy lowered = RichTextPolicy.of(EnumSet.of(RichTextFeature.SUBSCRIPT));
+		assertEquals("<p>x2 H<sub>2</sub>O</p>", lowered.sanitize(
+			"<p>x<sup>2</sup> H<sub>2</sub>O</p>"));
 
 		RichTextPolicy tasks = RichTextPolicy.of(EnumSet.of(RichTextFeature.TASK_LIST));
 		assertEquals("<ul data-type=\"taskList\"><li data-type=\"taskItem\">x</li></ul>",
