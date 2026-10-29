@@ -52,7 +52,9 @@ import jakarta.servlet.http.HttpServletRequest;
  * and give the table its reference with
  * {@link JsonBasedDynamicDataTable#setRowsResource(org.apache.wicket.request.resource.ResourceReference)}.
  * Anyone who knows the URL can read the rows, so a resource serving private data checks the
- * request, for example the session's user, in {@link #newProvider(PageParameters)}.
+ * request, for example the session's user, in
+ * {@link #isAllowed(org.apache.wicket.request.resource.IResource.Attributes, String)}, which
+ * answers 403 when it refuses, or in {@link #newProvider(PageParameters)}.
  * <p>
  * The resource can create, read, change and delete single rows too, for clients such as the React
  * and Svelte tables, which keep no page on the server:
@@ -67,7 +69,14 @@ import jakarta.servlet.http.HttpServletRequest;
  * A row that is not valid is answered with 400 and the message of the
  * {@link IllegalArgumentException} the method threw. The methods throw
  * {@link UnsupportedOperationException} by default, which answers 405: a resource only reads
- * unless it overrides them. Whoever may change rows has to be checked in those methods.
+ * unless it overrides them. Whoever may change rows has to be checked, in
+ * {@link #isAllowed(org.apache.wicket.request.resource.IResource.Attributes, String)} or in
+ * those methods.
+ * <p>
+ * A {@code POST} or a {@code PUT} has to send its row with the content type
+ * {@code application/json}, its parameters such as {@code charset} aside, or is answered with
+ * 415: no form or simple request of another site sends that, so another site cannot change rows
+ * in the name of a user of this one.
  *
  * @param <T>
  *            the type of the rows
@@ -163,10 +172,36 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Tells whether a request may do what it asks, before anything else: a resource serving
+	 * private data, or changing rows, checks the session's user here, for example. {@code true} by
+	 * default: anyone who knows the URL may read, and change the rows the resource lets change.
+	 *
+	 * @param attributes
+	 *            the attributes of the request
+	 * @param method
+	 *            its HTTP method in upper case: {@code GET} and {@code HEAD} read, {@code POST}
+	 *            creates, {@code PUT} changes and {@code DELETE} deletes a row
+	 * @return whether the request may go on; {@code false} answers 403
+	 */
+	protected boolean isAllowed(Attributes attributes, String method)
+	{
+		return true;
+	}
+
 	@Override
 	protected ResourceResponse newResourceResponse(Attributes attributes)
 	{
 		String method = method(attributes);
+		if (!isAllowed(attributes, method))
+		{
+			return error(attributes, 403, "Forbidden");
+		}
+		if (("POST".equals(method) || "PUT".equals(method)) && !isJson(attributes))
+		{
+			return error(attributes, 415, "Send the row as JSON, with the content type " +
+				"application/json");
+		}
 		PageParameters parameters = attributes.getParameters();
 		StringValue key = parameters.get(KEY);
 		if ("GET".equals(method) || "HEAD".equals(method))
@@ -293,6 +328,23 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 		}
 		entry.put("data", row);
 		return entry;
+	}
+
+	/**
+	 * @return whether a request says it sends JSON: its content type is {@code application/json},
+	 *         whatever its parameters
+	 */
+	private static boolean isJson(Attributes attributes)
+	{
+		String type = attributes.getRequest().getContainerRequest() instanceof
+			HttpServletRequest request ? request.getHeader("Content-Type") : null;
+		if (type == null)
+		{
+			return false;
+		}
+		int parameters = type.indexOf(';');
+		String mediaType = (parameters < 0 ? type : type.substring(0, parameters)).trim();
+		return "application/json".equals(mediaType.toLowerCase(Locale.ROOT));
 	}
 
 	private static String method(Attributes attributes)
