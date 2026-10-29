@@ -22,6 +22,7 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
+import com.antiliacode.widgets.clipboard.ClipboardCopyBehavior;
 import com.antiliacode.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.CompoundDynamicColumn;
@@ -160,6 +161,8 @@ public class JsonUsersTablePanel extends UsersTablePanel
 		// the rows can come from the mounted resource too, see the setting "Rows from"
 		table.setRowsResource(UsersRowsResource.REFERENCE);
 		hidden.forEach(column -> table.setColumnVisible(column, false));
+		// the phone numbers of the template of PhonesColumn copy on a double click
+		table.add(ClipboardCopyBehavior.within());
 		return table;
 	}
 

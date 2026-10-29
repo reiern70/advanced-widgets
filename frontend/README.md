@@ -30,8 +30,13 @@ and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `Tab
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
 `RichTextEditor`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
 `palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `breadcrumb`, `desktop`, `resizable`, `codeEditor`,
-`markdownPreview` and `richTextEditor` also work as Svelte actions, and `Clipboard.install()` and
-`FloatingPanel.install()` make the `data-antilia-copy` and floating panel markup work in any page.
+`markdownPreview` and `richTextEditor` also work as Svelte actions, and `FloatingPanel.install()`
+makes the floating panel markup work in any page. An element carrying `data-antilia-copy` copies
+its value on a click once `Clipboard.attach(element)` attached it, and the elements inside a
+container once `Clipboard.attachWithin(container)` did, as Wicket's `ClipboardCopyBehavior` and
+`ClipboardCopyBehavior.within()` do; `Clipboard.install()` makes every such element of the document
+copy, for a page that shows no HTML a user wrote, which could otherwise choose what lands on the
+clipboard.
 
 A `DataTable` loads its rows with `loadRows`, from a mounted resource for example, or is given
 them as `rows`, a local list of JSON it filters, sorts and pages in the browser with the core's

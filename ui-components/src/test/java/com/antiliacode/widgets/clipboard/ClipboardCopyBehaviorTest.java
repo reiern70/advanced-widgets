@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.clipboard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.wicket.MarkupContainer;
@@ -51,6 +52,26 @@ class ClipboardCopyBehaviorTest extends WicketTestCase
 		String page = tester.getLastResponseAsString();
 		assertTrue(page.contains("antilia-clipboard"), page);
 		assertTrue(page.contains("Wicket.Clipboard.copiedMessage = \"Copied\";"), page);
+		// the element copies once the script attached it, by its markup id
+		String id = tester.getTagByWicketId("phone").getAttribute("id");
+		assertTrue(page.contains("Wicket.Clipboard.attach(document.getElementById(\"" + id +
+			"\"));"), page);
+	}
+
+	@Test
+	void makesTheElementsInsideAComponentCopy()
+	{
+		TestPage page = new TestPage(new ClipboardCopyBehavior(Model.of("555")));
+		page.get("phone").remove(page.get("phone").getBehaviors().get(0));
+		page.get("phone").add(ClipboardCopyBehavior.within());
+		tester.startPage(page);
+
+		String html = tester.getLastResponseAsString();
+		String id = tester.getTagByWicketId("phone").getAttribute("id");
+		assertTrue(html.contains("Wicket.Clipboard.attachWithin(document.getElementById(\"" + id +
+			"\"));"), html);
+		assertTrue(html.contains("Wicket.Clipboard.copiedMessage = \"Copied\";"), html);
+		assertFalse(html.contains("data-antilia-copy"), "the component itself copies nothing");
 	}
 
 	public static class TestPage extends WebPage implements IMarkupResourceStreamProvider
