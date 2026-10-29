@@ -54,7 +54,9 @@ public class DemoSession extends WebSession
 	/**
 	 * The query parameter with which a visitor who does not sign in, such as a script checking
 	 * the site, tells who it is: {@code ?visitor=claude-dev} on any page records the access of the
-	 * session as {@code user-claude-dev}.
+	 * session as {@code user-claude-dev}. It changes a session there is already; a visitor without
+	 * one gets it from the script of the page, which passes the name on, see
+	 * {@link com.antiliacode.widgets.demo.admin.AccessTimeResource}.
 	 */
 	public static final String VISITOR_PARAMETER = "visitor";
 
@@ -305,6 +307,16 @@ public class DemoSession extends WebSession
 	}
 
 	/**
+	 * @param name
+	 *            what a visitor tells it is
+	 * @return whether it is a name a visitor may tell: a few letters, digits, dots and dashes
+	 */
+	public static boolean isVisitorName(String name)
+	{
+		return name != null && VISITOR.matcher(name).matches();
+	}
+
+	/**
 	 * Records the access of the session as the visitor's, unless somebody signed in: the
 	 * visitor tells who it is with {@link #VISITOR_PARAMETER}. A name with other characters than
 	 * letters, digits, dots and dashes is ignored.
@@ -314,7 +326,7 @@ public class DemoSession extends WebSession
 	 */
 	public void identify(String name)
 	{
-		if (name == null || !VISITOR.matcher(name).matches() || ("user-" + name).equals(visitor))
+		if (!isVisitorName(name) || ("user-" + name).equals(visitor))
 		{
 			return;
 		}
