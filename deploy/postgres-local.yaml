@@ -4,7 +4,7 @@
 # Without it the demo keeps its data in an H2 file in the temporary folder.
 services:
   db:
-    image: postgres:17
+    image: postgres:17.11@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
     restart: unless-stopped
     environment:
       POSTGRES_DB: widgets

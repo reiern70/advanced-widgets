@@ -1,6 +1,8 @@
 # The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
 # and passes everything, websockets included, to Jetty; PostgreSQL keeps the users and the
-# accesses. Settings come from .env, see .env.example.
+# accesses. Settings come from .env, see .env.example. The images are pinned by their digests, the
+# tag kept to be read; Dependabot proposes the next ones (see .github/dependabot.yml), and deploy.sh
+# pulls them.
 
 # the logs of every container: at most 3 files of 10 MB, so they never fill the disk
 x-logging: &logging
@@ -46,7 +48,7 @@ services:
   # the 2 GB instance next to a JVM of 1 GB: the pool of the app uses 5 connections at most.
   # Backed up every night by backup.sh, see README.md.
   db:
-    image: postgres:17
+    image: postgres:17.11@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
     restart: unless-stopped
     command:
       - postgres
@@ -80,7 +82,7 @@ services:
       retries: 12
 
   caddy:
-    image: caddy:2.11
+    image: caddy:2.11.7@sha256:5e5286cb37d44086d651a5363f05f43a692ce4d649d88fb1bd844579f45fa9e8
     restart: unless-stopped
     logging: *logging
     environment:
