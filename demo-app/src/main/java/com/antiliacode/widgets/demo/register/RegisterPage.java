@@ -62,9 +62,12 @@ import com.antiliacode.widgets.dropdown.Dropdown;
  * Lets a visitor register, once registering is open (see {@link #isOpen()}); until then it says
  * that registering is closed and the form is disabled. A visitor registers with: first and last
  * name, email, a strong password typed twice (see {@link StrongPasswordValidator}), country, what
- * the visitor does (a {@link JobRole}, in words with Other) and the language of the emails. On success the account is made, but opens the demos only once the
- * visitor followed the link of the {@link ConfirmationMail} to the {@link EmailValidationPage};
- * the visitor is sent to the {@link EmailConfirmationPage}, which says so.
+ * the visitor does (a {@link JobRole}, in words with Other) and the language of the emails. On
+ * success the account is made, but opens the demos only once the visitor followed the link of the
+ * {@link ConfirmationMail} to the {@link EmailValidationPage}; the visitor is sent to the
+ * {@link EmailConfirmationPage}, which says so. An email that has an account already gets the
+ * same answer, so that the page does not tell which emails have one, and the
+ * {@link AccountExistsMail} instead.
  * <p>
  * It keeps robots out in three ways, none needing an outside service: a field hidden from people
  * that robots fill in (a honeypot), a minimum time between showing the form and sending it, and
@@ -142,17 +145,21 @@ public class RegisterPage extends BasePage
 					error(getString("tooMany"));
 					return;
 				}
+				// the same answer whether the email has an account or not: only its owner learns
 				String email = Accounts.accountName(registration.getEmail());
 				Optional<String> token = Accounts.get().register(email,
 					registration.getPassword(), registration::fill);
 				registration.setPassword(null);
-				if (token.isEmpty())
-				{
-					error(getString("taken"));
-					return;
-				}
-				Accounts.get().find(email)
-					.ifPresent(user -> ConfirmationMail.send(user, token.get()));
+				Accounts.get().find(email).ifPresent(user -> {
+					if (token.isPresent())
+					{
+						ConfirmationMail.send(user, token.get());
+					}
+					else
+					{
+						AccountExistsMail.send(user, registration.getLanguage());
+					}
+				});
 				setResponsePage(new EmailConfirmationPage(email));
 			}
 

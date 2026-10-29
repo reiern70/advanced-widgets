@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="subject">Ihr Konto bei Antilia Widgets</entry>
+	<entry key="title">Sie haben schon ein Konto</entry>
+	<entry key="greeting">Hallo,</entry>
+	<entry key="tried">jemand, vielleicht Sie, wollte sich mit dieser E-Mail-Adresse bei Antilia Widgets registrieren, für die es schon ein Konto gibt. Es wurde kein neues Konto angelegt.</entry>
+	<entry key="signIn">Um die Demos auszuprobieren, melden Sie sich mit dieser E-Mail-Adresse und Ihrem Passwort an.</entry>
+	<entry key="button">Anmelden</entry>
+	<entry key="orCopy">Falls die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:</entry>
+	<entry key="notConfirmed">Falls Sie Ihre E-Mail-Adresse noch nicht bestätigt haben, sendet Ihnen die Anmeldung einen neuen Link, um sie zu bestätigen.</entry>
+	<entry key="ignore">Falls Sie es nicht waren, können Sie diese E-Mail ignorieren: Ihr Konto bleibt, wie es war.</entry>
+</properties>
