@@ -8,6 +8,11 @@ www.{$DOMAIN} {
 }
 
 {$DOMAIN} {
+	# no body larger than the uploads of the demo (20 MB at most, see UploadPage) reaches Jetty:
+	# a larger one is answered 413
+	request_body {
+		max_size 25MB
+	}
 	encode zstd gzip
 	reverse_proxy app:8080
 	# HTTPS only from now on, no guessing of types, the address of a page to other sites only

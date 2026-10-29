@@ -9,7 +9,7 @@ keeps the users and the accesses. The domain is registered in Lightsail too.
 | `Dockerfile` | Jetty 12 (ee10, Servlet 6) on Java 21 with the WAR as `ROOT.war`, websockets and `X-Forwarded-*` on; the Jetty of `jetty:run` and of the tests |
 | `compose.yaml` | Jetty, Caddy and PostgreSQL; the page store, the database and the certificates on volumes |
 | `postgres-local.yaml` | PostgreSQL on a development machine, see below |
-| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
+| `Caddyfile` | HTTPS for `$DOMAIN` (Let's Encrypt), `www.` redirected to the bare domain, request bodies up to 25 MB, the security headers (HSTS, `nosniff`, `Referrer-Policy`) and no `Server` |
 | `.env.example` | The settings; copied to `.env` on the server, never committed |
 | `setup-server.sh` | Prepares a fresh instance, once: Docker, swap, `/opt/antilia-widgets` |
 | `deploy.sh` | Builds the WAR here and starts it on the instance: `deploy/deploy.sh ubuntu@<ip>` |
@@ -85,6 +85,11 @@ sells no domains either. A plain VPS (Hetzner) is cheaper but has no managed Pos
    websocket status *Live*.
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
+
+**Memory.** Caddy answers 413 to a request body over 25 MB (the uploads of the demo take 20 MB at
+most), so such a body never reaches Jetty. A JVM that runs out of memory ends
+(`-XX:+ExitOnOutOfMemoryError`, set by the image in `JDK_JAVA_OPTIONS` whatever `JAVA_OPTIONS`
+say), and Docker starts it again (`restart: unless-stopped`) instead of leaving it up but broken.
 
 The demos are private: visitors sign in to open them, the home page is public. Registering is
 open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`.
