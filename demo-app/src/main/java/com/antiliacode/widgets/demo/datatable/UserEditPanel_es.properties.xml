@@ -22,4 +22,5 @@
 	<entry key="cancel">Cancelar</entry>
 	<entry key="save">Guardar</entry>
 	<entry key="userGone">El usuario ya no existe.</entry>
+	<entry key="usersFull">La demo guarda como mucho {0} usuarios: borre algunos primero.</entry>
 </properties>

@@ -24,10 +24,15 @@ import org.apache.wicket.util.lang.Args;
 
 /**
  * Keeps the users of the demos in memory, safe for use by several threads. Saving a user gives it
- * the next free id.
+ * the next free id. The users are shared by every visitor, so there are at most
+ * {@value #MAX_USERS} of them; the users in each order are kept until one changes, so that the
+ * pages of a list cost no sorting.
  */
 public class UsersDatabase
 {
+	/** The most users the database keeps. */
+	public static final int MAX_USERS = 2000;
+
 	private static final Comparator<User> BY_FIRST_NAME = Comparator
 		.comparing(User::getFirstName, Comparator.nullsFirst(Comparator.naturalOrder()))
 		.thenComparing(User::getId);
@@ -39,6 +44,9 @@ public class UsersDatabase
 	private final Map<Long, User> users = new ConcurrentHashMap<>();
 
 	private final AtomicLong lastId = new AtomicLong();
+
+	/** The users in each order asked for so far, by the order; emptied by every change. */
+	private final Map<String, List<User>> sorted = new ConcurrentHashMap<>();
 
 	/**
 	 * @param count
@@ -104,7 +112,25 @@ public class UsersDatabase
 	public List<User> getIndex(SortParam<String> sort)
 	{
 		Comparator<User> order = comparator(sort);
-		return users.values().stream().sorted(order).toList();
+		String key = sort == null ? "" : sort.getProperty() + (sort.isAscending() ? "+" : "-");
+		List<User> index = sorted.get(key);
+		if (index != null)
+		{
+			return index;
+		}
+		synchronized (this)
+		{
+			return sorted.computeIfAbsent(key,
+				ignored -> users.values().stream().sorted(order).toList());
+		}
+	}
+
+	/**
+	 * @return whether the database keeps {@value #MAX_USERS} users already, and saves no more
+	 */
+	public boolean isFull()
+	{
+		return users.size() >= MAX_USERS;
 	}
 
 	private static Comparator<User> comparator(SortParam<String> sort)
@@ -128,28 +154,36 @@ public class UsersDatabase
 	 *
 	 * @param user
 	 *            the user, with the id {@code 0}
+	 * @throws IllegalStateException
+	 *             if the database is {@link #isFull() full}
 	 */
-	public void save(User user)
+	public synchronized void save(User user)
 	{
 		Args.notNull(user, "user");
 		if (user.getId() != 0)
 		{
 			throw new IllegalArgumentException(user + " is already saved");
 		}
+		if (isFull())
+		{
+			throw new IllegalStateException("There are " + MAX_USERS + " users already");
+		}
 		user.setId(lastId.incrementAndGet());
 		users.put(user.getId(), user);
+		sorted.clear();
 	}
 
 	/**
 	 * Called after the fields of a saved user were changed. The users are held in memory, so
-	 * there is nothing to write.
+	 * there is nothing to write, but the orders are made anew.
 	 *
 	 * @param user
 	 *            the changed user
 	 */
-	public void update(User user)
+	public synchronized void update(User user)
 	{
 		get(user.getId());
+		sorted.clear();
 	}
 
 	/**
@@ -158,8 +192,9 @@ public class UsersDatabase
 	 * @param user
 	 *            the user
 	 */
-	public void delete(User user)
+	public synchronized void delete(User user)
 	{
 		users.remove(user.getId());
+		sorted.clear();
 	}
 }

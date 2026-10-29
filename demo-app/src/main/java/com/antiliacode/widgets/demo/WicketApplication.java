@@ -237,10 +237,12 @@ public class WicketApplication extends WebApplication
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());
 
-		// the demos are the private part: only visitors who signed in see them
+		// the demos are the private part: only visitors who signed in see them, and get the
+		// resources of the demos, such as the JSON of /api/...
 		DemosAuthorization authorization = new DemosAuthorization();
 		getSecuritySettings().setAuthorizationStrategy(authorization);
 		getSecuritySettings().setUnauthorizedComponentInstantiationListener(authorization);
+		getSecuritySettings().setUnauthorizedResourceRequestListener(authorization);
 
 		// the pages of the sessions go to this folder on disk, the servlet container's temporary
 		// folder by default; they last as long as the server runs, as the sessions do

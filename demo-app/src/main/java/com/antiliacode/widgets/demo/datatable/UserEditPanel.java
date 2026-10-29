@@ -138,7 +138,17 @@ public abstract class UserEditPanel extends Panel
 				user.setAddress(address);
 				if (userId == 0)
 				{
-					database.save(user);
+					try
+					{
+						database.save(user);
+					}
+					catch (IllegalStateException full)
+					{
+						error(getString("usersFull").replace("{0}",
+							String.valueOf(UsersDatabase.MAX_USERS)));
+						target.add(feedback);
+						return;
+					}
 				}
 				else
 				{
