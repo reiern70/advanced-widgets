@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Lo que el editor dice de su limpieza</entry>
+	<entry key="explanation">Pegue en el editor de abajo, desde el campo de arriba o desde cualquier página: la limpieza en el navegador deja fuera lo que el editor no acepta, y el servidor se entera de lo que perdió lo pegado, en una notificación; con Decir lo que perdió lo pegado, el editor lo dice también bajo su barra de herramientas. El servidor limpia de nuevo todo lo que llega. Envíe el HTML de cualquier parte como el texto del editor, como lo haría una petición hecha a mano, sin pasar por la limpieza del navegador: el servidor lo limpia en silencio, dice lo que quitó o rechaza el texto, según lo elegido.</entry>
+	<entry key="cleaningLegend">Cuando el servidor quita algo</entry>
+	<entry key="cleaning.SILENT">Limpiar en silencio</entry>
+	<entry key="cleaning.REPORT">Decir lo que quitó</entry>
+	<entry key="cleaning.REJECT">Rechazar el texto</entry>
+	<entry key="pasteNotice">Decir lo que perdió lo pegado</entry>
+	<entry key="pasteLabel">Pegue aquí</entry>
+	<entry key="send">Enviar</entry>
+	<entry key="sendUnsafe">Enviar el HTML de cualquier parte como su texto</entry>
+	<entry key="kept">Lo que guardó el servidor</entry>
+	<entry key="pasteTitle">Lo pegado se limpió</entry>
+	<entry key="pasteLost">El editor dejó fuera de lo pegado: {0}.</entry>
+	<entry key="serverTitle">El texto se limpió</entry>
+	<entry key="serverRemoved">El servidor quitó lo que el editor no permite: {0}.</entry>
+</properties>

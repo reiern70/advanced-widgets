@@ -18,12 +18,16 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.wicket.core.util.lang.WicketObjects;
 import org.junit.jupiter.api.Test;
+
+import com.antiliacode.widgets.richtext.RichTextCleaningReport;
 
 
 /**
@@ -56,6 +60,21 @@ class CKEditorPolicyTest
 			"<figure class=\"image\"><img src=\"/a.png\" alt=\"alt\" /><figcaption>cap</figcaption>" +
 			"</figure><p><img src=\"https://example.org/b.png\" alt=\"in\" /> x</p>";
 		assertEquals(html, clean(html));
+		// what CKEditor writes is no removal
+		assertTrue(CKEditorPolicy.ALL.sanitizeAndReport(html).report().isEmpty());
+		assertTrue(CKEditorPolicy.ALL.sanitizeAndReport("<p><a href=\"https://x.org\" " +
+			"target=\"_blank\" rel=\"noopener noreferrer\">l</a> <a href=\"/page\">m</a></p>")
+			.report().isEmpty());
+	}
+
+	@Test
+	void reportsWhatItRemoves()
+	{
+		RichTextCleaningReport report = CKEditorPolicy.ALL.sanitizeAndReport("<p style=\"x\">a<img " +
+			"src=\"/a.png\" onerror=\"steal()\" width=\"10\"></p><object data=\"x\"></object>")
+			.report();
+		assertEquals(Map.of("object", 1), report.getElements());
+		assertEquals(Map.of("style", 1, "onerror", 1, "width", 1), report.getAttributes());
 	}
 
 	@Test

@@ -13,8 +13,8 @@
 -->
 <!-- A RichTextEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
-	import type { RichTextBackgroundColor, RichTextColor, RichTextHighlighter, RichTextProofreader,
-		RichTextSuggester } from '@antilia/core';
+	import type { RichTextBackgroundColor, RichTextCleaningReport, RichTextColor,
+		RichTextHighlighter, RichTextProofreader, RichTextSuggester } from '@antilia/core';
 
 	import { RichTextEditor, type RichTextEditorState, type RichTextFeature, type RichTextFormat,
 		type RichTextTool } from '../src/index.js';
@@ -22,7 +22,8 @@
 	let { value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved, name,
 		format, readOnly, toolbar, count, className = 'rich', onsave, onfocus, onblur, onresize,
 		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, colors,
-		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features }: {
+		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features, pasteNotice,
+		onpastecleaned }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
 		format?: RichTextFormat; readOnly?: boolean; toolbar?: RichTextTool[][] | false;
 		count?: boolean; className?: string; onsave?: (value: string) => void;
@@ -34,7 +35,8 @@
 		backgroundColors?: readonly RichTextBackgroundColor[] | null;
 		spellcheck?: boolean | null; textLanguage?: string | null;
 		proofreader?: RichTextProofreader; suggesters?: RichTextSuggester[];
-		features?: RichTextFeature[] } = $props();
+		features?: RichTextFeature[]; pasteNotice?: boolean;
+		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
 	let modified = $state(false);
 </script>
 
@@ -43,7 +45,8 @@
 		{saved} {name} {format} {readOnly} {toolbar} {count} stateDelay={0} minHeight={100}
 		label="Notes" {onsave} {onfocus} {onblur} {onresize} {onselectionchange} {highlight}
 		{codeLanguages} {uploadMaxSize} {onupload} {colors} {backgroundColors} {spellcheck}
-		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} />
+		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} {pasteNotice}
+		{onpastecleaned} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

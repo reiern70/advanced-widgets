@@ -21,7 +21,9 @@
   state, the selection, the scroll position and the size, binds too (bind:state): the editor
   starts in the state given and reports the one the user leaves it in, a moment after; and whether
   the text has changes not saved (bind:modified), which the tabs it is in show. The core's editor
-  is the bindable editor (bind:editor).
+  is the bindable editor (bind:editor). What a paste lost to CKEditor, a script or a link to
+  javascript: for example, comes to onpastecleaned and, with pasteNotice, shows in a line under the
+  toolbar until the text changes.
 
   The package has no code of CKEditor, which is licensed under the GPL or CKSource's commercial
   terms: the page brings it, its classes (build) or the global CKEDITOR of its browser build, with
@@ -33,8 +35,8 @@
 	import { untrack } from 'svelte';
 	import { CKEditor, type CKEditorBuild, type CKEditorInstance, type CKEditorPlugin,
 		type CKEditorTexts, type HeadingLevel, type ResizableSize, type ResizeAxis,
-		type RichTextEditorSelection, type RichTextEditorState, type RichTextEditorStateChange,
-		type RichTextFeature } from '@antilia/core';
+		type RichTextCleaningReport, type RichTextEditorSelection, type RichTextEditorState,
+		type RichTextEditorStateChange, type RichTextFeature } from '@antilia/core';
 
 	import { getLook } from './look.js';
 
@@ -104,6 +106,11 @@
 		modified?: boolean;
 		/** The editor of the core, bound. */
 		editor?: CKEditor | null;
+		/**
+		 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+		 * again; false when left out.
+		 */
+		pasteNotice?: boolean;
 		/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 		texts?: Partial<CKEditorTexts>;
 		/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -121,6 +128,8 @@
 		onmodifiedchange?: (modified: boolean) => void;
 		onsave?: (value: string) => void;
 		onresize?: (size: ResizableSize) => void;
+		/** Called with what a paste lost to CKEditor, by name and count, once it is in the text. */
+		onpastecleaned?: (report: RichTextCleaningReport) => void;
 	};
 
 	let {
@@ -152,6 +161,7 @@
 		stateDelay,
 		modified = $bindable(false),
 		editor = $bindable(null),
+		pasteNotice,
 		texts,
 		name,
 		id,
@@ -165,7 +175,8 @@
 		onstatechange,
 		onmodifiedchange,
 		onsave,
-		onresize
+		onresize,
+		onpastecleaned
 	}: Props = $props();
 
 	let element = $state<HTMLDivElement>();
@@ -182,7 +193,8 @@
 		const made = new CKEditor(element, untrack(() => ({
 			build, licenseKey, language, translations, value, saved, format, features, headingLevels,
 			toolbar, plugins, config, readOnly, placeholder, label, spellcheck, textLanguage, count,
-			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, texts, look,
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, pasteNotice,
+			texts, look,
 			onReady: (next: CKEditorInstance) => onready?.(next),
 			onError: (error: unknown) => onerror?.(error),
 			onChange: (next: string) => {
@@ -201,7 +213,8 @@
 				onmodifiedchange?.(next);
 			},
 			onSave: (next: string) => onsave?.(next),
-			onResize: (next: ResizableSize) => onresize?.(next)
+			onResize: (next: ResizableSize) => onresize?.(next),
+			onPasteCleaned: (report: RichTextCleaningReport) => onpastecleaned?.(report)
 		})));
 		instance = made;
 		editor = made;
@@ -218,7 +231,8 @@
 	$effect(() => {
 		const next = { licenseKey, language, format, features, headingLevels, toolbar, readOnly,
 			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
-			count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts };
+			count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			pasteNotice: !!pasteNotice, texts };
 		untrack(() => instance?.configure(next));
 	});
 

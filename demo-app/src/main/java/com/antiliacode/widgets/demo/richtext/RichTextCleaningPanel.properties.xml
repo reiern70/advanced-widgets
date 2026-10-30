@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">What the editor tells of its cleaning</entry>
+	<entry key="explanation">Paste into the editor below, from the field above or from any page: the cleaning in the browser leaves out what the editor does not take, and the server hears what the paste lost, a notification; with Tell what a paste lost, the editor says it under its toolbar too. The server cleans again whatever comes. Send the HTML from anywhere as the text of the editor, as a request made by hand would, past the cleaning in the browser: the server cleans it silently, tells what it removed, or rejects the text, as chosen.</entry>
+	<entry key="cleaningLegend">When the server removes something</entry>
+	<entry key="cleaning.SILENT">Clean silently</entry>
+	<entry key="cleaning.REPORT">Tell what it removed</entry>
+	<entry key="cleaning.REJECT">Reject the text</entry>
+	<entry key="pasteNotice">Tell what a paste lost</entry>
+	<entry key="pasteLabel">Paste here</entry>
+	<entry key="send">Send</entry>
+	<entry key="sendUnsafe">Send the HTML from anywhere as its text</entry>
+	<entry key="kept">What the server kept</entry>
+	<entry key="pasteTitle">The paste was cleaned</entry>
+	<entry key="pasteLost">The editor left out of the paste: {0}.</entry>
+	<entry key="serverTitle">The text was cleaned</entry>
+	<entry key="serverRemoved">The server removed what the editor does not allow: {0}.</entry>
+</properties>

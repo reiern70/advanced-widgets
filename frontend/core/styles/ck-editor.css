@@ -289,6 +289,28 @@
 }
 
 /*
+ * what a paste lost, under CKEditor's toolbar, until the text changes: a polite line between the
+ * borders of the toolbar and of the text, in the color of the text on a tint of the theme's
+ * information. Empty, it takes no room, but stays a live region.
+ */
+.antilia-ck-editor .antilia-rich-text-notice {
+	flex: none;
+	padding: 0.3rem 0.6rem;
+	border: 1px solid var(--ck-color-base-border);
+	border-block-width: 0;
+	background: color-mix(in srgb, var(--antilia-theme-info, #1c7ed6) 10%,
+		var(--ck-color-base-background));
+	color: var(--ck-color-base-text);
+	font-size: 0.875em;
+	text-align: start;
+}
+
+.antilia-ck-editor .antilia-rich-text-notice:empty {
+	padding: 0;
+	border: 0;
+}
+
+/*
  * The text in the font of the page: CKEditor's content has a font of its own, a custom property
  * of :root, which a custom property of the editor set to inherit would take again.
  */

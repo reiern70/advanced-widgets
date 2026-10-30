@@ -290,13 +290,37 @@ class FakeEditor implements CKEditorInstance {
 			this.keys.set(keystroke, callback);
 		}
 	};
+	/** The clipboard's pipeline, which fires contentInsertion with what a paste inserts. */
+	readonly pipeline = new Emitter();
+	readonly plugins = {
+		has: (name: string) => name === 'ClipboardPipeline',
+		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline : undefined
+	};
 
 	constructor(readonly source: HTMLElement, readonly config: Record<string, unknown>) {
 		this.root = rootOf('');
 		this.uiElement.className = 'ck ck-editor';
 		this.editable.className = 'ck-editor__editable';
-		this.uiElement.append(this.editable);
+		// the toolbar above the text, as ClassicEditor has it
+		const top = document.createElement('div');
+		top.className = 'ck-editor__top';
+		const main = document.createElement('div');
+		main.className = 'ck-editor__main';
+		main.append(this.editable);
+		this.uiElement.append(top, main);
 		source.after(this.uiElement);
+	}
+
+	/**
+	 * Pastes as the user does: the clipboard's input, then what CKEditor read of it inserted,
+	 * which changes the text.
+	 */
+	paste(html: string, kept: string): void {
+		const transfer = { getData: (type: string) => type === 'text/html' ? html : '' };
+		const data = { dataTransfer: transfer, content: html as unknown };
+		this.viewDocument.fire('clipboardInput', data);
+		this.pipeline.fire('contentInsertion', { content: { data: kept } });
+		this.type(kept.replace(/<[^>]*>/g, ''));
 	}
 
 	get isReadOnly(): boolean {
@@ -970,5 +994,130 @@ describe('the types of events of CKEditor', () => {
 		select([1, 1], [1, 1]);
 		select([1, 2], [1, 2]);
 		expect(selected).toEqual([{ text: 'Hello' }, { text: 'tle\nHello' }, { text: '' }]);
+	});
+});
+
+describe('what a paste into CKEditor lost', () => {
+	/** A script, a handler, a link to javascript: and a frame: what CKEditor does not read. */
+	const UNSAFE = '<p onclick="steal()">Hi <a href="javascript:steal()">there</a></p>' +
+		'<script>steal()</script><iframe src="https://example.org"></iframe>';
+
+	it('is told to onPasteCleaned, with the event paste-cleaned, and in the notice', async () => {
+		const build = fakeBuild();
+		const field = textArea();
+		const reports: unknown[] = [];
+		const details: Array<Record<string, unknown>> = [];
+		field.addEventListener(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, (event) => {
+			const { editor: firing, ...rest } = (event as CustomEvent<Record<string, unknown>>).detail;
+			expect(firing).toBe(CKEditor.of(field));
+			details.push(rest);
+		});
+		const editor = new CKEditor(field, { build, pasteNotice: true,
+			onPasteCleaned: (report) => reports.push(report) });
+		await editor.ready;
+		const fake = build.editors[0]!;
+		// under the toolbar, before the text, empty
+		const notice = editor.element.querySelector<HTMLElement>('.antilia-rich-text-notice')!;
+		expect(notice.getAttribute('role')).toBe('status');
+		expect(notice.nextElementSibling?.classList.contains('ck-editor__main')).toBe(true);
+		expect(notice.textContent).toBe('');
+
+		fake.paste(UNSAFE, '<p>Hi there</p>');
+		// told once the paste is in the text
+		expect(reports).toEqual([]);
+		await Promise.resolve();
+		const report = { elements: { script: 1, iframe: 1, a: 1 }, attributes: { onclick: 1 } };
+		expect(reports).toEqual([report]);
+		expect(details).toEqual([report]);
+		expect(notice.textContent).toBe('Part of the paste was left out: scripts, embedded ' +
+			'content, links.');
+
+		// gone with the next change
+		fake.type('!');
+		expect(notice.textContent).toBe('');
+	});
+
+	it('reads the HTML of a paste of the browser from the clipboard, and stays through changes ' +
+		'of the model alone', async () => {
+		const build = fakeBuild();
+		const onPasteCleaned = vi.fn();
+		const editor = new CKEditor(textArea(), { build, pasteNotice: true, onPasteCleaned });
+		await editor.ready;
+		const fake = build.editors[0]!;
+		// a paste event of the browser: CKEditor reads the content from the clipboard after the
+		// editor heard of the paste
+		fake.viewDocument.fire('clipboardInput', { dataTransfer: { getData: (type: string) =>
+			type === 'text/html' ? '<p onclick="steal()">Hi</p><script>steal()</script>' : '' } });
+		fake.pipeline.fire('contentInsertion', { content: { data: '<p>Hi</p>' } });
+		fake.type('Hi');
+		await Promise.resolve();
+		expect(onPasteCleaned).toHaveBeenCalledWith({ elements: { script: 1 },
+			attributes: { onclick: 1 } });
+		const notice = editor.element.querySelector<HTMLElement>('.antilia-rich-text-notice')!;
+		expect(notice.textContent).toBe('Part of the paste was left out: scripts.');
+
+		// the model changed, not the text: an image given its natural size once it loaded
+		fake.modelDocument.fire('change:data');
+		expect(notice.textContent).toBe('Part of the paste was left out: scripts.');
+		fake.type('!');
+		expect(notice.textContent).toBe('');
+	});
+
+	it('is nothing for what CKEditor keeps, for text, and without the clipboard\'s pipeline',
+		async () => {
+			const build = fakeBuild();
+			const onPasteCleaned = vi.fn();
+			const editor = new CKEditor(textArea(), { build, pasteNotice: true, onPasteCleaned });
+			await editor.ready;
+			const fake = build.editors[0]!;
+			// what CKEditor writes of a paste of Word: italic as i, no spans, no paragraphs' classes
+			fake.paste('<p class="MsoNormal"><b><span lang="EN">Bold</span></b> <em>it</em>' +
+				'<o:p></o:p></p><ul><li>One</li></ul>', '<p><strong>Bold</strong> <i>it</i></p>' +
+				'<ul><li data-list-item-id="e1">One</li></ul>');
+			// text, which CKEditor makes HTML of
+			fake.viewDocument.fire('clipboardInput', { dataTransfer: { getData: (type: string) =>
+				type === 'text/plain' ? '<script>' : '' }, content: '<p>&lt;script&gt;</p>' });
+			fake.pipeline.fire('contentInsertion', { content: { data: '<p>&lt;script&gt;</p>' } });
+			await Promise.resolve();
+			expect(onPasteCleaned).not.toHaveBeenCalled();
+			expect(editor.element.querySelector('.antilia-rich-text-notice')!.textContent).toBe('');
+
+			// a CKEditor without the clipboard's pipeline pastes as it does
+			const plain = fakeBuild();
+			const create = plain.ClassicEditor.create;
+			(plain as { ClassicEditor: unknown }).ClassicEditor = {
+				create: async (element: HTMLElement, config: Record<string, unknown>) => Object.assign(
+					await create(element, config), { plugins: undefined }) };
+			const other = new CKEditor(textArea(), { build: plain, onPasteCleaned });
+			await other.ready;
+			plain.editors[0]!.paste(UNSAFE, '<p>Hi there</p>');
+			await Promise.resolve();
+			expect(onPasteCleaned).not.toHaveBeenCalled();
+		});
+
+	it('shows the notice as the options say, in the texts given, with each CKEditor', async () => {
+		const build = fakeBuild();
+		const editor = new CKEditor(textArea(), { build, texts: { pasteCleaned:
+			'Ein Teil fehlt: {0}.', pasteScripts: 'Skripte' } });
+		await editor.ready;
+		expect(editor.element.querySelector('.antilia-rich-text-notice')).toBeNull();
+		editor.configure({ pasteNotice: true });
+		build.editors[0]!.paste('<p onmouseover="x()">x</p>', '<p>x</p>');
+		await Promise.resolve();
+		expect(editor.element.querySelector('.antilia-rich-text-notice')!.textContent)
+			.toBe('Ein Teil fehlt: Skripte.');
+
+		// CKEditor made anew, the text the same: the notice under its toolbar, as it was
+		editor.configure({ features: ['bold'] });
+		await vi.waitFor(() => expect(build.editors[1]?.uiElement.isConnected).toBe(true));
+		await editor.ready;
+		const notice = editor.element.querySelector<HTMLElement>('.antilia-rich-text-notice')!;
+		expect(notice.nextElementSibling).toBe(build.editors[1]!.uiElement
+			.querySelector('.ck-editor__main'));
+		expect(notice.textContent).toBe('Ein Teil fehlt: Skripte.');
+		build.editors[1]!.type('!');
+		expect(notice.textContent).toBe('');
+		editor.configure({ pasteNotice: false });
+		expect(editor.element.querySelector('.antilia-rich-text-notice')).toBeNull();
 	});
 });

@@ -120,7 +120,8 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/** The texts of the editor's own, those of {@link RichTextEditor} of the same names. */
 	private static final List<String> TEXTS = List.of("characters", "character", "words", "word",
-		"resize", "linkNewTab");
+		"resize", "linkNewTab", "pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms",
+		"pasteImages", "pasteTables", "pasteLinks", "pasteFormatting");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<CKEditorFeature> features;
@@ -410,7 +411,8 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/**
 	 * What the editor says of its own, in the language of a component: the count and the bar
-	 * resizing it, and the switch opening a link in a new tab; CKEditor translates the rest. The
+	 * resizing it, the switch opening a link in a new tab and the notice of what a paste lost;
+	 * CKEditor translates the rest. The
 	 * texts of this editor, and those a page hands to the React and Svelte editors.
 	 *
 	 * @param component
