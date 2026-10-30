@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.ckeditor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -89,7 +90,8 @@ class CKEditorPolicyTest
 	@Test
 	void dropsWhatAnAttackerWrites()
 	{
-		assertEquals("<p>Hi there</p><p>Styled <img alt=\"A\" /></p>" +
+		// an image whose address does not pass goes whole
+		assertEquals("<p>Hi there</p><p>Styled </p>" +
 			"<figure><img src=\"/a.png\" alt=\"B\" /></figure>" +
 			"<ul><li>One</li></ul><p>Plain</p>",
 			clean("<p onclick=\"steal()\">Hi <a href=\"javascript:steal()\">there</a></p>" +
@@ -164,5 +166,33 @@ class CKEditorPolicyTest
 		CKEditorPolicy copy = WicketObjects.cloneObject(CKEditorPolicy.of(Set.of(
 			CKEditorFeature.ITALIC)));
 		assertEquals("<p><i>i</i>b</p>", copy.sanitize("<p><i>i</i><b>b</b></p>"));
+	}
+
+	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		CKEditorPolicy policy = CKEditorPolicy.ALL.withImagesFromSiteOnly(true);
+		assertTrue(policy.isImagesFromSiteOnly());
+		assertFalse(CKEditorPolicy.ALL.isImagesFromSiteOnly());
+		assertSame(CKEditorPolicy.ALL, CKEditorPolicy.ALL.withImagesFromSiteOnly(false));
+		assertEquals(CKEditorPolicy.ALL, policy.withImagesFromSiteOnly(false));
+		assertNotEquals(CKEditorPolicy.ALL, policy);
+		assertEquals(policy.hashCode(), CKEditorPolicy.of(null).withImagesFromSiteOnly(true)
+			.hashCode());
+
+		String site = "<figure class=\"image\"><img src=\"/a.png\" alt=\"A\" />" +
+			"<figcaption>cap</figcaption></figure><p><a href=\"https://example.org\" " +
+			"rel=\"noopener noreferrer nofollow\">elsewhere</a></p>";
+		assertEquals(site, policy.sanitize(site));
+		for (String src : new String[] { "https://example.org/a.png", "//example.org/a.png",
+			"\\\\example.org/a.png", "/\\example.org/a.png" })
+		{
+			assertEquals("<figure class=\"image\"><figcaption>cap</figcaption></figure>",
+				policy.sanitize("<figure class=\"image\"><img src=\"" + src + "\" alt=\"A\" />" +
+					"<figcaption>cap</figcaption></figure>"), src);
+		}
+		// by default, images of other sites stay
+		String elsewhere = "<p><img src=\"https://example.org/b.png\" alt=\"in\" /></p>";
+		assertEquals(elsewhere, CKEditorPolicy.ALL.sanitize(elsewhere));
 	}
 }

@@ -438,4 +438,103 @@ class RichTextPolicyTest
 			"</p>", ownCopy.sanitize("<p><span class=\"brand-text\">a</span>" +
 				"<mark class=\"brand-mark\">b</mark></p>"));
 	}
+
+	@Test
+	void tellsTheAddressesOfTheSite()
+	{
+		for (String url : List.of("/a.png", "a.png", "images/a.png", "../a.png", "?x=1", "#top",
+			"/a.png?x=//b", " /a.png", "\\a.png"))
+		{
+			assertTrue(RichTextPolicy.isSiteUrl(url), url);
+		}
+		for (String url : new String[] { null, "", " ", "https://example.org/a.png",
+			"HTTP://example.org/a.png", "//example.org/a.png", "///example.org/a.png",
+			"\\\\example.org/a.png", "/\\example.org/a.png", "\\/example.org/a.png",
+			"/\t/example.org/a.png", "/\n/example.org/a.png", " //example.org/a.png",
+			"\u0000//example.org/a.png", "data:image/png;base64,AAAA", "javascript:steal()",
+			"mailto:a@example.org", "https:a.png" })
+		{
+			assertFalse(RichTextPolicy.isSiteUrl(url), url);
+		}
+	}
+
+	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		RichTextPolicy policy = RichTextPolicy.ALL.withImagesFromSiteOnly(true);
+		assertTrue(policy.isImagesFromSiteOnly());
+		assertFalse(RichTextPolicy.ALL.isImagesFromSiteOnly());
+		assertSame(RichTextPolicy.ALL, RichTextPolicy.ALL.withImagesFromSiteOnly(false));
+		assertSame(policy, policy.withImagesFromSiteOnly(true));
+		assertEquals(RichTextPolicy.ALL, policy.withImagesFromSiteOnly(false));
+		assertNotEquals(RichTextPolicy.ALL, policy);
+		assertEquals(policy, RichTextPolicy.of(null).withImagesFromSiteOnly(true));
+		assertEquals(policy.hashCode(), RichTextPolicy.of(null).withImagesFromSiteOnly(true)
+			.hashCode());
+		assertEquals(policy, WicketObjects.cloneObject(policy));
+
+		String site = "<p><img src=\"/a.png\" alt=\"A\" title=\"T\" width=\"10\" />" +
+			"<img src=\"images/b.png\" /> <a href=\"https://example.org\" " +
+			"rel=\"noopener noreferrer nofollow\">a link elsewhere</a></p>";
+		assertEquals(site, policy.sanitize(site));
+
+		for (String src : List.of("https://example.org/a.png", "//example.org/a.png",
+			"\\\\example.org/a.png", "/\\example.org/a.png", "/&#9;/example.org/a.png",
+			"&#47;&#47;example.org/a.png", "data:image/png;base64,AAAA"))
+		{
+			String html = "<p>An <img src=\"" + src + "\" alt=\"A\" title=\"T\" />image</p>";
+			assertEquals("<p>An image</p>", policy.sanitize(html), src);
+		}
+		// by default, images of other sites stay
+		assertEquals("<p><img src=\"https://example.org/a.png\" alt=\"A\" /></p>",
+			clean("<p><img src=\"https://example.org/a.png\" alt=\"A\" /></p>"));
+	}
+
+	@Test
+	void dropsAnImageWhoseAddressDoesNotPassWhole()
+	{
+		assertEquals("<p>An image</p>",
+			clean("<p>An <img src=\"javascript:steal()\" alt=\"A\" title=\"T\" />image</p>"));
+		RichTextCleaningReport report = RichTextPolicy.ALL.withImagesFromSiteOnly(true)
+			.sanitizeAndReport("<p><img src=\"https://example.org/a.png\" alt=\"A\" /></p>")
+			.report();
+		assertEquals(Map.of("img", 1), report.getElements());
+	}
+
+	@Test
+	void holdsEveryAddressTheBrowserLoadsToTheSite()
+	{
+		IRichTextFeature media = new IRichTextFeature()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String getName()
+			{
+				return "media";
+			}
+
+			@Override
+			public void allowHtml(RichTextHtmlRules rules)
+			{
+				assertTrue(rules.isImagesFromSiteOnly());
+				rules.allowElements("img", "video", "a").allowUrl("src", "img", "video")
+					.allowAttribute("srcset", "img").allowUrl("poster", "video")
+					.allowUrl("href", "a");
+			}
+		};
+		RichTextPolicy policy = RichTextPolicy.of(List.of(media)).withImagesFromSiteOnly(true);
+
+		// as OWASP writes a srcset
+		assertEquals("<p><img src=\"/a.png\" srcset=\"/a.png 1x , b.png 2x\" /></p>",
+			policy.sanitize("<p><img src=\"/a.png\" srcset=\"/a.png 1x, b.png 2x\" /></p>"));
+		assertEquals("<p><img src=\"/a.png\" /></p>",
+			policy.sanitize("<p><img src=\"/a.png\" srcset=\"/a.png 1x,//example.org/b.png 2x\" />" +
+				"</p>"));
+		assertEquals("<p><video src=\"/a.webm\"></video></p>",
+			policy.sanitize("<p><video src=\"/a.webm\" poster=\"https://example.org/a.png\">" +
+				"</video></p>"));
+		assertEquals("<p><a href=\"https://example.org\">elsewhere</a></p>",
+			policy.sanitize("<p><a href=\"https://example.org\">elsewhere</a></p>"));
+	}
 }

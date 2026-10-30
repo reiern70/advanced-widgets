@@ -154,6 +154,22 @@ class CKEditorPageTest
 	}
 
 	@Test
+	void keepsTheImagesOfTheSiteAlone()
+	{
+		assertTrue(editor(NOTES).isImagesFromSiteOnly());
+		CKEditor editor = editor(EDITOR);
+		assertTrue(editor.isImagesFromSiteOnly());
+		String html = "<p>A bird</p><figure class=\"image\"><img " +
+			"src=\"//example.org/pixel.png\" alt=\"pixel\" /></figure><figure class=\"image\">" +
+			"<img src=\"favicon.svg\" alt=\"icon\" /></figure>";
+		sendState(editor, "{}", html);
+		fire(editor, RichTextEditorEvents.INPUT, html);
+
+		assertEquals("<p>A bird</p><figure class=\"image\"></figure><figure class=\"image\">" +
+			"<img src=\"favicon.svg\" alt=\"icon\" /></figure>", CKEditorPage.article().getText());
+	}
+
+	@Test
 	void keepsTheHtmlCleanedAndTheStateTheBrowserSendsInTheSession()
 	{
 		CKEditor editor = editor(EDITOR);

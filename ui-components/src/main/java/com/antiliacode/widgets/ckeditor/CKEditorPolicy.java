@@ -33,7 +33,9 @@ import com.antiliacode.widgets.richtext.RichTextSanitized;
  * letting through its own}, and nothing else, as {@link RichTextPolicy} does for Tiptap's. No script, no event
  * handler, no style attribute, no element of a feature left out; links and images only to http,
  * https and mailto addresses, or relative ones ({@link RichTextPolicy#isSafeUrl(String)}), links
- * with {@code rel="noopener noreferrer nofollow"}, and images without a width or a height. Classes
+ * with {@code rel="noopener noreferrer nofollow"}, and images without a width or a height; once
+ * {@link #withImagesFromSiteOnly(boolean) asked}, images only to the site's own addresses
+ * ({@link RichTextPolicy#isSiteUrl(String)}). Classes
  * only where CKEditor writes them:
  * <ul>
  * <li>the alignment of paragraphs, headings and the items of lists, {@code antilia-text-center},
@@ -59,6 +61,9 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 
 	private final Set<CKEditorFeature> features;
 
+	/** Whether images go only to the site's own addresses. */
+	private final boolean imagesFromSiteOnly;
+
 	/** Made the first time it cleans: OWASP's policies are not serializable. */
 	private transient PolicyFactory factory;
 
@@ -66,6 +71,13 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 	{
 		this.features = features.isEmpty() ? EnumSet.noneOf(CKEditorFeature.class) :
 			EnumSet.copyOf(features);
+		this.imagesFromSiteOnly = false;
+	}
+
+	private CKEditorPolicy(CKEditorPolicy policy, boolean imagesFromSiteOnly)
+	{
+		this.features = policy.features;
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
 	}
 
 	/**
@@ -90,6 +102,33 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 		return Collections.unmodifiableSet(features);
 	}
 
+	/**
+	 * @return whether images go only to the site's own addresses
+	 * @see #withImagesFromSiteOnly(boolean)
+	 * @since 10.11.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
+	}
+
+	/**
+	 * Keeps the images of the site alone, or not, as by default, as
+	 * {@link RichTextPolicy#withImagesFromSiteOnly(boolean)} does for Tiptap's HTML: an image whose
+	 * address is not {@link RichTextPolicy#isSiteUrl(String) the site's own} goes, and the caption
+	 * of its figure stays. Links go to other sites as before.
+	 *
+	 * @param imagesFromSiteOnly
+	 *            whether images go only to the site's own addresses; {@code false} by default
+	 * @return the policy cleaning so, {@code this} when it does already
+	 * @since 10.11.0
+	 */
+	public CKEditorPolicy withImagesFromSiteOnly(boolean imagesFromSiteOnly)
+	{
+		return imagesFromSiteOnly == this.imagesFromSiteOnly ? this :
+			new CKEditorPolicy(this, imagesFromSiteOnly);
+	}
+
 	@Override
 	public String sanitize(String html)
 	{
@@ -111,7 +150,7 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 	{
 		if (factory == null)
 		{
-			factory = RichTextHtmlRules.toPolicy(features, Set.of(), Set.of());
+			factory = RichTextHtmlRules.toPolicy(features, Set.of(), Set.of(), imagesFromSiteOnly);
 		}
 		return factory;
 	}
@@ -119,18 +158,20 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 	@Override
 	public boolean equals(Object other)
 	{
-		return other instanceof CKEditorPolicy policy && policy.features.equals(features);
+		return other instanceof CKEditorPolicy policy && policy.features.equals(features) &&
+			policy.imagesFromSiteOnly == imagesFromSiteOnly;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return features.hashCode();
+		return 31 * features.hashCode() + Boolean.hashCode(imagesFromSiteOnly);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "CKEditorPolicy" + features;
+		return "CKEditorPolicy" + features + (imagesFromSiteOnly ? "[images from the site only]" :
+			"");
 	}
 }

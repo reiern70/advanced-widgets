@@ -51,7 +51,10 @@ import com.github.openjson.JSONObject;
  * {@link #setMaxSize(Bytes) the size allowed}, which the request is cut at, and of
  * {@link #setTypes(Set) a type allowed} as its first bytes say, whatever its name and the type the
  * browser gave. The address the store answers must be one the editor and its cleaning take
- * ({@link RichTextPolicy#isSafeUrl(String)}): never {@code data:} nor {@code javascript:}.
+ * ({@link RichTextPolicy#isSafeUrl(String)}): never {@code data:} nor {@code javascript:}; and
+ * the site's own ({@link RichTextPolicy#isSiteUrl(String)}) when the behavior is on an editor that
+ * {@link AbstractRichTextEditor#setImagesFromSiteOnly(boolean) keeps the images of the site
+ * alone}.
  * <p>
  * A {@link RichTextEditor} with {@link RichTextEditor#setImageStore(IRichTextImageStore) a store}
  * has one already. Add one to a page for the editors of React and Svelte in it, and give them
@@ -294,13 +297,23 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 		{
 			upload.closeStreams();
 		}
-		if (!RichTextPolicy.isSafeUrl(url))
+		if (!RichTextPolicy.isSafeUrl(url) ||
+			(isImagesFromSiteOnly() && !RichTextPolicy.isSiteUrl(url)))
 		{
 			LOG.error("The address {} of the image {} uploaded is not one the editor takes", url,
 				name);
 			throw refusal("uploadFailed", name);
 		}
 		return url.trim();
+	}
+
+	/**
+	 * @return whether the behavior is on an editor that keeps the images of the site alone
+	 */
+	private boolean isImagesFromSiteOnly()
+	{
+		return getComponent() instanceof AbstractRichTextEditor<?> editor &&
+			editor.isImagesFromSiteOnly();
 	}
 
 	/**
