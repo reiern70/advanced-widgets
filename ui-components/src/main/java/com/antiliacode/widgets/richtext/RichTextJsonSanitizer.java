@@ -30,6 +30,10 @@ import com.github.openjson.JSONTokener;
  * gives {@code null}, nothing. The rest stays as it is: the texts, which a renderer writes as text,
  * and the attributes of the nodes, which a renderer of Tiptap's schema writes as its extensions
  * say.
+ * <p>
+ * It {@link #sanitizeAndReport(String) tells} of what it took out by the names of HTML: a link,
+ * {@code a}, an image, {@code img}, another mark or node by its type; and of a text that is no
+ * document as {@code json}, all of it taken out.
  *
  * @since 10.11.0
  */
@@ -43,16 +47,32 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	/** How deep objects and arrays may nest in the document. */
 	public static final int MAX_DEPTH = 100;
 
+	/** What a text that is no document is told of as. */
+	private static final String NO_DOCUMENT = "json";
+
 	@Override
 	public String sanitize(String json)
 	{
+		return sanitizeAndReport(json).text();
+	}
+
+	/**
+	 * Cleans the JSON, telling of the links, {@code a}, and the images, {@code img}, it took out,
+	 * and of a text that is no document, {@code json}.
+	 */
+	@Override
+	public RichTextSanitized sanitizeAndReport(String json)
+	{
 		if (json == null)
 		{
-			return null;
+			return new RichTextSanitized(null, RichTextCleaningReport.EMPTY);
 		}
+		RichTextCleaningReport.Builder report = RichTextCleaningReport.builder();
+		RichTextSanitized none = new RichTextSanitized(null,
+			report.addElement(NO_DOCUMENT).build());
 		if (depth(json) > MAX_DEPTH)
 		{
-			return null;
+			return none;
 		}
 		JSONObject document;
 		try
@@ -60,15 +80,17 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 			JSONTokener tokener = new JSONTokener(json);
 			if (!(tokener.nextValue() instanceof JSONObject object) || tokener.nextClean() != 0)
 			{
-				return null;
+				return none;
 			}
 			document = object;
 		}
 		catch (JSONException e)
 		{
-			return null;
+			return none;
 		}
-		return clean(document) ? document.toString() : json;
+		report = RichTextCleaningReport.builder();
+		return clean(document, report) ? new RichTextSanitized(document.toString(), report.build()) :
+			new RichTextSanitized(json, RichTextCleaningReport.EMPTY);
 	}
 
 	/**
@@ -77,23 +99,23 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	 *
 	 * @return whether it took anything out
 	 */
-	private static boolean clean(JSONObject node)
+	private static boolean clean(JSONObject node, RichTextCleaningReport.Builder report)
 	{
 		boolean changed = false;
 		JSONArray marks = node.optJSONArray("marks");
 		if (marks != null)
 		{
-			changed |= removeUnsafe(marks);
+			changed |= removeUnsafe(marks, report);
 		}
 		JSONArray content = node.optJSONArray("content");
 		if (content != null)
 		{
-			changed |= removeUnsafe(content);
+			changed |= removeUnsafe(content, report);
 			for (int i = 0; i < content.length(); i++)
 			{
 				if (content.opt(i) instanceof JSONObject child)
 				{
-					changed |= clean(child);
+					changed |= clean(child, report);
 				}
 			}
 		}
@@ -104,7 +126,7 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	 * @return whether it took out the marks or nodes of an array going to addresses that are not
 	 *         safe
 	 */
-	private static boolean removeUnsafe(JSONArray array)
+	private static boolean removeUnsafe(JSONArray array, RichTextCleaningReport.Builder report)
 	{
 		boolean changed = false;
 		for (int i = array.length() - 1; i >= 0; i--)
@@ -112,10 +134,25 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 			if (array.opt(i) instanceof JSONObject item && !isSafe(item))
 			{
 				array.remove(i);
+				report.addElement(nameOf(item.optString("type")));
 				changed = true;
 			}
 		}
 		return changed;
+	}
+
+	/**
+	 * @return the name of HTML of a mark or a node of Tiptap: {@code a} for a link, {@code img}
+	 *         for an image, its type otherwise
+	 */
+	private static String nameOf(String type)
+	{
+		return switch (type)
+		{
+			case "link" -> "a";
+			case "image" -> "img";
+			default -> type;
+		};
 	}
 
 	/**

@@ -59,6 +59,7 @@ import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEventsTester;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.richtext.RichTextCleaning;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
@@ -128,8 +129,10 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{\"selection\":{\"anchor\":0,\"head\":0},\"scrollTop\":0,\"scrollLeft\":0}",
 			options.getJSONObject("state").toString());
 		JSONObject texts = options.getJSONObject("texts");
-		assertEquals(6, texts.length());
+		assertEquals(14, texts.length());
 		assertEquals("{0} characters", texts.getString("characters"));
+		assertEquals("Part of the paste was left out: {0}.", texts.getString("pasteCleaned"));
+		assertFalse(options.has("pasteNotice"));
 		assertEquals("{0} word", texts.getString("word"));
 		assertEquals("Open in a new tab", texts.getString("linkNewTab"));
 		assertEquals("Drag, or use the arrow keys, to resize the editor", texts.getString("resize"));
@@ -507,6 +510,22 @@ class CKEditorTest extends WicketTestCase
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
 		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+	}
+
+	@Test
+	void rejectsWhatItsCleaningWouldRemove()
+	{
+		IModel<String> text = Model.of("");
+		CKEditor editor = new CKEditor("editor", text).setCleaning(RichTextCleaning.REJECT);
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p>Sized <img src=\"/a.png\" width=\"10\" /></p>");
+		form.submit();
+		assertEquals("", text.getObject());
+		assertEquals(List.of("The text holds what the editor does not allow: width."),
+			editor.getFeedbackMessages().toList().stream().map(message -> String.valueOf(
+				message.getMessage())).toList());
 	}
 
 	public static class TestPage extends WebPage implements IMarkupResourceStreamProvider

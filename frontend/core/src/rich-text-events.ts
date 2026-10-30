@@ -209,7 +209,13 @@ export const RICH_TEXT_BUILT_IN_EVENTS = Object.freeze({
 	 * selected. Fires from select, once for each text: not while the cursor moves with nothing
 	 * selected.
 	 */
-	selectedText: BUILT_IN_OWNER + ':selected-text'
+	selectedText: BUILT_IN_OWNER + ':selected-text',
+	/**
+	 * A paste lost something to the editor: detail.elements and detail.attributes have what, by
+	 * name and count (see pasteCleaningReport). The editor fires it after the paste, by trigger(),
+	 * and only for a paste that lost something.
+	 */
+	pasteCleaned: BUILT_IN_OWNER + ':paste-cleaned'
 });
 
 registerBuiltIn<{ text: string }>(RICH_TEXT_BUILT_IN_EVENTS.selectedText, {
@@ -222,6 +228,30 @@ registerBuiltIn<{ text: string }>(RICH_TEXT_BUILT_IN_EVENTS.selectedText, {
 		}
 		state.text = text;
 		return { text };
+	}
+});
+
+/**
+ * @returns the counts of a report by their names, those that are counts above 0 alone
+ */
+function counts(given: unknown): Record<string, number> {
+	const found: Record<string, number> = {};
+	if (given && typeof given === 'object') {
+		Object.entries(given as Record<string, unknown>).forEach(([name, count]) => {
+			if (typeof count === 'number' && Number.isInteger(count) && count > 0) {
+				found[name] = count;
+			}
+		});
+	}
+	return found;
+}
+
+registerBuiltIn(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, {
+	fire(_editor, _state, cause) {
+		const elements = counts(cause.detail.elements);
+		const attributes = counts(cause.detail.attributes);
+		return Object.keys(elements).length || Object.keys(attributes).length ?
+			{ elements, attributes } : undefined;
 	}
 });
 

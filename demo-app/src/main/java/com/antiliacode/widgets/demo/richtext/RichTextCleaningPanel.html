@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:panel>
+	<h3 class="rich-text-demo__subtitle"><wicket:message key="title"/></h3>
+	<p class="rich-text-demo__status"><wicket:message key="explanation"/></p>
+	<form wicket:id="form" class="rich-text-demo__editor">
+		<div class="rich-text-demo__controls">
+			<fieldset class="rich-text-demo__control">
+				<legend><wicket:message key="cleaningLegend"/></legend>
+				<span wicket:id="cleaning">[silent, report or reject]</span>
+			</fieldset>
+			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="pasteNotice"/> <wicket:message key="pasteNotice"/></label>
+		</div>
+		<label wicket:for="editor" class="rich-text-demo__name"><wicket:message key="pasteLabel"/></label>
+		<textarea wicket:id="editor"></textarea>
+		<div class="rich-text-demo__actions">
+			<button type="submit" wicket:id="send"><wicket:message key="send"/></button>
+			<button type="submit" wicket:id="sendUnsafe"><wicket:message key="sendUnsafe"/></button>
+		</div>
+	</form>
+	<div wicket:id="kept" class="rich-text-demo__saved">
+		<h3 class="rich-text-demo__subtitle"><wicket:message key="kept"/></h3>
+		<pre><code wicket:id="html">[the HTML the server kept]</code></pre>
+	</div>
+</wicket:panel>
+</body>
+</html>

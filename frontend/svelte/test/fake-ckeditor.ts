@@ -210,6 +210,14 @@ export class FakeEditor {
 
 	readonly conversion = { for: () => ({ add: () => undefined }) };
 
+	/** The clipboard's pipeline, which fires contentInsertion with what a paste inserts. */
+	private readonly pipeline = new Emitter();
+
+	readonly plugins = {
+		has: (name: string) => name === 'ClipboardPipeline',
+		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline : undefined
+	};
+
 	readonly keystrokes = {
 		set: (keystroke: string, callback: (data: unknown, cancel: () => void) => void) => {
 			this.keys.set(keystroke, callback);
@@ -235,6 +243,17 @@ export class FakeEditor {
 	/** The user changes the text. */
 	type(html: string): void {
 		this.setData(html);
+	}
+
+	/**
+	 * The user pastes HTML, of which CKEditor keeps some: the clipboard's input, then what CKEditor
+	 * read of it inserted, which becomes the text.
+	 */
+	paste(html: string, kept: string): void {
+		this.viewEmitter.fire('clipboardInput', { content: html,
+			dataTransfer: { getData: (type: string) => type === 'text/html' ? html : '' } });
+		this.pipeline.fire('contentInsertion', { content: kept });
+		this.setData(kept);
 	}
 
 	/** The user selects in a block, from an offset to another. */

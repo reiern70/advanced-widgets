@@ -17,7 +17,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { TextSelection } from '@tiptap/pm/state';
 
 import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS,
-	DEFAULT_RICH_TEXT_TOOLBAR, isSafeUrl, Popover, quietHtml, registerRichTextEvent,
+	DEFAULT_RICH_TEXT_PASTE_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, isEmptyCleaningReport, isSafeUrl,
+	pasteCleaningReport, pasteLosses, pasteNoticeText, Popover, quietHtml, registerRichTextEvent,
 	registerRichTextExtension, registerRichTextFeature, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_EVENT_SOURCES,
 	RICH_TEXT_EVENT_TRIGGER, RICH_TEXT_FEATURES, richTextBackgroundColors, richTextColors,
@@ -781,6 +782,181 @@ describe('a paste', () => {
 		expect(quietHtml('<h2 style="font-weight: 700">Heading</h2><b style="font-weight: bold">' +
 			'b</b>')).toBe('<h2 data-antilia-style="font-weight: 700">Heading</h2>' +
 			'<b data-antilia-style="font-weight: bold"><strong>b</strong></b>');
+	});
+});
+
+describe('what a paste lost', () => {
+	/** Pastes HTML as the user does; jsdom has no ClipboardEvent. */
+	const paste = (editor: RichTextEditor, html: string) =>
+		editor.editor.view.pasteHTML(html, new Event('paste') as ClipboardEvent);
+
+	/** A script, a handler, a link to javascript:, an image of data: and a frame. */
+	const UNSAFE = '<p onclick="steal()">Hi <a href="javascript:steal()">there</a> <img ' +
+		'src="data:image/png;base64,AAAA" onerror="steal()"><script>steal()</script></p>' +
+		'<iframe src="https://example.org"></iframe>';
+
+	it('is counted by the names of what was lost, never by what it held', () => {
+		expect(pasteCleaningReport(UNSAFE, '<p>Hi there </p>')).toEqual({
+			elements: { a: 1, img: 1, script: 1, iframe: 1 },
+			attributes: { onclick: 1, onerror: 1 } });
+		// b and strong, i and em, strike, del and s are the same marks; two marks may become one
+		expect(pasteCleaningReport('<p><b>a</b> <strong>b</strong> <i>c</i> <strike>d</strike> ' +
+			'<del>e</del></p>', '<p><strong>a b</strong> <em>c</em> <s>d e</s></p>'))
+			.toEqual({ elements: {}, attributes: {} });
+		// a mark kept nowhere is lost, as often as it was pasted
+		expect(pasteCleaningReport('<p><b>a</b> <b>b</b> <u>c</u></p>', '<p>a b <u>c</u></p>'))
+			.toEqual({ elements: { strong: 2 }, attributes: {} });
+		// the code of a code block is the block
+		expect(pasteCleaningReport('<pre><code>x</code></pre>', '<pre><code>x</code></pre>'))
+			.toEqual({ elements: {}, attributes: {} });
+		expect(pasteCleaningReport('<pre><code>x</code></pre><h5>T</h5>', '<p>x</p><p>T</p>'))
+			.toEqual({ elements: { pre: 1, h5: 1 }, attributes: {} });
+		// links to addresses not taken are lost, the others only when no link was kept
+		expect(pasteCleaningReport('<p><a href="vbscript:x">a</a> <a href="/b">b</a> ' +
+			'<a href="https://c.org">c</a> <a name="d">d</a></p>',
+		'<p>a <a href="/b">b c</a> d</p>')).toEqual({ elements: { a: 1 }, attributes: {} });
+		expect(pasteCleaningReport('<p><a href="/b">b</a> <a href="mailto:c@d.org">c</a></p>',
+			'<p>b c</p>')).toEqual({ elements: { a: 2 }, attributes: {} });
+		// a link the editor kept, whatever its address, is no loss: the server cleans it
+		expect(pasteCleaningReport('<p><a href="javascript:x()">a</a></p>',
+			'<p><a href="javascript:x()">a</a></p>')).toEqual({ elements: {}, attributes: {} });
+		// styles, classes, spans and divisions are no loss
+		expect(pasteCleaningReport('<div class="x"><p data-antilia-style="color: red" ' +
+			'class="MsoNormal"><span lang="en">a</span><font>b</font><o:p></o:p></p></div>' +
+			'<style>p { color: red }</style><meta charset="utf-8">', '<p>ab</p>'))
+			.toEqual({ elements: {}, attributes: {} });
+	});
+
+	it('is told as the notice says it, each kind once, in its order', () => {
+		const report = { elements: { a: 2, h2: 1, img: 1, input: 1, object: 1, strong: 1 },
+			attributes: { onload: 1 } };
+		expect(isEmptyCleaningReport(report)).toBe(false);
+		expect(isEmptyCleaningReport({ elements: {}, attributes: {} })).toBe(true);
+		expect(pasteLosses(report)).toEqual(['scripts', 'embedded', 'forms', 'images', 'links',
+			'formatting']);
+		expect(pasteNoticeText(report, DEFAULT_RICH_TEXT_PASTE_TEXTS)).toBe('Part of the paste was ' +
+			'left out: scripts, embedded content, form fields, images, links, formatting.');
+		expect(pasteNoticeText({ elements: { table: 1 }, attributes: {} }, {
+			...DEFAULT_RICH_TEXT_PASTE_TEXTS, pasteCleaned: 'Se omitió parte de lo pegado: {0}.',
+			pasteTables: 'tablas $&' })).toBe('Se omitió parte de lo pegado: tablas $&.');
+		expect(pasteNoticeText({ elements: {}, attributes: {} }, DEFAULT_RICH_TEXT_PASTE_TEXTS))
+			.toBe('');
+	});
+
+	it('is told to onPasteCleaned and with the event paste-cleaned, once the paste is in',
+		async () => {
+			const field = textArea('<p>Start</p>');
+			const told: Array<[unknown, string]> = [];
+			const details: Array<Record<string, unknown>> = [];
+			field.addEventListener(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, (event) => {
+				const { editor: firing, ...rest } = (event as CustomEvent<Record<string, unknown>>)
+					.detail;
+				expect(firing).toBe(RichTextEditor.of(field));
+				details.push(rest);
+			});
+			const editor: RichTextEditor = new RichTextEditor(field, {
+				onPasteCleaned: (report) => told.push([report, editor.getValue()]) });
+			select(editor, 6);
+			paste(editor, UNSAFE);
+			expect(told).toEqual([]);
+			await Promise.resolve();
+			const report = { elements: { a: 1, img: 1, script: 1, iframe: 1 },
+				attributes: { onclick: 1, onerror: 1 } };
+			// with the text pasted
+			expect(told).toEqual([[report, '<p>StartHi there</p>']]);
+			expect(details).toEqual([report]);
+			// without a notice unless asked
+			expect(editor.element.querySelector('.antilia-rich-text-notice')).toBeNull();
+		});
+
+	it('is nothing for what the editor keeps, for Google Docs and Word, and for text', async () => {
+		const onPasteCleaned = vi.fn();
+		const editor = new RichTextEditor(textArea('<p>Start</p>'), { onPasteCleaned,
+			pasteNotice: true });
+		select(editor, 6);
+		// Google Docs: a b of a normal weight around it all, spans of styles, a table
+		paste(editor, '<meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-' +
+			'guid-1"><p dir="ltr" style="text-align: center;"><span style="font-weight:700;">Bold' +
+			'</span> <span style="font-style:italic;">italic</span></p><div dir="ltr"><table>' +
+			'<colgroup><col width="100"></colgroup><tbody><tr><td><p>cell</p></td></tr></tbody>' +
+			'</table></div><ul><li><p>one</p></li></ul></b>');
+		// Word: a document, its styles, its classes and its empty paragraphs of Office
+		paste(editor, '<html xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta ' +
+			'name="Generator" content="Microsoft Word 15"><style>p.MsoNormal { margin: 0 }</style>' +
+			'</head><body><p class="MsoNormal"><b><span lang="EN-GB">Bold<o:p></o:p></span></b>' +
+			'</p><p class="MsoNormal"><i>it</i>, <a href="https://example.org">a link</a><sup>2' +
+			'</sup></p></body></html>');
+		// the editor's own task list, with its check boxes; two marks of the same kind
+		paste(editor, '<ul data-type="taskList"><li data-type="taskItem" data-checked="true">' +
+			'<label><input type="checkbox" checked><span></span></label><div><p>Done</p></div>' +
+			'</li></ul><p><strong>a</strong><strong>b</strong></p>');
+		editor.editor.view.pasteText('<script>steal()</script>',
+			new Event('paste') as ClipboardEvent);
+		await Promise.resolve();
+		expect(onPasteCleaned).not.toHaveBeenCalled();
+		expect(editor.element.querySelector('.antilia-rich-text-notice')!.textContent).toBe('');
+	});
+
+	it('includes the nodes and marks of the features left out', async () => {
+		const onPasteCleaned = vi.fn();
+		const editor = new RichTextEditor(textArea('<p>Start</p>'), { onPasteCleaned,
+			features: ['heading', 'bold', 'bulletList'], headingLevels: [1, 2] });
+		select(editor, 6);
+		paste(editor, '<h2>Kept</h2><h3>Not</h3><table><tbody><tr><td>a</td></tr></tbody></table>' +
+			'<p><img src="https://example.org/a.png"><b>b</b> <em>c</em></p><ul data-type=' +
+			'"taskList"><li data-type="taskItem" data-checked="false"><label><input type=' +
+			'"checkbox"><span></span></label><div><p>To do</p></div></li></ul>');
+		await Promise.resolve();
+		expect(onPasteCleaned).toHaveBeenCalledWith({ elements: { h3: 1, table: 1, img: 1, em: 1,
+			input: 1 }, attributes: {} });
+	});
+
+	it('shows in a polite line under the toolbar until the text changes', async () => {
+		const editor = new RichTextEditor(textArea('<p>Start</p>'), { pasteNotice: true });
+		const notice = editor.element.querySelector<HTMLElement>('.antilia-rich-text-notice')!;
+		// a live region there from the start, empty
+		expect(notice.getAttribute('role')).toBe('status');
+		expect(notice.previousElementSibling).toBe(editor.element.querySelector(
+			'.antilia-rich-text-toolbar'));
+		expect(notice.nextElementSibling).toBe(editor.content);
+		expect(notice.textContent).toBe('');
+
+		select(editor, 6);
+		paste(editor, UNSAFE);
+		await Promise.resolve();
+		expect(notice.textContent).toBe('Part of the paste was left out: scripts, embedded ' +
+			'content, images, links.');
+		type(editor, '!');
+		expect(notice.textContent).toBe('');
+
+		// another paste losing something says what; one losing nothing says nothing
+		paste(editor, '<p>x<svg><circle r="1"></circle></svg></p>');
+		await Promise.resolve();
+		expect(notice.textContent).toBe('Part of the paste was left out: embedded content.');
+		paste(editor, '<p>y</p>');
+		await Promise.resolve();
+		expect(notice.textContent).toBe('');
+	});
+
+	it('shows as the options say, in the texts given', async () => {
+		const editor = new RichTextEditor(textArea('<p>Start</p>'), { texts: {
+			pasteCleaned: 'Ein Teil des Eingefügten fehlt: {0}.', pasteForms: 'Formularfelder' } });
+		expect(editor.element.querySelector('.antilia-rich-text-notice')).toBeNull();
+		editor.configure({ pasteNotice: true });
+		select(editor, 6);
+		paste(editor, '<form><input name="a"><button>Go</button></form>');
+		await Promise.resolve();
+		const notice = editor.element.querySelector<HTMLElement>('.antilia-rich-text-notice')!;
+		expect(notice.textContent).toBe('Ein Teil des Eingefügten fehlt: Formularfelder.');
+		// made anew for other features: the paste is still read and told
+		editor.configure({ features: ['bold'] });
+		paste(editor, '<p onclick="x()">z</p>');
+		await Promise.resolve();
+		expect(notice.textContent).toBe('Ein Teil des Eingefügten fehlt: scripts.');
+		editor.configure({ pasteNotice: false });
+		expect(editor.element.querySelector('.antilia-rich-text-notice')).toBeNull();
+		editor.destroy();
+		expect(document.querySelector('.antilia-rich-text-notice')).toBeNull();
 	});
 });
 

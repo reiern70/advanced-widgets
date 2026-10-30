@@ -13,18 +13,21 @@
 -->
 <!-- A CKEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
+	import type { RichTextCleaningReport } from '@antilia/core';
+
 	import { CKEditor, type CKEditorBuild, type CKEditorInstance, type CKEditorPlugin,
 		type RichTextEditorState } from '../src/index.js';
 
 	let { build, value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved,
 		name, readOnly, toolbar, plugins, count, className = 'rich', onready, onerror, onsave,
-		onfocus, onblur, onselectionchange }: {
+		onfocus, onblur, onselectionchange, pasteNotice, onpastecleaned }: {
 		build?: CKEditorBuild; value?: string; state?: RichTextEditorState; saved?: string;
 		name?: string; readOnly?: boolean; toolbar?: string[] | false;
 		plugins?: CKEditorPlugin[]; count?: boolean; className?: string;
 		onready?: (editor: CKEditorInstance) => void; onerror?: (error: unknown) => void;
 		onsave?: (value: string) => void; onfocus?: () => void; onblur?: (value: string) => void;
-		onselectionchange?: (selection: unknown) => void } = $props();
+		onselectionchange?: (selection: unknown) => void; pasteNotice?: boolean;
+		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
 	let modified = $state(false);
 </script>
 
@@ -32,7 +35,7 @@
 	<CKEditor id="e" class={className} {build} licenseKey="GPL" language="de" bind:value
 		bind:state={editorState} bind:modified {saved} {name} {readOnly} {toolbar} {plugins} {count}
 		stateDelay={0} label="Notes" {onready} {onerror} {onsave} {onfocus} {onblur}
-		{onselectionchange} />
+		{onselectionchange} {pasteNotice} {onpastecleaned} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

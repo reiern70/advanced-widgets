@@ -185,15 +185,27 @@ public final class RichTextPolicy implements IRichTextSanitizer
 	@Override
 	public String sanitize(String html)
 	{
-		if (html == null)
-		{
-			return null;
-		}
+		return html == null ? null : factory().sanitize(html);
+	}
+
+	/**
+	 * Cleans the HTML, telling the elements and the attributes it removed: a script, an event
+	 * handler, a style, a link to an address that is not safe, an element of a feature left out.
+	 * What the editor writes is no removal.
+	 */
+	@Override
+	public RichTextSanitized sanitizeAndReport(String html)
+	{
+		return RichTextCleaningReport.sanitize(factory(), html);
+	}
+
+	private PolicyFactory factory()
+	{
 		if (factory == null)
 		{
 			factory = RichTextHtmlRules.toPolicy(features, colorClasses, backgroundClasses);
 		}
-		return factory.sanitize(html);
+		return factory;
 	}
 
 	@Override

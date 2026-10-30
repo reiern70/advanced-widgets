@@ -61,6 +61,13 @@
  * without Tiptap's modules of its own, a Wicket page, registers by a name, built from the classes
  * of Tiptap it is given (RICH_TEXT_EDITOR_KIT).
  *
+ * A paste loses what the features of the editor do not write, scripts and handlers of events,
+ * links and images to addresses it does not take, as the schema reads it: the editor tells what,
+ * by name and count, to onPasteCleaned and with the built-in event paste-cleaned
+ * (RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned), and to the user in a polite line under the toolbar
+ * while the page wants it (pasteNotice), until the text changes again. That is a convenience; the
+ * server cleans the HTML it gets, which it never trusts.
+ *
  * Code blocks are highlighted in the colors of their language with a highlighter the page gives
  * (highlight, see rich-text-code-blocks.ts), whose grammars this script does not carry; the menu of
  * the tool code block chooses the language (codeLanguages). Images are uploaded, chosen in the form
@@ -72,7 +79,7 @@ import { createDocument, Editor, Extension, getHTMLFromFragment, Mark, markInput
 	mergeAttributes, Node as TiptapNode, nodeInputRule, textblockTypeInputRule, wrappingInputRule,
 	type AnyExtension } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/extension-bubble-menu';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { Node as ProseMirrorNode, Slice } from '@tiptap/pm/model';
 import { Plugin, PluginKey, TextSelection, type Transaction } from '@tiptap/pm/state';
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
@@ -91,7 +98,9 @@ import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
 import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
-import { RichTextEventTypes } from './rich-text-events.js';
+import { RICH_TEXT_BUILT_IN_EVENTS, RichTextEventTypes } from './rich-text-events.js';
+import { isEmptyCleaningReport, pasteCleaningReport, pasteNoticeText, RichTextPasteNotice,
+	type RichTextCleaningReport } from './rich-text-html.js';
 import { issuePopoverOf, Proofreading, refreshProofreading,
 	type RichTextProofreader } from './rich-text-proofreading.js';
 import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
@@ -303,6 +312,11 @@ export interface RichTextEditorOptions {
 	uploadTypes?: readonly string[];
 	/** The largest image the user may upload, in bytes; none when left out or null. */
 	uploadMaxSize?: number | null;
+	/**
+	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+	 * again: "Part of the paste was left out: scripts, images."; false when left out.
+	 */
+	pasteNotice?: boolean;
 	/** What the editor says, in English when left out. */
 	texts?: Partial<RichTextEditorTexts>;
 	/** The look of the editor; that of the element it is in when left out (see lookOf). */
@@ -326,6 +340,11 @@ export interface RichTextEditorOptions {
 	onSave?: (value: string) => void;
 	/** Called with the size once the user has resized the editor. */
 	onResize?: (size: ResizableSize) => void;
+	/**
+	 * Called with what a paste lost, once it is in the text, before the event paste-cleaned: a
+	 * paste losing nothing calls nothing.
+	 */
+	onPasteCleaned?: (report: RichTextCleaningReport) => void;
 }
 
 /** What the events of the editor carry, besides what each tells. */
@@ -427,6 +446,12 @@ export class RichTextEditor {
 	private message: HTMLElement | null = null;
 
 	private messageTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** The line telling what a paste lost, while the options want it. */
+	private notice: RichTextPasteNotice | null = null;
+
+	/** The HTML of a paste, made quiet, until the editor read it. */
+	private pasted: string | null = null;
 
 	/** What the uploads ask of the editor, made once. */
 	private uploads: UploadHost | null = null;
@@ -577,6 +602,7 @@ export class RichTextEditor {
 			left: Math.max(state?.scrollLeft ?? 0, 0) };
 		this.size = { width: state?.width ?? null, height: state?.height ?? null };
 		this.renderToolbar();
+		this.renderNotice();
 		this.renderStatus();
 		this.renderResizable();
 		this.syncField(this.value);
@@ -835,11 +861,55 @@ export class RichTextEditor {
 			editable: !this.isReadOnly(),
 			injectCSS: false,
 			autofocus: false,
-			editorProps: { attributes: this.contentAttributes(),
-				transformPastedHTML: (html: string) => quietHtml(html) }
+			editorProps: this.editorProps()
 		});
 		editor.on('transaction', ({ transaction }) => this.onTransaction(editor, transaction));
 		return editor;
+	}
+
+	/**
+	 * @returns the properties of ProseMirror's view: the attributes of the text, and the paste,
+	 *          its HTML made quiet, then compared with what the schema kept of it
+	 */
+	private editorProps(): Record<string, unknown> {
+		return {
+			attributes: this.contentAttributes(),
+			transformPastedHTML: (html: string) => {
+				const quiet = quietHtml(html);
+				this.pasted = quiet;
+				return quiet;
+			},
+			transformPasted: (slice: Slice) => {
+				const pasted = this.pasted;
+				this.pasted = null;
+				if (pasted !== null && !this.destroyed) {
+					const kept = getHTMLFromFragment(slice.content, this.editor.schema);
+					this.pasteCleaned(pasteCleaningReport(pasted, kept));
+				}
+				return slice;
+			}
+		};
+	}
+
+	/**
+	 * Tells what a paste lost, once the paste is in the text: onPasteCleaned, the event
+	 * paste-cleaned and the notice; a paste losing nothing tells nothing.
+	 */
+	private pasteCleaned(report: RichTextCleaningReport): void {
+		if (isEmptyCleaningReport(report)) {
+			return;
+		}
+		// after the paste, which ProseMirror inserts right after reading it
+		queueMicrotask(() => {
+			if (this.destroyed) {
+				return;
+			}
+			this.notice?.show(pasteNoticeText(report, this.texts()));
+			this.options.onPasteCleaned?.({ elements: { ...report.elements },
+				attributes: { ...report.attributes } });
+			this.trigger(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, { elements: report.elements,
+				attributes: report.attributes });
+		});
 	}
 
 	private parseJson(value: string): Record<string, unknown> | string {
@@ -1127,6 +1197,20 @@ export class RichTextEditor {
 	}
 
 	/**
+	 * Shows the line telling what a paste lost, under the toolbar, or takes it away, as the
+	 * options say.
+	 */
+	private renderNotice(): void {
+		if (!this.options.pasteNotice) {
+			this.notice?.destroy();
+			this.notice = null;
+		} else if (!this.notice) {
+			this.notice = new RichTextPasteNotice();
+			this.content.before(this.notice.element);
+		}
+	}
+
+	/**
 	 * Shows the count of the characters and the words below the text, or takes it away.
 	 */
 	private renderStatus(): void {
@@ -1320,6 +1404,8 @@ export class RichTextEditor {
 		if (transaction.docChanged) {
 			const value = this.serialize(editor.state.doc);
 			if (value !== this.value) {
+				// what a paste lost is told until the text changes again
+				this.notice?.clear();
 				this.value = value;
 				this.syncField(value);
 				this.renderModified(value, true);
@@ -1688,8 +1774,7 @@ export class RichTextEditor {
 		} else if (changed('placeholder', 'label', 'spellcheck', 'textLanguage') ||
 			editableChanged || proofreadChanged) {
 			this.editor.setEditable(!readOnly, false);
-			this.editor.setOptions({ editorProps: { attributes: this.contentAttributes(),
-				transformPastedHTML: (html: string) => quietHtml(html) } });
+			this.editor.setOptions({ editorProps: this.editorProps() });
 			// the placeholder shows anew
 			this.editor.view.dispatch(this.editor.state.tr.setMeta(EXTERNAL, true));
 		}
@@ -1709,6 +1794,7 @@ export class RichTextEditor {
 		if (rebuilt || changed('count', 'texts')) {
 			this.renderStatus();
 		}
+		this.renderNotice();
 		this.renderResizable();
 	}
 
@@ -1831,6 +1917,8 @@ export class RichTextEditor {
 		this.bubble = null;
 		this.status?.remove();
 		this.status = null;
+		this.notice?.destroy();
+		this.notice = null;
 		this.clearMessage();
 		this.resizable?.destroy();
 		this.resizable = null;

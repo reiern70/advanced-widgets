@@ -252,6 +252,33 @@ describe('CKEditor', () => {
 		expect(ref.current?.getValue()).toBe('<p>a</p>');
 	});
 
+	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',
+		async () => {
+			const build = fakeBuild();
+			const first = vi.fn();
+			const ref = createRef<CKEditorHandle>();
+			const { container, rerender } = render(<CKEditor ref={ref} build={build}
+				value="<p>a</p>" onPasteCleaned={first} />);
+			const fake = await started(ref);
+			expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+			const latest = vi.fn();
+			rerender(<CKEditor ref={ref} build={build} value="<p>a</p>" onPasteCleaned={latest}
+				pasteNotice />);
+			act(() => fake.paste('<p onclick="steal()">b</p><iframe src="https://x.org"></iframe>',
+				'<p>b</p>'));
+			await act(async () => {
+				await Promise.resolve();
+			});
+			expect(first).not.toHaveBeenCalled();
+			expect(latest).toHaveBeenCalledWith({ elements: { iframe: 1 },
+				attributes: { onclick: 1 } });
+			expect(container.querySelector('.antilia-rich-text-notice')!.textContent)
+				.toBe('Part of the paste was left out: scripts, embedded content.');
+
+			rerender(<CKEditor ref={ref} build={build} value="<p>a</p>" onPasteCleaned={latest} />);
+			expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+		});
+
 	it('answers its handle before the editor is made, or after it went', () => {
 		const ref = createRef<CKEditorHandle>();
 		const { unmount } = render(<CKEditor ref={ref} build={fakeBuild()} value="<p>a</p>" />);

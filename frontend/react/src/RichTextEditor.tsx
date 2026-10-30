@@ -16,7 +16,8 @@ import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 
 import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLevel,
 	type ResizableSize, type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
-	type RichTextBackgroundColor, type RichTextColor, type RichTextEditorStateChange,
+	type RichTextBackgroundColor, type RichTextCleaningReport, type RichTextColor,
+	type RichTextEditorStateChange,
 	type RichTextEditorTexts,
 	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
@@ -120,6 +121,11 @@ export interface RichTextEditorProps {
 	uploadTypes?: readonly string[];
 	/** The largest image the user may upload, in bytes; none when left out. */
 	uploadMaxSize?: number | null;
+	/**
+	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+	 * again; false when left out.
+	 */
+	pasteNotice?: boolean;
 	/** What the editor says, in English when left out. */
 	texts?: Partial<RichTextEditorTexts>;
 	/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -139,6 +145,11 @@ export interface RichTextEditorProps {
 	/** Called with the text when the user pressed Ctrl+S, or Cmd+S. */
 	onSave?(value: string): void;
 	onResize?(size: ResizableSize): void;
+	/**
+	 * Called with what a paste lost to the editor, by name and count, once it is in the text: a
+	 * script, a handler of events, a link to an address the editor does not take...
+	 */
+	onPasteCleaned?(report: RichTextCleaningReport): void;
 	/**
 	 * Uploads an image the user chose, dropped or pasted, answering the address it is served at
 	 * (see uploadImageTo of the core); without it an image is an address the user gives.
@@ -186,8 +197,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			bubbleMenu,
 			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
 			suggesters, limit, count, resizable, minWidth,
-			minHeight, maxWidth, maxHeight, stateDelay, extensions, texts, highlight, codeLanguages,
-			uploadTypes, uploadMaxSize, name, id, className } = props;
+			minHeight, maxWidth, maxHeight, stateDelay, extensions, pasteNotice, texts, highlight,
+			codeLanguages, uploadTypes, uploadMaxSize, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
@@ -224,7 +235,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				count: current.count, resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, stateDelay: current.stateDelay, extensions: current.extensions,
-				texts: current.texts, look, highlight: highlighterOf(current.highlight) ?? false,
+				pasteNotice: current.pasteNotice, texts: current.texts, look, highlight: highlighterOf(current.highlight) ?? false,
 				codeLanguages: current.codeLanguages, uploadTypes: current.uploadTypes,
 				uploadMaxSize: current.uploadMaxSize, onUpload: uploaderOf(latest),
 				onChange: (next) => latest.current.onChange?.(next),
@@ -234,7 +245,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				onStateChange: (next, change) => latest.current.onStateChange?.(next, change),
 				onModifiedChange: (next) => latest.current.onModifiedChange?.(next),
 				onSave: (next) => latest.current.onSave?.(next),
-				onResize: (next) => latest.current.onResize?.(next)
+				onResize: (next) => latest.current.onResize?.(next),
+				onPasteCleaned: (report) => latest.current.onPasteCleaned?.(report)
 			});
 			instance.current = editor;
 			return () => {
@@ -249,12 +261,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				toolbar, bubbleMenu, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
 				textLanguage: textLanguage ?? null, proofreader: proofreader ?? null, proofreadDelay,
 				suggesters: suggesters ?? [], limit, count, resizable, minWidth, minHeight,
-				maxWidth, maxHeight, stateDelay, texts });
+				maxWidth, maxHeight, stateDelay, pasteNotice: !!pasteNotice, texts });
 		}, [format, features, featureOptions, headingLevels, colors, backgroundColors, toolbar,
 			bubbleMenu,
 			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
 			suggesters, limit, count, resizable,
-			minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts]);
+			minWidth, minHeight, maxWidth, maxHeight, stateDelay, pasteNotice, texts]);
 
 		useLayoutEffect(() => {
 			if (extensions !== undefined) {
