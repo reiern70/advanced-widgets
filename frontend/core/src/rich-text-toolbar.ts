@@ -43,6 +43,7 @@ import type { Editor } from '@tiptap/core';
 
 import { lookClasses, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Popover } from './popover.js';
+import { DEFAULT_RICH_TEXT_PASTE_TEXTS, type RichTextPasteTexts } from './rich-text-html.js';
 import { codeLanguage } from './rich-text-languages.js';
 import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUrl,
 	type HeadingLevel, type RichTextAlignment, type RichTextBackgroundColor, type RichTextColor,
@@ -89,8 +90,11 @@ export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[]
 export const RICH_TEXT_BUBBLE_TOOLS: readonly RichTextToolName[] = Object.freeze(['bold', 'italic',
 	'underline', 'strike', 'code', 'superscript', 'subscript', 'link']);
 
-/** What the editor says, in the language of the page. */
-export interface RichTextEditorTexts {
+/**
+ * What the editor says, in the language of the page; with the notice telling what a paste lost
+ * (RichTextPasteTexts).
+ */
+export interface RichTextEditorTexts extends RichTextPasteTexts {
 	/** The accessible name of the toolbar and of the bubble menu. */
 	toolbar: string;
 	bubble: string;
@@ -282,7 +286,8 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	proofreadIgnore: 'Ignore',
 	suggestions: 'Suggestions',
 	suggestLoading: 'Searching…',
-	suggestNone: 'Nothing found'
+	suggestNone: 'Nothing found',
+	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
 
 /** The bar under the icon of a tool of colors, the color where the cursor is. */

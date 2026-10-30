@@ -270,4 +270,13 @@
 	<entry key="RichTextEditor.suggestions">Vorschläge</entry>
 	<entry key="RichTextEditor.suggestLoading">Suche…</entry>
 	<entry key="RichTextEditor.suggestNone">Nichts gefunden</entry>
+	<entry key="RichTextEditor.rejected">Der Text enthält, was der Editor nicht erlaubt: ${removed}.</entry>
+	<entry key="RichTextEditor.pasteCleaned">Ein Teil des Eingefügten wurde weggelassen: {0}.</entry>
+	<entry key="RichTextEditor.pasteScripts">Skripte</entry>
+	<entry key="RichTextEditor.pasteEmbedded">eingebettete Inhalte</entry>
+	<entry key="RichTextEditor.pasteForms">Formularfelder</entry>
+	<entry key="RichTextEditor.pasteImages">Bilder</entry>
+	<entry key="RichTextEditor.pasteTables">Tabellen</entry>
+	<entry key="RichTextEditor.pasteLinks">Links</entry>
+	<entry key="RichTextEditor.pasteFormatting">Formatierungen</entry>
 </properties>

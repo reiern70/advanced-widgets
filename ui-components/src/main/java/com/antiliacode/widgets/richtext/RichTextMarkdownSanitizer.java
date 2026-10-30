@@ -35,6 +35,10 @@ import java.util.regex.Pattern;
  * {@link AbstractRichTextEditor#setMarkdownSanitizer(IRichTextSanitizer) set a sanitizer} that
  * parses the Markdown and cleans it. The same goes for a value that only looks like a link, in a
  * code span for example: its address gives way too, the text being changed but no harm done.
+ * <p>
+ * It {@link #sanitizeAndReport(String) tells} of each address that gave way: as a link,
+ * {@code a}, or as an image, {@code img}, by the {@code !} before the brackets; a reference
+ * definition and an autolink as a link. HTML left in the Markdown is not told of.
  *
  * @since 11.0.0
  */
@@ -63,18 +67,30 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	@Override
 	public String sanitize(String markdown)
 	{
+		return sanitizeAndReport(markdown).text();
+	}
+
+	/**
+	 * Cleans the Markdown, telling of each link, {@code a}, and each image, {@code img}, whose
+	 * address gave way.
+	 */
+	@Override
+	public RichTextSanitized sanitizeAndReport(String markdown)
+	{
 		if (markdown == null)
 		{
-			return null;
+			return new RichTextSanitized(null, RichTextCleaningReport.EMPTY);
 		}
-		return cleanAutolinks(cleanDestinations(markdown));
+		RichTextCleaningReport.Builder report = RichTextCleaningReport.builder();
+		String clean = cleanAutolinks(cleanDestinations(markdown, report), report);
+		return new RichTextSanitized(clean, report.build());
 	}
 
 	/**
 	 * @return the Markdown with the addresses of its links, images and reference definitions that
 	 *         are not safe replaced by {@code #}
 	 */
-	private static String cleanDestinations(String markdown)
+	private static String cleanDestinations(String markdown, RichTextCleaningReport.Builder report)
 	{
 		StringBuilder clean = null;
 		int copied = 0;
@@ -98,6 +114,8 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 				continue;
 			}
 			from = end;
+			report.addElement(start.group().equals("](") && isImage(markdown, start.start()) ?
+				"img" : "a");
 			if (clean == null)
 			{
 				clean = new StringBuilder(markdown.length());
@@ -110,6 +128,38 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 			return markdown;
 		}
 		return clean.append(markdown, copied, markdown.length()).toString();
+	}
+
+	/**
+	 * @return whether the brackets closing at an index are those of an image, {@code ![...]}: the
+	 *         bracket opening them, nested brackets and backslash escapes counted, comes after a
+	 *         {@code !} that is not escaped
+	 */
+	private static boolean isImage(String markdown, int closing)
+	{
+		int depth = 0;
+		for (int i = closing - 1; i >= 0; i--)
+		{
+			char c = markdown.charAt(i);
+			if ((c != '[' && c != ']') || (i > 0 && markdown.charAt(i - 1) == '\\'))
+			{
+				continue;
+			}
+			if (c == ']')
+			{
+				depth++;
+			}
+			else if (depth > 0)
+			{
+				depth--;
+			}
+			else
+			{
+				return i > 0 && markdown.charAt(i - 1) == '!' &&
+					(i < 2 || markdown.charAt(i - 2) != '\\');
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -207,7 +257,7 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	/**
 	 * @return the Markdown with the autolinks to addresses that are not safe turned into text
 	 */
-	private static String cleanAutolinks(String markdown)
+	private static String cleanAutolinks(String markdown, RichTextCleaningReport.Builder report)
 	{
 		Matcher autolink = AUTOLINK.matcher(markdown);
 		StringBuilder clean = null;
@@ -218,6 +268,7 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 			{
 				continue;
 			}
+			report.addElement("a");
 			if (clean == null)
 			{
 				clean = new StringBuilder(markdown.length());

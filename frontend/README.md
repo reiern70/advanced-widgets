@@ -212,7 +212,8 @@ from their own events (`from`, among `RICH_TEXT_EVENT_SOURCES`), keeping a state
 context of a feature and the run of its tools have too. The editors fire it on their text area as
 their own events, its detail with the editor; a name registers once, `antilia-rich-text-editor`
 is the editors' own, and a type fires from the editors' events alone, never while it is firing.
-`RICH_TEXT_BUILT_IN_EVENTS.selectedText` is built in: the text the user selected, as plain text.
+`RICH_TEXT_BUILT_IN_EVENTS.selectedText` is built in: the text the user selected, as plain text;
+and `RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned`, what a paste lost (see below).
 In Wicket, `Wicket.RichTextEvents` registers and triggers them, and an `IClientEvent` of the type's
 name renders its script and hears of it on the server. As the code editor does, it keeps the text in a
 text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
@@ -230,6 +231,25 @@ and images to addresses other than http, https, mailto or relative ones (`RichTe
 `RichTextJsonSanitizer`), but HTML written in Markdown stays as it is: render Markdown with a
 renderer that shows HTML as text or leaves it out, as `MarkdownPreview` does, or give the editor a
 sanitizer of Markdown that cleans it (`setMarkdownSanitizer`).
+
+A paste loses what the editor has no feature for, or never takes: scripts, frames, objects and
+forms, the handlers of events (`onclick`), links and images to addresses that are not safe, and the
+nodes and marks of the features left out, tables or images for example. Both editors tell what, by
+name and count, never with what it held (`pasteCleaningReport` in `rich-text-html.ts` compares the
+HTML pasted, made quiet, with what the editor kept): `onPasteCleaned(report)` gets
+`{ elements: { script: 1, a: 1 }, attributes: { onclick: 1 } }` once the paste is in the text, and
+the built-in event `antilia-rich-text-editor:paste-cleaned` fires on the text area, bubbling, with
+the same `detail.elements` and `detail.attributes`, which Wicket's
+`RichTextEditorPasteCleanedEvent` hears of on the server. The spans, divisions, classes and styles
+of a word processor are no loss, nor are two bold words written as one: a paste from Word or Google
+Docs tells of nothing. With `pasteNotice: true`, a polite line under the toolbar
+(`.antilia-rich-text-notice`, `role="status"`) tells the user too, "Part of the paste was left out:
+scripts, images.", in the texts of the editor (`pasteCleaned` and the kinds, `pasteScripts`,
+`pasteEmbedded`, `pasteForms`, `pasteImages`, `pasteTables`, `pasteLinks` and `pasteFormatting`),
+until the text changes again. React's editors take `pasteNotice` and `onPasteCleaned`, Svelte's
+`pasteNotice` and `onpastecleaned`. This is a convenience for the user, not the security: a request
+made by hand skips the browser, and the server cleans what it gets (Wicket's `setCleaning` reports
+or rejects what its cleaning removed).
 
 CKEditor 5 (`ck-editor.ts`, built as `antilia-ckeditor.js` for Wicket's `CKEditor`) is a second
 rich text editor, with the contract of the first: the text in a text area a form posts, HTML or
@@ -251,7 +271,10 @@ asynchronously: `ready` resolves once it has, and should it not start, without C
 or with a key it refuses, the text area shows again and `onError` tells why. The HTML has no style
 attribute: text aligns by the classes of the Tiptap editor, images have no width or height, for
 which CKEditor writes a style, and the HTML a page gives or the user pastes is made quiet first
-(`quietHtml`), as the Tiptap editor's. The selection counts the places between the nodes too, as
+(`quietHtml`), as the Tiptap editor's; what a paste lost, compared with what CKEditor inserts of it
+(its clipboard pipeline's `contentInsertion`), is told as the Tiptap editor tells it, with
+`onPasteCleaned`, the event `paste-cleaned` and `pasteNotice`, the line under CKEditor's toolbar.
+The selection counts the places between the nodes too, as
 ProseMirror's does, so `RichTextEditorState` fits both editors. React's `CKEditor` and Svelte's are
 our own wrappers, as for the other components, not `@ckeditor/ckeditor5-react`. Wicket's `CKEditor`
 renders the CKEditor of the application's `CKEditorLibrary`, with its license key, and cleans the

@@ -22,7 +22,9 @@
   whether the text has changes not saved (bind:modified), which the tabs it is in show. The core's
   editor is the bindable editor (bind:editor). With highlight, its code blocks show in the colors of
   their language, which the menu of the tool code block chooses; with onupload, the user uploads
-  images by the form of the image, or by dropping or pasting them into the text.
+  images by the form of the image, or by dropping or pasting them into the text. What a paste lost
+  to the editor, a script or a link to javascript: for example, comes to onpastecleaned and, with
+  pasteNotice, shows in a line under the toolbar until the text changes.
 
   The HTML it gives comes from the user: a server keeping it cleans it, as Wicket's RichTextEditor
   does.
@@ -30,7 +32,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { lezerHighlighter, RichTextEditor, type HeadingLevel, type ResizableSize,
-		type ResizeAxis, type RichTextBackgroundColor, type RichTextColor,
+		type ResizeAxis, type RichTextBackgroundColor, type RichTextCleaningReport, type RichTextColor,
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
@@ -134,6 +136,11 @@
 		uploadTypes?: readonly string[];
 		/** The largest image the user may upload, in bytes; none when left out. */
 		uploadMaxSize?: number | null;
+		/**
+		 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+		 * again; false when left out.
+		 */
+		pasteNotice?: boolean;
 		/** What the editor says, in English when left out. */
 		texts?: Partial<RichTextEditorTexts>;
 		/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -149,6 +156,8 @@
 		onmodifiedchange?: (modified: boolean) => void;
 		onsave?: (value: string) => void;
 		onresize?: (size: ResizableSize) => void;
+		/** Called with what a paste lost to the editor, by name and count, once it is in the text. */
+		onpastecleaned?: (report: RichTextCleaningReport) => void;
 		/** Uploads an image, answering the address it is served at: see uploadImageTo of the core. */
 		onupload?: (file: File) => Promise<string>;
 	};
@@ -185,6 +194,7 @@
 		modified = $bindable(false),
 		editor = $bindable(null),
 		extensions,
+		pasteNotice,
 		texts,
 		highlight,
 		codeLanguages,
@@ -201,6 +211,7 @@
 		onmodifiedchange,
 		onsave,
 		onresize,
+		onpastecleaned,
 		onupload
 	}: Props = $props();
 
@@ -224,7 +235,7 @@
 			toolbar,
 			bubbleMenu, readOnly, placeholder, label, spellcheck, textLanguage, proofreader,
 			proofreadDelay, suggesters, limit, count,
-			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, texts, look, highlight: highlighterOf(highlight),
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, pasteNotice, texts, look, highlight: highlighterOf(highlight),
 			codeLanguages, uploadTypes, uploadMaxSize, onUpload: uploader(),
 			onChange: (next: string) => {
 				value = next;
@@ -242,7 +253,8 @@
 				onmodifiedchange?.(next);
 			},
 			onSave: (next: string) => onsave?.(next),
-			onResize: (next: ResizableSize) => onresize?.(next)
+			onResize: (next: ResizableSize) => onresize?.(next),
+			onPasteCleaned: (report: RichTextCleaningReport) => onpastecleaned?.(report)
 		})));
 		instance = made;
 		editor = made;
@@ -262,7 +274,8 @@
 			bubbleMenu, readOnly,
 			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
 			proofreader: proofreader ?? null, proofreadDelay, suggesters: suggesters ?? [],
-			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts };
+			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			pasteNotice: !!pasteNotice, texts };
 		untrack(() => instance?.configure(next));
 	});
 

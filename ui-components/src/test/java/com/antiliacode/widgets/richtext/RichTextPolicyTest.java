@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.wicket.core.util.lang.WicketObjects;
@@ -63,6 +64,9 @@ class RichTextPolicyTest
 			"</table><img src=\"https://example.org/a.png\" alt=\"A bird\" title=\"Bird\" " +
 			"width=\"120\" height=\"80\" />";
 		assertEquals(html, clean(html));
+		// what the editor writes is no removal, nor the way the sanitizer writes it
+		assertEquals(new RichTextSanitized(html, RichTextCleaningReport.EMPTY),
+			RichTextPolicy.ALL.sanitizeAndReport(html.replace(" />", ">")));
 	}
 
 	@Test
@@ -74,6 +78,43 @@ class RichTextPolicyTest
 			"rel=\"noopener noreferrer nofollow\">C</a></p>", clean("<p><a target=\"_blank\" " +
 				"rel=\"noopener noreferrer nofollow\" href=\"https://example.org\">A</a> " +
 				"<a href=\"/page\">B</a> <a href=\"mailto:a@example.org\" rel=\"author\">C</a></p>"));
+	}
+
+	@Test
+	void reportsNothingForTheLinksAndTheTaskListsTheEditorWrites()
+	{
+		String html = "<p><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" " +
+			"href=\"https://example.org\">A</a> <a rel=\"noopener noreferrer nofollow\" " +
+			"href=\"mailto:a@example.org\">B</a> 'quoted' &amp; more</p>" +
+			"<ul data-type=\"taskList\"><li data-type=\"taskItem\" data-checked=\"true\"><label>" +
+			"<input type=\"checkbox\" checked=\"checked\"><span></span></label><div><p>Done</p>" +
+			"</div></li></ul>";
+		assertTrue(RichTextPolicy.ALL.sanitizeAndReport(html).report().isEmpty());
+	}
+
+	@Test
+	void reportsTheElementsAndTheAttributesItRemoves()
+	{
+		RichTextSanitized sanitized = RichTextPolicy.ALL.sanitizeAndReport("<p onclick=\"steal()\" " +
+			"style=\"color: red\">Text <a href=\"javascript:steal()\" onmouseover=\"x()\">link</a>" +
+			"</p><script>steal()</script><script>again()</script><iframe src=\"x\"></iframe>" +
+			"<p onclick=\"more()\">More</p>");
+		assertEquals("<p>Text link</p><p>More</p>", sanitized.text());
+		RichTextCleaningReport report = sanitized.report();
+		assertEquals(Map.of("a", 1, "script", 2, "iframe", 1), report.getElements());
+		assertEquals(Map.of("onclick", 2, "style", 1, "href", 1, "onmouseover", 1),
+			report.getAttributes());
+		// never what they held
+		assertFalse(report.toString().contains("steal"));
+		assertEquals(List.of("a", "script", "iframe", "onclick", "style", "href", "onmouseover"),
+			report.getNames());
+		// a feature left out
+		RichTextCleaningReport noTables = RichTextPolicy.of(List.of(RichTextFeature.BOLD))
+			.sanitizeAndReport("<table><tbody><tr><td><p><strong>a</strong></p></td></tr></tbody>" +
+				"</table>").report();
+		assertEquals(Set.of("table", "tbody", "tr", "td"), noTables.getElements().keySet());
+		assertEquals(new RichTextSanitized(null, RichTextCleaningReport.EMPTY),
+			RichTextPolicy.ALL.sanitizeAndReport(null));
 	}
 
 	@Test

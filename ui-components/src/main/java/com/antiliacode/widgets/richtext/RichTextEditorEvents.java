@@ -22,7 +22,7 @@ import com.antiliacode.widgets.resizable.ResizableSize;
  * {@link com.antiliacode.widgets.ckeditor.CKEditor} fires on its text area: those a text area fires
  * itself, {@link #INPUT} and {@link #CHANGE}, those of the editor, whose {@code detail} holds
  * the editor and what the event tells, and those of the built-in types of events,
- * {@link #SELECTED_TEXT}. An editor listens to those it is
+ * {@link #SELECTED_TEXT} and {@link #PASTE_CLEANED}. An editor listens to those it is
  * {@link AbstractRichTextEditor#addEvent(com.antiliacode.widgets.event.IClientEvent) given}, and
  * to those of any other name, which the scripts of its features fire for example.
  * <p>
@@ -106,6 +106,17 @@ public final class RichTextEditorEvents
 	 * {@link RichTextEditorSelectedTextEvent} hears of it on the server.
 	 */
 	public static final String SELECTED_TEXT = "antilia-rich-text-editor:selected-text";
+
+	/**
+	 * The cleaning in the browser left part of a paste out, a built-in type of events:
+	 * {@code detail.elements} and {@code detail.attributes} have the names of what it left out,
+	 * each with the number of times, never their content: a script, an event handler, a link or an
+	 * image to an address the editor does not take, what the editor has no feature for. Not when a
+	 * paste lost nothing. {@link RichTextEditorPasteCleanedEvent} hears of it on the server.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final String PASTE_CLEANED = "antilia-rich-text-editor:paste-cleaned";
 
 	/**
 	 * How long an event coming often, {@link #INPUT}, {@link #SELECT} or {@link #SELECTED_TEXT},

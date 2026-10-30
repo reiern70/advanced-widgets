@@ -186,3 +186,27 @@
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.85em;
 }
+
+/* what the editor tells of its cleaning, in the case HTML from anywhere */
+.rich-text-demo__modes {
+	margin-top: 24px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+fieldset.rich-text-demo__control {
+	flex-wrap: wrap;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+fieldset.rich-text-demo__control legend {
+	float: left;
+	margin-right: 6px;
+	padding: 0;
+}
+
+fieldset.rich-text-demo__control label {
+	margin-right: 12px;
+}

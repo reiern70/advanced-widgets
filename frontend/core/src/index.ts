@@ -48,6 +48,9 @@ export { DEFAULT_HEADING_LEVELS, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RI
 export type { HeadingLevel, RichTextAlignment, RichTextBackgroundColor, RichTextColor,
 	RichTextBackgroundColorName, RichTextColorName, RichTextFeature, RichTextFeatureName,
 	RichTextFormat } from './rich-text-schema.js';
+export { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, pasteCleaningReport, pasteLosses,
+	pasteNoticeText, RICH_TEXT_NOTICE_CLASS, RICH_TEXT_PASTE_LOSSES } from './rich-text-html.js';
+export type { RichTextCleaningReport, RichTextPasteLoss, RichTextPasteTexts } from './rich-text-html.js';
 export { registerRichTextFeature, richTextFeature, richTextFeatures } from './rich-text-features.js';
 export type { RichTextFeatureContext, RichTextFeatureDefinition, RichTextMenuItem,
 	RichTextToolContext, RichTextToolDefinition, RichTextTrigger } from './rich-text-features.js';

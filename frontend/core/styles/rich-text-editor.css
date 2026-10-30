@@ -640,6 +640,27 @@
 	font-size: 0.875em;
 }
 
+/*
+ * what a paste lost, under the toolbar, until the text changes: a polite line in the color of the
+ * text on a tint of the theme's information, light or dark. Empty, it takes no room, but stays a
+ * live region, which screen readers read once it has a text.
+ */
+.antilia-rich-text-notice {
+	flex: none;
+	padding: 0.35rem 0.75rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--antilia-theme-info, #1c7ed6) 35%,
+		transparent);
+	background: color-mix(in srgb, var(--antilia-theme-info, #1c7ed6) 10%,
+		var(--antilia-rich-text-background));
+	color: var(--antilia-rich-text-text);
+	font-size: 0.875em;
+}
+
+.antilia-rich-text-notice:empty {
+	padding: 0;
+	border: 0;
+}
+
 /* the count of the characters and the words */
 .antilia-rich-text-status {
 	flex: none;

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Was der Editor von seiner Bereinigung sagt</entry>
+	<entry key="explanation">Fügen Sie in den Editor unten ein, aus dem Feld oben oder von einer beliebigen Seite: Die Bereinigung im Browser lässt weg, was der Editor nicht annimmt, und der Server erfährt, was beim Einfügen verloren ging, als Benachrichtigung; mit Sagen, was beim Einfügen verloren ging, sagt es der Editor auch unter seiner Werkzeugleiste. Der Server bereinigt alles, was kommt, noch einmal. Senden Sie das HTML von irgendwoher als Text des Editors, wie es eine von Hand gemachte Anfrage täte, an der Bereinigung im Browser vorbei: Der Server bereinigt es stillschweigend, sagt, was er entfernt hat, oder lehnt den Text ab, wie gewählt.</entry>
+	<entry key="cleaningLegend">Wenn der Server etwas entfernt</entry>
+	<entry key="cleaning.SILENT">Stillschweigend bereinigen</entry>
+	<entry key="cleaning.REPORT">Sagen, was entfernt wurde</entry>
+	<entry key="cleaning.REJECT">Den Text ablehnen</entry>
+	<entry key="pasteNotice">Sagen, was beim Einfügen verloren ging</entry>
+	<entry key="pasteLabel">Hier einfügen</entry>
+	<entry key="send">Senden</entry>
+	<entry key="sendUnsafe">Das HTML von irgendwoher als seinen Text senden</entry>
+	<entry key="kept">Was der Server behalten hat</entry>
+	<entry key="pasteTitle">Das Eingefügte wurde bereinigt</entry>
+	<entry key="pasteLost">Der Editor hat beim Einfügen weggelassen: {0}.</entry>
+	<entry key="serverTitle">Der Text wurde bereinigt</entry>
+	<entry key="serverRemoved">Der Server hat entfernt, was der Editor nicht erlaubt: {0}.</entry>
+</properties>
