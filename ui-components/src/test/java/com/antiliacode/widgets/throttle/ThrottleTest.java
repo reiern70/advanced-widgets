@@ -33,10 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
 
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.core.request.handler.ListenerRequestHandler;
-import org.apache.wicket.core.request.handler.PageAndComponentProvider;
-import org.apache.wicket.core.request.handler.PageProvider;
-import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.FormComponent;
@@ -45,10 +41,8 @@ import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.apache.wicket.protocol.http.servlet.AbstractRequestWrapperFactory;
 import org.apache.wicket.protocol.http.servlet.ServletWebRequest;
 import org.apache.wicket.protocol.http.servlet.ServletWebResponse;
-import org.apache.wicket.request.IRequestHandler;
+import org.apache.wicket.request.Url;
 import org.apache.wicket.request.cycle.RequestCycle;
-import org.apache.wicket.request.handler.resource.ResourceReferenceRequestHandler;
-import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.WicketTestCase;
@@ -218,9 +212,8 @@ class ThrottleTest extends WicketTestCase
 		}
 	}
 
-	/** The handler of a request calling a component of a page. */
-	private static final IRequestHandler LISTENER = new ListenerRequestHandler(
-		new PageAndComponentProvider(TestPage.class, "button"));
+	/** The query of a request calling a component of a page: page 0, rendered once, its button. */
+	private static final String LISTENER = "0-1.0-button";
 
 	/**
 	 * @return how long the listener of the throttle kept a request calling a component waiting,
@@ -228,22 +221,31 @@ class ThrottleTest extends WicketTestCase
 	 */
 	private long waited(MockHttpServletRequest request)
 	{
-		return waited(request, LISTENER);
+		return waited(request, "", LISTENER);
 	}
 
 	/**
-	 * @return how long the listener of the throttle kept a request waiting, in milliseconds
+	 * @param path
+	 *            the path of the request, after the application's
+	 * @param query
+	 *            its query
+	 * @return how long the listener of the throttle kept the request waiting, in milliseconds
 	 */
-	private long waited(MockHttpServletRequest request, IRequestHandler... handlers)
+	private long waited(MockHttpServletRequest request, String path, String query)
 	{
-		ServletWebRequest web = new ServletWebRequest(request, "");
+		// a request of its own, as a mock request keeps the parameters of every address given
+		MockHttpServletRequest sent = new MockHttpServletRequest(tester.getApplication(),
+			request.getSession(), request.getServletContext());
+		if (request.getHeader("Wicket-Ajax") != null)
+		{
+			sent.addHeader("Wicket-Ajax", request.getHeader("Wicket-Ajax"));
+		}
+		sent.setUrl(Url.parse(path + (query.isEmpty() ? "" : "?" + query)));
+		ServletWebRequest web = new ServletWebRequest(sent, "");
 		RequestCycle cycle = tester.getApplication().createRequestCycle(web,
 			new ServletWebResponse(web, tester.getResponse()));
 		long started = System.nanoTime();
-		for (IRequestHandler handler : handlers)
-		{
-			new Throttle.AjaxDelayListener().onRequestHandlerResolved(cycle, handler);
-		}
+		new Throttle.AjaxDelayListener().onBeginRequest(cycle);
 		return (System.nanoTime() - started) / 1_000_000;
 	}
 
@@ -256,13 +258,12 @@ class ThrottleTest extends WicketTestCase
 
 		request.addHeader("Wicket-Ajax", "true");
 		assertTrue(waited(request) >= 450, "an Ajax request");
-		request.setURL(request.getRequestURL() + "?" + Throttle.EXEMPT_PARAMETER + "=true");
-		assertTrue(waited(request) < 400, "the throttle's own");
+		assertTrue(waited(request, "", LISTENER + "&" + Throttle.EXEMPT_PARAMETER + "=true") < 400,
+			"the throttle's own");
 
 		Thread.currentThread().interrupt();
 		try
 		{
-			request.setURL(request.getRequestURL().toString());
 			assertTrue(waited(request) < 400, "interrupted");
 			assertTrue(Thread.currentThread().isInterrupted());
 		}
@@ -273,19 +274,31 @@ class ThrottleTest extends WicketTestCase
 	}
 
 	@Test
-	void keepsOnlyTheRequestsOfComponentsWaitingAndOnce()
+	void keepsOnlyTheRequestsOfComponentsWaiting()
 	{
 		MockHttpServletRequest request = tester.getRequest();
 		Throttle.setAjaxDelay(request, AjaxDelay.HALF_SECOND);
 		request.addHeader("Wicket-Ajax", "true");
 
-		assertTrue(waited(request, new ResourceReferenceRequestHandler(
-			new PackageResourceReference(ThrottleTest.class, "x.js"))) < 400, "a resource");
-		assertTrue(waited(request, new RenderPageRequestHandler(new PageProvider(TestPage.class))) < 400,
-			"a page rendered");
-		long both = waited(request, LISTENER, new ListenerRequestHandler(
-			new PageAndComponentProvider(TestPage.class, "panel")));
-		assertTrue(both >= 450 && both < 900, "a request waits once: " + both);
+		assertTrue(waited(request, "wicket/resource/org.example.Page/x.js", "") < 400,
+			"a resource");
+		assertTrue(waited(request, "api/users", "page=1") < 400, "a mounted resource");
+		assertTrue(waited(request, "dropdown", "3") < 400, "a page rendered");
+		assertTrue(waited(request, "dropdown", "3-2.0-form-save") >= 450, "a mounted page's");
+		assertTrue(waited(request, "wicket/page", "3-2.-panel-link&x=1") >= 450,
+			"a link of a page without a mount");
+	}
+
+	@Test
+	void tellsTheRequestsCallingAComponentByTheirAddress()
+	{
+		assertTrue(Throttle.callsComponent(Url.parse("dropdown?0-1.0-button")));
+		assertTrue(Throttle.callsComponent(Url.parse("wicket/page?12-3.-form-save")));
+		assertTrue(Throttle.callsComponent(Url.parse("demo?a=b&0-1.0-button")));
+		assertFalse(Throttle.callsComponent(Url.parse("dropdown?0")));
+		assertFalse(Throttle.callsComponent(Url.parse("dropdown")));
+		assertFalse(Throttle.callsComponent(Url.parse("api/users?page=1")));
+		assertFalse(Throttle.callsComponent(Url.parse("wicket/resource/org.example.Page/x.js")));
 	}
 
 	@Test
