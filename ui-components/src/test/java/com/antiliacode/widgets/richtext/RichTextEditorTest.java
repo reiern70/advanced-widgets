@@ -578,6 +578,48 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		IModel<String> text = Model.of("");
+		RichTextEditor editor = new RichTextEditor("editor", text);
+		assertFalse(editor.isImagesFromSiteOnly());
+		assertSame(RichTextMarkdownSanitizer.INSTANCE, editor.getMarkdownSanitizer());
+		assertSame(RichTextJsonSanitizer.INSTANCE, editor.getJsonSanitizer());
+		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+
+		editor.setImagesFromSiteOnly(true);
+		assertTrue(editor.isImagesFromSiteOnly());
+		assertEquals(RichTextPolicy.ALL.withImagesFromSiteOnly(true), editor.getSanitizer());
+		assertSame(RichTextMarkdownSanitizer.IMAGES_FROM_SITE_ONLY, editor.getMarkdownSanitizer());
+		assertSame(RichTextJsonSanitizer.IMAGES_FROM_SITE_ONLY, editor.getJsonSanitizer());
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p><img src=\"https://example.org/a.png\" alt=\"A\" />" +
+			"<img src=\"/a.png\" alt=\"B\" /> <a href=\"https://example.org\">a link</a></p>");
+		form.submit();
+		assertEquals("<p><img src=\"/a.png\" alt=\"B\" /> <a href=\"https://example.org\" " +
+			"rel=\"noopener noreferrer nofollow\">a link</a></p>", text.getObject());
+
+		editor.setFormat(RichTextFormat.MARKDOWN);
+		form = tester.newFormTester("form");
+		form.setValue("editor", "![a](//example.org/a.png) ![b](/b.png) [c](https://example.org)");
+		form.submit();
+		assertEquals("![a](#) ![b](/b.png) [c](https://example.org)", text.getObject());
+
+		editor.setFormat(RichTextFormat.JSON);
+		form = tester.newFormTester("form");
+		form.setValue("editor", "{\"type\":\"doc\",\"content\":[{\"type\":\"image\"," +
+			"\"attrs\":{\"src\":\"https://example.org/a.png\"}}]}");
+		form.submit();
+		assertEquals("{\"type\":\"doc\",\"content\":[]}", text.getObject());
+
+		// a sanitizer of the page cleans as it does
+		IRichTextSanitizer own = html -> html;
+		assertSame(own, editor.setSanitizer(own).getSanitizer());
+	}
+
+	@Test
 	void cleansMarkdownAndJsonWithTheSanitizersOfThePage()
 	{
 		IModel<String> text = Model.of("");

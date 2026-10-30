@@ -33,7 +33,13 @@ import org.owasp.html.PolicyFactory;
  * What the {@link IRichTextFeature features} of an editor let through the cleaning of its HTML,
  * {@link RichTextPolicy}: each feature {@link IRichTextFeature#allowHtml(RichTextHtmlRules) adds}
  * the elements and the attributes it writes, and nothing else passes. Paragraphs and line breaks
- * always do; links and images go only to http, https and mailto addresses, or relative ones.
+ * always do; links and images go only to http, https and mailto addresses, or relative ones. An
+ * image whose address does not pass goes whole, rather than staying without its picture.
+ * <p>
+ * With {@link #isImagesFromSiteOnly() the images of the site alone}, every address the browser
+ * loads by itself must be {@link RichTextPolicy#isSiteUrl(String) the site's own}, whichever rule
+ * let the attribute through: {@code src}, {@code srcset}, {@code poster}, {@code background} and
+ * {@code data} on any element, and {@code href} on any but a link, {@code a} or {@code area}.
  * <p>
  * An attribute passes on the elements the rules allow, not on others: allowing a class on
  * {@code h1} lets no heading through. Rules of several features for the same attribute of the same
@@ -46,11 +52,29 @@ public final class RichTextHtmlRules
 {
 	private static final AttributePolicy ANY = (element, attribute, value) -> value;
 
+	/** The attributes whose addresses the browser loads by itself, on any element. */
+	private static final Set<String> LOADED = Set.of("src", "srcset", "poster", "background",
+		"data");
+
+	/** The attributes holding the address of a link on {@link #LINKS}, loaded elsewhere. */
+	private static final Set<String> LINKED = Set.of("href", "xlink:href");
+
+	/** The elements whose {@code href} is a link, followed on a click. */
+	private static final Set<String> LINKS = Set.of("a", "area");
+
+	/** A candidate of a {@code srcset} ends at a comma. */
+	private static final Pattern CANDIDATES = Pattern.compile(",");
+
+	/** The address of a candidate of a {@code srcset} ends at a space. */
+	private static final Pattern SPACES = Pattern.compile("\\s+");
+
 	private final Set<IRichTextFeature> features;
 
 	private final Set<String> colorClasses;
 
 	private final Set<String> backgroundClasses;
+
+	private final boolean imagesFromSiteOnly;
 
 	private final Set<String> elements = new LinkedHashSet<>();
 
@@ -63,11 +87,12 @@ public final class RichTextHtmlRules
 	private final Set<String> rels = new LinkedHashSet<>();
 
 	private RichTextHtmlRules(Set<IRichTextFeature> features, Set<String> colorClasses,
-		Set<String> backgroundClasses)
+		Set<String> backgroundClasses, boolean imagesFromSiteOnly)
 	{
 		this.features = features;
 		this.colorClasses = colorClasses;
 		this.backgroundClasses = backgroundClasses;
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
 		allowElements("p", "br");
 	}
 
@@ -83,9 +108,27 @@ public final class RichTextHtmlRules
 	public static PolicyFactory toPolicy(Collection<? extends IRichTextFeature> features,
 		Set<String> colorClasses, Set<String> backgroundClasses)
 	{
+		return toPolicy(features, colorClasses, backgroundClasses, false);
+	}
+
+	/**
+	 * @param features
+	 *            the features of an editor
+	 * @param colorClasses
+	 *            the classes of its colors of the text
+	 * @param backgroundClasses
+	 *            the classes of its colors of the background
+	 * @param imagesFromSiteOnly
+	 *            whether images go only to the site's own addresses
+	 * @return OWASP's policy letting through what the features write, and nothing else
+	 * @since 11.0.0
+	 */
+	public static PolicyFactory toPolicy(Collection<? extends IRichTextFeature> features,
+		Set<String> colorClasses, Set<String> backgroundClasses, boolean imagesFromSiteOnly)
+	{
 		Set<IRichTextFeature> all = Collections.unmodifiableSet(new LinkedHashSet<>(features));
 		RichTextHtmlRules rules = new RichTextHtmlRules(all, Set.copyOf(colorClasses),
-			Set.copyOf(backgroundClasses));
+			Set.copyOf(backgroundClasses), imagesFromSiteOnly);
 		all.forEach(feature -> feature.allowHtml(rules));
 		return rules.toFactory();
 	}
@@ -123,6 +166,18 @@ public final class RichTextHtmlRules
 	public Set<String> getBackgroundClasses()
 	{
 		return backgroundClasses;
+	}
+
+	/**
+	 * @return whether images go only to the site's own addresses
+	 *         ({@link RichTextPolicy#withImagesFromSiteOnly(boolean)}): then every address the
+	 *         browser loads by itself passes only if {@link RichTextPolicy#isSiteUrl(String) the
+	 *         site's own}, whichever rule let it through
+	 * @since 11.0.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
 	}
 
 	/**
@@ -210,7 +265,9 @@ public final class RichTextHtmlRules
 	 * @param on
 	 *            the elements it passes on
 	 * @return {@code this}, the attribute passing with the addresses
-	 *         {@link RichTextPolicy#isSafeUrl(String) the editor takes} alone
+	 *         {@link RichTextPolicy#isSafeUrl(String) the editor takes} alone, and with the site's
+	 *         own alone where the browser loads them by itself, the {@code src} of an image for
+	 *         example, if {@link #isImagesFromSiteOnly() the images are the site's alone}
 	 */
 	public RichTextHtmlRules allowUrl(String attribute, String... on)
 	{
@@ -251,6 +308,54 @@ public final class RichTextHtmlRules
 	}
 
 	/**
+	 * @return whether the browser loads the address of an attribute of an element by itself,
+	 *         without a click
+	 */
+	private static boolean isLoaded(String element, String attribute)
+	{
+		return LOADED.contains(attribute) ||
+			(LINKED.contains(attribute) && !LINKS.contains(element));
+	}
+
+	/**
+	 * @return whether the address of an attribute is the site's own; for a {@code srcset}, the
+	 *         address of each of its candidates
+	 */
+	private static boolean isSite(String attribute, String value)
+	{
+		if (!"srcset".equals(attribute))
+		{
+			return RichTextPolicy.isSiteUrl(value);
+		}
+		// split at every comma, even one a browser reads as part of an address: a piece more to
+		// check, never one less
+		for (String candidate : CANDIDATES.split(value))
+		{
+			String trimmed = candidate.strip();
+			if (!trimmed.isEmpty() && !RichTextPolicy.isSiteUrl(SPACES.split(trimmed, 2)[0]))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * @return whether the attributes of an element, names and values in turn, hold one
+	 */
+	private static boolean hasAttribute(List<String> attributes, String name)
+	{
+		for (int i = 0; i < attributes.size(); i += 2)
+		{
+			if (name.equals(attributes.get(i)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @return OWASP's policy of the rules
 	 */
 	private PolicyFactory toFactory()
@@ -260,6 +365,12 @@ public final class RichTextHtmlRules
 		if (!bare.isEmpty())
 		{
 			builder.allowWithoutAttributes(bare.toArray(String[]::new));
+		}
+		if (elements.contains("img"))
+		{
+			// an image whose address did not pass goes whole, its alt and title too
+			builder.allowElements((name, attributes) -> hasAttribute(attributes, "src") ? name :
+				null, "img");
 		}
 		attributes.forEach((element, byName) -> byName.forEach((name, policies) -> {
 			AttributePolicy any = policies.size() == 1 ? policies.get(0) :
@@ -274,6 +385,14 @@ public final class RichTextHtmlRules
 					}
 					return null;
 				};
+			if (imagesFromSiteOnly && isLoaded(element, name))
+			{
+				AttributePolicy allowed = any;
+				any = (on, attribute, value) -> {
+					String passed = allowed.apply(on, attribute, value);
+					return passed != null && isSite(attribute, passed) ? passed : null;
+				};
+			}
 			builder.allowAttributes(name).matching(any).onElements(element);
 		}));
 		if (!rels.isEmpty())

@@ -31,6 +31,10 @@ import com.github.openjson.JSONTokener;
  * and the attributes of the nodes, which a renderer of Tiptap's schema writes as its extensions
  * say.
  * <p>
+ * {@link #IMAGES_FROM_SITE_ONLY} keeps the images of the site alone: a node or a mark whose
+ * {@code src} is not {@link RichTextPolicy#isSiteUrl(String) the site's own} is taken out too, an
+ * image from another site for example. Links go to other sites as before.
+ * <p>
  * It {@link #sanitizeAndReport(String) tells} of what it took out by the names of HTML: a link,
  * {@code a}, an image, {@code img}, another mark or node by its type; and of a text that is no
  * document as {@code json}, all of it taken out.
@@ -44,11 +48,51 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	/** The sanitizer. */
 	public static final RichTextJsonSanitizer INSTANCE = new RichTextJsonSanitizer();
 
+	/**
+	 * The sanitizer keeping the images of the site alone.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final RichTextJsonSanitizer IMAGES_FROM_SITE_ONLY = new RichTextJsonSanitizer(
+		true);
+
 	/** How deep objects and arrays may nest in the document. */
 	public static final int MAX_DEPTH = 100;
 
 	/** What a text that is no document is told of as. */
 	private static final String NO_DOCUMENT = "json";
+
+	/** Whether images go only to the site's own addresses. */
+	private final boolean imagesFromSiteOnly;
+
+	/**
+	 * A sanitizer letting images go to other sites, as {@link #INSTANCE} does.
+	 */
+	public RichTextJsonSanitizer()
+	{
+		this(false);
+	}
+
+	/**
+	 * @param imagesFromSiteOnly
+	 *            whether images, the {@code src} of any node or mark, go only to the site's own
+	 *            addresses
+	 * @since 11.0.0
+	 */
+	public RichTextJsonSanitizer(boolean imagesFromSiteOnly)
+	{
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
+	}
+
+	/**
+	 * @return whether images, the {@code src} of any node or mark, go only to the site's own
+	 *         addresses
+	 * @since 11.0.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
+	}
 
 	@Override
 	public String sanitize(String json)
@@ -99,7 +143,7 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	 *
 	 * @return whether it took anything out
 	 */
-	private static boolean clean(JSONObject node, RichTextCleaningReport.Builder report)
+	private boolean clean(JSONObject node, RichTextCleaningReport.Builder report)
 	{
 		boolean changed = false;
 		JSONArray marks = node.optJSONArray("marks");
@@ -126,7 +170,7 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 	 * @return whether it took out the marks or nodes of an array going to addresses that are not
 	 *         safe
 	 */
-	private static boolean removeUnsafe(JSONArray array, RichTextCleaningReport.Builder report)
+	private boolean removeUnsafe(JSONArray array, RichTextCleaningReport.Builder report)
 	{
 		boolean changed = false;
 		for (int i = array.length() - 1; i >= 0; i--)
@@ -157,9 +201,10 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 
 	/**
 	 * @return whether the {@code href} and the {@code src} of a mark or a node, if it has them, go
-	 *         to safe addresses
+	 *         to safe addresses; the {@code src} to the site's own if the images are the site's
+	 *         alone
 	 */
-	private static boolean isSafe(JSONObject item)
+	private boolean isSafe(JSONObject item)
 	{
 		JSONObject attributes = item.optJSONObject("attrs");
 		if (attributes == null)
@@ -169,7 +214,8 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 		for (String name : new String[] { "href", "src" })
 		{
 			if (attributes.opt(name) instanceof String address && !address.isBlank() &&
-				!RichTextPolicy.isSafeUrl(address))
+				!(imagesFromSiteOnly && name.equals("src") ? RichTextPolicy.isSiteUrl(address) :
+					RichTextPolicy.isSafeUrl(address)))
 			{
 				return false;
 			}

@@ -189,7 +189,7 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	@Override
 	protected IRichTextSanitizer getDefaultSanitizer()
 	{
-		return CKEditorPolicy.of(getFeatures());
+		return CKEditorPolicy.of(getFeatures()).withImagesFromSiteOnly(isImagesFromSiteOnly());
 	}
 
 	/**
