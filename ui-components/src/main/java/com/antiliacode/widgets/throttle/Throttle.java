@@ -24,13 +24,14 @@ import org.apache.wicket.ajax.attributes.AjaxRequestAttributes.Method;
 import org.apache.wicket.core.request.handler.ListenerRequestHandler;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.protocol.http.servlet.AbstractRequestWrapperFactory;
-import org.apache.wicket.request.IRequestHandler;
-import org.apache.wicket.request.IRequestHandlerDelegate;
 import org.apache.wicket.request.Request;
+import org.apache.wicket.request.Url;
 import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.http.WebRequest;
+import org.apache.wicket.request.mapper.info.PageComponentInfo;
 import org.apache.wicket.util.lang.Args;
+import org.apache.wicket.util.string.Strings;
 
 import jakarta.servlet.ServletRequestWrapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,7 +61,8 @@ import jakarta.servlet.http.HttpSession;
  * components and behaviors the session uses; not those of resources, websockets or pages
  * rendered. A slowed down request holds a thread of the server while it waits, so at most
  * {@value #MAX_SLOWED} requests of a session are slowed down at once, waiting or sending files;
- * the others go at full speed. An application open to anybody shows the components to those
+ * the others go at full speed. A request waits before Wicket takes the lock of its page, so that
+ * the other requests of the page do not wait for it. An application open to anybody shows the components to those
  * trusted with it only, and {@link #reset(HttpServletRequest)} undoes the settings, when the user
  * signs out for example.
  *
@@ -82,12 +84,6 @@ public final class Throttle
 
 	/** The attribute of the HTTP session holding the permits of its requests to slow down. */
 	static final String PERMITS = Permits.class.getName();
-
-	/** The request was slowed down already: it waits once. */
-	private static final MetaDataKey<Boolean> DELAYED = new MetaDataKey<>()
-	{
-		private static final long serialVersionUID = 1L;
-	};
 
 	private static final MetaDataKey<Boolean> INSTALLED = new MetaDataKey<>()
 	{
@@ -294,6 +290,30 @@ public final class Throttle
 		return null;
 	}
 
+	/**
+	 * @param url
+	 *            the address of a request
+	 * @return whether the request calls a component or a behavior of a page: one of its query
+	 *         parameters without a value names the page and the component, {@code ?3-1.0-form-save}
+	 *         say, as the addresses of a {@link ListenerRequestHandler}, and not only the page, as
+	 *         those of a page rendered, nor nothing, as those of a resource
+	 */
+	static boolean callsComponent(Url url)
+	{
+		for (Url.QueryParameter parameter : url.getQueryParameters())
+		{
+			if (Strings.isEmpty(parameter.getValue()))
+			{
+				PageComponentInfo info = PageComponentInfo.parse(parameter.getName());
+				if (info != null)
+				{
+					return info.getComponentInfo() != null;
+				}
+			}
+		}
+		return false;
+	}
+
 	private static boolean isUpload(HttpServletRequest request)
 	{
 		String type = request.getContentType();
@@ -302,30 +322,29 @@ public final class Throttle
 	}
 
 	/**
-	 * Waits for the {@link AjaxDelay} of the session before calling the component or behavior
-	 * each of its Ajax requests calls, but those exempted, and frees the permits of the requests
+	 * Waits for the {@link AjaxDelay} of the session at the beginning of each of its Ajax requests
+	 * calling a component or behavior, but those exempted, and frees the permits of the requests
 	 * slowed down once they are done.
+	 * <p>
+	 * It waits before Wicket resolves the request, which takes the lock of the page: a request
+	 * waiting with the lock would keep every other request of the page waiting for it, each
+	 * holding a thread of the server, however few requests the permits let wait. So it tells a
+	 * request calling a component by its address alone, as Wicket's mappers do, see
+	 * {@link #callsComponent(Url)}.
 	 */
 	static final class AjaxDelayListener implements IRequestCycleListener
 	{
 		@Override
-		public void onRequestHandlerResolved(RequestCycle cycle, IRequestHandler handler)
+		public void onBeginRequest(RequestCycle cycle)
 		{
-			IRequestHandler resolved = handler;
-			while (resolved instanceof IRequestHandlerDelegate delegate)
-			{
-				resolved = delegate.getDelegateHandler();
-			}
 			Request request = cycle.getRequest();
-			if (!(resolved instanceof ListenerRequestHandler) ||
-				Boolean.TRUE.equals(cycle.getMetaData(DELAYED)) ||
-				!(request instanceof WebRequest web) || !web.isAjax() ||
+			if (!(request instanceof WebRequest web) || !web.isAjax() ||
 				!(web.getContainerRequest() instanceof HttpServletRequest http) ||
-				!web.getQueryParameters().getParameterValue(EXEMPT_PARAMETER).isEmpty())
+				!web.getQueryParameters().getParameterValue(EXEMPT_PARAMETER).isEmpty() ||
+				!callsComponent(web.getUrl()))
 			{
 				return;
 			}
-			cycle.setMetaData(DELAYED, Boolean.TRUE);
 			long millis = getAjaxDelay(http).getDuration().toMillis();
 			if (millis <= 0)
 			{
