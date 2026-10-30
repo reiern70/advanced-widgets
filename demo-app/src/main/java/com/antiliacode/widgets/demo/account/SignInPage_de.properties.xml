@@ -20,7 +20,8 @@
 	<entry key="password">Passwort</entry>
 	<entry key="submit">Anmelden</entry>
 	<entry key="wrong">Das Konto oder das Passwort ist falsch.</entry>
-	<entry key="full">Gerade sind zu viele Benutzer angemeldet: höchstens {0} gleichzeitig. Bitte versuchen Sie es in ein paar Minuten noch einmal.</entry>
+	<entry key="full">Gerade sind zu viele Benutzer angemeldet: höchstens {0} gleichzeitig. Bitte versuchen Sie es in {1,choice,1#einer Minute|1&lt;{1} Minuten} noch einmal.</entry>
+	<entry key="placeLost">Ein anderer Benutzer hat Ihren Platz übernommen: Jeder behält ihn {0} Minuten sicher, und höchstens {1} sind gleichzeitig angemeldet. Melden Sie sich erneut an, sobald Platz ist.</entry>
 	<entry key="noAccount">Noch kein Konto?</entry>
 	<entry key="register">Registrieren</entry>
 	<entry key="Required">${label} ist ein Pflichtfeld.</entry>

@@ -70,7 +70,40 @@ class SignedInUsersTest
 	private final Set<String> alwaysSignedIn = Set.of("semedy", "wicket", "client");
 
 	private final SignedInUsers users = new SignedInUsers(clock, Duration.ofMinutes(5),
-		alwaysSignedIn::contains);
+		Duration.ofMinutes(30), alwaysSignedIn::contains);
+
+	/** Signs user1 to user5 in, a minute apart, as s1 to s5. */
+	private void fillAMinuteApart()
+	{
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			if (i > 1)
+			{
+				clock.advance(Duration.ofMinutes(1));
+			}
+			assertTrue(signIn("user" + i, Role.USER, "s" + i));
+		}
+	}
+
+	/** Keeps every session signed in, as requests every few minutes would. */
+	private void allSeen()
+	{
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			users.seen("s" + i);
+		}
+	}
+
+	/** Lets time go by while every session makes a request every four minutes. */
+	private void keepActive(Duration duration)
+	{
+		for (Duration gone = Duration.ZERO; gone.compareTo(duration) < 0; gone = gone
+			.plusMinutes(4))
+		{
+			clock.advance(Duration.ofMinutes(4));
+			allSeen();
+		}
+	}
 
 	private boolean signIn(String account, Role role, String sessionId)
 	{
@@ -159,5 +192,87 @@ class SignedInUsersTest
 		// a request of a session signed out does not count it again
 		users.seen("s1");
 		assertEquals(5, users.count());
+	}
+
+	@Test
+	void anAccountKeepsItsPlaceForThePlaceTime()
+	{
+		fill();
+		keepActive(Duration.ofMinutes(28));
+
+		assertFalse(signIn("user6", Role.USER, "s6"));
+		assertEquals(Duration.ofMinutes(2), users.untilRoom());
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			assertTrue(users.holdsPlace("s" + i));
+		}
+	}
+
+	@Test
+	void beyondItsTimeAnotherAccountTakesThePlaceHeldLongest()
+	{
+		fillAMinuteApart();
+		keepActive(Duration.ofMinutes(28));
+
+		// user1 signed in 32 minutes ago, user2 31, user3 30, user4 29 and user5 28
+		assertEquals(Duration.ZERO, users.untilRoom());
+		assertTrue(users.hasRoomFor("user6", Role.USER));
+		assertTrue(signIn("user6", Role.USER, "s6"));
+		assertFalse(users.holdsPlace("s1"));
+		assertTrue(users.holdsPlace("s2"));
+		assertTrue(users.holdsPlace("s6"));
+		assertEquals(5, users.count());
+
+		// the next one takes the place of user2, and user1, signing in again, that of user3
+		assertTrue(signIn("user7", Role.USER, "s7"));
+		assertFalse(users.holdsPlace("s2"));
+		assertTrue(signIn("user1", Role.USER, "s1-again"));
+		assertFalse(users.holdsPlace("s3"));
+
+		// user4 and user5, and the newcomers, are within their time
+		assertFalse(signIn("user8", Role.USER, "s8"));
+		assertEquals(Duration.ofMinutes(1), users.untilRoom());
+	}
+
+	@Test
+	void anAccountBeyondItsTimeGoesOnWhileNobodyNeedsThePlace()
+	{
+		fill();
+		keepActive(Duration.ofHours(2));
+
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			assertTrue(users.holdsPlace("s" + i));
+		}
+		assertEquals(5, users.count());
+	}
+
+	@Test
+	void anotherBrowserDoesNotRenewThePlace()
+	{
+		fillAMinuteApart();
+		keepActive(Duration.ofMinutes(24));
+		assertTrue(signIn("user1", Role.USER, "s1-another-browser"));
+		keepActive(Duration.ofMinutes(4));
+
+		// the place of user1 counts from its first session; both of them lose it
+		assertTrue(signIn("user6", Role.USER, "s6"));
+		assertFalse(users.holdsPlace("s1"));
+		assertFalse(users.holdsPlace("s1-another-browser"));
+	}
+
+	@Test
+	void theAccountsNotCountedTakeNoPlace()
+	{
+		fill();
+		keepActive(Duration.ofMinutes(40));
+
+		assertTrue(signIn("admin", Role.ADMIN, "admin-session"));
+		assertTrue(signIn("client", Role.USER, "client-session"));
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			assertTrue(users.holdsPlace("s" + i));
+		}
+		assertFalse(users.holdsPlace("admin-session"));
 	}
 }

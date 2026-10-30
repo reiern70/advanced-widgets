@@ -233,7 +233,7 @@ public class WicketApplication extends WebApplication
 				if (Session.exists() && DemoSession.get().isSignedIn() &&
 					DemoSession.get().getId() != null)
 				{
-					signedInUsers.seen(DemoSession.get().getId());
+					getSignedInUsers().seen(DemoSession.get().getId());
 				}
 			}
 		});
@@ -249,7 +249,7 @@ public class WicketApplication extends WebApplication
 			}
 		}.setUnknownOutcomeAction(CsrfAction.ALLOW));
 		// at most SignedInUsers.MAXIMUM users are signed in at once: the ended sessions are not
-		getSessionStore().registerUnboundListener(signedInUsers::signedOut);
+		getSessionStore().registerUnboundListener(id -> getSignedInUsers().signedOut(id));
 
 		// the status of the home page's websocket, which keeps the home page stateless
 		getSharedResources().add(LiveResource.NAME, new LiveResource());

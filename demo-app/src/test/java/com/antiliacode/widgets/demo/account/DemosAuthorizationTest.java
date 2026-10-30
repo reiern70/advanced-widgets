@@ -271,7 +271,7 @@ class DemosAuthorizationTest
 		signIn("ada@example.com", "Analytical-Engine-1843");
 		tester.assertRenderedPage(SignInPage.class);
 		tester.assertErrorMessages("Too many users are signed in right now: at most 5 at once. " +
-			"Please try again in a few minutes.");
+			"Please try again in 30 minutes.");
 		assertFalse(DemoSession.get().isSignedIn());
 
 		// an administrator, an account the demo always has and one the server is started with
