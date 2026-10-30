@@ -20,7 +20,8 @@
 	<entry key="password">Contraseña</entry>
 	<entry key="submit">Iniciar sesión</entry>
 	<entry key="wrong">La cuenta o la contraseña no son correctas.</entry>
-	<entry key="full">Hay demasiados usuarios conectados en este momento: como mucho {0} a la vez. Vuelva a intentarlo en unos minutos.</entry>
+	<entry key="full">Hay demasiados usuarios conectados en este momento: como mucho {0} a la vez. Vuelva a intentarlo en {1,choice,1#un minuto|1&lt;{1} minutos}.</entry>
+	<entry key="placeLost">Otro usuario ha ocupado su lugar: cada uno lo conserva {0} minutos seguros, y como mucho {1} están conectados a la vez. Vuelva a iniciar sesión cuando haya sitio.</entry>
 	<entry key="noAccount">¿Aún no tiene cuenta?</entry>
 	<entry key="register">Regístrese</entry>
 	<entry key="Required">El campo «${label}» es obligatorio.</entry>

@@ -16,8 +16,10 @@ package com.antiliacode.widgets.demo.account;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -34,14 +36,27 @@ import com.antiliacode.widgets.demo.data.Role;
  * not counted, so that registered accounts cannot keep them out. A session counts from signing in
  * until it signs out, ends, or goes {@link WicketApplication#SESSION_TIMEOUT} without a request,
  * after which the servlet container ends it. Kept in memory, as the sessions are.
+ * <p>
+ * An account keeps its place for {@link #PLACE_TIME} for sure, counted from the first of its
+ * sessions to sign in. After that it goes on as long as nobody else needs the place: an account
+ * that finds every place taken takes the one held longest beyond its time, and the sessions of
+ * the account that held it no longer {@link #holdsPlace(String) hold a place}, so that they are
+ * signed out at their next request. A few accounts kept signed in can thus keep the others out for
+ * {@link #PLACE_TIME} at most, not for good.
  */
 public class SignedInUsers
 {
 	/** The most users signed in at once, those always signed in apart. */
 	public static final int MAXIMUM = 5;
 
-	/** A session signed in to an account, and when it made its last request. */
-	private record Session(String account, Instant seen)
+	/** How long an account keeps its place for sure, before another account may take it. */
+	public static final Duration PLACE_TIME = Duration.ofMinutes(30);
+
+	/**
+	 * A session signed in to an account, since when the account holds its place, and when the
+	 * session made its last request.
+	 */
+	private record Session(String account, Instant since, Instant seen)
 	{
 	}
 
@@ -52,12 +67,14 @@ public class SignedInUsers
 
 	private final Duration timeout;
 
+	private final Duration placeTime;
+
 	/** Whether an account, not an administrator's, always signs in and is not counted. */
 	private final Predicate<String> alwaysSignedIn;
 
 	public SignedInUsers()
 	{
-		this(Clock.systemUTC(), WicketApplication.SESSION_TIMEOUT,
+		this(Clock.systemUTC(), WicketApplication.SESSION_TIMEOUT, PLACE_TIME,
 			account -> Accounts.get().isAlwaysSignedIn(account));
 	}
 
@@ -66,13 +83,17 @@ public class SignedInUsers
 	 *            the clock of the requests
 	 * @param timeout
 	 *            how long a session lasts without a request
+	 * @param placeTime
+	 *            how long an account keeps its place for sure
 	 * @param alwaysSignedIn
 	 *            whether an account, not an administrator's, always signs in and is not counted
 	 */
-	SignedInUsers(Clock clock, Duration timeout, Predicate<String> alwaysSignedIn)
+	SignedInUsers(Clock clock, Duration timeout, Duration placeTime,
+		Predicate<String> alwaysSignedIn)
 	{
 		this.clock = clock;
 		this.timeout = timeout;
+		this.placeTime = placeTime;
 		this.alwaysSignedIn = alwaysSignedIn;
 	}
 
@@ -86,7 +107,8 @@ public class SignedInUsers
 
 	/**
 	 * Signs a session in when there is room for the account: then calls the sign in, which gives
-	 * the session its new id, and counts the session under that id.
+	 * the session its new id, and counts the session under that id. With every place taken, the
+	 * account takes the place held longest beyond {@link #PLACE_TIME}, if one is.
 	 *
 	 * @param account
 	 *            the name of the account
@@ -95,7 +117,7 @@ public class SignedInUsers
 	 * @param signIn
 	 *            signs the session in and returns its id
 	 * @return whether the session signed in; {@code false} if {@value #MAXIMUM} other accounts are
-	 *         signed in
+	 *         signed in, none of them for longer than {@link #PLACE_TIME}
 	 */
 	public boolean signIn(String account, Role role, Supplier<String> signIn)
 	{
@@ -107,10 +129,17 @@ public class SignedInUsers
 			{
 				return false;
 			}
+			if (counted && !isSignedIn(account) && count() >= MAXIMUM)
+			{
+				// hasRoomFor found a place held beyond its time
+				String overdue = overdue().orElseThrow();
+				sessions.values().removeIf(session -> session.account().equals(overdue));
+			}
 			String id = signIn.get();
 			if (counted)
 			{
-				sessions.put(id, new Session(account, clock.instant()));
+				Instant now = clock.instant();
+				sessions.put(id, new Session(account, since(account).orElse(now), now));
 			}
 			return true;
 		}
@@ -131,8 +160,67 @@ public class SignedInUsers
 	private synchronized boolean hasRoomFor(String account)
 	{
 		forgetInactive();
-		return sessions.values().stream().anyMatch(session -> session.account().equals(account)) ||
-			count() < MAXIMUM;
+		return isSignedIn(account) || count() < MAXIMUM || overdue().isPresent();
+	}
+
+	/**
+	 * @return how long an account that finds no room waits at most: until the place held longest
+	 *         goes beyond {@link #PLACE_TIME}; zero when there is room now
+	 */
+	public synchronized Duration untilRoom()
+	{
+		forgetInactive();
+		if (count() < MAXIMUM)
+		{
+			return Duration.ZERO;
+		}
+		Instant first = sessions.values().stream()
+			.map(Session::since)
+			.min(Comparator.naturalOrder())
+			.orElseThrow();
+		Duration wait = Duration.between(clock.instant(), first.plus(placeTime));
+		return wait.isNegative() ? Duration.ZERO : wait;
+	}
+
+	/**
+	 * @param id
+	 *            the id of a session
+	 * @return whether the session is counted among those signed in: {@code false} once another
+	 *         account took its place, or it went {@link WicketApplication#SESSION_TIMEOUT} without a
+	 *         request
+	 */
+	public synchronized boolean holdsPlace(String id)
+	{
+		forgetInactive();
+		return sessions.containsKey(id);
+	}
+
+	private boolean isSignedIn(String account)
+	{
+		return since(account).isPresent();
+	}
+
+	/**
+	 * @return since when the account holds its place: since the first of its sessions signed in
+	 */
+	private Optional<Instant> since(String account)
+	{
+		return sessions.values().stream()
+			.filter(session -> session.account().equals(account))
+			.map(Session::since)
+			.min(Comparator.naturalOrder());
+	}
+
+	/**
+	 * @return the account holding its place longest beyond {@link #PLACE_TIME}, if one does
+	 */
+	private Optional<String> overdue()
+	{
+		Instant ended = clock.instant().minus(placeTime);
+		return sessions.values().stream()
+			.filter(session -> !session.since().isAfter(ended))
+			.min(Comparator.comparing(Session::since))
+			.map(Session::account);
 	}
 
 	/**
@@ -162,7 +250,7 @@ public class SignedInUsers
 	public synchronized void seen(String id)
 	{
 		sessions.computeIfPresent(id, (key, session) -> new Session(session.account(),
-			clock.instant()));
+			session.since(), clock.instant()));
 	}
 
 	/**
