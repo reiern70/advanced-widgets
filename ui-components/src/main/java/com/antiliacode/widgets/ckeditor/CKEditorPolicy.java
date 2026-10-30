@@ -20,9 +20,11 @@ import java.util.Set;
 
 import org.owasp.html.PolicyFactory;
 
+import com.antiliacode.widgets.richtext.IRichTextSanitizer;
+import com.antiliacode.widgets.richtext.RichTextCleaningReport;
 import com.antiliacode.widgets.richtext.RichTextHtmlRules;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
-import com.antiliacode.widgets.richtext.IRichTextSanitizer;
+import com.antiliacode.widgets.richtext.RichTextSanitized;
 
 /**
  * The cleaning of the HTML of a {@link CKEditor}, with the OWASP Java HTML Sanitizer: it keeps the
@@ -91,15 +93,27 @@ public final class CKEditorPolicy implements IRichTextSanitizer
 	@Override
 	public String sanitize(String html)
 	{
-		if (html == null)
-		{
-			return null;
-		}
+		return html == null ? null : factory().sanitize(html);
+	}
+
+	/**
+	 * Cleans the HTML, telling the elements and the attributes it removed: a script, an event
+	 * handler, a style, a link to an address that is not safe, an element of a feature left out.
+	 * What CKEditor writes, as the editor sends it, is no removal.
+	 */
+	@Override
+	public RichTextSanitized sanitizeAndReport(String html)
+	{
+		return RichTextCleaningReport.sanitize(factory(), html);
+	}
+
+	private PolicyFactory factory()
+	{
 		if (factory == null)
 		{
 			factory = RichTextHtmlRules.toPolicy(features, Set.of(), Set.of());
 		}
-		return factory.sanitize(html);
+		return factory;
 	}
 
 	@Override

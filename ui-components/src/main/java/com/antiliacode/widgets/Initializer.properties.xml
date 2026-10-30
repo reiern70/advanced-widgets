@@ -270,4 +270,13 @@
 	<entry key="RichTextEditor.suggestions">Suggestions</entry>
 	<entry key="RichTextEditor.suggestLoading">Searching…</entry>
 	<entry key="RichTextEditor.suggestNone">Nothing found</entry>
+	<entry key="RichTextEditor.rejected">The text holds what the editor does not allow: ${removed}.</entry>
+	<entry key="RichTextEditor.pasteCleaned">Part of the paste was left out: {0}.</entry>
+	<entry key="RichTextEditor.pasteScripts">scripts</entry>
+	<entry key="RichTextEditor.pasteEmbedded">embedded content</entry>
+	<entry key="RichTextEditor.pasteForms">form fields</entry>
+	<entry key="RichTextEditor.pasteImages">images</entry>
+	<entry key="RichTextEditor.pasteTables">tables</entry>
+	<entry key="RichTextEditor.pasteLinks">links</entry>
+	<entry key="RichTextEditor.pasteFormatting">formatting</entry>
 </properties>

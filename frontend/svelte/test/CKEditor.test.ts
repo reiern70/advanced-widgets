@@ -132,6 +132,25 @@ describe('CKEditor', () => {
 		expect(third.config.plugins).toContain(build.Bold);
 	});
 
+	it('tells what a paste lost, to onpastecleaned and in a line while asked', async () => {
+		const onpastecleaned = vi.fn();
+		const { container, rerender } = render(BoundCKEditor, { build: fakeBuild(),
+			onpastecleaned });
+		const fake = await started(container);
+		expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+		await rerender({ pasteNotice: true });
+		flushSync();
+		fake.paste('<p>b</p><object data="x.swf"></object>', '<p>b</p>');
+		await Promise.resolve();
+		expect(onpastecleaned).toHaveBeenCalledWith({ elements: { object: 1 }, attributes: {} });
+		expect(container.querySelector('.antilia-rich-text-notice')!.textContent)
+			.toBe('Part of the paste was left out: embedded content.');
+
+		await rerender({ pasteNotice: false });
+		flushSync();
+		expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+	});
+
 	it('posts the text under a name, in a hidden text area', async () => {
 		const { container } = render(BoundCKEditor, { build: fakeBuild(), name: 'notes' });
 		const fake = await started(container);

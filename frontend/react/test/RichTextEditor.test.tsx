@@ -309,6 +309,33 @@ describe('RichTextEditor', () => {
 		expect(drop()).toBeFalsy();
 	});
 
+	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',
+		async () => {
+			const first = vi.fn();
+			const ref = createRef<RichTextEditorHandle>();
+			const { container, rerender } = render(<RichTextEditor ref={ref} value="<p>a</p>"
+				onPasteCleaned={first} />);
+			expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+			const latest = vi.fn();
+			rerender(<RichTextEditor ref={ref} value="<p>a</p>" onPasteCleaned={latest}
+				pasteNotice />);
+			const view = ref.current!.editor!.editor.view;
+			act(() => {
+				view.pasteHTML('<p>b<script>steal()</script></p>', new Event('paste') as ClipboardEvent);
+			});
+			await act(async () => {
+				await Promise.resolve();
+			});
+			expect(first).not.toHaveBeenCalled();
+			expect(latest).toHaveBeenCalledWith({ elements: { script: 1 }, attributes: {} });
+			const notice = container.querySelector('.antilia-rich-text-notice')!;
+			expect(notice.getAttribute('role')).toBe('status');
+			expect(notice.textContent).toBe('Part of the paste was left out: scripts.');
+
+			rerender(<RichTextEditor ref={ref} value="<p>a</p>" onPasteCleaned={latest} />);
+			expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+		});
+
 	it('answers its handle before the editor is made, and after it went', () => {
 		const ref = createRef<RichTextEditorHandle>();
 		const { unmount } = render(<RichTextEditor ref={ref} value="<p>a</p>" />);

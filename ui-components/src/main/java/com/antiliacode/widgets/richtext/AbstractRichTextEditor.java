@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -30,6 +31,9 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
+import org.apache.wicket.validation.ValidationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.antiliacode.widgets.ScriptJson;
 import com.github.openjson.JSONArray;
@@ -60,6 +64,23 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * {@link RichTextJsonSanitizer} by default, takes out the links and images to such addresses, and
  * gives nothing for a text that is no document.</li>
  * </ul>
+ * By default the cleaning is silent: the model gets the clean text, and no one hears of what was
+ * removed. {@link #setCleaning(RichTextCleaning)} makes the editor {@link RichTextCleaning#REPORT
+ * report} it, to {@link #onCleaned(AjaxRequestTarget, RichTextCleaningReport)} and in a
+ * {@link RichTextCleanedEvent} bubbling to the page, or {@link RichTextCleaning#REJECT reject} the
+ * text with an error, as a validator would; {@link RichTextCleaning#setDefault(
+ * org.apache.wicket.Application, RichTextCleaning)} sets the mode of every editor of the
+ * application. The sanitizers of the editors tell what they removed
+ * ({@link IRichTextSanitizer#sanitizeAndReport(String)}): the elements and the attributes of the
+ * HTML, the links and the images of Markdown and of JSON whose addresses are not safe; HTML left in
+ * Markdown is not told of. A sanitizer of a page's own tells of nothing unless it overrides that
+ * method.
+ * <p>
+ * The editor in the browser cleans what the user pastes too, by the features it has. It tells of
+ * what a paste lost with the event {@link RichTextEditorEvents#PASTE_CLEANED}, which
+ * {@link RichTextEditorPasteCleanedEvent} hears on the server, and, once
+ * {@link #setPasteNotice(boolean) asked}, in a line of its own under the toolbar.
+ * <p>
  * Each editor has features of its own kind,
  * {@link IRichTextFeature}s: {@link RichTextFeature} and those of a page for {@link RichTextEditor},
  * {@link com.antiliacode.widgets.ckeditor.CKEditorFeature} for CKEditor, of the same names.
@@ -125,6 +146,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private static final String STATE_PARAMETER = "state";
 
+	private static final Logger LOG = LoggerFactory.getLogger(AbstractRichTextEditor.class);
+
 	private final AbstractDefaultAjaxBehavior stateBehavior;
 
 	private final ClientEventsBehavior events;
@@ -164,6 +187,14 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	private IRichTextSanitizer markdownSanitizer;
 
 	private IRichTextSanitizer jsonSanitizer;
+
+	/** What the editor does when the cleaning removed something, {@code null} for the default. */
+	private RichTextCleaning cleaning;
+
+	private boolean pasteNotice;
+
+	/** What the cleaning removed from the text the model is about to get, to report then. */
+	private transient RichTextCleaningReport cleaned;
 
 	/**
 	 * @param id
@@ -301,24 +332,85 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	/**
 	 * Cleans the text the browser sent, before it is validated and the model gets it, with the
 	 * sanitizer of its format: {@link #getSanitizer()} for HTML, {@link #getMarkdownSanitizer()} for
-	 * Markdown and {@link #getJsonSanitizer()} for JSON.
+	 * Markdown and {@link #getJsonSanitizer()} for JSON. When the cleaning removed something, the
+	 * {@link #getCleaning() mode} decides: nothing more, a report once the model got the text, or
+	 * an error, {@code RichTextEditor.rejected}, with the names removed as {@code ${removed}}.
 	 */
 	@Override
 	public void convertInput()
 	{
+		cleaned = null;
 		super.convertInput();
 		String text = getConvertedInput();
 		if (text != null && isValid())
 		{
-			IRichTextSanitizer cleaning = switch (format)
+			IRichTextSanitizer sanitizer = switch (format)
 			{
 				case HTML -> getSanitizer();
 				case MARKDOWN -> getMarkdownSanitizer();
 				case JSON -> getJsonSanitizer();
 			};
-			String clean = cleaning.sanitize(text);
+			RichTextCleaning mode = getCleaning();
+			String clean;
+			if (mode == RichTextCleaning.SILENT)
+			{
+				clean = sanitizer.sanitize(text);
+			}
+			else
+			{
+				RichTextSanitized sanitized = sanitizer.sanitizeAndReport(text);
+				RichTextCleaningReport report = sanitized.report();
+				if (!report.isEmpty())
+				{
+					LOG.warn("The cleaning of the rich text editor {} on {} {}: {}",
+						getPageRelativePath(), getPage().getClass().getName(),
+						mode == RichTextCleaning.REJECT ? "rejected the text, which holds" :
+							"removed", report);
+					if (mode == RichTextCleaning.REJECT)
+					{
+						error(new ValidationError().addKey("RichTextEditor.rejected")
+							.setVariable("removed", report.toString()));
+						return;
+					}
+					cleaned = report;
+				}
+				clean = sanitized.text();
+			}
 			setConvertedInput(Strings.isEmpty(clean) ? null : clean);
 		}
+	}
+
+	/**
+	 * Gives the model the clean text, then tells what the cleaning removed from it, if anything,
+	 * in {@link RichTextCleaning#REPORT}: {@link #onCleaned(AjaxRequestTarget,
+	 * RichTextCleaningReport)}, then a {@link RichTextCleanedEvent} bubbling to the page.
+	 */
+	@Override
+	public void updateModel()
+	{
+		super.updateModel();
+		RichTextCleaningReport report = cleaned;
+		cleaned = null;
+		if (report != null)
+		{
+			AjaxRequestTarget target = getRequestCycle().find(AjaxRequestTarget.class)
+				.orElse(null);
+			onCleaned(target, report);
+			send(this, Broadcast.BUBBLE, new RichTextCleanedEvent(this, report, target));
+		}
+	}
+
+	/**
+	 * Called in {@link RichTextCleaning#REPORT} once the model got the text, when the cleaning
+	 * removed something from it, before the {@link RichTextCleanedEvent}. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target, {@code null} when the request is no Ajax one
+	 * @param report
+	 *            what the cleaning removed
+	 */
+	protected void onCleaned(AjaxRequestTarget target, RichTextCleaningReport report)
+	{
 	}
 
 	/**
@@ -741,6 +833,51 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
+	 * @return what the editor does when the cleaning removed something: the mode set, or that of
+	 *         the application, {@link RichTextCleaning#getDefault()}
+	 */
+	public RichTextCleaning getCleaning()
+	{
+		return cleaning != null ? cleaning : RichTextCleaning.getDefault();
+	}
+
+	/**
+	 * @param cleaning
+	 *            what the editor does when the cleaning of the text the browser sent removed
+	 *            something: {@link RichTextCleaning#SILENT}, {@link RichTextCleaning#REPORT} or
+	 *            {@link RichTextCleaning#REJECT}; {@code null} for that of the application, as by
+	 *            default
+	 * @return {@code this}
+	 */
+	public T setCleaning(RichTextCleaning cleaning)
+	{
+		this.cleaning = cleaning;
+		return self();
+	}
+
+	/**
+	 * @return whether the editor tells the user, under its toolbar, what a paste lost
+	 */
+	public boolean isPasteNotice()
+	{
+		return pasteNotice;
+	}
+
+	/**
+	 * @param pasteNotice
+	 *            whether the editor tells the user, in a polite line under its toolbar, what the
+	 *            cleaning in the browser left out of a paste, until the next change of the text;
+	 *            {@code false} by default. The event {@link RichTextEditorEvents#PASTE_CLEANED}
+	 *            fires either way.
+	 * @return {@code this}
+	 */
+	public T setPasteNotice(boolean pasteNotice)
+	{
+		this.pasteNotice = pasteNotice;
+		return self();
+	}
+
+	/**
 	 * @return what cleans the Markdown: the one set, or {@link RichTextMarkdownSanitizer}, which
 	 *         takes out the addresses of links and images that are not safe but leaves HTML in the
 	 *         Markdown as it is
@@ -862,6 +999,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		{
 			options.put("label", name);
 		}
+		if (pasteNotice)
+		{
+			options.put("pasteNotice", true);
+		}
 		if (resizable == null)
 		{
 			options.put("resizable", false);
@@ -895,6 +1036,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	protected void onDetach()
 	{
 		super.onDetach();
+		cleaned = null;
 		stateModel.detach();
 		if (savedModel != null)
 		{

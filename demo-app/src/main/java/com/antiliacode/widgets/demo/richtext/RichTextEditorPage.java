@@ -469,6 +469,8 @@ public class RichTextEditorPage extends DemoPage
 		cleanedBox.add(new RichTextView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
+		cleaningCase.add(new RichTextCleaningPanel("modes", RichTextEditor::new,
+			"rich-text-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;

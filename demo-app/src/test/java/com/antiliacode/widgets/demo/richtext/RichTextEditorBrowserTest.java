@@ -38,6 +38,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 import com.antiliacode.widgets.demo.SeleniumBrowser;
+import com.antiliacode.widgets.demo.Toasts;
 import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
@@ -55,6 +56,11 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 {
+	/** HTML from anywhere, to paste: a script, handlers and a link to javascript:. */
+	private static final String UNSAFE_PASTE = "<p>Pasted <b>bold</b> <img src=\"favicon.svg\" " +
+		"onload=\"window.pwned = 1\"><a href=\"javascript:window.pwned = 2\">a link</a>" +
+		"<script>window.pwned = 3</script></p><p onclick=\"window.pwned = 4\">Styled</p>";
+
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void formatsTheTextFromTheToolbarAndTheKeys(SeleniumBrowser browser, String framework)
@@ -405,6 +411,73 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		int heardWidth = Integer.parseInt(heard().replaceAll("\\D*(\\d+) × .*", "$1"));
 		assertEquals(width, heardWidth, 1, heard());
 		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void tellsWhatAPasteLostAndWhatTheServerRemovedOrRejected(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		selectCase("The cleaning on the server");
+		wait.until(d -> !modes().findElements(By.cssSelector(".ProseMirror")).isEmpty());
+		assertEquals("status", notice().getDomAttribute("role"));
+		assertEquals("", notice().getText());
+
+		// a paste of unsafe HTML: the editor says what it lost, and the server hears of it
+		WebElement text = modes().findElement(By.cssSelector(".ProseMirror"));
+		text.click();
+		script("arguments[0].editor.view.pasteHTML(arguments[1]);", text, UNSAFE_PASTE);
+		wait.until(d -> notice().getText().startsWith("Part of the paste was left out: scripts"));
+		wait.until(d -> Toasts.latest(d).startsWith("The editor left out of the paste: "));
+		assertTrue(Toasts.latest(driver).contains("script"), Toasts.latest(driver));
+		assertTrue(Toasts.latest(driver).contains("onclick"), Toasts.latest(driver));
+		assertNull(script("return window.pwned;"));
+		// gone with the next change
+		modes().findElement(By.cssSelector(".ProseMirror")).sendKeys("!");
+		wait.until(d -> notice().getText().isEmpty());
+
+		// the HTML from anywhere sent as the text of the editor: the server tells what it removed
+		WebElement sendUnsafe = modes().findElement(By.xpath(".//button[contains(., " +
+			"'Send the HTML from anywhere')]"));
+		sendUnsafe.click();
+		wait.until(d -> Toasts.latest(d).startsWith("The server removed what the editor does " +
+			"not allow: "));
+		wait.until(d -> kept().contains("A paragraph styled to cover the page"));
+		String kept = kept();
+		assertFalse(kept.contains("<script") || kept.contains("onclick") || kept.contains("style="),
+			kept);
+
+		// or rejects the text, which it then does not keep
+		modes().findElement(By.xpath(".//label[normalize-space() = 'Reject the text']")).click();
+		modes().findElement(By.xpath(".//button[contains(., 'Send the HTML from anywhere')]"))
+			.click();
+		wait.until(d -> Toasts.latest(d).startsWith("The text holds what the editor does not " +
+			"allow: "));
+		assertEquals(kept, kept());
+		assertNull(script("return window.pwned;"));
+		assertNoErrors();
+	}
+
+	private WebElement modes()
+	{
+		return app().findElement(By.cssSelector(".rich-text-demo__modes"));
+	}
+
+	/**
+	 * @return the line under the toolbar telling what a paste lost
+	 */
+	private WebElement notice()
+	{
+		return modes().findElement(By.cssSelector(".antilia-rich-text-notice"));
+	}
+
+	/**
+	 * @return the HTML the server kept of the text of the editor of the cleaning
+	 */
+	private String kept()
+	{
+		return modes().findElement(By.cssSelector(".rich-text-demo__saved code"))
+			.getDomProperty("textContent");
 	}
 
 	@ParameterizedTest

@@ -46,6 +46,7 @@ import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.demo.richtext.OutlineEvent;
+import com.antiliacode.widgets.demo.richtext.RichTextCleaningPanel;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
@@ -290,6 +291,8 @@ public class CKEditorPage extends DemoPage
 		cleanedBox.add(new CKEditorView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
+		cleaningCase.add(new RichTextCleaningPanel("modes", CKEditor::new,
+			"ckeditor-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;

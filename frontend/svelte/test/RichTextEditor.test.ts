@@ -163,6 +163,25 @@ describe('RichTextEditor', () => {
 			.toBe('11 characters · 2 words');
 	});
 
+	it('tells what a paste lost, to onpastecleaned and in a line while asked', async () => {
+		const onpastecleaned = vi.fn();
+		const { container, rerender } = render(BoundRichTextEditor, { onpastecleaned });
+		expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+		await rerender({ pasteNotice: true });
+		flushSync();
+		core(container).editor.view.pasteHTML('<p>b<a href="javascript:steal()">c</a></p>',
+			new Event('paste') as ClipboardEvent);
+		await Promise.resolve();
+		expect(onpastecleaned).toHaveBeenCalledWith({ elements: { a: 1 }, attributes: {} });
+		const notice = container.querySelector('.antilia-rich-text-notice')!;
+		expect(notice.getAttribute('role')).toBe('status');
+		expect(notice.textContent).toBe('Part of the paste was left out: links.');
+
+		await rerender({ pasteNotice: false });
+		flushSync();
+		expect(container.querySelector('.antilia-rich-text-notice')).toBeNull();
+	});
+
 	it('keeps Markdown', () => {
 		const { container } = render(BoundRichTextEditor, { format: 'markdown',
 			value: '# Title\n\nSome **bold**' });

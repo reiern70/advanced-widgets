@@ -192,7 +192,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink",
 		"uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType",
 		"proofreadSpelling", "proofreadGrammar", "proofreadStyle", "proofreadReplacements",
-		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone");
+		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone",
+		"pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms", "pasteImages", "pasteTables",
+		"pasteLinks", "pasteFormatting");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;

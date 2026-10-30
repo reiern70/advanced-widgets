@@ -55,6 +55,12 @@
  * of Wicket's editor listen to, and those of the types of events registered, shared with the
  * Tiptap editor (registerRichTextEvent, see rich-text-events.ts), from its own or by trigger().
  * The positions of the selection count the places between the nodes too, as ProseMirror's do.
+ *
+ * A paste loses what CKEditor's plugins do not read, scripts and handlers of events, links and
+ * images to addresses it does not take: the editor compares the HTML pasted with what CKEditor
+ * inserts, and tells what was lost as the Tiptap editor does, to onPasteCleaned, with the event
+ * paste-cleaned and, while the page wants it (pasteNotice), in a polite line under the toolbar
+ * until the text changes again.
  */
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
@@ -62,8 +68,10 @@ import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
 import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
 	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
-import { RichTextEventTypes } from './rich-text-events.js';
-import { quietHtml, RICH_TEXT_ALIGN_CLASSES } from './rich-text-html.js';
+import { RICH_TEXT_BUILT_IN_EVENTS, RichTextEventTypes } from './rich-text-events.js';
+import { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, pasteCleaningReport,
+	pasteNoticeText, quietHtml, RICH_TEXT_ALIGN_CLASSES, RichTextPasteNotice,
+	type RichTextCleaningReport, type RichTextPasteTexts } from './rich-text-html.js';
 import type { HeadingLevel, RichTextFeature } from './rich-text-schema.js';
 
 /* What the glue uses of CKEditor, as its classes have it: no more, so that any build fits. */
@@ -158,6 +166,11 @@ export interface CKEditorInstance {
 	};
 	readonly keystrokes: {
 		set(keystroke: string, callback: (data: unknown, cancel: () => void) => void): void;
+	};
+	/** CKEditor's plugins, by their names: the clipboard's pipeline tells what a paste inserts. */
+	readonly plugins?: {
+		has(name: string): boolean;
+		get(name: string): unknown;
 	};
 	getData(): string;
 	setData(data: string): void;
@@ -286,8 +299,11 @@ const TOOLBAR: readonly (readonly (readonly [CKEditorFeature | null, string])[])
 	[[null, 'undo'], [null, 'redo']]
 ];
 
-/** What the editor says, its own texts: CKEditor's are translated by CKEditor. */
-export interface CKEditorTexts {
+/**
+ * What the editor says, its own texts, with the notice telling what a paste lost
+ * (RichTextPasteTexts): CKEditor's are translated by CKEditor.
+ */
+export interface CKEditorTexts extends RichTextPasteTexts {
 	characters: string;
 	character: string;
 	words: string;
@@ -303,7 +319,8 @@ export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
 	words: '{0} words',
 	word: '{0} word',
 	resize: 'Drag, or use the arrow keys, to resize the editor',
-	linkNewTab: 'Open in a new tab'
+	linkNewTab: 'Open in a new tab',
+	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
 
 /**
@@ -372,6 +389,11 @@ export interface CKEditorOptions {
 	state?: RichTextEditorState;
 	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
 	stateDelay?: number;
+	/**
+	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+	 * again: "Part of the paste was left out: scripts, images."; false when left out.
+	 */
+	pasteNotice?: boolean;
 	/** What the editor says of its own, in English when left out. */
 	texts?: Partial<CKEditorTexts>;
 	/** The look of the editor; that of the element it is in when left out (see lookOf). */
@@ -399,6 +421,11 @@ export interface CKEditorOptions {
 	onSave?: (value: string) => void;
 	/** Called with the size once the user has resized the editor. */
 	onResize?: (size: ResizableSize) => void;
+	/**
+	 * Called with what a paste lost, once it is in the text, before the event paste-cleaned: a
+	 * paste losing nothing calls nothing.
+	 */
+	onPasteCleaned?: (report: RichTextCleaningReport) => void;
 }
 
 /** What the events of the editor carry, besides what each tells. */
@@ -647,6 +674,12 @@ export class CKEditor {
 	private source: HTMLElement | null = null;
 
 	private status: HTMLElement | null = null;
+
+	/** The line telling what a paste lost, while the options want it. */
+	private notice: RichTextPasteNotice | null = null;
+
+	/** The HTML of a paste, made quiet, until CKEditor inserts what it read of it. */
+	private pasted: string | null = null;
 
 	private resizable: Resizable | null = null;
 
@@ -1085,6 +1118,11 @@ export class CKEditor {
 				data.content = quietHtml(data.content);
 			}
 			const transfer = data.dataTransfer;
+			// HTML, not text, which CKEditor makes HTML of: what CKEditor inserts is compared with it;
+			// a paste of the browser has no content yet, which CKEditor reads from the clipboard
+			const html = transfer?.getData('text/html');
+			this.pasted = !html ? null : typeof data.content === 'string' ? data.content :
+				quietHtml(html);
 			if (transfer) {
 				data.dataTransfer = Object.assign(Object.create(transfer) as typeof transfer, {
 					getData: (type: string) => {
@@ -1094,6 +1132,7 @@ export class CKEditor {
 				});
 			}
 		}, { priority: 'highest' });
+		this.hearPastes(editor);
 		takesAway(editor, 'superscript', 'subscript');
 		takesAway(editor, 'subscript', 'superscript');
 		editor.keystrokes.set('Ctrl+S', (_data, cancel) => {
@@ -1127,10 +1166,81 @@ export class CKEditor {
 		});
 		this.bindScroller();
 		this.syncField(this.value);
+		this.renderNotice();
 		this.renderStatus();
 		this.renderModified(this.value, false);
 		this.restoreScroll();
 		this.dispatch('text');
+	}
+
+	/**
+	 * Compares what CKEditor inserts of a paste with the HTML pasted, before it inserts it, after
+	 * the plugins changing it (Paste from Office): what the paste lost is told once it is in the
+	 * text. Nothing without the clipboard's pipeline.
+	 */
+	private hearPastes(editor: CKEditorInstance): void {
+		const pipeline = editor.plugins?.has('ClipboardPipeline') ?
+			editor.plugins.get('ClipboardPipeline') as CKEditorEmitter : null;
+		pipeline?.on('contentInsertion', (_event, data: { content?: unknown }) => {
+			const pasted = this.pasted;
+			this.pasted = null;
+			if (pasted === null || editor !== this.editor || this.destroyed || !data.content) {
+				return;
+			}
+			try {
+				this.pasteCleaned(pasteCleaningReport(pasted, editor.data.stringify(data.content)));
+			} catch (error) {
+				getHost().log.error('The editor could not tell what the paste lost', error);
+			}
+		}, { priority: 'normal' });
+	}
+
+	/**
+	 * Tells what a paste lost, once the paste is in the text: onPasteCleaned, the event
+	 * paste-cleaned and the notice; a paste losing nothing tells nothing.
+	 */
+	private pasteCleaned(report: RichTextCleaningReport): void {
+		if (isEmptyCleaningReport(report)) {
+			return;
+		}
+		// after the paste, which CKEditor inserts right after this
+		queueMicrotask(() => {
+			if (this.destroyed) {
+				return;
+			}
+			this.notice?.show(pasteNoticeText(report, this.texts()));
+			this.options.onPasteCleaned?.({ elements: { ...report.elements },
+				attributes: { ...report.attributes } });
+			this.trigger(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, { elements: report.elements,
+				attributes: report.attributes });
+		});
+	}
+
+	/**
+	 * Shows the line telling what a paste lost under CKEditor's toolbar, or takes it away, as the
+	 * options say: in CKEditor's element, before its text, once CKEditor started.
+	 */
+	private renderNotice(): void {
+		if (!this.options.pasteNotice) {
+			this.notice?.destroy();
+			this.notice = null;
+			return;
+		}
+		this.notice = this.notice ?? new RichTextPasteNotice();
+		const element = this.notice.element;
+		const ui = this.editor?.ui.element;
+		const main = ui?.querySelector(':scope > .ck-editor__main');
+		if (main) {
+			if (element.nextElementSibling !== main) {
+				main.before(element);
+			}
+		} else if (ui) {
+			if (element.previousElementSibling !== ui) {
+				ui.after(element);
+			}
+		} else {
+			element.remove();
+		}
 	}
 
 	/**
@@ -1174,8 +1284,11 @@ export class CKEditor {
 		}
 		const value = this.read(editor);
 		if (value === this.value) {
+			// a change of the model alone, an image given its natural size once it loaded
 			return;
 		}
+		// what a paste lost is told until the text changes again
+		this.notice?.clear();
 		this.value = value;
 		this.syncField(value);
 		this.renderModified(value, true);
@@ -1813,6 +1926,7 @@ export class CKEditor {
 				this.renderSpellcheck();
 			}
 		}
+		this.renderNotice();
 		this.renderStatus();
 		this.renderResizable();
 	}
@@ -1926,6 +2040,8 @@ export class CKEditor {
 		this.stopWatchingRemoval = null;
 		this.status?.remove();
 		this.status = null;
+		this.notice?.destroy();
+		this.notice = null;
 		this.resizable?.destroy();
 		this.resizable = null;
 		const editor = this.editor;

@@ -16,7 +16,8 @@ import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 
 import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorInstance,
 	type CKEditorPlugin, type CKEditorTexts, type HeadingLevel, type ResizableSize,
-	type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
+	type ResizeAxis, type RichTextCleaningReport, type RichTextEditorSelection,
+	type RichTextEditorState,
 	type RichTextEditorStateChange, type RichTextFeature } from '@antilia/core';
 
 import { useLook } from './Look.js';
@@ -84,6 +85,11 @@ export interface CKEditorProps {
 	state?: RichTextEditorState;
 	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
 	stateDelay?: number;
+	/**
+	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
+	 * again; false when left out.
+	 */
+	pasteNotice?: boolean;
 	/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 	texts?: Partial<CKEditorTexts>;
 	/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -107,6 +113,11 @@ export interface CKEditorProps {
 	/** Called with the text when the user pressed Ctrl+S, or Cmd+S. */
 	onSave?(value: string): void;
 	onResize?(size: ResizableSize): void;
+	/**
+	 * Called with what a paste lost to CKEditor, by name and count, once it is in the text: a
+	 * script, a handler of events, a link to an address the editor does not take...
+	 */
+	onPasteCleaned?(report: RichTextCleaningReport): void;
 }
 
 /**
@@ -147,8 +158,8 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 	function CKEditor(props, ref) {
 		const { value, saved, build, licenseKey, language, translations, format, features,
 			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
-			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts,
-			name, id, className } = props;
+			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			pasteNotice, texts, name, id, className } = props;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
 		const look = useLook();
@@ -180,7 +191,8 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				spellcheck: current.spellcheck, textLanguage: current.textLanguage, count: current.count,
 				resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
-				state: current.state, stateDelay: current.stateDelay, texts: current.texts, look,
+				state: current.state, stateDelay: current.stateDelay,
+				pasteNotice: current.pasteNotice, texts: current.texts, look,
 				onReady: (next) => latest.current.onReady?.(next),
 				onError: (error) => latest.current.onError?.(error),
 				onChange: (next) => latest.current.onChange?.(next),
@@ -190,7 +202,8 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				onStateChange: (next, change) => latest.current.onStateChange?.(next, change),
 				onModifiedChange: (next) => latest.current.onModifiedChange?.(next),
 				onSave: (next) => latest.current.onSave?.(next),
-				onResize: (next) => latest.current.onResize?.(next)
+				onResize: (next) => latest.current.onResize?.(next),
+				onPasteCleaned: (report) => latest.current.onPasteCleaned?.(report)
 			});
 			instance.current = editor;
 			return () => {
@@ -203,10 +216,10 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 			instance.current?.configure({ licenseKey, language, format, features, headingLevels,
 				toolbar, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
 				textLanguage: textLanguage ?? null, count, resizable, minWidth, minHeight, maxWidth,
-				maxHeight, stateDelay, texts });
+				maxHeight, stateDelay, pasteNotice: !!pasteNotice, texts });
 		}, [licenseKey, language, format, features, headingLevels, toolbar, readOnly, placeholder,
 			label, spellcheck, textLanguage, count, resizable, minWidth, minHeight, maxWidth,
-			maxHeight, stateDelay, texts]);
+			maxHeight, stateDelay, pasteNotice, texts]);
 
 		// compared by what they are: another one makes CKEditor anew
 		useLayoutEffect(() => {

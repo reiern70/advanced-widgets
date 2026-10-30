@@ -23,6 +23,10 @@ import org.apache.wicket.util.io.IClusterable;
  * {@link com.antiliacode.widgets.ckeditor.CKEditorPolicy} keep what the features of each editor
  * write; for Markdown, {@link RichTextMarkdownSanitizer} cleans the addresses of the links and
  * images; for Tiptap's JSON, {@link RichTextJsonSanitizer} does.
+ * <p>
+ * Each of those tells what it removed ({@link #sanitizeAndReport(String)}), for the editor to
+ * report it, or to reject the text ({@link RichTextCleaning}). A sanitizer of a page's own reports
+ * nothing unless it says so too.
  *
  * @since 11.0.0
  */
@@ -35,4 +39,22 @@ public interface IRichTextSanitizer extends IClusterable
 	 * @return the text cleaned, {@code null} for {@code null}
 	 */
 	String sanitize(String text);
+
+	/**
+	 * Cleans a text as {@link #sanitize(String)} does, telling what it removed: the elements and
+	 * the attributes, by name and number, never their content. The way the text is written anew,
+	 * {@code <br />} for {@code <br>} or an entity for a character, is no removal.
+	 * <p>
+	 * Tells of nothing by default: a sanitizer of a page's own reports what it removes by
+	 * overriding this.
+	 *
+	 * @param text
+	 *            the text, HTML, Markdown or JSON as the editor keeps it, maybe {@code null}
+	 * @return the text cleaned, {@code null} for {@code null}, with what was removed
+	 * @since 10.11.0
+	 */
+	default RichTextSanitized sanitizeAndReport(String text)
+	{
+		return new RichTextSanitized(sanitize(text), RichTextCleaningReport.EMPTY);
+	}
 }
