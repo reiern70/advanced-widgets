@@ -43,8 +43,9 @@ import com.github.openjson.JSONObject;
  * Signs a visitor in with the name of an account and its password, while fewer than
  * {@value SignedInUsers#MAXIMUM} other registered accounts are signed in, the accounts the demo
  * always has and those the server is started with signing in whenever (see
- * {@link SignedInUsers}); then goes on to the demo the visitor wanted to see, or to the
- * {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA} failed attempts in the session,
+ * {@link SignedInUsers}), or while one of them has been signed in for longer than
+ * {@link SignedInUsers#PLACE_TIME}, whose place it then takes; then goes on to the demo the
+ * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA} failed attempts in the session,
  * or on the account, it asks for a {@link Captcha} too: an attempt
  * without it, from a session that has not seen it yet, is turned away and shown the captcha,
  * without checking the password. While the account or the address waits after too many failures
@@ -133,8 +134,11 @@ public class SignInPage extends BasePage
 				}
 				if (!session.signIn(user.get().getName(), user.get().getRole()))
 				{
+					Duration untilRoom = SignedInUsers.get().untilRoom();
 					error(new StringResourceModel("full", SignInPage.this)
-						.setParameters(SignedInUsers.MAXIMUM).getString());
+						.setParameters(SignedInUsers.MAXIMUM,
+							Math.max(1, (untilRoom.toSeconds() + 59) / 60))
+						.getString());
 					return;
 				}
 				continueToOriginalDestination();
@@ -205,6 +209,18 @@ public class SignInPage extends BasePage
 		form.add(captcha);
 
 		add(new BookmarkablePageLink<>("registerInstead", RegisterPage.class));
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		if (DemoSession.get().tellPlaceLost())
+		{
+			error(new StringResourceModel("placeLost", this)
+				.setParameters(SignedInUsers.PLACE_TIME.toMinutes(), SignedInUsers.MAXIMUM)
+				.getString());
+		}
 	}
 
 	/**
