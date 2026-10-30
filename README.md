@@ -142,7 +142,7 @@ The components for Wicket 10 are published, built from the `line-10.x` branch on
 10.11.0, without what needs Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery):
 
 - the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository of snapshots;
-- the release candidates, `10.11.0-RC4` the last, on Maven Central, and on GitHub Packages too.
+- the release candidates, `10.11.0-RC5` the last, on Maven Central, and on GitHub Packages too.
 
 Maven Central needs no repository, only the dependency; the releases will be there too. The
 Wicket 11 line, `master`, is not published yet: install it with `mvn install` and depend on
@@ -201,7 +201,7 @@ The dependency alone, in `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC4")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC5")
 }
 ```
 
@@ -211,7 +211,7 @@ or in the `pom.xml`:
 <dependency>
 	<groupId>com.antiliacode.widgets</groupId>
 	<artifactId>ui-components</artifactId>
-	<version>10.11.0-RC4</version>
+	<version>10.11.0-RC5</version>
 </dependency>
 ```
 
@@ -248,7 +248,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC4")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC5")
 }
 ```
 
@@ -270,7 +270,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC4'
+    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC5'
 }
 ```
 
@@ -304,7 +304,7 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 	<dependency>
 		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>ui-components</artifactId>
-		<version>10.11.0-RC4</version>
+		<version>10.11.0-RC5</version>
 	</dependency>
 </dependencies>
 ```
