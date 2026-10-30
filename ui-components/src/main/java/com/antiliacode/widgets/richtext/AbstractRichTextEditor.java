@@ -64,6 +64,9 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * {@link RichTextJsonSanitizer} by default, takes out the links and images to such addresses, and
  * gives nothing for a text that is no document.</li>
  * </ul>
+ * {@link #setImagesFromSiteOnly(boolean)} keeps the images of the site alone, in the three
+ * formats: an image from another site, which shows its viewers to that site, goes. It holds for the
+ * sanitizers of the editor; one a page sets cleans as it does.
  * By default the cleaning is silent: the model gets the clean text, and no one hears of what was
  * removed. {@link #setCleaning(RichTextCleaning)} makes the editor {@link RichTextCleaning#REPORT
  * report} it, to {@link #onCleaned(AjaxRequestTarget, RichTextCleaningReport)} and in a
@@ -188,6 +191,9 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private IRichTextSanitizer jsonSanitizer;
 
+	/** Whether the default sanitizers keep the images of the site alone. */
+	private boolean imagesFromSiteOnly;
+
 	/** What the editor does when the cleaning removed something, {@code null} for the default. */
 	private RichTextCleaning cleaning;
 
@@ -270,7 +276,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	/**
 	 * @return what cleans the HTML unless {@link #setSanitizer(IRichTextSanitizer) set otherwise}:
-	 *         the policy of the features of the editor
+	 *         the policy of the features of the editor, keeping the images of the site alone if
+	 *         {@link #isImagesFromSiteOnly() asked}
 	 */
 	protected abstract IRichTextSanitizer getDefaultSanitizer();
 
@@ -833,6 +840,44 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
+	 * @return whether the editor keeps the images of the site alone
+	 * @see #setImagesFromSiteOnly(boolean)
+	 * @since 10.11.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
+	}
+
+	/**
+	 * Keeps the images of the site alone, or not, as by default: the default sanitizers of the
+	 * editor take out an image whose address is not {@link RichTextPolicy#isSiteUrl(String) the
+	 * site's own}, a relative one, in HTML ({@link RichTextPolicy#withImagesFromSiteOnly(boolean)}),
+	 * in Markdown ({@link RichTextMarkdownSanitizer#IMAGES_FROM_SITE_ONLY}) and in Tiptap's JSON
+	 * ({@link RichTextJsonSanitizer#IMAGES_FROM_SITE_ONLY}). An image from another site shows who
+	 * reads the text to that site, a pixel tracking the readers for example. Links go to other
+	 * sites as before.
+	 * <p>
+	 * A sanitizer {@link #setSanitizer(IRichTextSanitizer) the page sets} cleans as it does; give
+	 * it the same setting. The editor in the browser still takes an image of another site, which
+	 * goes once the text reaches the server; the
+	 * {@link RichTextEditor#setImageStore(IRichTextImageStore) store} of the uploaded images must
+	 * answer relative addresses. A content security policy of the page with {@code img-src 'self'}
+	 * keeps the browser from loading such images, shown before the cleaning or saved before the
+	 * setting.
+	 *
+	 * @param imagesFromSiteOnly
+	 *            whether the editor keeps the images of the site alone; {@code false} by default
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public T setImagesFromSiteOnly(boolean imagesFromSiteOnly)
+	{
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
+		return self();
+	}
+
+	/**
 	 * @return what the editor does when the cleaning removed something: the mode set, or that of
 	 *         the application, {@link RichTextCleaning#getDefault()}
 	 */
@@ -880,11 +925,17 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	/**
 	 * @return what cleans the Markdown: the one set, or {@link RichTextMarkdownSanitizer}, which
 	 *         takes out the addresses of links and images that are not safe but leaves HTML in the
-	 *         Markdown as it is
+	 *         Markdown as it is, and those of images not the site's own if
+	 *         {@link #setImagesFromSiteOnly(boolean) asked}
 	 */
 	public IRichTextSanitizer getMarkdownSanitizer()
 	{
-		return markdownSanitizer != null ? markdownSanitizer : RichTextMarkdownSanitizer.INSTANCE;
+		if (markdownSanitizer != null)
+		{
+			return markdownSanitizer;
+		}
+		return imagesFromSiteOnly ? RichTextMarkdownSanitizer.IMAGES_FROM_SITE_ONLY :
+			RichTextMarkdownSanitizer.INSTANCE;
 	}
 
 	/**
@@ -902,11 +953,17 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * @return what cleans Tiptap's JSON: the one set, or {@link RichTextJsonSanitizer}
+	 * @return what cleans Tiptap's JSON: the one set, or {@link RichTextJsonSanitizer}, keeping the
+	 *         images of the site alone if {@link #setImagesFromSiteOnly(boolean) asked}
 	 */
 	public IRichTextSanitizer getJsonSanitizer()
 	{
-		return jsonSanitizer != null ? jsonSanitizer : RichTextJsonSanitizer.INSTANCE;
+		if (jsonSanitizer != null)
+		{
+			return jsonSanitizer;
+		}
+		return imagesFromSiteOnly ? RichTextJsonSanitizer.IMAGES_FROM_SITE_ONLY :
+			RichTextJsonSanitizer.INSTANCE;
 	}
 
 	/**

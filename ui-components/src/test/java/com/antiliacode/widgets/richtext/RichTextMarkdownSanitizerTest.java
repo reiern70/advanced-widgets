@@ -14,10 +14,13 @@
 package com.antiliacode.widgets.richtext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -74,5 +77,46 @@ class RichTextMarkdownSanitizerTest
 			assertSame(markdown, clean(markdown), markdown);
 		}
 		assertNull(clean(null));
+	}
+
+	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		RichTextMarkdownSanitizer site = RichTextMarkdownSanitizer.IMAGES_FROM_SITE_ONLY;
+		assertTrue(site.isImagesFromSiteOnly());
+		assertFalse(RichTextMarkdownSanitizer.INSTANCE.isImagesFromSiteOnly());
+		assertFalse(new RichTextMarkdownSanitizer().isImagesFromSiteOnly());
+
+		// written as Markdown: a backslash is written twice, once in Java
+		for (String elsewhere : List.of("https://example.org/a.png", "//example.org/a.png",
+			"\\\\\\\\example.org/a.png", "/\\example.org/a.png", "&#47;&#47;example.org/a.png",
+			"<//example.org/a.png>", "data:image/png;base64,AAAA"))
+		{
+			String markdown = "An ![image](" + elsewhere + " \"Title\") here";
+			String clean = site.sanitize(markdown);
+			assertEquals(elsewhere.startsWith("<") ? "An ![image](<#> \"Title\") here" :
+				"An ![image](# \"Title\") here", clean, elsewhere);
+			if (!elsewhere.startsWith("data:"))
+			{
+				// not safe anyway
+				assertSame(markdown, RichTextMarkdownSanitizer.INSTANCE.sanitize(markdown),
+					elsewhere);
+			}
+		}
+
+		// an image in a link: the image goes, the link stays
+		assertEquals("[![a](#)](https://example.org)",
+			site.sanitize("[![a](//example.org/a.png)](https://example.org)"));
+		// a reference definition may serve an image
+		assertEquals("![a][r]\n\n[r]: #", site.sanitize("![a][r]\n\n[r]: https://example.org/a.png"));
+
+		String kept = "![a](/a.png) ![b](images/b.png \"B\") ![c]() [d](https://example.org) " +
+			"<https://example.org> [e]: /e.png";
+		assertSame(kept, site.sanitize(kept));
+
+		RichTextSanitized sanitized = site.sanitizeAndReport(
+			"![a](https://example.org/a.png) [b](javascript:x) [c](https://example.org)");
+		assertEquals("![a](#) [b](#) [c](https://example.org)", sanitized.text());
+		assertEquals(Map.of("img", 1, "a", 1), sanitized.report().getElements());
 	}
 }

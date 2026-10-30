@@ -286,7 +286,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	@Override
 	protected IRichTextSanitizer getDefaultSanitizer()
 	{
-		return RichTextPolicy.of(getFeatures(), colors, backgroundColors);
+		return RichTextPolicy.of(getFeatures(), colors, backgroundColors)
+			.withImagesFromSiteOnly(isImagesFromSiteOnly());
 	}
 
 	/**

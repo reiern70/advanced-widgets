@@ -14,8 +14,13 @@
 package com.antiliacode.widgets.richtext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -79,5 +84,38 @@ class RichTextJsonSanitizerTest
 		String deepest = "{\"a\":" + "[".repeat(RichTextJsonSanitizer.MAX_DEPTH - 1) +
 			"]".repeat(RichTextJsonSanitizer.MAX_DEPTH - 1) + "}";
 		assertSame(deepest, clean(deepest));
+	}
+
+	private static String image(String src)
+	{
+		return "{\"type\":\"image\",\"attrs\":{\"src\":\"" + src + "\",\"alt\":\"A\"}}";
+	}
+
+	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		RichTextJsonSanitizer site = RichTextJsonSanitizer.IMAGES_FROM_SITE_ONLY;
+		assertTrue(site.isImagesFromSiteOnly());
+		assertFalse(RichTextJsonSanitizer.INSTANCE.isImagesFromSiteOnly());
+		assertFalse(new RichTextJsonSanitizer().isImagesFromSiteOnly());
+
+		String text = "{\"type\":\"text\",\"text\":\"!\"}";
+		// written as JSON: a backslash is written twice, and once more in Java
+		for (String elsewhere : List.of("https://example.org/a.png", "//example.org/a.png",
+			"\\\\\\\\example.org/a.png", "/\\\\example.org/a.png", "data:image/png;base64,AAAA"))
+		{
+			String json = paragraph(image(elsewhere) + "," + text);
+			RichTextSanitized sanitized = site.sanitizeAndReport(json);
+			assertEquals(new JSONObject(paragraph(text)).toString(), sanitized.text(), elsewhere);
+			assertEquals(Map.of("img", 1), sanitized.report().getElements(), elsewhere);
+		}
+		String elsewhere = paragraph(image("https://example.org/a.png"));
+		assertSame(elsewhere, RichTextJsonSanitizer.INSTANCE.sanitize(elsewhere));
+
+		for (String json : new String[] { paragraph(image("/a.png") + "," + image("images/b.png")),
+			paragraph(link("https://example.com/a")), paragraph(image("")) })
+		{
+			assertSame(json, site.sanitize(json), json);
+		}
 	}
 }

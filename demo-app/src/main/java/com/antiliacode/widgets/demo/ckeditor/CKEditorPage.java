@@ -188,6 +188,8 @@ public class CKEditorPage extends DemoPage
 		};
 		editor.setSavedModel(LambdaModel.of(article, CKEditorDocument::getSaved,
 			CKEditorDocument::setSaved));
+		// images of other sites go: they would show the readers to those sites
+		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
@@ -254,7 +256,7 @@ public class CKEditorPage extends DemoPage
 				document.setState(state);
 				Session.get().dirty();
 			}));
-		notesEditor.setFormat(RichTextFormat.MARKDOWN)
+		notesEditor.setFormat(RichTextFormat.MARKDOWN).setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, CKEditorDocument::getSaved,
 				CKEditorDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));

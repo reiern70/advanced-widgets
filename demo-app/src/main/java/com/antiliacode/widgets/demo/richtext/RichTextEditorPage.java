@@ -274,6 +274,8 @@ public class RichTextEditorPage extends DemoPage
 		editor.setSavedModel(LambdaModel.of(article, RichTextDocument::getSaved,
 			RichTextDocument::setSaved));
 		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE);
+		// images of other sites go: they would show the readers to those sites
+		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
@@ -431,6 +433,7 @@ public class RichTextEditorPage extends DemoPage
 			}));
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
 			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, RichTextDocument::getSaved,
 				RichTextDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));
