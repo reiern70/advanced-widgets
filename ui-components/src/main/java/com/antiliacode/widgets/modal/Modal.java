@@ -101,6 +101,9 @@ public class Modal extends ModalDialog
 	/** The id of the overlay in the markup of {@link ModalDialog}. */
 	private static final String OVERLAY_ID = "overlay";
 
+	/** The id of the dialog in the markup of {@link ModalDialog}. */
+	private static final String DIALOG_ID = "dialog";
+
 	/**
 	 * How wide a dialog is, never wider than the browser window.
 	 */
@@ -269,7 +272,8 @@ public class Modal extends ModalDialog
 	 * Called when the user asks to close the open dialog, with Escape, the close button, a click
 	 * around the dialog or a {@link ModalCloseButton}, and the function of
 	 * {@link #setCanClose(String)} let them. Closes the dialog if {@link #canClose(AjaxRequestTarget)}
-	 * lets it.
+	 * lets it, or hands the request to the content when it is an
+	 * {@link IModalCloseRequestHandler}, which decides.
 	 *
 	 * @param target
 	 *            the Ajax target
@@ -278,8 +282,24 @@ public class Modal extends ModalDialog
 	{
 		if (canClose(target))
 		{
-			close(target);
+			if (getContent() instanceof IModalCloseRequestHandler handler)
+			{
+				handler.onCloseRequest(this, target);
+			}
+			else
+			{
+				close(target);
+			}
 		}
+	}
+
+	/**
+	 * @return the content of the dialog, that given to {@link #open(Component, AjaxRequestTarget)}
+	 *         while it is open
+	 */
+	public Component getContent()
+	{
+		return get(OVERLAY_ID + ":" + DIALOG_ID + ":" + CONTENT_ID);
 	}
 
 	/**

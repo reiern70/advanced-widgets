@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
@@ -37,6 +38,7 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.logging.LogEntry;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import com.antiliacode.widgets.demo.JettyTestCase;
@@ -47,8 +49,8 @@ import com.antiliacode.widgets.demo.Toasts;
  * Drives {@link WizardPage} in Chrome and in Firefox, in deployment mode, so through the minified
  * script built from frontend/core: the key of mosquitoes answered with the mouse and with Enter,
  * the focus on the title of each new step, a crumb going back, the image card uploaded by Ajax and
- * given the text its step suggests, and the Bootstrap look. Runs with {@code -Pselenium}, see
- * {@link SeleniumBrowser}.
+ * given the text its step suggests, the key in a dialog, which Escape cancels after asking, and
+ * the Bootstrap look. Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class WizardBrowserTest extends JettyTestCase
@@ -155,6 +157,64 @@ class WizardBrowserTest extends JettyTestCase
 		button(true, "finish").click();
 		wait.until(d -> Toasts.latest(d).equals("Identified as Aedes aegypti."));
 		wait.until(d -> "Couplet 1".equals(title(true)));
+		assertNoErrors();
+	}
+
+	/**
+	 * @return the wizard open in a dialog
+	 */
+	private WebElement dialog()
+	{
+		return driver.findElement(By.cssSelector(".antilia-wizard-dialog"));
+	}
+
+	private String dialogTitle()
+	{
+		List<WebElement> titles = driver.findElements(By.cssSelector(
+			".antilia-wizard-dialog .modal-dialog-title"));
+		return titles.isEmpty() ? "" : titles.get(0).getText().trim();
+	}
+
+	private boolean bodyHasScrollBars()
+	{
+		return dialog().findElement(By.cssSelector(".modal-dialog-body")).getDomAttribute("class")
+			.contains("antilia-scrollbar-host");
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theKeyRunsInADialogWhichEscapeCancelsAfterAsking(SeleniumBrowser browser)
+	{
+		open(browser);
+		driver.findElements(By.cssSelector(".wizard-demo__open")).get(0).click();
+		wait.until(d -> "Couplet 1".equals(dialogTitle()));
+		wait.until(d -> bodyHasScrollBars());
+
+		dialog().findElements(By.cssSelector(".modal-dialog-body label")).stream()
+			.filter(label -> label.getText().trim().startsWith("Much shorter")).findFirst()
+			.orElseThrow().click();
+		dialog().findElement(By.cssSelector(".antilia-wizard-next")).click();
+		wait.until(d -> "Couplet 2".equals(dialogTitle()));
+		wait.until(d -> focused().getText().trim().equals("Couplet 2"));
+		// the body repainted with the step gets its scroll bars again
+		wait.until(d -> bodyHasScrollBars());
+
+		// Enter in an answer clicks Next in the dialog too
+		dialog().findElements(By.cssSelector(".modal-dialog-body label")).stream()
+			.filter(label -> label.getText().trim().startsWith("Pointed")).findFirst()
+			.orElseThrow().click();
+		focused().sendKeys(Keys.ENTER);
+		wait.until(d -> "Couplet 3".equals(dialogTitle()));
+
+		// past the first step, Escape asks before discarding the answers, then cancels
+		focused().sendKeys(Keys.ESCAPE);
+		wait.until(ExpectedConditions.alertIsPresent());
+		Alert question = driver.switchTo().alert();
+		assertEquals("Discard what was entered so far?", question.getText());
+		question.accept();
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-wizard-dialog")).isEmpty());
+		wait.until(d -> Toasts.latest(d).equals("The identification was cancelled."));
+		assertEquals("Couplet 1", title(true), "the key of the page is another");
 		assertNoErrors();
 	}
 

@@ -264,6 +264,20 @@ describe('ModalDialog', () => {
 		expect(isModified(form)).toBe(true);
 	});
 
+	it('counts an element marked data-modified as modified', () => {
+		document.body.innerHTML = '<div id="dialog"><form><input value="x"></form></div>';
+		const dialog = document.getElementById('dialog')!;
+		const form = dialog.querySelector('form')!;
+
+		form.setAttribute('data-modified', 'false');
+		expect(isModified(dialog)).toBe(false);
+		form.setAttribute('data-modified', 'true');
+		expect(isModified(dialog)).toBe(true);
+		form.setAttribute('data-modified', '');
+		expect(isModified(dialog)).toBe(true);
+		expect(isModified(form)).toBe(true);
+	});
+
 	it('leaves the focus alone without a trap', () => {
 		document.body.innerHTML = '<button id="opener">Open</button>';
 		document.getElementById('opener')!.focus();
@@ -284,5 +298,32 @@ describe('ModalDialog', () => {
 
 		modal.destroy();
 		expect(Scrollbar.of(body)).toBeUndefined();
+	});
+
+	it('gives a body put in place of the old one its scroll bars, in a form of the content', () => {
+		const overlay = dialog('m');
+		const content = overlay.querySelector('.modal-dialog-content')!;
+		content.innerHTML = '<form class="modal-dialog-form"><div class="modal-dialog-header">' +
+			'Step 1</div><div class="antilia-scrollbar"><div class="modal-dialog-body">One</div>' +
+			'</div></form>';
+		const modal = new ModalDialog(overlay);
+		const first = overlay.querySelector<HTMLElement>('.modal-dialog-body')!;
+		expect(Scrollbar.of(first)).toBeDefined();
+
+		// the content repaints itself, as a wizard going to its next step does
+		content.innerHTML = '<form class="modal-dialog-form"><div class="modal-dialog-header">' +
+			'Step 2</div><div class="antilia-scrollbar"><div class="modal-dialog-body">Two</div>' +
+			'</div></form>';
+		const second = overlay.querySelector<HTMLElement>('.modal-dialog-body')!;
+		modal.refresh();
+
+		expect(Scrollbar.of(second)).toBeDefined();
+		expect(Scrollbar.of(first)).toBeUndefined();
+		const handle = Scrollbar.of(second);
+		modal.refresh();
+		expect(Scrollbar.of(second)).toBe(handle);
+
+		modal.destroy();
+		expect(Scrollbar.of(second)).toBeUndefined();
 	});
 });

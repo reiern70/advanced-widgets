@@ -16,7 +16,9 @@
  * antilia-modal.js: registers Wicket.Modal for the Modal of ui-components, which calls
  * Wicket.Modal.attach(overlayId, options) each time it renders open. The behaviors stop, and the
  * focus goes back, when an update of the page removes the overlay, as closing the dialog does. The
- * body gets the scroll bars of Wicket.Scrollbar, when the page loaded them.
+ * body gets the scroll bars of Wicket.Scrollbar, when the page loaded them; a content repainting
+ * itself alone, a ModalWizard at each step, calls Wicket.Modal.refresh(overlayId) so its new body
+ * gets them again.
  */
 
 import { onRemoving } from '../host.js';
@@ -29,6 +31,19 @@ interface ScrollbarGlobal {
 }
 
 const dialogs = new Map<string, ModalDialog>();
+
+/**
+ * Labels a dialog by its title, if it has one with an id.
+ *
+ * @param overlay the overlay of the dialog
+ */
+function labelByTitle(overlay: HTMLElement): void {
+	const title = overlay.querySelector('.' + MODAL_CLASSES.title);
+	if (title?.id) {
+		overlay.querySelector('.' + MODAL_CLASSES.dialog)?.setAttribute('aria-labelledby',
+			title.id);
+	}
+}
 
 const WicketModal = {
 
@@ -44,11 +59,7 @@ const WicketModal = {
 		if (!overlay) {
 			return;
 		}
-		const title = overlay.querySelector('.' + MODAL_CLASSES.title);
-		if (title?.id) {
-			overlay.querySelector('.' + MODAL_CLASSES.dialog)?.setAttribute('aria-labelledby',
-				title.id);
-		}
+		labelByTitle(overlay);
 		const modal = new ModalDialog(overlay, options);
 		dialogs.set(id, modal);
 		onRemoving(overlay, () => {
@@ -56,6 +67,20 @@ const WicketModal = {
 				WicketModal.detach(id);
 			}
 		});
+	},
+
+	/**
+	 * Takes in the parts of an open dialog that an Ajax update put in place of the old ones, as
+	 * a content repainting itself does: its new body gets its scroll bars, its title labels it.
+	 *
+	 * @param id the markup id of the overlay
+	 */
+	refresh(id: string): void {
+		const overlay = document.getElementById(id);
+		if (overlay) {
+			labelByTitle(overlay);
+		}
+		dialogs.get(id)?.refresh();
 	},
 
 	/**

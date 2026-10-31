@@ -45,6 +45,9 @@ import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.wizard.ImageCardPanel.ImageCard;
 import com.antiliacode.widgets.demo.wizard.ImageCardPanel.Way;
 import com.antiliacode.widgets.demo.wizard.MosquitoKeyPanel.Identification;
+import com.antiliacode.widgets.modal.Modal;
+import com.antiliacode.widgets.modal.ModalCloseButton;
+import com.antiliacode.widgets.wizard.ModalWizard;
 import com.antiliacode.widgets.wizard.Wizard;
 import com.antiliacode.widgets.wizard.WizardBreadcrumbPosition;
 import com.antiliacode.widgets.wizard.WizardButtonsPosition;
@@ -59,6 +62,11 @@ class WizardPageTest
 	private static final String KEY = "themed:key:wizard";
 
 	private static final String CARD = "themed:card:wizard";
+
+	/** The wizard opened in the dialog, its content. */
+	private static final String KEY_DIALOG = "themed:key:modal:overlay:dialog:content";
+
+	private static final String CARD_DIALOG = "themed:card:modal:overlay:dialog:content";
 
 	@TempDir
 	Path folder;
@@ -140,9 +148,32 @@ class WizardPageTest
 	 */
 	private void answer(String lead)
 	{
-		FormTester form = tester.newFormTester(KEY + ":form", false);
+		answer(KEY, lead);
+	}
+
+	/**
+	 * Answers the couplet shown in a wizard, then clicks Next.
+	 */
+	private void answer(String path, String lead)
+	{
+		FormTester form = tester.newFormTester(path + ":form", false);
 		form.select("body:content:answer", "a".equals(lead) ? 0 : 1);
-		click(KEY, "next");
+		click(path, "next");
+	}
+
+	private Modal modal(String panel)
+	{
+		return (Modal)tester.getComponentFromLastRenderedPage("themed:" + panel + ":modal");
+	}
+
+	/**
+	 * Clicks the button opening the wizard of a case in the dialog, then renders the page again.
+	 */
+	private void openInDialog(String panel)
+	{
+		tester.executeAjaxEvent("themed:" + panel + "InDialog", "click");
+		render();
+		assertTrue(modal(panel).isOpen());
 	}
 
 	private File png(String name, int width, int height) throws IOException
@@ -184,6 +215,76 @@ class WizardPageTest
 		Wizard<Identification> key = wizard(KEY);
 		assertTrue(key.getModelObject().answers.isEmpty());
 		assertTrue(key.getVisitedSteps().isEmpty());
+	}
+
+	@Test
+	void theKeyRunsInADialogWhichFinishingCloses()
+	{
+		tester.startPage(WizardPage.class);
+		openInDialog("key");
+
+		assertTrue(wizard(KEY_DIALOG) instanceof ModalWizard<?>);
+		assertEquals(Modal.Size.MEDIUM, modal("key").getSize());
+		assertEquals("Couplet 1", title(KEY_DIALOG));
+		answer(KEY_DIALOG, "b");
+		answer(KEY_DIALOG, "a");
+		answer(KEY_DIALOG, "b");
+		assertEquals("Aedes albopictus", title(KEY_DIALOG));
+
+		click(KEY_DIALOG, "finish");
+
+		assertFalse(modal("key").isOpen());
+		assertEquals(List.of("Identified as Aedes albopictus."), tester.getMessages(
+			FeedbackMessage.SUCCESS).stream().map(Object::toString).toList());
+		Wizard<Identification> key = wizard(KEY);
+		assertTrue(key.getModelObject().answers.isEmpty(), "the key of the page is another");
+	}
+
+	@Test
+	void closingTheDialogCancelsAfterAskingOncePastTheFirstStep()
+	{
+		tester.startPage(WizardPage.class);
+		openInDialog("key");
+		assertEquals(1, TagTester.createTags(tester.getLastResponseAsString(), tag -> "button"
+			.equals(tag.getName()) && tag.getAttribute(ModalCloseButton.CLOSE_ATTRIBUTE) != null &&
+			String.valueOf(tag.getAttribute("class")).contains("antilia-wizard-cancel"), false)
+			.size(),
+			"Cancel closes the dialog as its close button does");
+		tester.assertContains("Wicket.Modal.isModified\\(dialog\\) \\|\\| " +
+			"window.confirm\\(\"Discard what was entered so far\\?\"\\)");
+		assertTrue(TagTester.createTags(tester.getLastResponseAsString(),
+			tag -> tag.getAttribute(ModalWizard.MODIFIED_ATTRIBUTE) != null, false).isEmpty(),
+			"nothing entered yet");
+
+		answer(KEY_DIALOG, "b");
+		assertEquals("true", TagTester.createTags(tester.getLastResponseAsString(),
+			tag -> "form".equals(tag.getName()) && tag.getAttribute(
+				ModalWizard.MODIFIED_ATTRIBUTE) != null, false).get(0)
+			.getAttribute(ModalWizard.MODIFIED_ATTRIBUTE), "the answer to couplet 1 is held");
+
+		// the browser asked, and the user said to discard: Escape, the close button or Cancel
+		tester.executeBehavior(modal("key").getBehaviors(
+			org.apache.wicket.ajax.AbstractDefaultAjaxBehavior.class).get(0));
+
+		assertFalse(modal("key").isOpen());
+		assertEquals(List.of("The identification was cancelled."), tester.getMessages(
+			FeedbackMessage.INFO).stream().map(Object::toString).toList());
+	}
+
+	@Test
+	void theDialogTakesTheSettingsOfThePage()
+	{
+		tester.startPage(WizardPage.class);
+		FormTester settings = tester.newFormTester("themed:settings");
+		settings.select("buttonsPosition", WizardButtonsPosition.TOP.ordinal());
+		tester.executeAjaxEvent("themed:settings:buttonsPosition", "change");
+
+		openInDialog("card");
+
+		assertEquals(Modal.Size.LARGE, modal("card").getSize());
+		Wizard<ImageCard> card = wizard(CARD_DIALOG);
+		assertEquals(WizardButtonsPosition.TOP, card.getButtonsPosition());
+		assertTrue(card.getForm().isMultiPart());
 	}
 
 	@Test
