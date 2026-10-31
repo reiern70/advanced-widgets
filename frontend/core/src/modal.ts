@@ -72,6 +72,12 @@ export function modalSizeClass(size: ModalSize): string {
  */
 export const CLOSE_ATTRIBUTE = 'data-modal-close';
 
+/**
+ * The attribute saying that an element has changes no field of it shows, "true" or empty, as in
+ * unsaved.ts: a wizard past its first step, holding what was entered in the steps before.
+ */
+const MODIFIED_MARK = 'data-modified';
+
 /** The class marking the dialog that traps the focus, the one opened last. */
 const TRAP_CLASS = 'modal-dialog-trap';
 
@@ -134,13 +140,18 @@ export function focusableIn(container: HTMLElement): HTMLElement[] {
 /**
  * Whether the user changed a field in a container since it was rendered: a text field or text
  * area holds another value than its default one, a check box or radio button is checked unlike
- * its default, an option is selected unlike its default. A canClose function can ask it, to keep
- * a dialog with a modified form open: {@code () => !isModified(dialog) || confirm('Discard?')}.
+ * its default, an option is selected unlike its default; or whether the container or an element
+ * in it is marked data-modified="true" (or empty), holding changes no field shows. A canClose
+ * function can ask it, to keep a dialog with a modified form open:
+ * {@code () => !isModified(dialog) || confirm('Discard?')}.
  *
  * @param container the element holding the fields, a form or a dialog
  */
 export function isModified(container: Element): boolean {
-	return Array.from(container.querySelectorAll('input, textarea, select')).some(isFieldModified);
+	const marks = [container, ...Array.from(container.querySelectorAll('[' + MODIFIED_MARK + ']'))];
+	return marks.some((mark) => ['', 'true'].includes(mark.getAttribute(MODIFIED_MARK) ??
+		'false')) ||
+		Array.from(container.querySelectorAll('input, textarea, select')).some(isFieldModified);
 }
 
 /**
@@ -240,6 +251,9 @@ export class ModalDialog {
 
 	private scrollbar: ScrollbarHandle | undefined = undefined;
 
+	/** The body the scroll bars are attached to. */
+	private scrolled: HTMLElement | undefined = undefined;
+
 	/**
 	 * Gives the body of a dialog, in the wrapper of the scroll bars, its scroll bars; Wicket gives
 	 * those of Wicket.Scrollbar, if any.
@@ -271,10 +285,7 @@ export class ModalDialog {
 			document.addEventListener('focusin', this.focusHandler);
 		}
 		ModalDialog.open.push(this);
-		const body = this.body();
-		if (body?.parentElement?.classList.contains(SCROLLBAR_WRAPPER_CLASS)) {
-			this.scrollbar = ModalDialog.attachScrollbar(body, this.look);
-		}
+		this.attachScrollbar();
 		if (this.trapsFocus()) {
 			this.firstFocusable().focus();
 		}
@@ -289,6 +300,34 @@ export class ModalDialog {
 			`dialog-${each}`));
 		this.dialog.classList.toggle(MODAL_CLASSES.sized, size !== undefined || !!width);
 		this.dialog.style.width = width ?? '';
+	}
+
+	/**
+	 * Gives the body of the dialog, in the wrapper of the scroll bars, its scroll bars, unless it
+	 * has them already.
+	 */
+	private attachScrollbar(): void {
+		const body = this.body();
+		if (body === this.scrolled && body?.isConnected) {
+			this.scrollbar?.update();
+			return;
+		}
+		this.scrollbar?.destroy();
+		this.scrollbar = undefined;
+		this.scrolled = body;
+		if (body?.parentElement?.classList.contains(SCROLLBAR_WRAPPER_CLASS)) {
+			this.scrollbar = ModalDialog.attachScrollbar(body, this.look);
+		}
+	}
+
+	/**
+	 * Takes in the parts of the dialog an update of the page put in place of the old ones, as a
+	 * content repainting itself via Ajax does: a new body gets its scroll bars.
+	 */
+	refresh(): void {
+		if (!this.destroyed) {
+			this.attachScrollbar();
+		}
 	}
 
 	/**

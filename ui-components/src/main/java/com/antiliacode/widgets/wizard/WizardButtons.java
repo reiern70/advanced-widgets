@@ -93,6 +93,11 @@ final class WizardButtons
 
 	static <T> Component cancel(String id, Wizard<T> wizard)
 	{
+		return wizard.newCancelButton(id);
+	}
+
+	static <T> Component ajaxCancel(String id, Wizard<T> wizard)
+	{
 		return new ActionButton<>(id, "cancel", SvgIcon.XMARK, wizard)
 		{
 			private static final long serialVersionUID = 1L;

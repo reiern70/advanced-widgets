@@ -117,6 +117,8 @@ public class Wizard<T> extends GenericPanel<T>
 
 	private final Form<Void> form;
 
+	private final WebMarkupContainer header;
+
 	private final Label title;
 
 	private final WebMarkupContainer body;
@@ -144,11 +146,11 @@ public class Wizard<T> extends GenericPanel<T>
 		setOutputMarkupId(true);
 
 		form = new Form<>("form");
-		form.add(new LookBehavior(LookPart.WIZARD));
+		form.add(new PartsLook(LookPart.WIZARD));
 		add(form);
 
-		WebMarkupContainer header = new WebMarkupContainer("header");
-		header.add(new LookBehavior(LookPart.WIZARD_HEADER));
+		header = new WebMarkupContainer("header");
+		header.add(new PartsLook(LookPart.WIZARD_HEADER));
 		form.add(header);
 
 		title = new Label("title")
@@ -172,9 +174,9 @@ public class Wizard<T> extends GenericPanel<T>
 			@Override
 			protected LookPart[] getParts(Component component)
 			{
-				return new LookPart[] { LookPart.WIZARD_TITLE,
+				return lookParts(LookPart.WIZARD_TITLE,
 					breadcrumbPosition == WizardBreadcrumbPosition.IN_TITLE && hasPreviousStep() ?
-						LookPart.WIZARD_TITLE_HIDDEN : null };
+						LookPart.WIZARD_TITLE_HIDDEN : null);
 			}
 		});
 		header.add(newBreadcrumb("breadcrumbBefore", true));
@@ -185,7 +187,7 @@ public class Wizard<T> extends GenericPanel<T>
 		form.add(newBar("buttonsTop", WizardButtonsPosition.TOP, topButtons));
 
 		body = new WebMarkupContainer("body");
-		body.add(new LookBehavior(LookPart.WIZARD_BODY));
+		body.add(new PartsLook(LookPart.WIZARD_BODY));
 		body.add(AttributeModifier.replace("aria-labelledby", title::getMarkupId));
 		form.add(body);
 
@@ -210,7 +212,7 @@ public class Wizard<T> extends GenericPanel<T>
 				setVisible(buttonsPosition == position);
 			}
 		};
-		bar.add(new LookBehavior(LookPart.WIZARD_BUTTONS, position == WizardButtonsPosition.TOP ?
+		bar.add(new PartsLook(LookPart.WIZARD_BUTTONS, position == WizardButtonsPosition.TOP ?
 			LookPart.WIZARD_BUTTONS_TOP : LookPart.WIZARD_BUTTONS_BOTTOM));
 		bar.add(buttons);
 		return bar;
@@ -662,6 +664,42 @@ public class Wizard<T> extends GenericPanel<T>
 		return this;
 	}
 
+	/**
+	 * @return the header, holding the title and the trail of the steps visited
+	 */
+	WebMarkupContainer getHeader()
+	{
+		return header;
+	}
+
+	/**
+	 * The parts of the look an element of the wizard gets, from those it has as a part of a
+	 * wizard: the same by default. A wizard laid out in another component, a {@link ModalWizard}
+	 * in a dialog, gives those of that component instead.
+	 *
+	 * @param parts
+	 *            the parts of the element in a wizard, some {@code null}
+	 * @return the parts it gets
+	 */
+	LookPart[] lookParts(LookPart... parts)
+	{
+		return parts;
+	}
+
+	/**
+	 * Makes the Cancel button, that of {@link IWizardButtonFactory#cancel()}: a button calling
+	 * {@link #cancel(AjaxRequestTarget)} via Ajax, shown when the step
+	 * {@link IWizardStep#canCancel(IModel) lets cancel}.
+	 *
+	 * @param id
+	 *            the id the button must have
+	 * @return the button
+	 */
+	Component newCancelButton(String id)
+	{
+		return WizardButtons.ajaxCancel(id, this);
+	}
+
 	@Override
 	protected void onConfigure()
 	{
@@ -688,5 +726,22 @@ public class Wizard<T> extends GenericPanel<T>
 		currentStep.detach();
 		firstStep.detach();
 		super.onDetach();
+	}
+
+	/** The look of an element of the wizard, its parts given by {@link #lookParts(LookPart...)}. */
+	private class PartsLook extends LookBehavior
+	{
+		private static final long serialVersionUID = 1L;
+
+		PartsLook(LookPart... parts)
+		{
+			super(parts);
+		}
+
+		@Override
+		protected LookPart[] getParts(Component component)
+		{
+			return lookParts(super.getParts(component));
+		}
 	}
 }

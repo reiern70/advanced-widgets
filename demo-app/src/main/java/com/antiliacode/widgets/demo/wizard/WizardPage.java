@@ -24,10 +24,14 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
+import org.apache.wicket.util.io.IClusterable;
 
+import com.antiliacode.widgets.button.AjaxActionButton;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.dropdown.Dropdown;
+import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.wizard.Wizard;
 import com.antiliacode.widgets.wizard.WizardBreadcrumbPosition;
 import com.antiliacode.widgets.wizard.WizardButtonsPosition;
@@ -36,8 +40,10 @@ import com.antiliacode.widgets.wizard.WizardButtonsPosition;
  * {@link Wizard}: two wizards whose steps are known only as the user goes. A dichotomous key of
  * mosquitoes, the {@link MosquitoKeyPanel}, each answer leading to the next question or to a
  * mosquito; and an image card, the {@link ImageCardPanel}, an image uploaded by Ajax, then
- * described or given a text over it. The settings put the bar of the buttons above or below the
- * body and the trail of the steps visited around the title, in both.
+ * described or given a text over it. A button below each opens the same wizard in a dialog, a
+ * {@link com.antiliacode.widgets.wizard.ModalWizard ModalWizard}, which asks before discarding
+ * what was entered past the first step. The settings put the bar of the buttons above or below the
+ * body and the trail of the steps visited around the title, in all of them.
  */
 public class WizardPage extends DemoPage
 {
@@ -68,6 +74,9 @@ public class WizardPage extends DemoPage
 		themed.add(key);
 		card = new ImageCardPanel("card");
 		themed.add(card);
+
+		themed.add(newOpenButton("keyInDialog", key::openInDialog));
+		themed.add(newOpenButton("cardInDialog", card::openInDialog));
 		apply(null);
 	}
 
@@ -105,6 +114,31 @@ public class WizardPage extends DemoPage
 			}
 		});
 		return setting;
+	}
+
+	/** Opens the wizard of a case in a dialog. */
+	@FunctionalInterface
+	private interface Opener extends IClusterable
+	{
+		void open(WizardButtonsPosition buttonsPosition,
+			WizardBreadcrumbPosition breadcrumbPosition, AjaxRequestTarget target);
+	}
+
+	/**
+	 * @return a button opening the wizard of a case in its dialog, in the settings of the page
+	 */
+	private AjaxActionButton newOpenButton(String id, Opener opener)
+	{
+		return new AjaxActionButton(id, new ResourceModel("inDialog"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				opener.open(buttonsPosition, breadcrumbPosition, target);
+			}
+		}.setIcon(SvgIcon.WINDOW_RESTORE);
 	}
 
 	/**
