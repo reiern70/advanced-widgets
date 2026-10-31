@@ -183,6 +183,16 @@
 	<entry key="CodeEditor.unfoldLine">Desplegar la línea</entry>
 	<entry key="CodeEditor.selectionDeleted">Selección eliminada</entry>
 	<entry key="CodeEditor.controlCharacter">Carácter de control</entry>
+	<entry key="CodeEditor.errors">Errores en el texto</entry>
+	<entry key="JsonValidator.end">${label}, línea ${line}, columna ${column}: el JSON termina antes de tiempo.</entry>
+	<entry key="JsonValidator.value">${label}, línea ${line}, columna ${column}: se esperaba un valor, no ${found}.</entry>
+	<entry key="JsonValidator.name">${label}, línea ${line}, columna ${column}: se esperaba un nombre entre comillas dobles, no ${found}.</entry>
+	<entry key="JsonValidator.colon">${label}, línea ${line}, columna ${column}: se esperaba ':', no ${found}.</entry>
+	<entry key="JsonValidator.objectNext">${label}, línea ${line}, columna ${column}: se esperaba ',' o '}', no ${found}.</entry>
+	<entry key="JsonValidator.arrayNext">${label}, línea ${line}, columna ${column}: se esperaba ',' o ']', no ${found}.</entry>
+	<entry key="JsonValidator.trailing">${label}, línea ${line}, columna ${column}: tras el valor no debería seguir nada, pero sigue ${found}.</entry>
+	<entry key="JsonValidator.string">${label}, línea ${line}, columna ${column}: ${found} no se admite aquí en una cadena.</entry>
+	<entry key="JsonValidator.number">${label}, línea ${line}, columna ${column}: el número no es válido en ${found}.</entry>
 	<entry key="MarkdownPreview.label">Vista previa</entry>
 	<entry key="MarkdownPreview.placeholder">Nada que previsualizar</entry>
 	<entry key="RichTextEditor.toolbar">Formato</entry>

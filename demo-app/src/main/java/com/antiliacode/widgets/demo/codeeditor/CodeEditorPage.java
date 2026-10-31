@@ -46,6 +46,7 @@ import com.antiliacode.widgets.codeeditor.CodeEditorEvent;
 import com.antiliacode.widgets.codeeditor.CodeEditorEventBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditorLanguage;
 import com.antiliacode.widgets.codeeditor.CodeEditorState;
+import com.antiliacode.widgets.codeeditor.JsonValidator;
 import com.antiliacode.widgets.codeeditor.MarkdownPreview;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
@@ -84,8 +85,13 @@ import com.github.openjson.JSONObject;
  * <p>
  * The files of a small project open in closable tabs of a {@link TabbedPanel}, an editor in each:
  * a tab is marked while its file has changes not saved, which the editor tells the tabs in the
- * browser, and closing it asks first; switching tabs keeps where the cursor of each was. The React
- * and Svelte tabs show the same in those frameworks.
+ * browser, and closing it asks first; switching tabs keeps where the cursor of each was.
+ * <p>
+ * Settings in JSON are saved as the user leaves their editor ({@link CodeEditor#setSaveOnBlur}),
+ * with Ctrl+S and with the button, once a {@link JsonValidator} found them well formed: otherwise
+ * the editor underlines the error and lists it below the text, and the notifications of the page
+ * tell it too. Check boxes switch saving on blur, and reading only, which the editor takes from a
+ * model of the session. The React and Svelte tabs show the same in those frameworks.
  */
 public class CodeEditorPage extends DemoPage
 {
@@ -96,6 +102,9 @@ public class CodeEditorPage extends DemoPage
 
 	/** The session attribute keeping the notes in Markdown, and how they show. */
 	static final String NOTES_ATTRIBUTE = "code-editor-demo.notes";
+
+	/** The session attribute keeping the settings in JSON, and how their editor works. */
+	static final String SETTINGS_ATTRIBUTE = "code-editor-demo.settings";
 
 	/** How the editor resizes, in the order of the drop-down: the names of the axes, or none. */
 	static final List<String> RESIZES = List.of("vertical", "horizontal", "both", "none");
@@ -118,6 +127,10 @@ public class CodeEditorPage extends DemoPage
 
 	private final Component togglePreview;
 
+	private final CodeEditor jsonEditor;
+
+	private final Label jsonStatus;
+
 	private CodeEditorLanguage language = CodeEditorLanguage.JAVA;
 
 	private String resize = "vertical";
@@ -136,6 +149,8 @@ public class CodeEditorPage extends DemoPage
 
 	private String notesMessage;
 
+	private String jsonMessage;
+
 	/**
 	 * Constructor.
 	 */
@@ -149,6 +164,7 @@ public class CodeEditorPage extends DemoPage
 		Fragment editorCase = cases.addCase("editorTitle", "editorCase");
 		Fragment notesCase = cases.addCase("notesTitle", "notesCase");
 		Fragment filesCase = cases.addCase("filesTitle", "filesCase");
+		Fragment jsonCase = cases.addCase("jsonTitle", "jsonCase");
 
 		known = new Label("known", this::describe);
 		known.setOutputMarkupId(true);
@@ -181,7 +197,6 @@ public class CodeEditorPage extends DemoPage
 				super.onConfigure();
 				setLanguage(language);
 				setLineNumbers(lineNumbers);
-				setReadOnly(readOnly);
 				setSelectable(selectable);
 				setLineWrapping(lineWrapping);
 				setResizable(axisOf(resize));
@@ -195,6 +210,8 @@ public class CodeEditorPage extends DemoPage
 		};
 		editor.setSavedModel(LambdaModel.of(shown, CodeDocument::getSaved, CodeDocument::setSaved));
 		editor.setLabel(() -> sample().getName());
+		// read only as the check box says, the editor rendered again when it changes
+		editor.setReadOnly(new PropertyModel<>(this, "readOnly"));
 		editor.add(new CodeEditorEventBehavior(CodeEditorEvent.FOCUS)
 		{
 			private static final long serialVersionUID = 1L;
@@ -456,6 +473,74 @@ public class CodeEditorPage extends DemoPage
 		files.setLabel(Model.of(getString("filesLabel")));
 		CodeSamples.files().forEach(document -> files.addTab(new FileTab(document.copy())));
 		filesCase.add(files);
+
+		Form<Void> jsonForm = new Form<>("jsonForm");
+		jsonForm.setOutputMarkupId(true);
+		jsonCase.add(jsonForm);
+		jsonStatus = new Label("jsonStatus", () -> jsonMessage != null ? jsonMessage :
+			getString("jsonStart"));
+		jsonStatus.setOutputMarkupId(true);
+		jsonForm.add(jsonStatus);
+		IModel<CodeDocument> settings = () -> settings().document;
+		jsonEditor = new CodeEditor("editor", LambdaModel.of(settings, CodeDocument::getText,
+			(document, text) -> {
+				document.setText(text);
+				Session.get().dirty();
+			}), LambdaModel.of(settings, CodeDocument::getState, (document, state) -> {
+				document.setState(state);
+				Session.get().dirty();
+			}))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setSaveOnBlur(settings().saveOnBlur);
+			}
+		};
+		jsonEditor.setLanguage(CodeEditorLanguage.JSON)
+			.setSavedModel(LambdaModel.of(settings, CodeDocument::getSaved, CodeDocument::setSaved))
+			// read only as the session's settings say, from a model
+			.setReadOnly(() -> settings().readOnly)
+			.setLabel(() -> settings().document.getName());
+		// well-formed JSON only: an error shows in the text and as a notification of the page
+		jsonEditor.add(new JsonValidator());
+		// Ctrl+S, and leaving the editor with changes not saved, save the JSON when it is valid
+		jsonEditor.add(CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE, this::saveJson,
+			(target, e) -> sayAboutJson(target, "jsonInvalid")));
+		jsonForm.add(jsonEditor);
+		jsonForm.add(new Label("name", () -> settings().document.getName())
+			.add(AttributeModifier.replace("for", () -> jsonEditor.getMarkupId())));
+		jsonForm.add(new AjaxButton("save")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSubmit(AjaxRequestTarget target)
+			{
+				saveJson(target);
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target)
+			{
+				sayAboutJson(target, "jsonInvalid");
+			}
+		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
+		Form<Void> jsonControls = new Form<>("jsonControls");
+		jsonCase.add(jsonControls);
+		jsonControls.add(new CheckBox("saveOnBlur", LambdaModel.of(() -> settings().saveOnBlur,
+			saveOnBlur -> {
+				settings().saveOnBlur = Boolean.TRUE.equals(saveOnBlur);
+				Session.get().dirty();
+			})).add(rerender(jsonForm)));
+		jsonControls.add(new CheckBox("readOnly", LambdaModel.of(() -> settings().readOnly,
+			readOnly -> {
+				settings().readOnly = Boolean.TRUE.equals(readOnly);
+				Session.get().dirty();
+			})).add(rerender(jsonForm)));
 	}
 
 	/**
@@ -554,6 +639,38 @@ public class CodeEditorPage extends DemoPage
 	}
 
 	/**
+	 * Saves the settings, the JSON being valid, telling the editor and saying so.
+	 */
+	private void saveJson(AjaxRequestTarget target)
+	{
+		settings().document.save();
+		Session.get().dirty();
+		jsonEditor.markSaved(target);
+		sayAboutJson(target, "jsonSaved");
+	}
+
+	private void sayAboutJson(AjaxRequestTarget target, String key)
+	{
+		jsonMessage = getString(key).replace("{0}", settings().document.getName());
+		target.add(jsonStatus);
+	}
+
+	/**
+	 * @return the settings of the session, and how their editor works
+	 */
+	static Settings settings()
+	{
+		Session session = Session.get();
+		Settings settings = (Settings)session.getAttribute(SETTINGS_ATTRIBUTE);
+		if (settings == null)
+		{
+			settings = new Settings(CodeSamples.settings());
+			session.setAttribute(SETTINGS_ATTRIBUTE, settings);
+		}
+		return settings;
+	}
+
+	/**
 	 * @return the notes of the session, and how they show
 	 */
 	static Notes notes()
@@ -629,8 +746,15 @@ public class CodeEditorPage extends DemoPage
 			"filesTitle", "language", "resize", "lineNumbers", "readOnly", "selectable",
 			"lineWrapping", "save", "heardSave", "sizeOfPage", "sizeGiven", "unsaved", "allSaved",
 			"hidePreview", "showPreview", "inStep", "previewHidden", "editorHidden", "bothShown",
-			"filesLabel", "filesStart", "closed", "saved");
+			"filesLabel", "filesStart", "closed", "saved", "jsonTitle", "saveOnBlur", "jsonSaved",
+			"jsonInvalid");
 		texts.put("notesStart", getString("appNotesStart"));
+		texts.put("jsonStart", getString("appJsonStart"));
+		// what JsonValidator says, which findJsonError of the core tells the app
+		for (JsonValidator.Problem problem : JsonValidator.Problem.values())
+		{
+			texts.put("json." + problem.key(), getString("JsonValidator." + problem.key()));
+		}
 		// the app, not the server, keeps the texts and the states
 		texts.put("start", getString("appStart")).put("heardFocus", getString("appHeardFocus"))
 			.put("heardBlur", getString("appHeardBlur")).put("known", getString("appKnown"));
@@ -653,6 +777,7 @@ public class CodeEditorPage extends DemoPage
 			tabs.put(name, getString("TabbedPanel." + name));
 		}
 		CodeDocument notes = CodeSamples.notes();
+		CodeDocument settings = CodeSamples.settings();
 		JSONObject split = new JSONObject();
 		for (String name : new String[] { "divider", "collapseLeft", "collapseRight", "restore" })
 		{
@@ -660,6 +785,8 @@ public class CodeEditorPage extends DemoPage
 		}
 		return new JSONObject()
 			.put("notes", new JSONObject().put("file", notes.getName()).put("text", notes.getText()))
+			.put("settings", new JSONObject().put("file", settings.getName())
+				.put("text", settings.getText()))
 			.put("preview", new JSONObject().put("label", getString("MarkdownPreview.label"))
 				.put("placeholder", getString("MarkdownPreview.placeholder")))
 			.put("split", split)
@@ -813,6 +940,26 @@ public class CodeEditorPage extends DemoPage
 		boolean inStep;
 
 		Notes(CodeDocument document)
+		{
+			this.document = document;
+		}
+	}
+
+	/**
+	 * The settings in JSON, the state of their editor, and whether it saves on blur and is read
+	 * only.
+	 */
+	static final class Settings implements Serializable
+	{
+		private static final long serialVersionUID = 1L;
+
+		final CodeDocument document;
+
+		boolean saveOnBlur = true;
+
+		boolean readOnly;
+
+		Settings(CodeDocument document)
 		{
 			this.document = document;
 		}

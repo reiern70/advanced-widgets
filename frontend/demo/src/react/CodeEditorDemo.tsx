@@ -15,10 +15,10 @@
 import { useState } from 'react';
 
 import { Button, CodeEditor, Dropdown, MarkdownPreview, Resizable, SplitPanel, Tab, Tabs,
-	type SplitPane, type SplitSize } from '@antilia/react';
+	type CodeEditorError, type SplitPane, type SplitSize } from '@antilia/react';
 
-import { axisOf, collapsedText, describe, filesOf, notesOf, registerLogGrammar, samplesOf,
-	type CodeEditorConfig, type Sample } from '../code-editor.js';
+import { axisOf, collapsedText, describe, filesOf, jsonErrorsOf, notesOf, registerLogGrammar,
+	samplesOf, settingsOf, type CodeEditorConfig, type Sample } from '../code-editor.js';
 import { dropdownTexts, format } from '../data.js';
 import { Icon } from './DialogOptionsDemo.js';
 
@@ -30,7 +30,8 @@ registerLogGrammar();
  * the state again when the language is shown anew. The notes in Markdown show beside their
  * preview in a split panel, in a box the user makes taller; a button hides the preview and shows it
  * again, and a check box keeps it in step with the editor. The files open in tabs, which their
- * editors tell of their changes not saved.
+ * editors tell of their changes not saved. The settings in JSON are saved as the user leaves their
+ * editor, when findJsonError finds them well formed; the editor shows the error otherwise.
  */
 export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 	const { texts } = config;
@@ -50,6 +51,11 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 	const [inStep, setInStep] = useState(false);
 	const [files, setFiles] = useState<Sample[]>(() => filesOf(config));
 	const [filesMessage, setFilesMessage] = useState(texts.filesStart);
+	const [settings, setSettings] = useState<Sample>(() => settingsOf(config));
+	const [settingsErrors, setSettingsErrors] = useState<CodeEditorError[]>([]);
+	const [saveOnBlur, setSaveOnBlur] = useState(true);
+	const [settingsReadOnly, setSettingsReadOnly] = useState(false);
+	const [settingsMessage, setSettingsMessage] = useState(texts.jsonStart);
 	const sample = samples[language];
 
 	const update = (change: Partial<Sample>) => setSamples((all) => ({ ...all,
@@ -75,6 +81,17 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 		setFiles((all) => all.map((each) => each.id === file.id ? { ...each, saved: each.text } :
 			each));
 		setFilesMessage(format(texts.saved, file.file));
+	};
+	// saved when well formed, as the Wicket page does with JsonValidator
+	const saveSettings = (text: string) => {
+		const errors = jsonErrorsOf(config, settings.file, text);
+		setSettingsErrors(errors);
+		if (errors.length) {
+			setSettingsMessage(format(texts.jsonInvalid, settings.file));
+		} else {
+			setSettings((all) => ({ ...all, text, saved: text }));
+			setSettingsMessage(format(texts.jsonSaved, settings.file));
+		}
 	};
 	const check = (label: string, checked: boolean, change: (checked: boolean) => void) => (
 		<label className="code-editor-demo__control">
@@ -198,6 +215,30 @@ export function CodeEditorDemo({ config }: { config: CodeEditorConfig }) {
 							))}
 						</Tabs>
 						<p className="code-editor-demo__status" role="status">{filesMessage}</p>
+					</section>
+				</Tab>
+				<Tab id="jsonTitle" title={texts.jsonTitle} modified={false}>
+					<section>
+						<div className="code-editor-demo__controls">
+							{check(texts.saveOnBlur, saveOnBlur, setSaveOnBlur)}
+							{check(texts.readOnly, settingsReadOnly, setSettingsReadOnly)}
+						</div>
+						<form className="code-editor-demo__editor" onSubmit={(event) => {
+							event.preventDefault();
+							saveSettings(settings.text);
+						}}>
+							<span className="code-editor-demo__name">{settings.file}</span>
+							<CodeEditor value={settings.text} saved={settings.saved} state={settings.state}
+								language="json" label={settings.file} readOnly={settingsReadOnly}
+								saveOnBlur={saveOnBlur} errors={settingsErrors} texts={config.editor}
+								onChange={(text) => setSettings((all) => ({ ...all, text }))}
+								onStateChange={(state) => setSettings((all) => ({ ...all, state }))}
+								onSave={saveSettings} />
+							<div className="code-editor-demo__actions">
+								<Button type="submit" label={texts.save} variant="primary" size="small" />
+								<span className="code-editor-demo__heard" role="status">{settingsMessage}</span>
+							</div>
+						</form>
 					</section>
 				</Tab>
 			</Tabs>

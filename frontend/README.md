@@ -111,14 +111,21 @@ lines show their numbers (`lineNumbers`), blocks fold (`folding`), Ctrl+F search
 Ctrl+Z undoes, brackets close and match, Alt and the mouse select a rectangle, Tab indents
 (`indentWithTab`: Escape, then Tab, leaves the editor) and Ctrl+S calls `onSave`. `readOnly` lets the
 user read and select but not change the text, `selectable: false` shows it as a picture, and the
-editor is resizable by a bar along its bottom (`resizable`, `vertical` by default, a `Resizable`).
+editor is resizable by a bar along its bottom (`resizable`, `vertical` by default, a `Resizable`);
+its text scrolls with the scroll bars of `scrollbar.ts` (style sheet `scrollbar.css`).
 `extensions` take any other CodeMirror extension, and `texts.phrases` CodeMirror's phrases in the
 language of the page. Over a text area, as in Wicket, the editor hides it and keeps the text in it,
 which a form posts; the text area fires `input` as the user types and `change` once the editor loses
 the focus, and the editor fires the events of `CODE_EDITOR_EVENTS` on it too: the focus, the blur,
 the selection, Ctrl+S, a resize and changes not saved. Against the text last saved (`saved`,
 `markSaved()`) the editor tells whether the text has changes as `data-modified` on its element,
-which the tabs and the desktop show; closing them anyway puts the saved text back. What is selected,
+which the tabs and the desktop show; closing them anyway puts the saved text back. With
+`saveOnBlur`, leaving the editor with changes not saved, or with errors shown, calls `onSave` as
+Ctrl+S does. `errors`
+(`setErrors()`, `CodeEditorError`: a message, and `from`/`to` or `line`/`column` when it says where)
+are what is wrong with the text: the editor underlines each where it is, lists them in a bar along
+its bottom, a click on one going there, and marks itself invalid. `findJsonError(text)` finds the
+first error of a JSON text, with where it is, as Wicket's `JsonValidator` does. What is selected,
 how far the text is scrolled and the size the user gave the editor are its state
 (`CodeEditorState`): the editor keeps it while hidden, in a tab not selected, `onStateChange` reports
 it a moment after the user changed it, as the editor loses the focus and as the page goes, and the
@@ -130,7 +137,12 @@ takes `value` and `state` and calls back; Svelte's binds `value`, `state` and `m
 default, takes the state the browser sends (`setSendToServer`, on by default), with the text the
 user changed as its input; `CodeEditorEventBehavior`s hear of its events, `markSaved(target)` tells
 the browser the text was saved, and `CodeEditorLanguage.of(name, script)` plugs in the grammar of a
-script of the page's own.
+script of the page's own. `CodeEditorEventBehavior.onUpdate(event, target -> ...)` hears of an event
+with a lambda. `setSaveOnBlur(true)` saves as the user leaves the editor; the editor validates its
+text with its validators, a `JsonValidator` for example, and shows its error messages in the text,
+where the validator tells by the variables `line` and `column` (`setShowErrors`, on by default),
+while the page's `FeedbackPanel` or `Notifications` show them too. `setReadOnly(IModel<Boolean>)`
+takes reading only from a model; read only, what the browser posts does not change the model.
 
 The preview of Markdown (`markdown-preview.ts`, in `antilia-code-editor.js` for Wicket's
 `MarkdownPreview`) shows a text as a page does, with GitHub's tables, task lists and strikethrough,

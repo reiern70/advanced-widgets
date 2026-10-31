@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.codeeditor.CodeEditor;
+import com.antiliacode.widgets.codeeditor.CodeEditorError;
 import com.antiliacode.widgets.codeeditor.CodeEditorEvent;
 import com.antiliacode.widgets.codeeditor.CodeEditorEventBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditorLanguage;
@@ -64,6 +65,8 @@ class CodeEditorPageTest
 	private static final String SPLIT = NOTES + ":notesSplit";
 
 	private static final String TOGGLE = NOTES + ":togglePreview";
+
+	private static final String SETTINGS = inCase("jsonTitle", "jsonForm:editor");
 
 	private WicketTester tester;
 
@@ -419,6 +422,78 @@ class CodeEditorPageTest
 		assertFalse(CodeEditorPage.notes().document.isModified());
 	}
 
+	private CodeEditor settingsEditor()
+	{
+		return (CodeEditor)tester.getComponentFromLastRenderedPage(SETTINGS);
+	}
+
+	@Test
+	void savesTheSettingsOnlyWhenTheirJsonIsWellFormed()
+	{
+		CodeEditor settings = settingsEditor();
+		assertEquals(CodeEditorLanguage.JSON, settings.getLanguage());
+		assertTrue(settings.isSaveOnBlur());
+		tester.assertContains("\"saveOnBlur\":true");
+		String original = CodeEditorPage.settings().document.getSaved();
+
+		// not JSON: not saved, the error shown in the text, and by the notifications of the page
+		tester.getRequest().getPostParameters().setParameterValue(settings.getInputName(),
+			"{\n    \"theme\": \"ocean\",\n}\n");
+		tester.executeBehavior(behavior(settings, CodeEditorEvent.SAVE));
+		String message = "settings.json, line 3, column 1: a name in double quotes was expected, " +
+			"not '}'.";
+		assertEquals(List.of(new CodeEditorError(message, 3, 1)), settings.getErrors());
+		assertEquals(original, CodeEditorPage.settings().document.getSaved());
+		tester.assertContains("setErrors\\(\\[\\{\"message\":");
+		tester.assertContains("settings.json is not saved: its JSON has an error.");
+		tester.assertContains("Wicket.Notifications");
+
+		// well formed: saved, and the error goes
+		tester.getRequest().getPostParameters().setParameterValue(settings.getInputName(),
+			"{ \"theme\": \"ocean\" }\n");
+		tester.executeBehavior(behavior(settings, CodeEditorEvent.SAVE));
+		assertEquals("{ \"theme\": \"ocean\" }\n", CodeEditorPage.settings().document.getSaved());
+		assertTrue(settings.getErrors().isEmpty());
+		tester.assertContains("setErrors\\(\\[\\]\\)");
+		tester.assertContains("Saved settings.json: the JSON is well formed.");
+	}
+
+	@Test
+	void savesTheSettingsWithTheButtonOnlyWhenWellFormed()
+	{
+		FormTester form = tester.newFormTester(inCase("jsonTitle", "jsonForm"));
+		form.setValue("editor", "[1, 2,]");
+		tester.executeAjaxEvent(inCase("jsonTitle", "jsonForm:save"), "click");
+		assertFalse(settingsEditor().getErrors().isEmpty());
+		tester.assertContains("settings.json is not saved: its JSON has an error.");
+	}
+
+	@Test
+	void switchesSavingOnBlurAndReadingOnlyFromTheSession()
+	{
+		FormTester form = tester.newFormTester(inCase("jsonTitle", "jsonControls"));
+		form.setValue("readOnly", true);
+		tester.executeAjaxEvent(inCase("jsonTitle", "jsonControls:readOnly"), "change");
+		assertTrue(CodeEditorPage.settings().readOnly);
+		assertTrue(settingsEditor().isReadOnly(), "the editor reads its model");
+		tester.assertContains("\"readOnly\":true");
+		tester.assertContains("readonly=\"readonly\"");
+
+		// read only, what the browser posts changes nothing
+		String text = CodeEditorPage.settings().document.getText();
+		tester.getRequest().getPostParameters().setParameterValue(settingsEditor().getInputName(),
+			"not json");
+		tester.executeBehavior(behavior(settingsEditor(), CodeEditorEvent.SAVE));
+		assertEquals(text, CodeEditorPage.settings().document.getText());
+		assertTrue(settingsEditor().getErrors().isEmpty());
+
+		form = tester.newFormTester(inCase("jsonTitle", "jsonControls"));
+		form.setValue("saveOnBlur", false);
+		tester.executeAjaxEvent(inCase("jsonTitle", "jsonControls:saveOnBlur"), "change");
+		assertFalse(CodeEditorPage.settings().saveOnBlur);
+		assertFalse(settingsEditor().isSaveOnBlur());
+	}
+
 	@Test
 	void describesTheStateInWords()
 	{
@@ -461,6 +536,11 @@ class CodeEditorPageTest
 		assertTrue(texts.getString("notesStart").contains("the app keeps the notes"));
 		assertEquals("Show the preview", texts.getString("showPreview"));
 		assertEquals("Keep the preview in step", texts.getString("inStep"));
+		assertEquals("settings.json", config.getJSONObject("settings").getString("file"));
+		assertTrue(texts.getString("jsonStart").contains("the app validates it"));
+		assertEquals("${label}, line ${line}, column ${column}: ',' or '}' was expected, not " +
+			"${found}.", texts.getString("json.objectNext"));
+		assertEquals("Errors in the text", config.getJSONObject("editor").getString("errors"));
 	}
 
 	@Test
@@ -470,6 +550,7 @@ class CodeEditorPageTest
 		tester.startPage(CodeEditorPage.class);
 		tester.assertContains("Jede Sprache, auf dem Server behalten");
 		tester.assertContains("Vorschau synchron halten");
+		tester.assertContains("JSON, geprüft beim Verlassen");
 		JSONObject config = new JSONObject(TagTester.createTagByAttribute(
 			tester.getLastResponseAsString(), "data-framework-app", "svelte")
 			.getAttribute("data-config"));
@@ -484,6 +565,7 @@ class CodeEditorPageTest
 		tester.startPage(CodeEditorPage.class);
 		tester.assertContains("Cualquier lenguaje, guardado en el servidor");
 		tester.assertContains("Mantener la vista previa sincronizada");
+		tester.assertContains("JSON, validado al salir");
 		tester.assertContains("\"Find\":\"Buscar\"");
 	}
 }

@@ -17,12 +17,13 @@
  * grammar the app plugs in, each kept by the app with the state the user left its editor in; check
  * boxes and drop-downs switching the options of the editor; notes in Markdown beside their preview,
  * in a split panel, a button hiding the preview and showing it again, a check box keeping it in
- * step with the editor; and the files of a project in closable tabs, an editor in each, marking its
- * tab while it has changes not saved.
+ * step with the editor; the files of a project in closable tabs, an editor in each, marking its
+ * tab while it has changes not saved; and settings in JSON, saved as the user leaves their editor
+ * once findJsonError finds them well formed, the editor showing the error otherwise.
  */
 
-import { codeEditorLanguages, registerLanguage, type CodeEditorState,
-	type CodeEditorTexts, type ResizeAxis, type TabsTexts } from '@antilia/core';
+import { codeEditorLanguages, findJsonError, registerLanguage, type CodeEditorError,
+	type CodeEditorState, type CodeEditorTexts, type ResizeAxis, type TabsTexts } from '@antilia/core';
 
 import { format, type DropdownTexts } from './data.js';
 
@@ -67,6 +68,18 @@ export interface CodeEditorDemoTexts extends DropdownTexts {
 	filesStart: string;
 	closed: string;
 	saved: string;
+	jsonTitle: string;
+	/** The check box saving the settings as the user leaves their editor. */
+	saveOnBlur: string;
+	jsonStart: string;
+	/** The settings were saved: {0} their file. */
+	jsonSaved: string;
+	/** The settings were not saved, their JSON having an error: {0} their file. */
+	jsonInvalid: string;
+	/**
+	 * What JsonValidator says, by json. and the problem (json.end, json.value...): ${label},
+	 * ${line}, ${column} and ${found} the file, where the error is and what is found there.
+	 */
 	[key: string]: string;
 }
 
@@ -98,6 +111,8 @@ export interface CodeEditorConfig {
 	files: FileConfig[];
 	/** The notes in Markdown shown beside their preview. */
 	notes: { file: string; text: string };
+	/** The settings in JSON, saved as the user leaves their editor. */
+	settings: { file: string; text: string };
 	/** What the preview says. */
 	preview: { label: string; placeholder: string };
 	/** What the divider of the split panel says. */
@@ -169,6 +184,31 @@ export function samplesOf(config: CodeEditorConfig): Record<string, Sample> {
 export function notesOf(config: CodeEditorConfig): Sample {
 	return { id: 'notes', file: config.notes.file, language: 'markdown', text: config.notes.text,
 		saved: config.notes.text };
+}
+
+/**
+ * @returns the settings the page gives, as the app keeps them
+ */
+export function settingsOf(config: CodeEditorConfig): Sample {
+	return { id: 'settings', file: config.settings.file, language: 'json',
+		text: config.settings.text, saved: config.settings.text };
+}
+
+/**
+ * @returns the error of the JSON of a file, as the editor shows it and in the words of
+ *          JsonValidator; none when the JSON is well formed
+ */
+export function jsonErrorsOf(config: CodeEditorConfig, file: string,
+	text: string): CodeEditorError[] {
+	const error = findJsonError(text);
+	if (!error) {
+		return [];
+	}
+	const values: Record<string, string | number> = { label: file, line: error.line,
+		column: error.column, found: error.found ?? '' };
+	const message = (config.texts['json.' + error.problem] ?? error.problem).replace(
+		/\$\{(\w+)\}/g, (match, name: string) => name in values ? String(values[name]) : match);
+	return [{ message, line: error.line, column: error.column }];
 }
 
 /**

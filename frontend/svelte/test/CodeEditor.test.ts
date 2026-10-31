@@ -144,6 +144,65 @@ describe('CodeEditor', () => {
 		expect(new FormData(container.querySelector('form')!).get('script')).toBe('xlet a = 1;');
 	});
 
+	it('shows the errors the page gives, as they change, and none', async () => {
+		const { container } = render(BoundCodeEditor, {
+			errors: [{ message: 'Unexpected', line: 1, column: 5 }] });
+		const element = editorOf(container);
+		const editor = core(container);
+		const bar = () => element.querySelector<HTMLElement>('.antilia-code-editor-errors');
+
+		expect(element.classList.contains('antilia-code-editor-invalid')).toBe(true);
+		expect(bar()?.textContent).toBe('Unexpected');
+		expect(bar()?.querySelector('button')).not.toBeNull();
+
+		// the same errors anew, in another array: the bar stays
+		const shown = bar();
+		await fireEvent.click(container.querySelector('.same-errors')!);
+		flushSync();
+		expect(bar()).toBe(shown);
+
+		await fireEvent.click(container.querySelector('.other-errors')!);
+		flushSync();
+		expect(bar()?.textContent).toBe('Not saved');
+		expect(bar()?.querySelector('button')).toBeNull();
+
+		await fireEvent.click(container.querySelector('.no-errors')!);
+		flushSync();
+		expect(bar()).toBeNull();
+		expect(element.classList.contains('antilia-code-editor-invalid')).toBe(false);
+		// the same editor all along
+		expect(core(container)).toBe(editor);
+	});
+
+	it('calls onsave when the user leaves it with changes not saved, with saveOnBlur', async () => {
+		const onsave = vi.fn();
+		const { container } = render(BoundCodeEditor, { onsave });
+		const other = container.querySelector('#other')!;
+		const leave = () => fireEvent.focusOut(container.querySelector('.cm-content')!,
+			{ relatedTarget: other });
+
+		core(container).view.dispatch({ changes: { from: 0, insert: 'x' },
+			userEvent: 'input.type' });
+		await leave();
+		expect(onsave).not.toHaveBeenCalled();
+
+		await fireEvent.click(container.querySelector('.save-on-blur')!);
+		flushSync();
+		await leave();
+		expect(onsave).toHaveBeenCalledWith('xlet a = 1;');
+	});
+
+	it('starts saving on blur when told to', async () => {
+		const onsave = vi.fn();
+		const { container } = render(BoundCodeEditor, { onsave, saveOnBlur: true });
+
+		core(container).view.dispatch({ changes: { from: 0, insert: 'y' },
+			userEvent: 'input.type' });
+		await fireEvent.focusOut(container.querySelector('.cm-content')!,
+			{ relatedTarget: container.querySelector('#other') });
+		expect(onsave).toHaveBeenCalledWith('ylet a = 1;');
+	});
+
 	it('takes itself away when unmounted', () => {
 		const { container, unmount } = render(BoundCodeEditor);
 		const editor = core(container);
