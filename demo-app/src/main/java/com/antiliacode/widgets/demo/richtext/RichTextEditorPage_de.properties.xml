@@ -58,12 +58,14 @@
 	<entry key="backgroundColors">Hintergrundfarben</entry>
 	<entry key="colors.none">Keine</entry>
 	<entry key="keys">Tasten, ein Merkmal der Seite selbst</entry>
+	<entry key="uploadDialog">Bilder in einem Dialog hochladen</entry>
+	<entry key="deleteAtOnce">Herausgenommene Bilder sofort löschen, nicht beim Speichern</entry>
 	<entry key="RichTextEditor.kbd">Taste</entry>
 	<entry key="bubbleMenu">Menü über der Auswahl</entry>
 	<entry key="readOnly">Nur lesen</entry>
 	<entry key="count">Wörter zählen</entry>
 	<entry key="highlight">Code hervorheben</entry>
-	<entry key="extras">Wählen Sie die Sprache eines Codeblocks im Menü seines Werkzeugs: Java, JavaScript, TypeScript, JSON oder Markdown, in ihren Farben. Laden Sie ein Bild über das Formular des Bildes hoch, oder ziehen oder fügen Sie eines in den Text ein: PNG, JPEG, GIF oder WebP, höchstens {0}.</entry>
+	<entry key="extras">Wählen Sie die Sprache eines Codeblocks im Menü seines Werkzeugs: Java, JavaScript, TypeScript, JSON oder Markdown, in ihren Farben. Ziehen Sie Bilder auf die Zone des Formulars des Bildes, oder wählen Sie dort mehrere aus, oder ziehen oder fügen Sie sie in den Text ein: PNG, JPEG, GIF, WebP oder AVIF, höchstens {0} und {1} Pixel, {2} auf einmal; ein größeres Bild können Sie verkleinern. Das Werkzeug Bilder listet die Bilder des Textes, jedes zum Auswählen oder Löschen; ein aus dem Text genommenes Bild wird beim Speichern gelöscht, oder sofort.</entry>
 	<entry key="save">Speichern</entry>
 	<entry key="start">Tippen, auswählen, scrollen oder die Größe ändern: Der Server behält alles.</entry>
 	<entry key="heardFocus">Der Server hat gehört, dass Sie den Artikel betreten haben.</entry>

@@ -15,8 +15,11 @@ package com.antiliacode.widgets.richtext;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +42,8 @@ import org.apache.wicket.util.string.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 
 /**
@@ -48,13 +53,20 @@ import com.github.openjson.JSONObject;
  * saying why not, in the language of the page, which the editor shows.
  * <p>
  * It checks the file before a {@link IRichTextImageStore} keeps it: no larger than
- * {@link #setMaxSize(Bytes) the size allowed}, which the request is cut at, and of
- * {@link #setTypes(Set) a type allowed} as its first bytes say, whatever its name and the type the
- * browser gave. The address the store answers must be one the editor and its cleaning take
+ * {@link #setMaxSize(Bytes) the size allowed}, which the request is cut at, of
+ * {@link #setTypes(Collection) a type allowed} as its first bytes say, whatever its name and the
+ * type the browser gave, and, with {@link #setMaxDimensions(RichTextImageDimensions) a limit of
+ * pixels}, no wider and no higher than it, as the header of the file says, read without decoding
+ * the picture. The address the store answers must be one the editor and its cleaning take
  * ({@link RichTextPolicy#isSafeUrl(String)}): never {@code data:} nor {@code javascript:}; and
  * the site's own ({@link RichTextPolicy#isSiteUrl(String)}) when the behavior is on an editor that
  * {@link AbstractRichTextEditor#setImagesFromSiteOnly(boolean) keeps the images of the site
  * alone}.
+ * <p>
+ * It deletes the images it took again when asked to, by a POST of the addresses as a JSON array
+ * under {@value #REMOVED_PARAMETER}, which {@code deleteImagesAt(}{@link #getUploadUrl()}{@code )}
+ * of the editor in the browser sends: only those it took on this page, by the store's
+ * {@link IRichTextImageStore#delete(String)}, and answers {@code {"deleted": [...]}}.
  * <p>
  * A {@link RichTextEditor} with {@link RichTextEditor#setImageStore(IRichTextImageStore) a store}
  * has one already. Add one to a page for the editors of React and Svelte in it, and give them
@@ -71,6 +83,13 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	/** The name the editor posts the file under. */
 	public static final String FILE_PARAMETER = "file";
 
+	/**
+	 * The name the editor posts the addresses of the images to delete under, as a JSON array.
+	 *
+	 * @since 10.11.0
+	 */
+	public static final String REMOVED_PARAMETER = "removed";
+
 	/** The largest image a user uploads, unless set otherwise. */
 	public static final Bytes DEFAULT_MAX_SIZE = Bytes.megabytes(5);
 
@@ -80,11 +99,19 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	/** The name of the upload, for the progress Wicket keeps of uploads. */
 	private static final String UPLOAD_ID = "antilia-rich-text-image";
 
+	/** The most addresses of the images taken a behavior remembers, the oldest forgotten first. */
+	private static final int REMEMBERED = 1000;
+
 	private final IRichTextImageStore store;
 
 	private Bytes maxSize = DEFAULT_MAX_SIZE;
 
-	private Set<RichTextImageType> types = EnumSet.allOf(RichTextImageType.class);
+	private Set<IRichTextImageType> types = new LinkedHashSet<>(RichTextImageType.ALL);
+
+	private RichTextImageDimensions maxDimensions;
+
+	/** The addresses of the images taken on this page, which it deletes when asked to. */
+	private final Set<String> uploaded = new LinkedHashSet<>();
 
 	/**
 	 * @param store
@@ -123,22 +150,64 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	}
 
 	/**
-	 * @return the types of the images a user uploads
+	 * @return the types of the images a user uploads, in their order
 	 */
-	public Set<RichTextImageType> getTypes()
+	public Set<IRichTextImageType> getTypes()
 	{
 		return Collections.unmodifiableSet(types);
 	}
 
 	/**
 	 * @param types
-	 *            the types of the images a user uploads, all of them by default
+	 *            the types of the images a user uploads, in the order the messages name them: those
+	 *            of {@link RichTextImageType} and those of the application's own; all those built
+	 *            in by default
 	 * @return {@code this}
 	 */
-	public RichTextImageUploadBehavior setTypes(Set<RichTextImageType> types)
+	public RichTextImageUploadBehavior setTypes(Collection<? extends IRichTextImageType> types)
+	{
+		this.types = checkedTypes(types);
+		return this;
+	}
+
+	/**
+	 * @return the types given, each once, in their order
+	 * @throws IllegalArgumentException
+	 *             for none, or one missing
+	 */
+	static Set<IRichTextImageType> checkedTypes(Collection<? extends IRichTextImageType> types)
 	{
 		Args.notEmpty(types, "types");
-		this.types = EnumSet.copyOf(types);
+		Set<IRichTextImageType> checked = new LinkedHashSet<>();
+		for (IRichTextImageType type : types)
+		{
+			Args.notNull(type, "type");
+			Args.notEmpty(type.getMimeType(), "type.getMimeType()");
+			checked.add(type);
+		}
+		return checked;
+	}
+
+	/**
+	 * @return the widest and the highest image a user uploads, {@code null} for no limit
+	 * @since 10.11.0
+	 */
+	public RichTextImageDimensions getMaxDimensions()
+	{
+		return maxDimensions;
+	}
+
+	/**
+	 * @param maxDimensions
+	 *            the widest and the highest image a user uploads, in pixels; {@code null} for no
+	 *            limit, as by default. The header of the file says it, read without decoding the
+	 *            picture: an image of a type that cannot tell it is refused.
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextImageUploadBehavior setMaxDimensions(RichTextImageDimensions maxDimensions)
+	{
+		this.maxDimensions = maxDimensions;
 		return this;
 	}
 
@@ -147,7 +216,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	 */
 	public List<String> getMimeTypes()
 	{
-		return types.stream().map(RichTextImageType::getMimeType).toList();
+		return types.stream().map(IRichTextImageType::getMimeType).distinct().toList();
 	}
 
 	/**
@@ -175,20 +244,157 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 		return true;
 	}
 
+	/**
+	 * @param url
+	 *            the address of an image
+	 * @return whether this behavior took the image on this page, and has not deleted it since
+	 * @since 10.11.0
+	 */
+	public boolean isUploaded(String url)
+	{
+		return url != null && uploaded.contains(url.trim());
+	}
+
+	/**
+	 * @return the addresses of the images this behavior took on this page, and has not deleted
+	 *         since, the oldest first
+	 * @since 10.11.0
+	 */
+	public Set<String> getUploaded()
+	{
+		return Collections.unmodifiableSet(uploaded);
+	}
+
+	/**
+	 * Forgets images this behavior took, as the text that holds them was saved: it no longer
+	 * deletes them when asked to.
+	 *
+	 * @param urls
+	 *            the addresses of the images
+	 * @since 10.11.0
+	 */
+	public void forget(Collection<String> urls)
+	{
+		// a copy: the addresses may be a view of those remembered
+		List.copyOf(urls).forEach(uploaded::remove);
+	}
+
+	/**
+	 * Deletes images this behavior took on this page, by the store, and forgets them; it leaves
+	 * the others alone.
+	 *
+	 * @param urls
+	 *            the addresses of the images
+	 * @return the addresses of the images deleted
+	 * @since 10.11.0
+	 */
+	public Set<String> deleteUploaded(Collection<String> urls)
+	{
+		Set<String> deleted = new LinkedHashSet<>();
+		for (String url : List.copyOf(urls))
+		{
+			if (isUploaded(url))
+			{
+				String address = url.trim();
+				if (delete(store, address))
+				{
+					deleted.add(address);
+				}
+				uploaded.remove(address);
+			}
+		}
+		return deleted;
+	}
+
+	/**
+	 * Deletes an image by a store, logging what went wrong.
+	 *
+	 * @return whether the store did not fail
+	 */
+	static boolean delete(IRichTextImageStore store, String url)
+	{
+		try
+		{
+			store.delete(url);
+			return true;
+		}
+		catch (IOException | RuntimeException e)
+		{
+			LOG.error("Could not delete the image {}", url, e);
+			return false;
+		}
+	}
+
 	@Override
 	public void onRequest()
 	{
 		JSONObject answer = new JSONObject();
-		try
+		List<String> removed = removed();
+		if (removed != null)
 		{
-			answer.put("url", receive());
+			answer.put("deleted", new JSONArray(isUploadAllowed() ? deleteUploaded(removed) :
+				Set.of()));
 		}
-		catch (Refusal refusal)
+		else
 		{
-			answer.put("error", refusal.getMessage());
+			try
+			{
+				answer.put("url", receive());
+			}
+			catch (Refusal refusal)
+			{
+				answer.put("error", refusal.getMessage());
+			}
 		}
 		RequestCycle.get().scheduleRequestHandlerAfterCurrent(new TextRequestHandler(
 			"application/json", "UTF-8", answer.toString()));
+	}
+
+	/**
+	 * @return the addresses of the images the request asks to delete, {@code null} for a request
+	 *         that does not: an upload
+	 */
+	private static List<String> removed()
+	{
+		RequestCycle cycle = RequestCycle.get();
+		if (cycle.getRequest() instanceof ServletWebRequest request)
+		{
+			String type = request.getContainerRequest().getContentType();
+			if (type != null && type.toLowerCase().startsWith("multipart/"))
+			{
+				return null;
+			}
+		}
+		String json = cycle.getRequest().getPostParameters().getParameterValue(REMOVED_PARAMETER)
+			.toOptionalString();
+		return json == null ? null : urlsOf(json);
+	}
+
+	/**
+	 * @param json
+	 *            a JSON array of addresses
+	 * @return the addresses, those that are strings; none for no such array
+	 */
+	static List<String> urlsOf(String json)
+	{
+		List<String> urls = new ArrayList<>();
+		try
+		{
+			JSONArray array = new JSONArray(json);
+			for (int i = 0; i < array.length() && i < REMEMBERED; i++)
+			{
+				if (array.opt(i) instanceof String url && !Strings.isEmpty(url.trim()))
+				{
+					urls.add(url.trim());
+				}
+			}
+		}
+		catch (JSONException e)
+		{
+			LOG.warn("The images to delete are no JSON array: {}", Strings.isEmpty(json) ? json :
+				json.substring(0, Math.min(json.length(), 200)));
+		}
+		return urls;
 	}
 
 	/**
@@ -221,7 +427,9 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 			{
 				throw refusal("uploadFailed", "");
 			}
-			return keep(new FileUpload(items.get(0)));
+			String url = keep(new FileUpload(items.get(0)));
+			remember(url);
+			return url;
 		}
 		catch (FileUploadSizeException tooLarge)
 		{
@@ -236,6 +444,33 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 		{
 			delete(items);
 		}
+	}
+
+	/**
+	 * Remembers the address of an image taken, forgetting the oldest beyond {@link #REMEMBERED}.
+	 */
+	private void remember(String url)
+	{
+		uploaded.remove(url);
+		uploaded.add(url);
+		Iterator<String> oldest = uploaded.iterator();
+		while (uploaded.size() > REMEMBERED && oldest.hasNext())
+		{
+			oldest.next();
+			oldest.remove();
+		}
+		onUploaded(url);
+	}
+
+	/**
+	 * Called once the store kept an image, with the address it answered. Does nothing by default.
+	 *
+	 * @param url
+	 *            the address of the image
+	 * @since 10.11.0
+	 */
+	protected void onUploaded(String url)
+	{
 	}
 
 	/**
@@ -268,21 +503,22 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 		{
 			throw refusal("uploadTooLarge", name, sizeText(maxSize.bytes()));
 		}
-		RichTextImageType type;
+		IRichTextImageType type;
 		try (InputStream input = upload.getInputStream())
 		{
-			type = RichTextImageType.detect(input.readNBytes(RichTextImageType.HEAD));
+			type = IRichTextImageType.detect(input.readNBytes(IRichTextImageType.HEAD), types);
 		}
 		catch (IOException e)
 		{
 			LOG.warn("Could not read the image {} uploaded", name, e);
 			throw refusal("uploadFailed", name);
 		}
-		if (type == null || !types.contains(type))
+		if (type == null)
 		{
-			throw refusal("uploadType", name, types.stream().map(RichTextImageType::getLabel)
-				.collect(Collectors.joining(", ")));
+			throw refusal("uploadType", name, types.stream().map(IRichTextImageType::getLabel)
+				.distinct().collect(Collectors.joining(", ")));
 		}
+		checkDimensions(upload, type, name);
 		String url;
 		try
 		{
@@ -314,6 +550,40 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	{
 		return getComponent() instanceof AbstractRichTextEditor<?> editor &&
 			editor.isImagesFromSiteOnly();
+	}
+
+	/**
+	 * Checks the width and the height of an image against the limit, if any, as the header of its
+	 * file says them.
+	 */
+	private void checkDimensions(FileUpload upload, IRichTextImageType type, String name)
+		throws Refusal
+	{
+		RichTextImageDimensions max = maxDimensions;
+		if (max == null)
+		{
+			return;
+		}
+		RichTextImageDimensions dimensions;
+		try (InputStream input = upload.getInputStream())
+		{
+			dimensions = type.readDimensions(input);
+		}
+		catch (IOException | RuntimeException e)
+		{
+			LOG.warn("Could not read the dimensions of the image {} uploaded", name, e);
+			throw refusal("uploadFailed", name);
+		}
+		if (dimensions == null)
+		{
+			LOG.warn("The header of the image {} uploaded, of the type {}, does not tell its " +
+				"dimensions", name, type.getLabel());
+			throw refusal("uploadFailed", name);
+		}
+		if (!dimensions.fits(max))
+		{
+			throw refusal("uploadTooBig", name, dimensions.toString(), max.toString());
+		}
 	}
 
 	/**

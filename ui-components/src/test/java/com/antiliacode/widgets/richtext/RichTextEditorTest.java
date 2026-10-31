@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -33,12 +36,14 @@ import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.event.IEvent;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.MarkupException;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.resource.JavaScriptPackageResource;
@@ -51,6 +56,7 @@ import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.danekja.java.util.function.serializable.SerializableConsumer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -319,6 +325,303 @@ class RichTextEditorTest extends WicketTestCase
 		tester.startPage(page);
 		assertFalse(options(editor).has("uploadUrl"));
 		assertEquals(1, editor.getBehaviors(RichTextImageUploadBehavior.class).size());
+	}
+
+	@Test
+	void sendsTheLimitsOfTheUploadsAndWhereToTellOfTheImagesTakenOut()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML))
+			.setImageStore((image, type) -> "/images/a.png");
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		JSONObject options = options(editor);
+		assertFalse(options.has("uploadMaxWidth"));
+		assertFalse(options.has("uploadScaling"));
+		assertFalse(options.has("uploadMaxCount"));
+		assertFalse(options.has("uploadDialog"));
+		assertTrue(options.getString("imagesUrl").contains("-form-editor"));
+		assertFalse(tester.getLastResponseAsString().contains("antilia-modal"));
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getImageDeletion());
+		assertNull(editor.getImageMaxDimensions());
+		assertFalse(editor.isImageScaling());
+		assertFalse(editor.isImageUploadDialog());
+		assertNull(editor.getImageMaxCount());
+
+		editor.setImageMaxDimensions(800, 600).setImageScaling(true).setImageMaxCount(3)
+			.setImageUploadDialog(true);
+		tester.startPage(page);
+		options = options(editor);
+		assertEquals(800, options.getInt("uploadMaxWidth"));
+		assertEquals(600, options.getInt("uploadMaxHeight"));
+		assertTrue(options.getBoolean("uploadScaling"));
+		assertEquals(3, options.getInt("uploadMaxCount"));
+		assertTrue(options.getBoolean("uploadDialog"));
+		tester.assertContains("antilia-modal");
+		assertEquals(new RichTextImageDimensions(800, 600), editor.getImageMaxDimensions());
+		assertEquals(new RichTextImageDimensions(800, 600), editor.getBehaviors(
+			RichTextImageUploadBehavior.class).get(0).getMaxDimensions());
+
+		assertEquals(1, editor.setImageMaxCount(0).getImageMaxCount());
+		assertNull(editor.setImageMaxCount(null).getImageMaxCount());
+		editor.setImageMaxDimensions(null);
+		assertNull(editor.getBehaviors(RichTextImageUploadBehavior.class).get(0)
+			.getMaxDimensions());
+		assertThrows(IllegalArgumentException.class, () -> editor.setImageDeletion(null));
+		assertThrows(IllegalArgumentException.class, () -> editor.setImageTypes(List.of()));
+	}
+
+	/** A store keeping nothing, which notes the images it was asked to delete. */
+	private static IRichTextImageStore deleting(List<String> deleted)
+	{
+		return new IRichTextImageStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(FileUpload image, IRichTextImageType type)
+			{
+				return "/images/new." + type.getExtension();
+			}
+
+			@Override
+			public void delete(String url)
+			{
+				deleted.add(url);
+			}
+		};
+	}
+
+	/** An editor noting what it heard of the images taken out of its text. */
+	private static RichTextEditor noting(IModel<String> text, List<Set<String>> heard)
+	{
+		return new RichTextEditor("editor", text)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onImagesRemoved(AjaxRequestTarget target, Set<String> urls)
+			{
+				heard.add(urls);
+			}
+		};
+	}
+
+	private static final String IMAGES = "<p>a</p><img src=\"/images/old.png\"><img " +
+		"src=\"/images/kept.png\">";
+
+	@Test
+	void deletesTheImagesTakenOutOnceTheTextIsSaved(@TempDir Path folder) throws IOException
+	{
+		List<String> deleted = new ArrayList<>();
+		List<Set<String>> heard = new ArrayList<>();
+		List<RichTextImagesRemovedEvent> events = new ArrayList<>();
+		IModel<String> text = Model.of(IMAGES);
+		RichTextEditor editor = noting(text, heard).setImageStore(deleting(deleted));
+		TestPage page = new TestPage(editor)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onEvent(IEvent<?> event)
+			{
+				if (event.getPayload() instanceof RichTextImagesRemovedEvent removed)
+				{
+					events.add(removed);
+				}
+			}
+		};
+		tester.startPage(page);
+		AbstractDefaultAjaxBehavior removal = removal(editor);
+
+		// one the editor knows, one it does not
+		removeImages(removal, "[\"/images/old.png\", \"/images/elsewhere.png\"]");
+		assertEquals(List.of(Set.of("/images/old.png")), heard);
+		assertEquals(1, events.size());
+		assertEquals(Set.of("/images/old.png"), events.get(0).getUrls());
+		assertFalse(events.get(0).isDeleted());
+		assertSame(editor, events.get(0).getEditor());
+		assertTrue(deleted.isEmpty(), "not before the text is saved");
+
+		// an image uploaded, which never went into the text
+		uploadImage(editor, folder);
+		assertEquals(List.of("/images/new.png"), List.copyOf(editor.getBehaviors(
+			RichTextImageUploadBehavior.class).get(0).getUploaded()));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p>a</p><img src=\"/images/kept.png\">");
+		form.submit();
+		assertEquals("<p>a</p><img src=\"/images/kept.png\" />", text.getObject());
+		assertTrue(deleted.isEmpty(), "the model has the text, which is not saved yet");
+
+		page.action = target -> editor.markSaved(target);
+		tester.clickLink("act");
+		assertEquals(List.of("/images/old.png", "/images/new.png"), deleted);
+
+		// saved again, nothing more to delete
+		tester.clickLink("act");
+		assertEquals(List.of("/images/old.png", "/images/new.png"), deleted);
+	}
+
+	@Test
+	void deletesTheImagesTakenOutOnceTheTextIsSavedWithoutAjax()
+	{
+		List<String> deleted = new ArrayList<>();
+		IModel<String> text = Model.of(IMAGES);
+		RichTextEditor editor = new RichTextEditor("editor", text).setImageStore(deleting(deleted));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		removeImages(removal(editor), "[\"/images/kept.png\"]");
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p>a</p><img src=\"/images/old.png\">");
+		form.submit();
+		assertSame(editor, editor.deleteRemovedImages());
+		assertEquals(List.of("/images/kept.png"), deleted);
+		// none without a store
+		assertSame(editor, editor.setImageStore(null).deleteRemovedImages());
+	}
+
+	@Test
+	void keepsAnImageTheTextHoldsAgainOnceSaved()
+	{
+		List<String> deleted = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(IMAGES))
+			.setImageStore(deleting(deleted));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		removeImages(removal(editor), "[\"/images/old.png\"]");
+
+		// Ctrl+Z brought it back
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", IMAGES);
+		form.submit();
+		page.action = target -> editor.markSaved(target);
+		tester.clickLink("act");
+		assertTrue(deleted.isEmpty());
+	}
+
+	@Test
+	void forgetsTheImagesTakenOutOfAnotherTextThanThePagePutsInTheModel()
+	{
+		List<String> deleted = new ArrayList<>();
+		IModel<String> text = Model.of(IMAGES);
+		RichTextEditor editor = new RichTextEditor("editor", text).setImageStore(deleting(deleted));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		removeImages(removal(editor), "[\"/images/old.png\"]");
+
+		text.setObject("<p>Another text</p>");
+		tester.startPage(page);
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p>Another text, changed</p>");
+		form.submit();
+		page.action = target -> editor.markSaved(target);
+		tester.clickLink("act");
+		assertTrue(deleted.isEmpty());
+
+		// put in the model without the editor shown again
+		removeImages(removal(editor), "[\"/images/old.png\"]");
+		text.setObject("<p>A third text</p>");
+		tester.clickLink("act");
+		assertTrue(deleted.isEmpty());
+	}
+
+	@Test
+	void deletesTheImagesTakenOutAtOnceWhenTold()
+	{
+		List<String> deleted = new ArrayList<>();
+		List<Set<String>> heard = new ArrayList<>();
+		RichTextEditor editor = noting(Model.of(IMAGES), heard).setImageStore(deleting(deleted))
+			.setImageDeletion(RichTextImageDeletion.AT_ONCE);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		AbstractDefaultAjaxBehavior removal = removal(editor);
+
+		removeImages(removal, "[\"/images/old.png\"]");
+		assertEquals(List.of("/images/old.png"), deleted);
+		assertEquals(List.of(Set.of("/images/old.png")), heard);
+		// deleted already: told again, as Ctrl+Z and Delete do, it is not known any more
+		removeImages(removal, "[\"/images/old.png\"]");
+		assertEquals(List.of("/images/old.png"), deleted);
+		assertEquals(1, heard.size());
+
+		// read only, the editor hears of none
+		editor.setReadOnly(true);
+		removeImages(removal, "[\"/images/kept.png\"]");
+		assertEquals(List.of("/images/old.png"), deleted);
+	}
+
+	@Test
+	void letsThePageDecideWhichImagesToDelete()
+	{
+		List<String> deleted = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(IMAGES))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void deleteImages(Set<String> urls)
+			{
+				urls.stream().filter(url -> !url.contains("kept")).forEach(deleted::add);
+			}
+		};
+		editor.setImageStore(deleting(new ArrayList<>()))
+			.setImageDeletion(RichTextImageDeletion.AT_ONCE);
+		tester.startPage(new TestPage(editor));
+		removeImages(removal(editor), "[\"/images/old.png\", \"/images/kept.png\"]");
+		assertEquals(List.of("/images/old.png"), deleted);
+	}
+
+	@Test
+	void readsTheImagesOfHtmlMarkdownAndJson()
+	{
+		assertEquals(List.of("/a.png", "https://example.org/b?x=1&y=2", "c.png"),
+			List.copyOf(RichTextImageAddresses.of("<p>a<img alt=\"x\" src=\"/a.png\"></p>" +
+				"<IMG SRC='https://example.org/b?x=1&amp;y=2'><img src=c.png><img alt=\"none\">" +
+				"<p>&lt;img src=\"/text.png\"&gt;</p><img src=\"/a.png\">", RichTextFormat.HTML)));
+		assertEquals(List.of("/a.png", "/b c.png", "/c.png"), List.copyOf(RichTextImageAddresses
+			.of("Text ![A bird](/a.png \"Title\") and ![B](</b c.png>)\n\n<img src=\"/c.png\">",
+				RichTextFormat.MARKDOWN)));
+		assertEquals(List.of("/a.png"), List.copyOf(RichTextImageAddresses.of("{\"type\":\"doc\"," +
+			"\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":" +
+			"\"src\"}]},{\"type\":\"image\",\"attrs\":{\"src\":\"/a.png\"}}]}",
+			RichTextFormat.JSON)));
+		assertTrue(RichTextImageAddresses.of("not json", RichTextFormat.JSON).isEmpty());
+		assertTrue(RichTextImageAddresses.of(null, RichTextFormat.HTML).isEmpty());
+		assertEquals("<a & \"b\" 'c' é>", RichTextImageAddresses.decode(
+			"&lt;a &amp; &quot;b&quot; &#39;c&apos; &#xe9;&gt;"));
+	}
+
+	/**
+	 * @return the behavior of an editor hearing of the images taken out of its text
+	 */
+	private static AbstractDefaultAjaxBehavior removal(RichTextEditor editor)
+	{
+		return editor.getImagesRemoval();
+	}
+
+	/**
+	 * Tells an editor of images taken out of its text, as its script does.
+	 */
+	private void removeImages(AbstractDefaultAjaxBehavior removal, String json)
+	{
+		tester.getRequest().getPostParameters().setParameterValue("removed", json);
+		tester.executeBehavior(removal);
+	}
+
+	/**
+	 * Uploads an image into an editor, as its script does.
+	 */
+	private void uploadImage(RichTextEditor editor, Path folder) throws IOException
+	{
+		Path file = folder.resolve("bird.png");
+		Files.write(file, new byte[] { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0,
+				13, 'I', 'H', 'D', 'R' });
+		tester.getRequest().setUseMultiPartContentType(true);
+		tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+			new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+		tester.executeBehavior(editor.getBehaviors(RichTextImageUploadBehavior.class).get(0));
+		assertEquals("/images/new.png", new JSONObject(tester.getLastResponseAsString())
+			.getString("url"));
 	}
 
 	@Test

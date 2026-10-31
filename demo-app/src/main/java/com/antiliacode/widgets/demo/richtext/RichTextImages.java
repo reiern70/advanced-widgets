@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.richtext.IRichTextImageStore;
+import com.antiliacode.widgets.richtext.IRichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextImageDimensions;
 import com.antiliacode.widgets.richtext.RichTextImageType;
 
 /**
@@ -55,6 +57,9 @@ import com.antiliacode.widgets.richtext.RichTextImageType;
  * Each image is named anew, by a random name and the extension of its type, which the resource
  * serves it as: the name the browser gave is never a path on the server. The name starts with a
  * mark of its user, eight hex digits of a hash, which tells the images of a user apart.
+ * <p>
+ * It deletes an image a user took out of a text when the editor says so, only one of that user's
+ * own: by its mark.
  */
 public final class RichTextImages implements IRichTextImageStore
 {
@@ -67,6 +72,13 @@ public final class RichTextImages implements IRichTextImageStore
 
 	/** The largest image a user uploads in the demo. */
 	public static final Bytes MAX_SIZE = Bytes.megabytes(2);
+
+	/** The widest and the highest image a user uploads in the demo, in pixels. */
+	public static final RichTextImageDimensions MAX_DIMENSIONS = new RichTextImageDimensions(2400,
+		2400);
+
+	/** How many images one drop or choice takes in the demo. */
+	public static final int MAX_COUNT = 5;
 
 	/** How long an image stays. */
 	public static final Duration MAX_AGE = Duration.ofDays(1);
@@ -81,7 +93,7 @@ public final class RichTextImages implements IRichTextImageStore
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	/** The name of an image the store kept. */
-	private static final Pattern NAME = Pattern.compile("[0-9a-f]{32}\\.(png|jpg|gif|webp)");
+	private static final Pattern NAME = Pattern.compile("[0-9a-f]{32}\\.(png|jpg|gif|webp|avif)");
 
 	/** The store of the demo, in its folder of the temporary folder of the JVM. */
 	private static final RichTextImages DEMO = new RichTextImages(Path.of(System.getProperty(
@@ -116,7 +128,7 @@ public final class RichTextImages implements IRichTextImageStore
 	}
 
 	@Override
-	public String store(FileUpload image, RichTextImageType type) throws IOException
+	public String store(FileUpload image, IRichTextImageType type) throws IOException
 	{
 		Path folder = getFolder();
 		String user = markOf(user());
@@ -135,6 +147,24 @@ public final class RichTextImages implements IRichTextImageStore
 			}
 		}
 		return addressOf(name);
+	}
+
+	/**
+	 * Deletes an image the user took out of a text: one of the user's own, the account's or the
+	 * session's, never another's, which its name tells.
+	 */
+	@Override
+	public void delete(String url) throws IOException
+	{
+		String name = url == null ? "" : url.substring(url.lastIndexOf('/') + 1);
+		if (!NAME.matcher(name).matches() || !name.startsWith(markOf(user())))
+		{
+			return;
+		}
+		synchronized (RichTextImages.class)
+		{
+			Files.deleteIfExists(getFolder().resolve(name));
+		}
 	}
 
 	/**

@@ -33,7 +33,7 @@ beforeAll(() => {
 });
 
 /** A moment, for the state reported after a delay of 0. */
-const tick = () => act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+const tick = (ms = 20) => act(() => new Promise((resolve) => setTimeout(resolve, ms)));
 
 function editorOf(container: HTMLElement): HTMLElement {
 	return container.querySelector('.antilia-rich-text-editor')!;
@@ -307,6 +307,31 @@ describe('RichTextEditor', () => {
 
 		rerender(<RichTextEditor ref={ref} value="<p>a</p>" />);
 		expect(drop()).toBeFalsy();
+	});
+
+	it('takes the limits of the uploads, and tells the latest onImagesRemoved of the images taken ' +
+		'out', async () => {
+		const first = vi.fn();
+		const latest = vi.fn();
+		const ref = createRef<RichTextEditorHandle>();
+		const props = { value: '<p>a</p><img src="/a.png">', onUpload: () => Promise.resolve('/b.png'),
+			uploadMaxCount: 2, uploadMaxWidth: 800, uploadMaxHeight: 600, uploadScaling: true,
+			uploadDialog: true };
+		const { rerender } = render(<RichTextEditor ref={ref} {...props} onImagesRemoved={first} />);
+		const options = ref.current!.editor!.options;
+		expect([options.uploadMaxCount, options.uploadMaxWidth, options.uploadMaxHeight,
+			options.uploadScaling, options.uploadDialog]).toEqual([2, 800, 600, true, true]);
+		rerender(<RichTextEditor ref={ref} {...props} uploadMaxCount={null} uploadDialog={false}
+			onImagesRemoved={latest} />);
+		expect([ref.current!.editor!.options.uploadMaxCount,
+			ref.current!.editor!.options.uploadDialog]).toEqual([null, false]);
+		act(() => {
+			const editor = ref.current!.editor!.editor;
+			editor.view.dispatch(editor.state.tr.delete(3, 4));
+		});
+		await tick(350);
+		expect(first).not.toHaveBeenCalled();
+		expect(latest).toHaveBeenCalledWith(['/a.png']);
 	});
 
 	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',

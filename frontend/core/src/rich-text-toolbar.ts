@@ -33,8 +33,11 @@
  * makes a code block, or takes it away. The link and the image open a form in a popover: the
  * address, and whether the link opens in a new tab or the text in place of the image. An address
  * must be safe (see isSafeUrl): http, https, mailto or a relative one. While the page uploads
- * images, the form of the image has a button choosing a file to upload, whose address the image
- * then takes.
+ * images, the form of the image has a zone to drop images on, with a button choosing them, several
+ * at once, which go into the text where the cursor is; or a button opening the dialog of the
+ * uploads, when the page wants it (see rich-text-upload-dialog.ts). The images of the text open a
+ * menu listing them, each with a thumbnail, selected by a click, and a button taking it out of the
+ * text, every place it is in.
  *
  * The same class draws the bubble menu over a selection, with the tools of the inline formats.
  */
@@ -43,6 +46,7 @@ import type { Editor } from '@tiptap/core';
 
 import { lookClasses, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Popover } from './popover.js';
+import { dropZone, openUploadDialog } from './rich-text-upload-dialog.js';
 import { DEFAULT_RICH_TEXT_PASTE_TEXTS, type RichTextPasteTexts } from './rich-text-html.js';
 import { codeLanguage } from './rich-text-languages.js';
 import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUrl,
@@ -50,13 +54,13 @@ import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUr
 	type RichTextFeature } from './rich-text-schema.js';
 import { registeredTool, type RichTextMenuItem, type RichTextToolContext,
 	type RichTextTrigger } from './rich-text-features.js';
-import type { UploadHost } from './rich-text-upload.js';
+import { uploadFiles, type UploadHost } from './rich-text-upload.js';
 
 /** The tools built in the toolbar. */
 export type RichTextToolName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
 	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
-	'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' |
+	'images' | 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' |
 	'clearFormatting';
 
 /**
@@ -69,8 +73,8 @@ export type RichTextTool = RichTextToolName | (string & {});
 export const RICH_TEXT_TOOLS: readonly RichTextToolName[] = Object.freeze(['heading', 'bold', 'italic',
 	'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor', 'textBackground', 'link',
 	'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table',
-	'image', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting', 'undo',
-	'redo']);
+	'image', 'images', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting',
+	'undo', 'redo']);
 
 /** The toolbar when the page gives none: the tools in groups. */
 export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[] = Object.freeze([
@@ -80,7 +84,7 @@ export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[]
 	['link'],
 	['bulletList', 'orderedList', 'taskList'],
 	['blockquote', 'codeBlock', 'horizontalRule'],
-	['table', 'image'],
+	['table', 'image', 'images'],
 	['alignLeft', 'alignCenter', 'alignRight', 'alignJustify'],
 	['clearFormatting'],
 	['undo', 'redo']
@@ -118,6 +122,7 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	horizontalRule: string;
 	table: string;
 	image: string;
+	images: string;
 	alignLeft: string;
 	alignCenter: string;
 	alignRight: string;
@@ -170,8 +175,20 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	colorIndigo: string;
 	colorPurple: string;
 	colorPink: string;
-	/** The button of the form of an image choosing a file to upload. */
+	/** The button of the form of an image opening the dialog of the uploads. */
 	uploadImage: string;
+	/** The zone of the form of an image, and of the dialog of the uploads, and its button. */
+	dropImages: string;
+	chooseImages: string;
+	/** The dialog of the uploads: its title, a file uploaded, the button taking one out ({0}). */
+	uploadImagesTitle: string;
+	uploadDone: string;
+	removeFile: string;
+	insertImages: string;
+	cancel: string;
+	/** The menu of the images of the text: when it has none, the button deleting one ({0}). */
+	noImages: string;
+	deleteImage: string;
 	/** The mark of an image uploading; {0} the name of its file. */
 	uploading: string;
 	/** What stands for the name of a file that has none. */
@@ -180,6 +197,16 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	uploadFailed: string;
 	uploadTooLarge: string;
 	uploadType: string;
+	/** {0} the most images at a time, {1} how many were left out. */
+	uploadTooMany: string;
+	/** {0} the name of the file, {1} its pixels, {2} the most: 640 × 480. */
+	uploadTooBig: string;
+	/** The dialog asking which pictures too large to scale down: {0} the most pixels; {0} the name
+	 * of the file, {1} its pixels scaled down. */
+	scaleTitle: string;
+	scaleText: string;
+	scaleDown: string;
+	upload: string;
 	/** The count: {0} the characters, {1} the limit, {0} the words; one of them alone. */
 	characters: string;
 	character: string;
@@ -223,6 +250,7 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	horizontalRule: 'Horizontal line',
 	table: 'Table',
 	image: 'Image',
+	images: 'Images in the text',
 	alignLeft: 'Align left',
 	alignCenter: 'Center',
 	alignRight: 'Align right',
@@ -266,12 +294,28 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	colorIndigo: 'Indigo',
 	colorPurple: 'Purple',
 	colorPink: 'Pink',
-	uploadImage: 'Upload an image…',
+	uploadImage: 'Upload images…',
+	dropImages: 'Drop images here',
+	chooseImages: 'Choose images…',
+	uploadImagesTitle: 'Upload images',
+	uploadDone: 'Uploaded',
+	removeFile: 'Remove {0}',
+	insertImages: 'Insert',
+	cancel: 'Cancel',
+	noImages: 'The text has no images.',
+	deleteImage: 'Delete {0}',
 	uploading: 'Uploading {0}…',
 	theImage: 'The image',
 	uploadFailed: '{0} could not be uploaded.',
 	uploadTooLarge: '{0} is larger than {1}.',
 	uploadType: '{0} is not an image of a type the editor takes: {1}.',
+	uploadTooMany: '{0} images at most at a time: {1} left out.',
+	uploadTooBig: '{0} is {1} pixels, larger than {2}.',
+	scaleTitle: 'Images too large',
+	scaleText: 'These images are larger than {0} pixels. Tick those to scale down; the others ' +
+		'are left out.',
+	scaleDown: 'Scale {0} down to {1}',
+	upload: 'Upload',
 	characters: '{0} characters',
 	character: '{0} character',
 	charactersOfLimit: '{0} of {1} characters',
@@ -408,6 +452,10 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading
 			'<path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'),
 		image: svg('<rect x="3" y="4" width="18" height="16" rx="2"/>' +
 			'<circle cx="9" cy="9.5" r="1.8"/><path d="m21 16-5-5L5 20"/>'),
+		// two pictures, one behind the other
+		images: svg('<rect x="7" y="3" width="14" height="14" rx="2"/>' +
+			'<path d="M3 7v12a2 2 0 0 0 2 2h12"/><circle cx="11.5" cy="7.5" r="1.4"/>' +
+			'<path d="m21 13-4-4-6 6"/>'),
 		alignLeft: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
 		alignCenter: svg('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
 		alignRight: svg('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
@@ -417,6 +465,77 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading
 		redo: svg('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
 		menu: svg('<path d="m6 9 6 6 6-6"/>')
 	});
+
+/** The icon of the button deleting an image of the menu of the images. */
+const TRASH = svg('<path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12' +
+	'M9 7V4h6v3"/>');
+
+/**
+ * @returns what the menu of the images calls an image: its text, else the name of its file, else
+ *          what stands for one without
+ */
+function imageLabel(src: string, alt: unknown, texts: RichTextEditorTexts): string {
+	if (typeof alt === 'string' && alt.trim()) {
+		return alt.trim();
+	}
+	const file = src.split(/[?#]/)[0]!.split('/').pop() ?? '';
+	try {
+		return decodeURIComponent(file) || texts.theImage;
+	} catch {
+		return file || texts.theImage;
+	}
+}
+
+/**
+ * @returns the images of a text, each once by its address, in their order, with their texts
+ */
+function imagesOf(editor: Editor): { src: string; alt: unknown }[] {
+	const images = new Map<string, unknown>();
+	editor.state.doc.descendants((node) => {
+		if (node.type.name === 'image' && typeof node.attrs.src === 'string' &&
+			!images.has(node.attrs.src)) {
+			images.set(node.attrs.src, node.attrs.alt);
+		}
+	});
+	return Array.from(images, ([src, alt]) => ({ src, alt }));
+}
+
+/**
+ * Takes the images of an address out of the text, every place it is in.
+ */
+function deleteImages(editor: Editor, src: string): void {
+	editor.chain().focus().command(({ tr }) => {
+		const found: number[] = [];
+		tr.doc.descendants((node, position) => {
+			if (node.type.name === 'image' && node.attrs.src === src) {
+				found.push(position);
+			}
+		});
+		found.reverse().forEach((position) => {
+			const node = tr.doc.nodeAt(position);
+			if (node) {
+				tr.delete(position, position + node.nodeSize);
+			}
+		});
+		return found.length > 0;
+	}).run();
+}
+
+/**
+ * Selects the first image of an address, and shows it.
+ */
+function selectImage(editor: Editor, src: string): void {
+	let found: number | null = null;
+	editor.state.doc.descendants((node, position) => {
+		if (found === null && node.type.name === 'image' && node.attrs.src === src) {
+			found = position;
+		}
+		return found === null;
+	});
+	if (found !== null) {
+		editor.chain().focus().setNodeSelection(found).scrollIntoView().run();
+	}
+}
 
 /** What a tool does, and what it needs. */
 interface ToolSpec {
@@ -524,6 +643,7 @@ const SPECS: Readonly<Record<RichTextToolName, ToolSpec>> = {
 	image: { feature: 'image', kind: 'form',
 		active: (editor) => editor.isActive('image'),
 		enabled: (editor) => editor.isActive('image') || editor.can().setImage({ src: '#' }) },
+		images: { feature: 'image', kind: 'menu' },
 	alignLeft: align(ALIGNMENTS.alignLeft),
 	alignCenter: align(ALIGNMENTS.alignCenter),
 	alignRight: align(ALIGNMENTS.alignRight),
@@ -628,6 +748,8 @@ interface MenuEntry {
 	swatch?: string;
 	/** Whether the item is the one in force, for a menu of choices. */
 	checked?: (editor: Editor) => boolean;
+	/** The address of the image of an item of the menu of the images. */
+	src?: string;
 	enabled: (editor: Editor) => boolean;
 	run: (editor: Editor, context: RichTextToolContext) => void;
 }
@@ -981,7 +1103,8 @@ export class RichTextToolbar {
 		}
 		const spec = toolSpec(tool);
 		if (this.kindOf(tool) === 'menu' && (spec?.registered || tool === 'table' ||
-			tool === 'textColor' || tool === 'textBackground' || tool === 'codeBlock')) {
+			tool === 'textColor' || tool === 'textBackground' || tool === 'codeBlock' ||
+			tool === 'images')) {
 			return this.menuLines(this.tools.find((drawn) => drawn.tool === tool) ??
 				{ tool }).some((entry) => entry !== 'separator' && entry.enabled(editor));
 		}
@@ -1114,6 +1237,24 @@ export class RichTextToolbar {
 		];
 	}
 
+	/**
+	 * @returns the items of the menu of the images: for each image of the text, one selecting it
+	 *          and one taking it out of the text, every place it is in
+	 */
+	private imageEntries(): MenuEntry[] {
+		const texts = this.context.texts();
+		return imagesOf(this.editor).flatMap(({ src, alt }, index): MenuEntry[] => {
+			const label = imageLabel(src, alt, texts);
+			return [
+				{ id: 'select-' + index, label, src, enabled: () => true,
+					run: (editor) => selectImage(editor, src) },
+				{ id: 'delete-' + index, label: format(texts.deleteImage, label), src,
+					enabled: (editor) => editor.isEditable,
+					run: (editor) => deleteImages(editor, src) }
+			];
+		});
+	}
+
 	private menuLines(drawn: Pick<DrawnTool, 'tool'>): MenuLine[] {
 		const spec = toolSpec(drawn.tool);
 		if (spec?.registered) {
@@ -1129,6 +1270,8 @@ export class RichTextToolbar {
 		case 'textColor':
 		case 'textBackground':
 			return this.colorEntries(drawn.tool as 'textColor' | 'textBackground');
+		case 'images':
+			return this.imageEntries();
 		default:
 			return this.tableEntries();
 		}
@@ -1162,6 +1305,10 @@ export class RichTextToolbar {
 	private renderMenu(drawn: DrawnTool): void {
 		if (this.isPalette(drawn.tool)) {
 			this.renderPalette(drawn, drawn.tool);
+			return;
+		}
+		if (drawn.tool === 'images' && !toolSpec(drawn.tool)?.registered) {
+			this.renderImages(drawn);
 			return;
 		}
 		const menu = drawn.menu!;
@@ -1215,6 +1362,53 @@ export class RichTextToolbar {
 			}
 		});
 		return button;
+	}
+
+	/**
+	 * Draws the menu of the images of the text: a line for each, its thumbnail and its name
+	 * selecting it, and a button taking it out of the text.
+	 */
+	private renderImages(drawn: DrawnTool): void {
+		const menu = drawn.menu!;
+		menu.replaceChildren();
+		this.paletteRows = [];
+		const entries = this.imageEntries();
+		if (!entries.length) {
+			const item = document.createElement('li');
+			item.setAttribute('role', 'none');
+			item.className = 'antilia-rich-text-images-none';
+			item.textContent = this.context.texts().noImages;
+			menu.append(item);
+			return;
+		}
+		for (let index = 0; index < entries.length; index += 2) {
+			const choose = entries[index]!;
+			const remove = entries[index + 1]!;
+			const item = document.createElement('li');
+			item.setAttribute('role', 'none');
+			item.className = 'antilia-rich-text-images-item';
+			const select = this.menuButton(choose, this.css('rich-text-menu-item') +
+				' antilia-rich-text-images-select');
+			const thumbnail = document.createElement('img');
+			thumbnail.className = 'antilia-rich-text-images-thumbnail';
+			thumbnail.alt = '';
+			thumbnail.loading = 'lazy';
+			thumbnail.referrerPolicy = 'no-referrer';
+			if (isSafeUrl(choose.src ?? '')) {
+				thumbnail.src = choose.src!;
+			}
+			const name = document.createElement('span');
+			name.className = 'antilia-rich-text-images-name';
+			name.textContent = choose.label;
+			select.append(thumbnail, name);
+			const trash = this.menuButton(remove, this.css('rich-text-menu-item') +
+				' antilia-rich-text-images-delete');
+			trash.setAttribute('aria-label', remove.label);
+			trash.title = remove.label;
+			trash.insertAdjacentHTML('beforeend', TRASH);
+			item.append(select, trash);
+			menu.append(item);
+		}
 	}
 
 	private swatch(className: string): HTMLElement {
@@ -1510,7 +1704,10 @@ export class RichTextToolbar {
 	}
 
 	/**
-	 * Opens the form of the image selected, or of one to insert.
+	 * Opens the form of the image selected, or of one to insert: its address and its text, and,
+	 * while the page uploads images, a zone to drop them on or choose them, or a button opening
+	 * the dialog of the uploads. The images dropped or chosen go into the text where the cursor
+	 * is, the form closing; one for the image selected takes its place, the form waiting for it.
 	 */
 	private openImage(trigger: HTMLElement): void {
 		const editor = this.editor;
@@ -1521,7 +1718,7 @@ export class RichTextToolbar {
 		const form = this.form();
 		const src = this.field(form, texts.imageUrl, 'url', attributes.src ?? '');
 		const uploads = this.context.uploads?.() ?? null;
-		const upload = uploads?.enabled() ? this.uploadButton(form, uploads) : null;
+		const upload = uploads?.enabled() ? this.uploadZone(form, uploads, selected) : null;
 		const alt = this.field(form, texts.imageAlt, 'text', attributes.alt ?? '');
 		const error = this.error(form);
 		const buttons = this.buttons(texts, null, () => undefined);
@@ -1544,72 +1741,99 @@ export class RichTextToolbar {
 			}
 			apply(address);
 		});
-		upload?.picker.addEventListener('change', () => {
-			const file = upload.picker.files?.[0];
-			upload.picker.value = '';
-			if (!file || !uploads) {
-				return;
-			}
-			const refused = uploads.refusal(file);
-			if (refused) {
-				this.showError(upload.button, error, refused);
-				return;
-			}
-			error.hidden = true;
-			upload.status.textContent = uploads.uploading(file);
-			upload.status.hidden = false;
+		if (upload && uploads) {
 			const busy = (on: boolean) => {
 				upload.button.disabled = on;
 				buttons.querySelectorAll('button').forEach((button) => {
 					button.disabled = on;
 				});
 			};
-			busy(true);
-			uploads.upload(file).then((address) => {
-				// the user closed the form meanwhile: the image is not wanted any more
-				if (form.isConnected) {
-					apply(address);
+			upload.onFiles = async (files) => {
+				error.hidden = true;
+				if (!selected || files.length !== 1) {
+					// into the text, where the cursor is, a mark standing for each meanwhile
+					this.closeForm();
+					void uploadFiles(uploads, files, editor.state.selection.from);
+					return;
 				}
-			}, (failure: unknown) => {
-				busy(false);
-				upload.status.hidden = true;
-				if (form.isConnected) {
-					this.showError(upload.button, error, failure instanceof Error ? failure.message :
-						String(failure));
+				busy(true);
+				const { files: checked, refused } = await uploads.check(files);
+				const file = checked[0];
+				if (!file) {
+					busy(false);
+					if (form.isConnected && refused.length) {
+						this.showError(upload.button, error, refused.join(' '));
+					}
+					return;
 				}
-			});
-		});
+				upload.status.textContent = uploads.uploading(file);
+				upload.status.hidden = false;
+				uploads.upload(file).then((address) => {
+					if (form.isConnected) {
+						apply(address);
+					} else {
+						// the user closed the form meanwhile: the image is not wanted any more
+						uploads.discard([address]);
+					}
+				}, (failure: unknown) => {
+					busy(false);
+					upload.status.hidden = true;
+					if (form.isConnected) {
+						this.showError(upload.button, error, failure instanceof Error ?
+							failure.message : String(failure));
+					}
+				});
+			};
+		}
 		this.showForm(trigger, texts.image, form, src);
 	}
 
 	/**
-	 * Adds a button choosing a file to upload to the form of an image, with the file field it
-	 * opens, hidden, and the line telling the upload.
+	 * Adds to the form of an image the zone to drop images on, with a button choosing them, or,
+	 * for the dialog of the uploads, a button opening it; and the line telling an upload.
+	 *
+	 * @param selected whether the form is of an image selected, which the dialog does not replace
+	 * @returns the button, and what the files dropped or chosen go to, which the form sets
 	 */
-	private uploadButton(form: HTMLFormElement, uploads: UploadHost): { button: HTMLButtonElement;
-		picker: HTMLInputElement; status: HTMLElement } {
+	private uploadZone(form: HTMLFormElement, uploads: UploadHost, selected: boolean): {
+		button: HTMLButtonElement; status: HTMLElement; onFiles: (files: File[]) => void } {
 		const texts = this.context.texts();
+		const look = this.context.look;
 		const box = document.createElement('div');
 		box.className = 'antilia-rich-text-form-upload';
-		const button = document.createElement('button');
-		button.type = 'button';
-		button.className = lookClasses(this.context.look, 'button', 'button-secondary',
-			'button-small');
-		button.textContent = texts.uploadImage;
-		const picker = document.createElement('input');
-		picker.type = 'file';
-		picker.accept = uploads.types().join(',');
-		picker.hidden = true;
-		picker.tabIndex = -1;
-		picker.className = 'antilia-rich-text-form-file';
-		button.addEventListener('click', () => picker.click());
 		const status = document.createElement('p');
 		status.className = 'antilia-rich-text-form-status';
 		status.setAttribute('role', 'status');
 		status.hidden = true;
-		box.append(button, picker, status);
+		const upload = { button: null as unknown as HTMLButtonElement, status,
+			onFiles: (_files: File[]) => undefined as void };
+		if (uploads.dialog() && !selected) {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = lookClasses(look, 'button', 'button-secondary', 'button-small');
+			button.textContent = texts.uploadImage;
+			button.addEventListener('click', () => {
+				const editor = this.editor;
+				this.closeForm();
+				openUploadDialog(uploads, texts, look, (srcs) => {
+					if (!editor.isDestroyed) {
+						editor.chain().focus().insertContent(srcs.map((src) => ({ type: 'image',
+							attrs: { src, alt: null } }))).run();
+					} else {
+						uploads.discard(srcs);
+					}
+				});
+			});
+			upload.button = button;
+			box.append(button);
+		} else {
+			const zone = dropZone(texts, look, uploads.types(), (files) => upload.onFiles(files));
+			upload.button = zone.button;
+			box.append(zone.element);
+		}
+		box.append(status);
 		form.append(box);
-		return { button, picker, status };
+		return upload;
 	}
 
 	private toolButton(tool: RichTextTool): HTMLButtonElement | undefined {

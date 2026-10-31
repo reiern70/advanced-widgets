@@ -45,6 +45,7 @@ import com.antiliacode.widgets.richtext.IRichTextSuggester;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageDeletion;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
@@ -434,7 +435,7 @@ class RichTextEditorPageTest
 			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
 
 		form = tester.newFormTester(controls);
-		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 25 }, true);
+		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 26 }, true);
 		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
 		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
 			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());
@@ -485,14 +486,19 @@ class RichTextEditorPageTest
 		assertEquals("[\"full\",\"compact\",\"none\"]", config.getJSONArray("toolbars").toString());
 		assertEquals("richTextEditor", page.getFrameworkDemo());
 		assertEquals("Highlight the code", config.getJSONObject("texts").getString("highlight"));
-		assertTrue(config.getJSONObject("texts").getString("extras").endsWith(", 2 MB at most."));
+		assertTrue(config.getJSONObject("texts").getString("extras").contains("2 MB and 2400 × 2400 " +
+			"pixels at most, 5 at a time"));
 		// the apps upload to the page
 		RichTextImageUploadBehavior uploads = page.getBehaviors(RichTextImageUploadBehavior.class)
 			.get(0);
 		assertEquals(uploads.getUploadUrl(), config.getString("uploadUrl"));
-		assertEquals("[\"image/png\",\"image/jpeg\",\"image/gif\",\"image/webp\"]",
+		assertEquals("[\"image/png\",\"image/jpeg\",\"image/gif\",\"image/webp\",\"image/avif\"]",
 			config.getJSONArray("uploadTypes").toString());
 		assertEquals(RichTextImages.MAX_SIZE.bytes(), config.getLong("uploadMaxSize"));
+		assertEquals(2400, config.getInt("uploadMaxWidth"));
+		assertEquals(2400, config.getInt("uploadMaxHeight"));
+		assertEquals(RichTextImages.MAX_COUNT, config.getInt("uploadMaxCount"));
+		assertEquals(RichTextImages.MAX_DIMENSIONS, uploads.getMaxDimensions());
 	}
 
 	@Test
@@ -504,7 +510,7 @@ class RichTextEditorPageTest
 		tester.assertContains("antilia-rich-text-highlight.*\\.js");
 		tester.assertContains("antilia-code-editor.*\\.css");
 		tester.assertContains("\"highlight\":true");
-		tester.assertContains("2 MB at most");
+		tester.assertContains("2 MB and 2400 × 2400 pixels at most");
 
 		FormTester form = tester.newFormTester(inCase("articleTitle", "controls"));
 		form.setValue("highlight", false);
@@ -516,14 +522,16 @@ class RichTextEditorPageTest
 	@Test
 	void uploadsImagesWhichTheApplicationServes() throws IOException
 	{
+		org.apache.wicket.Page page = tester.getLastRenderedPage();
 		RichTextEditor editor = editor(EDITOR);
 		assertTrue(editor.isImageUploading());
 		assertEquals(RichTextImages.MAX_SIZE, editor.getImageMaxSize());
 		assertTrue(editor(NOTES).isImageUploading());
 		tester.assertContains("\"uploadUrl\":");
 
+		// a header telling 640 × 480 pixels
 		byte[] png = { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 13, 'I', 'H',
-				'D', 'R' };
+				'D', 'R', 0, 0, 2, (byte)0x80, 0, 0, 1, (byte)0xe0 };
 		Path file = Files.createTempFile("bird", ".png");
 		try
 		{
@@ -551,6 +559,35 @@ class RichTextEditorPageTest
 		assertEquals(404, tester.getLastResponse().getStatus());
 		tester.executeUrl("rich-text-images/" + "0".repeat(32) + ".png");
 		assertEquals(404, tester.getLastResponse().getStatus());
+
+		// the article saved, without the image uploaded, which never went into it: it goes
+		tester.startPage(page);
+		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
+		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals(404, tester.getLastResponse().getStatus());
+	}
+
+	@Test
+	void uploadsInADialogAndDeletesAtOnceWhenTold()
+	{
+		RichTextEditor editor = editor(EDITOR);
+		assertFalse(editor.isImageUploadDialog());
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getImageDeletion());
+		assertEquals(RichTextImages.MAX_DIMENSIONS, editor.getImageMaxDimensions());
+		assertTrue(editor.isImageScaling());
+		assertEquals(RichTextImages.MAX_COUNT, editor.getImageMaxCount());
+		tester.assertContains("Delete the images taken out at once, not when saved");
+
+		String controls = inCase("articleTitle", "controls");
+		FormTester form = tester.newFormTester(controls);
+		form.setValue("uploadDialog", true);
+		tester.executeAjaxEvent(controls + ":uploadDialog", "change");
+		form = tester.newFormTester(controls);
+		form.setValue("deleteAtOnce", true);
+		tester.executeAjaxEvent(controls + ":deleteAtOnce", "change");
+		assertTrue(editor(EDITOR).isImageUploadDialog());
+		assertEquals(RichTextImageDeletion.AT_ONCE, editor(EDITOR).getImageDeletion());
+		tester.assertContains("\"uploadDialog\":true");
 	}
 
 	@Test
