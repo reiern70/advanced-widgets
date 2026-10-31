@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -26,7 +26,9 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -44,6 +46,7 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
+import com.antiliacode.widgets.modal.Modal;
 import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizeAxis;
@@ -94,11 +97,24 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * the code editor. The HTML stays plain: the colors are the editor's alone.
  * <p>
  * With {@link #setImageStore(IRichTextImageStore) a store of images}, the user uploads images:
- * chosen in the form of the image, dropped into the text or pasted. A behavior of the editor takes
- * each, no larger than {@link #setImageMaxSize(Bytes) allowed} and of
- * {@link #setImageTypes(Set) a type allowed} as its bytes say, has the store keep it and answers
- * the address it is served at, which the image takes and the cleaning checks as any other (see
- * {@link RichTextImageUploadBehavior}).
+ * dropped on the zone of the form of the image or chosen there, several at once, or, with
+ * {@link #setImageUploadDialog(boolean) the dialog}, in a dialog listing the files as they upload;
+ * dropped into the text or pasted. A behavior of the editor takes each, no larger than
+ * {@link #setImageMaxSize(Bytes) allowed}, of {@link #setImageTypes(Collection) a type allowed} as
+ * its bytes say, and no wider and no higher than {@link #setImageMaxDimensions(
+ * RichTextImageDimensions) allowed} as its header says, has the store keep it and answers the
+ * address it is served at, which the image takes and the cleaning checks as any other (see
+ * {@link RichTextImageUploadBehavior}). The browser checks the same before sending a file, and
+ * {@link #setImageMaxCount(Integer) how many} one drop or choice takes; it scales a picture too
+ * large down instead, when {@link #setImageScaling(boolean) allowed} and the user ticks it.
+ * <p>
+ * The tool {@link RichTextTool#IMAGES} lists the images of the text, each taking it out. The
+ * browser tells the server the images the user took out of the text, at once, via Ajax:
+ * {@link #onImagesRemoved(AjaxRequestTarget, Set)} and a {@link RichTextImagesRemovedEvent} hear of
+ * those the editor knows, those of the text it was shown with and those uploaded since, and
+ * {@link #deleteImages(Set)}, by the store, deletes them, at once or once the text is saved
+ * ({@link #markSaved(AjaxRequestTarget)}, {@link #deleteRemovedImages()}), as
+ * {@link #setImageDeletion(RichTextImageDeletion) the mode} says.
  * <p>
  * The browser checks the spelling of the text unless {@link #setSpellcheck(Boolean) told
  * otherwise}, in {@link #setTextLanguage(Locale) its language}. With
@@ -191,6 +207,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen",
 		"colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink",
 		"uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType",
+		"images", "noImages", "deleteImage", "dropImages", "chooseImages", "uploadImagesTitle",
+		"uploadDone", "removeFile", "insertImages", "cancel", "upload", "uploadTooMany",
+		"uploadTooBig", "scaleTitle", "scaleText", "scaleDown",
 		"proofreadSpelling", "proofreadGrammar", "proofreadStyle", "proofreadReplacements",
 		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone",
 		"pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms", "pasteImages", "pasteTables",
@@ -218,7 +237,29 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
 
-	private Set<RichTextImageType> imageTypes = EnumSet.allOf(RichTextImageType.class);
+	private Set<IRichTextImageType> imageTypes = new LinkedHashSet<>(RichTextImageType.ALL);
+
+	private RichTextImageDimensions imageMaxDimensions;
+
+	private Integer imageMaxCount;
+
+	private boolean imageUploadDialog;
+
+	private boolean imageScaling;
+
+	private RichTextImageDeletion imageDeletion = RichTextImageDeletion.ON_SAVE;
+
+	/** The behavior hearing of the images the user took out of the text, made with the first store. */
+	private AbstractDefaultAjaxBehavior imagesRemoval;
+
+	/** The images of the text of the model the editor was last shown with. */
+	private Set<String> imagesShown = new LinkedHashSet<>();
+
+	/** The hash of that text, to tell another text from it. */
+	private int shownHash;
+
+	/** The images the user took out of the text since it was last saved, to delete once it is. */
+	private final Set<String> imagesRemoved = new LinkedHashSet<>();
 
 	private IRichTextProofreader proofreader;
 
@@ -627,13 +668,27 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 					return isImageUploading();
 				}
 			};
-			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes);
+			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
+				.setMaxDimensions(imageMaxDimensions);
 			add(imageUpload);
+			imagesRemoval = new AbstractDefaultAjaxBehavior()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected void respond(AjaxRequestTarget target)
+				{
+					onImagesRemovedSent(target, RichTextImageUploadBehavior.urlsOf(getRequest()
+						.getRequestParameters().getParameterValue(
+							RichTextImageUploadBehavior.REMOVED_PARAMETER).toString("[]")));
+				}
+			};
+			add(imagesRemoval);
 		}
 		return this;
 	}
 
-	private String storeImage(FileUpload image, RichTextImageType type) throws IOException
+	private String storeImage(FileUpload image, IRichTextImageType type) throws IOException
 	{
 		if (imageStore == null)
 		{
@@ -667,28 +722,358 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
-	 * @return the types of the images the user uploads
+	 * @return the types of the images the user uploads, in their order
 	 */
-	public Set<RichTextImageType> getImageTypes()
+	public Set<IRichTextImageType> getImageTypes()
 	{
 		return Collections.unmodifiableSet(imageTypes);
 	}
 
 	/**
 	 * @param imageTypes
-	 *            the types of the images the user uploads, as their bytes say; all of them by
-	 *            default
+	 *            the types of the images the user uploads, as their bytes say, in the order the
+	 *            messages name them: those of {@link RichTextImageType} and those of the
+	 *            application's own ({@link IRichTextImageType}); all those built in by default
 	 * @return {@code this}
 	 */
-	public RichTextEditor setImageTypes(Set<RichTextImageType> imageTypes)
+	public RichTextEditor setImageTypes(Collection<? extends IRichTextImageType> imageTypes)
 	{
-		Args.notEmpty(imageTypes, "imageTypes");
-		this.imageTypes = EnumSet.copyOf(imageTypes);
+		this.imageTypes = RichTextImageUploadBehavior.checkedTypes(imageTypes);
 		if (imageUpload != null)
 		{
-			imageUpload.setTypes(imageTypes);
+			imageUpload.setTypes(this.imageTypes);
 		}
 		return this;
+	}
+
+	/**
+	 * @return the widest and the highest image the user uploads, {@code null} for no limit
+	 * @since 10.11.0
+	 */
+	public RichTextImageDimensions getImageMaxDimensions()
+	{
+		return imageMaxDimensions;
+	}
+
+	/**
+	 * @param imageMaxDimensions
+	 *            the widest and the highest image the user uploads, in pixels; {@code null} for no
+	 *            limit, as by default. The browser reads them from the file before sending it, and
+	 *            the server again from its header, without decoding the picture: a file of a few
+	 *            kilobytes may hold a picture of many millions of pixels, which every browser
+	 *            showing the text would decode. An image larger is refused, or scaled down in the
+	 *            browser while {@link #setImageScaling(boolean) the user may}.
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageMaxDimensions(RichTextImageDimensions imageMaxDimensions)
+	{
+		this.imageMaxDimensions = imageMaxDimensions;
+		if (imageUpload != null)
+		{
+			imageUpload.setMaxDimensions(imageMaxDimensions);
+		}
+		return this;
+	}
+
+	/**
+	 * @param maxWidth
+	 *            the widest image the user uploads, in pixels
+	 * @param maxHeight
+	 *            the highest image the user uploads, in pixels
+	 * @return {@code this}
+	 * @see #setImageMaxDimensions(RichTextImageDimensions)
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageMaxDimensions(int maxWidth, int maxHeight)
+	{
+		return setImageMaxDimensions(new RichTextImageDimensions(maxWidth, maxHeight));
+	}
+
+	/**
+	 * @return how many images one drop or choice of the user takes at most, {@code null} for no
+	 *         limit
+	 * @since 10.11.0
+	 */
+	public Integer getImageMaxCount()
+	{
+		return imageMaxCount;
+	}
+
+	/**
+	 * @param imageMaxCount
+	 *            how many images one drop, choice or paste of the user takes at most, the first
+	 *            ones, the others left out with a message; {@code null} for no limit, as by
+	 *            default. A limit of the browser alone: each image is a request of its own, which
+	 *            the server checks as any other; a store limits how many a user keeps.
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageMaxCount(Integer imageMaxCount)
+	{
+		this.imageMaxCount = imageMaxCount == null ? null : Math.max(imageMaxCount, 1);
+		return this;
+	}
+
+	/**
+	 * @return whether the form of the image opens a dialog to upload images in
+	 * @since 10.11.0
+	 */
+	public boolean isImageUploadDialog()
+	{
+		return imageUploadDialog;
+	}
+
+	/**
+	 * @param imageUploadDialog
+	 *            whether the form of the image has a button opening a dialog to upload images in:
+	 *            a zone to drop them on or choose them, and the list of the files, each uploading,
+	 *            uploaded or refused and why, which the user takes out before the images go into
+	 *            the text; {@code false}, the default, for the zone in the form itself, each image
+	 *            going into the text as soon as it is uploaded
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageUploadDialog(boolean imageUploadDialog)
+	{
+		this.imageUploadDialog = imageUploadDialog;
+		return this;
+	}
+
+	/**
+	 * @return whether the user may have a picture too large scaled down rather than refused
+	 * @since 10.11.0
+	 */
+	public boolean isImageScaling()
+	{
+		return imageScaling;
+	}
+
+	/**
+	 * @param imageScaling
+	 *            whether a dialog offers the user to scale down the pictures larger than
+	 *            {@link #setImageMaxDimensions(RichTextImageDimensions) the limit}, each by a box to
+	 *            tick, rather than refusing them; {@code false} by default. The browser scales a
+	 *            picture down before sending it, in its type when it can write it, else in PNG: an
+	 *            animated GIF loses its animation. The server checks the picture it gets as any
+	 *            other.
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageScaling(boolean imageScaling)
+	{
+		this.imageScaling = imageScaling;
+		return this;
+	}
+
+	/**
+	 * @return when the images the user took out of the text are deleted
+	 * @since 10.11.0
+	 */
+	public RichTextImageDeletion getImageDeletion()
+	{
+		return imageDeletion;
+	}
+
+	/**
+	 * @param imageDeletion
+	 *            when the images the user took out of the text are deleted: at once, or once the
+	 *            text is saved, {@link RichTextImageDeletion#ON_SAVE} by default
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor setImageDeletion(RichTextImageDeletion imageDeletion)
+	{
+		this.imageDeletion = Args.notNull(imageDeletion, "imageDeletion");
+		return this;
+	}
+
+	/**
+	 * @return the Ajax behavior hearing of the images taken out of the text, {@code null} until the
+	 *         editor has a store
+	 */
+	AbstractDefaultAjaxBehavior getImagesRemoval()
+	{
+		return imagesRemoval;
+	}
+
+	/**
+	 * @return the images of the text of the model, as its format writes them
+	 */
+	private Set<String> modelImages()
+	{
+		return RichTextImageAddresses.of(getModelObject(), getFormat());
+	}
+
+	/**
+	 * @return the images the editor knows: those of the text of the model it was shown with, and
+	 *         those uploaded since it was last saved
+	 */
+	private Set<String> knownImages()
+	{
+		Set<String> known = new LinkedHashSet<>(imagesShown);
+		if (imageUpload != null)
+		{
+			known.addAll(imageUpload.getUploaded());
+		}
+		return known;
+	}
+
+	/**
+	 * The browser told of images the user took out of the text: those the editor knows are
+	 * deleted now, or once the text is saved, then told of.
+	 */
+	private void onImagesRemovedSent(AjaxRequestTarget target, List<String> urls)
+	{
+		if (imageStore == null || !isImageEditing())
+		{
+			return;
+		}
+		Set<String> known = knownImages();
+		Set<String> removed = new LinkedHashSet<>();
+		urls.stream().filter(known::contains).forEach(removed::add);
+		if (removed.isEmpty())
+		{
+			return;
+		}
+		boolean now = imageDeletion == RichTextImageDeletion.AT_ONCE;
+		if (now)
+		{
+			deleteImages(Collections.unmodifiableSet(removed));
+			imagesShown.removeAll(removed);
+			imageUpload.forget(removed);
+		}
+		else
+		{
+			imagesRemoved.addAll(removed);
+		}
+		Set<String> told = Collections.unmodifiableSet(removed);
+		onImagesRemoved(target, told);
+		send(this, Broadcast.BUBBLE, new RichTextImagesRemovedEvent(this, told, now, target));
+	}
+
+	/**
+	 * Called when the browser told that the user took images out of the text, those the editor
+	 * knows, after they were deleted in {@link RichTextImageDeletion#AT_ONCE}, before the
+	 * {@link RichTextImagesRemovedEvent}. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param urls
+	 *            the addresses of the images
+	 * @since 10.11.0
+	 */
+	protected void onImagesRemoved(AjaxRequestTarget target, Set<String> urls)
+	{
+	}
+
+	/**
+	 * Deletes images the user took out of the text, at once or once the text is saved, as
+	 * {@link #getImageDeletion() the mode} says: each by {@link IRichTextImageStore#delete(String)}
+	 * by default. A page overrides it to decide which, knowing its texts: an image pasted into
+	 * another one stays, for example.
+	 *
+	 * @param urls
+	 *            the addresses of the images, those of the text the editor was shown with and those
+	 *            uploaded into it, never others
+	 * @since 10.11.0
+	 */
+	protected void deleteImages(Set<String> urls)
+	{
+		IRichTextImageStore store = imageStore;
+		if (store != null)
+		{
+			urls.forEach(url -> RichTextImageUploadBehavior.delete(store, url));
+		}
+	}
+
+	/**
+	 * Gives the model the text, which the images the user took out of are still told of against,
+	 * until it is saved.
+	 */
+	@Override
+	public void updateModel()
+	{
+		super.updateModel();
+		shownHash = hash(getModelObject());
+	}
+
+	/**
+	 * Tells the browser the text of the model was saved, then deletes the images the user took
+	 * out of it, as {@link #deleteRemovedImages()} does.
+	 */
+	@Override
+	public RichTextEditor markSaved(AjaxRequestTarget target)
+	{
+		super.markSaved(target);
+		return deleteRemovedImages();
+	}
+
+	/**
+	 * Deletes, by {@link #deleteImages(Set)}, the images the user took out of the text since it was
+	 * last saved, and those uploaded since that it does not hold: the text of the model is saved
+	 * without them. {@link #markSaved(AjaxRequestTarget)} calls it; call it once the text is saved
+	 * otherwise, by a form sent without Ajax for example. A text the page put in the model since
+	 * the editor was shown, not the user's, deletes nothing.
+	 *
+	 * @return {@code this}
+	 * @since 10.11.0
+	 */
+	public RichTextEditor deleteRemovedImages()
+	{
+		if (imageStore == null || imageUpload == null)
+		{
+			return this;
+		}
+		String text = getModelObject();
+		Set<String> saved = modelImages();
+		Set<String> gone = new LinkedHashSet<>();
+		if (hash(text) == shownHash)
+		{
+			gone.addAll(imagesRemoved);
+			gone.addAll(imageUpload.getUploaded());
+			gone.removeAll(saved);
+		}
+		imageUpload.forget(imageUpload.getUploaded());
+		imagesRemoved.clear();
+		imagesShown = saved;
+		shownHash = hash(text);
+		if (!gone.isEmpty())
+		{
+			deleteImages(Collections.unmodifiableSet(gone));
+		}
+		return this;
+	}
+
+	/**
+	 * Remembers the images of the text the editor is shown with. Another text than before, which
+	 * the page put in the model, forgets the images the user took out of the one before.
+	 */
+	private void showImages()
+	{
+		String text = getModelObject();
+		int hash = hash(text);
+		if (hash != shownHash)
+		{
+			shownHash = hash;
+			imagesRemoved.clear();
+		}
+		imagesShown = modelImages();
+	}
+
+	private static int hash(String text)
+	{
+		return text == null ? 0 : text.hashCode();
+	}
+
+	/**
+	 * @return whether the user changes the images of the text now: the editor is enabled, not read
+	 *         only, with the feature image
+	 */
+	private boolean isImageEditing()
+	{
+		return !isReadOnly() && getFeatures().contains(RichTextFeature.IMAGE) &&
+			isEnabledInHierarchy();
 	}
 
 	/**
@@ -831,14 +1216,17 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public boolean isImageUploading()
 	{
-		return imageStore != null && !isReadOnly() && getFeatures().contains(RichTextFeature.IMAGE) &&
-			isEnabledInHierarchy();
+		return imageStore != null && isImageEditing();
 	}
 
 	@Override
 	protected void renderEditorHead(IHeaderResponse response)
 	{
 		renderHeadItems(response);
+		if (isImageUploading() && (imageUploadDialog || imageScaling && imageMaxDimensions != null))
+		{
+			response.render(CssHeaderItem.forReference(Modal.CSS));
+		}
 		if (highlighting)
 		{
 			renderHighlightItems(response);
@@ -908,6 +1296,22 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			options.put("uploadUrl", imageUpload.getUploadUrl());
 			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
 			options.put("uploadMaxSize", imageMaxSize.bytes());
+			if (imageMaxDimensions != null)
+			{
+				options.put("uploadMaxWidth", imageMaxDimensions.width());
+				options.put("uploadMaxHeight", imageMaxDimensions.height());
+				options.put("uploadScaling", imageScaling);
+			}
+			if (imageMaxCount != null)
+			{
+				options.put("uploadMaxCount", imageMaxCount.intValue());
+			}
+			if (imageUploadDialog)
+			{
+				options.put("uploadDialog", true);
+			}
+			showImages();
+			options.put("imagesUrl", imagesRemoval.getCallbackUrl().toString());
 		}
 		if (isProofreading())
 		{

@@ -117,10 +117,22 @@ export interface RichTextEditorProps {
 	 * highlighter when left out while highlighting, none otherwise; false for none.
 	 */
 	codeLanguages?: readonly string[] | false;
-	/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+	/** The types of the images the user may upload: PNG, JPEG, GIF, WebP and AVIF when left out. */
 	uploadTypes?: readonly string[];
 	/** The largest image the user may upload, in bytes; none when left out. */
 	uploadMaxSize?: number | null;
+	/**
+	 * The widest and the highest picture the user may upload, in pixels, read from the header of
+	 * the file; none when left out. Both, or none.
+	 */
+	uploadMaxWidth?: number | null;
+	uploadMaxHeight?: number | null;
+	/** Whether the user may tick pictures too large to scale down rather than refusing them. */
+	uploadScaling?: boolean;
+	/** How many images one drop, choice or paste takes at most; none when left out. */
+	uploadMaxCount?: number | null;
+	/** Whether the form of the image opens the dialog of the uploads rather than its own zone. */
+	uploadDialog?: boolean;
 	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again; false when left out.
@@ -155,6 +167,12 @@ export interface RichTextEditorProps {
 	 * (see uploadImageTo of the core); without it an image is an address the user gives.
 	 */
 	onUpload?(file: File): Promise<string>;
+	/**
+	 * Called a moment after the user took images out of the text, or uploaded some that never went
+	 * into it, with their addresses, for the page to delete them, at once or once the text is saved
+	 * (see deleteImagesAt of the core).
+	 */
+	onImagesRemoved?(urls: string[]): void;
 }
 
 /**
@@ -185,7 +203,8 @@ export interface RichTextEditorHandle {
  * it a state to start in, one onStateChange reported, to show it again as the user left it. A ref
  * gets a {@link RichTextEditorHandle}. With highlight, its code blocks show in the colors of their
  * language, which the menu of the tool code block chooses; with onUpload, the user uploads images
- * by the form of the image, or by dropping or pasting them into the text.
+ * by the form of the image or its dialog, or by dropping or pasting them into the text, within the
+ * limits given; onImagesRemoved hears of those taken out of the text.
  *
  * The HTML it gives comes from the user: a server keeping it cleans it, as Wicket's
  * RichTextEditor does.
@@ -198,7 +217,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
 			suggesters, limit, count, resizable, minWidth,
 			minHeight, maxWidth, maxHeight, stateDelay, extensions, pasteNotice, texts, highlight,
-			codeLanguages, uploadTypes, uploadMaxSize, name, id, className } = props;
+			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
+			uploadMaxCount, uploadDialog, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
@@ -237,7 +257,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				state: current.state, stateDelay: current.stateDelay, extensions: current.extensions,
 				pasteNotice: current.pasteNotice, texts: current.texts, look, highlight: highlighterOf(current.highlight) ?? false,
 				codeLanguages: current.codeLanguages, uploadTypes: current.uploadTypes,
-				uploadMaxSize: current.uploadMaxSize, onUpload: uploaderOf(latest),
+				uploadMaxSize: current.uploadMaxSize, uploadMaxWidth: current.uploadMaxWidth,
+				uploadMaxHeight: current.uploadMaxHeight, uploadScaling: current.uploadScaling,
+				uploadMaxCount: current.uploadMaxCount, uploadDialog: current.uploadDialog,
+				onUpload: uploaderOf(latest),
+				onImagesRemoved: (urls) => latest.current.onImagesRemoved?.(urls),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
 				onBlur: (next) => latest.current.onBlur?.(next),
@@ -277,8 +301,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 		useLayoutEffect(() => {
 			instance.current?.configure({ highlight: highlighterOf(highlight) ?? false,
 				codeLanguages, uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
-				onUpload: uploaderOf(latest) });
-		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploads]);
+				uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
+				uploadScaling: !!uploadScaling, uploadMaxCount: uploadMaxCount ?? null,
+				uploadDialog: !!uploadDialog, onUpload: uploaderOf(latest) });
+		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
+			uploadScaling, uploadMaxCount, uploadDialog, uploads]);
 
 		useLayoutEffect(() => {
 			const editor = instance.current;

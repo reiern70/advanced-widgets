@@ -17,12 +17,13 @@
  * editor in, with a drop-down and check boxes switching the toolbar, the bubble menu, reading only,
  * the count of the words and the colors of the code blocks, and the HTML the editor gives; notes
  * in Markdown, and the Markdown the editor gives. The images the user uploads go to the Wicket
- * page, which keeps them and answers their addresses; the page checks the article too, with the
+ * page, which keeps them and answers their addresses, within its limits, and deletes those the user
+ * took out of a text once the app saves it (ImagesTakenOut); the page checks the article too, with the
  * proofreader of its writing case, and offers its people after @, its topics after # and its terms
  * on Ctrl+Space.
  */
 
-import { proofreadAt, suggestAt, uploadImageTo, type RichTextEditorState,
+import { deleteImagesAt, proofreadAt, suggestAt, uploadImageTo, type RichTextEditorState,
 	type RichTextEditorTexts, type RichTextProofreader, type RichTextSuggester,
 	type RichTextTool } from '@antilia/core';
 
@@ -71,6 +72,10 @@ export interface RichTextEditorConfig {
 	uploadUrl: string;
 	uploadTypes: string[];
 	uploadMaxSize: number;
+	/** The widest and the highest image, and how many at a time. */
+	uploadMaxWidth: number;
+	uploadMaxHeight: number;
+	uploadMaxCount: number;
 	/** Where the apps have their texts checked: the page's own behavior. */
 	proofreadUrl: string;
 	/** Where the apps ask for suggestions, and the suggesters of the page. */
@@ -97,6 +102,38 @@ export function suggesters(config: RichTextEditorConfig): RichTextSuggester[] {
  */
 export function uploader(config: RichTextEditorConfig): (file: File) => Promise<string> {
 	return uploadImageTo(config.uploadUrl);
+}
+
+/**
+ * The images the user took out of a text of an app, or uploaded and never put into it, which the
+ * page deletes once the app saved the text: those the text saved does not hold. The page deletes
+ * those it uploaded alone.
+ */
+export class ImagesTakenOut {
+	private readonly urls = new Set<string>();
+
+	constructor(private readonly remove: (urls: readonly string[]) => Promise<string[]>) {}
+
+	/** Notes images taken out, as onImagesRemoved tells them. */
+	add(urls: readonly string[]): void {
+		urls.forEach((url) => this.urls.add(url));
+	}
+
+	/** Has the page delete those the text saved does not hold. */
+	saved(text: string): void {
+		const gone = Array.from(this.urls).filter((url) => !text.includes(url));
+		this.urls.clear();
+		if (gone.length) {
+			void this.remove(gone).catch(() => undefined);
+		}
+	}
+}
+
+/**
+ * @returns what keeps the images taken out of a text of the apps, which the page deletes
+ */
+export function imagesTakenOut(config: RichTextEditorConfig): ImagesTakenOut {
+	return new ImagesTakenOut(deleteImagesAt(config.uploadUrl));
 }
 
 /** A text the app keeps: the text, the text last saved and the state of its editor. */

@@ -14,9 +14,14 @@
 package com.antiliacode.widgets.richtext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +56,10 @@ class RichTextImageTypeTest
 		assertEquals(RichTextImageType.GIF, RichTextImageType.detect(ascii("GIF89a and more")));
 		assertEquals(RichTextImageType.WEBP, RichTextImageType.detect(
 			ascii("RIFF\u0010\u0000\u0000\u0000WEBPVP8 ")));
+		assertEquals(RichTextImageType.AVIF, RichTextImageType.detect(
+			ascii("\u0000\u0000\u0000\u0014ftypavif\u0000\u0000\u0000\u0000mif1")));
+		assertEquals(RichTextImageType.AVIF, RichTextImageType.detect(
+			ascii("\u0000\u0000\u0000\u0018ftypmif1\u0000\u0000\u0000\u0000mif1avis")));
 	}
 
 	@Test
@@ -64,6 +73,12 @@ class RichTextImageTypeTest
 		assertNull(RichTextImageType.detect(bytes(0x89, 'P', 'N', 'G')));
 		assertNull(RichTextImageType.detect(bytes(0xff, 0xd8)));
 		assertNull(RichTextImageType.detect(ascii("GIF90a")));
+		// HEIC, of the same family as AVIF, and an AVIF brand past the box
+		assertNull(RichTextImageType.detect(
+			ascii("\u0000\u0000\u0000\u0018ftypheic\u0000\u0000\u0000\u0000mif1heic")));
+		assertNull(RichTextImageType.detect(
+			ascii("\u0000\u0000\u0000\u0010ftypmif1\u0000\u0000\u0000\u0000avif")));
+		assertNull(RichTextImageType.detect(ascii("\u0000\u0000\u0000\u0010ftyp")));
 	}
 
 	@Test
@@ -73,6 +88,38 @@ class RichTextImageTypeTest
 		assertEquals("jpg", RichTextImageType.JPEG.getExtension());
 		assertEquals("WebP", RichTextImageType.WEBP.getLabel());
 		assertEquals("image/webp", RichTextImageType.WEBP.getMimeType());
-		assertEquals(12, RichTextImageType.HEAD);
+		assertEquals("image/avif", RichTextImageType.AVIF.getMimeType());
+		assertEquals("avif", RichTextImageType.AVIF.getExtension());
+		assertEquals(32, IRichTextImageType.HEAD);
+		assertEquals(List.of(RichTextImageType.values()), RichTextImageType.ALL);
+	}
+
+	@Test
+	void detectsAmongTheTypesGiven()
+	{
+		byte[] gif = ascii("GIF89a");
+		assertEquals(RichTextImageType.GIF, IRichTextImageType.detect(gif, List.of(
+			RichTextImageType.PNG, RichTextImageType.GIF)));
+		assertNull(IRichTextImageType.detect(gif, List.of(RichTextImageType.PNG)));
+		assertNull(IRichTextImageType.detect(null, List.of(RichTextImageType.GIF)));
+		assertNull(IRichTextImageType.detect(gif, null));
+	}
+
+	@Test
+	void hasDimensionsThatFitALimitOrAreScaledDownToIt()
+	{
+		RichTextImageDimensions max = new RichTextImageDimensions(100, 100);
+		assertTrue(new RichTextImageDimensions(100, 80).fits(max));
+		assertTrue(new RichTextImageDimensions(400, 300).fits(null));
+		assertFalse(new RichTextImageDimensions(101, 80).fits(max));
+		assertEquals(new RichTextImageDimensions(100, 25), new RichTextImageDimensions(400, 100)
+			.scaledToFit(max));
+		assertEquals(new RichTextImageDimensions(1, 100), new RichTextImageDimensions(1, 5000)
+			.scaledToFit(max));
+		RichTextImageDimensions small = new RichTextImageDimensions(10, 20);
+		assertSame(small, small.scaledToFit(max));
+		assertEquals(new RichTextImageDimensions(20, 10), small.turned());
+		assertEquals("640 × 480", new RichTextImageDimensions(640, 480).toString());
+		assertThrows(IllegalArgumentException.class, () -> new RichTextImageDimensions(-1, 2));
 	}
 }

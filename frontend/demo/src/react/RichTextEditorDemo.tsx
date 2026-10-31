@@ -17,8 +17,8 @@ import { useState } from 'react';
 import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
-import { describe, proofreader as proofreaderOf, richText, suggesters as suggestersOf,
-	toolbarOf, uploader, type RichText,
+import { describe, imagesTakenOut, proofreader as proofreaderOf, richText,
+	suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 	type RichTextEditorConfig } from '../rich-text-editor.js';
 
 /**
@@ -36,6 +36,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const [count, setCount] = useState(true);
 	const [highlight, setHighlight] = useState(true);
 	const [onUpload] = useState(() => uploader(config));
+	const [articleImages] = useState(() => imagesTakenOut(config));
+	const [notesImages] = useState(() => imagesTakenOut(config));
 	const [proofreader] = useState(() => proofreaderOf(config));
 	const [suggesters] = useState(() => suggestersOf(config));
 	const [heard, setHeard] = useState(texts.appStart);
@@ -47,10 +49,19 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 		</label>
 	);
 	const saveArticle = () => {
-		setArticle((all) => ({ ...all, saved: all.text }));
+		setArticle((all) => {
+			articleImages.saved(all.text);
+			return { ...all, saved: all.text };
+		});
 		setHeard(texts.appSaved);
 	};
-	const saveNotes = () => setNotes((all) => ({ ...all, saved: all.text }));
+	const saveNotes = () => setNotes((all) => {
+		notesImages.saved(all.text);
+		return { ...all, saved: all.text };
+	});
+	const limits = { uploadTypes: config.uploadTypes, uploadMaxSize: config.uploadMaxSize,
+		uploadMaxWidth: config.uploadMaxWidth, uploadMaxHeight: config.uploadMaxHeight,
+		uploadMaxCount: config.uploadMaxCount, uploadScaling: true };
 
 	return (
 		<div className="rich-text-demo">
@@ -79,7 +90,7 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 								label={texts.articleLabel} placeholder={texts.placeholder}
 								toolbar={toolbarOf(toolbar)} bubbleMenu={bubbleMenu} readOnly={readOnly}
 								count={count} texts={config.editor} highlight={highlight} onUpload={onUpload}
-								uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
+								{...limits} onImagesRemoved={(urls) => articleImages.add(urls)}
 								proofreader={proofreader} suggesters={suggesters}
 								onChange={(text) => setArticle((all) => ({ ...all, text }))}
 								onStateChange={(state) => setArticle((all) => ({ ...all, state }))}
@@ -108,8 +119,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 							<span className="rich-text-demo__name">{texts.notesLabel}</span>
 							<RichTextEditor value={notes.text} saved={notes.saved} state={notes.state}
 								format="markdown" label={texts.notesLabel} bubbleMenu texts={config.editor}
-								highlight onUpload={onUpload} uploadTypes={config.uploadTypes}
-								uploadMaxSize={config.uploadMaxSize}
+								highlight onUpload={onUpload} {...limits}
+								onImagesRemoved={(urls) => notesImages.add(urls)}
 								onChange={(text) => setNotes((all) => ({ ...all, text }))}
 								onStateChange={(state) => setNotes((all) => ({ ...all, state }))}
 								onSave={saveNotes} />

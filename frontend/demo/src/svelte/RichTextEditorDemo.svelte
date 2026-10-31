@@ -21,8 +21,8 @@
 	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
-	import { describe, proofreader as proofreaderOf, richText, suggesters as suggestersOf,
-		toolbarOf, uploader, type RichText,
+	import { describe, imagesTakenOut, proofreader as proofreaderOf, richText,
+		suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 		type RichTextEditorConfig } from '../rich-text-editor.js';
 
 	let { config }: { config: RichTextEditorConfig } = $props();
@@ -38,6 +38,11 @@
 	let count = $state(true);
 	let highlight = $state(true);
 	const onupload = uploader(initial);
+	const articleImages = imagesTakenOut(initial);
+	const notesImages = imagesTakenOut(initial);
+	const limits = { uploadTypes: initial.uploadTypes, uploadMaxSize: initial.uploadMaxSize,
+		uploadMaxWidth: initial.uploadMaxWidth, uploadMaxHeight: initial.uploadMaxHeight,
+		uploadMaxCount: initial.uploadMaxCount, uploadScaling: true };
 	const proofreader = proofreaderOf(initial);
 	const suggesters = suggestersOf(initial);
 	let heard = $state(initial.texts.appStart);
@@ -47,11 +52,13 @@
 		{ id: 'notesTitle', title: texts.notesTitle, modified: false }]);
 
 	function saveArticle() {
+		articleImages.saved(article.text);
 		article.saved = article.text;
 		heard = texts.appSaved;
 	}
 
 	function saveNotes() {
+		notesImages.saved(notes.text);
 		notes.saved = notes.text;
 	}
 </script>
@@ -90,8 +97,8 @@
 						<RichTextEditor bind:value={article.text} bind:state={article.state}
 							saved={article.saved} label={texts.articleLabel} placeholder={texts.placeholder}
 							toolbar={toolbarOf(toolbar)} {bubbleMenu} {readOnly} {count} texts={config.editor}
-							{highlight} {onupload} uploadTypes={config.uploadTypes}
-							uploadMaxSize={config.uploadMaxSize} {proofreader} {suggesters}
+							{highlight} {onupload} {...limits}
+							onimagesremoved={(urls) => articleImages.add(urls)} {proofreader} {suggesters}
 							onsave={saveArticle} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
@@ -116,8 +123,8 @@
 						<span class="rich-text-demo__name">{texts.notesLabel}</span>
 						<RichTextEditor bind:value={notes.text} bind:state={notes.state} saved={notes.saved}
 							format="markdown" label={texts.notesLabel} bubbleMenu texts={config.editor}
-							highlight {onupload} uploadTypes={config.uploadTypes}
-							uploadMaxSize={config.uploadMaxSize} onsave={saveNotes} />
+							highlight {onupload} {...limits}
+							onimagesremoved={(urls) => notesImages.add(urls)} onsave={saveNotes} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">
