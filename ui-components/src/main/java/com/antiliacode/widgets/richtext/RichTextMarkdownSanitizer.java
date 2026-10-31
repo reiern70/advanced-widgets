@@ -27,6 +27,12 @@ import java.util.regex.Pattern;
  * {@code [label]: address}. An autolink to such an address, {@code <javascript:...>}, becomes
  * text.
  * <p>
+ * {@link #IMAGES_FROM_SITE_ONLY} keeps the images of the site alone: the address of an image,
+ * {@code ![text](address)}, must be {@link RichTextPolicy#isSiteUrl(String) the site's own}, else
+ * gives way to {@code #} too. So must that of a reference definition, which an image may use as
+ * well as a link, {@code ![text][label]}; the editor writes none. Links go to other sites as
+ * before.
+ * <p>
  * HTML written in the Markdown stays as it is: telling it from the text of code, where
  * {@code <b>} is no tag, takes a parser of Markdown. The editor writes the {@code <} of the text
  * as {@code &lt;}, so only code holds it as it is, but a form sent by other means than the editor
@@ -49,6 +55,14 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	/** The sanitizer. */
 	public static final RichTextMarkdownSanitizer INSTANCE = new RichTextMarkdownSanitizer();
 
+	/**
+	 * The sanitizer keeping the images of the site alone.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final RichTextMarkdownSanitizer IMAGES_FROM_SITE_ONLY =
+		new RichTextMarkdownSanitizer(true);
+
 	/** Where an inline link or an image, or a reference definition, writes its address. */
 	private static final Pattern DESTINATION_START = Pattern.compile("\\]\\(|\\]:");
 
@@ -63,6 +77,36 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	/** A backslash escape: a backslash before a punctuation character of ASCII. */
 	private static final Pattern BACKSLASH_ESCAPE = Pattern
 		.compile("\\\\([!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~])");
+
+	/** Whether images go only to the site's own addresses. */
+	private final boolean imagesFromSiteOnly;
+
+	/**
+	 * A sanitizer letting images go to other sites, as {@link #INSTANCE} does.
+	 */
+	public RichTextMarkdownSanitizer()
+	{
+		this(false);
+	}
+
+	/**
+	 * @param imagesFromSiteOnly
+	 *            whether images, and reference definitions, go only to the site's own addresses
+	 * @since 11.0.0
+	 */
+	public RichTextMarkdownSanitizer(boolean imagesFromSiteOnly)
+	{
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
+	}
+
+	/**
+	 * @return whether images, and reference definitions, go only to the site's own addresses
+	 * @since 11.0.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
+	}
 
 	@Override
 	public String sanitize(String markdown)
@@ -90,7 +134,7 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	 * @return the Markdown with the addresses of its links, images and reference definitions that
 	 *         are not safe replaced by {@code #}
 	 */
-	private static String cleanDestinations(String markdown, RichTextCleaningReport.Builder report)
+	private String cleanDestinations(String markdown, RichTextCleaningReport.Builder report)
 	{
 		StringBuilder clean = null;
 		int copied = 0;
@@ -109,13 +153,14 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 			boolean pointed = markdown.charAt(begin) == '<';
 			String destination = pointed ? markdown.substring(begin + 1, end - 1) :
 				markdown.substring(begin, end);
-			if (isSafe(destination))
+			boolean image = start.group().equals("](") && isImage(markdown, start.start());
+			boolean loaded = imagesFromSiteOnly && (image || start.group().equals("]:"));
+			if (loaded ? isSite(destination) : isSafe(destination))
 			{
 				continue;
 			}
 			from = end;
-			report.addElement(start.group().equals("](") && isImage(markdown, start.start()) ?
-				"img" : "a");
+			report.addElement(image ? "img" : "a");
 			if (clean == null)
 			{
 				clean = new StringBuilder(markdown.length());
@@ -289,8 +334,27 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	 */
 	static boolean isSafe(String destination)
 	{
-		String address = decodeEntities(BACKSLASH_ESCAPE.matcher(destination).replaceAll("$1"));
+		String address = read(destination);
 		return address.isBlank() || RichTextPolicy.isSafeUrl(address);
+	}
+
+	/**
+	 * @return whether an address of the Markdown is the site's own once its backslash escapes and
+	 *         entities are read; an empty one is
+	 */
+	static boolean isSite(String destination)
+	{
+		String address = read(destination);
+		return address.isBlank() || RichTextPolicy.isSiteUrl(address);
+	}
+
+	/**
+	 * @return an address of the Markdown as a renderer reads it: its backslash escapes and its
+	 *         entities read
+	 */
+	private static String read(String destination)
+	{
+		return decodeEntities(BACKSLASH_ESCAPE.matcher(destination).replaceAll("$1"));
 	}
 
 	/**

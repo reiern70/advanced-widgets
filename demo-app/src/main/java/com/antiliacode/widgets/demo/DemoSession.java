@@ -104,6 +104,15 @@ public class DemoSession extends WebSession
 	/** The {@link Accounts#changes()} then. */
 	private transient long accountChanges;
 
+	/**
+	 * Whether the session took one of the places of {@link SignedInUsers} when it signed in, which
+	 * another account may take later.
+	 */
+	private boolean placeHeld;
+
+	/** Whether the session was signed out as another account took its place, until told. */
+	private boolean placeLost;
+
 	public DemoSession(Request request)
 	{
 		super(request);
@@ -206,9 +215,9 @@ public class DemoSession extends WebSession
 
 	/**
 	 * Signs the user in, under a new session id so that the old one is of no use, unless
-	 * {@value SignedInUsers#MAXIMUM} other users are signed in already (see
-	 * {@link SignedInUsers}); the demo the user was going to stays in the session. The access of
-	 * the session gets the account.
+	 * {@value SignedInUsers#MAXIMUM} other users are signed in already, none of them for longer
+	 * than {@link SignedInUsers#PLACE_TIME} (see {@link SignedInUsers}); the demo the user was
+	 * going to stays in the session. The access of the session gets the account.
 	 *
 	 * @param account
 	 *            the name of the account
@@ -228,11 +237,13 @@ public class DemoSession extends WebSession
 			failedSignIns = 0;
 			accountChecked = System.currentTimeMillis();
 			accountChanges = Accounts.changes();
+			placeLost = false;
 			dirty();
 			return getId();
 		});
 		if (signedIn)
 		{
+			placeHeld = SignedInUsers.get().holdsPlace(getId());
 			recordAccess(access -> {
 				access.setSessionId(getId());
 				access.setUserName(account);
@@ -258,15 +269,24 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * Signs the user out when the account was removed or locked, or has another role than when
-	 * the user signed in with it, so that the session does not outlive the account. It looks at
-	 * the account at the first request after accounts were removed or locked, else at most every
-	 * {@link #ACCOUNT_CHECK}.
+	 * Signs the user out when another account took the place of the session (see
+	 * {@link SignedInUsers}), or when the account was removed or locked, or has another role than
+	 * when the user signed in with it, so that the session does not outlive the account. It looks
+	 * at the place at every request, and at the account at the first request after accounts were
+	 * removed or locked, else at most every {@link #ACCOUNT_CHECK}.
 	 */
 	public void checkAccount()
 	{
 		if (account == null)
 		{
+			return;
+		}
+		if (placeHeld && !SignedInUsers.get().holdsPlace(getId()))
+		{
+			LOG.info("Another account took the place of {}: session {} is signed out", account,
+				getId());
+			signOut();
+			placeLost = true;
 			return;
 		}
 		long now = System.currentTimeMillis();
@@ -297,6 +317,7 @@ public class DemoSession extends WebSession
 		}
 		account = null;
 		role = null;
+		placeHeld = false;
 		dirty();
 		RequestCycle cycle = RequestCycle.get();
 		if (cycle != null &&
@@ -304,6 +325,22 @@ public class DemoSession extends WebSession
 		{
 			Throttle.reset(request);
 		}
+	}
+
+	/**
+	 * @return whether the session was signed out as another account took its place (see
+	 *         {@link SignedInUsers#PLACE_TIME}); answers {@code true} once, so that the user is
+	 *         told once
+	 */
+	public boolean tellPlaceLost()
+	{
+		if (!placeLost)
+		{
+			return false;
+		}
+		placeLost = false;
+		dirty();
+		return true;
 	}
 
 	/**

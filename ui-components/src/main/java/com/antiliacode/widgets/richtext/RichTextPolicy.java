@@ -32,12 +32,14 @@ import org.owasp.html.PolicyFactory;
  * each {@link IRichTextFeature#allowHtml(RichTextHtmlRules) letting through its own}, and nothing
  * else. No script, no event handler, no style attribute, no element of a feature left
  * out; links and images only to http, https and mailto addresses, or relative ones, and links with
- * {@code rel="noopener noreferrer nofollow"}. Classes only where the editor writes them: the
- * alignment of paragraphs, headings and cells ({@code antilia-text-center}, {@code -right},
- * {@code -justify}), the language of a code block ({@code language-java}) and the colors of the
- * palettes of the editor: {@link IRichTextColor of the text}, on a {@code span}
- * ({@code antilia-color-red}), and {@link IRichTextBackgroundColor of its background}, on a
- * {@code mark} ({@code antilia-background-yellow}).
+ * {@code rel="noopener noreferrer nofollow"}; once {@link #withImagesFromSiteOnly(boolean) asked},
+ * images only to the site's own addresses ({@link #isSiteUrl(String)}). Classes only where the
+ * editor writes them: the alignment of paragraphs, headings and cells
+ * ({@code antilia-text-center}, {@code -right}, {@code -justify}), the language of a code block
+ * ({@code language-java}) and the colors of the palettes of the editor:
+ * {@link IRichTextColor of the text}, on a {@code span} ({@code antilia-color-red}), and
+ * {@link IRichTextBackgroundColor of its background}, on a {@code mark}
+ * ({@code antilia-background-yellow}).
  * <p>
  * Classes are not harmless: one of the page's own style sheets, a box fixed over the page or text
  * hidden for example, would let the HTML of a user dress itself as the page. So the policy keeps
@@ -75,6 +77,9 @@ public final class RichTextPolicy implements IRichTextSanitizer
 	/** The classes of the colors of the background. */
 	private final Set<String> backgroundClasses;
 
+	/** Whether images go only to the site's own addresses. */
+	private final boolean imagesFromSiteOnly;
+
 	/** Made the first time it cleans: OWASP's policies are not serializable. */
 	private transient PolicyFactory factory;
 
@@ -85,6 +90,15 @@ public final class RichTextPolicy implements IRichTextSanitizer
 		this.colorClasses = classes(colors, IRichTextColor::getColorClass);
 		this.backgroundClasses = classes(backgroundColors,
 			IRichTextBackgroundColor::getBackgroundClass);
+		this.imagesFromSiteOnly = false;
+	}
+
+	private RichTextPolicy(RichTextPolicy policy, boolean imagesFromSiteOnly)
+	{
+		this.features = policy.features;
+		this.colorClasses = policy.colorClasses;
+		this.backgroundClasses = policy.backgroundClasses;
+		this.imagesFromSiteOnly = imagesFromSiteOnly;
 	}
 
 	private static <C> Set<String> classes(Set<C> colors, Function<C, String> css)
@@ -159,6 +173,31 @@ public final class RichTextPolicy implements IRichTextSanitizer
 	}
 
 	/**
+	 * Whether an address is the site's own: a relative one, {@code /images/a.png} or
+	 * {@code a.png} for example, which the browser asks of the server the page comes from. Not one
+	 * with a scheme, {@code https:} or {@code data:} for example, nor one going to another host
+	 * without a scheme, {@code //host/a.png}, which browsers also read in {@code \\host/a.png} and
+	 * {@code /\host/a.png}, a backslash being a slash to them, and with spaces and control
+	 * characters between the slashes, which they ignore. An address of the site written whole,
+	 * with its host, is not taken either: the cleaning does not know the host of the site.
+	 *
+	 * @param url
+	 *            the address
+	 * @return whether it is the site's own
+	 * @see #withImagesFromSiteOnly(boolean)
+	 * @since 11.0.0
+	 */
+	public static boolean isSiteUrl(String url)
+	{
+		if (!isSafeUrl(url))
+		{
+			return false;
+		}
+		String bare = IGNORED.matcher(url).replaceAll("").replace('\\', '/');
+		return !SCHEME.matcher(bare).find() && !bare.startsWith("//");
+	}
+
+	/**
 	 * @return the features whose HTML the policy keeps
 	 */
 	public Set<IRichTextFeature> getFeatures()
@@ -182,6 +221,39 @@ public final class RichTextPolicy implements IRichTextSanitizer
 		return backgroundClasses;
 	}
 
+	/**
+	 * @return whether images go only to the site's own addresses
+	 * @see #withImagesFromSiteOnly(boolean)
+	 * @since 11.0.0
+	 */
+	public boolean isImagesFromSiteOnly()
+	{
+		return imagesFromSiteOnly;
+	}
+
+	/**
+	 * Keeps the images of the site alone, or not, as by default. An image from another site shows
+	 * its viewers to that site, a pixel tracking who reads the text for example; a content security
+	 * policy of the page with {@code img-src 'self'} blocks it in the browser too.
+	 * <p>
+	 * With the images of the site alone, every address the browser loads by itself, without a
+	 * click, must be {@link #isSiteUrl(String) the site's own}: the {@code src} of an image, and
+	 * also {@code srcset}, {@code poster}, {@code background}, {@code data}, and an {@code href}
+	 * but on a link, {@code a} or {@code area}, should a feature of the page's own let them
+	 * through. An image whose address does not pass goes, with its other attributes. Links go to
+	 * other sites as before.
+	 *
+	 * @param imagesFromSiteOnly
+	 *            whether images go only to the site's own addresses; {@code false} by default
+	 * @return the policy cleaning so, {@code this} when it does already
+	 * @since 11.0.0
+	 */
+	public RichTextPolicy withImagesFromSiteOnly(boolean imagesFromSiteOnly)
+	{
+		return imagesFromSiteOnly == this.imagesFromSiteOnly ? this :
+			new RichTextPolicy(this, imagesFromSiteOnly);
+	}
+
 	@Override
 	public String sanitize(String html)
 	{
@@ -203,7 +275,8 @@ public final class RichTextPolicy implements IRichTextSanitizer
 	{
 		if (factory == null)
 		{
-			factory = RichTextHtmlRules.toPolicy(features, colorClasses, backgroundClasses);
+			factory = RichTextHtmlRules.toPolicy(features, colorClasses, backgroundClasses,
+				imagesFromSiteOnly);
 		}
 		return factory;
 	}
@@ -213,18 +286,20 @@ public final class RichTextPolicy implements IRichTextSanitizer
 	{
 		return other instanceof RichTextPolicy policy && policy.features.equals(features) &&
 			policy.colorClasses.equals(colorClasses) &&
-			policy.backgroundClasses.equals(backgroundClasses);
+			policy.backgroundClasses.equals(backgroundClasses) &&
+			policy.imagesFromSiteOnly == imagesFromSiteOnly;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(features, colorClasses, backgroundClasses);
+		return Objects.hash(features, colorClasses, backgroundClasses, imagesFromSiteOnly);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "RichTextPolicy" + features + colorClasses + backgroundClasses;
+		return "RichTextPolicy" + features + colorClasses + backgroundClasses +
+			(imagesFromSiteOnly ? "[images from the site only]" : "");
 	}
 }

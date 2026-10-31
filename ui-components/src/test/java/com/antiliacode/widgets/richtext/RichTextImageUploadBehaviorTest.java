@@ -193,6 +193,25 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 	}
 
 	@Test
+	void refusesAnAddressOfAnotherSiteForAnEditorKeepingTheImagesOfTheSite() throws IOException
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Text</p>"));
+		editor.setImageStore((image, type) -> "https://images.example.org/a.png");
+		tester.startPage(new EditorPage(editor));
+		RichTextImageUploadBehavior behavior = editor.getBehaviors(
+			RichTextImageUploadBehavior.class).get(0);
+		assertEquals("https://images.example.org/a.png", upload(behavior, "bird.png", PNG)
+			.getString("url"));
+
+		editor.setImagesFromSiteOnly(true);
+		assertEquals("bird.png could not be uploaded.", upload(behavior, "bird.png", PNG)
+			.getString("error"));
+		editor.setImageStore((image, type) -> "/images/a.png");
+		assertEquals("/images/a.png", upload(editor.getBehaviors(
+			RichTextImageUploadBehavior.class).get(0), "bird.png", PNG).getString("url"));
+	}
+
+	@Test
 	void hasLimitsAndTypesOfItsOwn()
 	{
 		RichTextImageUploadBehavior behavior = new RichTextImageUploadBehavior((image, type) -> "/a");

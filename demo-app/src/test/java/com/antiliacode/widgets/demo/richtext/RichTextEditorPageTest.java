@@ -147,6 +147,21 @@ class RichTextEditorPageTest
 	}
 
 	@Test
+	void keepsTheImagesOfTheSiteAlone()
+	{
+		assertTrue(editor(NOTES).isImagesFromSiteOnly());
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isImagesFromSiteOnly());
+		String html = "<p>A <img src=\"https://example.org/pixel.png\" alt=\"pixel\" />bird " +
+			"<img src=\"/rich-text-images/a.png\" alt=\"bird\" /></p>";
+		sendState(editor, "{}", html);
+		fire(editor, RichTextEditorEvents.INPUT, html);
+
+		assertEquals("<p>A bird <img src=\"/rich-text-images/a.png\" alt=\"bird\" /></p>",
+			RichTextEditorPage.article().getText());
+	}
+
+	@Test
 	void keepsTheHtmlCleanedAndTheStateTheBrowserSendsInTheSession()
 	{
 		RichTextEditor editor = editor(EDITOR);

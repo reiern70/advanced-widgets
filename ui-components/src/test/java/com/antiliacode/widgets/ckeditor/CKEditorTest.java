@@ -308,6 +308,22 @@ class CKEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void keepsTheImagesOfTheSiteAloneWhenAsked()
+	{
+		IModel<String> text = Model.of("");
+		CKEditor editor = new CKEditor("editor", text).setImagesFromSiteOnly(true);
+		assertEquals(CKEditorPolicy.ALL.withImagesFromSiteOnly(true), editor.getSanitizer());
+		tester.startPage(new TestPage(editor));
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<figure class=\"image\"><img src=\"//example.org/a.png\" />" +
+			"<figcaption>A bird</figcaption></figure><p>Text</p>");
+		form.submit();
+		assertEquals("<figure class=\"image\"><figcaption>A bird</figcaption></figure>" +
+			"<p>Text</p>", text.getObject());
+	}
+
+	@Test
 	void cleansWithASanitizerOfThePage()
 	{
 		IModel<String> text = Model.of(HTML);

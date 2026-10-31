@@ -138,6 +138,8 @@ public class RichTextWritingPanel extends Panel
 			RichTextDocument::setSaved));
 		editor.setLabel(Model.of(getString("writingLabel")));
 		editor.setBubbleMenu(true).setCount(true);
+		// images of other sites go: they would show the readers to those sites
+		editor.setImagesFromSiteOnly(true);
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
 			(eventId, values, submitted, target) -> save(target)));
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
