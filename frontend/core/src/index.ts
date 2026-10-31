@@ -65,7 +65,12 @@ export type { RichTextHighlighter, RichTextToken } from './rich-text-languages.j
 export { lezerHighlighter } from './rich-text-highlight.js';
 export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, checkFiles, deleteImagesAt, scaleImage, sizeText,
 	typesText, uploadImageTo } from './rich-text-upload.js';
-export type { Oversize, RichTextUploader, UploadCheck, UploadLimits } from './rich-text-upload.js';
+export type { Oversize, RichTextUploader, RichTextUploadOptions, UploadCheck,
+	UploadLimits } from './rich-text-upload.js';
+export { findImagesAt, imagePicker, storedImagesOf,
+	storePermanentlyAt } from './rich-text-stored-images.js';
+export type { ImagePicker, ImagePickerTexts, RichTextImageFinder, RichTextImageKeeper,
+	RichTextStoredImage } from './rich-text-stored-images.js';
 export { askToScale, dropZone, openUploadDialog } from './rich-text-upload-dialog.js';
 export { dimensionsText, readImageDimensions, scaledToFit } from './rich-text-image-headers.js';
 export type { RichTextImageDimensions } from './rich-text-image-headers.js';

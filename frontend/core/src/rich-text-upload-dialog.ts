@@ -15,9 +15,10 @@
 /*
  * What the uploads of images show besides the marks in the text: the zone to drop images on or
  * choose them, in the form of the image or in the dialog of the uploads; the dialog of the uploads,
- * a zone and the list of the files, each uploading, uploaded or refused and why, which the user
- * takes out before the images go into the text; and the dialog asking which pictures too large to
- * scale down. The dialogs have the markup of modal.ts, appended to the body of the page, in the look
+ * a zone and the list of the files, each uploading with the share sent, uploaded or refused and
+ * why, which the user takes out before the images go into the text, canceling the upload of one
+ * uploading, and ticks to store permanently while the page stores images; and the dialog asking
+ * which pictures too large to scale down. The dialogs have the markup of modal.ts, appended to the body of the page, in the look
  * of the editor.
  */
 
@@ -26,7 +27,8 @@ import { partClasses, type Look } from './look.js';
 import { ModalDialog, CLOSE_ATTRIBUTE } from './modal.js';
 import { dimensionsText, type RichTextImageDimensions } from './rich-text-image-headers.js';
 import type { RichTextEditorTexts } from './rich-text-toolbar.js';
-import type { Oversize, UploadHost } from './rich-text-upload.js';
+import { isAbort, keepPermanently, progressBar, showProgress, type Oversize,
+	type UploadHost } from './rich-text-upload.js';
 
 /** Counts the dialogs, for the ids of their parts. */
 let dialogs = 0;
@@ -228,15 +230,24 @@ export function askToScale(oversize: readonly Oversize[], max: RichTextImageDime
 interface Row {
 	element: HTMLElement;
 	state: 'uploading' | 'done' | 'refused';
+	/** The name of its file. */
+	name: string;
 	/** The address of its image, once uploaded. */
 	src: string | null;
+	/** Cancels its upload, while it uploads. */
+	controller: AbortController | null;
+	/** The box to tick storing its image permanently, while the page stores images. */
+	permanent: HTMLInputElement | null;
 }
 
 /**
  * Opens the dialog of the uploads: a zone to drop images on or choose them, and the list of the
- * files, each uploading, uploaded, or refused and why, with a button taking it out. Insert puts the
- * images uploaded into the text, where the cursor is, in the order of the list; Cancel, Escape or
- * closing the dialog puts none, and tells the page of those uploaded, which the text never got.
+ * files, each uploading with the share of it sent, uploaded, or refused and why, with a button
+ * taking it out, which cancels its upload while it uploads; and, while the page stores images
+ * permanently, a box to tick for each to store it so. Insert puts the images uploaded into the
+ * text, where the cursor is, in the order of the list, and has the page store those ticked; Cancel,
+ * Escape or closing the dialog puts none, cancels the uploads going on, and tells the page of those
+ * uploaded, which the text never got.
  *
  * @param insert puts the images of the addresses into the text
  */
@@ -255,12 +266,33 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 			rows.some((row) => row.state === 'uploading');
 	};
 	let open = true;
+	const permanent = host.permanent();
+	const label = (made: Row) => {
+		const remove = made.element.querySelector<HTMLElement>('.antilia-rich-text-upload-remove')!;
+		const text = fill(made.state === 'uploading' ? texts.cancelUpload : texts.removeFile,
+			made.name || texts.theImage);
+		remove.setAttribute('aria-label', text);
+		remove.title = text;
+	};
+	const settle = (made: Row, state: 'done' | 'refused', status: string) => {
+		made.state = state;
+		made.controller = null;
+		made.element.className = 'antilia-rich-text-upload-file antilia-rich-text-upload-' + state;
+		made.element.querySelector('.antilia-rich-text-upload-status')!.textContent = status;
+		made.element.querySelector('.antilia-rich-text-progress')?.remove();
+		if (state === 'refused') {
+			made.element.querySelector('.antilia-rich-text-upload-permanent')?.remove();
+			made.permanent = null;
+		}
+		label(made);
+		update();
+	};
 	const row = (name: string, status: string, state: Row['state']): Row => {
 		const element = document.createElement('li');
 		element.className = 'antilia-rich-text-upload-file antilia-rich-text-upload-' + state;
-		const label = document.createElement('span');
-		label.className = 'antilia-rich-text-upload-name';
-		label.textContent = name;
+		const named = document.createElement('span');
+		named.className = 'antilia-rich-text-upload-name';
+		named.textContent = name;
 		const said = document.createElement('span');
 		said.className = 'antilia-rich-text-upload-status';
 		said.textContent = status;
@@ -268,16 +300,32 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		remove.type = 'button';
 		remove.className = buttonClasses({ variant: 'ghost', size: 'small', iconOnly: true, look }) +
 			' antilia-rich-text-upload-remove';
-		const removeLabel = fill(texts.removeFile, name || texts.theImage);
-		remove.setAttribute('aria-label', removeLabel);
-		remove.title = removeLabel;
 		remove.textContent = '×';
-		element.append(label, said, remove);
+		element.append(named, said);
+		const made: Row = { element, state, name, src: null, controller: null, permanent: null };
+		if (state === 'uploading') {
+			element.append(progressBar(status));
+			if (permanent) {
+				const check = document.createElement('label');
+				check.className = partClasses(look, 'rich-text-form-check') +
+					' antilia-rich-text-upload-permanent';
+				const box = document.createElement('input');
+				box.type = 'checkbox';
+				box.className = partClasses(look, 'rich-text-form-checkbox');
+				box.setAttribute('aria-label', texts.storePermanently + ': ' +
+					(name || texts.theImage));
+				check.append(box, document.createTextNode(' ' + texts.storePermanently));
+				element.append(check);
+				made.permanent = box;
+			}
+		}
+		element.append(remove);
 		list.append(element);
-		const made: Row = { element, state, src: null };
+		label(made);
 		remove.addEventListener('click', () => {
 			rows.splice(rows.indexOf(made), 1);
 			element.remove();
+			made.controller?.abort();
 			if (made.src) {
 				host.discard([made.src]);
 			}
@@ -296,29 +344,27 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		for (const file of checked) {
 			const name = file.name || texts.theImage;
 			const made = row(name, host.uploading(file), 'uploading');
+			const controller = new AbortController();
+			made.controller = controller;
 			update();
-			host.upload(file).then((src) => {
+			host.upload(file, { signal: controller.signal, onProgress: (sent, total) => {
+				const bar = made.element.querySelector<HTMLElement>('.antilia-rich-text-progress');
+				if (bar) {
+					showProgress(bar, sent / total);
+				}
+			} }).then((src) => {
 				if (!open || !rows.includes(made)) {
 					host.discard([src]);
 					return;
 				}
 				made.src = src;
-				made.state = 'done';
-				made.element.className = 'antilia-rich-text-upload-file antilia-rich-text-upload-done';
-				made.element.querySelector('.antilia-rich-text-upload-status')!.textContent =
-					texts.uploadDone;
-				update();
+				settle(made, 'done', texts.uploadDone);
 			}, (error: unknown) => {
-				if (!open || !rows.includes(made)) {
+				if (!open || !rows.includes(made) || isAbort(error)) {
 					return;
 				}
-				made.state = 'refused';
-				made.element.className =
-					'antilia-rich-text-upload-file antilia-rich-text-upload-refused';
-				made.element.querySelector('.antilia-rich-text-upload-status')!.textContent =
-					error instanceof Error && error.message ? error.message :
-						fill(texts.uploadFailed, name);
-				update();
+				settle(made, 'refused', error instanceof Error && error.message ? error.message :
+					fill(texts.uploadFailed, name));
 			});
 		}
 		update();
@@ -335,6 +381,7 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		open = false;
 		modal?.destroy();
 		wrapper.remove();
+		rows.forEach((each) => each.controller?.abort());
 		const left = rows.map((each) => each.src).filter((src): src is string => !!src &&
 			!srcs.includes(src));
 		if (left.length) {
@@ -342,6 +389,8 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		}
 		if (srcs.length) {
 			insert(srcs);
+			void keepPermanently(host, rows.filter((each) => each.src && srcs.includes(each.src) &&
+				each.permanent?.checked).map((each) => ({ src: each.src!, name: each.name })));
 		}
 	};
 	ok.addEventListener('click', () => {

@@ -277,6 +277,13 @@
 	<entry key="RichTextEditor.scaleTitle">Imágenes demasiado grandes</entry>
 	<entry key="RichTextEditor.scaleText">Estas imágenes miden más de {0} píxeles. Marque las que quiera reducir; las demás se omiten.</entry>
 	<entry key="RichTextEditor.scaleDown">Reducir {0} a {1}</entry>
+	<entry key="RichTextEditor.cancelUpload">Cancelar la subida de {0}</entry>
+	<entry key="RichTextEditor.storedImage">Insertar imagen del almacén</entry>
+	<entry key="RichTextEditor.storePermanently">Guardar permanentemente</entry>
+	<entry key="RichTextEditor.permanentFailed">{0} no se pudo guardar permanentemente.</entry>
+	<entry key="RichTextEditor.findImages">Nombre de la imagen</entry>
+	<entry key="RichTextEditor.findingImages">Buscando…</entry>
+	<entry key="RichTextEditor.noStoredImages">No se encontraron imágenes guardadas.</entry>
 	<entry key="RichTextEditor.proofreadSpelling">Ortografía</entry>
 	<entry key="RichTextEditor.proofreadGrammar">Gramática</entry>
 	<entry key="RichTextEditor.proofreadStyle">Estilo</entry>
