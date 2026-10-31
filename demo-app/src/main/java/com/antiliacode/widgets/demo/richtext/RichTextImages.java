@@ -25,9 +25,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +47,7 @@ import com.antiliacode.widgets.richtext.IRichTextImageStore;
 import com.antiliacode.widgets.richtext.IRichTextImageType;
 import com.antiliacode.widgets.richtext.RichTextImageDimensions;
 import com.antiliacode.widgets.richtext.RichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextStoredImage;
 
 /**
  * Keeps the images users upload into the rich text editors of the demo in a folder, served by
@@ -60,6 +63,12 @@ import com.antiliacode.widgets.richtext.RichTextImageType;
  * <p>
  * It deletes an image a user took out of a text when the editor says so, only one of that user's
  * own: by its mark.
+ * <p>
+ * It keeps the images a user ticked permanently, those of the user alone, in a folder of their own,
+ * {@value #PERMANENT}, with the name of the file uploaded beside each: at the same address, never
+ * deleted when taken out of a text, and found by their names for the tool insert image from store,
+ * each user finding its own. Permanently, in the demo, is for {@link #PERMANENT_MAX_AGE} and
+ * {@value #MAX_PERMANENT_PER_USER} images of a user, its oldest going first.
  */
 public final class RichTextImages implements IRichTextImageStore
 {
@@ -88,6 +97,24 @@ public final class RichTextImages implements IRichTextImageStore
 
 	/** How many images of one user stay at most. */
 	public static final int MAX_IMAGES_PER_USER = 10;
+
+	/** The folder of the images kept permanently, in the folder of the images. */
+	public static final String PERMANENT = "permanent";
+
+	/** How long an image kept permanently stays in the demo. */
+	public static final Duration PERMANENT_MAX_AGE = Duration.ofDays(30);
+
+	/** How many images of one user stay permanently at most. */
+	public static final int MAX_PERMANENT_PER_USER = 20;
+
+	/** How many images stay permanently at most. */
+	public static final int MAX_PERMANENT = 500;
+
+	/** The extension of the file beside an image kept permanently, holding its name. */
+	private static final String NAME_EXTENSION = ".name";
+
+	/** The longest name of an image kept permanently. */
+	private static final int LONGEST_NAME = 100;
 
 	/** The random part of the names. */
 	private static final SecureRandom RANDOM = new SecureRandom();
@@ -168,6 +195,181 @@ public final class RichTextImages implements IRichTextImageStore
 	}
 
 	/**
+	 * Keeps an image of the user's own permanently: moves it to the folder of those kept, with the
+	 * name of its file beside it. Its address stays.
+	 */
+	@Override
+	public void storePermanently(String url, String name) throws IOException
+	{
+		String file = nameOf(url);
+		String user = markOf(user());
+		if (!NAME.matcher(file).matches() || !file.startsWith(user))
+		{
+			throw new IOException("Not an image of the user: " + url);
+		}
+		Path permanent = getFolder().resolve(PERMANENT);
+		synchronized (RichTextImages.class)
+		{
+			Path image = getFolder().resolve(file);
+			if (!Files.isRegularFile(image))
+			{
+				throw new IOException("No such image: " + url);
+			}
+			Files.createDirectories(permanent);
+			prunePermanent(each -> each.getFileName().toString().startsWith(user),
+				MAX_PERMANENT_PER_USER - 1);
+			prunePermanent(each -> true, MAX_PERMANENT - 1);
+			Path kept = permanent.resolve(file);
+			Files.move(image, kept, StandardCopyOption.REPLACE_EXISTING);
+			Files.setLastModifiedTime(kept, FileTime.from(Instant.now()));
+			Files.writeString(permanent.resolve(file + NAME_EXTENSION), cleanName(name, file),
+				StandardCharsets.UTF_8);
+		}
+	}
+
+	@Override
+	public boolean isPermanent(String url)
+	{
+		String file = nameOf(url);
+		return NAME.matcher(file).matches() && Files.isRegularFile(getFolder().resolve(PERMANENT)
+			.resolve(file));
+	}
+
+	/**
+	 * Finds the images the user kept permanently whose names hold the query, the latest first.
+	 */
+	@Override
+	public List<RichTextStoredImage> findPermanent(String query, int max)
+	{
+		String user = markOf(user());
+		String text = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+		List<RichTextStoredImage> found = new ArrayList<>();
+		for (Path image : permanentImages(each -> each.getFileName().toString().startsWith(user)))
+		{
+			if (found.size() >= max)
+			{
+				break;
+			}
+			String file = image.getFileName().toString();
+			String name = nameOfPermanent(image);
+			if (name.toLowerCase(Locale.ROOT).contains(text))
+			{
+				found.add(new RichTextStoredImage(addressOf(file), name));
+			}
+		}
+		return found;
+	}
+
+	/**
+	 * @return the name of the file of an address, as it ends
+	 */
+	private static String nameOf(String url)
+	{
+		return url == null ? "" : url.substring(url.lastIndexOf('/') + 1);
+	}
+
+	/**
+	 * @return the name of an image kept permanently, as the file beside it says, else that of its
+	 *         file
+	 */
+	private static String nameOfPermanent(Path image)
+	{
+		try
+		{
+			return Files.readString(image.resolveSibling(image.getFileName() + NAME_EXTENSION),
+				StandardCharsets.UTF_8);
+		}
+		catch (IOException e)
+		{
+			return image.getFileName().toString();
+		}
+	}
+
+	/**
+	 * @return the name the browser gave, without what a line or a path would make of it, and not
+	 *         too long; that of the file for none
+	 */
+	static String cleanName(String name, String file)
+	{
+		String clean = name == null ? "" : name.replaceAll("[\\p{Cntrl}]", "").trim();
+		clean = clean.substring(Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\')) + 1)
+			.trim();
+		if (clean.length() > LONGEST_NAME)
+		{
+			clean = clean.substring(0, LONGEST_NAME);
+		}
+		return clean.isEmpty() ? file : clean;
+	}
+
+	/**
+	 * @return the images kept permanently of those chosen, the latest first, those older than
+	 *         {@link #PERMANENT_MAX_AGE} left out
+	 */
+	private List<Path> permanentImages(Predicate<Path> chosen)
+	{
+		Path permanent = getFolder().resolve(PERMANENT);
+		if (!Files.isDirectory(permanent))
+		{
+			return List.of();
+		}
+		Instant old = Instant.now().minus(PERMANENT_MAX_AGE);
+		try (Stream<Path> files = Files.list(permanent))
+		{
+			return files.filter(file -> NAME.matcher(file.getFileName().toString()).matches())
+				.filter(chosen).filter(file -> !isOld(file, old))
+				.sorted(Comparator.comparing(RichTextImages::modified).reversed()).toList();
+		}
+		catch (IOException e)
+		{
+			LOG.warn("Could not list the images in {}", permanent, e);
+			return List.of();
+		}
+	}
+
+	/**
+	 * Deletes the images kept permanently older than {@link #PERMANENT_MAX_AGE}, then the oldest
+	 * of those chosen, so that as many of them as this stay at most, with the files of their names.
+	 */
+	void prunePermanent(Predicate<Path> chosen, int keep)
+	{
+		Path permanent = getFolder().resolve(PERMANENT);
+		if (!Files.isDirectory(permanent))
+		{
+			return;
+		}
+		Instant old = Instant.now().minus(PERMANENT_MAX_AGE);
+		List<Path> images;
+		try (Stream<Path> files = Files.list(permanent))
+		{
+			images = files.filter(file -> NAME.matcher(file.getFileName().toString()).matches())
+				.sorted(Comparator.comparing(RichTextImages::modified).reversed()).toList();
+		}
+		catch (IOException e)
+		{
+			LOG.warn("Could not list the images in {}", permanent, e);
+			return;
+		}
+		int kept = 0;
+		for (Path image : images)
+		{
+			boolean counts = chosen.test(image);
+			if (isOld(image, old) || counts && kept++ >= Math.max(keep, 0))
+			{
+				try
+				{
+					Files.deleteIfExists(image);
+					Files.deleteIfExists(image.resolveSibling(image.getFileName() +
+						NAME_EXTENSION));
+				}
+				catch (IOException e)
+				{
+					LOG.warn("Could not delete the image {}", image, e);
+				}
+			}
+		}
+	}
+
+	/**
 	 * @return who uploads an image: the account signed in with, else the session
 	 */
 	private static String user()
@@ -216,7 +418,13 @@ public final class RichTextImages implements IRichTextImageStore
 			return null;
 		}
 		Path file = getFolder().resolve(name);
-		return Files.isRegularFile(file) && !isOld(file, Instant.now().minus(MAX_AGE)) ? file : null;
+		if (Files.isRegularFile(file))
+		{
+			return isOld(file, Instant.now().minus(MAX_AGE)) ? null : file;
+		}
+		Path permanent = getFolder().resolve(PERMANENT).resolve(name);
+		return Files.isRegularFile(permanent) && !isOld(permanent, Instant.now().minus(
+			PERMANENT_MAX_AGE)) ? permanent : null;
 	}
 
 	/**

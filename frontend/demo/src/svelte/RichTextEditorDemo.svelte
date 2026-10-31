@@ -21,7 +21,7 @@
 	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
-	import { describe, imagesTakenOut, proofreader as proofreaderOf, richText,
+	import { describe, imagesTakenOut, proofreader as proofreaderOf, richText, storedImages,
 		suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 		type RichTextEditorConfig } from '../rich-text-editor.js';
 
@@ -38,11 +38,13 @@
 	let count = $state(true);
 	let highlight = $state(true);
 	const onupload = uploader(initial);
+	const stored = storedImages(initial);
 	const articleImages = imagesTakenOut(initial);
 	const notesImages = imagesTakenOut(initial);
 	const limits = { uploadTypes: initial.uploadTypes, uploadMaxSize: initial.uploadMaxSize,
 		uploadMaxWidth: initial.uploadMaxWidth, uploadMaxHeight: initial.uploadMaxHeight,
-		uploadMaxCount: initial.uploadMaxCount, uploadScaling: true };
+		uploadMaxCount: initial.uploadMaxCount, uploadScaling: true,
+		onstorepermanently: stored.keep, onfindimages: stored.find };
 	const proofreader = proofreaderOf(initial);
 	const suggesters = suggestersOf(initial);
 	let heard = $state(initial.texts.appStart);

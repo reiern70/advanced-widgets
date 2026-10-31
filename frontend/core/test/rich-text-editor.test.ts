@@ -98,7 +98,13 @@ describe('RichTextEditor', () => {
 			'antilia-resizable-vertical');
 		expect(element.firstElementChild).toBe(field);
 		expect(element.children[1]?.getAttribute('role')).toBe('toolbar');
-		expect(element.children[2]?.className).toBe('antilia-rich-text-content');
+		// the text scrolls in the box of the scroll bars of the components, not the browser's
+		const scroller = element.children[2] as HTMLElement;
+		expect(scroller.className).toBe('antilia-scrollbar antilia-rich-text-scroller ' +
+			'antilia-scrollbar--both');
+		expect(scroller.firstElementChild?.className).toBe('antilia-rich-text-content ' +
+			'antilia-scrollbar-host');
+		expect(scroller.querySelector('.antilia-scrollbar-track--y')).not.toBeNull();
 		expect(element.lastElementChild?.className).toBe('antilia-resizable-handle');
 		expect(field.hidden).toBe(true);
 		expect(field.tabIndex).toBe(-1);
@@ -628,7 +634,9 @@ describe('the features', () => {
 		expect([...editor.features()]).toEqual([...RICH_TEXT_FEATURES]);
 		const tools = Array.from(editor.element.querySelectorAll<HTMLElement>('[data-tool]'))
 			.map((each) => each.dataset.tool);
-		expect(tools).toEqual(DEFAULT_RICH_TEXT_TOOLBAR.flat());
+		// the image from the store shows while the page finds the images it stores
+		expect(tools).toEqual(DEFAULT_RICH_TEXT_TOOLBAR.flat().filter((tool) =>
+			tool !== 'storedImage'));
 	});
 
 	it('leave out what the page leaves out, from the text and the toolbar', () => {
@@ -918,7 +926,7 @@ describe('what a paste lost', () => {
 		expect(notice.getAttribute('role')).toBe('status');
 		expect(notice.previousElementSibling).toBe(editor.element.querySelector(
 			'.antilia-rich-text-toolbar'));
-		expect(notice.nextElementSibling).toBe(editor.content);
+		expect(notice.nextElementSibling).toBe(editor.scroller);
 		expect(notice.textContent).toBe('');
 
 		select(editor, 6);

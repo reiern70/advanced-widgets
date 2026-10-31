@@ -26,8 +26,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
@@ -357,6 +359,125 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 		page.upload.forget(page.upload.getUploaded());
 		assertEquals("{\"deleted\":[]}", remove(page, "[\"/images/2.png\"]").toString());
 		assertEquals(List.of("/images/1.png"), deleted);
+	}
+
+	/** A store keeping images permanently in memory, by the names of their files. */
+	private static final class PermanentStore implements IRichTextImageStore
+	{
+		private static final long serialVersionUID = 1L;
+
+		final Map<String, String> permanent = new LinkedHashMap<>();
+
+		final List<String> deleted = new ArrayList<>();
+
+		@Override
+		public String store(org.apache.wicket.markup.html.form.upload.FileUpload image,
+			IRichTextImageType type)
+		{
+			return keep(image, type);
+		}
+
+		@Override
+		public void delete(String url)
+		{
+			deleted.add(url);
+		}
+
+		@Override
+		public void storePermanently(String url, String name)
+		{
+			permanent.put(url, name);
+		}
+
+		@Override
+		public boolean isPermanent(String url)
+		{
+			return permanent.containsKey(url);
+		}
+
+		@Override
+		public List<RichTextStoredImage> findPermanent(String query, int max)
+		{
+			List<RichTextStoredImage> found = new ArrayList<>();
+			permanent.forEach((url, name) -> {
+				if (name.contains(query))
+				{
+					found.add(new RichTextStoredImage(url, name));
+				}
+			});
+			// one the editor does not take, and more than asked
+			found.add(new RichTextStoredImage("javascript:steal()", "trap.png"));
+			return found;
+		}
+	}
+
+	@Test
+	void keepsPermanentlyAndFindsOnlyWhenAllowed() throws IOException
+	{
+		KEPT.clear();
+		PermanentStore store = new PermanentStore();
+		TestPage page = new TestPage(store);
+		tester.startPage(page);
+		upload(page, "one.png", PNG, "image/png");
+		upload(page, "two.png", PNG, "image/png");
+
+		// off by default
+		assertFalse(page.upload.isPermanentImages());
+		assertEquals("{\"stored\":[]}", post(page, RichTextImageUploadBehavior.PERMANENT_PARAMETER,
+			"[\"/images/1.png\"]").toString());
+		assertEquals("{\"images\":[]}", post(page, RichTextImageUploadBehavior.FIND_PARAMETER,
+			"").toString());
+		assertTrue(store.permanent.isEmpty());
+
+		page.upload.setPermanentImages(true);
+		// those it took alone, with the names of their files
+		assertEquals("{\"stored\":[\"/images/1.png\"]}", post(page,
+			RichTextImageUploadBehavior.PERMANENT_PARAMETER, "[\"/images/1.png\", " +
+				"\"/elsewhere.png\"]").toString());
+		assertEquals(Map.of("/images/1.png", "one.png"), store.permanent);
+		// kept, it is no longer deleted when asked to
+		assertFalse(page.upload.isUploaded("/images/1.png"));
+		assertEquals("{\"deleted\":[]}", remove(page, "[\"/images/1.png\"]").toString());
+		assertTrue(store.deleted.isEmpty());
+
+		// found by their names, those of an address the editor takes
+		assertEquals("{\"images\":[{\"url\":\"/images/1.png\",\"name\":\"one.png\"}]}",
+			post(page, RichTextImageUploadBehavior.FIND_PARAMETER, " one ").toString());
+		page.upload.setMaxFound(0);
+		assertEquals(1, page.upload.getMaxFound());
+		store.storePermanently("/images/9.png", "nine.png");
+		assertEquals(1, post(page, RichTextImageUploadBehavior.FIND_PARAMETER, "")
+			.getJSONArray("images").length());
+		assertEquals(RichTextImageUploadBehavior.DEFAULT_MAX_FOUND, new RichTextImageUploadBehavior(
+			store).getMaxFound());
+	}
+
+	@Test
+	void keepsNoneWithAStoreThatKeepsNonePermanently() throws IOException
+	{
+		KEPT.clear();
+		TestPage page = new TestPage(RichTextImageUploadBehaviorTest::keep);
+		page.upload.setPermanentImages(true);
+		tester.startPage(page);
+		upload(page, "one.png", PNG, "image/png");
+		assertEquals("{\"stored\":[]}", post(page, RichTextImageUploadBehavior.PERMANENT_PARAMETER,
+			"[\"/images/1.png\"]").toString());
+		// still deleted when asked to
+		assertTrue(page.upload.isUploaded("/images/1.png"));
+		assertEquals("{\"images\":[]}", post(page, RichTextImageUploadBehavior.FIND_PARAMETER,
+			"one").toString());
+		assertThrows(IllegalArgumentException.class, () -> new RichTextStoredImage(" ", "x"));
+		assertEquals("/a.png", new RichTextStoredImage(" /a.png ", null).name());
+	}
+
+	/**
+	 * Posts a parameter to a behavior, as the editor does, and reads the answer.
+	 */
+	private JSONObject post(TestPage page, String name, String value)
+	{
+		tester.getRequest().getPostParameters().setParameterValue(name, value);
+		tester.executeBehavior(page.upload);
+		return new JSONObject(tester.getLastResponseAsString());
 	}
 
 	/**

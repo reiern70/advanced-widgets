@@ -435,7 +435,7 @@ class RichTextEditorPageTest
 			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
 
 		form = tester.newFormTester(controls);
-		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 26 }, true);
+		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 27 }, true);
 		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
 		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
 			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());
@@ -565,6 +565,60 @@ class RichTextEditorPageTest
 		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
 		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals(404, tester.getLastResponse().getStatus());
+	}
+
+	@Test
+	void keepsTheImagesTickedPermanentlyAndFindsThem() throws IOException
+	{
+		org.apache.wicket.Page page = tester.getLastRenderedPage();
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isPermanentImages());
+		assertTrue(editor(NOTES).isPermanentImages());
+		tester.assertContains("\"permanentImages\":true");
+		RichTextImageUploadBehavior behavior = editor.getBehaviors(
+			RichTextImageUploadBehavior.class).get(0);
+
+		byte[] png = { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 13, 'I', 'H',
+				'D', 'R', 0, 0, 0, 16, 0, 0, 0, 16 };
+		Path file = Files.createTempFile("logo", ".png");
+		String url;
+		try
+		{
+			Files.write(file, png);
+			tester.getRequest().setUseMultiPartContentType(true);
+			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+				new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+			tester.executeBehavior(behavior);
+			url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+		}
+		finally
+		{
+			Files.deleteIfExists(file);
+		}
+		String name = file.getFileName().toString();
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextImageUploadBehavior.PERMANENT_PARAMETER, "[\"" + url + "\"]");
+		tester.executeBehavior(behavior);
+		assertEquals("{\"stored\":[\"" + url + "\"]}", tester.getLastResponseAsString());
+		assertTrue(RichTextImages.get().isPermanent(url));
+
+		// the article saved without it: it stays, served at its address
+		tester.startPage(page);
+		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
+		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals(200, tester.getLastResponse().getStatus());
+		assertArrayEquals(png, tester.getLastResponse().getBinaryContent());
+
+		// found by its name, by the user who kept it
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextImageUploadBehavior.FIND_PARAMETER, name.substring(0, 4).toUpperCase());
+		tester.executeBehavior(behavior);
+		JSONObject found = new JSONObject(tester.getLastResponseAsString()).getJSONArray("images")
+			.getJSONObject(0);
+		assertEquals(url, found.getString("url"));
+		assertEquals(name, found.getString("name"));
+		assertEquals("bird.png", RichTextImages.cleanName(" C:\\photos\\bird.png\n", "x.png"));
+		assertEquals("x.png", RichTextImages.cleanName(null, "x.png"));
 	}
 
 	@Test

@@ -73,7 +73,13 @@
  * the tool code block chooses the language (codeLanguages). Images are uploaded, dropped on the
  * zone of the form of the image or chosen there, or in the dialog of the uploads (uploadDialog),
  * dropped into the text or pasted, while the page uploads them (onUpload, see
- * rich-text-upload.ts), within its limits: their number, types, sizes and pixels.
+ * rich-text-upload.ts), within its limits: their number, types, sizes and pixels. While a file
+ * uploads, its mark tells the share sent, and a button cancels it. With onStorePermanently, the
+ * user ticks the images to store permanently as they upload, and with onFindImages the tool
+ * storedImage inserts those stored, found by their names (see rich-text-stored-images.ts).
+ *
+ * The text scrolls with the scroll bars of the components (scrollbar.ts), in the colors of the
+ * theme, not those of the browser.
  *
  * The editor tells the page the images the user took out of the text, by a key, a cut, the menu of
  * the images or the page's own code, and those uploaded that never went into it: onImagesRemoved
@@ -113,8 +119,10 @@ import { issuePopoverOf, Proofreading, refreshProofreading,
 	type RichTextProofreader } from './rich-text-proofreading.js';
 import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
 import { checkFiles, DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, refusalOf, uploadExtension,
-	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
+	type RichTextUploader, type RichTextUploadOptions, type UploadHost } from './rich-text-upload.js';
 import { askToScale } from './rich-text-upload-dialog.js';
+import type { RichTextImageFinder, RichTextImageKeeper } from './rich-text-stored-images.js';
+import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 import type { RichTextImageDimensions } from './rich-text-image-headers.js';
 
 export { RICH_TEXT_EDITOR_EVENTS, type RichTextEditorSelection, type RichTextEditorState,
@@ -348,6 +356,18 @@ export interface RichTextEditorOptions {
 	 */
 	onImagesRemoved?: (urls: string[]) => void;
 	/**
+	 * Stores images the user uploaded permanently, those ticked in the dialog of the uploads or in
+	 * the form of the image, once they are in the text: see storePermanentlyAt(). Resolves to the
+	 * addresses of those stored. None when left out or null: the uploads offer no box to tick.
+	 */
+	onStorePermanently?: RichTextImageKeeper | null;
+	/**
+	 * Finds the images the page stores permanently for what the user typed, which the tool
+	 * storedImage, "Insert image from store", lists and inserts: see findImagesAt(). None when
+	 * left out or null: the tool does not show.
+	 */
+	onFindImages?: RichTextImageFinder | null;
+	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again: "Part of the paste was left out: scripts, images."; false when left out.
 	 */
@@ -471,6 +491,16 @@ export class RichTextEditor {
 	/** The element the text scrolls in, holding Tiptap's. */
 	readonly content: HTMLElement;
 
+	/** The box of the scroll bars of the text, holding the element it scrolls in. */
+	readonly scroller: HTMLElement;
+
+	/**
+	 * Gives the text the scroll bars of the components (see scrollbar.ts); a page may replace it,
+	 * by one answering nothing for the scroll bars of the browser.
+	 */
+	static attachScrollbar: (content: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
+		(content, look) => Scrollbar.attach(content, { axis: 'both', look });
+
 	/** Tiptap's editor, for what the options do not offer; made anew when the schema changes. */
 	editor: Editor;
 
@@ -494,6 +524,9 @@ export class RichTextEditor {
 	private bubble: RichTextToolbar | null = null;
 
 	private status: HTMLElement | null = null;
+
+	/** The scroll bars of the text, if any. */
+	private scrollbar: ScrollbarHandle | undefined;
 
 	/** The message telling the user an upload went wrong, while it shows. */
 	private message: HTMLElement | null = null;
@@ -637,9 +670,15 @@ export class RichTextEditor {
 		// Firefox puts a box that scrolls in the order of Tab: the text in it is the stop
 		content.tabIndex = -1;
 		this.content = content;
+		// the box of the scroll bars, which the toolbar, the messages and the count go around
+		const scroller = document.createElement('div');
+		scroller.className = this.css('scrollbar') + ' antilia-rich-text-scroller';
+		scroller.append(content);
+		this.scroller = scroller;
 		this.render();
-		element.append(content);
+		element.append(scroller);
 		this.editor = this.create(given);
+		this.scrollbar = RichTextEditor.attachScrollbar(content, this.look);
 		this.images = imagesIn(this.editor.state.doc);
 		this.value = this.serialize(this.editor.state.doc);
 		this.saved = options.saved !== undefined ? this.canonical(options.saved) :
@@ -1043,6 +1082,8 @@ export class RichTextEditor {
 			backgroundColors: () => this.backgroundColors(),
 			codeLanguages: () => this.codeLanguages(),
 			uploads: () => this.uploadHost(),
+			findImages: () => this.options.onFindImages && this.features().has('image') ?
+				this.options.onFindImages : null,
 			trigger: (name, values) => this.trigger(name, values),
 			onForm: (open) => {
 				if (!open) {
@@ -1134,9 +1175,15 @@ export class RichTextEditor {
 					(oversize) => askToScale(oversize, this.uploadLimits().maxDimensions!,
 						this.texts(), this.look)),
 				uploading: (file) => format(this.texts().uploading, fileNameOf(file, this.texts())),
-				upload: (file) => this.upload(file),
+				texts: () => this.texts(),
+				upload: (file, options) => this.upload(file, options),
 				alert: (message) => this.alert(message),
-				discard: (urls) => this.imagesRemoved(urls.filter((url) => !this.images.has(url)))
+				discard: (urls) => this.imagesRemoved(urls.filter((url) => !this.images.has(url))),
+				permanent: () => !!this.options.onStorePermanently,
+				storePermanently: async (urls) => {
+					const keeper = this.options.onStorePermanently;
+					return keeper && urls.length ? keeper([...urls]) : [];
+				}
 			};
 		}
 		return this.uploads;
@@ -1167,7 +1214,7 @@ export class RichTextEditor {
 	 *
 	 * @returns the address of the image, a safe one; rejected with the message saying why not
 	 */
-	private async upload(file: File): Promise<string> {
+	private async upload(file: File, options?: RichTextUploadOptions): Promise<string> {
 		const texts = this.texts();
 		const failed = format(texts.uploadFailed, fileNameOf(file, texts));
 		const uploader = this.options.onUpload;
@@ -1177,8 +1224,11 @@ export class RichTextEditor {
 		}
 		let address: string;
 		try {
-			address = String(await uploader(file)).trim();
+			address = String(await uploader(file, options)).trim();
 		} catch (error) {
+			if (error instanceof Error && error.name === 'AbortError') {
+				throw error;
+			}
 			throw new Error(error instanceof Error && error.message ? error.message : failed);
 		}
 		if (!isSafeUrl(address)) {
@@ -1248,7 +1298,7 @@ export class RichTextEditor {
 			this.message = document.createElement('div');
 			this.message.className = 'antilia-rich-text-message';
 			this.message.setAttribute('role', 'alert');
-			this.content.before(this.message);
+			this.scroller.before(this.message);
 		}
 		this.message.textContent = text;
 		if (this.messageTimer !== null) {
@@ -1279,7 +1329,7 @@ export class RichTextEditor {
 			this.toolbar.render(groups);
 		} else {
 			this.toolbar = new RichTextToolbar(this.toolbarContext(), groups);
-			this.element.insertBefore(this.toolbar.element, this.content);
+			this.element.insertBefore(this.toolbar.element, this.scroller);
 		}
 		if (this.toolbar) {
 			this.toolbar.element.setAttribute('aria-controls', this.editor.view.dom.id ||
@@ -1311,7 +1361,7 @@ export class RichTextEditor {
 			this.notice = null;
 		} else if (!this.notice) {
 			this.notice = new RichTextPasteNotice();
-			this.content.before(this.notice.element);
+			this.scroller.before(this.notice.element);
 		}
 	}
 
@@ -1328,7 +1378,7 @@ export class RichTextEditor {
 		if (!this.status) {
 			this.status = document.createElement('div');
 			this.status.className = this.css('rich-text-status');
-			this.content.after(this.status);
+			this.scroller.after(this.status);
 		}
 		const storage = this.editor.storage.characterCount;
 		const characters = storage.characters();
@@ -1896,7 +1946,9 @@ export class RichTextEditor {
 		if (codeChanged && !rebuilt) {
 			redrawCodeBlocks(this.editor.view);
 		}
-		if (rebuilt || editableChanged || codeChanged || changed('toolbar', 'texts')) {
+		const finderChanged = !before.onFindImages !== !this.options.onFindImages;
+		if (rebuilt || editableChanged || codeChanged || finderChanged ||
+			changed('toolbar', 'texts')) {
 			this.renderToolbar();
 		} else {
 			this.toolbar?.update();
@@ -2037,7 +2089,9 @@ export class RichTextEditor {
 		this.resizable?.destroy();
 		this.resizable = null;
 		this.editor.destroy();
-		this.content.remove();
+		this.scrollbar?.destroy();
+		this.scrollbar = undefined;
+		this.scroller.remove();
 		if (instances.get(this.element) === this) {
 			instances.delete(this.element);
 		}

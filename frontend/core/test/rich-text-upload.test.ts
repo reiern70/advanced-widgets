@@ -18,9 +18,10 @@ import { Slice } from '@tiptap/pm/model';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 
-import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, deleteImagesAt, lezerHighlighter, Popover,
+import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, deleteImagesAt, findImagesAt, lezerHighlighter, Popover,
 	readImageDimensions, registerRichTextHighlighter, RichTextEditor, setHost, sizeText,
-	standaloneHost, typesText, uploadImageTo, type Host } from '../src/index.js';
+	standaloneHost, storePermanentlyAt, typesText, uploadImageTo, type Host,
+	type RichTextUploadOptions } from '../src/index.js';
 
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -114,8 +115,77 @@ function paste(editor: RichTextEditor, files: File[], html?: string): boolean {
 }
 
 function marks(editor: RichTextEditor): string[] {
-	return Array.from(editor.element.querySelectorAll('.antilia-rich-text-uploading')).map(
+	return Array.from(editor.element.querySelectorAll('.antilia-rich-text-uploading-text')).map(
 		(mark) => mark.getAttribute('role') + ': ' + mark.textContent);
+}
+
+/**
+ * An XMLHttpRequest the test answers, telling the progress the test gives: uploadImageTo() sends
+ * by it, as fetch() tells no progress of what it sends.
+ */
+class FakeRequest {
+	/** The requests sent, the last one last. */
+	static sent: FakeRequest[] = [];
+
+	/** What the next requests are answered, at once once sent; none for the test to answer. */
+	static answers: { status: number; body: string }[] = [];
+
+	method = '';
+	url = '';
+	headers: Record<string, string> = {};
+	body: unknown = null;
+	status = 0;
+	responseText = '';
+	responseType = '';
+	aborted = false;
+	readonly upload = new EventTarget();
+	private readonly events = new EventTarget();
+
+	addEventListener(type: string, listener: EventListener): void {
+		this.events.addEventListener(type, listener);
+	}
+
+	open(method: string, url: string): void {
+		this.method = method;
+		this.url = url;
+	}
+
+	setRequestHeader(name: string, value: string): void {
+		this.headers[name] = value;
+	}
+
+	send(body: unknown): void {
+		this.body = body;
+		FakeRequest.sent.push(this);
+		const answer = FakeRequest.answers.shift();
+		if (answer) {
+			setTimeout(() => this.answer(answer.status, answer.body));
+		}
+	}
+
+	answer(status: number, body: string): void {
+		this.status = status;
+		this.responseText = body;
+		this.events.dispatchEvent(new Event('load'));
+	}
+
+	progress(loaded: number, total: number): void {
+		const event = new Event('progress');
+		Object.assign(event, { lengthComputable: true, loaded, total });
+		this.upload.dispatchEvent(event);
+	}
+
+	abort(): void {
+		this.aborted = true;
+		this.events.dispatchEvent(new Event('abort'));
+	}
+}
+
+function fakeRequests(...answers: { status: number; body: string }[]): typeof FakeRequest {
+	FakeRequest.sent = [];
+	FakeRequest.answers = answers;
+	vi.stubGlobal('XMLHttpRequest', FakeRequest);
+	return FakeRequest;
 }
 
 function message(editor: RichTextEditor): string | null {
@@ -306,6 +376,38 @@ describe('the form of an image', () => {
 	});
 });
 
+describe('the box storing the images permanently', () => {
+	it('shows in the form of an image while the page stores images, and stores those ticked',
+		async () => {
+			const plain = new RichTextEditor(textArea(), { onUpload: () => Promise.resolve('/a') });
+			tool(plain, 'image').click();
+			expect(form()!.querySelector('.antilia-rich-text-form-permanent')).toBeNull();
+			Popover.closeAll();
+			plain.destroy();
+
+			const onStorePermanently = vi.fn((urls: string[]) => Promise.resolve(urls));
+			const editor = new RichTextEditor(textArea(), { onStorePermanently,
+				onUpload: (file) => Promise.resolve('/' + file.name) });
+			select(editor, 5);
+			tool(editor, 'image').click();
+			const box = form()!.querySelector<HTMLInputElement>(
+				'.antilia-rich-text-form-permanent input[type="checkbox"]')!;
+			expect(box.parentElement!.textContent).toBe(' Store permanently');
+			expect(box.checked).toBe(false);
+			box.checked = true;
+			choose(png('one.png'), png('two.png'));
+			await tick();
+			expect(editor.getValue()).toBe('<p>Text</p><img src="/one.png"><img src="/two.png">');
+			expect(onStorePermanently).toHaveBeenCalledWith(['/one.png', '/two.png']);
+
+			// not ticked, none stored
+			tool(editor, 'image').click();
+			choose(png('three.png'));
+			await tick();
+			expect(onStorePermanently).toHaveBeenCalledTimes(1);
+		});
+});
+
 describe('the dialog of the uploads', () => {
 	const dialog = () => document.querySelector<HTMLElement>('.antilia-rich-text-upload-dialog');
 	const rows = () => Array.from(dialog()!.querySelectorAll('.antilia-rich-text-upload-file'))
@@ -353,9 +455,12 @@ describe('the dialog of the uploads', () => {
 			expect(rows()[1]).toBe('done: one.png Uploaded');
 			// waiting for the second
 			expect(insert().disabled).toBe(true);
+			expect(dialog()!.querySelectorAll<HTMLButtonElement>('.antilia-rich-text-upload-remove')[1]!
+				.getAttribute('aria-label')).toBe('Remove one.png');
+			// uploading, taking it out cancels its upload
 			const remove = dialog()!.querySelectorAll<HTMLButtonElement>(
 				'.antilia-rich-text-upload-remove')[2]!;
-			expect(remove.getAttribute('aria-label')).toBe('Remove two.png');
+			expect(remove.getAttribute('aria-label')).toBe('Cancel the upload of two.png');
 			remove.click();
 			expect(insert().disabled).toBe(false);
 			second.resolve('/two.png');
@@ -383,6 +488,217 @@ describe('the dialog of the uploads', () => {
 		expect(dialog()).toBeNull();
 		expect(onImagesRemoved).toHaveBeenCalledWith(['/a.png']);
 		expect(editor.getValue()).toBe('<p>Text</p>');
+	});
+
+	it('tells the share of each file sent, and has the page store those ticked permanently',
+		async () => {
+			const uploads = new Map<string, { done: ReturnType<typeof deferred<string>>;
+				options: RichTextUploadOptions }>();
+			const onUpload = vi.fn((file: File, options?: RichTextUploadOptions) => {
+				const done = deferred<string>();
+				uploads.set(file.name, { done, options: options! });
+				return done.promise;
+			});
+			const onStorePermanently = vi.fn((urls: string[]) => Promise.resolve(urls.slice(0, 1)));
+			const editor = new RichTextEditor(textArea(), { onUpload, uploadDialog: true,
+				onStorePermanently });
+			select(editor, 5);
+			tool(editor, 'image').click();
+			form()!.querySelector<HTMLButtonElement>('.antilia-rich-text-form-upload button')!
+				.click();
+			chooseInDialog(png('one.png'), png('two.png'), png('three.png'));
+			await tick();
+			const bars = () => Array.from(dialog()!.querySelectorAll('[role="progressbar"]'));
+			expect(bars()).toHaveLength(3);
+			expect(bars()[0]!.getAttribute('aria-label')).toBe('Uploading one.png…');
+			expect(bars()[0]!.hasAttribute('aria-valuenow')).toBe(false);
+			uploads.get('one.png')!.options.onProgress!(1, 4);
+			expect(bars()[0]!.getAttribute('aria-valuenow')).toBe('25');
+			expect(bars()[0]!.getAttribute('aria-valuetext')).toBe('25 %');
+
+			const boxes = Array.from(dialog()!.querySelectorAll<HTMLInputElement>(
+				'.antilia-rich-text-upload-permanent input[type="checkbox"]'));
+			expect(boxes.map((box) => box.getAttribute('aria-label'))).toEqual([
+				'Store permanently: one.png', 'Store permanently: two.png',
+				'Store permanently: three.png']);
+			boxes[0]!.checked = true;
+			boxes[1]!.checked = true;
+			uploads.forEach(({ done }, name) => done.resolve('/' + name));
+			await tick();
+			// uploaded, no bar
+			expect(bars()).toHaveLength(0);
+			expect(rows()).toEqual(['done: one.png Uploaded', 'done: two.png Uploaded',
+				'done: three.png Uploaded']);
+
+			insert().click();
+			await tick();
+			expect(editor.getValue()).toBe('<p>Text</p><img src="/one.png"><img src="/two.png">' +
+				'<img src="/three.png">');
+			expect(onStorePermanently).toHaveBeenCalledWith(['/one.png', '/two.png']);
+			// the page stored the first alone
+			expect(message(editor)).toBe('alert: two.png could not be stored permanently.');
+		});
+
+	it('has no box to tick while the page stores no images, and cancels the uploads going on ' +
+		'once the user canceled', async () => {
+		const signals: AbortSignal[] = [];
+		const editor = new RichTextEditor(textArea(), { uploadDialog: true,
+			onUpload: (_file, options) => {
+				signals.push(options!.signal!);
+				return new Promise<string>(() => undefined);
+			} });
+		tool(editor, 'image').click();
+		form()!.querySelector<HTMLButtonElement>('.antilia-rich-text-form-upload button')!.click();
+		chooseInDialog(png());
+		await tick();
+		expect(dialog()!.querySelector('.antilia-rich-text-upload-permanent')).toBeNull();
+		expect(signals[0]!.aborted).toBe(false);
+		Array.from(dialog()!.querySelectorAll<HTMLButtonElement>('.modal-dialog-footer button'))[1]!
+			.click();
+		expect(signals[0]!.aborted).toBe(true);
+	});
+});
+
+describe('the marks of the images uploading', () => {
+	it('tell the share of the file sent, and cancel the upload, inserting nothing', async () => {
+		const upload = deferred<string>();
+		let given: RichTextUploadOptions = {};
+		const onImagesRemoved = vi.fn();
+		const onUpload = vi.fn((_file: File, options?: RichTextUploadOptions) => {
+			given = options!;
+			return upload.promise;
+		});
+		const editor = new RichTextEditor(textArea(), { onUpload, onImagesRemoved });
+		select(editor, 5);
+		drop(editor, [png('bird.png')]);
+		await tick();
+		const mark = editor.element.querySelector('.antilia-rich-text-uploading')!;
+		expect(mark.getAttribute('contenteditable')).toBe('false');
+		const bar = mark.querySelector('[role="progressbar"]')!;
+		expect(bar.getAttribute('aria-label')).toBe('Uploading bird.png…');
+		expect(bar.hasAttribute('aria-valuenow')).toBe(false);
+		given.onProgress!(42, 100);
+		expect(bar.getAttribute('aria-valuenow')).toBe('42');
+		expect(mark.querySelector('.antilia-rich-text-uploading-percent')!.textContent)
+			.toBe('42 %');
+
+		const cancel = mark.querySelector<HTMLButtonElement>('.antilia-rich-text-uploading-cancel')!;
+		expect(cancel.getAttribute('aria-label')).toBe('Cancel the upload of bird.png');
+		cancel.click();
+		expect(given.signal!.aborted).toBe(true);
+		expect(marks(editor)).toEqual([]);
+		// an uploader that does not stop: its image is not wanted, and the page hears of it
+		upload.resolve('/bird.png');
+		await tick();
+		expect(editor.getValue()).toBe('<p>Text</p>');
+		expect(onImagesRemoved).toHaveBeenCalledWith(['/bird.png']);
+		expect(message(editor)).toBeNull();
+	});
+
+	it('say nothing of an upload canceled that the uploader stopped, and keep the others',
+		async () => {
+			const second = deferred<string>();
+			const onUpload = vi.fn((file: File, options?: RichTextUploadOptions) => {
+				if (file.name === 'one.png') {
+					return new Promise<string>((_resolve, reject) => options!.signal!
+						.addEventListener('abort', () => reject(new DOMException('', 'AbortError'))));
+				}
+				return second.promise;
+			});
+			const editor = new RichTextEditor(textArea(), { onUpload });
+			select(editor, 5);
+			drop(editor, [png('one.png'), png('two.png')]);
+			await tick();
+			editor.element.querySelector<HTMLButtonElement>('.antilia-rich-text-uploading-cancel')!
+				.click();
+			expect(marks(editor)).toEqual(['status: Uploading two.png…']);
+			second.resolve('/two.png');
+			await tick();
+			expect(editor.getValue()).toBe('<p>Text</p><img src="/two.png">');
+			expect(message(editor)).toBeNull();
+		});
+});
+
+describe('the image from the store', () => {
+	const options = () => Array.from(document.querySelectorAll(
+		'.antilia-popover [role="option"]')).map((option) => option.textContent);
+	const combobox = () => form()!.querySelector<HTMLInputElement>('input[role="combobox"]')!;
+	const type = async (text: string) => {
+		combobox().value = text;
+		combobox().dispatchEvent(new Event('input'));
+		await tick(200);
+	};
+
+	it('shows while the page finds the images it stores', () => {
+		const editor = new RichTextEditor(textArea());
+		expect(tool(editor, 'storedImage')).toBeNull();
+		editor.configure({ onFindImages: () => Promise.resolve([]) });
+		expect(tool(editor, 'storedImage').getAttribute('aria-label'))
+			.toBe('Insert image from store');
+		editor.configure({ onFindImages: null });
+		expect(tool(editor, 'storedImage')).toBeNull();
+	});
+
+	it('finds the images by their names as the user types, and inserts the one chosen',
+		async () => {
+			const stored = [{ url: '/logo.png', name: 'Logo' }, { url: '/team.jpg',
+				name: 'Team photo' }, { url: 'javascript:steal()', name: 'Team trap' }];
+			const onFindImages = vi.fn((query: string) => Promise.resolve(stored.filter((image) =>
+				image.name.toLowerCase().includes(query.toLowerCase()))));
+			const editor = new RichTextEditor(textArea(), { onFindImages });
+			select(editor, 5);
+			tool(editor, 'storedImage').click();
+			expect(document.activeElement).toBe(combobox());
+			expect(form()!.querySelector('label')!.textContent).toBe('Name of the image');
+			// the latest at once
+			expect(onFindImages).toHaveBeenCalledWith('', expect.any(AbortSignal));
+			expect(form()!.querySelector('.antilia-rich-text-picker-status')!.textContent)
+				.toBe('Searching…');
+			await tick();
+			// an address the editor does not take is left out
+			expect(options()).toEqual(['Logo', 'Team photo']);
+			expect(combobox().getAttribute('aria-expanded')).toBe('true');
+			const list = document.getElementById(combobox().getAttribute('aria-controls')!)!;
+			expect(list.getAttribute('role')).toBe('listbox');
+			expect(list.querySelector('img')!.getAttribute('src')).toBe('/logo.png');
+			expect(combobox().getAttribute('aria-activedescendant')).toBe(
+				list.querySelector('[role="option"]')!.id);
+
+			await type('team');
+			expect(onFindImages).toHaveBeenLastCalledWith('team', expect.any(AbortSignal));
+			expect(options()).toEqual(['Team photo']);
+			await type('nothing');
+			expect(options()).toEqual([]);
+			expect(combobox().getAttribute('aria-expanded')).toBe('false');
+			expect(form()!.querySelector('.antilia-rich-text-picker-status')!.textContent)
+				.toBe('No stored images found.');
+
+			await type('');
+			combobox().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown',
+				bubbles: true }));
+			expect(list.querySelector('[aria-selected="true"]')!.textContent).toBe('Team photo');
+			form()!.dispatchEvent(new Event('submit', { cancelable: true }));
+			expect(form()).toBeNull();
+			expect(editor.getValue()).toBe('<p>Text</p><img src="/team.jpg">');
+		});
+
+	it('puts the image clicked in place of the image selected', async () => {
+		const editor = new RichTextEditor(textArea('<p>Text</p><img src="/old.png">'),
+			{ onFindImages: () => Promise.resolve([{ url: '/new.png', name: 'New' }]) });
+		selectImage(editor, 6);
+		tool(editor, 'storedImage').click();
+		await tick();
+		document.querySelector<HTMLElement>('.antilia-popover [role="option"]')!.click();
+		expect(editor.getValue()).toBe('<p>Text</p><img src="/new.png">');
+	});
+
+	it('says why the page found none', async () => {
+		const editor = new RichTextEditor(textArea(),
+			{ onFindImages: () => Promise.reject(new Error('Not allowed.')) });
+		tool(editor, 'storedImage').click();
+		await tick();
+		expect(form()!.querySelector('.antilia-rich-text-picker-status')!.textContent)
+			.toBe('Not allowed.');
 	});
 });
 
@@ -435,7 +751,7 @@ describe('the images dropped or pasted', () => {
 			expect(message(editor)).toBe('alert: notes.txt is not an image of a type the editor ' +
 				'takes: PNG, JPEG, GIF, WebP, AVIF.');
 			expect(editor.element.querySelector('.antilia-rich-text-message')!.nextElementSibling)
-				.toBe(editor.content);
+				.toBe(editor.scroller);
 			expect(marks(editor)).toEqual([]);
 			drop(editor, [png('large.png', 2048)]);
 			await vi.advanceTimersByTimeAsync(0);
@@ -673,30 +989,45 @@ describe('the images taken out of the text', () => {
 
 describe('uploadImageTo', () => {
 	it('posts a file, and reads its address from the answer', async () => {
-		const fetch = vi.fn(() => Promise.resolve(new Response('{"url": "/images/a.png"}',
-			{ status: 200, headers: { 'Content-Type': 'application/json' } })));
-		vi.stubGlobal('fetch', fetch);
+		const requests = fakeRequests({ status: 200, body: '{"url": "/images/a.png"}' },
+			{ status: 200, body: '{"url": "/images/b.png"}' });
 		const file = png();
 		expect(await uploadImageTo('upload?x=1')(file)).toBe('/images/a.png');
-		const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-		expect(url).toBe('upload?x=1');
-		expect(init.method).toBe('POST');
-		expect(init.credentials).toBe('same-origin');
-		expect((init.body as FormData).get('file')).toBeInstanceOf(File);
+		const [sent] = requests.sent;
+		expect(sent!.url).toBe('upload?x=1');
+		expect(sent!.method).toBe('POST');
+		expect(sent!.headers).toEqual({ Accept: 'application/json' });
+		expect((sent!.body as FormData).get('file')).toBeInstanceOf(File);
 
-		await uploadImageTo('upload', 'image')(file);
-		expect(((fetch.mock.calls[1] as unknown as [string, RequestInit])[1].body as FormData)
-			.get('image')).toBeInstanceOf(File);
+		expect(await uploadImageTo('upload', 'image')(file)).toBe('/images/b.png');
+		expect((requests.sent[1]!.body as FormData).get('image')).toBeInstanceOf(File);
 	});
 
 	it('rejects with what the server says, or with nothing', async () => {
-		const answers = [new Response('{"error": "Too large."}', { status: 200 }),
-			new Response('Server error', { status: 500 }), new Response('{}', { status: 200 })];
-		vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(answers.shift()!)));
+		fakeRequests({ status: 200, body: '{"error": "Too large."}' },
+			{ status: 500, body: 'Server error' }, { status: 200, body: '{}' });
 		const upload = uploadImageTo('upload');
 		await expect(upload(png())).rejects.toThrow('Too large.');
 		await expect(upload(png())).rejects.toThrow(/^$/);
 		await expect(upload(png())).rejects.toThrow(/^$/);
+	});
+
+	it('tells the share of the file sent, and stops as the signal aborts', async () => {
+		const requests = fakeRequests();
+		const onProgress = vi.fn();
+		const controller = new AbortController();
+		const uploaded = uploadImageTo('upload')(png(), { onProgress, signal: controller.signal });
+		const [sent] = requests.sent;
+		sent!.progress(40, 100);
+		expect(onProgress).toHaveBeenCalledWith(40, 100);
+		controller.abort();
+		expect(sent!.aborted).toBe(true);
+		await expect(uploaded).rejects.toMatchObject({ name: 'AbortError' });
+
+		// aborted before it started: nothing is sent
+		await expect(uploadImageTo('upload')(png(), { signal: controller.signal })).rejects
+			.toMatchObject({ name: 'AbortError' });
+		expect(requests.sent).toHaveLength(1);
 	});
 });
 
@@ -715,6 +1046,33 @@ describe('deleteImagesAt', () => {
 		expect(await deleteImagesAt('upload', 'gone')(['/a.png'])).toEqual([]);
 		expect(((fetch.mock.calls[1] as unknown as [string, RequestInit])[1].body as URLSearchParams)
 			.get('gone')).toBe('["/a.png"]');
+	});
+});
+
+describe('findImagesAt and storePermanentlyAt', () => {
+	it('post what the user typed and the addresses, and read the answers', async () => {
+		const fetch = vi.fn<(url: string, init: RequestInit) => Promise<Response>>()
+			.mockResolvedValueOnce(new Response('{"images": [{"url": "/a.png", "name": "A"}, ' +
+				'{"url": "/b.png"}, {"name": "no address"}, 3]}'))
+			.mockResolvedValueOnce(new Response('{"error": "Not allowed."}'))
+			.mockResolvedValueOnce(new Response('{"stored": ["/a.png", 4]}'))
+			.mockResolvedValueOnce(new Response('Server error', { status: 500 }));
+		vi.stubGlobal('fetch', fetch);
+		const signal = new AbortController().signal;
+		expect(await findImagesAt('upload?3')('bird', signal)).toEqual([
+			{ url: '/a.png', name: 'A' }, { url: '/b.png', name: '/b.png' }]);
+		const [url, init] = fetch.mock.calls[0]!;
+		expect(url).toBe('upload?3');
+		expect(init.method).toBe('POST');
+		expect(init.signal).toBe(signal);
+		expect((init.body as URLSearchParams).get('find')).toBe('bird');
+		await expect(findImagesAt('upload')('', signal)).rejects.toThrow('Not allowed.');
+
+		expect(await storePermanentlyAt('upload?3')(['/a.png', '/b.png'])).toEqual(['/a.png']);
+		expect((fetch.mock.calls[2]![1].body as URLSearchParams).get('permanent'))
+			.toBe('["/a.png","/b.png"]');
+		expect(await storePermanentlyAt('upload', 'keep')(['/a.png'])).toEqual([]);
+		expect((fetch.mock.calls[3]![1].body as URLSearchParams).get('keep')).toBe('["/a.png"]');
 	});
 });
 
@@ -793,14 +1151,13 @@ describe('Wicket.RichTextEditor', () => {
 			await import('../src/wicket/rich-text-editor.js');
 			const global = window as unknown as { Wicket: Record<string, unknown> };
 			const Wicket = global.Wicket.RichTextEditor as WicketRichTextEditor;
-			const fetch = vi.fn(() => Promise.resolve(new Response('{"url": "/images/a.png"}')));
-			vi.stubGlobal('fetch', fetch);
+			const requests = fakeRequests({ status: 200, body: '{"url": "/images/a.png"}' });
 			textArea('<pre><code class="language-java">class A {}</code></pre>');
 			const editor = Wicket.attach('notes', { uploadUrl: 'upload?2', highlight: true })!;
 			select(editor, 1);
 			drop(editor, [png()]);
 			await tick();
-			expect((fetch.mock.calls[0] as unknown as [string])[0]).toBe('upload?2');
+			expect(requests.sent[0]!.url).toBe('upload?2');
 			expect(editor.getValue()).toBe('<img src="/images/a.png"><pre><code ' +
 				'class="language-java">class A {}</code></pre>');
 
@@ -812,6 +1169,30 @@ describe('Wicket.RichTextEditor', () => {
 			expect(editor.editor.view.dom.querySelector('pre span.tok-keyword')?.textContent)
 				.toBe('class');
 		});
+
+	it('stores images permanently and finds those stored at the URL of the editor', async () => {
+		await import('../src/wicket/rich-text-editor.js');
+		const global = window as unknown as { Wicket: Record<string, unknown> };
+		const Wicket = global.Wicket.RichTextEditor as WicketRichTextEditor;
+		const fetch = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(() =>
+			Promise.resolve(new Response('{"images": [{"url": "/s.png", "name": "S"}]}')));
+		vi.stubGlobal('fetch', fetch);
+		textArea();
+		const plain = Wicket.attach('notes', { uploadUrl: 'upload?7' })!;
+		expect(tool(plain, 'storedImage')).toBeNull();
+		plain.destroy();
+
+		textArea();
+		const editor = Wicket.attach('notes', { uploadUrl: 'upload?7', permanentImages: true })!;
+		tool(editor, 'image').click();
+		expect(form()!.querySelector('.antilia-rich-text-form-permanent')).not.toBeNull();
+		Popover.closeAll();
+		tool(editor, 'storedImage').click();
+		await tick();
+		expect(fetch.mock.calls[0]![0]).toBe('upload?7');
+		expect((fetch.mock.calls[0]![1].body as URLSearchParams).get('find')).toBe('');
+		expect(document.querySelector('.antilia-popover [role="option"]')!.textContent).toBe('S');
+	});
 
 	it('tells the server of the images taken out of the text, via Ajax', async () => {
 		await import('../src/wicket/rich-text-editor.js');

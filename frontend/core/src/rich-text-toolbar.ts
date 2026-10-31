@@ -35,9 +35,12 @@
  * must be safe (see isSafeUrl): http, https, mailto or a relative one. While the page uploads
  * images, the form of the image has a zone to drop images on, with a button choosing them, several
  * at once, which go into the text where the cursor is; or a button opening the dialog of the
- * uploads, when the page wants it (see rich-text-upload-dialog.ts). The images of the text open a
- * menu listing them, each with a thumbnail, selected by a click, and a button taking it out of the
- * text, every place it is in.
+ * uploads, when the page wants it (see rich-text-upload-dialog.ts); with a box to tick storing the
+ * images permanently, while the page stores them. The images of the text open a menu listing them,
+ * each with a thumbnail, selected by a click, and a button taking it out of the text, every place
+ * it is in. The image from the store, while the page finds the images it stores, opens a form
+ * finding them by their names, as the user types, which inserts the one chosen (see
+ * rich-text-stored-images.ts).
  *
  * The same class draws the bubble menu over a selection, with the tools of the inline formats.
  */
@@ -47,6 +50,7 @@ import type { Editor } from '@tiptap/core';
 import { lookClasses, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Popover } from './popover.js';
 import { dropZone, openUploadDialog } from './rich-text-upload-dialog.js';
+import { imagePicker, type RichTextImageFinder } from './rich-text-stored-images.js';
 import { DEFAULT_RICH_TEXT_PASTE_TEXTS, type RichTextPasteTexts } from './rich-text-html.js';
 import { codeLanguage } from './rich-text-languages.js';
 import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUrl,
@@ -54,14 +58,15 @@ import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUr
 	type RichTextFeature } from './rich-text-schema.js';
 import { registeredTool, type RichTextMenuItem, type RichTextToolContext,
 	type RichTextTrigger } from './rich-text-features.js';
-import { uploadFiles, type UploadHost } from './rich-text-upload.js';
+import { isAbort, keepPermanently, percentText, uploadFiles,
+	type UploadHost } from './rich-text-upload.js';
 
 /** The tools built in the toolbar. */
 export type RichTextToolName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
 	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
-	'images' | 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' | 'redo' |
-	'clearFormatting';
+	'storedImage' | 'images' | 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' |
+	'redo' | 'clearFormatting';
 
 /**
  * A tool of the toolbar: a built-in one, or one of a feature registered
@@ -73,8 +78,8 @@ export type RichTextTool = RichTextToolName | (string & {});
 export const RICH_TEXT_TOOLS: readonly RichTextToolName[] = Object.freeze(['heading', 'bold', 'italic',
 	'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor', 'textBackground', 'link',
 	'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table',
-	'image', 'images', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'clearFormatting',
-	'undo', 'redo']);
+	'image', 'storedImage', 'images', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify',
+	'clearFormatting', 'undo', 'redo']);
 
 /** The toolbar when the page gives none: the tools in groups. */
 export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[] = Object.freeze([
@@ -84,7 +89,7 @@ export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[]
 	['link'],
 	['bulletList', 'orderedList', 'taskList'],
 	['blockquote', 'codeBlock', 'horizontalRule'],
-	['table', 'image', 'images'],
+	['table', 'image', 'storedImage', 'images'],
 	['alignLeft', 'alignCenter', 'alignRight', 'alignJustify'],
 	['clearFormatting'],
 	['undo', 'redo']
@@ -122,6 +127,7 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	horizontalRule: string;
 	table: string;
 	image: string;
+	storedImage: string;
 	images: string;
 	alignLeft: string;
 	alignCenter: string;
@@ -207,6 +213,18 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	scaleText: string;
 	scaleDown: string;
 	upload: string;
+	/** The button of the mark of an image uploading canceling it; {0} the name of its file. */
+	cancelUpload: string;
+	/**
+	 * The box to tick storing the images uploaded permanently, and why one was not; {0} the name
+	 * of its file.
+	 */
+	storePermanently: string;
+	permanentFailed: string;
+	/** The form of the image from the store: the field, while it searches, when it found none. */
+	findImages: string;
+	findingImages: string;
+	noStoredImages: string;
 	/** The count: {0} the characters, {1} the limit, {0} the words; one of them alone. */
 	characters: string;
 	character: string;
@@ -250,6 +268,7 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	horizontalRule: 'Horizontal line',
 	table: 'Table',
 	image: 'Image',
+	storedImage: 'Insert image from store',
 	images: 'Images in the text',
 	alignLeft: 'Align left',
 	alignCenter: 'Center',
@@ -316,6 +335,12 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 		'are left out.',
 	scaleDown: 'Scale {0} down to {1}',
 	upload: 'Upload',
+	cancelUpload: 'Cancel the upload of {0}',
+	storePermanently: 'Store permanently',
+	permanentFailed: '{0} could not be stored permanently.',
+	findImages: 'Name of the image',
+	findingImages: 'Searching…',
+	noStoredImages: 'No stored images found.',
 	characters: '{0} characters',
 	character: '{0} character',
 	charactersOfLimit: '{0} of {1} characters',
@@ -452,6 +477,10 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading
 			'<path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'),
 		image: svg('<rect x="3" y="4" width="18" height="16" rx="2"/>' +
 			'<circle cx="9" cy="9.5" r="1.8"/><path d="m21 16-5-5L5 20"/>'),
+		// a picture coming out of a box
+		storedImage: svg('<path d="M3 14v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5"/>' +
+			'<path d="M3 14h5l1 2h6l1-2h5"/><rect x="7" y="3" width="10" height="8" rx="1.5"/>' +
+			'<path d="m7.5 10 3-3 2 2 1.5-1.5 2.5 2.5"/>'),
 		// two pictures, one behind the other
 		images: svg('<rect x="7" y="3" width="14" height="14" rx="2"/>' +
 			'<path d="M3 7v12a2 2 0 0 0 2 2h12"/><circle cx="11.5" cy="7.5" r="1.4"/>' +
@@ -643,7 +672,9 @@ const SPECS: Readonly<Record<RichTextToolName, ToolSpec>> = {
 	image: { feature: 'image', kind: 'form',
 		active: (editor) => editor.isActive('image'),
 		enabled: (editor) => editor.isActive('image') || editor.can().setImage({ src: '#' }) },
-		images: { feature: 'image', kind: 'menu' },
+	storedImage: { feature: 'image', kind: 'form',
+		enabled: (editor) => editor.can().setImage({ src: '#' }) },
+	images: { feature: 'image', kind: 'menu' },
 	alignLeft: align(ALIGNMENTS.alignLeft),
 	alignCenter: align(ALIGNMENTS.alignCenter),
 	alignRight: align(ALIGNMENTS.alignRight),
@@ -788,6 +819,11 @@ export interface RichTextToolbarContext {
 	codeLanguages?: () => readonly RichTextCodeLanguage[];
 	/** The uploads of the form of an image; none while the page uploads no images. */
 	uploads?: () => UploadHost | null;
+	/**
+	 * Finds the images the page stores permanently, for the tool storedImage; none, the tool not
+	 * showing, while the page finds none.
+	 */
+	findImages?: () => RichTextImageFinder | null;
 	/** Called as a form opens and once it closed. */
 	onForm?: (open: boolean) => void;
 	/**
@@ -916,7 +952,8 @@ export class RichTextToolbar {
 		this.tools = [];
 		const seen = new Set<RichTextTool>();
 		for (const group of groups) {
-			const tools = group.filter((tool) => toolAvailable(tool, features) && !seen.has(tool));
+			const tools = group.filter((tool) => toolAvailable(tool, features) &&
+				this.offered(tool) && !seen.has(tool));
 			if (!tools.length) {
 				continue;
 			}
@@ -932,6 +969,15 @@ export class RichTextToolbar {
 		this.current = Math.min(this.current, Math.max(this.tools.length - 1, 0));
 		this.element.hidden = !this.tools.length;
 		this.update();
+	}
+
+	/**
+	 * @returns whether the page offers what a tool needs: the image from the store needs the page
+	 *          to find the images it stores
+	 */
+	private offered(tool: RichTextTool): boolean {
+		return tool !== 'storedImage' || !!toolSpec(tool)?.registered ||
+			!!this.context.findImages?.();
 	}
 
 	/**
@@ -1020,6 +1066,8 @@ export class RichTextToolbar {
 		if (spec.kind === 'form') {
 			if (drawn.tool === 'link') {
 				this.openLink(drawn.button);
+			} else if (drawn.tool === 'storedImage') {
+				this.openStoredImage(drawn.button);
 			} else {
 				this.openImage(drawn.button);
 			}
@@ -1706,8 +1754,10 @@ export class RichTextToolbar {
 	/**
 	 * Opens the form of the image selected, or of one to insert: its address and its text, and,
 	 * while the page uploads images, a zone to drop them on or choose them, or a button opening
-	 * the dialog of the uploads. The images dropped or chosen go into the text where the cursor
-	 * is, the form closing; one for the image selected takes its place, the form waiting for it.
+	 * the dialog of the uploads, with a box to tick storing them permanently while the page stores
+	 * images. The images dropped or chosen go into the text where the cursor is, the form closing;
+	 * one for the image selected takes its place, the form waiting for it and telling the share
+	 * sent. Closing the form cancels its upload.
 	 */
 	private openImage(trigger: HTMLElement): void {
 		const editor = this.editor;
@@ -1750,10 +1800,11 @@ export class RichTextToolbar {
 			};
 			upload.onFiles = async (files) => {
 				error.hidden = true;
+				const permanent = !!upload.permanent?.checked;
 				if (!selected || files.length !== 1) {
 					// into the text, where the cursor is, a mark standing for each meanwhile
 					this.closeForm();
-					void uploadFiles(uploads, files, editor.state.selection.from);
+					void uploadFiles(uploads, files, editor.state.selection.from, permanent);
 					return;
 				}
 				busy(true);
@@ -1766,11 +1817,23 @@ export class RichTextToolbar {
 					}
 					return;
 				}
-				upload.status.textContent = uploads.uploading(file);
+				const uploading = uploads.uploading(file);
+				upload.status.textContent = uploading;
 				upload.status.hidden = false;
-				uploads.upload(file).then((address) => {
+				const controller = new AbortController();
+				uploads.upload(file, { signal: controller.signal, onProgress: (sent, total) => {
+					if (!form.isConnected) {
+						// the user closed the form: the image is not wanted any more
+						controller.abort();
+					} else {
+						upload.status.textContent = uploading + ' ' + percentText(sent / total);
+					}
+				} }).then((address) => {
 					if (form.isConnected) {
 						apply(address);
+						if (permanent) {
+							void keepPermanently(uploads, [{ src: address, name: file.name }]);
+						}
 					} else {
 						// the user closed the form meanwhile: the image is not wanted any more
 						uploads.discard([address]);
@@ -1778,7 +1841,7 @@ export class RichTextToolbar {
 				}, (failure: unknown) => {
 					busy(false);
 					upload.status.hidden = true;
-					if (form.isConnected) {
+					if (form.isConnected && !isAbort(failure)) {
 						this.showError(upload.button, error, failure instanceof Error ?
 							failure.message : String(failure));
 					}
@@ -1789,14 +1852,18 @@ export class RichTextToolbar {
 	}
 
 	/**
-	 * Adds to the form of an image the zone to drop images on, with a button choosing them, or,
-	 * for the dialog of the uploads, a button opening it; and the line telling an upload.
+	 * Adds to the form of an image the zone to drop images on, with a button choosing them, and,
+	 * while the page stores images, a box to tick storing them permanently; or, for the dialog of
+	 * the uploads, a button opening it, whose lines have boxes of their own; and the line telling
+	 * an upload.
 	 *
 	 * @param selected whether the form is of an image selected, which the dialog does not replace
-	 * @returns the button, and what the files dropped or chosen go to, which the form sets
+	 * @returns the button, the box to tick, and what the files dropped or chosen go to, which the
+	 *          form sets
 	 */
 	private uploadZone(form: HTMLFormElement, uploads: UploadHost, selected: boolean): {
-		button: HTMLButtonElement; status: HTMLElement; onFiles: (files: File[]) => void } {
+		button: HTMLButtonElement; status: HTMLElement; permanent: HTMLInputElement | null;
+		onFiles: (files: File[]) => void } {
 		const texts = this.context.texts();
 		const look = this.context.look;
 		const box = document.createElement('div');
@@ -1806,6 +1873,7 @@ export class RichTextToolbar {
 		status.setAttribute('role', 'status');
 		status.hidden = true;
 		const upload = { button: null as unknown as HTMLButtonElement, status,
+			permanent: null as HTMLInputElement | null,
 			onFiles: (_files: File[]) => undefined as void };
 		if (uploads.dialog() && !selected) {
 			const button = document.createElement('button');
@@ -1830,10 +1898,52 @@ export class RichTextToolbar {
 			const zone = dropZone(texts, look, uploads.types(), (files) => upload.onFiles(files));
 			upload.button = zone.button;
 			box.append(zone.element);
+			if (uploads.permanent()) {
+				const label = document.createElement('label');
+				label.className = this.css('rich-text-form-check') +
+					' antilia-rich-text-form-permanent';
+				const tick = document.createElement('input');
+				tick.type = 'checkbox';
+				tick.className = this.css('rich-text-form-checkbox');
+				label.append(tick, document.createTextNode(' ' + texts.storePermanently));
+				box.append(label);
+				upload.permanent = tick;
+			}
 		}
 		box.append(status);
 		form.append(box);
 		return upload;
+	}
+
+	/**
+	 * Opens the form of the image from the store: a field finding the images the page stores
+	 * permanently by their names, as the user types, and the list of those found, each with a
+	 * thumbnail; Enter or a click inserts the one chosen where the cursor is, in place of the image
+	 * selected, if any.
+	 */
+	private openStoredImage(trigger: HTMLElement): void {
+		const find = this.context.findImages?.();
+		if (!find) {
+			return;
+		}
+		const editor = this.editor;
+		const texts = this.context.texts();
+		const form = this.form();
+		form.classList.add('antilia-rich-text-picker-form');
+		const picker = imagePicker(texts, this.context.look, find, (image) => {
+			if (!isSafeUrl(image.url)) {
+				return;
+			}
+			this.closeForm();
+			editor.chain().focus().setImage({ src: image.url }).run();
+		});
+		form.append(picker.element);
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			picker.choose();
+		});
+		this.showForm(trigger, texts.storedImage, form, picker.input, () => picker.destroy());
+		picker.search();
 	}
 
 	private toolButton(tool: RichTextTool): HTMLButtonElement | undefined {
@@ -1919,7 +2029,7 @@ export class RichTextToolbar {
 	}
 
 	private showForm(trigger: HTMLElement, title: string, form: HTMLFormElement,
-		focus: HTMLInputElement): void {
+		focus: HTMLInputElement, onClose?: () => void): void {
 		this.closeMenu(false);
 		this.closeForm();
 		const texts = this.context.texts();
@@ -1931,6 +2041,7 @@ export class RichTextToolbar {
 				if (openForm?.popover === popover) {
 					openForm = null;
 				}
+				onClose?.();
 				this.context.onForm?.(false);
 			} });
 		if (popover) {

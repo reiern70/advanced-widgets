@@ -28,7 +28,9 @@
  * with CKEditor's script (see rich-text-events.ts).
  *
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
- * chooses, drops or pastes there, and the server answers their addresses. With imagesUrl, that of
+ * chooses, drops or pastes there, telling the share sent, and the server answers their addresses;
+ * with permanentImages too, the user ticks the images to store permanently, which the editor asks
+ * the same behavior to, and the tool storedImage finds those stored there. With imagesUrl, that of
  * its Ajax behavior hearing of the images taken out of the text, the editor tells the server of
  * them, via Ajax, a moment after the user took them out; the server deletes those it knows, at once
  * or once the form is sent. With proofreadUrl, that
@@ -47,6 +49,7 @@ import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTe
 import type { RichTextHighlighter } from '../rich-text-languages.js';
 import { proofreadAt } from '../rich-text-proofreading.js';
 import { suggestAt, type RichTextSuggester } from '../rich-text-suggestions.js';
+import { findImagesAt, storePermanentlyAt } from '../rich-text-stored-images.js';
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
@@ -60,6 +63,11 @@ interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'sugge
 	inputName?: string;
 	/** The URL of the behavior taking the images the user uploads, and answering their addresses. */
 	uploadUrl?: string;
+	/**
+	 * Whether the user stores images permanently, and inserts those stored, by the behavior of
+	 * uploadUrl.
+	 */
+	permanentImages?: boolean;
 	/** The URL of the Ajax behavior hearing of the images the user took out of the text. */
 	imagesUrl?: string;
 	/** The URL of the behavior checking the text, and answering its issues. */
@@ -81,8 +89,8 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { stateUrl, inputName, uploadUrl, imagesUrl, proofreadUrl, suggestUrl, suggesters,
-			...rest } = options;
+		const { stateUrl, inputName, uploadUrl, permanentImages, imagesUrl, proofreadUrl, suggestUrl,
+			suggesters, ...rest } = options;
 		let editor: RichTextEditor | null = null;
 		const onStateChange = stateUrl ? (state: RichTextEditorState,
 			change: RichTextEditorStateChange) => {
@@ -94,6 +102,9 @@ const WicketRichTextEditor = {
 			rest.onStateChange?.(state, change);
 		} : rest.onStateChange;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
+		const stored = !!uploadUrl && !!permanentImages;
+		const onStorePermanently = stored ? storePermanentlyAt(uploadUrl) : rest.onStorePermanently;
+		const onFindImages = stored ? findImagesAt(uploadUrl) : rest.onFindImages;
 		const onImagesRemoved = imagesUrl ? (urls: string[]) => {
 			sendState(id, imagesUrl, [{ name: 'removed', value: JSON.stringify(urls) }], false);
 			rest.onImagesRemoved?.(urls);
@@ -103,7 +114,7 @@ const WicketRichTextEditor = {
 			suggestUrl ? suggestAt(suggestUrl, suggester) : null)
 			.filter((suggester): suggester is RichTextSuggester => !!suggester);
 		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload, onImagesRemoved,
-			proofreader, suggesters: asked });
+			onStorePermanently, onFindImages, proofreader, suggesters: asked });
 		return editor;
 	},
 

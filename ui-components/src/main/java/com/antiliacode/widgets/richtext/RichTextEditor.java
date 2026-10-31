@@ -40,6 +40,8 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.lang.Bytes;
 import org.apache.wicket.util.string.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -51,6 +53,7 @@ import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
+import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 
 /**
  * A text area shown as a rich text editor, Tiptap ({@link RichTextLibrary}), in the colors of the
@@ -116,6 +119,13 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * ({@link #markSaved(AjaxRequestTarget)}, {@link #deleteRemovedImages()}), as
  * {@link #setImageDeletion(RichTextImageDeletion) the mode} says.
  * <p>
+ * With {@link #setPermanentImages(boolean) permanent images}, the user ticks the images to keep
+ * permanently as they upload, in each line of the dialog or in the form of the image, and the
+ * store keeps them ({@link IRichTextImageStore#storePermanently(String, String)}); the tool
+ * {@link RichTextTool#STORED_IMAGE insert image from store} finds those kept by their names, as the
+ * user types ({@link IRichTextImageStore#findPermanent(String, int)}), and inserts the one chosen.
+ * The editor never deletes an image kept permanently.
+ * <p>
  * The browser checks the spelling of the text unless {@link #setSpellcheck(Boolean) told
  * otherwise}, in {@link #setTextLanguage(Locale) its language}. With
  * {@link #setProofreader(IRichTextProofreader) a proofreader}, such as
@@ -157,6 +167,8 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
 public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 {
 	private static final long serialVersionUID = 1L;
+
+	private static final Logger LOG = LoggerFactory.getLogger(RichTextEditor.class);
 
 	/**
 	 * The script of the editor, {@code Wicket.RichTextEditor}, with Tiptap and ProseMirror. The
@@ -209,7 +221,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType",
 		"images", "noImages", "deleteImage", "dropImages", "chooseImages", "uploadImagesTitle",
 		"uploadDone", "removeFile", "insertImages", "cancel", "upload", "uploadTooMany",
-		"uploadTooBig", "scaleTitle", "scaleText", "scaleDown",
+		"uploadTooBig", "scaleTitle", "scaleText", "scaleDown", "cancelUpload", "storedImage",
+		"storePermanently", "permanentFailed", "findImages", "findingImages", "noStoredImages",
 		"proofreadSpelling", "proofreadGrammar", "proofreadStyle", "proofreadReplacements",
 		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone",
 		"pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms", "pasteImages", "pasteTables",
@@ -248,6 +261,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	private boolean imageScaling;
 
 	private RichTextImageDeletion imageDeletion = RichTextImageDeletion.ON_SAVE;
+
+	private boolean permanentImages;
 
 	/** The behavior hearing of the images the user took out of the text, made with the first store. */
 	private AbstractDefaultAjaxBehavior imagesRemoval;
@@ -658,7 +673,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		this.imageStore = imageStore;
 		if (imageStore != null && imageUpload == null)
 		{
-			imageUpload = new RichTextImageUploadBehavior(this::storeImage)
+			imageUpload = new RichTextImageUploadBehavior(new EditorImageStore())
 			{
 				private static final long serialVersionUID = 1L;
 
@@ -669,7 +684,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 				}
 			};
 			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
-				.setMaxDimensions(imageMaxDimensions);
+				.setMaxDimensions(imageMaxDimensions).setPermanentImages(permanentImages);
 			add(imageUpload);
 			imagesRemoval = new AbstractDefaultAjaxBehavior()
 			{
@@ -688,13 +703,51 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		return this;
 	}
 
-	private String storeImage(FileUpload image, IRichTextImageType type) throws IOException
+	/**
+	 * The store of the editor's behavior: the store the editor has now, which the page may change.
+	 */
+	private final class EditorImageStore implements IRichTextImageStore
 	{
-		if (imageStore == null)
+		private static final long serialVersionUID = 1L;
+
+		private IRichTextImageStore current() throws IOException
 		{
-			throw new IOException("The editor keeps no images");
+			if (imageStore == null)
+			{
+				throw new IOException("The editor keeps no images");
+			}
+			return imageStore;
 		}
-		return imageStore.store(image, type);
+
+		@Override
+		public String store(FileUpload image, IRichTextImageType type) throws IOException
+		{
+			return current().store(image, type);
+		}
+
+		@Override
+		public void delete(String url) throws IOException
+		{
+			current().delete(url);
+		}
+
+		@Override
+		public void storePermanently(String url, String name) throws IOException
+		{
+			current().storePermanently(url, name);
+		}
+
+		@Override
+		public boolean isPermanent(String url)
+		{
+			return imageStore != null && imageStore.isPermanent(url);
+		}
+
+		@Override
+		public List<RichTextStoredImage> findPermanent(String query, int max) throws IOException
+		{
+			return current().findPermanent(query, max);
+		}
 	}
 
 	/**
@@ -889,6 +942,55 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return whether the user keeps images permanently, and inserts those kept
+	 * @since 11.0.0
+	 */
+	public boolean isPermanentImages()
+	{
+		return permanentImages;
+	}
+
+	/**
+	 * @param permanentImages
+	 *            whether the user keeps images permanently, by a box to tick for each in the dialog
+	 *            of the uploads, or for those dropped on the form of the image, which
+	 *            {@link IRichTextImageStore#storePermanently(String, String) the store keeps}; and
+	 *            inserts those kept by the tool {@link RichTextTool#STORED_IMAGE insert image from
+	 *            store}, which {@link IRichTextImageStore#findPermanent(String, int) the store
+	 *            finds}. {@code false} by default. Needs {@link #setImageStore(IRichTextImageStore)
+	 *            a store}.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setPermanentImages(boolean permanentImages)
+	{
+		this.permanentImages = permanentImages;
+		if (imageUpload != null)
+		{
+			imageUpload.setPermanentImages(permanentImages);
+		}
+		return this;
+	}
+
+	/**
+	 * @return whether the store keeps an image permanently, which the editor never deletes
+	 */
+	private boolean isPermanent(String url)
+	{
+		IRichTextImageStore store = imageStore;
+		try
+		{
+			return store != null && store.isPermanent(url);
+		}
+		catch (RuntimeException e)
+		{
+			LOG.warn("Could not tell whether the image {} is kept permanently", url, e);
+			// kept: an image deleted is gone for good
+			return true;
+		}
+	}
+
+	/**
 	 * @return the Ajax behavior hearing of the images taken out of the text, {@code null} until the
 	 *         editor has a store
 	 */
@@ -931,7 +1033,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		}
 		Set<String> known = knownImages();
 		Set<String> removed = new LinkedHashSet<>();
-		urls.stream().filter(known::contains).forEach(removed::add);
+		urls.stream().filter(known::contains).filter(url -> !isPermanent(url))
+			.forEach(removed::add);
 		if (removed.isEmpty())
 		{
 			return;
@@ -1033,6 +1136,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			gone.addAll(imagesRemoved);
 			gone.addAll(imageUpload.getUploaded());
 			gone.removeAll(saved);
+			gone.removeIf(this::isPermanent);
 		}
 		imageUpload.forget(imageUpload.getUploaded());
 		imagesRemoved.clear();
@@ -1310,6 +1414,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			{
 				options.put("uploadDialog", true);
 			}
+			if (permanentImages)
+			{
+				options.put("permanentImages", true);
+			}
 			showImages();
 			options.put("imagesUrl", imagesRemoval.getCallbackUrl().toString());
 		}
@@ -1465,8 +1573,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * Renders what the editor needs in the browser: {@link #JS} and {@link #CSS}, the style sheet
-	 * of the bar resizing it, {@link ResizableBehavior#CSS}, and those of the buttons and the
-	 * popovers of its forms.
+	 * of the bar resizing it, {@link ResizableBehavior#CSS}, that of the scroll bars of its text,
+	 * {@link ScrollbarBehavior#CSS}, and those of the buttons and the popovers of its forms.
 	 *
 	 * @param response
 	 *            the header response
@@ -1475,6 +1583,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	{
 		CoreLibrariesContributor.contribute(Application.get(), response);
 		response.render(CssHeaderItem.forReference(ResizableBehavior.CSS));
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
 		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
 		response.render(CssHeaderItem.forReference(Popover.CSS));
 		response.render(JavaScriptHeaderItem.forReference(JS));
