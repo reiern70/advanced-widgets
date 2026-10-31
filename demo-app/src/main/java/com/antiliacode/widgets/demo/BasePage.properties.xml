@@ -75,6 +75,8 @@
 	<entry key="demo.richTextEditor.description">Text with headings, lists, links, tables, images and alignment, from a toolbar of the components' own: Tiptap, in the colors of the theme. The server cleans the HTML before it keeps it, with the cursor, the selection and the size; or the editor keeps Markdown.</entry>
 	<entry key="demo.ckEditor">CKEditor 5</entry>
 	<entry key="demo.ckEditor.description">CKEditor 5, a complete editor with its own toolbar, balloons and dialogs, in the colors of the theme, with the contract of the Rich Text Editor. The application brings CKEditor and its license; the server cleans the HTML before it keeps it.</entry>
+	<entry key="demo.wizard">Wizard</entry>
+	<entry key="demo.wizard.description">Steps known only as the user goes, branching on the answers: a dichotomous key of mosquitoes and an image card uploaded by Ajax, then described or given a text over it; buttons above or below, the trail of the steps visited around the title.</entry>
 	<entry key="demo.scrollbar">Scrollbar</entry>
 	<entry key="demo.scrollbar.description">Slim scroll bars in the colors of the theme that look the same in every browser, drawn over native scrolling so the wheel, the keys and touch work as ever, and following content changed via Ajax.</entry>
 	<entry key="demo.splitPanel">Split Panel</entry>

@@ -99,6 +99,7 @@ import com.antiliacode.widgets.demo.tree.TreeGridPage;
 import com.antiliacode.widgets.demo.tree.TreeOfLifeResource;
 import com.antiliacode.widgets.demo.upload.DemoUploadsFileManager;
 import com.antiliacode.widgets.demo.upload.UploadPage;
+import com.antiliacode.widgets.demo.wizard.WizardPage;
 import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.throttle.Throttle;
 
@@ -348,6 +349,7 @@ public class WicketApplication extends WebApplication
 		mountPage("tabs", TabbedPanelPage.class);
 		mountPage("menus", MenusPage.class);
 		mountPage("breadcrumbs", BreadcrumbsPage.class);
+		mountPage("wizard", WizardPage.class);
 		mountPage("popovers", PopoversPage.class);
 		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);

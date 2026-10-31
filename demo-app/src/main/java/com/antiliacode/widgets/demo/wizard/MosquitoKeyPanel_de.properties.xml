@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="couplet">Frage {0}</entry>
+	<entry key="couplet.1">Die Taster des Weibchens, neben dem Stechrüssel:</entry>
+	<entry key="couplet.1a">So lang wie der Stechrüssel; in Ruhe steht der Körper schräg zur Fläche</entry>
+	<entry key="couplet.1b">Viel kürzer als der Stechrüssel; in Ruhe liegt der Körper parallel zur Fläche</entry>
+	<entry key="couplet.2">Die Spitze des Hinterleibs des Weibchens:</entry>
+	<entry key="couplet.2a">Spitz, die Cerci ragen heraus; Beine oft weiß geringelt</entry>
+	<entry key="couplet.2b">Stumpf, abgerundet</entry>
+	<entry key="couplet.3">Die weißen Schuppen auf dem Rücken der Brust (dem Scutum):</entry>
+	<entry key="couplet.3a">In der Form einer Leier</entry>
+	<entry key="couplet.3b">Ein einziger Streifen in der Mitte</entry>
+	<entry key="couplet.4">Die Borsten vor dem Stigma der Brust (Spiracularborsten):</entry>
+	<entry key="couplet.4a">Vorhanden</entry>
+	<entry key="couplet.4b">Fehlen</entry>
+	<entry key="taxon.anopheles">Anopheles</entry>
+	<entry key="taxon.anopheles.note">Die Gattung der Stechmücken, die Malaria übertragen.</entry>
+	<entry key="taxon.aedesAegypti">Aedes aegypti</entry>
+	<entry key="taxon.aedesAegypti.note">Die Gelbfiebermücke, die auch Dengue, Zika und Chikungunya überträgt.</entry>
+	<entry key="taxon.aedesAlbopictus">Aedes albopictus</entry>
+	<entry key="taxon.aedesAlbopictus.note">Die Asiatische Tigermücke, die ebenfalls Dengue und Chikungunya übertragen kann.</entry>
+	<entry key="taxon.culex">Culex</entry>
+	<entry key="taxon.culex.note">Die gewöhnlichen Hausmücken, die das West-Nil-Virus übertragen.</entry>
+	<entry key="taxon.culiseta">Culiseta</entry>
+	<entry key="taxon.culiseta.note">Große Stechmücken, die meist eher Vögel und andere Tiere stechen als Menschen.</entry>
+	<entry key="route">Deine Antworten: {0}</entry>
+	<entry key="identified">Bestimmt als {0}.</entry>
+	<entry key="cancelled">Die Bestimmung wurde abgebrochen.</entry>
+	<entry key="disclaimer">Ein vereinfachter Schlüssel der erwachsenen Weibchen von fünf Stechmücken Amerikas, für diese Demo gemacht: nicht zum Bestimmen von Stechmücken.</entry>
+</properties>

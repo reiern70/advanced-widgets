@@ -75,6 +75,8 @@
 	<entry key="demo.richTextEditor.description">Text mit Überschriften, Listen, Links, Tabellen, Bildern und Ausrichtung, aus einer eigenen Werkzeugleiste der Komponenten: Tiptap, in den Farben des Themas. Der Server bereinigt das HTML, bevor er es behält, mit Cursor, Auswahl und Größe; oder der Editor behält Markdown.</entry>
 	<entry key="demo.ckEditor">CKEditor 5</entry>
 	<entry key="demo.ckEditor.description">CKEditor 5, ein vollständiger Editor mit eigener Werkzeugleiste, eigenen Sprechblasen und Dialogen, in den Farben des Themas, mit dem Vertrag des Rich-Text-Editors. Die Anwendung bringt CKEditor und seine Lizenz mit; der Server bereinigt das HTML, bevor er es behält.</entry>
+	<entry key="demo.wizard">Wizard</entry>
+	<entry key="demo.wizard.description">Schritte, die erst beim Vorgehen bekannt werden und sich nach den Antworten verzweigen: ein dichotomer Schlüssel der Stechmücken und eine per Ajax hochgeladene Bildkarte, dann beschrieben oder mit einem Text darüber; Schaltflächen oben oder unten, der Pfad der besuchten Schritte am Titel.</entry>
 	<entry key="demo.scrollbar">Bildlaufleiste</entry>
 	<entry key="demo.scrollbar.description">Schmale Bildlaufleisten in den Farben des Themes, in jedem Browser gleich, über dem nativen Scrollen gezeichnet, sodass Mausrad, Tasten und Touch wie immer funktionieren, und sie folgen per Ajax geändertem Inhalt.</entry>
 	<entry key="demo.splitPanel">Geteiltes Panel</entry>

@@ -387,6 +387,19 @@ public enum LookPart
 	BREADCRUMB_MORE_BUTTON(LookAspect.BASE),
 	BREADCRUMB_CURRENT(LookAspect.STATE),
 
+	// wizards: a header with the title of the step and the trail of the steps visited, the body and
+	// a bar of buttons; in Bootstrap's look a card, the bar below its footer
+	WIZARD(LookAspect.BASE),
+	WIZARD_HEADER(LookAspect.BASE),
+	WIZARD_TITLE(LookAspect.BASE),
+	WIZARD_TITLE_HIDDEN(LookAspect.STATE),
+	WIZARD_BREADCRUMB(LookAspect.BASE),
+	WIZARD_BREADCRUMB_IN_TITLE(LookAspect.BASE),
+	WIZARD_BODY(LookAspect.BASE),
+	WIZARD_BUTTONS(LookAspect.BASE),
+	WIZARD_BUTTONS_TOP(LookAspect.BASE),
+	WIZARD_BUTTONS_BOTTOM(LookAspect.BASE),
+
 	// trees and tree grids
 	TREE(LookAspect.BASE),
 	TREE_JSON(LookAspect.BASE),

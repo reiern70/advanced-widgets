@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Wizard</entry>
+	<entry key="explanation">&lt;p&gt;Wizard from ui-components leads the user through steps, one at a time: each step has its title in the header, its body, and a bar of buttons. The steps fill in an object, the model of the wizard, typed by the steps, which needs not be serializable. The wizard knows its first step only and asks each step for the next one, so the steps can branch on what the user entered.&lt;/p&gt;&lt;p&gt;Next, Last and Finish submit the form of the body, its fields validated; Previous, First and Cancel are plain Ajax actions that submit nothing. Last follows the next steps up to one with no next step, without showing nor validating those in between. Each step says which buttons show and which may be clicked, and may add buttons of its own. The trail of the steps visited, a breadcrumb whose crumbs go back, is above the title, in its place, below it or nowhere, and the bar of the buttons above or below the body.&lt;/p&gt;&lt;p&gt;The key of mosquitoes is a dichotomous key: each question has two answers, each leading to the next question or to a mosquito. The image card uploads an image by Ajax in the form of the wizard, then describes it or writes a text over it; the step of the text has a button of its own suggesting one. Everything takes its colors from the theme and its classes from the look, a card in the Bootstrap look, and works under a strict Content Security Policy.&lt;/p&gt;</entry>
+	<entry key="buttonsPosition">Buttons</entry>
+	<entry key="buttonsPosition.TOP">Above the body</entry>
+	<entry key="buttonsPosition.BOTTOM">Below the body</entry>
+	<entry key="breadcrumbPosition">Steps visited</entry>
+	<entry key="breadcrumbPosition.NONE">Not shown</entry>
+	<entry key="breadcrumbPosition.ABOVE_TITLE">Above the title</entry>
+	<entry key="breadcrumbPosition.IN_TITLE">In place of the title</entry>
+	<entry key="breadcrumbPosition.BELOW_TITLE">Below the title</entry>
+	<entry key="keyTitle">A key of mosquitoes</entry>
+	<entry key="keyIntro">Two answers to each question, each leading to the next question or to a mosquito: the steps branch.</entry>
+	<entry key="cardTitle">An image card</entry>
+	<entry key="cardIntro">An image uploaded by Ajax, then described or given a text over it, and a preview.</entry>
+</properties>
