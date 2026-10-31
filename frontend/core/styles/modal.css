@@ -17,7 +17,8 @@
  * Wicket's. The header, slim, holds the title and the close button, drags the dialog and folds it
  * to the header; the buttons of the footer, those of button.css and small, are on the right. A
  * dialog fits its content or comes in a size, small, medium or large, or a width of its own.
- * Dialogs nested in another, or opened after it, are shifted a little.
+ * Dialogs nested in another, or opened after it, are shifted a little. A form around the header,
+ * the body and the footer (modal-dialog-form), whose buttons submit it, is laid out as the content.
  */
 .dialog-theme-default .modal-dialog-overlay {
 	position: fixed;
@@ -67,7 +68,7 @@
 
 /* with a body, only the body scrolls: what is positioned in it against the dialog, such as
    visually hidden text, would otherwise scroll the header away with the rest */
-.dialog-theme-default .modal-dialog .modal-dialog-content:has(> .modal-dialog-body, > .antilia-scrollbar) {
+.dialog-theme-default .modal-dialog .modal-dialog-content:has(> .modal-dialog-body, > .antilia-scrollbar, > .modal-dialog-form) {
 	overflow: hidden;
 }
 
@@ -120,7 +121,8 @@
 }
 
 /* the header drags the dialog, and a double click folds it */
-.dialog-theme-default .modal-dialog-draggable > .modal-dialog-content > .modal-dialog-header {
+.dialog-theme-default .modal-dialog-draggable > .modal-dialog-content > .modal-dialog-header,
+.dialog-theme-default .modal-dialog-draggable > .modal-dialog-content > .modal-dialog-form > .modal-dialog-header {
 	cursor: move;
 	touch-action: none;
 	user-select: none;
@@ -136,7 +138,8 @@
 
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-body,
 .dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .antilia-scrollbar,
-.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-footer {
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-footer,
+.dialog-theme-default .modal-dialog-folded > .modal-dialog-content > .modal-dialog-form > :not(.modal-dialog-header) {
 	display: none;
 }
 
@@ -148,11 +151,23 @@
 }
 
 /* a body in the wrapper of the slim scroll bars of the core: the wrapper takes its place */
-.dialog-theme-default .modal-dialog-content > .antilia-scrollbar {
+.dialog-theme-default .modal-dialog-content > .antilia-scrollbar,
+.dialog-theme-default .modal-dialog-content > .modal-dialog-form > .antilia-scrollbar {
 	display: flex;
 	flex: 1 1 auto;
 	flex-direction: column;
 	min-height: 0;
+}
+
+/* a form around the header, the body and the footer of a content, whose buttons submit it, laid
+   out as the content itself, in any look */
+.modal-dialog-form {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	margin: 0;
 }
 
 /* the buttons of the footer, on the right */

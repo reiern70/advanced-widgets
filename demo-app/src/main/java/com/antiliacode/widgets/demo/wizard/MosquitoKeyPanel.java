@@ -30,9 +30,14 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LambdaModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.model.ResourceModel;
 
+import com.antiliacode.widgets.modal.Modal;
 import com.antiliacode.widgets.wizard.IWizardStep;
+import com.antiliacode.widgets.wizard.ModalWizard;
 import com.antiliacode.widgets.wizard.Wizard;
+import com.antiliacode.widgets.wizard.WizardBreadcrumbPosition;
+import com.antiliacode.widgets.wizard.WizardButtonsPosition;
 
 /**
  * A dichotomous key as a {@link Wizard}: each step a couplet, a question with two answers, the
@@ -111,6 +116,8 @@ public class MosquitoKeyPanel extends Panel
 
 	private final Wizard<Identification> wizard;
 
+	private final Modal modal;
+
 	/**
 	 * @param id
 	 *            component id
@@ -125,23 +132,91 @@ public class MosquitoKeyPanel extends Panel
 			@Override
 			protected void onFinish(AjaxRequestTarget target)
 			{
-				if (getCurrentStep() instanceof ResultStep result)
-				{
-					success(MosquitoKeyPanel.this.getString("identified").replace("{0}",
-						MosquitoKeyPanel.this.getString("taxon." + result.taxon)));
-				}
+				identified(this);
 				startAgain(target);
 			}
 
 			@Override
 			protected void onCancel(AjaxRequestTarget target)
 			{
-				info(MosquitoKeyPanel.this.getString("cancelled"));
+				cancelled();
 				startAgain(target);
 			}
 		};
 		wizard.setTitleLevel(4);
 		add(wizard);
+
+		modal = new Modal("modal");
+		modal.setSize(Modal.Size.MEDIUM).confirmCloseIfModified(new ResourceModel("discard"));
+		add(modal);
+	}
+
+	/**
+	 * Opens the key in a dialog, in a wizard of its own.
+	 *
+	 * @param buttonsPosition
+	 *            where the bar of the buttons is
+	 * @param breadcrumbPosition
+	 *            where the trail of the steps visited is
+	 * @param target
+	 *            the Ajax request
+	 */
+	public void openInDialog(WizardButtonsPosition buttonsPosition,
+		WizardBreadcrumbPosition breadcrumbPosition, AjaxRequestTarget target)
+	{
+		ModalWizard<?> inDialog = newModalWizard();
+		inDialog.setButtonsPosition(buttonsPosition).setBreadcrumbPosition(breadcrumbPosition);
+		modal.open(inDialog, target);
+	}
+
+	/**
+	 * @return the dialog the key opens in
+	 */
+	public Modal getModal()
+	{
+		return modal;
+	}
+
+	/**
+	 * @return the key in a wizard of its own, for a dialog, which closes once the key is
+	 *         finished or cancelled
+	 */
+	private ModalWizard<?> newModalWizard()
+	{
+		return new ModalWizard<>(Model.of(new Identification()), new CoupletStep(1))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onFinish(AjaxRequestTarget target)
+			{
+				identified(this);
+				super.onFinish(target);
+			}
+
+			@Override
+			protected void onCancel(AjaxRequestTarget target)
+			{
+				cancelled();
+				super.onCancel(target);
+			}
+		};
+	}
+
+	/**
+	 * Tells the mosquito the key led to, on this panel, which stays when a dialog closes.
+	 */
+	private void identified(Wizard<Identification> finished)
+	{
+		if (finished.getCurrentStep() instanceof ResultStep result)
+		{
+			success(getString("identified").replace("{0}", getString("taxon." + result.taxon)));
+		}
+	}
+
+	private void cancelled()
+	{
+		info(getString("cancelled"));
 	}
 
 	private void startAgain(AjaxRequestTarget target)

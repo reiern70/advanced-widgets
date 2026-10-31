@@ -22,6 +22,10 @@
  * In Bootstrap's look the wizard is a card, its header the card's header, its body the card's
  * body and the bar below the body its footer: Bootstrap lays them out and gives their spaces, so
  * the spaces here are only for the components' own look.
+ *
+ * A wizard in a dialog (ModalWizard, antilia-wizard-dialog) is in the parts of the dialog
+ * instead (modal.css): the title and the trail in its header, the body in its body, the bar below
+ * the body in its footer.
  */
 
 .antilia-wizard {
@@ -117,7 +121,7 @@
 	gap: 0.5em;
 }
 
-.antilia-wizard-buttons:not(.card-footer) {
+.antilia-wizard-buttons:not(.card-footer, .modal-dialog-footer) {
 	padding: 0.75em 1em;
 }
 
@@ -132,4 +136,49 @@
 /* Cancel at the start of the bar, the others at its end */
 .antilia-wizard-buttons > .antilia-wizard-cancel {
 	margin-inline-end: auto;
+}
+
+/* in a dialog: the trail and the title in a column, the close button beside them */
+.antilia-wizard-dialog-heading {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0.15em;
+	min-width: 0;
+}
+
+.antilia-wizard-dialog .antilia-wizard-buttons-top {
+	flex: none;
+}
+
+/* the trail in the header of the dialog of the default theme, on its primary color; above the
+   links of the dialog in antilia-theme.css */
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb,
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-link,
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-more-button,
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	color: inherit;
+}
+
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-link {
+	text-decoration: underline;
+}
+
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-link:hover,
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-more-button:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-link:focus-visible,
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .modal-dialog-header .antilia-breadcrumb-more-button:focus-visible {
+	outline-color: currentColor;
+}
+
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .antilia-wizard-title:focus-visible {
+	outline-color: currentColor;
+}
+
+/* the trail in place of the title, as large as the title of the dialog */
+.dialog-theme-default .modal-dialog .antilia-wizard-dialog .antilia-wizard-breadcrumb-in-title {
+	font-size: inherit;
 }
