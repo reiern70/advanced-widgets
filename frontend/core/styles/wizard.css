@@ -1,0 +1,135 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Wizards, in the colors of the theme they are in (see antilia-theme.css) and with colors of their
+ * own outside one: a box with a header, holding the title of the step and the trail of the steps
+ * visited (breadcrumb.css), the body of the step, and a bar of buttons (button.css) below the body
+ * or between the header and the body. In the bar, Cancel stands at the start and the other
+ * buttons at the end; the bar wraps onto more lines when it has no room.
+ *
+ * In Bootstrap's look the wizard is a card, its header the card's header, its body the card's
+ * body and the bar below the body its footer: Bootstrap lays them out and gives their spaces, so
+ * the spaces here are only for the components' own look.
+ */
+
+.antilia-wizard {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	margin: 0;
+	color: var(--antilia-theme-text, #1c2333);
+	color-scheme: var(--antilia-theme-color-scheme, normal);
+}
+
+.antilia-wizard:not(.card) {
+	overflow: hidden;
+	border: 1px solid var(--antilia-theme-border, #d0d7e2);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: var(--antilia-theme-surface, #fff);
+}
+
+.antilia-wizard-header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35em;
+}
+
+.antilia-wizard-header:not(.card-header) {
+	padding: 0.75em 1em;
+	border-bottom: 1px solid var(--antilia-theme-border, #d0d7e2);
+	background: var(--antilia-theme-surface-alt, #f4f6fa);
+}
+
+.antilia-wizard-title {
+	margin: 0;
+	font-size: 1.2em;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.antilia-wizard-title:focus {
+	outline: none;
+}
+
+.antilia-wizard-title:focus-visible {
+	outline: 2px solid var(--antilia-theme-primary, #2f6fde);
+	outline-offset: 2px;
+}
+
+/* the title kept for screen readers when the trail takes its place */
+.antilia-wizard-title-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.antilia-wizard-breadcrumb {
+	min-width: 0;
+	font-size: 0.875em;
+}
+
+/* the trail in place of the title, as large, the step shown in the weight of a title */
+.antilia-wizard-breadcrumb-in-title {
+	font-size: 1.2em;
+	line-height: 1.3;
+}
+
+.antilia-wizard-breadcrumb-in-title .antilia-breadcrumb-page {
+	font-weight: 600;
+}
+
+/* Bootstrap's breadcrumb keeps a space below it, which the header has already */
+.antilia-wizard-breadcrumb .breadcrumb {
+	margin-bottom: 0;
+}
+
+.antilia-wizard-body {
+	min-width: 0;
+}
+
+.antilia-wizard-body:not(.card-body) {
+	padding: 1em;
+}
+
+.antilia-wizard-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5em;
+}
+
+.antilia-wizard-buttons:not(.card-footer) {
+	padding: 0.75em 1em;
+}
+
+.antilia-wizard-buttons-top {
+	border-bottom: 1px solid var(--antilia-theme-border, #d0d7e2);
+}
+
+.antilia-wizard:not(.card) .antilia-wizard-buttons-bottom {
+	border-top: 1px solid var(--antilia-theme-border, #d0d7e2);
+}
+
+/* Cancel at the start of the bar, the others at its end */
+.antilia-wizard-buttons > .antilia-wizard-cancel {
+	margin-inline-end: auto;
+}

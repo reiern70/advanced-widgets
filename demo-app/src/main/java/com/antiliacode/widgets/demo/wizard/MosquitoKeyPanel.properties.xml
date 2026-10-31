@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="couplet">Couplet {0}</entry>
+	<entry key="couplet.1">The palps of the female, beside the proboscis:</entry>
+	<entry key="couplet.1a">As long as the proboscis; at rest the body is at an angle to the surface</entry>
+	<entry key="couplet.1b">Much shorter than the proboscis; at rest the body is parallel to the surface</entry>
+	<entry key="couplet.2">The tip of the abdomen of the female:</entry>
+	<entry key="couplet.2a">Pointed, the cerci sticking out; legs often banded in white</entry>
+	<entry key="couplet.2b">Blunt, rounded</entry>
+	<entry key="couplet.3">The white scales on the back of the thorax (the scutum):</entry>
+	<entry key="couplet.3a">In the shape of a lyre</entry>
+	<entry key="couplet.3b">One stripe down the middle</entry>
+	<entry key="couplet.4">The bristles in front of the spiracle of the thorax (spiracular setae):</entry>
+	<entry key="couplet.4a">Present</entry>
+	<entry key="couplet.4b">Absent</entry>
+	<entry key="taxon.anopheles">Anopheles</entry>
+	<entry key="taxon.anopheles.note">The genus of the mosquitoes that carry malaria.</entry>
+	<entry key="taxon.aedesAegypti">Aedes aegypti</entry>
+	<entry key="taxon.aedesAegypti.note">The yellow fever mosquito, which also carries dengue, Zika and chikungunya.</entry>
+	<entry key="taxon.aedesAlbopictus">Aedes albopictus</entry>
+	<entry key="taxon.aedesAlbopictus.note">The Asian tiger mosquito, which can carry dengue and chikungunya too.</entry>
+	<entry key="taxon.culex">Culex</entry>
+	<entry key="taxon.culex.note">The common house mosquitoes, which carry the West Nile virus.</entry>
+	<entry key="taxon.culiseta">Culiseta</entry>
+	<entry key="taxon.culiseta.note">Large mosquitoes, most of which bite birds and other animals more than people.</entry>
+	<entry key="route">Your answers: {0}</entry>
+	<entry key="identified">Identified as {0}.</entry>
+	<entry key="cancelled">The identification was cancelled.</entry>
+	<entry key="disclaimer">A simplified key of the adult females of five mosquitoes of the Americas, made for this demo: not for identifying mosquitoes.</entry>
+</properties>

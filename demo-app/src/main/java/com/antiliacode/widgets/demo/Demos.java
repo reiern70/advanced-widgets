@@ -48,6 +48,7 @@ import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
 import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
 import com.antiliacode.widgets.demo.tree.TreeGridPage;
+import com.antiliacode.widgets.demo.wizard.WizardPage;
 import com.antiliacode.widgets.demo.upload.UploadPage;
 
 /**
@@ -127,6 +128,7 @@ public final class Demos
 		new Demo("codeEditor", "forms", CodeEditorPage.class, true),
 		new Demo("richTextEditor", "forms", RichTextEditorPage.class, true),
 		new Demo("ckEditor", "forms", CKEditorPage.class, true),
+		new Demo("wizard", "forms", WizardPage.class, false),
 		new Demo("scrollbar", "layout", ScrollbarPage.class, true),
 		new Demo("splitPanel", "layout", SplitPanelPage.class, true),
 		new Demo("resizable", "layout", ResizablePage.class, true),

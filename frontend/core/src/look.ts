@@ -408,6 +408,19 @@ const PARTS = {
 	'breadcrumb-more-button': ['base', 'antilia-breadcrumb-more-button', ''],
 	'breadcrumb-current': ['state', 'antilia-breadcrumb-current', 'active'],
 
+	// wizards: a header with the title of the step and the trail of the steps visited, the body and
+	// a bar of buttons; in Bootstrap's look a card, the bar below its footer
+	'wizard': ['base', 'antilia-wizard', 'card'],
+	'wizard-header': ['base', 'antilia-wizard-header', 'card-header'],
+	'wizard-title': ['base', 'antilia-wizard-title', 'card-title fs-5 mb-0'],
+	'wizard-title-hidden': ['state', 'antilia-wizard-title-hidden', 'visually-hidden'],
+	'wizard-breadcrumb': ['base', 'antilia-wizard-breadcrumb', ''],
+	'wizard-breadcrumb-in-title': ['base', 'antilia-wizard-breadcrumb-in-title', 'fs-5'],
+	'wizard-body': ['base', 'antilia-wizard-body', 'card-body'],
+	'wizard-buttons': ['base', 'antilia-wizard-buttons', ''],
+	'wizard-buttons-top': ['base', 'antilia-wizard-buttons-top', ''],
+	'wizard-buttons-bottom': ['base', 'antilia-wizard-buttons-bottom', 'card-footer'],
+
 	// trees and tree grids
 	'tree': ['base', 'antilia-tree', ''],
 	'tree-json': ['base', 'json-tree', ''],

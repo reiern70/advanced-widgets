@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="upload">Upload an image</entry>
+	<entry key="uploaded">Upload an image: {0}</entry>
+	<entry key="uploadHint">A PNG, JPEG, GIF or WebP image of 2 MB at most, dropped here or chosen.</entry>
+	<entry key="current">Uploaded: {0}. Choose another image to replace it, or go on.</entry>
+	<entry key="image">Image</entry>
+	<entry key="tooLarge">The image weighs more than 2 MB.</entry>
+	<entry key="notAnImage">The file is no PNG, JPEG, GIF or WebP image.</entry>
+	<entry key="way">What to do with {0}</entry>
+	<entry key="wayLabel">What to do with the image</entry>
+	<entry key="Way.DESCRIBE">Describe it</entry>
+	<entry key="Way.CAPTION">Write a text over it</entry>
+	<entry key="describe">Describe {0}</entry>
+	<entry key="description">Description, also read by screen readers</entry>
+	<entry key="caption">A text over {0}</entry>
+	<entry key="captionLabel">Text over the image</entry>
+	<entry key="position">Where the text goes</entry>
+	<entry key="Position.TOP">At the top</entry>
+	<entry key="Position.BOTTOM">At the bottom</entry>
+	<entry key="suggest">Suggest a text</entry>
+	<entry key="suggestion">{0} · {1} × {2} px · {3}</entry>
+	<entry key="suggestionNoSize">{0} · {3}</entry>
+	<entry key="preview">Preview of {0}</entry>
+	<entry key="ready">The card of {0} is ready.</entry>
+	<entry key="cancelled">The card was cancelled.</entry>
+</properties>

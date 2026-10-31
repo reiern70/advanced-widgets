@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Wizard</entry>
+	<entry key="explanation">&lt;p&gt;Wizard aus ui-components führt den Benutzer Schritt für Schritt: Jeder Schritt hat seinen Titel in der Kopfzeile, seinen Inhalt und eine Leiste mit Schaltflächen. Die Schritte füllen ein Objekt aus, das Modell des Wizards, vom Typ der Schritte, das nicht serialisierbar sein muss. Der Wizard kennt nur seinen ersten Schritt und fragt jeden Schritt nach dem nächsten, sodass sich die Schritte nach den Eingaben des Benutzers verzweigen können.&lt;/p&gt;&lt;p&gt;Weiter, Zum Ende und Fertigstellen senden das Formular des Inhalts ab und prüfen seine Felder; Zurück, Zum Anfang und Abbrechen sind einfache Ajax-Aktionen, die nichts absenden. Zum Ende folgt den nächsten Schritten bis zu einem ohne nächsten, ohne die dazwischen zu zeigen oder zu prüfen. Jeder Schritt sagt, welche Schaltflächen erscheinen und welche geklickt werden können, und kann eigene hinzufügen. Der Pfad der besuchten Schritte, eine Brotkrümelnavigation, deren Krümel zurückführen, steht über dem Titel, an seiner Stelle, darunter oder nirgends, und die Leiste der Schaltflächen über oder unter dem Inhalt.&lt;/p&gt;&lt;p&gt;Der Schlüssel der Stechmücken ist ein dichotomer Bestimmungsschlüssel: Jede Frage hat zwei Antworten, die jeweils zur nächsten Frage oder zu einer Stechmücke führen. Die Bildkarte lädt ein Bild per Ajax im Formular des Wizards hoch und beschreibt es dann oder schreibt einen Text darüber; der Schritt des Textes hat eine eigene Schaltfläche, die einen vorschlägt. Alles nimmt seine Farben vom Theme und seine Klassen vom Look, eine Card im Bootstrap-Look, und funktioniert unter einer strengen Content Security Policy.&lt;/p&gt;</entry>
+	<entry key="buttonsPosition">Schaltflächen</entry>
+	<entry key="buttonsPosition.TOP">Über dem Inhalt</entry>
+	<entry key="buttonsPosition.BOTTOM">Unter dem Inhalt</entry>
+	<entry key="breadcrumbPosition">Besuchte Schritte</entry>
+	<entry key="breadcrumbPosition.NONE">Nicht gezeigt</entry>
+	<entry key="breadcrumbPosition.ABOVE_TITLE">Über dem Titel</entry>
+	<entry key="breadcrumbPosition.IN_TITLE">Anstelle des Titels</entry>
+	<entry key="breadcrumbPosition.BELOW_TITLE">Unter dem Titel</entry>
+	<entry key="keyTitle">Ein Schlüssel der Stechmücken</entry>
+	<entry key="keyIntro">Zwei Antworten auf jede Frage, jede führt zur nächsten Frage oder zu einer Stechmücke: Die Schritte verzweigen sich.</entry>
+	<entry key="cardTitle">Eine Bildkarte</entry>
+	<entry key="cardIntro">Ein per Ajax hochgeladenes Bild, dann beschrieben oder mit einem Text darüber, und eine Vorschau.</entry>
+</properties>
