@@ -50,7 +50,9 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
  * reading only, the text area hidden in the room of the editor until the script makes it, and the
  * text and the selection the server keeps, which the page shows again when opened anew; the code
  * blocks in the colors of the language their menu chooses, and the images uploaded from the form
- * of the image, dropped and pasted.
+ * of the image, dropped and pasted: several at once on the zone of the form or of the dialog of the
+ * uploads, a picture too large scaled down, and an image taken out of the text deleted on the
+ * server once the text is saved.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -689,6 +691,139 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 				"img[src*='/rich-text-images/']")).size() == 3);
 		}
 		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void uploadsSeveralImagesOnTheZoneAndDeletesThoseTakenOutOnceSaved(SeleniumBrowser browser,
+		String framework)
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("image").click();
+		WebElement zone = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-popover .antilia-rich-text-dropzone")).stream().findFirst().orElse(null));
+		// once the popover is shown
+		wait.until(d -> "Drop images here".equals(zone.findElement(By.cssSelector(
+			".antilia-rich-text-dropzone-text")).getText()));
+
+		// two images and a file of another type, dropped at once
+		dropFiles(zone, "one.png", "image/png", PNG, "two.png", "image/png", PNG, "notes.txt",
+			"text/plain", Base64.getEncoder().encodeToString("notes".getBytes(
+				StandardCharsets.UTF_8)));
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-popover")).isEmpty());
+		WebElement message = wait.until(d -> editor().findElements(By.cssSelector(
+			".antilia-rich-text-message")).stream().findFirst().orElse(null));
+		assertTrue(message.getText().startsWith("notes.txt is not an image"), message.getText());
+		wait.until(d -> uploaded().size() == 2);
+
+		// a picture wider than the page takes: scaled down, once ticked
+		script("var content = arguments[0], target = content.querySelector('p');" +
+			"var canvas = document.createElement('canvas'); canvas.width = 3000; canvas.height = 20;" +
+			"canvas.getContext('2d').fillRect(0, 0, 3000, 20);" +
+			"canvas.toBlob((blob) => { var data = new DataTransfer();" +
+			"  data.items.add(new File([blob], 'wide.png', { type: 'image/png' }));" +
+			"  var rect = target.getBoundingClientRect();" +
+			"  target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true," +
+			"    clientX: rect.left + 4, clientY: rect.top + rect.height / 2, dataTransfer: data }));" +
+			"}, 'image/png');", content());
+		WebElement scale = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-rich-text-scale-dialog")).stream().findFirst().orElse(null));
+		assertEquals("Scale wide.png down to 2400 × 16 (3000 × 20)", scale.findElement(
+			By.cssSelector("label")).getDomProperty("textContent").trim());
+		scale.findElement(By.cssSelector("input[type=checkbox]")).click();
+		scale.findElement(By.cssSelector(".modal-dialog-footer button")).click();
+		wait.until(d -> uploaded().size() == 3);
+		wait.until(d -> uploaded().stream().anyMatch(image -> Long.valueOf(2400).equals(
+			script("return arguments[0].naturalWidth;", image))));
+
+		// the menu of the images takes one out of the text; saved, the server deletes it
+		String first = uploaded().get(0).getDomProperty("src");
+		tool("images").click();
+		WebElement delete = wait.until(d -> editor().findElements(By.cssSelector(
+			"[role=menu] .antilia-rich-text-images-delete")).stream().findFirst().orElse(null));
+		assertTrue(delete.getDomAttribute("aria-label").startsWith("Delete "));
+		delete.click();
+		wait.until(d -> uploaded().size() == 2);
+		assertEquals(200L, served(first));
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> Long.valueOf(404).equals(served(first)));
+		assertEquals(200L, served(uploaded().get(0).getDomProperty("src")));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void uploadsInTheDialogTheImagesTheUserKeeps(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		checkBox("Upload images in a dialog").click();
+		// the editor made anew, with the dialog
+		wait.until(d -> Boolean.TRUE.equals(script("var field = document.querySelector(" +
+			"'.rich-text-demo__editor textarea'), editor = field && Wicket.RichTextEditor.of(" +
+			"field.id); return !!editor && editor.options.uploadDialog === true;")));
+		waitForTheEditor();
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("image").click();
+		WebElement open = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-popover .antilia-rich-text-form-upload button")).stream().findFirst()
+			.orElse(null));
+		wait.until(d -> "Upload images…".equals(open.getText()));
+		open.click();
+		WebElement dialog = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-rich-text-upload-dialog")).stream().findFirst().orElse(null));
+		assertEquals("Upload images", dialog.findElement(By.cssSelector(".modal-dialog-title"))
+			.getText());
+		dropFiles(dialog.findElement(By.cssSelector(".antilia-rich-text-dropzone")), "one.png",
+			"image/png", PNG, "two.png", "image/png", PNG);
+		wait.until(d -> dialog.findElements(By.cssSelector(".antilia-rich-text-upload-done"))
+			.size() == 2);
+		// the second taken out of the list: only the first goes into the text
+		dialog.findElements(By.cssSelector(".antilia-rich-text-upload-remove")).get(1).click();
+		dialog.findElement(By.cssSelector(".modal-dialog-footer button")).click();
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-rich-text-upload-dialog"))
+			.isEmpty());
+		wait.until(d -> uploaded().size() == 1);
+		assertNoErrors();
+	}
+
+	/**
+	 * Drops files on an element, as the browser does: name, type and base64 of each in turn.
+	 */
+	private void dropFiles(WebElement target, String... files)
+	{
+		script("var target = arguments[0], files = arguments[1], data = new DataTransfer();" +
+			"for (var i = 0; i < files.length; i += 3) {" +
+			"  var bytes = Uint8Array.from(atob(files[i + 2]), (c) => c.charCodeAt(0));" +
+			"  data.items.add(new File([bytes], files[i], { type: files[i + 1] }));" +
+			"}" +
+			"target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true," +
+			"  dataTransfer: data }));" +
+			"target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true," +
+			"  dataTransfer: data }));", target, List.of(files));
+	}
+
+	/**
+	 * @return the status the server answers an address with, asked from here: a 404 in the
+	 *         browser would be an error of its console
+	 */
+	private static Long served(String url)
+	{
+		try
+		{
+			return (long)java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest
+				.newBuilder(java.net.URI.create(url)).GET().build(),
+				java.net.http.HttpResponse.BodyHandlers.discarding()).statusCode();
+		}
+		catch (IOException e)
+		{
+			return -1L;
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
+			return -1L;
+		}
 	}
 
 	/** A PNG of one pixel. */

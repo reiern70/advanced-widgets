@@ -66,6 +66,7 @@ import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageDeletion;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
@@ -164,6 +165,12 @@ public class RichTextEditorPage extends DemoPage
 	/** Whether the editor has the feature of the page's own, {@link KbdFeature}. */
 	private boolean keys;
 
+	/** Whether the form of the image opens the dialog of the uploads. */
+	private boolean uploadDialog;
+
+	/** Whether the images taken out of the text are deleted at once, not once it is saved. */
+	private boolean deleteAtOnce;
+
 	/** The colors of the text of the editor and of the view, all of them at first. */
 	private List<RichTextColor> colors = new ArrayList<>(List.of(RichTextColor.values()));
 
@@ -260,6 +267,9 @@ public class RichTextEditorPage extends DemoPage
 				setReadOnly(readOnly);
 				setCount(count);
 				setHighlighting(highlight);
+				setImageUploadDialog(uploadDialog);
+				setImageDeletion(deleteAtOnce ? RichTextImageDeletion.AT_ONCE :
+					RichTextImageDeletion.ON_SAVE);
 				// none chosen, no tool
 				setColors(RichTextEditorPage.this.colors);
 				setBackgroundColors(RichTextEditorPage.this.backgroundColors);
@@ -273,7 +283,9 @@ public class RichTextEditorPage extends DemoPage
 		};
 		editor.setSavedModel(LambdaModel.of(article, RichTextDocument::getSaved,
 			RichTextDocument::setSaved));
-		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE);
+		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
+			.setImageMaxCount(RichTextImages.MAX_COUNT);
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
@@ -408,9 +420,9 @@ public class RichTextEditorPage extends DemoPage
 			RichTextColor::getName, editorForm, savedBox));
 		controls.add(paletteChoice("backgroundColors", List.of(RichTextBackgroundColor.values()),
 			RichTextBackgroundColor::getName, editorForm, savedBox));
-		articleCase.add(new Label("extras", getString("extras").replace("{0}",
-			sizeText(RichTextImages.MAX_SIZE))));
-		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight", "keys"))
+		articleCase.add(new Label("extras", extras()));
+		for (String option : List.of("bubbleMenu", "readOnly", "count", "highlight", "keys",
+			"uploadDialog", "deleteAtOnce"))
 		{
 			controls.add(new CheckBox(option, new PropertyModel<>(this, option))
 				.add(rerender(editorForm)));
@@ -433,6 +445,8 @@ public class RichTextEditorPage extends DemoPage
 			}));
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
 			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
+			.setImageMaxCount(RichTextImages.MAX_COUNT)
 			.setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, RichTextDocument::getSaved,
 				RichTextDocument::setSaved))
@@ -486,7 +500,7 @@ public class RichTextEditorPage extends DemoPage
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
 
 		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
-			.setMaxSize(RichTextImages.MAX_SIZE);
+			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS);
 		add(appUploads);
 		appProofreading = new RichTextProofreadBehavior(RichTextWriting.proofreader(
 			getString("misspelled"), getString("repeated"), getString("twoBlanks")));
@@ -768,6 +782,17 @@ public class RichTextEditorPage extends DemoPage
 	}
 
 	/**
+	 * @return what the page says of the code blocks and the uploads: the largest image, in bytes
+	 *         and in pixels, and how many at a time
+	 */
+	private String extras()
+	{
+		return getString("extras").replace("{0}", sizeText(RichTextImages.MAX_SIZE))
+			.replace("{1}", RichTextImages.MAX_DIMENSIONS.toString())
+			.replace("{2}", String.valueOf(RichTextImages.MAX_COUNT));
+	}
+
+	/**
 	 * @return the texts, the article, the notes and the HTML to clean as the page has them
 	 */
 	@Override
@@ -777,7 +802,7 @@ public class RichTextEditorPage extends DemoPage
 			"articleLabel", "notesLabel", "placeholder", "toolbar", "bubbleMenu", "readOnly",
 			"count", "highlight", "save", "unsaved", "allSaved", "appArticleTitle", "appHtml",
 			"appMarkdown", "appKnown", "appSaved", "appNotClean", "appStart");
-		texts.put("extras", getString("extras").replace("{0}", sizeText(RichTextImages.MAX_SIZE)));
+		texts.put("extras", extras());
 		TOOLBARS.forEach(each -> texts.put("toolbar." + each, getString("toolbar." + each)));
 		return new JSONObject()
 			.put("article", RichTextSamples.ARTICLE)
@@ -790,6 +815,9 @@ public class RichTextEditorPage extends DemoPage
 			.put("uploadUrl", appUploads.getUploadUrl())
 			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
 			.put("uploadMaxSize", appUploads.getMaxSize().bytes())
+			.put("uploadMaxWidth", RichTextImages.MAX_DIMENSIONS.width())
+			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height())
+			.put("uploadMaxCount", RichTextImages.MAX_COUNT)
 			.put("proofreadUrl", appProofreading.getProofreadUrl())
 			.put("suggestUrl", appSuggestions.getSuggestUrl())
 			.put("suggesters", appSuggestions.toJson());

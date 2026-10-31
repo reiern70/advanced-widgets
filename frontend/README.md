@@ -303,15 +303,31 @@ classes and with CodeMirror around them: sharing them would make a page highligh
 the whole code editor.
 
 While the page uploads images (`onUpload(file): Promise<string>`, `rich-text-upload.ts`), the form
-of the image has a button choosing a file, and an image dropped into the text, or pasted without
-HTML as a screenshot is, uploads too: a mark stands where it goes until the page answers its
-address, which the image then takes, or a message above the text says why not. The editor checks
-the type (`uploadTypes`: PNG, JPEG, GIF and WebP by default, no SVG) and the size (`uploadMaxSize`)
-first, and the address the page answers goes through `isSafeUrl`: never `data:`. `uploadImageTo(url)`
-posts the file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as Wicket's
-`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `IRichTextImageStore` has one, which
-checks the size again, tells the type by the first bytes of the file, has the store keep it, and
-checks the address the store answers; a page adds one for its React and Svelte editors.
+of the image has a zone to drop images on, with a button choosing several at once, which go into the
+text where the cursor is, in their order; with `uploadDialog` it has a button opening the dialog of
+the uploads instead (`rich-text-upload-dialog.ts`): a zone, and the list of the files, uploading,
+uploaded or refused and why, which the user takes out before Insert puts the others into the text.
+An image dropped into the text, or pasted without HTML as a screenshot is, uploads too: a mark stands
+where it goes until the page answers its address, which the image then takes, or a message above the
+text says why not. The editor checks first how many one drop or choice takes (`uploadMaxCount`), the
+type (`uploadTypes`: PNG, JPEG, GIF, WebP and AVIF by default, no SVG), the size (`uploadMaxSize`) and
+the width and height (`uploadMaxWidth`, `uploadMaxHeight`), read from the header of the file without
+decoding the picture (`readImageDimensions`); with `uploadScaling`, a dialog offers to scale a
+picture too large down, each by a box the user ticks, which the browser does before sending it. The
+address the page answers goes through `isSafeUrl`: never `data:`. `uploadImageTo(url)` posts the
+file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as Wicket's
+`RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `IRichTextImageStore` has one,
+which checks the size and the pixels again, tells the type by the first bytes of the file (an
+`IRichTextImageType` of the application's own too), has the store keep it, and checks the address
+the store answers; a page adds one for its React and Svelte editors.
+
+The tool `images` lists the images of the text, each with a thumbnail, selected by a click or taken
+out of the text. `onImagesRemoved(urls)`, and the event `images-removed`, tell the page of the images
+the user took out of the text, a moment after, or as the user saves or leaves the editor, and of
+those uploaded that never went into it; a text the page gives tells of nothing. Wicket's editor
+tells the server via Ajax, which deletes those it knows by the store, at once or once the text is
+saved (`setImageDeletion`, `markSaved`); `deleteImagesAt(url)` asks a page's
+`RichTextImageUploadBehavior` to delete those it took, for the React and Svelte editors.
 
 The browser checks the spelling of the text as it does unless `spellcheck` says otherwise (`true`,
 `false`), in the language of the page or `textLanguage` (a BCP 47 tag, the text's `lang`), in both

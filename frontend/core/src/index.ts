@@ -63,9 +63,12 @@ export { CODE_BLOCK_LANGUAGE_ATTRIBUTE, registerRichTextHighlighter,
 export { codeLanguage, RICH_TEXT_CODE_LANGUAGES } from './rich-text-languages.js';
 export type { RichTextHighlighter, RichTextToken } from './rich-text-languages.js';
 export { lezerHighlighter } from './rich-text-highlight.js';
-export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText,
-	uploadImageTo } from './rich-text-upload.js';
-export type { RichTextUploader } from './rich-text-upload.js';
+export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, checkFiles, deleteImagesAt, scaleImage, sizeText,
+	typesText, uploadImageTo } from './rich-text-upload.js';
+export type { Oversize, RichTextUploader, UploadCheck, UploadLimits } from './rich-text-upload.js';
+export { askToScale, dropZone, openUploadDialog } from './rich-text-upload-dialog.js';
+export { dimensionsText, readImageDimensions, scaledToFit } from './rich-text-image-headers.js';
+export type { RichTextImageDimensions } from './rich-text-image-headers.js';
 export { issuesOf, languageToolKind, languageToolProofreader, proofreadAt, proofreadBlocks,
 	proofreadIssues, RICH_TEXT_ISSUE_CLASSES, RICH_TEXT_ISSUE_KINDS } from './rich-text-proofreading.js';
 export type { LanguageToolOptions, RichTextIssue, RichTextIssueFound, RichTextIssueKind,

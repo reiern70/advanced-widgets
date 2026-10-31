@@ -582,13 +582,64 @@
 	font-size: 0.875em;
 }
 
+/* the menu of the images of the text: a line for each, its thumbnail, its name and a button */
+.antilia-rich-text-images-item {
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-images-select {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 0.5em;
+	min-width: 0;
+	max-width: 18em;
+}
+
+.antilia-rich-text-images-thumbnail {
+	flex: none;
+	width: 2.5em;
+	height: 2.5em;
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	background: var(--antilia-rich-text-hover);
+	object-fit: cover;
+}
+
+.antilia-rich-text-images-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-images-delete {
+	display: inline-flex;
+	flex: none;
+	width: auto;
+	padding: 0.4em;
+	font-size: 1.1em;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-images-delete:is(:hover, :focus-visible) {
+	color: var(--antilia-theme-error, #c53030);
+}
+
+.antilia-rich-text-images-none {
+	padding: 0.4em 0.75em;
+	color: var(--antilia-rich-text-muted);
+	font-style: italic;
+}
+
 .antilia-rich-text-suggestion-status {
 	padding: 0.4em 0.75em;
 	color: var(--antilia-rich-text-muted);
 	font-style: italic;
 }
 
-/* the button choosing an image to upload, below the address, and the line telling the upload */
+/*
+ * the zone of the uploads, or the button opening their dialog, below the address, and the line
+ * telling the upload
+ */
 .antilia-rich-text-form-upload {
 	display: grid;
 	justify-items: start;
@@ -603,6 +654,95 @@
 
 .antilia-rich-text-form-status[hidden] {
 	display: none;
+}
+
+/*
+ * the zone to drop images on, in the form of the image and in the dialog of the uploads: a dashed
+ * box, its line and the button choosing the images; tinted while files are dragged over it
+ */
+.antilia-rich-text-dropzone {
+	display: grid;
+	justify-items: center;
+	gap: 0.4rem;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.75rem;
+	border: 2px dashed var(--antilia-theme-border, #c9cfdb);
+	border-radius: var(--antilia-look-radius, 0.4em);
+	text-align: center;
+}
+
+.antilia-rich-text-dropzone-over {
+	border-color: var(--antilia-theme-primary, #2f6fde);
+	background: color-mix(in srgb, var(--antilia-theme-primary, #2f6fde) 10%, transparent);
+}
+
+.antilia-rich-text-dropzone-text {
+	margin: 0;
+	color: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 70%, transparent);
+	font-size: 0.875em;
+}
+
+/* the list of the files of the dialog of the uploads: the name, what became of it, a button */
+.antilia-rich-text-upload-list {
+	display: grid;
+	gap: 0.25rem;
+	margin: 0.75rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-rich-text-upload-file {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 0.5rem;
+	border: 1px solid var(--antilia-theme-border, #c9cfdb);
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	font-size: 0.875em;
+}
+
+.antilia-rich-text-upload-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.antilia-rich-text-upload-status {
+	color: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 70%, transparent);
+}
+
+.antilia-rich-text-upload-done .antilia-rich-text-upload-status {
+	color: var(--antilia-theme-success, #2f855a);
+}
+
+.antilia-rich-text-upload-refused .antilia-rich-text-upload-status {
+	color: var(--antilia-theme-error, #c53030);
+	white-space: normal;
+}
+
+/* a message refusing a file, without a name, takes the width of the line */
+.antilia-rich-text-upload-refused .antilia-rich-text-upload-name:empty {
+	display: none;
+}
+
+.antilia-rich-text-upload-refused:has(.antilia-rich-text-upload-name:empty) {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* the pictures too large the dialog offers to scale down, each by a box to tick */
+.antilia-rich-text-scale-list {
+	display: grid;
+	gap: 0.35rem;
+	margin: 0.5rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-rich-text-scale-size {
+	color: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 60%, transparent);
+	font-size: 0.875em;
 }
 
 /* the text, scrolling below the toolbar */

@@ -22,7 +22,8 @@
   whether the text has changes not saved (bind:modified), which the tabs it is in show. The core's
   editor is the bindable editor (bind:editor). With highlight, its code blocks show in the colors of
   their language, which the menu of the tool code block chooses; with onupload, the user uploads
-  images by the form of the image, or by dropping or pasting them into the text. What a paste lost
+  images by the form of the image or its dialog, or by dropping or pasting them into the text, within
+  the limits given; onimagesremoved hears of those taken out of the text. What a paste lost
   to the editor, a script or a link to javascript: for example, comes to onpastecleaned and, with
   pasteNotice, shows in a line under the toolbar until the text changes.
 
@@ -132,10 +133,22 @@
 		highlight?: boolean | RichTextHighlighter;
 		/** The languages the menu of the tool code block offers: those of the highlighter when left out. */
 		codeLanguages?: readonly string[] | false;
-		/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+		/** The types of the images the user may upload: PNG, JPEG, GIF, WebP and AVIF when left out. */
 		uploadTypes?: readonly string[];
 		/** The largest image the user may upload, in bytes; none when left out. */
 		uploadMaxSize?: number | null;
+		/**
+		 * The widest and the highest picture the user may upload, in pixels, read from the header
+		 * of the file; none when left out. Both, or none.
+		 */
+		uploadMaxWidth?: number | null;
+		uploadMaxHeight?: number | null;
+		/** Whether the user may tick pictures too large to scale down rather than refusing them. */
+		uploadScaling?: boolean;
+		/** How many images one drop, choice or paste takes at most; none when left out. */
+		uploadMaxCount?: number | null;
+		/** Whether the form of the image opens the dialog of the uploads rather than its own zone. */
+		uploadDialog?: boolean;
 		/**
 		 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 		 * again; false when left out.
@@ -160,6 +173,12 @@
 		onpastecleaned?: (report: RichTextCleaningReport) => void;
 		/** Uploads an image, answering the address it is served at: see uploadImageTo of the core. */
 		onupload?: (file: File) => Promise<string>;
+		/**
+		 * Called a moment after the user took images out of the text, or uploaded some that never
+		 * went into it, with their addresses, for the page to delete them (see deleteImagesAt of the
+		 * core).
+		 */
+		onimagesremoved?: (urls: string[]) => void;
 	};
 
 	let {
@@ -200,6 +219,11 @@
 		codeLanguages,
 		uploadTypes,
 		uploadMaxSize,
+		uploadMaxWidth,
+		uploadMaxHeight,
+		uploadScaling,
+		uploadMaxCount,
+		uploadDialog,
 		name,
 		id,
 		class: className = '',
@@ -212,7 +236,8 @@
 		onsave,
 		onresize,
 		onpastecleaned,
-		onupload
+		onupload,
+		onimagesremoved
 	}: Props = $props();
 
 	/** The highlighter of the prop highlight: the grammars of the code editor for true. */
@@ -236,7 +261,9 @@
 			bubbleMenu, readOnly, placeholder, label, spellcheck, textLanguage, proofreader,
 			proofreadDelay, suggesters, limit, count,
 			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, pasteNotice, texts, look, highlight: highlighterOf(highlight),
-			codeLanguages, uploadTypes, uploadMaxSize, onUpload: uploader(),
+			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
+			uploadMaxCount, uploadDialog, onUpload: uploader(),
+			onImagesRemoved: (urls: string[]) => onimagesremoved?.(urls),
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -288,7 +315,10 @@
 
 	$effect(() => {
 		const next = { highlight: highlighterOf(highlight), codeLanguages, uploadTypes,
-			uploadMaxSize: uploadMaxSize ?? null, onUpload: uploader() };
+			uploadMaxSize: uploadMaxSize ?? null, uploadMaxWidth: uploadMaxWidth ?? null,
+			uploadMaxHeight: uploadMaxHeight ?? null, uploadScaling: !!uploadScaling,
+			uploadMaxCount: uploadMaxCount ?? null, uploadDialog: !!uploadDialog,
+			onUpload: uploader() };
 		untrack(() => instance?.configure(next));
 	});
 
