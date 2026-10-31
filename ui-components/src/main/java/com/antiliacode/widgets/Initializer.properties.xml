@@ -287,6 +287,13 @@
 	<entry key="RichTextEditor.scaleTitle">Images too large</entry>
 	<entry key="RichTextEditor.scaleText">These images are larger than {0} pixels. Tick those to scale down; the others are left out.</entry>
 	<entry key="RichTextEditor.scaleDown">Scale {0} down to {1}</entry>
+	<entry key="RichTextEditor.cancelUpload">Cancel the upload of {0}</entry>
+	<entry key="RichTextEditor.storedImage">Insert image from store</entry>
+	<entry key="RichTextEditor.storePermanently">Store permanently</entry>
+	<entry key="RichTextEditor.permanentFailed">{0} could not be stored permanently.</entry>
+	<entry key="RichTextEditor.findImages">Name of the image</entry>
+	<entry key="RichTextEditor.findingImages">Searching…</entry>
+	<entry key="RichTextEditor.noStoredImages">No stored images found.</entry>
 	<entry key="RichTextEditor.proofreadSpelling">Spelling</entry>
 	<entry key="RichTextEditor.proofreadGrammar">Grammar</entry>
 	<entry key="RichTextEditor.proofreadStyle">Style</entry>

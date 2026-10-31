@@ -21,8 +21,9 @@ import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLev
 	type RichTextEditorTexts,
 	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
-	type RichTextProofreader, type RichTextSuggester,
-	type RichTextTool } from '@antilia/core';
+	type RichTextImageFinder, type RichTextImageKeeper, type RichTextProofreader,
+	type RichTextStoredImage, type RichTextSuggester, type RichTextTool, type RichTextUploader,
+	type RichTextUploadOptions } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
@@ -164,9 +165,23 @@ export interface RichTextEditorProps {
 	onPasteCleaned?(report: RichTextCleaningReport): void;
 	/**
 	 * Uploads an image the user chose, dropped or pasted, answering the address it is served at
-	 * (see uploadImageTo of the core); without it an image is an address the user gives.
+	 * (see uploadImageTo of the core); without it an image is an address the user gives. The
+	 * options tell the share sent, which the mark of the image shows, and abort as the user
+	 * cancels the upload.
 	 */
-	onUpload?(file: File): Promise<string>;
+	onUpload?(file: File, options?: RichTextUploadOptions): Promise<string>;
+	/**
+	 * Stores images the user uploaded permanently, those ticked as they upload, resolving to the
+	 * addresses of those stored (see storePermanentlyAt of the core); without it the uploads offer
+	 * no box to tick.
+	 */
+	onStorePermanently?(urls: string[]): Promise<string[]>;
+	/**
+	 * Finds the images the page stores permanently for what the user typed, which the tool
+	 * storedImage lists and inserts (see findImagesAt of the core); without it the tool does not
+	 * show.
+	 */
+	onFindImages?(query: string, signal: AbortSignal): Promise<readonly RichTextStoredImage[]>;
 	/**
 	 * Called a moment after the user took images out of the text, or uploaded some that never went
 	 * into it, with their addresses, for the page to delete them, at once or once the text is saved
@@ -204,7 +219,9 @@ export interface RichTextEditorHandle {
  * gets a {@link RichTextEditorHandle}. With highlight, its code blocks show in the colors of their
  * language, which the menu of the tool code block chooses; with onUpload, the user uploads images
  * by the form of the image or its dialog, or by dropping or pasting them into the text, within the
- * limits given; onImagesRemoved hears of those taken out of the text.
+ * limits given, each telling the share sent and canceled by a button; onImagesRemoved hears of
+ * those taken out of the text. With onStorePermanently the user ticks the images to store
+ * permanently, and with onFindImages inserts those stored by the tool storedImage.
  *
  * The HTML it gives comes from the user: a server keeping it cleans it, as Wicket's
  * RichTextEditor does.
@@ -220,6 +237,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
 			uploadMaxCount, uploadDialog, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
+		const keeps = props.onStorePermanently !== undefined;
+		const finds = props.onFindImages !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreRichTextEditor | null>(null);
 		const look = useLook();
@@ -260,7 +279,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				uploadMaxSize: current.uploadMaxSize, uploadMaxWidth: current.uploadMaxWidth,
 				uploadMaxHeight: current.uploadMaxHeight, uploadScaling: current.uploadScaling,
 				uploadMaxCount: current.uploadMaxCount, uploadDialog: current.uploadDialog,
-				onUpload: uploaderOf(latest),
+				onUpload: uploaderOf(latest), onStorePermanently: keeperOf(latest),
+				onFindImages: finderOf(latest),
 				onImagesRemoved: (urls) => latest.current.onImagesRemoved?.(urls),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
@@ -303,9 +323,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				codeLanguages, uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
 				uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
 				uploadScaling: !!uploadScaling, uploadMaxCount: uploadMaxCount ?? null,
-				uploadDialog: !!uploadDialog, onUpload: uploaderOf(latest) });
+				uploadDialog: !!uploadDialog, onUpload: uploaderOf(latest),
+				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest) });
 		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
-			uploadScaling, uploadMaxCount, uploadDialog, uploads]);
+			uploadScaling, uploadMaxCount, uploadDialog, uploads, keeps, finds]);
 
 		useLayoutEffect(() => {
 			const editor = instance.current;
@@ -346,7 +367,24 @@ function highlighterOf(highlight: boolean | RichTextHighlighter | undefined):
 /**
  * @returns the uploader of the props, calling the latest onUpload; null without one
  */
-function uploaderOf(props: { current: RichTextEditorProps }):
-	((file: File) => Promise<string>) | null {
-	return props.current.onUpload ? (file) => props.current.onUpload!(file) : null;
+function uploaderOf(props: { current: RichTextEditorProps }): RichTextUploader | null {
+	return props.current.onUpload ? (file, options) => props.current.onUpload!(file, options) :
+		null;
+}
+
+/**
+ * @returns what stores the images permanently, calling the latest onStorePermanently; null
+ *          without one
+ */
+function keeperOf(props: { current: RichTextEditorProps }): RichTextImageKeeper | null {
+	return props.current.onStorePermanently ? (urls) => props.current.onStorePermanently!(urls) :
+		null;
+}
+
+/**
+ * @returns what finds the images stored, calling the latest onFindImages; null without one
+ */
+function finderOf(props: { current: RichTextEditorProps }): RichTextImageFinder | null {
+	return props.current.onFindImages ? (query, signal) =>
+		props.current.onFindImages!(query, signal) : null;
 }

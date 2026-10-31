@@ -683,7 +683,10 @@
 	font-size: 0.875em;
 }
 
-/* the list of the files of the dialog of the uploads: the name, what became of it, a button */
+/*
+ * the list of the files of the dialog of the uploads: the name, what became of it, the share sent
+ * while it uploads, the box storing it permanently and a button
+ */
 .antilia-rich-text-upload-list {
 	display: grid;
 	gap: 0.25rem;
@@ -693,8 +696,7 @@
 }
 
 .antilia-rich-text-upload-file {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto;
+	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.25rem 0.5rem;
@@ -704,6 +706,8 @@
 }
 
 .antilia-rich-text-upload-name {
+	flex: 1 1 auto;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -727,8 +731,75 @@
 	display: none;
 }
 
-.antilia-rich-text-upload-refused:has(.antilia-rich-text-upload-name:empty) {
-	grid-template-columns: minmax(0, 1fr) auto;
+.antilia-rich-text-upload-refused:has(.antilia-rich-text-upload-name:empty)
+	.antilia-rich-text-upload-status {
+	flex: 1 1 auto;
+}
+
+.antilia-rich-text-upload-file .antilia-rich-text-progress {
+	flex: none;
+	width: 5em;
+}
+
+.antilia-rich-text-upload-permanent {
+	flex: none;
+	margin: 0;
+	white-space: nowrap;
+}
+
+.antilia-rich-text-upload-remove {
+	flex: none;
+}
+
+/* the box storing the images dropped on the form of the image permanently */
+.antilia-rich-text-form-permanent {
+	margin: 0;
+}
+
+/*
+ * the form of the image from the store: the field, the line telling the search and the list of the
+ * images found, a thumbnail and a name each, the one active tinted
+ */
+.antilia-rich-text-picker {
+	display: grid;
+	gap: 0.3rem;
+	min-width: min(18rem, 80vw);
+}
+
+.antilia-rich-text-picker-status {
+	margin: 0;
+	color: var(--antilia-rich-text-muted);
+	font-size: 0.875em;
+	font-style: italic;
+}
+
+.antilia-rich-text-picker-status[hidden],
+.antilia-rich-text-picker-list[hidden] {
+	display: none;
+}
+
+.antilia-rich-text-picker-list {
+	display: grid;
+	gap: 0.1rem;
+	max-height: 16rem;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+	list-style: none;
+}
+
+.antilia-rich-text-picker-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	min-width: 0;
+	padding: 0.25em 0.4em;
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	cursor: pointer;
+}
+
+.antilia-rich-text-picker-active {
+	background: var(--antilia-rich-text-hover);
 }
 
 /* the pictures too large the dialog offers to scale down, each by a box to tick */
@@ -745,6 +816,17 @@
 	font-size: 0.875em;
 }
 
+/*
+ * the box of the scroll bars of the text, below the toolbar: the bars of scrollbar.css, in the
+ * colors of the theme, over the edges of the text, which scrolls natively below them
+ */
+.antilia-rich-text-scroller {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+}
+
 /* the text, scrolling below the toolbar */
 .antilia-rich-text-content {
 	/* for the element over an issue, which scrolls with the text */
@@ -753,8 +835,6 @@
 	min-height: 0;
 	overflow: auto;
 	cursor: text;
-	scrollbar-width: thin;
-	scrollbar-color: color-mix(in srgb, var(--antilia-rich-text-text) 30%, transparent) transparent;
 }
 
 .antilia-rich-text-text {
@@ -894,14 +974,92 @@
 
 /* where an image uploading goes, until it is there */
 .antilia-rich-text-uploading {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
 	margin: 0 0.25em;
-	padding: 0.1em 0.5em;
+	padding: 0.1em 0.2em 0.1em 0.5em;
 	border: 1px dashed var(--antilia-rich-text-border);
 	border-radius: var(--antilia-look-radius-sm, 0.3em);
 	color: var(--antilia-rich-text-muted);
 	font-size: 0.875em;
 	user-select: none;
+	vertical-align: middle;
+}
+
+.antilia-rich-text-uploading .antilia-rich-text-progress {
+	width: 4em;
+}
+
+.antilia-rich-text-uploading-percent {
+	min-width: 2.6em;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.antilia-rich-text-uploading-percent:empty {
+	display: none;
+}
+
+/* the button canceling an upload, a cross */
+.antilia-rich-text-uploading-cancel {
+	display: inline-flex;
+	padding: 0.15em;
+	border: 0;
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.antilia-rich-text-uploading-cancel:is(:hover, :focus-visible) {
+	background: var(--antilia-rich-text-hover);
+	color: var(--antilia-theme-error, #c53030);
+}
+
+/*
+ * a bar of the share of a file sent, in the mark of an upload and in the dialog of the uploads: a
+ * track and its fill, as long as the custom property the script sets, from 0 to 1; without it,
+ * before the upload tells its progress, the fill slides along
+ */
+.antilia-rich-text-progress {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	height: 0.35em;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--antilia-theme-text, #1c2333) 12%, transparent);
+}
+
+.antilia-rich-text-progress-fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: calc(var(--antilia-rich-text-progress, 0) * 100%);
+	border-radius: inherit;
+	background: var(--antilia-theme-primary, #2f6fde);
+	transition: width 0.2s ease-out;
+}
+
+.antilia-rich-text-progress:not([aria-valuenow]) .antilia-rich-text-progress-fill {
+	width: 30%;
+	animation: antilia-rich-text-progress-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes antilia-rich-text-progress-slide {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(340%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-rich-text-progress:not([aria-valuenow]) .antilia-rich-text-progress-fill {
+		animation: none;
+	}
 }
 
 /* the language of a code block, in its corner */

@@ -572,6 +572,72 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void keepsImagesPermanentlyAndNeverDeletesThem()
+	{
+		List<String> deleted = new ArrayList<>();
+		List<Set<String>> heard = new ArrayList<>();
+		IRichTextImageStore store = new IRichTextImageStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(FileUpload image, IRichTextImageType type)
+			{
+				return "/images/new.png";
+			}
+
+			@Override
+			public void delete(String url)
+			{
+				deleted.add(url);
+			}
+
+			@Override
+			public boolean isPermanent(String url)
+			{
+				return url.contains("kept");
+			}
+
+			@Override
+			public List<RichTextStoredImage> findPermanent(String query, int max)
+			{
+				return List.of(new RichTextStoredImage("/images/kept.png", "Kept"));
+			}
+		};
+		RichTextEditor editor = noting(Model.of(IMAGES), heard).setImageStore(store)
+			.setImageDeletion(RichTextImageDeletion.AT_ONCE);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertFalse(editor.isPermanentImages());
+		assertFalse(options(editor).has("permanentImages"));
+		RichTextImageUploadBehavior behavior = editor.getBehaviors(RichTextImageUploadBehavior.class)
+			.get(0);
+		assertFalse(behavior.isPermanentImages());
+
+		editor.setPermanentImages(true);
+		tester.startPage(page);
+		assertTrue(options(editor).getBoolean("permanentImages"));
+		assertTrue(behavior.isPermanentImages());
+		// the store of the page, through the editor's
+		assertEquals(List.of(new RichTextStoredImage("/images/kept.png", "Kept")),
+			behavior.findPermanent(""));
+
+		// one kept permanently is neither deleted nor told of
+		removeImages(removal(editor), "[\"/images/old.png\", \"/images/kept.png\"]");
+		assertEquals(List.of("/images/old.png"), deleted);
+		assertEquals(List.of(Set.of("/images/old.png")), heard);
+
+		// read only, nothing found
+		editor.setReadOnly(true);
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextImageUploadBehavior.FIND_PARAMETER, "");
+		tester.executeBehavior(behavior);
+		assertEquals("{\"images\":[]}", tester.getLastResponseAsString());
+		assertTrue(RichTextTool.DEFAULT_TOOLBAR.stream().anyMatch(group -> group.contains(
+			RichTextTool.STORED_IMAGE)));
+	}
+
+	@Test
 	void readsTheImagesOfHtmlMarkdownAndJson()
 	{
 		assertEquals(List.of("/a.png", "https://example.org/b?x=1&y=2", "c.png"),

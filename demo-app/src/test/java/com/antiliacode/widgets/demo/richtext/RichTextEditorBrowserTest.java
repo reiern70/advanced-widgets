@@ -787,6 +787,55 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		assertNoErrors();
 	}
 
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void keepsAnImagePermanentlyAndInsertsItFromTheStore(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		// the text scrolls with the scroll bars of the components, not the browser's
+		assertEquals(1, editor().findElements(By.cssSelector(".antilia-rich-text-scroller" +
+			".antilia-scrollbar > .antilia-rich-text-content.antilia-scrollbar-host")).size());
+		assertEquals("none", script("return getComputedStyle(arguments[0]).scrollbarWidth;",
+			editor().findElement(By.cssSelector(".antilia-rich-text-content"))));
+
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("image").click();
+		WebElement zone = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-popover .antilia-rich-text-dropzone")).stream().findFirst().orElse(null));
+		wait.until(d -> "Drop images here".equals(zone.findElement(By.cssSelector(
+			".antilia-rich-text-dropzone-text")).getText()));
+		WebElement keep = driver.findElement(By.cssSelector(
+			".antilia-popover .antilia-rich-text-form-permanent"));
+		assertEquals("Store permanently", keep.getText().trim());
+		keep.findElement(By.cssSelector("input[type=checkbox]")).click();
+		String name = "logo-" + framework + "-" + browser.name().toLowerCase() + ".png";
+		dropFiles(zone, name, "image/png", PNG);
+		wait.until(d -> uploaded().size() == 1);
+		String src = uploaded().get(0).getDomProperty("src");
+
+		// taken out of the text and saved: kept all the same
+		tool("images").click();
+		wait.until(d -> editor().findElements(By.cssSelector(
+			"[role=menu] .antilia-rich-text-images-delete")).stream().findFirst().orElse(null))
+			.click();
+		wait.until(d -> uploaded().isEmpty());
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+
+		// found by its name, and inserted
+		tool("storedImage").click();
+		WebElement field = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-popover input[role=combobox]")).stream().findFirst().orElse(null));
+		wait.until(d -> field.equals(d.switchTo().activeElement()));
+		field.sendKeys(name);
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-popover [role=option]")).stream()
+			.anyMatch(option -> name.equals(option.getText().trim())));
+		field.sendKeys(Keys.ENTER);
+		wait.until(d -> uploaded().size() == 1);
+		assertEquals(src, uploaded().get(0).getDomProperty("src"));
+		assertEquals(200L, served(src));
+		assertNoErrors();
+	}
+
 	/**
 	 * Drops files on an element, as the browser does: name, type and base64 of each in turn.
 	 */

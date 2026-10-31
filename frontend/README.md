@@ -321,7 +321,12 @@ the uploads instead (`rich-text-upload-dialog.ts`): a zone, and the list of the 
 uploaded or refused and why, which the user takes out before Insert puts the others into the text.
 An image dropped into the text, or pasted without HTML as a screenshot is, uploads too: a mark stands
 where it goes until the page answers its address, which the image then takes, or a message above the
-text says why not. The editor checks first how many one drop or choice takes (`uploadMaxCount`), the
+text says why not. The mark shows the share of the file sent and a cross canceling the upload, which
+takes the mark away and inserts nothing; the dialog shows the share of each file, and taking out a
+file uploading cancels it. The uploader gets `{ onProgress(sent, total), signal }` as its second
+argument (`RichTextUploadOptions`): `uploadImageTo` sends by `XMLHttpRequest`, as `fetch` tells no
+progress of what it sends, and stops as the signal aborts; an image an uploader answers once
+canceled is told of as removed. The editor checks first how many one drop or choice takes (`uploadMaxCount`), the
 type (`uploadTypes`: PNG, JPEG, GIF, WebP and AVIF by default, no SVG), the size (`uploadMaxSize`) and
 the width and height (`uploadMaxWidth`, `uploadMaxHeight`), read from the header of the file without
 decoding the picture (`readImageDimensions`); with `uploadScaling`, a dialog offers to scale a
@@ -340,6 +345,23 @@ those uploaded that never went into it; a text the page gives tells of nothing. 
 tells the server via Ajax, which deletes those it knows by the store, at once or once the text is
 saved (`setImageDeletion`, `markSaved`); `deleteImagesAt(url)` asks a page's
 `RichTextImageUploadBehavior` to delete those it took, for the React and Svelte editors.
+
+With `onStorePermanently(urls)`, the user ticks the images to store permanently as they upload: a box
+on each line of the dialog, or one under the zone of the form of the image; the editor hands the
+page those ticked once they are in the text, and says which the page did not store. With
+`onFindImages(query, signal)` the tool `storedImage`, "Insert image from store", in the default
+toolbar, shows: a form finding the images the page stores by their names as the user types
+(`rich-text-stored-images.ts`), a WAI-ARIA combobox listing each with a thumbnail, which inserts the
+one chosen. `storePermanentlyAt(url)` and `findImagesAt(url)` ask a page's
+`RichTextImageUploadBehavior` with `setPermanentImages(true)`, which stores permanently only the images
+it took on its page, by `IRichTextImageStore.storePermanently(url, name)`, and finds those its store
+keeps (`findPermanent(query, max)`); Wicket's `RichTextEditor.setPermanentImages(true)` does it all,
+and never deletes an image its store keeps permanently (`isPermanent(url)`).
+
+The text scrolls with the scroll bars of the components (`scrollbar.ts`), in the colors of the theme,
+over the edges of the text, which still scrolls natively: a page renders `scrollbar.css` with the
+editor's style sheet, as Wicket's editor does. `RichTextEditor.attachScrollbar` makes them; a page
+replaces it by one answering nothing for the browser's scroll bars.
 
 The browser checks the spelling of the text as it does unless `spellcheck` says otherwise (`true`,
 `false`), in the language of the page or `textLanguage` (a BCP 47 tag, the text's `lang`), in both

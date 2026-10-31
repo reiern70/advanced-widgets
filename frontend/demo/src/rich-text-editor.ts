@@ -23,7 +23,9 @@
  * on Ctrl+Space.
  */
 
-import { deleteImagesAt, proofreadAt, suggestAt, uploadImageTo, type RichTextEditorState,
+import { deleteImagesAt, findImagesAt, proofreadAt, storePermanentlyAt, suggestAt, uploadImageTo,
+	type RichTextEditorState, type RichTextImageFinder, type RichTextImageKeeper,
+	type RichTextUploader,
 	type RichTextEditorTexts, type RichTextProofreader, type RichTextSuggester,
 	type RichTextTool } from '@antilia/core';
 
@@ -98,10 +100,19 @@ export function suggesters(config: RichTextEditorConfig): RichTextSuggester[] {
 }
 
 /**
- * @returns what the editors of the apps upload images with: to the page
+ * @returns what the editors of the apps upload images with: to the page, telling the progress
  */
-export function uploader(config: RichTextEditorConfig): (file: File) => Promise<string> {
+export function uploader(config: RichTextEditorConfig): RichTextUploader {
 	return uploadImageTo(config.uploadUrl);
+}
+
+/**
+ * @returns what the editors of the apps store images permanently with, and find those stored:
+ *          the page, which keeps those of each user
+ */
+export function storedImages(config: RichTextEditorConfig): { keep: RichTextImageKeeper;
+	find: RichTextImageFinder } {
+	return { keep: storePermanentlyAt(config.uploadUrl), find: findImagesAt(config.uploadUrl) };
 }
 
 /**
