@@ -114,7 +114,8 @@ const STYLES = [
 	['styles/split-panel.css', 'com/antiliacode/widgets/split/antilia-split-panel.css'],
 	['styles/tabs.css', 'com/antiliacode/widgets/tabs/antilia-tabs.css'],
 	['styles/tree.css', 'com/antiliacode/widgets/tree/antilia-tree.css'],
-	['styles/upload.css', 'com/antiliacode/widgets/upload/antilia-upload.css']
+	['styles/upload.css', 'com/antiliacode/widgets/upload/antilia-upload.css'],
+	['styles/wizard.css', 'com/antiliacode/widgets/wizard/antilia-wizard.css']
 ];
 
 await rm(out, { recursive: true, force: true });

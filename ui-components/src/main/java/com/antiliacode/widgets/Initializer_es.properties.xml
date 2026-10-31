@@ -113,6 +113,13 @@
 	<entry key="TabbedPanel.keep">Dejarla abierta</entry>
 	<entry key="Breadcrumb.label">Ruta de navegación</entry>
 	<entry key="Breadcrumb.more">Mostrar toda la ruta ({0} más)</entry>
+	<entry key="Wizard.steps">Pasos</entry>
+	<entry key="Wizard.first">Primero</entry>
+	<entry key="Wizard.previous">Anterior</entry>
+	<entry key="Wizard.next">Siguiente</entry>
+	<entry key="Wizard.last">Último</entry>
+	<entry key="Wizard.finish">Finalizar</entry>
+	<entry key="Wizard.cancel">Cancelar</entry>
 	<entry key="Popover.close">Cerrar</entry>
 	<entry key="Autocomplete.placeholder">Escriba para buscar…</entry>
 	<entry key="Autocomplete.noMatch">Sin resultados</entry>
