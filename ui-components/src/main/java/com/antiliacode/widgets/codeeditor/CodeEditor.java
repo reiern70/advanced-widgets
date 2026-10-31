@@ -13,7 +13,10 @@
  */
 package com.antiliacode.widgets.codeeditor;
 
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.wicket.Application;
@@ -21,6 +24,9 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
+import org.apache.wicket.event.IEvent;
+import org.apache.wicket.feedback.FeedbackMessage;
+import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -35,14 +41,18 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.string.Strings;
+import org.apache.wicket.validation.IValidationError;
+import org.apache.wicket.validation.ValidationError;
 
 import com.antiliacode.widgets.ScriptJson;
+import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
+import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 
 /**
  * A text area shown as a code editor, CodeMirror, in the colors of the
@@ -63,6 +73,21 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * saved, against the text it was rendered with or {@link #setSavedModel(IModel) the text last
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
  * back. {@link #markSaved(AjaxRequestTarget)} tells the browser the text was saved.
+ * {@link #setSaveOnBlur(boolean) Saving on blur}, leaving the editor with changes not saved tells
+ * the page to save, as Ctrl+S does: the {@link CodeEditorEventBehavior} of
+ * {@link CodeEditorEvent#SAVE} hears of it.
+ * <p>
+ * The editor validates its text as any form component does, with the validators added to it, a
+ * {@link JsonValidator} for example, when a form is sent or a {@link CodeEditorEventBehavior}
+ * hears of an event. It {@link #setShowErrors(boolean) shows} its error messages in the text: it
+ * underlines where each is, when the error tells by the variables {@value #LINE} and
+ * {@value #COLUMN} as {@link JsonValidator} does, lists them in a bar along its bottom and marks
+ * itself invalid, until the text is valid again. The messages stay feedback messages, which a
+ * {@link org.apache.wicket.markup.html.panel.FeedbackPanel} or
+ * {@link com.antiliacode.widgets.notification.Notifications} show as well.
+ * <p>
+ * {@link #setReadOnly(IModel) Read only}, from a model or not, the user can read, select and copy
+ * the text, not change it, and what the browser posts does not change the model.
  * <p>
  * Where the cursor is, what is selected, how far the text is scrolled and the size the user gave
  * the editor, by the bar along its bottom ({@link #setResizable(ResizeAxis)}), are its
@@ -77,7 +102,8 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * browser.
  * <p>
  * {@code Wicket.CodeEditor} from {@link #JS} makes the editor in the browser; its sizes are CSS
- * custom properties set through the CSSOM. CodeMirror writes its style sheet into the page in a
+ * custom properties set through the CSSOM, and the text scrolls with the scroll bars of
+ * {@link ScrollbarBehavior}. CodeMirror writes its style sheet into the page in a
  * style element, which the nonce of the page lets in under the Content Security Policy of the
  * application, when it has one. The look comes from {@link #CSS}.
  *
@@ -101,6 +127,18 @@ public class CodeEditor extends TextArea<String>
 
 	/** The height the user resizes the editor from at least, in pixels, unless set otherwise. */
 	public static final int DEFAULT_MIN_HEIGHT = 64;
+
+	/**
+	 * The variable of a {@link ValidationError} telling the line where the error is in the text,
+	 * counted from 1, which the editor underlines.
+	 */
+	public static final String LINE = "line";
+
+	/**
+	 * The variable of a {@link ValidationError} telling the column where the error is in its line,
+	 * counted from 1.
+	 */
+	public static final String COLUMN = "column";
 
 	private static final String STATE_PARAMETER = "state";
 
@@ -142,7 +180,23 @@ public class CodeEditor extends TextArea<String>
 
 	private boolean folding = true;
 
-	private boolean readOnly;
+	private IModel<Boolean> readOnly = Model.of(false);
+
+	private boolean saveOnBlur;
+
+	private boolean showErrors = true;
+
+	/** The errors the editor shows, of the last validation. */
+	private List<CodeEditorError> errors = List.of();
+
+	/** The errors the browser was last given. */
+	private List<CodeEditorError> sentErrors = List.of();
+
+	/** Whether the text was validated in this request: its errors are those of its messages. */
+	private transient boolean validated;
+
+	/** Where the errors of the validators of this request are, by their messages. */
+	private transient Map<FeedbackMessage, CodeEditorError> located;
 
 	private boolean selectable = true;
 
@@ -237,7 +291,7 @@ public class CodeEditor extends TextArea<String>
 		}
 		// read where the text area's input is: among what the form posts
 		String[] input = getInputAsArray();
-		if (input != null && input.length > 0 && input[0] != null && !readOnly)
+		if (input != null && input.length > 0 && input[0] != null && !isReadOnly())
 		{
 			inputChanged();
 		}
@@ -427,11 +481,12 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * @return whether the user cannot change the text, {@code false} unless set otherwise
+	 * @return whether the user cannot change the text, as the model of reading only says;
+	 *         {@code false} unless set otherwise
 	 */
 	public boolean isReadOnly()
 	{
-		return readOnly;
+		return Boolean.TRUE.equals(readOnly.getObject());
 	}
 
 	/**
@@ -441,8 +496,244 @@ public class CodeEditor extends TextArea<String>
 	 */
 	public CodeEditor setReadOnly(boolean readOnly)
 	{
-		this.readOnly = readOnly;
+		return setReadOnly(Model.of(readOnly));
+	}
+
+	/**
+	 * Tells from a model whether the user cannot change the text, but can read, select and copy
+	 * it: each time the editor renders, also when it renders again via Ajax after the model
+	 * changed. Meanwhile what the browser posts does not change the model of the text.
+	 *
+	 * @param readOnly
+	 *            the model of reading only; {@code null} for never
+	 * @return {@code this}
+	 */
+	public CodeEditor setReadOnly(IModel<Boolean> readOnly)
+	{
+		this.readOnly = readOnly == null ? Model.of(false) : readOnly;
 		return this;
+	}
+
+	/**
+	 * @return the model telling whether the user cannot change the text
+	 */
+	public IModel<Boolean> getReadOnlyModel()
+	{
+		return readOnly;
+	}
+
+	/**
+	 * @return whether leaving the editor with changes not saved, or with errors shown, tells the
+	 *         page to save, {@code false} unless set otherwise
+	 */
+	public boolean isSaveOnBlur()
+	{
+		return saveOnBlur;
+	}
+
+	/**
+	 * @param saveOnBlur
+	 *            whether leaving the editor with changes not saved, against the text it was
+	 *            rendered with or {@link #setSavedModel(IModel) the text last saved}, or with
+	 *            errors shown, tells the page to save, as Ctrl+S does: the event
+	 *            {@link CodeEditorEvent#SAVE}, which a {@link CodeEditorEventBehavior} hears of,
+	 *            validating the text
+	 * @return {@code this}
+	 */
+	public CodeEditor setSaveOnBlur(boolean saveOnBlur)
+	{
+		this.saveOnBlur = saveOnBlur;
+		return this;
+	}
+
+	/**
+	 * @return whether the editor shows its error messages in the text, {@code true} unless set
+	 *         otherwise
+	 */
+	public boolean isShowErrors()
+	{
+		return showErrors;
+	}
+
+	/**
+	 * @param showErrors
+	 *            whether the editor shows its error messages in the text: underlined where they
+	 *            are, when they tell, and listed in a bar along its bottom
+	 * @return {@code this}
+	 */
+	public CodeEditor setShowErrors(boolean showErrors)
+	{
+		this.showErrors = showErrors;
+		return this;
+	}
+
+	/**
+	 * @return the errors the editor shows: those of the last validation of its text
+	 */
+	public List<CodeEditorError> getErrors()
+	{
+		return errors;
+	}
+
+	/**
+	 * Shows the error messages the editor has now, those reported after its text was validated
+	 * too, {@code error("...")} in {@code onUpdate} for example; none takes away those it shows.
+	 * After a validation in an Ajax request, the editor shows its errors without being told.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @return {@code this}
+	 */
+	public CodeEditor showErrors(AjaxRequestTarget target)
+	{
+		errors = collectErrors();
+		sendErrors(target);
+		return this;
+	}
+
+	/**
+	 * Validates the text, unless the editor is read only: the browser could not change it then.
+	 */
+	@Override
+	public void validate()
+	{
+		located = null;
+		if (isReadOnly())
+		{
+			if (hasFeedbackMessage())
+			{
+				getFeedbackMessages().clear();
+			}
+		}
+		else
+		{
+			super.validate();
+		}
+		validated = true;
+	}
+
+	/**
+	 * Reports an error of the validators, keeping where it is in the text, when it tells by the
+	 * variables {@value #LINE} and {@value #COLUMN}.
+	 */
+	@Override
+	public void error(IValidationError error)
+	{
+		int before = getFeedbackMessages().size();
+		super.error(error);
+		if (error instanceof ValidationError validationError &&
+			validationError.getVariables().get(LINE) instanceof Number line)
+		{
+			List<FeedbackMessage> messages = getFeedbackMessages().toList();
+			Object column = validationError.getVariables().get(COLUMN);
+			for (FeedbackMessage message : messages.subList(Math.min(before, messages.size()),
+				messages.size()))
+			{
+				if (located == null)
+				{
+					located = new IdentityHashMap<>();
+				}
+				located.put(message, new CodeEditorError(String.valueOf(message.getMessage()),
+					line.intValue(), column instanceof Number number ? number.intValue() : null));
+			}
+		}
+	}
+
+	/**
+	 * Takes the model of the text as it is: read only, what the browser posts does not change it.
+	 */
+	@Override
+	public void updateModel()
+	{
+		if (!isReadOnly())
+		{
+			super.updateModel();
+		}
+	}
+
+	/**
+	 * The text changed: the errors shown are of another one.
+	 */
+	@Override
+	protected void onModelChanged()
+	{
+		super.onModelChanged();
+		errors = List.of();
+	}
+
+	/**
+	 * @return the error messages of the editor, as errors in its text, where the validators told
+	 */
+	private List<CodeEditorError> collectErrors()
+	{
+		List<CodeEditorError> collected = new ArrayList<>();
+		for (FeedbackMessage message : getFeedbackMessages().toList())
+		{
+			if (message.isError())
+			{
+				CodeEditorError error = located == null ? null : located.get(message);
+				collected.add(error != null ? error : CodeEditorError.of(String.valueOf(
+					message.getMessage())));
+			}
+		}
+		return List.copyOf(collected);
+	}
+
+	/**
+	 * Takes the errors of the messages of the editor when its text was validated in this request.
+	 */
+	private void refreshErrors()
+	{
+		if (validated)
+		{
+			validated = false;
+			errors = collectErrors();
+		}
+	}
+
+	/**
+	 * Gives the browser the errors to show, when they are not the ones it shows.
+	 */
+	private void sendErrors(AjaxRequestTarget target)
+	{
+		List<CodeEditorError> shown = showErrors ? errors : List.of();
+		if (!shown.equals(sentErrors))
+		{
+			sentErrors = shown;
+			target.appendJavaScript(script("setErrors(" + ScriptJson.of(errorsJson(shown)) + ")"));
+		}
+	}
+
+	private static JSONArray errorsJson(List<CodeEditorError> errors)
+	{
+		JSONArray json = new JSONArray();
+		errors.forEach(error -> json.put(error.toJson()));
+		return json;
+	}
+
+	/**
+	 * Shows the errors of a validation in this Ajax request, which the page broadcasts once the
+	 * request was handled, and those the text no longer has.
+	 */
+	@Override
+	public void onEvent(IEvent<?> event)
+	{
+		super.onEvent(event);
+		if (event.getPayload() instanceof AjaxRequestTarget target && isVisibleInHierarchy())
+		{
+			refreshErrors();
+			sendErrors(target);
+		}
+	}
+
+	@Override
+	protected void onComponentTag(ComponentTag tag)
+	{
+		super.onComponentTag(tag);
+		if (isReadOnly())
+		{
+			tag.put("readonly", "readonly");
+		}
 	}
 
 	/**
@@ -624,7 +915,7 @@ public class CodeEditor extends TextArea<String>
 		JSONObject options = new JSONObject()
 			.put("lineNumbers", lineNumbers)
 			.put("folding", folding)
-			.put("readOnly", readOnly)
+			.put("readOnly", isReadOnly())
 			.put("selectable", selectable)
 			.put("lineWrapping", lineWrapping)
 			.put("tabSize", tabSize)
@@ -637,6 +928,16 @@ public class CodeEditor extends TextArea<String>
 		if (savedModel != null)
 		{
 			options.put("saved", normalize(savedModel.getObject()));
+		}
+		if (saveOnBlur)
+		{
+			options.put("saveOnBlur", true);
+		}
+		refreshErrors();
+		sentErrors = showErrors ? errors : List.of();
+		if (!sentErrors.isEmpty())
+		{
+			options.put("errors", errorsJson(sentErrors));
 		}
 		String text = placeholder == null ? null : placeholder.getObject();
 		if (!Strings.isEmpty(text))
@@ -676,13 +977,13 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * What the editor says, in the language of a component: the name of the bar resizing it and
-	 * CodeMirror's phrases, those translated. The texts of this editor, and those a page hands to the
+	 * What the editor says, in the language of a component: the names of the bar resizing it and
+	 * of the bar listing its errors, and CodeMirror's phrases, those translated. The texts of this editor, and those a page hands to the
 	 * React and Svelte editors.
 	 *
 	 * @param component
 	 *            the component whose resources translate the texts
-	 * @return the texts, {@code resize} and {@code phrases}
+	 * @return the texts, {@code resize}, {@code errors} and {@code phrases}
 	 */
 	public static JSONObject texts(Component component)
 	{
@@ -697,6 +998,7 @@ public class CodeEditor extends TextArea<String>
 		return new JSONObject()
 			.put("resize", component.getString("CodeEditor.resize", null,
 				"Drag, or use the arrow keys, to resize the editor"))
+			.put("errors", component.getString("CodeEditor.errors", null, "Errors"))
 			.put("phrases", phrases);
 	}
 
@@ -735,7 +1037,10 @@ public class CodeEditor extends TextArea<String>
 	protected void onDetach()
 	{
 		super.onDetach();
+		validated = false;
+		located = null;
 		stateModel.detach();
+		readOnly.detach();
 		if (savedModel != null)
 		{
 			savedModel.detach();
@@ -748,7 +1053,8 @@ public class CodeEditor extends TextArea<String>
 
 	/**
 	 * Renders what the editor needs in the browser: {@link #JS} and {@link #CSS}, and the style
-	 * sheet of the bar resizing it, {@link ResizableBehavior#CSS}.
+	 * sheets of the bar resizing it, {@link ResizableBehavior#CSS}, and of its scroll bars,
+	 * {@link ScrollbarBehavior#CSS}.
 	 *
 	 * @param response
 	 *            the header response
@@ -757,6 +1063,7 @@ public class CodeEditor extends TextArea<String>
 	{
 		CoreLibrariesContributor.contribute(Application.get(), response);
 		response.render(CssHeaderItem.forReference(ResizableBehavior.CSS));
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
 		response.render(JavaScriptHeaderItem.forReference(JS));
 		response.render(CssHeaderItem.forReference(CSS));
 	}

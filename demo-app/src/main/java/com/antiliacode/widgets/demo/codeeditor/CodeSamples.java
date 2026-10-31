@@ -124,6 +124,22 @@ final class CodeSamples
 		}
 		""";
 
+	private static final String SETTINGS = """
+		{
+		    "theme": "ocean",
+		    "editor": {
+		        "tabSize": 4,
+		        "lineWrapping": false,
+		        "languages": ["java", "json", "markdown"]
+		    },
+		    "autosave": true,
+		    "recent": [
+		        { "file": "Order.java", "line": 12 },
+		        { "file": "package.json", "line": 3 }
+		    ]
+		}
+		""";
+
 	private static final String MARKDOWN = """
 		# Shop front
 
@@ -236,6 +252,14 @@ final class CodeSamples
 	static CodeDocument notes()
 	{
 		return new CodeDocument("NOTES.md", CodeEditorLanguage.MARKDOWN, NOTES);
+	}
+
+	/**
+	 * @return the settings in JSON, which the server validates as the user leaves their editor
+	 */
+	static CodeDocument settings()
+	{
+		return new CodeDocument("settings.json", CodeEditorLanguage.JSON, SETTINGS);
 	}
 
 	/**

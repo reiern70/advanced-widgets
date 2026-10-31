@@ -14,6 +14,7 @@
 
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { diagnosticCount, forEachDiagnostic } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
@@ -637,3 +638,331 @@ describe('CodeEditor', () => {
 		expect(element.innerHTML).toBe('');
 	});
 });
+
+/**
+ * Moves the focus out of an element, as the browser tells it: focusout with the element taking it.
+ */
+function leave(element: HTMLElement, to: Element | null): void {
+	element.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: to }));
+}
+
+/**
+ * @returns the diagnostics of CodeMirror: their ranges and messages
+ */
+function diagnostics(editor: CodeEditor): Array<[number, number, string]> {
+	const found: Array<[number, number, string]> = [];
+	forEachDiagnostic(editor.view.state, (diagnostic, from, to) => {
+		found.push([from, to, diagnostic.message]);
+	});
+	return found;
+}
+
+describe('CodeEditor scroll bars', () => {
+	it('scrolls the text with the scroll bars of the theme, around CodeMirror\'s scroller', () => {
+		const editor = new CodeEditor(textArea());
+		const scroller = editor.view.scrollDOM;
+		const wrapper = scroller.parentElement!;
+
+		expect(wrapper.classList.contains('antilia-scrollbar')).toBe(true);
+		expect(wrapper.parentElement).toBe(editor.view.dom);
+		expect(wrapper.parentElement?.classList.contains('cm-editor')).toBe(true);
+		expect(scroller.classList.contains('antilia-scrollbar-host')).toBe(true);
+		expect(wrapper.querySelectorAll(':scope > .antilia-scrollbar-track')).toHaveLength(2);
+		expect(wrapper.classList.contains('antilia-scrollbar--both')).toBe(true);
+	});
+
+	it('takes the scroll bars away with the editor', () => {
+		const field = textArea();
+		const editor = new CodeEditor(field);
+		const scroller = editor.view.scrollDOM;
+		const wrapper = scroller.parentElement!;
+
+		editor.destroy();
+		expect(wrapper.querySelector('.antilia-scrollbar-track')).toBeNull();
+		expect(scroller.classList.contains('antilia-scrollbar-host')).toBe(false);
+		expect(document.querySelector('.antilia-scrollbar')).toBeNull();
+		expect(document.querySelector('.cm-editor')).toBeNull();
+		expect(field.parentElement?.tagName).toBe('FORM');
+	});
+
+	it('rendered anew in the same place, leaves one wrapper of scroll bars', () => {
+		textArea();
+		CodeEditor.attach('code');
+		const again = CodeEditor.attach('code')!;
+
+		expect(again.element.querySelectorAll('.antilia-scrollbar')).toHaveLength(1);
+		expect(again.view.scrollDOM.parentElement?.classList.contains('antilia-scrollbar'))
+			.toBe(true);
+	});
+});
+
+describe('CodeEditor saving on blur', () => {
+	it('tells the page to save when the user leaves it with changes not saved', () => {
+		const onSave = vi.fn();
+		const editor = new CodeEditor(textArea(), { saveOnBlur: true, onSave });
+		const saved = vi.fn();
+		editor.field!.addEventListener(CODE_EDITOR_EVENTS.save, saved);
+		const other = document.getElementById('other')!;
+
+		// nothing to save yet
+		leave(editor.view.contentDOM, other);
+		expect(onSave).not.toHaveBeenCalled();
+
+		type(editor, 'x');
+		leave(editor.view.contentDOM, other);
+		expect(onSave).toHaveBeenCalledWith('xlet a = 1;\nlet b = 2;');
+		expect(saved).toHaveBeenCalledTimes(1);
+
+		// the focus going nowhere, to another window for example, leaves the editor too
+		leave(editor.view.contentDOM, null);
+		expect(onSave).toHaveBeenCalledTimes(2);
+
+		// saved, nothing more to save
+		editor.markSaved();
+		leave(editor.view.contentDOM, other);
+		expect(onSave).toHaveBeenCalledTimes(2);
+	});
+
+	it('tells the page to save again while it shows errors, the text being as saved', () => {
+		const onSave = vi.fn();
+		const editor = new CodeEditor(textArea(), { saveOnBlur: true, onSave });
+		const other = document.getElementById('other')!;
+		editor.setErrors([{ message: 'Not valid', line: 1, column: 1 }]);
+
+		// the user put the text back as it was saved: the errors are no longer true
+		leave(editor.view.contentDOM, other);
+		expect(onSave).toHaveBeenCalledWith('let a = 1;\nlet b = 2;');
+
+		editor.setErrors([]);
+		leave(editor.view.contentDOM, other);
+		expect(onSave).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not save while the focus stays in the editor, in its search panel for example', () => {
+		const onSave = vi.fn();
+		const editor = new CodeEditor(textArea(), { saveOnBlur: true, onSave });
+		type(editor, 'x');
+		const inside = document.createElement('input');
+		editor.element.append(inside);
+
+		leave(editor.view.contentDOM, inside);
+		expect(onSave).not.toHaveBeenCalled();
+	});
+
+	it('does not save on blur unless told to, nor a text read only', () => {
+		const onSave = vi.fn();
+		const editor = new CodeEditor(textArea(), { onSave });
+		const other = document.getElementById('other')!;
+		type(editor, 'x');
+
+		leave(editor.view.contentDOM, other);
+		expect(onSave).not.toHaveBeenCalled();
+
+		editor.configure({ saveOnBlur: true, readOnly: true });
+		leave(editor.view.contentDOM, other);
+		expect(onSave).not.toHaveBeenCalled();
+
+		editor.configure({ readOnly: false });
+		leave(editor.view.contentDOM, other);
+		expect(onSave).toHaveBeenCalledTimes(1);
+	});
+
+	it('saves when the focus really leaves it', async () => {
+		const onSave = vi.fn();
+		const editor = new CodeEditor(textArea(), { saveOnBlur: true, onSave });
+		editor.focus();
+		await focusTick();
+		type(editor, 'x');
+		document.getElementById('other')!.focus();
+		await focusTick();
+
+		expect(onSave).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('CodeEditor errors', () => {
+	const text = '{\n  "a": 1,\n  "b": ]\n}';
+
+	it('shows the errors the page gives: underlined, listed and the editor invalid', () => {
+		const editor = new CodeEditor(textArea(text), {
+			errors: [{ message: 'A value was expected', line: 3, column: 8 },
+				{ message: 'Not saved' }],
+			texts: { errors: 'Errors in the text' }
+		});
+		const element = editor.element;
+		const bar = element.querySelector<HTMLElement>('.antilia-code-editor-errors')!;
+
+		expect(element.classList.contains('antilia-code-editor-invalid')).toBe(true);
+		expect(bar.getAttribute('role')).toBe('alert');
+		expect(bar.getAttribute('aria-label')).toBe('Errors in the text');
+		expect(bar.closest('.cm-panels-bottom')).not.toBeNull();
+		const items = Array.from(bar.children) as HTMLElement[];
+		expect(items.map((item) => item.textContent)).toEqual(['A value was expected',
+			'Not saved']);
+		expect(items.map((item) => item.tagName)).toEqual(['BUTTON', 'DIV']);
+		expect(items[0].className).toBe('antilia-code-editor-error');
+		expect((items[0] as HTMLButtonElement).type).toBe('button');
+		expect(editor.view.contentDOM.getAttribute('aria-invalid')).toBe('true');
+		expect(editor.view.contentDOM.getAttribute('aria-describedby')).toBe(bar.id);
+		// line 3, column 8: the ] after "b":
+		const at = text.indexOf(']');
+		expect(diagnosticCount(editor.view.state)).toBe(1);
+		expect(diagnostics(editor)).toEqual([[at, at + 1, 'A value was expected']]);
+	});
+
+	it('goes to an error the user clicks in the bar', () => {
+		const editor = new CodeEditor(textArea(text));
+		const focus = vi.spyOn(editor.view, 'focus');
+		editor.setErrors([{ message: 'Here', line: 3, column: 8 }]);
+
+		editor.element.querySelector<HTMLButtonElement>('.antilia-code-editor-error')!.click();
+		expect(editor.view.state.selection.main.head).toBe(text.indexOf(']'));
+		expect(focus).toHaveBeenCalled();
+	});
+
+	it('places an error by its range, by its line alone, and within the text', () => {
+		const editor = new CodeEditor(textArea(text));
+		const lines = text.split('\n');
+		editor.setErrors([
+			{ message: 'range', from: 2, to: 5 },
+			{ message: 'from', from: 4 },
+			{ message: 'line', line: 2 },
+			{ message: 'beyond', line: 99, column: 99 },
+			{ message: 'before', line: -3, column: -3 },
+			{ message: 'past the end', from: 1000, to: 2000 }
+		]);
+
+		const line2 = lines[0].length + 1;
+		const last = text.length - lines[3].length;
+		expect(diagnostics(editor)).toEqual([
+			[0, 1, 'before'],
+			[2, 5, 'range'],
+			[4, 5, 'from'],
+			[line2, line2 + 1, 'line'],
+			// the last line holds one character: the end of the text, a point there
+			[text.length, text.length, 'beyond'],
+			[text.length, text.length, 'past the end']
+		].sort((one, other) => (one[0] as number) - (other[0] as number) ||
+			(one[1] as number) - (other[1] as number)) as Array<[number, number, string]>);
+		expect(last).toBe(text.length - 1);
+		expect(editor.element.querySelectorAll('button.antilia-code-editor-error')).toHaveLength(6);
+	});
+
+	it('takes the errors away when the page gives none', () => {
+		const editor = new CodeEditor(textArea(text), { errors: [{ message: 'x', line: 1 }] });
+
+		editor.setErrors([]);
+		expect(editor.element.classList.contains('antilia-code-editor-invalid')).toBe(false);
+		expect(editor.element.querySelector('.antilia-code-editor-errors')).toBeNull();
+		expect(editor.view.contentDOM.hasAttribute('aria-invalid')).toBe(false);
+		expect(editor.view.contentDOM.hasAttribute('aria-describedby')).toBe(false);
+		expect(diagnosticCount(editor.view.state)).toBe(0);
+		expect(editor.getErrors()).toEqual([]);
+
+		editor.setErrors([{ message: 'y' }]);
+		editor.setErrors();
+		expect(editor.element.querySelector('.antilia-code-editor-errors')).toBeNull();
+	});
+
+	it('leaves out errors without a message', () => {
+		const editor = new CodeEditor(textArea(text));
+		editor.setErrors([{ message: '' }, null as unknown as { message: string },
+			{ line: 1 } as unknown as { message: string }]);
+
+		expect(editor.getErrors()).toEqual([]);
+		expect(editor.element.classList.contains('antilia-code-editor-invalid')).toBe(false);
+		editor.setErrors('none' as unknown as []);
+		expect(editor.getErrors()).toEqual([]);
+	});
+
+	it('keeps the bar when given the same errors again, underlining them anew', () => {
+		const editor = new CodeEditor(textArea(text));
+		editor.setErrors([{ message: 'Here', line: 3, column: 8 }]);
+		const bar = editor.element.querySelector('.antilia-code-editor-errors');
+
+		// the user typed before the error, which moves with the text
+		type(editor, 'xx');
+		const at = text.indexOf(']') + 2;
+		expect(diagnostics(editor)).toEqual([[at, at + 1, 'Here']]);
+
+		editor.setErrors([{ message: 'Here', line: 3, column: 8 }]);
+		expect(editor.element.querySelector('.antilia-code-editor-errors')).toBe(bar);
+		// line 3, column 8 of the text as it is now
+		const now = editor.getValue();
+		const line3 = now.indexOf('\n', now.indexOf('\n') + 1) + 1;
+		expect(diagnostics(editor)).toEqual([[line3 + 7, line3 + 8, 'Here']]);
+
+		editor.setErrors([{ message: 'Other' }]);
+		const other = editor.element.querySelector('.antilia-code-editor-errors');
+		expect(other).not.toBe(bar);
+		expect(other?.textContent).toBe('Other');
+		expect(diagnosticCount(editor.view.state)).toBe(0);
+	});
+
+	it('keeps the bar, and the view, while other options change, the phrases too', () => {
+		const editor = new CodeEditor(textArea(text), { errors: [{ message: 'x', line: 1 }],
+			texts: { phrases: { Find: 'Suchen' } } });
+		const bar = editor.element.querySelector('.antilia-code-editor-errors');
+		const content = editor.view.contentDOM.firstElementChild;
+
+		editor.configure({ lineNumbers: false, texts: { phrases: { Find: 'Suchen' } } });
+		expect(editor.element.querySelector('.antilia-code-editor-errors')).toBe(bar);
+		expect(editor.view.contentDOM.firstElementChild).toBe(content);
+
+		// other phrases: CodeMirror draws the view anew, in them
+		editor.configure({ texts: { phrases: { Find: 'Buscar' } } });
+		expect(editor.view.state.phrase('Find')).toBe('Buscar');
+		expect(editor.element.querySelector('.antilia-code-editor-errors')?.textContent).toBe('x');
+	});
+
+	it('takes errors with other options, and gives copies of them', () => {
+		const editor = new CodeEditor(textArea(text));
+		const given = [{ message: 'From the options', line: 1, column: 1 }];
+
+		editor.configure({ errors: given });
+		expect(editor.element.querySelector('.antilia-code-editor-errors')?.textContent)
+			.toBe('From the options');
+		given[0].message = 'changed';
+		const errors = editor.getErrors();
+		expect(errors).toEqual([{ message: 'From the options', line: 1, column: 1 }]);
+		errors[0].message = 'changed too';
+		expect(editor.getErrors()[0].message).toBe('From the options');
+
+		// other options leave the errors
+		editor.configure({ lineNumbers: false });
+		expect(editor.getErrors()).toHaveLength(1);
+		editor.configure({ errors: [] });
+		expect(editor.getErrors()).toEqual([]);
+	});
+
+	it('keeps the class of an invalid editor when a framework wrote other classes over it', () => {
+		const editor = new CodeEditor(textArea(text), { errors: [{ message: 'x' }] });
+
+		editor.element.className = 'other';
+		editor.configure({});
+		expect(editor.element.classList.contains('antilia-code-editor-invalid')).toBe(true);
+		expect(editor.element.classList.contains('other')).toBe(true);
+	});
+
+	it('names the bar in English unless told otherwise, and each bar by its own id', () => {
+		const first = new CodeEditor(textArea(text), { errors: [{ message: 'x' }] });
+		const bar = first.element.querySelector('.antilia-code-editor-errors')!;
+		expect(bar.getAttribute('aria-label')).toBe('Errors');
+
+		document.body.insertAdjacentHTML('beforeend', '<div id="second"></div>');
+		const second = new CodeEditor(document.getElementById('second')!, { value: 'y',
+			errors: [{ message: 'y' }] });
+		const other = second.element.querySelector('.antilia-code-editor-errors')!;
+		expect(other.id).not.toBe(bar.id);
+	});
+
+	it('takes the class of an invalid editor away with the editor', () => {
+		document.body.innerHTML = '<div id="own"></div>';
+		const editor = new CodeEditor(document.getElementById('own')!, { value: 'x',
+			errors: [{ message: 'x' }] });
+
+		editor.destroy();
+		expect(document.body.innerHTML).toBe('<div id="own"></div>');
+	});
+});
+

@@ -23,9 +23,10 @@ export type { CKEditorBuild, CKEditorInstance, CKEditorPlugin, CKEditorTexts } f
 export { CodeEditor } from './CodeEditor.js';
 export type { CodeEditorHandle, CodeEditorProps } from './CodeEditor.js';
 export { CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditorLanguages,
-	registerLanguage } from '@antilia/core';
-export type { CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader, CodeEditorSelection,
-	CodeEditorState, CodeEditorStateChange, CodeEditorTexts, Extension } from '@antilia/core';
+	findJsonError, registerLanguage } from '@antilia/core';
+export type { CodeEditorError, CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader,
+	CodeEditorSelection, CodeEditorState, CodeEditorStateChange, CodeEditorTexts, Extension,
+	JsonError, JsonProblem } from '@antilia/core';
 export { DatePicker, DateTimePicker } from './DatePicker.js';
 export type { DatePickerProps, DateTimePickerProps } from './DatePicker.js';
 export { Desktop, DesktopWindow } from './Desktop.js';

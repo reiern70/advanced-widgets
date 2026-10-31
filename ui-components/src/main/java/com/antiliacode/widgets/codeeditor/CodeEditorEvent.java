@@ -38,7 +38,10 @@ public enum CodeEditorEvent
 	/** The user moved the cursor or selected text. */
 	SELECT("antilia-code-editor:select"),
 
-	/** The user pressed Ctrl+S, or Cmd+S, in the editor. */
+	/**
+	 * The user pressed Ctrl+S, or Cmd+S, in the editor, or left it with changes not saved or errors
+	 * shown, when it {@link CodeEditor#setSaveOnBlur(boolean) saves on blur}.
+	 */
 	SAVE("antilia-code-editor:save"),
 
 	/** The user resized the editor. */

@@ -40,7 +40,13 @@
  *
  * The editor tells whether the text has changes not saved, against the text last saved (saved,
  * markSaved()): as data-modified on its element, which tabs and windows of the desktop show, and
- * with onModifiedChange. Closing a tab or a window anyway puts the saved text back.
+ * with onModifiedChange. Closing a tab or a window anyway puts the saved text back. With saveOnBlur,
+ * leaving the editor with changes not saved, or with errors shown, tells the page to save, as
+ * Ctrl+S does.
+ *
+ * The page tells the editor what is wrong with the text, after validating it on the server for
+ * example (errors, setErrors()): the editor underlines where each error is, lists them in a bar
+ * along its bottom, which the user clicks to go to one, and marks itself invalid.
  *
  * Besides its callbacks, the editor fires events on the text area, or its element without one,
  * which bubble: CODE_EDITOR_EVENTS, for listeners of the page's own, and Wicket's Ajax behaviors.
@@ -49,6 +55,7 @@
  * Policy without 'unsafe-inline', the element needs the nonce of the page, which the editor takes
  * from the scripts of the page unless given one. Its own sizes are custom properties set through
  * the CSSOM, as the resizable's, which makes the editor resizable by its bottom edge by default.
+ * The text scrolls with the scroll bars of scrollbar.ts, in the colors of the theme.
  */
 
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
@@ -56,17 +63,20 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { bracketMatching, foldGutter, foldKeymap, HighlightStyle, indentOnInput, indentUnit,
 	Language, LanguageDescription, LanguageSupport, LRLanguage, StreamLanguage,
 	syntaxHighlighting } from '@codemirror/language';
+import { setDiagnostics, type Diagnostic } from '@codemirror/lint';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { Annotation, Compartment, EditorSelection, EditorState,
-	type Extension } from '@codemirror/state';
+import { Annotation, Compartment, EditorSelection, EditorState, type Extension,
+	type StateEffect } from '@codemirror/state';
 import { crosshairCursor, drawSelection, dropCursor, EditorView, highlightActiveLine,
 	highlightActiveLineGutter, highlightSpecialChars, keymap, lineNumbers,
-	placeholder as placeholderText, rectangularSelection, type ViewUpdate } from '@codemirror/view';
+	placeholder as placeholderText, rectangularSelection, showPanel, type Panel,
+	type ViewUpdate } from '@codemirror/view';
 import { classHighlighter, styleTags, tags } from '@lezer/highlight';
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
+import { Scrollbar } from './scrollbar.js';
 
 /**
  * The CodeMirror classes a function registering a grammar is given, for a page that has no
@@ -139,10 +149,29 @@ export interface CodeEditorStateChange {
 	changed: boolean;
 }
 
+/**
+ * Something wrong with the text, which the editor shows: underlined where it is, when it says
+ * where, and listed in a bar along the bottom of the editor.
+ */
+export interface CodeEditorError {
+	/** What is wrong, as the user reads it. */
+	message: string;
+	/** Where it starts in the text, in characters from its start. */
+	from?: number;
+	/** Where it ends in the text; one character after from when left out. */
+	to?: number;
+	/** Or the line where it is, counted from 1, as the validators of Wicket tell. */
+	line?: number;
+	/** And the column in that line, counted from 1; the start of the line when left out. */
+	column?: number;
+}
+
 /** What the editor says, in the language of the page. */
 export interface CodeEditorTexts {
 	/** The accessible name of the handle resizing the editor. */
 	resize: string;
+	/** The accessible name of the bar listing the errors of the text. */
+	errors: string;
 	/**
 	 * CodeMirror's phrases, those of its search panel for example, by their English text (see
 	 * EditorState.phrases): "Find", "Replace", "next" and so on.
@@ -195,6 +224,13 @@ export interface CodeEditorOptions {
 	state?: CodeEditorState;
 	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
 	stateDelay?: number;
+	/**
+	 * Whether leaving the editor with changes not saved, or with errors shown, tells the page to
+	 * save, onSave and the event save, as Ctrl+S does: false when left out.
+	 */
+	saveOnBlur?: boolean;
+	/** What is wrong with the text, which the editor shows; none when left out. */
+	errors?: CodeEditorError[];
 	/** More CodeMirror extensions: key bindings, listeners and so on. */
 	extensions?: Extension[];
 	/** What the editor says, in English when left out. */
@@ -221,7 +257,10 @@ export interface CodeEditorOptions {
 	onStateChange?: (state: CodeEditorState, change: CodeEditorStateChange) => void;
 	/** Called when the text came to have changes not saved, or no longer has. */
 	onModifiedChange?: (modified: boolean) => void;
-	/** Called with the text when the user pressed Ctrl+S, or Cmd+S. */
+	/**
+	 * Called with the text when the user pressed Ctrl+S, or Cmd+S, and, with saveOnBlur, when the
+	 * user left the editor with changes not saved or errors shown.
+	 */
 	onSave?: (value: string) => void;
 	/** Called with the size once the user has resized the editor. */
 	onResize?: (size: ResizableSize) => void;
@@ -237,7 +276,7 @@ export const CODE_EDITOR_EVENTS = Object.freeze({
 	blur: 'antilia-code-editor:blur',
 	/** The user moved the cursor or selected text. */
 	select: 'antilia-code-editor:select',
-	/** The user pressed Ctrl+S, or Cmd+S. */
+	/** The user pressed Ctrl+S, or Cmd+S, or left the editor with changes not saved (saveOnBlur). */
 	save: 'antilia-code-editor:save',
 	/** The user resized the editor. */
 	resize: 'antilia-code-editor:resize',
@@ -267,7 +306,13 @@ export const CODE_EDITOR_CLASSES = Object.freeze({
 	field: 'antilia-code-editor-field',
 	readOnly: 'antilia-code-editor-readonly',
 	disabled: 'antilia-code-editor-disabled',
-	unselectable: 'antilia-code-editor-unselectable'
+	unselectable: 'antilia-code-editor-unselectable',
+	/** The editor while the text has errors. */
+	invalid: 'antilia-code-editor-invalid',
+	/** The bar listing the errors, along the bottom of the editor. */
+	errors: 'antilia-code-editor-errors',
+	/** An error in that bar. */
+	error: 'antilia-code-editor-error'
 });
 
 /** The English phrases of CodeMirror, which the texts of a page translate. */
@@ -279,6 +324,7 @@ export const CODE_EDITOR_PHRASES: readonly string[] = Object.freeze(['Find', 'Re
 
 export const DEFAULT_CODE_EDITOR_TEXTS: Readonly<CodeEditorTexts> = Object.freeze({
 	resize: 'Drag, or use the arrow keys, to resize the editor',
+	errors: 'Errors',
 	phrases: Object.freeze({})
 });
 
@@ -371,8 +417,24 @@ const THEME = EditorView.theme({
 		backgroundColor: 'var(--antilia-code-editor-background, #fff)',
 		color: 'var(--antilia-code-editor-text, inherit)',
 		border: '1px solid var(--antilia-code-editor-border, #ddd)'
+	},
+	// the errors of the page, underlined in the error color of the theme
+	'.cm-lintRange-error': {
+		backgroundImage: 'none',
+		textDecoration: 'underline wavy var(--antilia-code-editor-invalid, #c53030)',
+		textDecorationSkipInk: 'none',
+		textUnderlineOffset: '0.2em'
+	},
+	'.cm-lintPoint-error:after': {
+		borderBottomColor: 'var(--antilia-code-editor-invalid, #c53030)'
+	},
+	'.cm-diagnostic-error': {
+		borderLeftColor: 'var(--antilia-code-editor-invalid, #c53030)'
 	}
 });
+
+/** Tells the bars listing the errors of the editors apart. */
+let errorBars = 0;
 
 type LanguageEntry = CodeEditorLanguageLoader | Extension;
 
@@ -609,6 +671,24 @@ export class CodeEditor {
 	/** Counts the grammars asked for, so that one loading late does not replace a later one. */
 	private languageRequest = 0;
 
+	/** The scroll bars of the text, in the colors of the theme. */
+	private scrollbar: Scrollbar | null = null;
+
+	/** What is wrong with the text, as the page told. */
+	private errors: CodeEditorError[] = [];
+
+	/** Whether the text shows errors underlined, which setErrors() then takes away. */
+	private underlined = false;
+
+	/** The id of the bar listing the errors, which the text is described by. */
+	private readonly errorBarId = 'antilia-code-editor-errors-' + ++errorBars;
+
+	/**
+	 * The phrases CodeMirror was last given, given again while the same: other phrases make
+	 * CodeMirror draw the view anew, its panels too.
+	 */
+	private givenPhrases: Record<string, string> = {};
+
 	private readonly compartments = {
 		language: new Compartment(),
 		gutters: new Compartment(),
@@ -619,6 +699,7 @@ export class CodeEditor {
 		label: new Compartment(),
 		phrases: new Compartment(),
 		theme: new Compartment(),
+		errors: new Compartment(),
 		extensions: new Compartment()
 	};
 
@@ -711,12 +792,17 @@ export class CodeEditor {
 		this.scroll = { top: Math.max(state?.scrollTop ?? 0, 0),
 			left: Math.max(state?.scrollLeft ?? 0, 0) };
 		this.size = { width: state?.width ?? null, height: state?.height ?? null };
+		this.scrollbar = Scrollbar.attach(this.view.scrollDOM, { axis: 'both', look: this.look }) ??
+			null;
 		this.renderResizable();
 		this.syncField(value);
 		this.renderModified(value, false);
 		this.applyLanguage();
 		this.bind();
 		this.restoreScroll();
+		if (options.errors?.length) {
+			this.setErrors(options.errors);
+		}
 		this.stopWatchingRemoval = onRemoving(field ?? element, () => this.remove());
 		this.dispatch('text');
 	}
@@ -775,6 +861,7 @@ export class CodeEditor {
 		element.classList.toggle(CODE_EDITOR_CLASSES.readOnly, this.isReadOnly());
 		element.classList.toggle(CODE_EDITOR_CLASSES.disabled, this.isDisabled());
 		element.classList.toggle(CODE_EDITOR_CLASSES.unselectable, !this.isSelectable());
+		element.classList.toggle(CODE_EDITOR_CLASSES.invalid, this.errors.length > 0);
 		const field = this.field;
 		if (field) {
 			field.classList.add(...this.css('code-editor-field').split(' '));
@@ -822,8 +909,9 @@ export class CodeEditor {
 			compartments.placeholder.of(this.options.placeholder ?
 				placeholderText(this.options.placeholder) : []),
 			compartments.label.of(EditorView.contentAttributes.of(this.labelAttributes())),
-			compartments.phrases.of(EditorState.phrases.of(this.texts().phrases)),
+			compartments.phrases.of(EditorState.phrases.of(this.phrases())),
 			compartments.theme.of(this.theme()),
+			compartments.errors.of([]),
 			compartments.extensions.of(this.options.extensions ?? []),
 			EditorView.updateListener.of((update) => this.onUpdate(update))
 		];
@@ -833,8 +921,23 @@ export class CodeEditor {
 		const texts = this.options.texts;
 		return {
 			resize: texts?.resize ?? DEFAULT_CODE_EDITOR_TEXTS.resize,
+			errors: texts?.errors ?? DEFAULT_CODE_EDITOR_TEXTS.errors,
 			phrases: { ...DEFAULT_CODE_EDITOR_TEXTS.phrases, ...texts?.phrases }
 		};
+	}
+
+	/**
+	 * @returns CodeMirror's phrases in the language of the page: those last given while the same
+	 */
+	private phrases(): Record<string, string> {
+		const next = this.texts().phrases;
+		const given = this.givenPhrases;
+		const keys = Object.keys(next);
+		if (keys.length !== Object.keys(given).length ||
+			keys.some((key) => next[key] !== given[key])) {
+			this.givenPhrases = next;
+		}
+		return this.givenPhrases;
 	}
 
 	private gutters(): Extension {
@@ -1009,6 +1112,15 @@ export class CodeEditor {
 		};
 		this.listen(document, 'antilia-tabs:discard', discard);
 		this.listen(document, 'antilia-desktop:discard', discard);
+		// the user left the editor, not for its search panel or the bar of its errors, with
+		// changes not saved or errors shown, which saving again may take away
+		this.listen<FocusEvent>(this.element, 'focusout', (event) => {
+			const next = event.relatedTarget as Node | null;
+			if (this.options.saveOnBlur && !(next && this.element.contains(next)) &&
+				(this.modified || this.errors.length > 0) && !this.isReadOnly()) {
+				this.save();
+			}
+		});
 		this.listen(window, 'pagehide', () => {
 			if (this.timer !== null || !this.textReported) {
 				this.report(true);
@@ -1294,7 +1406,8 @@ export class CodeEditor {
 	}
 
 	/**
-	 * Tells the page to save the text: onSave and the event save, as Ctrl+S does.
+	 * Tells the page to save the text: onSave and the event save, as Ctrl+S does, and leaving the
+	 * editor with changes not saved does with saveOnBlur.
 	 */
 	save(): void {
 		const value = this.getValue();
@@ -1307,6 +1420,124 @@ export class CodeEditor {
 	 */
 	focus(): void {
 		this.view.focus();
+	}
+
+	/**
+	 * Shows what is wrong with the text, without calling back: each error underlined where it is,
+	 * when it says where, and all listed in a bar along the bottom of the editor, which is marked
+	 * invalid meanwhile. No errors take them away.
+	 *
+	 * @param errors the errors, none when left out
+	 */
+	setErrors(errors: CodeEditorError[] = []): void {
+		const next = (Array.isArray(errors) ? errors : []).filter((error) => error &&
+			typeof error.message === 'string' && error.message !== '').map((error) => ({ ...error }));
+		const listed = JSON.stringify(next) !== JSON.stringify(this.errors);
+		this.errors = next;
+		this.renderErrors(listed);
+	}
+
+	/**
+	 * @returns what is wrong with the text, as the page told
+	 */
+	getErrors(): CodeEditorError[] {
+		return this.errors.map((error) => ({ ...error }));
+	}
+
+	/**
+	 * Underlines the errors where they are, and lists them in the bar along the bottom when they
+	 * changed.
+	 */
+	private renderErrors(listed: boolean): void {
+		this.element.classList.toggle(CODE_EDITOR_CLASSES.invalid, this.errors.length > 0);
+		const diagnostics: Diagnostic[] = [];
+		this.errors.forEach((error) => {
+			const range = this.rangeOf(error);
+			if (range) {
+				diagnostics.push({ ...range, severity: 'error', message: error.message });
+			}
+		});
+		const effects: StateEffect<unknown>[] = [];
+		if (listed) {
+			effects.push(this.compartments.errors.reconfigure(this.errorExtensions()));
+		}
+		if (diagnostics.length || this.underlined) {
+			effects.push(...[setDiagnostics(this.view.state, diagnostics).effects ?? []].flat());
+		}
+		this.underlined = diagnostics.length > 0;
+		if (effects.length) {
+			this.view.dispatch({ effects, annotations: external.of(true) });
+		}
+	}
+
+	/**
+	 * @returns the text described by the bar of the errors and marked invalid, and the bar; none
+	 *          without errors
+	 */
+	private errorExtensions(): Extension {
+		const errors = this.errors;
+		if (!errors.length) {
+			return [];
+		}
+		return [
+			EditorView.contentAttributes.of({ 'aria-invalid': 'true',
+				'aria-describedby': this.errorBarId }),
+			showPanel.of((view) => this.errorBar(view, errors))
+		];
+	}
+
+	/**
+	 * @returns the bar listing the errors, along the bottom of the editor: those saying where they
+	 *          are as buttons going there
+	 */
+	private errorBar(view: EditorView, errors: CodeEditorError[]): Panel {
+		const dom = document.createElement('div');
+		dom.id = this.errorBarId;
+		dom.className = CODE_EDITOR_CLASSES.errors;
+		dom.setAttribute('role', 'alert');
+		dom.setAttribute('aria-label', this.texts().errors);
+		errors.forEach((error) => {
+			const located = this.rangeOf(error) !== null;
+			const item = document.createElement(located ? 'button' : 'div');
+			item.className = CODE_EDITOR_CLASSES.error;
+			item.textContent = error.message;
+			if (item instanceof HTMLButtonElement) {
+				item.type = 'button';
+				item.addEventListener('click', () => {
+					const range = this.rangeOf(error);
+					if (range) {
+						view.dispatch({ selection: EditorSelection.single(range.from),
+							scrollIntoView: true });
+						view.focus();
+					}
+				});
+			}
+			dom.append(item);
+		});
+		return { dom, top: false };
+	}
+
+	/**
+	 * @returns where an error is in the text as it is now, null when it does not say
+	 */
+	private rangeOf(error: CodeEditorError): { from: number; to: number } | null {
+		const doc = this.view.state.doc;
+		const clamp = (value: number, min: number, max: number) =>
+			Math.min(Math.max(Math.round(value), min), max);
+		let from: number;
+		if (typeof error.from === 'number' && Number.isFinite(error.from)) {
+			from = clamp(error.from, 0, doc.length);
+		} else if (typeof error.line === 'number' && Number.isFinite(error.line)) {
+			const line = doc.line(clamp(error.line, 1, doc.lines));
+			const column = typeof error.column === 'number' && Number.isFinite(error.column) ?
+				error.column - 1 : 0;
+			from = line.from + clamp(column, 0, line.length);
+		} else {
+			return null;
+		}
+		const to = typeof error.to === 'number' && Number.isFinite(error.to) ?
+			clamp(error.to, from, doc.length) : Math.min(from + 1, doc.lineAt(from).to);
+		return { from, to };
 	}
 
 	/**
@@ -1329,7 +1560,7 @@ export class CodeEditor {
 			compartments.placeholder.reconfigure(this.options.placeholder ?
 				placeholderText(this.options.placeholder) : []),
 			compartments.label.reconfigure(EditorView.contentAttributes.of(this.labelAttributes())),
-			compartments.phrases.reconfigure(EditorState.phrases.of(this.texts().phrases)),
+			compartments.phrases.reconfigure(EditorState.phrases.of(this.phrases())),
 			compartments.theme.reconfigure(this.theme())
 		];
 		if (defined.extensions !== undefined) {
@@ -1338,6 +1569,9 @@ export class CodeEditor {
 		this.view.dispatch({ effects, annotations: external.of(true) });
 		if (defined.language !== undefined && defined.language !== before.language) {
 			this.applyLanguage();
+		}
+		if (defined.errors !== undefined) {
+			this.setErrors(defined.errors);
 		}
 		this.renderResizable();
 	}
@@ -1420,6 +1654,8 @@ export class CodeEditor {
 		this.stopWatchingRemoval = null;
 		this.resizable?.destroy();
 		this.resizable = null;
+		this.scrollbar?.destroy();
+		this.scrollbar = null;
 		this.view.destroy();
 		if (instances.get(this.element) === this) {
 			instances.delete(this.element);

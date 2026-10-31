@@ -15,10 +15,13 @@ package com.antiliacode.widgets.codeeditor;
 
 import java.time.Duration;
 
+import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.ThrottlingSettings;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.util.lang.Args;
+import org.danekja.java.util.function.serializable.SerializableBiConsumer;
+import org.danekja.java.util.function.serializable.SerializableConsumer;
 
 /**
  * Hears on the server of what a {@link CodeEditor} tells, a {@link CodeEditorEvent}: the focus
@@ -40,6 +43,12 @@ import org.apache.wicket.util.lang.Args;
  *         editor.markSaved(target);
  *     }
  * });
+ * </pre>
+ *
+ * or, with lambdas, {@link #onUpdate(CodeEditorEvent, SerializableConsumer)}:
+ *
+ * <pre>
+ * editor.add(CodeEditorEventBehavior.onUpdate(CodeEditorEvent.BLUR, target -&gt; target.add(status)));
  * </pre>
  *
  * @since 11.0.0
@@ -91,6 +100,65 @@ public abstract class CodeEditorEventBehavior extends AjaxFormComponentUpdatingB
 	{
 		this.delay = delay;
 		return this;
+	}
+
+	/**
+	 * A behavior hearing of an event of the editor, calling a lambda once the text is valid and in
+	 * the model.
+	 *
+	 * @param event
+	 *            the event of the editor
+	 * @param onUpdate
+	 *            what to do then
+	 * @return the behavior
+	 */
+	public static CodeEditorEventBehavior onUpdate(CodeEditorEvent event,
+		SerializableConsumer<AjaxRequestTarget> onUpdate)
+	{
+		return onUpdate(event, onUpdate, null);
+	}
+
+	/**
+	 * A behavior hearing of an event of the editor, calling a lambda once the text is valid and in
+	 * the model, and another when it is not valid; the editor shows its errors either way.
+	 *
+	 * @param event
+	 *            the event of the editor
+	 * @param onUpdate
+	 *            what to do when the text is valid
+	 * @param onError
+	 *            what to do when it is not, given the exception, if one was thrown; {@code null}
+	 *            for nothing
+	 * @return the behavior
+	 */
+	public static CodeEditorEventBehavior onUpdate(CodeEditorEvent event,
+		SerializableConsumer<AjaxRequestTarget> onUpdate,
+		SerializableBiConsumer<AjaxRequestTarget, RuntimeException> onError)
+	{
+		Args.notNull(onUpdate, "onUpdate");
+		return new CodeEditorEventBehavior(event)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onUpdate(AjaxRequestTarget target)
+			{
+				onUpdate.accept(target);
+			}
+
+			@Override
+			protected void onError(AjaxRequestTarget target, RuntimeException e)
+			{
+				if (onError != null)
+				{
+					onError.accept(target, e);
+				}
+				else
+				{
+					super.onError(target, e);
+				}
+			}
+		};
 	}
 
 	@Override
