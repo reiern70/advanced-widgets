@@ -92,26 +92,7 @@ public class ModalContent extends Panel
 				setVisible(ModalContent.this.title != null);
 			}
 		}.setOutputMarkupId(true).add(new LookBehavior(LookPart.DIALOG_TITLE)));
-		header.add(new WebMarkupContainer("close")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setVisible(hasCloseButton());
-			}
-
-			@Override
-			protected void onComponentTag(ComponentTag tag)
-			{
-				super.onComponentTag(tag);
-				String label = getString("Modal.close", null, "Close");
-				tag.put("aria-label", label);
-				tag.put("title", label);
-			}
-		}.add(new LookBehavior(LookPart.DIALOG_CLOSE)));
+		header.add(newCloseButton("close"));
 
 		add(new LookContainer("scroller", LookPart.SCROLLBAR));
 		add(body.add(new LookBehavior(LookPart.DIALOG_BODY)));
@@ -131,8 +112,47 @@ public class ModalContent extends Panel
 
 	private boolean hasCloseButton()
 	{
-		Modal modal = findParent(Modal.class);
+		return hasCloseButton(this);
+	}
+
+	private static boolean hasCloseButton(Component component)
+	{
+		Modal modal = component.findParent(Modal.class);
 		return modal == null || modal.isCloseButton();
+	}
+
+	/**
+	 * Makes the close button of the header, for a {@code <button type="button">} of the class
+	 * {@code modal-dialog-close} in a content of one's own: the script of the dialog closes it on
+	 * a click, as Escape does; shown when the {@link Modal} it is in has a close button
+	 * ({@link Modal#setCloseButton(boolean)}).
+	 *
+	 * @param id
+	 *            the component id
+	 * @return the close button
+	 */
+	public static Component newCloseButton(String id)
+	{
+		return new WebMarkupContainer(id)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(hasCloseButton(this));
+			}
+
+			@Override
+			protected void onComponentTag(ComponentTag tag)
+			{
+				super.onComponentTag(tag);
+				String label = getString("Modal.close", null, "Close");
+				tag.put("aria-label", label);
+				tag.put("title", label);
+			}
+		}.add(new LookBehavior(LookPart.DIALOG_CLOSE));
 	}
 
 	/**

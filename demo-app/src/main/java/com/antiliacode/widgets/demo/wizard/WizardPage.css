@@ -43,6 +43,11 @@
 	margin: 0 0 4px;
 }
 
+/* the button opening the wizard of a case in a dialog */
+.wizard-demo__open {
+	margin-top: 12px;
+}
+
 .wizard-demo__intro,
 .wizard-demo__hint,
 .wizard-demo__note,

@@ -54,8 +54,12 @@ import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.upload.FilePickerBehavior;
 import com.antiliacode.widgets.upload.FilePickerBehavior.Design;
 import com.antiliacode.widgets.wizard.IWizardButtonFactory;
+import com.antiliacode.widgets.modal.Modal;
 import com.antiliacode.widgets.wizard.IWizardStep;
+import com.antiliacode.widgets.wizard.ModalWizard;
 import com.antiliacode.widgets.wizard.Wizard;
+import com.antiliacode.widgets.wizard.WizardBreadcrumbPosition;
+import com.antiliacode.widgets.wizard.WizardButtonsPosition;
 
 /**
  * An image card made in a {@link Wizard}: an image uploaded in the form of the wizard, by Ajax,
@@ -116,6 +120,8 @@ public class ImageCardPanel extends Panel
 
 	private final Wizard<ImageCard> wizard;
 
+	private final Modal modal;
+
 	/**
 	 * @param id
 	 *            component id
@@ -130,22 +136,101 @@ public class ImageCardPanel extends Panel
 			@Override
 			protected void onFinish(AjaxRequestTarget target)
 			{
-				success(ImageCardPanel.this.getString("ready").replace("{0}",
-					getModelObject().fileName));
+				ready(getModelObject());
 				startAgain(target);
 			}
 
 			@Override
 			protected void onCancel(AjaxRequestTarget target)
 			{
-				info(ImageCardPanel.this.getString("cancelled"));
+				cancelled();
 				startAgain(target);
 			}
 		};
 		wizard.setTitleLevel(4);
+		uploading(wizard);
+		add(wizard);
+
+		modal = new Modal("modal");
+		modal.setSize(Modal.Size.LARGE).confirmCloseIfModified(new ResourceModel("discard"));
+		add(modal);
+	}
+
+	/**
+	 * Opens the card in a dialog, in a wizard of its own.
+	 *
+	 * @param buttonsPosition
+	 *            where the bar of the buttons is
+	 * @param breadcrumbPosition
+	 *            where the trail of the steps visited is
+	 * @param target
+	 *            the Ajax request
+	 */
+	public void openInDialog(WizardButtonsPosition buttonsPosition,
+		WizardBreadcrumbPosition breadcrumbPosition, AjaxRequestTarget target)
+	{
+		ModalWizard<?> inDialog = newModalWizard();
+		inDialog.setButtonsPosition(buttonsPosition).setBreadcrumbPosition(breadcrumbPosition);
+		modal.open(inDialog, target);
+	}
+
+	/**
+	 * @return the dialog the card opens in
+	 */
+	public Modal getModal()
+	{
+		return modal;
+	}
+
+	/**
+	 * @return the card in a wizard of its own, for a dialog, which closes once the card is ready
+	 *         or cancelled
+	 */
+	private ModalWizard<?> newModalWizard()
+	{
+		ModalWizard<ImageCard> inDialog = new ModalWizard<>(Model.of(new ImageCard()),
+			new UploadStep())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onFinish(AjaxRequestTarget target)
+			{
+				ready(getModelObject());
+				super.onFinish(target);
+			}
+
+			@Override
+			protected void onCancel(AjaxRequestTarget target)
+			{
+				cancelled();
+				super.onCancel(target);
+			}
+		};
+		uploading(inDialog);
+		return inDialog;
+	}
+
+	/**
+	 * Lets the form of a wizard upload the image.
+	 */
+	private static void uploading(Wizard<ImageCard> wizard)
+	{
 		wizard.getForm().setMultiPart(true);
 		wizard.getForm().setFileMaxSize(MAX_SIZE);
-		add(wizard);
+	}
+
+	/**
+	 * Tells the card is ready, on this panel, which stays when a dialog closes.
+	 */
+	private void ready(ImageCard card)
+	{
+		success(getString("ready").replace("{0}", card.fileName));
+	}
+
+	private void cancelled()
+	{
+		info(getString("cancelled"));
 	}
 
 	private void startAgain(AjaxRequestTarget target)
