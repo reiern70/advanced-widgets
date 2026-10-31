@@ -75,6 +75,8 @@
 	<entry key="demo.richTextEditor.description">Texto con títulos, listas, enlaces, tablas, imágenes y alineación, desde una barra de herramientas propia de los componentes: Tiptap, en los colores del tema. El servidor limpia el HTML antes de guardarlo, con el cursor, la selección y el tamaño; o el editor guarda Markdown.</entry>
 	<entry key="demo.ckEditor">CKEditor 5</entry>
 	<entry key="demo.ckEditor.description">CKEditor 5, un editor completo con su propia barra de herramientas, sus globos y sus diálogos, en los colores del tema, con el contrato del editor de texto enriquecido. La aplicación aporta CKEditor y su licencia; el servidor limpia el HTML antes de guardarlo.</entry>
+	<entry key="demo.wizard">Wizard</entry>
+	<entry key="demo.wizard.description">Pasos que se conocen a medida que el usuario avanza, ramificados según sus respuestas: una clave dicotómica de mosquitos y una tarjeta de imagen subida por Ajax, después descrita o con un texto encima; botones arriba o abajo, la ruta de los pasos visitados junto al título.</entry>
 	<entry key="demo.scrollbar">Barra de desplazamiento</entry>
 	<entry key="demo.scrollbar.description">Barras de desplazamiento finas con los colores del tema, iguales en todos los navegadores, dibujadas sobre el desplazamiento nativo para que la rueda, las teclas y el tacto funcionen como siempre, y que siguen al contenido cambiado por Ajax.</entry>
 	<entry key="demo.splitPanel">Panel dividido</entry>
