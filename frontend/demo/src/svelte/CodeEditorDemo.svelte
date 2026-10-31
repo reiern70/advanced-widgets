@@ -17,15 +17,16 @@
   language the state again when the language is shown anew. The notes in Markdown show beside their
   preview in a split panel, in a box the user makes taller; a button hides the preview and shows it
   again, and a check box keeps it in step with the editor. The files open in tabs, which their
-  editors tell of their changes not saved.
+  editors tell of their changes not saved. The settings in JSON are saved as the user leaves their
+  editor, when findJsonError finds them well formed; the editor shows the error otherwise.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { Button, CodeEditor, Dropdown, MarkdownPreview, Resizable, SplitPanel, Tabs,
-		type SplitPane, type SplitSize, type TabItem } from '@antilia/svelte';
+		type CodeEditorError, type SplitPane, type SplitSize, type TabItem } from '@antilia/svelte';
 
-	import { axisOf, collapsedText, describe, filesOf, notesOf, registerLogGrammar, samplesOf,
-		type CodeEditorConfig, type Sample } from '../code-editor.js';
+	import { axisOf, collapsedText, describe, filesOf, jsonErrorsOf, notesOf, registerLogGrammar,
+		samplesOf, settingsOf, type CodeEditorConfig, type Sample } from '../code-editor.js';
 	import { dropdownTexts, format } from '../data.js';
 
 	registerLogGrammar();
@@ -51,10 +52,15 @@
 	let inStep = $state(false);
 	let files = $state<Sample[]>(filesOf(initial));
 	let filesMessage = $state(initial.texts.filesStart);
+	let settings = $state<Sample>(settingsOf(initial));
+	let settingsErrors = $state<CodeEditorError[]>([]);
+	let saveOnBlur = $state(true);
+	let settingsReadOnly = $state(false);
+	let settingsMessage = $state(initial.texts.jsonStart);
 
 	const sample = $derived(samples[language]);
 	// the cases, one at a time
-	const cases = $derived<TabItem[]>(['editorTitle', 'notesTitle', 'filesTitle']
+	const cases = $derived<TabItem[]>(['editorTitle', 'notesTitle', 'filesTitle', 'jsonTitle']
 		.map((id) => ({ id, title: texts[id], modified: false })));
 	const fileTabs = $derived<TabItem[]>(files.map((file) => ({ id: file.id, title: file.file,
 		closable: true })));
@@ -78,6 +84,17 @@
 	function saveFile(file: Sample) {
 		file.saved = file.text;
 		filesMessage = format(texts.saved, file.file);
+	}
+
+	/** Saves the settings when well formed, as the Wicket page does with JsonValidator. */
+	function saveSettings(text: string) {
+		settingsErrors = jsonErrorsOf(config, settings.file, text);
+		if (settingsErrors.length) {
+			settingsMessage = format(texts.jsonInvalid, settings.file);
+		} else {
+			settings.saved = text;
+			settingsMessage = format(texts.jsonSaved, settings.file);
+		}
 	}
 
 	function close(id: string) {
@@ -202,6 +219,30 @@
 						{/snippet}
 					</Tabs>
 					<p class="code-editor-demo__status" role="status">{filesMessage}</p>
+				</section>
+			{:else if tab.id === 'jsonTitle'}
+				<section>
+					<div class="code-editor-demo__controls">
+						<label class="code-editor-demo__control">
+							<input type="checkbox" bind:checked={saveOnBlur} /> {texts.saveOnBlur}
+						</label>
+						<label class="code-editor-demo__control">
+							<input type="checkbox" bind:checked={settingsReadOnly} /> {texts.readOnly}
+						</label>
+					</div>
+					<form class="code-editor-demo__editor" onsubmit={(event) => {
+						event.preventDefault();
+						saveSettings(settings.text);
+					}}>
+						<span class="code-editor-demo__name">{settings.file}</span>
+						<CodeEditor bind:value={settings.text} bind:state={settings.state} saved={settings.saved}
+							language="json" label={settings.file} readOnly={settingsReadOnly} {saveOnBlur}
+							errors={settingsErrors} texts={config.editor} onsave={saveSettings} />
+						<div class="code-editor-demo__actions">
+							<Button type="submit" label={texts.save} variant="primary" size="small" />
+							<span class="code-editor-demo__heard" role="status">{settingsMessage}</span>
+						</div>
+					</form>
 				</section>
 			{/if}
 		{/snippet}

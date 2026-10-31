@@ -40,7 +40,8 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
  * server keeps in Wicket and the page shows again when opened anew, the languages and the options
  * switched, the notes in Markdown beside their preview, which follows the text as the user types,
  * keeps in step with the place in the editor once ticked, and a button hides and shows again, and
- * the files in tabs, marked while they have changes not saved and saved with Ctrl+S.
+ * the files in tabs, marked while they have changes not saved and saved with Ctrl+S, and the
+ * settings in JSON, saved as the user leaves their editor unless it shows their error.
  * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -195,6 +196,54 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 			.contains("antilia-tab-modified"));
 		wait.until(d -> app().findElements(By.cssSelector(".code-editor-demo__status")).stream()
 			.anyMatch(status -> status.getText().equals("Saved Order.java.")));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void savesTheJsonAsTheUserLeavesTheEditorUnlessItHasAnError(SeleniumBrowser browser,
+		String framework)
+	{
+		openEditor(browser, framework);
+		selectCase("JSON, validated as you leave");
+		wait.until(d -> settingsEditor() != null);
+		// the text scrolls with the scroll bars of the theme
+		assertFalse(settingsEditor().findElements(By.cssSelector(
+			".cm-editor > .antilia-scrollbar > .cm-scroller.antilia-scrollbar-host")).isEmpty());
+
+		// the comma after "ocean" taken away
+		WebElement content = settingsEditor().findElement(By.cssSelector(".cm-content"));
+		click(content.findElements(By.cssSelector(".cm-line")).get(1));
+		content.sendKeys(Keys.END, Keys.BACK_SPACE);
+		click(settingsStatus());
+		String message = "settings.json, line 3, column 5: ',' or '}' was expected, not '\"'.";
+		wait.until(d -> settingsEditor().findElements(By.cssSelector(
+			".antilia-code-editor-errors .antilia-code-editor-error")).stream()
+			.anyMatch(error -> error.getText().contains(message)));
+		assertTrue(settingsEditor().getDomAttribute("class").contains("antilia-code-editor-invalid"));
+		assertFalse(settingsEditor().findElements(By.cssSelector(".cm-lintRange-error")).isEmpty());
+		assertEquals("true", settingsEditor().findElement(By.cssSelector(".cm-content"))
+			.getDomAttribute("aria-invalid"));
+		wait.until(d -> settingsStatus().getText().equals(
+			"settings.json is not saved: its JSON has an error."));
+		if ("wicket".equals(framework))
+		{
+			// the notifications of the page tell it too
+			wait.until(d -> driver.findElements(By.cssSelector(".antilia-notification")).stream()
+				.anyMatch(notification -> notification.getText().contains(message)));
+		}
+
+		// a click on the error goes there; the comma put back, the JSON is saved as the user leaves
+		settingsEditor().findElement(By.cssSelector("button.antilia-code-editor-error")).click();
+		content = settingsEditor().findElement(By.cssSelector(".cm-content"));
+		content.sendKeys(Keys.UP, Keys.END, ",");
+		click(settingsStatus());
+		wait.until(d -> settingsStatus().getText().equals(
+			"Saved settings.json: the JSON is well formed."));
+		wait.until(d -> settingsEditor().findElements(By.cssSelector(".antilia-code-editor-errors"))
+			.isEmpty());
+		assertFalse(settingsEditor().getDomAttribute("class").contains("antilia-code-editor-invalid"));
+		assertEquals("false", settingsEditor().getDomAttribute("data-modified"));
 		assertNoErrors();
 	}
 
@@ -542,6 +591,23 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 		script("arguments[0].scrollIntoView({block: 'center'});", element);
 		int width = element.getRect().getWidth();
 		new Actions(driver).moveToElement(element, -width / 2 + 4, 0).click().perform();
+	}
+
+	/**
+	 * @return the editor of the settings, shown; null before
+	 */
+	private WebElement settingsEditor()
+	{
+		return app().findElements(By.cssSelector(".code-editor-demo__editor .antilia-code-editor"))
+			.stream().filter(each -> each.isDisplayed() && each.getText().contains("\"autosave\""))
+			.findFirst().orElse(null);
+	}
+
+	private WebElement settingsStatus()
+	{
+		return app().findElements(By.cssSelector(".code-editor-demo__heard")).stream()
+			.filter(WebElement::isDisplayed).filter(each -> each.getText().contains("settings.json") ||
+				each.getText().startsWith("Change the JSON")).findFirst().orElseThrow();
 	}
 
 	private List<WebElement> fileTabs()

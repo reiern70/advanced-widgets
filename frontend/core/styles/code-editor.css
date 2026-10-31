@@ -117,10 +117,77 @@
 	background: var(--antilia-code-editor-background);
 }
 
-/* slim scroll bars, in the colors of the theme */
-.antilia-code-editor .cm-scroller {
-	scrollbar-width: thin;
-	scrollbar-color: color-mix(in srgb, var(--antilia-code-editor-text) 30%, transparent) transparent;
+/*
+ * The text scrolls with the scroll bars of scrollbar.css, in the colors of the theme: the script
+ * puts CodeMirror's scroller into their wrapper, which takes its place in the editor. The text
+ * keeps clear of the bars.
+ */
+.antilia-code-editor .cm-editor > .antilia-scrollbar {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.antilia-code-editor .cm-editor > .antilia-scrollbar > .cm-scroller {
+	flex: 1 1 auto;
+	min-height: 0;
+	height: auto;
+}
+
+.antilia-code-editor .antilia-scrollbar-host > .cm-content {
+	padding-right: calc(var(--antilia-scrollbar-size) + 2 * var(--antilia-scrollbar-gap));
+	padding-bottom: calc(var(--antilia-scrollbar-size) + 2 * var(--antilia-scrollbar-gap));
+}
+
+/* the editor while the text has errors, which the bar along its bottom lists */
+.antilia-code-editor.antilia-code-editor-invalid {
+	border-color: var(--antilia-code-editor-invalid);
+}
+
+.antilia-code-editor.antilia-code-editor-invalid:focus-within {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--antilia-code-editor-invalid) 22%, transparent);
+}
+
+.antilia-code-editor-errors {
+	max-height: 6.5em;
+	overflow: auto;
+	padding: 0.25em 0.5em;
+	border-left: 4px solid var(--antilia-code-editor-invalid);
+	font-size: 0.875em;
+	line-height: 1.4;
+}
+
+.antilia-code-editor-error {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.1em 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+}
+
+.antilia-code-editor-error::before {
+	content: "\26A0\FE0E";
+	margin-inline-end: 0.4em;
+	color: var(--antilia-code-editor-invalid);
+}
+
+button.antilia-code-editor-error {
+	cursor: pointer;
+}
+
+button.antilia-code-editor-error:hover,
+button.antilia-code-editor-error:focus-visible {
+	text-decoration: underline;
+}
+
+button.antilia-code-editor-error:focus-visible {
+	outline: 2px solid var(--antilia-theme-accent, #2f6fde);
+	outline-offset: -2px;
 }
 
 /* the bar along the bottom, or the right edge, by which the user resizes the editor */

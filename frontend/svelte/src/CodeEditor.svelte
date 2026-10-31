@@ -24,7 +24,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { CodeEditor, type CodeEditorLanguage, type CodeEditorSelection, type CodeEditorState,
+	import { CodeEditor, type CodeEditorError, type CodeEditorLanguage, type CodeEditorSelection,
+		type CodeEditorState,
 		type CodeEditorStateChange, type CodeEditorTexts, type Extension, type ResizableSize,
 		type ResizeAxis } from '@antilia/core';
 
@@ -67,6 +68,16 @@
 		state?: CodeEditorState;
 		/** How long after the user changed the state it is reported, 400 ms when left out. */
 		stateDelay?: number;
+		/**
+		 * Whether leaving the editor with changes not saved, or with errors shown, calls onsave:
+		 * false when left out.
+		 */
+		saveOnBlur?: boolean;
+		/**
+		 * What is wrong with the text: underlined where each error is and listed in a bar along the
+		 * bottom of the editor; none when left out.
+		 */
+		errors?: CodeEditorError[];
 		/** Whether the text has changes not saved, bound. */
 		modified?: boolean;
 		/** The editor of the core, bound. */
@@ -111,6 +122,8 @@
 		// not state, which would hide the rune $state
 		state: editorState = $bindable(),
 		stateDelay,
+		saveOnBlur,
+		errors,
 		modified = $bindable(false),
 		editor = $bindable(null),
 		extensions,
@@ -136,10 +149,13 @@
 			return;
 		}
 		void name;
-		const made = new CodeEditor(element, untrack(() => ({
+		const target = element;
+		// untracked, the editor too: it reads the props it is given, the errors for example, which
+		// would make it anew each time they change
+		const made = untrack(() => new CodeEditor(target, {
 			value, saved, language, lineNumbers, folding, readOnly, selectable, lineWrapping, tabSize,
 			indentWithTab, placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			state: editorState, stateDelay, extensions, texts, look,
+			state: editorState, stateDelay, saveOnBlur, errors, extensions, texts, look,
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -157,7 +173,7 @@
 			},
 			onSave: (next: string) => onsave?.(next),
 			onResize: (next: ResizableSize) => onresize?.(next)
-		})));
+		}));
 		instance = made;
 		editor = made;
 		untrack(() => {
@@ -173,8 +189,13 @@
 	$effect(() => {
 		const next = { language: language ?? null, lineNumbers, folding, readOnly, selectable,
 			lineWrapping, tabSize, indentWithTab, placeholder, label, resizable, minWidth, minHeight,
-			maxWidth, maxHeight, stateDelay, texts };
+			maxWidth, maxHeight, stateDelay, saveOnBlur, texts };
 		untrack(() => instance?.configure(next));
+	});
+
+	$effect(() => {
+		const next = errors ?? [];
+		untrack(() => instance?.setErrors(next));
 	});
 
 	$effect(() => {
