@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<div wicket:id="wizard"></div>
+
+<wicket:fragment wicket:id="upload">
+	<p class="wizard-demo__hint"><wicket:message key="uploadHint"/></p>
+	<input type="file" wicket:id="file" accept="image/png,image/jpeg,image/gif,image/webp"/>
+	<p wicket:id="current" class="wizard-demo__hint">[current]</p>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="way">
+	<div class="wizard-demo__way">
+		<img wicket:id="thumbnail" class="wizard-demo__thumbnail"/>
+		<fieldset class="wizard-demo__couplet">
+			<legend class="wizard-demo__question"><wicket:message key="wayLabel"/></legend>
+			<div wicket:id="choice" class="wizard-demo__answers"></div>
+		</fieldset>
+	</div>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="describe">
+	<label class="wizard-demo__field"><wicket:message key="description"/>
+		<textarea wicket:id="description" rows="4" maxlength="500"></textarea></label>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="caption">
+	<label class="wizard-demo__field"><wicket:message key="captionLabel"/>
+		<input type="text" wicket:id="text" maxlength="80"/></label>
+	<fieldset class="wizard-demo__couplet">
+		<legend class="wizard-demo__question"><wicket:message key="position"/></legend>
+		<div wicket:id="position" class="wizard-demo__answers"></div>
+	</fieldset>
+</wicket:fragment>
+
+<wicket:fragment wicket:id="preview">
+	<figure class="wizard-demo__card">
+		<div class="wizard-demo__frame">
+			<img wicket:id="image" class="wizard-demo__image"/>
+			<p wicket:id="text" class="wizard-demo__text">[text]</p>
+		</div>
+		<figcaption wicket:id="description" class="wizard-demo__description">[description]</figcaption>
+	</figure>
+</wicket:fragment>
+</wicket:panel>

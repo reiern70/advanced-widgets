@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Wizard</entry>
+	<entry key="explanation">&lt;p&gt;Wizard de ui-components guía al usuario por pasos, uno a la vez: cada paso tiene su título en la cabecera, su cuerpo y una barra de botones. Los pasos rellenan un objeto, el modelo del wizard, del tipo de los pasos, que no tiene por qué ser serializable. El wizard solo conoce su primer paso y pregunta a cada paso cuál sigue, así que los pasos pueden ramificarse según lo que el usuario escribió.&lt;/p&gt;&lt;p&gt;Siguiente, Último y Finalizar envían el formulario del cuerpo, validando sus campos; Anterior, Primero y Cancelar son acciones Ajax simples que no envían nada. Último sigue los pasos siguientes hasta uno sin siguiente, sin mostrar ni validar los de en medio. Cada paso dice qué botones se ven y cuáles se pueden pulsar, y puede añadir botones propios. La ruta de los pasos visitados, un breadcrumb cuyas migas vuelven atrás, va encima del título, en su lugar, debajo o en ninguna parte, y la barra de botones encima o debajo del cuerpo.&lt;/p&gt;&lt;p&gt;La clave de mosquitos es una clave dicotómica: cada pregunta tiene dos respuestas, y cada una lleva a la pregunta siguiente o a un mosquito. La tarjeta de imagen sube una imagen por Ajax en el formulario del wizard y después la describe o le escribe un texto encima; el paso del texto tiene un botón propio que sugiere uno. Todo toma sus colores del tema y sus clases del look, una card en el look de Bootstrap, y funciona con una Content Security Policy estricta.&lt;/p&gt;</entry>
+	<entry key="buttonsPosition">Botones</entry>
+	<entry key="buttonsPosition.TOP">Encima del cuerpo</entry>
+	<entry key="buttonsPosition.BOTTOM">Debajo del cuerpo</entry>
+	<entry key="breadcrumbPosition">Pasos visitados</entry>
+	<entry key="breadcrumbPosition.NONE">No se muestran</entry>
+	<entry key="breadcrumbPosition.ABOVE_TITLE">Encima del título</entry>
+	<entry key="breadcrumbPosition.IN_TITLE">En lugar del título</entry>
+	<entry key="breadcrumbPosition.BELOW_TITLE">Debajo del título</entry>
+	<entry key="keyTitle">Una clave de mosquitos</entry>
+	<entry key="keyIntro">Dos respuestas a cada pregunta, cada una lleva a la pregunta siguiente o a un mosquito: los pasos se ramifican.</entry>
+	<entry key="cardTitle">Una tarjeta de imagen</entry>
+	<entry key="cardIntro">Una imagen subida por Ajax, después descrita o con un texto encima, y una vista previa.</entry>
+</properties>

@@ -1,0 +1,164 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* the Wizard demo: the settings, then the two wizards side by side, one above the other on a phone */
+
+.wizard-demo {
+	display: grid;
+	gap: 16px;
+}
+
+.wizard-demo__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	align-items: center;
+}
+
+.wizard-demo__control {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.wizard-demo__cases {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+	gap: 24px;
+	align-items: start;
+}
+
+.wizard-demo__heading {
+	margin: 0 0 4px;
+}
+
+.wizard-demo__intro,
+.wizard-demo__hint,
+.wizard-demo__note,
+.wizard-demo__route {
+	margin: 0 0 12px;
+	line-height: 1.5;
+}
+
+.wizard-demo__note,
+.wizard-demo__route {
+	margin-top: 12px;
+	font-size: 0.875em;
+	opacity: 0.8;
+}
+
+/* a question and its answers, one per line */
+
+.wizard-demo__couplet {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.wizard-demo__question {
+	margin-bottom: 8px;
+	padding: 0;
+	font-weight: 600;
+}
+
+.wizard-demo__answers {
+	display: grid;
+	gap: 8px;
+}
+
+.wizard-demo__answers label {
+	margin-inline-start: 6px;
+}
+
+.wizard-demo__taxon {
+	margin: 0 0 8px;
+	font-size: 1.4em;
+}
+
+.wizard-demo__field {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 12px;
+}
+
+.wizard-demo__field textarea,
+.wizard-demo__field input {
+	width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+}
+
+/* the image card */
+
+.wizard-demo__way {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-start;
+}
+
+.wizard-demo__thumbnail {
+	max-width: 120px;
+	max-height: 120px;
+	border-radius: 4px;
+	object-fit: cover;
+}
+
+.wizard-demo__card {
+	margin: 0;
+}
+
+.wizard-demo__frame {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.wizard-demo__image {
+	display: block;
+	max-width: 100%;
+	max-height: 360px;
+	border-radius: 4px;
+}
+
+/* the text over the image, legible on any picture */
+.wizard-demo__text {
+	position: absolute;
+	inset-inline: 0;
+	margin: 0;
+	padding: 10px 14px;
+	color: #fff;
+	font-size: 1.3em;
+	font-weight: 700;
+	text-align: center;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+	background: rgba(0, 0, 0, 0.35);
+	overflow-wrap: anywhere;
+}
+
+.wizard-demo__text--top {
+	top: 0;
+	border-radius: 4px 4px 0 0;
+}
+
+.wizard-demo__text--bottom {
+	bottom: 0;
+	border-radius: 0 0 4px 4px;
+}
+
+.wizard-demo__description {
+	margin-top: 8px;
+	line-height: 1.5;
+}

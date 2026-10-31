@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="couplet">Dilema {0}</entry>
+	<entry key="couplet.1">Los palpos de la hembra, junto a la probóscide:</entry>
+	<entry key="couplet.1a">Tan largos como la probóscide; en reposo el cuerpo forma un ángulo con la superficie</entry>
+	<entry key="couplet.1b">Mucho más cortos que la probóscide; en reposo el cuerpo queda paralelo a la superficie</entry>
+	<entry key="couplet.2">La punta del abdomen de la hembra:</entry>
+	<entry key="couplet.2a">Puntiaguda, con los cercos salientes; patas a menudo con anillos blancos</entry>
+	<entry key="couplet.2b">Roma, redondeada</entry>
+	<entry key="couplet.3">Las escamas blancas del dorso del tórax (el escudo):</entry>
+	<entry key="couplet.3a">En forma de lira</entry>
+	<entry key="couplet.3b">Una sola franja por el centro</entry>
+	<entry key="couplet.4">Las cerdas delante del espiráculo del tórax (setas espiraculares):</entry>
+	<entry key="couplet.4a">Presentes</entry>
+	<entry key="couplet.4b">Ausentes</entry>
+	<entry key="taxon.anopheles">Anopheles</entry>
+	<entry key="taxon.anopheles.note">El género de los mosquitos que transmiten la malaria.</entry>
+	<entry key="taxon.aedesAegypti">Aedes aegypti</entry>
+	<entry key="taxon.aedesAegypti.note">El mosquito de la fiebre amarilla, que también transmite el dengue, el zika y la chikungunya.</entry>
+	<entry key="taxon.aedesAlbopictus">Aedes albopictus</entry>
+	<entry key="taxon.aedesAlbopictus.note">El mosquito tigre asiático, que también puede transmitir el dengue y la chikungunya.</entry>
+	<entry key="taxon.culex">Culex</entry>
+	<entry key="taxon.culex.note">Los mosquitos comunes de las casas, que transmiten el virus del Nilo Occidental.</entry>
+	<entry key="taxon.culiseta">Culiseta</entry>
+	<entry key="taxon.culiseta.note">Mosquitos grandes, la mayoría de los cuales pican más a las aves y otros animales que a las personas.</entry>
+	<entry key="route">Tus respuestas: {0}</entry>
+	<entry key="identified">Identificado como {0}.</entry>
+	<entry key="cancelled">Se canceló la identificación.</entry>
+	<entry key="disclaimer">Una clave simplificada de las hembras adultas de cinco mosquitos de América, hecha para esta demo: no sirve para identificar mosquitos.</entry>
+</properties>

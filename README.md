@@ -45,6 +45,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Code editor (CodeMirror): Java, JavaScript, TypeScript, JSON, Markdown with its preview | ✓ | ✓ |
 | | Rich text editor (Tiptap), with text colors, its HTML cleaned on the server, or Markdown; what a paste lost told to the user, what the server's cleaning removed reported or the text rejected, as configured; spelling and grammar checked on the server, mentions and completions from it | ✓ | ✓ |
 | | CKEditor 5, which the application brings with its license, with the contract of the rich text editor | ✓ | ✓ |
+| | Wizard: steps typed by the object they fill in, known only as the user goes and branching on the answers, moved through via Ajax; each step says which buttons show and may add its own, and the trail of the steps visited goes back | ✓ | |
 | Feedback | Progress bar | ✓ | ✓ |
 | | Notifications; Wicket's feedback messages become notifications by themselves | ✓ | ✓ |
 | | Popovers | ✓ | ✓ |
