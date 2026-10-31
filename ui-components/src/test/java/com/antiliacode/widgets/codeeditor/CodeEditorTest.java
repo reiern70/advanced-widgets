@@ -20,10 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,14 +46,18 @@ import org.apache.wicket.request.resource.JavaScriptPackageResource;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
+import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.danekja.java.util.function.serializable.SerializableConsumer;
 import org.junit.jupiter.api.Test;
 
+import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.Initializer;
 import com.antiliacode.widgets.codeeditor.CodeEditorState.Range;
+import com.antiliacode.widgets.notification.Notifications;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 
@@ -382,6 +391,382 @@ class CodeEditorTest extends WicketTestCase
 		assertNotEquals(selecting, CodeEditorState.NONE);
 	}
 
+	@Test
+	void rendersTheStyleSheetOfTheScrollBars()
+	{
+		tester.startPage(new TestPage(new CodeEditor("editor", Model.of(TEXT))));
+
+		tester.assertContains("antilia-scrollbar.*\\.css");
+	}
+
+	@Test
+	void readsOnlyAsItsModelSays()
+	{
+		IModel<Boolean> readOnly = Model.of(true);
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT)).setReadOnly(readOnly);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+
+		assertSame(readOnly, editor.getReadOnlyModel());
+		assertTrue(editor.isReadOnly());
+		assertTrue(options(editor).getBoolean("readOnly"));
+		assertEquals("readonly", tester.getTagByWicketId("editor").getAttribute("readonly"),
+			"read only without JavaScript too");
+
+		readOnly.setObject(false);
+		tester.startPage(page);
+		assertFalse(editor.isReadOnly());
+		assertFalse(options(editor).getBoolean("readOnly"));
+		assertNull(tester.getTagByWicketId("editor").getAttribute("readonly"));
+
+		editor.setReadOnly((IModel<Boolean>)null);
+		assertFalse(editor.isReadOnly());
+		editor.setReadOnly(true);
+		assertTrue(editor.isReadOnly());
+	}
+
+	@Test
+	void readOnlyIgnoresWhatTheBrowserPosts()
+	{
+		IModel<String> text = Model.of(TEXT);
+		List<String> heard = new ArrayList<>();
+		CodeEditor editor = new CodeEditor("editor", text).setReadOnly(Model.of(true));
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> heard.add("saved"), (target, e) -> heard.add("invalid"));
+		editor.add(save);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+
+		// a form sent
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "{ not json");
+		form.submit();
+		assertEquals(TEXT, text.getObject());
+		assertFalse(editor.hasErrorMessage());
+		assertTrue(editor.getErrors().isEmpty());
+
+		// an event of the editor
+		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), "[1,");
+		tester.executeBehavior(save);
+		assertEquals(List.of("saved"), heard, "nothing to validate: the user could not change it");
+		assertEquals(TEXT, text.getObject());
+		assertFalse(editor.hasErrorMessage());
+		tester.assertContainsNot("setErrors\\(");
+
+		// the state with the text
+		sendState(editor, "{\"scrollTop\":0}", "class B {\n}");
+		tester.startPage(page);
+		assertEquals(TEXT, tester.getTagByWicketId("editor").getValue());
+	}
+
+	@Test
+	void savesOnBlurWhenTold()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertFalse(editor.isSaveOnBlur());
+		assertFalse(options(editor).has("saveOnBlur"));
+
+		editor.setSaveOnBlur(true);
+		tester.startPage(page);
+		assertTrue(editor.isSaveOnBlur());
+		assertTrue(options(editor).getBoolean("saveOnBlur"));
+	}
+
+	@Test
+	void showsTheErrorsOfItsValidatorsWhereTheyAreViaAjax()
+	{
+		IModel<String> text = Model.of("{}");
+		List<String> saved = new ArrayList<>();
+		CodeEditor editor = new CodeEditor("editor", text);
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> saved.add(editor.getModelObject()));
+		editor.add(save);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertTrue(editor.isShowErrors());
+		assertFalse(options(editor).has("errors"));
+
+		String message = "editor, line 2, column 9: ',' or '}' was expected, not ']'.";
+		post(editor, "{\n  \"a\": 1]\n}");
+		tester.executeBehavior(save);
+		assertEquals(List.of(), saved, "not valid");
+		assertEquals("{}", text.getObject());
+		assertEquals(List.of(new CodeEditorError(message, 2, 9)), editor.getErrors());
+		JSONArray sent = sentErrors(editor);
+		assertEquals(1, sent.length());
+		assertEquals(message, sent.getJSONObject(0).getString("message"));
+		assertEquals(2, sent.getJSONObject(0).getInt("line"));
+		assertEquals(9, sent.getJSONObject(0).getInt("column"));
+
+		// the same errors again: the browser shows them already
+		post(editor, "{\n  \"a\": 1]\n}");
+		tester.executeBehavior(save);
+		tester.assertContainsNot("setErrors\\(");
+
+		// rendered again, the editor shows them
+		tester.startPage(page);
+		assertEquals(message, options(editor).getJSONArray("errors").getJSONObject(0)
+			.getString("message"));
+
+		// valid: the errors go
+		post(editor, "{\"a\": [1]}");
+		tester.executeBehavior(save);
+		assertEquals(List.of("{\"a\": [1]}"), saved);
+		assertEquals("{\"a\": [1]}", text.getObject());
+		assertTrue(editor.getErrors().isEmpty());
+		assertEquals(0, sentErrors(editor).length());
+		tester.startPage(page);
+		assertFalse(options(editor).has("errors"));
+	}
+
+	@Test
+	void showsTheErrorsOfAFormSent()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		editor.add(new JsonValidator());
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "[1, 2,]");
+		form.submit();
+
+		JSONArray errors = options(editor).getJSONArray("errors");
+		assertEquals(1, errors.length());
+		assertEquals("editor, line 1, column 7: a value was expected, not ']'.",
+			errors.getJSONObject(0).getString("message"));
+		assertEquals(1, errors.getJSONObject(0).getInt("line"));
+		assertEquals(7, errors.getJSONObject(0).getInt("column"));
+		assertEquals("[]", editor.getModelObject());
+	}
+
+	@Test
+	void showsErrorsThatDoNotSayWhereTheyAreInTheBar()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		editor.setRequired(true);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "");
+		form.submit();
+
+		JSONObject error = options(editor).getJSONArray("errors").getJSONObject(0);
+		assertTrue(error.getString("message").contains("editor"), error.toString());
+		assertFalse(error.has("line"));
+		assertFalse(error.has("column"));
+		assertNull(editor.getErrors().get(0).line());
+	}
+
+	@Test
+	void showsNoErrorsWhenToldNotTo()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]")).setShowErrors(false);
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> {
+			});
+		editor.add(save);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertFalse(editor.isShowErrors());
+
+		post(editor, "[");
+		tester.executeBehavior(save);
+		tester.assertContainsNot("setErrors\\(");
+		assertEquals(1, editor.getErrors().size(), "the editor knows them");
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "[");
+		form.submit();
+		assertFalse(options(editor).has("errors"));
+	}
+
+	@Test
+	void showsTheErrorsReportedAfterTheValidation()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		// in onUpdate, the text was validated in the request: the editor takes the error too
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> editor.error("The store is full"));
+		editor.add(save);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+
+		post(editor, "[1]");
+		tester.executeBehavior(save);
+		assertEquals(List.of(CodeEditorError.of("The store is full")), editor.getErrors());
+		assertEquals("The store is full", sentErrors(editor).getJSONObject(0).getString("message"));
+
+		// without a validation, the page tells the editor
+		page.action = target -> {
+			editor.error("The store is down");
+			editor.showErrors(target);
+		};
+		tester.clickLink("act");
+		assertEquals(List.of(CodeEditorError.of("The store is full"),
+			CodeEditorError.of("The store is down")), editor.getErrors(),
+			"the messages not rendered stay, as Wicket keeps them");
+		assertEquals(2, sentErrors(editor).length());
+	}
+
+	@Test
+	void anotherTextTakesTheErrorsAway()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> {
+			});
+		editor.add(save);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		post(editor, "[");
+		tester.executeBehavior(save);
+		assertEquals(1, editor.getErrors().size());
+
+		page.action = target -> editor.setModelObject("{}");
+		tester.clickLink("act");
+		assertTrue(editor.getErrors().isEmpty());
+		assertEquals(0, sentErrors(editor).length());
+	}
+
+	@Test
+	void keepsShowingTheErrorsTheNotificationsShowedToo()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> {
+			});
+		editor.add(save);
+		NotificationsPage page = new NotificationsPage(editor);
+		tester.startPage(page);
+
+		post(editor, "[1,]");
+		tester.executeBehavior(save);
+		String message = "editor, line 1, column 4: a value was expected, not ']'.";
+		assertEquals(message, sentErrors(editor).getJSONObject(0).getString("message"));
+		// a toast too
+		tester.assertContains("Wicket\\.Notifications\\.show\\(");
+		tester.assertContains("a value was expected");
+
+		// the notifications rendered the message, which Wicket took away: the editor goes on
+		// showing the error, also as the browser sends its state
+		sendState(editor, "{\"scrollTop\":4}", null);
+		tester.assertContainsNot("setErrors\\(");
+		assertEquals(List.of(new CodeEditorError(message, 1, 4)), editor.getErrors());
+		tester.startPage(page);
+		assertEquals(message, options(editor).getJSONArray("errors").getJSONObject(0)
+			.getString("message"));
+	}
+
+	@Test
+	void hearsOfEventsWithLambdas()
+	{
+		List<String> heard = new ArrayList<>();
+		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
+		editor.add(new JsonValidator());
+		CodeEditorEventBehavior blur = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.BLUR,
+			target -> heard.add("blur " + editor.getModelObject()));
+		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
+			target -> heard.add("save " + editor.getModelObject()),
+			(target, e) -> heard.add("invalid " + e));
+		editor.add(blur, save);
+		tester.startPage(new TestPage(editor));
+		assertSame(CodeEditorEvent.BLUR, blur.getCodeEditorEvent());
+		tester.assertContains("\"e\":\"antilia-code-editor:blur\"");
+
+		post(editor, "[1]");
+		tester.executeBehavior(blur);
+		post(editor, "[2]");
+		tester.executeBehavior(save);
+		post(editor, "[");
+		tester.executeBehavior(save);
+		// without a lambda for errors, nothing is heard of them
+		post(editor, "[");
+		tester.executeBehavior(blur);
+		assertEquals(List.of("blur [1]", "save [2]", "invalid null"), heard);
+	}
+
+	@Test
+	void namesTheBarOfTheErrorsInTheLanguageOfThePage()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertEquals("Errors in the text", options(editor).getJSONObject("texts")
+			.getString("errors"));
+
+		tester.getSession().setLocale(Locale.GERMAN);
+		tester.startPage(page);
+		assertEquals("Fehler im Text", CodeEditor.texts(editor).getString("errors"));
+
+		tester.getSession().setLocale(Locale.of("es"));
+		tester.startPage(page);
+		assertEquals("Errores en el texto", options(editor).getJSONObject("texts")
+			.getString("errors"));
+	}
+
+	@Test
+	void hasEachTextInEachBundle() throws IOException
+	{
+		Set<String> english = null;
+		for (String suffix : new String[] { "", "_de", "_es" })
+		{
+			Properties bundle = new Properties();
+			try (InputStream in = Initializer.class.getResourceAsStream("Initializer" + suffix +
+				".properties.xml"))
+			{
+				bundle.loadFromXML(in);
+			}
+			Set<String> keys = new TreeSet<>();
+			bundle.stringPropertyNames().stream().filter(key -> key.startsWith("CodeEditor.") ||
+				key.startsWith("JsonValidator.")).forEach(keys::add);
+			assertTrue(keys.contains("CodeEditor.errors"), suffix);
+			for (JsonValidator.Problem problem : JsonValidator.Problem.values())
+			{
+				String message = bundle.getProperty("JsonValidator." + problem.key());
+				assertTrue(message != null && message.contains("${line}") &&
+					message.contains("${column}"), problem + " in " + suffix);
+				assertEquals(problem != JsonValidator.Problem.END, message.contains("${found}"),
+					problem + " in " + suffix);
+			}
+			if (english == null)
+			{
+				english = keys;
+			}
+			else
+			{
+				assertEquals(english, keys, suffix);
+			}
+		}
+	}
+
+	private void post(CodeEditor editor, String text)
+	{
+		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
+	}
+
+	/**
+	 * @return the errors the last response gave the editor in the browser
+	 */
+	private JSONArray sentErrors(CodeEditor editor)
+	{
+		Matcher matcher = Pattern.compile("Wicket\\.CodeEditor\\.of\\(\"" +
+			Pattern.quote(editor.getMarkupId()) + "\"\\);if\\(e\\)\\{e\\.setErrors\\((\\[.*?\\])\\);\\}")
+			.matcher(tester.getLastResponseAsString());
+		assertTrue(matcher.find(), "the browser is given the errors");
+		JSONArray errors = new JSONArray(matcher.group(1));
+		assertFalse(matcher.find(), "once");
+		return errors;
+	}
+
 	/**
 	 * @return the options the editor was attached with in the last response
 	 */
@@ -440,6 +825,29 @@ class CodeEditorTest extends WicketTestCase
 			return new StringResourceStream("<html><head></head><body><form wicket:id=\"form\">" +
 				"<textarea wicket:id=\"editor\"></textarea></form><a wicket:id=\"act\">Act</a>" +
 				"</body></html>");
+		}
+	}
+
+	/**
+	 * A page showing the feedback messages as notifications.
+	 */
+	public static class NotificationsPage extends TestPage
+	{
+		private static final long serialVersionUID = 1L;
+
+		NotificationsPage(CodeEditor editor)
+		{
+			super(editor);
+			add(new Notifications("notifications"));
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream("<html><head></head><body><form wicket:id=\"form\">" +
+				"<textarea wicket:id=\"editor\"></textarea></form><a wicket:id=\"act\">Act</a>" +
+				"<div wicket:id=\"notifications\"></div></body></html>");
 		}
 	}
 }

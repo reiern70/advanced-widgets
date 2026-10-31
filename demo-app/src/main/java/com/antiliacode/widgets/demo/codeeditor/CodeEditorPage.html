@@ -67,6 +67,23 @@
 	</section>
 </wicket:fragment>
 
+<wicket:fragment wicket:id="jsonCase">
+	<section>
+		<form wicket:id="jsonControls" class="code-editor-demo__controls">
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="saveOnBlur"/> <wicket:message key="saveOnBlur"/></label>
+			<label class="code-editor-demo__control"><input type="checkbox" wicket:id="readOnly"/> <wicket:message key="readOnly"/></label>
+		</form>
+		<form wicket:id="jsonForm" class="code-editor-demo__editor">
+			<label wicket:id="name" class="code-editor-demo__name">[file]</label>
+			<textarea wicket:id="editor"></textarea>
+			<div class="code-editor-demo__actions">
+				<button type="submit" wicket:id="save"><wicket:message key="save"/></button>
+				<span wicket:id="jsonStatus" class="code-editor-demo__heard" role="status">[what the server did]</span>
+			</div>
+		</form>
+	</section>
+</wicket:fragment>
+
 <wicket:fragment wicket:id="filePanel">
 <form wicket:id="form" class="code-editor-demo__file">
 	<textarea wicket:id="editor"></textarea>

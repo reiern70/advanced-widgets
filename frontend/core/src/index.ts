@@ -20,9 +20,11 @@ export { CODE_EDITOR_CLASSES, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_L
 	CODE_EDITOR_PHRASES, CodeEditor, codeEditor, codeEditorLanguages, DEFAULT_CODE_EDITOR_TEXTS,
 	loadLanguage, registerLanguage } from './code-editor.js';
 export type { Extension } from '@codemirror/state';
-export type { CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage, CodeEditorLanguageLoader,
-	CodeEditorOptions, CodeEditorRange, CodeEditorSelection, CodeEditorState, CodeEditorStateChange,
-	CodeEditorTexts } from './code-editor.js';
+export type { CodeEditorError, CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage,
+	CodeEditorLanguageLoader, CodeEditorOptions, CodeEditorRange, CodeEditorSelection,
+	CodeEditorState, CodeEditorStateChange, CodeEditorTexts } from './code-editor.js';
+export { findJsonError } from './json-error.js';
+export type { JsonError, JsonProblem } from './json-error.js';
 export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
 	renderMarkdown } from './markdown-preview.js';
 export type { MarkdownPreviewOptions } from './markdown-preview.js';

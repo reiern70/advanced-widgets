@@ -14,7 +14,8 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { CodeEditor as CoreCodeEditor, type CodeEditorLanguage, type CodeEditorSelection,
+import { CodeEditor as CoreCodeEditor, type CodeEditorError, type CodeEditorLanguage,
+	type CodeEditorSelection,
 	type CodeEditorState, type CodeEditorStateChange, type CodeEditorTexts, type Extension,
 	type ResizableSize, type ResizeAxis } from '@antilia/core';
 
@@ -58,6 +59,16 @@ export interface CodeEditorProps {
 	state?: CodeEditorState;
 	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
 	stateDelay?: number;
+	/**
+	 * Whether leaving the editor with changes not saved, or with errors shown, calls onSave: false
+	 * when left out.
+	 */
+	saveOnBlur?: boolean;
+	/**
+	 * What is wrong with the text: underlined where each error is and listed in a bar along the
+	 * bottom of the editor; none when left out.
+	 */
+	errors?: CodeEditorError[];
 	/** More CodeMirror extensions. */
 	extensions?: Extension[];
 	/** What the editor says, in English when left out. */
@@ -76,7 +87,10 @@ export interface CodeEditorProps {
 	onStateChange?(state: CodeEditorState, change: CodeEditorStateChange): void;
 	/** Called when the text came to have changes not saved, or no longer has. */
 	onModifiedChange?(modified: boolean): void;
-	/** Called with the text when the user pressed Ctrl+S, or Cmd+S. */
+	/**
+	 * Called with the text when the user pressed Ctrl+S, or Cmd+S, and, with saveOnBlur, when the
+	 * user left the editor with changes not saved or errors shown.
+	 */
 	onSave?(value: string): void;
 	onResize?(size: ResizableSize): void;
 }
@@ -99,6 +113,8 @@ export interface CodeEditorHandle {
 	markSaved(value?: string): void;
 	/** @returns whether the text has changes not saved */
 	isModified(): boolean;
+	/** Tells the editor to save, as Ctrl+S does: onSave. */
+	save(): void;
 }
 
 /**
@@ -113,7 +129,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 	props, ref) {
 	const { value, saved, language, lineNumbers, folding, readOnly, selectable, lineWrapping,
 		tabSize, indentWithTab, placeholder, label, resizable, minWidth, minHeight, maxWidth,
-		maxHeight, stateDelay, extensions, texts, name, id, className } = props;
+		maxHeight, stateDelay, saveOnBlur, errors, extensions, texts, name, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreCodeEditor | null>(null);
 	const look = useLook();
@@ -130,7 +146,8 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 		getState: () => instance.current?.getState() ?? null,
 		setState: (state) => instance.current?.setState(state),
 		markSaved: (text) => instance.current?.markSaved(text),
-		isModified: () => instance.current?.isModified() ?? false
+		isModified: () => instance.current?.isModified() ?? false,
+		save: () => instance.current?.save()
 	}), []);
 
 	useLayoutEffect(() => {
@@ -143,6 +160,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			placeholder: current.placeholder, label: current.label, resizable: current.resizable,
 			minWidth: current.minWidth, minHeight: current.minHeight, maxWidth: current.maxWidth,
 			maxHeight: current.maxHeight, state: current.state, stateDelay: current.stateDelay,
+			saveOnBlur: current.saveOnBlur, errors: current.errors,
 			extensions: current.extensions, texts: current.texts, look,
 			onChange: (next) => latest.current.onChange?.(next),
 			onFocus: () => latest.current.onFocus?.(),
@@ -163,9 +181,14 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 	useLayoutEffect(() => {
 		instance.current?.configure({ language: language ?? null, lineNumbers, folding, readOnly,
 			selectable, lineWrapping, tabSize, indentWithTab, placeholder, label, resizable,
-			minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts });
+			minWidth, minHeight, maxWidth, maxHeight, stateDelay, saveOnBlur, texts });
 	}, [language, lineNumbers, folding, readOnly, selectable, lineWrapping, tabSize, indentWithTab,
-		placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay, texts]);
+		placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+		saveOnBlur, texts]);
+
+	useLayoutEffect(() => {
+		instance.current?.setErrors(errors ?? []);
+	}, [errors]);
 
 	useLayoutEffect(() => {
 		if (extensions !== undefined) {

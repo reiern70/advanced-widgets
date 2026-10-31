@@ -221,5 +221,86 @@ describe('CodeEditor', () => {
 		handle.focus();
 		handle.setState({});
 		handle.markSaved();
+		handle.save();
+	});
+
+	it('shows the errors the page gives, as they change, and none', () => {
+		const ref = createRef<CodeEditorHandle>();
+		const { container, rerender } = render(<CodeEditor ref={ref} value={'{\n  "a": ]\n}'}
+			errors={[{ message: 'A value was expected', line: 2, column: 8 }]}
+			texts={{ errors: 'Errors in the text' }} />);
+		const element = editorOf(container);
+		const bar = () => element.querySelector<HTMLElement>('.antilia-code-editor-errors');
+
+		expect(element.classList.contains('antilia-code-editor-invalid')).toBe(true);
+		expect(bar()?.textContent).toBe('A value was expected');
+		expect(bar()?.getAttribute('aria-label')).toBe('Errors in the text');
+		expect(bar()?.querySelector('button')).not.toBeNull();
+		expect(ref.current?.editor?.getErrors()).toEqual([{ message: 'A value was expected',
+			line: 2, column: 8 }]);
+
+		// the same errors anew, in another array: the bar stays
+		const shown = bar();
+		rerender(<CodeEditor ref={ref} value={'{\n  "a": ]\n}'}
+			errors={[{ message: 'A value was expected', line: 2, column: 8 }]}
+			texts={{ errors: 'Errors in the text' }} />);
+		expect(bar()).toBe(shown);
+
+		rerender(<CodeEditor ref={ref} value={'{\n  "a": ]\n}'}
+			errors={[{ message: 'Not saved' }]} />);
+		expect(bar()?.textContent).toBe('Not saved');
+		expect(bar()?.querySelector('button')).toBeNull();
+
+		rerender(<CodeEditor ref={ref} value={'{\n  "a": ]\n}'} />);
+		expect(bar()).toBeNull();
+		expect(element.classList.contains('antilia-code-editor-invalid')).toBe(false);
+	});
+
+	it('calls onSave when the user leaves it with changes not saved, with saveOnBlur', () => {
+		const onSave = vi.fn();
+		const ref = createRef<CodeEditorHandle>();
+		const { container, rerender } = render(<><CodeEditor ref={ref} value="x" onSave={onSave} />
+			<input id="other" /></>);
+		const other = container.querySelector('#other')!;
+		const leave = () => fireEvent.focusOut(container.querySelector('.cm-content')!,
+			{ relatedTarget: other });
+
+		act(() => ref.current!.editor!.view.dispatch({ changes: { from: 1, insert: 'y' },
+			userEvent: 'input.type' }));
+		leave();
+		expect(onSave).not.toHaveBeenCalled();
+
+		rerender(<><CodeEditor ref={ref} value="xy" saveOnBlur onSave={onSave} />
+			<input id="other" /></>);
+		leave();
+		expect(onSave).toHaveBeenCalledWith('xy');
+
+		rerender(<><CodeEditor ref={ref} value="xy" saveOnBlur={false} onSave={onSave} />
+			<input id="other" /></>);
+		leave();
+		expect(onSave).toHaveBeenCalledTimes(1);
+	});
+
+	it('saves when its handle tells it to, as Ctrl+S does', () => {
+		const onSave = vi.fn();
+		const ref = createRef<CodeEditorHandle>();
+		render(<CodeEditor ref={ref} value="saved" onSave={onSave} />);
+
+		act(() => ref.current!.save());
+		expect(onSave).toHaveBeenCalledWith('saved');
+	});
+
+	it('starts with the errors and saving on blur given', () => {
+		const onSave = vi.fn();
+		const ref = createRef<CodeEditorHandle>();
+		const { container } = render(<><CodeEditor ref={ref} value="a" saveOnBlur onSave={onSave}
+			errors={[{ message: 'Wrong', from: 0, to: 1 }]} /><input id="other" /></>);
+
+		expect(container.querySelector('.antilia-code-editor-errors')?.textContent).toBe('Wrong');
+		act(() => ref.current!.editor!.view.dispatch({ changes: { from: 1, insert: 'b' },
+			userEvent: 'input.type' }));
+		fireEvent.focusOut(container.querySelector('.cm-content')!,
+			{ relatedTarget: container.querySelector('#other') });
+		expect(onSave).toHaveBeenCalledWith('ab');
 	});
 });

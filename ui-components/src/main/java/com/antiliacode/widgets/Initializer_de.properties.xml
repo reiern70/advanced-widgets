@@ -183,6 +183,16 @@
 	<entry key="CodeEditor.unfoldLine">Zeile ausklappen</entry>
 	<entry key="CodeEditor.selectionDeleted">Auswahl gelöscht</entry>
 	<entry key="CodeEditor.controlCharacter">Steuerzeichen</entry>
+	<entry key="CodeEditor.errors">Fehler im Text</entry>
+	<entry key="JsonValidator.end">${label}, Zeile ${line}, Spalte ${column}: das JSON endet zu früh.</entry>
+	<entry key="JsonValidator.value">${label}, Zeile ${line}, Spalte ${column}: ein Wert wurde erwartet, nicht ${found}.</entry>
+	<entry key="JsonValidator.name">${label}, Zeile ${line}, Spalte ${column}: ein Name in doppelten Anführungszeichen wurde erwartet, nicht ${found}.</entry>
+	<entry key="JsonValidator.colon">${label}, Zeile ${line}, Spalte ${column}: ':' wurde erwartet, nicht ${found}.</entry>
+	<entry key="JsonValidator.objectNext">${label}, Zeile ${line}, Spalte ${column}: ',' oder '}' wurde erwartet, nicht ${found}.</entry>
+	<entry key="JsonValidator.arrayNext">${label}, Zeile ${line}, Spalte ${column}: ',' oder ']' wurde erwartet, nicht ${found}.</entry>
+	<entry key="JsonValidator.trailing">${label}, Zeile ${line}, Spalte ${column}: nach dem Wert sollte nichts folgen, es folgt aber ${found}.</entry>
+	<entry key="JsonValidator.string">${label}, Zeile ${line}, Spalte ${column}: ${found} ist hier in einer Zeichenkette nicht erlaubt.</entry>
+	<entry key="JsonValidator.number">${label}, Zeile ${line}, Spalte ${column}: die Zahl ist bei ${found} ungültig.</entry>
 	<entry key="MarkdownPreview.label">Vorschau</entry>
 	<entry key="MarkdownPreview.placeholder">Nichts zur Vorschau</entry>
 	<entry key="RichTextEditor.toolbar">Formatierung</entry>
