@@ -16,6 +16,7 @@ package com.antiliacode.widgets.richtext;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -57,7 +58,7 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 	private static final List<Object[]> KEPT = new ArrayList<>();
 
 	private static String keep(org.apache.wicket.markup.html.form.upload.FileUpload image,
-		RichTextImageType type)
+		IRichTextImageType type)
 	{
 		KEPT.add(new Object[] { image.getClientFileName(), type, image.getBytes() });
 		return "/images/" + KEPT.size() + "." + type.getExtension();
@@ -92,8 +93,8 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 
 		JSONObject refused = upload(page, "notes.png", "<svg onload=\"steal()\"/>".getBytes(
 			StandardCharsets.UTF_8), "image/png");
-		assertEquals("notes.png is not an image of a type the editor takes: PNG, JPEG, GIF, WebP.",
-			refused.getString("error"));
+		assertEquals("notes.png is not an image of a type the editor takes: PNG, JPEG, GIF, WebP, " +
+			"AVIF.", refused.getString("error"));
 		assertFalse(refused.has("url"));
 
 		page.upload.setTypes(EnumSet.of(RichTextImageType.PNG));
@@ -157,7 +158,7 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 		TestPage page = new TestPage(RichTextImageUploadBehaviorTest::keep);
 		tester.startPage(page);
 		assertEquals("notas.png no es una imagen de un tipo que el editor acepte: PNG, JPEG, GIF, " +
-			"WebP.", upload(page, "notas.png", new byte[20], "image/png").getString("error"));
+			"WebP, AVIF.", upload(page, "notas.png", new byte[20], "image/png").getString("error"));
 
 		tester.getSession().setLocale(Locale.of("de"));
 		page.upload.setMaxSize(Bytes.bytes(10));
@@ -217,13 +218,156 @@ class RichTextImageUploadBehaviorTest extends WicketTestCase
 		RichTextImageUploadBehavior behavior = new RichTextImageUploadBehavior((image, type) -> "/a");
 		assertEquals(RichTextImageUploadBehavior.DEFAULT_MAX_SIZE, behavior.getMaxSize());
 		assertEquals(Bytes.megabytes(5), RichTextImageUploadBehavior.DEFAULT_MAX_SIZE);
-		assertEquals(EnumSet.allOf(RichTextImageType.class), behavior.getTypes());
-		assertEquals(List.of("image/png", "image/jpeg", "image/gif", "image/webp"),
+		assertEquals(List.copyOf(RichTextImageType.ALL), List.copyOf(behavior.getTypes()));
+		assertEquals(List.of("image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"),
 			behavior.getMimeTypes());
+		assertNull(behavior.getMaxDimensions());
 		assertFalse(behavior.rendersPage());
 		assertThrows(IllegalArgumentException.class, () -> behavior.setTypes(EnumSet.noneOf(
 			RichTextImageType.class)));
+		assertThrows(IllegalArgumentException.class, () -> behavior.setTypes(
+			java.util.Arrays.asList(RichTextImageType.PNG, null)));
 		assertThrows(IllegalArgumentException.class, () -> new RichTextImageUploadBehavior(null));
+	}
+
+	/** A PNG whose header says its width and height. */
+	private static byte[] png(int width, int height)
+	{
+		byte[] bytes = new byte[33];
+		System.arraycopy(PNG, 0, bytes, 0, PNG.length);
+		java.nio.ByteBuffer.wrap(bytes).putInt(16, width).putInt(20, height);
+		return bytes;
+	}
+
+	@Test
+	void refusesAPictureWiderOrHigherThanAllowedByItsHeader() throws IOException
+	{
+		KEPT.clear();
+		TestPage page = new TestPage(RichTextImageUploadBehaviorTest::keep);
+		page.upload.setMaxDimensions(new RichTextImageDimensions(100, 100));
+		tester.startPage(page);
+
+		assertEquals("wide.png is 200 × 50 pixels, larger than 100 × 100.", upload(page,
+			"wide.png", png(200, 50), "image/png").getString("error"));
+		assertEquals("/images/1.png", upload(page, "small.png", png(100, 80), "image/png")
+			.getString("url"));
+		// a header that does not tell them
+		assertEquals("odd.png could not be uploaded.", upload(page, "odd.png", PNG, "image/png")
+			.getString("error"));
+
+		tester.getSession().setLocale(Locale.GERMAN);
+		assertEquals("wide.png hat 200 × 50 Pixel, mehr als 100 × 100.", upload(page, "wide.png",
+			png(200, 50), "image/png").getString("error"));
+		assertEquals(1, KEPT.size());
+
+		page.upload.setMaxDimensions(null);
+		assertTrue(upload(page, "wide.png", png(200, 50), "image/png").has("url"));
+	}
+
+	/** A type of the application's own: BMP, which starts with BM. */
+	private static final IRichTextImageType BMP = new IRichTextImageType()
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public String getMimeType()
+		{
+			return "image/bmp";
+		}
+
+		@Override
+		public String getExtension()
+		{
+			return "bmp";
+		}
+
+		@Override
+		public String getLabel()
+		{
+			return "BMP";
+		}
+
+		@Override
+		public boolean matches(byte[] head)
+		{
+			return head.length >= 2 && head[0] == 'B' && head[1] == 'M';
+		}
+	};
+
+	@Test
+	void takesTypesOfTheApplicationsOwn() throws IOException
+	{
+		KEPT.clear();
+		TestPage page = new TestPage(RichTextImageUploadBehaviorTest::keep);
+		page.upload.setTypes(List.of(BMP, RichTextImageType.PNG));
+		tester.startPage(page);
+
+		assertEquals(List.of("image/bmp", "image/png"), page.upload.getMimeTypes());
+		assertEquals("/images/1.bmp", upload(page, "map.bmp", "BM and the rest".getBytes(
+			StandardCharsets.US_ASCII), "image/bmp").getString("url"));
+		assertEquals(BMP, KEPT.get(0)[1]);
+		assertEquals("bird.gif is not an image of a type the editor takes: BMP, PNG.",
+			upload(page, "bird.gif", GIF, "image/gif").getString("error"));
+
+		// a limit of pixels refuses a type that cannot tell them
+		page.upload.setMaxDimensions(new RichTextImageDimensions(100, 100));
+		assertEquals("map.bmp could not be uploaded.", upload(page, "map.bmp", "BM and the rest"
+			.getBytes(StandardCharsets.US_ASCII), "image/bmp").getString("error"));
+	}
+
+	@Test
+	void deletesOnlyTheImagesItTookWhenAsked() throws IOException
+	{
+		List<String> deleted = new ArrayList<>();
+		IRichTextImageStore store = new IRichTextImageStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(org.apache.wicket.markup.html.form.upload.FileUpload image,
+				IRichTextImageType type)
+			{
+				return keep(image, type);
+			}
+
+			@Override
+			public void delete(String url)
+			{
+				deleted.add(url);
+			}
+		};
+		KEPT.clear();
+		TestPage page = new TestPage(store);
+		tester.startPage(page);
+		upload(page, "one.png", PNG, "image/png");
+		upload(page, "two.png", PNG, "image/png");
+		assertEquals(List.of("/images/1.png", "/images/2.png"), List.copyOf(page.upload
+			.getUploaded()));
+		assertTrue(page.upload.isUploaded(" /images/1.png "));
+
+		assertEquals("{\"deleted\":[\"/images/1.png\"]}", remove(page, "[\"/images/1.png\", " +
+			"\"/elsewhere.png\", 3]").toString());
+		assertEquals(List.of("/images/1.png"), deleted);
+		assertFalse(page.upload.isUploaded("/images/1.png"));
+		// deleted already
+		assertEquals("{\"deleted\":[]}", remove(page, "[\"/images/1.png\"]").toString());
+		assertEquals("{\"deleted\":[]}", remove(page, "not json").toString());
+
+		// a text saved holds it: the behavior forgets it, and leaves it alone
+		page.upload.forget(page.upload.getUploaded());
+		assertEquals("{\"deleted\":[]}", remove(page, "[\"/images/2.png\"]").toString());
+		assertEquals(List.of("/images/1.png"), deleted);
+	}
+
+	/**
+	 * Asks a behavior to delete images, as deleteImagesAt() of the editor does.
+	 */
+	private JSONObject remove(TestPage page, String json)
+	{
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextImageUploadBehavior.REMOVED_PARAMETER, json);
+		tester.executeBehavior(page.upload);
+		return new JSONObject(tester.getLastResponseAsString());
 	}
 
 	@Test

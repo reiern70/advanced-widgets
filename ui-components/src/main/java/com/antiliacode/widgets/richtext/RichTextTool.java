@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * The tools of the toolbar of a {@link RichTextEditor} built in its script: a button formatting the
- * text, opening a menu (the text style, the colors, the table) or a form (a link, an image), or
+ * text, opening a menu (the text style, the colors, the table, the images) or a form (a link, an image), or
  * undoing. A tool needs its {@link #getFeature() feature}: without it, it does not show. A
  * {@link IRichTextFeature feature} of a page's own brings tools of its own, {@link IRichTextTool}.
  *
@@ -77,6 +77,16 @@ public enum RichTextTool implements IRichTextTool
 	/** The image selected, or one to insert, in a form: its address and its text. */
 	IMAGE("image", RichTextFeature.IMAGE),
 
+	/**
+	 * The images of the text, in a menu: each with a thumbnail and its name, selected by a click,
+	 * and a button taking it out of the text, every place it is in; with
+	 * {@link RichTextEditor#setImageStore(IRichTextImageStore) a store}, the store then deletes it
+	 * as {@link RichTextEditor#setImageDeletion(RichTextImageDeletion) the editor says}.
+	 *
+	 * @since 11.0.0
+	 */
+	IMAGES("images", RichTextFeature.IMAGE),
+
 	ALIGN_LEFT("alignLeft", RichTextFeature.TEXT_ALIGN),
 
 	ALIGN_CENTER("alignCenter", RichTextFeature.TEXT_ALIGN),
@@ -98,7 +108,7 @@ public enum RichTextTool implements IRichTextTool
 		List.of(TEXT_COLOR, TEXT_BACKGROUND),
 		List.of(LINK),
 		List.of(BULLET_LIST, ORDERED_LIST, TASK_LIST), List.of(BLOCKQUOTE, CODE_BLOCK,
-			HORIZONTAL_RULE), List.of(TABLE, IMAGE), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,
+			HORIZONTAL_RULE), List.of(TABLE, IMAGE, IMAGES), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,
 				ALIGN_JUSTIFY), List.of(CLEAR_FORMATTING), List.of(UNDO, REDO));
 
 	private final String name;

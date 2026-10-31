@@ -21,7 +21,8 @@
 
 	let { value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved, name,
 		format, readOnly, toolbar, count, className = 'rich', onsave, onfocus, onblur, onresize,
-		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, colors,
+		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, uploadMaxCount,
+		uploadMaxWidth, uploadMaxHeight, uploadScaling, uploadDialog, onimagesremoved, colors,
 		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features, pasteNotice,
 		onpastecleaned }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
@@ -31,6 +32,9 @@
 		onselectionchange?: (selection: unknown) => void;
 		highlight?: boolean | RichTextHighlighter; codeLanguages?: string[] | false;
 		uploadMaxSize?: number; onupload?: (file: File) => Promise<string>;
+		uploadMaxCount?: number; uploadMaxWidth?: number; uploadMaxHeight?: number;
+		uploadScaling?: boolean; uploadDialog?: boolean;
+		onimagesremoved?: (urls: string[]) => void;
 		colors?: readonly RichTextColor[] | null;
 		backgroundColors?: readonly RichTextBackgroundColor[] | null;
 		spellcheck?: boolean | null; textLanguage?: string | null;
@@ -44,7 +48,9 @@
 	<RichTextEditor id="e" class={className} bind:value bind:state={editorState} bind:modified
 		{saved} {name} {format} {readOnly} {toolbar} {count} stateDelay={0} minHeight={100}
 		label="Notes" {onsave} {onfocus} {onblur} {onresize} {onselectionchange} {highlight}
-		{codeLanguages} {uploadMaxSize} {onupload} {colors} {backgroundColors} {spellcheck}
+		{codeLanguages} {uploadMaxSize} {onupload} {uploadMaxCount} {uploadMaxWidth}
+		{uploadMaxHeight} {uploadScaling} {uploadDialog} {onimagesremoved} {colors}
+		{backgroundColors} {spellcheck}
 		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} {pasteNotice}
 		{onpastecleaned} />
 </form>

@@ -31,7 +31,7 @@ beforeAll(() => {
 });
 
 /** A moment, for the state reported after a delay of 0. */
-const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
+const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function editorOf(container: HTMLElement): HTMLElement {
 	return container.querySelector('.antilia-rich-text-editor')!;
@@ -259,6 +259,25 @@ describe('RichTextEditor', () => {
 		flushSync();
 		expect(codeBlock().getAttribute('aria-haspopup')).toBeNull();
 	});
+
+	it('takes the limits of the uploads, and tells onimagesremoved of the images taken out',
+		async () => {
+			const onimagesremoved = vi.fn();
+			const { container, rerender } = render(BoundRichTextEditor, {
+				value: '<p>a</p><img src="/a.png">', onupload: () => Promise.resolve('/b.png'),
+				uploadMaxCount: 2, uploadMaxWidth: 800, uploadMaxHeight: 600, uploadScaling: true,
+				uploadDialog: true, onimagesremoved });
+			const options = () => core(container).options;
+			expect([options().uploadMaxCount, options().uploadMaxWidth, options().uploadMaxHeight,
+				options().uploadScaling, options().uploadDialog]).toEqual([2, 800, 600, true, true]);
+			await rerender({ uploadMaxCount: undefined, uploadDialog: false });
+			flushSync();
+			expect([options().uploadMaxCount, options().uploadDialog]).toEqual([null, false]);
+			const editor = core(container).editor;
+			editor.view.dispatch(editor.state.tr.delete(3, 4));
+			await tick(350);
+			expect(onimagesremoved).toHaveBeenCalledWith(['/a.png']);
+		});
 
 	it('uploads the images the user drops, by onupload', async () => {
 		const onupload = vi.fn(() => Promise.resolve('/bird.png'));

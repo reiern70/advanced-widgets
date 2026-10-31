@@ -28,7 +28,10 @@
  * with CKEditor's script (see rich-text-events.ts).
  *
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
- * chooses, drops or pastes there, and the server answers their addresses. With proofreadUrl, that
+ * chooses, drops or pastes there, and the server answers their addresses. With imagesUrl, that of
+ * its Ajax behavior hearing of the images taken out of the text, the editor tells the server of
+ * them, via Ajax, a moment after the user took them out; the server deletes those it knows, at once
+ * or once the form is sent. With proofreadUrl, that
  * of its proofreading behavior, the server checks the text, which the editor underlines. With
  * suggestUrl and suggesters, the names, characters and insertions of the editor's suggesters, the
  * server offers what the user types: the users to mention, the words to complete. The grammars of the code
@@ -57,6 +60,8 @@ interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'sugge
 	inputName?: string;
 	/** The URL of the behavior taking the images the user uploads, and answering their addresses. */
 	uploadUrl?: string;
+	/** The URL of the Ajax behavior hearing of the images the user took out of the text. */
+	imagesUrl?: string;
 	/** The URL of the behavior checking the text, and answering its issues. */
 	proofreadUrl?: string;
 	/** The URL of the behavior answering the items of the suggesters. */
@@ -76,7 +81,7 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { stateUrl, inputName, uploadUrl, proofreadUrl, suggestUrl, suggesters,
+		const { stateUrl, inputName, uploadUrl, imagesUrl, proofreadUrl, suggestUrl, suggesters,
 			...rest } = options;
 		let editor: RichTextEditor | null = null;
 		const onStateChange = stateUrl ? (state: RichTextEditorState,
@@ -89,12 +94,16 @@ const WicketRichTextEditor = {
 			rest.onStateChange?.(state, change);
 		} : rest.onStateChange;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
+		const onImagesRemoved = imagesUrl ? (urls: string[]) => {
+			sendState(id, imagesUrl, [{ name: 'removed', value: JSON.stringify(urls) }], false);
+			rest.onImagesRemoved?.(urls);
+		} : rest.onImagesRemoved;
 		const proofreader = proofreadUrl ? proofreadAt(proofreadUrl) : rest.proofreader;
 		const asked = suggesters?.map((suggester) => 'items' in suggester ? suggester :
 			suggestUrl ? suggestAt(suggestUrl, suggester) : null)
 			.filter((suggester): suggester is RichTextSuggester => !!suggester);
-		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload, proofreader,
-			suggesters: asked });
+		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload, onImagesRemoved,
+			proofreader, suggesters: asked });
 		return editor;
 	},
 

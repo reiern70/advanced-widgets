@@ -215,7 +215,13 @@ export const RICH_TEXT_BUILT_IN_EVENTS = Object.freeze({
 	 * name and count (see pasteCleaningReport). The editor fires it after the paste, by trigger(),
 	 * and only for a paste that lost something.
 	 */
-	pasteCleaned: BUILT_IN_OWNER + ':paste-cleaned'
+	pasteCleaned: BUILT_IN_OWNER + ':paste-cleaned',
+	/**
+	 * The user took images out of the text, or uploaded some that never went into it:
+	 * detail.urls has their addresses. The editor fires it a moment after, by trigger(), for the
+	 * images the text does not hold again by then.
+	 */
+	imagesRemoved: BUILT_IN_OWNER + ':images-removed'
 });
 
 registerBuiltIn<{ text: string }>(RICH_TEXT_BUILT_IN_EVENTS.selectedText, {
@@ -252,6 +258,14 @@ registerBuiltIn(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, {
 		const attributes = counts(cause.detail.attributes);
 		return Object.keys(elements).length || Object.keys(attributes).length ?
 			{ elements, attributes } : undefined;
+	}
+});
+
+registerBuiltIn(RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved, {
+	fire(_editor, _state, cause) {
+		const urls = Array.isArray(cause.detail.urls) ? cause.detail.urls.filter(
+			(url): url is string => typeof url === 'string' && !!url) : [];
+		return urls.length ? { urls } : undefined;
 	}
 });
 

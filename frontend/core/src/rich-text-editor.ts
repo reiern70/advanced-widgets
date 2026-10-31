@@ -70,9 +70,17 @@
  *
  * Code blocks are highlighted in the colors of their language with a highlighter the page gives
  * (highlight, see rich-text-code-blocks.ts), whose grammars this script does not carry; the menu of
- * the tool code block chooses the language (codeLanguages). Images are uploaded, chosen in the form
- * of the image, dropped into the text or pasted, while the page uploads them (onUpload, see
- * rich-text-upload.ts).
+ * the tool code block chooses the language (codeLanguages). Images are uploaded, dropped on the
+ * zone of the form of the image or chosen there, or in the dialog of the uploads (uploadDialog),
+ * dropped into the text or pasted, while the page uploads them (onUpload, see
+ * rich-text-upload.ts), within its limits: their number, types, sizes and pixels.
+ *
+ * The editor tells the page the images the user took out of the text, by a key, a cut, the menu of
+ * the images or the page's own code, and those uploaded that never went into it: onImagesRemoved
+ * and the built-in event images-removed, a moment after, with the addresses of those no longer in
+ * the text, or at once as the user saves or leaves the editor; an image Ctrl+Z or a paste brought
+ * back by then is not told of. A text the page gives (setValue) tells of nothing. The page deletes
+ * them, at once or once the text is saved.
  */
 
 import { createDocument, Editor, Extension, getHTMLFromFragment, Mark, markInputRule, markPasteRule,
@@ -104,8 +112,10 @@ import { isEmptyCleaningReport, pasteCleaningReport, pasteNoticeText, RichTextPa
 import { issuePopoverOf, Proofreading, refreshProofreading,
 	type RichTextProofreader } from './rich-text-proofreading.js';
 import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
-import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, sizeText, typesText, uploadExtension,
+import { checkFiles, DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, refusalOf, uploadExtension,
 	type RichTextUploader, type UploadHost } from './rich-text-upload.js';
+import { askToScale } from './rich-text-upload-dialog.js';
+import type { RichTextImageDimensions } from './rich-text-image-headers.js';
 
 export { RICH_TEXT_EDITOR_EVENTS, type RichTextEditorSelection, type RichTextEditorState,
 	type RichTextEditorStateChange };
@@ -308,10 +318,35 @@ export interface RichTextEditorOptions {
 	 * None when left out or null: an image is then an address the user gives.
 	 */
 	onUpload?: RichTextUploader | null;
-	/** The types of the images the user may upload: PNG, JPEG, GIF and WebP when left out. */
+	/** The types of the images the user may upload: PNG, JPEG, GIF, WebP and AVIF when left out. */
 	uploadTypes?: readonly string[];
 	/** The largest image the user may upload, in bytes; none when left out or null. */
 	uploadMaxSize?: number | null;
+	/**
+	 * The widest and the highest picture the user may upload, in pixels, read from the header of
+	 * the file without decoding it; none when left out or null. Both, or none.
+	 */
+	uploadMaxWidth?: number | null;
+	uploadMaxHeight?: number | null;
+	/**
+	 * Whether a dialog offers the user to scale down the pictures larger than that, each by a box
+	 * to tick, rather than refusing them; false when left out.
+	 */
+	uploadScaling?: boolean;
+	/** How many images one drop, choice or paste takes at most, the first; none when left out. */
+	uploadMaxCount?: number | null;
+	/**
+	 * Whether the form of the image has a button opening the dialog of the uploads, rather than a
+	 * zone of its own; false when left out.
+	 */
+	uploadDialog?: boolean;
+	/**
+	 * Called a moment after the user took images out of the text, with their addresses: by a key,
+	 * a cut, the menu of the images or the page's own code, or uploaded and never put into it.
+	 * The page deletes them, at once or once the text is saved: deleteImagesAt() asks Wicket's
+	 * RichTextImageUploadBehavior to.
+	 */
+	onImagesRemoved?: (urls: string[]) => void;
 	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again: "Part of the paste was left out: scripts, images."; false when left out.
@@ -366,6 +401,24 @@ export const RICH_TEXT_EDITOR_CLASSES = Object.freeze({
 	disabled: 'antilia-rich-text-editor-disabled',
 	focused: 'antilia-rich-text-editor-focused'
 });
+
+/** How long after the user took images out of the text the editor tells of them, in ms. */
+const REMOVED_DELAY = 300;
+
+/**
+ * @returns the addresses of the images of a document, with how many times each is in it
+ */
+function imagesIn(doc: ProseMirrorNode): Map<string, number> {
+	const images = new Map<string, number>();
+	doc.descendants((node) => {
+		if (node.type.name === 'image' && typeof node.attrs.src === 'string' && node.attrs.src) {
+			images.set(node.attrs.src, (images.get(node.attrs.src) ?? 0) + 1);
+		}
+		// no image in the text of a paragraph: images are blocks
+		return !node.isTextblock;
+	});
+	return images;
+}
 
 const DEFAULTS = { stateDelay: 400, resizable: 'vertical' as ResizeAxis, minWidth: 200,
 	minHeight: 96, proofreadDelay: 600, suggestDelay: 150 };
@@ -455,6 +508,14 @@ export class RichTextEditor {
 
 	/** What the uploads ask of the editor, made once. */
 	private uploads: UploadHost | null = null;
+
+	/** The addresses of the images of the text, with how many times each is in it. */
+	private images = new Map<string, number>();
+
+	/** The images taken out of the text, to tell of in a moment. */
+	private readonly removed = new Set<string>();
+
+	private removedTimer: ReturnType<typeof setTimeout> | null = null;
 
 	private resizable: Resizable | null = null;
 
@@ -579,6 +640,7 @@ export class RichTextEditor {
 		this.render();
 		element.append(content);
 		this.editor = this.create(given);
+		this.images = imagesIn(this.editor.state.doc);
 		this.value = this.serialize(this.editor.state.doc);
 		this.saved = options.saved !== undefined ? this.canonical(options.saved) :
 			field ? this.canonical(field.defaultValue) : this.value;
@@ -1067,20 +1129,17 @@ export class RichTextEditor {
 				enabled: () => !!this.options.onUpload && !this.isReadOnly() &&
 					this.features().has('image'),
 				types: () => this.uploadTypes(),
-				refusal: (file) => this.refusal(file),
-				uploading: (file) => format(this.texts().uploading, this.fileName(file)),
+				dialog: () => !!this.options.uploadDialog,
+				check: (files) => checkFiles(files, this.uploadLimits(), this.texts(),
+					(oversize) => askToScale(oversize, this.uploadLimits().maxDimensions!,
+						this.texts(), this.look)),
+				uploading: (file) => format(this.texts().uploading, fileNameOf(file, this.texts())),
 				upload: (file) => this.upload(file),
-				alert: (message) => this.alert(message)
+				alert: (message) => this.alert(message),
+				discard: (urls) => this.imagesRemoved(urls.filter((url) => !this.images.has(url)))
 			};
 		}
 		return this.uploads;
-	}
-
-	/**
-	 * @returns the name of a file as the messages say it, which a file pasted may not have
-	 */
-	private fileName(file: File): string {
-		return file.name || this.texts().theImage;
 	}
 
 	private uploadTypes(): string[] {
@@ -1089,20 +1148,18 @@ export class RichTextEditor {
 	}
 
 	/**
-	 * @returns why a file cannot be uploaded: not of the types taken, or too large; null when it
-	 *          can
+	 * @returns the limits of the uploads, as the options give them
 	 */
-	private refusal(file: File): string | null {
-		const texts = this.texts();
-		const types = this.uploadTypes();
-		if (!types.includes(file.type.toLowerCase())) {
-			return format(texts.uploadType, this.fileName(file), typesText(types));
-		}
-		const max = this.options.uploadMaxSize;
-		if (max != null && file.size > max) {
-			return format(texts.uploadTooLarge, this.fileName(file), sizeText(max));
-		}
-		return null;
+	private uploadLimits(): Parameters<typeof checkFiles>[1] {
+		const { uploadMaxWidth: width, uploadMaxHeight: height, uploadMaxCount: count,
+			uploadMaxSize: size } = this.options;
+		const positive = (value: number | null | undefined) => typeof value === 'number' &&
+			Number.isFinite(value) && value > 0;
+		const maxDimensions: RichTextImageDimensions | null = positive(width) && positive(height) ?
+			{ width: Math.floor(width!), height: Math.floor(height!) } : null;
+		return { types: this.uploadTypes(), maxSize: size ?? null,
+			maxCount: positive(count) ? Math.floor(count!) : null, maxDimensions,
+			scaling: !!this.options.uploadScaling };
 	}
 
 	/**
@@ -1112,9 +1169,9 @@ export class RichTextEditor {
 	 */
 	private async upload(file: File): Promise<string> {
 		const texts = this.texts();
-		const failed = format(texts.uploadFailed, this.fileName(file));
+		const failed = format(texts.uploadFailed, fileNameOf(file, texts));
 		const uploader = this.options.onUpload;
-		const refused = this.refusal(file);
+		const refused = refusalOf(file, this.uploadLimits(), texts);
 		if (!uploader || refused) {
 			throw new Error(refused ?? failed);
 		}
@@ -1130,6 +1187,54 @@ export class RichTextEditor {
 			throw new Error(failed);
 		}
 		return address;
+	}
+
+	/**
+	 * Notes the images the text no longer holds, after a change of the user or of the page's
+	 * code, to tell of in a moment; those it holds again by then are not told of. A text the page
+	 * gives tells of nothing.
+	 */
+	private trackImages(transaction: Transaction): void {
+		const before = this.images;
+		const after = imagesIn(this.editor.state.doc);
+		this.images = after;
+		if (transaction.getMeta(EXTERNAL)) {
+			return;
+		}
+		before.forEach((_count, src) => {
+			if (!after.has(src)) {
+				this.removed.add(src);
+			}
+		});
+		after.forEach((_count, src) => this.removed.delete(src));
+		if (this.removed.size && this.removedTimer === null) {
+			this.removedTimer = setTimeout(() => this.flushRemoved(), REMOVED_DELAY);
+		}
+	}
+
+	/**
+	 * Tells of the images taken out of the text, those it does not hold again.
+	 */
+	private flushRemoved(): void {
+		if (this.removedTimer !== null) {
+			clearTimeout(this.removedTimer);
+			this.removedTimer = null;
+		}
+		const urls = Array.from(this.removed).filter((url) => !this.images.has(url));
+		this.removed.clear();
+		this.imagesRemoved(urls);
+	}
+
+	/**
+	 * Tells the page of images the text no longer holds: onImagesRemoved, then the event
+	 * images-removed.
+	 */
+	private imagesRemoved(urls: readonly string[]): void {
+		if (!urls.length || this.destroyed) {
+			return;
+		}
+		this.options.onImagesRemoved?.([...urls]);
+		this.trigger(RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved, { urls: [...urls] });
 	}
 
 	/**
@@ -1390,6 +1495,8 @@ export class RichTextEditor {
 			this.fieldEvent('change');
 		}
 		this.focusValue = null;
+		// the images taken out a moment ago are told of before the page saves
+		this.flushRemoved();
 		this.options.onBlur?.(value);
 		this.dispatch('blur');
 		this.report(false);
@@ -1402,6 +1509,7 @@ export class RichTextEditor {
 		const rebuilding = this.rebuilding;
 		const user = !transaction.getMeta(EXTERNAL);
 		if (transaction.docChanged) {
+			this.trackImages(transaction);
 			const value = this.serialize(editor.state.doc);
 			if (value !== this.value) {
 				// what a paste lost is told until the text changes again
@@ -1724,9 +1832,11 @@ export class RichTextEditor {
 	}
 
 	/**
-	 * Tells the page to save the text: onSave and the event save, as Ctrl+S does.
+	 * Tells the page to save the text: onSave and the event save, as Ctrl+S does; the images taken
+	 * out a moment ago are told of before.
 	 */
 	save(): void {
+		this.flushRemoved();
 		this.options.onSave?.(this.getValue());
 		this.dispatch('save');
 	}
@@ -1895,6 +2005,10 @@ export class RichTextEditor {
 	private release(): void {
 		if (this.destroyed) {
 			return;
+		}
+		// the images taken out a moment ago are told of still
+		if (this.removedTimer !== null) {
+			this.flushRemoved();
 		}
 		this.destroyed = true;
 		this.stopHearing?.();
