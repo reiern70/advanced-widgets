@@ -277,6 +277,13 @@
 	<entry key="RichTextEditor.scaleTitle">Zu große Bilder</entry>
 	<entry key="RichTextEditor.scaleText">Diese Bilder sind größer als {0} Pixel. Haken Sie die zu verkleinernden an; die anderen werden weggelassen.</entry>
 	<entry key="RichTextEditor.scaleDown">{0} auf {1} verkleinern</entry>
+	<entry key="RichTextEditor.cancelUpload">Hochladen von {0} abbrechen</entry>
+	<entry key="RichTextEditor.storedImage">Bild aus dem Speicher einfügen</entry>
+	<entry key="RichTextEditor.storePermanently">Dauerhaft speichern</entry>
+	<entry key="RichTextEditor.permanentFailed">{0} konnte nicht dauerhaft gespeichert werden.</entry>
+	<entry key="RichTextEditor.findImages">Name des Bildes</entry>
+	<entry key="RichTextEditor.findingImages">Suche…</entry>
+	<entry key="RichTextEditor.noStoredImages">Keine gespeicherten Bilder gefunden.</entry>
 	<entry key="RichTextEditor.proofreadSpelling">Rechtschreibung</entry>
 	<entry key="RichTextEditor.proofreadGrammar">Grammatik</entry>
 	<entry key="RichTextEditor.proofreadStyle">Stil</entry>

@@ -65,7 +65,7 @@
 	<entry key="readOnly">Read only</entry>
 	<entry key="count">Count the words</entry>
 	<entry key="highlight">Highlight the code</entry>
-	<entry key="extras">Choose the language of a code block in the menu of its tool: Java, JavaScript, TypeScript, JSON or Markdown, in their colors. Drop images on the zone of the form of the image, or choose several there, or drop or paste them into the text: PNG, JPEG, GIF, WebP or AVIF, {0} and {1} pixels at most, {2} at a time; you may scale down a picture larger. The tool Images lists the images of the text, each to select or delete; an image taken out of the text is deleted once you save, or at once.</entry>
+	<entry key="extras">Choose the language of a code block in the menu of its tool: Java, JavaScript, TypeScript, JSON or Markdown, in their colors. Drop images on the zone of the form of the image, or choose several there, or drop or paste them into the text: PNG, JPEG, GIF, WebP or AVIF, {0} and {1} pixels at most, {2} at a time; you may scale down a picture larger. The tool Images lists the images of the text, each to select or delete; an image taken out of the text is deleted once you save, or at once. While an image uploads, its mark shows the share sent, and its cross cancels it. Tick Store permanently to keep an image you upload: the tool Insert image from store finds those you kept by their names, as you type.</entry>
 	<entry key="save">Save</entry>
 	<entry key="start">Type, select, scroll or resize: the server keeps it all.</entry>
 	<entry key="heardFocus">The server heard you entered the article.</entry>

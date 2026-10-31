@@ -17,7 +17,7 @@ import { useState } from 'react';
 import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
-import { describe, imagesTakenOut, proofreader as proofreaderOf, richText,
+import { describe, imagesTakenOut, proofreader as proofreaderOf, richText, storedImages,
 	suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 	type RichTextEditorConfig } from '../rich-text-editor.js';
 
@@ -36,6 +36,7 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const [count, setCount] = useState(true);
 	const [highlight, setHighlight] = useState(true);
 	const [onUpload] = useState(() => uploader(config));
+	const [stored] = useState(() => storedImages(config));
 	const [articleImages] = useState(() => imagesTakenOut(config));
 	const [notesImages] = useState(() => imagesTakenOut(config));
 	const [proofreader] = useState(() => proofreaderOf(config));
@@ -61,7 +62,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	});
 	const limits = { uploadTypes: config.uploadTypes, uploadMaxSize: config.uploadMaxSize,
 		uploadMaxWidth: config.uploadMaxWidth, uploadMaxHeight: config.uploadMaxHeight,
-		uploadMaxCount: config.uploadMaxCount, uploadScaling: true };
+		uploadMaxCount: config.uploadMaxCount, uploadScaling: true,
+		onStorePermanently: stored.keep, onFindImages: stored.find };
 
 	return (
 		<div className="rich-text-demo">

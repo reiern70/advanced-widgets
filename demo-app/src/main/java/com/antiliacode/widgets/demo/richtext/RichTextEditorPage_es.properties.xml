@@ -65,7 +65,7 @@
 	<entry key="readOnly">Solo lectura</entry>
 	<entry key="count">Contar las palabras</entry>
 	<entry key="highlight">Resaltar el código</entry>
-	<entry key="extras">Elija el lenguaje de un bloque de código en el menú de su herramienta: Java, JavaScript, TypeScript, JSON o Markdown, en sus colores. Suelte imágenes en la zona del formulario de la imagen, o elija varias allí, o suéltelas o péguelas en el texto: PNG, JPEG, GIF, WebP o AVIF, de {0} y {1} píxeles como mucho, {2} a la vez; puede reducir una imagen mayor. La herramienta Imágenes lista las imágenes del texto, cada una para seleccionarla o eliminarla; una imagen quitada del texto se elimina al guardar, o al momento.</entry>
+	<entry key="extras">Elija el lenguaje de un bloque de código en el menú de su herramienta: Java, JavaScript, TypeScript, JSON o Markdown, en sus colores. Suelte imágenes en la zona del formulario de la imagen, o elija varias allí, o suéltelas o péguelas en el texto: PNG, JPEG, GIF, WebP o AVIF, de {0} y {1} píxeles como mucho, {2} a la vez; puede reducir una imagen mayor. La herramienta Imágenes lista las imágenes del texto, cada una para seleccionarla o eliminarla; una imagen quitada del texto se elimina al guardar, o al momento. Mientras una imagen se sube, su marca muestra la parte enviada, y su cruz la cancela. Marque Guardar permanentemente para conservar una imagen que suba: la herramienta Insertar imagen del almacén encuentra las que conservó por su nombre, según escribe.</entry>
 	<entry key="save">Guardar</entry>
 	<entry key="start">Escriba, seleccione, desplácese o cambie el tamaño: el servidor lo guarda todo.</entry>
 	<entry key="heardFocus">El servidor supo que entró en el artículo.</entry>

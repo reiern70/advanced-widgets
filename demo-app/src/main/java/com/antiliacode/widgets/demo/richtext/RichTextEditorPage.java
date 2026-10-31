@@ -285,7 +285,7 @@ public class RichTextEditorPage extends DemoPage
 			RichTextDocument::setSaved));
 		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
-			.setImageMaxCount(RichTextImages.MAX_COUNT);
+			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true);
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
@@ -446,7 +446,7 @@ public class RichTextEditorPage extends DemoPage
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
 			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
-			.setImageMaxCount(RichTextImages.MAX_COUNT)
+			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true)
 			.setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, RichTextDocument::getSaved,
 				RichTextDocument::setSaved))
@@ -500,7 +500,8 @@ public class RichTextEditorPage extends DemoPage
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
 
 		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
-			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS);
+			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS)
+			.setPermanentImages(true);
 		add(appUploads);
 		appProofreading = new RichTextProofreadBehavior(RichTextWriting.proofreader(
 			getString("misspelled"), getString("repeated"), getString("twoBlanks")));

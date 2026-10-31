@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,17 @@ import com.github.openjson.JSONObject;
  * of the editor in the browser sends: only those it took on this page, by the store's
  * {@link IRichTextImageStore#delete(String)}, and answers {@code {"deleted": [...]}}.
  * <p>
+ * With {@link #setPermanentImages(boolean) permanent images}, it keeps images it took permanently
+ * when asked to, by a POST of their addresses as a JSON array under {@value #PERMANENT_PARAMETER},
+ * which {@code storePermanentlyAt(}{@link #getUploadUrl()}{@code )} sends: only those it took on
+ * this page, by the store's {@link IRichTextImageStore#storePermanently(String, String)} with the
+ * name of their files, and answers {@code {"stored": [...]}}. It finds those kept, by a POST of
+ * what the user typed under {@value #FIND_PARAMETER}, which {@code findImagesAt(}
+ * {@link #getUploadUrl()}{@code )} sends: by the store's
+ * {@link IRichTextImageStore#findPermanent(String, int)}, {@link #setMaxFound(int) so many} at
+ * most, and answers {@code {"images": [{"url": ..., "name": ...}]}}, those of an address the
+ * editor takes.
+ * <p>
  * A {@link RichTextEditor} with {@link RichTextEditor#setImageStore(IRichTextImageStore) a store}
  * has one already. Add one to a page for the editors of React and Svelte in it, and give them
  * {@code uploadImageTo(}{@link #getUploadUrl()}{@code )} as their {@code onUpload}.
@@ -90,6 +102,31 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	 */
 	public static final String REMOVED_PARAMETER = "removed";
 
+	/**
+	 * The name the editor posts the addresses of the images to keep permanently under, as a JSON
+	 * array.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final String PERMANENT_PARAMETER = "permanent";
+
+	/**
+	 * The name the editor posts what the user typed to find the images kept permanently under.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final String FIND_PARAMETER = "find";
+
+	/**
+	 * The most images kept permanently a search answers, unless set otherwise.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final int DEFAULT_MAX_FOUND = 20;
+
+	/** The longest query of a search, in characters; the rest is cut. */
+	private static final int LONGEST_QUERY = 100;
+
 	/** The largest image a user uploads, unless set otherwise. */
 	public static final Bytes DEFAULT_MAX_SIZE = Bytes.megabytes(5);
 
@@ -110,8 +147,15 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 
 	private RichTextImageDimensions maxDimensions;
 
-	/** The addresses of the images taken on this page, which it deletes when asked to. */
-	private final Set<String> uploaded = new LinkedHashSet<>();
+	private boolean permanentImages;
+
+	private int maxFound = DEFAULT_MAX_FOUND;
+
+	/**
+	 * The addresses of the images taken on this page, which it deletes when asked to, with the
+	 * names of their files.
+	 */
+	private final Map<String, String> uploaded = new LinkedHashMap<>();
 
 	/**
 	 * @param store
@@ -212,6 +256,52 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	}
 
 	/**
+	 * @return whether users keep images permanently, and find those kept
+	 * @since 11.0.0
+	 */
+	public boolean isPermanentImages()
+	{
+		return permanentImages;
+	}
+
+	/**
+	 * @param permanentImages
+	 *            whether users keep the images they upload permanently, those they ticked, and find
+	 *            those kept, by the store ({@link IRichTextImageStore#storePermanently(String,
+	 *            String)}, {@link IRichTextImageStore#findPermanent(String, int)}); {@code false}
+	 *            by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextImageUploadBehavior setPermanentImages(boolean permanentImages)
+	{
+		this.permanentImages = permanentImages;
+		return this;
+	}
+
+	/**
+	 * @return how many images kept permanently a search answers at most
+	 * @since 11.0.0
+	 */
+	public int getMaxFound()
+	{
+		return maxFound;
+	}
+
+	/**
+	 * @param maxFound
+	 *            how many images kept permanently a search answers at most, at least one;
+	 *            {@link #DEFAULT_MAX_FOUND} by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextImageUploadBehavior setMaxFound(int maxFound)
+	{
+		this.maxFound = Math.max(maxFound, 1);
+		return this;
+	}
+
+	/**
 	 * @return the media types of the images a user uploads, as the editor in the browser takes them
 	 */
 	public List<String> getMimeTypes()
@@ -245,6 +335,17 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	}
 
 	/**
+	 * @return whether users keep images permanently now, and find those kept: with
+	 *         {@link #setPermanentImages(boolean) permanent images}, while
+	 *         {@link #isUploadAllowed() uploads are allowed}
+	 * @since 11.0.0
+	 */
+	protected boolean isPermanentAllowed()
+	{
+		return permanentImages && isUploadAllowed();
+	}
+
+	/**
 	 * @param url
 	 *            the address of an image
 	 * @return whether this behavior took the image on this page, and has not deleted it since
@@ -252,7 +353,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	 */
 	public boolean isUploaded(String url)
 	{
-		return url != null && uploaded.contains(url.trim());
+		return url != null && uploaded.containsKey(url.trim());
 	}
 
 	/**
@@ -262,7 +363,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	 */
 	public Set<String> getUploaded()
 	{
-		return Collections.unmodifiableSet(uploaded);
+		return Collections.unmodifiableSet(uploaded.keySet());
 	}
 
 	/**
@@ -277,6 +378,89 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	{
 		// a copy: the addresses may be a view of those remembered
 		List.copyOf(urls).forEach(uploaded::remove);
+	}
+
+	/**
+	 * Keeps images this behavior took on this page permanently, by the store, with the names of
+	 * their files, and forgets them: it no longer deletes them when asked to. It leaves the others
+	 * alone.
+	 *
+	 * @param urls
+	 *            the addresses of the images
+	 * @return the addresses of the images kept
+	 * @since 11.0.0
+	 */
+	public Set<String> storePermanently(Collection<String> urls)
+	{
+		Set<String> stored = new LinkedHashSet<>();
+		for (String url : List.copyOf(urls))
+		{
+			if (isUploaded(url))
+			{
+				String address = url.trim();
+				try
+				{
+					store.storePermanently(address, uploaded.get(address));
+					uploaded.remove(address);
+					stored.add(address);
+				}
+				catch (IOException | RuntimeException e)
+				{
+					LOG.error("Could not keep the image {} permanently", address, e);
+				}
+			}
+		}
+		return stored;
+	}
+
+	/**
+	 * Finds the images kept permanently, by the store: those of an address the editor takes,
+	 * {@link #getMaxFound() so many} at most.
+	 *
+	 * @param query
+	 *            what the user typed
+	 * @return the images found
+	 * @since 11.0.0
+	 */
+	public List<RichTextStoredImage> findPermanent(String query)
+	{
+		String text = query == null ? "" : query.trim();
+		if (text.length() > LONGEST_QUERY)
+		{
+			text = text.substring(0, LONGEST_QUERY);
+		}
+		List<RichTextStoredImage> found;
+		try
+		{
+			found = store.findPermanent(text, maxFound);
+		}
+		catch (IOException | RuntimeException e)
+		{
+			LOG.error("Could not find the images kept permanently for {}", text, e);
+			return List.of();
+		}
+		if (found == null)
+		{
+			return List.of();
+		}
+		List<RichTextStoredImage> taken = new ArrayList<>();
+		for (RichTextStoredImage image : found)
+		{
+			if (taken.size() >= maxFound)
+			{
+				break;
+			}
+			if (image != null && isTaken(image.url()))
+			{
+				taken.add(image);
+			}
+			else if (image != null)
+			{
+				LOG.warn("The address {} of an image kept permanently is not one the editor takes",
+					image.url());
+			}
+		}
+		return taken;
 	}
 
 	/**
@@ -315,6 +499,10 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	{
 		try
 		{
+			if (store.isPermanent(url))
+			{
+				return false;
+			}
 			store.delete(url);
 			return true;
 		}
@@ -329,13 +517,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	public void onRequest()
 	{
 		JSONObject answer = new JSONObject();
-		List<String> removed = removed();
-		if (removed != null)
-		{
-			answer.put("deleted", new JSONArray(isUploadAllowed() ? deleteUploaded(removed) :
-				Set.of()));
-		}
-		else
+		if (isMultipart())
 		{
 			try
 			{
@@ -346,28 +528,55 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 				answer.put("error", refusal.getMessage());
 			}
 		}
+		else if (parameter(REMOVED_PARAMETER) != null)
+		{
+			answer.put("deleted", new JSONArray(isUploadAllowed() ?
+				deleteUploaded(urlsOf(parameter(REMOVED_PARAMETER))) : Set.of()));
+		}
+		else if (parameter(PERMANENT_PARAMETER) != null)
+		{
+			answer.put("stored", new JSONArray(isPermanentAllowed() ?
+				storePermanently(urlsOf(parameter(PERMANENT_PARAMETER))) : Set.of()));
+		}
+		else if (parameter(FIND_PARAMETER) != null)
+		{
+			JSONArray images = new JSONArray();
+			if (isPermanentAllowed())
+			{
+				findPermanent(parameter(FIND_PARAMETER)).forEach(image -> images.put(
+					image.toJson()));
+			}
+			answer.put("images", images);
+		}
+		else
+		{
+			answer.put("error", RichTextEditor.text(getComponent(), "uploadFailed").replace("{0}",
+				RichTextEditor.text(getComponent(), "theImage")));
+		}
 		RequestCycle.get().scheduleRequestHandlerAfterCurrent(new TextRequestHandler(
 			"application/json", "UTF-8", answer.toString()));
 	}
 
 	/**
-	 * @return the addresses of the images the request asks to delete, {@code null} for a request
-	 *         that does not: an upload
+	 * @return whether the request posts a form of files: an upload
 	 */
-	private static List<String> removed()
+	private static boolean isMultipart()
 	{
-		RequestCycle cycle = RequestCycle.get();
-		if (cycle.getRequest() instanceof ServletWebRequest request)
+		if (RequestCycle.get().getRequest() instanceof ServletWebRequest request)
 		{
 			String type = request.getContainerRequest().getContentType();
-			if (type != null && type.toLowerCase().startsWith("multipart/"))
-			{
-				return null;
-			}
+			return type != null && type.toLowerCase().startsWith("multipart/");
 		}
-		String json = cycle.getRequest().getPostParameters().getParameterValue(REMOVED_PARAMETER)
+		return false;
+	}
+
+	/**
+	 * @return a parameter posted, {@code null} for none
+	 */
+	private static String parameter(String name)
+	{
+		return RequestCycle.get().getRequest().getPostParameters().getParameterValue(name)
 			.toOptionalString();
-		return json == null ? null : urlsOf(json);
 	}
 
 	/**
@@ -427,8 +636,9 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 			{
 				throw refusal("uploadFailed", "");
 			}
-			String url = keep(new FileUpload(items.get(0)));
-			remember(url);
+			FileUpload upload = new FileUpload(items.get(0));
+			String url = keep(upload);
+			remember(url, upload.getClientFileName());
 			return url;
 		}
 		catch (FileUploadSizeException tooLarge)
@@ -447,13 +657,14 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	}
 
 	/**
-	 * Remembers the address of an image taken, forgetting the oldest beyond {@link #REMEMBERED}.
+	 * Remembers the address of an image taken, and the name of its file, forgetting the oldest
+	 * beyond {@link #REMEMBERED}.
 	 */
-	private void remember(String url)
+	private void remember(String url, String name)
 	{
 		uploaded.remove(url);
-		uploaded.add(url);
-		Iterator<String> oldest = uploaded.iterator();
+		uploaded.put(url, name == null ? "" : name);
+		Iterator<String> oldest = uploaded.keySet().iterator();
 		while (uploaded.size() > REMEMBERED && oldest.hasNext())
 		{
 			oldest.next();
@@ -533,14 +744,23 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 		{
 			upload.closeStreams();
 		}
-		if (!RichTextPolicy.isSafeUrl(url) ||
-			(isImagesFromSiteOnly() && !RichTextPolicy.isSiteUrl(url)))
+		if (!isTaken(url))
 		{
 			LOG.error("The address {} of the image {} uploaded is not one the editor takes", url,
 				name);
 			throw refusal("uploadFailed", name);
 		}
 		return url.trim();
+	}
+
+	/**
+	 * @return whether the editor takes an image of the address: a safe one, of the site when the
+	 *         editor keeps the images of the site alone
+	 */
+	private boolean isTaken(String url)
+	{
+		return RichTextPolicy.isSafeUrl(url) && (!isImagesFromSiteOnly() ||
+			RichTextPolicy.isSiteUrl(url));
 	}
 
 	/**

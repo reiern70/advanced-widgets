@@ -23,7 +23,9 @@
   editor is the bindable editor (bind:editor). With highlight, its code blocks show in the colors of
   their language, which the menu of the tool code block chooses; with onupload, the user uploads
   images by the form of the image or its dialog, or by dropping or pasting them into the text, within
-  the limits given; onimagesremoved hears of those taken out of the text. What a paste lost
+  the limits given, each telling the share sent and canceled by a button; onimagesremoved hears of
+  those taken out of the text. With onstorepermanently the user ticks the images to store
+  permanently, and with onfindimages inserts those stored by the tool storedImage. What a paste lost
   to the editor, a script or a link to javascript: for example, comes to onpastecleaned and, with
   pasteNotice, shows in a line under the toolbar until the text changes.
 
@@ -37,8 +39,8 @@
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
-		type RichTextProofreader, type RichTextSuggester,
-		type RichTextTool } from '@antilia/core';
+		type RichTextProofreader, type RichTextStoredImage, type RichTextSuggester,
+		type RichTextTool, type RichTextUploadOptions } from '@antilia/core';
 
 	import { getLook } from './look.js';
 
@@ -171,8 +173,25 @@
 		onresize?: (size: ResizableSize) => void;
 		/** Called with what a paste lost to the editor, by name and count, once it is in the text. */
 		onpastecleaned?: (report: RichTextCleaningReport) => void;
-		/** Uploads an image, answering the address it is served at: see uploadImageTo of the core. */
-		onupload?: (file: File) => Promise<string>;
+		/**
+		 * Uploads an image, answering the address it is served at: see uploadImageTo of the core.
+		 * The options tell the share sent, which the mark of the image shows, and abort as the user
+		 * cancels the upload.
+		 */
+		onupload?: (file: File, options?: RichTextUploadOptions) => Promise<string>;
+		/**
+		 * Stores images the user uploaded permanently, those ticked as they upload, resolving to the
+		 * addresses of those stored (see storePermanentlyAt of the core); without it the uploads
+		 * offer no box to tick.
+		 */
+		onstorepermanently?: (urls: string[]) => Promise<string[]>;
+		/**
+		 * Finds the images the page stores permanently for what the user typed, which the tool
+		 * storedImage lists and inserts (see findImagesAt of the core); without it the tool does
+		 * not show.
+		 */
+		onfindimages?: (query: string, signal: AbortSignal) =>
+			Promise<readonly RichTextStoredImage[]>;
 		/**
 		 * Called a moment after the user took images out of the text, or uploaded some that never
 		 * went into it, with their addresses, for the page to delete them (see deleteImagesAt of the
@@ -237,6 +256,8 @@
 		onresize,
 		onpastecleaned,
 		onupload,
+		onstorepermanently,
+		onfindimages,
 		onimagesremoved
 	}: Props = $props();
 
@@ -245,7 +266,16 @@
 		given === true ? lezerHighlighter : given || false;
 
 	/** Uploads by the latest onupload, null without one. */
-	const uploader = () => onupload ? (file: File) => onupload!(file) : null;
+	const uploader = () => onupload ? (file: File, options?: RichTextUploadOptions) =>
+		onupload!(file, options) : null;
+
+	/** Stores permanently by the latest onstorepermanently, null without one. */
+	const keeper = () => onstorepermanently ? (urls: string[]) => onstorepermanently!(urls) :
+		null;
+
+	/** Finds the images stored by the latest onfindimages, null without one. */
+	const finder = () => onfindimages ? (query: string, signal: AbortSignal) =>
+		onfindimages!(query, signal) : null;
 
 	let element = $state<HTMLDivElement>();
 	let instance: RichTextEditor | null = null;
@@ -262,7 +292,8 @@
 			proofreadDelay, suggesters, limit, count,
 			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, pasteNotice, texts, look, highlight: highlighterOf(highlight),
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
-			uploadMaxCount, uploadDialog, onUpload: uploader(),
+			uploadMaxCount, uploadDialog, onUpload: uploader(), onStorePermanently: keeper(),
+			onFindImages: finder(),
 			onImagesRemoved: (urls: string[]) => onimagesremoved?.(urls),
 			onChange: (next: string) => {
 				value = next;
@@ -318,7 +349,7 @@
 			uploadMaxSize: uploadMaxSize ?? null, uploadMaxWidth: uploadMaxWidth ?? null,
 			uploadMaxHeight: uploadMaxHeight ?? null, uploadScaling: !!uploadScaling,
 			uploadMaxCount: uploadMaxCount ?? null, uploadDialog: !!uploadDialog,
-			onUpload: uploader() };
+			onUpload: uploader(), onStorePermanently: keeper(), onFindImages: finder() };
 		untrack(() => instance?.configure(next));
 	});
 

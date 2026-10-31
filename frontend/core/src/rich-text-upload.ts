@@ -27,11 +27,14 @@
  * decoding the picture. A picture too large is refused, or, while the page allows it
  * (uploadScaling), offered in a dialog to scale down, which the user ticks: the browser then
  * scales it down before sending it. The server checks them again, the browser's word is not to be
- * trusted. While a file uploads, a mark stands where its image goes; the images take their places
- * once the page answered, in the order of the files, or a message says why one did not.
+ * trusted. While a file uploads, a mark stands where its image goes, with the share of the file
+ * sent and a button canceling the upload; the images take their places once the page answered, in
+ * the order of the files, or a message says why one did not. Canceling takes the mark away and
+ * inserts nothing.
  *
  * deleteImagesAt() asks Wicket's RichTextImageUploadBehavior to delete images it took, those the
- * user took out of the text (onImagesRemoved).
+ * user took out of the text (onImagesRemoved). The images the user ticks to store permanently go
+ * to the page (onStorePermanently, see rich-text-stored-images.ts) once they are in the text.
  */
 
 import { Extension, type Editor } from '@tiptap/core';
@@ -40,9 +43,21 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 import { dimensionsText, fits, readImageDimensions, scaledToFit,
 	type RichTextImageDimensions } from './rich-text-image-headers.js';
+import type { RichTextEditorTexts } from './rich-text-toolbar.js';
 
-/** Uploads an image, answering the address it is served at. */
-export type RichTextUploader = (file: File) => Promise<string>;
+/** What the editor gives an upload besides the file. */
+export interface RichTextUploadOptions {
+	/** Called as the file is sent, with the bytes sent and those of the whole request. */
+	onProgress?: (sent: number, total: number) => void;
+	/** Aborted as the user cancels the upload: the uploader may stop it then. */
+	signal?: AbortSignal;
+}
+
+/**
+ * Uploads an image, answering the address it is served at. It may tell how much of the file it
+ * sent, and stop as the user cancels: the editor ignores what an upload canceled answers anyway.
+ */
+export type RichTextUploader = (file: File, options?: RichTextUploadOptions) => Promise<string>;
 
 /** The types of the images a user may upload unless the page says otherwise. */
 export const DEFAULT_RICH_TEXT_UPLOAD_TYPES: readonly string[] = Object.freeze(['image/png',
@@ -58,30 +73,76 @@ const EXTENSIONS: ReadonlyMap<string, string> = new Map([['image/png', 'png'],
 	['image/jpeg', 'jpg'], ['image/webp', 'webp']]);
 
 /**
+ * @returns an error telling an upload was canceled, as fetch() rejects an aborted request
+ */
+export function abortError(): Error {
+	return new DOMException('The upload was canceled', 'AbortError');
+}
+
+/**
+ * @returns whether an error tells of an upload canceled
+ */
+export function isAbort(error: unknown): boolean {
+	return error instanceof Error && error.name === 'AbortError';
+}
+
+/**
  * @returns an uploader posting a file to a URL, in a form under a name, and reading the address
  *          from the JSON of the answer, {"url": "..."}; {"error": "..."} says why the server
- *          refused it, which the promise is rejected with
+ *          refused it, which the promise is rejected with. It tells the progress of the file sent,
+ *          and stops as the signal aborts, rejecting with an AbortError: by XMLHttpRequest, as
+ *          fetch() tells no progress of what it sends.
  */
 export function uploadImageTo(url: string, name = 'file'): RichTextUploader {
-	return async (file) => {
+	return (file, options = {}) => new Promise<string>((resolve, reject) => {
+		const { signal, onProgress } = options;
+		if (signal?.aborted) {
+			reject(abortError());
+			return;
+		}
 		const body = new FormData();
 		body.append(name, file, file.name);
-		const response = await fetch(url, { method: 'POST', body, credentials: 'same-origin',
-			headers: { Accept: 'application/json' } });
-		let answer: { url?: unknown; error?: unknown } = {};
-		try {
-			answer = await response.json() as typeof answer;
-		} catch {
-			// no JSON: the server failed
+		const request = new XMLHttpRequest();
+		const abort = () => request.abort();
+		const settle = () => signal?.removeEventListener('abort', abort);
+		request.open('POST', url);
+		request.setRequestHeader('Accept', 'application/json');
+		request.responseType = 'text';
+		if (onProgress) {
+			request.upload.addEventListener('progress', (event) => {
+				if (event.lengthComputable && event.total > 0) {
+					onProgress(event.loaded, event.total);
+				}
+			});
 		}
-		if (typeof answer.error === 'string' && answer.error) {
-			throw new Error(answer.error);
-		}
-		if (!response.ok || typeof answer.url !== 'string') {
-			throw new Error('');
-		}
-		return answer.url;
-	};
+		request.addEventListener('load', () => {
+			settle();
+			let answer: { url?: unknown; error?: unknown } = {};
+			try {
+				answer = JSON.parse(request.responseText) as typeof answer;
+			} catch {
+				// no JSON: the server failed
+			}
+			if (typeof answer.error === 'string' && answer.error) {
+				reject(new Error(answer.error));
+			} else if (request.status < 200 || request.status >= 300 ||
+				typeof answer.url !== 'string') {
+				reject(new Error(''));
+			} else {
+				resolve(answer.url);
+			}
+		});
+		request.addEventListener('error', () => {
+			settle();
+			reject(new Error(''));
+		});
+		request.addEventListener('abort', () => {
+			settle();
+			reject(abortError());
+		});
+		signal?.addEventListener('abort', abort);
+		request.send(body);
+	});
 }
 
 /**
@@ -343,22 +404,160 @@ export interface UploadHost {
 	/**
 	 * Uploads a file, checked already.
 	 *
-	 * @returns the address of the image; rejected with the message saying why not
+	 * @param options the progress, and the signal canceling the upload
+	 * @returns the address of the image; rejected with the message saying why not, or with an
+	 *          AbortError once canceled
 	 */
-	upload(file: File): Promise<string>;
+	upload(file: File, options?: RichTextUploadOptions): Promise<string>;
 	/** @returns the text of the mark standing where the image of a file goes */
 	uploading(file: File): string;
+	/** What the editor says. */
+	texts(): RichTextEditorTexts;
 	/** Tells the user something went wrong. */
 	alert(message: string): void;
 	/** Tells the page images were uploaded that never went into the text, or no longer are. */
 	discard(urls: readonly string[]): void;
+	/** Whether the user may store the images uploaded permanently, by a box to tick. */
+	permanent(): boolean;
+	/**
+	 * Has the page store images uploaded permanently.
+	 *
+	 * @returns the addresses of those stored
+	 */
+	storePermanently(urls: readonly string[]): Promise<string[]>;
 }
 
-/** A file uploading: the mark of where its image goes. */
+/**
+ * Has the page store images permanently, telling the user of those it did not store.
+ *
+ * @param images the address of each image, and the name of its file
+ */
+export async function keepPermanently(host: UploadHost,
+	images: readonly { src: string; name: string }[]): Promise<void> {
+	if (!images.length) {
+		return;
+	}
+	let stored: readonly string[];
+	try {
+		stored = await host.storePermanently(images.map((each) => each.src));
+	} catch {
+		stored = [];
+	}
+	const texts = host.texts();
+	const failed = images.filter((each) => !stored.includes(each.src));
+	if (failed.length) {
+		host.alert(failed.map((each) => fill(texts.permanentFailed, each.name || texts.theImage))
+			.join(' '));
+	}
+}
+
+/** A file uploading: the mark of where its image goes, with its progress and its cancel. */
 interface Uploading {
 	id: object;
 	position: number;
 	text: string;
+	/** The label of the button canceling the upload. */
+	cancelLabel: string;
+	/** The share of the file sent, from 0 to 1; null before the upload tells it. */
+	progress: number | null;
+	/** Cancels the upload, taking the mark away. */
+	cancel: () => void;
+	/** The element of the mark the editor shows, if any, which the progress updates. */
+	element: HTMLElement | null;
+}
+
+/** Counts the marks, for the keys of their widgets. */
+let marks = 0;
+
+/** The icon of the button canceling an upload: a cross. */
+const CROSS = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" ' +
+	'stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" ' +
+	'focusable="false"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+/**
+ * @returns the share of a file sent as the mark and the dialog say it: 42 %
+ */
+export function percentText(progress: number): string {
+	return Math.round(Math.min(Math.max(progress, 0), 1) * 100) + ' %';
+}
+
+/**
+ * @returns a bar of progress, its share set by showProgress(), with no share until then
+ * @param label what the bar is the progress of
+ */
+export function progressBar(label: string): HTMLElement {
+	const bar = document.createElement('span');
+	bar.className = 'antilia-rich-text-progress';
+	bar.setAttribute('role', 'progressbar');
+	bar.setAttribute('aria-label', label);
+	bar.setAttribute('aria-valuemin', '0');
+	bar.setAttribute('aria-valuemax', '100');
+	const fill = document.createElement('span');
+	fill.className = 'antilia-rich-text-progress-fill';
+	bar.append(fill);
+	return bar;
+}
+
+/**
+ * Shows the share sent on a bar of progressBar(): its length, by a custom property the script
+ * sets through the CSSOM, which a strict policy allows, and its value.
+ */
+export function showProgress(bar: HTMLElement, progress: number | null): void {
+	if (progress === null) {
+		bar.removeAttribute('aria-valuenow');
+		bar.removeAttribute('aria-valuetext');
+		return;
+	}
+	const share = Math.min(Math.max(progress, 0), 1);
+	bar.style.setProperty('--antilia-rich-text-progress', String(share));
+	bar.setAttribute('aria-valuenow', String(Math.round(share * 100)));
+	bar.setAttribute('aria-valuetext', percentText(share));
+}
+
+/**
+ * @returns the element of a mark: what uploads, its progress and the button canceling it
+ */
+function markElement(uploading: Uploading): HTMLElement {
+	const element = document.createElement('span');
+	element.className = 'antilia-rich-text-uploading';
+	element.setAttribute('contenteditable', 'false');
+	const text = document.createElement('span');
+	text.className = 'antilia-rich-text-uploading-text';
+	text.setAttribute('role', 'status');
+	text.textContent = uploading.text;
+	const bar = progressBar(uploading.text);
+	const percent = document.createElement('span');
+	percent.className = 'antilia-rich-text-uploading-percent';
+	percent.setAttribute('aria-hidden', 'true');
+	const cancel = document.createElement('button');
+	cancel.type = 'button';
+	cancel.className = 'antilia-rich-text-uploading-cancel';
+	cancel.setAttribute('aria-label', uploading.cancelLabel);
+	cancel.title = uploading.cancelLabel;
+	cancel.insertAdjacentHTML('beforeend', CROSS);
+	cancel.addEventListener('mousedown', (event) => event.preventDefault());
+	cancel.addEventListener('click', (event) => {
+		event.preventDefault();
+		uploading.cancel();
+	});
+	element.append(text, bar, percent, cancel);
+	uploading.element = element;
+	updateMark(uploading);
+	return element;
+}
+
+/**
+ * Shows the progress of an upload on its mark.
+ */
+function updateMark(uploading: Uploading): void {
+	const element = uploading.element;
+	if (!element) {
+		return;
+	}
+	showProgress(element.querySelector<HTMLElement>('.antilia-rich-text-progress')!,
+		uploading.progress);
+	element.querySelector('.antilia-rich-text-uploading-percent')!.textContent =
+		uploading.progress === null ? '' : percentText(uploading.progress);
 }
 
 /**
@@ -367,6 +566,12 @@ interface Uploading {
  */
 type UploadMeta = { add: Uploading } |
 	{ remove: object; move?: { ids: readonly object[]; position: number } };
+
+/** What the spec of the widget of a mark holds. */
+interface MarkSpec {
+	id: object;
+	uploading: Uploading;
+}
 
 const KEY = new PluginKey<DecorationSet>('antiliaRichTextUploads');
 
@@ -379,16 +584,13 @@ function markOf(state: EditorState, id: object): number | null {
 }
 
 /**
- * @returns the mark of a file uploading, before what goes in where it stands
+ * @returns the mark of a file uploading, before what goes in where it stands; the editor leaves
+ *          the events of its button to it
  */
 function mark(uploading: Uploading): Decoration {
-	return Decoration.widget(uploading.position, () => {
-		const element = document.createElement('span');
-		element.className = 'antilia-rich-text-uploading';
-		element.setAttribute('role', 'status');
-		element.textContent = uploading.text;
-		return element;
-	}, { id: uploading.id, text: uploading.text, side: -1 });
+	return Decoration.widget(uploading.position, () => markElement(uploading),
+		{ id: uploading.id, uploading, side: -1, key: 'antilia-upload-' + (++marks),
+			ignoreSelection: true, stopEvent: () => true });
 }
 
 /**
@@ -407,28 +609,37 @@ function endOfLastStep(tr: Transaction, position: number): number {
 /**
  * Checks files and uploads them, each image taking the place of its mark once the page answered,
  * in the order of the files. The marks stand from the start, where the images go as the text
- * changes meanwhile; those of the files the check leaves out go.
+ * changes meanwhile, each showing the share of its file sent and a button canceling it; those of
+ * the files the check leaves out go, and so do those the user cancels, their images not inserted.
  *
  * @param position where the images go
+ * @param permanent whether the page stores the images permanently once they are in the text
  */
 export async function uploadFiles(host: UploadHost, files: readonly File[],
-	position: number): Promise<void> {
+	position: number, permanent = false): Promise<void> {
 	const start = host.editor();
 	const at = Math.min(Math.max(position, 0), start.state.doc.content.size);
-	const ids = new Map<File, object>();
-	for (const file of files) {
-		const id = {};
-		ids.set(file, id);
-		start.view.dispatch(start.state.tr.setMeta(KEY, { add: { id, position: at,
-			text: host.uploading(file) } }).setMeta('addToHistory', false));
-	}
+	const texts = host.texts();
 	const unmark = (id: object) => {
 		const current = host.editor();
-		if (!current.isDestroyed) {
+		if (!current.isDestroyed && markOf(current.state, id) !== null) {
 			current.view.dispatch(current.state.tr.setMeta(KEY, { remove: id })
 				.setMeta('addToHistory', false));
 		}
 	};
+	const uploads = new Map<File, { uploading: Uploading; controller: AbortController }>();
+	for (const file of files) {
+		const controller = new AbortController();
+		const uploading: Uploading = { id: {}, position: at, text: host.uploading(file),
+			cancelLabel: fill(texts.cancelUpload, fileNameOf(file, texts)), progress: null,
+			element: null, cancel: () => {
+				controller.abort();
+				unmark(uploading.id);
+			} };
+		uploads.set(file, { uploading, controller });
+		start.view.dispatch(start.state.tr.setMeta(KEY, { add: uploading })
+			.setMeta('addToHistory', false));
+	}
 	let check: UploadCheck;
 	try {
 		check = await host.check(files);
@@ -436,29 +647,40 @@ export async function uploadFiles(host: UploadHost, files: readonly File[],
 		check = { files: [], from: [], refused: [] };
 	}
 	const { files: checked, from, refused } = check;
-	ids.forEach((id, file) => {
+	uploads.forEach(({ uploading }, file) => {
 		if (!from.includes(file)) {
-			unmark(id);
+			unmark(uploading.id);
 		}
 	});
 	if (refused.length) {
 		host.alert(refused.join(' '));
 	}
+	const inserted: { src: string; name: string }[] = [];
 	// the image before goes in first, or fails, so that the images keep their order
 	let before: Promise<unknown> = Promise.resolve();
 	checked.forEach((file, index) => {
-		const id = ids.get(from[index]!)!;
-		const uploaded = host.editor().isDestroyed ? Promise.reject(new Error('')) :
-			host.upload(file);
+		const { uploading, controller } = uploads.get(from[index]!)!;
+		const id = uploading.id;
+		const signal = controller.signal;
+		const uploaded = signal.aborted ? Promise.reject(abortError()) :
+			host.editor().isDestroyed ? Promise.reject(new Error('')) :
+				host.upload(file, { signal, onProgress: (sent, total) => {
+					uploading.progress = sent / total;
+					updateMark(uploading);
+				} });
 		// failing before the image before it is in: told once that one is
 		uploaded.catch(() => undefined);
 		// the marks of the files after it, which go after its image
-		const later = checked.slice(index + 1).map((_each, next) => ids.get(from[index + 1 + next]!)!);
+		const later = checked.slice(index + 1).map((_each, next) =>
+			uploads.get(from[index + 1 + next]!)!.uploading.id);
 		before = before.then(() => uploaded).then((src) => {
 			const current = host.editor();
-			const where = current.isDestroyed ? null : markOf(current.state, id);
+			const where = current.isDestroyed || signal.aborted ? null :
+				markOf(current.state, id);
 			if (where === null) {
-				// the editor went, or the text where the image went: the image is not wanted
+				// the editor went, the text where the image went, or the user canceled it: the
+				// image is not wanted
+				unmark(id);
 				host.discard([src]);
 				return;
 			}
@@ -469,15 +691,19 @@ export async function uploadFiles(host: UploadHost, files: readonly File[],
 					where) } });
 				return true;
 			}).run();
+			inserted.push({ src, name: fileNameOf(file, texts) });
 		}, (error: unknown) => {
 			unmark(id);
 			const message = error instanceof Error ? error.message : String(error);
-			if (message) {
+			if (message && !isAbort(error) && !signal.aborted) {
 				host.alert(message);
 			}
 		});
 	});
 	await before;
+	if (permanent) {
+		await keepPermanently(host, inserted);
+	}
 }
 
 /**
@@ -513,14 +739,15 @@ export function uploadExtension(host: UploadHost): Extension {
 								const moved = next.find(undefined, undefined, (spec) =>
 									move.ids.includes(spec.id as object));
 								// before remove(), which empties the array it is given
-								const specs = moved.map((each) => each.spec as Uploading);
+								const specs = moved.map((each) => each.spec as MarkSpec);
 								next = next.remove(moved);
 								next = next.add(transaction.doc, move.ids.map((id) =>
 									specs.find((spec) => spec.id === id)).filter(
-									(spec): spec is Uploading => !!spec).map((spec) =>
-									mark({ id: spec.id, text: spec.text,
-										position: Math.min(move.position,
-											transaction.doc.content.size) })));
+									(spec): spec is MarkSpec => !!spec).map((spec) => {
+									spec.uploading.position = Math.min(move.position,
+										transaction.doc.content.size);
+									return mark(spec.uploading);
+								}));
 							}
 						}
 						return next;
