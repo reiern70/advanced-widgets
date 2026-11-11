@@ -24,7 +24,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { CodeEditor, type CodeEditorError, type CodeEditorLanguage, type CodeEditorSelection,
+	import { CodeEditor, type CodeEditorError, type CodeEditorEventKey, type CodeEditorLanguage,
+		type CodeEditorSelection, type EditorEvents,
 		type CodeEditorState,
 		type CodeEditorStateChange, type CodeEditorTexts, type Extension, type ResizableSize,
 		type ResizeAxis } from '@antilia/core';
@@ -66,8 +67,14 @@
 		maxHeight?: number | null;
 		/** The state: the one the editor starts in, then the one the user leaves it in, bound. */
 		state?: CodeEditorState;
-		/** How long after the user changed the state it is reported, 400 ms when left out. */
-		stateDelay?: number;
+		/**
+		 * The handlers of the editor's events, by their keys (CODE_EDITOR_EVENTS) or the names of
+		 * other events it fires, each sending the state or not (send); those left out keep theirs:
+		 * change, select, scroll and resize send the state 400 ms after the user paused, blur and
+		 * leave at once; an empty list for none. Keep the object the same: another one puts the
+		 * handlers anew.
+		 */
+		events?: EditorEvents<CodeEditor, CodeEditorEventKey>;
 		/**
 		 * Whether leaving the editor with changes not saved, or with errors shown, calls onsave:
 		 * false when left out.
@@ -121,7 +128,7 @@
 		maxHeight,
 		// not state, which would hide the rune $state
 		state: editorState = $bindable(),
-		stateDelay,
+		events,
 		saveOnBlur,
 		errors,
 		modified = $bindable(false),
@@ -155,7 +162,7 @@
 		const made = untrack(() => new CodeEditor(target, {
 			value, saved, language, lineNumbers, folding, readOnly, selectable, lineWrapping, tabSize,
 			indentWithTab, placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			state: editorState, stateDelay, saveOnBlur, errors, extensions, texts, look,
+			state: editorState, events, saveOnBlur, errors, extensions, texts, look,
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -189,7 +196,7 @@
 	$effect(() => {
 		const next = { language: language ?? null, lineNumbers, folding, readOnly, selectable,
 			lineWrapping, tabSize, indentWithTab, placeholder, label, resizable, minWidth, minHeight,
-			maxWidth, maxHeight, stateDelay, saveOnBlur, texts };
+			maxWidth, maxHeight, saveOnBlur, texts };
 		untrack(() => instance?.configure(next));
 	});
 
@@ -202,6 +209,13 @@
 		const next = extensions;
 		if (next !== undefined) {
 			untrack(() => instance?.configure({ extensions: next }));
+		}
+	});
+
+	$effect(() => {
+		const next = events;
+		if (next !== undefined) {
+			untrack(() => instance?.configure({ events: next }));
 		}
 	});
 

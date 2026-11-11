@@ -91,7 +91,7 @@ public abstract class RichTextEditorSelectedTextEvent extends AjaxEvent
 	 * empty text for none, and for what is not a text.
 	 */
 	@Override
-	public final void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+	public final void onEvent(JSONObject values, AjaxRequestTarget target)
 	{
 		Object text = values.opt("text");
 		onSelect(text instanceof String selected ? selected : "", target);

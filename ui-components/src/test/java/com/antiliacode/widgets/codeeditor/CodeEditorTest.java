@@ -22,10 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,13 +33,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.resource.JavaScriptPackageResource;
@@ -57,6 +57,12 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.Initializer;
 import com.antiliacode.widgets.codeeditor.CodeEditorState.Range;
+import com.antiliacode.widgets.event.AbstractDelayedClientEvent;
+import com.antiliacode.widgets.event.AjaxEvent;
+import com.antiliacode.widgets.event.AjaxUpdateEvent;
+import com.antiliacode.widgets.event.ClientEventsTester;
+import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.notification.Notifications;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
@@ -97,9 +103,26 @@ class CodeEditorTest extends WicketTestCase
 			options.getJSONObject("texts").getString("resize"));
 		assertEquals(0, options.getJSONObject("texts").getJSONObject("phrases").length(),
 			"CodeMirror's own phrases are in English");
-		assertTrue(options.getString("stateUrl").contains("-form-editor"));
-		assertEquals(page.editor.getInputName(), options.getString("inputName"));
-		assertTrue(page.editor.isSendToServer());
+		assertFalse(options.has("stateUrl"));
+		// the state goes with six events of the editor's, by default
+		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
+			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
+		{
+			assertTrue(page.editor.getEvents(name).get(0) instanceof SendStateEvent);
+			assertEquals(400, ((SendStateEvent)page.editor.getEvents(name).get(0)).getDelay());
+		}
+		for (CodeEditorEvent name : List.of(CodeEditorEvent.BLUR, CodeEditorEvent.LEAVE))
+		{
+			assertTrue(page.editor.getEvents(name).get(0) instanceof SendStateEvent);
+			assertEquals(AbstractDelayedClientEvent.NO_DELAY, ((SendStateEvent)page.editor
+				.getEvents(name).get(0)).getDelay());
+		}
+		assertEquals(6, page.editor.getEvents().size());
+		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:leave\",\"index\":5," +
+			"\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\"\\}");
+		tester.assertContains("values:function\\(editor\\)\\{return Wicket.CodeEditor\\?" +
+			"Wicket.CodeEditor.stateParameters\\(editor\\):\\{\\};\\}");
 		assertEquals(CodeEditorState.NONE, page.editor.getState());
 	}
 
@@ -255,16 +278,40 @@ class CodeEditorTest extends WicketTestCase
 	}
 
 	@Test
-	void hearsNothingWithoutSendingToTheServer()
+	void sendsTheStateWithTheEventsItIsGiven()
 	{
-		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT)).setSendToServer(false);
+		List<String> heard = new ArrayList<>();
+		// the state goes as the editor loses the focus, not as the user types
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT))
+			.removeEvents(CodeEditorEvent.INPUT).removeEvents(CodeEditorEvent.SELECT)
+			.removeEvents(CodeEditorEvent.SCROLL.getEventName())
+			.removeEvents(CodeEditorEvent.RESIZE)
+			.setEvent(new SendStateEvent(CodeEditorEvent.BLUR).setDelay(100))
+			.addEvent(AjaxEvent.of(CodeEditorEvent.FOCUS, (values, target) -> heard.add(
+				CodeEditorEvent.FOCUS.getEventName())));
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
-		assertFalse(options(editor).has("stateUrl"));
-		assertFalse(options(editor).has("inputName"));
+		tester.assertContainsNot("\"eventName\":\"input\"");
+		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:blur\",\"index\":0," +
+			"\"kind\":\"ajax\",\"delay\":100," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\"\\}");
+		assertEquals(List.of(), editor.getEvents(CodeEditorEvent.INPUT));
 
-		sendState(editor, "{\"scrollTop\":40}", "other");
-		assertEquals(CodeEditorState.NONE, editor.getState());
+		// any event going to the server carries the state and the text, which the editor takes
+		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), "other");
+		ClientEventsTester.fire(tester, editor, editor.getEvents(CodeEditorEvent.FOCUS).get(0),
+			new JSONObject(), Map.of(SendStateEvent.STATE_PARAMETER, "{\"scrollTop\":40}",
+				SendStateEvent.TEXT_CHANGED_PARAMETER, "true"));
+		assertEquals(40, editor.getState().getScrollTop());
+		assertEquals(List.of(CodeEditorEvent.FOCUS.getEventName()), heard);
+		tester.startPage(page);
+		assertEquals("other", tester.getTagByWicketId("editor").getValue());
+
+		// the text the browser did not tell changed stays out
+		editor.clearInput();
+		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), "else");
+		ClientEventsTester.sendState(tester, editor, "{\"scrollTop\":4}", false);
+		assertEquals(4, editor.getState().getScrollTop());
 		tester.startPage(page);
 		assertEquals(TEXT, tester.getTagByWicketId("editor").getValue());
 	}
@@ -293,49 +340,41 @@ class CodeEditorTest extends WicketTestCase
 		List<String> saved = new ArrayList<>();
 		IModel<String> text = Model.of(TEXT);
 		CodeEditor editor = new CodeEditor("editor", text);
-		CodeEditorEventBehavior save = new CodeEditorEventBehavior(CodeEditorEvent.SAVE)
+		IClientEvent save = new AjaxUpdateEvent(CodeEditorEvent.SAVE)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void onUpdate(AjaxRequestTarget target)
+			public void onEvent(JSONObject values, FormComponent<?> component,
+				AjaxRequestTarget target)
 			{
 				saved.add(editor.getModelObject());
 				editor.markSaved(target);
 			}
 		};
-		editor.add(save);
-		CodeEditorEventBehavior typing = new CodeEditorEventBehavior(CodeEditorEvent.INPUT)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-			}
-		};
-		editor.add(typing);
+		editor.addEvent(save);
+		IClientEvent typing = AjaxUpdateEvent.of(CodeEditorEvent.INPUT, (values, component,
+			target) -> {
+		}).setDelay(CodeEditorEvent.TYPING_DELAY);
+		editor.addEvent(typing);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 
-		tester.assertContains("\"e\":\"antilia-code-editor:save\"");
+		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:save\",\"index\":7," +
+			"\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		// typing waits until the user paused
-		tester.assertContains("\"e\":\"input\",\"tr\":\\{\"id\":\"[^\"]*\",\"d\":500,\"p\":true\\}");
-		assertSame(CodeEditorEvent.SAVE, save.getCodeEditorEvent());
-		assertEquals(CodeEditorEventBehavior.DEFAULT_DELAY, typing.getDelay());
+		tester.assertContains("\\{\"eventName\":\"input\",\"index\":1,\"kind\":\"ajax\"," +
+			"\"delay\":500,\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"class C {}\n");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		// code keeps its white space
 		assertEquals(List.of("class C {}\n"), saved);
 		assertEquals("class C {}\n", text.getObject());
 		tester.assertContains("Wicket.CodeEditor.of\\(\"" + editor.getMarkupId() +
 			"\"\\);if\\(e\\)\\{e.markSaved\\(\"class C \\{}\\\\n\"\\);");
-
-		typing.setDelay(Duration.ZERO);
-		tester.startPage(page);
-		tester.assertContainsNot("\"d\":500");
 	}
 
 	@Test
@@ -344,8 +383,9 @@ class CodeEditorTest extends WicketTestCase
 		assertEquals("input", CodeEditorEvent.INPUT.getEventName());
 		assertEquals("change", CodeEditorEvent.CHANGE.getEventName());
 		assertEquals("antilia-code-editor:blur", CodeEditorEvent.BLUR.getEventName());
-		assertTrue(CodeEditorEvent.SELECT.isFrequent());
-		assertFalse(CodeEditorEvent.FOCUS.isFrequent());
+		assertEquals("antilia-code-editor:scroll", CodeEditorEvent.SCROLL.getEventName());
+		assertEquals("antilia-code-editor:leave", CodeEditorEvent.LEAVE.getEventName());
+		assertEquals("antilia-code-editor:discard", CodeEditorEvent.DISCARD.getEventName());
 	}
 
 	@Test
@@ -432,9 +472,10 @@ class CodeEditorTest extends WicketTestCase
 		List<String> heard = new ArrayList<>();
 		CodeEditor editor = new CodeEditor("editor", text).setReadOnly(Model.of(true));
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> heard.add("saved"), (target, e) -> heard.add("invalid"));
-		editor.add(save);
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> heard.add("saved"),
+			(values, component, target, e) -> heard.add("invalid"));
+		editor.addEvent(save);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 
@@ -448,7 +489,7 @@ class CodeEditorTest extends WicketTestCase
 
 		// an event of the editor
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), "[1,");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		assertEquals(List.of("saved"), heard, "nothing to validate: the user could not change it");
 		assertEquals(TEXT, text.getObject());
 		assertFalse(editor.hasErrorMessage());
@@ -482,9 +523,9 @@ class CodeEditorTest extends WicketTestCase
 		List<String> saved = new ArrayList<>();
 		CodeEditor editor = new CodeEditor("editor", text);
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> saved.add(editor.getModelObject()));
-		editor.add(save);
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> saved.add(editor.getModelObject()));
+		editor.addEvent(save);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 		assertTrue(editor.isShowErrors());
@@ -492,7 +533,7 @@ class CodeEditorTest extends WicketTestCase
 
 		String message = "editor, line 2, column 9: ',' or '}' was expected, not ']'.";
 		post(editor, "{\n  \"a\": 1]\n}");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		assertEquals(List.of(), saved, "not valid");
 		assertEquals("{}", text.getObject());
 		assertEquals(List.of(new CodeEditorError(message, 2, 9)), editor.getErrors());
@@ -504,7 +545,7 @@ class CodeEditorTest extends WicketTestCase
 
 		// the same errors again: the browser shows them already
 		post(editor, "{\n  \"a\": 1]\n}");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		tester.assertContainsNot("setErrors\\(");
 
 		// rendered again, the editor shows them
@@ -514,7 +555,7 @@ class CodeEditorTest extends WicketTestCase
 
 		// valid: the errors go
 		post(editor, "{\"a\": [1]}");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		assertEquals(List.of("{\"a\": [1]}"), saved);
 		assertEquals("{\"a\": [1]}", text.getObject());
 		assertTrue(editor.getErrors().isEmpty());
@@ -568,16 +609,16 @@ class CodeEditorTest extends WicketTestCase
 	{
 		CodeEditor editor = new CodeEditor("editor", Model.of("[]")).setShowErrors(false);
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> {
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> {
 			});
-		editor.add(save);
+		editor.addEvent(save);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 		assertFalse(editor.isShowErrors());
 
 		post(editor, "[");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		tester.assertContainsNot("setErrors\\(");
 		assertEquals(1, editor.getErrors().size(), "the editor knows them");
 
@@ -592,14 +633,14 @@ class CodeEditorTest extends WicketTestCase
 	{
 		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
 		// in onUpdate, the text was validated in the request: the editor takes the error too
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> editor.error("The store is full"));
-		editor.add(save);
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> editor.error("The store is full"));
+		editor.addEvent(save);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 
 		post(editor, "[1]");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		assertEquals(List.of(CodeEditorError.of("The store is full")), editor.getErrors());
 		assertEquals("The store is full", sentErrors(editor).getJSONObject(0).getString("message"));
 
@@ -620,14 +661,14 @@ class CodeEditorTest extends WicketTestCase
 	{
 		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> {
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> {
 			});
-		editor.add(save);
+		editor.addEvent(save);
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 		post(editor, "[");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		assertEquals(1, editor.getErrors().size());
 
 		page.action = target -> editor.setModelObject("{}");
@@ -641,15 +682,15 @@ class CodeEditorTest extends WicketTestCase
 	{
 		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> {
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> {
 			});
-		editor.add(save);
+		editor.addEvent(save);
 		NotificationsPage page = new NotificationsPage(editor);
 		tester.startPage(page);
 
 		post(editor, "[1,]");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		String message = "editor, line 1, column 4: a value was expected, not ']'.";
 		assertEquals(message, sentErrors(editor).getJSONObject(0).getString("message"));
 		// a toast too
@@ -672,25 +713,25 @@ class CodeEditorTest extends WicketTestCase
 		List<String> heard = new ArrayList<>();
 		CodeEditor editor = new CodeEditor("editor", Model.of("[]"));
 		editor.add(new JsonValidator());
-		CodeEditorEventBehavior blur = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.BLUR,
-			target -> heard.add("blur " + editor.getModelObject()));
-		CodeEditorEventBehavior save = CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE,
-			target -> heard.add("save " + editor.getModelObject()),
-			(target, e) -> heard.add("invalid " + e));
-		editor.add(blur, save);
+		IClientEvent blur = AjaxUpdateEvent.of(CodeEditorEvent.BLUR,
+			(values, component, target) -> heard.add("blur " + editor.getModelObject()));
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> heard.add("save " + editor.getModelObject()),
+			(values, component, target, e) -> heard.add("invalid " + e));
+		editor.addEvent(blur).addEvent(save);
 		tester.startPage(new TestPage(editor));
-		assertSame(CodeEditorEvent.BLUR, blur.getCodeEditorEvent());
-		tester.assertContains("\"e\":\"antilia-code-editor:blur\"");
+		assertEquals(CodeEditorEvent.BLUR.getEventName(), blur.getEventName());
+		tester.assertContains("\"eventName\":\"antilia-code-editor:blur\",\"index\":5");
 
 		post(editor, "[1]");
-		tester.executeBehavior(blur);
+		fire(editor, blur);
 		post(editor, "[2]");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		post(editor, "[");
-		tester.executeBehavior(save);
+		fire(editor, save);
 		// without a lambda for errors, nothing is heard of them
 		post(editor, "[");
-		tester.executeBehavior(blur);
+		fire(editor, blur);
 		assertEquals(List.of("blur [1]", "save [2]", "invalid null"), heard);
 	}
 
@@ -781,13 +822,20 @@ class CodeEditorTest extends WicketTestCase
 
 	private void sendState(CodeEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			// as the browser posts it
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		ClientEventsTester.sendState(tester, editor, state, text != null);
+	}
+
+	/**
+	 * Sends an event of the editor, as its handler does.
+	 */
+	private void fire(CodeEditor editor, IClientEvent event)
+	{
+		ClientEventsTester.fire(tester, editor, event, new JSONObject(), Map.of());
 	}
 
 	public static class TestPage extends WebPage implements IMarkupResourceStreamProvider

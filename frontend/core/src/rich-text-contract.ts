@@ -62,11 +62,20 @@ export const RICH_TEXT_EDITOR_EVENTS = Object.freeze({
 	resize: 'antilia-rich-text-editor:resize',
 	/** The text came to have changes not saved, or no longer has. */
 	modified: 'antilia-rich-text-editor:modified',
-	/** The state was reported: what onStateChange is given. */
+	/** The state was sent: what onStateChange, or the server, is given. */
 	state: 'antilia-rich-text-editor:state',
 	/** The editor has a text: it started, or its text changed, by the user or by the page. */
-	text: 'antilia-rich-text-editor:text'
+	text: 'antilia-rich-text-editor:text',
+	/** The user scrolled the text. */
+	scroll: 'antilia-rich-text-editor:scroll',
+	/** The page is going: its detail tells leaving, true. */
+	leave: 'antilia-rich-text-editor:leave',
+	/** A tab or a window of the desktop closed anyway put the text last saved back. */
+	discard: 'antilia-rich-text-editor:discard'
 });
+
+/** The keys of the events the editors fire, which their option events takes handlers by. */
+export type RichTextEditorEventKey = keyof typeof RICH_TEXT_EDITOR_EVENTS;
 
 /** A language tag of BCP 47: en, en-GB, zh-Hant-TW, de-CH-1996. */
 const LANGUAGE_TAG = /^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/;

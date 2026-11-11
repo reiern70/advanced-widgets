@@ -24,10 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
-import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -41,6 +40,8 @@ import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
 import com.antiliacode.widgets.event.IAjaxSubmitEvent;
 import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.IClientEventName;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.IRichTextSuggester;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
@@ -94,18 +95,29 @@ class RichTextEditorPageTest
 	}
 
 	/**
-	 * Sends the editor's state, and the text, as the browser does.
+	 * Sends the state, and the text when given, as the editor does with its events: by the first
+	 * one sending it.
 	 */
 	private void sendState(RichTextEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
-			.filter(behavior -> !(behavior instanceof AjaxEventBehavior)).findFirst()
-			.orElseThrow());
+		List<IClientEvent> events = editor.getEvents();
+		IClientEvent sending = events.stream().filter(SendStateEvent.class::isInstance)
+			.findFirst().orElseThrow();
+		send(editor, sending, events.indexOf(sending), Map.of(SendStateEvent.STATE_PARAMETER,
+			state, SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(text != null)));
+	}
+
+	/**
+	 * Fires an event of the editor with its text, as the browser does: the page's own, not the one
+	 * sending the state by default.
+	 */
+	private void fire(RichTextEditor editor, IClientEventName event, String text)
+	{
+		fire(editor, event.getEventName(), text);
 	}
 
 	/**
@@ -115,14 +127,29 @@ class RichTextEditorPageTest
 	{
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		List<IClientEvent> events = editor.getEvents();
-		IClientEvent found = events.stream().filter(each -> each.getId().equals(event) &&
-			(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent)).findFirst()
-			.orElseThrow();
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, event);
+		for (int index = 0; index < events.size(); index++)
+		{
+			IClientEvent each = events.get(index);
+			if (each.getEventName().equals(event) && !(each instanceof SendStateEvent) &&
+				(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent))
+			{
+				send(editor, each, index, Map.of());
+				return;
+			}
+		}
+		throw new AssertionError("no event " + event);
+	}
+
+	private void send(RichTextEditor editor, IClientEvent event, int index,
+		Map<String, String> parameters)
+	{
+		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
+		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
+			event.getEventName());
 		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-			String.valueOf(events.indexOf(found)));
+			String.valueOf(index));
 		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
-			.getAjaxBehavior(found));
+			.getAjaxBehavior(event));
 	}
 
 	@Test
@@ -246,10 +273,12 @@ class RichTextEditorPageTest
 		tester.assertLabel(inCase("articleTitle", "outline"),
 			"Change the headings of the article: the server hears of its outline.");
 		// the built-in type waits for the user to finish selecting; the page's own has a script
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:\\d+," +
-			"kind:'ajax',delay:500\\}");
-		tester.assertContains("\\{id:\"rich-text-demo:outline\",index:\\d+,kind:'ajax'," +
-			"delay:-1\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:selected-text\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":500," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+		tester.assertContains("\\{\"eventName\":\"rich-text-demo:outline\",\"index\":\\d+," +
+			"\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		tester.assertContains("OutlineEvent/outline-event");
 
 		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
@@ -285,8 +314,9 @@ class RichTextEditorPageTest
 	void marksTheTitleWithTheChangesNotSavedInTheBrowser()
 	{
 		editor(EDITOR);
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:modified\",index:\\d+," +
-			"kind:'client',delay:-1,fn:function\\(event\\)\\{var title=document.title");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:modified\"," +
+			"\"index\":\\d+,\"kind\":\"client\"," +
+			"\"eventHandlerClientSideCode\":function\\(event\\)\\{var title=document.title");
 	}
 
 	@Test

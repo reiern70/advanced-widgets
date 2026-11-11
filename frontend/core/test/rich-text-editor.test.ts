@@ -22,9 +22,12 @@ import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_
 	registerRichTextExtension, registerRichTextFeature, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_CLASSES, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_EVENT_SOURCES,
 	RICH_TEXT_EVENT_TRIGGER, RICH_TEXT_FEATURES, richTextBackgroundColors, richTextColors,
-	RichTextEditor, richTextEditor, richTextEvent, richTextEvents, richTextExtensions, setHost,
-	shortcutText, standaloneHost, textLanguage, type Host } from '../src/index.js';
+	RichTextEditor, richTextEditor, richTextEvent, richTextEvents, richTextExtensions,
+	sendEditorState, setHost, shortcutText, standaloneHost, STATE_DELAY, textLanguage,
+	type Host } from '../src/index.js';
 import { recentRichTextColors } from '../src/rich-text-toolbar.js';
+import { attachClientEvents, CLIENT_EVENTS_AJAX,
+	type ClientEventRequest } from '../src/wicket/client-events.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -85,6 +88,7 @@ afterEach(() => {
 	document.body.innerHTML = '';
 	setHost(standaloneHost);
 	vi.restoreAllMocks();
+	vi.useRealTimers();
 });
 
 describe('RichTextEditor', () => {
@@ -300,20 +304,24 @@ describe('RichTextEditor', () => {
 		expect(editor.getValue()).toBe('<p>From the page</p>');
 	});
 
-	it('reports its state a moment after the user changed it, and as the page goes', async () => {
+	it('reports its state a moment after the user changed it, and as the page goes', () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		const field = textArea();
 		const states: string[] = [];
-		const editor = new RichTextEditor(field, { stateDelay: 0, onStateChange: (state, change) =>
+		const editor = new RichTextEditor(field, { onStateChange: (state, change) =>
 			states.push(JSON.stringify(state.selection) + (change.changed ? ' changed' : '') +
 				(change.leaving ? ' leaving' : '')) });
 
 		select(editor, 3, 5);
-		await tick();
+		vi.advanceTimersByTime(STATE_DELAY - 1);
+		expect(states).toEqual([]);
+		vi.advanceTimersByTime(1);
 		expect(states).toEqual(['{"anchor":3,"head":5}']);
 
+		// the text and the cursor moving: one report, for both
 		type(editor, 'x');
-		await tick();
-		expect(states[1]).toBe('{"anchor":4,"head":4} changed');
+		vi.advanceTimersByTime(STATE_DELAY);
+		expect(states).toEqual(['{"anchor":3,"head":5}', '{"anchor":4,"head":4} changed']);
 
 		// nothing new: nothing reported
 		window.dispatchEvent(new Event('pagehide'));
@@ -322,6 +330,104 @@ describe('RichTextEditor', () => {
 		select(editor, 2);
 		window.dispatchEvent(new Event('pagehide'));
 		expect(states[2]).toBe('{"anchor":2,"head":2} leaving');
+		editor.destroy();
+		vi.useRealTimers();
+	});
+
+	it('sends its state as the handlers of its events say', () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		const states: string[] = [];
+		const seen: string[] = [];
+		const editor = new RichTextEditor(textArea(), {
+			onStateChange: (state, change) => states.push(JSON.stringify(state.selection) +
+				(change.changed ? ' changed' : '')),
+			events: {
+				// nothing while the user types
+				change: [],
+				// at once as the cursor moves, after a handler of the page's own
+				select: [(event, editor) => seen.push(event.type + ' ' +
+					(editor === event.detail.editor)), sendEditorState],
+				// a handler waiting for the scrolling to pause
+				scroll: [{ delay: 100, handler: (event) => seen.push('scrolled ' +
+					JSON.stringify(event.detail.scroll)) }],
+				// by the name of any other event the editor fires
+				'antilia-rich-text-editor:modified': [(event) => seen.push('modified ' +
+					event.detail.modified)]
+			} });
+
+		select(editor, 3);
+		expect(states).toEqual(['{"anchor":3,"head":3}']);
+		expect(seen).toEqual(['antilia-rich-text-editor:select true']);
+
+		// typing: the text goes with the next state sent
+		type(editor, 'x');
+		vi.advanceTimersByTime(STATE_DELAY * 2);
+		expect(states).toEqual(['{"anchor":3,"head":3}', '{"anchor":4,"head":4} changed']);
+		expect(seen).toContain('modified true');
+		expect(editor.hasUnsentState()).toBe(false);
+
+		const scroller = editor.content;
+		Object.defineProperty(scroller, 'clientHeight', { value: 100, configurable: true });
+		scroller.scrollTop = 30;
+		scroller.dispatchEvent(new Event('scroll'));
+		scroller.scrollTop = 40;
+		scroller.dispatchEvent(new Event('scroll'));
+		vi.advanceTimersByTime(99);
+		expect(seen.filter((item) => item.startsWith('scrolled'))).toEqual([]);
+		vi.advanceTimersByTime(1);
+		expect(seen.filter((item) => item.startsWith('scrolled'))).toEqual([
+			'scrolled {"top":40,"left":0}']);
+		// blur and leave keep theirs: the scrolling goes as the page goes
+		expect(editor.hasUnsentState()).toBe(true);
+		window.dispatchEvent(new Event('pagehide'));
+		expect(states).toHaveLength(3);
+		expect(editor.hasUnsentState()).toBe(false);
+
+		// other handlers, at once
+		editor.configure({ events: { change: [sendEditorState] } });
+		type(editor, 'y');
+		expect(states[3]).toMatch(/changed$/);
+		editor.destroy();
+		vi.useRealTimers();
+	});
+
+	it('logs a handler failing and goes on', () => {
+		const errors: unknown[] = [];
+		setHost({ ...standaloneHost, log: { error: (message) => errors.push(message) } });
+		const onStateChange = vi.fn();
+		const editor = new RichTextEditor(textArea(), { onStateChange, events: {
+			select: [() => {
+				throw new Error('broken');
+			}, sendEditorState] } });
+
+		select(editor, 2);
+		expect(errors).toEqual(['The handler of antilia-rich-text-editor:select failed']);
+		expect(onStateChange).toHaveBeenCalledOnce();
+		editor.destroy();
+		setHost();
+	});
+
+	it('takes the state to send, as sent, telling whether the text changed', () => {
+		const states: unknown[] = [];
+		const field = textArea();
+		field.addEventListener(RICH_TEXT_EDITOR_EVENTS.state, (event) =>
+			states.push((event as CustomEvent).detail.state));
+		const editor = new RichTextEditor(field, { events: { change: [], select: [] } });
+		// as it started: nothing to send
+		expect(editor.hasUnsentState()).toBe(false);
+
+		type(editor, 'x');
+		expect(editor.hasUnsentState()).toBe(true);
+		const taken = editor.takeState();
+		expect(taken).toEqual({ state: editor.getState(), changed: true });
+		expect(states).toEqual([editor.getState()]);
+		expect(editor.hasUnsentState()).toBe(false);
+		expect(editor.takeState().changed).toBe(false);
+
+		select(editor, 1);
+		expect(editor.hasUnsentState()).toBe(true);
+		editor.destroy();
+		expect(editor.hasUnsentState()).toBe(false);
 	});
 
 	it('starts in a state, and is put in one', () => {
@@ -460,6 +566,8 @@ describe('RichTextEditor', () => {
 		const field = document.getElementById('t') as HTMLTextAreaElement;
 		field.defaultValue = '<p>Saved</p>';
 		const editor = new RichTextEditor(field);
+		const discarded = vi.fn();
+		field.addEventListener(RICH_TEXT_EDITOR_EVENTS.discard, discarded);
 		type(editor, 'x');
 		expect(editor.isModified()).toBe(true);
 
@@ -467,6 +575,11 @@ describe('RichTextEditor', () => {
 			{ bubbles: true }));
 		expect(editor.getValue()).toBe('<p>Saved</p>');
 		expect(editor.isModified()).toBe(false);
+		// told, once: nothing to put back the next time
+		expect(discarded).toHaveBeenCalledOnce();
+		document.getElementById('tab')!.dispatchEvent(new Event('antilia-desktop:discard',
+			{ bubbles: true }));
+		expect(discarded).toHaveBeenCalledOnce();
 	});
 
 	it('is read only as told, or as its text area is, without its toolbar', () => {
@@ -2084,6 +2197,7 @@ describe('Wicket.RichTextEditor', () => {
 		registerExtension: typeof registerRichTextExtension;
 		extensions(): string[];
 		kit: typeof RICH_TEXT_EDITOR_KIT;
+		stateParameters(editor: RichTextEditor | null): Record<string, string>;
 	}
 
 	async function wicket(): Promise<WicketRichTextEditor> {
@@ -2092,37 +2206,63 @@ describe('Wicket.RichTextEditor', () => {
 			.RichTextEditor;
 	}
 
-	it('makes an editor of a text area, sending the server its state and its text', async () => {
+	it('makes an editor of a text area, whose events send the server its state and its text', async () => {
 		const Wicket = await wicket();
-		const post = vi.fn();
-		(window as unknown as { Wicket: Record<string, unknown> }).Wicket.Ajax = { post,
+		(window as unknown as { Wicket: Record<string, unknown> }).Wicket.Ajax = {
 			baseUrl: 'page?1' };
-		textArea();
-		const editor = Wicket.attach('notes', { stateUrl: 'state?x=1', inputName: 'notes',
-			stateDelay: 0 })!;
+		const field = textArea();
+		const onStateChange = vi.fn();
+		const editor = Wicket.attach('notes', { onStateChange })!;
 		expect(Wicket.of('notes')).toBe(editor);
 		expect(Wicket.attach('missing')).toBeNull();
 		expect(Wicket.kit).toBe(RICH_TEXT_EDITOR_KIT);
+		// the events of the server send the state, as the ClientEventsBehavior renders them
+		const sent: ClientEventRequest[] = [];
+		field.addEventListener(CLIENT_EVENTS_AJAX, (event) =>
+			sent.push((event as CustomEvent<ClientEventRequest>).detail));
+		const state = (eventName: string, index: number) => ({ eventName, index,
+			kind: 'ajax' as const, eventClientHandlerName: 'Wicket.ClientEvents.sendState' });
+		attachClientEvents('notes', [state('input', 0),
+			state(RICH_TEXT_EDITOR_EVENTS.select, 1), state(RICH_TEXT_EDITOR_EVENTS.leave, 5)],
+			(element) => Wicket.of(element.id), { ajaxUrl: 'events?x=1',
+				values: (component) => Wicket.stateParameters(component as RichTextEditor) });
 
 		select(editor, 3);
-		await tick();
-		expect(post).toHaveBeenCalledWith({ u: 'state?x=1', c: 'notes', ep: [{ name: 'state',
-			value: JSON.stringify(editor.getState()) }] });
+		expect(sent).toEqual([{ event: RICH_TEXT_EDITOR_EVENTS.select, index: 1,
+			values: '{"selection":{"anchor":3,"head":3}}',
+			extra: { 'antilia-state': JSON.stringify(editor.getState()),
+				'antilia-text-changed': 'false' } }]);
 
+		// the text and the cursor: one request, the cursor finding nothing new to send
 		type(editor, 'x');
-		await tick();
-		expect(post.mock.calls[1]![0].ep).toEqual([{ name: 'state',
-			value: JSON.stringify(editor.getState()) }, { name: 'notes', value: editor.getValue() }]);
+		expect(sent).toHaveLength(2);
+		expect(sent[1]!.event).toBe('input');
+		expect(sent[1]!.extra!['antilia-text-changed']).toBe('true');
+		// the core's own handlers are off
+		expect(onStateChange).not.toHaveBeenCalled();
 
 		const beacon = vi.fn(() => true);
 		Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true });
-		select(editor, 2);
-		window.dispatchEvent(new Event('pagehide'));
+		try {
+			// scrolled, which no event of the server sends at once: it goes as the page goes
+			Object.defineProperty(editor.content, 'clientHeight', { value: 100,
+				configurable: true });
+			editor.content.scrollTop = 30;
+			editor.content.dispatchEvent(new Event('scroll'));
+			window.dispatchEvent(new Event('pagehide'));
+		} finally {
+			delete (navigator as unknown as Record<string, unknown>).sendBeacon;
+		}
 		expect(beacon).toHaveBeenCalledTimes(1);
 		const [url, body] = beacon.mock.calls[0] as unknown as [string, URLSearchParams];
-		expect(url).toBe('state?x=1&wicket-ajax=true');
+		expect(url).toBe('events?x=1&wicket-ajax=true');
 		expect(body.get('wicket-ajax-baseurl')).toBe('page?1');
-		expect(JSON.parse(body.get('state')!).selection).toEqual({ anchor: 2, head: 2 });
+		expect(body.get('antilia-event')).toBe(RICH_TEXT_EDITOR_EVENTS.leave);
+		expect(body.get('antilia-event-index')).toBe('5');
+		expect(JSON.parse(body.get('antilia-state')!).scrollTop).toBe(30);
+		expect(body.get('notes')).toBe(editor.getValue());
+		expect(sent).toHaveLength(2);
+		expect(Wicket.stateParameters(null)).toEqual({});
 	});
 
 	it('plugs in the extensions of the page', async () => {
@@ -2135,12 +2275,12 @@ describe('Wicket.RichTextEditor', () => {
 		const editor = Wicket.attach('notes', { extensions: ['callout'] })!;
 		expect(editor.getValue()).toBe('<div class="callout"><p>Note</p></div>');
 
-		// without a URL of the state, the page's callback alone
+		// the page's callback, by handlers of the page's own
 		const onStateChange = vi.fn();
 		textArea();
-		const plain = Wicket.attach('notes', { onStateChange, stateDelay: 0 })!;
+		const plain = Wicket.attach('notes', { onStateChange,
+			events: { select: [sendEditorState] } })!;
 		select(plain, 3);
-		await tick();
 		expect(onStateChange).toHaveBeenCalled();
 	});
 	it('defines Wicket.RichTextEvents, registering the types and triggering them by the id', async () => {

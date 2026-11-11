@@ -37,11 +37,12 @@
  *
  * What is selected, how far the text is scrolled and the size the user gave the editor are its
  * state (RichTextEditorState). The editor keeps it while hidden, in a tab that is not selected for
- * example, and shows it again when shown; onStateChange reports it, a moment after the user
- * changed it, as the editor loses the focus and as the page goes, for a page that keeps it, on the
- * server for example, to give it back with the option state, after the user came back to the
- * page. Rendered anew in the same place with the same text, as Wicket does, the editor goes on as
- * it was.
+ * example, and shows it again when shown; onStateChange gets it, by default a moment after the
+ * user changed it, as the editor loses the focus and as the page goes, for a page that keeps it,
+ * on the server for example, to give it back with the option state, after the user came back to
+ * the page. When it goes is the page's: the option events takes the handlers of the editor's
+ * events, which send it or not (see editor-events.ts). Rendered anew in the same place with the
+ * same text, as Wicket does, the editor goes on as it was.
  *
  * The editor tells whether the text has changes not saved, against the text last saved (saved,
  * markSaved()): as data-modified on its element, which tabs and windows of the desktop show, and
@@ -110,8 +111,10 @@ import { DEFAULT_HEADING_LEVELS, isSafeUrl, quietHtml, RICH_TEXT_FEATURES, RICH_
 import { DEFAULT_RICH_TEXT_EDITOR_TEXTS, DEFAULT_RICH_TEXT_TOOLBAR, format, RICH_TEXT_BUBBLE_TOOLS,
 	RichTextToolbar, type RichTextCodeLanguage, type RichTextEditorTexts, type RichTextTool,
 	type RichTextToolbarContext } from './rich-text-toolbar.js';
-import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
-	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
+import { EditorEventHandlers, type EditorEvents } from './editor-events.js';
+import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorEventKey,
+	type RichTextEditorSelection, type RichTextEditorState,
+	type RichTextEditorStateChange } from './rich-text-contract.js';
 import { RICH_TEXT_BUILT_IN_EVENTS, RichTextEventTypes } from './rich-text-events.js';
 import { isEmptyCleaningReport, pasteCleaningReport, pasteNoticeText, RichTextPasteNotice,
 	type RichTextCleaningReport } from './rich-text-html.js';
@@ -125,8 +128,8 @@ import type { RichTextImageFinder, RichTextImageKeeper } from './rich-text-store
 import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 import type { RichTextImageDimensions } from './rich-text-image-headers.js';
 
-export { RICH_TEXT_EDITOR_EVENTS, type RichTextEditorSelection, type RichTextEditorState,
-	type RichTextEditorStateChange };
+export { RICH_TEXT_EDITOR_EVENTS, type RichTextEditorEventKey, type RichTextEditorSelection,
+	type RichTextEditorState, type RichTextEditorStateChange };
 
 /**
  * The classes of Tiptap and ProseMirror a function registering an extension is given, for a page
@@ -304,8 +307,14 @@ export interface RichTextEditorOptions {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: RichTextEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+	 * other events it fires: each runs on its event, at once or a moment after the last of a row of
+	 * them, and may send the state to onStateChange (see editor-events.ts). Those left out keep
+	 * theirs: change, select, scroll and resize send the state 400 ms after the user paused, blur
+	 * and leave at once; an empty list for none.
+	 */
+	events?: EditorEvents<RichTextEditor, RichTextEditorEventKey>;
 	/** More extensions: Tiptap's, or the names of those registered. */
 	extensions?: readonly RichTextExtension[];
 	/**
@@ -385,8 +394,9 @@ export interface RichTextEditorOptions {
 	/** Called with the selection each time the user moved the cursor or selected text. */
 	onSelectionChange?: (selection: RichTextEditorSelection) => void;
 	/**
-	 * Called with the state a moment after the user changed it, as the editor loses the focus and
-	 * as the page goes, when it changed since it was last reported.
+	 * Called with the state when a handler of the events sends it (events), and it, or the text,
+	 * changed since it was last sent: by default a moment after the user changed it, as the editor
+	 * loses the focus and as the page goes.
 	 */
 	onStateChange?: (state: RichTextEditorState, change: RichTextEditorStateChange) => void;
 	/** Called when the text came to have changes not saved, or no longer has. */
@@ -409,6 +419,10 @@ export interface RichTextEditorEventDetail {
 	state?: RichTextEditorState;
 	modified?: boolean;
 	size?: ResizableSize;
+	/** How far the text is scrolled, for scroll. */
+	scroll?: { top: number; left: number };
+	/** True as the page goes, for leave. */
+	leaving?: boolean;
 }
 
 /** The classes of the editor and its states. */
@@ -440,7 +454,7 @@ function imagesIn(doc: ProseMirrorNode): Map<string, number> {
 	return images;
 }
 
-const DEFAULTS = { stateDelay: 400, resizable: 'vertical' as ResizeAxis, minWidth: 200,
+const DEFAULTS = { resizable: 'vertical' as ResizeAxis, minWidth: 200,
 	minHeight: 96, proofreadDelay: 600, suggestDelay: 150 };
 
 /** Marks the transactions of the page, not the user's, which fire no events. */
@@ -561,10 +575,13 @@ export class RichTextEditor {
 	/** Whether the editor is shown, not in a hidden tab for example. */
 	private shown = false;
 
-	/** The state last reported, null before. */
+	/** The state last sent, or the one the page gave, null before. */
 	private reported: RichTextEditorState | null = null;
 
-	/** Whether the text was reported, with the state, since the user last changed it. */
+	/** The state the editor started in: nothing to send while it has it, before any was sent. */
+	private started: RichTextEditorState | null = null;
+
+	/** Whether the text was sent, with the state, since the user last changed it. */
 	private textReported = true;
 
 	/** Whether the focus is in the editor, its toolbar or a form of it. */
@@ -591,7 +608,8 @@ export class RichTextEditor {
 	/** Whether Escape was the last key: Tab then leaves the editor, even in a list. */
 	private escaped = false;
 
-	private timer: ReturnType<typeof setTimeout> | null = null;
+	/** Runs the handlers of the events. */
+	private handlers: EditorEventHandlers<RichTextEditor> | null = null;
 
 	private listeners: Array<[EventTarget, string, EventListener, boolean]> = [];
 
@@ -709,6 +727,8 @@ export class RichTextEditor {
 		this.syncField(this.value);
 		this.renderModified(this.value, false);
 		this.bind();
+		this.renderEventHandlers();
+		this.started = this.getState();
 		this.restoreScroll();
 		this.stopWatchingRemoval = onRemoving(field ?? element, () => this.remove());
 		this.dispatch('text');
@@ -1424,7 +1444,6 @@ export class RichTextEditor {
 		this.size = size;
 		this.options.onResize?.({ ...size });
 		this.dispatch('resize', { size: { ...size } });
-		this.stateChanged();
 	}
 
 	private listen<E extends Event>(target: EventTarget, type: string,
@@ -1440,7 +1459,7 @@ export class RichTextEditor {
 			// hidden, a scroller is at its start: the editor keeps where it was
 			if (scroller.clientHeight > 0) {
 				this.scroll = { top: scroller.scrollTop, left: scroller.scrollLeft };
-				this.stateChanged();
+				this.dispatch('scroll', { scroll: { ...this.scroll } });
 			}
 		}, { passive: true });
 		this.shown = scroller.clientHeight > 0;
@@ -1495,15 +1514,12 @@ export class RichTextEditor {
 			const target = event.target as Node | null;
 			if (target && target.contains(this.element) && this.isModified()) {
 				this.setValue(this.saved);
+				this.dispatch('discard');
 			}
 		};
 		this.listen(document, 'antilia-tabs:discard', discard);
 		this.listen(document, 'antilia-desktop:discard', discard);
-		this.listen(window, 'pagehide', () => {
-			if (this.timer !== null || !this.textReported) {
-				this.report(true);
-			}
-		});
+		this.listen(window, 'pagehide', () => this.dispatch('leave', { leaving: true }));
 	}
 
 	/**
@@ -1549,7 +1565,6 @@ export class RichTextEditor {
 		this.flushRemoved();
 		this.options.onBlur?.(value);
 		this.dispatch('blur');
-		this.report(false);
 	}
 
 	private onTransaction(editor: Editor, transaction: Transaction): void {
@@ -1573,7 +1588,6 @@ export class RichTextEditor {
 					this.options.onChange?.(value);
 					this.fieldEvent('input');
 					this.dispatch('change');
-					this.stateChanged();
 				}
 			}
 			this.renderStatus();
@@ -1584,7 +1598,6 @@ export class RichTextEditor {
 			if (user) {
 				this.options.onSelectionChange?.(selection);
 				this.dispatch('select', { selection });
-				this.stateChanged();
 			}
 		}
 		if (!rebuilding) {
@@ -1655,12 +1668,14 @@ export class RichTextEditor {
 		// a listener may fire another event meanwhile: the editor still does not hear it
 		const dispatching = this.dispatching;
 		this.dispatching = true;
+		const event = new CustomEvent(type, { bubbles: true, detail: { ...detail, editor: this } });
 		try {
-			target.dispatchEvent(new CustomEvent(type, { bubbles: true,
-				detail: { ...detail, editor: this } }));
+			target.dispatchEvent(event);
 		} finally {
 			this.dispatching = dispatching;
 		}
+		// its handlers once the page heard of it
+		this.handlers?.handle(event);
 		return true;
 	}
 
@@ -1669,16 +1684,18 @@ export class RichTextEditor {
 	 * the types of events firing from it, also without a text area.
 	 */
 	private fieldEvent(type: 'input' | 'change'): void {
+		const event = new Event(type, { bubbles: true });
 		if (this.field) {
 			const dispatching = this.dispatching;
 			this.dispatching = true;
 			try {
-				this.field.dispatchEvent(new Event(type, { bubbles: true }));
+				this.field.dispatchEvent(event);
 			} finally {
 				this.dispatching = dispatching;
 			}
 		}
 		this.eventTypes.from(type);
+		this.handlers?.handle(event);
 	}
 
 	/**
@@ -1739,40 +1756,58 @@ export class RichTextEditor {
 	}
 
 	/**
-	 * Reports the state a moment after the user last changed it.
+	 * Listens to the events with their handlers: those of the option events, and the default ones.
 	 */
-	private stateChanged(): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-		}
-		this.timer = setTimeout(() => this.report(false),
-			Math.max(this.options.stateDelay ?? DEFAULTS.stateDelay, 0));
+	private renderEventHandlers(): void {
+		this.handlers?.destroy();
+		this.handlers = new EditorEventHandlers<RichTextEditor>(this, RICH_TEXT_EDITOR_EVENTS,
+			this.options.events, (leaving) => this.report(leaving));
 	}
 
 	/**
-	 * Reports the state, when it or the text changed since it was last reported.
+	 * @returns whether the state, or the text, changed since they were last sent (takeState(),
+	 *          onStateChange), or since the page gave the state
+	 */
+	hasUnsentState(): boolean {
+		return !this.destroyed && (!this.textReported ||
+			!sameState(this.getState(), this.reported ?? this.started));
+	}
+
+	/**
+	 * Takes the state to send, as sent: hasUnsentState() is false after, until the user changes it
+	 * again. Fires the event state. Wicket's editor sends it so with each of its events.
+	 *
+	 * @returns the state, and whether the text changed since it was last sent
+	 */
+	takeState(): { state: RichTextEditorState; changed: boolean } {
+		return this.take();
+	}
+
+	/**
+	 * @param leaving whether the page is going, for onStateChange; undefined not to call it
+	 */
+	private take(leaving?: boolean): { state: RichTextEditorState; changed: boolean } {
+		const state = this.getState();
+		const changed = !this.textReported;
+		this.textReported = true;
+		this.reported = state;
+		if (leaving !== undefined) {
+			this.options.onStateChange?.(state, { leaving, changed });
+		}
+		this.dispatch('state', { state });
+		return { state, changed };
+	}
+
+	/**
+	 * Gives onStateChange the state, when it or the text changed since they were last sent: what
+	 * send does for the handlers of the events.
 	 *
 	 * @param leaving whether the page is going
 	 */
 	private report(leaving: boolean): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+		if (this.hasUnsentState()) {
+			this.take(leaving);
 		}
-		if (this.destroyed) {
-			return;
-		}
-		const state = this.getState();
-		const changed = !this.textReported;
-		if (!changed && sameState(state, this.reported)) {
-			return;
-		}
-		this.textReported = true;
-		if (this.options.onStateChange) {
-			this.reported = state;
-			this.options.onStateChange(state, { leaving, changed });
-		}
-		this.dispatch('state', { state });
 	}
 
 	/**
@@ -1958,6 +1993,9 @@ export class RichTextEditor {
 		}
 		this.renderNotice();
 		this.renderResizable();
+		if (before.events !== this.options.events) {
+			this.renderEventHandlers();
+		}
 	}
 
 	/**
@@ -2065,10 +2103,8 @@ export class RichTextEditor {
 		this.destroyed = true;
 		this.stopHearing?.();
 		this.stopHearing = null;
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
-		}
+		this.handlers?.destroy();
+		this.handlers = null;
 		this.listeners.forEach(([target, type, listener, capture]) => {
 			target.removeEventListener(type, listener, capture);
 		});

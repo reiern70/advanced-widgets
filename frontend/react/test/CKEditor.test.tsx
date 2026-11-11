@@ -16,7 +16,10 @@ import { createRef, StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { setHost, standaloneHost } from '@antilia/core';
+import { sendEditorState, setHost, standaloneHost } from '@antilia/core';
+
+/** The state sent at once as the cursor moves. */
+const AT_ONCE = { select: [sendEditorState] };
 
 import { BOOTSTRAP_LOOK, CKEditor, LookProvider, type CKEditorHandle } from '../src/index.js';
 import { fakeBuild, type FakeEditor } from './fake-ckeditor.js';
@@ -182,7 +185,7 @@ describe('CKEditor', () => {
 			const onSelectionChange = vi.fn();
 			const onStateChange = vi.fn();
 			const ref = createRef<CKEditorHandle>();
-			render(<CKEditor ref={ref} build={fakeBuild()} value="<p>Hello</p>" stateDelay={0}
+			render(<CKEditor ref={ref} build={fakeBuild()} value="<p>Hello</p>" events={AT_ONCE}
 				onFocus={onFocus} onBlur={onBlur} onSave={onSave}
 				onSelectionChange={onSelectionChange} onStateChange={onStateChange} />);
 			const fake = await started(ref);

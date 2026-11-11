@@ -51,8 +51,9 @@
  * As the Tiptap editor, it keeps its state, what is selected, how far the text is scrolled and
  * the size the user gave it, by the bar along its bottom; it tells whether the text has changes
  * not saved, as data-modified on its element, which tabs and windows of the desktop show; Ctrl+S
- * tells the page to save; and it fires the events of RICH_TEXT_EDITOR_EVENTS, which the events
- * of Wicket's editor listen to, and those of the types of events registered, shared with the
+ * tells the page to save; and it fires the events of RICH_TEXT_EDITOR_EVENTS, whose handlers
+ * (events) send the state to onStateChange as the Tiptap editor's do and which the events of
+ * Wicket's editor listen to, and those of the types of events registered, shared with the
  * Tiptap editor (registerRichTextEvent, see rich-text-events.ts), from its own or by trigger().
  * The positions of the selection count the places between the nodes too, as ProseMirror's do.
  *
@@ -66,8 +67,10 @@
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
-import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorSelection,
-	type RichTextEditorState, type RichTextEditorStateChange } from './rich-text-contract.js';
+import { EditorEventHandlers, type EditorEvents } from './editor-events.js';
+import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorEventKey,
+	type RichTextEditorSelection, type RichTextEditorState,
+	type RichTextEditorStateChange } from './rich-text-contract.js';
 import { RICH_TEXT_BUILT_IN_EVENTS, RichTextEventTypes } from './rich-text-events.js';
 import { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, pasteCleaningReport,
 	pasteNoticeText, quietHtml, RICH_TEXT_ALIGN_CLASSES, RichTextPasteNotice,
@@ -387,8 +390,14 @@ export interface CKEditorOptions {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: RichTextEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+	 * other events it fires: each runs on its event, at once or a moment after the last of a row of
+	 * them, and may send the state to onStateChange (see editor-events.ts). Those left out keep
+	 * theirs: change, select, scroll and resize send the state 400 ms after the user paused, blur
+	 * and leave at once; an empty list for none.
+	 */
+	events?: EditorEvents<CKEditor, RichTextEditorEventKey>;
 	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again: "Part of the paste was left out: scripts, images."; false when left out.
@@ -411,8 +420,9 @@ export interface CKEditorOptions {
 	/** Called with the selection each time the user moved the cursor or selected text. */
 	onSelectionChange?: (selection: RichTextEditorSelection) => void;
 	/**
-	 * Called with the state a moment after the user changed it, as the editor loses the focus and
-	 * as the page goes, when it changed since it was last reported.
+	 * Called with the state when a handler of the events sends it (events), and it, or the text,
+	 * changed since it was last sent: by default a moment after the user changed it, as the editor
+	 * loses the focus and as the page goes.
 	 */
 	onStateChange?: (state: RichTextEditorState, change: RichTextEditorStateChange) => void;
 	/** Called when the text came to have changes not saved, or no longer has. */
@@ -435,6 +445,10 @@ export interface CKEditorEventDetail {
 	state?: RichTextEditorState;
 	modified?: boolean;
 	size?: ResizableSize;
+	/** How far the text is scrolled, for scroll. */
+	scroll?: { top: number; left: number };
+	/** True as the page goes, for leave. */
+	leaving?: boolean;
 }
 
 /** The classes of the editor and its states. */
@@ -450,7 +464,7 @@ export const CK_EDITOR_CLASSES = Object.freeze({
 	focused: 'antilia-ck-editor-focused'
 });
 
-const DEFAULTS = { stateDelay: 400, resizable: 'vertical' as ResizeAxis, minWidth: 200,
+const DEFAULTS = { resizable: 'vertical' as ResizeAxis, minWidth: 200,
 	minHeight: 96, headingLevels: [1, 2, 3, 4] as readonly HeadingLevel[] };
 
 /** The lock of CKEditor's read only mode the editor holds. */
@@ -695,10 +709,13 @@ export class CKEditor {
 	/** Whether the editor is shown, not in a hidden tab for example. */
 	private shown = false;
 
-	/** The state last reported, null before. */
+	/** The state last sent, or the one the page gave, null before. */
 	private reported: RichTextEditorState | null = null;
 
-	/** Whether the text was reported, with the state, since the user last changed it. */
+	/** The state the editor started in: nothing to send while it has it, before any was sent. */
+	private started: RichTextEditorState | null = null;
+
+	/** Whether the text was sent, with the state, since the user last changed it. */
 	private textReported = true;
 
 	private focused = false;
@@ -718,7 +735,8 @@ export class CKEditor {
 	/** Counts the CKEditors made, so that one made for options since changed goes. */
 	private generation = 0;
 
-	private timer: ReturnType<typeof setTimeout> | null = null;
+	/** Runs the handlers of the events. */
+	private handlers: EditorEventHandlers<CKEditor> | null = null;
 
 	private listeners: Array<[EventTarget, string, EventListener, boolean]> = [];
 
@@ -814,6 +832,8 @@ export class CKEditor {
 		this.syncField(this.value);
 		this.renderModified(this.value, false);
 		this.bind();
+		this.renderEventHandlers();
+		this.started = this.getState();
 		this.stopWatchingRemoval = onRemoving(field ?? element, () => this.remove());
 		this.ready = this.start();
 		// a page not waiting for it is told by onError and the log
@@ -1080,6 +1100,10 @@ export class CKEditor {
 		}
 		this.editor = editor;
 		this.setUp(editor);
+		// CKEditor has the selection now
+		if (this.reported === null && this.textReported) {
+			this.started = this.getState();
+		}
 		this.options.onReady?.(editor);
 		return this;
 	}
@@ -1299,7 +1323,6 @@ export class CKEditor {
 			this.options.onChange?.(value);
 			this.fieldEvent('input');
 			this.dispatch('change');
-			this.stateChanged();
 		}
 	}
 
@@ -1315,7 +1338,6 @@ export class CKEditor {
 		if (!this.external) {
 			this.options.onSelectionChange?.(selection);
 			this.dispatch('select', { selection });
-			this.stateChanged();
 		}
 	}
 
@@ -1343,7 +1365,6 @@ export class CKEditor {
 		this.focusValue = null;
 		this.options.onBlur?.(value);
 		this.dispatch('blur');
-		this.report(false);
 	}
 
 	/**
@@ -1412,7 +1433,6 @@ export class CKEditor {
 		this.size = size;
 		this.options.onResize?.({ ...size });
 		this.dispatch('resize', { size: { ...size } });
-		this.stateChanged();
 	}
 
 	/**
@@ -1479,15 +1499,12 @@ export class CKEditor {
 			const target = event.target as Node | null;
 			if (target && target.contains(this.element) && this.isModified()) {
 				this.setValue(this.saved);
+				this.dispatch('discard');
 			}
 		};
 		this.listen(document, 'antilia-tabs:discard', discard);
 		this.listen(document, 'antilia-desktop:discard', discard);
-		this.listen(window, 'pagehide', () => {
-			if (this.timer !== null || !this.textReported) {
-				this.report(true);
-			}
-		});
+		this.listen(window, 'pagehide', () => this.dispatch('leave', { leaving: true }));
 	}
 
 	/**
@@ -1504,7 +1521,7 @@ export class CKEditor {
 			// hidden, a scroller is at its start: the editor keeps where it was
 			if (scroller.clientHeight > 0) {
 				this.scroll = { top: scroller.scrollTop, left: scroller.scrollLeft };
-				this.stateChanged();
+				this.dispatch('scroll', { scroll: { ...this.scroll } });
 			}
 		};
 		scroller.addEventListener('scroll', onScroll, { passive: true });
@@ -1599,12 +1616,14 @@ export class CKEditor {
 		// a listener may fire another event meanwhile: the editor still does not hear it
 		const dispatching = this.dispatching;
 		this.dispatching = true;
+		const event = new CustomEvent(type, { bubbles: true, detail: { ...detail, editor: this } });
 		try {
-			target.dispatchEvent(new CustomEvent(type, { bubbles: true,
-				detail: { ...detail, editor: this } }));
+			target.dispatchEvent(event);
 		} finally {
 			this.dispatching = dispatching;
 		}
+		// its handlers once the page heard of it
+		this.handlers?.handle(event);
 		return true;
 	}
 
@@ -1613,16 +1632,18 @@ export class CKEditor {
 	 * the types of events firing from it, also without a text area.
 	 */
 	private fieldEvent(type: 'input' | 'change'): void {
+		const event = new Event(type, { bubbles: true });
 		if (this.field) {
 			const dispatching = this.dispatching;
 			this.dispatching = true;
 			try {
-				this.field.dispatchEvent(new Event(type, { bubbles: true }));
+				this.field.dispatchEvent(event);
 			} finally {
 				this.dispatching = dispatching;
 			}
 		}
 		this.eventTypes.from(type);
+		this.handlers?.handle(event);
 	}
 
 	/**
@@ -1709,40 +1730,58 @@ export class CKEditor {
 	}
 
 	/**
-	 * Reports the state a moment after the user last changed it.
+	 * Listens to the events with their handlers: those of the option events, and the default ones.
 	 */
-	private stateChanged(): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-		}
-		this.timer = setTimeout(() => this.report(false),
-			Math.max(this.options.stateDelay ?? DEFAULTS.stateDelay, 0));
+	private renderEventHandlers(): void {
+		this.handlers?.destroy();
+		this.handlers = new EditorEventHandlers<CKEditor>(this, RICH_TEXT_EDITOR_EVENTS,
+			this.options.events, (leaving) => this.report(leaving));
 	}
 
 	/**
-	 * Reports the state, when it or the text changed since it was last reported.
+	 * @returns whether the state, or the text, changed since they were last sent (takeState(),
+	 *          onStateChange), or since the page gave the state
+	 */
+	hasUnsentState(): boolean {
+		return !this.destroyed && (!this.textReported ||
+			!sameState(this.getState(), this.reported ?? this.started));
+	}
+
+	/**
+	 * Takes the state to send, as sent: hasUnsentState() is false after, until the user changes it
+	 * again. Fires the event state. Wicket's editor sends it so with each of its events.
+	 *
+	 * @returns the state, and whether the text changed since it was last sent
+	 */
+	takeState(): { state: RichTextEditorState; changed: boolean } {
+		return this.take();
+	}
+
+	/**
+	 * @param leaving whether the page is going, for onStateChange; undefined not to call it
+	 */
+	private take(leaving?: boolean): { state: RichTextEditorState; changed: boolean } {
+		const state = this.getState();
+		const changed = !this.textReported;
+		this.textReported = true;
+		this.reported = state;
+		if (leaving !== undefined) {
+			this.options.onStateChange?.(state, { leaving, changed });
+		}
+		this.dispatch('state', { state });
+		return { state, changed };
+	}
+
+	/**
+	 * Gives onStateChange the state, when it or the text changed since they were last sent: what
+	 * send does for the handlers of the events.
 	 *
 	 * @param leaving whether the page is going
 	 */
 	private report(leaving: boolean): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+		if (this.hasUnsentState()) {
+			this.take(leaving);
 		}
-		if (this.destroyed) {
-			return;
-		}
-		const state = this.getState();
-		const changed = !this.textReported;
-		if (!changed && sameState(state, this.reported)) {
-			return;
-		}
-		this.textReported = true;
-		if (this.options.onStateChange) {
-			this.reported = state;
-			this.options.onStateChange(state, { leaving, changed });
-		}
-		this.dispatch('state', { state });
 	}
 
 	/**
@@ -1929,6 +1968,9 @@ export class CKEditor {
 		this.renderNotice();
 		this.renderStatus();
 		this.renderResizable();
+		if (before.events !== this.options.events) {
+			this.renderEventHandlers();
+		}
 	}
 
 	/**
@@ -2027,10 +2069,8 @@ export class CKEditor {
 		}
 		this.destroyed = true;
 		this.generation++;
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
-		}
+		this.handlers?.destroy();
+		this.handlers = null;
 		this.listeners.forEach(([target, type, listener, capture]) => {
 			target.removeEventListener(type, listener, capture);
 		});

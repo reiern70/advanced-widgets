@@ -17,6 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.wicket.ajax.json.JSONFunction;
 import org.junit.jupiter.api.Test;
 
 import com.github.openjson.JSONArray;
@@ -57,5 +61,19 @@ class ScriptJsonTest
 		assertSame(json, ScriptJson.escape(json), "nothing to escape, the same text");
 		assertEquals("{\"a\":\"" + U + "003c!--\"}", ScriptJson.escape("{\"a\":\"<!--\"}"));
 		assertNull(ScriptJson.escape(null));
+	}
+
+	@Test
+	void writesCodeAsItIsAndTheRestEscaped()
+	{
+		JSONObject options = new JSONObject().put("name", "</script>")
+			.put("fn", new JSONFunction("function(a,b){return a<b&&b>0;}"))
+			.put("list", new JSONArray().put(1).put(new JSONFunction("f")).put(JSONObject.NULL))
+			.put("map", Map.of("x", true)).put("items", List.of(2.5)).put("count", 3);
+
+		assertEquals("{\"name\":\"\\u003c\\/script\\u003e\"," +
+			"\"fn\":function(a,b){return a<b&&b>0;},\"list\":[1,f,null],\"map\":{\"x\":true}," +
+			"\"items\":[2.5],\"count\":3}", ScriptJson.withFunctions(options));
+		assertEquals("null", ScriptJson.withFunctions(null));
 	}
 }
