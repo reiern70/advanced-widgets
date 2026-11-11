@@ -13,8 +13,9 @@
 -->
 <!-- A RichTextEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
-	import type { RichTextBackgroundColor, RichTextCleaningReport, RichTextColor,
-		RichTextHighlighter, RichTextProofreader, RichTextSuggester } from '@antilia/core';
+	import { sendEditorState, type RichTextBackgroundColor, type RichTextCleaningReport,
+		type RichTextColor, type RichTextHighlighter, type RichTextProofreader,
+		type RichTextSuggester } from '@antilia/core';
 
 	import { RichTextEditor, type RichTextEditorState, type RichTextFeature, type RichTextFormat,
 		type RichTextTool } from '../src/index.js';
@@ -42,11 +43,15 @@
 		features?: RichTextFeature[]; pasteNotice?: boolean;
 		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
 	let modified = $state(false);
+
+	/** The state sent at once, as the user changes it. */
+	const AT_ONCE = { change: [sendEditorState], select: [sendEditorState],
+		scroll: [sendEditorState], resize: [sendEditorState] };
 </script>
 
 <form>
 	<RichTextEditor id="e" class={className} bind:value bind:state={editorState} bind:modified
-		{saved} {name} {format} {readOnly} {toolbar} {count} stateDelay={0} minHeight={100}
+		{saved} {name} {format} {readOnly} {toolbar} {count} events={AT_ONCE} minHeight={100}
 		label="Notes" {onsave} {onfocus} {onblur} {onresize} {onselectionchange} {highlight}
 		{codeLanguages} {uploadMaxSize} {onupload} {uploadMaxCount} {uploadMaxWidth}
 		{uploadMaxHeight} {uploadScaling} {uploadDialog} {onimagesremoved} {colors}

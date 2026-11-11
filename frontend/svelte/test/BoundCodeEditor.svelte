@@ -13,6 +13,8 @@
 -->
 <!-- A CodeEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
+	import { sendEditorState } from '@antilia/core';
+
 	import { CodeEditor, type CodeEditorError, type CodeEditorState } from '../src/index.js';
 
 	let { value = $bindable('let a = 1;'), state: editorState = $bindable(), saved, name, language,
@@ -25,11 +27,15 @@
 		onresize?: (size: unknown) => void; onselectionchange?: (selection: unknown) => void }
 		= $props();
 	let modified = $state(false);
+
+	/** The state sent at once, as the user changes it. */
+	const AT_ONCE = { change: [sendEditorState], select: [sendEditorState],
+		scroll: [sendEditorState], resize: [sendEditorState] };
 </script>
 
 <form>
 	<CodeEditor id="e" class={className} bind:value bind:state={editorState} bind:modified {saved}
-		{name} {language} {lineNumbers} {readOnly} {saveOnBlur} {errors} stateDelay={0}
+		{name} {language} {lineNumbers} {readOnly} {saveOnBlur} {errors} events={AT_ONCE}
 		minHeight={100} label="Script"
 		{onsave} {onfocus} {onblur} {onresize} {onselectionchange} />
 </form>

@@ -15,7 +15,10 @@ package com.antiliacode.widgets.event;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxEventBehavior;
@@ -26,6 +29,7 @@ import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
+import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.ResourceReference;
@@ -43,30 +47,38 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
 /**
  * Listens to the {@link IClientEvent events} of its component in the browser, any number of them,
  * of any names: those the browser fires and those the scripts of the component fire, the events of
- * a rich text editor for example. Each event runs its function in the browser; there the Ajax ones
- * go to the server, through one of two Ajax behaviors the behavior adds to the component, whatever
- * the number of events: one for the {@link IAjaxEvent}s, without the form, one for the
+ * a rich text editor for example. It keeps them by their names, as many as needed for each name.
+ * Each event runs its handler in the browser; there the Ajax ones go to the server, through one of
+ * two Ajax behaviors the behavior adds to the component, whatever the number of events: one for
+ * the {@link IAjaxEvent}s and the {@link IAjaxUpdateEvent}s, without the form, one for the
  * {@link IAjaxSubmitEvent}s, submitting the form the component is in. Both post: when the
  * component is a field, Wicket sends its value with an Ajax event too, as the text a
  * {@link com.antiliacode.widgets.richtext.RichTextEditorChangeEvent} reads.
  *
  * <pre>
  * ClientEventsBehavior events = new ClientEventsBehavior();
- * events.add(AjaxEvent.of("focusin", (eventId, values, target) -&gt; target.add(status)));
+ * events.add(AjaxEvent.of("focusin", (values, target) -&gt; target.add(status)));
  * events.add(new ClientEvent("keydown", "function(event) { ... }"));
+ * events.add(ClientEvent.handledBy("keyup", "Search.suggest"));
  * component.add(events);
  * </pre>
  *
- * Several events may have one name: each runs, in their order, with its own function and delay,
- * and each going to the server sends its own request, which only it hears of. One event keeps the
- * size of a resized editor in the browser, for example, and another sends it to the server; or a
- * single {@link IAjaxEvent} does both, its function keeping the size before it calls
- * {@code send}.
+ * The events of one name each run, in their order, with their own handler and delay, and each
+ * going to the server sends its own request, which only it hears of. One event keeps the size of a
+ * resized editor in the browser, for example, and another sends it to the server; or a single
+ * {@link IAjaxEvent} does both, its handler keeping the size before it calls {@code send}.
+ * {@link #add(IClientEvent)} adds an event after those of its name, {@link #set(IClientEvent)}
+ * puts it in their place and {@link #removeEvents(String)} takes them away.
+ * <p>
+ * An event telling {@code leaving: true} in its {@code detail}, as the editors' events as the page
+ * goes do, goes to the server in a beacon, which the browser sends even then.
  * <p>
  * The events go to the browser as the component renders, in the order they are in, by which the
  * server finds them again: a page changes them before it renders the component, not between. A
  * component keeping events of its own, or of its parts, overrides {@link #getEvents()};
- * {@link #getClientObject()} gives the functions what the component is in the browser.
+ * {@link #getClientObject()} gives the handlers what the component is in the browser,
+ * {@link #getClientValues()} what each request carries besides, which
+ * {@link #onEventSent(AjaxRequestTarget, IRequestParameters)} takes first.
  *
  * @since 11.0.0
  */
@@ -95,13 +107,21 @@ public class ClientEventsBehavior extends Behavior
 	/** The private event of the browser the events submitting the form go to the server by. */
 	static final String SUBMIT_EVENT = "antilia-client-events:submit";
 
-	/** Reads the request of a private event from the event, as Wicket's Ajax wraps it. */
-	private static final String PARAMETERS = "var e=attrs.event,d=e&&(e.detail||" +
-		"(e.originalEvent&&e.originalEvent.detail))||{};return {'" + EVENT_PARAMETER +
-		"':d.event||'','" + INDEX_PARAMETER + "':d.index==null?-1:d.index,'" + VALUES_PARAMETER +
-		"':d.values||'{}'};";
+	/** What the name of a function of the page is: a global, or a path to one. */
+	private static final Pattern FUNCTION_NAME = Pattern.compile(
+		"[A-Za-z_$][\\w$]*(\\.[A-Za-z_$][\\w$]*)*");
 
-	private final List<IClientEvent> events = new ArrayList<>();
+	/**
+	 * Reads the request of a private event from the event, as Wicket's Ajax wraps it: the
+	 * parameters the component adds, then the event's own.
+	 */
+	private static final String PARAMETERS = "var e=attrs.event,d=e&&(e.detail||" +
+		"(e.originalEvent&&e.originalEvent.detail))||{},x=d.extra||{},r={},k;" +
+		"for(k in x){if(Object.prototype.hasOwnProperty.call(x,k)){r[k]=x[k];}}" +
+		"r['" + EVENT_PARAMETER + "']=d.event||'';r['" + INDEX_PARAMETER +
+		"']=d.index==null?-1:d.index;r['" + VALUES_PARAMETER + "']=d.values||'{}';return r;";
+
+	private final Map<String, List<IClientEvent>> events = new LinkedHashMap<>();
 
 	private AjaxEvents ajaxEvents;
 
@@ -109,15 +129,33 @@ public class ClientEventsBehavior extends Behavior
 
 	/**
 	 * @param event
-	 *            an event the component listens to, after those it listens to already
+	 *            an event the component listens to, after those it listens to already, of its name
+	 *            and of the others
 	 * @return {@code this}
 	 * @throws IllegalArgumentException
-	 *             when the event goes to the server both ways, or stays in the browser without a
-	 *             function
+	 *             when the event goes to the server more than one way, or has no handler
 	 */
 	public ClientEventsBehavior add(IClientEvent event)
 	{
-		events.add(check(event));
+		check(event);
+		events.computeIfAbsent(event.getEventName(), name -> new ArrayList<>()).add(event);
+		return this;
+	}
+
+	/**
+	 * @param event
+	 *            an event the component listens to in place of those of its name it listens to
+	 *            already, if any
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             when the event goes to the server more than one way, or has no handler
+	 */
+	public ClientEventsBehavior set(IClientEvent event)
+	{
+		check(event);
+		List<IClientEvent> named = new ArrayList<>();
+		named.add(event);
+		events.put(event.getEventName(), named);
 		return this;
 	}
 
@@ -128,15 +166,84 @@ public class ClientEventsBehavior extends Behavior
 	 */
 	public boolean remove(IClientEvent event)
 	{
-		return events.remove(event);
+		if (event == null)
+		{
+			return false;
+		}
+		List<IClientEvent> named = events.get(event.getEventName());
+		if (named == null || !named.remove(event))
+		{
+			return false;
+		}
+		if (named.isEmpty())
+		{
+			events.remove(event.getEventName());
+		}
+		return true;
 	}
 
 	/**
-	 * @return the events added, in their order
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the component no longer listens to, an empty list for none
+	 */
+	public List<IClientEvent> removeEvents(String eventName)
+	{
+		List<IClientEvent> removed = events.remove(eventName);
+		return removed == null ? List.of() : Collections.unmodifiableList(removed);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the component no longer listens to, an empty list for none
+	 */
+	public List<IClientEvent> removeEvents(IClientEventName eventName)
+	{
+		return removeEvents(AbstractClientEvent.nameOf(eventName));
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name added, in their order, an empty list for none
+	 */
+	public List<IClientEvent> getEvents(String eventName)
+	{
+		List<IClientEvent> named = events.get(eventName);
+		return named == null ? List.of() : Collections.unmodifiableList(named);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name added, in their order, an empty list for none
+	 */
+	public List<IClientEvent> getEvents(IClientEventName eventName)
+	{
+		return getEvents(AbstractClientEvent.nameOf(eventName));
+	}
+
+	/**
+	 * @return the events added by their names, in the order the names came, those of each name in
+	 *         theirs
+	 */
+	public Map<String, List<IClientEvent>> getEventsByName()
+	{
+		Map<String, List<IClientEvent>> byName = new LinkedHashMap<>();
+		events.forEach((name, named) -> byName.put(name, Collections.unmodifiableList(named)));
+		return Collections.unmodifiableMap(byName);
+	}
+
+	/**
+	 * @return the events added, in their order: by their names, in the order the names came, those
+	 *         of each name in theirs
 	 */
 	public List<IClientEvent> getAddedEvents()
 	{
-		return Collections.unmodifiableList(events);
+		List<IClientEvent> all = new ArrayList<>();
+		events.values().forEach(all::addAll);
+		return Collections.unmodifiableList(all);
 	}
 
 	/**
@@ -152,7 +259,7 @@ public class ClientEventsBehavior extends Behavior
 	 * The function goes into the page as it is, as code: it is the component's own, never made of
 	 * what a user entered.
 	 *
-	 * @return JavaScript, {@code function(element) {...}}, giving what the functions of the events
+	 * @return JavaScript, {@code function(element) {...}}, giving what the handlers of the events
 	 *         get as the component from its element; {@code null}, as by default, for the element
 	 */
 	protected String getClientObject()
@@ -161,32 +268,75 @@ public class ClientEventsBehavior extends Behavior
 	}
 
 	/**
+	 * The function goes into the page as it is, as code: it is the component's own, never made of
+	 * what a user entered. What it gives comes back from the browser: the server checks it before
+	 * it trusts it.
+	 *
+	 * @return JavaScript, {@code function(component) {...}}, giving the parameters, an object of
+	 *         strings by their names, the request of each event going to the server carries
+	 *         besides its own, the state of an editor for example, which
+	 *         {@link #onEventSent(AjaxRequestTarget, IRequestParameters)} takes;
+	 *         {@code null}, as by default, for none
+	 */
+	protected String getClientValues()
+	{
+		return null;
+	}
+
+	/**
+	 * Called when the browser sent an event, before the event hears of it and, for an event
+	 * submitting the form, before the form takes what the user entered: the parameters hold what
+	 * {@link #getClientValues()} gave. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param parameters
+	 *            the parameters of the request
+	 */
+	protected void onEventSent(AjaxRequestTarget target, IRequestParameters parameters)
+	{
+	}
+
+	/**
 	 * @param event
 	 *            an event
-	 * @return the event, when it is one way or the other
+	 * @return the event, when it is one way or the other and has a handler
 	 */
 	static IClientEvent check(IClientEvent event)
 	{
 		Args.notNull(event, "event");
-		Args.notEmpty(event.getId(), "event.id");
-		if (event instanceof IAjaxEvent && event instanceof IAjaxSubmitEvent)
+		Args.notEmpty(event.getEventName(), "event.eventName");
+		int ways = (event instanceof IAjaxEvent ? 1 : 0) + (event instanceof IAjaxUpdateEvent ?
+			1 : 0) + (event instanceof IAjaxSubmitEvent ? 1 : 0);
+		if (ways > 1)
 		{
-			throw new IllegalArgumentException("The event " + event.getId() +
-				" is both an IAjaxEvent and an IAjaxSubmitEvent: it is one or the other");
+			throw new IllegalArgumentException("The event " + event.getEventName() +
+				" goes to the server more than one way: it is one of IAjaxEvent," +
+				" IAjaxUpdateEvent and IAjaxSubmitEvent");
 		}
-		if (kind(event) == Kind.CLIENT && Strings.isEmpty(event.getClientFunction()))
+		String handler = event.getEventClientHandlerName();
+		if (Strings.isEmpty(event.getEventHandlerClientSideCode()))
 		{
-			throw new IllegalArgumentException("The event " + event.getId() +
-				" stays in the browser but has no function to run there");
+			if (Strings.isEmpty(handler))
+			{
+				throw new IllegalArgumentException("The event " + event.getEventName() +
+					" has no handler: neither the name of a function nor code");
+			}
+			if (!FUNCTION_NAME.matcher(handler).matches())
+			{
+				throw new IllegalArgumentException("The handler of the event " +
+					event.getEventName() + ", " + handler +
+					", is not the name of a function: a global or a path to one");
+			}
 		}
 		return event;
 	}
 
 	private enum Kind
 	{
-		CLIENT("client"), AJAX("ajax"), SUBMIT("submit");
+		CLIENT("client"), AJAX("ajax"), UPDATE("ajax"), SUBMIT("submit");
 
-		/** The kind in the browser. */
+		/** The kind in the browser: an update goes as an Ajax event does. */
 		private final String script;
 
 		Kind(String script)
@@ -200,6 +350,10 @@ public class ClientEventsBehavior extends Behavior
 		if (event instanceof IAjaxSubmitEvent)
 		{
 			return Kind.SUBMIT;
+		}
+		if (event instanceof IAjaxUpdateEvent)
+		{
+			return Kind.UPDATE;
 		}
 		return event instanceof IAjaxEvent ? Kind.AJAX : Kind.CLIENT;
 	}
@@ -242,29 +396,68 @@ public class ClientEventsBehavior extends Behavior
 		for (int index = 0; index < all.size(); index++)
 		{
 			IClientEvent event = check(all.get(index));
+			if (kind(event) == Kind.UPDATE && !(component instanceof FormComponent))
+			{
+				throw new IllegalStateException("The event " + event.getEventName() +
+					" updates the model of its component, which " + component +
+					" is not a form component to");
+			}
 			event.renderHead(component, response);
 			if (index > 0)
 			{
 				script.append(',');
 			}
-			script.append("{id:").append(ScriptJson.quote(event.getId())).append(",index:")
-				.append(index).append(",kind:'").append(kind(event).script).append("',delay:")
-				.append(event.getDelay() < 1 ? IClientEvent.NO_DELAY : event.getDelay());
-			String function = event.getClientFunction();
-			if (!Strings.isEmpty(function))
-			{
-				script.append(",fn:").append(function);
-			}
-			script.append('}');
+			script.append(ScriptJson.withFunctions(describe(event, index)));
 		}
-		script.append(']');
+		script.append("],");
 		String clientObject = getClientObject();
-		if (!Strings.isEmpty(clientObject))
+		script.append(Strings.isEmpty(clientObject) ? "null" : clientObject).append(",{");
+		// the URLs a beacon goes to as the page goes
+		List<String> options = new ArrayList<>();
+		if (hasEvents(Kind.AJAX) || hasEvents(Kind.UPDATE))
 		{
-			script.append(',').append(clientObject);
+			options.add("ajaxUrl:" + ScriptJson.quote(ajaxEvents.getCallbackUrl().toString()));
 		}
-		script.append(");");
+		if (hasEvents(Kind.SUBMIT))
+		{
+			options.add("submitUrl:" +
+				ScriptJson.quote(submitEvents.getCallbackUrl().toString()));
+		}
+		String values = getClientValues();
+		if (!Strings.isEmpty(values))
+		{
+			options.add("values:" + values);
+		}
+		script.append(String.join(",", options)).append("});");
 		response.render(OnDomReadyHeaderItem.forScript(script));
+	}
+
+	/**
+	 * @param event
+	 *            an event of the component
+	 * @param index
+	 *            its place among them
+	 * @return what the browser gets of it: its name, its place and its kind first, which the
+	 *         {@link IClientEvent#toJson() JSON} of the event does not change, then the JSON
+	 */
+	private static JSONObject describe(IClientEvent event, int index)
+	{
+		JSONObject described = new JSONObject();
+		described.put("eventName", event.getEventName());
+		described.put("index", index);
+		described.put("kind", kind(event).script);
+		JSONObject json = event.toJson();
+		if (json != null)
+		{
+			for (String key : json.keySet())
+			{
+				if (!described.has(key))
+				{
+					described.put(key, json.opt(key));
+				}
+			}
+		}
+		return described;
 	}
 
 	/**
@@ -282,10 +475,10 @@ public class ClientEventsBehavior extends Behavior
 	{
 		return switch (kind(event))
 		{
-			case AJAX -> ajaxEvents;
+			case AJAX, UPDATE -> ajaxEvents;
 			case SUBMIT -> submitEvents;
-			case CLIENT -> throw new IllegalArgumentException("The event " + event.getId() +
-				" stays in the browser");
+			case CLIENT -> throw new IllegalArgumentException("The event " +
+				event.getEventName() + " stays in the browser");
 		};
 	}
 
@@ -300,23 +493,23 @@ public class ClientEventsBehavior extends Behavior
 	/**
 	 * @return the event the request is of, {@code null} when the component no longer has it
 	 */
-	private <E extends IClientEvent> E eventOf(IRequestParameters parameters, Class<E> type)
+	private IClientEvent eventOf(IRequestParameters parameters, Kind... kinds)
 	{
-		String id = parameters.getParameterValue(EVENT_PARAMETER).toOptionalString();
+		String name = parameters.getParameterValue(EVENT_PARAMETER).toOptionalString();
 		int index = parameters.getParameterValue(INDEX_PARAMETER).toInt(-1);
 		List<IClientEvent> all = getEvents();
 		if (index < 0 || index >= all.size())
 		{
-			LOG.debug("No event {} at {} among the events of the component", id, index);
+			LOG.debug("No event {} at {} among the events of the component", name, index);
 			return null;
 		}
 		IClientEvent event = all.get(index);
-		if (!type.isInstance(event) || !event.getId().equals(id))
+		if (!List.of(kinds).contains(kind(event)) || !event.getEventName().equals(name))
 		{
-			LOG.debug("The event at {} is {}, not {}", index, event.getId(), id);
+			LOG.debug("The event at {} is {}, not {}", index, event.getEventName(), name);
 			return null;
 		}
-		return type.cast(event);
+		return event;
 	}
 
 	/**
@@ -346,7 +539,38 @@ public class ClientEventsBehavior extends Behavior
 	}
 
 	/**
-	 * Hears of the {@link IAjaxEvent}s, by the private event their functions fire.
+	 * Gives the model of the component what the user entered, validated, then tells the event, as
+	 * Wicket's {@link org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior} does.
+	 */
+	private static void update(IAjaxUpdateEvent event, JSONObject values,
+		FormComponent<?> component, AjaxRequestTarget target)
+	{
+		try
+		{
+			component.inputChanged();
+			component.validate();
+			if (component.isValid())
+			{
+				component.valid();
+				component.updateModel();
+				event.onEvent(values, component, target);
+			}
+			else
+			{
+				component.invalid();
+				event.onError(values, component, target, null);
+			}
+			component.updateAutoLabels(target);
+		}
+		catch (RuntimeException e)
+		{
+			event.onError(values, component, target, e);
+		}
+	}
+
+	/**
+	 * Hears of the {@link IAjaxEvent}s and the {@link IAjaxUpdateEvent}s, by the private event
+	 * their handlers fire.
 	 */
 	private final class AjaxEvents extends AjaxEventBehavior
 	{
@@ -360,7 +584,7 @@ public class ClientEventsBehavior extends Behavior
 		@Override
 		public void renderHead(Component component, IHeaderResponse response)
 		{
-			if (hasEvents(Kind.AJAX))
+			if (hasEvents(Kind.AJAX) || hasEvents(Kind.UPDATE))
 			{
 				super.renderHead(component, response);
 			}
@@ -369,8 +593,8 @@ public class ClientEventsBehavior extends Behavior
 		@Override
 		public boolean getStatelessHint(Component component)
 		{
-			// without events of its kind, it never renders
-			return !hasEvents(Kind.AJAX);
+			// without events of its kinds, it never renders
+			return !hasEvents(Kind.AJAX) && !hasEvents(Kind.UPDATE);
 		}
 
 		@Override
@@ -387,16 +611,24 @@ public class ClientEventsBehavior extends Behavior
 		protected void onEvent(AjaxRequestTarget target)
 		{
 			IRequestParameters parameters = parameters();
-			IAjaxEvent event = eventOf(parameters, IAjaxEvent.class);
-			if (event != null)
+			onEventSent(target, parameters);
+			IClientEvent event = eventOf(parameters, Kind.AJAX, Kind.UPDATE);
+			if (event instanceof IAjaxUpdateEvent update)
 			{
-				event.onEvent(event.getId(), valuesOf(parameters), target);
+				if (getComponent() instanceof FormComponent<?> component)
+				{
+					update(update, valuesOf(parameters), component, target);
+				}
+			}
+			else if (event instanceof IAjaxEvent ajax)
+			{
+				ajax.onEvent(valuesOf(parameters), target);
 			}
 		}
 	}
 
 	/**
-	 * Hears of the {@link IAjaxSubmitEvent}s, by the private event their functions fire, submitting
+	 * Hears of the {@link IAjaxSubmitEvent}s, by the private event their handlers fire, submitting
 	 * the form.
 	 */
 	private final class SubmitEvents extends AjaxFormSubmitBehavior
@@ -432,13 +664,20 @@ public class ClientEventsBehavior extends Behavior
 		}
 
 		@Override
+		protected void onEvent(AjaxRequestTarget target)
+		{
+			// what the component sent besides, before the form takes what the user entered
+			onEventSent(target, parameters());
+			super.onEvent(target);
+		}
+
+		@Override
 		protected void onSubmit(AjaxRequestTarget target)
 		{
 			IRequestParameters parameters = parameters();
-			IAjaxSubmitEvent event = eventOf(parameters, IAjaxSubmitEvent.class);
-			if (event != null)
+			if (eventOf(parameters, Kind.SUBMIT) instanceof IAjaxSubmitEvent event)
 			{
-				event.onEvent(event.getId(), valuesOf(parameters), getForm(), target);
+				event.onEvent(valuesOf(parameters), getForm(), target);
 			}
 		}
 
@@ -446,10 +685,9 @@ public class ClientEventsBehavior extends Behavior
 		protected void onError(AjaxRequestTarget target)
 		{
 			IRequestParameters parameters = parameters();
-			IAjaxSubmitEvent event = eventOf(parameters, IAjaxSubmitEvent.class);
-			if (event != null)
+			if (eventOf(parameters, Kind.SUBMIT) instanceof IAjaxSubmitEvent event)
 			{
-				event.onError(event.getId(), valuesOf(parameters), getForm(), target);
+				event.onError(valuesOf(parameters), getForm(), target);
 			}
 		}
 	}

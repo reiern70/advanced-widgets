@@ -16,7 +16,10 @@ import { createRef, StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { lezerHighlighter } from '@antilia/core';
+import { lezerHighlighter, sendEditorState } from '@antilia/core';
+
+/** The state sent at once as the cursor moves. */
+const AT_ONCE = { select: [sendEditorState] };
 import { Slice } from '@tiptap/pm/model';
 
 import type { RichTextProofreader, RichTextSuggester } from '@antilia/core';
@@ -147,7 +150,7 @@ describe('RichTextEditor', () => {
 		const onStateChange = vi.fn();
 		const onSelectionChange = vi.fn();
 		const ref = createRef<RichTextEditorHandle>();
-		render(<RichTextEditor ref={ref} value="<p>Hello world</p>" stateDelay={0}
+		render(<RichTextEditor ref={ref} value="<p>Hello world</p>" events={AT_ONCE}
 			state={{ selection: { anchor: 2, head: 4 } }} onStateChange={onStateChange}
 			onSelectionChange={onSelectionChange} />);
 

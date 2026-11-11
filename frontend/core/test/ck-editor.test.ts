@@ -632,8 +632,7 @@ describe('CKEditor', () => {
 						'=' + (event as CustomEvent).detail.modified))));
 			field.addEventListener('input', () => events.push('input'));
 			field.addEventListener('change', () => events.push('change-of-field'));
-			const editor = new CKEditor(field, { build, onChange: (value) => changes.push(value),
-				stateDelay: 0 });
+			const editor = new CKEditor(field, { build, onChange: (value) => changes.push(value) });
 			await editor.ready;
 			const fake = build.editors[0]!;
 			// the ids of the items are CKEditor's, new each time: not the text's

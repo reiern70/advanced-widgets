@@ -183,15 +183,13 @@ class RichTextCleaningTest extends WicketTestCase
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onEvent(String eventId, JSONObject values, Form<?> form,
-				AjaxRequestTarget target)
+			public void onEvent(JSONObject values, Form<?> form, AjaxRequestTarget target)
 			{
 				events.add("saved");
 			}
 
 			@Override
-			public void onError(String eventId, JSONObject values, Form<?> form,
-				AjaxRequestTarget target)
+			public void onError(JSONObject values, Form<?> form, AjaxRequestTarget target)
 			{
 				events.add("error");
 			}

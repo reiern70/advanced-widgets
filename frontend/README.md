@@ -127,18 +127,35 @@ are what is wrong with the text: the editor underlines each where it is, lists t
 its bottom, a click on one going there, and marks itself invalid. `findJsonError(text)` finds the
 first error of a JSON text, with where it is, as Wicket's `JsonValidator` does. What is selected,
 how far the text is scrolled and the size the user gave the editor are its state
-(`CodeEditorState`): the editor keeps it while hidden, in a tab not selected, `onStateChange` reports
-it a moment after the user changed it, as the editor loses the focus and as the page goes, and the
-option `state` gives it back; rendered anew in the same place with the same text, as Wicket does,
-the editor goes on as it was. CodeMirror writes its style sheet into a style element, which takes
+(`CodeEditorState`): the editor keeps it while hidden, in a tab not selected, `onStateChange` gets
+it, and the option `state` gives it back; rendered anew in the same place with the same text, as
+Wicket does, the editor goes on as it was. When the state goes is the page's: the option `events`
+(`editor-events.ts`, shared by the three editors) takes the handlers of the editor's events by their
+keys, `change`, `select`, `scroll`, `resize`, `blur`, `leave` (the page going), `save`, `discard`...,
+or by the name of any event it fires, each a function `(event, editor, send)` run at once or
+`{ handler, delay }` run once the events paused, `send()` giving `onStateChange` the state when it
+or the text changed since last sent. Those left out keep the default ones (`DEFAULT_STATE_EVENTS`):
+`change`, `select`, `scroll` and `resize` send it 400 ms after the user paused, `blur` and `leave`
+at once; `events={{ change: [], select: [], scroll: [], resize: [] }}` sends it only as the editor
+loses the focus and as the page goes. CodeMirror writes its style sheet into a style element, which takes
 the nonce of the page's scripts, or `nonce`, under a Content Security Policy. React's `CodeEditor`
 takes `value` and `state` and calls back; Svelte's binds `value`, `state` and `modified`. Wicket's
 `CodeEditor` is a `TextArea` whose model is the text and whose state model, kept in the page by
-default, takes the state the browser sends (`setSendToServer`, on by default), with the text the
-user changed as its input; `CodeEditorEventBehavior`s hear of its events, `markSaved(target)` tells
-the browser the text was saved, and `CodeEditorLanguage.of(name, script)` plugs in the grammar of a
-script of the page's own. `CodeEditorEventBehavior.onUpdate(event, target -> ...)` hears of an event
-with a lambda. `setSaveOnBlur(true)` saves as the user leaves the editor; the editor validates its
+default, takes the state the browser sends with each of its events going to the server, with the
+text the user changed as its input. Its events are `IClientEvent`s of a `ClientEventsBehavior`, kept
+by their names, several for a name if need be (`addEvent`, `setEvent`, `removeEvents`), each with
+the name of a function of the page (`getEventClientHandlerName`) or code of its own
+(`getEventHandlerClientSideCode`, which wins), taking `(event, component, send, options)`: an event
+goes to the browser as `toJson()`, its public getters by default, which the handler gets as
+`options`, and the events going to the server (`AbstractDelayedClientEvent`) may wait for the user
+to pause (`setDelay`); by default six `SendStateEvent`s, on `INPUT`,
+`SELECT`, `SCROLL`, `RESIZE` (400 ms after the user paused), `BLUR` and `LEAVE`, send the state:
+`removeEvents(CodeEditorEvent.INPUT)` stops sending it as the user types,
+`setEvent(ClientEvent.nothing(CodeEditorEvent.BLUR))` as the editor loses the focus.
+`AjaxUpdateEvent.of(CodeEditorEvent.SAVE, (values, component, target) -> ...)` hears of an
+event once the model took the text, valid, `markSaved(target)` tells the browser the text was
+saved, and `CodeEditorLanguage.of(name, script)` plugs in the grammar of a script of the page's
+own. `setSaveOnBlur(true)` saves as the user leaves the editor; the editor validates its
 text with its validators, a `JsonValidator` for example, and shows its error messages in the text,
 where the validator tells by the variables `line` and `column` (`setShowErrors`, on by default),
 while the page's `FeedbackPanel` or `Notifications` show them too. `setReadOnly(IModel<Boolean>)`
@@ -230,7 +247,10 @@ In Wicket, `Wicket.RichTextEvents` registers and triggers them, and an `IClientE
 name renders its script and hears of it on the server. As the code editor does, it keeps the text in a
 text area a form posts, fires `RICH_TEXT_EDITOR_EVENTS`, tells of changes not saved with
 `data-modified`, keeps its state (`RichTextEditorState`: the selection, the scrolling and the size)
-while hidden and gives it to `onStateChange`, and goes on as it was when Wicket renders it anew.
+while hidden and gives it to `onStateChange` as the handlers of its events (`events`) say, and goes
+on as it was when Wicket renders it anew. In Wicket its events send the state, as the code
+editor's do: `RichTextEditorEvents` is the enum of their names, and the six `SendStateEvent`s are
+events as any other.
 The text area Wicket renders has the class `antilia-rich-text-editor-loading`
 (`RICH_TEXT_EDITOR_CLASSES.loading`) until the editor is made of it: while scripts run, the style
 sheet hides it in the room of the editor, so that a page arriving slowly shows no HTML, and without

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.event.AjaxEvent;
+import com.antiliacode.widgets.event.IClientEventName;
 
 /**
  * Hears on the server of the text of a {@link RichTextEditor} or a
@@ -89,30 +90,57 @@ public abstract class RichTextEditorChangeEvent extends AjaxEvent
 	/**
 	 * @param editor
 	 *            the editor, which listens to the event
-	 * @param eventId
+	 * @param eventName
 	 *            the event the text comes with, {@link RichTextEditorEvents#BLUR} for example
 	 */
-	protected RichTextEditorChangeEvent(AbstractRichTextEditor<?> editor, String eventId)
+	protected RichTextEditorChangeEvent(AbstractRichTextEditor<?> editor, String eventName)
 	{
-		super(eventId);
+		super(eventName);
 		this.editor = Args.notNull(editor, "editor");
 	}
 
 	/**
 	 * @param editor
 	 *            the editor, which listens to the event
-	 * @param eventId
+	 * @param eventName
+	 *            the event the text comes with, {@link RichTextEditorEvents#BLUR} for example
+	 */
+	protected RichTextEditorChangeEvent(AbstractRichTextEditor<?> editor,
+		IClientEventName eventName)
+	{
+		this(editor, Args.notNull(eventName, "eventName").getEventName());
+	}
+
+	/**
+	 * @param editor
+	 *            the editor, which listens to the event
+	 * @param eventName
 	 *            the event the text comes with, {@link RichTextEditorEvents#CHANGE} or
 	 *            {@link RichTextEditorEvents#BLUR} for example
 	 * @param listener
 	 *            what the server does with the text before and the text now
 	 * @return the event
 	 */
-	public static RichTextEditorChangeEvent of(AbstractRichTextEditor<?> editor, String eventId,
+	public static RichTextEditorChangeEvent of(AbstractRichTextEditor<?> editor,
+		IClientEventName eventName, IChangeListener listener)
+	{
+		return of(editor, Args.notNull(eventName, "eventName").getEventName(), listener);
+	}
+
+	/**
+	 * @param editor
+	 *            the editor, which listens to the event
+	 * @param eventName
+	 *            the name of the event the text comes with in the browser
+	 * @param listener
+	 *            what the server does with the text before and the text now
+	 * @return the event
+	 */
+	public static RichTextEditorChangeEvent of(AbstractRichTextEditor<?> editor, String eventName,
 		IChangeListener listener)
 	{
 		Args.notNull(listener, "listener");
-		return new RichTextEditorChangeEvent(editor, eventId)
+		return new RichTextEditorChangeEvent(editor, eventName)
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -134,12 +162,23 @@ public abstract class RichTextEditorChangeEvent extends AjaxEvent
 	}
 
 	/**
+	 * @return the properties of the event, without the editor, which the browser knows
+	 */
+	@Override
+	public JSONObject toJson()
+	{
+		JSONObject json = super.toJson();
+		json.remove("editor");
+		return json;
+	}
+
+	/**
 	 * Takes the text area posted as the input of the editor, as an Ajax behavior
 	 * updating a form component does, then calls {@link #onChange(String, String,
 	 * AjaxRequestTarget)} or {@link #onError(AjaxRequestTarget)}.
 	 */
 	@Override
-	public final void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+	public final void onEvent(JSONObject values, AjaxRequestTarget target)
 	{
 		if (editor.isReadOnly() || !editor.isEnabledInHierarchy())
 		{
@@ -149,7 +188,7 @@ public abstract class RichTextEditorChangeEvent extends AjaxEvent
 			editor.getInputName()))
 		{
 			// without the text, the model would lose it
-			LOG.debug("The event {} came without the text of {}", eventId, editor);
+			LOG.debug("The event {} came without the text of {}", getEventName(), editor);
 			return;
 		}
 		String previousText = editor.getModelObject();

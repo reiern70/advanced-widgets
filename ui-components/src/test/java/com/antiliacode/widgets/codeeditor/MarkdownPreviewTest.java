@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
@@ -38,6 +37,7 @@ import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.event.ClientEventsTester;
 import com.github.openjson.JSONObject;
 
 class MarkdownPreviewTest extends WicketTestCase
@@ -79,10 +79,9 @@ class MarkdownPreviewTest extends WicketTestCase
 		assertSame(editor, preview.getEditor());
 
 		// what the user typed, which the editor keeps as its input
-		tester.getRequest().setParameter("state", "{}");
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"typed <i>");
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		ClientEventsTester.sendState(tester, editor, "{}", true);
 		assertEquals("typed <i>", preview.getText());
 
 		assertThrows(IllegalArgumentException.class, () -> new MarkdownPreview("preview",
