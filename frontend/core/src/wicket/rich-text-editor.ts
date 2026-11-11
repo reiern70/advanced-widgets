@@ -14,10 +14,12 @@
 
 /*
  * antilia-rich-text-editor.js: registers Wicket.RichTextEditor for the RichTextEditor of
- * ui-components, which calls Wicket.RichTextEditor.attach(id, options). With stateUrl, the URL of
- * the editor's Ajax behavior, the editor sends the server its state, and its text with it when the
- * user changed it, under the name of the text area: a moment after the user changed them and as
- * the editor loses the focus, via Ajax; as the page goes, in a beacon the browser sends even then.
+ * ui-components, which calls Wicket.RichTextEditor.attach(id, options). The editor sends the
+ * server its state, and its text when the user changed it, with each of its events going to the
+ * server, which the events of the RichTextEditor, Wicket.ClientEvents, send
+ * (Wicket.RichTextEditor.stateParameters): by default a moment after the user changed them, as the
+ * editor loses the focus and, in a beacon, as the page goes. The core's own handlers sending the
+ * state are off.
  *
  * Wicket.RichTextEditor.registerExtension(name, function (kit) {...}) plugs in an extension of the
  * page's own, built from the Tiptap classes of the kit, a Mark or a Node for example.
@@ -43,9 +45,9 @@
 
 import { registerRichTextHighlighter } from '../rich-text-code-blocks.js';
 import { registerRichTextFeature, richTextFeatures } from '../rich-text-features.js';
+import { NO_STATE_EVENTS } from '../editor-events.js';
 import { RICH_TEXT_EDITOR_KIT, RichTextEditor, registerRichTextExtension, richTextExtensions,
-	type RichTextEditorOptions, type RichTextEditorState,
-	type RichTextEditorStateChange } from '../rich-text-editor.js';
+	type RichTextEditorOptions } from '../rich-text-editor.js';
 import type { RichTextHighlighter } from '../rich-text-languages.js';
 import { proofreadAt } from '../rich-text-proofreading.js';
 import { suggestAt, type RichTextSuggester } from '../rich-text-suggestions.js';
@@ -53,14 +55,10 @@ import { findImagesAt, storePermanentlyAt } from '../rich-text-stored-images.js'
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
-import { sendState, type Parameter } from './send-state.js';
+import { sendState, stateParameters } from './send-state.js';
 
-/** The options of Wicket's editor: those of the core, and where the server hears of the state. */
+/** The options of Wicket's editor: those of the core, and the URLs of the behaviors of the server. */
 interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'suggesters'> {
-	/** The URL of the Ajax behavior keeping the state on the server. */
-	stateUrl?: string;
-	/** The name the text area posts the text under, which the text goes to the server under too. */
-	inputName?: string;
 	/** The URL of the behavior taking the images the user uploads, and answering their addresses. */
 	uploadUrl?: string;
 	/**
@@ -84,23 +82,13 @@ const WicketRichTextEditor = {
 	 * Makes an editor of a text area.
 	 *
 	 * @param id the markup id of the text area
-	 * @param options the text, its format, the features, the toolbar and the state; where the
-	 *        server hears of the state
+	 * @param options the text, its format, the features, the toolbar and the state; the URLs of
+	 *        the behaviors of the server
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { stateUrl, inputName, uploadUrl, permanentImages, imagesUrl, proofreadUrl, suggestUrl,
-			suggesters, ...rest } = options;
-		let editor: RichTextEditor | null = null;
-		const onStateChange = stateUrl ? (state: RichTextEditorState,
-			change: RichTextEditorStateChange) => {
-			const parameters: Parameter[] = [{ name: 'state', value: JSON.stringify(state) }];
-			if (change.changed && inputName && editor) {
-				parameters.push({ name: inputName, value: editor.getValue() });
-			}
-			sendState(id, stateUrl, parameters, change.leaving);
-			rest.onStateChange?.(state, change);
-		} : rest.onStateChange;
+		const { uploadUrl, permanentImages, imagesUrl, proofreadUrl, suggestUrl, suggesters,
+			...rest } = options;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
 		const stored = !!uploadUrl && !!permanentImages;
 		const onStorePermanently = stored ? storePermanentlyAt(uploadUrl) : rest.onStorePermanently;
@@ -113,10 +101,14 @@ const WicketRichTextEditor = {
 		const asked = suggesters?.map((suggester) => 'items' in suggester ? suggester :
 			suggestUrl ? suggestAt(suggestUrl, suggester) : null)
 			.filter((suggester): suggester is RichTextSuggester => !!suggester);
-		editor = RichTextEditor.attach(id, { ...rest, onStateChange, onUpload, onImagesRemoved,
-			onStorePermanently, onFindImages, proofreader, suggesters: asked });
-		return editor;
+		// the events of the server send the state
+		return RichTextEditor.attach(id, { ...rest, events: { ...NO_STATE_EVENTS, ...rest.events },
+			onUpload, onImagesRemoved, onStorePermanently, onFindImages, proofreader,
+			suggesters: asked });
 	},
+
+	/** What the events of the server carry besides: see stateParameters(). */
+	stateParameters,
 
 	/**
 	 * @param id the markup id of the text area

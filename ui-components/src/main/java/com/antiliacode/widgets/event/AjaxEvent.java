@@ -20,72 +20,93 @@ import org.apache.wicket.util.lang.Args;
 import com.github.openjson.JSONObject;
 
 /**
- * An event the server hears of via Ajax, without the form: an {@link IAjaxEvent} made ready.
+ * An event the server hears of via Ajax, without the form: an {@link IAjaxEvent} made ready. Its
+ * handler is {@link #SEND_HANDLER} unless set otherwise.
  *
  * <pre>
  * editor.addEvent(new AjaxEvent(RichTextEditorEvents.RESIZE)
  * {
- *     public void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+ *     public void onEvent(JSONObject values, AjaxRequestTarget target)
  *     {
  *         JSONObject size = values.optJSONObject("size");
  *         ...
  *     }
  * });
- * editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS, (eventId, values, target) -&gt; ...));
+ * editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS, (values, target) -&gt; ...));
  * </pre>
  *
  * @since 11.0.0
  */
-public abstract class AjaxEvent extends AbstractClientEvent<AjaxEvent> implements IAjaxEvent
+public abstract class AjaxEvent extends AbstractDelayedClientEvent<AjaxEvent>
+	implements IAjaxEvent
 {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * What the server does with an event: {@link IAjaxEvent#onEvent(String, JSONObject,
+	 * What the server does with an event: {@link IAjaxEvent#onEvent(JSONObject,
 	 * AjaxRequestTarget)}, as a lambda.
 	 */
 	@FunctionalInterface
 	public interface IListener extends IClusterable
 	{
 		/**
-		 * @param eventId
-		 *            the name of the event
 		 * @param values
 		 *            what the browser sent
 		 * @param target
 		 *            the Ajax request target
 		 */
-		void onEvent(String eventId, JSONObject values, AjaxRequestTarget target);
+		void onEvent(JSONObject values, AjaxRequestTarget target);
 	}
 
 	/**
-	 * @param id
+	 * @param eventName
 	 *            the name of the event in the browser
 	 */
-	protected AjaxEvent(String id)
+	protected AjaxEvent(String eventName)
 	{
-		super(id, null);
+		super(eventName, SEND_HANDLER, null);
 	}
 
 	/**
-	 * @param id
+	 * @param eventName
+	 *            the name of the event
+	 */
+	protected AjaxEvent(IClientEventName eventName)
+	{
+		this(nameOf(eventName));
+	}
+
+	/**
+	 * @param eventName
 	 *            the name of the event in the browser
 	 * @param listener
 	 *            what the server does with the event
 	 * @return the event
 	 */
-	public static AjaxEvent of(String id, IListener listener)
+	public static AjaxEvent of(String eventName, IListener listener)
 	{
 		Args.notNull(listener, "listener");
-		return new AjaxEvent(id)
+		return new AjaxEvent(eventName)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+			public void onEvent(JSONObject values, AjaxRequestTarget target)
 			{
-				listener.onEvent(eventId, values, target);
+				listener.onEvent(values, target);
 			}
 		};
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @param listener
+	 *            what the server does with the event
+	 * @return the event
+	 */
+	public static AjaxEvent of(IClientEventName eventName, IListener listener)
+	{
+		return of(nameOf(eventName), listener);
 	}
 }

@@ -148,11 +148,16 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * What is selected, how far the text is scrolled and the size the user gave the editor, by the bar
  * along its bottom ({@link #setResizable(ResizeAxis)}), are its {@link RichTextEditorState state},
  * kept in the state model: by default in the editor, and so in the page. The browser sends the
- * server the state, a moment after the user changed it, as the editor loses the focus and, in a
- * beacon, as the page goes ({@link #setSendToServer(boolean)}, on by default), with the text the
- * user changed, which the editor keeps as its input until the form is sent, as a text area keeps
- * what the user typed when the form did not validate. Rendered again, or shown again after the user
- * came back to the page with a state model of the session, the editor takes the state up again.
+ * server the state with each event of the editor going to the server, with the text the user
+ * changed, which the editor keeps as its input until the form is sent, as a text area keeps what
+ * the user typed when the form did not validate: by default a moment after the user changed it, as
+ * the editor loses the focus and, in a beacon, as the page goes, by the
+ * {@link com.antiliacode.widgets.event.SendStateEvent}s the editor listens to, which a page takes
+ * away or puts others in the place of
+ * ({@link #removeEvents(com.antiliacode.widgets.event.IClientEventName)},
+ * {@link #setEvent(com.antiliacode.widgets.event.IClientEvent)}). Rendered again, or shown again
+ * after the user came back to the page with a state model of the session, the editor takes the
+ * state up again.
  * <p>
  * {@code Wicket.RichTextEditor} from {@link #JS} makes the editor in the browser, with Tiptap and
  * ProseMirror; its sizes are CSS custom properties set through the CSSOM, and it writes no style

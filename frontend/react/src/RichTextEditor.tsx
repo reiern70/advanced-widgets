@@ -14,7 +14,8 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type HeadingLevel,
+import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type EditorEvents,
+	type HeadingLevel, type RichTextEditorEventKey,
 	type ResizableSize, type ResizeAxis, type RichTextEditorSelection, type RichTextEditorState,
 	type RichTextBackgroundColor, type RichTextCleaningReport, type RichTextColor,
 	type RichTextEditorStateChange,
@@ -103,8 +104,14 @@ export interface RichTextEditorProps {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: RichTextEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+	 * other events it fires, each sending the state to onStateChange or not (send); those left out
+	 * keep theirs: change, select, scroll and resize send the state 400 ms after the user paused,
+	 * blur and leave at once; an empty list for none. Keep the object the same: another one puts
+	 * the handlers anew.
+	 */
+	events?: EditorEvents<CoreRichTextEditor, RichTextEditorEventKey>;
 	/** More extensions of Tiptap, or the names of those registered; keep the array the same. */
 	extensions?: readonly RichTextExtension[];
 	/**
@@ -233,7 +240,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			bubbleMenu,
 			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
 			suggesters, limit, count, resizable, minWidth,
-			minHeight, maxWidth, maxHeight, stateDelay, extensions, pasteNotice, texts, highlight,
+			minHeight, maxWidth, maxHeight, events, extensions, pasteNotice, texts, highlight,
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
 			uploadMaxCount, uploadDialog, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
@@ -273,7 +280,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				suggesters: current.suggesters, limit: current.limit,
 				count: current.count, resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
-				state: current.state, stateDelay: current.stateDelay, extensions: current.extensions,
+				state: current.state, events: current.events, extensions: current.extensions,
 				pasteNotice: current.pasteNotice, texts: current.texts, look, highlight: highlighterOf(current.highlight) ?? false,
 				codeLanguages: current.codeLanguages, uploadTypes: current.uploadTypes,
 				uploadMaxSize: current.uploadMaxSize, uploadMaxWidth: current.uploadMaxWidth,
@@ -305,18 +312,24 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				toolbar, bubbleMenu, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
 				textLanguage: textLanguage ?? null, proofreader: proofreader ?? null, proofreadDelay,
 				suggesters: suggesters ?? [], limit, count, resizable, minWidth, minHeight,
-				maxWidth, maxHeight, stateDelay, pasteNotice: !!pasteNotice, texts });
+				maxWidth, maxHeight, pasteNotice: !!pasteNotice, texts });
 		}, [format, features, featureOptions, headingLevels, colors, backgroundColors, toolbar,
 			bubbleMenu,
 			readOnly, placeholder, label, spellcheck, textLanguage, proofreader, proofreadDelay,
 			suggesters, limit, count, resizable,
-			minWidth, minHeight, maxWidth, maxHeight, stateDelay, pasteNotice, texts]);
+			minWidth, minHeight, maxWidth, maxHeight, pasteNotice, texts]);
 
 		useLayoutEffect(() => {
 			if (extensions !== undefined) {
 				instance.current?.configure({ extensions });
 			}
 		}, [extensions]);
+
+		useLayoutEffect(() => {
+			if (events !== undefined) {
+				instance.current?.configure({ events });
+			}
+		}, [events]);
 
 		useLayoutEffect(() => {
 			instance.current?.configure({ highlight: highlighterOf(highlight) ?? false,

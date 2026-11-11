@@ -14,7 +14,8 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { CodeEditor as CoreCodeEditor, type CodeEditorError, type CodeEditorLanguage,
+import { CodeEditor as CoreCodeEditor, type CodeEditorError, type CodeEditorEventKey,
+	type CodeEditorLanguage, type EditorEvents,
 	type CodeEditorSelection,
 	type CodeEditorState, type CodeEditorStateChange, type CodeEditorTexts, type Extension,
 	type ResizableSize, type ResizeAxis } from '@antilia/core';
@@ -57,8 +58,14 @@ export interface CodeEditorProps {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: CodeEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (CODE_EDITOR_EVENTS) or the names of
+	 * other events it fires, each sending the state to onStateChange or not (send); those left out
+	 * keep theirs: change, select, scroll and resize send the state 400 ms after the user paused,
+	 * blur and leave at once; an empty list for none. Keep the object the same: another one puts
+	 * the handlers anew.
+	 */
+	events?: EditorEvents<CoreCodeEditor, CodeEditorEventKey>;
 	/**
 	 * Whether leaving the editor with changes not saved, or with errors shown, calls onSave: false
 	 * when left out.
@@ -129,7 +136,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 	props, ref) {
 	const { value, saved, language, lineNumbers, folding, readOnly, selectable, lineWrapping,
 		tabSize, indentWithTab, placeholder, label, resizable, minWidth, minHeight, maxWidth,
-		maxHeight, stateDelay, saveOnBlur, errors, extensions, texts, name, id, className } = props;
+		maxHeight, events, saveOnBlur, errors, extensions, texts, name, id, className } = props;
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreCodeEditor | null>(null);
 	const look = useLook();
@@ -159,7 +166,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			tabSize: current.tabSize, indentWithTab: current.indentWithTab,
 			placeholder: current.placeholder, label: current.label, resizable: current.resizable,
 			minWidth: current.minWidth, minHeight: current.minHeight, maxWidth: current.maxWidth,
-			maxHeight: current.maxHeight, state: current.state, stateDelay: current.stateDelay,
+			maxHeight: current.maxHeight, state: current.state, events: current.events,
 			saveOnBlur: current.saveOnBlur, errors: current.errors,
 			extensions: current.extensions, texts: current.texts, look,
 			onChange: (next) => latest.current.onChange?.(next),
@@ -181,9 +188,9 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 	useLayoutEffect(() => {
 		instance.current?.configure({ language: language ?? null, lineNumbers, folding, readOnly,
 			selectable, lineWrapping, tabSize, indentWithTab, placeholder, label, resizable,
-			minWidth, minHeight, maxWidth, maxHeight, stateDelay, saveOnBlur, texts });
+			minWidth, minHeight, maxWidth, maxHeight, saveOnBlur, texts });
 	}, [language, lineNumbers, folding, readOnly, selectable, lineWrapping, tabSize, indentWithTab,
-		placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+		placeholder, label, resizable, minWidth, minHeight, maxWidth, maxHeight,
 		saveOnBlur, texts]);
 
 	useLayoutEffect(() => {
@@ -195,6 +202,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 			instance.current?.configure({ extensions });
 		}
 	}, [extensions]);
+
+	useLayoutEffect(() => {
+		if (events !== undefined) {
+			instance.current?.configure({ events });
+		}
+	}, [events]);
 
 	useLayoutEffect(() => {
 		const editor = instance.current;

@@ -14,7 +14,8 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorInstance,
+import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorInstance, type EditorEvents,
+	type RichTextEditorEventKey,
 	type CKEditorPlugin, type CKEditorTexts, type HeadingLevel, type ResizableSize,
 	type ResizeAxis, type RichTextCleaningReport, type RichTextEditorSelection,
 	type RichTextEditorState,
@@ -83,8 +84,14 @@ export interface CKEditorProps {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: RichTextEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+	 * other events it fires, each sending the state to onStateChange or not (send); those left out
+	 * keep theirs: change, select, scroll and resize send the state 400 ms after the user paused,
+	 * blur and leave at once; an empty list for none. Keep the object the same: another one puts
+	 * the handlers anew.
+	 */
+	events?: EditorEvents<CoreCKEditor, RichTextEditorEventKey>;
 	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again; false when left out.
@@ -158,7 +165,7 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 	function CKEditor(props, ref) {
 		const { value, saved, build, licenseKey, language, translations, format, features,
 			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
-			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, events,
 			pasteNotice, texts, name, id, className } = props;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
@@ -191,7 +198,7 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				spellcheck: current.spellcheck, textLanguage: current.textLanguage, count: current.count,
 				resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
-				state: current.state, stateDelay: current.stateDelay,
+				state: current.state, events: current.events,
 				pasteNotice: current.pasteNotice, texts: current.texts, look,
 				onReady: (next) => latest.current.onReady?.(next),
 				onError: (error) => latest.current.onError?.(error),
@@ -216,10 +223,16 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 			instance.current?.configure({ licenseKey, language, format, features, headingLevels,
 				toolbar, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
 				textLanguage: textLanguage ?? null, count, resizable, minWidth, minHeight, maxWidth,
-				maxHeight, stateDelay, pasteNotice: !!pasteNotice, texts });
+				maxHeight, pasteNotice: !!pasteNotice, texts });
 		}, [licenseKey, language, format, features, headingLevels, toolbar, readOnly, placeholder,
 			label, spellcheck, textLanguage, count, resizable, minWidth, minHeight, maxWidth,
-			maxHeight, stateDelay, pasteNotice, texts]);
+			maxHeight, pasteNotice, texts]);
+
+		useLayoutEffect(() => {
+			if (events !== undefined) {
+				instance.current?.configure({ events });
+			}
+		}, [events]);
 
 		// compared by what they are: another one makes CKEditor anew
 		useLayoutEffect(() => {

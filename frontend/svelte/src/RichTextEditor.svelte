@@ -34,7 +34,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { lezerHighlighter, RichTextEditor, type HeadingLevel, type ResizableSize,
+	import { lezerHighlighter, RichTextEditor, type EditorEvents, type HeadingLevel,
+		type ResizableSize, type RichTextEditorEventKey,
 		type ResizeAxis, type RichTextBackgroundColor, type RichTextCleaningReport, type RichTextColor,
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
@@ -119,8 +120,14 @@
 		maxHeight?: number | null;
 		/** The state: the one the editor starts in, then the one the user leaves it in, bound. */
 		state?: RichTextEditorState;
-		/** How long after the user changed the state it is reported, 400 ms when left out. */
-		stateDelay?: number;
+		/**
+		 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+		 * other events it fires, each sending the state or not (send); those left out keep theirs:
+		 * change, select, scroll and resize send the state 400 ms after the user paused, blur and
+		 * leave at once; an empty list for none. Keep the object the same: another one puts the
+		 * handlers anew.
+		 */
+		events?: EditorEvents<RichTextEditor, RichTextEditorEventKey>;
 		/** Whether the text has changes not saved, bound. */
 		modified?: boolean;
 		/** The editor of the core, bound. */
@@ -228,7 +235,7 @@
 		maxHeight,
 		// not state, which would hide the rune $state
 		state: editorState = $bindable(),
-		stateDelay,
+		events,
 		modified = $bindable(false),
 		editor = $bindable(null),
 		extensions,
@@ -290,7 +297,7 @@
 			toolbar,
 			bubbleMenu, readOnly, placeholder, label, spellcheck, textLanguage, proofreader,
 			proofreadDelay, suggesters, limit, count,
-			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, extensions, pasteNotice, texts, look, highlight: highlighterOf(highlight),
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, events, extensions, pasteNotice, texts, look, highlight: highlighterOf(highlight),
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
 			uploadMaxCount, uploadDialog, onUpload: uploader(), onStorePermanently: keeper(),
 			onFindImages: finder(),
@@ -332,7 +339,7 @@
 			bubbleMenu, readOnly,
 			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
 			proofreader: proofreader ?? null, proofreadDelay, suggesters: suggesters ?? [],
-			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			limit, count, resizable, minWidth, minHeight, maxWidth, maxHeight,
 			pasteNotice: !!pasteNotice, texts };
 		untrack(() => instance?.configure(next));
 	});
@@ -341,6 +348,13 @@
 		const next = extensions;
 		if (next !== undefined) {
 			untrack(() => instance?.configure({ extensions: next }));
+		}
+	});
+
+	$effect(() => {
+		const next = events;
+		if (next !== undefined) {
+			untrack(() => instance?.configure({ events: next }));
 		}
 	});
 

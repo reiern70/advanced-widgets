@@ -19,8 +19,8 @@ import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
 import { CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, CodeEditor, codeEditor,
-	codeEditorLanguages, loadLanguage, registerLanguage, setHost, standaloneHost, type Host }
-	from '../src/index.js';
+	codeEditorLanguages, loadLanguage, registerLanguage, sendEditorState, setHost, standaloneHost,
+	type Host } from '../src/index.js';
 
 /** A moment, for the grammars loading and the state reported after a delay of 0. */
 const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
@@ -351,8 +351,7 @@ describe('CodeEditor', () => {
 	it('reports the state a moment after the user changed it, and as it loses the focus', async () => {
 		const onStateChange = vi.fn();
 		const onSelectionChange = vi.fn();
-		const editor = new CodeEditor(textArea(), { stateDelay: 0, onStateChange,
-			onSelectionChange });
+		const editor = new CodeEditor(textArea(), { onStateChange, onSelectionChange });
 		const selects = vi.fn();
 		editor.field!.addEventListener(CODE_EDITOR_EVENTS.select, selects);
 
@@ -399,8 +398,8 @@ describe('CodeEditor', () => {
 	it('reports the size the user gave it', async () => {
 		const onResize = vi.fn();
 		const onStateChange = vi.fn();
-		const editor = new CodeEditor(textArea(), { stateDelay: 0, onResize, onStateChange,
-			minHeight: 100 });
+		const editor = new CodeEditor(textArea(), { onResize, onStateChange, minHeight: 100,
+			events: { resize: [{ handler: sendEditorState, delay: 0 }] } });
 		const resized = vi.fn();
 		editor.field!.addEventListener(CODE_EDITOR_EVENTS.resize, resized);
 		const handle = editor.element.querySelector('.antilia-resizable-handle')!;

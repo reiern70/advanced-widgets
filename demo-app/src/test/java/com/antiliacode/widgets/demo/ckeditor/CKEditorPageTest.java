@@ -20,9 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
-import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -38,6 +37,8 @@ import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
 import com.antiliacode.widgets.event.IAjaxSubmitEvent;
 import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.IClientEventName;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.github.openjson.JSONObject;
@@ -84,18 +85,29 @@ class CKEditorPageTest
 	}
 
 	/**
-	 * Sends the editor's state, and the text, as the browser does.
+	 * Sends the state, and the text when given, as the editor does with its events: by the first
+	 * one sending it.
 	 */
 	private void sendState(CKEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
-			.filter(behavior -> !(behavior instanceof AjaxEventBehavior)).findFirst()
-			.orElseThrow());
+		List<IClientEvent> events = editor.getEvents();
+		IClientEvent sending = events.stream().filter(SendStateEvent.class::isInstance)
+			.findFirst().orElseThrow();
+		send(editor, sending, events.indexOf(sending), Map.of(SendStateEvent.STATE_PARAMETER,
+			state, SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(text != null)));
+	}
+
+	/**
+	 * Fires an event of the editor with its text, as the browser does: the page's own, not the one
+	 * sending the state by default.
+	 */
+	private void fire(CKEditor editor, IClientEventName event, String text)
+	{
+		fire(editor, event.getEventName(), text);
 	}
 
 	/**
@@ -105,14 +117,29 @@ class CKEditorPageTest
 	{
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		List<IClientEvent> events = editor.getEvents();
-		IClientEvent found = events.stream().filter(each -> each.getId().equals(event) &&
-			(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent)).findFirst()
-			.orElseThrow();
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, event);
+		for (int index = 0; index < events.size(); index++)
+		{
+			IClientEvent each = events.get(index);
+			if (each.getEventName().equals(event) && !(each instanceof SendStateEvent) &&
+				(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent))
+			{
+				send(editor, each, index, Map.of());
+				return;
+			}
+		}
+		throw new AssertionError("no event " + event);
+	}
+
+	private void send(CKEditor editor, IClientEvent event, int index,
+		Map<String, String> parameters)
+	{
+		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
+		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
+			event.getEventName());
 		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-			String.valueOf(events.indexOf(found)));
+			String.valueOf(index));
 		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
-			.getAjaxBehavior(found));
+			.getAjaxBehavior(event));
 	}
 
 	@Test

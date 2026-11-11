@@ -87,7 +87,7 @@ public abstract class RichTextEditorResizeEvent extends AjaxEvent
 	protected RichTextEditorResizeEvent()
 	{
 		super(RichTextEditorEvents.RESIZE);
-		setClientFunction(CLIENT_FUNCTION);
+		setEventHandlerClientSideCode(CLIENT_FUNCTION);
 	}
 
 	/**
@@ -114,7 +114,7 @@ public abstract class RichTextEditorResizeEvent extends AjaxEvent
 	 * Reads the size the browser sent, and calls {@link #onResize(int, int, AjaxRequestTarget)}.
 	 */
 	@Override
-	public final void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+	public final void onEvent(JSONObject values, AjaxRequestTarget target)
 	{
 		onResize(pixels(values.opt("width")), pixels(values.opt("height")), target);
 	}

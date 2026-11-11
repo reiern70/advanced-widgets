@@ -18,11 +18,11 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import com.github.openjson.JSONObject;
 
 /**
- * An event the server hears of via Ajax, without the form: when its
- * {@link #getClientFunction() function} calls {@code send(values)}, the browser sends the values,
- * and the server calls {@link #onEvent(String, JSONObject, AjaxRequestTarget)}. Without a
- * function, as by default, the browser sends what the event told, the data of its
- * {@code detail}: the size the user resized a rich text editor to, for example, as
+ * An event the server hears of via Ajax, without the form: when its handler calls
+ * {@code send(values)}, the browser sends the values, and the server calls
+ * {@link #onEvent(JSONObject, AjaxRequestTarget)}. By default the handler is
+ * {@link #SEND_HANDLER}, sending what the event told, the data of its {@code detail}: the size the
+ * user resized a rich text editor to, for example, as
  * {@code {"size": {"width": 640, "height": 320}}}.
  * <p>
  * The values come from the browser: the server checks them before it trusts them.
@@ -33,25 +33,22 @@ import com.github.openjson.JSONObject;
 public interface IAjaxEvent extends IClientEvent
 {
 	/**
-	 * @return the JavaScript function the browser runs on the event,
-	 *         {@code function(event, component, send) {...}}; {@code null}, as by default, for one
-	 *         sending the data of the event's {@code detail}
+	 * @return the name of the JavaScript function the browser runs on the event,
+	 *         {@link #SEND_HANDLER} by default
 	 */
 	@Override
-	default String getClientFunction()
+	default String getEventClientHandlerName()
 	{
-		return null;
+		return SEND_HANDLER;
 	}
 
 	/**
 	 * Called when the browser sent the event.
 	 *
-	 * @param eventId
-	 *            the name of the event, {@link #getId()}
 	 * @param values
 	 *            what the browser sent, an empty object for nothing
 	 * @param target
 	 *            the Ajax request target
 	 */
-	void onEvent(String eventId, JSONObject values, AjaxRequestTarget target);
+	void onEvent(JSONObject values, AjaxRequestTarget target);
 }

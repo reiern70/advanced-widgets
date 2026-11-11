@@ -16,8 +16,8 @@ package com.antiliacode.widgets.event;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * What the events made ready share: the name, the delay and the function, which their setters
- * change.
+ * What the events made ready share: the name and the handler, a function named or code of the
+ * event's own, which their setters change.
  *
  * @param <T>
  *            the event, which its setters return
@@ -27,22 +27,38 @@ public abstract class AbstractClientEvent<T extends AbstractClientEvent<T>> impl
 {
 	private static final long serialVersionUID = 1L;
 
-	private final String id;
+	private final String eventName;
 
-	private int delay = NO_DELAY;
+	private String clientHandlerName;
 
-	private String clientFunction;
+	private String clientSideCode;
 
 	/**
-	 * @param id
+	 * @param eventName
 	 *            the name of the event in the browser
-	 * @param clientFunction
-	 *            the JavaScript function the browser runs on the event, {@code null} for none
+	 * @param clientHandlerName
+	 *            the name of the JavaScript function the browser runs on the event, {@code null}
+	 *            for none
+	 * @param clientSideCode
+	 *            the JavaScript function the browser runs on the event, in place of the one
+	 *            named, {@code null} for none
 	 */
-	protected AbstractClientEvent(String id, String clientFunction)
+	protected AbstractClientEvent(String eventName, String clientHandlerName,
+		String clientSideCode)
 	{
-		this.id = Args.notEmpty(id, "id");
-		this.clientFunction = clientFunction;
+		this.eventName = Args.notEmpty(eventName, "eventName");
+		this.clientHandlerName = clientHandlerName;
+		this.clientSideCode = clientSideCode;
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @return its name in the browser
+	 */
+	static String nameOf(IClientEventName eventName)
+	{
+		return Args.notNull(eventName, "eventName").getEventName();
 	}
 
 	/**
@@ -55,50 +71,51 @@ public abstract class AbstractClientEvent<T extends AbstractClientEvent<T>> impl
 	}
 
 	@Override
-	public String getId()
+	public String getEventName()
 	{
-		return id;
+		return eventName;
 	}
 
 	@Override
-	public int getDelay()
+	public String getEventClientHandlerName()
 	{
-		return delay;
+		return clientHandlerName;
 	}
 
 	/**
-	 * @param delay
-	 *            how long the event waits for the next of its kind, in milliseconds;
-	 *            {@link #NO_DELAY}, or any number below 1, for not at all
+	 * @param clientHandlerName
+	 *            the name of the JavaScript function the browser runs on the event, a global or a
+	 *            path to one, {@code Articles.showModified} for example; {@code null} for none
 	 * @return {@code this}
 	 */
-	public T setDelay(int delay)
+	public T setEventClientHandlerName(String clientHandlerName)
 	{
-		this.delay = delay < 1 ? NO_DELAY : delay;
+		this.clientHandlerName = clientHandlerName;
 		return self();
 	}
 
 	@Override
-	public String getClientFunction()
+	public String getEventHandlerClientSideCode()
 	{
-		return clientFunction;
+		return clientSideCode;
 	}
 
 	/**
-	 * @param clientFunction
+	 * @param clientSideCode
 	 *            the JavaScript function the browser runs on the event,
-	 *            {@code function(event, component, send) {...}}
+	 *            {@code function(event, component, send, options) {...}}, in place of the one
+	 *            named; {@code null} for none
 	 * @return {@code this}
 	 */
-	public T setClientFunction(String clientFunction)
+	public T setEventHandlerClientSideCode(String clientSideCode)
 	{
-		this.clientFunction = clientFunction;
+		this.clientSideCode = clientSideCode;
 		return self();
 	}
 
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + id + "]";
+		return getClass().getSimpleName() + "[" + eventName + "]";
 	}
 }

@@ -22,39 +22,36 @@ import com.github.openjson.JSONObject;
 
 /**
  * An event submitting the form the component is in, via Ajax: an {@link IAjaxSubmitEvent} made
- * ready.
+ * ready. Its handler is {@link #SEND_HANDLER} unless set otherwise.
  *
  * <pre>
  * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE)
  * {
- *     public void onEvent(String eventId, JSONObject values, Form&lt;?&gt; form,
- *         AjaxRequestTarget target)
+ *     public void onEvent(JSONObject values, Form&lt;?&gt; form, AjaxRequestTarget target)
  *     {
  *         articles.save(editor.getModelObject());
  *         editor.markSaved(target);
  *     }
  * });
- * editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT, (eventId, values, form,
- * 	target) -&gt; target.add(preview)).setDelay(500));
+ * editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT, (values, form, target) -&gt;
+ * 	target.add(preview)).setDelay(500));
  * </pre>
  *
  * @since 11.0.0
  */
-public abstract class AjaxSubmitEvent extends AbstractClientEvent<AjaxSubmitEvent>
+public abstract class AjaxSubmitEvent extends AbstractDelayedClientEvent<AjaxSubmitEvent>
 	implements IAjaxSubmitEvent
 {
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * What the server does with an event once the form took what the user entered:
-	 * {@link IAjaxSubmitEvent#onEvent(String, JSONObject, Form, AjaxRequestTarget)}, as a lambda.
+	 * {@link IAjaxSubmitEvent#onEvent(JSONObject, Form, AjaxRequestTarget)}, as a lambda.
 	 */
 	@FunctionalInterface
 	public interface IListener extends IClusterable
 	{
 		/**
-		 * @param eventId
-		 *            the name of the event
 		 * @param values
 		 *            what the browser sent with the form
 		 * @param form
@@ -62,39 +59,60 @@ public abstract class AjaxSubmitEvent extends AbstractClientEvent<AjaxSubmitEven
 		 * @param target
 		 *            the Ajax request target
 		 */
-		void onEvent(String eventId, JSONObject values, Form<?> form, AjaxRequestTarget target);
+		void onEvent(JSONObject values, Form<?> form, AjaxRequestTarget target);
 	}
 
 	/**
-	 * @param id
+	 * @param eventName
 	 *            the name of the event in the browser
 	 */
-	protected AjaxSubmitEvent(String id)
+	protected AjaxSubmitEvent(String eventName)
 	{
-		super(id, null);
+		super(eventName, SEND_HANDLER, null);
 	}
 
 	/**
-	 * @param id
+	 * @param eventName
+	 *            the name of the event
+	 */
+	protected AjaxSubmitEvent(IClientEventName eventName)
+	{
+		this(nameOf(eventName));
+	}
+
+	/**
+	 * @param eventName
 	 *            the name of the event in the browser
 	 * @param listener
 	 *            what the server does with the event once the form took what the user entered;
 	 *            nothing when a field is not valid
 	 * @return the event
 	 */
-	public static AjaxSubmitEvent of(String id, IListener listener)
+	public static AjaxSubmitEvent of(String eventName, IListener listener)
 	{
 		Args.notNull(listener, "listener");
-		return new AjaxSubmitEvent(id)
+		return new AjaxSubmitEvent(eventName)
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onEvent(String eventId, JSONObject values, Form<?> form,
-				AjaxRequestTarget target)
+			public void onEvent(JSONObject values, Form<?> form, AjaxRequestTarget target)
 			{
-				listener.onEvent(eventId, values, form, target);
+				listener.onEvent(values, form, target);
 			}
 		};
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @param listener
+	 *            what the server does with the event once the form took what the user entered;
+	 *            nothing when a field is not valid
+	 * @return the event
+	 */
+	public static AjaxSubmitEvent of(IClientEventName eventName, IListener listener)
+	{
+		return of(nameOf(eventName), listener);
 	}
 }

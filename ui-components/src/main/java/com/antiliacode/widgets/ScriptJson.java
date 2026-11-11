@@ -13,8 +13,13 @@
  */
 package com.antiliacode.widgets;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
+
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
+import com.github.openjson.JSONString;
 
 /**
  * Writes values into inline scripts: the scripts of {@code OnDomReadyHeaderItem.forScript},
@@ -29,8 +34,9 @@ import com.github.openjson.JSONObject;
  * value.
  * <p>
  * Use {@link #quote(String)} for a text, {@link #of(JSONObject)} and {@link #of(JSONArray)} for
- * options, and {@link #escape(CharSequence)} for JSON written by another serializer. Not for
- * scripts: their operators, such as {@code &&}, would not survive.
+ * options, {@link #withFunctions(JSONObject)} for options holding code, and
+ * {@link #escape(CharSequence)} for JSON written by another serializer. Not for scripts: their
+ * operators, such as {@code &&}, would not survive.
  *
  * @since 11.0.0
  */
@@ -73,6 +79,102 @@ public final class ScriptJson
 	public static String of(JSONArray json)
 	{
 		return json == null ? "null" : escape(json.toString());
+	}
+
+	/**
+	 * @param json
+	 *            a JSON object holding code, such as the options of a script with a function
+	 * @return the object as {@link #of(JSONObject)} writes it, but its values that are code,
+	 *         {@link JSONString}s such as Wicket's {@code JSONFunction}, written as they are: the
+	 *         page's own code, never made of what a user entered; the text {@code null} for
+	 *         {@code null}
+	 */
+	public static String withFunctions(JSONObject json)
+	{
+		StringBuilder script = new StringBuilder();
+		write(script, json);
+		return script.toString();
+	}
+
+	private static void write(StringBuilder script, Object value)
+	{
+		if (value instanceof JSONString code)
+		{
+			script.append(code.toJSONString());
+		}
+		else if (value instanceof JSONObject object)
+		{
+			script.append('{');
+			String separator = "";
+			for (String key : object.keySet())
+			{
+				script.append(separator).append(quote(key)).append(':');
+				write(script, object.opt(key));
+				separator = ",";
+			}
+			script.append('}');
+		}
+		else if (value instanceof JSONArray array)
+		{
+			script.append('[');
+			for (int index = 0; index < array.length(); index++)
+			{
+				script.append(index > 0 ? "," : "");
+				write(script, array.opt(index));
+			}
+			script.append(']');
+		}
+		else if (value == null || JSONObject.NULL.equals(value))
+		{
+			script.append("null");
+		}
+		else if (value instanceof Number number)
+		{
+			script.append(JSONObject.numberToString(number));
+		}
+		else if (value instanceof Boolean)
+		{
+			script.append(value);
+		}
+		else if (value instanceof Map<?, ?> map)
+		{
+			script.append('{');
+			String separator = "";
+			for (Map.Entry<?, ?> entry : map.entrySet())
+			{
+				script.append(separator).append(quote(String.valueOf(entry.getKey()))).append(':');
+				write(script, entry.getValue());
+				separator = ",";
+			}
+			script.append('}');
+		}
+		else if (value instanceof Collection<?> items)
+		{
+			script.append('[');
+			String separator = "";
+			for (Object item : items)
+			{
+				script.append(separator);
+				write(script, item);
+				separator = ",";
+			}
+			script.append(']');
+		}
+		else if (value.getClass().isArray())
+		{
+			script.append('[');
+			for (int index = 0; index < Array.getLength(value); index++)
+			{
+				script.append(index > 0 ? "," : "");
+				write(script, Array.get(value, index));
+			}
+			script.append(']');
+		}
+		else
+		{
+			// anything else as its text, never walked through as JSON's wrap would
+			script.append(quote(value.toString()));
+		}
 	}
 
 	/**

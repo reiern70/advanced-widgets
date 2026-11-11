@@ -16,12 +16,15 @@ package com.antiliacode.widgets.event;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * An event staying in the browser, which runs its function there: an {@link IClientEvent} made
- * ready.
+ * An event staying in the browser, which runs its handler there: an {@link IClientEvent} made
+ * ready, with code of its own or the name of a function of the page.
  *
  * <pre>
  * editor.addEvent(new ClientEvent(RichTextEditorEvents.MODIFIED,
  * 	"function(event) { document.title = (event.detail.modified ? '* ' : '') + 'Article'; }"));
+ * editor.addEvent(ClientEvent.handledBy(RichTextEditorEvents.MODIFIED, "Articles.showModified"));
+ * // the editor sends its state on blur no more
+ * editor.setEvent(ClientEvent.nothing(RichTextEditorEvents.BLUR));
  * </pre>
  *
  * @since 11.0.0
@@ -31,20 +34,82 @@ public class ClientEvent extends AbstractClientEvent<ClientEvent>
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * @param id
+	 * @param eventName
 	 *            the name of the event in the browser
-	 * @param clientFunction
+	 * @param clientSideCode
 	 *            the JavaScript function the browser runs on the event,
-	 *            {@code function(event, component, send) {...}}
+	 *            {@code function(event, component, send, options) {...}}
 	 */
-	public ClientEvent(String id, String clientFunction)
+	public ClientEvent(String eventName, String clientSideCode)
 	{
-		super(id, Args.notEmpty(clientFunction, "clientFunction"));
+		super(eventName, null, Args.notEmpty(clientSideCode, "clientSideCode"));
 	}
 
-	@Override
-	public ClientEvent setClientFunction(String clientFunction)
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @param clientSideCode
+	 *            the JavaScript function the browser runs on the event,
+	 *            {@code function(event, component, send, options) {...}}
+	 */
+	public ClientEvent(IClientEventName eventName, String clientSideCode)
 	{
-		return super.setClientFunction(Args.notEmpty(clientFunction, "clientFunction"));
+		this(nameOf(eventName), clientSideCode);
+	}
+
+	/**
+	 * For the constructors and the factories, which give the event its handler.
+	 */
+	private ClientEvent(String eventName, String clientHandlerName, String clientSideCode)
+	{
+		super(eventName, clientHandlerName, clientSideCode);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event in the browser
+	 * @param clientHandlerName
+	 *            the name of the JavaScript function of the page the browser runs on the event,
+	 *            {@code Articles.showModified} for example, taking
+	 *            {@code (event, component, send, options)}
+	 * @return the event
+	 */
+	public static ClientEvent handledBy(String eventName, String clientHandlerName)
+	{
+		return new ClientEvent(eventName, Args.notEmpty(clientHandlerName, "clientHandlerName"),
+			null);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @param clientHandlerName
+	 *            the name of the JavaScript function of the page the browser runs on the event
+	 * @return the event
+	 */
+	public static ClientEvent handledBy(IClientEventName eventName, String clientHandlerName)
+	{
+		return handledBy(nameOf(eventName), clientHandlerName);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event in the browser
+	 * @return an event doing nothing, by {@link #NO_HANDLER}: in place of the events a component
+	 *         listens to by default, given it by {@code setEvent} for example
+	 */
+	public static ClientEvent nothing(String eventName)
+	{
+		return handledBy(eventName, NO_HANDLER);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of the event
+	 * @return an event doing nothing, by {@link #NO_HANDLER}
+	 */
+	public static ClientEvent nothing(IClientEventName eventName)
+	{
+		return nothing(nameOf(eventName));
 	}
 }

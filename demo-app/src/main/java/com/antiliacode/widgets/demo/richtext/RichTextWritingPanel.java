@@ -141,9 +141,9 @@ public class RichTextWritingPanel extends Panel
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
-			(eventId, values, submitted, target) -> save(target)));
+			(values, submitted, target) -> save(target)));
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
-			(eventId, values, submitted, target) -> showKept(target))
+			(values, submitted, target) -> showKept(target))
 			.setDelay(RichTextEditorEvents.TYPING_DELAY));
 		form.add(editor);
 		form.add(new Label("writingName", getString("writingLabel"))
