@@ -120,7 +120,7 @@ public abstract class OutlineEvent extends AjaxEvent
 	 * Reads the headings the browser sent, and calls {@link #onOutline(List, AjaxRequestTarget)}.
 	 */
 	@Override
-	public final void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+	public final void onEvent(JSONObject values, AjaxRequestTarget target)
 	{
 		onOutline(headingsOf(values), target);
 	}

@@ -16,25 +16,18 @@
  * antilia-ckeditor.js: registers Wicket.CKEditor for the CKEditor of ui-components, which calls
  * Wicket.CKEditor.attach(id, options). It holds no code of CKEditor: the page loads CKEditor's
  * browser build before, which defines the global CKEDITOR, with its license key in the options.
- * With stateUrl, the URL of the editor's Ajax behavior, the editor sends the server its state, and
- * its text with it when the user changed it, under the name of the text area: a moment after the
- * user changed them and as the editor loses the focus, via Ajax; as the page goes, in a beacon the
- * browser sends even then.
+ * The editor sends the server its state, and its text when the user changed it, with each of its
+ * events going to the server, which the events of the CKEditor, Wicket.ClientEvents, send
+ * (Wicket.CKEditor.stateParameters): by default a moment after the user changed them, as the
+ * editor loses the focus and, in a beacon, as the page goes. The core's own handlers sending the
+ * state are off.
  */
 
 import { CKEditor, type CKEditorOptions } from '../ck-editor.js';
-import type { RichTextEditorState, RichTextEditorStateChange } from '../rich-text-contract.js';
+import { NO_STATE_EVENTS } from '../editor-events.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
-import { sendState, type Parameter } from './send-state.js';
-
-/** The options of Wicket's editor: those of the core, and where the server hears of the state. */
-interface WicketCKEditorOptions extends CKEditorOptions {
-	/** The URL of the Ajax behavior keeping the state on the server. */
-	stateUrl?: string;
-	/** The name the text area posts the text under, which the text goes to the server under too. */
-	inputName?: string;
-}
+import { stateParameters } from './send-state.js';
 
 const WicketCKEditor = {
 
@@ -42,25 +35,17 @@ const WicketCKEditor = {
 	 * Makes an editor of a text area.
 	 *
 	 * @param id the markup id of the text area
-	 * @param options CKEditor's license key, the text, its format, the features and the state;
-	 *        where the server hears of the state
+	 * @param options CKEditor's license key, the text, its format, the features and the state
 	 * @returns the editor, null when there is no such element
 	 */
-	attach(id: string, options: WicketCKEditorOptions = {}): CKEditor | null {
-		const { stateUrl, inputName, ...rest } = options;
-		let editor: CKEditor | null = null;
-		const onStateChange = stateUrl ? (state: RichTextEditorState,
-			change: RichTextEditorStateChange) => {
-			const parameters: Parameter[] = [{ name: 'state', value: JSON.stringify(state) }];
-			if (change.changed && inputName && editor) {
-				parameters.push({ name: inputName, value: editor.getValue() });
-			}
-			sendState(id, stateUrl, parameters, change.leaving);
-			rest.onStateChange?.(state, change);
-		} : rest.onStateChange;
-		editor = CKEditor.attach(id, { ...rest, onStateChange });
-		return editor;
+	attach(id: string, options: CKEditorOptions = {}): CKEditor | null {
+		// the events of the server send the state
+		return CKEditor.attach(id, { ...options, events: { ...NO_STATE_EVENTS,
+			...options.events } });
 	},
+
+	/** What the events of the server carry besides: see stateParameters(). */
+	stateParameters,
 
 	/**
 	 * @param id the markup id of the text area

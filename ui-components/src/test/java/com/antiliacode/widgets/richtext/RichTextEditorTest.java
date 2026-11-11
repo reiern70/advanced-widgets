@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,11 +62,13 @@ import org.junit.jupiter.api.io.TempDir;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.event.AbstractDelayedClientEvent;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEvent;
 import com.antiliacode.widgets.event.ClientEventsTester;
 import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 
@@ -120,9 +123,26 @@ class RichTextEditorTest extends WicketTestCase
 		assertEquals("Bold", texts.getString("bold"));
 		assertEquals("Heading {0}", texts.getString("headingLevel"));
 		assertEquals("Drag, or use the arrow keys, to resize the editor", texts.getString("resize"));
-		assertTrue(options.getString("stateUrl").contains("-form-editor"));
-		assertEquals(page.editor.getInputName(), options.getString("inputName"));
-		assertTrue(page.editor.isSendToServer());
+		assertFalse(options.has("stateUrl"));
+		// the state goes with six events of the editor's, by default
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
+		{
+			assertTrue(page.editor.getEvents(name).get(0) instanceof SendStateEvent);
+			assertEquals(400, ((SendStateEvent)page.editor.getEvents(name).get(0)).getDelay());
+		}
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.BLUR,
+			RichTextEditorEvents.LEAVE))
+		{
+			assertTrue(page.editor.getEvents(name).get(0) instanceof SendStateEvent);
+			assertEquals(AbstractDelayedClientEvent.NO_DELAY, ((SendStateEvent)page.editor
+				.getEvents(name).get(0)).getDelay());
+		}
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:blur\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\"\\}");
+		tester.assertContains("values:function\\(editor\\)\\{return Wicket.RichTextEditor\\?" +
+			"Wicket.RichTextEditor.stateParameters\\(editor\\):\\{\\};\\}");
 		assertEquals(RichTextEditorState.NONE, page.editor.getState());
 		assertSame(RichTextPolicy.ALL, page.editor.getSanitizer());
 	}
@@ -1075,16 +1095,40 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
-	void hearsNothingWithoutSendingToTheServer()
+	void sendsTheStateWithTheEventsItIsGiven()
 	{
-		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML)).setSendToServer(false);
+		List<String> heard = new ArrayList<>();
+		// the state goes as the editor loses the focus and as the user saves, not as the user
+		// types, moves the cursor, scrolls or resizes
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML))
+			.removeEvents(RichTextEditorEvents.INPUT).removeEvents(RichTextEditorEvents.SELECT)
+			.removeEvents(RichTextEditorEvents.SCROLL)
+			.removeEvents(RichTextEditorEvents.RESIZE.getEventName())
+			.addEvent(AjaxEvent.of(RichTextEditorEvents.SAVE, (values, target) -> heard.add(
+				RichTextEditorEvents.SAVE.getEventName())));
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
-		assertFalse(options(editor).has("stateUrl"));
-		assertFalse(options(editor).has("inputName"));
+		tester.assertContainsNot("\"eventName\":\"input\"");
+		tester.assertContainsNot("\"eventName\":\"antilia-rich-text-editor:scroll\"");
+		assertEquals(List.of(), editor.getEvents(RichTextEditorEvents.INPUT));
 
-		sendState(editor, "{\"scrollTop\":40}", "other");
-		assertEquals(RichTextEditorState.NONE, editor.getState());
+		// any event going to the server carries the state, which the editor takes first
+		ClientEventsTester.fire(tester, editor, editor.getEvents(RichTextEditorEvents.SAVE).get(0),
+			new JSONObject(), Map.of(SendStateEvent.STATE_PARAMETER, "{\"scrollTop\":40}",
+				SendStateEvent.TEXT_CHANGED_PARAMETER, "false"));
+		assertEquals(40, editor.getState().getScrollTop());
+		assertEquals(List.of(RichTextEditorEvents.SAVE.getEventName()), heard);
+
+		// one doing nothing in the place of the one on blur
+		editor.setEvent(ClientEvent.nothing(RichTextEditorEvents.BLUR));
+		tester.startPage(page);
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:blur\"," +
+			"\"index\":\\d+,\"kind\":\"client\"," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.nothing\"\\}");
+
+		// an event without the state, sent before the script made the editor: the state stays
+		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SAVE);
+		assertEquals(40, editor.getState().getScrollTop());
 	}
 
 	@Test
@@ -1127,31 +1171,33 @@ class RichTextEditorTest extends WicketTestCase
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onEvent(String eventId, JSONObject values, Form<?> form,
-				AjaxRequestTarget target)
+			public void onEvent(JSONObject values, Form<?> form, AjaxRequestTarget target)
 			{
 				saved.add(editor.getModelObject());
 				editor.markSaved(target);
 			}
 		});
-		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT, (eventId, values, form,
-			target) -> {
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT, (values, form, target) -> {
 		}).setDelay(RichTextEditorEvents.TYPING_DELAY));
-		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.RESIZE, (eventId, values,
-			target) -> sizes.add(RichTextEditorEvents.sizeOf(values).toString())));
+		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.RESIZE, (values, target) -> sizes.add(
+			RichTextEditorEvents.sizeOf(values).toString())));
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
 
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:save\",index:0,kind:'submit'," +
-			"delay:-1\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:save\"," +
+			"\"index\":\\d+,\"kind\":\"submit\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		// typing waits until the user paused
-		tester.assertContains("\\{id:\"input\",index:1,kind:'submit',delay:500\\}");
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:resize\",index:2,kind:'ajax'," +
-			"delay:-1\\}");
+		tester.assertContains("\\{\"eventName\":\"input\",\"index\":\\d+,\"kind\":\"submit\"," +
+			"\"delay\":500,\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:resize\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		// the functions get the editor
 		tester.assertContains("function\\(element\\)\\{return Wicket.RichTextEditor&&" +
-			"Wicket.RichTextEditor.of\\(element.id\\);\\}\\);");
-		assertEquals(3, editor.getEvents().size());
+			"Wicket.RichTextEditor.of\\(element.id\\);\\},\\{ajaxUrl:");
+		// with the six sending the state
+		assertEquals(9, editor.getEvents().size());
 
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"<p>Saved <img src=x onerror=steal()></p>");
@@ -1177,8 +1223,10 @@ class RichTextEditorTest extends WicketTestCase
 		tester.startPage(new TestPage(editor));
 
 		// the browser measures the dimension the user does not resize
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:resize\",index:0,kind:'ajax'," +
-			"delay:-1,fn:function\\(event,editor,send\\)");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:resize\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"," +
+			"\"eventHandlerClientSideCode\":function\\(event,editor,send\\)");
 		tester.assertContains("getBoundingClientRect");
 
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.RESIZE, new JSONObject()
@@ -1201,8 +1249,9 @@ class RichTextEditorTest extends WicketTestCase
 		tester.startPage(new TestPage(editor));
 
 		// a built-in type of events of the editors: the browser sends what it tells
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:0," +
-			"kind:'ajax',delay:500\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:selected-text\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":500," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
 			new JSONObject().put("text", "Hello\nworld"));
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
@@ -1260,6 +1309,10 @@ class RichTextEditorTest extends WicketTestCase
 		});
 		TestPage page = new TestPage(editor);
 		tester.startPage(page);
+		// the browser gets the event without the editor
+		JSONObject json = editor.getEvents(RichTextEditorEvents.BLUR).get(1).toJson();
+		assertEquals(RichTextEditorEvents.BLUR.getEventName(), json.getString("eventName"));
+		assertFalse(json.has("editor"));
 
 		// the text as the text area posts it, cleaned
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
@@ -1324,16 +1377,19 @@ class RichTextEditorTest extends WicketTestCase
 		tester.startPage(new TestPage(editor));
 
 		// the editor's own first, then those of its features
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:modified\",index:0," +
-			"kind:'client',delay:-1,fn:function\\(event\\)");
-		tester.assertContains("\\{id:\"antilia-own:inserted\",index:1,kind:'ajax',delay:-1\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:modified\"," +
+			"\"index\":\\d+,\"kind\":\"client\",\"eventHandlerClientSideCode\":function\\(event\\)");
+		tester.assertContains("\\{\"eventName\":\"antilia-own:inserted\",\"index\":\\d+," +
+			"\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		ClientEventsTester.fire(tester, editor, "antilia-own:inserted", new JSONObject().put(
 			"what", "kbd"));
 		assertEquals(List.of("antilia-own:inserted kbd"), heard);
 
 		editor.removeFeature(editor.getFeatures().stream().filter(feature -> feature
 			.getName().equals("own")).findFirst().orElseThrow());
-		assertEquals(1, editor.getEvents().size());
+		// its own and the six sending the state
+		assertEquals(7, editor.getEvents().size());
 	}
 
 	@Test
@@ -1368,7 +1424,7 @@ class RichTextEditorTest extends WicketTestCase
 		}
 
 		@Override
-		public void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+		public void onEvent(JSONObject values, AjaxRequestTarget target)
 		{
 			JSONArray headings = values.optJSONArray("headings");
 			for (int index = 0; headings != null && index < headings.length(); index++)
@@ -1393,8 +1449,8 @@ class RichTextEditorTest extends WicketTestCase
 		@Override
 		public List<? extends IClientEvent> getEvents(org.apache.wicket.Component editor)
 		{
-			return List.of(AjaxEvent.of("antilia-own:inserted", (eventId, values,
-				target) -> heard.add(eventId + " " + values.optString("what"))));
+			return List.of(AjaxEvent.of("antilia-own:inserted", (values, target) -> heard.add(
+				"antilia-own:inserted " + values.optString("what"))));
 		}
 	}
 
@@ -1419,14 +1475,19 @@ class RichTextEditorTest extends WicketTestCase
 	@Test
 	void eventsHaveTheNamesOfTheBrowser()
 	{
-		assertEquals("input", RichTextEditorEvents.INPUT);
-		assertEquals("change", RichTextEditorEvents.CHANGE);
-		assertEquals("antilia-rich-text-editor:blur", RichTextEditorEvents.BLUR);
-		assertEquals("antilia-rich-text-editor:focus", RichTextEditorEvents.FOCUS);
-		assertEquals("antilia-rich-text-editor:resize", RichTextEditorEvents.RESIZE);
-		assertEquals("antilia-rich-text-editor:modified", RichTextEditorEvents.MODIFIED);
-		assertEquals("antilia-rich-text-editor:select", RichTextEditorEvents.SELECT);
-		assertEquals("antilia-rich-text-editor:save", RichTextEditorEvents.SAVE);
+		assertEquals("input", RichTextEditorEvents.INPUT.getEventName());
+		assertEquals("change", RichTextEditorEvents.CHANGE.getEventName());
+		assertEquals("antilia-rich-text-editor:blur", RichTextEditorEvents.BLUR.getEventName());
+		assertEquals("antilia-rich-text-editor:focus", RichTextEditorEvents.FOCUS.getEventName());
+		assertEquals("antilia-rich-text-editor:resize", RichTextEditorEvents.RESIZE.getEventName());
+		assertEquals("antilia-rich-text-editor:modified",
+			RichTextEditorEvents.MODIFIED.getEventName());
+		assertEquals("antilia-rich-text-editor:select", RichTextEditorEvents.SELECT.getEventName());
+		assertEquals("antilia-rich-text-editor:save", RichTextEditorEvents.SAVE.getEventName());
+		assertEquals("antilia-rich-text-editor:scroll", RichTextEditorEvents.SCROLL.getEventName());
+		assertEquals("antilia-rich-text-editor:leave", RichTextEditorEvents.LEAVE.getEventName());
+		assertEquals("antilia-rich-text-editor:discard",
+			RichTextEditorEvents.DISCARD.getEventName());
 	}
 
 	@Test
@@ -1490,13 +1551,12 @@ class RichTextEditorTest extends WicketTestCase
 
 	private void sendState(RichTextEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			// as the browser posts it
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		ClientEventsTester.sendState(tester, editor, state, text != null);
 	}
 
 	public static class TestPage extends WebPage implements IMarkupResourceStreamProvider

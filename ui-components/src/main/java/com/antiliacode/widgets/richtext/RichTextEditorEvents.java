@@ -15,16 +15,20 @@ package com.antiliacode.widgets.richtext;
 
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.resizable.ResizableSize;
 
 /**
- * The names of the events a {@link RichTextEditor} or a
- * {@link com.antiliacode.widgets.ckeditor.CKEditor} fires on its text area: those a text area fires
- * itself, {@link #INPUT} and {@link #CHANGE}, those of the editor, whose {@code detail} holds
- * the editor and what the event tells, and those of the built-in types of events,
+ * The events a {@link RichTextEditor} or a {@link com.antiliacode.widgets.ckeditor.CKEditor} fires
+ * on its text area, by their names in the browser ({@link #getEventName()}): those a text area
+ * fires itself, {@link #INPUT} and {@link #CHANGE}, those of the editor, whose {@code detail}
+ * holds the editor and what the event tells, and those of the built-in types of events,
  * {@link #SELECTED_TEXT} and {@link #PASTE_CLEANED}. An editor listens to those it is
  * {@link AbstractRichTextEditor#addEvent(com.antiliacode.widgets.event.IClientEvent) given}, and
- * to those of any other name, which the scripts of its features fire for example.
+ * to those of any other name, which the scripts of its features fire for example. By default it
+ * sends its state on six of them, {@link #INPUT}, {@link #SELECT}, {@link #SCROLL},
+ * {@link #RESIZE}, {@link #BLUR} and {@link #LEAVE}: see
+ * {@link com.antiliacode.widgets.event.SendStateEvent}.
  * <p>
  * A type of events of a page's own, or of a library's, fires on both editors as their own do: a
  * script registers it in the browser, by a name {@code <owner>:<event>}, with the events of the
@@ -51,53 +55,71 @@ import com.antiliacode.widgets.resizable.ResizableSize;
  *
  * <pre>
  * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE) { ... });
- * editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS, (eventId, values, target) -&gt; ...));
+ * editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS, (values, target) -&gt; ...));
  * editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -&gt; ...));
  * </pre>
  *
  * @since 11.0.0
  */
-public final class RichTextEditorEvents
+public enum RichTextEditorEvents implements IClientEventName
 {
 	/** The user changed the text: each change, as a text area tells. */
-	public static final String INPUT = "input";
+	INPUT("input"),
 
 	/**
 	 * The text changed, once the editor lost the focus, as a text area tells.
 	 * {@link RichTextEditorChangeEvent} hears of the text before and the text now.
 	 */
-	public static final String CHANGE = "change";
+	CHANGE("change"),
 
 	/** The editor got the focus. */
-	public static final String FOCUS = "antilia-rich-text-editor:focus";
+	FOCUS("antilia-rich-text-editor:focus"),
 
 	/**
 	 * The editor lost the focus. {@link RichTextEditorChangeEvent} hears of the text before and
 	 * the text now.
 	 */
-	public static final String BLUR = "antilia-rich-text-editor:blur";
+	BLUR("antilia-rich-text-editor:blur"),
 
 	/**
 	 * The user moved the cursor or selected text; {@code detail.selection} has {@code anchor} and
 	 * {@code head}.
 	 */
-	public static final String SELECT = "antilia-rich-text-editor:select";
+	SELECT("antilia-rich-text-editor:select"),
+
+	/**
+	 * The user scrolled the text; {@code detail.scroll} has {@code top} and {@code left}, in
+	 * pixels.
+	 */
+	SCROLL("antilia-rich-text-editor:scroll"),
 
 	/** The user pressed Ctrl+S, or Cmd+S, in the editor. */
-	public static final String SAVE = "antilia-rich-text-editor:save";
+	SAVE("antilia-rich-text-editor:save"),
 
 	/**
 	 * The user resized the editor, once they let go; {@code detail.size} has the {@code width}
 	 * and the {@code height}, in pixels, of the dimensions the editor resizes in.
 	 * {@link RichTextEditorResizeEvent} hears of both on the server, as numbers.
 	 */
-	public static final String RESIZE = "antilia-rich-text-editor:resize";
+	RESIZE("antilia-rich-text-editor:resize"),
 
 	/**
 	 * The text came to have changes not saved, or no longer has; {@code detail.modified} tells
 	 * which.
 	 */
-	public static final String MODIFIED = "antilia-rich-text-editor:modified";
+	MODIFIED("antilia-rich-text-editor:modified"),
+
+	/**
+	 * The page is going; {@code detail.leaving} is {@code true}. The events going to the server
+	 * go in a beacon, which the browser sends even then; what the server answers is lost.
+	 */
+	LEAVE("antilia-rich-text-editor:leave"),
+
+	/**
+	 * A tab of {@link com.antiliacode.widgets.tabs.TabbedPanel} or a window of
+	 * {@link com.antiliacode.widgets.desktop.Desktop} closed anyway put the text last saved back.
+	 */
+	DISCARD("antilia-rich-text-editor:discard"),
 
 	/**
 	 * The text the user selected changed, a built-in type of events; {@code detail.text} has it,
@@ -105,7 +127,7 @@ public final class RichTextEditorEvents
 	 * each text, not as the cursor moves with nothing selected.
 	 * {@link RichTextEditorSelectedTextEvent} hears of it on the server.
 	 */
-	public static final String SELECTED_TEXT = "antilia-rich-text-editor:selected-text";
+	SELECTED_TEXT("antilia-rich-text-editor:selected-text"),
 
 	/**
 	 * The cleaning in the browser left part of a paste out, a built-in type of events:
@@ -116,14 +138,27 @@ public final class RichTextEditorEvents
 	 *
 	 * @since 10.11.0
 	 */
-	public static final String PASTE_CLEANED = "antilia-rich-text-editor:paste-cleaned";
+	PASTE_CLEANED("antilia-rich-text-editor:paste-cleaned");
 
 	/**
 	 * How long an event coming often, {@link #INPUT}, {@link #SELECT} or {@link #SELECTED_TEXT},
 	 * may wait for the user to pause, in milliseconds: see
-	 * {@link com.antiliacode.widgets.event.AbstractClientEvent#setDelay(int)}.
+	 * {@link com.antiliacode.widgets.event.AbstractDelayedClientEvent#setDelay(int)}.
 	 */
 	public static final int TYPING_DELAY = 500;
+
+	private final String eventName;
+
+	RichTextEditorEvents(String eventName)
+	{
+		this.eventName = eventName;
+	}
+
+	@Override
+	public String getEventName()
+	{
+		return eventName;
+	}
 
 	/**
 	 * @param values
@@ -134,9 +169,5 @@ public final class RichTextEditorEvents
 	public static ResizableSize sizeOf(JSONObject values)
 	{
 		return ResizableSize.of(values == null ? null : values.optJSONObject("size"));
-	}
-
-	private RichTextEditorEvents()
-	{
 	}
 }

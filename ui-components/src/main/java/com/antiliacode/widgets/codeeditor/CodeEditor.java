@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
 import org.apache.wicket.event.IEvent;
@@ -45,6 +44,10 @@ import org.apache.wicket.validation.IValidationError;
 import org.apache.wicket.validation.ValidationError;
 
 import com.antiliacode.widgets.ScriptJson;
+import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.IClientEventName;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -64,9 +67,19 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * The text area stays in the page, hidden, and holds the text: a form posts it as always, and it
  * fires {@code input} as the user types and {@code change} once the editor loses the focus, as a
  * text area does, so the Ajax behaviors listening to them work as with one. The editor fires its
- * own events too, {@link CodeEditorEvent}, which {@link CodeEditorEventBehavior}s hear of: the
- * focus got and lost, the selection, Ctrl+S, the size changed. Without JavaScript the text area is
+ * own events too, {@link CodeEditorEvent}: the focus got and lost, the selection, the scrolling,
+ * Ctrl+S, the size changed. It listens to the {@link IClientEvent events} it is
+ * {@link #addEvent(IClientEvent) given}, of those names or of any other, through a
+ * {@link ClientEventsBehavior}: an {@link com.antiliacode.widgets.event.AjaxUpdateEvent} hears of
+ * one on the server once the model took the text, valid. Without JavaScript the text area is
  * shown.
+ *
+ * <pre>
+ * editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE, (values, component, target) -&gt; {
+ *     documents.save(editor.getModelObject());
+ *     editor.markSaved(target);
+ * }));
+ * </pre>
  * <p>
  * The editor tells the {@link com.antiliacode.widgets.tabs.TabbedPanel tabs} and the
  * {@link com.antiliacode.widgets.desktop.Desktop desktop} it is in whether its text has changes not
@@ -74,14 +87,14 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * saved}, and its tab or its window shows a mark meanwhile; closing them anyway puts the saved text
  * back. {@link #markSaved(AjaxRequestTarget)} tells the browser the text was saved.
  * {@link #setSaveOnBlur(boolean) Saving on blur}, leaving the editor with changes not saved tells
- * the page to save, as Ctrl+S does: the {@link CodeEditorEventBehavior} of
- * {@link CodeEditorEvent#SAVE} hears of it.
+ * the page to save, as Ctrl+S does: the event of {@link CodeEditorEvent#SAVE} hears of it.
  * <p>
  * The editor validates its text as any form component does, with the validators added to it, a
- * {@link JsonValidator} for example, when a form is sent or a {@link CodeEditorEventBehavior}
- * hears of an event. It {@link #setShowErrors(boolean) shows} its error messages in the text: it
- * underlines where each is, when the error tells by the variables {@value #LINE} and
- * {@value #COLUMN} as {@link JsonValidator} does, lists them in a bar along its bottom and marks
+ * {@link JsonValidator} for example, when a form is sent or an
+ * {@link com.antiliacode.widgets.event.AjaxUpdateEvent} hears of an event. It
+ * {@link #setShowErrors(boolean) shows} its error messages in the text: it underlines where each
+ * is, when the error tells by the variables {@value #LINE} and {@value #COLUMN} as
+ * {@link JsonValidator} does, lists them in a bar along its bottom and marks
  * itself invalid, until the text is valid again. The messages stay feedback messages, which a
  * {@link org.apache.wicket.markup.html.panel.FeedbackPanel} or
  * {@link com.antiliacode.widgets.notification.Notifications} show as well.
@@ -92,10 +105,17 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * Where the cursor is, what is selected, how far the text is scrolled and the size the user gave
  * the editor, by the bar along its bottom ({@link #setResizable(ResizeAxis)}), are its
  * {@link CodeEditorState state}, kept in the state model: by default in the editor, and so in the
- * page. The browser sends the server the state, a moment after the user changed it, as the editor
- * loses the focus and, in a beacon, as the page goes ({@link #setSendToServer(boolean)}, on by
- * default), with the text the user changed, which the editor keeps as its input until the form
- * is sent, as a text area keeps what the user typed when the form did not validate. Rendered again,
+ * page. The browser sends the server the state with each event going to the server, with the text
+ * when the user changed it, which the editor keeps as its input until the form is sent, as a text
+ * area keeps what the user typed when the form did not validate, before the event hears of it. By
+ * default the editor listens to six {@link SendStateEvent}s, sending them when they changed since
+ * last sent: {@link CodeEditorEvent#INPUT}, {@link CodeEditorEvent#SELECT},
+ * {@link CodeEditorEvent#SCROLL} and {@link CodeEditorEvent#RESIZE} a moment after the user paused
+ * ({@link SendStateEvent#DEFAULT_DELAY}), {@link CodeEditorEvent#BLUR} at once and
+ * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. They are events as any other:
+ * {@link #removeEvents(IClientEventName)} takes those of a name away, so that the state goes only
+ * as the editor loses the focus for example, {@link #setEvent(IClientEvent)} puts another in
+ * their place, {@link #addEvent(IClientEvent)} adds one, of any name. Rendered again,
  * or shown again after the user came back to the page with a state model of the session, the
  * editor takes the state up again: the cursor, the selection, the scrolling and the size. In a tab
  * of {@link com.antiliacode.widgets.tabs.TabbedPanel} not selected, the editor keeps them in the
@@ -140,8 +160,6 @@ public class CodeEditor extends TextArea<String>
 	 */
 	public static final String COLUMN = "column";
 
-	private static final String STATE_PARAMETER = "state";
-
 	/** CodeMirror's phrases, by the keys of their translations in the bundles. */
 	private static final Map<String, String> PHRASES = new LinkedHashMap<>();
 
@@ -166,7 +184,7 @@ public class CodeEditor extends TextArea<String>
 		}
 	}
 
-	private final AbstractDefaultAjaxBehavior stateBehavior;
+	private final ClientEventsBehavior events;
 
 	private IModel<CodeEditorState> stateModel;
 
@@ -214,8 +232,6 @@ public class CodeEditor extends TextArea<String>
 
 	private Integer maxWidth;
 
-	private boolean sendToServer = true;
-
 	/**
 	 * An editor whose model is inherited, for example from a {@code CompoundPropertyModel}, keeping
 	 * its state in the page.
@@ -255,31 +271,56 @@ public class CodeEditor extends TextArea<String>
 		super(id, model);
 		this.stateModel = stateModel == null ? Model.of((CodeEditorState)null) : stateModel;
 		setOutputMarkupId(true);
-		stateBehavior = new AbstractDefaultAjaxBehavior()
+		events = new ClientEventsBehavior()
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void respond(AjaxRequestTarget target)
+			protected String getClientObject()
 			{
-				onStateSent(target, getRequest().getRequestParameters());
+				// the editor, once its script made it
+				return "function(element){return Wicket.CodeEditor&&" +
+					"Wicket.CodeEditor.of(element.id);}";
+			}
+
+			@Override
+			protected String getClientValues()
+			{
+				// the state, and whether the text changed, with each event
+				return "function(editor){return Wicket.CodeEditor?" +
+					"Wicket.CodeEditor.stateParameters(editor):{};}";
+			}
+
+			@Override
+			protected void onEventSent(AjaxRequestTarget target, IRequestParameters parameters)
+			{
+				onStateSent(target, parameters);
 			}
 		};
-		add(stateBehavior);
+		add(events);
+		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
+			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
+		{
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
+		}
+		events.add(new SendStateEvent(CodeEditorEvent.BLUR));
+		events.add(new SendStateEvent(CodeEditorEvent.LEAVE));
 	}
 
 	/**
-	 * Takes what the browser sent: the state, which the state model gets, and the text when the
-	 * user changed it, which the editor keeps as its input.
+	 * Takes what the browser sent with an event: the state, which the state model gets, and the
+	 * text when the user changed it, which the editor keeps as its input.
 	 */
 	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters)
 	{
-		if (!sendToServer)
+		String sent = parameters.getParameterValue(SendStateEvent.STATE_PARAMETER)
+			.toOptionalString();
+		if (sent == null)
 		{
+			// an event of the editor's, without the state: before the script made the editor
 			return;
 		}
-		CodeEditorState state = CodeEditorState.parse(parameters.getParameterValue(
-			STATE_PARAMETER).toOptionalString());
+		CodeEditorState state = CodeEditorState.parse(sent);
 		if (state != null)
 		{
 			state = state.withSize(resizable == null ? ResizableSize.NONE :
@@ -289,13 +330,110 @@ public class CodeEditor extends TextArea<String>
 				stateModel.setObject(state);
 			}
 		}
-		// read where the text area's input is: among what the form posts
+		// read where the text area's input is: among what the form posts, which Wicket's Ajax
+		// sends with each event
+		boolean textChanged = parameters.getParameterValue(
+			SendStateEvent.TEXT_CHANGED_PARAMETER).toBoolean(false);
 		String[] input = getInputAsArray();
-		if (input != null && input.length > 0 && input[0] != null && !isReadOnly())
+		if (textChanged && input != null && input.length > 0 && input[0] != null &&
+			!isReadOnly())
 		{
 			inputChanged();
 		}
 		onStateChanged(target);
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor listens to, after those it listens to already, of its name and
+	 *            of the others: one of {@link CodeEditorEvent}, or of any other name
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             when the event goes to the server more than one way, or has no handler
+	 */
+	public CodeEditor addEvent(IClientEvent event)
+	{
+		events.add(event);
+		return this;
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor listens to in place of those of its name it listens to
+	 *            already, the {@link SendStateEvent} of the name by default for example
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             when the event goes to the server more than one way, or has no handler
+	 */
+	public CodeEditor setEvent(IClientEvent event)
+	{
+		events.set(event);
+		return this;
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor no longer listens to
+	 * @return {@code this}
+	 */
+	public CodeEditor removeEvent(IClientEvent event)
+	{
+		events.remove(event);
+		return this;
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events the editor no longer listens to, those it listens to by default
+	 *            too: the editor then does nothing on them
+	 * @return {@code this}
+	 */
+	public CodeEditor removeEvents(String eventName)
+	{
+		events.removeEvents(eventName);
+		return this;
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events the editor no longer listens to, those it listens to by default
+	 *            too: the editor then does nothing on them
+	 * @return {@code this}
+	 */
+	public CodeEditor removeEvents(IClientEventName eventName)
+	{
+		events.removeEvents(eventName);
+		return this;
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the editor was given, or listens to by default, in their
+	 *         order
+	 */
+	public List<IClientEvent> getEvents(IClientEventName eventName)
+	{
+		return events.getEvents(eventName);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the editor was given, or listens to by default, in their
+	 *         order
+	 */
+	public List<IClientEvent> getEvents(String eventName)
+	{
+		return events.getEvents(eventName);
+	}
+
+	/**
+	 * @return the events the editor listens to: those it was given, and by default
+	 */
+	public List<IClientEvent> getEvents()
+	{
+		return events.getEvents();
 	}
 
 	/**
@@ -309,8 +447,8 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * Called when the browser sent the state, and maybe the text, after the state model took it.
-	 * Does nothing by default.
+	 * Called when the browser sent the state, and maybe the text, with an event, after the state
+	 * model took it, before the event hears of it. Does nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -536,8 +674,9 @@ public class CodeEditor extends TextArea<String>
 	 *            whether leaving the editor with changes not saved, against the text it was
 	 *            rendered with or {@link #setSavedModel(IModel) the text last saved}, or with
 	 *            errors shown, tells the page to save, as Ctrl+S does: the event
-	 *            {@link CodeEditorEvent#SAVE}, which a {@link CodeEditorEventBehavior} hears of,
-	 *            validating the text
+	 *            {@link CodeEditorEvent#SAVE}, which an
+	 *            {@link com.antiliacode.widgets.event.AjaxUpdateEvent} hears of, validating the
+	 *            text
 	 * @return {@code this}
 	 */
 	public CodeEditor setSaveOnBlur(boolean saveOnBlur)
@@ -871,28 +1010,6 @@ public class CodeEditor extends TextArea<String>
 		return this;
 	}
 
-	/**
-	 * @return whether the browser sends the server the state and the text the user changed,
-	 *         {@code true} unless set otherwise
-	 */
-	public boolean isSendToServer()
-	{
-		return sendToServer;
-	}
-
-	/**
-	 * @param sendToServer
-	 *            whether the browser sends the server the selection, the scrolling, the size and
-	 *            the text the user changed, which the state model and the input of the editor
-	 *            take
-	 * @return {@code this}
-	 */
-	public CodeEditor setSendToServer(boolean sendToServer)
-	{
-		this.sendToServer = sendToServer;
-		return this;
-	}
-
 	@Override
 	public void renderHead(IHeaderResponse response)
 	{
@@ -967,11 +1084,6 @@ public class CodeEditor extends TextArea<String>
 		if (nonce != null)
 		{
 			options.put("nonce", nonce);
-		}
-		if (sendToServer)
-		{
-			options.put("stateUrl", stateBehavior.getCallbackUrl().toString());
-			options.put("inputName", getInputName());
 		}
 		return options;
 	}

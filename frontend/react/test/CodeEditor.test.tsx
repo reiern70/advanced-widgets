@@ -16,8 +16,13 @@ import { createRef, StrictMode, useState } from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { sendEditorState } from '@antilia/core';
+
 import { BOOTSTRAP_LOOK, CODE_EDITOR_KIT, CodeEditor, LookProvider,
 	type CodeEditorHandle } from '../src/index.js';
+
+/** The state sent at once as the cursor moves. */
+const AT_ONCE = { select: [sendEditorState] };
 
 beforeAll(() => {
 	// jsdom lays nothing out: CodeMirror measures nothing
@@ -113,7 +118,7 @@ describe('CodeEditor', () => {
 		const onStateChange = vi.fn();
 		const onSelectionChange = vi.fn();
 		const ref = createRef<CodeEditorHandle>();
-		render(<CodeEditor ref={ref} value="first line" stateDelay={0}
+		render(<CodeEditor ref={ref} value="first line" events={AT_ONCE}
 			state={{ selection: { ranges: [{ anchor: 2, head: 5 }], main: 0 }, height: 200 }}
 			onStateChange={onStateChange} onSelectionChange={onSelectionChange} />);
 

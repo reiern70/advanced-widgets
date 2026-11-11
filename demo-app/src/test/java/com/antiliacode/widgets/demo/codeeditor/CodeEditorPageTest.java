@@ -21,10 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
-import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
@@ -35,12 +35,14 @@ import org.junit.jupiter.api.Test;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
 import com.antiliacode.widgets.codeeditor.CodeEditorError;
 import com.antiliacode.widgets.codeeditor.CodeEditorEvent;
-import com.antiliacode.widgets.codeeditor.CodeEditorEventBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditorLanguage;
 import com.antiliacode.widgets.codeeditor.CodeEditorState;
 import com.antiliacode.widgets.codeeditor.MarkdownPreview;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.split.SplitPane;
@@ -103,14 +105,38 @@ class CodeEditorPageTest
 	 */
 	private void sendState(CodeEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
-			.filter(behavior -> !(behavior instanceof CodeEditorEventBehavior)).findFirst()
-			.orElseThrow());
+		// by the first event sending it, as the editor sends it with its events
+		List<IClientEvent> events = editor.getEvents();
+		IClientEvent sending = events.stream().filter(SendStateEvent.class::isInstance)
+			.findFirst().orElseThrow();
+		send(editor, sending, Map.of(SendStateEvent.STATE_PARAMETER, state,
+			SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(text != null)));
+	}
+
+	/**
+	 * Fires an event of the page's own, not the one sending the state by default, as the browser
+	 * does.
+	 */
+	private void fire(CodeEditor editor, CodeEditorEvent event)
+	{
+		send(editor, editor.getEvents(event).stream().filter(each -> !(each instanceof
+			SendStateEvent)).findFirst().orElseThrow(() -> new AssertionError("no event " +
+				event)), Map.of());
+	}
+
+	private void send(CodeEditor editor, IClientEvent event, Map<String, String> parameters)
+	{
+		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
+		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
+			event.getEventName());
+		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
+			String.valueOf(editor.getEvents().indexOf(event)));
+		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
+			.getAjaxBehavior(event));
 	}
 
 	private CodeEditor notesEditor()
@@ -146,19 +172,6 @@ class CodeEditorPageTest
 		tester.executeBehavior(split.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
 	}
 
-	private CodeEditorEventBehavior behavior(CodeEditor editor, CodeEditorEvent event)
-	{
-		for (Behavior behavior : editor.getBehaviors())
-		{
-			if (behavior instanceof CodeEditorEventBehavior heard &&
-				heard.getCodeEditorEvent() == event)
-			{
-				return heard;
-			}
-		}
-		throw new AssertionError("no behavior for " + event);
-	}
-
 	@Test
 	void showsTheJavaSampleInAnEditorKeepingItsState()
 	{
@@ -166,7 +179,8 @@ class CodeEditorPageTest
 		assertEquals(CodeEditorLanguage.JAVA, editor.getLanguage());
 		assertEquals(ResizeAxis.VERTICAL, editor.getResizable());
 		assertTrue(editor.isLineNumbers());
-		assertTrue(editor.isSendToServer());
+		// the state goes with the events the editor listens to by default
+		assertTrue(editor.getEvents(CodeEditorEvent.BLUR).get(0) instanceof SendStateEvent);
 		tester.assertContains("Wicket.CodeEditor.attach");
 		tester.assertContains("public record Order");
 		tester.assertContains("antilia-code-editor.*\\.js");
@@ -185,7 +199,7 @@ class CodeEditorPageTest
 		sendState(editor, "{\"selection\":{\"ranges\":[{\"anchor\":120,\"head\":124}]," +
 			"\"main\":0},\"scrollTop\":40,\"height\":420}", text);
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.INPUT));
+		fire(editor, CodeEditorEvent.INPUT);
 
 		CodeDocument java = CodeEditorPage.samples().get("java");
 		assertEquals(text, java.getText());
@@ -209,7 +223,7 @@ class CodeEditorPageTest
 		CodeEditor editor = editor();
 		String text = "class Saved {}\n";
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.SAVE));
+		fire(editor, CodeEditorEvent.SAVE);
 
 		CodeDocument java = CodeEditorPage.samples().get("java");
 		assertEquals(text, java.getText());
@@ -229,13 +243,13 @@ class CodeEditorPageTest
 		CodeEditor editor = editor();
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			CodeEditorPage.samples().get("java").getText());
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.FOCUS));
+		fire(editor, CodeEditorEvent.FOCUS);
 		tester.assertLabel(inCase("editorTitle", "editorForm:heard"),
 			"The server heard you entered Order.java.");
 
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			CodeEditorPage.samples().get("java").getText());
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.BLUR));
+		fire(editor, CodeEditorEvent.BLUR);
 		tester.assertLabel(inCase("editorTitle", "editorForm:heard"),
 			"The server heard you left Order.java, with its text.");
 	}
@@ -290,7 +304,7 @@ class CodeEditorPageTest
 		assertEquals(CodeEditorLanguage.JSON, json.getLanguage());
 		tester.getRequest().getPostParameters().setParameterValue(json.getInputName(),
 			"{ \"name\": \"shop\" }\n");
-		tester.executeBehavior(behavior(json, CodeEditorEvent.SAVE));
+		fire(json, CodeEditorEvent.SAVE);
 		assertEquals("{ \"name\": \"shop\" }\n", page.getFiles().get(2).getSaved());
 		tester.assertContains("Saved package.json.");
 	}
@@ -389,7 +403,7 @@ class CodeEditorPageTest
 			"\"main\":0}}", "# Notes, changed\n");
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"# Notes, changed\n");
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.INPUT));
+		fire(editor, CodeEditorEvent.INPUT);
 		CodeEditorPage.Notes notes = CodeEditorPage.notes();
 		assertEquals(SplitSize.percent(35), notes.split.getPosition());
 		assertEquals(SplitPane.SECOND, notes.split.getCollapsed());
@@ -411,7 +425,7 @@ class CodeEditorPageTest
 	{
 		CodeEditor editor = notesEditor();
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), "# Saved\n");
-		tester.executeBehavior(behavior(editor, CodeEditorEvent.SAVE));
+		fire(editor, CodeEditorEvent.SAVE);
 		assertEquals("# Saved\n", CodeEditorPage.notes().document.getSaved());
 		tester.assertContains("Saved NOTES.md.");
 
@@ -439,7 +453,7 @@ class CodeEditorPageTest
 		// not JSON: not saved, the error shown in the text, and by the notifications of the page
 		tester.getRequest().getPostParameters().setParameterValue(settings.getInputName(),
 			"{\n    \"theme\": \"ocean\",\n}\n");
-		tester.executeBehavior(behavior(settings, CodeEditorEvent.SAVE));
+		fire(settings, CodeEditorEvent.SAVE);
 		String message = "settings.json, line 3, column 1: a name in double quotes was expected, " +
 			"not '}'.";
 		assertEquals(List.of(new CodeEditorError(message, 3, 1)), settings.getErrors());
@@ -451,7 +465,7 @@ class CodeEditorPageTest
 		// well formed: saved, and the error goes
 		tester.getRequest().getPostParameters().setParameterValue(settings.getInputName(),
 			"{ \"theme\": \"ocean\" }\n");
-		tester.executeBehavior(behavior(settings, CodeEditorEvent.SAVE));
+		fire(settings, CodeEditorEvent.SAVE);
 		assertEquals("{ \"theme\": \"ocean\" }\n", CodeEditorPage.settings().document.getSaved());
 		assertTrue(settings.getErrors().isEmpty());
 		tester.assertContains("setErrors\\(\\[\\]\\)");
@@ -483,7 +497,7 @@ class CodeEditorPageTest
 		String text = CodeEditorPage.settings().document.getText();
 		tester.getRequest().getPostParameters().setParameterValue(settingsEditor().getInputName(),
 			"not json");
-		tester.executeBehavior(behavior(settingsEditor(), CodeEditorEvent.SAVE));
+		fire(settingsEditor(), CodeEditorEvent.SAVE);
 		assertEquals(text, CodeEditorPage.settings().document.getText());
 		assertTrue(settingsEditor().getErrors().isEmpty());
 

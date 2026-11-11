@@ -291,15 +291,15 @@ public class RichTextEditorPage extends DemoPage
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
-			(eventId, values, target) -> hear(target, "heardFocus")));
+			(values, target) -> hear(target, "heardFocus")));
 		// the text before and the text now, which the model gets, without the rest of the form
 		editor.addEvent(RichTextEditorChangeEvent.of(editor, RichTextEditorEvents.BLUR,
 			(previousText, currentText, target) -> hearBlur(target, previousText, currentText)));
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
-			(eventId, values, form, target) -> save(target)));
+			(values, form, target) -> save(target)));
 		// the server follows the text as the user types, a moment after each pause
 		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
-			(eventId, values, form, target) -> target.add(known))
+			(values, form, target) -> target.add(known))
 			.setDelay(RichTextEditorEvents.TYPING_DELAY));
 		// the size the user gave the article, which the browser sends once they let go
 		editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -> hearSize(target,
@@ -452,9 +452,9 @@ public class RichTextEditorPage extends DemoPage
 				RichTextDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));
 		notesEditor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
-			(eventId, values, form, target) -> saveNotes(target)));
+			(values, form, target) -> saveNotes(target)));
 		notesEditor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
-			(eventId, values, form, target) -> showNotesKept(target))
+			(values, form, target) -> showNotesKept(target))
 			.setDelay(RichTextEditorEvents.TYPING_DELAY));
 		notesForm.add(notesEditor);
 		notesForm.add(new Label("notesName", getString("notesLabel"))

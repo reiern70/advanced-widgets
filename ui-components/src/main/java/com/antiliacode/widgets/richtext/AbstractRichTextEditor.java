@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.ComponentTag;
@@ -41,6 +40,8 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IClientEvent;
+import com.antiliacode.widgets.event.IClientEventName;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 
@@ -101,7 +102,7 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * <pre>
  * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE)
  * {
- *     public void onEvent(String eventId, JSONObject values, Form&lt;?&gt; form,
+ *     public void onEvent(JSONObject values, Form&lt;?&gt; form,
  *         AjaxRequestTarget target)
  *     {
  *         articles.save(editor.getModelObject());
@@ -126,11 +127,28 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * What is selected, how far the text is scrolled and the size the user gave the editor, by the bar
  * along its bottom ({@link #setResizable(ResizeAxis)}), are its {@link RichTextEditorState state},
  * kept in the state model: by default in the editor, and so in the page. The browser sends the
- * server the state, a moment after the user changed it, as the editor loses the focus and, in a
- * beacon, as the page goes ({@link #setSendToServer(boolean)}, on by default), with the text the
- * user changed, which the editor keeps as its input until the form is sent. Rendered again, or
- * shown again after the user came back to the page with a state model of the session, the editor
- * takes the state up again.
+ * server the state with each event going to the server, with the text when the user changed it,
+ * which the editor keeps as its input until the form is sent, before the event hears of it. By
+ * default the editor listens to six {@link SendStateEvent}s, sending them when they changed since
+ * last sent: {@link RichTextEditorEvents#INPUT}, {@link RichTextEditorEvents#SELECT},
+ * {@link RichTextEditorEvents#SCROLL} and {@link RichTextEditorEvents#RESIZE} a moment after the
+ * user paused ({@link SendStateEvent#DEFAULT_DELAY}), {@link RichTextEditorEvents#BLUR} at once and
+ * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. They are events as any other:
+ * {@link #removeEvents(IClientEventName)} takes those of a name away,
+ * {@link #setEvent(IClientEvent)} puts another in their place, {@link #addEvent(IClientEvent)}
+ * adds one, of any name.
+ *
+ * <pre>
+ * // the state and the text go as the editor loses the focus and as the page goes, no more as
+ * // the user types, moves the cursor, scrolls or resizes
+ * editor.removeEvents(RichTextEditorEvents.INPUT).removeEvents(RichTextEditorEvents.SELECT)
+ *     .removeEvents(RichTextEditorEvents.SCROLL).removeEvents(RichTextEditorEvents.RESIZE);
+ * // or as the user types, but not as the editor loses the focus
+ * editor.setEvent(ClientEvent.nothing(RichTextEditorEvents.BLUR));
+ * </pre>
+ *
+ * Rendered again, or shown again after the user came back to the page with a state model of the
+ * session, the editor takes the state up again.
  *
  * @param <T>
  *            the editor, which its setters return
@@ -147,11 +165,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	/** The levels of the headings, unless set otherwise. */
 	public static final List<Integer> DEFAULT_HEADING_LEVELS = List.of(1, 2, 3, 4);
 
-	private static final String STATE_PARAMETER = "state";
-
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractRichTextEditor.class);
-
-	private final AbstractDefaultAjaxBehavior stateBehavior;
 
 	private final ClientEventsBehavior events;
 
@@ -183,7 +197,6 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	private Integer maxWidth;
 
-	private boolean sendToServer = true;
 
 	private IRichTextSanitizer sanitizer;
 
@@ -217,17 +230,6 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		super(id, model);
 		this.stateModel = stateModel == null ? Model.of((RichTextEditorState)null) : stateModel;
 		setOutputMarkupId(true);
-		stateBehavior = new AbstractDefaultAjaxBehavior()
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void respond(AjaxRequestTarget target)
-			{
-				onStateSent(target, getRequest().getRequestParameters());
-			}
-		};
-		add(stateBehavior);
 		events = new ClientEventsBehavior()
 		{
 			private static final long serialVersionUID = 1L;
@@ -249,8 +251,30 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 				return "function(element){return " + global + "&&" + global +
 					".of(element.id);}";
 			}
+
+			@Override
+			protected String getClientValues()
+			{
+				// the state, and whether the text changed, with each event
+				String global = getScriptObject();
+				return "function(editor){return " + global + "?" + global +
+					".stateParameters(editor):{};}";
+			}
+
+			@Override
+			protected void onEventSent(AjaxRequestTarget target, IRequestParameters parameters)
+			{
+				onStateSent(target, parameters);
+			}
 		};
 		add(events);
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
+		{
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
+		}
+		events.add(new SendStateEvent(RichTextEditorEvents.BLUR));
+		events.add(new SendStateEvent(RichTextEditorEvents.LEAVE));
 	}
 
 	/**
@@ -307,17 +331,19 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * Takes what the browser sent: the state, which the state model gets, and the text when the
-	 * user changed it, which the editor keeps as its input.
+	 * Takes what the browser sent with an event: the state, which the state model gets, and the
+	 * text when the user changed it, which the editor keeps as its input.
 	 */
 	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters)
 	{
-		if (!sendToServer)
+		String sent = parameters.getParameterValue(SendStateEvent.STATE_PARAMETER)
+			.toOptionalString();
+		if (sent == null)
 		{
+			// an event of the editor's, without the state: before the script made the editor
 			return;
 		}
-		RichTextEditorState state = RichTextEditorState.parse(parameters.getParameterValue(
-			STATE_PARAMETER).toOptionalString());
+		RichTextEditorState state = RichTextEditorState.parse(sent);
 		if (state != null)
 		{
 			state = state.withSize(resizable == null ? ResizableSize.NONE :
@@ -327,9 +353,12 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 				stateModel.setObject(state);
 			}
 		}
-		// read where the text area's input is: among what the form posts
+		// read where the text area's input is: among what the form posts, which Wicket's Ajax
+		// sends with each event
+		boolean textChanged = parameters.getParameterValue(
+			SendStateEvent.TEXT_CHANGED_PARAMETER).toBoolean(false);
 		String[] input = getInputAsArray();
-		if (input != null && input.length > 0 && input[0] != null && !readOnly)
+		if (textChanged && input != null && input.length > 0 && input[0] != null && !readOnly)
 		{
 			inputChanged();
 		}
@@ -421,8 +450,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * Called when the browser sent the state, and maybe the text, after the state model took it.
-	 * Does nothing by default.
+	 * Called when the browser sent the state, and maybe the text, with an event, after the state
+	 * model took it, before the event hears of it. Does nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -433,16 +462,29 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 
 	/**
 	 * @param event
-	 *            an event the editor listens to, after those it listens to already: one of
-	 *            {@link RichTextEditorEvents}, or of any other name
+	 *            an event the editor listens to, after those it listens to already, of its name and
+	 *            of the others: one of {@link RichTextEditorEvents}, or of any other name
 	 * @return {@code this}
 	 * @throws IllegalArgumentException
-	 *             when the event goes to the server both ways, or stays in the browser without a
-	 *             function
+	 *             when the event goes to the server more than one way, or has no handler
 	 */
 	public T addEvent(IClientEvent event)
 	{
 		events.add(event);
+		return self();
+	}
+
+	/**
+	 * @param event
+	 *            an event the editor listens to in place of those of its name it listens to
+	 *            already, the {@link SendStateEvent} of the name by default for example
+	 * @return {@code this}
+	 * @throws IllegalArgumentException
+	 *             when the event goes to the server more than one way, or has no handler
+	 */
+	public T setEvent(IClientEvent event)
+	{
+		events.set(event);
 		return self();
 	}
 
@@ -458,7 +500,54 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * @return the events the editor listens to: those it was given, then those of its features
+	 * @param eventName
+	 *            the name of events the editor no longer listens to, those it listens to by default
+	 *            too: the editor then does nothing on them
+	 * @return {@code this}
+	 */
+	public T removeEvents(String eventName)
+	{
+		events.removeEvents(eventName);
+		return self();
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events the editor no longer listens to, those it listens to by default
+	 *            too: the editor then does nothing on them
+	 * @return {@code this}
+	 */
+	public T removeEvents(IClientEventName eventName)
+	{
+		events.removeEvents(eventName);
+		return self();
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the editor was given, or listens to by default, in their
+	 *         order
+	 */
+	public List<IClientEvent> getEvents(IClientEventName eventName)
+	{
+		return events.getEvents(eventName);
+	}
+
+	/**
+	 * @param eventName
+	 *            the name of events
+	 * @return the events of the name the editor was given, or listens to by default, in their
+	 *         order
+	 */
+	public List<IClientEvent> getEvents(String eventName)
+	{
+		return events.getEvents(eventName);
+	}
+
+	/**
+	 * @return the events the editor listens to: those it was given, and by default, then those of
+	 *         its features
 	 */
 	public List<IClientEvent> getEvents()
 	{
@@ -796,28 +885,6 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * @return whether the browser sends the server the state and the text the user changed,
-	 *         {@code true} unless set otherwise
-	 */
-	public boolean isSendToServer()
-	{
-		return sendToServer;
-	}
-
-	/**
-	 * @param sendToServer
-	 *            whether the browser sends the server the selection, the scrolling, the size and
-	 *            the text the user changed, which the state model and the input of the editor
-	 *            take
-	 * @return {@code this}
-	 */
-	public T setSendToServer(boolean sendToServer)
-	{
-		this.sendToServer = sendToServer;
-		return self();
-	}
-
-	/**
 	 * @return what cleans the HTML: the one set, or the {@link #getDefaultSanitizer() policy of the
 	 *         features}
 	 */
@@ -1073,11 +1140,6 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 			putPixels(options, "maxWidth", maxWidth);
 		}
 		options.put("texts", getTexts());
-		if (sendToServer)
-		{
-			options.put("stateUrl", stateBehavior.getCallbackUrl().toString());
-			options.put("inputName", getInputName());
-		}
 		return options;
 	}
 

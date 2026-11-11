@@ -30,7 +30,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.core.util.lang.WicketObjects;
@@ -57,6 +56,7 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEventsTester;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.richtext.RichTextCleaning;
@@ -105,7 +105,8 @@ class CKEditorTest extends WicketTestCase
 		tester.assertContains("antilia-ckeditor.*\\.css");
 		tester.assertContains("antilia-resizable.*\\.css");
 		tester.assertContainsNot("de.umd.js");
-		tester.assertContainsNot("antilia-rich-text-editor");
+		// the names of the events alone
+		tester.assertContainsNot("antilia-rich-text-editor(?!:)");
 
 		JSONObject options = options(page.editor);
 		assertEquals("GPL", options.getString("licenseKey"));
@@ -136,8 +137,7 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{0} word", texts.getString("word"));
 		assertEquals("Open in a new tab", texts.getString("linkNewTab"));
 		assertEquals("Drag, or use the arrow keys, to resize the editor", texts.getString("resize"));
-		assertTrue(options.getString("stateUrl").contains("-form-editor"));
-		assertEquals(page.editor.getInputName(), options.getString("inputName"));
+		assertFalse(options.has("stateUrl"), "the events send the state");
 		assertSame(CKEditorPolicy.ALL, page.editor.getSanitizer());
 		assertSame(LIBRARY, page.editor.getLibrary());
 		assertNull(page.editor.getLanguage());
@@ -382,12 +382,17 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{\"selection\":{\"anchor\":9,\"head\":3},\"scrollTop\":12,\"scrollLeft\":3," +
 			"\"height\":260}", options(editor).getJSONObject("state").toString());
 
-		// not sending to the server: nothing heard
-		editor.setSendToServer(false);
+		// without events sending the state: the script of the editor sends it no more
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE,
+			RichTextEditorEvents.BLUR, RichTextEditorEvents.LEAVE))
+		{
+			assertTrue(editor.getEvents(name).get(0) instanceof SendStateEvent);
+			editor.removeEvents(name);
+		}
 		tester.startPage(page);
 		assertFalse(options(editor).has("stateUrl"));
-		sendState(editor, "{\"scrollTop\":40}", null);
-		assertEquals(12, editor.getState().getScrollTop());
+		tester.assertContainsNot("Wicket.ClientEvents.sendState");
 	}
 
 	@Test
@@ -414,14 +419,14 @@ class CKEditorTest extends WicketTestCase
 		List<String> saved = new ArrayList<>();
 		IModel<String> text = Model.of(HTML);
 		CKEditor editor = new CKEditor("editor", text);
-		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE, (eventId, values, form,
-			target) -> {
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE, (values, form, target) -> {
 			saved.add(editor.getModelObject());
 			editor.markSaved(target);
 		}));
 		tester.startPage(new TestPage(editor));
 
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:save\",index:0,kind:'submit'");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:save\"," +
+			"\"index\":\\d+,\"kind\":\"submit\"");
 		tester.assertContains("Wicket.CKEditor&&Wicket.CKEditor.of\\(element.id\\)");
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"<p>Saved <img src=x onerror=steal()></p>");
@@ -439,8 +444,9 @@ class CKEditorTest extends WicketTestCase
 			selectedText)));
 		tester.startPage(new TestPage(editor));
 
-		tester.assertContains("\\{id:\"antilia-rich-text-editor:selected-text\",index:0," +
-			"kind:'ajax',delay:-1\\}");
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:selected-text\"," +
+			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
 			new JSONObject().put("text", "Hello"));
 		assertEquals(List.of("Hello"), heard);
@@ -519,13 +525,12 @@ class CKEditorTest extends WicketTestCase
 
 	private void sendState(CKEditor editor, String state, String text)
 	{
-		tester.getRequest().setParameter("state", state);
 		if (text != null)
 		{
 			// as the browser posts it
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		tester.executeBehavior(editor.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+		ClientEventsTester.sendState(tester, editor, state, text != null);
 	}
 
 	@Test

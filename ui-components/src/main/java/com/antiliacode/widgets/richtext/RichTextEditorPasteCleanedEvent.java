@@ -95,7 +95,7 @@ public abstract class RichTextEditorPasteCleanedEvent extends AjaxEvent
 	 * nothing.
 	 */
 	@Override
-	public final void onEvent(String eventId, JSONObject values, AjaxRequestTarget target)
+	public final void onEvent(JSONObject values, AjaxRequestTarget target)
 	{
 		RichTextCleaningReport report = RichTextCleaningReport.fromJson(values);
 		if (!report.isEmpty())

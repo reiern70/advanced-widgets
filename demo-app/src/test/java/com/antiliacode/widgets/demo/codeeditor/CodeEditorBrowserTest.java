@@ -121,10 +121,12 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 			"Not at all");
 		wait.until(d -> editor().findElements(By.cssSelector(".antilia-resizable-handle"))
 			.isEmpty());
+		assertTrue(known().contains("the cursor on line 3,"), known());
 
+		// focusing the text, the browser puts the cursor at its end, which the events of the
+		// editor going to the server tell it at once
 		content().sendKeys("x");
 		assertEquals("import java.math.BigDecimal;", line(3).getText(), "read only");
-		assertTrue(known().contains("the cursor on line 3,"), known());
 		assertNoErrors();
 	}
 

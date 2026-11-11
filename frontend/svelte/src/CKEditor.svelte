@@ -34,6 +34,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { CKEditor, type CKEditorBuild, type CKEditorInstance, type CKEditorPlugin,
+		type EditorEvents, type RichTextEditorEventKey,
 		type CKEditorTexts, type HeadingLevel, type ResizableSize, type ResizeAxis,
 		type RichTextCleaningReport, type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextFeature } from '@antilia/core';
@@ -100,8 +101,14 @@
 		maxHeight?: number | null;
 		/** The state: the one the editor starts in, then the one the user leaves it in, bound. */
 		state?: RichTextEditorState;
-		/** How long after the user changed the state it is reported, 400 ms when left out. */
-		stateDelay?: number;
+		/**
+		 * The handlers of the editor's events, by their keys (RICH_TEXT_EDITOR_EVENTS) or the names of
+		 * other events it fires, each sending the state or not (send); those left out keep theirs:
+		 * change, select, scroll and resize send the state 400 ms after the user paused, blur and
+		 * leave at once; an empty list for none. Keep the object the same: another one puts the
+		 * handlers anew.
+		 */
+		events?: EditorEvents<CKEditor, RichTextEditorEventKey>;
 		/** Whether the text has changes not saved, bound. */
 		modified?: boolean;
 		/** The editor of the core, bound. */
@@ -158,7 +165,7 @@
 		maxHeight,
 		// not state, which would hide the rune $state
 		state: editorState = $bindable(),
-		stateDelay,
+		events,
 		modified = $bindable(false),
 		editor = $bindable(null),
 		pasteNotice,
@@ -193,7 +200,7 @@
 		const made = new CKEditor(element, untrack(() => ({
 			build, licenseKey, language, translations, value, saved, format, features, headingLevels,
 			toolbar, plugins, config, readOnly, placeholder, label, spellcheck, textLanguage, count,
-			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, stateDelay, pasteNotice,
+			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, events, pasteNotice,
 			texts, look,
 			onReady: (next: CKEditorInstance) => onready?.(next),
 			onError: (error: unknown) => onerror?.(error),
@@ -231,9 +238,16 @@
 	$effect(() => {
 		const next = { licenseKey, language, format, features, headingLevels, toolbar, readOnly,
 			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
-			count, resizable, minWidth, minHeight, maxWidth, maxHeight, stateDelay,
+			count, resizable, minWidth, minHeight, maxWidth, maxHeight,
 			pasteNotice: !!pasteNotice, texts };
 		untrack(() => instance?.configure(next));
+	});
+
+	$effect(() => {
+		const next = events;
+		if (next !== undefined) {
+			untrack(() => instance?.configure({ events: next }));
+		}
 	});
 
 	// compared by what they are: another one makes CKEditor anew

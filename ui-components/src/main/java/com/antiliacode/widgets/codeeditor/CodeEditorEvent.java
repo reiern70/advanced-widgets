@@ -13,15 +13,22 @@
  */
 package com.antiliacode.widgets.codeeditor;
 
+import com.antiliacode.widgets.event.IClientEventName;
+
 /**
- * What a {@link CodeEditor} tells the page of, by the events the browser fires on its text area:
- * those a text area fires itself, {@code input} and {@code change}, and those of the editor. A
- * {@link CodeEditorEventBehavior} hears of one on the server, as any Ajax behavior listening to
- * {@link #getEventName() its name} does.
+ * What a {@link CodeEditor} tells the page of, by the events the browser fires on its text area,
+ * by their names ({@link #getEventName()}): those a text area fires itself, {@code input} and
+ * {@code change}, and those of the editor, whose {@code detail} holds the editor and what the event
+ * tells. The editor listens to those it is
+ * {@link CodeEditor#addEvent(com.antiliacode.widgets.event.IClientEvent) given}: an
+ * {@link com.antiliacode.widgets.event.AjaxUpdateEvent} hears of one on the server once the model
+ * took the text, valid. By default the editor sends its state on six of them, {@link #INPUT},
+ * {@link #SELECT}, {@link #SCROLL}, {@link #RESIZE}, {@link #BLUR} and {@link #LEAVE}: see
+ * {@link com.antiliacode.widgets.event.SendStateEvent}.
  *
  * @since 11.0.0
  */
-public enum CodeEditorEvent
+public enum CodeEditorEvent implements IClientEventName
 {
 	/** The user changed the text: each change, as a text area tells. */
 	INPUT("input"),
@@ -38,6 +45,9 @@ public enum CodeEditorEvent
 	/** The user moved the cursor or selected text. */
 	SELECT("antilia-code-editor:select"),
 
+	/** The user scrolled the text; {@code detail.scroll} has {@code top} and {@code left}. */
+	SCROLL("antilia-code-editor:scroll"),
+
 	/**
 	 * The user pressed Ctrl+S, or Cmd+S, in the editor, or left it with changes not saved or errors
 	 * shown, when it {@link CodeEditor#setSaveOnBlur(boolean) saves on blur}.
@@ -48,7 +58,26 @@ public enum CodeEditorEvent
 	RESIZE("antilia-code-editor:resize"),
 
 	/** The text came to have changes not saved, or no longer has. */
-	MODIFIED("antilia-code-editor:modified");
+	MODIFIED("antilia-code-editor:modified"),
+
+	/**
+	 * The page is going; {@code detail.leaving} is {@code true}. The events going to the server
+	 * go in a beacon, which the browser sends even then; what the server answers is lost.
+	 */
+	LEAVE("antilia-code-editor:leave"),
+
+	/**
+	 * A tab of {@link com.antiliacode.widgets.tabs.TabbedPanel} or a window of
+	 * {@link com.antiliacode.widgets.desktop.Desktop} closed anyway put the text last saved back.
+	 */
+	DISCARD("antilia-code-editor:discard");
+
+	/**
+	 * How long an event coming often, {@link #INPUT} or {@link #SELECT}, may wait for the user to
+	 * pause, in milliseconds: see
+	 * {@link com.antiliacode.widgets.event.AbstractDelayedClientEvent#setDelay(int)}.
+	 */
+	public static final int TYPING_DELAY = 500;
 
 	private final String eventName;
 
@@ -60,17 +89,9 @@ public enum CodeEditorEvent
 	/**
 	 * @return the name of the event in the browser
 	 */
+	@Override
 	public String getEventName()
 	{
 		return eventName;
-	}
-
-	/**
-	 * @return whether the event comes often, as the user types or moves the cursor: an Ajax
-	 *         behavior then waits until the user paused
-	 */
-	public boolean isFrequent()
-	{
-		return this == INPUT || this == SELECT;
 	}
 }

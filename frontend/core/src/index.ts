@@ -20,9 +20,14 @@ export { CODE_EDITOR_CLASSES, CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_L
 	CODE_EDITOR_PHRASES, CodeEditor, codeEditor, codeEditorLanguages, DEFAULT_CODE_EDITOR_TEXTS,
 	loadLanguage, registerLanguage } from './code-editor.js';
 export type { Extension } from '@codemirror/state';
-export type { CodeEditorError, CodeEditorEventDetail, CodeEditorKit, CodeEditorLanguage,
+export type { CodeEditorError, CodeEditorEventDetail, CodeEditorEventKey, CodeEditorKit,
+	CodeEditorLanguage,
 	CodeEditorLanguageLoader, CodeEditorOptions, CodeEditorRange, CodeEditorSelection,
 	CodeEditorState, CodeEditorStateChange, CodeEditorTexts } from './code-editor.js';
+export { DEFAULT_STATE_EVENTS, EditorEventHandlers, NO_STATE_EVENTS, sendEditorState,
+	STATE_DELAY } from './editor-events.js';
+export type { DelayedEditorEventHandler, EditorEventFunction, EditorEventHandler, EditorEvents,
+	EditorEventSend } from './editor-events.js';
 export { findJsonError } from './json-error.js';
 export type { JsonError, JsonProblem } from './json-error.js';
 export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
@@ -34,6 +39,7 @@ export type { CKEditorBuild, CKEditorClass, CKEditorEditingView, CKEditorEventDe
 	CKEditorFeature, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
 	CKEditorViewWriter } from './ck-editor.js';
 export { canonicalState, sameState, textLanguage } from './rich-text-contract.js';
+export type { RichTextEditorEventKey } from './rich-text-contract.js';
 export { RICH_TEXT_BUILT_IN_EVENTS, RICH_TEXT_EVENT_SOURCES, RICH_TEXT_EVENT_TRIGGER,
 	registerRichTextEvent, richTextEvent, richTextEvents } from './rich-text-events.js';
 export type { RichTextEventCause, RichTextEventDefinition,

@@ -43,7 +43,6 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
 import com.antiliacode.widgets.codeeditor.CodeEditorEvent;
-import com.antiliacode.widgets.codeeditor.CodeEditorEventBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditorLanguage;
 import com.antiliacode.widgets.codeeditor.CodeEditorState;
 import com.antiliacode.widgets.codeeditor.JsonValidator;
@@ -52,6 +51,7 @@ import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.dropdown.Dropdown;
+import com.antiliacode.widgets.event.AjaxUpdateEvent;
 import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizableSize;
@@ -212,47 +212,16 @@ public class CodeEditorPage extends DemoPage
 		editor.setLabel(() -> sample().getName());
 		// read only as the check box says, the editor rendered again when it changes
 		editor.setReadOnly(new PropertyModel<>(this, "readOnly"));
-		editor.add(new CodeEditorEventBehavior(CodeEditorEvent.FOCUS)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				hear(target, "heardFocus");
-			}
-		});
-		editor.add(new CodeEditorEventBehavior(CodeEditorEvent.BLUR)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				hear(target, "heardBlur");
-			}
-		});
-		editor.add(new CodeEditorEventBehavior(CodeEditorEvent.SAVE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				save(target);
-			}
-		});
+		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.FOCUS,
+			(values, component, target) -> hear(target, "heardFocus")));
+		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.BLUR,
+			(values, component, target) -> hear(target, "heardBlur")));
+		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> save(target)));
 		// the server follows the text as the user types, a moment after each pause
-		editor.add(new CodeEditorEventBehavior(CodeEditorEvent.INPUT)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				target.add(known);
-			}
-		});
+		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.INPUT,
+			(values, component, target) -> target.add(known))
+			.setDelay(CodeEditorEvent.TYPING_DELAY));
 		editorForm.add(editor);
 		// lambdas, not editor::getMarkupId and preview::getMarkupId: javac deserializes two method
 		// references to one inherited method as the first one's, and the page fails to load
@@ -333,27 +302,13 @@ public class CodeEditorPage extends DemoPage
 			.setResizable(null).setSavedModel(LambdaModel.of(notes, CodeDocument::getSaved,
 				CodeDocument::setSaved))
 			.setLabel(() -> notes().document.getName());
-		notesEditor.add(new CodeEditorEventBehavior(CodeEditorEvent.SAVE)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				saveNotes(target);
-			}
-		});
+		notesEditor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> saveNotes(target)));
 		// the server follows the text as the user types, a moment after each pause, keeping it in
 		// the session; the preview follows it in the browser
-		notesEditor.add(new CodeEditorEventBehavior(CodeEditorEvent.INPUT)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-			}
-		});
+		notesEditor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.INPUT,
+			(values, component, target) -> {
+			}).setDelay(CodeEditorEvent.TYPING_DELAY));
 		MarkdownPreview preview = new MarkdownPreview("preview", notesEditor)
 		{
 			private static final long serialVersionUID = 1L;
@@ -508,8 +463,9 @@ public class CodeEditorPage extends DemoPage
 		// well-formed JSON only: an error shows in the text and as a notification of the page
 		jsonEditor.add(new JsonValidator());
 		// Ctrl+S, and leaving the editor with changes not saved, save the JSON when it is valid
-		jsonEditor.add(CodeEditorEventBehavior.onUpdate(CodeEditorEvent.SAVE, this::saveJson,
-			(target, e) -> sayAboutJson(target, "jsonInvalid")));
+		jsonEditor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+			(values, component, target) -> saveJson(target),
+			(values, component, target, e) -> sayAboutJson(target, "jsonInvalid")));
 		jsonForm.add(jsonEditor);
 		jsonForm.add(new Label("name", () -> settings().document.getName())
 			.add(AttributeModifier.replace("for", () -> jsonEditor.getMarkupId())));
@@ -993,16 +949,8 @@ public class CodeEditorPage extends DemoPage
 			fileEditor.setLanguage(document.getLanguage())
 				.setSavedModel(new PropertyModel<>(document, "saved"))
 				.setLabel(Model.of(document.getName()));
-			fileEditor.add(new CodeEditorEventBehavior(CodeEditorEvent.SAVE)
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected void onUpdate(AjaxRequestTarget target)
-				{
-					saveFile(target, fileEditor);
-				}
-			});
+			fileEditor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
+				(values, component, target) -> saveFile(target, fileEditor)));
 			form.add(fileEditor);
 			form.add(new AjaxButton("save")
 			{

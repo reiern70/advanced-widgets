@@ -13,7 +13,7 @@
 -->
 <!-- A CKEditor whose text, state and changes not saved are bound, shown next to it. -->
 <script lang="ts">
-	import type { RichTextCleaningReport } from '@antilia/core';
+	import { sendEditorState, type RichTextCleaningReport } from '@antilia/core';
 
 	import { CKEditor, type CKEditorBuild, type CKEditorInstance, type CKEditorPlugin,
 		type RichTextEditorState } from '../src/index.js';
@@ -29,12 +29,16 @@
 		onselectionchange?: (selection: unknown) => void; pasteNotice?: boolean;
 		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
 	let modified = $state(false);
+
+	/** The state sent at once, as the user changes it. */
+	const AT_ONCE = { change: [sendEditorState], select: [sendEditorState],
+		scroll: [sendEditorState], resize: [sendEditorState] };
 </script>
 
 <form>
 	<CKEditor id="e" class={className} {build} licenseKey="GPL" language="de" bind:value
 		bind:state={editorState} bind:modified {saved} {name} {readOnly} {toolbar} {plugins} {count}
-		stateDelay={0} label="Notes" {onready} {onerror} {onsave} {onfocus} {onblur}
+		events={AT_ONCE} label="Notes" {onready} {onerror} {onsave} {onfocus} {onblur}
 		{onselectionchange} {pasteNotice} {onpastecleaned} />
 </form>
 <output>{value}</output>

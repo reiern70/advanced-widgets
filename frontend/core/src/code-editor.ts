@@ -32,11 +32,12 @@
  *
  * Where the cursor is, what is selected, how far the text is scrolled and the size the user gave
  * the editor are its state (CodeEditorState). The editor keeps it while hidden, in a tab that is
- * not selected for example, and shows it again when shown; onStateChange reports it, a moment
- * after the user changed it, as the editor loses the focus and as the page goes, for a page that
- * keeps it, on the server for example, to give it back with the option state, after the user came
- * back to the page. Rendered anew in the same place with the same text, as Wicket does, the editor
- * goes on as it was.
+ * not selected for example, and shows it again when shown; onStateChange gets it, by default a
+ * moment after the user changed it, as the editor loses the focus and as the page goes, for a page
+ * that keeps it, on the server for example, to give it back with the option state, after the user
+ * came back to the page. When it goes is the page's: the option events takes the handlers of the
+ * editor's events, which send it or not (see editor-events.ts). Rendered anew in the same place
+ * with the same text, as Wicket does, the editor goes on as it was.
  *
  * The editor tells whether the text has changes not saved, against the text last saved (saved,
  * markSaved()): as data-modified on its element, which tabs and windows of the desktop show, and
@@ -73,6 +74,7 @@ import { crosshairCursor, drawSelection, dropCursor, EditorView, highlightActive
 	type ViewUpdate } from '@codemirror/view';
 import { classHighlighter, styleTags, tags } from '@lezer/highlight';
 
+import { EditorEventHandlers, type EditorEvents } from './editor-events.js';
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, type Look, type LookPart } from './look.js';
 import { Resizable, type ResizableSize, type ResizeAxis } from './resizable.js';
@@ -222,8 +224,14 @@ export interface CodeEditorOptions {
 	maxHeight?: number | null;
 	/** The state the editor starts in: the selection, the scroll position and the size. */
 	state?: CodeEditorState;
-	/** How long after the user changed the state onStateChange reports it, 400 ms when left out. */
-	stateDelay?: number;
+	/**
+	 * The handlers of the editor's events, by their keys (CODE_EDITOR_EVENTS) or the names of other
+	 * events it fires: each runs on its event, at once or a moment after the last of a row of them,
+	 * and may send the state to onStateChange (see editor-events.ts). Those left out keep theirs:
+	 * change, select, scroll and resize send the state 400 ms after the user paused, blur and leave
+	 * at once; an empty list for none.
+	 */
+	events?: EditorEvents<CodeEditor, CodeEditorEventKey>;
 	/**
 	 * Whether leaving the editor with changes not saved, or with errors shown, tells the page to
 	 * save, onSave and the event save, as Ctrl+S does: false when left out.
@@ -251,8 +259,9 @@ export interface CodeEditorOptions {
 	/** Called with the selection each time the user moved the cursor or selected text. */
 	onSelectionChange?: (selection: CodeEditorSelection) => void;
 	/**
-	 * Called with the state a moment after the user changed it, as the editor loses the focus and
-	 * as the page goes, when it changed since it was last reported.
+	 * Called with the state when a handler of the events sends it (events), and it, or the text,
+	 * changed since it was last sent: by default a moment after the user changed it, as the editor
+	 * loses the focus and as the page goes.
 	 */
 	onStateChange?: (state: CodeEditorState, change: CodeEditorStateChange) => void;
 	/** Called when the text came to have changes not saved, or no longer has. */
@@ -282,14 +291,23 @@ export const CODE_EDITOR_EVENTS = Object.freeze({
 	resize: 'antilia-code-editor:resize',
 	/** The text came to have changes not saved, or no longer has. */
 	modified: 'antilia-code-editor:modified',
-	/** The state was reported: what onStateChange is given. */
+	/** The state was sent: what onStateChange, or the server, is given. */
 	state: 'antilia-code-editor:state',
 	/**
 	 * The editor has a text: it started, or its text changed, by the user or by the page, for
 	 * what shows the text elsewhere, a preview of Markdown for example.
 	 */
-	text: 'antilia-code-editor:text'
+	text: 'antilia-code-editor:text',
+	/** The user scrolled the text. */
+	scroll: 'antilia-code-editor:scroll',
+	/** The page is going: its detail tells leaving, true. */
+	leave: 'antilia-code-editor:leave',
+	/** A tab or a window of the desktop closed anyway put the text last saved back. */
+	discard: 'antilia-code-editor:discard'
 });
+
+/** The keys of the events the editor fires, which its option events takes handlers by. */
+export type CodeEditorEventKey = keyof typeof CODE_EDITOR_EVENTS;
 
 /** What the events of the editor carry, besides what each tells. */
 export interface CodeEditorEventDetail {
@@ -298,6 +316,10 @@ export interface CodeEditorEventDetail {
 	state?: CodeEditorState;
 	modified?: boolean;
 	size?: ResizableSize;
+	/** How far the text is scrolled, for scroll. */
+	scroll?: { top: number; left: number };
+	/** True as the page goes, for leave. */
+	leaving?: boolean;
 }
 
 /** The classes of the editor and its states. */
@@ -331,7 +353,7 @@ export const DEFAULT_CODE_EDITOR_TEXTS: Readonly<CodeEditorTexts> = Object.freez
 /** The theme custom property telling the color scheme, light or dark, of a theme. */
 const COLOR_SCHEME_PROPERTY = '--antilia-theme-color-scheme';
 
-const DEFAULTS = { tabSize: 4, stateDelay: 400, resizable: 'vertical' as ResizeAxis,
+const DEFAULTS = { tabSize: 4, resizable: 'vertical' as ResizeAxis,
 	minWidth: 160, minHeight: 64 };
 
 /** Marks the transactions of the page, not the user's, which fire no events. */
@@ -657,16 +679,20 @@ export class CodeEditor {
 	/** Whether the editor is shown, not in a hidden tab for example. */
 	private shown = false;
 
-	/** The state last reported, null before. */
+	/** The state last sent, or the one the page gave, null before. */
 	private reported: CodeEditorState | null = null;
 
-	/** Whether the text was reported, with the state, since the user last changed it. */
+	/** The state the editor started in: nothing to send while it has it, before any was sent. */
+	private started: CodeEditorState | null = null;
+
+	/** Whether the text was sent, with the state, since the user last changed it. */
 	private textReported = true;
 
 	/** The text when the editor got the focus, for the event change. */
 	private focusValue: string | null = null;
 
-	private timer: ReturnType<typeof setTimeout> | null = null;
+	/** Runs the handlers of the events. */
+	private handlers: EditorEventHandlers<CodeEditor> | null = null;
 
 	/** Counts the grammars asked for, so that one loading late does not replace a later one. */
 	private languageRequest = 0;
@@ -799,6 +825,8 @@ export class CodeEditor {
 		this.renderModified(value, false);
 		this.applyLanguage();
 		this.bind();
+		this.renderEventHandlers();
+		this.started = this.getState();
 		this.restoreScroll();
 		if (options.errors?.length) {
 			this.setErrors(options.errors);
@@ -1059,7 +1087,6 @@ export class CodeEditor {
 		this.size = size;
 		this.options.onResize?.({ ...size });
 		this.dispatch('resize', { size: { ...size } });
-		this.stateChanged();
 	}
 
 	private listen<E extends Event>(target: EventTarget, type: string,
@@ -1074,7 +1101,7 @@ export class CodeEditor {
 			// hidden, a scroller is at its start: the editor keeps where it was
 			if (scroller.clientHeight > 0) {
 				this.scroll = { top: scroller.scrollTop, left: scroller.scrollLeft };
-				this.stateChanged();
+				this.dispatch('scroll', { scroll: { ...this.scroll } });
 			}
 		}, { passive: true });
 		this.shown = scroller.clientHeight > 0;
@@ -1108,6 +1135,7 @@ export class CodeEditor {
 			const target = event.target as Node | null;
 			if (target && target.contains(this.element) && this.isModified()) {
 				this.setValue(this.saved);
+				this.dispatch('discard');
 			}
 		};
 		this.listen(document, 'antilia-tabs:discard', discard);
@@ -1121,11 +1149,7 @@ export class CodeEditor {
 				this.save();
 			}
 		});
-		this.listen(window, 'pagehide', () => {
-			if (this.timer !== null || !this.textReported) {
-				this.report(true);
-			}
-		});
+		this.listen(window, 'pagehide', () => this.dispatch('leave', { leaving: true }));
 	}
 
 	private onUpdate(update: ViewUpdate): void {
@@ -1140,14 +1164,12 @@ export class CodeEditor {
 				this.options.onChange?.(value);
 				this.fieldEvent('input');
 				this.dispatch('change');
-				this.stateChanged();
 			}
 		}
 		if (update.selectionSet && user) {
 			const selection = this.selection();
 			this.options.onSelectionChange?.(selection);
 			this.dispatch('select', { selection });
-			this.stateChanged();
 		}
 		if (update.focusChanged) {
 			if (update.view.hasFocus) {
@@ -1162,7 +1184,6 @@ export class CodeEditor {
 				this.focusValue = null;
 				this.options.onBlur?.(value);
 				this.dispatch('blur');
-				this.report(false);
 			}
 		}
 	}
@@ -1214,27 +1235,32 @@ export class CodeEditor {
 	private dispatch(name: keyof typeof CODE_EDITOR_EVENTS,
 		detail: Omit<CodeEditorEventDetail, 'editor'> = {}): void {
 		const target = this.field ?? this.element;
+		const event = new CustomEvent<CodeEditorEventDetail>(CODE_EDITOR_EVENTS[name], {
+			bubbles: true, detail: { editor: this, ...detail } });
 		this.dispatching = true;
 		try {
-			target.dispatchEvent(new CustomEvent<CodeEditorEventDetail>(CODE_EDITOR_EVENTS[name], {
-				bubbles: true, detail: { editor: this, ...detail } }));
+			target.dispatchEvent(event);
 		} finally {
 			this.dispatching = false;
 		}
+		// its handlers once the page heard of it
+		this.handlers?.handle(event);
 	}
 
 	/**
 	 * Fires input or change on the text area, as a text area does when the user changes it.
 	 */
 	private fieldEvent(type: 'input' | 'change'): void {
+		const event = new Event(type, { bubbles: true });
 		if (this.field) {
 			this.dispatching = true;
 			try {
-				this.field.dispatchEvent(new Event(type, { bubbles: true }));
+				this.field.dispatchEvent(event);
 			} finally {
 				this.dispatching = false;
 			}
 		}
+		this.handlers?.handle(event);
 	}
 
 	/**
@@ -1284,40 +1310,58 @@ export class CodeEditor {
 	}
 
 	/**
-	 * Reports the state a moment after the user last changed it.
+	 * Listens to the events with their handlers: those of the option events, and the default ones.
 	 */
-	private stateChanged(): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-		}
-		this.timer = setTimeout(() => this.report(false),
-			Math.max(this.options.stateDelay ?? DEFAULTS.stateDelay, 0));
+	private renderEventHandlers(): void {
+		this.handlers?.destroy();
+		this.handlers = new EditorEventHandlers<CodeEditor>(this, CODE_EDITOR_EVENTS,
+			this.options.events, (leaving) => this.report(leaving));
 	}
 
 	/**
-	 * Reports the state, when it or the text changed since it was last reported.
+	 * @returns whether the state, or the text, changed since they were last sent (takeState(),
+	 *          onStateChange), or since the page gave the state
+	 */
+	hasUnsentState(): boolean {
+		return !this.destroyed && (!this.textReported ||
+			!sameState(this.getState(), this.reported ?? this.started));
+	}
+
+	/**
+	 * Takes the state to send, as sent: hasUnsentState() is false after, until the user changes it
+	 * again. Fires the event state. Wicket's editor sends it so with each of its events.
+	 *
+	 * @returns the state, and whether the text changed since it was last sent
+	 */
+	takeState(): { state: CodeEditorState; changed: boolean } {
+		return this.take();
+	}
+
+	/**
+	 * @param leaving whether the page is going, for onStateChange; undefined not to call it
+	 */
+	private take(leaving?: boolean): { state: CodeEditorState; changed: boolean } {
+		const state = this.getState();
+		const changed = !this.textReported;
+		this.textReported = true;
+		this.reported = state;
+		if (leaving !== undefined) {
+			this.options.onStateChange?.(state, { leaving, changed });
+		}
+		this.dispatch('state', { state });
+		return { state, changed };
+	}
+
+	/**
+	 * Gives onStateChange the state, when it or the text changed since they were last sent: what
+	 * send does for the handlers of the events.
 	 *
 	 * @param leaving whether the page is going
 	 */
 	private report(leaving: boolean): void {
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
+		if (this.hasUnsentState()) {
+			this.take(leaving);
 		}
-		if (this.destroyed) {
-			return;
-		}
-		const state = this.getState();
-		const changed = !this.textReported;
-		if (!changed && sameState(state, this.reported)) {
-			return;
-		}
-		this.textReported = true;
-		if (this.options.onStateChange) {
-			this.reported = state;
-			this.options.onStateChange(state, { leaving, changed });
-		}
-		this.dispatch('state', { state });
 	}
 
 	/**
@@ -1574,6 +1618,9 @@ export class CodeEditor {
 			this.setErrors(defined.errors);
 		}
 		this.renderResizable();
+		if (before.events !== this.options.events) {
+			this.renderEventHandlers();
+		}
 	}
 
 	/**
@@ -1640,10 +1687,8 @@ export class CodeEditor {
 			return;
 		}
 		this.destroyed = true;
-		if (this.timer !== null) {
-			clearTimeout(this.timer);
-			this.timer = null;
-		}
+		this.handlers?.destroy();
+		this.handlers = null;
 		this.listeners.forEach(([target, type, listener]) => {
 			target.removeEventListener(type, listener);
 		});
