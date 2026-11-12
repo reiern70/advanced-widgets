@@ -36,6 +36,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxCallListener;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.event.IEvent;
@@ -73,6 +74,7 @@ import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 class RichTextEditorTest extends WicketTestCase
 {
@@ -350,6 +352,64 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void tellsOfTheImagesTakenOutWithTheAttributesOfTheEventsOrItsOwn()
+	{
+		// the page veil leaves the requests of the editor's events alone, and so the one telling of
+		// the images taken out
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		}.setImageStore((image, type) -> "/images/a.png");
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		JSONObject images = options(editor).getJSONObject("imagesAjax");
+		assertTrue(images.getString("u").contains("-form-editor"));
+		assertEquals("POST", images.getString("m"));
+		assertEquals(1, images.getJSONArray("ep").length());
+		assertEquals(PageVeilBehavior.NO_VEIL_PARAMETER,
+			images.getJSONArray("ep").getJSONObject(0).getString("name"));
+
+		// or attributes of its own: a listener of the call, whose head renders
+		RichTextEditor own = new RichTextEditor("editor", Model.of(HTML))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateImagesRemovalAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				attributes.getExtraParameters().put("own", "1");
+				attributes.getAjaxCallListeners().add(new AjaxCallListener()
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					public void renderHead(Component component, IHeaderResponse response)
+					{
+						response.render(JavaScriptHeaderItem.forScript("var heardImages;",
+							"heard-images"));
+					}
+				}.onSuccess("heardImages = true;"));
+			}
+		}.setImageStore((image, type) -> "/images/a.png");
+		tester.startPage(new TestPage(own));
+		tester.assertContains("\"imagesAjax\":\\{\"u\":\"[^\"]+\",\"m\":\"POST\",\"c\":\"" +
+			own.getMarkupId() + "\",.*\"ep\":\\[\\{\"name\":\"own\",\"value\":\"1\"\\}\\]");
+		tester.assertContains("heardImages = true;");
+		tester.assertContains("var heardImages;");
+		assertFalse(tester.getLastResponseAsString().contains(PageVeilBehavior.NO_VEIL_PARAMETER));
+
+		// the editor still hears of them
+		removeImages(removal(own), "[\"/images/a.png\"]");
+		tester.assertNoErrorMessage();
+	}
+
+	@Test
 	void sendsTheLimitsOfTheUploadsAndWhereToTellOfTheImagesTakenOut()
 	{
 		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML))
@@ -361,7 +421,11 @@ class RichTextEditorTest extends WicketTestCase
 		assertFalse(options.has("uploadScaling"));
 		assertFalse(options.has("uploadMaxCount"));
 		assertFalse(options.has("uploadDialog"));
-		assertTrue(options.getString("imagesUrl").contains("-form-editor"));
+		JSONObject images = options.getJSONObject("imagesAjax");
+		assertTrue(images.getString("u").contains("-form-editor"));
+		assertEquals("POST", images.getString("m"));
+		assertEquals(editor.getMarkupId(), images.getString("c"));
+		assertFalse(images.has("ep"));
 		assertFalse(tester.getLastResponseAsString().contains("antilia-modal"));
 		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getImageDeletion());
 		assertNull(editor.getImageMaxDimensions());

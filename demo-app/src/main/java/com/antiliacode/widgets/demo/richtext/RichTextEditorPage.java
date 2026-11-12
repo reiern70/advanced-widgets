@@ -106,7 +106,10 @@ import com.github.openjson.JSONObject;
  * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
  * the editors' events, which go as the user types: the editors mark them with
  * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
- * {@link RichTextEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
+ * {@link RichTextEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}, and so the request
+ * telling the server of the images taken out of the text, which takes the attributes of the events
+ * unless {@link RichTextEditor#updateImagesRemovalAjaxAttributes(AjaxRequestAttributes)} says
+ * otherwise.
  */
 public class RichTextEditorPage extends DemoPage
 {

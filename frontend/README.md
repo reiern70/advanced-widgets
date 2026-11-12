@@ -380,7 +380,10 @@ out of the text. `onImagesRemoved(urls)`, and the event `images-removed`, tell t
 the user took out of the text, a moment after, or as the user saves or leaves the editor, and of
 those uploaded that never went into it; a text the page gives tells of nothing. Wicket's editor
 tells the server via Ajax, which deletes those it knows by the store, at once or once the text is
-saved (`setImageDeletion`, `markSaved`); `deleteImagesAt(url)` asks a page's
+saved (`setImageDeletion`, `markSaved`): a round trip of Wicket's Ajax with the attributes the
+server renders as `imagesAjax`, which `updateImagesRemovalAjaxAttributes(attributes)` changes, by
+default as `updateEventAjaxAttributes` does those of the events, so that a page veil leaving the
+events alone leaves this request alone too; `deleteImagesAt(url)` asks a page's
 `RichTextImageUploadBehavior` to delete those it took, for the React and Svelte editors.
 
 With `onStorePermanently(urls)`, the user ticks the images to store permanently as they upload: a box
@@ -655,7 +658,10 @@ one sent the usual way, sending neither while the files break a limit, and ends 
 request ends should Wicket not tell; `UploadToResourceField`, Wicket's `FileUploadToResourceField`
 telling its uploads around the hooks of Wicket's field, which stay the page's, guards them, lets
 the field's own callback go, sends one upload at a time and none breaking a limit, and words
-its errors in the language of the page. The server tells the progress with
+its errors in the language of the page. The requests telling the callback how an upload ended,
+Wicket's field's and those of the uploads refused before being sent, go with the attributes the
+server renders, which `updateCallbackAjaxAttributes(attributes)` changes: the extra parameter of
+a page veil leaving them alone, for example. The server tells the progress with
 `UploadStatusResource`, from what Wicket keeps of an upload with
 `setUploadProgressUpdatesEnabled(true)`. The demo's Upload page shows a form posted or sent by Ajax,
 an upload to a resource with the guard, and zones to drop files on, and slows the server down
