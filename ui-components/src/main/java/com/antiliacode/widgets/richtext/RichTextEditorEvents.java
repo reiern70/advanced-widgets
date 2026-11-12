@@ -110,6 +110,13 @@ public enum RichTextEditorEvents implements IClientEventName
 	MODIFIED("antilia-rich-text-editor:modified"),
 
 	/**
+	 * The editor has a text: it started, or its text changed, by the user or by the page, unlike
+	 * {@link #INPUT}, which the user's changes alone fire. {@code detail.editor} is the editor:
+	 * {@code getText()} gives the text as plain text, {@code getValue()} as the editor keeps it.
+	 */
+	TEXT("antilia-rich-text-editor:text"),
+
+	/**
 	 * The page is going; {@code detail.leaving} is {@code true}. The events going to the server
 	 * go in a beacon, which the browser sends even then; what the server answers is lost.
 	 */

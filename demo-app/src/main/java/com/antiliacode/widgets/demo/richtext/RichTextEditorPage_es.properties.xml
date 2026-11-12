@@ -91,6 +91,7 @@
 	<entry key="markdownKept">El Markdown que guarda el servidor</entry>
 	<entry key="notesStart">Dé a las notas el formato que quiera: el servidor las guarda como Markdown.</entry>
 	<entry key="notesSaved">Notas guardadas.</entry>
+	<entry key="notesCount">Caracteres: {0}</entry>
 	<entry key="cleaningExplanation">HTML de cualquier parte, pegado o enviado por un navegador que no es el editor: un script, manejadores, un enlace a javascript:, un estilo que tapa la página y un marco. Límpielo y vea lo que queda: solo lo que escribe el editor.</entry>
 	<entry key="unsafeLabel">HTML de cualquier parte</entry>
 	<entry key="clean">Limpiar</entry>

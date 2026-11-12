@@ -32,7 +32,7 @@ import { CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, CodeEditor, codeEditorLanguages
 import { NO_STATE_EVENTS } from '../editor-events.js';
 import { MarkdownPreview } from '../markdown-preview.js';
 import { useWicketHost, wicket } from './host.js';
-import { stateParameters } from './send-state.js';
+import { pendingParameters, stateParameters } from './send-state.js';
 
 const WicketCodeEditor = {
 
@@ -51,6 +51,9 @@ const WicketCodeEditor = {
 
 	/** What the events of the server carry besides: see stateParameters(). */
 	stateParameters,
+
+	/** What the page's other Ajax requests carry for the editor: see pendingParameters(). */
+	pendingParameters,
 
 	/**
 	 * @param id the markup id of the text area

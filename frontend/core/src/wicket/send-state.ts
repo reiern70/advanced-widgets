@@ -67,9 +67,23 @@ export function sendState(id: string, url: string, parameters: Parameter[], leav
 	ajax?.post({ u: url, c: id, ep: parameters });
 }
 
+/**
+ * The parameter of the requests of an editor's events holding its state, as JSON: SendStateEvent's
+ * STATE_PARAMETER on the server. Before 10.11.0-RC7 the editors sent it as state, by a request of
+ * their own.
+ */
+export const STATE_PARAMETER = 'antilia-state';
+
+/**
+ * The parameter of the requests of an editor's events telling whether the text changed since it
+ * was last sent: SendStateEvent's TEXT_CHANGED_PARAMETER on the server.
+ */
+export const TEXT_CHANGED_PARAMETER = 'antilia-text-changed';
+
 /** An editor of Wicket, which takes its state to send. */
 interface StateSource {
 	takeState(): { state: unknown; changed: boolean };
+	takeUnsentState?(): unknown;
 }
 
 /**
@@ -83,5 +97,21 @@ export function stateParameters(editor: StateSource | null | undefined): Record<
 		return {};
 	}
 	const { state, changed } = editor.takeState();
-	return { 'antilia-state': JSON.stringify(state), 'antilia-text-changed': String(changed) };
+	return { [STATE_PARAMETER]: JSON.stringify(state), [TEXT_CHANGED_PARAMETER]: String(changed) };
+}
+
+/**
+ * @param editor an editor, null before its script made it
+ * @returns the parameters the page's other Ajax requests carry for it: the state, as JSON, when
+ *          the editor did not send it yet, without the text, which those requests do not send;
+ *          null for none
+ */
+export function pendingParameters(editor: StateSource | null | undefined):
+	Record<string, string> | null {
+	if (!editor || typeof editor.takeUnsentState !== 'function') {
+		return null;
+	}
+	const state = editor.takeUnsentState();
+	return state === null || state === undefined ? null :
+		{ [STATE_PARAMETER]: JSON.stringify(state) };
 }

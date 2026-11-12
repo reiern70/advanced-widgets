@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -39,6 +40,7 @@ import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.event.SendStateEvent;
@@ -134,17 +136,32 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * {@link RichTextEditorEvents#SCROLL} and {@link RichTextEditorEvents#RESIZE} a moment after the
  * user paused ({@link SendStateEvent#DEFAULT_DELAY}), {@link RichTextEditorEvents#BLUR} at once and
  * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. They are events as any other:
- * {@link #removeEvents(IClientEventName)} takes those of a name away,
+ * {@link #removeEvents(IClientEventName...)} takes those of names away,
  * {@link #setEvent(IClientEvent)} puts another in their place, {@link #addEvent(IClientEvent)}
- * adds one, of any name.
+ * adds one, of any name. Besides, the page's other Ajax requests carry the state when the editor
+ * did not send it yet: the user scrolled the editor without focusing it, the page not sending
+ * the state as the user scrolls, then the request of a check box redraws the form, for example.
+ * The text goes with the editor's own events alone, the others not sending the text area.
  *
  * <pre>
  * // the state and the text go as the editor loses the focus and as the page goes, no more as
  * // the user types, moves the cursor, scrolls or resizes
- * editor.removeEvents(RichTextEditorEvents.INPUT).removeEvents(RichTextEditorEvents.SELECT)
- *     .removeEvents(RichTextEditorEvents.SCROLL).removeEvents(RichTextEditorEvents.RESIZE);
+ * editor.removeEvents(RichTextEditorEvents.INPUT, RichTextEditorEvents.SELECT,
+ *     RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE);
  * // or as the user types, but not as the editor loses the focus
  * editor.setEvent(ClientEvent.nothing(RichTextEditorEvents.BLUR));
+ * </pre>
+ *
+ * The requests of the events are Wicket's Ajax requests:
+ * {@link #updateEventAjaxAttributes(AjaxRequestAttributes)} changes the attributes of all of them,
+ * and each event those of its own, by
+ * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)}: the method, the extra
+ * parameters, the dynamic extra parameters and the listeners of the calls, which the built-in
+ * events take by their setters:
+ *
+ * <pre>
+ * // the page veil leaves the request sending the state on blur alone
+ * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR).setExtraParameter("_nb", "true"));
  * </pre>
  *
  * Rendered again, or shown again after the user came back to the page with a state model of the
@@ -262,9 +279,32 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 			}
 
 			@Override
+			protected String getClientPendingValues()
+			{
+				// the state, when not sent yet, with the page's other requests
+				String global = getScriptObject();
+				return "function(editor){return " + global + "?" + global +
+					".pendingParameters(editor):null;}";
+			}
+
+			@Override
 			protected void onEventSent(AjaxRequestTarget target, IRequestParameters parameters)
 			{
-				onStateSent(target, parameters);
+				onStateSent(target, parameters, true);
+			}
+
+			@Override
+			protected void onPendingValuesSent(AjaxRequestTarget target,
+				IRequestParameters values)
+			{
+				// the state alone: the text goes with the editor's own events
+				onStateSent(target, values, false);
+			}
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				updateEventAjaxAttributes(attributes);
 			}
 		};
 		add(events);
@@ -331,10 +371,33 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * Takes what the browser sent with an event: the state, which the state model gets, and the
-	 * text when the user changed it, which the editor keeps as its input.
+	 * Changes the attributes of the requests of all the events of the editor going to the server,
+	 * those sending its state among them: the
+	 * {@link AjaxRequestAttributes#getExtraParameters() extra parameters} a page veil leaves the
+	 * requests alone by, or the method, for example. Each event changes those of its requests
+	 * after, in its
+	 * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes) own}. Does nothing by
+	 * default.
+	 *
+	 * @param attributes
+	 *            the attributes of the requests, with what the events need already: keep it
+	 * @see ClientEventsBehavior#updateAjaxAttributes(AjaxRequestAttributes)
 	 */
-	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters)
+	protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+	}
+
+	/**
+	 * Takes what the browser sent with an event, or with another request of the page: the state,
+	 * which the state model gets, and, with an event, the text when the user changed it, which
+	 * the editor keeps as its input.
+	 *
+	 * @param withText
+	 *            whether the editor takes the text the request tells it changed: not from the
+	 *            page's other requests, which do not send it
+	 */
+	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters,
+		boolean withText)
 	{
 		String sent = parameters.getParameterValue(SendStateEvent.STATE_PARAMETER)
 			.toOptionalString();
@@ -355,7 +418,7 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		}
 		// read where the text area's input is: among what the form posts, which Wicket's Ajax
 		// sends with each event
-		boolean textChanged = parameters.getParameterValue(
+		boolean textChanged = withText && parameters.getParameterValue(
 			SendStateEvent.TEXT_CHANGED_PARAMETER).toBoolean(false);
 		String[] input = getInputAsArray();
 		if (textChanged && input != null && input.length > 0 && input[0] != null && !readOnly)
@@ -500,26 +563,26 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	}
 
 	/**
-	 * @param eventName
-	 *            the name of events the editor no longer listens to, those it listens to by default
-	 *            too: the editor then does nothing on them
+	 * @param eventNames
+	 *            the names of events the editor no longer listens to, those it listens to by
+	 *            default too: the editor then does nothing on them
 	 * @return {@code this}
 	 */
-	public T removeEvents(String eventName)
+	public T removeEvents(String... eventNames)
 	{
-		events.removeEvents(eventName);
+		events.removeEvents(eventNames);
 		return self();
 	}
 
 	/**
-	 * @param eventName
-	 *            the name of events the editor no longer listens to, those it listens to by default
-	 *            too: the editor then does nothing on them
+	 * @param eventNames
+	 *            the names of events the editor no longer listens to, those it listens to by
+	 *            default too: the editor then does nothing on them
 	 * @return {@code this}
 	 */
-	public T removeEvents(IClientEventName eventName)
+	public T removeEvents(IClientEventName... eventNames)
 	{
-		events.removeEvents(eventName);
+		events.removeEvents(eventNames);
 		return self();
 	}
 
@@ -1061,6 +1124,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		renderEditorHead(response);
 		// after the editor's script, which the scripts of the features register with
 		getFeatures().forEach(feature -> feature.renderHead(this, response));
+		// the events listen before the editor starts, hearing of its text as it starts too
+		events.renderHead(this, response);
 		response.render(OnDomReadyHeaderItem.forScript(getScriptObject() + ".attach(" +
 			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}

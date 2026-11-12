@@ -22,6 +22,7 @@ import java.util.Map;
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
 import org.apache.wicket.event.IEvent;
 import org.apache.wicket.feedback.FeedbackMessage;
@@ -45,6 +46,7 @@ import org.apache.wicket.validation.ValidationError;
 
 import com.antiliacode.widgets.ScriptJson;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
+import com.antiliacode.widgets.event.IAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.event.SendStateEvent;
@@ -113,12 +115,17 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * {@link CodeEditorEvent#SCROLL} and {@link CodeEditorEvent#RESIZE} a moment after the user paused
  * ({@link SendStateEvent#DEFAULT_DELAY}), {@link CodeEditorEvent#BLUR} at once and
  * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. They are events as any other:
- * {@link #removeEvents(IClientEventName)} takes those of a name away, so that the state goes only
- * as the editor loses the focus for example, {@link #setEvent(IClientEvent)} puts another in
- * their place, {@link #addEvent(IClientEvent)} adds one, of any name. Rendered again,
- * or shown again after the user came back to the page with a state model of the session, the
- * editor takes the state up again: the cursor, the selection, the scrolling and the size. In a tab
- * of {@link com.antiliacode.widgets.tabs.TabbedPanel} not selected, the editor keeps them in the
+ * {@link #removeEvents(IClientEventName...)} takes those of names away, so that the state goes
+ * only as the editor loses the focus for example, {@link #setEvent(IClientEvent)} puts another in
+ * their place, {@link #addEvent(IClientEvent)} adds one, of any name. Besides, the page's other
+ * Ajax requests carry the state when the editor did not send it yet, without the text: the user
+ * scrolled the editor without focusing it, then the request of a check box redraws the form, for
+ * example. {@link #updateEventAjaxAttributes(AjaxRequestAttributes)} changes the attributes of
+ * the requests of the events, Wicket's Ajax requests, and each event those of its own, by
+ * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)}. Rendered again, or
+ * shown again after the user came back to the page with a state model of the session, the editor
+ * takes the state up again: the cursor, the selection, the scrolling and the size. In a tab of
+ * {@link com.antiliacode.widgets.tabs.TabbedPanel} not selected, the editor keeps them in the
  * browser.
  * <p>
  * {@code Wicket.CodeEditor} from {@link #JS} makes the editor in the browser; its sizes are CSS
@@ -292,9 +299,31 @@ public class CodeEditor extends TextArea<String>
 			}
 
 			@Override
+			protected String getClientPendingValues()
+			{
+				// the state, when not sent yet, with the page's other requests
+				return "function(editor){return Wicket.CodeEditor?" +
+					"Wicket.CodeEditor.pendingParameters(editor):null;}";
+			}
+
+			@Override
 			protected void onEventSent(AjaxRequestTarget target, IRequestParameters parameters)
 			{
-				onStateSent(target, parameters);
+				onStateSent(target, parameters, true);
+			}
+
+			@Override
+			protected void onPendingValuesSent(AjaxRequestTarget target,
+				IRequestParameters values)
+			{
+				// the state alone: the text goes with the editor's own events
+				onStateSent(target, values, false);
+			}
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				updateEventAjaxAttributes(attributes);
 			}
 		};
 		add(events);
@@ -308,10 +337,33 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * Takes what the browser sent with an event: the state, which the state model gets, and the
-	 * text when the user changed it, which the editor keeps as its input.
+	 * Changes the attributes of the requests of all the events of the editor going to the server,
+	 * those sending its state among them: the
+	 * {@link AjaxRequestAttributes#getExtraParameters() extra parameters} a page veil leaves the
+	 * requests alone by, or the method, for example. Each event changes those of its requests
+	 * after, in its
+	 * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes) own}. Does nothing by
+	 * default.
+	 *
+	 * @param attributes
+	 *            the attributes of the requests, with what the events need already: keep it
+	 * @see ClientEventsBehavior#updateAjaxAttributes(AjaxRequestAttributes)
 	 */
-	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters)
+	protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+	}
+
+	/**
+	 * Takes what the browser sent with an event, or with another request of the page: the state,
+	 * which the state model gets, and, with an event, the text when the user changed it, which
+	 * the editor keeps as its input.
+	 *
+	 * @param withText
+	 *            whether the editor takes the text the request tells it changed: not from the
+	 *            page's other requests, which do not send it
+	 */
+	private void onStateSent(AjaxRequestTarget target, IRequestParameters parameters,
+		boolean withText)
 	{
 		String sent = parameters.getParameterValue(SendStateEvent.STATE_PARAMETER)
 			.toOptionalString();
@@ -332,7 +384,7 @@ public class CodeEditor extends TextArea<String>
 		}
 		// read where the text area's input is: among what the form posts, which Wicket's Ajax
 		// sends with each event
-		boolean textChanged = parameters.getParameterValue(
+		boolean textChanged = withText && parameters.getParameterValue(
 			SendStateEvent.TEXT_CHANGED_PARAMETER).toBoolean(false);
 		String[] input = getInputAsArray();
 		if (textChanged && input != null && input.length > 0 && input[0] != null &&
@@ -383,26 +435,26 @@ public class CodeEditor extends TextArea<String>
 	}
 
 	/**
-	 * @param eventName
-	 *            the name of events the editor no longer listens to, those it listens to by default
-	 *            too: the editor then does nothing on them
+	 * @param eventNames
+	 *            the names of events the editor no longer listens to, those it listens to by
+	 *            default too: the editor then does nothing on them
 	 * @return {@code this}
 	 */
-	public CodeEditor removeEvents(String eventName)
+	public CodeEditor removeEvents(String... eventNames)
 	{
-		events.removeEvents(eventName);
+		events.removeEvents(eventNames);
 		return this;
 	}
 
 	/**
-	 * @param eventName
-	 *            the name of events the editor no longer listens to, those it listens to by default
-	 *            too: the editor then does nothing on them
+	 * @param eventNames
+	 *            the names of events the editor no longer listens to, those it listens to by
+	 *            default too: the editor then does nothing on them
 	 * @return {@code this}
 	 */
-	public CodeEditor removeEvents(IClientEventName eventName)
+	public CodeEditor removeEvents(IClientEventName... eventNames)
 	{
-		events.removeEvents(eventName);
+		events.removeEvents(eventNames);
 		return this;
 	}
 
@@ -1019,6 +1071,8 @@ public class CodeEditor extends TextArea<String>
 		{
 			response.render(JavaScriptHeaderItem.forReference(language.getScript()));
 		}
+		// the events listen before the editor starts, hearing of its text as it starts too
+		events.renderHead(this, response);
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.CodeEditor.attach(" +
 			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
 	}

@@ -26,8 +26,7 @@ import { BOOTSTRAP_LOOK, DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_
 	sendEditorState, setHost, shortcutText, standaloneHost, STATE_DELAY, textLanguage,
 	type Host } from '../src/index.js';
 import { recentRichTextColors } from '../src/rich-text-toolbar.js';
-import { attachClientEvents, CLIENT_EVENTS_AJAX,
-	type ClientEventRequest } from '../src/wicket/client-events.js';
+import { attachClientEvents } from '../src/wicket/client-events.js';
 
 /** A moment, for the state reported after a delay of 0 and the focus Tiptap gives in a frame. */
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -428,6 +427,30 @@ describe('RichTextEditor', () => {
 		expect(editor.hasUnsentState()).toBe(true);
 		editor.destroy();
 		expect(editor.hasUnsentState()).toBe(false);
+	});
+
+	it('takes the state alone, when not sent yet, leaving the text unsent', () => {
+		const states: unknown[] = [];
+		const field = textArea();
+		field.addEventListener(RICH_TEXT_EDITOR_EVENTS.state, (event) =>
+			states.push((event as CustomEvent).detail.state));
+		const editor = new RichTextEditor(field, { events: { change: [], select: [] } });
+		// as it started: nothing to send
+		expect(editor.takeUnsentState()).toBeNull();
+
+		select(editor, 2);
+		expect(editor.takeUnsentState()).toEqual(editor.getState());
+		expect(states).toEqual([editor.getState()]);
+		expect(editor.takeUnsentState()).toBeNull();
+		expect(editor.hasUnsentState()).toBe(false);
+		// the text stays for the editor's next event
+		type(editor, 'x');
+		editor.takeUnsentState();
+		expect(editor.hasUnsentState()).toBe(true);
+		expect(editor.takeState().changed).toBe(true);
+		select(editor, 1);
+		editor.destroy();
+		expect(editor.takeUnsentState()).toBeNull();
 	});
 
 	it('starts in a state, and is put in one', () => {
@@ -2198,6 +2221,7 @@ describe('Wicket.RichTextEditor', () => {
 		extensions(): string[];
 		kit: typeof RICH_TEXT_EDITOR_KIT;
 		stateParameters(editor: RichTextEditor | null): Record<string, string>;
+		pendingParameters(editor: RichTextEditor | null): Record<string, string> | null;
 	}
 
 	async function wicket(): Promise<WicketRichTextEditor> {
@@ -2208,36 +2232,40 @@ describe('Wicket.RichTextEditor', () => {
 
 	it('makes an editor of a text area, whose events send the server its state and its text', async () => {
 		const Wicket = await wicket();
+		// the requests of the events, by Wicket's Ajax: their extra parameters, by their names
+		const sent: Array<Record<string, string>> = [];
 		(window as unknown as { Wicket: Record<string, unknown> }).Wicket.Ajax = {
-			baseUrl: 'page?1' };
-		const field = textArea();
+			baseUrl: 'page?1',
+			Call: class {
+				ajax(attrs: { ep: Array<{ name: string; value: string }> }) {
+					sent.push(Object.fromEntries(attrs.ep.map(({ name, value }) => [name, value])));
+				}
+			} };
+		textArea();
 		const onStateChange = vi.fn();
 		const editor = Wicket.attach('notes', { onStateChange })!;
 		expect(Wicket.of('notes')).toBe(editor);
 		expect(Wicket.attach('missing')).toBeNull();
 		expect(Wicket.kit).toBe(RICH_TEXT_EDITOR_KIT);
 		// the events of the server send the state, as the ClientEventsBehavior renders them
-		const sent: ClientEventRequest[] = [];
-		field.addEventListener(CLIENT_EVENTS_AJAX, (event) =>
-			sent.push((event as CustomEvent<ClientEventRequest>).detail));
 		const state = (eventName: string, index: number) => ({ eventName, index,
-			kind: 'ajax' as const, eventClientHandlerName: 'Wicket.ClientEvents.sendState' });
+			ajax: { u: 'events?x=1', m: 'POST', c: 'notes' },
+			eventClientHandlerName: 'Wicket.ClientEvents.sendState' });
 		attachClientEvents('notes', [state('input', 0),
 			state(RICH_TEXT_EDITOR_EVENTS.select, 1), state(RICH_TEXT_EDITOR_EVENTS.leave, 5)],
-			(element) => Wicket.of(element.id), { ajaxUrl: 'events?x=1',
+			(element) => Wicket.of(element.id), {
 				values: (component) => Wicket.stateParameters(component as RichTextEditor) });
 
 		select(editor, 3);
-		expect(sent).toEqual([{ event: RICH_TEXT_EDITOR_EVENTS.select, index: 1,
-			values: '{"selection":{"anchor":3,"head":3}}',
-			extra: { 'antilia-state': JSON.stringify(editor.getState()),
-				'antilia-text-changed': 'false' } }]);
+		expect(sent).toEqual([{ 'antilia-state': JSON.stringify(editor.getState()),
+			'antilia-text-changed': 'false', 'antilia-event': RICH_TEXT_EDITOR_EVENTS.select,
+			'antilia-event-index': '1', 'antilia-event-values': '{"selection":{"anchor":3,"head":3}}' }]);
 
 		// the text and the cursor: one request, the cursor finding nothing new to send
 		type(editor, 'x');
 		expect(sent).toHaveLength(2);
-		expect(sent[1]!.event).toBe('input');
-		expect(sent[1]!.extra!['antilia-text-changed']).toBe('true');
+		expect(sent[1]!['antilia-event']).toBe('input');
+		expect(sent[1]!['antilia-text-changed']).toBe('true');
 		// the core's own handlers are off
 		expect(onStateChange).not.toHaveBeenCalled();
 
@@ -2263,6 +2291,21 @@ describe('Wicket.RichTextEditor', () => {
 		expect(body.get('notes')).toBe(editor.getValue());
 		expect(sent).toHaveLength(2);
 		expect(Wicket.stateParameters(null)).toEqual({});
+	});
+
+	it('gives the page\'s other requests the state not sent yet, without the text', async () => {
+		const Wicket = await wicket();
+		textArea();
+		const editor = Wicket.attach('notes')!;
+		expect(Wicket.pendingParameters(editor)).toBeNull();
+
+		select(editor, 2);
+		type(editor, 'x');
+		expect(Wicket.pendingParameters(editor)).toEqual({
+			'antilia-state': JSON.stringify(editor.getState()) });
+		expect(Wicket.pendingParameters(editor)).toBeNull();
+		expect(editor.takeState().changed).toBe(true);
+		expect(Wicket.pendingParameters(null)).toBeNull();
 	});
 
 	it('plugs in the extensions of the page', async () => {
