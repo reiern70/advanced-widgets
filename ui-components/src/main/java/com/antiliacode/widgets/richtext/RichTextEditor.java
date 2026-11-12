@@ -28,6 +28,8 @@ import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
+import org.apache.wicket.ajax.json.JSONFunction;
 import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -117,7 +119,11 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * those the editor knows, those of the text it was shown with and those uploaded since, and
  * {@link #deleteImages(Set)}, by the store, deletes them, at once or once the text is saved
  * ({@link #markSaved(AjaxRequestTarget)}, {@link #deleteRemovedImages()}), as
- * {@link #setImageDeletion(RichTextImageDeletion) the mode} says.
+ * {@link #setImageDeletion(RichTextImageDeletion) the mode} says. The request telling of them is a
+ * request of Wicket's Ajax, whose attributes
+ * {@link #updateImagesRemovalAjaxAttributes(AjaxRequestAttributes)} changes: by default those of
+ * the requests of the editor's events, so that a page veil leaving the events alone leaves this
+ * one alone too.
  * <p>
  * With {@link #setPermanentImages(boolean) permanent images}, the user ticks the images to keep
  * permanently as they upload, in each line of the dialog or in the form of the image, and the
@@ -270,7 +276,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	private boolean permanentImages;
 
 	/** The behavior hearing of the images the user took out of the text, made with the first store. */
-	private AbstractDefaultAjaxBehavior imagesRemoval;
+	private ImagesRemoval imagesRemoval;
 
 	/** The images of the text of the model the editor was last shown with. */
 	private Set<String> imagesShown = new LinkedHashSet<>();
@@ -691,18 +697,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
 				.setMaxDimensions(imageMaxDimensions).setPermanentImages(permanentImages);
 			add(imageUpload);
-			imagesRemoval = new AbstractDefaultAjaxBehavior()
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected void respond(AjaxRequestTarget target)
-				{
-					onImagesRemovedSent(target, RichTextImageUploadBehavior.urlsOf(getRequest()
-						.getRequestParameters().getParameterValue(
-							RichTextImageUploadBehavior.REMOVED_PARAMETER).toString("[]")));
-				}
-			};
+			imagesRemoval = new ImagesRemoval();
 			add(imagesRemoval);
 		}
 		return this;
@@ -1002,6 +997,57 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	AbstractDefaultAjaxBehavior getImagesRemoval()
 	{
 		return imagesRemoval;
+	}
+
+	/**
+	 * Changes the attributes of the request telling the server of the images the user took out of
+	 * the text, which the editor's script sends by Wicket's Ajax: the
+	 * {@link AjaxRequestAttributes#getExtraParameters() extra parameters} a page veil leaves the
+	 * request alone by, or the listeners of the call, for example. By default the attributes of the
+	 * requests of the editor's events, {@link #updateEventAjaxAttributes(AjaxRequestAttributes)}: a
+	 * page leaving those alone leaves this one alone too.
+	 *
+	 * @param attributes
+	 *            the attributes of the request, POST already, the images going in its body
+	 * @since 10.11.0
+	 */
+	protected void updateImagesRemovalAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+		updateEventAjaxAttributes(attributes);
+	}
+
+	/**
+	 * Hears of the images the user took out of the text, by the request the editor's script sends
+	 * with the attributes it renders.
+	 */
+	private final class ImagesRemoval extends AbstractDefaultAjaxBehavior
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+		{
+			super.updateAjaxAttributes(attributes);
+			// in the body: the addresses of the images may be many
+			attributes.setMethod(AjaxRequestAttributes.Method.POST);
+			updateImagesRemovalAjaxAttributes(attributes);
+		}
+
+		/**
+		 * @return the attributes of its requests, as the editor's script takes them
+		 */
+		CharSequence renderAttributes()
+		{
+			return renderAjaxAttributes(getComponent());
+		}
+
+		@Override
+		protected void respond(AjaxRequestTarget target)
+		{
+			onImagesRemovedSent(target, RichTextImageUploadBehavior.urlsOf(getRequest()
+				.getRequestParameters().getParameterValue(
+					RichTextImageUploadBehavior.REMOVED_PARAMETER).toString("[]")));
+		}
 	}
 
 	/**
@@ -1424,7 +1470,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 				options.put("permanentImages", true);
 			}
 			showImages();
-			options.put("imagesUrl", imagesRemoval.getCallbackUrl().toString());
+			// the attributes of the request telling of the images taken out: the page's extra
+			// parameters go with it
+			options.put("imagesAjax", new JSONFunction(imagesRemoval.renderAttributes()));
 		}
 		if (isProofreading())
 		{

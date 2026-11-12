@@ -32,7 +32,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
-import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
@@ -428,13 +427,48 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		assertNoErrors();
 	}
 
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void thePageVeilLeavesTheRequestTellingOfTheImagesTakenOutAlone(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("image").click();
+		WebElement zone = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-popover .antilia-rich-text-dropzone")).stream().findFirst().orElse(null));
+		dropFiles(zone, "unveiled-" + browser.name().toLowerCase() + ".png", "image/png", PNG);
+		wait.until(d -> uploaded().size() == 1);
+		recordVeils();
+
+		// taken out of the text and saved: the editor tells the server of it, without the veil,
+		// for the page leaves the requests of the editor alone
+		tool("images").click();
+		wait.until(d -> editor().findElements(By.cssSelector(
+			"[role=menu] .antilia-rich-text-images-delete")).stream().findFirst().orElse(null))
+			.click();
+		wait.until(d -> uploaded().isEmpty());
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> number(script("return window.imagesTold;")) == 1);
+		assertEquals(0, number(script("return window.veils;")),
+			"veiled as the editor told of the image taken out");
+		// the user goes on at once
+		tool("image").click();
+		wait.until(d -> !d.findElements(By.cssSelector(
+			".antilia-popover .antilia-rich-text-dropzone")).isEmpty());
+		assertNoErrors();
+	}
+
 	/**
-	 * Counts the veils Wicket puts over the page, in {@code window.veils}, and the Ajax requests
-	 * the page veil leaves alone, in {@code window.unveiledRequests}.
+	 * Counts the veils Wicket puts over the page, in {@code window.veils}, the Ajax requests the
+	 * page veil leaves alone, in {@code window.unveiledRequests}, and the requests telling the
+	 * server of images taken out of the text once they ended, in {@code window.imagesTold}.
 	 */
 	private void recordVeils()
 	{
-		script("window.veils = 0; window.unveiledRequests = 0;" +
+		script("window.veils = 0; window.unveiledRequests = 0; window.imagesTold = 0;" +
+			"Wicket.Event.subscribe('/ajax/call/complete', function (event, attrs) {" +
+			" if (Array.isArray(attrs.ep) && attrs.ep.some(function (p) {" +
+			" return p && p.name === 'removed'; })) { window.imagesTold++; } });" +
 			"new MutationObserver(function (records) { records.forEach(function (record) {" +
 			" record.addedNodes.forEach(function (node) {" +
 			" if (node.classList && node.classList.contains('wicket-veil')) { window.veils++; }" +
@@ -886,12 +920,9 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> uploaded().isEmpty());
 		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
 
-		// found by its name, and inserted, once the page veil of the request telling the server
-		// of the image taken out, which the save sends, is gone
-		wait.ignoring(ElementClickInterceptedException.class).until(d -> {
-			tool("storedImage").click();
-			return true;
-		});
+		// found by its name, and inserted: the request telling the server of the image taken out,
+		// which the save sends, goes without the page veil
+		tool("storedImage").click();
 		WebElement field = wait.until(d -> d.findElements(By.cssSelector(
 			".antilia-popover input[role=combobox]")).stream().findFirst().orElse(null));
 		wait.until(d -> field.equals(d.switchTo().activeElement()));

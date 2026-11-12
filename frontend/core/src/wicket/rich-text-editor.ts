@@ -32,10 +32,12 @@
  * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
  * chooses, drops or pastes there, telling the share sent, and the server answers their addresses;
  * with permanentImages too, the user ticks the images to store permanently, which the editor asks
- * the same behavior to, and the tool storedImage finds those stored there. With imagesUrl, that of
- * its Ajax behavior hearing of the images taken out of the text, the editor tells the server of
- * them, via Ajax, a moment after the user took them out; the server deletes those it knows, at once
- * or once the form is sent. With proofreadUrl, that
+ * the same behavior to, and the tool storedImage finds those stored there. With imagesAjax, the
+ * attributes of the requests of its Ajax behavior hearing of the images taken out of the text,
+ * which the server renders, the editor tells the server of them, via Ajax, a moment after the user
+ * took them out: a request of Wicket's Ajax with those attributes, the extra parameters of the
+ * page, the one a page veil leaves the request alone by among them, going with it; the server
+ * deletes those it knows, at once or once the form is sent. With proofreadUrl, that
  * of its proofreading behavior, the server checks the text, which the editor underlines. With
  * suggestUrl and suggesters, the names, characters and insertions of the editor's suggesters, the
  * server offers what the user types: the users to mention, the words to complete. The grammars of the code
@@ -55,7 +57,8 @@ import { findImagesAt, storePermanentlyAt } from '../rich-text-stored-images.js'
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
-import { pendingParameters, sendState, stateParameters } from './send-state.js';
+import { type AjaxAttributes, pendingParameters, roundTrip, stateParameters }
+	from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and the URLs of the behaviors of the server. */
 interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'suggesters'> {
@@ -66,8 +69,11 @@ interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'sugge
 	 * uploadUrl.
 	 */
 	permanentImages?: boolean;
-	/** The URL of the Ajax behavior hearing of the images the user took out of the text. */
-	imagesUrl?: string;
+	/**
+	 * The attributes of the requests of the Ajax behavior hearing of the images the user took out
+	 * of the text, as the server renders them: its URL, its method, its extra parameters.
+	 */
+	imagesAjax?: AjaxAttributes;
 	/** The URL of the behavior checking the text, and answering its issues. */
 	proofreadUrl?: string;
 	/** The URL of the behavior answering the items of the suggesters. */
@@ -87,14 +93,14 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { uploadUrl, permanentImages, imagesUrl, proofreadUrl, suggestUrl, suggesters,
+		const { uploadUrl, permanentImages, imagesAjax, proofreadUrl, suggestUrl, suggesters,
 			...rest } = options;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
 		const stored = !!uploadUrl && !!permanentImages;
 		const onStorePermanently = stored ? storePermanentlyAt(uploadUrl) : rest.onStorePermanently;
 		const onFindImages = stored ? findImagesAt(uploadUrl) : rest.onFindImages;
-		const onImagesRemoved = imagesUrl ? (urls: string[]) => {
-			sendState(id, imagesUrl, [{ name: 'removed', value: JSON.stringify(urls) }], false);
+		const onImagesRemoved = imagesAjax ? (urls: string[]) => {
+			roundTrip(imagesAjax, [{ name: 'removed', value: JSON.stringify(urls) }]);
 			rest.onImagesRemoved?.(urls);
 		} : rest.onImagesRemoved;
 		const proofreader = proofreadUrl ? proofreadAt(proofreadUrl) : rest.proofreader;
