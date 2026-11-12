@@ -153,6 +153,114 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
+	void thePageVeilLeavesTheRequestsOfTheEditorAlone(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		assertEquals("object", script("return typeof Wicket.Veil;"));
+		script("window.veils = 0; window.unveiledRequests = 0;" +
+			"new MutationObserver(function (records) { records.forEach(function (record) {" +
+			" record.addedNodes.forEach(function (node) {" +
+			" if (node.classList && node.classList.contains('wicket-veil')) { window.veils++; }" +
+			" }); }); }).observe(document.body, { childList: true, subtree: true });" +
+			"Wicket.Event.subscribe('/ajax/call/beforeSend', function (event, attrs) {" +
+			" var ep = attrs.ep;" +
+			" if (Array.isArray(ep) ? ep.some(function (p) { return p && p.name === 'wicket_nb'; })" +
+			" : !!ep && Object.prototype.hasOwnProperty.call(ep, 'wicket_nb')) {" +
+			" window.unveiledRequests++; } });");
+
+		// the focus, the text and the state go as the user types, without the veil
+		click(line(9));
+		content().sendKeys(Keys.END, " // typed");
+		wait.until(d -> known().endsWith("changes not saved."));
+		wait.until(d -> ((Number)script("return window.unveiledRequests;")).intValue() >= 2);
+		assertEquals(0, ((Number)script("return window.veils;")).intValue(),
+			"veiled as the user types");
+
+		// the button's request is veiled
+		editor().findElement(By.xpath("ancestor::form//button[@type='submit']")).click();
+		wait.until(d -> ((Number)script("return window.veils;")).intValue() > 0);
+		wait.until(d -> known().endsWith("all saved."));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void theRequestRedrawingTheFormCarriesTheScrollingNotSentYet(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		WebElement textArea = editor().findElement(By.cssSelector("textarea"));
+		String id = textArea.getDomAttribute("id");
+		// the editor's events send nothing, as on a page sending the state on blur alone
+		script("Wicket.ClientEvents.sendState = Wicket.ClientEvents.nothing;");
+		recordRequests();
+		long top = ((Number)script("var s = arguments[0].querySelector('.cm-scroller');" +
+			" s.scrollTop = 80; return s.scrollTop;", editor())).longValue();
+		assertTrue(top > 0, "the sample scrolls");
+		wait.until(d -> ((Number)script("return Wicket.CodeEditor.of(arguments[0].id)" +
+			".getState().scrollTop;", textArea)).longValue() == top);
+
+		// the check box redraws the form: its request carries the scrolling, which the server
+		// draws the editor anew with
+		checkBox("Read only").click();
+		wait.until(d -> editor().getDomAttribute("class").contains("antilia-code-editor-readonly"));
+		String sent = sent();
+		assertTrue(sent.contains("readOnly=on&antilia-pending:" + id +
+			"={\"antilia-state\":"), sent);
+		assertTrue(sent.contains("\\\"scrollTop\\\":" + top), sent);
+		assertTrue(String.valueOf(script("return window.receivedResponses.join();"))
+			.contains("\"scrollTop\":" + top));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void sendsTheRequestsOfTheEventsWithTheAttributesTheServerGaveThem(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		recordRequests();
+		// the extra parameters as Wicket's Ajax tells of the request, where a page veil sees them
+		script("window.seenParameters = [];" +
+			"Wicket.Event.subscribe('/ajax/call/before', function (event, attrs) {" +
+			" window.seenParameters.push(JSON.stringify(attrs.ep || [])); });");
+
+		click(line(9));
+		content().sendKeys(Keys.END, " // sent");
+		wait.until(d -> sent().contains("wicket_nb=true") && sent().contains("antilia-event="));
+		String seen = String.valueOf(script("return window.seenParameters.join();"));
+		assertTrue(seen.contains("{\"name\":\"wicket_nb\",\"value\":\"true\"}"), seen);
+		assertTrue(seen.contains("{\"name\":\"antilia-event\","), seen);
+		assertNoErrors();
+	}
+
+	/**
+	 * Records the URLs and the bodies of the requests of the page's Ajax, as sent, and their
+	 * responses.
+	 */
+	private void recordRequests()
+	{
+		script("window.sentRequests = []; window.receivedResponses = [];" +
+			"var open = XMLHttpRequest.prototype.open, send = XMLHttpRequest.prototype.send;" +
+			"XMLHttpRequest.prototype.open = function (method, url) { this.recordedUrl = url;" +
+			" return open.apply(this, arguments); };" +
+			"XMLHttpRequest.prototype.send = function (body) {" +
+			" window.sentRequests.push(this.recordedUrl + ' ' +" +
+			" (typeof body === 'string' ? body : ''));" +
+			" this.addEventListener('load', function () {" +
+			" window.receivedResponses.push(this.responseText); });" +
+			" return send.apply(this, arguments); };");
+	}
+
+	/**
+	 * @return the requests recorded, decoded
+	 */
+	private String sent()
+	{
+		return String.valueOf(script("return window.sentRequests.map(function (each) {" +
+			" return decodeURIComponent(each.replace(/\\+/g, ' ')); }).join('\\n');"));
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
 	void theServerKeepsTheTextTheCursorAndTheSize(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");

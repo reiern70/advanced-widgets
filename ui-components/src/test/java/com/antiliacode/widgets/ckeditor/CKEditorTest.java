@@ -426,7 +426,7 @@ class CKEditorTest extends WicketTestCase
 		tester.startPage(new TestPage(editor));
 
 		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:save\"," +
-			"\"index\":\\d+,\"kind\":\"submit\"");
+			"\"index\":\\d+");
 		tester.assertContains("Wicket.CKEditor&&Wicket.CKEditor.of\\(element.id\\)");
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"<p>Saved <img src=x onerror=steal()></p>");
@@ -445,8 +445,8 @@ class CKEditorTest extends WicketTestCase
 		tester.startPage(new TestPage(editor));
 
 		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:selected-text\"," +
-			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":-1," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+			"\"index\":\\d+,\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\",\"ajax\":\\{");
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
 			new JSONObject().put("text", "Hello"));
 		assertEquals(List.of("Hello"), heard);

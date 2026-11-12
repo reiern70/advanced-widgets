@@ -27,23 +27,29 @@ import com.github.openjson.JSONObject;
  * <p>
  * The event goes to the browser as {@link #toJson() JSON}, its properties, and on each event the
  * browser runs the handler of the event, a JavaScript function taking
- * {@code (event, component, send, options)}:
+ * {@code (event, component, options, send)}:
  * <ul>
  * <li>{@code event}, the event of the browser, its {@code detail} what a script told with it;</li>
  * <li>{@code component}, what the component is in the browser, the editor of a rich text editor
- * for example, else its element;</li>
- * <li>{@code send(values)}, which tells the server the values, an object, for the events going to
- * the server, {@link IAjaxEvent}, {@link IAjaxUpdateEvent} and {@link IAjaxSubmitEvent}, and does
- * nothing for the others. A component may send more with them: an editor sends its state, and its
- * text when the user changed it;</li>
+ * for example, its text by {@code getText()}, else its element;</li>
  * <li>{@code options}, the JSON of the event, by which the properties of an event of its own
- * configure its handler.</li>
+ * configure its handler;</li>
+ * <li>{@code send(values, attributes)}, which tells the server the values, an object, for the
+ * events going to the server, the {@link IAjaxRoundTripEvent}s, by a round trip of Wicket's Ajax
+ * with the attributes of their requests, and does nothing for the others. A component may send
+ * more with them: an editor sends its state, and its text when the user changed it.
+ * {@code attributes}, if given, are attributes of Wicket's Ajax adding to those of the event:
+ * listeners of the call, {@code sh} and {@code fh} on success and on failure for example, extra
+ * parameters, {@code ep}, or another method, {@code m}.</li>
  * </ul>
+ * A handler takes what it needs of them, the first ones: one staying in the browser needs no
+ * {@code send}.
  * The handler is either {@link #getEventHandlerClientSideCode() code of the event's own} or the
  * {@link #getEventClientHandlerName() name of a function} of the page, which a script of the page
  * defines, the browser finding it when the event comes: an event needs one of the two, and the
- * code runs when it has both. Three functions are built in: {@link #SEND_HANDLER},
- * {@link #SEND_STATE_HANDLER} and {@link #NO_HANDLER}.
+ * code runs when it has both. {@link #NO_HANDLER} is built in, doing nothing; the events going to
+ * the server have two more, {@link IAjaxRoundTripEvent#SEND_HANDLER} and
+ * {@link IAjaxRoundTripEvent#SEND_STATE_HANDLER}.
  * <p>
  * An event of this interface alone stays in the browser: it keeps the size of an editor in a
  * cookie, for example. It runs its handler at once; an event telling a {@code delay} in its JSON,
@@ -66,20 +72,6 @@ import com.github.openjson.JSONObject;
 public interface IClientEvent extends IClusterable
 {
 	/**
-	 * The built-in function sending the data of what the event told, its {@code detail}: the
-	 * handler of the events going to the server, unless they are given another.
-	 */
-	String SEND_HANDLER = "Wicket.ClientEvents.send";
-
-	/**
-	 * The built-in function sending the data of what the event told when the component has
-	 * something the server was not sent yet: the state of an editor, or its text, changed since
-	 * the editor last sent them. For a component without a state, it sends always. The editors
-	 * send their state by it, by default.
-	 */
-	String SEND_STATE_HANDLER = "Wicket.ClientEvents.sendState";
-
-	/**
 	 * The built-in function doing nothing: for an event of a name to do nothing, in place of what
 	 * the component does on it by default, the state an editor sends on blur for example.
 	 */
@@ -96,7 +88,11 @@ public interface IClientEvent extends IClusterable
 	 *
 	 * @return the name of the JavaScript function the browser runs on the event, a global or a
 	 *         path to one, {@code Articles.showModified} for example, taking
-	 *         {@code (event, component, send, options)}; {@code null}, as by default, for none
+	 *         {@code (event, component, options, send)}: the event of the browser, what the
+	 *         component is in the browser, the JSON of the event, and
+	 *         {@code send(values, attributes)}, sending the values to the server, as
+	 *         {@link IClientEvent} tells;
+	 *         {@code this} is the element of the component. {@code null}, as by default, for none
 	 */
 	default String getEventClientHandlerName()
 	{
@@ -108,8 +104,9 @@ public interface IClientEvent extends IClusterable
 	 * entered, which would run in the browsers of others.
 	 *
 	 * @return the JavaScript function the browser runs on the event,
-	 *         {@code function(event, component, send, options) {...}}, in place of the one
-	 *         {@link #getEventClientHandlerName() named}; {@code null}, as by default, for none
+	 *         {@code function(event, component, options, send) {...}}, in place of the one
+	 *         {@link #getEventClientHandlerName() named}, taking what it takes;
+	 *         {@code null}, as by default, for none
 	 */
 	default String getEventHandlerClientSideCode()
 	{
@@ -125,10 +122,11 @@ public interface IClientEvent extends IClusterable
 	 * goes as its name, a value that is no number, text, boolean, collection, map or array as its
 	 * {@code toString()}: an event leaves out what the browser should not see by overriding this.
 	 * <p>
-	 * The {@link ClientEventsBehavior} adds {@code eventName}, {@code index} and {@code kind},
-	 * which no event changes. An event overriding this gives other properties, or fewer: Wicket's
-	 * {@link org.apache.wicket.ajax.json.JSONFunction} writes a value as code. The code goes into
-	 * the page as it is: the page's own, never made of what a user entered.
+	 * The {@link ClientEventsBehavior} adds {@code eventName} and {@code index}, which no event
+	 * changes, and, for an {@link IAjaxRoundTripEvent}, the attributes of its requests as
+	 * {@code ajax}, which no event gives. An event overriding this gives other properties, or
+	 * fewer: Wicket's {@link org.apache.wicket.ajax.json.JSONFunction} writes a value as code. The
+	 * code goes into the page as it is: the page's own, never made of what a user entered.
 	 *
 	 * @return the event as JSON
 	 */

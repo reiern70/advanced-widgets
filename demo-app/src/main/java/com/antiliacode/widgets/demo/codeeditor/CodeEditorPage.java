@@ -23,9 +23,11 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -92,6 +94,11 @@ import com.github.openjson.JSONObject;
  * the editor underlines the error and lists it below the text, and the notifications of the page
  * tell it too. Check boxes switch saving on blur, and reading only, which the editor takes from a
  * model of the session. The React and Svelte tabs show the same in those frameworks.
+ * <p>
+ * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
+ * the editors' events, which go as the user types: the editors mark them with
+ * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
+ * {@link CodeEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
  */
 public class CodeEditorPage extends DemoPage
 {
@@ -156,6 +163,8 @@ public class CodeEditorPage extends DemoPage
 	 */
 	public CodeEditorPage()
 	{
+		// the veil over the page while its Ajax requests run, those of the editors' events aside
+		add(new PageVeilBehavior());
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
@@ -206,6 +215,13 @@ public class CodeEditorPage extends DemoPage
 			protected void onStateChanged(AjaxRequestTarget target)
 			{
 				target.add(known);
+			}
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// the requests of the events go as the user types: the page veil leaves them alone
+				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		editor.setSavedModel(LambdaModel.of(shown, CodeDocument::getSaved, CodeDocument::setSaved));
@@ -296,7 +312,16 @@ public class CodeEditorPage extends DemoPage
 			}), LambdaModel.of(notes, CodeDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}));
+			}))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		};
 		// the editor fills its pane, whose size the split panel and the box give
 		notesEditor.setLanguage(CodeEditorLanguage.MARKDOWN).setLineWrapping(true)
 			.setResizable(null).setSavedModel(LambdaModel.of(notes, CodeDocument::getSaved,
@@ -453,6 +478,12 @@ public class CodeEditorPage extends DemoPage
 			{
 				super.onConfigure();
 				setSaveOnBlur(settings().saveOnBlur);
+			}
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		jsonEditor.setLanguage(CodeEditorLanguage.JSON)
@@ -945,7 +976,16 @@ public class CodeEditorPage extends DemoPage
 			Fragment panel = new Fragment(id, "filePanel", CodeEditorPage.this);
 			Form<Void> form = new Form<>("form");
 			panel.add(form);
-			CodeEditor fileEditor = new CodeEditor("editor", new PropertyModel<>(document, "text"));
+			CodeEditor fileEditor = new CodeEditor("editor", new PropertyModel<>(document, "text"))
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+				{
+					PageVeilBehavior.noVeil(attributes);
+				}
+			};
 			fileEditor.setLanguage(document.getLanguage())
 				.setSavedModel(new PropertyModel<>(document, "saved"))
 				.setLabel(Model.of(document.getName()));

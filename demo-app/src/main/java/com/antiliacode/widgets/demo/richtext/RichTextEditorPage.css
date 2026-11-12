@@ -112,6 +112,11 @@
 	font-size: 14px;
 }
 
+.rich-text-demo__count {
+	margin-left: auto;
+	font-variant-numeric: tabular-nums;
+}
+
 .rich-text-demo__status {
 	margin: 12px 0 0;
 	line-height: 1.5;

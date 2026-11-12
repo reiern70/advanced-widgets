@@ -40,7 +40,7 @@ import com.github.openjson.JSONObject;
  *
  * @since 11.0.0
  */
-public abstract class AjaxUpdateEvent extends AbstractDelayedClientEvent<AjaxUpdateEvent>
+public abstract class AjaxUpdateEvent extends AbstractAjaxRoundTripEvent<AjaxUpdateEvent>
 	implements IAjaxUpdateEvent
 {
 	private static final long serialVersionUID = 1L;

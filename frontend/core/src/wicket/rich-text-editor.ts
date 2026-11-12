@@ -55,7 +55,7 @@ import { findImagesAt, storePermanentlyAt } from '../rich-text-stored-images.js'
 import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
-import { sendState, stateParameters } from './send-state.js';
+import { pendingParameters, sendState, stateParameters } from './send-state.js';
 
 /** The options of Wicket's editor: those of the core, and the URLs of the behaviors of the server. */
 interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'suggesters'> {
@@ -109,6 +109,9 @@ const WicketRichTextEditor = {
 
 	/** What the events of the server carry besides: see stateParameters(). */
 	stateParameters,
+
+	/** What the page's other Ajax requests carry for the editor: see pendingParameters(). */
+	pendingParameters,
 
 	/**
 	 * @param id the markup id of the text area
