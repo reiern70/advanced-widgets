@@ -91,6 +91,7 @@
 	<entry key="markdownKept">Das Markdown, das der Server behält</entry>
 	<entry key="notesStart">Formatieren Sie die Notizen nach Belieben: Der Server behält sie als Markdown.</entry>
 	<entry key="notesSaved">Notizen gespeichert.</entry>
+	<entry key="notesCount">Zeichen: {0}</entry>
 	<entry key="cleaningExplanation">HTML von irgendwoher, eingefügt oder von einem Browser geschickt, der nicht der Editor ist: ein Skript, Handler, ein Link auf javascript:, ein Stil, der die Seite bedeckt, und ein Frame. Bereinigen Sie es und sehen Sie, was übrig bleibt: nur, was der Editor schreibt.</entry>
 	<entry key="unsafeLabel">HTML von irgendwoher</entry>
 	<entry key="clean">Bereinigen</entry>

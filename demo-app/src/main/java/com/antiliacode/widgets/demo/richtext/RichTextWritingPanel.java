@@ -22,8 +22,10 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
@@ -130,6 +132,13 @@ public class RichTextWritingPanel extends Panel
 				setProofreader("demo".equals(proofreading) ? demo :
 					"languagetool".equals(proofreading) && languageTool != null ?
 						new LanguageToolProofreader(URI.create(languageTool)) : null);
+			}
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// the requests of the events go as the user types: the page veil leaves them alone
+				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		editor.addSuggester(RichTextWriting.people()).addSuggester(RichTextWriting.topics())

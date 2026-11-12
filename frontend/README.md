@@ -145,13 +145,30 @@ default, takes the state the browser sends with each of its events going to the 
 text the user changed as its input. Its events are `IClientEvent`s of a `ClientEventsBehavior`, kept
 by their names, several for a name if need be (`addEvent`, `setEvent`, `removeEvents`), each with
 the name of a function of the page (`getEventClientHandlerName`) or code of its own
-(`getEventHandlerClientSideCode`, which wins), taking `(event, component, send, options)`: an event
+(`getEventHandlerClientSideCode`, which wins), taking `(event, component, options, send)`: an event
 goes to the browser as `toJson()`, its public getters by default, which the handler gets as
-`options`, and the events going to the server (`AbstractDelayedClientEvent`) may wait for the user
+`options`, and the events going to the server (`AbstractAjaxRoundTripEvent`) may wait for the user
 to pause (`setDelay`); by default six `SendStateEvent`s, on `INPUT`,
 `SELECT`, `SCROLL`, `RESIZE` (400 ms after the user paused), `BLUR` and `LEAVE`, send the state:
-`removeEvents(CodeEditorEvent.INPUT)` stops sending it as the user types,
-`setEvent(ClientEvent.nothing(CodeEditorEvent.BLUR))` as the editor loses the focus.
+`removeEvents(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT)` stops sending it as the user types
+and moves the cursor, `setEvent(ClientEvent.nothing(CodeEditorEvent.BLUR))` as the editor loses the
+focus. The page's other Ajax requests carry the state the editor did not send yet, without the
+text (`takeUnsentState()`, the parameter `antilia-pending:<markup id>`): scrolled without the focus,
+an editor no longer sending the scrolling keeps it when the request of a check box redraws its
+form. The browser knows of an event its handler alone: one going to the server
+(`IAjaxRoundTripEvent`: `IAjaxEvent`, `IAjaxUpdateEvent` or `IAjaxSubmitEvent`) comes with the
+attributes of its requests as `ajax`, those of Wicket's Ajax, which the server renders, and
+`send(values)` makes a round trip of Wicket's Ajax with them (`Wicket.ClientEvents.roundTrip`),
+`send(values, attributes)` adding the handler's own, listeners of the call for example; any other
+event stays in the browser. `updateEventAjaxAttributes(attributes)` of the editor, or
+`updateAjaxAttributes` of a `ClientEventsBehavior`, changes the attributes of the requests of all
+its events, posted unless one sets GET, then each event those of its own
+(`IAjaxRoundTripEvent.updateAjaxAttributes`), which the built-in ones take by their setters:
+`setMethod(Method.GET)`, `setExtraParameter(name, value)`, in the `ep` of the request, where a page
+veil leaving some requests alone sees it, `addDynamicExtraParameter(functionBody)` and
+`addAjaxCallListener(listener)`, on success and on failure for example. The state goes in `antilia-state` and `antilia-text-changed`
+(`SendStateEvent.STATE_PARAMETER`, `TEXT_CHANGED_PARAMETER`, `Wicket.ClientEvents.parameters`):
+before 10.11.0-RC7 the editors sent it as `state`, by a request of their own.
 `AjaxUpdateEvent.of(CodeEditorEvent.SAVE, (values, component, target) -> ...)` hears of an
 event once the model took the text, valid, `markSaved(target)` tells the browser the text was
 saved, and `CodeEditorLanguage.of(name, script)` plugs in the grammar of a script of the page's

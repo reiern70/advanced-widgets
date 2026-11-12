@@ -38,7 +38,7 @@ public class ClientEvent extends AbstractClientEvent<ClientEvent>
 	 *            the name of the event in the browser
 	 * @param clientSideCode
 	 *            the JavaScript function the browser runs on the event,
-	 *            {@code function(event, component, send, options) {...}}
+	 *            {@code function(event, component, options, send) {...}}
 	 */
 	public ClientEvent(String eventName, String clientSideCode)
 	{
@@ -50,7 +50,7 @@ public class ClientEvent extends AbstractClientEvent<ClientEvent>
 	 *            the name of the event
 	 * @param clientSideCode
 	 *            the JavaScript function the browser runs on the event,
-	 *            {@code function(event, component, send, options) {...}}
+	 *            {@code function(event, component, options, send) {...}}
 	 */
 	public ClientEvent(IClientEventName eventName, String clientSideCode)
 	{
@@ -71,7 +71,7 @@ public class ClientEvent extends AbstractClientEvent<ClientEvent>
 	 * @param clientHandlerName
 	 *            the name of the JavaScript function of the page the browser runs on the event,
 	 *            {@code Articles.showModified} for example, taking
-	 *            {@code (event, component, send, options)}
+	 *            {@code (event, component, options, send)}
 	 * @return the event
 	 */
 	public static ClientEvent handledBy(String eventName, String clientHandlerName)

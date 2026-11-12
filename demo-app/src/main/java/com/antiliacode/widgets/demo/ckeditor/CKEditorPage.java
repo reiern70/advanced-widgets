@@ -20,8 +20,10 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -73,6 +75,11 @@ import com.github.openjson.JSONObject;
  * The cleaning on the server: HTML from anywhere, with scripts, handlers and styles, and what
  * {@link CKEditorPolicy} leaves of it. The React and Svelte tabs show the editor in those
  * frameworks, with the CKEditor the page loaded.
+ * <p>
+ * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
+ * the editors' events, which go as the user types: the editors mark them with
+ * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
+ * {@link CKEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
  */
 public class CKEditorPage extends DemoPage
 {
@@ -123,6 +130,8 @@ public class CKEditorPage extends DemoPage
 	 */
 	public CKEditorPage()
 	{
+		// the veil over the page while its Ajax requests run, those of the editors' events aside
+		add(new PageVeilBehavior());
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 		// which CKEditor, and under which license
@@ -184,6 +193,13 @@ public class CKEditorPage extends DemoPage
 			protected void onStateChanged(AjaxRequestTarget target)
 			{
 				target.add(known);
+			}
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// the requests of the events go as the user types: the page veil leaves them alone
+				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		editor.setSavedModel(LambdaModel.of(article, CKEditorDocument::getSaved,
@@ -255,7 +271,16 @@ public class CKEditorPage extends DemoPage
 			}), LambdaModel.of(notes, CKEditorDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}));
+			}))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		};
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, CKEditorDocument::getSaved,
 				CKEditorDocument::setSaved))
@@ -293,8 +318,16 @@ public class CKEditorPage extends DemoPage
 		cleanedBox.add(new CKEditorView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
-		cleaningCase.add(new RichTextCleaningPanel("modes", CKEditor::new,
-			"ckeditor-demo-unsafe"));
+		cleaningCase.add(new RichTextCleaningPanel("modes", (id, model) -> new CKEditor(id, model)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		}, "ckeditor-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;

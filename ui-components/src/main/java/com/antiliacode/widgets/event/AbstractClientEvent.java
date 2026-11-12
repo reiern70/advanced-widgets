@@ -103,7 +103,7 @@ public abstract class AbstractClientEvent<T extends AbstractClientEvent<T>> impl
 	/**
 	 * @param clientSideCode
 	 *            the JavaScript function the browser runs on the event,
-	 *            {@code function(event, component, send, options) {...}}, in place of the one
+	 *            {@code function(event, component, options, send) {...}}, in place of the one
 	 *            named; {@code null} for none
 	 * @return {@code this}
 	 */

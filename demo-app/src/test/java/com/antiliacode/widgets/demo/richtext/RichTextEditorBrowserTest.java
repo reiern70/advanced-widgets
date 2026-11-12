@@ -312,6 +312,29 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	}
 
 	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void countsTheCharactersOfTheNotesInTheBrowser(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		selectCase("Notes in Markdown");
+		WebElement notes = app().findElements(By.cssSelector(".rich-text-demo__editor .ProseMirror"))
+			.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow();
+		WebElement form = notes.findElement(By.xpath("ancestor::form"));
+		WebElement count = form.findElement(By.cssSelector(".rich-text-demo__count"));
+		String field = form.findElement(By.tagName("textarea")).getAttribute("id");
+		// the editor told its text as it started: counted before the user types
+		long before = ((Number)script("return Wicket.RichTextEditor.of(arguments[0]).getText()" +
+			".replace(/\\n/g, '').length;", field)).longValue();
+		assertTrue(before > 0);
+		wait.until(d -> count.getText().equals("Characters: " + before));
+
+		clickAtEnd(notes.findElement(By.cssSelector("h1")));
+		notes.sendKeys(" for two");
+		wait.until(d -> count.getText().equals("Characters: " + (before + 8)));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void leavesAListWithEscapeThenTab(SeleniumBrowser browser, String framework)
 	{
@@ -379,6 +402,47 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		assertEquals(number(waiting.get("width")), number(made.get("width")), 1);
 		assertEquals(number(waiting.get("height")), number(made.get("height")), 1);
 		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void thePageVeilLeavesTheRequestsOfTheEditorAlone(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		assertEquals("object", script("return typeof Wicket.Veil;"));
+		recordVeils();
+
+		// the focus, the text and the state go as the user types, without the veil
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		content().sendKeys(" Wading on.");
+		wait.until(d -> status().contains("changes not saved"));
+		wait.until(d -> number(script("return window.unveiledRequests;")) >= 2);
+		assertEquals(0, number(script("return window.veils;")), "veiled as the user types");
+
+		// the button's request is veiled
+		editor().findElement(By.xpath("ancestor::form//button[@type='submit']")).click();
+		wait.until(d -> number(script("return window.veils;")) > 0);
+		wait.until(d -> app().findElement(By.cssSelector(".rich-text-demo__view")).getText()
+			.contains("Wading on."));
+		assertNoErrors();
+	}
+
+	/**
+	 * Counts the veils Wicket puts over the page, in {@code window.veils}, and the Ajax requests
+	 * the page veil leaves alone, in {@code window.unveiledRequests}.
+	 */
+	private void recordVeils()
+	{
+		script("window.veils = 0; window.unveiledRequests = 0;" +
+			"new MutationObserver(function (records) { records.forEach(function (record) {" +
+			" record.addedNodes.forEach(function (node) {" +
+			" if (node.classList && node.classList.contains('wicket-veil')) { window.veils++; }" +
+			" }); }); }).observe(document.body, { childList: true, subtree: true });" +
+			"Wicket.Event.subscribe('/ajax/call/beforeSend', function (event, attrs) {" +
+			" var ep = attrs.ep;" +
+			" if (Array.isArray(ep) ? ep.some(function (p) { return p && p.name === 'wicket_nb'; })" +
+			" : !!ep && Object.prototype.hasOwnProperty.call(ep, 'wicket_nb')) {" +
+			" window.unveiledRequests++; } });");
 	}
 
 	@ParameterizedTest

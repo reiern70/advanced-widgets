@@ -27,7 +27,7 @@ import { CKEditor, type CKEditorOptions } from '../ck-editor.js';
 import { NO_STATE_EVENTS } from '../editor-events.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
-import { stateParameters } from './send-state.js';
+import { pendingParameters, stateParameters } from './send-state.js';
 
 const WicketCKEditor = {
 
@@ -46,6 +46,9 @@ const WicketCKEditor = {
 
 	/** What the events of the server carry besides: see stateParameters(). */
 	stateParameters,
+
+	/** What the page's other Ajax requests carry for the editor: see pendingParameters(). */
+	pendingParameters,
 
 	/**
 	 * @param id the markup id of the text area

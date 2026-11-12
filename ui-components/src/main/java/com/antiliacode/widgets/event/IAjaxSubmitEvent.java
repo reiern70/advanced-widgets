@@ -32,18 +32,8 @@ import com.github.openjson.JSONObject;
  * @see AjaxSubmitEvent
  * @since 11.0.0
  */
-public interface IAjaxSubmitEvent extends IClientEvent
+public interface IAjaxSubmitEvent extends IAjaxRoundTripEvent
 {
-	/**
-	 * @return the name of the JavaScript function the browser runs on the event,
-	 *         {@link #SEND_HANDLER} by default
-	 */
-	@Override
-	default String getEventClientHandlerName()
-	{
-		return SEND_HANDLER;
-	}
-
 	/**
 	 * Called when the browser sent the form with the event, once the models of its fields got what
 	 * the user entered.

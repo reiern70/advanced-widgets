@@ -23,9 +23,11 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormChoiceComponentUpdatingBehavior;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -100,6 +102,11 @@ import com.github.openjson.JSONObject;
  * Writing: the spell check of the browser, a proofreader on the server, mentions and completions
  * from the server ({@link RichTextWritingPanel}). The React and Svelte tabs show the editor in those
  * frameworks.
+ * <p>
+ * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
+ * the editors' events, which go as the user types: the editors mark them with
+ * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
+ * {@link RichTextEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
  */
 public class RichTextEditorPage extends DemoPage
 {
@@ -202,6 +209,8 @@ public class RichTextEditorPage extends DemoPage
 	 */
 	public RichTextEditorPage()
 	{
+		// the veil over the page while its Ajax requests run, those of the editors' events aside
+		add(new PageVeilBehavior());
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
@@ -279,6 +288,13 @@ public class RichTextEditorPage extends DemoPage
 			protected void onStateChanged(AjaxRequestTarget target)
 			{
 				target.add(known);
+			}
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// the requests of the events go as the user types: the page veil leaves them alone
+				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		editor.setSavedModel(LambdaModel.of(article, RichTextDocument::getSaved,
@@ -442,7 +458,16 @@ public class RichTextEditorPage extends DemoPage
 			}), LambdaModel.of(notes, RichTextDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}));
+			}))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		};
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
 			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
@@ -456,6 +481,10 @@ public class RichTextEditorPage extends DemoPage
 		notesEditor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
 			(values, form, target) -> showNotesKept(target))
 			.setDelay(RichTextEditorEvents.TYPING_DELAY));
+		// stays in the browser: the characters of the notes, counted as they change
+		Label notesCount = new Label("notesCount");
+		notesForm.add(notesCount);
+		notesEditor.addEvent(new CharacterCountEvent(notesCount, () -> getString("notesCount")));
 		notesForm.add(notesEditor);
 		notesForm.add(new Label("notesName", getString("notesLabel"))
 			.add(AttributeModifier.replace("for", () -> notesEditor.getMarkupId())));
@@ -486,8 +515,17 @@ public class RichTextEditorPage extends DemoPage
 		cleanedBox.add(new RichTextView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
-		cleaningCase.add(new RichTextCleaningPanel("modes", RichTextEditor::new,
-			"rich-text-demo-unsafe"));
+		cleaningCase.add(new RichTextCleaningPanel("modes", (id, model) -> new RichTextEditor(id,
+			model)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				PageVeilBehavior.noVeil(attributes);
+			}
+		}, "rich-text-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;

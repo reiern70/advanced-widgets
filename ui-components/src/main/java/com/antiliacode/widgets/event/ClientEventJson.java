@@ -45,6 +45,12 @@ final class ClientEventJson
 	/** The property of the code of the event, which goes as code. */
 	static final String CODE = "eventHandlerClientSideCode";
 
+	/**
+	 * The property of the attributes of the requests of an event going to the server, which the
+	 * {@link ClientEventsBehavior} writes: no event's own.
+	 */
+	static final String AJAX = "ajax";
+
 	private ClientEventJson()
 	{
 	}
@@ -52,7 +58,9 @@ final class ClientEventJson
 	/**
 	 * @param event
 	 *            an event
-	 * @return its properties, as JSON, without those that are {@code null}, the code as code
+	 * @return its properties, as JSON, without those that are {@code null} and those of the
+	 *         attributes of its requests, which {@link AbstractAjaxRoundTripEvent} keeps, the code as
+	 *         code
 	 */
 	static JSONObject of(IClientEvent event)
 	{
@@ -70,6 +78,12 @@ final class ClientEventJson
 		for (PropertyDescriptor property : info.getPropertyDescriptors())
 		{
 			Method getter = property.getReadMethod();
+			if (getter != null && getter.getDeclaringClass() == AbstractAjaxRoundTripEvent.class)
+			{
+				// the method, the extra parameters and the rest go in the attributes of the
+				// requests, which the ClientEventsBehavior writes
+				continue;
+			}
 			Object value = getter == null ? null : read(event, getter, property);
 			if (value != null)
 			{

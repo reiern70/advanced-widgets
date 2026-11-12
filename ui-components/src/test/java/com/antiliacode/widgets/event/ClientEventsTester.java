@@ -204,8 +204,7 @@ public final class ClientEventsTester
 
 	private static boolean goesToServer(IClientEvent event)
 	{
-		return event instanceof IAjaxEvent || event instanceof IAjaxUpdateEvent ||
-			event instanceof IAjaxSubmitEvent;
+		return event instanceof IAjaxRoundTripEvent;
 	}
 
 	private static ClientEventsBehavior behaviorOf(Component component)

@@ -395,6 +395,21 @@ describe('CodeEditor', () => {
 		{ leaving: true, changed: false });
 	});
 
+	it('takes the state alone, when not sent yet, leaving the text unsent', () => {
+		const editor = new CodeEditor(textArea('one two'), { events: { change: [], select: [] } });
+		expect(editor.takeUnsentState()).toBeNull();
+
+		select(editor, 2, 4);
+		expect(editor.takeUnsentState()).toEqual(editor.getState());
+		expect(editor.takeUnsentState()).toBeNull();
+		type(editor, 'x');
+		select(editor, 1, 1);
+		expect(editor.takeUnsentState()).toEqual(editor.getState());
+		expect(editor.hasUnsentState()).toBe(true);
+		expect(editor.takeState().changed).toBe(true);
+		editor.destroy();
+	});
+
 	it('reports the size the user gave it', async () => {
 		const onResize = vi.fn();
 		const onStateChange = vi.fn();
