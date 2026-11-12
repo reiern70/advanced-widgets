@@ -49,32 +49,10 @@
 
 import { getHost } from '../host.js';
 import { onWicketTopic, useWicketHost, wicket } from './host.js';
-import { sendBeacon, STATE_PARAMETER, TEXT_CHANGED_PARAMETER, type Parameter } from './send-state.js';
+import { type AjaxAttributes, asParameters, roundTrip, sendBeacon, STATE_PARAMETER,
+	TEXT_CHANGED_PARAMETER, type Parameter } from './send-state.js';
 
-/**
- * The attributes of a request of Wicket's Ajax, as the server renders them for an event going to
- * it, and as a handler adds to them.
- */
-export interface AjaxAttributes {
-	/** The URL of the Ajax behavior. */
-	u?: string;
-	/** The method: GET, or POST. */
-	m?: string;
-	/** The markup id of the component, whose field Wicket sends with the request. */
-	c?: unknown;
-	/** The markup id of the form the request submits. */
-	f?: string;
-	/** The name of the component submitting the form. */
-	sc?: string;
-	/** Whether Wicket sends the fields within the component too. */
-	sr?: boolean;
-	/** The extra parameters: values by their names, or an array of name and value. */
-	ep?: unknown;
-	/** The dynamic extra parameters: functions of the attributes giving parameters. */
-	dep?: unknown[];
-	/** The rest of Wicket's attributes: the listeners of the call, sh and fh among them. */
-	[attribute: string]: unknown;
-}
+export { type AjaxAttributes, asParameters, roundTrip };
 
 /**
  * Sends the server the values, an object, for an event going to the server, by a round trip of
@@ -149,23 +127,6 @@ interface WicketForm {
 	serializeForm?(form: Element): Parameter[];
 }
 
-/** A call of Wicket's Ajax. */
-interface WicketCall {
-	ajax(attributes: AjaxAttributes): unknown;
-	_executeHandlers?(handlers: unknown, attributes: AjaxAttributes): void;
-}
-
-/** Wicket's Ajax, making calls. */
-interface WicketAjaxCalls {
-	Call?: new () => WicketCall;
-}
-
-/** Wicket's events, which tell the listeners of a topic. */
-interface WicketEvents {
-	publish?(topic: string, ...payload: unknown[]): void;
-	Topic?: Record<string, string>;
-}
-
 const attached = new WeakMap<Element, AttachedClientEvents>();
 
 /** A component giving what it did not send yet to the page's other Ajax requests. */
@@ -227,33 +188,6 @@ function carryPending(): void {
 		// the attributes of this request alone: Wicket's Ajax copies them for each
 		attrs.dep = [...(Array.isArray(attrs.dep) ? attrs.dep : []), () => pendingValues(own)];
 	});
-}
-
-/**
- * @param parameters parameters as Wicket's Ajax takes them: values by their names, an array of
- *        values for a name having several, or an array of name and value
- * @returns them as an array of name and value, the values as strings, those that are null or
- *          undefined left out
- */
-export function asParameters(parameters: unknown): Parameter[] {
-	const list: Parameter[] = [];
-	if (Array.isArray(parameters)) {
-		parameters.forEach((parameter) => {
-			const { name, value } = (parameter ?? {}) as { name?: unknown; value?: unknown };
-			if (typeof name === 'string' && value !== null && value !== undefined) {
-				list.push({ name, value: String(value) });
-			}
-		});
-	} else if (parameters !== null && typeof parameters === 'object') {
-		Object.entries(parameters as Record<string, unknown>).forEach(([name, value]) => {
-			(Array.isArray(value) ? value : [value]).forEach((each) => {
-				if (each !== null && each !== undefined) {
-					list.push({ name, value: String(each) });
-				}
-			});
-		});
-	}
-	return list;
 }
 
 /**
@@ -336,32 +270,6 @@ function beacon(attributes: AjaxAttributes, parameters: Parameter[]): boolean {
 	}
 	return sendBeacon(attributes.u, [...asParameters(attributes.ep), ...parameters,
 		...dynamicParameters(attributes), ...serialized(attributes)]);
-}
-
-/**
- * Makes a round trip of Wicket's Ajax: a request with the attributes, carrying the parameters
- * besides their extra parameters, as Wicket's Ajax sends the request of an event it listens to,
- * its init handlers first.
- *
- * @param attributes the attributes of the request, those of an event going to the server: its URL,
- *        its method, its extra parameters, its dynamic extra parameters and the listeners of the call
- * @param parameters what the request carries besides
- * @returns whether the request went: not without Wicket's Ajax, nor without a URL
- */
-export function roundTrip(attributes: AjaxAttributes, parameters: Parameter[] = []): boolean {
-	const ajax = wicket().Ajax as WicketAjaxCalls | undefined;
-	if (!ajax?.Call || typeof attributes.u !== 'string') {
-		getHost().log.error('No Ajax of Wicket to send a request to ' + attributes.u);
-		return false;
-	}
-	const attrs: AjaxAttributes = { ...attributes,
-		ep: [...asParameters(attributes.ep), ...parameters] };
-	const call = new ajax.Call();
-	call._executeHandlers?.(attrs.ih, attrs);
-	const events = wicket().Event as WicketEvents | undefined;
-	events?.publish?.(events.Topic?.AJAX_CALL_INIT ?? '/ajax/call/init', attrs);
-	call.ajax(attrs);
-	return true;
 }
 
 /**

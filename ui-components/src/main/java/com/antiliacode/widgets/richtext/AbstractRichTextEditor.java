@@ -1126,8 +1126,10 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		getFeatures().forEach(feature -> feature.renderHead(this, response));
 		// the events listen before the editor starts, hearing of its text as it starts too
 		events.renderHead(this, response);
+		// the options may hold the attributes of Ajax requests, with functions
 		response.render(OnDomReadyHeaderItem.forScript(getScriptObject() + ".attach(" +
-			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(getOptions()) + ");"));
+			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.withFunctions(getOptions()) +
+			");"));
 	}
 
 	/**

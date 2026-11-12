@@ -16,6 +16,11 @@ package com.antiliacode.widgets.upload;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.wicket.Component;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
+import org.apache.wicket.ajax.attributes.AjaxAttributeName;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.form.Form;
@@ -60,6 +65,12 @@ import com.github.openjson.JSONObject;
  * German and Spanish, and the bar of the field tells the same words: when the request got no
  * answer, both the bar and the server tell that the connection broke off
  * ({@value FileUploadToResourceField#CONNECTION_LOST_RESOURCE_KEY}).
+ * <p>
+ * Wicket's field tells its callback how an upload ended by a request of Wicket's Ajax, which the
+ * field sends with attributes of its own:
+ * {@link #updateCallbackAjaxAttributes(AjaxRequestAttributes)} changes them, those of the uploads
+ * it refuses before sending them too, the extra parameters a page veil leaves the requests alone
+ * by, for example.
  *
  * @since 11.0.0
  */
@@ -71,6 +82,8 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 
 	private boolean blockingRequests;
 
+	private final CallbackAttributes callbackAttributes;
+
 	/**
 	 * @param id
 	 *            component id
@@ -78,6 +91,8 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 	public UploadToResourceField(String id)
 	{
 		super(id);
+		callbackAttributes = new CallbackAttributes();
+		add(callbackAttributes);
 	}
 
 	/**
@@ -150,7 +165,70 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 		// after Wicket's field is made, whose hooks it wraps
 		response.render(OnDomReadyHeaderItem.forScript(getGuardScript() +
 			"Wicket.Upload.field(" + ScriptJson.quote(getMarkupId()) + ", " +
-			ScriptJson.of(newMessages()) + ");"));
+			ScriptJson.of(newMessages()) + ", " + callbackAttributes.renderAttributes() + ");"));
+	}
+
+	/**
+	 * Changes the attributes of the requests telling the server how an upload ended, which Wicket's
+	 * field sends to its callback, and the script of the field for the uploads it refuses before
+	 * sending them: the {@link AjaxRequestAttributes#getExtraParameters() extra parameters} a page
+	 * veil leaves the requests alone by
+	 * ({@link org.apache.wicket.extensions.ajax.veil.PageVeilBehavior#noVeil(
+	 * AjaxRequestAttributes)}), the dynamic extra parameters or the listeners
+	 * of the call, for example. The requests go to the callback of Wicket's field, by POST, which
+	 * carries what the server needs of the files in the body. Does nothing by default.
+	 *
+	 * @param attributes
+	 *            the attributes of the requests
+	 */
+	protected void updateCallbackAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+	}
+
+	/**
+	 * Renders the attributes of the requests to the callback of Wicket's field, whose URL its
+	 * script knows: it hears of no request of its own.
+	 */
+	private final class CallbackAttributes extends AbstractDefaultAjaxBehavior
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+		{
+			super.updateAjaxAttributes(attributes);
+			attributes.setMethod(AjaxRequestAttributes.Method.POST);
+			updateCallbackAjaxAttributes(attributes);
+		}
+
+		@Override
+		protected void postprocessConfiguration(JSONObject attributesJson, Component component)
+		{
+			super.postprocessConfiguration(attributesJson, component);
+			// the URL is the callback's, and Wicket's field sends no field with the requests
+			attributesJson.remove(AjaxAttributeName.URL.jsonName());
+			attributesJson.remove(AjaxAttributeName.MARKUP_ID.jsonName());
+		}
+
+		/**
+		 * @return the attributes, as the script of the field takes them
+		 */
+		CharSequence renderAttributes()
+		{
+			return renderAjaxAttributes(getComponent());
+		}
+
+		@Override
+		public boolean canCallListener(Component component)
+		{
+			// the requests go to the callback of Wicket's field
+			return false;
+		}
+
+		@Override
+		protected void respond(AjaxRequestTarget target)
+		{
+		}
 	}
 
 	/**

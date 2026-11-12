@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,7 @@ import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.feedback.FeedbackMessage;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -56,6 +58,7 @@ import com.antiliacode.widgets.button.ButtonBehavior.Size;
 import com.antiliacode.widgets.button.ButtonBehavior.Variant;
 import com.antiliacode.widgets.upload.FilePickerBehavior.Design;
 import com.github.openjson.JSONObject;
+import com.github.openjson.JSONTokener;
 
 class UploadsTest extends WicketTestCase
 {
@@ -340,6 +343,46 @@ class UploadsTest extends WicketTestCase
 	}
 
 	@Test
+	void tellsTheCallbackOfAFieldHowAnUploadEndedWithTheAttributesOfThePage()
+	{
+		TestField[] fields = new TestField[1];
+		tester.startPage(new TestPage("<input type=\"file\" wicket:id=\"file\"/>",
+			page -> page.add(fields[0] = new TestField("file"))));
+
+		// by POST, to the callback of Wicket's field, whose URL its script knows
+		String call = "Wicket.Upload.field(" + JSONObject.quote(fields[0].getMarkupId()) + ", ";
+		List<JSONObject> arguments = arguments(tester.getLastResponseAsString(), call);
+		assertEquals(2, arguments.size());
+		assertEquals("{\"m\":\"POST\"}", arguments.get(1).toString());
+		// it hears of no request of its own
+		List<AbstractDefaultAjaxBehavior> behaviors = fields[0].getBehaviors(
+			AbstractDefaultAjaxBehavior.class);
+		assertEquals(2, behaviors.size());
+		assertFalse(behaviors.get(1).canCallListener(fields[0]));
+		assertTrue(behaviors.get(0).canCallListener(fields[0]));
+
+		// the page veil leaves them alone
+		tester.startPage(new TestPage("<input type=\"file\" wicket:id=\"file\"/>",
+			page -> page.add(fields[0] = new TestField("file")
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected void updateCallbackAjaxAttributes(AjaxRequestAttributes attributes)
+				{
+					PageVeilBehavior.noVeil(attributes);
+				}
+			})));
+		JSONObject attributes = arguments(tester.getLastResponseAsString(), "Wicket.Upload.field(" +
+			JSONObject.quote(fields[0].getMarkupId()) + ", ").get(1);
+		assertEquals("POST", attributes.getString("m"));
+		assertEquals("[{\"name\":\"" + PageVeilBehavior.NO_VEIL_PARAMETER +
+			"\",\"value\":\"true\"}]", attributes.getJSONArray("ep").toString());
+		assertFalse(attributes.has("u"));
+		assertFalse(attributes.has("c"));
+	}
+
+	@Test
 	void escapesTheMessagesOfAFieldUploadingToAResourceInItsScript()
 	{
 		String value = "<!--<script>";
@@ -430,11 +473,26 @@ class UploadsTest extends WicketTestCase
 
 	private static JSONObject options(String page, String call)
 	{
+		return arguments(page, call).get(0);
+	}
+
+	/**
+	 * @return the objects a call of the page takes, from the first after the text given
+	 */
+	private static List<JSONObject> arguments(String page, String call)
+	{
 		int start = page.indexOf(call);
 		assertTrue(start >= 0, call + " in " + page);
-		start += call.length();
-		int end = page.indexOf(");", start);
-		return new JSONObject(page.substring(start, end));
+		JSONTokener tokener = new JSONTokener(page.substring(start + call.length()));
+		List<JSONObject> arguments = new ArrayList<>();
+		char next;
+		do
+		{
+			arguments.add((JSONObject)tokener.nextValue());
+			next = tokener.nextClean();
+		}
+		while (next == ',');
+		return arguments;
 	}
 
 	private static class TestField extends UploadToResourceField
