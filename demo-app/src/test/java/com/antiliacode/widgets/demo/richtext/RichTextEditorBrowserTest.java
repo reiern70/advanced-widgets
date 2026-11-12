@@ -32,6 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
@@ -885,8 +886,12 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> uploaded().isEmpty());
 		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
 
-		// found by its name, and inserted
-		tool("storedImage").click();
+		// found by its name, and inserted, once the page veil of the request telling the server
+		// of the image taken out, which the save sends, is gone
+		wait.ignoring(ElementClickInterceptedException.class).until(d -> {
+			tool("storedImage").click();
+			return true;
+		});
 		WebElement field = wait.until(d -> d.findElements(By.cssSelector(
 			".antilia-popover input[role=combobox]")).stream().findFirst().orElse(null));
 		wait.until(d -> field.equals(d.switchTo().activeElement()));
