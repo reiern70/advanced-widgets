@@ -799,7 +799,7 @@ describe('Wicket.Upload', () => {
 
 	interface UploadGlobal {
 		guard(source: string, options: object | null): void;
-		field(source: string, messages?: Record<string, string>): void;
+		field(source: string, messages?: Record<string, string>, attributes?: object): void;
 		upload(source: string): boolean;
 		started(source: string, xhr?: XMLHttpRequest): void;
 		ended(source: string, outcome: string, message?: string): void;
@@ -944,6 +944,56 @@ describe('Wicket.Upload', () => {
 		(bare.clientSideSuccessCallBack as () => void)();
 		expect(ends.mock.calls[2][0].detail).toMatchObject({ source: 'g', outcome: 'done' });
 		upload.field('missing');
+	});
+
+	it('tells the field\'s callback how an upload ended with the attributes the server rendered', async () => {
+		const upload = await load();
+		document.body.innerHTML = '<input type="file" id="r">';
+		const told: unknown[] = [];
+		const instance = {
+			ajaxCallBackUrl: 'cb',
+			upload: vi.fn(),
+			report(parameters: Record<string, unknown>) {
+				told.push(parameters);
+			}
+		};
+		const heard: unknown[] = [];
+		const post = vi.fn();
+		window.Wicket!.Timer = { r: instance };
+		window.Wicket!.Ajax = { post, Call: class {
+			ajax(attributes: unknown) {
+				heard.push(attributes);
+			}
+		} };
+
+		// without attributes, as Wicket's field tells it
+		upload.field('r');
+		instance.report({ error: false, filesInfo: '[]' });
+		expect(told).toEqual([{ error: false, filesInfo: '[]' }]);
+		expect(heard).toEqual([]);
+
+		// with them: the extra parameters of the page go with the request, the veil's among them
+		upload.field('r', undefined, { m: 'POST', ep: { wicket_nb: 'true' } });
+		instance.report({ error: false, filesInfo: '[]' });
+		expect(told).toHaveLength(1);
+		expect(heard).toEqual([{ u: 'cb', m: 'POST', ep: [{ name: 'wicket_nb', value: 'true' },
+			{ name: 'error', value: 'false' }, { name: 'filesInfo', value: '[]' }] }]);
+		// an upload the field refuses before sending it too
+		expect(upload.upload('r')).toBe(false);
+		expect(heard[1]).toEqual({ u: 'cb', m: 'POST', ep: [{ name: 'wicket_nb', value: 'true' },
+			{ name: 'error', value: 'true' },
+			{ name: 'errorMessage', value: 'wicket.no.files.selected' }] });
+		expect(post).not.toHaveBeenCalled();
+		// the field made again keeps them
+		const reported = vi.fn();
+		const again = { ajaxCallBackUrl: 'cb2', upload: vi.fn(), report: reported };
+		window.Wicket!.Timer = { r: again };
+		upload.field('r', {});
+		again.report({ error: true, errorMessage: 'upload.canceled' });
+		expect(reported).not.toHaveBeenCalled();
+		expect(heard[2]).toMatchObject({ u: 'cb2', ep: [{ name: 'wicket_nb', value: 'true' },
+			{ name: 'error', value: 'true' },
+			{ name: 'errorMessage', value: 'upload.canceled' }] });
 	});
 
 	it('starts the uploads of fields, but not one more, nor files breaking a limit', async () => {

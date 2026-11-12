@@ -16,15 +16,18 @@
  * antilia-upload.js: registers Wicket.Upload for FilePickerBehavior, which calls
  * Wicket.Upload.FilePicker.attach(id, options), for UploadProgressBar, which calls
  * Wicket.Upload.UploadProgress.attach(id, options), and for UploadToResourceField, which has
- * Wicket's FileUploadToResourceField tell its uploads with Wicket.Upload.field(id, messages), how
- * the server words their errors being the messages, tells what guards them with
+ * Wicket's FileUploadToResourceField tell its uploads with Wicket.Upload.field(id, messages,
+ * attributes), how the server words their errors being the messages, tells what guards them with
  * Wicket.Upload.guard(id, options) and starts them with Wicket.Upload.upload(id). field() wraps the
  * hooks Wicket's field calls in the browser, which stay the page's: once the page's hook let the
  * request be sent it calls Wicket.Upload.started(id, xhr), once the files arrived
  * Wicket.Upload.ended(id, 'done'), once the upload failed Wicket.Upload.failed(id, error); the
  * request itself tells of a cancellation. The guard of a field's upload lets the field's own Ajax
  * callback go, which Wicket's FileUploadToResourceField calls once the upload ended, or was
- * canceled.
+ * canceled. The attributes are those of the requests telling the field's callback how an upload
+ * ended, which the server renders: Wicket's field and this script send them with those, the extra
+ * parameters of the page, the one a page veil leaves the requests alone by among them, going with
+ * them.
  *
  * A field sends one upload at a time, and none whose files break the limits its picker knows: the
  * server hears of those as of files it refused, without receiving them. Wicket's field tells its
@@ -44,6 +47,8 @@
  */
 
 import { useWicketHost, wicket } from './host.js';
+import { type AjaxAttributes as RenderedAttributes, asParameters, roundTrip }
+	from './send-state.js';
 import { FilePicker, UploadGuard, type UploadGuardHandle, type UploadGuardOptions,
 	type UploadOutcome, type UploadProblemKind, uploadProblems, UploadProgress, uploadEnded,
 	uploadRefused, uploadStarted } from '../upload.js';
@@ -94,6 +99,8 @@ interface ResourceField {
 	clientBeforeSendCallBack?: (xhr: XMLHttpRequest) => unknown;
 	clientSideSuccessCallBack?: () => unknown;
 	uploadErrorCallBack?: (error: UploadError) => unknown;
+	/** Tells the field's callback how an upload ended, by the parameters of the request. */
+	report?: (parameters: Record<string, unknown>) => unknown;
 	/** Whether field() wrapped the hooks. */
 	antiliaUpload?: boolean;
 }
@@ -129,6 +136,9 @@ const guards = new Map<string, UploadGuardOptions>();
 /** The words of the server for the errors of the uploads of fields, by field. */
 const words = new Map<string, Record<string, string>>();
 
+/** The attributes of the requests telling the callbacks of fields how uploads ended, by field. */
+const reports = new Map<string, RenderedAttributes>();
+
 /**
  * Sets what guards the next uploads of a field.
  *
@@ -154,15 +164,22 @@ function fieldOf(source: string): ResourceField | undefined {
 /**
  * Has Wicket's FileUploadToResourceField of an id tell its uploads, around the hooks of the page:
  * the request about to be sent, unless the page's hook keeps it from going, the files arrived, the
- * upload failed. The hook of a cancellation stays as it is: the request tells of it.
+ * upload failed. The hook of a cancellation stays as it is: the request tells of it. The field
+ * tells its callback how an upload ended with the attributes, if any.
  *
  * @param source the id of the field
  * @param errors how the server words the errors of its uploads, which the progress tells, by
  * error, such as uploadTooLarge
+ * @param attributes those of the requests telling the field's callback how an upload ended, as
+ * the server renders them, without the URL, which the field knows
  */
-function field(source: string, errors?: Record<string, string>): void {
+function field(source: string, errors?: Record<string, string>,
+	attributes?: RenderedAttributes): void {
 	if (errors) {
 		words.set(source, { ...errors });
+	}
+	if (attributes) {
+		reports.set(source, { ...attributes });
 	}
 	const instance = fieldOf(source);
 	if (!instance || instance.antiliaUpload) {
@@ -188,6 +205,16 @@ function field(source: string, errors?: Record<string, string>): void {
 		failed(source, res);
 		return error?.call(this, res);
 	};
+	const told = instance.report;
+	instance.report = function (this: ResourceField, parameters: Record<string, unknown>) {
+		const url = typeof this?.ajaxCallBackUrl === 'string' ? this.ajaxCallBackUrl :
+			callbackOf(source);
+		if (url && reports.has(source)) {
+			report(source, url, parameters);
+			return undefined;
+		}
+		return told?.call(this, parameters);
+	};
 }
 
 /**
@@ -199,13 +226,30 @@ function callbackOf(source: string): string | undefined {
 }
 
 /**
+ * Tells the callback of a field how an upload ended, by POST as Wicket's FileUploadToResourceField
+ * does: with the attributes the server rendered for its requests, if any.
+ *
+ * @param source the id of the field
+ * @param url the URL of its callback
+ * @param parameters what the request carries: whether the upload failed, and why, or the files
+ */
+function report(source: string, url: string, parameters: Record<string, unknown>): void {
+	const attributes = reports.get(source);
+	if (attributes) {
+		roundTrip({ ...attributes, u: url, m: 'POST' }, asParameters(parameters));
+		return;
+	}
+	const ajax = wicket().Ajax as { post?: (attrs: object) => unknown } | undefined;
+	ajax?.post?.({ u: url, ep: parameters });
+}
+
+/**
  * Tells the server that an upload of a field failed, as Wicket's FileUploadToResourceField does.
  */
 function tell(source: string, error: string): void {
 	const url = callbackOf(source);
-	const ajax = wicket().Ajax as { post?: (attrs: object) => unknown } | undefined;
-	if (url && ajax?.post) {
-		ajax.post({ u: url, ep: { error: true, errorMessage: error } });
+	if (url) {
+		report(source, url, { error: true, errorMessage: error });
 	}
 }
 

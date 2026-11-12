@@ -1194,22 +1194,29 @@ describe('Wicket.RichTextEditor', () => {
 		expect(document.querySelector('.antilia-popover [role="option"]')!.textContent).toBe('S');
 	});
 
-	it('tells the server of the images taken out of the text, via Ajax', async () => {
+	it('tells the server of the images taken out of the text, via Ajax with the attributes it rendered', async () => {
 		await import('../src/wicket/rich-text-editor.js');
 		const global = window as unknown as { Wicket: Record<string, unknown> };
 		const Wicket = global.Wicket.RichTextEditor as WicketRichTextEditor;
-		const post = vi.fn();
+		const heard: unknown[] = [];
 		const ajax = global.Wicket.Ajax;
-		global.Wicket.Ajax = { post };
+		global.Wicket.Ajax = { Call: class {
+			ajax(attributes: unknown) {
+				heard.push(attributes);
+			}
+		} };
 		vi.useFakeTimers();
 		try {
 			textArea('<p>Text</p><img src="/a.png">');
-			const editor = Wicket.attach('notes', { imagesUrl: 'images?5' })!;
+			// the page veil leaves the request alone, by its extra parameter
+			const editor = Wicket.attach('notes', { imagesAjax: { u: 'images?5', m: 'POST',
+				c: 'notes', ep: { wicket_nb: 'true' } } })!;
 			const state = editor.editor.state;
 			editor.editor.view.dispatch(state.tr.delete(6, 7));
 			await vi.advanceTimersByTimeAsync(300);
-			expect(post).toHaveBeenCalledWith({ u: 'images?5', c: 'notes',
-				ep: [{ name: 'removed', value: '["/a.png"]' }] });
+			expect(heard).toEqual([{ u: 'images?5', m: 'POST', c: 'notes',
+				ep: [{ name: 'wicket_nb', value: 'true' },
+					{ name: 'removed', value: '["/a.png"]' }] }]);
 		} finally {
 			vi.useRealTimers();
 			global.Wicket.Ajax = ajax;
