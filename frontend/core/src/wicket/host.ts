@@ -65,6 +65,19 @@ function subscription<T>(topic: string | null, fallback: string,
 }
 
 /**
+ * Listens to a topic of Wicket.Event, /ajax/call/before for example.
+ *
+ * @param topic the name of the topic in Wicket.Event.Topic, AJAX_CALL_BEFORE for example
+ * @param fallback the topic itself, when Wicket.Event.Topic has no such name
+ * @param listener gets what the topic tells, the attributes of a request for example
+ * @returns stops listening; nothing to stop when the page has no Wicket.Event
+ */
+export function onWicketTopic<T>(topic: string, fallback: string,
+	listener: (payload: T) => void): Unsubscribe {
+	return subscription(topic, fallback, listener);
+}
+
+/**
  * The host backed by Wicket.Event and Wicket.Log.
  */
 export const wicketHost: Host = {

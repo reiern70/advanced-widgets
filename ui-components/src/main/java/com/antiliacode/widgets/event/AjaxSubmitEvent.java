@@ -39,7 +39,7 @@ import com.github.openjson.JSONObject;
  *
  * @since 11.0.0
  */
-public abstract class AjaxSubmitEvent extends AbstractDelayedClientEvent<AjaxSubmitEvent>
+public abstract class AjaxSubmitEvent extends AbstractAjaxRoundTripEvent<AjaxSubmitEvent>
 	implements IAjaxSubmitEvent
 {
 	private static final long serialVersionUID = 1L;

@@ -30,18 +30,8 @@ import com.github.openjson.JSONObject;
  * @see AjaxEvent
  * @since 11.0.0
  */
-public interface IAjaxEvent extends IClientEvent
+public interface IAjaxEvent extends IAjaxRoundTripEvent
 {
-	/**
-	 * @return the name of the JavaScript function the browser runs on the event,
-	 *         {@link #SEND_HANDLER} by default
-	 */
-	@Override
-	default String getEventClientHandlerName()
-	{
-		return SEND_HANDLER;
-	}
-
 	/**
 	 * Called when the browser sent the event.
 	 *

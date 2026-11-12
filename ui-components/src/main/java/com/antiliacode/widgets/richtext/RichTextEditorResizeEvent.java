@@ -55,7 +55,7 @@ public abstract class RichTextEditorResizeEvent extends AjaxEvent
 	 * What the browser runs: sends the width and the height, those the user gave the editor, else
 	 * those of the editor's box.
 	 */
-	static final String CLIENT_FUNCTION = "function(event,editor,send){" +
+	static final String CLIENT_FUNCTION = "function(event,editor,options,send){" +
 		"var s=(event.detail&&event.detail.size)||{}," +
 		"b=editor&&editor.element?editor.element.getBoundingClientRect():null;" +
 		"send({width:s.width!=null?s.width:(b?Math.round(b.width):null)," +

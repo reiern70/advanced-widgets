@@ -37,11 +37,16 @@ import com.github.openjson.JSONObject;
  * editor.setEvent(new SendStateEvent(RichTextEditorEvents.RESIZE).setDelay(Duration.ofSeconds(1)));
  * // and as the user saves
  * editor.addEvent(new SendStateEvent(RichTextEditorEvents.SAVE));
+ * // the page veil leaves the request on blur alone
+ * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR).setExtraParameter("_nb", "true"));
  * </pre>
+ *
+ * Besides, the page's other Ajax requests carry the state the editor did not send yet: the user
+ * scrolled it without focusing it, and the request of a check box redraws its form, for example.
  *
  * @since 11.0.0
  */
-public class SendStateEvent extends AbstractDelayedClientEvent<SendStateEvent>
+public class SendStateEvent extends AbstractAjaxRoundTripEvent<SendStateEvent>
 	implements IAjaxEvent
 {
 	private static final long serialVersionUID = 1L;
@@ -54,13 +59,22 @@ public class SendStateEvent extends AbstractDelayedClientEvent<SendStateEvent>
 
 	/**
 	 * The parameter of the requests of an editor's events holding its state, as JSON: what the
-	 * editor gives each of its events going to the server.
+	 * editor gives each of its events going to the server, and the page's other Ajax requests
+	 * when the editor did not send it yet, in
+	 * {@link ClientEventsBehavior#PENDING_PARAMETER_PREFIX the parameter of the editor}. Scripts
+	 * find the name in {@code Wicket.ClientEvents.parameters.state}.
+	 * <p>
+	 * Before 10.11.0-RC7 the editors sent the state as {@code state}, by a request of their own: a
+	 * script telling those requests by it no longer finds them. Mark the requests of the events
+	 * with {@link ClientEventsBehavior#updateAjaxAttributes} or an event's
+	 * {@link #setExtraParameter(String, String) extra parameters} instead.
 	 */
 	public static final String STATE_PARAMETER = "antilia-state";
 
 	/**
 	 * The parameter of the requests of an editor's events telling whether the text changed since
 	 * it was last sent: the editor then takes it from the text area, which Wicket's Ajax sends.
+	 * Scripts find the name in {@code Wicket.ClientEvents.parameters.textChanged}.
 	 */
 	public static final String TEXT_CHANGED_PARAMETER = "antilia-text-changed";
 

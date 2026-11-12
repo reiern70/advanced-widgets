@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
@@ -60,6 +61,7 @@ import com.antiliacode.widgets.codeeditor.CodeEditorState.Range;
 import com.antiliacode.widgets.event.AbstractDelayedClientEvent;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxUpdateEvent;
+import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.ClientEventsTester;
 import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
@@ -119,8 +121,8 @@ class CodeEditorTest extends WicketTestCase
 		}
 		assertEquals(6, page.editor.getEvents().size());
 		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:leave\",\"index\":5," +
-			"\"kind\":\"ajax\",\"delay\":-1," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\"\\}");
+			"\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\",\"ajax\":\\{");
 		tester.assertContains("values:function\\(editor\\)\\{return Wicket.CodeEditor\\?" +
 			"Wicket.CodeEditor.stateParameters\\(editor\\):\\{\\};\\}");
 		assertEquals(CodeEditorState.NONE, page.editor.getState());
@@ -208,6 +210,11 @@ class CodeEditorTest extends WicketTestCase
 		String response = tester.getLastResponseAsString();
 		assertTrue(response.indexOf("antilia-code-editor.js") < response.indexOf("log-grammar.js"));
 		assertEquals("log", options(editor).getString("language"));
+		// the events listen before the editor starts, hearing of its text as it starts, once
+		int listening = response.indexOf("Wicket.ClientEvents.attach(");
+		assertTrue(listening >= 0 && listening < response.indexOf("Wicket.CodeEditor.attach("),
+			response);
+		assertEquals(listening, response.lastIndexOf("Wicket.ClientEvents.attach("), response);
 	}
 
 	@Test
@@ -278,6 +285,37 @@ class CodeEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void takesTheStateNotSentFromThePagesOtherRequests()
+	{
+		List<String> attributes = new ArrayList<>();
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateEventAjaxAttributes(AjaxRequestAttributes given)
+			{
+				attributes.add(given.getMethod().toString());
+			}
+		}.removeEvents(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT, CodeEditorEvent.SCROLL);
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		tester.assertContains("pending:function\\(editor\\)\\{return Wicket.CodeEditor\\?" +
+			"Wicket.CodeEditor.pendingParameters\\(editor\\):null;\\}");
+		// those of the requests of the events, which post
+		assertFalse(attributes.isEmpty());
+		assertTrue(attributes.stream().allMatch("POST"::equals), attributes.toString());
+
+		page.action = target -> target.add(editor);
+		tester.getRequest().setParameter(ClientEventsBehavior.PENDING_PARAMETER_PREFIX +
+			editor.getMarkupId(), new JSONObject().put(SendStateEvent.STATE_PARAMETER,
+				"{\"scrollTop\":40}").toString());
+		tester.clickLink("act");
+		assertEquals(40, editor.getState().getScrollTop());
+		assertEquals(TEXT, editor.getModelObject());
+	}
+
+	@Test
 	void sendsTheStateWithTheEventsItIsGiven()
 	{
 		List<String> heard = new ArrayList<>();
@@ -293,8 +331,8 @@ class CodeEditorTest extends WicketTestCase
 		tester.startPage(page);
 		tester.assertContainsNot("\"eventName\":\"input\"");
 		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:blur\",\"index\":0," +
-			"\"kind\":\"ajax\",\"delay\":100," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\"\\}");
+			"\"delay\":100," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.sendState\",\"ajax\":\\{");
 		assertEquals(List.of(), editor.getEvents(CodeEditorEvent.INPUT));
 
 		// any event going to the server carries the state and the text, which the editor takes
@@ -361,11 +399,11 @@ class CodeEditorTest extends WicketTestCase
 		tester.startPage(page);
 
 		tester.assertContains("\\{\"eventName\":\"antilia-code-editor:save\",\"index\":7," +
-			"\"kind\":\"ajax\",\"delay\":-1," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+			"\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\",\"ajax\":\\{");
 		// typing waits until the user paused
-		tester.assertContains("\\{\"eventName\":\"input\",\"index\":1,\"kind\":\"ajax\"," +
-			"\"delay\":500,\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+		tester.assertContains("\\{\"eventName\":\"input\",\"index\":1," +
+			"\"delay\":500,\"eventClientHandlerName\":\"Wicket.ClientEvents.send\",\"ajax\":\\{");
 
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(),
 			"class C {}\n");
@@ -386,6 +424,7 @@ class CodeEditorTest extends WicketTestCase
 		assertEquals("antilia-code-editor:scroll", CodeEditorEvent.SCROLL.getEventName());
 		assertEquals("antilia-code-editor:leave", CodeEditorEvent.LEAVE.getEventName());
 		assertEquals("antilia-code-editor:discard", CodeEditorEvent.DISCARD.getEventName());
+		assertEquals("antilia-code-editor:text", CodeEditorEvent.TEXT.getEventName());
 	}
 
 	@Test

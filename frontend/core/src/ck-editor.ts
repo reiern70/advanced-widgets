@@ -1758,6 +1758,26 @@ export class CKEditor {
 	}
 
 	/**
+	 * Takes the state to send without the text, as sent, when it changed since it was last sent,
+	 * or since the page gave it: the page's other requests carry it so, which do not send the
+	 * text. The text stays unsent, for the editor's next event. Fires the event state.
+	 *
+	 * @returns the state, null when it was sent already
+	 */
+	takeUnsentState(): RichTextEditorState | null {
+		if (this.destroyed) {
+			return null;
+		}
+		const state = this.getState();
+		if (sameState(state, this.reported ?? this.started)) {
+			return null;
+		}
+		this.reported = state;
+		this.dispatch('state', { state });
+		return state;
+	}
+
+	/**
 	 * @param leaving whether the page is going, for onStateChange; undefined not to call it
 	 */
 	private take(leaving?: boolean): { state: RichTextEditorState; changed: boolean } {

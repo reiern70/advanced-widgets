@@ -154,7 +154,7 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * the editor loses the focus and, in a beacon, as the page goes, by the
  * {@link com.antiliacode.widgets.event.SendStateEvent}s the editor listens to, which a page takes
  * away or puts others in the place of
- * ({@link #removeEvents(com.antiliacode.widgets.event.IClientEventName)},
+ * ({@link #removeEvents(com.antiliacode.widgets.event.IClientEventName...)},
  * {@link #setEvent(com.antiliacode.widgets.event.IClientEvent)}). Rendered again, or shown again
  * after the user came back to the page with a state model of the session, the editor takes the
  * state up again.

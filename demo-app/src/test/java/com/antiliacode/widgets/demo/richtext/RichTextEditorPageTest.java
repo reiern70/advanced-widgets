@@ -274,11 +274,11 @@ class RichTextEditorPageTest
 			"Change the headings of the article: the server hears of its outline.");
 		// the built-in type waits for the user to finish selecting; the page's own has a script
 		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:selected-text\"," +
-			"\"index\":\\d+,\"kind\":\"ajax\",\"delay\":500," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+			"\"index\":\\d+,\"delay\":500," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\",\"ajax\":\\{");
 		tester.assertContains("\\{\"eventName\":\"rich-text-demo:outline\",\"index\":\\d+," +
-			"\"kind\":\"ajax\",\"delay\":-1," +
-			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\"\\}");
+			"\"delay\":-1," +
+			"\"eventClientHandlerName\":\"Wicket.ClientEvents.send\",\"ajax\":\\{");
 		tester.assertContains("OutlineEvent/outline-event");
 
 		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
@@ -315,8 +315,24 @@ class RichTextEditorPageTest
 	{
 		editor(EDITOR);
 		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:modified\"," +
-			"\"index\":\\d+,\"kind\":\"client\"," +
+			"\"index\":\\d+," +
 			"\"eventHandlerClientSideCode\":function\\(event\\)\\{var title=document.title");
+	}
+
+	@Test
+	void countsTheCharactersOfTheNotesInTheBrowser()
+	{
+		editor(NOTES);
+		String counter = tester.getComponentFromLastRenderedPage(
+			inCase("notesTitle", "notesForm:notesCount")).getMarkupId();
+		// code taking no send, where and what to write as properties of the event, and no
+		// attributes of requests: it stays in the browser
+		tester.assertContains("\\{\"eventName\":\"antilia-rich-text-editor:text\"," +
+			"\"index\":\\d+,\"counterId\":\"" + counter + "\"," +
+			"\"eventHandlerClientSideCode\":" + Pattern.quote(CharacterCountEvent.CLIENT_FUNCTION) +
+			",\"message\":\"Characters: \\{0\\}\"\\}");
+		assertTrue(CharacterCountEvent.CLIENT_FUNCTION.startsWith(
+			"function(event,editor,options){"));
 	}
 
 	@Test

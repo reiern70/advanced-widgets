@@ -34,18 +34,8 @@ import com.github.openjson.JSONObject;
  * @see AjaxUpdateEvent
  * @since 11.0.0
  */
-public interface IAjaxUpdateEvent extends IClientEvent
+public interface IAjaxUpdateEvent extends IAjaxRoundTripEvent
 {
-	/**
-	 * @return the name of the JavaScript function the browser runs on the event,
-	 *         {@link #SEND_HANDLER} by default
-	 */
-	@Override
-	default String getEventClientHandlerName()
-	{
-		return SEND_HANDLER;
-	}
-
 	/**
 	 * Called when the browser sent the event, once the model of the component got what the user
 	 * entered.
