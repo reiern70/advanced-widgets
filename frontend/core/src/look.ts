@@ -101,6 +101,7 @@ const PARTS = {
 	'table-selection': ['base', 'ant-data-table-selection', ''],
 	'table-select': ['base', 'ant-data-table-select', 'form-check-input'],
 	'table-select-page': ['base', 'ant-data-table-select-page', 'form-check-input'],
+	'table-check': ['base', 'ant-data-table-check', 'form-check-input'],
 	'table-body': ['base', 'ant-data-table-body', ''],
 	'table-body-row': ['base', 'ant-data-table-body-row', ''],
 	'table-body-cell': ['base', 'ant-data-table-body-cell', ''],
