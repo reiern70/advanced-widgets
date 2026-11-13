@@ -171,10 +171,17 @@ const DISABLED_ACTION_CLASS = 'ant-data-table-action-disabled';
 const DISABLED_ACTIONS_ATTRIBUTE = 'data-dt-disabled-actions';
 
 /**
+ * The attribute of an element carrying an action whose text stays, as plain text, on a row the
+ * action is left out of or disabled on: the value of a cell shown as the link of an action.
+ */
+const UNAVAILABLE_ATTRIBUTE = 'data-dt-unavailable';
+
+/**
  * Removes the elements of a row carrying an action left out of it, and disables those carrying an
  * action disabled on it: aria-disabled, a class greying them out and the reason as their title
  * and description. They stay focusable, so that the reason can be read; clicks on them are
- * ignored.
+ * ignored. An element marked data-dt-unavailable="text" is replaced by its content instead, in
+ * both cases.
  */
 function applyRowActions(tr: HTMLElement, actions: DataTableRowActions | null | undefined): void {
 	const hidden = actions?.hiddenActions ?? [];
@@ -184,7 +191,11 @@ function applyRowActions(tr: HTMLElement, actions: DataTableRowActions | null | 
 	}
 	tr.querySelectorAll<HTMLElement>('[data-dt-action]').forEach((element) => {
 		const action = element.getAttribute('data-dt-action')!;
-		if (hidden.includes(action)) {
+		const unavailable = hidden.includes(action) ||
+			Object.prototype.hasOwnProperty.call(disabled, action);
+		if (unavailable && element.getAttribute(UNAVAILABLE_ATTRIBUTE) === 'text') {
+			element.replaceWith(...Array.from(element.childNodes));
+		} else if (hidden.includes(action)) {
 			element.remove();
 		} else if (Object.prototype.hasOwnProperty.call(disabled, action)) {
 			element.setAttribute('aria-disabled', 'true');

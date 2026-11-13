@@ -26,7 +26,7 @@ import org.apache.wicket.util.lang.Args;
 /**
  * The column of a {@link BeanBasedDynamicDataTable} with row actions, the counterpart of a
  * {@link CompoundDynamicColumn} of {@link IAjaxActionColumnContributor}s such as
- * {@link IconBasedRowAction}s: every cell shows the markup of each contributor
+ * {@link IconBasedRowAction}s and {@link TextRowAction}s: every cell shows the markup of each contributor
  * {@link IAjaxActionColumnContributor#isVisible(Object) visible} on its row, one after the other,
  * a row none is visible on having an empty cell; the browser disables those that are not
  * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on the row. The table registers the contributors and dispatches
@@ -43,7 +43,10 @@ import org.apache.wicket.util.lang.Args;
  *            the type of the sort properties
  * @since 11.0.0
  */
-public class BeanActionsColumn<T, S> extends AbstractColumn<T, S> implements IFixedWidthColumn
+public class BeanActionsColumn<T, S> extends AbstractColumn<T, S>
+	implements
+		IFixedWidthColumn,
+		IRowActionColumn<T>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -66,6 +69,15 @@ public class BeanActionsColumn<T, S> extends AbstractColumn<T, S> implements IFi
 	 * @return the actions, in display order
 	 */
 	public List<IAjaxActionColumnContributor<T>> getContributors()
+	{
+		return contributors;
+	}
+
+	/**
+	 * @return the {@link #getContributors() actions}, which the table registers
+	 */
+	@Override
+	public List<IAjaxActionColumnContributor<T>> getActionContributors()
 	{
 		return contributors;
 	}

@@ -572,6 +572,33 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * @param actionId
+	 *            the id of an action
+	 * @return the contributor registered for the action, or {@code null} if there is none
+	 * @since 11.0.0
+	 */
+	public IAjaxActionColumnContributor<T> getActionContributor(String actionId)
+	{
+		return actionContributors.get(actionId);
+	}
+
+	/**
+	 * @param contributor
+	 *            an action
+	 * @param row
+	 *            a row
+	 * @return whether the action can be run on the row: it is both
+	 *         {@link IAjaxActionColumnContributor#isVisible(Object) visible} and
+	 *         {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on it, and so shown
+	 *         and usable there
+	 * @since 11.0.0
+	 */
+	public static <T> boolean isAvailable(IAjaxActionColumnContributor<T> contributor, T row)
+	{
+		return isActionAvailable(contributor, row);
+	}
+
+	/**
 	 * Returns the actions registered with the table that are not
 	 * {@link IAjaxActionColumnContributor#isVisible(Object) visible} on a row. A
 	 * {@link JsonBasedDynamicDataTable} sends them with the row, and the browser removes the

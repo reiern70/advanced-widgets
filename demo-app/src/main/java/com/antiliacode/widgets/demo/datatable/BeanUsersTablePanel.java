@@ -37,6 +37,7 @@ import org.danekja.java.util.function.serializable.SerializableSupplier;
 import com.antiliacode.widgets.clipboard.ClipboardCopyBehavior;
 import com.antiliacode.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable;
+import com.antiliacode.widgets.dynamicdatatable.BeanActionLinkColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanActionsColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.BeanRowNumberColumn;
@@ -90,7 +91,8 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			footer -> new Label(footer, new StringResourceModel("footer.users")
 				.setParameters(provider.size())),
 			() -> footerText("footer.users", provider.size())));
-		columns.add(new UserColumn("lastName", "lastName", User::getLastName));
+		// the last name is the link of the edit action of the actions column
+		columns.add(new EditLinkColumn("lastName", "lastName", User::getLastName));
 		columns.add(new FooterUserColumn("bornDate", "bornDate",
 			user -> Objects.toString(bornOn(user), ""), footer -> {
 				Long age = provider.getAverageAge();
@@ -160,6 +162,24 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			SerializableFunction<User, ?> value)
 		{
 			super(new ResourceModel(headerKey), sortProperty, value);
+		}
+	}
+
+	/**
+	 * A value of the user as the link of the edit action, which the user can hide and move like
+	 * the other columns.
+	 */
+	private static class EditLinkColumn extends BeanActionLinkColumn<User, String>
+		implements
+			IHideableColumn,
+			IMovableColumn
+	{
+		private static final long serialVersionUID = 1L;
+
+		EditLinkColumn(String headerKey, String sortProperty, SerializableFunction<User, ?> value)
+		{
+			super(new ResourceModel(headerKey), value, "edit");
+			setSortProperty(sortProperty);
 		}
 	}
 
