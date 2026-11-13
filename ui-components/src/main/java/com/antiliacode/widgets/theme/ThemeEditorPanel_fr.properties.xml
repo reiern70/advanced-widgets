@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="className">Nom de la classe</entry>
+	<entry key="css">Votre thème&#160;:</entry>
+	<entry key="copy">Copier dans le presse-papiers</entry>
+	<entry key="property.primary">les en-têtes, la barre d’une barre de progression</entry>
+	<entry key="property.primary-dark">les bordures et les dégradés à côté de la couleur principale</entry>
+	<entry key="property.on-primary">le texte sur la couleur principale</entry>
+	<entry key="property.accent">les liens, le focus et les indicateurs de glissement</entry>
+	<entry key="property.text">le texte</entry>
+	<entry key="property.surface">le fond du contenu, comme les lignes</entry>
+	<entry key="property.surface-alt">le fond alterné, comme une ligne sur deux</entry>
+	<entry key="property.hover">le fond du contenu sous le pointeur</entry>
+	<entry key="property.selected">le fond du contenu sélectionné</entry>
+	<entry key="property.highlight">le fond des avis</entry>
+	<entry key="property.toolbar">le fond des barres d’outils</entry>
+	<entry key="property.border">les bordures</entry>
+	<entry key="property.progress">la partie remplie d’une barre de progression</entry>
+	<entry key="property.progress-dark">la fin du dégradé de la partie remplie</entry>
+	<entry key="property.track">la partie vide d’une barre de progression</entry>
+	<entry key="property.veil">l’assombrissement du contenu bloqué par un voile ou une boîte de dialogue</entry>
+	<entry key="property.color-scheme">le jeu de couleurs des contrôles de formulaire</entry>
+	<entry key="property.success">la couleur de ce qui a réussi, comme une notification de succès</entry>
+	<entry key="property.error">la couleur de ce qui a échoué, comme une notification d’erreur</entry>
+	<entry key="property.warning">la couleur de ce qui demande de l’attention, comme un avertissement</entry>
+	<entry key="property.info">la couleur de l’information, comme une notification d’information</entry>
+</properties>
