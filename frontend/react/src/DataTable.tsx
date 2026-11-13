@@ -105,8 +105,11 @@ export interface DataTableProps {
 export interface DataTableHandle {
 	/** Loads the rows shown again. */
 	reload(): Promise<void>;
-	/** Repaints one row with new data, in place; a row the table does not show is ignored. */
-	renderRow(key: string, data: unknown): void;
+	/**
+	 * Repaints one row with new data, in place, hiding the elements of the actions that do not
+	 * apply to it; a row the table does not show is ignored.
+	 */
+	renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void;
 	/** The keys of the selected rows. */
 	selectedKeys(): string[];
 	/** Deselects every row. */
@@ -329,7 +332,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	useEffect(() => props.subscribe?.((message) => {
 		const table = instance.current;
 		if (message.type === 'updateRow') {
-			table?.renderRow(message.key, message.data);
+			table?.renderRow(message.key, message.data, message.hiddenActions);
 		} else if (message.type === 'updateRows') {
 			table?.render(message.rows);
 		} else {
@@ -339,7 +342,8 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 
 	useImperativeHandle(ref, () => ({
 		reload: () => instance.current?.load() ?? Promise.resolve(),
-		renderRow: (key, data) => instance.current?.renderRow(key, data),
+		renderRow: (key, data, hiddenActions) =>
+			instance.current?.renderRow(key, data, hiddenActions),
 		selectedKeys: () => Array.from(instance.current?.selectedKeys ?? []),
 		clearSelection
 	}), []);

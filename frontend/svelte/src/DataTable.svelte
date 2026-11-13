@@ -312,7 +312,7 @@
 
 	$effect(() => subscribe?.((message) => {
 		if (message.type === 'updateRow') {
-			instance?.renderRow(message.key, message.data);
+			instance?.renderRow(message.key, message.data, message.hiddenActions);
 		} else if (message.type === 'updateRows') {
 			instance?.render(message.rows);
 		} else {
@@ -334,9 +334,12 @@
 		return instance?.load() ?? Promise.resolve();
 	}
 
-	/** Repaints one row with new data, in place; a row the table does not show is ignored. */
-	export function renderRow(key: string, data: unknown): void {
-		instance?.renderRow(key, data);
+	/**
+	 * Repaints one row with new data, in place, hiding the elements of the actions that do not
+	 * apply to it; a row the table does not show is ignored.
+	 */
+	export function renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void {
+		instance?.renderRow(key, data, hiddenActions);
 	}
 
 	/** The keys of the selected rows. */
