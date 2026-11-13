@@ -39,6 +39,7 @@ import com.antiliacode.widgets.dynamicdatatable.AbstractDynamicToolbar;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.BeanActionsColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
+import com.antiliacode.widgets.dynamicdatatable.BeanProgressBarColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanRowNumberColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanSelectionColumn;
 import com.antiliacode.widgets.dynamicdatatable.IFixedWidthColumn;
@@ -73,7 +74,7 @@ public class BeanUsersTablePanel extends UsersTablePanel
 	@Override
 	public double[] getColumnProportions()
 	{
-		return new double[] { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.0, 2.4,
+		return new double[] { 0.4, 0.4, 1.1, 0.5, 1.1, 1.1, 0.9, 2.0, 2.4, 1.3,
 			1.1, 1.1, 1.0, 1.0 };
 	}
 
@@ -101,6 +102,7 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
 		columns.add(new PhonesColumn());
+		columns.add(new ProgressColumn());
 		List<IColumn<User, String>> hidden = List.of(
 			new UserColumn("homePhone", null, User::getHomePhone),
 			new UserColumn("cellPhone", null, User::getCellPhone),
@@ -160,6 +162,22 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			SerializableFunction<User, ?> value)
 		{
 			super(new ResourceModel(headerKey), sortProperty, value);
+		}
+	}
+
+	/**
+	 * The progress of the user as a bar, which the user can hide and move like the other columns.
+	 */
+	private static class ProgressColumn extends BeanProgressBarColumn<User, String>
+		implements
+			IHideableColumn,
+			IMovableColumn
+	{
+		private static final long serialVersionUID = 1L;
+
+		ProgressColumn()
+		{
+			super(new ResourceModel("progress"), User::getProgress);
 		}
 	}
 
