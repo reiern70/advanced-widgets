@@ -48,7 +48,9 @@ import jakarta.servlet.http.HttpServletRequest;
  * currentPage}}, the rows as the {@link #getJsonSerializer() serializer} writes them,
  * {@code hiddenActions} and {@code disabledActions} only for a row with
  * {@link #getHiddenActions(Object) actions left out} or {@link #getDisabledActions(Object)
- * disabled}.
+ * disabled}. If the provider is an {@link IFooterDataProvider}, the answer has its
+ * {@link IFooterDataProvider#footer() footer} too, as {@code footer}, for the footer row of the
+ * table.
  * <p>
  * Mount it like any resource, for example
  * {@code mountResource("api/users", new ResourceReference("users") { ... getResource() ... })},
@@ -511,6 +513,10 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 			data.put("rows", rows);
 			data.put("itemCount", itemCount);
 			data.put("currentPage", first / count);
+			if (provider instanceof IFooterDataProvider footer)
+			{
+				data.put("footer", footer.footer());
+			}
 			return json(200, data);
 		}
 		finally

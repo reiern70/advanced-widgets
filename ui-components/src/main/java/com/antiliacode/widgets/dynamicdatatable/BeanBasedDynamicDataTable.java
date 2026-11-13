@@ -42,12 +42,14 @@ import com.github.openjson.JSONObject;
  * and exported to CSV if it is an {@link IExportableColumn}. A column the user must not resize is
  * marked {@link IFixedWidthColumn};
  * {@link com.antiliacode.widgets.table.IMovableColumn} and
- * {@link IHideableColumn} mark the columns the user can move and hide. {@link BeanSelectionColumn}, {@link BeanRowNumberColumn}
+ * {@link IHideableColumn} mark the columns the user can move and hide, and an
+ * {@link IFooterColumn} has a value, such as a total, in the footer row under the rows.
+ * {@link BeanSelectionColumn}, {@link BeanRowNumberColumn}
  * and {@link BeanActionsColumn} are the counterparts of {@link SelectionColumn},
  * {@link RowNumberColumn} and a {@link CompoundDynamicColumn} of row actions.
  * <p>
  * Changing the page, sorting or {@link #refresh(IPartialPageRequestHandler) refreshing} renders
- * the rows again via Ajax, not the whole table.
+ * the rows again via Ajax, and the footer, not the whole table.
  *
  * @param <T>
  *            the type of the rows
@@ -126,6 +128,24 @@ public class BeanBasedDynamicDataTable<T, K extends Serializable, S>
 	protected Component newHeader(String id, IColumn<T, S> column)
 	{
 		return column.getHeader(id);
+	}
+
+	/**
+	 * @return whether the column is an {@link IFooterColumn}
+	 */
+	@Override
+	protected boolean hasFooter(IColumn<T, S> column)
+	{
+		return column instanceof IFooterColumn;
+	}
+
+	/**
+	 * @return the {@link IFooterColumn#newFooter(String) footer} of an {@link IFooterColumn}
+	 */
+	@Override
+	protected Component newFooter(String id, IColumn<T, S> column)
+	{
+		return column instanceof IFooterColumn<?> footer ? footer.newFooter(id) : null;
 	}
 
 	/**

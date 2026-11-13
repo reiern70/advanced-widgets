@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
@@ -102,13 +103,16 @@ public class JsonUsersTablePanel extends UsersTablePanel
 				return false;
 			}
 		}.setExportValue(User::getId).setId("id"));
+		// the footer: how many users the filter lets through, and their average age, as the
+		// provider gives them
 		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("firstName", "FirstNameColumn", User::getFirstName), "firstName"));
+			new TemplateColumn("firstName", "FirstNameColumn", User::getFirstName)
+				.setFooter("footer.users", "users"), "firstName"));
 		columns.add(new SortableDynamicColumn<>(
 			new TemplateColumn("lastName", "LastNameColumn", User::getLastName), "lastName"));
 		columns.add(new SortableDynamicColumn<>(
-			new TemplateColumn("bornDate", "BornDateColumn", UsersTablePanel::bornOn),
-			"bornDate"));
+			new TemplateColumn("bornDate", "BornDateColumn", UsersTablePanel::bornOn)
+				.setFooter("footer.age", "averageAge"), "bornDate"));
 		columns.add(new TemplateColumn("address", "AddressColumn",
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
@@ -187,12 +191,34 @@ public class JsonUsersTablePanel extends UsersTablePanel
 	{
 		private static final long serialVersionUID = 1L;
 
+		private String footerKey;
+
+		private String footerProperty;
+
 		TemplateColumn(String headerKey, String templateName,
 			SerializableFunction<User, ?> exportValue)
 		{
 			super(new ResourceModel(headerKey), JsonUsersTablePanel.class, templateName);
 			setId(headerKey);
 			setExportValue(exportValue);
+		}
+
+		/**
+		 * Gives the column a value in the footer: the text of a resource key, its {@code {0}}
+		 * the property of the footer data of the table.
+		 */
+		TemplateColumn setFooter(String footerKey, String footerProperty)
+		{
+			this.footerKey = footerKey;
+			this.footerProperty = footerProperty;
+			return this;
+		}
+
+		@Override
+		public String getFooterTemplate(JsonBasedDynamicDataTable<User, ?> table)
+		{
+			return footerKey != null ? new StringResourceModel(footerKey, table)
+				.setParameters("{{" + footerProperty + "}}").getObject() : null;
 		}
 	}
 

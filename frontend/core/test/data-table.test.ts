@@ -104,6 +104,42 @@ describe('DynamicDataTable', () => {
 		fetch.mockRestore();
 	});
 
+	it('fills the footer cells of the columns with a footer template with the footer data that comes with the rows', async () => {
+		const load = vi.fn((more: boolean) => Promise.resolve<DataTableData>({
+			rows: rows(more ? 3 : 1, 2), itemCount: 4, currentPage: 0,
+			footer: { total: more ? '<4>' : '<2>' } }));
+		const cfg = config({ load, bodyHeight: { value: 200, unit: 'px' }, columns: [
+			{ template: '{{name}}' },
+			{ template: '{{city}}', footerTemplate: '<b>{{total}}</b> cities' }
+		] });
+		document.querySelector('#table')!.insertAdjacentHTML('beforeend',
+			'<tfoot><tr class="ant-data-table-footer"><td>keep</td><td></td></tr></tfoot>');
+		const footer = () => Array.from(document.querySelectorAll('#table > tfoot td'),
+			(td) => td.innerHTML);
+		const table = new DynamicDataTable(cfg, () => undefined);
+		await vi.waitFor(() => expect(footer()[1]).toBe('<b>&lt;2&gt;</b> cities'));
+		expect(footer()[0]).toBe('keep');
+
+		await table.loadMore();
+		expect(footer()[1]).toBe('<b>&lt;4&gt;</b> cities');
+
+		table.update({ rows: rows(1, 2), itemCount: 2 });
+		expect(footer()[1]).toBe('<b>&lt;4&gt;</b> cities');
+
+		table.update({ rows: rows(1, 2), itemCount: 2, footer: null });
+		expect(footer()[1]).toBe('<b></b> cities');
+	});
+
+	it('ignores the footer data without a footer row', () => {
+		const table = new DynamicDataTable(config({ columns: [
+			{ template: '{{name}}', footerTemplate: '{{total}}' },
+			{ template: '{{city}}' }
+		] }), () => undefined, null, null, { rows: rows(1, 2), itemCount: 2, footer: { total: 3 } });
+
+		expect(table.footerRow()).toBeNull();
+		expect(cells()).toEqual([['User 1', 'City <1>'], ['User 2', 'City <2>']]);
+	});
+
 	it('reports the action of a clicked element with the key of its row', () => {
 		const action = vi.fn();
 		new DynamicDataTable(config(), action, null, null, { rows: rows(1, 2), itemCount: 2 });
