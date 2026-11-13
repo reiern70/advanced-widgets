@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -290,6 +291,21 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 
 		assertEquals(List.of(2L), pay.paid);
 		assertEquals(List.of("pay 1 Person <1>"), table.notFound);
+	}
+
+	@Test
+	void speaksFrenchInAFrenchSession()
+	{
+		tester.getSession().setLocale(Locale.FRENCH);
+		start(5);
+		table.setItemsPerPageOptions(2L, 5L);
+		tester.startPage(tester.getLastRenderedPage());
+
+		tester.assertContains("Affichage de 1 à 2 sur 5");
+		tester.assertContains("Lignes par page");
+		tester.assertContains("aria-label=\"Sélectionner la ligne\"");
+		tester.assertContains("aria-label=\"Sélectionner toutes les lignes de cette page\"");
+		tester.assertContains("title=\"Page suivante\"");
 	}
 
 	private void start(int people, List<? extends IAjaxActionColumnContributor<Person>> actions)
