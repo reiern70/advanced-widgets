@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +88,7 @@ class JsonRowsResourceTest extends WicketTestCase
 	}
 
 	@Test
-	void sendsTheActionsThatDoNotApplyToARowWithIt()
+	void sendsTheActionsLeftOutOfARowAndThoseDisabledOnItWithIt()
 	{
 		JSONObject json = fetch("api/fruits?first=1&count=2&sort=name&ascending=false&filter=e");
 
@@ -95,6 +96,9 @@ class JsonRowsResourceTest extends WicketTestCase
 		JSONArray rows = json.getJSONArray("rows");
 		assertFalse(rows.getJSONObject(0).has("hiddenActions"), rows.toString());
 		assertEquals("peel", rows.getJSONObject(1).getJSONArray("hiddenActions").getString(0));
+		assertEquals("Not ripe", rows.getJSONObject(0).getJSONObject("disabledActions")
+			.getString("eat"));
+		assertFalse(rows.getJSONObject(1).has("disabledActions"), rows.toString());
 	}
 
 	@Test
@@ -229,6 +233,12 @@ class JsonRowsResourceTest extends WicketTestCase
 		protected List<String> getHiddenActions(Fruit row)
 		{
 			return "Cherry".equals(row.getName()) ? List.of("peel") : List.of();
+		}
+
+		@Override
+		protected Map<String, String> getDisabledActions(Fruit row)
+		{
+			return "Melon".equals(row.getName()) ? Map.of("eat", "Not ripe") : Map.of();
 		}
 	}
 

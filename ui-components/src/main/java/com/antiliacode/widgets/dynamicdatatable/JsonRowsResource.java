@@ -44,9 +44,11 @@ import jakarta.servlet.http.HttpServletRequest;
  * {@value #SORT} and {@value #ASCENDING} (the sort property and order, if the table is sorted),
  * plus those of {@link JsonBasedDynamicDataTable#addRowsParameters(PageParameters)}, such as a
  * filter. {@link #newProvider(PageParameters)} turns them into the provider of the rows; the
- * answer is {@code {rows: [{key, number, data, hiddenActions}], itemCount, currentPage}}, the rows
- * as the {@link #getJsonSerializer() serializer} writes them, {@code hiddenActions} only for a row
- * with {@link #getHiddenActions(Object) actions that do not apply to it}.
+ * answer is {@code {rows: [{key, number, data, hiddenActions, disabledActions}], itemCount,
+ * currentPage}}, the rows as the {@link #getJsonSerializer() serializer} writes them,
+ * {@code hiddenActions} and {@code disabledActions} only for a row with
+ * {@link #getHiddenActions(Object) actions left out} or {@link #getDisabledActions(Object)
+ * disabled}.
  * <p>
  * Mount it like any resource, for example
  * {@code mountResource("api/users", new ResourceReference("users") { ... getResource() ... })},
@@ -174,19 +176,36 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 	}
 
 	/**
-	 * Returns the actions that do not {@link IAjaxActionColumnContributor#isVisible(Object) apply}
-	 * to a row, sent with it so that the browser hides the elements of the row carrying them. The
-	 * resource does not know the actions of the table, so one whose actions apply only to some
-	 * rows says which here, for example with
+	 * Returns the actions that are not {@link IAjaxActionColumnContributor#isVisible(Object)
+	 * visible} on a row, sent with it so that the browser removes the elements of the row carrying
+	 * them. The resource does not know the actions of the table, so one whose actions apply only
+	 * to some rows says which here, for example with
 	 * {@code row.isScheduled() ? List.of() : List.of("cancel")}. None by default.
 	 *
 	 * @param row
 	 *            the row
-	 * @return the ids of the actions, empty if all of them apply
+	 * @return the ids of the actions, empty if all of them are visible
 	 */
 	protected List<String> getHiddenActions(T row)
 	{
 		return List.of();
+	}
+
+	/**
+	 * Returns the actions that are visible on a row but not
+	 * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled}, with the reason of each,
+	 * sent with the row so that the browser disables the elements of the row carrying them, for
+	 * example with {@code row.isIssued() ? Map.of("issue", "Already issued") : Map.of()}. None by
+	 * default.
+	 *
+	 * @param row
+	 *            the row
+	 * @return the reason of each action by its id, an empty reason keeping the action's own
+	 *         tooltip; empty if all the visible actions are enabled
+	 */
+	protected Map<String, String> getDisabledActions(T row)
+	{
+		return Map.of();
 	}
 
 	/**
@@ -349,6 +368,11 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 		if (hiddenActions != null && hiddenActions.isEmpty() == false)
 		{
 			entry.put("hiddenActions", hiddenActions);
+		}
+		Map<String, String> disabledActions = getDisabledActions(row);
+		if (disabledActions != null && disabledActions.isEmpty() == false)
+		{
+			entry.put("disabledActions", disabledActions);
 		}
 		return entry;
 	}

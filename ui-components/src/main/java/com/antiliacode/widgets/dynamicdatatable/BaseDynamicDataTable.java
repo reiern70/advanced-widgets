@@ -227,12 +227,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	public static final String OVERLAY_CONTENT_ID = "content";
 
 	/**
-	 * The CSS class the browser gives the elements of a row of a {@link JsonBasedDynamicDataTable}
-	 * carrying an action that does not
-	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row; the table's style
-	 * sheet hides them.
+	 * The CSS class the browser gives the elements of a row carrying an action that is not
+	 * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on the row, besides
+	 * {@code aria-disabled="true"}; the table's style sheet greys them out.
 	 */
-	public static final String HIDDEN_ACTION_CSS_CLASS = "ant-data-table-action-hidden";
+	public static final String DISABLED_ACTION_CSS_CLASS = "ant-data-table-action-disabled";
 
 	/** The CSS class of the table. */
 	public static final String CSS_CLASS = "ant-data-table";
@@ -527,15 +526,15 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
-	 * Returns the actions registered with the table that do not
-	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to a row. A
-	 * {@link JsonBasedDynamicDataTable} sends them with the row, and the browser hides the elements
-	 * carrying them in the row.
+	 * Returns the actions registered with the table that are not
+	 * {@link IAjaxActionColumnContributor#isVisible(Object) visible} on a row. A
+	 * {@link JsonBasedDynamicDataTable} sends them with the row, and the browser removes the
+	 * elements carrying them from the row.
 	 *
 	 * @param row
 	 *            the row
 	 * @return the ids of the actions, in the order they were registered, empty if all of them
-	 *         apply
+	 *         are visible
 	 */
 	public List<String> getHiddenActions(T row)
 	{
@@ -552,11 +551,60 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * Returns the actions registered with the table that are visible on a row but not
+	 * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled}, with the
+	 * {@link IAjaxActionColumnContributor#getDisabledReason(Object) reason} of each. Both tables
+	 * send them with the row, and the browser disables the elements carrying them in the row.
+	 *
+	 * @param row
+	 *            the row
+	 * @return the reason of each action by its id, in the order the actions were registered, an
+	 *         empty reason for an action without one; empty if all the visible actions are enabled
+	 */
+	public Map<String, String> getDisabledActions(T row)
+	{
+		Args.notNull(row, "row");
+		Map<String, String> disabled = new LinkedHashMap<>();
+		for (IAjaxActionColumnContributor<T> contributor : actionContributors.values())
+		{
+			if (contributor.isVisible(row) && contributor.isEnabled(row) == false)
+			{
+				IModel<String> reason = contributor.getDisabledReason(row);
+				String text = null;
+				if (reason != null)
+				{
+					try
+					{
+						text = IconBasedRowAction.resolve(reason, this);
+					}
+					finally
+					{
+						reason.detach();
+					}
+				}
+				disabled.put(contributor.getActionId(), text != null ? text : "");
+			}
+		}
+		return disabled;
+	}
+
+	/**
+	 * @return whether the action can be run on the row: it is both
+	 *         {@link IAjaxActionColumnContributor#isVisible(Object) visible} and
+	 *         {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on it
+	 */
+	static <T> boolean isActionAvailable(IAjaxActionColumnContributor<T> contributor, T row)
+	{
+		return contributor.isVisible(row) && contributor.isEnabled(row);
+	}
+
+	/**
 	 * Dispatches a click on an element with a {@code data-dt-action} attribute to the
 	 * {@link IAjaxActionColumnContributor} registered for the action, or to
 	 * {@link #onNotFoundAction(AjaxRequestTarget, String, Serializable, Object)} if there is none,
-	 * the row no longer exists or the action does not
-	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row.
+	 * the row no longer exists or the action is not
+	 * {@link IAjaxActionColumnContributor#isVisible(Object) visible} or not
+	 * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on the row.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -571,7 +619,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	protected final void onAction(AjaxRequestTarget target, String action, K key, T row)
 	{
 		IAjaxActionColumnContributor<T> contributor = actionContributors.get(action);
-		if (contributor == null || row == null || contributor.isVisible(row) == false)
+		if (contributor == null || row == null || isActionAvailable(contributor, row) == false)
 		{
 			onNotFoundAction(target, action, key, row);
 		}
@@ -584,8 +632,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	/**
 	 * Called when a click cannot be dispatched: the row no longer exists, for example because it
 	 * was deleted after it was rendered, no contributor is registered for the action, or the
-	 * action does not {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row, for
-	 * example because the row changed after it was rendered. Does nothing by default.
+	 * action is not {@link IAjaxActionColumnContributor#isVisible(Object) visible} or not
+	 * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on the row, for example
+	 * because the row changed after it was rendered. Does nothing by default.
 	 * <p>
 	 * Both the action and the key come from the browser.
 	 *

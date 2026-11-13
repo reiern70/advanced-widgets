@@ -27,8 +27,9 @@ import org.apache.wicket.util.lang.Args;
  * The column of a {@link BeanBasedDynamicDataTable} with row actions, the counterpart of a
  * {@link CompoundDynamicColumn} of {@link IAjaxActionColumnContributor}s such as
  * {@link IconBasedRowAction}s: every cell shows the markup of each contributor
- * {@link IAjaxActionColumnContributor#isVisible(Object) applying} to its row, one after the other;
- * a row none applies to has an empty cell. The table registers the contributors and dispatches
+ * {@link IAjaxActionColumnContributor#isVisible(Object) visible} on its row, one after the other,
+ * a row none is visible on having an empty cell; the browser disables those that are not
+ * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on the row. The table registers the contributors and dispatches
  * their clicks to them, by the row's key. The column has a fixed width, so its cells line up
  * whether a row shows all of its actions or none.
  * <p>

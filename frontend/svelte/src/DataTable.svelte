@@ -28,7 +28,8 @@
 		MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS,
 		SHOW_COLUMNS, type DataTableColumnDef, type DataTableData,
 		type DataTableFilter, type DataTablePush, type DataTableQuery, type DataTableRow,
-		type DataTableSort, type DataTableTexts, type LookPart, partClasses,
+		type DataTableRowActions, type DataTableSort, type DataTableTexts, type LookPart,
+		partClasses,
 		type ResizeMode } from '@antilia/core';
 
 	import Dropdown from './Dropdown.svelte';
@@ -312,7 +313,7 @@
 
 	$effect(() => subscribe?.((message) => {
 		if (message.type === 'updateRow') {
-			instance?.renderRow(message.key, message.data, message.hiddenActions);
+			instance?.renderRow(message.key, message.data, message);
 		} else if (message.type === 'updateRows') {
 			instance?.render(message.rows);
 		} else {
@@ -335,11 +336,13 @@
 	}
 
 	/**
-	 * Repaints one row with new data, in place, hiding the elements of the actions that do not
-	 * apply to it; a row the table does not show is ignored.
+	 * Repaints one row with new data, in place, removing the elements of the actions left out of
+	 * it and disabling those of the actions disabled on it; a row the table does not show is
+	 * ignored.
 	 */
-	export function renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void {
-		instance?.renderRow(key, data, hiddenActions);
+	export function renderRow(key: string, data: unknown, actions?: DataTableRowActions | null):
+		void {
+		instance?.renderRow(key, data, actions);
 	}
 
 	/** The keys of the selected rows. */

@@ -27,15 +27,21 @@ import { Scrollbar } from './scrollbar.js';
 import { templates, type CompiledTemplate, type TemplateEngine } from './templates.js';
 
 /**
- * A row: its key, its number counting from 1, whether it is selected, its data, and the actions
- * that do not apply to it, whose elements in the row are hidden.
+ * The actions that apply to a row only partly: those left out of it, whose elements are removed
+ * from the row, and those disabled on it, with the reason of each, whose elements are disabled.
  */
-export interface DataTableRow {
+export interface DataTableRowActions {
+	hiddenActions?: string[] | null;
+	/** The reason of each disabled action by its id; an empty reason keeps the element's title. */
+	disabledActions?: Record<string, string> | null;
+}
+
+/** A row: its key, its number counting from 1, whether it is selected, and its data. */
+export interface DataTableRow extends DataTableRowActions {
 	key: string;
 	number?: number;
 	selected?: boolean;
 	data: unknown;
-	hiddenActions?: string[] | null;
 }
 
 /** Rows to show: those of a page, how many there are in all, the page, and whether to scroll up. */
@@ -147,8 +153,39 @@ const COLGROUP_CLASS = 'ant-data-table-colgroup';
 
 const CHOOSER = '.ant-data-table-column-chooser';
 
-/** Hides the elements of a row carrying an action that does not apply to the row. */
-const HIDDEN_ACTION_CLASS = 'ant-data-table-action-hidden';
+/** Greys out the elements of a row carrying an action disabled on the row. */
+const DISABLED_ACTION_CLASS = 'ant-data-table-action-disabled';
+
+/** The attribute of a row rendered on the server naming the actions disabled on it, as JSON. */
+const DISABLED_ACTIONS_ATTRIBUTE = 'data-dt-disabled-actions';
+
+/**
+ * Removes the elements of a row carrying an action left out of it, and disables those carrying an
+ * action disabled on it: aria-disabled, a class greying them out and the reason as their title
+ * and description. They stay focusable, so that the reason can be read; clicks on them are
+ * ignored.
+ */
+function applyRowActions(tr: HTMLElement, actions: DataTableRowActions | null | undefined): void {
+	const hidden = actions?.hiddenActions ?? [];
+	const disabled = actions?.disabledActions ?? {};
+	if (hidden.length === 0 && Object.keys(disabled).length === 0) {
+		return;
+	}
+	tr.querySelectorAll<HTMLElement>('[data-dt-action]').forEach((element) => {
+		const action = element.getAttribute('data-dt-action')!;
+		if (hidden.includes(action)) {
+			element.remove();
+		} else if (Object.prototype.hasOwnProperty.call(disabled, action)) {
+			element.setAttribute('aria-disabled', 'true');
+			element.classList.add(DISABLED_ACTION_CLASS);
+			const reason = disabled[action];
+			if (reason) {
+				element.title = reason;
+				element.setAttribute('aria-description', reason);
+			}
+		}
+	});
+}
 
 /**
  * A dynamic data table.
@@ -452,8 +489,7 @@ export class DynamicDataTable {
 		(rows || []).forEach((row) => {
 			const number = row.number !== undefined ? row.number : body.rows.length + 1;
 			if (!document.getElementById(this.rowId(row.key))) {
-				fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected,
-					row.hiddenActions));
+				fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected, row));
 			}
 		});
 		body.appendChild(fragment);
@@ -471,19 +507,29 @@ export class DynamicDataTable {
 		const fragment = document.createDocumentFragment();
 		(rows || []).forEach((row, index) => {
 			const number = row.number !== undefined ? row.number : index + 1;
-			fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected,
-				row.hiddenActions));
+			fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected, row));
 		});
 		this.rowsBody().replaceChildren(fragment);
 		this.rowsReplaced();
 	}
 
 	/**
-	 * Lays the table out for new rows: marks the selected ones, sizes the body and, the first time
-	 * there are rows, fits the columns to them. The server calls it after it replaced the rows of a
-	 * table whose rows come with the markup.
+	 * Lays the table out for new rows: marks the selected ones, disables the actions the rows
+	 * rendered on the server name as disabled, sizes the body and, the first time there are rows,
+	 * fits the columns to them. The server calls it after it replaced the rows of a table whose
+	 * rows come with the markup.
 	 */
 	rowsReplaced(): void {
+		this.rowsBody().querySelectorAll<HTMLElement>('tr[' + DISABLED_ACTIONS_ATTRIBUTE + ']')
+			.forEach((tr) => {
+				try {
+					applyRowActions(tr, { disabledActions:
+						JSON.parse(tr.getAttribute(DISABLED_ACTIONS_ATTRIBUTE)!) });
+				} catch (error) {
+					getHost().log.error('Wicket.DynamicDataTable: the disabled actions of row ' +
+						tr.id + ' are no JSON', error);
+				}
+			});
 		this.updateSelection();
 		this.layoutBody();
 		if (!this.fitted && this.rowsBody().rows.length > 0) {
@@ -717,15 +763,15 @@ export class DynamicDataTable {
 	 *
 	 * @param key the key of the row
 	 * @param data the row's data
-	 * @param hiddenActions the actions that do not apply to the row, whose elements are hidden
+	 * @param actions the actions left out of the row and those disabled on it
 	 */
-	renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void {
+	renderRow(key: string, data: unknown, actions?: DataTableRowActions | null): void {
 		const tr = document.getElementById(this.rowId(key));
 		if (tr && this.rowsBody().contains(tr)) {
 			const number = Number(tr.getAttribute('data-number'));
 			const last = !tr.nextElementSibling;
 			tr.replaceWith(this.buildRow(key, number, data, tr.classList.contains('selected'),
-				hiddenActions));
+				actions));
 			if (last && !this.loading) {
 				// the last row is watched for scrolling infinitely
 				this.watchEnd();
@@ -740,10 +786,11 @@ export class DynamicDataTable {
 	/**
 	 * Builds the element of a row. The column templates are evaluated as cell(data, meta), meta
 	 * holding the row's key, number and selection, for example for {{@number}}. The elements
-	 * carrying an action that does not apply to the row get a class that hides them.
+	 * carrying an action left out of the row are removed, those carrying an action disabled on it
+	 * disabled.
 	 */
 	private buildRow(key: string, number: number, data: unknown, selected?: boolean,
-		hiddenActions?: string[] | null): HTMLTableRowElement {
+		actions?: DataTableRowActions | null): HTMLTableRowElement {
 		if (selected === undefined) {
 			// a row from a resource: selected if the page says so
 			selected = this.selectedKeys.has(String(key));
@@ -772,13 +819,7 @@ export class DynamicDataTable {
 		tr.querySelectorAll<HTMLInputElement>(ROW_CHECKBOX).forEach((checkbox) => {
 			checkbox.checked = meta.selected;
 		});
-		if (hiddenActions && hiddenActions.length > 0) {
-			tr.querySelectorAll<HTMLElement>('[data-dt-action]').forEach((element) => {
-				if (hiddenActions.includes(element.getAttribute('data-dt-action')!)) {
-					element.classList.add(HIDDEN_ACTION_CLASS);
-				}
-			});
-		}
+		applyRowActions(tr, actions);
 		toggleParts(tr, this.look, meta.selected, 'table-row-selected');
 		return tr;
 	}
@@ -895,6 +936,11 @@ export class DynamicDataTable {
 		const target = event.target as Element;
 		const actionElement = target.closest<HTMLElement>('[data-dt-action]');
 		if (!actionElement || !this.table.contains(actionElement)) {
+			return;
+		}
+		if (actionElement.getAttribute('aria-disabled') === 'true') {
+			// disabled on its row: the server would refuse it too
+			event.preventDefault();
 			return;
 		}
 		let action = actionElement.getAttribute('data-dt-action');
