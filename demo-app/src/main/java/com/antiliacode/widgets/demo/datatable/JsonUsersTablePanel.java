@@ -15,6 +15,7 @@ package com.antiliacode.widgets.demo.datatable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.model.Model;
@@ -107,12 +108,14 @@ public class JsonUsersTablePanel extends UsersTablePanel
 		// provider gives them
 		columns.add(new SortableDynamicColumn<>(
 			new TemplateColumn("firstName", "FirstNameColumn", User::getFirstName)
-				.setFooter("footer.users", "users"), "firstName"));
+				.setFooter("footer.users", "users")
+				.setFooterExportValue(footerExport("footer.users", "users")), "firstName"));
 		columns.add(new SortableDynamicColumn<>(
 			new TemplateColumn("lastName", "LastNameColumn", User::getLastName), "lastName"));
 		columns.add(new SortableDynamicColumn<>(
 			new TemplateColumn("bornDate", "BornDateColumn", UsersTablePanel::bornOn)
-				.setFooter("footer.age", "averageAge"), "bornDate"));
+				.setFooter("footer.age", "averageAge")
+				.setFooterExportValue(footerExport("footer.age", "averageAge")), "bornDate"));
 		columns.add(new TemplateColumn("address", "AddressColumn",
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
@@ -178,6 +181,16 @@ public class JsonUsersTablePanel extends UsersTablePanel
 	 */
 	protected void onRowsSent(List<Long> keys)
 	{
+	}
+
+	/**
+	 * @return the value of a column in the footer line of the CSV export: the text of a resource
+	 *         key, its {@code {0}} a property of the footer data, as the footer shows it
+	 */
+	private SerializableFunction<Object, String> footerExport(String key, String property)
+	{
+		return footer -> footer instanceof Map<?, ?> data ? footerText(key, data.get(property))
+			: null;
 	}
 
 	/**

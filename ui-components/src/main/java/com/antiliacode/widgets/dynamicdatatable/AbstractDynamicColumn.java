@@ -19,8 +19,9 @@ import org.danekja.java.util.function.serializable.SerializableFunction;
 
 /**
  * Base class for columns of a {@link JsonBasedDynamicDataTable}, holding the header, the CSS class,
- * the {@link #setFooterTemplate(String) footer template} and the function returning the
- * {@link #setExportValue(SerializableFunction) export value}.
+ * the {@link #setFooterTemplate(String) footer template} and the functions returning the
+ * {@link #setExportValue(SerializableFunction) export value} and the
+ * {@link #setFooterExportValue(SerializableFunction) one of the footer}.
  * Subclasses supply the template; see {@link IDynamicColumn} for how it is evaluated, and why it
  * has to be authored by the developer.
  *
@@ -41,6 +42,8 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 	private String footerTemplate;
 
 	private SerializableFunction<T, ?> exportValue;
+
+	private SerializableFunction<Object, ?> footerExportValue;
 
 	/**
 	 * @param header
@@ -140,5 +143,32 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 	public Object getExportValue(T row)
 	{
 		return exportValue != null ? exportValue.apply(row) : null;
+	}
+
+	/**
+	 * Gives the column a value in the footer line of a CSV export
+	 * {@link CsvExportToolbarAction#setExportFooter(boolean) writing the footer}, under its
+	 * values, for a column with a {@link #setFooterTemplate(String) footer template}.
+	 *
+	 * @param footerExportValue
+	 *            returns the value of the column in the footer from the table's
+	 *            {@link JsonBasedDynamicDataTable#getFooterData() footer data}, which may be
+	 *            {@code null}, for example
+	 *            {@code footer -> footer != null ? ((Map<?, ?>)footer).get("total") : null};
+	 *            {@code null} for an empty field
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public AbstractDynamicColumn<T> setFooterExportValue(
+		SerializableFunction<Object, ?> footerExportValue)
+	{
+		this.footerExportValue = footerExportValue;
+		return this;
+	}
+
+	@Override
+	public Object getFooterExportValue(Object footer)
+	{
+		return footerExportValue != null ? footerExportValue.apply(footer) : null;
 	}
 }

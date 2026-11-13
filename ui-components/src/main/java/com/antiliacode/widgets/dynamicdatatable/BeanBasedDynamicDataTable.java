@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.dynamicdatatable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.Component;
@@ -191,6 +192,22 @@ public class BeanBasedDynamicDataTable<T, K extends Serializable, S>
 	protected boolean isColumnExportable(IColumn<T, S> column)
 	{
 		return column instanceof IExportableColumn;
+	}
+
+	/**
+	 * @return the {@link IFooterColumn#getFooterExportValue() footer export value} of each
+	 *         {@link IFooterColumn}, {@code null} for the other columns
+	 */
+	@Override
+	protected List<Object> getFooterExportValues(List<IColumn<T, S>> columns)
+	{
+		List<Object> values = new ArrayList<>();
+		for (IColumn<T, S> column : columns)
+		{
+			values.add(column instanceof IFooterColumn<?> footer ? footer.getFooterExportValue()
+				: null);
+		}
+		return values;
 	}
 
 	@Override

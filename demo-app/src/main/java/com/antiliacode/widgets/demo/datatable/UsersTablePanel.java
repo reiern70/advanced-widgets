@@ -122,8 +122,10 @@ public abstract class UsersTablePanel extends Panel
 		table.addToolbarAction(new AddUserAction());
 		table.addToolbarAction(new SlowAction());
 		table.addToolbarAction(new ColumnChooserToolbarAction<>());
+		// all the users exported end with the footer's line, how many they are and their age
 		table.addToolbarAction(new CsvExportToolbarAction<User, Long>()
-			.setFileName("users.csv"));
+			.setFileName("users.csv")
+			.setExportFooter(true));
 		table.addToolbarAction(selectionCount);
 		// searching, paging, selecting and choosing columns lose nothing when a window of a
 		// desktop holding the table closes: only the form of a user does, see showUserForm
@@ -184,6 +186,20 @@ public abstract class UsersTablePanel extends Panel
 	private ActionIcons icons()
 	{
 		return host.getIcons();
+	}
+
+	/**
+	 * @param key
+	 *            the resource key of a text of the footer, such as {@code footer.users}
+	 * @param value
+	 *            the value of its {@code {0}}
+	 * @return the text, as the footer shows it, for the footer line of the CSV export;
+	 *         {@code null} without a value
+	 */
+	protected final String footerText(String key, Object value)
+	{
+		return value != null ? new StringResourceModel(key, this).setParameters(value)
+			.getObject() : null;
 	}
 
 	/**
