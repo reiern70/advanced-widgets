@@ -26,9 +26,11 @@ import org.apache.wicket.util.lang.Args;
 /**
  * The column of a {@link BeanBasedDynamicDataTable} with row actions, the counterpart of a
  * {@link CompoundDynamicColumn} of {@link IAjaxActionColumnContributor}s such as
- * {@link IconBasedRowAction}s: every cell shows the markup of each contributor, one after the
- * other. The table registers the contributors and dispatches their clicks to them, by the row's
- * key.
+ * {@link IconBasedRowAction}s: every cell shows the markup of each contributor
+ * {@link IAjaxActionColumnContributor#isVisible(Object) applying} to its row, one after the other;
+ * a row none applies to has an empty cell. The table registers the contributors and dispatches
+ * their clicks to them, by the row's key. The column has a fixed width, so its cells line up
+ * whether a row shows all of its actions or none.
  * <p>
  * The markup of a contributor is written into the cell as it is, without the row's data: a
  * contributor's {@link IDynamicColumnContributor#getTemplate(BaseDynamicDataTable) template} has to
@@ -74,7 +76,9 @@ public class BeanActionsColumn<T, S> extends AbstractColumn<T, S> implements IFi
 	{
 		cellItem.add(new Label(componentId, () -> {
 			BaseDynamicDataTable<T, ?, ?> table = cellItem.findParent(BaseDynamicDataTable.class);
+			T row = rowModel.getObject();
 			return contributors.stream()
+				.filter(contributor -> contributor.isVisible(row))
 				.map(contributor -> contributor.getTemplate(table))
 				.collect(Collectors.joining());
 		}).setEscapeModelStrings(false));

@@ -190,6 +190,32 @@ class IconBasedRowActionTest extends WicketTestCase
 	}
 
 	@Test
+	void anActionIsNotRunOnARowItDoesNotApplyTo()
+	{
+		start(null);
+		action.hiddenOn = "Linus";
+
+		executeAction("act", "2");
+		executeAction("act", "1");
+
+		assertEquals(List.of("Ada"), action.done);
+		assertEquals(List.of("act 2"), table.notFound);
+	}
+
+	@Test
+	void aRowTheActionNoLongerAppliesToWhenConfirmedIsNotActedOn()
+	{
+		start(Model.of("Really?"));
+		executeAction("act", "2");
+		action.hiddenOn = "Linus";
+
+		tester.clickLink(CONFIRM);
+
+		assertTrue(action.done.isEmpty());
+		assertFalse(table.isOverlayShown());
+	}
+
+	@Test
 	void escapeClosesTheOverlay()
 	{
 		start(Model.of("Really?"));
@@ -255,9 +281,18 @@ class IconBasedRowActionTest extends WicketTestCase
 
 		final List<String> done = new ArrayList<>();
 
+		/** The name of the row the action does not apply to, if any. */
+		String hiddenOn;
+
 		RecordingAction(String actionId, IIcon icon, IModel<String> tooltip)
 		{
 			super(actionId, icon, tooltip);
+		}
+
+		@Override
+		public boolean isVisible(Item row)
+		{
+			return row.getName().equals(hiddenOn) == false;
 		}
 
 		@Override
@@ -273,10 +308,19 @@ class IconBasedRowActionTest extends WicketTestCase
 
 		int closed;
 
+		final List<String> notFound = new ArrayList<>();
+
 		TestTable(RecordingAction action, ItemsProvider provider)
 		{
 			super("table", List.of(new CompoundDynamicColumn<>(Model.of("Actions"),
 				List.of(action))), provider, 10);
+		}
+
+		@Override
+		protected void onNotFoundAction(AjaxRequestTarget target, String action, String key,
+			Item row)
+		{
+			notFound.add(action + " " + key);
 		}
 
 		@Override

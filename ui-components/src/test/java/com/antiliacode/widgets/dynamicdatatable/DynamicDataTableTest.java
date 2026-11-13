@@ -148,6 +148,25 @@ class DynamicDataTableTest extends WicketTestCase
 	}
 
 	@Test
+	void sendsTheActionsThatDoNotApplyToARowWithIt()
+	{
+		table.addActionContributor(new AdaOnlyAction("greet"));
+		table.addActionContributor(new AdaOnlyAction("wave"));
+
+		tester.executeBehavior(dataBehavior());
+
+		assertEquals(
+			"{\"rows\":[{\"key\":\"1\",\"number\":1,\"selected\":false," +
+				"\"data\":{\"id\":\"1\",\"name\":\"Ada\"}}," +
+				"{\"key\":\"2\",\"number\":2,\"selected\":false," +
+				"\"data\":{\"id\":\"2\",\"name\":\"Linus\"}," +
+				"\"hiddenActions\":[\"greet\",\"wave\"]}]," +
+				"\"itemCount\":2,\"currentPage\":0}",
+			tester.getLastResponseAsString());
+		assertEquals(List.of(), table.getHiddenActions(PEOPLE.get(0)));
+	}
+
+	@Test
 	void navigationIsHiddenOnASinglePage()
 	{
 		String page = tester.getLastResponseAsString();
@@ -364,6 +383,25 @@ class DynamicDataTableTest extends WicketTestCase
 		assertEquals("updateRow", message.getString("typeId"));
 		assertEquals("2", message.getString("key"));
 		assertEquals("Linus", message.getJSONObject("data").getString("name"));
+		assertEquals(0, message.getJSONArray("hiddenActions").length());
+	}
+
+	@Test
+	void updateRowMessageCarriesTheActionsThatDoNotApplyToTheRow() throws IOException
+	{
+		table.addActionContributor(new AdaOnlyAction("greet"));
+
+		JSONObject linus = send(table.newUpdateRowMessage(PEOPLE.get(1)));
+		JSONObject ada = send(table.newUpdateRowMessage(PEOPLE.get(0)));
+		JSONObject built = send(UpdateRowMessageType.newMessage("table1", "2", PEOPLE.get(1),
+			List.of("greet")));
+
+		assertEquals("greet", linus.getJSONArray("hiddenActions").getString(0));
+		assertEquals(1, linus.getJSONArray("hiddenActions").length());
+		assertEquals(0, ada.getJSONArray("hiddenActions").length());
+		assertEquals("greet", built.getJSONArray("hiddenActions").getString(0));
+		assertTrue(UpdateRowMessageType.INSTANCE.getTypeFunction()
+			.contains("renderRow(message.key, message.data, message.hiddenActions)"));
 	}
 
 	@Test
@@ -578,6 +616,25 @@ class DynamicDataTableTest extends WicketTestCase
 		public void onAction(Person row, AjaxRequestTarget target)
 		{
 			lastRow = row;
+		}
+	}
+
+	/**
+	 * An action that applies to Ada only.
+	 */
+	private static class AdaOnlyAction extends RecordingAction
+	{
+		private static final long serialVersionUID = 1L;
+
+		AdaOnlyAction(String actionId)
+		{
+			super(actionId);
+		}
+
+		@Override
+		public boolean isVisible(Person row)
+		{
+			return "Ada".equals(row.getName());
 		}
 	}
 

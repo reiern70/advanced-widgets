@@ -226,6 +226,14 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 */
 	public static final String OVERLAY_CONTENT_ID = "content";
 
+	/**
+	 * The CSS class the browser gives the elements of a row of a {@link JsonBasedDynamicDataTable}
+	 * carrying an action that does not
+	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row; the table's style
+	 * sheet hides them.
+	 */
+	public static final String HIDDEN_ACTION_CSS_CLASS = "ant-data-table-action-hidden";
+
 	/** The CSS class of the table. */
 	public static final String CSS_CLASS = "ant-data-table";
 
@@ -519,10 +527,36 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * Returns the actions registered with the table that do not
+	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to a row. A
+	 * {@link JsonBasedDynamicDataTable} sends them with the row, and the browser hides the elements
+	 * carrying them in the row.
+	 *
+	 * @param row
+	 *            the row
+	 * @return the ids of the actions, in the order they were registered, empty if all of them
+	 *         apply
+	 */
+	public List<String> getHiddenActions(T row)
+	{
+		Args.notNull(row, "row");
+		List<String> hidden = new ArrayList<>();
+		for (IAjaxActionColumnContributor<T> contributor : actionContributors.values())
+		{
+			if (contributor.isVisible(row) == false)
+			{
+				hidden.add(contributor.getActionId());
+			}
+		}
+		return hidden;
+	}
+
+	/**
 	 * Dispatches a click on an element with a {@code data-dt-action} attribute to the
 	 * {@link IAjaxActionColumnContributor} registered for the action, or to
-	 * {@link #onNotFoundAction(AjaxRequestTarget, String, Serializable, Object)} if there is none
-	 * or the row no longer exists.
+	 * {@link #onNotFoundAction(AjaxRequestTarget, String, Serializable, Object)} if there is none,
+	 * the row no longer exists or the action does not
+	 * {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -537,7 +571,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	protected final void onAction(AjaxRequestTarget target, String action, K key, T row)
 	{
 		IAjaxActionColumnContributor<T> contributor = actionContributors.get(action);
-		if (contributor == null || row == null)
+		if (contributor == null || row == null || contributor.isVisible(row) == false)
 		{
 			onNotFoundAction(target, action, key, row);
 		}
@@ -549,8 +583,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	/**
 	 * Called when a click cannot be dispatched: the row no longer exists, for example because it
-	 * was deleted after it was rendered, or no contributor is registered for the action. Does
-	 * nothing by default.
+	 * was deleted after it was rendered, no contributor is registered for the action, or the
+	 * action does not {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row, for
+	 * example because the row changed after it was rendered. Does nothing by default.
 	 * <p>
 	 * Both the action and the key come from the browser.
 	 *

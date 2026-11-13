@@ -87,6 +87,17 @@ class JsonRowsResourceTest extends WicketTestCase
 	}
 
 	@Test
+	void sendsTheActionsThatDoNotApplyToARowWithIt()
+	{
+		JSONObject json = fetch("api/fruits?first=1&count=2&sort=name&ascending=false&filter=e");
+
+		// Melon, then Cherry, which cannot be peeled
+		JSONArray rows = json.getJSONArray("rows");
+		assertFalse(rows.getJSONObject(0).has("hiddenActions"), rows.toString());
+		assertEquals("peel", rows.getJSONObject(1).getJSONArray("hiddenActions").getString(0));
+	}
+
+	@Test
 	void limitsTheRowsOfARequest()
 	{
 		JSONObject json = fetch("api/fruits?first=-5&count=100000");
@@ -212,6 +223,12 @@ class JsonRowsResourceTest extends WicketTestCase
 		protected IDynamicDataProvider<Fruit, String> newProvider(PageParameters parameters)
 		{
 			return new FruitsProvider(parameters.get("filter").toOptionalString());
+		}
+
+		@Override
+		protected List<String> getHiddenActions(Fruit row)
+		{
+			return "Cherry".equals(row.getName()) ? List.of("peel") : List.of();
 		}
 	}
 

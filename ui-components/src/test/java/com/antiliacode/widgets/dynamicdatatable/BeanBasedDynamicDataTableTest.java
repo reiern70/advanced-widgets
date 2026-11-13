@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
@@ -222,6 +223,68 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		assertEquals(1, page.split(" checked>", -1).length - 1, page);
 	}
 
+	@Test
+	void actionsAreRenderedOnlyOnTheRowsTheyApplyTo()
+	{
+		start(5, List.of(new GreetAction(), new WaveAction()));
+
+		String first = rowMarkup("1");
+		String second = rowMarkup("2");
+		assertEquals(1, count(first, "data-dt-action=\"greet\""), first);
+		assertEquals(0, count(first, "data-dt-action=\"wave\""), first);
+		assertEquals(1, count(second, "data-dt-action=\"greet\""), second);
+		assertEquals(1, count(second, "data-dt-action=\"wave\""), second);
+		assertTrue(second.indexOf("\"greet\"") < second.indexOf("\"wave\""),
+			"in display order: " + second);
+	}
+
+	@Test
+	void aRowNoActionAppliesToHasAnEmptyCell()
+	{
+		start(5, List.of(new WaveAction()));
+
+		String first = rowMarkup("1");
+		assertFalse(first.contains("data-dt-action=\"wave\""), first);
+		assertTrue(first.contains("<wicket:container wicket:id=\"cell\"></wicket:container></td>"),
+			first);
+		assertTrue(rowMarkup("2").contains("data-dt-action=\"wave\""));
+	}
+
+	@Test
+	void anActionIsNotRunOnARowItDoesNotApplyTo()
+	{
+		WaveAction wave = new WaveAction();
+		start(5, List.of(new GreetAction(), wave));
+
+		executeAction("wave", "1");
+
+		assertTrue(wave.waved.isEmpty());
+		assertEquals(List.of("wave 1 Person <1>"), table.notFound);
+
+		executeAction("wave", "2");
+
+		assertEquals(List.of(2L), wave.waved);
+		assertEquals(1, table.notFound.size());
+	}
+
+	private void start(int people, List<? extends IAjaxActionColumnContributor<Person>> actions)
+	{
+		provider = new PeopleProvider(people);
+		table = new TestTable(provider, actions, null);
+		tester.startPage(new TablePage(table));
+	}
+
+	private String rowMarkup(String key)
+	{
+		return TagTester.createTagByAttribute(tester.getLastResponseAsString(), "data-key", key)
+			.getValue();
+	}
+
+	private static int count(String text, String part)
+	{
+		return text.split(Pattern.quote(part), -1).length - 1;
+	}
+
 	private void executeAction(String action, String key)
 	{
 		tester.getRequest().getPostParameters().setParameterValue("action", action);
@@ -332,11 +395,47 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		}
 	}
 
+	/**
+	 * Waves only at the people with an even id.
+	 */
+	private static class WaveAction implements IAjaxActionColumnContributor<Person>
+	{
+		private static final long serialVersionUID = 1L;
+
+		final List<Long> waved = new ArrayList<>();
+
+		@Override
+		public String getTemplate()
+		{
+			return "<button data-dt-action=\"wave\">Wave</button>";
+		}
+
+		@Override
+		public String getActionId()
+		{
+			return "wave";
+		}
+
+		@Override
+		public boolean isVisible(Person row)
+		{
+			return row.getId() % 2 == 0;
+		}
+
+		@Override
+		public void onAction(Person row, AjaxRequestTarget target)
+		{
+			waved.add(row.getId());
+		}
+	}
+
 	private static class TestTable extends BeanBasedDynamicDataTable<Person, Long, String>
 	{
 		private static final long serialVersionUID = 1L;
 
 		final GreetAction greet;
+
+		final List<String> notFound = new ArrayList<>();
 
 		TestTable(PeopleProvider provider)
 		{
@@ -345,12 +444,25 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 
 		private TestTable(PeopleProvider provider, GreetAction greet)
 		{
+			this(provider, List.of(greet), greet);
+		}
+
+		TestTable(PeopleProvider provider,
+			List<? extends IAjaxActionColumnContributor<Person>> actions, GreetAction greet)
+		{
 			super("table", List.of(new BeanSelectionColumn<>(),
 				new BeanRowNumberColumn<>(Model.of("#")),
 				new MovableColumn("Name", "name", "name"),
 				new MovableColumn("Id", "id", null),
-				new BeanActionsColumn<>(Model.of("Actions"), List.of(greet))), provider, 2);
+				new BeanActionsColumn<>(Model.of("Actions"), actions)), provider, 2);
 			this.greet = greet;
+		}
+
+		@Override
+		protected void onNotFoundAction(AjaxRequestTarget target, String action, Long key,
+			Person row)
+		{
+			notFound.add(action + " " + key + " " + (row != null ? row.getName() : null));
 		}
 	}
 

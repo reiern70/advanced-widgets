@@ -13,15 +13,18 @@
  */
 package com.antiliacode.widgets.dynamicdatatable;
 
+import java.util.List;
+
 import org.apache.wicket.util.lang.Args;
 
 /**
  * Messages of this type repaint a single row of the table from the data they carry, leaving the
  * other rows alone. The row is found by its key; a message for a row the browser does not show,
  * for example one on another page, is ignored. Every {@link JsonBasedDynamicDataTable} registers
- * it; {@link JsonBasedDynamicDataTable#newUpdateRowMessage(Object)} builds such a message, and
- * {@link #newMessage(String, String, Object)} builds one without the table, for example on a
- * background thread.
+ * it; {@link JsonBasedDynamicDataTable#newUpdateRowMessage(Object)} builds such a message, with
+ * the actions that do not {@link IAjaxActionColumnContributor#isVisible(Object) apply} to the row,
+ * and {@link #newMessage(String, String, Object, List)} builds one without the table, for example
+ * on a background thread.
  *
  * @since 11.0.0
  */
@@ -40,8 +43,9 @@ public final class UpdateRowMessageType implements IWebSocketMessageType
 	}
 
 	/**
-	 * Builds a message repainting a row, sent as {@code tableId}, {@code typeId}, {@code key} and
-	 * {@code data}. Every property the serializer produces for {@code data} reaches the browser.
+	 * Builds a message repainting a row with all of its actions, sent as {@code tableId},
+	 * {@code typeId}, {@code key}, {@code data} and an empty {@code hiddenActions}. Every property
+	 * the serializer produces for {@code data} reaches the browser.
 	 *
 	 * @param tableId
 	 *            the markup id of the table
@@ -51,11 +55,37 @@ public final class UpdateRowMessageType implements IWebSocketMessageType
 	 * @param data
 	 *            the row, serialized when the message is sent
 	 * @return the message
+	 * @see #newMessage(String, String, Object, List)
 	 */
 	public static IWebSocketLightWeightMessage newMessage(String tableId, String key, Object data)
 	{
+		return newMessage(tableId, key, data, List.of());
+	}
+
+	/**
+	 * Builds a message repainting a row, sent as {@code tableId}, {@code typeId}, {@code key},
+	 * {@code data} and {@code hiddenActions}. Every property the serializer produces for
+	 * {@code data} reaches the browser, which hides the elements of the row carrying the hidden
+	 * actions.
+	 *
+	 * @param tableId
+	 *            the markup id of the table
+	 * @param key
+	 *            the key of the row as the browser shows it, see
+	 *            {@link JsonBasedDynamicDataTable#getRowKey(Object)}
+	 * @param data
+	 *            the row, serialized when the message is sent
+	 * @param hiddenActions
+	 *            the actions that do not apply to the row, see
+	 *            {@link JsonBasedDynamicDataTable#getHiddenActions(Object)}
+	 * @return the message
+	 */
+	public static IWebSocketLightWeightMessage newMessage(String tableId, String key, Object data,
+		List<String> hiddenActions)
+	{
 		return new JsonBasedDynamicDataTable.UpdateRowMessage(Args.notEmpty(tableId, "tableId"),
-			Args.notNull(key, "key"), data);
+			Args.notNull(key, "key"), data,
+			List.copyOf(Args.notNull(hiddenActions, "hiddenActions")));
 	}
 
 	@Override
@@ -69,6 +99,6 @@ public final class UpdateRowMessageType implements IWebSocketMessageType
 	{
 		return "function (message) { " +
 			"Wicket.DynamicDataTable.instances[message.tableId].renderRow(message.key, " +
-			"message.data); }";
+			"message.data, message.hiddenActions); }";
 	}
 }
