@@ -95,7 +95,7 @@ class BeanDynamicDataTablePageTest
 			.toList();
 
 		assertEquals(4, hidden.size());
-		assertEquals(9, table.getVisibleColumns().size());
+		assertEquals(10, table.getVisibleColumns().size(), "the progress bar among them");
 	}
 
 	@Test
