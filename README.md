@@ -3,8 +3,8 @@
 User interface components for [Apache Wicket](https://wicket.apache.org) 11, most of them also
 for React and Svelte: data grids rendered from JSON, trees, drop-downs, date pickers, a code
 editor, a rich text editor, split panels, tabs, menus, dialogs, a desktop of floating windows
-and more. Every component takes the colors of a theme, speaks English, Spanish and German, and
-uses no inline style or script, so it works under a strict Content Security Policy.
+and more. Every component takes the colors of a theme, speaks English, Spanish, German and
+French, and uses no inline style or script, so it works under a strict Content Security Policy.
 
 **Live demo: <https://antiliacode.com>**
 
