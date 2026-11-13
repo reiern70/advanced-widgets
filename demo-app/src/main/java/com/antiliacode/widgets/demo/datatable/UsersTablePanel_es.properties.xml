@@ -43,4 +43,6 @@
 	<entry key="added">{0} {1} añadido.</entry>
 	<entry key="saved">{0} {1} guardado.</entry>
 	<entry key="failed">El recurso de usuarios falló: {0}</entry>
+	<entry key="footer.users">{0} usuarios</entry>
+	<entry key="footer.age">Edad media {0}</entry>
 </properties>

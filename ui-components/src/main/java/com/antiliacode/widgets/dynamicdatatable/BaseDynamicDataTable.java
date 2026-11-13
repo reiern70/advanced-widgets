@@ -113,6 +113,11 @@ import com.github.openjson.JSONObject;
  * methods an application can override. {@link IDynamicToolbarAction Actions} on the whole table,
  * such as a {@link CsvExportToolbarAction}, are shown in the navigation.
  * <p>
+ * Under the rows, above the bottom toolbars, a footer row lines up with the columns, for totals,
+ * counts or averages, as soon as a column the table shows has a value there; see
+ * {@link #hasFooter()}. Its cells move, hide and resize with their columns, and
+ * {@link #refresh(IPartialPageRequestHandler) refreshing} the rows renders it again.
+ * <p>
  * With an {@link ISortableDynamicDataProvider}, the header of every column with a
  * {@link #getSortProperty(IDetachable) sort property} is a link sorting the rows by the column,
  * followed by an up and a down arrow, the one of the current order highlighted. Sorting has the
@@ -239,6 +244,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	/** The id of the component holding the rows, see {@link #newRowsBody(String)}. */
 	public static final String ROWS_BODY_ID = "body";
 
+	/** The id of the content of a footer cell, see {@link #newFooter(String, IDetachable)}. */
+	public static final String FOOTER_ID = "footer";
+
 	private static final int FETCH_CHUNK = 100;
 
 	private static final double MAX_COLUMN_WIDTH = 100_000;
@@ -330,6 +338,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	private final NavigationBehavior navigationBehavior;
 
 	private final WebMarkupContainer headersRow;
+
+	private final WebMarkupContainer footerRow;
 
 	private final RepeatingView topToolbars;
 
@@ -475,6 +485,42 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			}
 		});
 		headersRow.add(new WebMarkupContainer("filler")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(hasFiller());
+			}
+		}.add(new LookBehavior(LookPart.TABLE_FILLER)));
+
+		footerRow = new WebMarkupContainer("footerRow")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(hasFooter());
+			}
+		};
+		footerRow.setOutputMarkupPlaceholderTag(true);
+		footerRow.add(new LookBehavior(LookPart.TABLE_FOOTER));
+		add(footerRow);
+		footerRow.add(new ListView<>("footers", this::getVisibleColumns)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<C> item)
+			{
+				populateFooter(item, item.getModelObject());
+			}
+		});
+		footerRow.add(new WebMarkupContainer("filler")
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -745,7 +791,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	/**
 	 * Queries the rows of the current page again, has the browser repaint all of them and
-	 * re-renders the toolbars.
+	 * re-renders the toolbars and the {@link #hasFooter() footer}, so totals follow a change of
+	 * the data.
 	 *
 	 * @param target
 	 *            the handler of the current Ajax or web socket request
@@ -754,6 +801,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	{
 		forgetRows();
 		refreshToolbars(target);
+		refreshFooter(target);
 		refreshRows(target);
 	}
 
@@ -764,6 +812,21 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 *            the handler of the current Ajax or web socket request
 	 */
 	protected abstract void refreshRows(IPartialPageRequestHandler target);
+
+	/**
+	 * Re-renders the {@link #hasFooter() footer}, if the table has one, along with the rows.
+	 *
+	 * @param target
+	 *            the handler of the current Ajax or web socket request
+	 * @since 11.0.0
+	 */
+	protected void refreshFooter(IPartialPageRequestHandler target)
+	{
+		if (hasFooter())
+		{
+			target.add(footerRow);
+		}
+	}
 
 	/**
 	 * Forgets the rows of the current page and their count, so they are queried again.
@@ -1141,6 +1204,58 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 * @return the value a CSV export writes for the row in the column
 	 */
 	protected abstract Object getColumnExportValue(C column, T row);
+
+	/**
+	 * @param column
+	 *            a column of the table
+	 * @return whether the column has a value in the footer, under its cells, such as a total;
+	 *         {@code false} by default
+	 * @see #hasFooter()
+	 * @since 11.0.0
+	 */
+	protected boolean hasFooter(C column)
+	{
+		return false;
+	}
+
+	/**
+	 * Creates the content of the footer's cell of a column that {@link #hasFooter(IDetachable)
+	 * has one}. Returns {@code null} by default, for an empty cell, which the browser fills in a
+	 * table rendering its footer there.
+	 *
+	 * @param id
+	 *            the id the component must have
+	 * @param column
+	 *            a column of the table with a value in the footer
+	 * @return the component, attached to a {@code <wicket:container>} in the cell, or
+	 *         {@code null} for an empty cell
+	 * @since 11.0.0
+	 */
+	protected Component newFooter(String id, C column)
+	{
+		return null;
+	}
+
+	/**
+	 * @return whether the table renders a footer row, under its rows and above its bottom
+	 *         toolbars: whether one of the columns it shows {@link #hasFooter(IDetachable) has a
+	 *         value in the footer}. The row has a cell for every shown column, in their order and
+	 *         with their CSS classes, empty for the columns without a value.
+	 * @since 11.0.0
+	 */
+	public boolean hasFooter()
+	{
+		return getVisibleColumns().stream().anyMatch(this::hasFooter);
+	}
+
+	/**
+	 * @return the footer row, see {@link #hasFooter()}
+	 * @since 11.0.0
+	 */
+	protected final Component getFooterRow()
+	{
+		return footerRow;
+	}
 
 
 	/**
@@ -2377,6 +2492,26 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			() -> isMoving() && isMovable(column) ? "true" : null));
 		item.add(AttributeModifier.replace("aria-sort",
 			() -> ARIA_SORT.get(getSortOrder(column))));
+	}
+
+	/**
+	 * Fills the footer's cell of a column: the column's {@link #newFooter(String, IDetachable)
+	 * footer}, if it has one, and its CSS class.
+	 */
+	private void populateFooter(ListItem<C> item, C column)
+	{
+		Component footer = hasFooter(column) ? newFooter(FOOTER_ID, column) : null;
+		if (footer != null)
+		{
+			Args.isTrue(FOOTER_ID.equals(footer.getId()),
+				"the footer of a column must have the id '" + FOOTER_ID + "'");
+		}
+		item.add(footer != null ? footer : new WebMarkupContainer(FOOTER_ID));
+		String cssClass = getColumnCssClass(column);
+		if (cssClass != null)
+		{
+			item.add(AttributeModifier.append("class", cssClass));
+		}
 	}
 
 	/**

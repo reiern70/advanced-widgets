@@ -18,8 +18,9 @@ import org.apache.wicket.util.lang.Args;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
 /**
- * Base class for columns of a {@link JsonBasedDynamicDataTable}, holding the header, the CSS class
- * and the function returning the {@link #setExportValue(SerializableFunction) export value}.
+ * Base class for columns of a {@link JsonBasedDynamicDataTable}, holding the header, the CSS class,
+ * the {@link #setFooterTemplate(String) footer template} and the function returning the
+ * {@link #setExportValue(SerializableFunction) export value}.
  * Subclasses supply the template; see {@link IDynamicColumn} for how it is evaluated, and why it
  * has to be authored by the developer.
  *
@@ -36,6 +37,8 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 	private String id;
 
 	private String cssClass;
+
+	private String footerTemplate;
 
 	private SerializableFunction<T, ?> exportValue;
 
@@ -87,6 +90,29 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 	public AbstractDynamicColumn<T> setCssClass(String cssClass)
 	{
 		this.cssClass = cssClass;
+		return this;
+	}
+
+	@Override
+	public String getFooterTemplate()
+	{
+		return footerTemplate;
+	}
+
+	/**
+	 * Gives the column a value in the footer row, under the rows, such as a total.
+	 *
+	 * @param footerTemplate
+	 *            the template of the column's footer cell, filled with the table's
+	 *            {@link JsonBasedDynamicDataTable#getFooterData() footer data}, for example
+	 *            {@code <strong>{{total}}</strong>}; trusted markup authored by the developer,
+	 *            as the cell template; {@code null} for no value in the footer
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public AbstractDynamicColumn<T> setFooterTemplate(String footerTemplate)
+	{
+		this.footerTemplate = footerTemplate;
 		return this;
 	}
 

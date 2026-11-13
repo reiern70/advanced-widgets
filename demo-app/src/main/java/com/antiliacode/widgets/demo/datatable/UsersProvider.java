@@ -13,15 +13,21 @@
  */
 package com.antiliacode.widgets.demo.datatable;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import org.apache.wicket.extensions.markup.html.repeater.util.SortParam;
 import org.apache.wicket.util.string.Strings;
 
+import com.antiliacode.widgets.dynamicdatatable.IFooterDataProvider;
 import com.antiliacode.widgets.dynamicdatatable.IIdentifiableDynamicDataProvider;
 import com.antiliacode.widgets.dynamicdatatable.SortableDynamicDataProvider;
 
@@ -29,11 +35,13 @@ import com.antiliacode.widgets.dynamicdatatable.SortableDynamicDataProvider;
  * The users of the large database for the dynamic table examples. Sorts by first or last name
  * with the database's indexes, and by born date in memory, and filters in memory by first and
  * last name and by country. The users are their own keys' source, being
- * {@link User#getId() identifiable}.
+ * {@link User#getId() identifiable}. The footer of the tables tells how many users there are and
+ * their average age.
  */
 public class UsersProvider extends SortableDynamicDataProvider<User, Long, String>
 	implements
-		IIdentifiableDynamicDataProvider<User, Long>
+		IIdentifiableDynamicDataProvider<User, Long>,
+		IFooterDataProvider
 {
 	private static final long serialVersionUID = 1L;
 
@@ -135,6 +143,41 @@ public class UsersProvider extends SortableDynamicDataProvider<User, Long, Strin
 	private static boolean contains(String name, String term)
 	{
 		return name != null && name.toLowerCase(Locale.ROOT).contains(term);
+	}
+
+	/**
+	 * @return the average age of the users the filter lets through, in years, or {@code null} if
+	 *         none has a born date
+	 */
+	public Long getAverageAge()
+	{
+		return averageAge(users());
+	}
+
+	private static Long averageAge(List<User> users)
+	{
+		LocalDate today = LocalDate.now();
+		double average = users.stream()
+			.map(UsersTablePanel::bornOn)
+			.filter(Objects::nonNull)
+			.mapToInt(born -> Period.between(born, today).getYears())
+			.average()
+			.orElse(Double.NaN);
+		return Double.isNaN(average) ? null : Math.round(average);
+	}
+
+	/**
+	 * @return the number of users the filter lets through, as {@code users}, and their average
+	 *         age, as {@code averageAge}, if any has a born date
+	 */
+	@Override
+	public Object footer()
+	{
+		List<User> users = users();
+		Map<String, Object> footer = new LinkedHashMap<>();
+		footer.put("users", users.size());
+		footer.put("averageAge", averageAge(users));
+		return footer;
 	}
 
 	@Override

@@ -97,6 +97,7 @@ const PARTS = {
 	'table-sort-ascending': ['base', 'ant-data-table-sort-asc', ''],
 	'table-sort-descending': ['base', 'ant-data-table-sort-desc', ''],
 	'table-filler': ['base', 'ant-data-table-filler', ''],
+	'table-footer': ['base', 'ant-data-table-footer', 'table-group-divider fw-semibold'],
 	'table-selection': ['base', 'ant-data-table-selection', ''],
 	'table-select': ['base', 'ant-data-table-select', 'form-check-input'],
 	'table-select-page': ['base', 'ant-data-table-select-page', 'form-check-input'],

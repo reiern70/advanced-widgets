@@ -347,13 +347,20 @@ export class MovableColumns {
 	}
 
 	/**
-	 * @returns the cells of the column at index: its header cell and the cells of the rows, also of
-	 *          rows in a table nested in the body
+	 * @returns the cells of the column at index: its header cell, the cells of the rows, also of
+	 *          rows in a table nested in the body, and those of the rows of the footer with a cell
+	 *          per column, such as the totals under the rows
 	 */
 	columnCells(index: number): HTMLTableCellElement[] {
-		const cells: Array<HTMLTableCellElement | undefined> = [this.headerCells()[index]];
+		const headers = this.headerCells();
+		const cells: Array<HTMLTableCellElement | undefined> = [headers[index]];
 		this.table.querySelectorAll<HTMLTableRowElement>('tbody > tr').forEach((tr) => {
 			if (tr.cells.length > 1 && tr.cells[index]) {
+				cells.push(tr.cells[index]);
+			}
+		});
+		Array.from(this.table.tFoot?.rows ?? []).forEach((tr) => {
+			if (tr.cells.length > 1 && tr.cells.length === headers.length) {
 				cells.push(tr.cells[index]);
 			}
 		});

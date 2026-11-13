@@ -80,6 +80,19 @@ describe('MovableColumns', () => {
 		expect(onMove).toHaveBeenCalledTimes(1);
 	});
 
+	it('takes along the cells of the rows and of a footer row with a cell per column, not the toolbars', () => {
+		const element = table(['Name', 'City', 'Born'], ['data-movable="true"',
+			'data-movable="true"', 'data-movable="true"']);
+		element.insertAdjacentHTML('beforeend', '<tfoot><tr><td>Count</td><td></td><td>Age</td>' +
+			'</tr><tr><td colspan="3">Navigation</td></tr></tfoot>');
+		MovableColumns.attach(element);
+
+		expect(MovableColumns.instances.t.columnCells(2).map((cell) => cell.textContent))
+			.toEqual(['Born', 'Born1', 'Age']);
+		expect(MovableColumns.instances.t.columnCells(0).map((cell) => cell.textContent))
+			.toEqual(['Name', 'Name1', 'Count']);
+	});
+
 	it('adds handles to header cells the host says were added', () => {
 		let added: ((element: Element) => void) | undefined;
 		setHost({ ...standaloneHost, onNodeAdded: (listener) => ((added = listener), () => {}) });

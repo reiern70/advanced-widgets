@@ -498,6 +498,15 @@ table.ant-data-table > tfoot > tr.ant-data-table-selection-toolbar > td {
 	background: var(--antilia-theme-highlight);
 }
 
+/* the footer row: the totals under the columns, set off from the rows by a line */
+table.ant-data-table > tfoot > tr.ant-data-table-footer > td {
+	border-top: 2px solid var(--antilia-theme-border, currentColor);
+	background: var(--antilia-theme-surface);
+	color: var(--antilia-theme-text);
+	font-weight: 600;
+	vertical-align: middle;
+}
+
 table.ant-data-table tr.ant-data-table-selection-toolbar a,
 table.ant-data-table .ant-data-table-action {
 	color: var(--antilia-theme-accent);
