@@ -32,6 +32,7 @@ import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.util.string.Strings;
 import org.danekja.java.util.function.serializable.SerializableFunction;
+import org.danekja.java.util.function.serializable.SerializableSupplier;
 
 import com.antiliacode.widgets.clipboard.ClipboardCopyBehavior;
 import com.antiliacode.widgets.dynamicdatatable.AbstractDynamicToolbar;
@@ -87,14 +88,15 @@ public class BeanUsersTablePanel extends UsersTablePanel
 		// the footer: how many users the filter lets through, and their average age
 		columns.add(new FooterUserColumn("firstName", "firstName", User::getFirstName,
 			footer -> new Label(footer, new StringResourceModel("footer.users")
-				.setParameters(provider.size()))));
+				.setParameters(provider.size())),
+			() -> footerText("footer.users", provider.size())));
 		columns.add(new UserColumn("lastName", "lastName", User::getLastName));
 		columns.add(new FooterUserColumn("bornDate", "bornDate",
 			user -> Objects.toString(bornOn(user), ""), footer -> {
 				Long age = provider.getAverageAge();
 				return age != null ? new Label(footer,
 					new StringResourceModel("footer.age").setParameters(age)) : null;
-			}));
+			}, () -> footerText("footer.age", provider.getAverageAge())));
 		columns.add(new UserColumn("address", null,
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
@@ -170,17 +172,27 @@ public class BeanUsersTablePanel extends UsersTablePanel
 
 		private final SerializableFunction<String, Component> footer;
 
+		private final SerializableSupplier<?> footerExportValue;
+
 		FooterUserColumn(String headerKey, String sortProperty,
-			SerializableFunction<User, ?> value, SerializableFunction<String, Component> footer)
+			SerializableFunction<User, ?> value, SerializableFunction<String, Component> footer,
+			SerializableSupplier<?> footerExportValue)
 		{
 			super(headerKey, sortProperty, value);
 			this.footer = footer;
+			this.footerExportValue = footerExportValue;
 		}
 
 		@Override
 		public Component newFooter(String id)
 		{
 			return footer.apply(id);
+		}
+
+		@Override
+		public Object getFooterExportValue()
+		{
+			return footerExportValue.get();
 		}
 	}
 

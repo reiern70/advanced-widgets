@@ -160,6 +160,18 @@ class CsvExportButton<T, K extends Serializable, C extends IDetachable> extends 
 			}
 			writeLine(writer, fields);
 		}
+
+		// the footer sums up all the rows: not under the selected ones only
+		if (action.isExportFooter() && selection.isEmpty() &&
+			columns.stream().anyMatch(table::hasFooter))
+		{
+			fields.clear();
+			for (Object value : table.getFooterExportValues(columns))
+			{
+				fields.add(quote(format(value)));
+			}
+			writeLine(writer, fields);
+		}
 	}
 
 	private void writeLine(Writer writer, List<String> fields) throws IOException
