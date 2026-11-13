@@ -48,7 +48,31 @@ public interface IAjaxActionColumnContributor<T> extends IDynamicColumnContribut
 	}
 
 	/**
-	 * Called when the action is clicked on a row that still exists.
+	 * Whether the action applies to the row, for example "Cancel" only to an item still
+	 * scheduled: an action that does not is neither rendered in the row's cell of a
+	 * {@link BeanActionsColumn} nor run when the browser asks for it on the row, which ends up in
+	 * {@link BaseDynamicDataTable#onNotFoundAction(AjaxRequestTarget, String, java.io.Serializable,
+	 * Object)} instead. Every row by default.
+	 * <p>
+	 * A {@link JsonBasedDynamicDataTable} renders the same template on every row, in the browser:
+	 * it sends the actions that do not apply to a row with the row, and the browser gives the
+	 * elements of the row carrying them, those whose {@code data-dt-action} attribute is the
+	 * action, the CSS class {@value BaseDynamicDataTable#HIDDEN_ACTION_CSS_CLASS}, which hides
+	 * them. The template needs no condition. Rows served by a {@link JsonRowsResource} carry the
+	 * actions its {@link JsonRowsResource#getHiddenActions(Object)} names.
+	 *
+	 * @param row
+	 *            the row, never {@code null}
+	 * @return whether the action applies to the row
+	 */
+	default boolean isVisible(T row)
+	{
+		return true;
+	}
+
+	/**
+	 * Called when the action is clicked on a row that still exists and that the action
+	 * {@link #isVisible(Object) applies to}.
 	 *
 	 * @param row
 	 *            the row the action was clicked on, never {@code null}

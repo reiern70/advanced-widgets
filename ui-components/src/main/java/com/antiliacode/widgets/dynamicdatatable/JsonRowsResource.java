@@ -44,8 +44,9 @@ import jakarta.servlet.http.HttpServletRequest;
  * {@value #SORT} and {@value #ASCENDING} (the sort property and order, if the table is sorted),
  * plus those of {@link JsonBasedDynamicDataTable#addRowsParameters(PageParameters)}, such as a
  * filter. {@link #newProvider(PageParameters)} turns them into the provider of the rows; the
- * answer is {@code {rows: [{key, number, data}], itemCount, currentPage}}, the rows as the
- * {@link #getJsonSerializer() serializer} writes them.
+ * answer is {@code {rows: [{key, number, data, hiddenActions}], itemCount, currentPage}}, the rows
+ * as the {@link #getJsonSerializer() serializer} writes them, {@code hiddenActions} only for a row
+ * with {@link #getHiddenActions(Object) actions that do not apply to it}.
  * <p>
  * Mount it like any resource, for example
  * {@code mountResource("api/users", new ResourceReference("users") { ... getResource() ... })},
@@ -170,6 +171,22 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 	protected void deleteRow(T row)
 	{
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Returns the actions that do not {@link IAjaxActionColumnContributor#isVisible(Object) apply}
+	 * to a row, sent with it so that the browser hides the elements of the row carrying them. The
+	 * resource does not know the actions of the table, so one whose actions apply only to some
+	 * rows says which here, for example with
+	 * {@code row.isScheduled() ? List.of() : List.of("cancel")}. None by default.
+	 *
+	 * @param row
+	 *            the row
+	 * @return the ids of the actions, empty if all of them apply
+	 */
+	protected List<String> getHiddenActions(T row)
+	{
+		return List.of();
 	}
 
 	/**
@@ -316,7 +333,8 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 	}
 
 	/**
-	 * @return the row as the answer has it: its key, its number if it has one, and the row
+	 * @return the row as the answer has it: its key, its number if it has one, the row, and the
+	 *         actions that do not apply to it if there are any
 	 */
 	private Map<String, Object> entry(IDynamicDataProvider<T, K> provider, T row, Long number)
 	{
@@ -327,6 +345,11 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 			entry.put("number", number);
 		}
 		entry.put("data", row);
+		List<String> hiddenActions = getHiddenActions(row);
+		if (hiddenActions != null && hiddenActions.isEmpty() == false)
+		{
+			entry.put("hiddenActions", hiddenActions);
+		}
 		return entry;
 	}
 

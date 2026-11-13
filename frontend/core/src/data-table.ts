@@ -26,12 +26,16 @@ import { ResizableColumns, type ResizableColumnsOptions } from './resizable-colu
 import { Scrollbar } from './scrollbar.js';
 import { templates, type CompiledTemplate, type TemplateEngine } from './templates.js';
 
-/** A row: its key, its number counting from 1, whether it is selected, and its data. */
+/**
+ * A row: its key, its number counting from 1, whether it is selected, its data, and the actions
+ * that do not apply to it, whose elements in the row are hidden.
+ */
 export interface DataTableRow {
 	key: string;
 	number?: number;
 	selected?: boolean;
 	data: unknown;
+	hiddenActions?: string[] | null;
 }
 
 /** Rows to show: those of a page, how many there are in all, the page, and whether to scroll up. */
@@ -142,6 +146,9 @@ const FILLER_WIDTH = '3em';
 const COLGROUP_CLASS = 'ant-data-table-colgroup';
 
 const CHOOSER = '.ant-data-table-column-chooser';
+
+/** Hides the elements of a row carrying an action that does not apply to the row. */
+const HIDDEN_ACTION_CLASS = 'ant-data-table-action-hidden';
 
 /**
  * A dynamic data table.
@@ -445,7 +452,8 @@ export class DynamicDataTable {
 		(rows || []).forEach((row) => {
 			const number = row.number !== undefined ? row.number : body.rows.length + 1;
 			if (!document.getElementById(this.rowId(row.key))) {
-				fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected));
+				fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected,
+					row.hiddenActions));
 			}
 		});
 		body.appendChild(fragment);
@@ -463,7 +471,8 @@ export class DynamicDataTable {
 		const fragment = document.createDocumentFragment();
 		(rows || []).forEach((row, index) => {
 			const number = row.number !== undefined ? row.number : index + 1;
-			fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected));
+			fragment.appendChild(this.buildRow(row.key, number, row.data, row.selected,
+				row.hiddenActions));
 		});
 		this.rowsBody().replaceChildren(fragment);
 		this.rowsReplaced();
@@ -708,13 +717,15 @@ export class DynamicDataTable {
 	 *
 	 * @param key the key of the row
 	 * @param data the row's data
+	 * @param hiddenActions the actions that do not apply to the row, whose elements are hidden
 	 */
-	renderRow(key: string, data: unknown): void {
+	renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void {
 		const tr = document.getElementById(this.rowId(key));
 		if (tr && this.rowsBody().contains(tr)) {
 			const number = Number(tr.getAttribute('data-number'));
 			const last = !tr.nextElementSibling;
-			tr.replaceWith(this.buildRow(key, number, data, tr.classList.contains('selected')));
+			tr.replaceWith(this.buildRow(key, number, data, tr.classList.contains('selected'),
+				hiddenActions));
 			if (last && !this.loading) {
 				// the last row is watched for scrolling infinitely
 				this.watchEnd();
@@ -728,10 +739,11 @@ export class DynamicDataTable {
 
 	/**
 	 * Builds the element of a row. The column templates are evaluated as cell(data, meta), meta
-	 * holding the row's key, number and selection, for example for {{@number}}.
+	 * holding the row's key, number and selection, for example for {{@number}}. The elements
+	 * carrying an action that does not apply to the row get a class that hides them.
 	 */
-	private buildRow(key: string, number: number, data: unknown, selected?: boolean):
-		HTMLTableRowElement {
+	private buildRow(key: string, number: number, data: unknown, selected?: boolean,
+		hiddenActions?: string[] | null): HTMLTableRowElement {
 		if (selected === undefined) {
 			// a row from a resource: selected if the page says so
 			selected = this.selectedKeys.has(String(key));
@@ -760,6 +772,13 @@ export class DynamicDataTable {
 		tr.querySelectorAll<HTMLInputElement>(ROW_CHECKBOX).forEach((checkbox) => {
 			checkbox.checked = meta.selected;
 		});
+		if (hiddenActions && hiddenActions.length > 0) {
+			tr.querySelectorAll<HTMLElement>('[data-dt-action]').forEach((element) => {
+				if (hiddenActions.includes(element.getAttribute('data-dt-action')!)) {
+					element.classList.add(HIDDEN_ACTION_CLASS);
+				}
+			});
+		}
 		toggleParts(tr, this.look, meta.selected, 'table-row-selected');
 		return tr;
 	}
