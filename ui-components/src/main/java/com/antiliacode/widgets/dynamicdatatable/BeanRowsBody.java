@@ -15,6 +15,7 @@ package com.antiliacode.widgets.dynamicdatatable;
 
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
@@ -29,15 +30,22 @@ import org.apache.wicket.model.Model;
 
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookPart;
+import com.github.openjson.JSONObject;
 
 /**
  * The rows of a {@link BeanBasedDynamicDataTable}, in its {@code <tbody>}: one {@code <tr>} per row
  * of the current page, carrying the attributes the table's script reads, and one {@code <td>} per
- * shown column, populated by the column.
+ * shown column, populated by the column. A row with actions that are not
+ * {@link IAjaxActionColumnContributor#isEnabled(Object) enabled} on it names them, with their
+ * reasons, in its {@value #DISABLED_ACTIONS_ATTRIBUTE} attribute, as JSON; the script disables
+ * the elements carrying them.
  */
 class BeanRowsBody<T, K extends Serializable, S> extends Panel
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The attribute of a row naming the actions disabled on it. */
+	static final String DISABLED_ACTIONS_ATTRIBUTE = "data-dt-disabled-actions";
 
 	private final BeanBasedDynamicDataTable<T, K, S> table;
 
@@ -76,6 +84,12 @@ class BeanRowsBody<T, K extends Serializable, S> extends Panel
 		item.add(AttributeModifier.replace("id", table.getMarkupId() + "-row-" + formatted));
 		item.add(AttributeModifier.replace("data-key", formatted));
 		item.add(AttributeModifier.replace("data-number", number));
+		Map<String, String> disabledActions = table.getDisabledActions(row);
+		if (disabledActions.isEmpty() == false)
+		{
+			item.add(AttributeModifier.replace(DISABLED_ACTIONS_ATTRIBUTE,
+				new JSONObject(disabledActions).toString()));
+		}
 		item.add(new LookBehavior(
 			number % 2 == 1 ? LookPart.TABLE_ROW_EVEN : LookPart.TABLE_ROW_ODD,
 			table.isSelected(key) ? LookPart.TABLE_ROW_SELECTED : null));

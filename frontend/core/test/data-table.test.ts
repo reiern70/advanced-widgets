@@ -123,20 +123,62 @@ describe('DynamicDataTable', () => {
 			['User 3 #3', 'City <3>']]);
 	});
 
-	it('hides the elements of the actions that do not apply to a row', () => {
+	it('removes the elements of the actions left out of a row', () => {
 		const data = rows(1, 2);
 		data[1].hiddenActions = ['open'];
 		const table = new DynamicDataTable(config(), () => undefined, null, null,
 			{ rows: data, itemCount: 2 });
-		const hidden = () => Array.from(document.querySelectorAll('#table [data-dt-action="open"]'),
-			(element) => element.classList.contains('ant-data-table-action-hidden'));
+		const shown = () => Array.from(document.querySelectorAll('#table tbody tr'),
+			(tr) => tr.querySelector('[data-dt-action="open"]') !== null);
 
-		expect(hidden()).toEqual([false, true]);
+		expect(shown()).toEqual([true, false]);
+		expect(cells()[1]).toEqual([' #2', 'City <2>']);
 
-		table.renderRow('k1', data[0].data, ['open', 'other']);
+		table.renderRow('k1', data[0].data, { hiddenActions: ['open', 'other'] });
 		table.renderRow('k2', data[1].data);
 
-		expect(hidden()).toEqual([true, false]);
+		expect(shown()).toEqual([false, true]);
+	});
+
+	it('disables the elements of the actions disabled on a row, with the reason, and ignores clicks on them', () => {
+		const action = vi.fn();
+		const data = rows(1, 3);
+		data[1].disabledActions = { open: 'Already opened' };
+		data[2].disabledActions = { open: '' };
+		const table = new DynamicDataTable(config(), action, null, null,
+			{ rows: data, itemCount: 3 });
+		const links = () => Array.from(
+			document.querySelectorAll<HTMLElement>('#table [data-dt-action="open"]'));
+
+		expect(links().map((link) => link.getAttribute('aria-disabled'))).toEqual([null, 'true',
+			'true']);
+		expect(links().map((link) => link.classList.contains('ant-data-table-action-disabled')))
+			.toEqual([false, true, true]);
+		expect(links()[1].title).toBe('Already opened');
+		expect(links()[1].getAttribute('aria-description')).toBe('Already opened');
+		expect(links()[2].hasAttribute('title')).toBe(false);
+
+		const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+		links()[1].dispatchEvent(click);
+		expect(click.defaultPrevented).toBe(true);
+		expect(action).not.toHaveBeenCalled();
+
+		table.renderRow('k2', data[1].data);
+		links()[1].click();
+		expect(action).toHaveBeenCalledWith('open', 'k2');
+	});
+
+	it('disables the actions rows rendered on the server name as disabled', () => {
+		const cfg = config({ serverRows: true });
+		document.querySelector('#table tbody')!.innerHTML =
+			'<tr data-key="k1" data-number="1"><td><a data-dt-action="open">Open</a></td></tr>' +
+			'<tr data-key="k2" data-number="2" data-dt-disabled-actions=\'{"open":"Gone"}\'>' +
+			'<td><a data-dt-action="open">Open</a></td></tr>';
+		new DynamicDataTable(cfg, () => undefined);
+
+		const links = Array.from(document.querySelectorAll<HTMLElement>('#table [data-dt-action]'));
+		expect(links.map((link) => link.getAttribute('aria-disabled'))).toEqual([null, 'true']);
+		expect(links[1].title).toBe('Gone');
 	});
 
 	it('selects rows with their checkboxes and shows it in the header checkbox', () => {
