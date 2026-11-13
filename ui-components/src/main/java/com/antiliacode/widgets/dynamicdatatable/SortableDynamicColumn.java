@@ -87,6 +87,18 @@ public class SortableDynamicColumn<T, S>
 	}
 
 	@Override
+	public String getFooterTemplate()
+	{
+		return column.getFooterTemplate();
+	}
+
+	@Override
+	public String getFooterTemplate(JsonBasedDynamicDataTable<T, ?> table)
+	{
+		return column.getFooterTemplate(table);
+	}
+
+	@Override
 	public String getId()
 	{
 		return column.getId();
