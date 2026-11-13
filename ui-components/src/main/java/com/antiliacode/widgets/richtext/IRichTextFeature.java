@@ -127,10 +127,13 @@ public interface IRichTextFeature extends IClusterable
 	}
 
 	/**
+	 * The editor asks once while it has the feature, and keeps the events: each going to the
+	 * server has an Ajax behavior of its own on the editor.
+	 *
 	 * @param editor
 	 *            the editor
-	 * @return the events the editor listens to while it has the feature, after its own, in the
-	 *         same order each time: the server finds them by it. None by default.
+	 * @return the events the editor listens to while it has the feature, after its own. None by
+	 *         default.
 	 */
 	default List<? extends IClientEvent> getEvents(Component editor)
 	{

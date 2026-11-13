@@ -16,6 +16,7 @@ package com.antiliacode.widgets.event;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,11 @@ import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.IComponentAwareHeaderContributor;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.request.IRequestParameters;
+import org.apache.wicket.request.Url;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.ResourceReference;
+import org.apache.wicket.resource.CoreLibrariesContributor;
+import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.StringValue;
 import org.apache.wicket.util.string.Strings;
@@ -59,12 +63,13 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * Each event runs its handler in the browser, and that is all the browser knows of it: an
  * {@link IAjaxRoundTripEvent} comes with the attributes of its requests, those of Wicket's Ajax,
  * which its handler sends by calling {@code send(values)}, a round trip of Wicket's Ajax; any other
- * stays in the browser, its handler doing what it does there. The requests go to one of two Ajax
- * behaviors the behavior adds to the component, whatever the number of events: one for the
- * {@link IAjaxEvent}s and the {@link IAjaxUpdateEvent}s, without the form, one for the
- * {@link IAjaxSubmitEvent}s, submitting the form the component is in. They post, unless an event
- * sets GET: when the component is a field, Wicket sends its value with the request too, as the
- * text a {@link com.antiliacode.widgets.richtext.RichTextEditorChangeEvent} reads.
+ * stays in the browser, its handler doing what it does there. Each event going to the server has
+ * an Ajax behavior of its own, which the behavior adds to the component: with its own URL, its own
+ * attributes and its own response, as any Ajax behavior of Wicket. That of an {@link IAjaxEvent}
+ * or an {@link IAjaxUpdateEvent} sends the request without the form, that of an
+ * {@link IAjaxSubmitEvent} submits the form the component is in. They post, unless an event sets
+ * GET: when the component is a field, Wicket sends its value with the request too, as the text a
+ * {@link com.antiliacode.widgets.richtext.RichTextEditorChangeEvent} reads.
  *
  * <pre>
  * ClientEventsBehavior events = new ClientEventsBehavior();
@@ -75,25 +80,42 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * </pre>
  *
  * The events of one name each run, in their order, with their own handler and delay, and each
- * going to the server sends its own request, which only it hears of. One event keeps the size of a
- * resized editor in the browser, for example, and another sends it to the server; or a single
- * {@link IAjaxEvent} does both, its handler keeping the size before it calls {@code send}.
- * {@link #add(IClientEvent)} adds an event after those of its name, {@link #set(IClientEvent)}
- * puts it in their place and {@link #removeEvents(String...)} takes them away.
+ * going to the server sends its own request, to its own behavior, which only it hears of. One
+ * event keeps the size of a resized editor in the browser, for example, and another sends it to
+ * the server; or a single {@link IAjaxEvent} does both, its handler keeping the size before it
+ * calls {@code send}. {@link #add(IClientEvent)} adds an event after those of its name,
+ * {@link #set(IClientEvent)} puts it in their place and {@link #removeEvents(String...)} takes
+ * them away.
  * <p>
- * The attributes of the requests of each event are those of Wicket's Ajax:
+ * The attributes of the requests of each event are those of its behavior, Wicket's Ajax ones:
  * {@link #updateAjaxAttributes(AjaxRequestAttributes)} changes those of all the events of the
  * component, then {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)} those of
  * the event alone, its method, its extra parameters, which a page veil leaving some requests alone
  * sees in their {@code ep}, its dynamic extra parameters and the listeners of its calls, on
- * success and on failure for example.
+ * success and on failure for example. Two events of one name may so go each its own way:
+ *
+ * <pre>
+ * // on blur, the state goes to the server under the page's veil, and another request, which the
+ * // veil leaves alone, tells the page
+ * events.add(new SendStateEvent(RichTextEditorEvents.BLUR)
+ * {
+ * 	&#64;Override
+ * 	public void updateAjaxAttributes(AjaxRequestAttributes attributes)
+ * 	{
+ * 		super.updateAjaxAttributes(attributes);
+ * 		attributes.getAjaxCallListeners().add(new VeilListener());
+ * 	}
+ * });
+ * events.add(AjaxEvent.of(RichTextEditorEvents.BLUR, (values, target) -&gt; ...)
+ * 	.setExtraParameter("_nb", "true"));
+ * </pre>
  * <p>
  * An event telling {@code leaving: true} in its {@code detail}, as the editors' events as the page
  * goes do, goes to the server in a beacon, which the browser sends even then.
  * <p>
- * The events go to the browser as the component renders, in the order they are in, by which the
- * server finds them again: a page changes them before it renders the component, not between. A
- * component keeping events of its own, or of its parts, overrides {@link #getEvents()};
+ * The events go to the browser as the component renders, in the order they are in. A component
+ * keeping events of its own, or of its parts, overrides {@link #getEvents()}, giving the same
+ * events each time, each with its behavior;
  * {@link #getClientObject()} gives the handlers what the component is in the browser,
  * {@link #getClientValues()} what each request carries besides, which
  * {@link #onEventSent(AjaxRequestTarget, IRequestParameters)} takes first, and
@@ -120,11 +142,11 @@ public class ClientEventsBehavior extends Behavior
 	public static final ResourceReference JS = new AlreadyCompressedJavaScriptResourceReference(
 		ClientEventsBehavior.class, "antilia-client-events.js");
 
-	/** The parameter of a request naming the event. */
+	/**
+	 * The parameter of a request naming the event, for the page's scripts and logs: the server
+	 * knows the event by the behavior the request goes to, without reading it.
+	 */
 	public static final String EVENT_PARAMETER = "antilia-event";
-
-	/** The parameter of a request telling the place of the event among those of the component. */
-	public static final String INDEX_PARAMETER = "antilia-event-index";
 
 	/** The parameter of a request holding the values the browser sent, as JSON. */
 	public static final String VALUES_PARAMETER = "antilia-event-values";
@@ -155,9 +177,14 @@ public class ClientEventsBehavior extends Behavior
 
 	private final Map<String, List<IClientEvent>> events = new LinkedHashMap<>();
 
-	private AjaxEvents ajaxEvents;
+	/**
+	 * The Ajax behaviors of the events going to the server, one each, on the component, in the
+	 * order they came.
+	 */
+	private final List<EventBehavior> eventBehaviors = new ArrayList<>();
 
-	private SubmitEvents submitEvents;
+	/** The component, once the behavior is bound to it. */
+	private Component bound;
 
 	/**
 	 * @param event
@@ -171,6 +198,7 @@ public class ClientEventsBehavior extends Behavior
 	{
 		check(event);
 		events.computeIfAbsent(event.getEventName(), name -> new ArrayList<>()).add(event);
+		addBehavior(event);
 		return this;
 	}
 
@@ -187,7 +215,12 @@ public class ClientEventsBehavior extends Behavior
 		check(event);
 		List<IClientEvent> named = new ArrayList<>();
 		named.add(event);
-		events.put(event.getEventName(), named);
+		List<IClientEvent> replaced = events.put(event.getEventName(), named);
+		if (replaced != null)
+		{
+			replaced.forEach(this::dropBehavior);
+		}
+		addBehavior(event);
 		return this;
 	}
 
@@ -211,6 +244,7 @@ public class ClientEventsBehavior extends Behavior
 		{
 			events.remove(event.getEventName());
 		}
+		dropBehavior(event);
 		return true;
 	}
 
@@ -231,6 +265,7 @@ public class ClientEventsBehavior extends Behavior
 				removed.addAll(named);
 			}
 		}
+		removed.forEach(this::dropBehavior);
 		return Collections.unmodifiableList(removed);
 	}
 
@@ -295,8 +330,11 @@ public class ClientEventsBehavior extends Behavior
 	}
 
 	/**
-	 * @return the events the component listens to, in the order the server finds them by: those
-	 *         added, unless a subclass adds others
+	 * A subclass adding events gives the same events each time, not new ones: each event going to
+	 * the server has its own Ajax behavior on the component, which the server finds it by.
+	 *
+	 * @return the events the component listens to, in their order: those added, unless a subclass
+	 *         adds others
 	 */
 	public List<IClientEvent> getEvents()
 	{
@@ -388,9 +426,10 @@ public class ClientEventsBehavior extends Behavior
 	 * server, those via Ajax and those submitting the form: the channel, the method, the
 	 * {@link AjaxRequestAttributes#getExtraParameters() extra parameters} a page veil leaves the
 	 * requests alone by, or the {@link AjaxRequestAttributes#getAjaxCallListeners() listeners},
-	 * for example. Each event changes those of its own after, in
-	 * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)}. Does nothing by
-	 * default.
+	 * for example. The Ajax behavior of each event calls it, then the event changes those of its
+	 * own, in {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)}: what
+	 * differs from one event to another, the veil on blur but not as the user types for example,
+	 * goes there. Does nothing by default.
 	 * <p>
 	 * The attributes have the URL, the method, POST, and the form the events need already: keep
 	 * them.
@@ -448,23 +487,127 @@ public class ClientEventsBehavior extends Behavior
 	public void bind(Component component)
 	{
 		super.bind(component);
-		if (ajaxEvents != null)
+		if (bound != null)
 		{
 			throw new IllegalStateException("A ClientEventsBehavior listens to one component");
 		}
 		component.setOutputMarkupId(true);
-		ajaxEvents = new AjaxEvents();
-		submitEvents = new SubmitEvents();
-		component.add(ajaxEvents, submitEvents);
+		bound = component;
+		// those added: a subclass adding others may not be ready to give them yet
+		getAddedEvents().forEach(this::addBehavior);
 	}
 
 	@Override
 	public void unbind(Component component)
 	{
-		component.remove(ajaxEvents, submitEvents);
-		ajaxEvents = null;
-		submitEvents = null;
+		for (EventBehavior behavior : eventBehaviors)
+		{
+			component.remove(behavior.asBehavior());
+		}
+		eventBehaviors.clear();
+		bound = null;
 		super.unbind(component);
+	}
+
+	/**
+	 * Gives each event going to the server its Ajax behavior before the component renders, those
+	 * a subclass adds among them.
+	 */
+	@Override
+	public void onConfigure(Component component)
+	{
+		super.onConfigure(component);
+		syncBehaviors();
+	}
+
+	/**
+	 * Gives each event of the component going to the server an Ajax behavior of its own, and takes
+	 * away those of the events the component no longer has whose URL never went to the browser:
+	 * the browser may still send a request to the others, which they leave alone.
+	 */
+	private void syncBehaviors()
+	{
+		if (bound == null)
+		{
+			return;
+		}
+		List<IClientEvent> all = getEvents();
+		for (Iterator<EventBehavior> iterator = eventBehaviors.iterator(); iterator.hasNext();)
+		{
+			EventBehavior behavior = iterator.next();
+			if (!behavior.isRendered() && !containsSame(all, behavior.getClientEvent()))
+			{
+				iterator.remove();
+				bound.remove(behavior.asBehavior());
+			}
+		}
+		all.forEach(this::addBehavior);
+	}
+
+	/**
+	 * Adds the Ajax behavior of an event going to the server to the component, unless the event
+	 * has one already.
+	 */
+	private void addBehavior(IClientEvent event)
+	{
+		if (bound == null || behaviorOf(event) != null)
+		{
+			return;
+		}
+		EventBehavior behavior;
+		if (event instanceof IAjaxSubmitEvent submit)
+		{
+			behavior = new EventSubmitBehavior(submit);
+		}
+		else if (event instanceof IAjaxEvent || event instanceof IAjaxUpdateEvent)
+		{
+			behavior = new EventAjaxBehavior((IAjaxRoundTripEvent)event);
+		}
+		else
+		{
+			// it stays in the browser
+			return;
+		}
+		eventBehaviors.add(behavior);
+		bound.add(behavior.asBehavior());
+	}
+
+	/**
+	 * Takes the Ajax behavior of an event the component no longer listens to away from the
+	 * component, unless its URL went to the browser already, or the event was added again.
+	 */
+	private void dropBehavior(IClientEvent event)
+	{
+		EventBehavior behavior = behaviorOf(event);
+		if (bound != null && behavior != null && !behavior.isRendered() &&
+			!containsSame(getAddedEvents(), event))
+		{
+			eventBehaviors.remove(behavior);
+			bound.remove(behavior.asBehavior());
+		}
+	}
+
+	/**
+	 * @return the Ajax behavior of the event, {@code null} for none
+	 */
+	private EventBehavior behaviorOf(IClientEvent event)
+	{
+		for (EventBehavior behavior : eventBehaviors)
+		{
+			if (behavior.getClientEvent() == event)
+			{
+				return behavior;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return whether the events hold the event itself, not merely one equal to it
+	 */
+	private static boolean containsSame(List<IClientEvent> all, IClientEvent event)
+	{
+		return all.stream().anyMatch(each -> each == event);
 	}
 
 	/**
@@ -527,14 +670,16 @@ public class ClientEventsBehavior extends Behavior
 	 * @param component
 	 *            the component
 	 * @param response
-	 *            the response, which the listeners of the calls of the event render their head to
+	 *            the response, which the libraries of Wicket's Ajax and the listeners of the calls
+	 *            of the event render their head to
 	 * @param event
-	 *            an event of the component
+	 *            an event of the component, checked
 	 * @param index
 	 *            its place among them
 	 * @return what the browser gets of it: its name and its place first, which the
 	 *         {@link IClientEvent#toJson() JSON} of the event does not change, then the JSON, then,
-	 *         for an event going to the server, the attributes of its requests as {@code ajax}
+	 *         for an event going to the server, the attributes of the requests of its behavior as
+	 *         {@code ajax}
 	 */
 	private JSONObject describe(Component component, IHeaderResponse response, IClientEvent event,
 		int index)
@@ -554,23 +699,33 @@ public class ClientEventsBehavior extends Behavior
 				}
 			}
 		}
-		if (event instanceof IAjaxRoundTripEvent roundTrip)
+		if (event instanceof IAjaxRoundTripEvent)
 		{
-			described.put(ClientEventJson.AJAX, new JSONFunction(
-				attributesOf(component, response, roundTrip)));
+			EventBehavior behavior = behaviorOf(event);
+			if (behavior == null)
+			{
+				// too late to add one: Wicket takes no behaviors as the component renders
+				throw new IllegalStateException("The event " + event.getEventName() +
+					" came after " + component + " was configured: getEvents() gives the" +
+					" same events each time, and a page changes them before it renders the" +
+					" component");
+			}
+			described.put(ClientEventJson.AJAX, new JSONFunction(behavior.renderAttributes(
+				component, response)));
 		}
 		return described;
 	}
 
 	/**
-	 * @return the attributes of the requests of the event, as Wicket's Ajax takes them: those of
-	 *         the behavior it goes by, of all the events of the component, then of the event
+	 * Renders the libraries of Wicket's Ajax and the base URL of its requests, as its behaviors
+	 * do.
 	 */
-	private CharSequence attributesOf(Component component, IHeaderResponse response,
-		IAjaxRoundTripEvent event)
+	private static void renderAjaxLibraries(Component component, IHeaderResponse response)
 	{
-		return event instanceof IAjaxSubmitEvent ? submitEvents.attributesOf(component, response,
-			event) : ajaxEvents.attributesOf(component, response, event);
+		CoreLibrariesContributor.contributeAjax(component.getApplication(), response);
+		Url baseUrl = component.getRequestCycle().getUrlRenderer().getBaseUrl();
+		response.render(JavaScriptHeaderItem.forScript("Wicket.Ajax.baseUrl=\"" +
+			Strings.escapeMarkup(baseUrl.toString()) + "\";", "wicket-ajax-base-url"));
 	}
 
 	/**
@@ -676,60 +831,46 @@ public class ClientEventsBehavior extends Behavior
 	}
 
 	/**
-	 * Gives a test the Ajax behavior to execute for an event, with the request parameters
-	 * {@link #EVENT_PARAMETER}, {@link #INDEX_PARAMETER}, the place of the event in
-	 * {@link #getEvents()}, and {@link #VALUES_PARAMETER}, which the browser sends with it.
+	 * Gives a test the Ajax behavior to execute for an event, with the request parameter
+	 * {@link #VALUES_PARAMETER}, which the browser sends with it.
 	 *
 	 * @param event
-	 *            an event going to the server
-	 * @return the Ajax behavior it goes by
+	 *            an event going to the server, which the component listens to
+	 * @return its own Ajax behavior on the component
 	 * @throws IllegalArgumentException
-	 *             when the event stays in the browser
+	 *             when the event stays in the browser, or the component does not listen to it
 	 */
 	public AbstractDefaultAjaxBehavior getAjaxBehavior(IClientEvent event)
 	{
-		if (event instanceof IAjaxSubmitEvent)
+		Args.notNull(event, "event");
+		if (!(event instanceof IAjaxEvent || event instanceof IAjaxUpdateEvent ||
+			event instanceof IAjaxSubmitEvent))
 		{
-			return submitEvents;
+			throw new IllegalArgumentException("The event " + event.getEventName() +
+				" stays in the browser");
 		}
-		if (event instanceof IAjaxEvent || event instanceof IAjaxUpdateEvent)
+		syncBehaviors();
+		EventBehavior behavior = behaviorOf(event);
+		if (behavior == null)
 		{
-			return ajaxEvents;
+			throw new IllegalArgumentException("The component does not listen to the event " +
+				event.getEventName());
 		}
-		throw new IllegalArgumentException("The event " + event.getEventName() +
-			" stays in the browser");
+		return behavior.asBehavior();
 	}
 
 	/**
-	 * @return whether the component listens to an event of the type
+	 * @return whether the component still listens to the event, which a request came for: the
+	 *         browser may send one after the page took the event away
 	 */
-	private boolean hasEvents(Class<?> type)
+	private boolean listensTo(IClientEvent event)
 	{
-		return getEvents().stream().anyMatch(type::isInstance);
-	}
-
-	/**
-	 * @return the event the request is of, {@code null} when the component no longer has it, or
-	 *         when it is of none of the types, which the behavior hears of
-	 */
-	private IClientEvent eventOf(IRequestParameters parameters, Class<?>... types)
-	{
-		String name = parameters.getParameterValue(EVENT_PARAMETER).toOptionalString();
-		int index = parameters.getParameterValue(INDEX_PARAMETER).toInt(-1);
-		List<IClientEvent> all = getEvents();
-		if (index < 0 || index >= all.size())
+		if (containsSame(getEvents(), event))
 		{
-			LOG.debug("No event {} at {} among the events of the component", name, index);
-			return null;
+			return true;
 		}
-		IClientEvent event = all.get(index);
-		if (List.of(types).stream().noneMatch(type -> type.isInstance(event)) ||
-			!event.getEventName().equals(name))
-		{
-			LOG.debug("The event at {} is {}, not {}", index, event.getEventName(), name);
-			return null;
-		}
-		return event;
+		LOG.debug("The component no longer listens to the event {}", event.getEventName());
+		return false;
 	}
 
 	/**
@@ -788,31 +929,87 @@ public class ClientEventsBehavior extends Behavior
 		}
 	}
 
+	/** The Ajax behavior of an event going to the server, on the component. */
+	private interface EventBehavior extends IClusterable
+	{
+		/**
+		 * @return the event, which the requests of the behavior are of
+		 */
+		IAjaxRoundTripEvent getClientEvent();
+
+		/**
+		 * @return whether the URL of the behavior went to the browser, which may send a request to
+		 *         it then
+		 */
+		boolean isRendered();
+
+		/**
+		 * Renders what the requests need, the libraries of Wicket's Ajax and the head of the
+		 * listeners of their calls.
+		 *
+		 * @param component
+		 *            the component
+		 * @param response
+		 *            the header response
+		 * @return the attributes of the requests of the event, as JSON
+		 */
+		CharSequence renderAttributes(Component component, IHeaderResponse response);
+
+		/**
+		 * @return the behavior itself
+		 */
+		AbstractDefaultAjaxBehavior asBehavior();
+	}
+
 	/**
-	 * Hears of the {@link IAjaxEvent}s and the {@link IAjaxUpdateEvent}s, by the requests their
-	 * handlers send. It renders the libraries of Wicket's Ajax for all the events going to the
-	 * server.
+	 * Hears of an {@link IAjaxEvent} or an {@link IAjaxUpdateEvent}, by the requests its handler
+	 * sends.
 	 */
-	private final class AjaxEvents extends AbstractDefaultAjaxBehavior
+	private final class EventAjaxBehavior extends AbstractDefaultAjaxBehavior
+		implements EventBehavior
 	{
 		private static final long serialVersionUID = 1L;
 
-		@Override
-		public void renderHead(Component component, IHeaderResponse response)
+		private final IAjaxRoundTripEvent event;
+
+		private boolean rendered;
+
+		EventAjaxBehavior(IAjaxRoundTripEvent event)
 		{
-			if (hasEvents(IAjaxRoundTripEvent.class))
-			{
-				super.renderHead(component, response);
-			}
+			this.event = event;
 		}
 
 		@Override
-		public boolean getStatelessHint(Component component)
+		public IAjaxRoundTripEvent getClientEvent()
 		{
-			// without events going by it, its URL never renders
-			return !hasEvents(IAjaxEvent.class) && !hasEvents(IAjaxUpdateEvent.class);
+			return event;
 		}
 
+		@Override
+		public boolean isRendered()
+		{
+			return rendered;
+		}
+
+		@Override
+		public AbstractDefaultAjaxBehavior asBehavior()
+		{
+			return this;
+		}
+
+		@Override
+		public CharSequence renderAttributes(Component component, IHeaderResponse response)
+		{
+			rendered = true;
+			AjaxRequestAttributes attributes = getAttributes();
+			renderAjaxLibraries(component, response);
+			renderListeners(component, response, attributes);
+			return renderAjaxAttributes(component, attributes);
+		}
+
+		/**
+		 * POST, then those of all the events of the component, then those of the event.
+		 */
 		@Override
 		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
 		{
@@ -821,18 +1018,7 @@ public class ClientEventsBehavior extends Behavior
 			// and the values may be long too
 			attributes.setMethod(AjaxRequestAttributes.Method.POST);
 			ClientEventsBehavior.this.updateAjaxAttributes(attributes);
-		}
-
-		/**
-		 * @return the attributes of the requests of the event, as JSON
-		 */
-		CharSequence attributesOf(Component component, IHeaderResponse response,
-			IAjaxRoundTripEvent event)
-		{
-			AjaxRequestAttributes attributes = getAttributes();
 			event.updateAjaxAttributes(attributes);
-			renderListeners(component, response, attributes);
-			return renderAjaxAttributes(component, attributes);
 		}
 
 		@Override
@@ -840,7 +1026,10 @@ public class ClientEventsBehavior extends Behavior
 		{
 			IRequestParameters parameters = parameters();
 			onEventSent(target, parameters);
-			IClientEvent event = eventOf(parameters, IAjaxEvent.class, IAjaxUpdateEvent.class);
+			if (!listensTo(event))
+			{
+				return;
+			}
 			if (event instanceof IAjaxUpdateEvent update)
 			{
 				if (getComponent() instanceof FormComponent<?> component)
@@ -856,51 +1045,77 @@ public class ClientEventsBehavior extends Behavior
 	}
 
 	/**
-	 * Hears of the {@link IAjaxSubmitEvent}s, by the requests their handlers send, submitting the
-	 * form. Wicket's behavior submitting a form binds to an event, which the browser never fires
-	 * here: it renders no script, the events coming with the attributes of their requests.
+	 * Hears of an {@link IAjaxSubmitEvent}, by the requests its handler sends, submitting the form.
+	 * Wicket's behavior submitting a form binds to an event, which the browser never fires here: it
+	 * renders no script, the event coming with the attributes of its requests.
 	 */
-	private final class SubmitEvents extends AjaxFormSubmitBehavior
+	private final class EventSubmitBehavior extends AjaxFormSubmitBehavior
+		implements EventBehavior
 	{
 		private static final long serialVersionUID = 1L;
 
-		SubmitEvents()
+		private final IAjaxSubmitEvent event;
+
+		private boolean rendered;
+
+		EventSubmitBehavior(IAjaxSubmitEvent event)
 		{
 			super(SUBMIT_EVENT);
+			this.event = event;
 		}
 
+		@Override
+		public IAjaxRoundTripEvent getClientEvent()
+		{
+			return event;
+		}
+
+		@Override
+		public boolean isRendered()
+		{
+			return rendered;
+		}
+
+		@Override
+		public AbstractDefaultAjaxBehavior asBehavior()
+		{
+			return this;
+		}
+
+		@Override
+		public CharSequence renderAttributes(Component component, IHeaderResponse response)
+		{
+			rendered = true;
+			AjaxRequestAttributes attributes = getAttributes();
+			renderAjaxLibraries(component, response);
+			renderListeners(component, response, attributes);
+			return renderAjaxAttributes(component, attributes);
+		}
+
+		/**
+		 * Renders what Wicket's Ajax behaviors render, without the script of Wicket's behavior
+		 * binding to the event: without names of events, it would send the request as the page is
+		 * ready.
+		 */
 		@Override
 		public void renderHead(Component component, IHeaderResponse response)
 		{
-			// the libraries come with the other behavior, the attributes with the events
+			renderAjaxLibraries(component, response);
+			renderListeners(component, response, getAttributes());
 		}
 
-		@Override
-		public boolean getStatelessHint(Component component)
-		{
-			// without events going by it, its URL never renders
-			return !hasEvents(IAjaxSubmitEvent.class);
-		}
-
+		/**
+		 * Those of the form, then those of all the events of the component, then those of the
+		 * event.
+		 */
 		@Override
 		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
 		{
 			super.updateAjaxAttributes(attributes);
-			// the browser fires no event of it: the handlers of the events send the requests
+			// the browser fires no event of it: the handler of the event sends the requests
 			attributes.setEventNames();
 			ClientEventsBehavior.this.updateAjaxAttributes(attributes);
-		}
-
-		/**
-		 * @return the attributes of the requests of the event, as JSON
-		 */
-		CharSequence attributesOf(Component component, IHeaderResponse response,
-			IAjaxRoundTripEvent event)
-		{
-			AjaxRequestAttributes attributes = getAttributes();
 			event.updateAjaxAttributes(attributes);
-			renderListeners(component, response, attributes);
-			return renderAjaxAttributes(component, attributes);
 		}
 
 		@Override
@@ -908,27 +1123,22 @@ public class ClientEventsBehavior extends Behavior
 		{
 			// what the component sent besides, before the form takes what the user entered
 			onEventSent(target, parameters());
-			super.onEvent(target);
+			if (listensTo(event))
+			{
+				super.onEvent(target);
+			}
 		}
 
 		@Override
 		protected void onSubmit(AjaxRequestTarget target)
 		{
-			IRequestParameters parameters = parameters();
-			if (eventOf(parameters, IAjaxSubmitEvent.class) instanceof IAjaxSubmitEvent event)
-			{
-				event.onEvent(valuesOf(parameters), getForm(), target);
-			}
+			event.onEvent(valuesOf(parameters()), getForm(), target);
 		}
 
 		@Override
 		protected void onError(AjaxRequestTarget target)
 		{
-			IRequestParameters parameters = parameters();
-			if (eventOf(parameters, IAjaxSubmitEvent.class) instanceof IAjaxSubmitEvent event)
-			{
-				event.onError(valuesOf(parameters), getForm(), target);
-			}
+			event.onError(valuesOf(parameters()), getForm(), target);
 		}
 	}
 }

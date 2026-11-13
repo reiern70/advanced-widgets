@@ -89,10 +89,10 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * own events too, {@link RichTextEditorEvents}: the focus got and lost, the selection, Ctrl+S, the
  * size changed. It listens to the {@link #addEvent(com.antiliacode.widgets.event.IClientEvent)
  * events it is given}, in the browser or on the server, with the form or without, and to those
- * of its features, through two Ajax behaviors whatever their number. Until the script makes the
- * editor, the text area is hidden in the room the editor takes ({@link #LOADING_CLASS}), so that a
- * page arriving slowly does not show the HTML of the text. Without JavaScript the text area is
- * shown.
+ * of its features, each going to the server through an Ajax behavior of its own. Until the script
+ * makes the editor, the text area is hidden in the room the editor takes
+ * ({@link #LOADING_CLASS}), so that a page arriving slowly does not show the HTML of the text.
+ * Without JavaScript the text area is shown.
  * <p>
  * Code blocks are in a language, {@code <pre><code class="language-java">}, which the menu of the
  * tool code block chooses among {@link #setCodeLanguages(String...) the languages of the editor}.

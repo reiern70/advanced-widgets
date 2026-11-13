@@ -20,10 +20,11 @@ import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
  * {@code send(values)}, the browser sends a request of Wicket's Ajax with the values; and
  * {@code send(values, attributes)} adds attributes of the handler's own to those of the event,
  * listeners of the call for example, {@code sh} on success and {@code fh} on failure. The request is
- * Wicket's own: its attributes, which the server renders with the event, tell the URL, the method,
- * GET or POST, the form it submits, if any, its extra parameters and its dynamic extra parameters,
- * functions the browser calls as it sends the request, and the listeners of the call, handling its
- * success and its failure among them. The browser knows nothing else of what the event does on the
+ * Wicket's own: its attributes, which the server renders with the event, tell the URL, that of the
+ * Ajax behavior of the event's own on the component, the method, GET or POST, the form it submits,
+ * if any, its extra parameters and its dynamic extra parameters, functions the browser calls as it
+ * sends the request, and the listeners of the call, handling its success and its failure among
+ * them. The browser knows nothing else of what the event does on the
  * server: an event staying in the browser is one that is not an {@code IAjaxRoundTripEvent}.
  * <p>
  * What the server does with it is one of three ways: {@link IAjaxEvent}, alone,
@@ -63,8 +64,11 @@ public interface IAjaxRoundTripEvent extends IClientEvent
 	}
 
 	/**
-	 * Changes the attributes of the requests of the event, of its own alone, as an Ajax behavior of
-	 * Wicket does: the {@link AjaxRequestAttributes#setMethod(AjaxRequestAttributes.Method) method},
+	 * Changes the attributes of the requests of the event, of its own alone: the event has an Ajax
+	 * behavior of its own on the component, whose
+	 * {@code updateAjaxAttributes(AjaxRequestAttributes)} calls this last, so that two events, of
+	 * one name or not, send their requests each its own way. As in an Ajax behavior of Wicket, it
+	 * changes the {@link AjaxRequestAttributes#setMethod(AjaxRequestAttributes.Method) method},
 	 * POST unless the event sets GET, the {@link AjaxRequestAttributes#getExtraParameters() extra
 	 * parameters}, which Wicket's Ajax puts in the {@code ep} of the attributes, where a page veil
 	 * leaving some requests alone sees them, the

@@ -49,10 +49,10 @@ function parameters(request: Sent): Record<string, string> {
 	return Object.fromEntries(request.ep.map(({ name, value }) => [name, value]));
 }
 
-/** @returns the parameters the request carries for the event: its name, its place, its values */
-function event(request: Sent): [string, string, string] {
+/** @returns the parameters the request carries for the event: its name, its values */
+function event(request: Sent): [string, string] {
 	const sent = parameters(request);
-	return [sent['antilia-event'], sent['antilia-event-index'], sent['antilia-event-values']];
+	return [sent['antilia-event'], sent['antilia-event-values']];
 }
 
 describe('client events', () => {
@@ -87,7 +87,6 @@ describe('client events', () => {
 		element.dispatchEvent(new CustomEvent('antilia:resize', { detail: {
 			editor: new (class Editor {})(), size: { width: 640, height: 320 } } }));
 		expect(heard).toEqual([{ ...AJAX, ep: [{ name: 'antilia-event', value: 'antilia:resize' },
-			{ name: 'antilia-event-index', value: '2' },
 			{ name: 'antilia-event-values', value: '{"size":{"width":640,"height":320}}' }] }]);
 	});
 
@@ -102,7 +101,7 @@ describe('client events', () => {
 			(found) => RichTextEditor.of(found.id));
 
 		editor.trigger('test-client:asked', { what: 'size' });
-		expect(heard.map(event)).toEqual([['test-client:asked', '0',
+		expect(heard.map(event)).toEqual([['test-client:asked',
 			'{"asked":"size","length":4}']]);
 	});
 
@@ -122,7 +121,7 @@ describe('client events', () => {
 		expect(seen).toEqual(['input', component, 'input', element]);
 		expect(heard).toHaveLength(1);
 		expect(heard[0]).toMatchObject(submit);
-		expect(event(heard[0])).toEqual(['input', '0', '{"length":3}']);
+		expect(event(heard[0])).toEqual(['input', '{"length":3}']);
 	});
 
 	it('keeps an event without attributes in the browser', () => {
@@ -185,7 +184,7 @@ describe('client events', () => {
 
 		element.dispatchEvent(new CustomEvent('antilia:resize', { detail: { size: { height: 300 } } }));
 		expect(document.cookie).toContain('kept=300');
-		expect(heard.map(event)).toEqual([['antilia:resize', '1', '{"size":{"height":300}}']]);
+		expect(heard.map(event)).toEqual([['antilia:resize', '{"size":{"height":300}}']]);
 	});
 
 	it('waits for the events to pause, each postponing the one waiting', () => {
@@ -201,7 +200,7 @@ describe('client events', () => {
 		expect(heard).toEqual([]);
 		vi.advanceTimersByTime(100);
 		// the last one, a value which is not an object wrapped
-		expect(heard.map((request) => event(request)[2])).toEqual(['{"value":2}']);
+		expect(heard.map((request) => event(request)[1])).toEqual(['{"value":2}']);
 
 		// gone from the page meanwhile: nothing
 		element.dispatchEvent(new CustomEvent('input', { detail: 3 }));
@@ -237,13 +236,15 @@ describe('client events', () => {
 		attachClientEvents('editor', [
 			{ eventName: 'focus', index: 0, ajax: AJAX, eventHandlerClientSideCode: () => { throw new Error('broken'); } },
 			{ eventName: 'focus', index: 1, ajax: AJAX, eventHandlerClientSideCode: (_event, _component, _options, send) => send(circular) },
-			{ eventName: 'focus', index: 2, ajax: AJAX, eventClientHandlerName: 'Wicket.ClientEvents.send' },
+			{ eventName: 'focus', index: 2, ajax: { ...AJAX, u: 'page?1-1.2-editor' }, eventClientHandlerName: 'Wicket.ClientEvents.send' },
 			{ eventName: 'focus', index: 3, ajax: AJAX, eventClientHandlerName: 'Nowhere.toBeFound' }]);
 
 		element.dispatchEvent(new Event('focus'));
 		expect(errors).toEqual(['The handler of focus failed', 'The values of focus are not JSON',
 			'The handler of focus, Nowhere.toBeFound, is no function of the page']);
-		expect(heard.map((request) => event(request).slice(1))).toEqual([['2', '{}']]);
+		// the request of the third alone, to the URL of its own behavior
+		expect(heard.map((request) => [request.u, event(request)[1]])).toEqual([
+			['page?1-1.2-editor', '{}']]);
 	});
 
 	it('runs the function of the page named, a path to it, found as the event comes', () => {
@@ -264,7 +265,7 @@ describe('client events', () => {
 			delete (window as unknown as Record<string, unknown>).Articles;
 		}
 		expect(seen).toEqual(['input', component]);
-		expect(heard.map((request) => event(request)[2])).toEqual(['{"typed":true}']);
+		expect(heard.map((request) => event(request)[1])).toEqual(['{"typed":true}']);
 	});
 
 	it('runs the code of an event in place of the function named', () => {
@@ -274,7 +275,7 @@ describe('client events', () => {
 			eventHandlerClientSideCode: (_event, _component, _options, send) => send({ code: true }) }]);
 
 		element.dispatchEvent(new CustomEvent('input', { detail: { code: false } }));
-		expect(heard.map((request) => event(request)[2])).toEqual(['{"code":true}']);
+		expect(heard.map((request) => event(request)[1])).toEqual(['{"code":true}']);
 	});
 
 	it('sends with each event what the component adds, its state for example', () => {
@@ -343,7 +344,7 @@ describe('client events', () => {
 		expect(heard[0].sh).toEqual([success, added]);
 		expect(heard[0].fh).toEqual([added]);
 		expect(heard[0].ep.map(({ name }) => name)).toEqual(['_nb', 'quick', 'antilia-event',
-			'antilia-event-index', 'antilia-event-values']);
+			'antilia-event-values']);
 	});
 
 	it('runs the init handlers of a round trip and tells Wicket of it, as Wicket does for an event', () => {
@@ -401,7 +402,7 @@ describe('client events', () => {
 		}
 		// the extra parameters, those of the event, the dynamic ones, then the field
 		expect(beacons).toEqual([['page?1-1.0-editor&wicket-ajax=true', '_nb=true&state=%7B%7D&' +
-			'antilia-event=leave&antilia-event-index=3&antilia-event-values=%7B%22leaving%22%3Atrue%7D&' +
+			'antilia-event=leave&antilia-event-values=%7B%22leaving%22%3Atrue%7D&' +
 			'at=9&text=Typed&wicket-ajax-baseurl=']]);
 		expect(heard).toEqual([]);
 	});
@@ -480,7 +481,7 @@ describe('client events', () => {
 	it('tells scripts the names of the parameters', () => {
 		const global = window.Wicket?.ClientEvents as Record<string, unknown>;
 		expect(global.AJAX_EVENT).toBeUndefined();
-		expect(global.parameters).toEqual({ event: 'antilia-event', index: 'antilia-event-index',
+		expect(global.parameters).toEqual({ event: 'antilia-event',
 			values: 'antilia-event-values', state: 'antilia-state',
 			textChanged: 'antilia-text-changed', pendingPrefix: 'antilia-pending:' });
 	});

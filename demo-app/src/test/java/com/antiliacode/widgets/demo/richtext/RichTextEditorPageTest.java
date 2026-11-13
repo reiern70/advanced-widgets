@@ -104,11 +104,10 @@ class RichTextEditorPageTest
 		{
 			tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
 		}
-		List<IClientEvent> events = editor.getEvents();
-		IClientEvent sending = events.stream().filter(SendStateEvent.class::isInstance)
+		IClientEvent sending = editor.getEvents().stream().filter(SendStateEvent.class::isInstance)
 			.findFirst().orElseThrow();
-		send(editor, sending, events.indexOf(sending), Map.of(SendStateEvent.STATE_PARAMETER,
-			state, SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(text != null)));
+		send(editor, sending, Map.of(SendStateEvent.STATE_PARAMETER, state,
+			SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(text != null)));
 	}
 
 	/**
@@ -126,28 +125,23 @@ class RichTextEditorPageTest
 	private void fire(RichTextEditor editor, String event, String text)
 	{
 		tester.getRequest().getPostParameters().setParameterValue(editor.getInputName(), text);
-		List<IClientEvent> events = editor.getEvents();
-		for (int index = 0; index < events.size(); index++)
+		for (IClientEvent each : editor.getEvents())
 		{
-			IClientEvent each = events.get(index);
 			if (each.getEventName().equals(event) && !(each instanceof SendStateEvent) &&
 				(each instanceof IAjaxEvent || each instanceof IAjaxSubmitEvent))
 			{
-				send(editor, each, index, Map.of());
+				send(editor, each, Map.of());
 				return;
 			}
 		}
 		throw new AssertionError("no event " + event);
 	}
 
-	private void send(RichTextEditor editor, IClientEvent event, int index,
-		Map<String, String> parameters)
+	private void send(RichTextEditor editor, IClientEvent event, Map<String, String> parameters)
 	{
 		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
 		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
 			event.getEventName());
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-			String.valueOf(index));
 		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
 			.getAjaxBehavior(event));
 	}
