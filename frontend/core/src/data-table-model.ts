@@ -65,7 +65,7 @@ export interface DataTableQuery {
 
 /** A change of the rows pushed to a table. */
 export type DataTablePush =
-	| { type: 'updateRow'; key: string; data: unknown }
+	| { type: 'updateRow'; key: string; data: unknown; hiddenActions?: string[] | null }
 	| { type: 'updateRows'; rows: DataTableRow[] }
 	| { type: 'refresh' };
 

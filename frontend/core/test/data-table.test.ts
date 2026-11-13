@@ -123,6 +123,22 @@ describe('DynamicDataTable', () => {
 			['User 3 #3', 'City <3>']]);
 	});
 
+	it('hides the elements of the actions that do not apply to a row', () => {
+		const data = rows(1, 2);
+		data[1].hiddenActions = ['open'];
+		const table = new DynamicDataTable(config(), () => undefined, null, null,
+			{ rows: data, itemCount: 2 });
+		const hidden = () => Array.from(document.querySelectorAll('#table [data-dt-action="open"]'),
+			(element) => element.classList.contains('ant-data-table-action-hidden'));
+
+		expect(hidden()).toEqual([false, true]);
+
+		table.renderRow('k1', data[0].data, ['open', 'other']);
+		table.renderRow('k2', data[1].data);
+
+		expect(hidden()).toEqual([true, false]);
+	});
+
 	it('selects rows with their checkboxes and shows it in the header checkbox', () => {
 		const action = vi.fn();
 		const cfg = config({ columns: [{ template: '<input type="checkbox" ' +
