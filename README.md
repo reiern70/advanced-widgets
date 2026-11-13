@@ -75,8 +75,7 @@ obstacle.
 ## Requirements
 
 - Java 21 and Maven 3.9 or later.
-- Wicket 11.0.0, which the build downloads: from the staging repository of its vote, which the pom
-  names, until it is on Maven Central.
+- Wicket 11.0.0, which the build downloads from Maven Central.
 - Nothing else: the build downloads Node and npm for the frontend into `frontend/node`.
 - For the browser tests, Chrome and Firefox.
 

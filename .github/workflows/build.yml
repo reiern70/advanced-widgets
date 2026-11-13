@@ -2,14 +2,15 @@
 # machine: the Java modules with their tests, and the frontend with its own, which the Maven build
 # runs with the Node it installs.
 #
-# The project depends on Wicket 11.0.0, which the pom takes from the staging repository of its vote
-# until it is on Maven Central. Run by hand (Actions, Build, Run workflow) with a branch or tag of
-# apache/wicket, master for example, the workflow first builds the Wicket modules the project uses
-# from it, installs them into the Maven repository and builds the project against their version.
-# The cache keeps that repository, with the commit Wicket was built from, so Wicket is built again
-# only when its branch moves on; it is saved even when the tests fail. When the build fails, its
-# errors are also given as annotations of the run, which show on the pull request and are readable
-# through the API without downloading the log.
+# The project depends on Wicket 11.0.0, from Maven Central. Run by hand (Actions, Build, Run
+# workflow) with a branch or tag of apache/wicket, master for example, the workflow first builds the
+# Wicket modules the project uses from it, installs them into the Maven repository and builds the
+# project against their version. The cache keeps that repository, with the commit Wicket was built
+# from, so Wicket is built again only when its branch moves on; it is saved even when the tests
+# fail. Its keys start with maven-central-: the caches before held the jars of the staging
+# repository of Wicket 11.0.0, which differ from those on Central and which Maven would not
+# download again. When the build fails, its errors are also given as annotations of the run, which
+# show on the pull request and are readable through the API without downloading the log.
 #
 # The actions are pinned by the commit of their release, the version in a comment, so that a tag
 # moved later cannot change what runs here; Dependabot (.github/dependabot.yml) proposes the new
@@ -70,10 +71,10 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.m2/repository
-          key: maven-${{ steps.wicket.outputs.commit || 'pom' }}-${{ hashFiles('**/pom.xml') }}
+          key: maven-central-${{ steps.wicket.outputs.commit || 'pom' }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            maven-${{ steps.wicket.outputs.commit || 'pom' }}-
-            maven-
+            maven-central-${{ steps.wicket.outputs.commit || 'pom' }}-
+            maven-central-
 
       - name: Build Wicket ${{ env.WICKET_REF }}
         id: build-wicket

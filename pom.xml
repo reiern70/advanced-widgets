@@ -68,7 +68,7 @@
 		<revision>1.0.0-SNAPSHOT</revision>
 		<!-- whether Central publishes a release once validated, see the profile release -->
 		<central.autoPublish>false</central.autoPublish>
-		<!-- Wicket 11.0.0, being voted: from its staging repository until it is on Maven Central -->
+		<!-- Wicket 11.0.0, from Maven Central -->
 		<wicket.version>11.0.0</wicket.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<!--
@@ -101,24 +101,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
-
-	<repositories>
-		<!--
-		  The staging repository of Apache Wicket 11.0.0, round 2 of its vote; its artifacts are
-		  those Maven Central gets once the vote passes. Then take this repository away, as Central
-		  takes no project depending on another repository.
-		-->
-		<repository>
-			<id>apache-wicket-11.0.0-staging</id>
-			<url>https://repository.apache.org/content/repositories/orgapachewicket-1283/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
 
 	<dependencyManagement>
 		<dependencies>
