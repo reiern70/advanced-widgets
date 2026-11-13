@@ -263,6 +263,55 @@ describe('DynamicDataTable', () => {
 		expect(action).toHaveBeenLastCalledWith('deselect', 'k2');
 	});
 
+	it('checks a checkbox of a boolean of the row as its template says, and sends its actions', () => {
+		const action = vi.fn();
+		const data = rows(1, 2);
+		(data[0].data as Record<string, unknown>).done = true;
+		(data[1].data as Record<string, unknown>).done = false;
+		const cfg = config({ selection: 'one', columns: [
+			{ template: '<input type="checkbox" class="ant-data-table-select" ' +
+				'data-dt-action="select" data-dt-action-unchecked="deselect">' },
+			{ template: '<input type="checkbox" class="ant-data-table-check" ' +
+				'data-dt-action="done" data-dt-action-unchecked="done-unchecked" ' +
+				'data-dt-checked="{{done}}">' }
+		] });
+		const table = new DynamicDataTable(cfg, action, null, null, { rows: data, itemCount: 2 });
+		const select = document.querySelectorAll<HTMLInputElement>('#table tbody .ant-data-table-select');
+		const done = document.querySelectorAll<HTMLInputElement>('#table tbody .ant-data-table-check');
+
+		expect(Array.from(done, (box) => box.checked)).toEqual([true, false]);
+
+		select[0].click();
+		expect(Array.from(table.selectedKeys)).toEqual(['k1']);
+
+		done[1].click();
+		expect(action).toHaveBeenLastCalledWith('done', 'k2');
+		expect(done[1].checked).toBe(true);
+		expect(select[0].checked).toBe(true);
+		expect(Array.from(table.selectedKeys)).toEqual(['k1']);
+
+		done[0].click();
+		expect(action).toHaveBeenLastCalledWith('done-unchecked', 'k1');
+		expect(done[0].checked).toBe(false);
+	});
+
+	it('leaves a checkbox disabled on its row as it is', () => {
+		const action = vi.fn();
+		const data = rows(1, 1);
+		(data[0].data as Record<string, unknown>).done = true;
+		data[0].disabledActions = { done: 'Locked' };
+		new DynamicDataTable(config({ columns: [{ template: '<input type="checkbox" ' +
+			'data-dt-action="done" data-dt-action-unchecked="done-unchecked" ' +
+			'data-dt-checked="{{done}}">' }] }), action, null, null, { rows: data, itemCount: 1 });
+		const box = document.querySelector<HTMLInputElement>('#table tbody input')!;
+
+		box.click();
+
+		expect(box.checked).toBe(true);
+		expect(box.title).toBe('Locked');
+		expect(action).not.toHaveBeenCalled();
+	});
+
 	it('hands the messages pushed for it to the handlers of their types', () => {
 		const listeners: Array<(message: unknown) => void> = [];
 		setHost({ ...standaloneHost, onMessage(listener) {

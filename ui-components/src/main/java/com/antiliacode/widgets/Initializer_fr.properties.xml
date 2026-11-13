@@ -27,6 +27,9 @@
 	<entry key="DynamicDataTable.cancel">Annuler</entry>
 	<entry key="DynamicDataTable.chooseColumns">Colonnes</entry>
 	<entry key="DynamicDataTable.applyColumns">Appliquer</entry>
+	<entry key="DynamicDataTable.yes">Oui</entry>
+	<entry key="DynamicDataTable.no">Non</entry>
+	<entry key="DynamicDataTable.checkLabel">${column}&#160;: ${row}</entry>
 	<entry key="MovableColumnsBehavior.moveColumn">Déplacer la colonne&#160;: faites-la glisser ou utilisez les touches fléchées</entry>
 	<entry key="ResizableColumnsBehavior.resizeColumn">Redimensionner la colonne</entry>
 	<entry key="FloatingPanel.close">Fermer</entry>
