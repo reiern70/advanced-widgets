@@ -502,12 +502,12 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	 * @param row
 	 *            the row in its current state
 	 * @return the message
-	 * @see UpdateRowMessageType#newMessage(String, String, Object, List)
+	 * @see UpdateRowMessageType#newMessage(String, String, Object, List, Map)
 	 */
 	public IWebSocketLightWeightMessage newUpdateRowMessage(T row)
 	{
 		return UpdateRowMessageType.newMessage(getMarkupId(), getRowKey(row), row,
-			getHiddenActions(row));
+			getHiddenActions(row), getDisabledActions(row));
 	}
 
 	/**
@@ -671,6 +671,11 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 			{
 				entry.put("hiddenActions", hiddenActions);
 			}
+			Map<String, String> disabledActions = getDisabledActions(row);
+			if (disabledActions.isEmpty() == false)
+			{
+				entry.put("disabledActions", disabledActions);
+			}
 			entries.add(entry);
 		}
 		return entries;
@@ -733,17 +738,26 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 
 		private final List<String> hiddenActions;
 
-		UpdateRowMessage(String tableId, String key, Object data, List<String> hiddenActions)
+		private final Map<String, String> disabledActions;
+
+		UpdateRowMessage(String tableId, String key, Object data, List<String> hiddenActions,
+			Map<String, String> disabledActions)
 		{
 			super(tableId, UpdateRowMessageType.TYPE_ID);
 			this.key = key;
 			this.data = data;
 			this.hiddenActions = hiddenActions;
+			this.disabledActions = disabledActions;
 		}
 
 		public List<String> getHiddenActions()
 		{
 			return hiddenActions;
+		}
+
+		public Map<String, String> getDisabledActions()
+		{
+			return disabledActions;
 		}
 
 		public String getKey()

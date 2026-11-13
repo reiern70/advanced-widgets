@@ -17,7 +17,7 @@
  * selection column and the actions the core reports, as the Wicket tables name them.
  */
 
-import type { DataTableColumn, DataTableRow } from './data-table.js';
+import type { DataTableColumn, DataTableRow, DataTableRowActions } from './data-table.js';
 import { ANTILIA_LOOK, partClasses, type Look } from './look.js';
 
 /** A column of a React or Svelte table. */
@@ -65,7 +65,7 @@ export interface DataTableQuery {
 
 /** A change of the rows pushed to a table. */
 export type DataTablePush =
-	| { type: 'updateRow'; key: string; data: unknown; hiddenActions?: string[] | null }
+	| ({ type: 'updateRow'; key: string; data: unknown } & DataTableRowActions)
 	| { type: 'updateRows'; rows: DataTableRow[] }
 	| { type: 'refresh' };
 
