@@ -36,6 +36,11 @@ import org.apache.wicket.model.IModel;
  * An element in the template carrying a {@code data-dt-action} attribute becomes an action:
  * clicking it calls {@link JsonBasedDynamicDataTable#onAction} with the attribute's value and the
  * row, for example {@code <a href="#" data-dt-action="delete">Delete</a>}.
+ * <p>
+ * A column with a {@link #getFooterTemplate() footer template} has a value in the footer row
+ * under the rows, such as a total: the browser fills the template with the
+ * {@link JsonBasedDynamicDataTable#getFooterData() footer data} of the table, for example
+ * {@code {{total}}}, which comes with the rows.
  *
  * @param <T>
  *            the type of the rows
@@ -78,6 +83,32 @@ public interface IDynamicColumn<T> extends IDetachable
 	default String getTemplate(JsonBasedDynamicDataTable<T, ?> table)
 	{
 		return getTemplate();
+	}
+
+	/**
+	 * @return the template of the column's cell in the footer row, under the rows, filled with
+	 *         the table's {@link JsonBasedDynamicDataTable#getFooterData() footer data} rather than
+	 *         with a row, trusted markup authored by the developer like {@link #getTemplate()};
+	 *         {@code null} by default, for a column without a value in the footer
+	 * @since 11.0.0
+	 */
+	default String getFooterTemplate()
+	{
+		return null;
+	}
+
+	/**
+	 * Returns the footer template as rendered in the given table, which may depend on its locale,
+	 * style or variation. Returns {@link #getFooterTemplate()} by default.
+	 *
+	 * @param table
+	 *            the table the column is rendered in
+	 * @return the footer template, or {@code null} for a column without a value in the footer
+	 * @since 11.0.0
+	 */
+	default String getFooterTemplate(JsonBasedDynamicDataTable<T, ?> table)
+	{
+		return getFooterTemplate();
 	}
 
 	/**

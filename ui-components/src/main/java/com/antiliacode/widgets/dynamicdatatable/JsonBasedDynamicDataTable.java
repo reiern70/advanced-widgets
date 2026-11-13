@@ -73,6 +73,11 @@ import com.github.openjson.JSONObject;
  * sorts the rows. A {@link SortableDynamicColumn} is hideable and movable if the column it wraps
  * is.
  * <p>
+ * The columns with a {@link IDynamicColumn#getFooterTemplate() footer template} have a value in
+ * the footer row under the rows, such as a total: the browser fills their templates with the
+ * table's {@link #getFooterData() footer data}, which comes with the rows, from the provider if it
+ * is an {@link IFooterDataProvider}.
+ * <p>
  * The column templates are written into the page as markup and have to be authored by the
  * developer; see {@link IDynamicColumn}. Every property the {@link #setJsonSerializer serializer}
  * produces for a row is sent to the browser.
@@ -375,6 +380,53 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		return column.getCssClass();
 	}
 
+	/**
+	 * @return whether the column has a {@link IDynamicColumn#getFooterTemplate(JsonBasedDynamicDataTable)
+	 *         footer template}
+	 */
+	@Override
+	protected boolean hasFooter(IDynamicColumn<T> column)
+	{
+		return column.getFooterTemplate(this) != null;
+	}
+
+	/**
+	 * Does nothing: the browser fills the footer with the {@link #getFooterData() footer data}
+	 * that comes with the rows.
+	 */
+	@Override
+	protected void refreshFooter(IPartialPageRequestHandler target)
+	{
+	}
+
+	/**
+	 * Returns the data the browser fills the {@link IDynamicColumn#getFooterTemplate() footer
+	 * templates} of the columns with, sent along with the rows as the
+	 * {@link #setJsonSerializer(IJsonSerializer) serializer} writes it, as long as the table
+	 * {@link #hasFooter() has a footer}. By default the {@link IFooterDataProvider#footer() footer}
+	 * of the provider, if it is an {@link IFooterDataProvider}, else {@code null}.
+	 *
+	 * @return the data of the footer, for example a map or a bean of the totals; {@code null} to
+	 *         fill the footer templates with nothing
+	 * @since 11.0.0
+	 */
+	public Object getFooterData()
+	{
+		return getProvider() instanceof IFooterDataProvider footer ? footer.footer() : null;
+	}
+
+	/**
+	 * Adds the {@link #getFooterData() footer data} to rows sent to the browser, if the table has
+	 * a footer.
+	 */
+	private void putFooter(Map<String, Object> data)
+	{
+		if (hasFooter())
+		{
+			data.put("footer", getFooterData());
+		}
+	}
+
 	@Override
 	protected boolean isColumnResizable(IDynamicColumn<T> column)
 	{
@@ -415,6 +467,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		{
 			data.put("top", true);
 		}
+		putFooter(data);
 		String json = jsonSerializer.toJson(data);
 		onRowsSent(getCurrentPageKeys());
 		return json;
@@ -434,6 +487,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		data.put("rows", toRowEntries(rows, first));
 		data.put("itemCount", getItemCount());
 		data.put("currentPage", getCurrentPage());
+		putFooter(data);
 		String json = jsonSerializer.toJson(data);
 		if (rows.isEmpty() == false)
 		{
@@ -606,6 +660,11 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 			JSONObject columnConfig = new JSONObject();
 			columnConfig.put("template", column.getTemplate(this));
 			columnConfig.put("cssClass", column.getCssClass());
+			String footerTemplate = column.getFooterTemplate(this);
+			if (footerTemplate != null)
+			{
+				columnConfig.put("footerTemplate", footerTemplate);
+			}
 			columnConfigs.put(columnConfig);
 		}
 		if (isFromResource())

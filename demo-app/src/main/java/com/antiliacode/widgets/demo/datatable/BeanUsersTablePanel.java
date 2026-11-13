@@ -29,6 +29,7 @@ import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.util.string.Strings;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 
@@ -40,6 +41,7 @@ import com.antiliacode.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.BeanRowNumberColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanSelectionColumn;
 import com.antiliacode.widgets.dynamicdatatable.IFixedWidthColumn;
+import com.antiliacode.widgets.dynamicdatatable.IFooterColumn;
 import com.antiliacode.widgets.dynamicdatatable.IHideableColumn;
 import com.antiliacode.widgets.table.IMovableColumn;
 
@@ -82,10 +84,17 @@ public class BeanUsersTablePanel extends UsersTablePanel
 		columns.add(new BeanRowNumberColumn<>(Model.of("#")));
 		columns.add(new BeanActionsColumn<>(new ResourceModel("actions"), newRowActions()));
 		columns.add(new IdColumn());
-		columns.add(new UserColumn("firstName", "firstName", User::getFirstName));
+		// the footer: how many users the filter lets through, and their average age
+		columns.add(new FooterUserColumn("firstName", "firstName", User::getFirstName,
+			footer -> new Label(footer, new StringResourceModel("footer.users")
+				.setParameters(provider.size()))));
 		columns.add(new UserColumn("lastName", "lastName", User::getLastName));
-		columns.add(new UserColumn("bornDate", "bornDate",
-			user -> Objects.toString(bornOn(user), "")));
+		columns.add(new FooterUserColumn("bornDate", "bornDate",
+			user -> Objects.toString(bornOn(user), ""), footer -> {
+				Long age = provider.getAverageAge();
+				return age != null ? new Label(footer,
+					new StringResourceModel("footer.age").setParameters(age)) : null;
+			}));
 		columns.add(new UserColumn("address", null,
 			user -> user.getAddress() + ", " + user.getCity() + ", " +
 				user.getCountryName()));
@@ -149,6 +158,29 @@ public class BeanUsersTablePanel extends UsersTablePanel
 			SerializableFunction<User, ?> value)
 		{
 			super(new ResourceModel(headerKey), sortProperty, value);
+		}
+	}
+
+	/**
+	 * A value of the user, like a {@link UserColumn}, with a value in the footer of the table.
+	 */
+	private static class FooterUserColumn extends UserColumn implements IFooterColumn<User>
+	{
+		private static final long serialVersionUID = 1L;
+
+		private final SerializableFunction<String, Component> footer;
+
+		FooterUserColumn(String headerKey, String sortProperty,
+			SerializableFunction<User, ?> value, SerializableFunction<String, Component> footer)
+		{
+			super(headerKey, sortProperty, value);
+			this.footer = footer;
+		}
+
+		@Override
+		public Component newFooter(String id)
+		{
+			return footer.apply(id);
 		}
 	}
 

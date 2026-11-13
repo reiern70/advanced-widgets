@@ -43,4 +43,6 @@
 	<entry key="added">{0} {1} hinzugefügt.</entry>
 	<entry key="saved">{0} {1} gespeichert.</entry>
 	<entry key="failed">Die Benutzer-Ressource ist fehlgeschlagen: {0}</entry>
+	<entry key="footer.users">{0} Benutzer</entry>
+	<entry key="footer.age">Durchschnittsalter {0}</entry>
 </properties>

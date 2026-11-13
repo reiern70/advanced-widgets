@@ -44,18 +44,26 @@ export interface DataTableRow extends DataTableRowActions {
 	data: unknown;
 }
 
-/** Rows to show: those of a page, how many there are in all, the page, and whether to scroll up. */
+/**
+ * Rows to show: those of a page, how many there are in all, the page, whether to scroll up, and
+ * the data the footer templates of the columns are filled with, for totals.
+ */
 export interface DataTableData {
 	rows: DataTableRow[];
 	itemCount?: number;
 	currentPage?: number;
 	top?: boolean;
+	footer?: unknown;
 }
 
-/** A column: the template of its cells and their CSS class. */
+/**
+ * A column: the template of its cells, their CSS class, and the template of its cell in the
+ * footer row, if it has one there.
+ */
 export interface DataTableColumn {
 	template: string;
 	cssClass?: string;
+	footerTemplate?: string | null;
 }
 
 /** How the columns are laid out: their proportions, and whether the table fills its parent. */
@@ -146,6 +154,9 @@ const CLOSE_OVERLAY_ACTION = '_antilia-close-overlay';
 const SHOW_COLUMNS_ACTION = '_antilia-show-columns';
 
 const HEADERS_CLASS = 'ant-data-table-headers';
+
+/** The footer row, under the rows, whose cells the footer templates of the columns fill. */
+const FOOTER_CLASS = 'ant-data-table-footer';
 
 const FILLER_WIDTH = '3em';
 
@@ -240,6 +251,8 @@ export class DynamicDataTable {
 
 	private cells: CompiledTemplate[] = [];
 
+	private footerCells: Array<CompiledTemplate | null> = [];
+
 	private rowsTable: HTMLTableElement | undefined = undefined;
 
 	private body: HTMLDivElement | undefined = undefined;
@@ -302,6 +315,8 @@ export class DynamicDataTable {
 				return;
 			}
 			this.cells = cfg.columns.map((column) => engine.compile(column.template));
+			this.footerCells = cfg.columns.map((column) =>
+				column.footerTemplate != null ? engine.compile(column.footerTemplate) : null);
 		}
 
 		this.table.addEventListener('click', this.clickHandler);
@@ -370,6 +385,7 @@ export class DynamicDataTable {
 					this.setPaging(json.itemCount, json.currentPage);
 				}
 				this.render(json.rows);
+				this.applyFooter(json);
 				if (changed) {
 					this.navigation?.();
 				}
@@ -408,9 +424,47 @@ export class DynamicDataTable {
 	update(data: DataTableData): void {
 		this.setPaging(data.itemCount, data.currentPage);
 		this.render(data.rows);
+		this.applyFooter(data);
 		if (data.top) {
 			this.scrollToTop();
 		}
+	}
+
+	/**
+	 * Fills the footer with the footer data of rows, if they came with it.
+	 */
+	private applyFooter(data: DataTableData): void {
+		if (data.footer !== undefined) {
+			this.renderFooter(data.footer);
+		}
+	}
+
+	/**
+	 * Fills the cells of the footer row, under the rows, of the columns with a footer template,
+	 * with the footer data, for example the totals; the cells of the other columns stay as they
+	 * are. A table without a footer row ignores it.
+	 *
+	 * @param footer the data the footer templates are filled with; none fills them with nothing
+	 */
+	renderFooter(footer: unknown): void {
+		const row = this.footerRow();
+		if (!row) {
+			return;
+		}
+		this.footerCells.forEach((cell, index) => {
+			const td = row.cells[index];
+			if (cell && td) {
+				td.innerHTML = cell(footer ?? {}, {});
+			}
+		});
+	}
+
+	/**
+	 * @returns the footer row, under the rows, if the table has one
+	 */
+	footerRow(): HTMLTableRowElement | null {
+		return this.table.tFoot?.querySelector<HTMLTableRowElement>(':scope > tr.' + FOOTER_CLASS) ??
+			null;
 	}
 
 	/**
@@ -465,6 +519,7 @@ export class DynamicDataTable {
 				return;
 			}
 			this.append(json.rows);
+			this.applyFooter(json);
 			this.itemCount = json.itemCount;
 			this.navigation?.();
 		}).catch((error) => {
