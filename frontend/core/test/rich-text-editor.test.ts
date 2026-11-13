@@ -2259,7 +2259,7 @@ describe('Wicket.RichTextEditor', () => {
 		select(editor, 3);
 		expect(sent).toEqual([{ 'antilia-state': JSON.stringify(editor.getState()),
 			'antilia-text-changed': 'false', 'antilia-event': RICH_TEXT_EDITOR_EVENTS.select,
-			'antilia-event-index': '1', 'antilia-event-values': '{"selection":{"anchor":3,"head":3}}' }]);
+			'antilia-event-values': '{"selection":{"anchor":3,"head":3}}' }]);
 
 		// the text and the cursor: one request, the cursor finding nothing new to send
 		type(editor, 'x');
@@ -2286,7 +2286,7 @@ describe('Wicket.RichTextEditor', () => {
 		expect(url).toBe('events?x=1&wicket-ajax=true');
 		expect(body.get('wicket-ajax-baseurl')).toBe('page?1');
 		expect(body.get('antilia-event')).toBe(RICH_TEXT_EDITOR_EVENTS.leave);
-		expect(body.get('antilia-event-index')).toBe('5');
+		expect(body.get('antilia-event-index')).toBeNull();
 		expect(JSON.parse(body.get('antilia-state')!).scrollTop).toBe(30);
 		expect(body.get('notes')).toBe(editor.getValue());
 		expect(sent).toHaveLength(2);

@@ -15,6 +15,7 @@ package com.antiliacode.widgets.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,11 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
+import org.apache.wicket.ajax.AjaxChannel;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxCallListener;
@@ -104,10 +111,64 @@ class ClientEventsBehaviorTest extends WicketTestCase
 	@Test
 	void rendersNothingWithoutEvents()
 	{
-		tester.startPage(new TestPage(new ClientEventsBehavior()));
+		TestPage page = new TestPage(new ClientEventsBehavior());
+		tester.startPage(page);
 
 		tester.assertContainsNot("Wicket.ClientEvents");
 		tester.assertContainsNot("antilia-client-events");
+		assertTrue(page.box.getBehaviors(AbstractDefaultAjaxBehavior.class).isEmpty());
+	}
+
+	@Test
+	void addsAnAjaxBehaviorForEachEventGoingToTheServer()
+	{
+		IAjaxEvent focus = AjaxEvent.of("focusin", (values, target) -> {
+		});
+		IAjaxEvent removed = AjaxEvent.of("focusout", (values, target) -> {
+		});
+		ClientEventsBehavior events = new ClientEventsBehavior()
+			.add(new ClientEvent("keydown", "function(){}")).add(focus).add(removed);
+		TestPage page = new TestPage(events);
+		assertEquals(2, page.box.getBehaviors(AbstractDefaultAjaxBehavior.class).size());
+
+		// taken away before its URL went to the browser: its behavior goes with it
+		assertTrue(events.remove(removed));
+		assertEquals(List.of(events.getAjaxBehavior(focus)),
+			page.box.getBehaviors(AbstractDefaultAjaxBehavior.class));
+		assertThrows(IllegalArgumentException.class, () -> events.getAjaxBehavior(removed));
+
+		// for those staying in the browser none: the component stays stateless
+		TestPage browser = new TestPage(new ClientEventsBehavior()
+			.add(new ClientEvent("keydown", "function(){}")));
+		tester.startPage(browser);
+		assertTrue(browser.box.getBehaviors(AbstractDefaultAjaxBehavior.class).isEmpty());
+		assertTrue(browser.box.isStateless());
+	}
+
+	@Test
+	void givesTheEventsASubclassAddsTheirBehaviorsBeforeTheComponentRenders()
+	{
+		List<String> heard = new ArrayList<>();
+		IAjaxEvent part = AjaxEvent.of("antilia:part", (values, target) -> heard.add("part"));
+		ClientEventsBehavior events = new ClientEventsBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public List<IClientEvent> getEvents()
+			{
+				List<IClientEvent> all = new ArrayList<>(getAddedEvents());
+				all.add(part);
+				return all;
+			}
+		};
+		TestPage page = new TestPage(events);
+		tester.startPage(page);
+
+		assertEquals(List.of(events.getAjaxBehavior(part)),
+			page.box.getBehaviors(AbstractDefaultAjaxBehavior.class));
+		ClientEventsTester.fire(tester, page.box, "antilia:part");
+		assertEquals(List.of("part"), heard);
 	}
 
 	@Test
@@ -164,6 +225,9 @@ class ClientEventsBehaviorTest extends WicketTestCase
 		tester.assertContains("\"ajax\":\\{\"u\":\"[^\"]+\",\"m\":\"POST\",\"c\":\"" +
 			page.box.getMarkupId() + "\",\"f\":\"" + page.form.getMarkupId() + "\"");
 		tester.assertContainsNot("\"e\":");
+		// nor a script of Wicket's behavior submitting the form, which would send it at once
+		tester.assertContainsNot("Wicket\\.Ajax\\.ajax\\(");
+		tester.assertContainsNot("antilia-client-events:");
 
 		tester.getRequest().getPostParameters().setParameterValue(page.name.getInputName(),
 			"new");
@@ -197,16 +261,16 @@ class ClientEventsBehaviorTest extends WicketTestCase
 		tester.assertContains("\\{\"eventName\":\"antilia:resize\",\"index\":1");
 		tester.assertContains("\\{\"eventName\":\"antilia:resize\",\"index\":2");
 
-		// each request goes to its own event, by its place
-		for (int index : new int[] { 2, 1 })
+		// each going to the server by its own behavior, with its own URL
+		assertNotSame(events.getAjaxBehavior(first), events.getAjaxBehavior(second));
+		assertEquals(2, urlsOf(tester.getLastResponseAsString()).size());
+
+		// each request goes to its own event, by its behavior
+		for (IAjaxEvent event : List.of(second, first))
 		{
-			tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
-				"antilia:resize");
-			tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-				String.valueOf(index));
 			tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
-				"{\"w\":" + index + "}");
-			tester.executeBehavior(events.getAjaxBehavior(index == 1 ? first : second));
+				"{\"w\":" + (event == first ? 1 : 2) + "}");
+			tester.executeBehavior(events.getAjaxBehavior(event));
 		}
 		assertEquals(List.of("second {\"w\":2}", "first {\"w\":1}"), heard);
 	}
@@ -215,27 +279,119 @@ class ClientEventsBehaviorTest extends WicketTestCase
 	void ignoresARequestOfAnEventTheComponentNoLongerHas()
 	{
 		List<String> heard = new ArrayList<>();
-		IAjaxEvent focus = AjaxEvent.of("focusin", (values, target) -> heard.add("focusin"));
+		IAjaxEvent focus = AjaxEvent.of("focusin", (values, target) -> heard.add("focusin " +
+			values));
 		ClientEventsBehavior events = new ClientEventsBehavior().add(focus);
 		TestPage page = new TestPage(events);
 		tester.startPage(page);
-
-		// another name at the place of the event
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, "focusout");
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER, "0");
-		tester.executeBehavior(events.getAjaxBehavior(focus));
-		// no event at the place
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, "focusin");
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER, "3");
-		tester.executeBehavior(events.getAjaxBehavior(focus));
-		assertTrue(heard.isEmpty());
+		AbstractDefaultAjaxBehavior behavior = events.getAjaxBehavior(focus);
 
 		// values not JSON: none
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, "focusin");
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER, "0");
 		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER, "[1,");
-		tester.executeBehavior(events.getAjaxBehavior(focus));
-		assertEquals(List.of("focusin"), heard);
+		tester.executeBehavior(behavior);
+		assertEquals(List.of("focusin {}"), heard);
+
+		// taken away once its URL went to the browser, which may still send a request to it: the
+		// behavior stays, leaving the requests alone
+		assertTrue(events.remove(focus));
+		tester.startPage(page);
+		tester.assertContainsNot("focusin");
+		assertSame(behavior, events.getAjaxBehavior(focus));
+		assertTrue(page.box.getBehaviors().contains(behavior));
+		tester.executeBehavior(behavior);
+		assertEquals(List.of("focusin {}"), heard);
+	}
+
+	@Test
+	void tellsASubclassGivingNewEventsEachTime()
+	{
+		ClientEventsBehavior events = new ClientEventsBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public List<IClientEvent> getEvents()
+			{
+				return List.of(AjaxEvent.of("focusin", (values, target) -> {
+				}));
+			}
+		};
+		Throwable thrown = assertThrows(RuntimeException.class, () -> tester.startPage(
+			new TestPage(events)));
+		while (thrown.getCause() != null && !(thrown instanceof IllegalStateException))
+		{
+			thrown = thrown.getCause();
+		}
+		assertTrue(thrown instanceof IllegalStateException &&
+			thrown.getMessage().contains("same events each time"), String.valueOf(thrown));
+	}
+
+	@Test
+	void givesTwoEventsOfOneNameEachTheAttributesOfItsOwnBehavior()
+	{
+		// on blur the state goes under the page's veil, and another request the veil leaves alone
+		SendStateEvent veiled = new SendStateEvent("blur")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				super.updateAjaxAttributes(attributes);
+				attributes.getAjaxCallListeners().add(new AjaxCallListener().onBefore(
+					"Veil.show();"));
+			}
+		};
+		IAjaxEvent quiet = AjaxEvent.of("blur", (values, target) -> {
+		}).setExtraParameter("_nb", "true");
+		ClientEventsBehavior events = new ClientEventsBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				attributes.setChannel(new AjaxChannel("editor"));
+			}
+		}.add(veiled).add(quiet);
+		TestPage page = new TestPage(events);
+		tester.startPage(page);
+		String document = tester.getLastResponseAsString();
+
+		String first = eventIn(document, 0);
+		String second = eventIn(document, 1);
+		assertTrue(first.contains("Veil.show();") && !first.contains("_nb"), first);
+		assertTrue(second.contains("{\"name\":\"_nb\",\"value\":\"true\"}") &&
+			!second.contains("Veil.show();"), second);
+		// what the component changes in both
+		assertTrue(first.contains("\"ch\":\"editor|s\"") &&
+			second.contains("\"ch\":\"editor|s\""), document);
+		assertEquals(2, urlsOf(document).size());
+	}
+
+	/**
+	 * @return the URLs of the requests of the events in the document, each once
+	 */
+	private static Set<String> urlsOf(String document)
+	{
+		Set<String> urls = new HashSet<>();
+		Matcher matcher = Pattern.compile("\"ajax\":\\{\"u\":\"([^\"]+)\"").matcher(document);
+		while (matcher.find())
+		{
+			urls.add(matcher.group(1));
+		}
+		return urls;
+	}
+
+	/**
+	 * @return what the browser gets of the event at the place among those of the component
+	 */
+	private static String eventIn(String document, int index)
+	{
+		int start = document.indexOf("\"index\":" + index + ",");
+		assertTrue(start >= 0, document);
+		int end = document.indexOf("{\"eventName\":", start);
+		return document.substring(start, end < 0 ? document.indexOf("],null", start) : end);
 	}
 
 	@Test
@@ -406,7 +562,7 @@ class ClientEventsBehaviorTest extends WicketTestCase
 		TestPage page = new TestPage(events);
 		tester.startPage(page);
 
-		// the requests of the events of both behaviors, each event changing those of its own after
+		// the requests of the behavior of each event, the event changing those of its own after
 		String document = tester.getLastResponseAsString();
 		assertEquals(2, document.split("\\{\"name\":\"_nb\",\"value\":\"true\"\\}", -1).length - 1,
 			document);
@@ -623,10 +779,11 @@ class ClientEventsBehaviorTest extends WicketTestCase
 		ClientEventsTester.fire(tester, page.box, events.getEvents("focusin").get(0),
 			new JSONObject(), Map.of("kept", "1"));
 		// the component first, even for an event that no longer is there
+		IClientEvent focus = events.getEvents("focusin").get(0);
+		AbstractDefaultAjaxBehavior gone = events.getAjaxBehavior(focus);
+		assertTrue(events.remove(focus));
 		tester.getRequest().setParameter("kept", "2");
-		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER, "gone");
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER, "7");
-		tester.executeBehavior(events.getAjaxBehavior(events.getEvents("focusin").get(0)));
+		tester.executeBehavior(gone);
 		ClientEventsTester.fire(tester, page.box, "leave");
 		assertEquals(List.of("sent 1", "focusin", "sent 2", "sent null"), heard);
 	}

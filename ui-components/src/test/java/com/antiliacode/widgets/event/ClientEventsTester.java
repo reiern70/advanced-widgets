@@ -130,7 +130,7 @@ public final class ClientEventsTester
 			throw new IllegalArgumentException(component + " has no event " + eventName +
 				" going to the server");
 		}
-		send(tester, behavior, events.get(chosen), chosen, values, Map.of());
+		send(tester, behavior, events.get(chosen), values, Map.of());
 	}
 
 	/**
@@ -154,23 +154,20 @@ public final class ClientEventsTester
 	{
 		Args.notNull(tester, "tester");
 		ClientEventsBehavior behavior = behaviorOf(component);
-		int index = behavior.getEvents().indexOf(event);
-		if (index < 0 || !goesToServer(event))
+		if (!behavior.getEvents().contains(event) || !goesToServer(event))
 		{
 			throw new IllegalArgumentException(component + " has no event " + event +
 				" going to the server");
 		}
-		send(tester, behavior, event, index, values, parameters);
+		send(tester, behavior, event, values, parameters);
 	}
 
 	private static void send(BaseWicketTester tester, ClientEventsBehavior behavior,
-		IClientEvent event, int index, JSONObject values, Map<String, String> parameters)
+		IClientEvent event, JSONObject values, Map<String, String> parameters)
 	{
 		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
 		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
 			event.getEventName());
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-			String.valueOf(index));
 		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
 			(values == null ? new JSONObject() : values).toString());
 		tester.executeBehavior(behavior.getAjaxBehavior(event));

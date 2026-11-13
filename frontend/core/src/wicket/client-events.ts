@@ -28,11 +28,11 @@
  * send, last, which a handler staying in the browser leaves out.
  *
  * That is all the script knows of an event: one going to the server comes with ajax, the
- * attributes of its requests, those of Wicket's Ajax, which the server rendered: the URL, the
- * method, GET or POST, the form submitted, if any, the extra parameters, the dynamic extra
- * parameters and the listeners of the call, on success and on failure among them. Calling
- * send(values) makes a round trip of Wicket's Ajax with them (roundTrip()), carrying the name of
- * the event, its place among the events of the component, the values, as JSON, and what
+ * attributes of its requests, those of Wicket's Ajax, which the server rendered: the URL, that of
+ * the Ajax behavior of the event's own, the method, GET or POST, the form submitted, if any, the
+ * extra parameters, the dynamic extra parameters and the listeners of the call, on success and on
+ * failure among them. Calling send(values) makes a round trip of Wicket's Ajax with them
+ * (roundTrip()), carrying the name of the event, the values, as JSON, and what
  * options.values(component) gives besides, the state of an editor for example; send(values,
  * attributes) adds attributes of the handler's own, listeners of the call for example. An event
  * without ajax stays in the browser: send does nothing. An event telling leaving: true in its
@@ -69,7 +69,7 @@ export type ClientEventFunction = (event: Event, component: unknown, options: Cl
 export interface ClientEventOptions {
 	/** The name of the event in the browser. */
 	eventName: string;
-	/** Its place among the events of the component, which the server finds it by. */
+	/** Its place among the events of the component. */
 	index: number;
 	/** How long the event waits for the next of its kind, in milliseconds; -1, or none, for not at all. */
 	delay?: number;
@@ -100,7 +100,6 @@ export interface ClientEventsOptions {
 
 /** The parameters of the requests of the events, as the server reads them. */
 const EVENT_PARAMETER = 'antilia-event';
-const INDEX_PARAMETER = 'antilia-event-index';
 const VALUES_PARAMETER = 'antilia-event-values';
 
 /**
@@ -411,7 +410,6 @@ export function attachClientEvents(id: string, events: ClientEventOptions[],
 			const parameters: Parameter[] = Object.entries(extra)
 				.map(([name, value]) => ({ name, value: String(value) }));
 			parameters.push({ name: EVENT_PARAMETER, value: event.eventName },
-				{ name: INDEX_PARAMETER, value: String(event.index) },
 				{ name: VALUES_PARAMETER, value: json });
 			const attributes = merged(event.ajax, added);
 			if (isLeaving(fired) && beacon(attributes, parameters)) {
@@ -514,8 +512,6 @@ const WicketClientEvents = {
 	parameters: Object.freeze({
 		/** The name of the event: ClientEventsBehavior.EVENT_PARAMETER. */
 		event: EVENT_PARAMETER,
-		/** Its place among the events of the component: INDEX_PARAMETER. */
-		index: INDEX_PARAMETER,
 		/** The values the handler sent, JSON: VALUES_PARAMETER. */
 		values: VALUES_PARAMETER,
 		/** The state of an editor, JSON: SendStateEvent.STATE_PARAMETER. */
