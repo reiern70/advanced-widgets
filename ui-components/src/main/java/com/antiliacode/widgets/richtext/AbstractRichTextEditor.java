@@ -15,8 +15,10 @@ package com.antiliacode.widgets.richtext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -29,6 +31,7 @@ import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestParameters;
+import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 import org.apache.wicket.validation.ValidationError;
@@ -98,8 +101,8 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * any other, and to those of its {@link IRichTextFeature#getEvents(org.apache.wicket.Component)
  * features}: each runs its function in the browser, and goes to the server when it is an
  * {@link com.antiliacode.widgets.event.IAjaxEvent}, alone, or an
- * {@link com.antiliacode.widgets.event.IAjaxSubmitEvent}, submitting the form, through the two
- * Ajax behaviors of a {@link ClientEventsBehavior}, whatever the number of events:
+ * {@link com.antiliacode.widgets.event.IAjaxSubmitEvent}, submitting the form, each through an
+ * Ajax behavior of its own, which a {@link ClientEventsBehavior} adds to the editor:
  *
  * <pre>
  * editor.addEvent(new AjaxSubmitEvent(RichTextEditorEvents.SAVE)
@@ -251,12 +254,30 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		{
 			private static final long serialVersionUID = 1L;
 
+			/**
+			 * The events of each feature by its name, asked once while the editor has the feature:
+			 * the same events each time, each with its Ajax behavior.
+			 */
+			private final Map<String, FeatureEvents> featureEvents = new LinkedHashMap<>();
+
 			@Override
 			public List<IClientEvent> getEvents()
 			{
 				List<IClientEvent> all = new ArrayList<>(getAddedEvents());
-				getFeatures().forEach(feature -> all.addAll(feature.getEvents(
-					AbstractRichTextEditor.this)));
+				Set<? extends IRichTextFeature> features = getFeatures();
+				featureEvents.keySet().removeIf(name -> features.stream().noneMatch(
+					feature -> feature.getName().equals(name)));
+				for (IRichTextFeature feature : features)
+				{
+					FeatureEvents asked = featureEvents.get(feature.getName());
+					if (asked == null || !asked.feature().equals(feature))
+					{
+						asked = new FeatureEvents(feature, List.copyOf(feature.getEvents(
+							AbstractRichTextEditor.this)));
+						featureEvents.put(feature.getName(), asked);
+					}
+					all.addAll(asked.events());
+				}
 				return all;
 			}
 
@@ -1232,5 +1253,18 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		{
 			placeholder.detach();
 		}
+	}
+
+	/**
+	 * The events of a feature, as the editor asked them.
+	 *
+	 * @param feature
+	 *            the feature
+	 * @param events
+	 *            its events
+	 */
+	private record FeatureEvents(IRichTextFeature feature, List<IClientEvent> events)
+		implements IClusterable
+	{
 	}
 }

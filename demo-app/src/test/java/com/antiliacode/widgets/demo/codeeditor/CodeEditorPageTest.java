@@ -133,8 +133,6 @@ class CodeEditorPageTest
 		parameters.forEach((name, value) -> tester.getRequest().setParameter(name, value));
 		tester.getRequest().setParameter(ClientEventsBehavior.EVENT_PARAMETER,
 			event.getEventName());
-		tester.getRequest().setParameter(ClientEventsBehavior.INDEX_PARAMETER,
-			String.valueOf(editor.getEvents().indexOf(event)));
 		tester.executeBehavior(editor.getBehaviors(ClientEventsBehavior.class).get(0)
 			.getAjaxBehavior(event));
 	}
