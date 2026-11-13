@@ -231,17 +231,21 @@
 							<excludes>
 								<exclude>**/*.min.js</exclude>
 								<exclude>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</exclude>
+								<exclude>com/antiliacode/widgets/richtext/antilia-rich-text-editor.js</exclude>
+								<exclude>com/antiliacode/widgets/richtext/antilia-rich-text-highlight.js</exclude>
 							</excludes>
 						</configuration>
 					</execution>
 					<!--
-					  The code editor bundles CodeMirror, whose own code makes the compiler warn on
-					  every build: empty branches (if ... ;) and a new RegExp() made only to see whether
-					  it throws. Those two checks are off for this bundle only, so that a new warning
-					  stands out.
+					  The editors bundle libraries whose own code makes the compiler warn on every
+					  build: CodeMirror in the code editor, ProseMirror in the rich text editor and the
+					  Lezer parsers in its highlighting. They hold empty branches (if ... ;), a new
+					  RegExp() made only to see whether it throws, and a style read only to make the
+					  browser compute it. Those two checks are off for these bundles only, so that a new
+					  warning stands out.
 					-->
 					<execution>
-						<id>minify-code-editor-js</id>
+						<id>minify-editor-bundles-js</id>
 						<phase>process-resources</phase>
 						<goals>
 							<goal>minify</goal>
@@ -249,6 +253,8 @@
 						<configuration>
 							<includes>
 								<include>com/antiliacode/widgets/codeeditor/antilia-code-editor.js</include>
+								<include>com/antiliacode/widgets/richtext/antilia-rich-text-editor.js</include>
+								<include>com/antiliacode/widgets/richtext/antilia-rich-text-highlight.js</include>
 							</includes>
 							<closureWarningLevels>
 								<suspiciousCode>OFF</suspiciousCode>
