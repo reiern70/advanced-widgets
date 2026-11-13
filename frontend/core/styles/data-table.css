@@ -528,12 +528,59 @@ table.ant-data-table > tbody > tr > td {
 	cursor: pointer;
 }
 
-.ant-data-table-icon-action + .ant-data-table-icon-action {
+.ant-data-table-icon-action + .ant-data-table-icon-action,
+.ant-data-table-text-action + .ant-data-table-action,
+.ant-data-table-action + .ant-data-table-text-action {
 	margin-left: 0.3em;
 }
 
-table.ant-data-table > tbody > tr > td:has(> .ant-data-table-icon-action) {
+table.ant-data-table > tbody > tr > td:has(> .ant-data-table-icon-action),
+table.ant-data-table > tbody > tr > td:has(> .ant-data-table-text-action) {
 	white-space: nowrap;
+}
+
+/* a row action as words, its icon if any before them; its column as wide as they are */
+.ant-data-table-text-action {
+	gap: 0.3em;
+	padding: 0.1em 0.5em;
+	background: transparent;
+	color: var(--antilia-theme-accent, inherit);
+	font: inherit;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+/* a text action drawn as a link: still a button for the keyboard and screen readers */
+table.ant-data-table .ant-data-table-link-action {
+	min-height: 0;
+	padding: 0 0.1em;
+	border-color: transparent;
+	text-decoration: underline;
+}
+
+table.ant-data-table .ant-data-table-link-action:hover,
+table.ant-data-table .ant-data-table-link-action:focus-visible {
+	background: transparent;
+	color: var(--antilia-theme-accent, inherit);
+	text-decoration-thickness: 2px;
+}
+
+/* the value of a cell as the link of a row action */
+.ant-data-table-action-link {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--antilia-theme-accent, inherit);
+	font: inherit;
+	text-align: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.ant-data-table-action-link:hover {
+	text-decoration-thickness: 2px;
 }
 
 caption.ant-data-table-overlay {
@@ -607,7 +654,9 @@ caption.ant-data-table-overlay.ant-data-table-overlay-body {
 }
 
 .ant-data-table-button:focus-visible,
-.ant-data-table-icon-action:focus-visible {
+.ant-data-table-icon-action:focus-visible,
+.ant-data-table-text-action:focus-visible,
+.ant-data-table-action-link:focus-visible {
 	outline: 2px solid var(--antilia-theme-accent, Highlight);
 	outline-offset: 1px;
 }
