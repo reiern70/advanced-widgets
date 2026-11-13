@@ -36,6 +36,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColu
 import org.apache.wicket.extensions.markup.html.repeater.util.SortParam;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.StringResourceStream;
@@ -267,6 +268,30 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		assertEquals(1, table.notFound.size());
 	}
 
+	@Test
+	void aRowNamesTheActionsDisabledOnItForTheScript()
+	{
+		PayAction pay = new PayAction();
+		start(5, List.of(new GreetAction(), pay));
+
+		TagTester first = TagTester.createTagByAttribute(tester.getLastResponseAsString(),
+			"data-key", "1");
+		assertEquals("{\"pay\":\"Nothing to pay <yet>\"}",
+			first.getAttribute("data-dt-disabled-actions"));
+		assertTrue(rowMarkup("1").contains("data-dt-action=\"pay\""), "still rendered");
+		assertNull(TagTester.createTagByAttribute(tester.getLastResponseAsString(), "data-key",
+			"2").getAttribute("data-dt-disabled-actions"));
+		assertTrue(tester.getLastResponseAsString().contains(
+			"data-dt-disabled-actions=\"{&quot;pay&quot;:&quot;Nothing to pay &lt;yet&gt;&quot;}\""),
+			"escaped: " + tester.getLastResponseAsString());
+
+		executeAction("pay", "1");
+		executeAction("pay", "2");
+
+		assertEquals(List.of(2L), pay.paid);
+		assertEquals(List.of("pay 1 Person <1>"), table.notFound);
+	}
+
 	private void start(int people, List<? extends IAjaxActionColumnContributor<Person>> actions)
 	{
 		provider = new PeopleProvider(people);
@@ -426,6 +451,46 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		public void onAction(Person row, AjaxRequestTarget target)
 		{
 			waved.add(row.getId());
+		}
+	}
+
+	/**
+	 * Pays only for the people with an even id, disabled on the others.
+	 */
+	private static class PayAction implements IAjaxActionColumnContributor<Person>
+	{
+		private static final long serialVersionUID = 1L;
+
+		final List<Long> paid = new ArrayList<>();
+
+		@Override
+		public String getTemplate()
+		{
+			return "<button data-dt-action=\"pay\">Pay</button>";
+		}
+
+		@Override
+		public String getActionId()
+		{
+			return "pay";
+		}
+
+		@Override
+		public boolean isEnabled(Person row)
+		{
+			return row.getId() % 2 == 0;
+		}
+
+		@Override
+		public IModel<String> getDisabledReason(Person row)
+		{
+			return Model.of("Nothing to pay <yet>");
+		}
+
+		@Override
+		public void onAction(Person row, AjaxRequestTarget target)
+		{
+			paid.add(row.getId());
 		}
 	}
 

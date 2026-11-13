@@ -18,8 +18,9 @@ import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, use
 import { CLEAR_SELECTION_ICON, DATA_TABLE_TEXTS, DynamicDataTable, localRows,
 	MovableColumns, pageLinks, ResizableColumns, selectionColumn, SELECTION_ACTIONS, SHOW_COLUMNS,
 	type DataTableColumnDef, type DataTableData, type DataTableFilter,
-	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableSort,
-	type DataTableTexts, type LookPart, partClasses, type ResizeMode } from '@antilia/core';
+	type DataTablePush, type DataTableQuery, type DataTableRow, type DataTableRowActions,
+	type DataTableSort, type DataTableTexts, type LookPart, partClasses,
+	type ResizeMode } from '@antilia/core';
 
 import { Dropdown } from './Dropdown.js';
 import { useLook } from './Look.js';
@@ -106,10 +107,11 @@ export interface DataTableHandle {
 	/** Loads the rows shown again. */
 	reload(): Promise<void>;
 	/**
-	 * Repaints one row with new data, in place, hiding the elements of the actions that do not
-	 * apply to it; a row the table does not show is ignored.
+	 * Repaints one row with new data, in place, removing the elements of the actions left out of
+	 * it and disabling those of the actions disabled on it; a row the table does not show is
+	 * ignored.
 	 */
-	renderRow(key: string, data: unknown, hiddenActions?: string[] | null): void;
+	renderRow(key: string, data: unknown, actions?: DataTableRowActions | null): void;
 	/** The keys of the selected rows. */
 	selectedKeys(): string[];
 	/** Deselects every row. */
@@ -332,7 +334,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 	useEffect(() => props.subscribe?.((message) => {
 		const table = instance.current;
 		if (message.type === 'updateRow') {
-			table?.renderRow(message.key, message.data, message.hiddenActions);
+			table?.renderRow(message.key, message.data, message);
 		} else if (message.type === 'updateRows') {
 			table?.render(message.rows);
 		} else {
@@ -342,8 +344,7 @@ export const DataTable = forwardRef<DataTableHandle, DataTableProps>(function Da
 
 	useImperativeHandle(ref, () => ({
 		reload: () => instance.current?.load() ?? Promise.resolve(),
-		renderRow: (key, data, hiddenActions) =>
-			instance.current?.renderRow(key, data, hiddenActions),
+		renderRow: (key, data, actions) => instance.current?.renderRow(key, data, actions),
 		selectedKeys: () => Array.from(instance.current?.selectedKeys ?? []),
 		clearSelection
 	}), []);

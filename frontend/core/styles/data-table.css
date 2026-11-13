@@ -211,10 +211,16 @@ table.ant-data-table .ant-data-table-action:focus-visible {
 	color: var(--antilia-theme-on-primary, #ffffff);
 }
 
-/* an action that does not apply to its row; important, as the action's own class or a look may
-   give it a display of its own */
-.ant-data-table-action-hidden {
-	display: none !important;
+/* an action disabled on its row: greyed out, without the look of the hover and the focus */
+table.ant-data-table .ant-data-table-action-disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+table.ant-data-table .ant-data-table-action-disabled:hover,
+table.ant-data-table .ant-data-table-action-disabled:focus-visible {
+	background: transparent;
+	color: var(--antilia-theme-accent, inherit);
 }
 
 /* after the filter, not at the far end, so that it stays in sight on a table wider than the window */

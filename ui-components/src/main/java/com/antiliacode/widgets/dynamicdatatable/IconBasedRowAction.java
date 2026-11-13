@@ -38,11 +38,13 @@ import com.antiliacode.widgets.icon.IIcon;
  * {@link BaseDynamicDataTable#showOverlay(org.apache.wicket.Component,
  * org.apache.wicket.core.request.handler.IPartialPageRequestHandler) overlay}, which blocks the
  * table until the user answers. {@link #onRowAction(Object, AjaxRequestTarget)} is called only when
- * the user confirms, the row still exists and the action still {@link #isVisible(Object) applies}
- * to it.
+ * the user confirms, the row still exists and the action is still {@link #isVisible(Object)
+ * visible} and {@link #isEnabled(Object) enabled} on it.
  * <p>
  * Override {@link #isVisible(Object)} to offer the action only on some rows, for example "Cancel"
- * only on a run still scheduled.
+ * only on a run still scheduled, or {@link #isEnabled(Object)} and
+ * {@link #getDisabledReason(Object)} to show it disabled on the others, with the reason as its
+ * tooltip.
  *
  * @param <T>
  *            the type of the rows

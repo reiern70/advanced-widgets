@@ -216,6 +216,32 @@ class IconBasedRowActionTest extends WicketTestCase
 	}
 
 	@Test
+	void aDisabledActionIsNotRunOnTheRow()
+	{
+		start(null);
+		action.disabledOn = "Linus";
+
+		executeAction("act", "2");
+		executeAction("act", "1");
+
+		assertEquals(List.of("Ada"), action.done);
+		assertEquals(List.of("act 2"), table.notFound);
+	}
+
+	@Test
+	void aRowTheActionIsDisabledOnWhenConfirmedIsNotActedOn()
+	{
+		start(Model.of("Really?"));
+		executeAction("act", "2");
+		action.disabledOn = "Linus";
+
+		tester.clickLink(CONFIRM);
+
+		assertTrue(action.done.isEmpty());
+		assertFalse(table.isOverlayShown());
+	}
+
+	@Test
 	void escapeClosesTheOverlay()
 	{
 		start(Model.of("Really?"));
@@ -284,6 +310,9 @@ class IconBasedRowActionTest extends WicketTestCase
 		/** The name of the row the action does not apply to, if any. */
 		String hiddenOn;
 
+		/** The name of the row the action is disabled on, if any. */
+		String disabledOn;
+
 		RecordingAction(String actionId, IIcon icon, IModel<String> tooltip)
 		{
 			super(actionId, icon, tooltip);
@@ -293,6 +322,12 @@ class IconBasedRowActionTest extends WicketTestCase
 		public boolean isVisible(Item row)
 		{
 			return row.getName().equals(hiddenOn) == false;
+		}
+
+		@Override
+		public boolean isEnabled(Item row)
+		{
+			return row.getName().equals(disabledOn) == false;
 		}
 
 		@Override

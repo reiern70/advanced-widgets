@@ -64,7 +64,7 @@ class RowActionConfirmationPanel<T> extends Panel
 				BaseDynamicDataTable<T, ?, ?> table = action.getTable();
 				table.closeOverlay(target);
 				T row = table.findRow(rowKey);
-				if (row != null && action.isVisible(row))
+				if (row != null && BaseDynamicDataTable.isActionAvailable(action, row))
 				{
 					action.onRowAction(row, target);
 				}

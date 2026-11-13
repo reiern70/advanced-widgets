@@ -26,6 +26,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
@@ -34,7 +35,9 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.protocol.ws.WebSocketSettings;
 import org.apache.wicket.protocol.ws.api.IWebSocketConnection;
 import org.apache.wicket.protocol.ws.api.registry.PageIdKey;
@@ -148,10 +151,12 @@ class DynamicDataTableTest extends WicketTestCase
 	}
 
 	@Test
-	void sendsTheActionsThatDoNotApplyToARowWithIt()
+	void sendsTheActionsLeftOutOfARowAndThoseDisabledOnItWithIt()
 	{
 		table.addActionContributor(new AdaOnlyAction("greet"));
 		table.addActionContributor(new AdaOnlyAction("wave"));
+		table.addActionContributor(new IssueAction("issue", Model.of("Already issued")));
+		table.addActionContributor(new IssueAction("remind", null));
 
 		tester.executeBehavior(dataBehavior());
 
@@ -160,10 +165,54 @@ class DynamicDataTableTest extends WicketTestCase
 				"\"data\":{\"id\":\"1\",\"name\":\"Ada\"}}," +
 				"{\"key\":\"2\",\"number\":2,\"selected\":false," +
 				"\"data\":{\"id\":\"2\",\"name\":\"Linus\"}," +
-				"\"hiddenActions\":[\"greet\",\"wave\"]}]," +
+				"\"hiddenActions\":[\"greet\",\"wave\"]," +
+				"\"disabledActions\":{\"issue\":\"Already issued\",\"remind\":\"\"}}]," +
 				"\"itemCount\":2,\"currentPage\":0}",
 			tester.getLastResponseAsString());
 		assertEquals(List.of(), table.getHiddenActions(PEOPLE.get(0)));
+		assertEquals(Map.of(), table.getDisabledActions(PEOPLE.get(0)));
+	}
+
+	@Test
+	void anActionIsNotDisabledOnARowItIsLeftOutOf()
+	{
+		table.addActionContributor(new IssueAction("issue", Model.of("Already issued"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isVisible(Person row)
+			{
+				return false;
+			}
+		});
+
+		assertEquals(List.of("issue"), table.getHiddenActions(PEOPLE.get(1)));
+		assertEquals(Map.of(), table.getDisabledActions(PEOPLE.get(1)));
+	}
+
+	@Test
+	void theReasonOfADisabledActionIsResolvedAgainstTheTable()
+	{
+		table.addActionContributor(new IssueAction("issue",
+			new ResourceModel("issued", "Already issued")));
+
+		assertEquals(Map.of("issue", "Already issued"), table.getDisabledActions(PEOPLE.get(1)));
+	}
+
+	@Test
+	void aDisabledActionIsNotRunOnTheRow()
+	{
+		IssueAction issue = new IssueAction("issue", null);
+		table.addActionContributor(issue);
+
+		executeAction("issue", "2");
+		assertNull(issue.lastRow);
+		assertEquals("issue", table.notFoundAction);
+		assertEquals("Linus", table.notFoundRow.getName());
+
+		executeAction("issue", "1");
+		assertEquals("Ada", issue.lastRow.getName());
 	}
 
 	@Test
@@ -384,24 +433,30 @@ class DynamicDataTableTest extends WicketTestCase
 		assertEquals("2", message.getString("key"));
 		assertEquals("Linus", message.getJSONObject("data").getString("name"));
 		assertEquals(0, message.getJSONArray("hiddenActions").length());
+		assertEquals(0, message.getJSONObject("disabledActions").length());
 	}
 
 	@Test
-	void updateRowMessageCarriesTheActionsThatDoNotApplyToTheRow() throws IOException
+	void updateRowMessageCarriesTheActionsLeftOutOfTheRowAndThoseDisabledOnIt()
+		throws IOException
 	{
 		table.addActionContributor(new AdaOnlyAction("greet"));
+		table.addActionContributor(new IssueAction("issue", Model.of("Already issued")));
 
 		JSONObject linus = send(table.newUpdateRowMessage(PEOPLE.get(1)));
 		JSONObject ada = send(table.newUpdateRowMessage(PEOPLE.get(0)));
 		JSONObject built = send(UpdateRowMessageType.newMessage("table1", "2", PEOPLE.get(1),
-			List.of("greet")));
+			List.of("greet"), Map.of("issue", "Done")));
 
 		assertEquals("greet", linus.getJSONArray("hiddenActions").getString(0));
 		assertEquals(1, linus.getJSONArray("hiddenActions").length());
+		assertEquals("Already issued", linus.getJSONObject("disabledActions").getString("issue"));
 		assertEquals(0, ada.getJSONArray("hiddenActions").length());
+		assertEquals(0, ada.getJSONObject("disabledActions").length());
 		assertEquals("greet", built.getJSONArray("hiddenActions").getString(0));
+		assertEquals("Done", built.getJSONObject("disabledActions").getString("issue"));
 		assertTrue(UpdateRowMessageType.INSTANCE.getTypeFunction()
-			.contains("renderRow(message.key, message.data, message.hiddenActions)"));
+			.contains("renderRow(message.key, message.data, message)"));
 	}
 
 	@Test
@@ -635,6 +690,34 @@ class DynamicDataTableTest extends WicketTestCase
 		public boolean isVisible(Person row)
 		{
 			return "Ada".equals(row.getName());
+		}
+	}
+
+	/**
+	 * An action that can be used on Ada only, disabled on the others with a reason.
+	 */
+	private static class IssueAction extends RecordingAction
+	{
+		private static final long serialVersionUID = 1L;
+
+		private final IModel<String> reason;
+
+		IssueAction(String actionId, IModel<String> reason)
+		{
+			super(actionId);
+			this.reason = reason;
+		}
+
+		@Override
+		public boolean isEnabled(Person row)
+		{
+			return "Ada".equals(row.getName());
+		}
+
+		@Override
+		public IModel<String> getDisabledReason(Person row)
+		{
+			return reason;
 		}
 	}
 
