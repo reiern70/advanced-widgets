@@ -97,13 +97,56 @@ class ProgressBarTest extends WicketTestCase
 			"aria-hidden=\"true\">{{p}}%</span></div>", ProgressBar.markup("{{p}}"));
 	}
 
+	@Test
+	void aLabelOfItsOwnReplacesThePercentageEscaped()
+	{
+		tester.startPage(new BarPage(new ProgressBar("bar", Model.of(75))
+			.setLabel(Model.of("3 of 4 <done>"))));
+
+		TagTester bar = tester.getTagByWicketId("bar");
+		assertTrue(bar.getValue().contains("aria-hidden=\"true\">3 of 4 &lt;done&gt;</span>"),
+			bar.getValue());
+		assertTrue(bar.getValue().contains(">75%</progress>"), "the element keeps the percentage");
+
+		tester.startPage(new BarPage(new ProgressBar("bar", Model.of(75))
+			.setLabel(Model.of((String)null))));
+		assertTrue(tester.getTagByWicketId("bar").getValue().contains(">75%</span>"),
+			"a label of null shows the percentage");
+	}
+
+	@Test
+	void anAccessibleNameNamesTheProgressElement()
+	{
+		tester.startPage(new BarPage(new ProgressBar("bar", Model.of(10))
+			.setAccessibleName(Model.of("Collected \"so far\""))));
+
+		assertEquals("Collected \"so far\"", tester.getTagByWicketId("bar").getChild("progress")
+			.getAttribute("aria-label"));
+		assertTrue(tester.getLastResponseAsString().contains("aria-label=\"Collected &quot;so far&quot;\""),
+			"escaped");
+
+		tester.startPage(new BarPage(new ProgressBar("bar", Model.of((Integer)null))
+			.setAccessibleName(Model.of("Collected"))));
+		assertEquals("Collected", tester.getTagByWicketId("bar").getChild("progress")
+			.getAttribute("aria-label"), "an indeterminate bar too");
+
+		tester.startPage(new BarPage(Model.of(10)));
+		assertNull(tester.getTagByWicketId("bar").getChild("progress").getAttribute("aria-label"),
+			"none by default");
+	}
+
 	public static class BarPage extends WebPage implements IMarkupResourceStreamProvider
 	{
 		private static final long serialVersionUID = 1L;
 
 		BarPage(IModel<? extends Number> value)
 		{
-			add(new ProgressBar("bar", value));
+			this(new ProgressBar("bar", value));
+		}
+
+		BarPage(ProgressBar bar)
+		{
+			add(bar);
 		}
 
 		@Override
