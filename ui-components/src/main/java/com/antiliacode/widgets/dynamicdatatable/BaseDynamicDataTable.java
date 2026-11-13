@@ -2951,7 +2951,14 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			}
 			if (CLOSE_OVERLAY_ACTION.equals(action))
 			{
-				closeOverlay(target);
+				if (overlayWindow.get(OVERLAY_CONTENT_ID) instanceof ICancellableOverlay content)
+				{
+					content.cancel(target);
+				}
+				else
+				{
+					closeOverlay(target);
+				}
 				return;
 			}
 			if (SHOW_COLUMNS_ACTION.equals(action))
