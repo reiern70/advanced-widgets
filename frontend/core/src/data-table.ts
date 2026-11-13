@@ -147,6 +147,9 @@ const ROW_CHECKBOX = 'input.ant-data-table-select';
 
 const PAGE_CHECKBOX = 'input.ant-data-table-select-page';
 
+/** The attribute of a checkbox in a template telling whether it is checked: true or anything else. */
+const CHECKED_ATTRIBUTE = 'data-dt-checked';
+
 const OVERLAY_CLASS = 'ant-data-table-overlay';
 
 const CLOSE_OVERLAY_ACTION = '_antilia-close-overlay';
@@ -885,6 +888,11 @@ export class DynamicDataTable {
 		tr.querySelectorAll<HTMLInputElement>(ROW_CHECKBOX).forEach((checkbox) => {
 			checkbox.checked = meta.selected;
 		});
+		// a checkbox of a boolean of the row: checked when its template wrote true
+		tr.querySelectorAll<HTMLInputElement>('input[type="checkbox"][' + CHECKED_ATTRIBUTE + ']')
+			.forEach((checkbox) => {
+				checkbox.checked = checkbox.getAttribute(CHECKED_ATTRIBUTE) === 'true';
+			});
 		applyRowActions(tr, actions);
 		toggleParts(tr, this.look, meta.selected, 'table-row-selected');
 		return tr;
@@ -1016,7 +1024,7 @@ export class DynamicDataTable {
 			}
 			if (actionElement.matches(PAGE_CHECKBOX)) {
 				this.selectRows(actionElement.checked);
-			} else {
+			} else if (actionElement.matches(ROW_CHECKBOX)) {
 				if (this.cfg.selection === 'one' && actionElement.checked) {
 					// one row at a time: the server deselects the others too
 					this.rowsBody().querySelectorAll<HTMLInputElement>(ROW_CHECKBOX)

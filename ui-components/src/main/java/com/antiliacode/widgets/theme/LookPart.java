@@ -80,6 +80,7 @@ public enum LookPart
 	TABLE_SELECTION(LookAspect.BASE),
 	TABLE_SELECT(LookAspect.BASE),
 	TABLE_SELECT_PAGE(LookAspect.BASE),
+	TABLE_CHECK(LookAspect.BASE),
 	TABLE_BODY(LookAspect.BASE),
 	TABLE_BODY_ROW(LookAspect.BASE),
 	TABLE_BODY_CELL(LookAspect.BASE),

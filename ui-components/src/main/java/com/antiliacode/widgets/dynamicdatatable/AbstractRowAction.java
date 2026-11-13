@@ -141,7 +141,7 @@ public abstract class AbstractRowAction<T> implements IAjaxActionColumnContribut
 		else
 		{
 			String key = table.getRowKey(row);
-			table.showOverlay(new FloatingPanel(BaseDynamicDataTable.OVERLAY_CONTENT_ID, name)
+			table.showOverlay(new Confirmation(name)
 			{
 				private static final long serialVersionUID = 1L;
 
@@ -155,10 +155,29 @@ public abstract class AbstractRowAction<T> implements IAjaxActionColumnContribut
 				@Override
 				protected void onClose(AjaxRequestTarget target)
 				{
+					cancel(target);
+				}
+
+				@Override
+				public void cancel(AjaxRequestTarget target)
+				{
 					table.closeOverlay(target);
 					onCancel(target);
 				}
 			}, target);
+		}
+	}
+
+	/**
+	 * The window of a confirmation, cancelled by its close button, its cancel button and Escape.
+	 */
+	private abstract static class Confirmation extends FloatingPanel implements ICancellableOverlay
+	{
+		private static final long serialVersionUID = 1L;
+
+		Confirmation(IModel<String> title)
+		{
+			super(BaseDynamicDataTable.OVERLAY_CONTENT_ID, title);
 		}
 	}
 
@@ -174,7 +193,7 @@ public abstract class AbstractRowAction<T> implements IAjaxActionColumnContribut
 
 	/**
 	 * Called when the user answers the {@link #getConfirmation(Object) confirmation} with cancel,
-	 * or closes it: the action is not carried out. Does nothing by default.
+	 * closes it or presses Escape: the action is not carried out. Does nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target

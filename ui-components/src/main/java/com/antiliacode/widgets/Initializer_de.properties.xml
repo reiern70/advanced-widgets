@@ -27,6 +27,9 @@
 	<entry key="DynamicDataTable.cancel">Abbrechen</entry>
 	<entry key="DynamicDataTable.chooseColumns">Spalten</entry>
 	<entry key="DynamicDataTable.applyColumns">Übernehmen</entry>
+	<entry key="DynamicDataTable.yes">Ja</entry>
+	<entry key="DynamicDataTable.no">Nein</entry>
+	<entry key="DynamicDataTable.checkLabel">${column}: ${row}</entry>
 	<entry key="MovableColumnsBehavior.moveColumn">Spalte verschieben: ziehen oder mit den Pfeiltasten</entry>
 	<entry key="ResizableColumnsBehavior.resizeColumn">Spaltenbreite ändern</entry>
 	<entry key="FloatingPanel.close">Schließen</entry>
