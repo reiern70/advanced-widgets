@@ -40,6 +40,7 @@ import org.openqa.selenium.interactions.Actions;
 import com.antiliacode.widgets.demo.SeleniumBrowser;
 import com.antiliacode.widgets.demo.Toasts;
 import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 
 /**
  * Drives {@link RichTextEditorPage} in Chrome and in Firefox, in deployment mode, so through the
@@ -406,7 +407,8 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void thePageVeilLeavesTheRequestsOfTheEditorAlone(SeleniumBrowser browser)
+	void thePageVeilLeavesTheRequestsGoingAsTheUserTypesAloneAndVeilsTheBlur(
+		SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");
 		assertEquals("object", script("return typeof Wicket.Veil;"));
@@ -418,10 +420,30 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> status().contains("changes not saved"));
 		wait.until(d -> number(script("return window.unveiledRequests;")) >= 2);
 		assertEquals(0, number(script("return window.veils;")), "veiled as the user types");
+		assertEquals(List.of(), script("return window.veiledEvents;"));
+		List<?> unveiled = (List<?>)script("return window.unveiledEvents;");
+		assertTrue(unveiled.contains(RichTextEditorEvents.FOCUS.getEventName()),
+			unveiled.toString());
+		assertTrue(unveiled.contains(RichTextEditorEvents.INPUT.getEventName()),
+			unveiled.toString());
 
-		// the button's request is veiled
+		// the editor losing the focus, the page is veiled until the server has the text: the
+		// requests of blur alone, each event going by its own behavior with its own attributes
+		app().findElement(By.cssSelector(".rich-text-demo__heard")).click();
+		wait.until(d -> heard().startsWith("The server heard you left the article"));
+		assertTrue(number(script("return window.veils;")) > 0, "not veiled on blur");
+		List<?> veiled = (List<?>)script("return window.veiledEvents;");
+		assertFalse(veiled.isEmpty());
+		assertTrue(veiled.stream().allMatch(RichTextEditorEvents.BLUR.getEventName()::equals),
+			veiled.toString());
+		assertFalse(((List<?>)script("return window.unveiledEvents;")).contains(
+			RichTextEditorEvents.BLUR.getEventName()));
+
+		// the button's request is veiled too
+		wait.until(d -> d.findElements(By.cssSelector(".wicket-veil")).isEmpty());
+		double veils = number(script("return window.veils;"));
 		editor().findElement(By.xpath("ancestor::form//button[@type='submit']")).click();
-		wait.until(d -> number(script("return window.veils;")) > 0);
+		wait.until(d -> number(script("return window.veils;")) > veils);
 		wait.until(d -> app().findElement(By.cssSelector(".rich-text-demo__view")).getText()
 			.contains("Wading on."));
 		assertNoErrors();
@@ -461,11 +483,14 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	/**
 	 * Counts the veils Wicket puts over the page, in {@code window.veils}, the Ajax requests the
 	 * page veil leaves alone, in {@code window.unveiledRequests}, and the requests telling the
-	 * server of images taken out of the text once they ended, in {@code window.imagesTold}.
+	 * server of images taken out of the text once they ended, in {@code window.imagesTold}; lists
+	 * the names of the events whose requests go under the veil, in {@code window.veiledEvents},
+	 * and of those going without, in {@code window.unveiledEvents}.
 	 */
 	private void recordVeils()
 	{
 		script("window.veils = 0; window.unveiledRequests = 0; window.imagesTold = 0;" +
+			"window.veiledEvents = []; window.unveiledEvents = [];" +
 			"Wicket.Event.subscribe('/ajax/call/complete', function (event, attrs) {" +
 			" if (Array.isArray(attrs.ep) && attrs.ep.some(function (p) {" +
 			" return p && p.name === 'removed'; })) { window.imagesTold++; } });" +
@@ -474,10 +499,13 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 			" if (node.classList && node.classList.contains('wicket-veil')) { window.veils++; }" +
 			" }); }); }).observe(document.body, { childList: true, subtree: true });" +
 			"Wicket.Event.subscribe('/ajax/call/beforeSend', function (event, attrs) {" +
-			" var ep = attrs.ep;" +
-			" if (Array.isArray(ep) ? ep.some(function (p) { return p && p.name === 'wicket_nb'; })" +
-			" : !!ep && Object.prototype.hasOwnProperty.call(ep, 'wicket_nb')) {" +
-			" window.unveiledRequests++; } });");
+			" var ep = attrs.ep, unveiled = Array.isArray(ep) ? ep.some(function (p) {" +
+			" return p && p.name === 'wicket_nb'; }) : !!ep &&" +
+			" Object.prototype.hasOwnProperty.call(ep, 'wicket_nb');" +
+			" if (unveiled) { window.unveiledRequests++; }" +
+			" (Array.isArray(ep) ? ep : []).forEach(function (p) {" +
+			" if (p && p.name === 'antilia-event') {" +
+			" (unveiled ? window.unveiledEvents : window.veiledEvents).push(p.value); } }); });");
 	}
 
 	@ParameterizedTest
