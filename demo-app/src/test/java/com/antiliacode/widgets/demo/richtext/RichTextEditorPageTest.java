@@ -22,11 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
@@ -52,7 +55,10 @@ import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
 import com.antiliacode.widgets.richtext.RichTextSuggestBehavior;
 import com.antiliacode.widgets.richtext.RichTextTool;
+import com.github.openjson.JSONArray;
+import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
+import com.github.openjson.JSONTokener;
 
 /**
  * Checks {@link RichTextEditorPage}: the article whose HTML and state the session keeps, cleaned,
@@ -166,6 +172,75 @@ class RichTextEditorPageTest
 		tester.assertContains("antilia-rich-text-view\"[^>]*><h2>Field notes from the coast</h2>");
 		assertFalse(Pattern.compile("<[a-z][^>]*\\sstyle=").matcher(
 			tester.getLastResponseAsString()).find(), "no inline style");
+	}
+
+	/**
+	 * Each event of the article goes to the server by an Ajax behavior of its own, with the
+	 * attributes the page gives it: those going as the user types, moves the cursor, scrolls or
+	 * resizes carry the parameter the page veil leaves alone, those of blur not. The leave goes in
+	 * a beacon, which no veil sees. The notes leave the veil off all their events.
+	 */
+	@Test
+	void veilsThePageAsTheArticleLosesTheFocusAlone()
+	{
+		Map<String, List<Boolean>> article = unveiledEventsOf(editor(EDITOR));
+		String blur = RichTextEditorEvents.BLUR.getEventName();
+		// the state, and the text before and now: two events, two behaviors
+		assertEquals(List.of(false, false), article.remove(blur), article.toString());
+		assertEquals(List.of(false), article.remove(RichTextEditorEvents.LEAVE.getEventName()));
+		for (RichTextEditorEvents typing : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE,
+			RichTextEditorEvents.FOCUS, RichTextEditorEvents.SAVE))
+		{
+			assertTrue(article.containsKey(typing.getEventName()), typing + " in " + article);
+		}
+		article.forEach((name, unveiled) -> assertFalse(unveiled.contains(false), name +
+			" veiled"));
+
+		Map<String, List<Boolean>> notes = unveiledEventsOf(editor(NOTES));
+		assertTrue(notes.containsKey(blur), notes.toString());
+		notes.forEach((name, unveiled) -> assertFalse(unveiled.contains(false), name +
+			" veiled"));
+	}
+
+	/**
+	 * @return by name, whether each event of an editor going to the server carries the parameter
+	 *         the page veil leaves alone, as the browser gets the events
+	 */
+	private Map<String, List<Boolean>> unveiledEventsOf(RichTextEditor editor)
+	{
+		String page = tester.getLastResponseAsString();
+		Map<String, List<Boolean>> unveiled = new LinkedHashMap<>();
+		String start = "{\"eventName\":";
+		for (int at = page.indexOf(start); at >= 0; at = page.indexOf(start, at + 1))
+		{
+			JSONObject event;
+			try
+			{
+				event = (JSONObject)new JSONTokener(page.substring(at)).nextValue();
+			}
+			catch (JSONException e)
+			{
+				// a handler of the page's own, a function: the event stays in the browser
+				continue;
+			}
+			JSONObject ajax = event.optJSONObject("ajax");
+			if (ajax == null || !editor.getMarkupId().equals(ajax.optString("c")))
+			{
+				continue;
+			}
+			JSONArray parameters = ajax.optJSONArray("ep");
+			boolean marked = false;
+			for (int index = 0; parameters != null && index < parameters.length(); index++)
+			{
+				marked |= PageVeilBehavior.NO_VEIL_PARAMETER.equals(parameters.getJSONObject(index)
+					.getString("name"));
+			}
+			unveiled.computeIfAbsent(event.getString("eventName"), name -> new ArrayList<>())
+				.add(marked);
+		}
+		assertFalse(unveiled.isEmpty(), "no event of " + editor);
+		return unveiled;
 	}
 
 	@Test

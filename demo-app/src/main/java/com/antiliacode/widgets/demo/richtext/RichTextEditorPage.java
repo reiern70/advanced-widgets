@@ -55,9 +55,11 @@ import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.dropdown.Dropdown;
 import com.antiliacode.widgets.dropdown.MultiDropdown;
+import com.antiliacode.widgets.event.AbstractAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEvent;
+import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.IRichTextTool;
 import com.antiliacode.widgets.richtext.RichTextBackgroundColor;
 import com.antiliacode.widgets.richtext.RichTextColor;
@@ -103,13 +105,16 @@ import com.github.openjson.JSONObject;
  * from the server ({@link RichTextWritingPanel}). The React and Svelte tabs show the editor in those
  * frameworks.
  * <p>
- * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
- * the editors' events, which go as the user types: the editors mark them with
- * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
+ * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those
+ * carrying {@link PageVeilBehavior#NO_VEIL_PARAMETER}. The article marks its events one by one,
+ * each event going to the server by an Ajax behavior of its own: those going as the user types,
+ * moves the cursor, scrolls or resizes carry the parameter, and the page veil leaves them alone;
+ * those of blur do not, and the page stays veiled until the server has the text. The other editors
+ * mark all their events with {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
  * {@link RichTextEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}, and so the request
  * telling the server of the images taken out of the text, which takes the attributes of the events
  * unless {@link RichTextEditor#updateImagesRemovalAjaxAttributes(AjaxRequestAttributes)} says
- * otherwise.
+ * otherwise, as it does for the article.
  */
 public class RichTextEditorPage extends DemoPage
 {
@@ -212,7 +217,7 @@ public class RichTextEditorPage extends DemoPage
 	 */
 	public RichTextEditorPage()
 	{
-		// the veil over the page while its Ajax requests run, those of the editors' events aside
+		// the veil over the page while its Ajax requests run, but those going without it
 		add(new PageVeilBehavior());
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
@@ -294,9 +299,10 @@ public class RichTextEditorPage extends DemoPage
 			}
 
 			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
+			protected void updateImagesRemovalAjaxAttributes(AjaxRequestAttributes attributes)
 			{
-				// the requests of the events go as the user types: the page veil leaves them alone
+				// the editor tells of the images taken out by itself, after a save: the user goes
+				// on at once
 				PageVeilBehavior.noVeil(attributes);
 			}
 		};
@@ -309,25 +315,35 @@ public class RichTextEditorPage extends DemoPage
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
-		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
-			(values, target) -> hear(target, "heardFocus")));
-		// the text before and the text now, which the model gets, without the rest of the form
+		// the state goes as the user types, moves the cursor, scrolls or resizes, without the veil;
+		// on blur, by the default event left as it is, under the veil
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
+		{
+			editor.setEvent(unveiled(new SendStateEvent(name)
+				.setDelay(SendStateEvent.DEFAULT_DELAY)));
+		}
+		editor.addEvent(unveiled(AjaxEvent.of(RichTextEditorEvents.FOCUS,
+			(values, target) -> hear(target, "heardFocus"))));
+		// the text before and the text now, which the model gets, without the rest of the form:
+		// under the veil, the page waiting for the server as the editor loses the focus
 		editor.addEvent(RichTextEditorChangeEvent.of(editor, RichTextEditorEvents.BLUR,
 			(previousText, currentText, target) -> hearBlur(target, previousText, currentText)));
-		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
-			(values, form, target) -> save(target)));
+		editor.addEvent(unveiled(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
+			(values, form, target) -> save(target))));
 		// the server follows the text as the user types, a moment after each pause
-		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+		editor.addEvent(unveiled(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
 			(values, form, target) -> target.add(known))
-			.setDelay(RichTextEditorEvents.TYPING_DELAY));
+			.setDelay(RichTextEditorEvents.TYPING_DELAY)));
 		// the size the user gave the article, which the browser sends once they let go
-		editor.addEvent(RichTextEditorResizeEvent.of((width, height, target) -> hearSize(target,
-			width, height)));
+		editor.addEvent(unveiled(RichTextEditorResizeEvent.of((width, height,
+			target) -> hearSize(target, width, height))));
 		// a built-in type of events of the editors: the text the user selected, once they paused
-		editor.addEvent(RichTextEditorSelectedTextEvent.of((text, target) -> hearSelection(target,
-			text)).setDelay(RichTextEditorEvents.TYPING_DELAY));
+		editor.addEvent(unveiled(RichTextEditorSelectedTextEvent.of((text,
+			target) -> hearSelection(target, text)).setDelay(RichTextEditorEvents.TYPING_DELAY)));
 		// a type of events of the page's own, which its script registers: the headings
-		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
+		editor.addEvent(unveiled(OutlineEvent.of((headings, target) -> hearOutline(target,
+			headings))));
 		// stays in the browser: the title of the page marks the changes not saved
 		editor.addEvent(new ClientEvent(RichTextEditorEvents.MODIFIED,
 			"function(event){var title=document.title.replace(/^\\* /,'');" +
@@ -550,6 +566,17 @@ public class RichTextEditorPage extends DemoPage
 		appSuggestions = new RichTextSuggestBehavior(RichTextWriting.people(),
 			RichTextWriting.topics(), RichTextWriting.terms());
 		add(appSuggestions);
+	}
+
+	/**
+	 * Marks an event the page veil leaves alone: its requests carry
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}, those of the other events of the editor not.
+	 *
+	 * @return the event
+	 */
+	private static <E extends AbstractAjaxRoundTripEvent<E>> E unveiled(E event)
+	{
+		return event.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true");
 	}
 
 	/**
