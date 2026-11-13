@@ -28,6 +28,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.behavior.AbstractAjaxBehavior;
+import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
@@ -73,6 +74,9 @@ class DynamicDataTableFooterTest extends WicketTestCase
 	private BeanBasedDynamicDataTable<Line, Long, String> beanTable;
 
 	private JsonBasedDynamicDataTable<Line, Long> jsonTable;
+
+	/** The CSV export the next table started gets, if any. */
+	private CsvExportToolbarAction<Line, Long> csv;
 
 	@Override
 	protected WicketTester newWicketTester(WebApplication app)
@@ -243,6 +247,99 @@ class DynamicDataTableFooterTest extends WicketTestCase
 		assertEquals(60, json.getJSONObject("footer").getInt("total"));
 	}
 
+	@Test
+	void aCsvExportEndsWithTheFooterOfABeanTableWhenAskedTo()
+	{
+		csv = new CsvExportToolbarAction<Line, Long>().setExportFooter(true);
+		startBeanTable(true);
+
+		assertTrue(csv.isExportFooter());
+		assertEquals("\"Item\",\"Amount\"\r\n\"Paper\",\"10\"\r\n\"Ink\",\"20\"\r\n" +
+			"\"Stamps\",\"30\"\r\n\"\",\"60\"\r\n", exportCsv());
+	}
+
+	@Test
+	void aCsvExportHasNoFooterByDefault()
+	{
+		csv = new CsvExportToolbarAction<>();
+		startBeanTable(true);
+
+		assertFalse(csv.isExportFooter());
+		assertTrue(exportCsv().endsWith("\"Stamps\",\"30\"\r\n"), tester.getLastResponseAsString());
+	}
+
+	@Test
+	void aCsvExportOfTheSelectedRowsHasNoFooterAsItSumsUpAllRows()
+	{
+		csv = new CsvExportToolbarAction<Line, Long>().setExportFooter(true);
+		startBeanTable(true);
+		select(beanTable, "2");
+
+		assertEquals("\"Item\",\"Amount\"\r\n\"Ink\",\"20\"\r\n", exportCsv());
+	}
+
+	@Test
+	void aCsvExportWritesNoFooterForATableWithoutOne()
+	{
+		csv = new CsvExportToolbarAction<Line, Long>().setExportFooter(true);
+		startBeanTable(false);
+
+		assertTrue(exportCsv().endsWith("\"Stamps\",\"30\"\r\n"), tester.getLastResponseAsString());
+	}
+
+	@Test
+	void aCsvExportWritesTheFooterOfAJsonTableFromItsFooterData()
+	{
+		csv = new CsvExportToolbarAction<Line, Long>().setExportFooter(true);
+		startJsonTable(true);
+
+		assertEquals("\"Item\",\"Amount\"\r\n\"Paper\",\"10\"\r\n\"Ink\",\"20\"\r\n" +
+			"\"Stamps\",\"30\"\r\n\"\",\"60\"\r\n", exportCsv());
+	}
+
+	@Test
+	void aJsonColumnWithAFooterTemplateButNoFooterExportValueLeavesItsFieldEmpty()
+	{
+		provider = new LinesProvider();
+		List<IDynamicColumn<Line>> columns = new ArrayList<>();
+		columns.add(new DynamicColumn<Line>(Model.of("Item"), "{{item}}")
+			.setExportValue(Line::getItem)
+			.setFooterTemplate("{{count}}"));
+		columns.add(new SortableDynamicColumn<>(new DynamicColumn<Line>(Model.of("Amount"),
+			"{{amount}}").setExportValue(Line::getAmount)
+				.setFooterTemplate("<b>{{total}}</b>")
+				.setFooterExportValue(footer -> ((Map<?, ?>)footer).get("total")), "amount"));
+		jsonTable = new JsonBasedDynamicDataTable<>("table", columns, provider, 2);
+		jsonTable.addToolbarAction(new CsvExportToolbarAction<Line, Long>().setExportFooter(true));
+		tester.startPage(new TablePage(jsonTable));
+
+		assertTrue(exportCsv().endsWith("\"Stamps\",\"30\"\r\n\"\",\"60\"\r\n"),
+			"a sortable column gives the footer export value of the column it sorts: " +
+				tester.getLastResponseAsString());
+	}
+
+	private String exportCsv()
+	{
+		Component button = tester.getLastRenderedPage()
+			.visitChildren(CsvExportButton.class, (component, visit) -> visit.stop(component));
+		tester.clickLink(((MarkupContainer)button).get("link"));
+		Behavior download = button.getBehaviors()
+			.stream()
+			.filter(behavior -> behavior.getClass().getName().endsWith("$ResourceBehavior"))
+			.findFirst()
+			.orElseThrow();
+		tester.invokeListener(button, download);
+		return tester.getLastResponseAsString();
+	}
+
+	private void select(BaseDynamicDataTable<Line, Long, ?> table, String key)
+	{
+		tester.getRequest().getPostParameters().setParameterValue("action",
+			BaseDynamicDataTable.SELECT_ACTION);
+		tester.getRequest().getPostParameters().setParameterValue("key", key);
+		tester.executeBehavior(table.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0));
+	}
+
 	private void startBeanTable(boolean footer)
 	{
 		provider = new LinesProvider();
@@ -256,18 +353,31 @@ class DynamicDataTableFooterTest extends WicketTestCase
 		columns.add(new BeanRowNumberColumn<>(Model.of("#")));
 		columns.add(new LineColumn("Item", "item"));
 		columns.add(footer ? new AmountColumn(provider) : new LineColumn("Amount", "amount"));
-		return new BeanBasedDynamicDataTable<>("table", columns, provider, 2);
+		BeanBasedDynamicDataTable<Line, Long, String> table = new BeanBasedDynamicDataTable<>(
+			"table", columns, provider, 2);
+		if (csv != null)
+		{
+			table.addToolbarAction(csv);
+		}
+		return table;
 	}
 
 	private void startJsonTable(boolean footer)
 	{
 		provider = new LinesProvider();
 		List<IDynamicColumn<Line>> columns = new ArrayList<>();
-		columns.add(new DynamicColumn<>(Model.of("Item"), "{{item}}"));
+		columns.add(new DynamicColumn<Line>(Model.of("Item"), "{{item}}")
+			.setExportValue(Line::getItem));
 		columns.add(new DynamicColumn<Line>(Model.of("Amount"), "{{amount}}")
 			.setFooterTemplate(footer ? "<b>{{total}}</b>" : null)
+			.setFooterExportValue(data -> ((Map<?, ?>)data).get("total"))
+			.setExportValue(Line::getAmount)
 			.setCssClass("amount"));
 		jsonTable = new JsonBasedDynamicDataTable<>("table", columns, provider, 2);
+		if (csv != null)
+		{
+			jsonTable.addToolbarAction(csv);
+		}
 		tester.startPage(new TablePage(jsonTable));
 	}
 
@@ -402,6 +512,12 @@ class DynamicDataTableFooterTest extends WicketTestCase
 		public Component newFooter(String id)
 		{
 			return new Label(id, () -> "Total " + provider.total());
+		}
+
+		@Override
+		public Object getFooterExportValue()
+		{
+			return provider.total();
 		}
 	}
 

@@ -135,6 +135,12 @@ public class SortableDynamicColumn<T, S>
 	}
 
 	@Override
+	public Object getFooterExportValue(Object footer)
+	{
+		return column.getFooterExportValue(footer);
+	}
+
+	@Override
 	public void renderHead(IHeaderResponse response)
 	{
 		if (column instanceof IHeaderContributor contributor)

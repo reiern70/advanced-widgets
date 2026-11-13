@@ -453,6 +453,23 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	}
 
 	/**
+	 * @return the {@link IDynamicColumn#getFooterExportValue(Object) footer export value} of each
+	 *         column with a footer, from the {@link #getFooterData() footer data}, asked for once;
+	 *         {@code null} for the other columns
+	 */
+	@Override
+	protected List<Object> getFooterExportValues(List<IDynamicColumn<T>> columns)
+	{
+		Object footer = getFooterData();
+		List<Object> values = new ArrayList<>();
+		for (IDynamicColumn<T> column : columns)
+		{
+			values.add(hasFooter(column) ? column.getFooterExportValue(footer) : null);
+		}
+		return values;
+	}
+
+	/**
 	 * @return the rows of the current page as the browser reads them, with the paging state, and
 	 *         calls {@link #onRowsSent(List)}
 	 */
