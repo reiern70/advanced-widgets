@@ -13,44 +13,34 @@
  */
 package com.antiliacode.widgets.dynamicdatatable;
 
-import org.apache.wicket.Component;
-import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.string.Strings;
 
-import com.antiliacode.widgets.floating.FloatingPanel;
 import com.antiliacode.widgets.icon.IIcon;
 
 /**
  * A row action shown as an icon button, its tooltip naming what it does, optionally asking for a
- * confirmation before it acts.
+ * confirmation before it acts. For an action better read as words, see {@link TextRowAction}.
  * <p>
  * The button carries the {@link #getActionId() action}, so a click is dispatched by the
  * {@link BaseDynamicDataTable} the action is registered with, through a {@link
- * CompoundDynamicColumn} or {@link
+ * CompoundDynamicColumn}, a {@link BeanActionsColumn} or {@link
  * BaseDynamicDataTable#addActionContributor(IAjaxActionColumnContributor)}. The tooltip is written
  * escaped, as the button's {@code title} and {@code aria-label}.
  * <p>
  * With a {@link #setConfirmation(IModel) confirmation}, a click first shows the question with a
- * confirm and a cancel button, in a {@link FloatingPanel} titled with the tooltip, in the table's
- * {@link BaseDynamicDataTable#showOverlay(org.apache.wicket.Component,
- * org.apache.wicket.core.request.handler.IPartialPageRequestHandler) overlay}, which blocks the
- * table until the user answers. {@link #onRowAction(Object, AjaxRequestTarget)} is called only when
- * the user confirms, the row still exists and the action is still {@link #isVisible(Object)
- * visible} and {@link #isEnabled(Object) enabled} on it.
- * <p>
- * Override {@link #isVisible(Object)} to offer the action only on some rows, for example "Cancel"
- * only on a run still scheduled, or {@link #isEnabled(Object)} and
- * {@link #getDisabledReason(Object)} to show it disabled on the others, with the reason as its
- * tooltip.
+ * confirm and a cancel button, in the table's overlay, titled with the tooltip; see
+ * {@link AbstractRowAction}. Override {@link #isVisible(Object)} to offer the action only on some
+ * rows, or {@link #isEnabled(Object)} and {@link #getDisabledReason(Object)} to show it disabled on
+ * the others, with the reason as its tooltip.
  *
  * @param <T>
  *            the type of the rows
  * @since 11.0.0
  */
-public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContributor<T>
+public abstract class IconBasedRowAction<T> extends AbstractRowAction<T>
 {
 	private static final long serialVersionUID = 1L;
 
@@ -93,15 +83,7 @@ public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContribu
 		}
 	}
 
-	private final String actionId;
-
 	private final IIcon icon;
-
-	private final IModel<String> tooltip;
-
-	private IModel<String> confirmation;
-
-	private BaseDynamicDataTable<T, ?, ?> table;
 
 	/**
 	 * @param actionId
@@ -113,15 +95,8 @@ public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContribu
 	 */
 	public IconBasedRowAction(String actionId, IIcon icon, IModel<String> tooltip)
 	{
-		this.actionId = Args.notEmpty(actionId, "actionId");
+		super(actionId, tooltip);
 		this.icon = Args.notNull(icon, "icon");
-		this.tooltip = Args.notNull(tooltip, "tooltip");
-	}
-
-	@Override
-	public String getActionId()
-	{
-		return actionId;
 	}
 
 	/**
@@ -135,31 +110,11 @@ public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContribu
 		return icon;
 	}
 
-	/**
-	 * Asks the user to confirm before the action is carried out, for example before a row is
-	 * deleted.
-	 *
-	 * @param confirmation
-	 *            the question to confirm, written escaped; {@code null} to act without asking
-	 * @return {@code this}
-	 */
+	@Override
 	public IconBasedRowAction<T> setConfirmation(IModel<String> confirmation)
 	{
-		this.confirmation = confirmation;
+		super.setConfirmation(confirmation);
 		return this;
-	}
-
-	/**
-	 * Returns the question to confirm before acting on a row, the one set with
-	 * {@link #setConfirmation(IModel)} by default. Override to ask about the row itself.
-	 *
-	 * @param row
-	 *            the row the action was clicked on
-	 * @return the question, or {@code null} to act without asking
-	 */
-	protected IModel<String> getConfirmation(T row)
-	{
-		return confirmation;
 	}
 
 	/**
@@ -168,7 +123,7 @@ public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContribu
 	@Override
 	public String getTemplate()
 	{
-		return button(actionId, getIcon().getMarkup(), tooltip.getObject());
+		return button(getActionId(), getIcon().getMarkup(), getName().getObject());
 	}
 
 	/**
@@ -178,75 +133,7 @@ public abstract class IconBasedRowAction<T> implements IAjaxActionColumnContribu
 	@Override
 	public String getTemplate(BaseDynamicDataTable<T, ?, ?> table)
 	{
-		return button(actionId, getIcon().getMarkup(), resolve(tooltip, table));
-	}
-
-	@Override
-	public void bind(BaseDynamicDataTable<T, ?, ?> table)
-	{
-		this.table = table;
-	}
-
-	/**
-	 * @return the table the action is registered with, or {@code null} before it is registered
-	 */
-	protected BaseDynamicDataTable<T, ?, ?> getTable()
-	{
-		return table;
-	}
-
-	/**
-	 * Carries out the action, or asks for a confirmation first if there is one.
-	 */
-	@Override
-	public final void onAction(T row, AjaxRequestTarget target)
-	{
-		IModel<String> question = getConfirmation(row);
-		if (question == null)
-		{
-			onRowAction(row, target);
-		}
-		else
-		{
-			String key = table.getRowKey(row);
-			table.showOverlay(new FloatingPanel(BaseDynamicDataTable.OVERLAY_CONTENT_ID, tooltip)
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected Component newBody(String id)
-				{
-					return new RowActionConfirmationPanel<>(id, question, key,
-						IconBasedRowAction.this);
-				}
-
-				@Override
-				protected void onClose(AjaxRequestTarget target)
-				{
-					table.closeOverlay(target);
-				}
-			}, target);
-		}
-	}
-
-	/**
-	 * Carries out the action on a row: right away, or once the user confirmed it.
-	 *
-	 * @param row
-	 *            the row, never {@code null}
-	 * @param target
-	 *            the Ajax request target
-	 */
-	protected abstract void onRowAction(T row, AjaxRequestTarget target);
-
-	@Override
-	public void detach()
-	{
-		tooltip.detach();
-		if (confirmation != null)
-		{
-			confirmation.detach();
-		}
+		return button(getActionId(), getIcon().getMarkup(), resolve(getName(), table));
 	}
 
 	/**

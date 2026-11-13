@@ -25,8 +25,9 @@ import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
 
 /**
- * Asks to confirm an {@link IconBasedRowAction} in the overlay of its table, and carries out the
- * action on the row, looked up again by its key, once the user confirms.
+ * Asks to confirm an {@link AbstractRowAction}, such as an {@link IconBasedRowAction}, in the
+ * overlay of its table, and carries out the action on the row, looked up again by its key, once
+ * the user confirms.
  *
  * @param <T>
  *            the type of the rows
@@ -36,7 +37,7 @@ class RowActionConfirmationPanel<T> extends Panel
 	private static final long serialVersionUID = 1L;
 
 	RowActionConfirmationPanel(String id, IModel<String> question, String rowKey,
-		IconBasedRowAction<T> action)
+		AbstractRowAction<T> action)
 	{
 		super(id);
 
@@ -51,6 +52,7 @@ class RowActionConfirmationPanel<T> extends Panel
 			public void onClick(AjaxRequestTarget target)
 			{
 				action.getTable().closeOverlay(target);
+				action.onCancel(target);
 			}
 		}.setBody(new ResourceModel("DynamicDataTable.cancel", "Cancel"))
 			.add(new LookBehavior(LookPart.TABLE_BUTTON, LookPart.TABLE_BUTTON_SECONDARY)));

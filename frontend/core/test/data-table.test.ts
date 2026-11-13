@@ -204,6 +204,26 @@ describe('DynamicDataTable', () => {
 		expect(action).toHaveBeenCalledWith('open', 'k2');
 	});
 
+	it('shows the value of a cell linked to an action as text on the rows the action is unavailable on', () => {
+		const action = vi.fn();
+		const data = rows(1, 3);
+		data[1].hiddenActions = ['open'];
+		data[2].disabledActions = { open: 'Closed' };
+		new DynamicDataTable(config({ columns: [
+			{ template: '<button data-dt-action="open" data-dt-unavailable="text">{{name}}</button>' },
+			{ template: '{{city}}' }
+		] }), action, null, null, { rows: data, itemCount: 3 });
+
+		const links = Array.from(document.querySelectorAll<HTMLElement>('#table [data-dt-action]'));
+		expect(links.length).toBe(1);
+		expect(cells().map((row) => row[0])).toEqual(['User 1', 'User 2', 'User 3']);
+		expect(document.querySelectorAll('#table tbody tr')[2].querySelector('td')!.innerHTML)
+			.toBe('User 3');
+
+		links[0].click();
+		expect(action).toHaveBeenCalledWith('open', 'k1');
+	});
+
 	it('disables the actions rows rendered on the server name as disabled', () => {
 		const cfg = config({ serverRows: true });
 		document.querySelector('#table tbody')!.innerHTML =

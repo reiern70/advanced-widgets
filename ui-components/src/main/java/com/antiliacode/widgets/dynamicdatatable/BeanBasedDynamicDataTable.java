@@ -76,17 +76,18 @@ public class BeanBasedDynamicDataTable<T, K extends Serializable, S>
 	 * @param rowsPerPage
 	 *            the number of rows shown on a page
 	 */
+	@SuppressWarnings("unchecked")
 	public BeanBasedDynamicDataTable(String id, List<? extends IColumn<T, S>> columns,
 		IDynamicDataProvider<T, K> provider, long rowsPerPage)
 	{
 		super(id, columns, provider, rowsPerPage);
 		for (IColumn<T, S> column : getColumns())
 		{
-			if (column instanceof BeanActionsColumn<T, S> actions)
+			if (column instanceof IRowActionColumn<?> actions)
 			{
-				for (IAjaxActionColumnContributor<T> contributor : actions.getContributors())
+				for (IAjaxActionColumnContributor<?> contributor : actions.getActionContributors())
 				{
-					addActionContributor(contributor);
+					addActionContributor((IAjaxActionColumnContributor<T>)contributor);
 				}
 			}
 		}

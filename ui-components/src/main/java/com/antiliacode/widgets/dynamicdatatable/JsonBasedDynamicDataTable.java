@@ -135,6 +135,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	 * @param rowsPerPage
 	 *            the number of rows shown on a page
 	 */
+	@SuppressWarnings("unchecked")
 	public JsonBasedDynamicDataTable(String id, List<? extends IDynamicColumn<T>> columns,
 		IDynamicDataProvider<T, K> provider, long rowsPerPage)
 	{
@@ -143,6 +144,13 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		for (IDynamicColumn<T> column : getColumns())
 		{
 			IDynamicColumn<T> unwrapped = unwrap(column);
+			if (unwrapped instanceof IRowActionColumn<?> actions)
+			{
+				for (IAjaxActionColumnContributor<?> contributor : actions.getActionContributors())
+				{
+					addActionContributor((IAjaxActionColumnContributor<T>)contributor);
+				}
+			}
 			if (unwrapped instanceof CompoundDynamicColumn<T> compound)
 			{
 				for (IDynamicColumnContributor<T> contributor : compound.getContributors())
