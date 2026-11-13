@@ -51,4 +51,18 @@ public interface IFooterColumn<T>
 	 * @return the component, or {@code null} for an empty cell
 	 */
 	Component newFooter(String id);
+
+	/**
+	 * The value a CSV export {@link CsvExportToolbarAction#setExportFooter(boolean) writing the
+	 * footer} writes under the column, in the last line of the file: the total, the count or the
+	 * average of {@link #newFooter(String)}, for example as a number rather than as the text the
+	 * footer shows. It is converted like the values of the rows.
+	 *
+	 * @return the value, or {@code null} for an empty field; {@code null} by default
+	 * @since 11.0.0
+	 */
+	default Object getFooterExportValue()
+	{
+		return null;
+	}
 }

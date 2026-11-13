@@ -1237,6 +1237,21 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * Returns the values a CSV export {@link CsvExportToolbarAction#setExportFooter(boolean)
+	 * writing the footer} writes in its last line, under the values of the rows. Returns
+	 * {@code null} for every column by default, for empty fields.
+	 *
+	 * @param columns
+	 *            the exported columns, in their order
+	 * @return a value per column, in the same order, {@code null} for an empty field
+	 * @since 11.0.0
+	 */
+	protected List<Object> getFooterExportValues(List<C> columns)
+	{
+		return new ArrayList<>(Collections.nCopies(columns.size(), null));
+	}
+
+	/**
 	 * @return whether the table renders a footer row, under its rows and above its bottom
 	 *         toolbars: whether one of the columns it shows {@link #hasFooter(IDetachable) has a
 	 *         value in the footer}. The row has a cell for every shown column, in their order and

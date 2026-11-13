@@ -164,6 +164,23 @@ public interface IDynamicColumn<T> extends IDetachable
 		return null;
 	}
 
+	/**
+	 * The value a CSV export {@link CsvExportToolbarAction#setExportFooter(boolean) writing the
+	 * footer} writes under the column, in the last line of the file, for a column with a
+	 * {@link #getFooterTemplate() footer template}.
+	 *
+	 * @param footer
+	 *            the table's {@link JsonBasedDynamicDataTable#getFooterData() footer data}, the
+	 *            one the footer template is filled with, may be {@code null}
+	 * @return the value of the column in the footer as exported, for example the total the
+	 *         template shows; {@code null} by default, for an empty field
+	 * @since 11.0.0
+	 */
+	default Object getFooterExportValue(Object footer)
+	{
+		return null;
+	}
+
 	@Override
 	default void detach()
 	{

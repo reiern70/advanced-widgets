@@ -41,6 +41,12 @@ import org.apache.wicket.util.lang.Args;
  * spreadsheets take as the mark of a text: see {@link #escapeFormula(String)}. Numbers, such as
  * {@code -12.5}, stay as they are. {@link #setEscapeFormulas(boolean)} turns this off, for files
  * read by tools that take no formulas.
+ * <p>
+ * With {@link #setExportFooter(boolean)}, the file ends with the table's
+ * {@link BaseDynamicDataTable#hasFooter() footer}, its totals for example: a line with the
+ * {@link IFooterColumn#getFooterExportValue() footer export value} of each column, empty for the
+ * columns without one. A file of the selected rows only has no footer line, as the footer sums
+ * up all the rows.
  *
  * @param <T>
  *            the type of the rows
@@ -70,6 +76,8 @@ public class CsvExportToolbarAction<T, K extends Serializable>
 	private Location location = Location.Blob;
 
 	private boolean escapeFormulas = true;
+
+	private boolean exportFooter;
 
 	@Override
 	public Component newComponent(String id, BaseDynamicDataTable<T, K, ?> table)
@@ -174,6 +182,35 @@ public class CsvExportToolbarAction<T, K extends Serializable>
 	public CsvExportToolbarAction<T, K> setEscapeFormulas(boolean escapeFormulas)
 	{
 		this.escapeFormulas = escapeFormulas;
+		return this;
+	}
+
+	/**
+	 * @return whether the file ends with a line of the table's footer, {@code false} by default
+	 * @see #setExportFooter(boolean)
+	 * @since 11.0.0
+	 */
+	public boolean isExportFooter()
+	{
+		return exportFooter;
+	}
+
+	/**
+	 * @param exportFooter
+	 *            whether the file ends with a line of the table's
+	 *            {@link BaseDynamicDataTable#hasFooter() footer}, under the rows: the value of
+	 *            {@link IFooterColumn#getFooterExportValue()} for each column of a
+	 *            {@link BeanBasedDynamicDataTable}, of
+	 *            {@link IDynamicColumn#getFooterExportValue(Object)} for each column of a
+	 *            {@link JsonBasedDynamicDataTable}, empty for the columns without one. Written
+	 *            only when the table has a footer and the file holds all the rows, not only the
+	 *            selected ones, which the footer does not sum up.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public CsvExportToolbarAction<T, K> setExportFooter(boolean exportFooter)
+	{
+		this.exportFooter = exportFooter;
 		return this;
 	}
 
