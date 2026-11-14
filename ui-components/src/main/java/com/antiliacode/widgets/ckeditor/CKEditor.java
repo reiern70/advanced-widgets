@@ -80,6 +80,18 @@ import com.antiliacode.widgets.richtext.IRichTextSanitizer;
  * {@code 'unsafe-inline'} in the {@code style-src} of the page's Content Security Policy, and a
  * sanitizer keeping their styles.
  * <p>
+ * CKEditor 49 has no Watchdog: after an error escaping it, CKEditor keeps running, but may be left
+ * in a state of its own. The editor hears of those errors by CKEditor's {@code onEditorError}, and
+ * starts CKEditor again, as the Watchdog did, with the text it last had and the selection, saying
+ * so below the text; errors coming too often, it gives up and leaves CKEditor running, telling the
+ * user to save the text and reload the page ({@link #setRecovery(CKEditorRecovery)}). It fires
+ * {@link CKEditorEvents#ERROR} either way, which {@link CKEditorErrorEvent} hears of on the
+ * server, logging it:
+ *
+ * <pre>
+ * editor.addEvent(new CKEditorErrorEvent());
+ * </pre>
+ * <p>
  * {@code Wicket.CKEditor} from {@link #JS} makes the editor in the browser, with CKEditor's
  * {@code ClassicEditor} of the library; {@link #CSS} gives CKEditor the colors of the theme.
  *
@@ -120,7 +132,7 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/** The texts of the editor's own, those of {@link RichTextEditor} of the same names. */
 	private static final List<String> TEXTS = List.of("characters", "character", "words", "word",
-		"resize", "linkNewTab", "pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms",
+		"resize", "linkNewTab", "errorRestarted", "errorGaveUp", "pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms",
 		"pasteImages", "pasteTables", "pasteLinks", "pasteFormatting");
 
 	/** The features set, {@code null} for those of the format. */
@@ -134,6 +146,9 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/** CKEditor's configuration of the page's own, as JSON: a JSON object is not serializable. */
 	private String config;
+
+	/** How CKEditor starts again after an error, {@code null} for not at all. */
+	private CKEditorRecovery recovery = CKEditorRecovery.DEFAULT;
 
 	/**
 	 * An editor whose model is inherited, for example from a {@code CompoundPropertyModel}, keeping
@@ -362,6 +377,29 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	}
 
 	/**
+	 * @return how CKEditor starts again in the browser after an error escaped it, {@code null} for
+	 *         not at all
+	 */
+	public CKEditorRecovery getRecovery()
+	{
+		return recovery;
+	}
+
+	/**
+	 * @param recovery
+	 *            how CKEditor starts again in the browser after an error escaped it, as CKEditor's
+	 *            Watchdog did: {@link CKEditorRecovery#DEFAULT} by default; {@code null} to leave
+	 *            CKEditor running as it is, as CKEditor 49 does, the editor telling of the error
+	 *            alone ({@link CKEditorEvents#ERROR})
+	 * @return {@code this}
+	 */
+	public CKEditor setRecovery(CKEditorRecovery recovery)
+	{
+		this.recovery = recovery;
+		return this;
+	}
+
+	/**
 	 * @return the language of CKEditor's texts in this page: that of the page's locale when the
 	 *         library has a translation of it; {@code null} for English
 	 */
@@ -377,13 +415,15 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	}
 
 	/**
-	 * Puts the options of CKEditor: the license key, the language, the toolbar, the plugins and
-	 * the configuration of the page's own.
+	 * Puts the options of CKEditor: the license key, the language, the toolbar, the plugins, the
+	 * configuration of the page's own and the recovery after an error.
 	 */
 	@Override
 	protected void putEditorOptions(JSONObject options)
 	{
 		options.put("licenseKey", getLibrary().getLicenseKey());
+		options.put("recovery", recovery == null ? (Object)false : new JSONObject()
+			.put("crashes", recovery.crashes()).put("interval", recovery.interval().toMillis()));
 		String language = getLanguage();
 		if (language != null)
 		{
@@ -411,8 +451,8 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/**
 	 * What the editor says of its own, in the language of a component: the count and the bar
-	 * resizing it, the switch opening a link in a new tab and the notice of what a paste lost;
-	 * CKEditor translates the rest. The
+	 * resizing it, the switch opening a link in a new tab, the line telling of an error and the
+	 * notice of what a paste lost; CKEditor translates the rest. The
 	 * texts of this editor, and those a page hands to the React and Svelte editors.
 	 *
 	 * @param component

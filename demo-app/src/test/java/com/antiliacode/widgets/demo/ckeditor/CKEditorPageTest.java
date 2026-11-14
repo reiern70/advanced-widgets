@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.ckeditor.CKEditor;
+import com.antiliacode.widgets.ckeditor.CKEditorEvents;
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
@@ -280,6 +281,18 @@ class CKEditorPageTest
 		fire(editor, RichTextEditorEvents.RESIZE, CKEditorSamples.ARTICLE);
 		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
 			"The server heard you resized the article to auto × 320 px.");
+	}
+
+	@Test
+	void hearsOfCKEditorRunningIntoAnError()
+	{
+		CKEditor editor = editor(EDITOR);
+		tester.getRequest().setParameter(ClientEventsBehavior.VALUES_PARAMETER,
+			"{\"name\":\"CKEditorError\",\"message\":\"A command failed.\",\"started\":true," +
+			"\"restarting\":true,\"gaveUp\":false,\"crashes\":1}");
+		fire(editor, CKEditorEvents.ERROR, editor.getModelObject());
+		tester.assertLabel(inCase("articleTitle", "editorForm:heard"),
+			"CKEditor ran into an error, which the server heard of and logged: A command failed.");
 	}
 
 	@Test

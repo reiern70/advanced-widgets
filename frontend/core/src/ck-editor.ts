@@ -36,6 +36,15 @@
  * getValue() is the text given. Should it not start, without CKEditor in the page or with a
  * license key it refuses, the text area shows again, to type the text in, and onError tells why.
  *
+ * Since CKEditor 49 has no Watchdog, CKEditor keeps running after an error that escaped it, but
+ * may be left in a state of its own. The editor hears of those of its CKEditor by CKEditor's
+ * onEditorError, when the build has it, and tells them to onError, with the event error of
+ * CK_EDITOR_EVENTS and in the log. Then it starts CKEditor again, as the Watchdog did, with the
+ * text it last had, which the text area holds, and the selection, and says so in a line below the
+ * text (recovery): after each of its first crashes, then as long as they come further apart than
+ * an interval on average; crashes coming more often, it leaves CKEditor running, saying so in that
+ * line.
+ *
  * The text is HTML, or Markdown with CKEditor's Markdown plugin (format). What it may hold are the
  * features of the Tiptap editor (rich-text-schema.ts), each made by CKEditor's plugins
  * (CK_EDITOR_FEATURE_PLUGINS), all of them unless the page leaves some out; the toolbar has their
@@ -198,9 +207,25 @@ export interface CKEditorViewWriter {
 	removeAttribute(key: string, element: unknown): void;
 }
 
+/** What CKEditor's onEditorError tells of an error that escaped an editor. */
+export interface CKEditorErrorData {
+	/** The error, a CKEditorError. */
+	readonly error: unknown;
+	/** The editor, or the context, the error came from; null when CKEditor cannot tell. */
+	readonly source: unknown;
+}
+
+/**
+ * CKEditor's onEditorError (CKEditor 49 and later): registers a callback for the errors escaping
+ * the editors of the page, and returns a function unregistering it.
+ */
+export type CKEditorOnEditorError = (callback: (data: CKEditorErrorData) => void) => () => void;
+
 /** CKEditor's ClassicEditor: an editor with a toolbar above the text. */
 export interface CKEditorClass {
 	create(element: HTMLElement, config: Record<string, unknown>): Promise<CKEditorInstance>;
+	/** CKEditor's onEditorError, reachable from the class, in CKEditor 49 and later. */
+	readonly onEditorError?: CKEditorOnEditorError;
 }
 
 /**
@@ -209,6 +234,8 @@ export interface CKEditorClass {
  */
 export interface CKEditorBuild {
 	readonly ClassicEditor: CKEditorClass;
+	/** CKEditor's onEditorError, as the browser build of CKEditor 49 and later has it. */
+	readonly onEditorError?: CKEditorOnEditorError;
 	readonly [name: string]: unknown;
 }
 
@@ -314,6 +341,10 @@ export interface CKEditorTexts extends RichTextPasteTexts {
 	resize: string;
 	/** The switch of the form of a link opening it in a new tab. */
 	linkNewTab: string;
+	/** The line below the text once CKEditor ran into an error and started again (recovery). */
+	errorRestarted: string;
+	/** The line below the text once CKEditor ran into errors too often to start again. */
+	errorGaveUp: string;
 }
 
 export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
@@ -323,8 +354,70 @@ export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
 	word: '{0} word',
 	resize: 'Drag, or use the arrow keys, to resize the editor',
 	linkNewTab: 'Open in a new tab',
+	errorRestarted: 'Something went wrong in the editor. It started again, with your text.',
+	errorGaveUp: 'Something keeps going wrong in the editor. Save your text, then reload the ' +
+		'page.',
 	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
+
+/**
+ * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog did: after
+ * each of the first crashes, then as long as the crashes come further apart than an interval on
+ * average.
+ */
+export interface CKEditorRecovery {
+	/**
+	 * How many crashes in a row CKEditor starts again after, however close they come: 3 when left
+	 * out, the Watchdog's crashNumberLimit.
+	 */
+	crashes?: number;
+	/**
+	 * After more crashes, CKEditor starts again only while the last of them came further apart than
+	 * this on average, in milliseconds: 5000 when left out, the Watchdog's
+	 * minimumNonErrorTimePeriod.
+	 */
+	interval?: number;
+}
+
+/** What happened as CKEditor failed, which onError and the event error tell. */
+export interface CKEditorFailure {
+	/** Whether CKEditor had started: false when it could not start, the text area shown again. */
+	started: boolean;
+	/** Whether the editor starts CKEditor again, with the text it had. */
+	restarting: boolean;
+	/** Whether the editor gave up starting CKEditor again, the errors coming too often. */
+	gaveUp: boolean;
+	/** How many times CKEditor failed after it started, this time among them. */
+	crashes: number;
+}
+
+/** What the event error of the editor carries, besides the editor. */
+export interface CKEditorErrorDetail extends CKEditorFailure {
+	/** The error. */
+	error: unknown;
+	/** The name of the error, CKEditorError for one of CKEditor. */
+	name: string;
+	/** What the error says. */
+	message: string;
+}
+
+/** The events the editor fires besides those it shares with the Tiptap editor. */
+export const CK_EDITOR_EVENTS = Object.freeze({
+	/**
+	 * CKEditor ran into an error after it started, or could not start: its detail is a
+	 * CKEditorErrorDetail.
+	 */
+	error: 'antilia-ck-editor:error'
+});
+
+/** How the editor starts CKEditor again, unless the options say otherwise. */
+export const DEFAULT_CK_EDITOR_RECOVERY: Readonly<Required<CKEditorRecovery>> = Object.freeze({
+	crashes: 3,
+	interval: 5000
+});
+
+/** The longest message of an error the event error carries, in characters. */
+const MESSAGE_LENGTH = 1000;
 
 /**
  * What an editor holds and shows, and what it lets the user do.
@@ -409,8 +502,17 @@ export interface CKEditorOptions {
 	look?: Look;
 	/** Called with CKEditor's editor once it started. */
 	onReady?: (editor: CKEditorInstance) => void;
-	/** Called with what went wrong when CKEditor could not start. */
-	onError?: (error: unknown) => void;
+	/**
+	 * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog did:
+	 * DEFAULT_CK_EDITOR_RECOVERY when left out; false to leave CKEditor running as it is, as
+	 * CKEditor 49 does, telling of the errors alone.
+	 */
+	recovery?: CKEditorRecovery | false;
+	/**
+	 * Called with what went wrong when CKEditor could not start, or ran into an error after it
+	 * started, which CKEditor tells by its onEditorError, and what the editor does about it.
+	 */
+	onError?: (error: unknown, failure: CKEditorFailure) => void;
 	/** Called with the text each time the user changed it. */
 	onChange?: (value: string) => void;
 	/** Called when the editor got the focus. */
@@ -461,7 +563,9 @@ export const CK_EDITOR_CLASSES = Object.freeze({
 	loading: 'antilia-ck-editor-loading',
 	readOnly: 'antilia-ck-editor-readonly',
 	disabled: 'antilia-ck-editor-disabled',
-	focused: 'antilia-ck-editor-focused'
+	focused: 'antilia-ck-editor-focused',
+	/** The line below the text telling the user CKEditor ran into an error. */
+	error: 'antilia-ck-editor-error'
 });
 
 const DEFAULTS = { resizable: 'vertical' as ResizeAxis, minWidth: 200,
@@ -487,6 +591,18 @@ const SIZES = ['width', 'height'];
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
 	return typeof target === 'string' ? document.getElementById(target) : target;
+}
+
+/**
+ * @returns the name and the message of an error, as the event error carries them: what it says
+ *          cut to MESSAGE_LENGTH characters
+ */
+function describeError(error: unknown): { name: string; message: string } {
+	const named = error as { name?: unknown; message?: unknown } | null | undefined;
+	const name = typeof named?.name === 'string' && named.name ? named.name : 'Error';
+	const message = typeof named?.message === 'string' ? named.message :
+		error === undefined || error === null ? '' : String(error);
+	return { name: name.slice(0, 100), message: message.slice(0, MESSAGE_LENGTH) };
 }
 
 /**
@@ -694,6 +810,24 @@ export class CKEditor {
 
 	/** The HTML of a paste, made quiet, until CKEditor inserts what it read of it. */
 	private pasted: string | null = null;
+
+	/** The line below the text telling the user CKEditor ran into an error, while it tells. */
+	private errorLine: HTMLElement | null = null;
+
+	/** What the line telling of an error says: that CKEditor started again, or gave up; none. */
+	private errorShown: 'restarted' | 'gaveUp' | null = null;
+
+	/** How many times CKEditor failed after it started. */
+	private crashCount = 0;
+
+	/** When CKEditor failed last, as many times as the recovery looks back at. */
+	private crashTimes: number[] = [];
+
+	/** Whether the editor gave up starting CKEditor again, the errors coming too often. */
+	private gaveUp = false;
+
+	/** The CKEditor whose errors the editor hears of, and what stops hearing of them. */
+	private hearing: { editor: CKEditorInstance; stop: () => void } | null = null;
 
 	private resizable: Resizable | null = null;
 
@@ -1099,6 +1233,7 @@ export class CKEditor {
 			return this.ready;
 		}
 		this.editor = editor;
+		this.hearErrors(editor, build);
 		this.setUp(editor);
 		// CKEditor has the selection now
 		if (this.reported === null && this.textReported) {
@@ -1113,9 +1248,181 @@ export class CKEditor {
 	 */
 	private fail(error: unknown): never {
 		getHost().log.error('CKEditor could not start', error);
-		this.options.onError?.(error);
+		this.tellError(error, { started: false, restarting: false, gaveUp: this.gaveUp,
+			crashes: this.crashCount });
 		this.destroy();
 		throw error;
+	}
+
+	/**
+	 * Hears of the errors escaping CKEditor, by CKEditor's onEditorError when the build has it
+	 * (CKEditor 49 and later): those of this CKEditor alone, until it stops.
+	 */
+	private hearErrors(editor: CKEditorInstance, build: CKEditorBuild): void {
+		this.stopHearingErrors();
+		const register = typeof build.onEditorError === 'function' ? build.onEditorError :
+			build.ClassicEditor.onEditorError;
+		if (typeof register !== 'function') {
+			return;
+		}
+		try {
+			const stop = register(({ error, source }) => {
+				if (source === editor && editor === this.editor && !this.destroyed) {
+					this.crashed(editor, error);
+				}
+			});
+			this.hearing = { editor, stop: typeof stop === 'function' ? stop : () => undefined };
+		} catch (error) {
+			getHost().log.error('The editor cannot hear of the errors of CKEditor', error);
+		}
+	}
+
+	/**
+	 * No longer hears of the errors of a CKEditor, or of the one heard of.
+	 */
+	private stopHearingErrors(editor?: CKEditorInstance): void {
+		const hearing = this.hearing;
+		if (!hearing || (editor && hearing.editor !== editor)) {
+			return;
+		}
+		this.hearing = null;
+		try {
+			hearing.stop();
+		} catch (error) {
+			getHost().log.error('The editor could not stop hearing of the errors of CKEditor', error);
+		}
+	}
+
+	/**
+	 * @returns how the editor starts CKEditor again after an error, null for not at all: the
+	 *          option recovery, DEFAULT_CK_EDITOR_RECOVERY for what it leaves out
+	 */
+	private recovery(): Required<CKEditorRecovery> | null {
+		const given = this.options.recovery;
+		if (given === false) {
+			return null;
+		}
+		const crashes = given?.crashes;
+		const interval = given?.interval;
+		return {
+			crashes: typeof crashes === 'number' && Number.isFinite(crashes) && crashes >= 0 ?
+				Math.floor(crashes) : DEFAULT_CK_EDITOR_RECOVERY.crashes,
+			interval: typeof interval === 'number' && Number.isFinite(interval) && interval >= 0 ?
+				interval : DEFAULT_CK_EDITOR_RECOVERY.interval
+		};
+	}
+
+	/**
+	 * @returns whether CKEditor starts again after the crashes it had, as CKEditor's Watchdog
+	 *          decided: after each of the first ones, then while the last of them came further
+	 *          apart than the interval on average
+	 */
+	private mayRestart(recovery: Required<CKEditorRecovery>): boolean {
+		const times = this.crashTimes;
+		if (times.length <= recovery.crashes) {
+			return true;
+		}
+		const last = times[times.length - 1]!;
+		const first = times[times.length - 1 - recovery.crashes]!;
+		return (last - first) / recovery.crashes > recovery.interval;
+	}
+
+	/**
+	 * CKEditor ran into an error after it started: CKEditor starts again with the text it had and
+	 * the selection, unless the recovery is off, or the errors come too often, CKEditor then
+	 * running on as it is. Then the error is told: in the log, to onError and with the event
+	 * error; and to the user, in a line below the text, unless the recovery is off.
+	 */
+	private crashed(editor: CKEditorInstance, error: unknown): void {
+		const recovery = this.recovery();
+		this.crashCount++;
+		if (recovery) {
+			this.crashTimes = [...this.crashTimes, Date.now()].slice(-(recovery.crashes + 1));
+		}
+		const restarting = !!recovery && !this.gaveUp && this.mayRestart(recovery);
+		if (recovery && !restarting) {
+			this.gaveUp = true;
+		}
+		getHost().log.error(restarting ? 'CKEditor ran into an error, and starts again' :
+			this.gaveUp ? 'CKEditor ran into an error again, and runs on as it is' :
+				'CKEditor ran into an error', error);
+		if (restarting) {
+			this.recover(editor);
+		}
+		this.tellError(error, { started: true, restarting, gaveUp: this.gaveUp,
+			crashes: this.crashCount });
+		if (recovery && !this.destroyed) {
+			this.errorShown = restarting ? 'restarted' : 'gaveUp';
+			this.renderErrorLine();
+		}
+	}
+
+	/**
+	 * Starts CKEditor again after it ran into an error, as the Watchdog did: with the text it last
+	 * had, which the text area holds, and the selection, the focus back in it if it was there.
+	 */
+	private recover(editor: CKEditorInstance): void {
+		let selection = this.selected;
+		try {
+			selection = this.selection();
+		} catch (error) {
+			getHost().log.error('CKEditor could not tell what is selected', error);
+		}
+		const focused = this.focused;
+		this.pendingSelection = selection;
+		this.unbindScroller();
+		this.editor = null;
+		this.stop(editor);
+		this.restartWith(this.value);
+		if (focused) {
+			this.ready.then((restarted) => restarted.focus(), () => undefined);
+		}
+	}
+
+	/**
+	 * Tells what went wrong: to onError, then with the event error.
+	 */
+	private tellError(error: unknown, failure: CKEditorFailure): void {
+		try {
+			this.options.onError?.(error, { ...failure });
+		} catch (thrown) {
+			getHost().log.error('onError of the editor failed', thrown);
+		}
+		this.emit(CK_EDITOR_EVENTS.error, { ...failure, error, ...describeError(error) });
+	}
+
+	/**
+	 * Shows the line telling the user CKEditor ran into an error, below the text, before the count
+	 * and the handle resizing the editor; or takes it away, once it tells nothing.
+	 */
+	private renderErrorLine(): void {
+		const shown = this.errorShown;
+		if (!shown || this.destroyed) {
+			this.errorLine?.remove();
+			this.errorLine = null;
+			return;
+		}
+		if (!this.errorLine) {
+			this.errorLine = document.createElement('div');
+			this.errorLine.className = CK_EDITOR_CLASSES.error;
+		}
+		const line = this.errorLine;
+		// polite as CKEditor started again; the user has to act once it gave up
+		line.setAttribute('role', shown === 'gaveUp' ? 'alert' : 'status');
+		line.toggleAttribute('data-gave-up', shown === 'gaveUp');
+		const texts = this.texts();
+		const text = shown === 'gaveUp' ? texts.errorGaveUp : texts.errorRestarted;
+		if (line.textContent !== text) {
+			line.textContent = text;
+		}
+		const next = this.status ?? this.element.querySelector(':scope > .antilia-resizable-handle');
+		if (next) {
+			if (line.nextElementSibling !== next) {
+				next.before(line);
+			}
+		} else if (line.parentElement !== this.element || line.nextElementSibling) {
+			this.element.append(line);
+		}
 	}
 
 	/**
@@ -1319,6 +1626,11 @@ export class CKEditor {
 		this.renderStatus();
 		this.dispatch('text');
 		if (!this.external) {
+			// that CKEditor started again is told until the user changes the text
+			if (this.errorShown === 'restarted') {
+				this.errorShown = null;
+				this.renderErrorLine();
+			}
 			this.textReported = false;
 			this.options.onChange?.(value);
 			this.fieldEvent('input');
@@ -1381,13 +1693,14 @@ export class CKEditor {
 			this.status.className = this.css('ck-editor-status');
 			this.status.setAttribute('aria-live', 'polite');
 		}
-		// after CKEditor's, before the handle resizing the editor
+		// after CKEditor's and the line telling of an error, before the handle resizing the editor
 		const handle = this.element.querySelector(':scope > .antilia-resizable-handle');
 		if (handle) {
 			handle.before(this.status);
 		} else {
 			this.element.append(this.status);
 		}
+		this.errorLine?.after(this.status);
 		// counted once CKEditor started, in its model
 		const root = this.editor?.model.document.getRoot();
 		if (!root) {
@@ -1987,6 +2300,7 @@ export class CKEditor {
 		}
 		this.renderNotice();
 		this.renderStatus();
+		this.renderErrorLine();
 		this.renderResizable();
 		if (before.events !== this.options.events) {
 			this.renderEventHandlers();
@@ -2102,6 +2416,8 @@ export class CKEditor {
 		this.status = null;
 		this.notice?.destroy();
 		this.notice = null;
+		this.errorLine?.remove();
+		this.errorLine = null;
 		this.resizable?.destroy();
 		this.resizable = null;
 		const editor = this.editor;
@@ -2109,6 +2425,7 @@ export class CKEditor {
 		if (editor) {
 			this.stop(editor);
 		}
+		this.stopHearingErrors();
 		this.source?.remove();
 		this.source = null;
 		if (instances.get(this.element) === this) {
@@ -2123,9 +2440,15 @@ export class CKEditor {
 	 * Stops a CKEditor: its UI goes at once, CKEditor in a moment.
 	 */
 	private stop(editor: CKEditorInstance): void {
+		this.stopHearingErrors(editor);
 		const ui = editor.ui.element;
-		editor.destroy().catch((error: unknown) =>
-			getHost().log.error('CKEditor could not stop', error));
+		try {
+			Promise.resolve(editor.destroy()).catch((error: unknown) =>
+				getHost().log.error('CKEditor could not stop', error));
+		} catch (error) {
+			// a CKEditor in a state of its own after an error
+			getHost().log.error('CKEditor could not stop', error);
+		}
 		ui?.remove();
 	}
 }

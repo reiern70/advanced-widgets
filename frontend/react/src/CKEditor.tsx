@@ -14,7 +14,8 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorInstance, type EditorEvents,
+import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorFailure, type CKEditorInstance,
+	type CKEditorRecovery, type EditorEvents,
 	type RichTextEditorEventKey,
 	type CKEditorPlugin, type CKEditorTexts, type HeadingLevel, type ResizableSize,
 	type ResizeAxis, type RichTextCleaningReport, type RichTextEditorSelection,
@@ -106,8 +107,17 @@ export interface CKEditorProps {
 	className?: string;
 	/** Called with CKEditor's editor once it started. */
 	onReady?(editor: CKEditorInstance): void;
-	/** Called with what went wrong when CKEditor could not start. */
-	onError?(error: unknown): void;
+	/**
+	 * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog did:
+	 * after each of 3 crashes, then while they come more than 5 s apart on average, when left out;
+	 * false to leave CKEditor running as it is.
+	 */
+	recovery?: CKEditorRecovery | false;
+	/**
+	 * Called with what went wrong when CKEditor could not start, or ran into an error after it
+	 * started, and what the editor does about it.
+	 */
+	onError?(error: unknown, failure: CKEditorFailure): void;
 	/** Called with the text each time the user changed it. */
 	onChange?(value: string): void;
 	onFocus?(): void;
@@ -166,7 +176,7 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 		const { value, saved, build, licenseKey, language, translations, format, features,
 			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
 			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, events,
-			pasteNotice, texts, name, id, className } = props;
+			pasteNotice, recovery, texts, name, id, className } = props;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
 		const look = useLook();
@@ -199,9 +209,10 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				resizable: current.resizable, minWidth: current.minWidth,
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, events: current.events,
-				pasteNotice: current.pasteNotice, texts: current.texts, look,
+				pasteNotice: current.pasteNotice, recovery: current.recovery, texts: current.texts,
+				look,
 				onReady: (next) => latest.current.onReady?.(next),
-				onError: (error) => latest.current.onError?.(error),
+				onError: (error, failure) => latest.current.onError?.(error, failure),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
 				onBlur: (next) => latest.current.onBlur?.(next),
@@ -223,10 +234,10 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 			instance.current?.configure({ licenseKey, language, format, features, headingLevels,
 				toolbar, readOnly, placeholder, label, spellcheck: spellcheck ?? null,
 				textLanguage: textLanguage ?? null, count, resizable, minWidth, minHeight, maxWidth,
-				maxHeight, pasteNotice: !!pasteNotice, texts });
+				maxHeight, pasteNotice: !!pasteNotice, recovery, texts });
 		}, [licenseKey, language, format, features, headingLevels, toolbar, readOnly, placeholder,
 			label, spellcheck, textLanguage, count, resizable, minWidth, minHeight, maxWidth,
-			maxHeight, pasteNotice, texts]);
+			maxHeight, pasteNotice, recovery, texts]);
 
 		useLayoutEffect(() => {
 			if (events !== undefined) {

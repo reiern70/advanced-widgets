@@ -248,12 +248,49 @@ describe('CKEditor', () => {
 		await act(async () => {
 			await ref.current!.editor!.ready.catch(() => undefined);
 		});
-		expect(onError).toHaveBeenCalledWith(expect.any(Error));
+		expect(onError).toHaveBeenCalledWith(expect.any(Error), { started: false, restarting: false,
+			gaveUp: false, crashes: 0 });
 		expect(error).toHaveBeenCalledWith('CKEditor could not start', expect.any(Error));
 		// the text area shows, to type the text in
 		expect(container.querySelector<HTMLTextAreaElement>('textarea')?.hidden).toBe(false);
 		expect(ref.current?.getValue()).toBe('<p>a</p>');
 	});
+
+	it('tells the latest onError of an error after CKEditor started, and starts it again',
+		async () => {
+			setHost({ ...standaloneHost, log: { error: vi.fn() } });
+			const build = fakeBuild();
+			const first = vi.fn();
+			const ref = createRef<CKEditorHandle>();
+			const { container, rerender } = render(<CKEditor ref={ref} build={build}
+				value="<p>Kept</p>" onError={first} />);
+			const fake = await started(ref);
+			const onError = vi.fn();
+			rerender(<CKEditor ref={ref} build={build} value="<p>Kept</p>" onError={onError} />);
+			const crash = new Error('A plugin failed');
+			await act(async () => {
+				build.crash(fake, crash);
+				await ref.current!.editor!.ready;
+			});
+			expect(first).not.toHaveBeenCalled();
+			expect(onError).toHaveBeenCalledWith(crash, { started: true, restarting: true,
+				gaveUp: false, crashes: 1 });
+			expect(fake.destroyed).toBe(true);
+			expect(build.editors).toHaveLength(2);
+			expect(ref.current?.getValue()).toBe('<p>Kept</p>');
+			expect(container.querySelector('.antilia-ck-editor-error')?.textContent)
+				.toContain('started again');
+
+			// or CKEditor runs on as it is
+			rerender(<CKEditor ref={ref} build={build} value="<p>Kept</p>" onError={onError}
+				recovery={false} />);
+			await act(async () => {
+				build.crash(build.editors[1]!, crash);
+			});
+			expect(onError).toHaveBeenLastCalledWith(crash, { started: true, restarting: false,
+				gaveUp: false, crashes: 2 });
+			expect(build.editors).toHaveLength(2);
+		});
 
 	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',
 		async () => {

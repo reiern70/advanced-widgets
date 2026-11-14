@@ -322,4 +322,6 @@
 	<entry key="RichTextEditor.pasteTables">tables</entry>
 	<entry key="RichTextEditor.pasteLinks">links</entry>
 	<entry key="RichTextEditor.pasteFormatting">formatting</entry>
+	<entry key="RichTextEditor.errorRestarted">Something went wrong in the editor. It started again, with your text.</entry>
+	<entry key="RichTextEditor.errorGaveUp">Something keeps going wrong in the editor. Save your text, then reload the page.</entry>
 </properties>

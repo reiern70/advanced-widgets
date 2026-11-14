@@ -289,6 +289,27 @@
 }
 
 /*
+ * CKEditor ran into an error: below the text, before the count, in the color of the text on a
+ * tint of the theme's warning, or of its error once the editor gave up starting CKEditor again
+ */
+.antilia-ck-editor-error {
+	flex: none;
+	padding: 0.3rem 0.6rem;
+	border: 1px solid var(--ck-color-base-border);
+	border-block-start-width: 0;
+	background: color-mix(in srgb, var(--antilia-theme-warning, #d97706) 12%,
+		var(--ck-color-base-background));
+	color: var(--ck-color-base-text);
+	font-size: 0.875em;
+	text-align: start;
+}
+
+.antilia-ck-editor-error[data-gave-up] {
+	background: color-mix(in srgb, var(--antilia-theme-error, #c53030) 12%,
+		var(--ck-color-base-background));
+}
+
+/*
  * what a paste lost, under CKEditor's toolbar, until the text changes: a polite line between the
  * borders of the toolbar and of the text, in the color of the text on a tint of the theme's
  * information. Empty, it takes no room, but stays a live region.
