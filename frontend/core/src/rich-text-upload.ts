@@ -573,7 +573,8 @@ interface MarkSpec {
 	uploading: Uploading;
 }
 
-const KEY = new PluginKey<DecorationSet>('antiliaRichTextUploads');
+// pure: a script using the checks alone, the CKEditor's, holds no ProseMirror
+const KEY = /* @__PURE__ */ new PluginKey<DecorationSet>('antiliaRichTextUploads');
 
 /**
  * @returns where the mark of a file uploading stands, null when it is gone

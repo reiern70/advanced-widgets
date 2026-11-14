@@ -327,7 +327,17 @@ holds, and the selection, saying so in a line below the text (`recovery`: after 
 then while they come more than 5 s apart on average; `false` to leave CKEditor running). Crashes
 coming more often, it gives up and leaves CKEditor running, the line asking the user to save and
 reload. Wicket's `CKEditor` takes it as `setRecovery(CKEditorRecovery)`, and `CKEditorErrorEvent`
-hears of the errors on the server, logging them. The HTML has no style
+hears of the errors on the server, logging them. Given `onUpload`, as the Tiptap editor, the editor
+uploads the images the user chooses, pastes or drops: CKEditor's `ImageUpload` for the feature
+image, with an upload adapter of its own calling `onUpload` (not `SimpleUploadAdapter`), which tells
+CKEditor the progress and cancels as CKEditor aborts; the editor checks each image first
+(`uploadTypes`, `uploadMaxSize`, `uploadMaxWidth`, `uploadMaxHeight`) and tells why it does not
+upload one, or why it failed, in a line above the text (`antilia-ck-editor-message`), not in
+CKEditor's alert, also for a file of a type not taken that CKEditor leaves alone. The bar of the
+progress grows by classes (`uploadProgressClass`), CKEditor's own width being a style attribute.
+Wicket's `CKEditor` takes the store of the images as the Tiptap editor does (`setImageStore`, the
+contract of `AbstractRichTextEditor`), posting to a `RichTextImageUploadBehavior` (`uploadUrl`). The
+HTML has no style
 attribute: text aligns by the classes of the Tiptap editor, images have no width or height, for
 which CKEditor writes a style, and the HTML a page gives or the user pastes is made quiet first
 (`quietHtml`), as the Tiptap editor's; what a paste lost, compared with what CKEditor inserts of it

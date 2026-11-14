@@ -19,6 +19,7 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { uploadImageTo } from '@antilia/core';
 	import { Button, CKEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { ckText, describe, type CKEditorConfig, type CKText } from '../ck-editor.js';
@@ -33,6 +34,8 @@
 	let readOnly = $state(false);
 	let count = $state(true);
 	let heard = $state(initial.texts.appStart);
+	// the images uploaded into the article go to the page
+	const onupload = uploadImageTo(initial.uploadUrl);
 
 	// the cases, one at a time
 	const cases = $derived<TabItem[]>([{ id: 'articleTitle', title: texts.appArticleTitle, modified: false },
@@ -70,7 +73,9 @@
 						<CKEditor licenseKey={config.licenseKey} language={config.language}
 							bind:value={article.text} bind:state={article.state} saved={article.saved}
 							label={texts.articleLabel} placeholder={texts.placeholder} {readOnly} {count}
-							texts={config.editor} onsave={saveArticle} />
+							texts={config.editor} onsave={saveArticle} {onupload}
+							uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
+							uploadMaxWidth={config.uploadMaxWidth} uploadMaxHeight={config.uploadMaxHeight} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">

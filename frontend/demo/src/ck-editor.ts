@@ -62,6 +62,12 @@ export interface CKEditorConfig {
 	licenseKey: string;
 	/** The language of CKEditor's texts, whose translations the page loaded; none for English. */
 	language?: string;
+	/** Where the apps upload images: the page's own behavior, answering their addresses. */
+	uploadUrl: string;
+	uploadTypes: string[];
+	uploadMaxSize: number;
+	uploadMaxWidth: number;
+	uploadMaxHeight: number;
 }
 
 /** A text the app keeps: the text, the text last saved and the state of its editor. */
