@@ -150,6 +150,9 @@ The components are published in two lines, on Maven Central and on GitHub Packag
   `10.11.0-RC9` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
   of snapshots.
 
+[CHANGES.md](CHANGES.md) tells what each release candidate brings and what an application has to
+change when it upgrades, the request parameters renamed among it.
+
 Maven Central needs no repository, only the dependency; the releases will be there too.
 `./install.sh <version>` releases a version: see the script.
 
