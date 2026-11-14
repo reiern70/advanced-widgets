@@ -147,6 +147,9 @@ The components are published in two lines, on Maven Central and on GitHub Packag
   of snapshots;
 - for Wicket 11, built from `master`: the release candidates, `11.0.0-RC2` the last.
 
+[CHANGES.md](CHANGES.md) tells what each release candidate brings and what an application has to
+change when it upgrades, the request parameters renamed among it.
+
 Maven Central needs no repository, only the dependency; the releases will be there too.
 `./install.sh <version>` releases a version: see the script.
 
