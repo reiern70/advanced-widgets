@@ -424,6 +424,28 @@ may open it, as an attachment otherwise. `setBaseUrl("https://files.example.com/
 links the files to a domain of their own. The resource refuses an upload a browser sends from
 another site, and cuts a request larger than the largest image allowed before reading the file.
 
+### Files attached to a rich text
+
+With a store of files, `editor.setAttachmentStore(store)`, or the resource of the uploads given one
+(`RichTextFiles.mount(...).setAttachmentStore(store)`), the user attaches PDFs, Office documents,
+OpenDocuments, ZIPs and texts by the tool "Attach a file", or drops them into the text; each goes in
+where the cursor is as a link with its name and its size,
+`<a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">report.pdf</a>`,
+and the tool "Files of the text" lists them, each taken out by a button. The formats are told by
+the bytes of the file (`UploadFileFormat`, or an `IUploadFileFormat` of the application's own); a text
+is checked to be UTF-8 without NUL, its extension choosing among TXT, CSV and Markdown. A file taken
+out of the text is deleted at once or once the text is saved, as the images are. The resource serves
+a PDF inline, the others as attachments, each in a sandbox.
+
+```java
+// an antivirus, or a sanitizer of the application's own, on every upload, images too
+editor.setUploadScanner((file, format, locale) -> clamAv.isClean(file.getInputStream()) ?
+	UploadScan.accept() : UploadScan.refuse(messages.virus(file.getClientFileName(), locale)));
+```
+
+The scanner may answer a cleaned copy too (`UploadScan.clean(bytes)`), which the store keeps
+instead, checked again. In Markdown, a file attached is a plain link, `[report.pdf](url)`.
+
 ## Using the components in React and Svelte
 
 The packages are in `frontend` (`@antilia/core`, `@antilia/react`, `@antilia/svelte`) and not

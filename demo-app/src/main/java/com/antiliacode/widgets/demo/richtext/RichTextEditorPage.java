@@ -333,7 +333,10 @@ public class RichTextEditorPage extends DemoPage
 		editor.setUploadResource(RichTextFiles.get(RichTextImages.PATH))
 			.setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
-			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true);
+			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true)
+			// the files attached go to the resource too, which has a store of them
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE)
+			.setAttachmentMaxCount(RichTextAttachments.MAX_COUNT);
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
@@ -937,6 +940,14 @@ public class RichTextEditorPage extends DemoPage
 			.put("uploadMaxWidth", RichTextImages.MAX_DIMENSIONS.width())
 			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height())
 			.put("uploadMaxCount", RichTextImages.MAX_COUNT)
+			// and attach files there
+			.put("attachUrl", files().getAttachmentUploadUrl())
+			.put("attachTypes", new JSONArray(files().getAttachmentFormats().stream()
+				.map(format -> new JSONObject().put("type", format.getMimeType())
+					.put("extension", format.getExtension()).put("label", format.getLabel()))
+				.toList()))
+			.put("attachMaxSize", files().getAttachmentMaxSize().bytes())
+			.put("attachMaxCount", RichTextAttachments.MAX_COUNT)
 			.put("proofreadUrl", appProofreading.getProofreadUrl())
 			.put("suggestUrl", appSuggestions.getSuggestUrl())
 			.put("suggesters", appSuggestions.toJson());

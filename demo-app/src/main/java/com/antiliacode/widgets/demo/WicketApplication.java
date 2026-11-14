@@ -85,6 +85,7 @@ import com.antiliacode.widgets.demo.split.SplitPanelPage;
 import com.antiliacode.widgets.demo.codeeditor.CodeEditorPage;
 import com.antiliacode.widgets.demo.resizable.ResizablePage;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
+import com.antiliacode.widgets.demo.richtext.RichTextAttachments;
 import com.antiliacode.widgets.demo.richtext.RichTextImages;
 import com.antiliacode.widgets.demo.popover.PopoversPage;
 import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
@@ -371,7 +372,10 @@ public class WicketApplication extends WebApplication
 		// the apps go there, and all of them are served there
 		RichTextFiles.mount(this, RichTextImages.PATH, RichTextImages.get())
 			.setImageMaxSize(RichTextImages.MAX_SIZE)
-			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setPermanentImages(true);
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setPermanentImages(true)
+			// and the files attached to the texts, PDFs, Office documents, texts
+			.setAttachmentStore(RichTextAttachments.get())
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);

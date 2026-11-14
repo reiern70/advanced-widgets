@@ -56,6 +56,9 @@ import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
+import com.antiliacode.widgets.upload.IUploadFileFormat;
+import com.antiliacode.widgets.upload.IUploadScanner;
+import com.antiliacode.widgets.upload.UploadFileFormat;
 
 /**
  * A text area shown as a rich text editor, Tiptap ({@link RichTextLibrary}), in the colors of the
@@ -212,6 +215,12 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public static final String LOADING_CLASS = "antilia-rich-text-editor-loading";
 
+	/**
+	 * The parameter of the request telling the server of the files the user took out of the text,
+	 * their addresses as a JSON array, beside those of the images.
+	 */
+	static final String ATTACHMENTS_REMOVED_PARAMETER = "removedAttachments";
+
 	/** What the name of a language of code blocks may be, as their class holds it. */
 	private static final Pattern LANGUAGE = Pattern.compile("[A-Za-z0-9_+#.-]{1,40}");
 
@@ -233,6 +242,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"colorBrown", "colorRed", "colorOrange", "colorYellow", "colorLime", "colorGreen",
 		"colorTeal", "colorCyan", "colorBlue", "colorIndigo", "colorPurple", "colorPink",
 		"uploadImage", "uploading", "theImage", "uploadFailed", "uploadTooLarge", "uploadType",
+		"attachment", "attachments", "noAttachments", "deleteAttachment", "dropFiles",
+		"chooseFiles", "attachFiles", "attachFilesTitle", "insertFiles", "attachmentType",
+		"attachTooMany", "theFile", "attaching",
 		"images", "noImages", "deleteImage", "dropImages", "chooseImages", "uploadImagesTitle",
 		"uploadDone", "removeFile", "insertImages", "cancel", "upload", "uploadTooMany",
 		"uploadTooBig", "scaleTitle", "scaleText", "scaleDown", "cancelUpload", "storedImage",
@@ -284,8 +296,32 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private boolean permanentImages;
 
-	/** The behavior hearing of the images the user took out of the text, made with the first store. */
+	/**
+	 * The behavior hearing of the images and the files the user took out of the text, made with the
+	 * first store.
+	 */
 	private ImagesRemoval imagesRemoval;
+
+	private IRichTextAttachmentStore attachmentStore;
+
+	/** The behavior taking the files attached, made with the first store, unless they go to the resource. */
+	private RichTextAttachmentUploadBehavior attachmentUpload;
+
+	private Bytes attachmentMaxSize = RichTextAttachmentUploadBehavior.DEFAULT_MAX_SIZE;
+
+	private Set<IUploadFileFormat> attachmentFormats = new LinkedHashSet<>(UploadFileFormat.ALL);
+
+	private Integer attachmentMaxCount;
+
+	private boolean attachmentUploadDialog;
+
+	private IUploadScanner uploadScanner;
+
+	/** The files attached to the text of the model the editor was last shown with. */
+	private Set<String> attachmentsShown = new LinkedHashSet<>();
+
+	/** The files the user took out of the text since it was last saved, to delete once it is. */
+	private final Set<String> attachmentsRemoved = new LinkedHashSet<>();
 
 	/** The images of the text of the model the editor was last shown with. */
 	private Set<String> imagesShown = new LinkedHashSet<>();
@@ -709,7 +745,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 				}
 			};
 			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
-				.setMaxDimensions(imageMaxDimensions).setPermanentImages(permanentImages);
+				.setMaxDimensions(imageMaxDimensions).setPermanentImages(permanentImages)
+				.setScanner(uploadScanner);
 			add(imageUpload);
 		}
 		return this;
@@ -739,7 +776,312 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	public RichTextEditor setUploadResource(RichTextFiles uploadResource)
 	{
 		uploadResourcePath = uploadResource == null ? null : uploadResource.getPath();
+		if (uploadResource != null && uploadResource.getAttachmentStore() != null)
+		{
+			setAttachmentStore(uploadResource.getAttachmentStore());
+		}
+		else if (attachmentStore != null)
+		{
+			setAttachmentStore(attachmentStore);
+		}
 		return setImageStore(uploadResource == null ? imageStore : uploadResource.getImageStore());
+	}
+
+	/**
+	 * @return what keeps the files the user attaches, {@code null} for none
+	 * @since 11.0.0
+	 */
+	public IRichTextAttachmentStore getAttachmentStore()
+	{
+		return attachmentStore;
+	}
+
+	/**
+	 * @param attachmentStore
+	 *            what keeps the files the user attaches to the text, PDFs or spreadsheets, which go
+	 *            in as links, and tells their addresses; {@code null} for none, as by default. With
+	 *            {@link #setUploadResource(RichTextFiles) the resource of the uploads} taking files,
+	 *            the resource's.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentStore(IRichTextAttachmentStore attachmentStore)
+	{
+		this.attachmentStore = attachmentStore;
+		if (attachmentStore != null && imagesRemoval == null)
+		{
+			imagesRemoval = new ImagesRemoval();
+			add(imagesRemoval);
+		}
+		if (attachmentStore != null && attachmentUpload == null && !isAttachmentResource())
+		{
+			attachmentUpload = new RichTextAttachmentUploadBehavior(new EditorAttachmentStore())
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected boolean isUploadAllowed()
+				{
+					return isAttachmentUploading() && !isAttachmentResource();
+				}
+			};
+			attachmentUpload.setMaxSize(attachmentMaxSize).setFormats(attachmentFormats)
+				.setScanner(uploadScanner);
+			add(attachmentUpload);
+		}
+		return this;
+	}
+
+	/**
+	 * The store of the editor's behavior of the files: the store the editor has now.
+	 */
+	private final class EditorAttachmentStore implements IRichTextAttachmentStore
+	{
+		private static final long serialVersionUID = 1L;
+
+		private IRichTextAttachmentStore current() throws IOException
+		{
+			if (attachmentStore == null)
+			{
+				throw new IOException("The editor keeps no files");
+			}
+			return attachmentStore;
+		}
+
+		@Override
+		public String store(FileUpload file, IUploadFileFormat format) throws IOException
+		{
+			return current().store(file, format);
+		}
+
+		@Override
+		public void delete(String url) throws IOException
+		{
+			current().delete(url);
+		}
+
+		@Override
+		public RichTextServedFile open(String name) throws IOException
+		{
+			return current().open(name);
+		}
+	}
+
+	/**
+	 * @return whether the files go to the resource of the uploads: the editor has one, which takes
+	 *         files
+	 */
+	private boolean isAttachmentResource()
+	{
+		return uploadResourcePath != null && getUploadResource().getAttachmentStore() != null;
+	}
+
+	/**
+	 * @return the largest file the user attaches
+	 * @since 11.0.0
+	 */
+	public Bytes getAttachmentMaxSize()
+	{
+		return attachmentMaxSize;
+	}
+
+	/**
+	 * @param attachmentMaxSize
+	 *            the largest file the user attaches,
+	 *            {@link RichTextAttachmentUploadBehavior#DEFAULT_MAX_SIZE} by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentMaxSize(Bytes attachmentMaxSize)
+	{
+		this.attachmentMaxSize = Args.notNull(attachmentMaxSize, "attachmentMaxSize");
+		if (attachmentUpload != null)
+		{
+			attachmentUpload.setMaxSize(attachmentMaxSize);
+		}
+		return this;
+	}
+
+	/**
+	 * @return the formats of the files the user attaches, in their order
+	 * @since 11.0.0
+	 */
+	public Set<IUploadFileFormat> getAttachmentFormats()
+	{
+		return Collections.unmodifiableSet(attachmentFormats);
+	}
+
+	/**
+	 * @param attachmentFormats
+	 *            the formats of the files the user attaches, as their bytes say, in the order a file
+	 *            is told by and the messages name them: those of {@link UploadFileFormat} and those
+	 *            of the application's own ({@link IUploadFileFormat}); all those built in by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentFormats(
+		Collection<? extends IUploadFileFormat> attachmentFormats)
+	{
+		this.attachmentFormats = RichTextAttachmentUploads.checkedFormats(attachmentFormats);
+		if (attachmentUpload != null)
+		{
+			attachmentUpload.setFormats(this.attachmentFormats);
+		}
+		return this;
+	}
+
+	/**
+	 * @return how many files one drop or choice of the user takes at most, {@code null} for no
+	 *         limit
+	 * @since 11.0.0
+	 */
+	public Integer getAttachmentMaxCount()
+	{
+		return attachmentMaxCount;
+	}
+
+	/**
+	 * @param attachmentMaxCount
+	 *            how many files one drop, choice or paste of the user takes at most, the first ones,
+	 *            the others left out with a message; {@code null} for no limit, as by default. A
+	 *            limit of the browser alone: each file is a request of its own, which the server
+	 *            checks as any other.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentMaxCount(Integer attachmentMaxCount)
+	{
+		this.attachmentMaxCount = attachmentMaxCount == null ? null :
+			Math.max(attachmentMaxCount, 1);
+		return this;
+	}
+
+	/**
+	 * @return whether the form of the tool attaching files opens a dialog to upload them in
+	 * @since 11.0.0
+	 */
+	public boolean isAttachmentUploadDialog()
+	{
+		return attachmentUploadDialog;
+	}
+
+	/**
+	 * @param attachmentUploadDialog
+	 *            whether the form of the tool attaching files has a button opening a dialog to
+	 *            upload them in, with the list of the files as they upload, which the user takes out
+	 *            before they go into the text; {@code false}, the default, for the zone in the form
+	 *            itself
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentUploadDialog(boolean attachmentUploadDialog)
+	{
+		this.attachmentUploadDialog = attachmentUploadDialog;
+		return this;
+	}
+
+	/**
+	 * @return what scans each image and each file uploaded before a store keeps it, {@code null}
+	 *         for none
+	 * @since 11.0.0
+	 */
+	public IUploadScanner getUploadScanner()
+	{
+		return uploadScanner;
+	}
+
+	/**
+	 * @param uploadScanner
+	 *            what scans each image and each file the user uploads, before a store keeps it: an
+	 *            antivirus, or a sanitizer of the application's own; it accepts the file, refuses
+	 *            it with a message in the language of the user, or answers a cleaned copy.
+	 *            {@code null} for none, as by default; at {@link #setUploadResource(RichTextFiles)
+	 *            the resource of the uploads}, the resource's when the editor has none.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setUploadScanner(IUploadScanner uploadScanner)
+	{
+		this.uploadScanner = uploadScanner;
+		if (imageUpload != null)
+		{
+			imageUpload.setScanner(uploadScanner);
+		}
+		if (attachmentUpload != null)
+		{
+			attachmentUpload.setScanner(uploadScanner);
+		}
+		return this;
+	}
+
+	/**
+	 * @return whether the user attaches files now: the editor has a store of files, and is enabled,
+	 *         not read only, with the feature attachment
+	 * @since 11.0.0
+	 */
+	public boolean isAttachmentUploading()
+	{
+		return attachmentStore != null && !isReadOnly() &&
+			getFeatures().contains(RichTextFeature.ATTACHMENT) && isEnabledInHierarchy();
+	}
+
+	/**
+	 * @return the files the editor took since it was last saved, by its behavior or at the
+	 *         resource of the uploads
+	 */
+	private Set<String> uploadedAttachments()
+	{
+		if (isAttachmentResource())
+		{
+			return uploadKey == null ? Set.of() :
+				getUploadResource().getUploadedAttachments(uploadKey);
+		}
+		return attachmentUpload == null ? Set.of() : attachmentUpload.getUploaded();
+	}
+
+	/**
+	 * Forgets files the editor took: they are no longer deleted when the browser asks to.
+	 */
+	private void forgetAttachments(Collection<String> urls)
+	{
+		if (isAttachmentResource())
+		{
+			if (uploadKey != null)
+			{
+				getUploadResource().forgetAttachments(uploadKey, urls);
+			}
+		}
+		else if (attachmentUpload != null)
+		{
+			attachmentUpload.forget(urls);
+		}
+	}
+
+	/**
+	 * @return the rules of the files the editor attaches
+	 */
+	private RichTextAttachmentUploads.Rules attachmentRules()
+	{
+		return new RichTextAttachmentUploads.Rules(attachmentMaxSize, attachmentFormats,
+			isImagesFromSiteOnly(), uploadScanner);
+	}
+
+	/**
+	 * @return the address the browser posts the files to: of the editor's behavior, or of the
+	 *         resource, with the key of its uploads, its rules registered in the session
+	 */
+	private String attachmentUploadUrl()
+	{
+		if (!isAttachmentResource())
+		{
+			return attachmentUpload.getUploadUrl();
+		}
+		if (uploadKey == null)
+		{
+			uploadKey = RichTextFiles.newKey();
+		}
+		return getUploadResource().registerAttachments(uploadKey, attachmentRules(),
+			isAttachmentUploading());
 	}
 
 	/**
@@ -780,7 +1122,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	{
 		return new RichTextImageUploads.Rules(imageMaxSize, imageTypes, imageMaxDimensions,
 			isImagesFromSiteOnly(), permanentImages && isImageUploading(),
-			RichTextImageUploadBehavior.DEFAULT_MAX_FOUND);
+			RichTextImageUploadBehavior.DEFAULT_MAX_FOUND, uploadScanner);
 	}
 
 	/**
@@ -1147,9 +1489,18 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		@Override
 		protected void respond(AjaxRequestTarget target)
 		{
-			onImagesRemovedSent(target, RichTextImageUploadBehavior.urlsOf(getRequest()
-				.getRequestParameters().getParameterValue(
-					RichTextImageUploadBehavior.REMOVED_PARAMETER).toString("[]")));
+			String images = getRequest().getRequestParameters().getParameterValue(
+				RichTextImageUploadBehavior.REMOVED_PARAMETER).toOptionalString();
+			if (images != null)
+			{
+				onImagesRemovedSent(target, RichTextImageUploadBehavior.urlsOf(images));
+			}
+			String attachments = getRequest().getRequestParameters().getParameterValue(
+				ATTACHMENTS_REMOVED_PARAMETER).toOptionalString();
+			if (attachments != null)
+			{
+				onAttachmentsRemovedSent(target, RichTextAttachmentUploads.urlsOf(attachments));
+			}
 		}
 	}
 
@@ -1204,6 +1555,84 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		Set<String> told = Collections.unmodifiableSet(removed);
 		onImagesRemoved(target, told);
 		send(this, Broadcast.BUBBLE, new RichTextImagesRemovedEvent(this, told, now, target));
+	}
+
+	/**
+	 * @return the files attached to the text of the model, as its format writes them
+	 */
+	private Set<String> modelAttachments()
+	{
+		return RichTextImageAddresses.attachmentsOf(getModelObject(), getFormat());
+	}
+
+	/**
+	 * The browser told of files the user took out of the text: those the editor knows, those of
+	 * the text it was shown with and those uploaded since, are deleted now, or once the text is
+	 * saved, then told of.
+	 */
+	private void onAttachmentsRemovedSent(AjaxRequestTarget target, List<String> urls)
+	{
+		if (attachmentStore == null || !isAttachmentUploading())
+		{
+			return;
+		}
+		Set<String> known = new LinkedHashSet<>(attachmentsShown);
+		known.addAll(uploadedAttachments());
+		Set<String> removed = new LinkedHashSet<>();
+		urls.stream().filter(known::contains).forEach(removed::add);
+		if (removed.isEmpty())
+		{
+			return;
+		}
+		boolean now = imageDeletion == RichTextImageDeletion.AT_ONCE;
+		if (now)
+		{
+			deleteAttachments(Collections.unmodifiableSet(removed));
+			attachmentsShown.removeAll(removed);
+			forgetAttachments(removed);
+		}
+		else
+		{
+			attachmentsRemoved.addAll(removed);
+		}
+		Set<String> told = Collections.unmodifiableSet(removed);
+		onAttachmentsRemoved(target, told);
+		send(this, Broadcast.BUBBLE, new RichTextAttachmentsRemovedEvent(this, told, now, target));
+	}
+
+	/**
+	 * Called when the browser told that the user took files out of the text, those the editor
+	 * knows, after they were deleted in {@link RichTextImageDeletion#AT_ONCE}, before the
+	 * {@link RichTextAttachmentsRemovedEvent}. Does nothing by default.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @param urls
+	 *            the addresses of the files
+	 * @since 11.0.0
+	 */
+	protected void onAttachmentsRemoved(AjaxRequestTarget target, Set<String> urls)
+	{
+	}
+
+	/**
+	 * Deletes files the user took out of the text, at once or once the text is saved, as
+	 * {@link #getImageDeletion() the mode} says: each by
+	 * {@link IRichTextAttachmentStore#delete(String)} by default. A page overrides it to decide
+	 * which, knowing its texts.
+	 *
+	 * @param urls
+	 *            the addresses of the files, those of the text the editor was shown with and those
+	 *            uploaded into it, never others
+	 * @since 11.0.0
+	 */
+	protected void deleteAttachments(Set<String> urls)
+	{
+		IRichTextAttachmentStore store = attachmentStore;
+		if (store != null)
+		{
+			urls.forEach(url -> RichTextAttachmentUploads.delete(store, url));
+		}
 	}
 
 	/**
@@ -1275,15 +1704,36 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public RichTextEditor deleteRemovedImages()
 	{
+		String text = getModelObject();
+		boolean users = hash(text) == shownHash;
+		if (attachmentStore != null)
+		{
+			Set<String> saved = modelAttachments();
+			Set<String> gone = new LinkedHashSet<>();
+			Set<String> uploaded = uploadedAttachments();
+			if (users)
+			{
+				gone.addAll(attachmentsRemoved);
+				gone.addAll(uploaded);
+				gone.removeAll(saved);
+			}
+			forgetAttachments(uploaded);
+			attachmentsRemoved.clear();
+			attachmentsShown = saved;
+			if (!gone.isEmpty())
+			{
+				deleteAttachments(Collections.unmodifiableSet(gone));
+			}
+		}
 		if (imageStore == null || imageUpload == null && uploadResourcePath == null)
 		{
+			shownHash = hash(text);
 			return this;
 		}
-		String text = getModelObject();
 		Set<String> saved = modelImages();
 		Set<String> gone = new LinkedHashSet<>();
 		Set<String> uploaded = uploadedImages();
-		if (hash(text) == shownHash)
+		if (users)
 		{
 			gone.addAll(imagesRemoved);
 			gone.addAll(uploaded);
@@ -1313,8 +1763,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		{
 			shownHash = hash;
 			imagesRemoved.clear();
+			attachmentsRemoved.clear();
 		}
 		imagesShown = modelImages();
+		attachmentsShown = modelAttachments();
 	}
 
 	private static int hash(String text)
@@ -1479,7 +1931,8 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	protected void renderEditorHead(IHeaderResponse response)
 	{
 		renderHeadItems(response);
-		if (isImageUploading() && (imageUploadDialog || imageScaling && imageMaxDimensions != null))
+		if (isImageUploading() && (imageUploadDialog || imageScaling && imageMaxDimensions != null) ||
+			isAttachmentUploading() && attachmentUploadDialog)
 		{
 			response.render(CssHeaderItem.forReference(Modal.CSS));
 		}
@@ -1580,6 +2033,32 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		{
 			// the resource takes no more uploads of the editor, read only now for example
 			imageUploadUrl();
+		}
+		if (isAttachmentUploading())
+		{
+			options.put("attachUrl", attachmentUploadUrl());
+			options.put("attachTypes", attachmentRules().toJson());
+			options.put("attachMaxSize", isAttachmentResource() ? Math.min(
+				attachmentMaxSize.bytes(), getUploadResource().getAttachmentMaxSize().bytes()) :
+				attachmentMaxSize.bytes());
+			if (attachmentMaxCount != null)
+			{
+				options.put("attachMaxCount", attachmentMaxCount.intValue());
+			}
+			if (attachmentUploadDialog)
+			{
+				options.put("attachDialog", true);
+			}
+			showImages();
+			if (!options.has("imagesAjax"))
+			{
+				options.put("imagesAjax", new JSONFunction(imagesRemoval.renderAttributes()));
+			}
+		}
+		else if (uploadKey != null && isAttachmentResource())
+		{
+			// the resource takes no more files of the editor
+			attachmentUploadUrl();
 		}
 		if (isProofreading())
 		{

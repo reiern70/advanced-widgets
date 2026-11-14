@@ -97,6 +97,25 @@ public enum RichTextTool implements IRichTextTool
 	 */
 	STORED_IMAGE("storedImage", RichTextFeature.IMAGE),
 
+	/**
+	 * Attaches a file to the text, a PDF or a spreadsheet, in a form: a zone to drop files on or
+	 * choose them, or a button opening the dialog of the uploads; the file goes in where the cursor
+	 * is, as a link with its name and its size. Shows only on an editor with
+	 * {@link RichTextEditor#setAttachmentStore(IRichTextAttachmentStore) a store of files}.
+	 *
+	 * @since 11.0.0
+	 */
+	ATTACHMENT("attachment", RichTextFeature.ATTACHMENT),
+
+	/**
+	 * The files attached to the text, in a menu: each with its name and its size, selected by a
+	 * click, and a button taking it out of the text; the store then deletes it as
+	 * {@link RichTextEditor#setImageDeletion(RichTextImageDeletion) the editor says}.
+	 *
+	 * @since 11.0.0
+	 */
+	ATTACHMENTS("attachments", RichTextFeature.ATTACHMENT),
+
 	ALIGN_LEFT("alignLeft", RichTextFeature.TEXT_ALIGN),
 
 	ALIGN_CENTER("alignCenter", RichTextFeature.TEXT_ALIGN),
@@ -119,7 +138,7 @@ public enum RichTextTool implements IRichTextTool
 		List.of(LINK),
 		List.of(BULLET_LIST, ORDERED_LIST, TASK_LIST), List.of(BLOCKQUOTE, CODE_BLOCK,
 			HORIZONTAL_RULE), List.of(TABLE, IMAGE, STORED_IMAGE,
-			IMAGES), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,
+			IMAGES, ATTACHMENT, ATTACHMENTS), List.of(ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT,
 				ALIGN_JUSTIFY), List.of(CLEAR_FORMATTING), List.of(UNDO, REDO));
 
 	private final String name;

@@ -25,7 +25,7 @@
 		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, uploadMaxCount,
 		uploadMaxWidth, uploadMaxHeight, uploadScaling, uploadDialog, onimagesremoved, colors,
 		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features, pasteNotice,
-		onpastecleaned }: {
+		onpastecleaned, onattach, attachMaxSize, onattachmentsremoved }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
 		format?: RichTextFormat; readOnly?: boolean; toolbar?: RichTextTool[][] | false;
 		count?: boolean; className?: string; onsave?: (value: string) => void;
@@ -41,7 +41,9 @@
 		spellcheck?: boolean | null; textLanguage?: string | null;
 		proofreader?: RichTextProofreader; suggesters?: RichTextSuggester[];
 		features?: RichTextFeature[]; pasteNotice?: boolean;
-		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
+		onpastecleaned?: (report: RichTextCleaningReport) => void;
+		onattach?: (file: File) => Promise<string>; attachMaxSize?: number;
+		onattachmentsremoved?: (urls: string[]) => void } = $props();
 	let modified = $state(false);
 
 	/** The state sent at once, as the user changes it. */
@@ -57,7 +59,7 @@
 		{uploadMaxHeight} {uploadScaling} {uploadDialog} {onimagesremoved} {colors}
 		{backgroundColors} {spellcheck}
 		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} {pasteNotice}
-		{onpastecleaned} />
+		{onpastecleaned} {onattach} {attachMaxSize} {onattachmentsremoved} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

@@ -55,6 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.antiliacode.widgets.upload.IUploadFileFormat;
+import com.antiliacode.widgets.upload.IUploadScanner;
+import com.antiliacode.widgets.upload.UploadFileFormat;
 import com.github.openjson.JSONObject;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -135,6 +137,15 @@ public final class RichTextFiles
 	/** The name of the parameter of the uploads of an editor, the key it registered its rules by. */
 	public static final String KEY_PARAMETER = "antilia-uploads";
 
+	/**
+	 * The name of the parameter telling the uploads of files attached,
+	 * {@value #ATTACHMENTS}, from those of images.
+	 */
+	public static final String KIND_PARAMETER = "antilia-kind";
+
+	/** The value of {@link #KIND_PARAMETER} for the files attached. */
+	public static final String ATTACHMENTS = "attachments";
+
 	/** The name of the file, the last segment of the path of a GET. */
 	private static final String NAME = "name";
 
@@ -165,6 +176,9 @@ public final class RichTextFiles
 	/** The key of the uploads of the editors of React and Svelte, posting without one. */
 	private static final String DEFAULT_KEY = "";
 
+	/** What the key of an editor's files attached ends with, beside that of its images. */
+	private static final String ATTACHMENT_SLOT = "\nattachments";
+
 	private final String path;
 
 	private final IRichTextImageStore imageStore;
@@ -180,6 +194,14 @@ public final class RichTextFiles
 	private int maxFound = RichTextImageUploadBehavior.DEFAULT_MAX_FOUND;
 
 	private String baseUrl;
+
+	private IRichTextAttachmentStore attachmentStore;
+
+	private Bytes attachmentMaxSize = RichTextAttachmentUploadBehavior.DEFAULT_MAX_SIZE;
+
+	private Set<IUploadFileFormat> attachmentFormats = new LinkedHashSet<>(UploadFileFormat.ALL);
+
+	private IUploadScanner scanner;
 
 	private BiPredicate<String, Request> readCheck;
 
@@ -408,6 +430,91 @@ public final class RichTextFiles
 	}
 
 	/**
+	 * @return what keeps the files attached to the texts, {@code null} for none: the resource takes
+	 *         no files
+	 */
+	public IRichTextAttachmentStore getAttachmentStore()
+	{
+		return attachmentStore;
+	}
+
+	/**
+	 * @param attachmentStore
+	 *            what keeps the files users attach to the texts, PDFs or spreadsheets, and opens
+	 *            them by their names; {@code null} for none, as by default: the resource takes
+	 *            images alone
+	 * @return {@code this}
+	 */
+	public RichTextFiles setAttachmentStore(IRichTextAttachmentStore attachmentStore)
+	{
+		this.attachmentStore = attachmentStore;
+		return this;
+	}
+
+	/**
+	 * @return the largest file the editors of React and Svelte attach
+	 */
+	public Bytes getAttachmentMaxSize()
+	{
+		return attachmentMaxSize;
+	}
+
+	/**
+	 * @param attachmentMaxSize
+	 *            the largest file the editors posting without a key attach, those of React and
+	 *            Svelte; {@link RichTextAttachmentUploadBehavior#DEFAULT_MAX_SIZE} by default. Also
+	 *            the largest any editor of Wicket attaches here, whatever its own limit.
+	 * @return {@code this}
+	 */
+	public RichTextFiles setAttachmentMaxSize(Bytes attachmentMaxSize)
+	{
+		this.attachmentMaxSize = Args.notNull(attachmentMaxSize, "attachmentMaxSize");
+		return this;
+	}
+
+	/**
+	 * @return the formats of the files the editors of React and Svelte attach, in their order
+	 */
+	public Set<IUploadFileFormat> getAttachmentFormats()
+	{
+		return Collections.unmodifiableSet(attachmentFormats);
+	}
+
+	/**
+	 * @param attachmentFormats
+	 *            the formats of the files the editors posting without a key attach, as their bytes
+	 *            say: all those of {@link UploadFileFormat} by default
+	 * @return {@code this}
+	 */
+	public RichTextFiles setAttachmentFormats(
+		Collection<? extends IUploadFileFormat> attachmentFormats)
+	{
+		this.attachmentFormats = RichTextAttachmentUploads.checkedFormats(attachmentFormats);
+		return this;
+	}
+
+	/**
+	 * @return what scans each file uploaded before a store keeps it, {@code null} for none
+	 */
+	public IUploadScanner getScanner()
+	{
+		return scanner;
+	}
+
+	/**
+	 * @param scanner
+	 *            what scans each file uploaded here, image or file attached, before a store keeps
+	 *            it, whichever editor uploads it: an antivirus, or a sanitizer of the application's
+	 *            own; {@code null} for none, as by default
+	 * @return {@code this}
+	 */
+	public RichTextFiles setScanner(IUploadScanner scanner)
+	{
+		this.scanner = scanner;
+		return this;
+	}
+
+	/**
 	 * @return the address the links of the files start with, {@code null} for the site's own
 	 */
 	public String getBaseUrl()
@@ -481,6 +588,15 @@ public final class RichTextFiles
 	}
 
 	/**
+	 * @return the address the editors of React and Svelte post the files they attach to:
+	 *         {@code uploadFileTo(url)} of the editor in the browser
+	 */
+	public String getAttachmentUploadUrl()
+	{
+		return getUploadUrl() + "?" + KIND_PARAMETER + "=" + ATTACHMENTS;
+	}
+
+	/**
 	 * @param name
 	 *            the name of a file the store keeps, which it {@link IRichTextImageStore#open(String)
 	 *            opens} by
@@ -530,6 +646,39 @@ public final class RichTextFiles
 	}
 
 	/**
+	 * Registers the rules of the files an editor attaches in the session, and answers the address
+	 * its files go to.
+	 *
+	 * @param allowed
+	 *            whether the editor takes files now
+	 * @return the address, with the key
+	 */
+	String registerAttachments(String key, RichTextAttachmentUploads.Rules rules, boolean allowed)
+	{
+		Session session = Session.get();
+		if (session.isTemporary())
+		{
+			session.bind();
+		}
+		Uploads uploads = uploads(session);
+		uploads.register(path, key + ATTACHMENT_SLOT, capped(rules), allowed);
+		session.setMetaData(UPLOADS, uploads);
+		return getUploadUrl() + "?" + KEY_PARAMETER + "=" + key + "&" + KIND_PARAMETER + "=" +
+			ATTACHMENTS;
+	}
+
+	/**
+	 * @return the rules of an editor, its files no larger than the resource takes, scanned by the
+	 *         resource's scanner when it has none
+	 */
+	private RichTextAttachmentUploads.Rules capped(RichTextAttachmentUploads.Rules rules)
+	{
+		return new RichTextAttachmentUploads.Rules(rules.maxSize().greaterThan(attachmentMaxSize) ?
+			attachmentMaxSize : rules.maxSize(), rules.formats(), rules.siteOnly(),
+			rules.scanner() != null ? rules.scanner() : scanner);
+	}
+
+	/**
 	 * @return a new key for the uploads of an editor
 	 */
 	static String newKey()
@@ -544,9 +693,10 @@ public final class RichTextFiles
 	 */
 	private RichTextImageUploads.Rules capped(RichTextImageUploads.Rules rules)
 	{
-		return rules.maxSize().greaterThan(imageMaxSize) ? new RichTextImageUploads.Rules(
-			imageMaxSize, rules.types(), rules.maxDimensions(), rules.siteOnly(), rules.permanent(),
-			rules.maxFound()) : rules;
+		return new RichTextImageUploads.Rules(rules.maxSize().greaterThan(imageMaxSize) ?
+			imageMaxSize : rules.maxSize(), rules.types(), rules.maxDimensions(), rules.siteOnly(),
+			rules.permanent(), rules.maxFound(), rules.scanner() != null ? rules.scanner() :
+				scanner);
 	}
 
 	/**
@@ -571,6 +721,23 @@ public final class RichTextFiles
 			uploaded.forget(urls);
 			Session.get().setMetaData(UPLOADS, Session.get().getMetaData(UPLOADS));
 		}
+	}
+
+	/**
+	 * @return the addresses of the files the editor attached in this session and did not delete
+	 *         since
+	 */
+	Set<String> getUploadedAttachments(String key)
+	{
+		return getUploaded(key + ATTACHMENT_SLOT);
+	}
+
+	/**
+	 * Forgets files an editor attached: they are no longer deleted when asked to.
+	 */
+	void forgetAttachments(String key, Collection<String> urls)
+	{
+		forget(key + ATTACHMENT_SLOT, urls);
 	}
 
 	/**
@@ -610,7 +777,16 @@ public final class RichTextFiles
 	private RichTextImageUploads.Rules defaultRules()
 	{
 		return new RichTextImageUploads.Rules(imageMaxSize, imageTypes, imageMaxDimensions, false,
-			permanentImages, maxFound);
+			permanentImages, maxFound, scanner);
+	}
+
+	/**
+	 * @return the rules of the files of the editors posting without a key
+	 */
+	private RichTextAttachmentUploads.Rules defaultAttachmentRules()
+	{
+		return new RichTextAttachmentUploads.Rules(attachmentMaxSize, attachmentFormats, false,
+			scanner);
 	}
 
 	/**
@@ -642,22 +818,45 @@ public final class RichTextFiles
 			session.bind();
 		}
 		Uploads uploads = uploads(session);
-		Slot slot = DEFAULT_KEY.equals(key) ? uploads.defaultSlot(path, defaultRules()) :
-			uploads.get(path, key);
-		JSONObject answer;
-		if (slot == null)
+		boolean attachments = ATTACHMENTS.equals(request.getQueryParameters()
+			.getParameterValue(KIND_PARAMETER).toOptionalString());
+		String id = attachments ? key + ATTACHMENT_SLOT : key;
+		Slot slot;
+		if (attachments && attachmentStore == null)
 		{
-			// the session of the editor is gone, or the key made up
-			answer = new JSONObject().put("error", RichTextEditor.textIn(locale, "uploadFailed")
-				.replace("{0}", RichTextEditor.textIn(locale, "theImage")));
+			slot = null;
+		}
+		else if (DEFAULT_KEY.equals(key))
+		{
+			slot = uploads.defaultSlot(path, id, attachments ? defaultAttachmentRules() :
+				defaultRules());
 		}
 		else
 		{
-			RichTextImageUploads.Rules rules = slot.allowed ? slot.rules :
-				new RichTextImageUploads.Rules(slot.rules.maxSize(), slot.rules.types(),
-					slot.rules.maxDimensions(), slot.rules.siteOnly(), false, slot.rules.maxFound());
+			slot = uploads.get(path, id);
+		}
+		RichTextImageUploads.Texts texts = name -> RichTextEditor.textIn(locale, name);
+		JSONObject answer;
+		if (slot == null)
+		{
+			// the session of the editor is gone, the key made up, or no files are taken
+			answer = new JSONObject().put("error", texts.text("uploadFailed").replace("{0}",
+				texts.text(attachments ? "theFile" : "theImage")));
+		}
+		else if (slot.rules instanceof RichTextAttachmentUploads.Rules rules)
+		{
+			answer = RichTextAttachmentUploads.answer(request, rules, attachmentStore,
+				slot.uploaded, slot.allowed, texts);
+		}
+		else
+		{
+			RichTextImageUploads.Rules images = (RichTextImageUploads.Rules)slot.rules;
+			RichTextImageUploads.Rules rules = slot.allowed ? images :
+				new RichTextImageUploads.Rules(images.maxSize(), images.types(),
+					images.maxDimensions(), images.siteOnly(), false, images.maxFound(),
+					images.scanner());
 			answer = RichTextImageUploads.answer(request, rules, imageStore, slot.uploaded,
-				slot.allowed, name -> RichTextEditor.textIn(locale, name));
+				slot.allowed, texts);
 		}
 		// the images taken go to the store of the sessions, in a cluster too
 		session.setMetaData(UPLOADS, uploads);
@@ -698,7 +897,8 @@ public final class RichTextFiles
 		}
 		try
 		{
-			return imageStore.open(name);
+			RichTextServedFile file = imageStore.open(name);
+			return file == null && attachmentStore != null ? attachmentStore.open(name) : file;
 		}
 		catch (IOException | RuntimeException e)
 		{
@@ -776,8 +976,7 @@ public final class RichTextFiles
 
 		private final Map<String, Slot> slots = new LinkedHashMap<>();
 
-		synchronized void register(String path, String key, RichTextImageUploads.Rules rules,
-			boolean allowed)
+		synchronized void register(String path, String key, IClusterable rules, boolean allowed)
 		{
 			String id = path + "\n" + key;
 			Slot slot = slots.remove(id);
@@ -785,7 +984,9 @@ public final class RichTextFiles
 			Iterator<Map.Entry<String, Slot>> oldest = slots.entrySet().iterator();
 			while (slots.size() > EDITORS && oldest.hasNext())
 			{
-				if (oldest.next().getKey().endsWith("\n" + DEFAULT_KEY))
+				String each = oldest.next().getKey();
+				if (each.endsWith("\n" + DEFAULT_KEY) ||
+					each.endsWith("\n" + DEFAULT_KEY + ATTACHMENT_SLOT))
 				{
 					continue;
 				}
@@ -798,9 +999,9 @@ public final class RichTextFiles
 			return slots.get(path + "\n" + key);
 		}
 
-		synchronized Slot defaultSlot(String path, RichTextImageUploads.Rules rules)
+		synchronized Slot defaultSlot(String path, String key, IClusterable rules)
 		{
-			String id = path + "\n" + DEFAULT_KEY;
+			String id = path + "\n" + key;
 			Slot slot = slots.get(id);
 			slot = slot == null ? new Slot(rules, true) : slot.with(rules, true);
 			slots.put(id, slot);
@@ -813,19 +1014,19 @@ public final class RichTextFiles
 	{
 		private static final long serialVersionUID = 1L;
 
-		private final RichTextImageUploads.Rules rules;
+		/** The rules of images, or of files attached. */
+		private final IClusterable rules;
 
 		private final boolean allowed;
 
 		private final RichTextUploadedImages uploaded;
 
-		Slot(RichTextImageUploads.Rules rules, boolean allowed)
+		Slot(IClusterable rules, boolean allowed)
 		{
 			this(rules, allowed, new RichTextUploadedImages());
 		}
 
-		private Slot(RichTextImageUploads.Rules rules, boolean allowed,
-			RichTextUploadedImages uploaded)
+		private Slot(IClusterable rules, boolean allowed, RichTextUploadedImages uploaded)
 		{
 			this.rules = rules;
 			this.allowed = allowed;
@@ -835,7 +1036,7 @@ public final class RichTextFiles
 		/**
 		 * @return the slot with other rules, the same images
 		 */
-		Slot with(RichTextImageUploads.Rules rules, boolean allowed)
+		Slot with(IClusterable rules, boolean allowed)
 		{
 			return rules.equals(this.rules) && allowed == this.allowed ? this :
 				new Slot(rules, allowed, uploaded);
@@ -927,6 +1128,10 @@ public final class RichTextFiles
 			FileResponse response = new FileResponse(disposition(format.isInline(),
 				Strings.isEmpty(file.getFileName()) ? name : file.getFileName()));
 			response.setContentType(format.getMimeType());
+			if (format.getMimeType().startsWith("text/"))
+			{
+				response.setTextEncoding("UTF-8");
+			}
 			if (file.getSize() >= 0)
 			{
 				response.setContentLength(file.getSize());

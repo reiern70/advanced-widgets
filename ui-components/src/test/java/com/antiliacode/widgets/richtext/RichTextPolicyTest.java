@@ -81,6 +81,29 @@ class RichTextPolicyTest
 	}
 
 	@Test
+	void keepsTheLinksOfTheFilesAttachedTheirClassesAndSizes()
+	{
+		String link = "<a class=\"antilia-attachment antilia-attachment-pdf\" href=\"/files/r.pdf\" " +
+			"target=\"_blank\" data-size=\"1.5 KB\" rel=\"noopener noreferrer nofollow\">" +
+			"report.pdf</a>";
+		assertEquals("<p>See " + link + "</p>", RichTextPolicy.ALL.sanitize("<p>See " + link +
+			"</p>"));
+		// another class, a size the editor does not write, an unsafe address: no link left
+		assertEquals("<p><a href=\"/f\" rel=\"noopener noreferrer nofollow\">x</a> " +
+			"<a class=\"antilia-attachment\">y</a></p>",
+			RichTextPolicy.ALL.sanitize("<p><a class=\"antilia-attachment fixed-overlay\" " +
+				"href=\"/f\" data-size=\"&lt;script&gt;\">x</a> <a class=\"antilia-attachment\" " +
+				"href=\"javascript:steal()\">y</a></p>"));
+		// without the feature, a plain link of the feature link, or none
+		assertEquals("<p><a href=\"/files/r.pdf\" target=\"_blank\" " +
+			"rel=\"noopener noreferrer nofollow\">report.pdf</a></p>",
+			RichTextPolicy.of(EnumSet.of(RichTextFeature.LINK)).sanitize("<p>" + link + "</p>"));
+		assertEquals("<p>report.pdf</p>", RichTextPolicy.of(EnumSet.of(RichTextFeature.BOLD))
+			.sanitize("<p>" + link + "</p>"));
+		assertTrue(RichTextPolicy.ALL.sanitizeAndReport("<p>" + link + "</p>").report().isEmpty());
+	}
+
+	@Test
 	void reportsNothingForTheLinksAndTheTaskListsTheEditorWrites()
 	{
 		String html = "<p><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" " +

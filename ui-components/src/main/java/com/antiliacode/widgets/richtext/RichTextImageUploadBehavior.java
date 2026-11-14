@@ -26,6 +26,7 @@ import org.apache.wicket.request.handler.TextRequestHandler;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.lang.Bytes;
 
+import com.antiliacode.widgets.upload.IUploadScanner;
 import com.github.openjson.JSONObject;
 
 /**
@@ -121,6 +122,8 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	private boolean permanentImages;
 
 	private int maxFound = DEFAULT_MAX_FOUND;
+
+	private IUploadScanner scanner;
 
 	/**
 	 * The addresses of the images taken on this page, which it deletes when asked to, with the
@@ -265,6 +268,29 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	}
 
 	/**
+	 * @return what scans each image before the store keeps it, {@code null} for none
+	 * @since 11.0.0
+	 */
+	public IUploadScanner getScanner()
+	{
+		return scanner;
+	}
+
+	/**
+	 * @param scanner
+	 *            what scans each image before the store keeps it, after the checks of its size,
+	 *            its type and its pixels: an antivirus, or a sanitizer of the application's own,
+	 *            which may answer a cleaned copy; {@code null} for none, as by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextImageUploadBehavior setScanner(IUploadScanner scanner)
+	{
+		this.scanner = scanner;
+		return this;
+	}
+
+	/**
 	 * @return the media types of the images a user uploads, as the editor in the browser takes them
 	 */
 	public List<String> getMimeTypes()
@@ -401,7 +427,7 @@ public class RichTextImageUploadBehavior extends AbstractAjaxBehavior
 	private RichTextImageUploads.Rules rules()
 	{
 		return new RichTextImageUploads.Rules(maxSize, types, maxDimensions,
-			isImagesFromSiteOnly(), isPermanentAllowed(), maxFound);
+			isImagesFromSiteOnly(), isPermanentAllowed(), maxFound, scanner);
 	}
 
 	@Override

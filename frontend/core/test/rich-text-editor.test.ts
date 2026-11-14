@@ -770,9 +770,10 @@ describe('the features', () => {
 		expect([...editor.features()]).toEqual([...RICH_TEXT_FEATURES]);
 		const tools = Array.from(editor.element.querySelectorAll<HTMLElement>('[data-tool]'))
 			.map((each) => each.dataset.tool);
-		// the image from the store shows while the page finds the images it stores
+		// the image from the store shows while the page finds the images it stores, the tools of
+		// the files attached while it attaches them
 		expect(tools).toEqual(DEFAULT_RICH_TEXT_TOOLBAR.flat().filter((tool) =>
-			tool !== 'storedImage'));
+			tool !== 'storedImage' && tool !== 'attachment' && tool !== 'attachments'));
 	});
 
 	it('leave out what the page leaves out, from the text and the toolbar', () => {

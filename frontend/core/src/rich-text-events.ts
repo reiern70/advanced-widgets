@@ -221,7 +221,12 @@ export const RICH_TEXT_BUILT_IN_EVENTS = Object.freeze({
 	 * detail.urls has their addresses. The editor fires it a moment after, by trigger(), for the
 	 * images the text does not hold again by then.
 	 */
-	imagesRemoved: BUILT_IN_OWNER + ':images-removed'
+	imagesRemoved: BUILT_IN_OWNER + ':images-removed',
+	/**
+	 * The user took files attached out of the text, or uploaded some that never went into it:
+	 * detail.urls has their addresses, as for imagesRemoved.
+	 */
+	attachmentsRemoved: BUILT_IN_OWNER + ':attachments-removed'
 });
 
 registerBuiltIn<{ text: string }>(RICH_TEXT_BUILT_IN_EVENTS.selectedText, {
@@ -261,13 +266,16 @@ registerBuiltIn(RICH_TEXT_BUILT_IN_EVENTS.pasteCleaned, {
 	}
 });
 
-registerBuiltIn(RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved, {
-	fire(_editor, _state, cause) {
-		const urls = Array.isArray(cause.detail.urls) ? cause.detail.urls.filter(
-			(url): url is string => typeof url === 'string' && !!url) : [];
-		return urls.length ? { urls } : undefined;
-	}
-});
+for (const name of [RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved,
+	RICH_TEXT_BUILT_IN_EVENTS.attachmentsRemoved]) {
+	registerBuiltIn(name, {
+		fire(_editor, _state, cause) {
+			const urls = Array.isArray(cause.detail.urls) ? cause.detail.urls.filter(
+				(url): url is string => typeof url === 'string' && !!url) : [];
+			return urls.length ? { urls } : undefined;
+		}
+	});
+}
 
 /**
  * Fires the types of events of an editor: those of the events it fires from, and those
