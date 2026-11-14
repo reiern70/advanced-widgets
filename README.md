@@ -139,15 +139,16 @@ a warning in the log.
 
 ## Using the components in a Wicket application
 
-The components for Wicket 10 are published, built from the `line-10.x` branch on Wicket
-10.11.0, without what needs Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery):
+The components are published in two lines, on Maven Central and on GitHub Packages too:
 
-- the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository of snapshots;
-- the release candidates, `10.11.0-RC7` the last, on Maven Central, and on GitHub Packages too.
+- for Wicket 10, built from this branch, `line-10.x`, on Wicket 10.11.0, without what needs
+  Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery): the release candidates,
+  `10.11.0-RC9` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
+  of snapshots;
+- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC2` the last.
 
-Maven Central needs no repository, only the dependency; the releases will be there too. The
-Wicket 11 line, `master`, is not published yet: install it with `mvn install` and depend on
-`1.0.0-SNAPSHOT`. `./install.sh <version>` releases a version: see the script.
+Maven Central needs no repository, only the dependency; the releases will be there too.
+`./install.sh <version>` releases a version: see the script.
 
 ### The snapshots, from Maven Central
 
@@ -198,11 +199,11 @@ or in the `pom.xml`:
 
 ### The release candidates, from Maven Central
 
-The dependency alone, in `build.gradle.kts`:
+The dependency alone, `11.0.0-RC2` instead for Wicket 11, in `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC7")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC9")
 }
 ```
 
@@ -212,7 +213,7 @@ or in the `pom.xml`:
 <dependency>
 	<groupId>com.antiliacode.widgets</groupId>
 	<artifactId>ui-components</artifactId>
-	<version>10.11.0-RC7</version>
+	<version>10.11.0-RC9</version>
 </dependency>
 ```
 
@@ -249,7 +250,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC7")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC9")
 }
 ```
 
@@ -271,7 +272,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC7'
+    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC9'
 }
 ```
 
@@ -305,7 +306,7 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 	<dependency>
 		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>ui-components</artifactId>
-		<version>10.11.0-RC7</version>
+		<version>10.11.0-RC9</version>
 	</dependency>
 </dependencies>
 ```
