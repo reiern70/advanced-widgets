@@ -32,8 +32,8 @@
  * the order of the files, or a message says why one did not. Canceling takes the mark away and
  * inserts nothing.
  *
- * deleteImagesAt() asks Wicket's RichTextImageUploadBehavior to delete images it took, those the
- * user took out of the text (onImagesRemoved). The images the user ticks to store permanently go
+ * deleteImagesAt() asks Wicket's RichTextImageUploadBehavior, or the resource of the uploads
+ * RichTextFiles, to delete images it took, those the user took out of the text (onImagesRemoved). The images the user ticks to store permanently go
  * to the page (onStorePermanently, see rich-text-stored-images.ts) once they are in the text.
  */
 
@@ -147,9 +147,9 @@ export function uploadImageTo(url: string, name = 'file'): RichTextUploader {
 
 /**
  * @returns a function asking a URL to delete images, by their addresses: it posts them as a JSON
- *          array under a name, as Wicket's RichTextImageUploadBehavior takes them, which deletes
- *          those it took alone, and resolves to the addresses deleted, as the answer says,
- *          {"deleted": [...]}
+ *          array under a name, as Wicket's RichTextImageUploadBehavior and RichTextFiles take
+ *          them, which delete those they took alone, and resolves to the addresses deleted, as the
+ *          answer says, {"deleted": [...]}
  */
 export function deleteImagesAt(url: string,
 	name = 'removed'): (urls: readonly string[]) => Promise<string[]> {

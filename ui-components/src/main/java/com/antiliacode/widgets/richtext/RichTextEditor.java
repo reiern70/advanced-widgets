@@ -112,6 +112,9 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * {@link RichTextImageUploadBehavior}). The browser checks the same before sending a file, and
  * {@link #setImageMaxCount(Integer) how many} one drop or choice takes; it scales a picture too
  * large down instead, when {@link #setImageScaling(boolean) allowed} and the user ticks it.
+ * {@link #setUploadResource(RichTextFiles) The resource of the uploads} of the application, mounted
+ * once and not tied to the page, takes them instead, with the same checks, and serves them: the
+ * editor registers its rules in the session as it renders, and deletes only the images it took.
  * <p>
  * The tool {@link RichTextTool#IMAGES} lists the images of the text, each taking it out. The
  * browser tells the server the images the user took out of the text, at once, via Ajax:
@@ -256,8 +259,14 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private IRichTextImageStore imageStore;
 
-	/** The behavior taking the images, made with the first store. */
+	/** The behavior taking the images, made with the first store, unless they go to the resource. */
 	private RichTextImageUploadBehavior imageUpload;
+
+	/** The path of the resource of the uploads taking the images, {@code null} for the behavior. */
+	private String uploadResourcePath;
+
+	/** The key of the editor's uploads at the resource, made as the editor first renders there. */
+	private String uploadKey;
 
 	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
 
@@ -682,7 +691,12 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	public RichTextEditor setImageStore(IRichTextImageStore imageStore)
 	{
 		this.imageStore = imageStore;
-		if (imageStore != null && imageUpload == null)
+		if (imageStore != null && imagesRemoval == null)
+		{
+			imagesRemoval = new ImagesRemoval();
+			add(imagesRemoval);
+		}
+		if (imageStore != null && imageUpload == null && uploadResourcePath == null)
 		{
 			imageUpload = new RichTextImageUploadBehavior(new EditorImageStore())
 			{
@@ -691,16 +705,99 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 				@Override
 				protected boolean isUploadAllowed()
 				{
-					return isImageUploading();
+					return isImageUploading() && uploadResourcePath == null;
 				}
 			};
 			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
 				.setMaxDimensions(imageMaxDimensions).setPermanentImages(permanentImages);
 			add(imageUpload);
-			imagesRemoval = new ImagesRemoval();
-			add(imagesRemoval);
 		}
 		return this;
+	}
+
+	/**
+	 * @return the resource of the uploads the images go to, {@code null} for the editor's own
+	 *         behavior
+	 * @since 11.0.0
+	 */
+	public RichTextFiles getUploadResource()
+	{
+		return uploadResourcePath == null ? null : RichTextFiles.get(uploadResourcePath);
+	}
+
+	/**
+	 * @param uploadResource
+	 *            the resource of the uploads of the application the images go to, mounted once,
+	 *            not tied to the page: its store keeps them, which the editor deletes and finds them
+	 *            by too, and serves them; {@code null} for a behavior of the editor's own, the page
+	 *            the context, with {@link #setImageStore(IRichTextImageStore) the store}, as by
+	 *            default. The editor keeps its own rules there, its limits and its types, which it
+	 *            registers in the session as it renders, and deletes only the images it took.
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setUploadResource(RichTextFiles uploadResource)
+	{
+		uploadResourcePath = uploadResource == null ? null : uploadResource.getPath();
+		return setImageStore(uploadResource == null ? imageStore : uploadResource.getImageStore());
+	}
+
+	/**
+	 * @return the images the editor took since it was last saved, by its behavior or at the
+	 *         resource of the uploads
+	 */
+	private Set<String> uploadedImages()
+	{
+		if (uploadResourcePath != null)
+		{
+			return uploadKey == null ? Set.of() : getUploadResource().getUploaded(uploadKey);
+		}
+		return imageUpload == null ? Set.of() : imageUpload.getUploaded();
+	}
+
+	/**
+	 * Forgets images the editor took: they are no longer deleted when the browser asks to.
+	 */
+	private void forgetUploaded(Collection<String> urls)
+	{
+		if (uploadResourcePath != null)
+		{
+			if (uploadKey != null)
+			{
+				getUploadResource().forget(uploadKey, urls);
+			}
+		}
+		else if (imageUpload != null)
+		{
+			imageUpload.forget(urls);
+		}
+	}
+
+	/**
+	 * @return the rules of the editor's uploads at the resource
+	 */
+	private RichTextImageUploads.Rules imageRules()
+	{
+		return new RichTextImageUploads.Rules(imageMaxSize, imageTypes, imageMaxDimensions,
+			isImagesFromSiteOnly(), permanentImages && isImageUploading(),
+			RichTextImageUploadBehavior.DEFAULT_MAX_FOUND);
+	}
+
+	/**
+	 * @return the address the browser posts the images to: of the editor's behavior, or of the
+	 *         resource, with the key of its uploads, its rules registered in the session
+	 */
+	private String imageUploadUrl()
+	{
+		if (uploadResourcePath == null)
+		{
+			return imageUpload.getUploadUrl();
+		}
+		if (uploadKey == null)
+		{
+			uploadKey = RichTextFiles.newKey();
+		}
+		return getUploadResource().register(uploadKey, imageRules(), isImageUploading());
 	}
 
 	/**
@@ -747,6 +844,12 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		public List<RichTextStoredImage> findPermanent(String query, int max) throws IOException
 		{
 			return current().findPermanent(query, max);
+		}
+
+		@Override
+		public RichTextServedFile open(String name) throws IOException
+		{
+			return current().open(name);
 		}
 	}
 
@@ -1065,10 +1168,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	private Set<String> knownImages()
 	{
 		Set<String> known = new LinkedHashSet<>(imagesShown);
-		if (imageUpload != null)
-		{
-			known.addAll(imageUpload.getUploaded());
-		}
+		known.addAll(uploadedImages());
 		return known;
 	}
 
@@ -1095,7 +1195,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		{
 			deleteImages(Collections.unmodifiableSet(removed));
 			imagesShown.removeAll(removed);
-			imageUpload.forget(removed);
+			forgetUploaded(removed);
 		}
 		else
 		{
@@ -1175,21 +1275,22 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public RichTextEditor deleteRemovedImages()
 	{
-		if (imageStore == null || imageUpload == null)
+		if (imageStore == null || imageUpload == null && uploadResourcePath == null)
 		{
 			return this;
 		}
 		String text = getModelObject();
 		Set<String> saved = modelImages();
 		Set<String> gone = new LinkedHashSet<>();
+		Set<String> uploaded = uploadedImages();
 		if (hash(text) == shownHash)
 		{
 			gone.addAll(imagesRemoved);
-			gone.addAll(imageUpload.getUploaded());
+			gone.addAll(uploaded);
 			gone.removeAll(saved);
 			gone.removeIf(this::isPermanent);
 		}
-		imageUpload.forget(imageUpload.getUploaded());
+		forgetUploaded(uploaded);
 		imagesRemoved.clear();
 		imagesShown = saved;
 		shownHash = hash(text);
@@ -1448,9 +1549,10 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		}
 		if (isImageUploading())
 		{
-			options.put("uploadUrl", imageUpload.getUploadUrl());
-			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
-			options.put("uploadMaxSize", imageMaxSize.bytes());
+			options.put("uploadUrl", imageUploadUrl());
+			options.put("uploadTypes", new JSONArray(imageRules().mimeTypes()));
+			options.put("uploadMaxSize", uploadResourcePath == null ? imageMaxSize.bytes() :
+				Math.min(imageMaxSize.bytes(), getUploadResource().getImageMaxSize().bytes()));
 			if (imageMaxDimensions != null)
 			{
 				options.put("uploadMaxWidth", imageMaxDimensions.width());
@@ -1473,6 +1575,11 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			// the attributes of the request telling of the images taken out: the page's extra
 			// parameters go with it
 			options.put("imagesAjax", new JSONFunction(imagesRemoval.renderAttributes()));
+		}
+		else if (uploadKey != null)
+		{
+			// the resource takes no more uploads of the editor, read only now for example
+			imageUploadUrl();
 		}
 		if (isProofreading())
 		{
@@ -1594,6 +1701,26 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	{
 		String text = translation(component, name);
 		return text == null ? name : text;
+	}
+
+	/**
+	 * @param locale
+	 *            the language, {@code null} for English
+	 * @param name
+	 *            the name of a text of the editor, {@code uploadFailed} for example
+	 * @return the text, in the language, for an answer of no component: of
+	 *         {@link RichTextFiles the resource of the uploads}
+	 */
+	static String textIn(Locale locale, String name)
+	{
+		String text = null;
+		if (Application.exists())
+		{
+			text = Application.get().getResourceSettings().getLocalizer().getString(
+				"RichTextEditor." + name, null, null, locale == null ? Locale.ENGLISH : locale,
+				null, "");
+		}
+		return Strings.isEmpty(text) ? name : text;
 	}
 
 	/**

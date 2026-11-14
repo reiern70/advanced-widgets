@@ -215,3 +215,8 @@ fieldset.rich-text-demo__control legend {
 fieldset.rich-text-demo__control label {
 	margin-right: 12px;
 }
+
+/* the notes as saved, in Markdown: a height to scroll in */
+.rich-text-demo__notes-view {
+	max-height: 24rem;
+}

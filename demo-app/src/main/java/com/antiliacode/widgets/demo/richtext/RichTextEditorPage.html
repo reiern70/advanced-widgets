@@ -106,6 +106,18 @@
 <wicket:fragment wicket:id="writingCase">
 	<section wicket:id="writing">[the writing case]</section>
 </wicket:fragment>
+
+<wicket:fragment wicket:id="viewCase">
+	<section wicket:id="views" class="rich-text-demo__views">
+		<p class="rich-text-demo__status"><wicket:message key="viewExplanation"/></p>
+		<h3 class="rich-text-demo__subtitle"><wicket:message key="articleTitle"/></h3>
+		<div wicket:id="articleView" class="rich-text-demo__view"></div>
+		<h3 class="rich-text-demo__subtitle"><wicket:message key="notesTitle"/></h3>
+		<div wicket:id="notesView" class="rich-text-demo__view rich-text-demo__notes-view"></div>
+		<h3 class="rich-text-demo__subtitle"><wicket:message key="writingTitle"/></h3>
+		<div wicket:id="writingView" class="rich-text-demo__view"></div>
+	</section>
+</wicket:fragment>
 </wicket:extend>
 </body>
 </html>

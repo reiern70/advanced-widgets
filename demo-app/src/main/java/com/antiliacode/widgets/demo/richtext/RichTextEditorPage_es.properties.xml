@@ -20,6 +20,8 @@
 	<entry key="notesTitle">Notas en Markdown</entry>
 	<entry key="cleaningTitle">La limpieza en el servidor</entry>
 	<entry key="writingTitle">Escribir: ortografía, menciones, compleciones</entry>
+	<entry key="viewTitle">Vista: los textos tal como se guardaron</entry>
+	<entry key="viewExplanation">Los textos de los casos tal como se guardaron por última vez, de solo lectura, como cualquier página los muestra fuera de los editores. Sus imágenes vienen del recurso de las subidas de la aplicación, que comparten los editores y cualquier página.</entry>
 	<entry key="writingLabel">Texto</entry>
 	<entry key="writingStart">Aún sin guardar.</entry>
 	<entry key="writingSaved">Guardado.</entry>
