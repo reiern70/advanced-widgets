@@ -310,6 +310,48 @@
 }
 
 /*
+ * why an image was not uploaded, under CKEditor's toolbar, for a while, as the Tiptap editor says
+ * it: in the color of the text on a tint of the theme's error
+ */
+.antilia-ck-editor .antilia-ck-editor-message {
+	flex: none;
+	padding: 0.3rem 0.6rem;
+	border: 1px solid var(--ck-color-base-border);
+	border-block-width: 0;
+	background: color-mix(in srgb, var(--antilia-theme-error, #c53030) 10%,
+		var(--ck-color-base-background));
+	color: var(--ck-color-base-text);
+	font-size: 0.875em;
+	text-align: start;
+}
+
+/*
+ * the bar of the progress of an image uploading, which CKEditor would size by a style attribute:
+ * by the classes of its steps, of 5 %
+ */
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-0 { width: 0%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-5 { width: 5%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-10 { width: 10%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-15 { width: 15%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-20 { width: 20%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-25 { width: 25%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-30 { width: 30%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-35 { width: 35%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-40 { width: 40%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-45 { width: 45%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-50 { width: 50%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-55 { width: 55%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-60 { width: 60%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-65 { width: 65%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-70 { width: 70%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-75 { width: 75%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-80 { width: 80%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-85 { width: 85%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-90 { width: 90%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-95 { width: 95%; }
+.antilia-ck-editor .ck-progress-bar.antilia-ck-upload-100 { width: 100%; }
+
+/*
  * what a paste lost, under CKEditor's toolbar, until the text changes: a polite line between the
  * borders of the toolbar and of the text, in the color of the text on a tint of the theme's
  * information. Empty, it takes no room, but stays a live region.

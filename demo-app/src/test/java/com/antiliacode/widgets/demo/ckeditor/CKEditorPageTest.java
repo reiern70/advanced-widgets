@@ -18,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 
@@ -33,6 +36,7 @@ import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.richtext.OutlineEvent;
+import com.antiliacode.widgets.demo.richtext.RichTextImages;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.IAjaxEvent;
 import com.antiliacode.widgets.event.IAjaxSubmitEvent;
@@ -41,6 +45,7 @@ import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.github.openjson.JSONObject;
 
 /**
@@ -296,6 +301,37 @@ class CKEditorPageTest
 	}
 
 	@Test
+	void uploadsTheImagesOfTheArticle() throws IOException
+	{
+		CKEditor editor = editor(EDITOR);
+		assertTrue(editor.isImageUploading());
+		// the page renders where the article's images go, with their limits
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("\"uploadUrl\":"), "the address of the uploads");
+		assertTrue(response.contains("\"uploadMaxSize\":" + RichTextImages.MAX_SIZE.bytes()));
+		// the notes, in Markdown, upload nothing
+		assertFalse(editor(NOTES).isImageUploading());
+
+		// an image as CKEditor's adapter posts it, kept as those of the Tiptap editor
+		Path file = Files.createTempFile("bird", ".png");
+		try
+		{
+			Files.write(file, new byte[] { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0,
+					0, 13, 'I', 'H', 'D', 'R', 0, 0, 0, 1, 0, 0, 0, 1 });
+			tester.getRequest().setUseMultiPartContentType(true);
+			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+				new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+			tester.executeBehavior(editor.getImageUploadBehavior());
+			String url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+			assertTrue(url.contains(RichTextImages.PATH + "/"), url);
+		}
+		finally
+		{
+			Files.deleteIfExists(file);
+		}
+	}
+
+	@Test
 	void switchesTheOptions()
 	{
 		for (String option : new String[] { "readOnly", "count" })
@@ -355,6 +391,12 @@ class CKEditorPageTest
 		assertFalse(config.has("language"), "English: no translation");
 		assertEquals("Open in a new tab", config.getJSONObject("editor").getString("linkNewTab"));
 		assertEquals("Article", config.getJSONObject("texts").getString("articleLabel"));
+		// the apps upload images to the page, with the limits of the Wicket editor
+		assertTrue(config.getString("uploadUrl").contains("ckeditor"), config.getString("uploadUrl"));
+		assertEquals(RichTextImages.MAX_SIZE.bytes(), config.getLong("uploadMaxSize"));
+		assertEquals(RichTextImages.MAX_DIMENSIONS.width(), config.getInt("uploadMaxWidth"));
+		assertEquals(RichTextImages.MAX_DIMENSIONS.height(), config.getInt("uploadMaxHeight"));
+		assertTrue(config.getJSONArray("uploadTypes").toString().contains("image/png"));
 
 		tester.getSession().setLocale(Locale.of("de"));
 		tester.startPage(CKEditorPage.class);

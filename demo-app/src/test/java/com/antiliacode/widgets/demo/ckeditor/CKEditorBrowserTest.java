@@ -18,6 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +52,10 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class CKEditorBrowserTest extends FrameworkAppsTestCase
 {
+	/** A PNG of one pixel. */
+	private static final String PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk" +
+		"+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
 	/** HTML from anywhere, to paste: a script, handlers and a link to javascript:. */
 	private static final String UNSAFE_PASTE = "<p>Pasted <b>bold</b> <img src=\"favicon.svg\" " +
 		"onload=\"window.pwned = 1\"><a href=\"javascript:window.pwned = 2\">a link</a>" +
@@ -396,6 +405,151 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 				message.contains("Content-Security-Policy"))
 			.toList();
 		assertEquals(List.of(), violations, "violations of the policy in the console");
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void uploadsAnImageChosenDroppedOrPasted(SeleniumBrowser browser, String framework)
+		throws IOException
+	{
+		openEditor(browser, framework);
+		// in the build's folder: Firefox, a snap, cannot read the temporary folder of the system
+		Path image = Files.createTempFile(Path.of("target").toAbsolutePath(), "bird", ".png");
+		try
+		{
+			Files.write(image, Base64.getDecoder().decode(PNG));
+			// chosen by the button of the toolbar, CKEditor's
+			clickAtEnd(content().findElement(By.cssSelector("p")));
+			toolbar().findElement(By.cssSelector("input[type=file]")).sendKeys(image.toAbsolutePath()
+				.toString());
+			wait.until(d -> uploaded().size() == 1);
+			wait.until(d -> Boolean.TRUE.equals(script("return arguments[0].complete && " +
+				"arguments[0].naturalWidth === 1;", uploaded().get(0))));
+		}
+		finally
+		{
+			Files.deleteIfExists(image);
+		}
+
+		// dropped into the text, and pasted as a screenshot is
+		transfer("drop", "dropped.png", "image/png", PNG, 0);
+		wait.until(d -> uploaded().size() == 2);
+		// the image dropped is selected, which a paste would replace: the cursor in the text
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		transfer("paste", "pasted.png", "image/png", PNG, 0);
+		wait.until(d -> uploaded().size() == 3);
+		// no bar of the progress left, which grew by classes
+		wait.until(d -> content().findElements(By.cssSelector(".ck-progress-bar")).isEmpty());
+
+		// a file of another type, and one too large: refused before uploading, saying why
+		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
+			"notes".getBytes(StandardCharsets.UTF_8)), 0);
+		wait.until(d -> message().startsWith("notes.txt is not an image of a type the editor " +
+			"takes: PNG"));
+		assertEquals("alert", editor().findElement(By.cssSelector(".antilia-ck-editor-message"))
+			.getDomAttribute("role"));
+		transfer("drop", "large.png", "image/png", PNG, 3 * 1024 * 1024);
+		wait.until(d -> message().equals("large.png is larger than 2 MB."));
+		assertEquals(3, uploaded().size());
+
+		if ("wicket".equals(framework))
+		{
+			// the server keeps the addresses through its cleaning, and serves the images
+			content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+			wait.until(d -> view().findElements(By.cssSelector("img[src*='/rich-text-images/']"))
+				.size() == 3);
+		}
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void tellsWhyAnImageIsNotUploadedInTheLanguageOfThePage(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		chooseLanguage("Deutsch");
+		waitForTheEditor();
+		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
+			"notes".getBytes(StandardCharsets.UTF_8)), 0);
+		wait.until(d -> message().startsWith("notes.txt ist kein Bild eines Typs, den der Editor " +
+			"annimmt: PNG"));
+		transfer("drop", "large.png", "image/png", PNG, 3 * 1024 * 1024);
+		wait.until(d -> message().equals("large.png ist größer als 2 MB."));
+
+		chooseLanguage("Español");
+		waitForTheEditor();
+		transfer("drop", "large.png", "image/png", PNG, 3 * 1024 * 1024);
+		wait.until(d -> message().equals("large.png pesa más de 2 MB."));
+		assertTrue(uploaded().isEmpty());
+		assertNoErrors();
+	}
+
+	/**
+	 * Chooses a language in the top bar, which the page is loaded anew in, and shows the tab of the
+	 * framework again.
+	 */
+	private void chooseLanguage(String name)
+	{
+		// a mark of the page before, which the page loaded anew does not have
+		script("window.antiliaTestBefore = true; var s = arguments[0]; s.selectedIndex = " +
+			"Array.from(s.options).findIndex(o => o.text === arguments[1]);" +
+			"s.dispatchEvent(new Event('change', {bubbles: true}));",
+			driver.findElement(By.cssSelector(".topbar__setting select[name$='language']")), name);
+		wait.until(d -> Boolean.TRUE.equals(script("return !window.antiliaTestBefore && " +
+			"document.readyState === 'complete';")));
+		tab(framework).click();
+		wait.until(d -> app().isDisplayed() && !app().findElements(By.xpath("*")).isEmpty());
+	}
+
+	/**
+	 * @return what the line above the text says of an image not uploaded, '' for nothing
+	 */
+	private String message()
+	{
+		return editor().findElements(By.cssSelector(".antilia-ck-editor-message")).stream()
+			.findFirst().map(WebElement::getText).orElse("");
+	}
+
+	/**
+	 * @return the images of the text the page uploaded
+	 */
+	private List<WebElement> uploaded()
+	{
+		return content().findElements(By.cssSelector("img[src*='/rich-text-images/']"));
+	}
+
+	/**
+	 * Drops a file on the first paragraph of the text, or pastes it, as the browser does, of the
+	 * bytes of a base64 and as many more of 0. Firefox gives a paste event of a script no data:
+	 * there the file goes into CKEditor's clipboard as the paste event would bring it.
+	 */
+	private void transfer(String kind, String name, String type, String base64, int padding)
+	{
+		script("var content = arguments[0], target = content.querySelector('p'), kind = arguments[1];" +
+			"var head = Uint8Array.from(atob(arguments[4]), (c) => c.charCodeAt(0));" +
+			"var bytes = new Uint8Array(head.length + arguments[5]); bytes.set(head);" +
+			"var file = new File([bytes], arguments[2], { type: arguments[3] });" +
+			"var data = new DataTransfer(); data.items.add(file);" +
+			"var rect = target.getBoundingClientRect();" +
+			"var at = { clientX: rect.left + 4, clientY: rect.top + rect.height / 2 };" +
+			"if (kind === 'drop') {" +
+			"  target.dispatchEvent(new DragEvent('dragenter', Object.assign({ bubbles: true," +
+			"    cancelable: true, dataTransfer: data }, at)));" +
+			"  target.dispatchEvent(new DragEvent('dragover', Object.assign({ bubbles: true," +
+			"    cancelable: true, dataTransfer: data }, at)));" +
+			"  target.dispatchEvent(new DragEvent('drop', Object.assign({ bubbles: true," +
+			"    cancelable: true, dataTransfer: data }, at)));" +
+			"} else if (!arguments[6]) {" +
+			"  content.focus();" +
+			"  target.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true," +
+			"    clipboardData: data }));" +
+			"} else {" +
+			"  content.focus();" +
+			"  var transfer = { types: ['Files'], files: [file], effectAllowed: 'all'," +
+			"    dropEffect: 'copy', setData: function () {}, getData: function () { return ''; } };" +
+			"  content.ckeditorInstance.editing.view.document.fire('clipboardInput'," +
+			"    { dataTransfer: transfer, method: 'paste' });" +
+			"}", content(), kind, name, type, base64, padding, browser == SeleniumBrowser.FIREFOX);
 	}
 
 	private WebElement modes()

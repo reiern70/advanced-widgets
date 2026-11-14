@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -52,6 +55,7 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.danekja.java.util.function.serializable.SerializableConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.github.openjson.JSONObject;
 
@@ -65,7 +69,11 @@ import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFeature;
+import com.antiliacode.widgets.richtext.AbstractRichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageDimensions;
+import com.antiliacode.widgets.richtext.RichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 
 class CKEditorTest extends WicketTestCase
 {
@@ -131,7 +139,7 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{\"selection\":{\"anchor\":0,\"head\":0},\"scrollTop\":0,\"scrollLeft\":0}",
 			options.getJSONObject("state").toString());
 		JSONObject texts = options.getJSONObject("texts");
-		assertEquals(16, texts.length());
+		assertEquals(22, texts.length());
 		assertEquals("Something went wrong in the editor. It started again, with your text.",
 			texts.getString("errorRestarted"));
 		assertEquals("{0} characters", texts.getString("characters"));
@@ -516,6 +524,88 @@ class CKEditorTest extends WicketTestCase
 		ClientEventsTester.fire(tester, logging, CKEditorEvents.ERROR, new JSONObject()
 			.put("message", "Logged"));
 		tester.assertNoErrorMessage();
+	}
+
+	@Test
+	void uploadsImagesWhileItHasAStore(@TempDir Path folder) throws IOException
+	{
+		CKEditor editor = new CKEditor("editor", Model.of(HTML));
+		TestPage page = new TestPage(editor);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		assertTrue(editor.getBehaviors(RichTextImageUploadBehavior.class).isEmpty());
+		assertFalse(editor.isImageUploading());
+		assertNull(editor.getImageUploadBehavior());
+
+		// through the contract the editors share
+		List<String> stored = new ArrayList<>();
+		AbstractRichTextEditor<?> shared = editor;
+		shared.setImageMaxSize(org.apache.wicket.util.lang.Bytes.kilobytes(512))
+			.setImageTypes(EnumSet.of(RichTextImageType.PNG, RichTextImageType.JPEG))
+			.setImageMaxDimensions(new RichTextImageDimensions(400, 300))
+			.setImageStore((image, type) -> {
+				stored.add(image.getClientFileName() + " as " + type.getMimeType());
+				return "/images/new." + type.getExtension();
+			});
+		tester.startPage(page);
+		JSONObject options = options(editor);
+		assertTrue(options.getString("uploadUrl").contains("-form-editor"),
+			options.getString("uploadUrl"));
+		assertEquals("[\"image/png\",\"image/jpeg\"]", options.getJSONArray("uploadTypes")
+			.toString());
+		assertEquals(512 * 1024, options.getLong("uploadMaxSize"));
+		assertEquals(400, options.getInt("uploadMaxWidth"));
+		assertEquals(300, options.getInt("uploadMaxHeight"));
+		RichTextImageUploadBehavior behavior = editor.getImageUploadBehavior();
+		assertSame(behavior, editor.getBehaviors(RichTextImageUploadBehavior.class).get(0));
+		assertEquals(new RichTextImageDimensions(400, 300), behavior.getMaxDimensions());
+		assertTrue(editor.isImageUploading());
+		// the texts of the checks, in the language of the page
+		assertEquals("{0} is larger than {1}.", options.getJSONObject("texts")
+			.getString("uploadTooLarge"));
+
+		// an image as the adapter posts it: the behavior checks it by its bytes, the store keeps it
+		Path file = folder.resolve("bird.png");
+		Files.write(file, new byte[] { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0,
+				13, 'I', 'H', 'D', 'R', 0, 0, 0, 2, 0, 0, 0, 3 });
+		tester.getRequest().setUseMultiPartContentType(true);
+		tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+			new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+		tester.executeBehavior(behavior);
+		assertEquals("/images/new.png", new JSONObject(tester.getLastResponseAsString())
+			.getString("url"));
+		assertEquals(List.of("bird.png as image/png"), stored);
+
+		// changed after: the behavior follows
+		editor.setImageMaxSize(org.apache.wicket.util.lang.Bytes.megabytes(1))
+			.setImageTypes(EnumSet.of(RichTextImageType.GIF)).setImageMaxDimensions(null);
+		assertEquals(org.apache.wicket.util.lang.Bytes.megabytes(1), behavior.getMaxSize());
+		assertEquals(java.util.Set.of(RichTextImageType.GIF), behavior.getTypes());
+		assertNull(behavior.getMaxDimensions());
+		assertThrows(IllegalArgumentException.class, () -> editor.setImageTypes(List.of()));
+
+		// not while read only, without images, disabled or without a store
+		editor.setReadOnly(true);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setReadOnly(false).setFeatures(EnumSet.of(CKEditorFeature.BOLD));
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setFeatures(null).setEnabled(false);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		editor.setEnabled(true);
+		editor.setImageStore(null);
+		tester.startPage(page);
+		assertFalse(options(editor).has("uploadUrl"));
+		assertEquals(1, editor.getBehaviors(RichTextImageUploadBehavior.class).size());
+		// the behavior refuses uploads then
+		tester.getRequest().setUseMultiPartContentType(true);
+		tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+			new org.apache.wicket.util.file.File(file.toFile()), "image/png");
+		tester.executeBehavior(behavior);
+		assertFalse(new JSONObject(tester.getLastResponseAsString()).has("url"));
+		assertEquals(1, stored.size());
 	}
 
 	@Test

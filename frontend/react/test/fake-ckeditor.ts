@@ -305,7 +305,7 @@ export function fakeBuild(): FakeBuild {
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
-		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown'];
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'ImageUpload'];
 	const callbacks = new Set<(data: { error: unknown; source: unknown }) => void>();
 	return {
 		...Object.fromEntries(names.map((name) => [name, plugin(name)])),

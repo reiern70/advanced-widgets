@@ -207,6 +207,22 @@ describe('CKEditor', () => {
 		expect(container.querySelector('.antilia-ck-editor-error')).toBeNull();
 	});
 
+	it('uploads images by onupload, with the limits given', async () => {
+		const build = fakeBuild();
+		const onupload = vi.fn(async () => '/bird.png');
+		const { container } = render(BoundCKEditor, { build, onupload, uploadTypes: ['image/png'],
+			uploadMaxSize: 1000 });
+		const fake = await started(container);
+		expect((fake.config.plugins as { pluginName: string }[]).map((each) => each.pluginName))
+			.toContain('ImageUpload');
+		expect((fake.config.image as { upload?: unknown }).upload).toEqual({ types: ['png'] });
+		const core = CKEditor.of(editorOf(container))!;
+		expect(core.options.uploadMaxSize).toBe(1000);
+		const file = new File(['x'], 'bird.png', { type: 'image/png' });
+		await expect(core.options.onUpload!(file)).resolves.toBe('/bird.png');
+		expect(onupload).toHaveBeenCalledWith(file, undefined);
+	});
+
 	it('tells why CKEditor could not start, without a build', async () => {
 		const error = vi.fn();
 		setHost({ ...standaloneHost, log: { error } });

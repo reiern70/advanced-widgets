@@ -18,8 +18,8 @@ import { CK_EDITOR_CLASSES, CK_EDITOR_EVENTS, CKEditor, ckEditor, DEFAULT_CK_EDI
 	registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
 	type CKEditorInstance, type CKEditorViewWriter, type Host } from '../src/index.js';
-import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorModelPosition,
-	type CKEditorModelWriter } from '../src/ck-editor.js';
+import { offsetOfPath, pathOfOffset, uploadProgressClass, type CKEditorModelElement,
+	type CKEditorModelPosition, type CKEditorModelWriter } from '../src/ck-editor.js';
 
 /*
  * A CKEditor of the tests: what the glue uses of CKEditor, as small as it goes. Its model is a
@@ -28,6 +28,62 @@ import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorMod
  */
 
 type Callback = (...args: any[]) => void;
+
+/**
+ * An emitter whose listeners may stop an event, by their priorities, as CKEditor's: those of a
+ * higher priority first.
+ */
+class StoppableEmitter {
+	private callbacks: Array<{ event: string; callback: Callback; priority: number }> = [];
+
+	on(event: string, callback: Callback, options?: { priority?: string | number }): void {
+		const priority = options?.priority === 'highest' ? 3 : options?.priority === 'high' ? 2 :
+			options?.priority === 'low' ? -1 : 0;
+		this.callbacks.push({ event, callback, priority });
+		this.callbacks.sort((one, other) => other.priority - one.priority);
+	}
+
+	/** @returns whether a listener stopped the event */
+	fire(event: string, ...args: unknown[]): boolean {
+		let stopped = false;
+		const info = { name: event, stop: () => {
+			stopped = true;
+		} };
+		for (const { event: name, callback } of [...this.callbacks]) {
+			if (name === event) {
+				callback(info, ...args);
+				if (stopped) {
+					break;
+				}
+			}
+		}
+		return stopped;
+	}
+}
+
+/** A file CKEditor's FileRepository hands an upload adapter, with the progress it is told. */
+class FakeLoader extends StoppableEmitter {
+	uploaded = 0;
+	uploadTotal: number | null = null;
+	constructor(readonly file: Promise<File | null>, readonly id = 'u1') {
+		super();
+	}
+}
+
+/** An element of CKEditor's editing view, with its classes. */
+class FakeViewElement {
+	readonly classes = new Set<string>();
+	constructor(readonly children: FakeViewElement[] = [],
+		private readonly properties: Record<string, unknown> = {}) {}
+
+	getChildren(): Iterable<FakeViewElement> {
+		return this.children;
+	}
+
+	getCustomProperty(key: string): unknown {
+		return this.properties[key];
+	}
+}
 
 class Emitter {
 	private callbacks = new Map<string, Callback[]>();
@@ -214,11 +270,21 @@ class FakeEditor implements CKEditorInstance {
 	});
 	/** The dispatchers of the downcast, by their groups. */
 	readonly downcast = new Emitter();
+	readonly editingDowncast = new StoppableEmitter();
+	/** CKEditor's FileRepository, with the adapter the editor gives it and the files uploading. */
+	readonly repository: { createUploadAdapter?: (loader: FakeLoader) => {
+		upload(): Promise<{ default: string }>; abort(): void }; loaders: Map<unknown, FakeLoader> } =
+		{ loaders: new Map() };
+	readonly notification = new StoppableEmitter();
+	/** The figures of the images in the editing view, by the images of the model. */
+	readonly figures = new Map<unknown, FakeViewElement>();
 	readonly conversion = {
 		for: (group: string) => ({
-			add: (helper: (dispatcher: Emitter) => void) => {
+			add: (helper: (dispatcher: Emitter | StoppableEmitter) => void) => {
 				if (group === 'downcast') {
 					helper(this.downcast);
+				} else if (group === 'editingDowncast') {
+					helper(this.editingDowncast);
 				}
 			}
 		})
@@ -275,9 +341,12 @@ class FakeEditor implements CKEditorInstance {
 			document: Object.assign(this.viewDocument, { getRoot: () => this.editable }),
 			change: (callback: (writer: CKEditorViewWriter) => void) => callback({
 				setAttribute: (key, value, element) => (element as HTMLElement).setAttribute(key, value),
-				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key)
-			})
-		}
+				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key),
+				addClass: (name: string, element: FakeViewElement) => element.classes.add(name),
+				removeClass: (name: string, element: FakeViewElement) => element.classes.delete(name)
+			} as CKEditorViewWriter)
+		},
+		mapper: { toViewElement: (item: unknown) => this.figures.get(item) }
 	};
 	readonly uiElement = document.createElement('div');
 	readonly editable = document.createElement('div');
@@ -294,9 +363,18 @@ class FakeEditor implements CKEditorInstance {
 	/** The clipboard's pipeline, which fires contentInsertion with what a paste inserts. */
 	readonly pipeline = new Emitter();
 	readonly plugins = {
-		has: (name: string) => name === 'ClipboardPipeline',
-		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline : undefined
+		has: (name: string) => name === 'ClipboardPipeline' || (this.uploads() &&
+			(name === 'FileRepository' || name === 'Notification')),
+		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline :
+			name === 'FileRepository' && this.uploads() ? this.repository :
+				name === 'Notification' && this.uploads() ? this.notification : undefined
 	};
+
+	/** @returns whether CKEditor was made with ImageUpload, which brings FileRepository */
+	uploads(): boolean {
+		return (this.config.plugins as { pluginName: string }[]).some((plugin) =>
+			plugin.pluginName === 'ImageUpload');
+	}
 
 	constructor(readonly source: HTMLElement, readonly config: Record<string, unknown>) {
 		this.root = rootOf('');
@@ -380,7 +458,7 @@ function fakeBuild(fail?: unknown) {
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
-		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight'];
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight', 'ImageUpload'];
 	const build: CKEditorBuild & { editors: FakeEditor[]; crash(source: unknown, error: unknown): void;
 		hearing(): number } = Object.assign(
 		Object.fromEntries(names.map((name) => [name, plugin(name)])), {
@@ -1133,6 +1211,169 @@ describe('CKEditor running into an error after it started', () => {
 		await editor.ready;
 		expect(editor.editor).toBe(build.editors[0]);
 		editor.destroy();
+	});
+});
+
+describe('images uploaded into CKEditor', () => {
+	/** A PNG of 2 × 3 pixels, as far as its header tells. */
+	function png(name = 'bird.png', width = 2, height = 3, size = 0): File {
+		const bytes = new Uint8Array(Math.max(size, 33));
+		bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44,
+			0x52]);
+		new DataView(bytes.buffer).setUint32(16, width);
+		new DataView(bytes.buffer).setUint32(20, height);
+		return new File([bytes], name, { type: 'image/png' });
+	}
+
+	async function started(options: ConstructorParameters<typeof CKEditor>[1] = {}) {
+		const build = fakeBuild();
+		const editor = new CKEditor(textArea(), { build, ...options });
+		await editor.ready;
+		return { build, editor, fake: build.editors[build.editors.length - 1]! };
+	}
+
+	it('takes ImageUpload and the types of the images with onUpload, for the feature image',
+		async () => {
+			const onUpload = vi.fn(async () => '/images/bird.png');
+			const { build, editor, fake } = await started({ onUpload,
+				uploadTypes: ['image/png', ' IMAGE/SVG+XML'] });
+			expect(pluginNames(fake.config)).toContain('ImageUpload');
+			expect((fake.config.image as { upload: unknown }).upload).toEqual({
+				types: ['png', 'svg+xml'] });
+			expect(fake.repository.createUploadAdapter).toBeTypeOf('function');
+
+			// without the feature image, or without onUpload, none
+			editor.configure({ features: ['bold'] });
+			await editor.ready;
+			expect(pluginNames(build.editors[1]!.config)).not.toContain('ImageUpload');
+			const plain = await started();
+			expect(pluginNames(plain.fake.config)).not.toContain('ImageUpload');
+			expect(plain.fake.config.image).toEqual({ toolbar: ['imageTextAlternative',
+				'toggleImageCaption'] });
+			// onUpload coming makes CKEditor anew with it
+			plain.editor.configure({ onUpload });
+			await plain.editor.ready;
+			expect(pluginNames((plain.editor.editor as unknown as FakeEditor).config))
+				.toContain('ImageUpload');
+			plain.editor.configure({ onUpload: null });
+			await plain.editor.ready;
+			expect(pluginNames((plain.editor.editor as unknown as FakeEditor).config))
+				.not.toContain('ImageUpload');
+		});
+
+	it('uploads by onUpload, telling CKEditor the progress, and stops as CKEditor aborts',
+		async () => {
+			let told: { onProgress?: (sent: number, total: number) => void; signal?: AbortSignal } = {};
+			const onUpload = vi.fn((_file: File, options?: typeof told) => {
+				told = options ?? {};
+				return Promise.resolve('/images/bird.png');
+			});
+			const { fake } = await started({ onUpload });
+			const file = png();
+			const loader = new FakeLoader(Promise.resolve(file));
+			const adapter = fake.repository.createUploadAdapter!(loader);
+			await expect(adapter.upload()).resolves.toEqual({ default: '/images/bird.png' });
+			expect(onUpload).toHaveBeenCalledWith(file, expect.anything());
+			told.onProgress!(40, 100);
+			expect(loader.uploaded).toBe(40);
+			expect(loader.uploadTotal).toBe(100);
+			expect(told.signal!.aborted).toBe(false);
+			adapter.abort();
+			expect(told.signal!.aborted).toBe(true);
+		});
+
+	it('refuses an image too large, too big in pixels or of another type, telling why',
+		async () => {
+			const onUpload = vi.fn(async () => '/images/bird.png');
+			const { fake } = await started({ onUpload, uploadMaxSize: 100, uploadMaxWidth: 2,
+				uploadMaxHeight: 2, texts: { uploadTooBig: '{0}: {1} > {2}' } });
+			const upload = (file: File) => fake.repository.createUploadAdapter!(
+				new FakeLoader(Promise.resolve(file))).upload();
+			await expect(upload(png('big.png', 2, 3, 500))).rejects.toBe(
+				'big.png is larger than 100 B.');
+			await expect(upload(png('tall.png', 2, 3))).rejects.toBe('tall.png: 2 × 3 > 2 × 2');
+			await expect(upload(new File(['x'], 'notes.txt', { type: 'text/plain' }))).rejects.toBe(
+				'notes.txt is not an image of a type the editor takes: PNG, JPEG, GIF, WebP, AVIF.');
+			await expect(upload(new File(['x'], '', { type: 'text/plain' }))).rejects.toMatch(
+				/^The image is not an image/);
+			expect(onUpload).not.toHaveBeenCalled();
+			await expect(fake.repository.createUploadAdapter!(new FakeLoader(Promise.resolve(null)))
+				.upload()).rejects.toBe('The image could not be uploaded.');
+		});
+
+	it('tells why an upload failed: the message of the server, or that it failed', async () => {
+		const errors: unknown[] = [];
+		setHost({ ...standaloneHost, log: { error: (message: unknown) => errors.push(message) } } as
+			Host);
+		const onUpload = vi.fn<(file: File) => Promise<string>>();
+		const { fake } = await started({ onUpload });
+		const upload = () => fake.repository.createUploadAdapter!(new FakeLoader(
+			Promise.resolve(png()))).upload();
+		onUpload.mockRejectedValueOnce(new Error('Not today.'));
+		await expect(upload()).rejects.toBe('Not today.');
+		onUpload.mockRejectedValueOnce(new Error(''));
+		await expect(upload()).rejects.toBe('bird.png could not be uploaded.');
+		onUpload.mockResolvedValueOnce('javascript:alert(1)');
+		await expect(upload()).rejects.toBe('bird.png could not be uploaded.');
+		expect(errors).toEqual(['The address of an image uploaded is not one the editor takes: ' +
+			'javascript:alert(1)']);
+		// canceled: CKEditor hears of the abort, and tells nothing
+		const abort = Object.assign(new Error('The upload was canceled'), { name: 'AbortError' });
+		onUpload.mockRejectedValueOnce(abort);
+		await expect(upload()).rejects.toBe(abort);
+	});
+
+	it('tells in its line above the text, not in CKEditor\'s alert, why an image was not ' +
+		'uploaded, for a while', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		const { editor, fake } = await started({ onUpload: async () => '/images/bird.png' });
+		// CKEditor's warning of a failed upload, its message the adapter's
+		expect(fake.notification.fire('show:warning:upload', { message: 'big.png is larger than ' +
+			'5 MB.', title: 'Upload failed' })).toBe(true);
+		const line = () => editor.element.querySelector<HTMLElement>('.' + CK_EDITOR_CLASSES.message);
+		expect(line()?.textContent).toBe('big.png is larger than 5 MB.');
+		expect(line()?.getAttribute('role')).toBe('alert');
+		// above the text, in CKEditor's element
+		expect(line()?.nextElementSibling?.className).toBe('ck-editor__main');
+		vi.advanceTimersByTime(8000);
+		expect(line()).toBeNull();
+
+		// files pasted or dropped of a type not taken, which CKEditor leaves alone
+		const files = [new File(['x'], 'notes.txt', { type: 'text/plain' }), png()];
+		fake.viewDocument.fire('clipboardInput', { dataTransfer: { files,
+			getData: () => '' } });
+		expect(line()?.textContent).toBe('notes.txt is not an image of a type the editor takes: ' +
+			'PNG, JPEG, GIF, WebP, AVIF.');
+		// with HTML, CKEditor pastes the HTML
+		editor.destroy();
+		expect(document.querySelector('.' + CK_EDITOR_CLASSES.message)).toBeNull();
+	});
+
+	it('shows the progress of an upload by classes, CKEditor writing no style', async () => {
+		const { fake } = await started({ onUpload: async () => '/images/bird.png' });
+		const bar = new FakeViewElement([], { progressBar: true });
+		const image = { getAttribute: (key: string) => key === 'uploadId' ? 'u1' : undefined };
+		fake.figures.set(image, new FakeViewElement([new FakeViewElement(), bar]));
+		const loader = new FakeLoader(Promise.resolve(png()));
+		fake.repository.loaders.set('u1', loader);
+		const styles: number[] = [];
+		// CKEditor's own, which would write the width as a style
+		loader.on('change:uploadedPercent', (_event: unknown, _name: string, percent: number) =>
+			styles.push(percent));
+		fake.editingDowncast.fire('attribute:uploadStatus:imageBlock', { item: image,
+			attributeNewValue: 'uploading' });
+		// once for an image
+		fake.editingDowncast.fire('attribute:uploadStatus:imageBlock', { item: image,
+			attributeNewValue: 'uploading' });
+
+		expect(loader.fire('change:uploadedPercent', 'uploadedPercent', 42)).toBe(true);
+		expect([...bar.classes]).toEqual(['antilia-ck-upload-40']);
+		loader.fire('change:uploadedPercent', 'uploadedPercent', 100);
+		expect([...bar.classes]).toEqual(['antilia-ck-upload-100']);
+		expect(styles).toEqual([]);
+		expect(uploadProgressClass(-3)).toBe('antilia-ck-upload-0');
+		expect(uploadProgressClass(Number.NaN)).toBe('antilia-ck-upload-0');
+		expect(uploadProgressClass(97.6)).toBe('antilia-ck-upload-100');
 	});
 });
 

@@ -15,6 +15,7 @@ package com.antiliacode.widgets.richtext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,7 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
+import org.apache.wicket.util.lang.Bytes;
 import org.apache.wicket.util.string.Strings;
 import org.apache.wicket.validation.ValidationError;
 import org.slf4j.Logger;
@@ -169,6 +171,12 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  *
  * Rendered again, or shown again after the user came back to the page with a state model of the
  * session, the editor takes the state up again.
+ * <p>
+ * Given {@link #setImageStore(IRichTextImageStore) a store}, the editor uploads the images the user
+ * chooses, pastes or drops, through a {@link RichTextImageUploadBehavior}, which checks their type
+ * by their bytes, their size and their pixels as the editor tells it
+ * ({@link #setImageTypes(Collection)}, {@link #setImageMaxSize(Bytes)},
+ * {@link #setImageMaxDimensions(RichTextImageDimensions)}), the browser checking them first.
  *
  * @param <T>
  *            the editor, which its setters return
@@ -769,6 +777,76 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *         format; their names go to the browser, and each renders what it needs there
 	 */
 	public abstract Set<? extends IRichTextFeature> getFeatures();
+
+	/**
+	 * @return what keeps the images the user uploads, {@code null} for none
+	 * @since 11.0.0
+	 */
+	public abstract IRichTextImageStore getImageStore();
+
+	/**
+	 * @param imageStore
+	 *            what keeps the images the user uploads, with the feature image, and tells their
+	 *            addresses; {@code null} for no uploads, as by default: an image is an address the
+	 *            user gives
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public abstract T setImageStore(IRichTextImageStore imageStore);
+
+	/**
+	 * @return the largest image the user uploads
+	 * @since 11.0.0
+	 */
+	public abstract Bytes getImageMaxSize();
+
+	/**
+	 * @param imageMaxSize
+	 *            the largest image the user uploads,
+	 *            {@link RichTextImageUploadBehavior#DEFAULT_MAX_SIZE} by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public abstract T setImageMaxSize(Bytes imageMaxSize);
+
+	/**
+	 * @return the types of the images the user uploads, in their order
+	 * @since 11.0.0
+	 */
+	public abstract Set<IRichTextImageType> getImageTypes();
+
+	/**
+	 * @param imageTypes
+	 *            the types of the images the user uploads, as their bytes say, in the order the
+	 *            messages name them: those of {@link RichTextImageType} and those of the
+	 *            application's own ({@link IRichTextImageType}); all those built in by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public abstract T setImageTypes(Collection<? extends IRichTextImageType> imageTypes);
+
+	/**
+	 * @return the widest and the highest image the user uploads, {@code null} for no limit
+	 * @since 11.0.0
+	 */
+	public abstract RichTextImageDimensions getImageMaxDimensions();
+
+	/**
+	 * @param imageMaxDimensions
+	 *            the widest and the highest image the user uploads, in pixels, which the browser
+	 *            reads from the file before sending it and the server again from its header;
+	 *            {@code null} for no limit, as by default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public abstract T setImageMaxDimensions(RichTextImageDimensions imageMaxDimensions);
+
+	/**
+	 * @return whether the user uploads images now: the editor has a store, and is enabled, not read
+	 *         only, with the feature image
+	 * @since 11.0.0
+	 */
+	public abstract boolean isImageUploading();
 
 	/**
 	 * @return the levels of the headings

@@ -292,6 +292,38 @@ describe('CKEditor', () => {
 			expect(build.editors).toHaveLength(2);
 		});
 
+	it('uploads images by the latest onUpload, with the limits given', async () => {
+		const build = fakeBuild();
+		const first = vi.fn(async () => '/first.png');
+		const ref = createRef<CKEditorHandle>();
+		const { rerender } = render(<CKEditor ref={ref} build={build} onUpload={first}
+			uploadTypes={['image/png']} uploadMaxSize={1000} />);
+		const fake = await started(ref);
+		const names = (fake.config.plugins as { pluginName: string }[]).map((each) =>
+			each.pluginName);
+		expect(names).toContain('ImageUpload');
+		expect((fake.config.image as { upload?: unknown }).upload).toEqual({ types: ['png'] });
+		expect(ref.current!.editor!.options.uploadMaxSize).toBe(1000);
+
+		const latest = vi.fn(async () => '/latest.png');
+		rerender(<CKEditor ref={ref} build={build} onUpload={latest} uploadTypes={['image/png']}
+			uploadMaxSize={2000} />);
+		const file = new File(['x'], 'bird.png', { type: 'image/png' });
+		await expect(ref.current!.editor!.options.onUpload!(file)).resolves.toBe('/latest.png');
+		expect(first).not.toHaveBeenCalled();
+		expect(ref.current!.editor!.options.uploadMaxSize).toBe(2000);
+		expect(build.editors).toHaveLength(1);
+
+		// without it, CKEditor anew without ImageUpload
+		await act(async () => {
+			rerender(<CKEditor ref={ref} build={build} uploadTypes={['image/png']} />);
+			await ref.current!.editor!.ready;
+		});
+		expect(build.editors).toHaveLength(2);
+		expect((build.editors[1]!.config.plugins as { pluginName: string }[]).map((each) =>
+			each.pluginName)).not.toContain('ImageUpload');
+	});
+
 	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',
 		async () => {
 			const build = fakeBuild();

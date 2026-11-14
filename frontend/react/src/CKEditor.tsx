@@ -15,7 +15,7 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
 import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorFailure, type CKEditorInstance,
-	type CKEditorRecovery, type EditorEvents,
+	type CKEditorRecovery, type EditorEvents, type RichTextUploader, type RichTextUploadOptions,
 	type RichTextEditorEventKey,
 	type CKEditorPlugin, type CKEditorTexts, type HeadingLevel, type ResizableSize,
 	type ResizeAxis, type RichTextCleaningReport, type RichTextEditorSelection,
@@ -98,6 +98,16 @@ export interface CKEditorProps {
 	 * again; false when left out.
 	 */
 	pasteNotice?: boolean;
+	/** The types of the images the user may upload: PNG, JPEG, GIF, WebP and AVIF when left out. */
+	uploadTypes?: readonly string[];
+	/** The largest image the user may upload, in bytes; none when left out. */
+	uploadMaxSize?: number | null;
+	/**
+	 * The widest and the highest picture the user may upload, in pixels, read from the header of
+	 * the file; none when left out. Both, or none.
+	 */
+	uploadMaxWidth?: number | null;
+	uploadMaxHeight?: number | null;
 	/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 	texts?: Partial<CKEditorTexts>;
 	/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -105,6 +115,14 @@ export interface CKEditorProps {
 	id?: string;
 	/** CSS classes of the editor, next to antilia-ck-editor. */
 	className?: string;
+	/**
+	 * Uploads an image the user chose, pasted or dropped, resolving to its address, or rejecting
+	 * with the message saying why not; it is told the progress and canceled as the user takes the
+	 * image out (uploadImageTo(url) posts it to a URL). With it, the feature image has CKEditor's
+	 * upload button, and takes images pasted and dropped; the latest is called. One coming or
+	 * going makes CKEditor anew.
+	 */
+	onUpload?(file: File, options?: RichTextUploadOptions): Promise<string>;
 	/** Called with CKEditor's editor once it started. */
 	onReady?(editor: CKEditorInstance): void;
 	/**
@@ -176,7 +194,9 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 		const { value, saved, build, licenseKey, language, translations, format, features,
 			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
 			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, events,
-			pasteNotice, recovery, texts, name, id, className } = props;
+			pasteNotice, recovery, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, texts,
+			name, id, className } = props;
+		const uploads = props.onUpload !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
 		const look = useLook();
@@ -210,7 +230,9 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				minHeight: current.minHeight, maxWidth: current.maxWidth, maxHeight: current.maxHeight,
 				state: current.state, events: current.events,
 				pasteNotice: current.pasteNotice, recovery: current.recovery, texts: current.texts,
-				look,
+				uploadTypes: current.uploadTypes, uploadMaxSize: current.uploadMaxSize,
+				uploadMaxWidth: current.uploadMaxWidth, uploadMaxHeight: current.uploadMaxHeight,
+				onUpload: uploaderOf(latest), look,
 				onReady: (next) => latest.current.onReady?.(next),
 				onError: (error, failure) => latest.current.onError?.(error, failure),
 				onChange: (next) => latest.current.onChange?.(next),
@@ -245,6 +267,12 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 			}
 		}, [events]);
 
+		useLayoutEffect(() => {
+			instance.current?.configure({ uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
+				uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
+				onUpload: uploaderOf(latest) });
+		}, [uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploads]);
+
 		// compared by what they are: another one makes CKEditor anew
 		useLayoutEffect(() => {
 			instance.current?.configure({ build, plugins, config, translations });
@@ -277,3 +305,11 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 			</div>
 		);
 	});
+
+/**
+ * @returns the uploader of the props, calling the latest onUpload; null without one
+ */
+function uploaderOf(props: { current: CKEditorProps }): RichTextUploader | null {
+	return props.current.onUpload ? (file, options) => props.current.onUpload!(file, options) :
+		null;
+}
