@@ -14,7 +14,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CK_EDITOR_CLASSES, CKEditor, ckEditor, registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
+import { CK_EDITOR_CLASSES, CK_EDITOR_EVENTS, CKEditor, ckEditor, DEFAULT_CK_EDITOR_TEXTS,
+	registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
 	type CKEditorInstance, type CKEditorViewWriter, type Host } from '../src/index.js';
 import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorModelPosition,
@@ -367,18 +368,33 @@ class FakeEditor implements CKEditorInstance {
 	}
 }
 
-/** A build of the tests, with ClassicEditor, the plugins by their names and the editors made. */
+/**
+ * A build of the tests, with ClassicEditor, the plugins by their names and the editors made, and
+ * CKEditor's onEditorError: crash() tells its callbacks of an error escaping an editor.
+ */
 function fakeBuild(fail?: unknown) {
 	const editors: FakeEditor[] = [];
+	const callbacks = new Set<(data: { error: unknown; source: unknown }) => void>();
 	const plugin = (name: string) => ({ pluginName: name });
 	const names = ['Essentials', 'Paragraph', 'Autoformat', 'PasteFromOffice', 'Heading', 'Bold',
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
 		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight'];
-	const build: CKEditorBuild & { editors: FakeEditor[] } = Object.assign(
+	const build: CKEditorBuild & { editors: FakeEditor[]; crash(source: unknown, error: unknown): void;
+		hearing(): number } = Object.assign(
 		Object.fromEntries(names.map((name) => [name, plugin(name)])), {
 			editors,
+			onEditorError: (callback: (data: { error: unknown; source: unknown }) => void) => {
+				const registration = (data: { error: unknown; source: unknown }) => callback(data);
+				callbacks.add(registration);
+				return () => {
+					callbacks.delete(registration);
+				};
+			},
+			crash: (source: unknown, error: unknown) => [...callbacks].forEach((callback) =>
+				callback({ error, source })),
+			hearing: () => callbacks.size,
 			ClassicEditor: {
 				create: async (element: HTMLElement, config: Record<string, unknown>) => {
 					if (fail) {
@@ -597,7 +613,8 @@ describe('CKEditor', () => {
 		const refused = new CKEditor(textArea(), { build: fakeBuild(new Error('license-key-invalid')),
 			onError });
 		await expect(refused.ready).rejects.toThrow('license-key-invalid');
-		expect(onError).toHaveBeenLastCalledWith(new Error('license-key-invalid'));
+		expect(onError).toHaveBeenLastCalledWith(new Error('license-key-invalid'), { started: false,
+			restarting: false, gaveUp: false, crashes: 0 });
 		// gone, it takes no more options: the text area stays shown
 		refused.configure({ readOnly: true });
 		refused.setValue('<p>x</p>');
@@ -909,6 +926,213 @@ describe('CKEditor', () => {
 		build.editors[0]!.blur();
 		(document.querySelector('label') as HTMLLabelElement).click();
 		expect(build.editors[0]!.focusTracker.isFocused).toBe(true);
+	});
+});
+
+describe('CKEditor running into an error after it started', () => {
+	/** @returns what the editors log, the host logging nothing else */
+	function quietly(): unknown[] {
+		const errors: unknown[] = [];
+		setHost({ ...standaloneHost, log: { error: (message: unknown) => errors.push(message) } } as
+			Host);
+		return errors;
+	}
+
+	it('hears of the errors of its own CKEditor alone, by onEditorError, until it stops',
+		async () => {
+			quietly();
+			const build = fakeBuild();
+			const onError = vi.fn();
+			const one = new CKEditor(textArea(), { build, onError, recovery: false });
+			const element = document.createElement('div');
+			document.body.append(element);
+			const otherError = vi.fn();
+			const other = new CKEditor(element, { build, onError: otherError, recovery: false });
+			await one.ready;
+			await other.ready;
+			expect(build.hearing()).toBe(2);
+
+			const crash = new Error('A command failed');
+			build.crash(build.editors[1], crash);
+			expect(otherError).toHaveBeenCalledWith(crash, { started: true, restarting: false,
+				gaveUp: false, crashes: 1 });
+			expect(onError).not.toHaveBeenCalled();
+			// a context, or another editor of the page
+			build.crash({}, crash);
+			expect(onError).not.toHaveBeenCalled();
+
+			one.destroy();
+			expect(build.hearing()).toBe(1);
+			// made anew for other features: the CKEditor before is no longer heard of
+			other.configure({ features: ['bold'] });
+			await other.ready;
+			expect(build.hearing()).toBe(1);
+			build.crash(build.editors[1], crash);
+			expect(otherError).toHaveBeenCalledTimes(1);
+			build.crash(build.editors[2], crash);
+			expect(otherError).toHaveBeenCalledTimes(2);
+			other.destroy();
+			expect(build.hearing()).toBe(0);
+		});
+
+	it('starts CKEditor again with the text, the selection and the focus it had, and says so',
+		async () => {
+			const errors = quietly();
+			const build = fakeBuild();
+			const field = textArea('<p>Hello</p><p>World</p>');
+			const heard: CustomEvent[] = [];
+			field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+			const onError = vi.fn();
+			const editor = new CKEditor(field, { build, onError, count: true });
+			await editor.ready;
+			const first = build.editors[0]!;
+			first.type(' there');
+			const value = editor.getValue();
+			editor.setState({ selection: { anchor: 3, head: 5 } });
+			const selection = editor.getState().selection;
+			editor.focus();
+
+			const crash = new Error('A command failed');
+			build.crash(first, crash);
+			expect(first.destroyed).toBe(true);
+			expect(editor.editor).toBeNull();
+			await editor.ready;
+			const second = build.editors[1]!;
+			expect(editor.editor).toBe(second);
+			expect(editor.getValue()).toBe(value);
+			expect(field.value).toBe(value);
+			expect(second.getData()).toBe(value);
+			expect(editor.getState().selection).toEqual(selection);
+			expect(second.focusTracker.isFocused).toBe(true);
+
+			expect(onError).toHaveBeenCalledWith(crash, { started: true, restarting: true,
+				gaveUp: false, crashes: 1 });
+			expect(heard).toHaveLength(1);
+			expect(heard[0]!.bubbles).toBe(true);
+			expect(heard[0]!.detail).toMatchObject({ error: crash, name: 'Error',
+				message: 'A command failed', started: true, restarting: true, gaveUp: false,
+				crashes: 1, editor });
+			expect(errors).toContain('CKEditor ran into an error, and starts again');
+
+			// below the text, before the count
+			const line = editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)!;
+			expect(line.textContent).toBe(DEFAULT_CK_EDITOR_TEXTS.errorRestarted);
+			expect(line.getAttribute('role')).toBe('status');
+			expect(line.previousElementSibling).toBe(second.uiElement);
+			expect(line.nextElementSibling?.classList.contains('antilia-ck-editor-status'))
+				.toBe(true);
+			// in the texts of the page
+			editor.configure({ texts: { errorRestarted: 'Neu gestartet.' } });
+			expect(line.textContent).toBe('Neu gestartet.');
+			// told until the user changes the text
+			second.type('!');
+			expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+		});
+
+	it('starts CKEditor again while the crashes come further apart than the interval, then ' +
+		'gives up, CKEditor running on', async () => {
+		quietly();
+		const now = vi.spyOn(Date, 'now');
+		try {
+			const build = fakeBuild();
+			const onError = vi.fn();
+			const editor = new CKEditor(textArea(), { build, onError,
+				recovery: { crashes: 2, interval: 1000 } });
+			await editor.ready;
+			const crashAt = async (time: number) => {
+				now.mockReturnValue(time);
+				build.crash(editor.editor, new Error('at ' + time));
+				await editor.ready;
+			};
+			// the first two, however close
+			await crashAt(10_000);
+			await crashAt(10_100);
+			expect(build.editors).toHaveLength(3);
+			// the last three 2500 ms apart on average
+			await crashAt(15_000);
+			expect(build.editors).toHaveLength(4);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 15000'), { started: true,
+				restarting: true, gaveUp: false, crashes: 3 });
+			// then 600 ms apart: given up, CKEditor runs on as it is
+			await crashAt(15_100);
+			await crashAt(15_200);
+			expect(build.editors).toHaveLength(5);
+			expect(editor.editor).toBe(build.editors[4]);
+			expect(build.editors[4]!.destroyed).toBe(false);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 15200'), { started: true,
+				restarting: false, gaveUp: true, crashes: 5 });
+			const line = editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)!;
+			expect(line.textContent).toBe(DEFAULT_CK_EDITOR_TEXTS.errorGaveUp);
+			expect(line.getAttribute('role')).toBe('alert');
+			// for good, the text changing or not
+			build.editors[4]!.type('!');
+			await crashAt(100_000);
+			expect(build.editors).toHaveLength(5);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 100000'), { started: true,
+				restarting: false, gaveUp: true, crashes: 6 });
+			expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)?.textContent)
+				.toBe(DEFAULT_CK_EDITOR_TEXTS.errorGaveUp);
+			editor.destroy();
+			expect(document.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+		} finally {
+			now.mockRestore();
+		}
+	});
+
+	it('gives up at the fourth crash in a row by default, as the Watchdog did', async () => {
+		quietly();
+		const build = fakeBuild();
+		const onError = vi.fn();
+		const editor = new CKEditor(textArea(), { build, onError });
+		await editor.ready;
+		for (let crash = 1; crash <= 4; crash++) {
+			build.crash(editor.editor, new Error('again'));
+			await editor.ready;
+		}
+		expect(build.editors).toHaveLength(4);
+		expect(onError).toHaveBeenLastCalledWith(new Error('again'), { started: true,
+			restarting: false, gaveUp: true, crashes: 4 });
+	});
+
+	it('leaves CKEditor running without recovery, telling of the error alone', async () => {
+		const errors = quietly();
+		const build = fakeBuild();
+		const field = textArea();
+		const heard: CustomEvent[] = [];
+		field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+		const onError = vi.fn();
+		const editor = new CKEditor(field, { build, onError, recovery: false });
+		await editor.ready;
+		build.crash(editor.editor, 'not an Error');
+		expect(build.editors).toHaveLength(1);
+		expect(editor.editor).toBe(build.editors[0]);
+		expect(onError).toHaveBeenCalledWith('not an Error', { started: true, restarting: false,
+			gaveUp: false, crashes: 1 });
+		expect(heard[0]!.detail).toMatchObject({ name: 'Error', message: 'not an Error',
+			restarting: false, gaveUp: false });
+		expect(errors).toEqual(['CKEditor ran into an error']);
+		expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+	});
+
+	it('tells why CKEditor could not start with the event error too', async () => {
+		quietly();
+		const field = textArea();
+		const heard: CustomEvent[] = [];
+		field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+		const editor = new CKEditor(field, { build: fakeBuild(new Error('license-key-invalid')) });
+		await expect(editor.ready).rejects.toThrow('license-key-invalid');
+		expect(heard).toHaveLength(1);
+		expect(heard[0]!.detail).toMatchObject({ name: 'Error', message: 'license-key-invalid',
+			started: false, restarting: false, gaveUp: false, crashes: 0 });
+	});
+
+	it('starts without hearing of errors with a build of CKEditor before 49', async () => {
+		const build = fakeBuild();
+		delete (build as { onEditorError?: unknown }).onEditorError;
+		const editor = new CKEditor(textArea(), { build });
+		await editor.ready;
+		expect(editor.editor).toBe(build.editors[0]);
+		editor.destroy();
 	});
 });
 

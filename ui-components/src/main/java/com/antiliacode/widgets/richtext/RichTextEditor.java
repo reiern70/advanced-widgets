@@ -237,7 +237,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"proofreadSpelling", "proofreadGrammar", "proofreadStyle", "proofreadReplacements",
 		"proofreadNoSuggestions", "proofreadIgnore", "suggestions", "suggestLoading", "suggestNone",
 		"pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms", "pasteImages", "pasteTables",
-		"pasteLinks", "pasteFormatting");
+		"pasteLinks", "pasteFormatting", "errorRestarted", "errorGaveUp");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<IRichTextFeature> features;

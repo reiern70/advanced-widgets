@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -130,7 +131,9 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{\"selection\":{\"anchor\":0,\"head\":0},\"scrollTop\":0,\"scrollLeft\":0}",
 			options.getJSONObject("state").toString());
 		JSONObject texts = options.getJSONObject("texts");
-		assertEquals(14, texts.length());
+		assertEquals(16, texts.length());
+		assertEquals("Something went wrong in the editor. It started again, with your text.",
+			texts.getString("errorRestarted"));
 		assertEquals("{0} characters", texts.getString("characters"));
 		assertEquals("Part of the paste was left out: {0}.", texts.getString("pasteCleaned"));
 		assertFalse(options.has("pasteNotice"));
@@ -218,6 +221,8 @@ class CKEditorTest extends WicketTestCase
 		assertEquals(600, options.getInt("maxHeight"));
 		assertEquals(200, options.getInt("minWidth"));
 		assertEquals(900, options.getInt("maxWidth"));
+		// as the Watchdog did by default
+		assertEquals("{\"crashes\":3,\"interval\":5000}", options.getJSONObject("recovery").toString());
 		assertEquals(List.of("bold", "|", "link"), editor.getToolbar());
 		assertEquals(List.of("FindAndReplace"), editor.getPlugins());
 		assertEquals("  ", editor.getConfig().getJSONObject("codeBlock").getString("indentSequence"));
@@ -225,9 +230,10 @@ class CKEditorTest extends WicketTestCase
 
 		// no toolbar, and back to the features'
 		editor.setToolbar(List.of()).setPlugins((String[])null).setConfig(null).setResizable(null)
-			.setFeatures(EnumSet.of(CKEditorFeature.BOLD));
+			.setFeatures(EnumSet.of(CKEditorFeature.BOLD)).setRecovery(null);
 		tester.startPage(new TestPage(editor));
 		options = options(editor);
+		assertFalse(options.getBoolean("recovery"));
 		assertFalse(options.getBoolean("toolbar"));
 		assertFalse(options.has("plugins"));
 		assertFalse(options.has("config"));
@@ -450,6 +456,66 @@ class CKEditorTest extends WicketTestCase
 		ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SELECTED_TEXT,
 			new JSONObject().put("text", "Hello"));
 		assertEquals(List.of("Hello"), heard);
+	}
+
+	@Test
+	void startsCKEditorAgainAfterAnErrorAsTold()
+	{
+		CKEditor editor = new CKEditor("editor", Model.of(HTML));
+		assertEquals(CKEditorRecovery.DEFAULT, editor.getRecovery());
+		editor.setRecovery(new CKEditorRecovery(1, Duration.ofMillis(1500)));
+		tester.getSession().setLocale(Locale.GERMAN);
+		tester.startPage(new TestPage(editor));
+		JSONObject options = options(editor);
+		assertEquals("{\"crashes\":1,\"interval\":1500}", options.getJSONObject("recovery").toString());
+		// the line telling of an error, in the language of the page
+		assertTrue(options.getJSONObject("texts").getString("errorRestarted").startsWith(
+			"Im Editor ist etwas schiefgegangen"), options.getJSONObject("texts").toString());
+		assertTrue(options.getJSONObject("texts").has("errorGaveUp"));
+
+		assertThrows(IllegalArgumentException.class, () -> new CKEditorRecovery(-1,
+			Duration.ZERO));
+		assertThrows(IllegalArgumentException.class, () -> new CKEditorRecovery(3,
+			Duration.ofSeconds(-1)));
+		assertThrows(IllegalArgumentException.class, () -> new CKEditorRecovery(3, null));
+	}
+
+	@Test
+	void hearsOfTheErrorsOfCKEditorOnTheServer()
+	{
+		List<CKEditorFailure> heard = new ArrayList<>();
+		CKEditor editor = new CKEditor("editor", Model.of(HTML));
+		editor.addEvent(CKEditorErrorEvent.of((failure, target) -> heard.add(failure)));
+		tester.startPage(new TestPage(editor));
+
+		tester.assertContains("\\{\"eventName\":\"antilia-ck-editor:error\"");
+		ClientEventsTester.fire(tester, editor, CKEditorEvents.ERROR, new JSONObject()
+			.put("name", "CKEditorError").put("message", "A command failed.\n\tRead more: x\u0007")
+			.put("started", true).put("restarting", true).put("gaveUp", false).put("crashes", 1));
+		assertEquals(List.of(new CKEditorFailure("CKEditorError", "A command failed. Read more: x",
+			true, true, false, 1)), heard);
+		assertEquals("CKEditorError: A command failed. Read more: x (starts again, crashes: 1)",
+			heard.get(0).toString());
+
+		// what the browser sends is cut, and stands for what it leaves out
+		ClientEventsTester.fire(tester, editor, CKEditorEvents.ERROR, new JSONObject()
+			.put("message", "x".repeat(5000)).put("started", false));
+		CKEditorFailure failure = heard.get(1);
+		assertEquals("Error", failure.name());
+		assertEquals(CKEditorFailure.MAX_LENGTH, failure.message().length());
+		assertFalse(failure.started());
+		assertTrue(failure.toString().endsWith("(could not start, crashes: 0)"));
+		assertEquals("Error (gave up starting again, crashes: 4)", new CKEditorFailure(null, null,
+			true, false, true, 4).toString());
+		assertEquals("Error (runs on, crashes: 0)", CKEditorFailure.fromJson(null).toString());
+
+		// logging alone
+		CKEditor logging = new CKEditor("editor", Model.of(HTML));
+		logging.addEvent(new CKEditorErrorEvent());
+		tester.startPage(new TestPage(logging));
+		ClientEventsTester.fire(tester, logging, CKEditorEvents.ERROR, new JSONObject()
+			.put("message", "Logged"));
+		tester.assertNoErrorMessage();
 	}
 
 	@Test

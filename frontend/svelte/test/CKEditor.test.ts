@@ -176,12 +176,44 @@ describe('CKEditor', () => {
 		expect(fake.destroyed).toBe(true);
 	});
 
+	it('tells onerror of an error after CKEditor started, and starts it again', async () => {
+		setHost({ ...standaloneHost, log: { error: vi.fn() } });
+		const build = fakeBuild();
+		const onerror = vi.fn();
+		const { container } = render(BoundCKEditor, { build, value: '<p>Kept</p>', onerror });
+		const fake = await started(container);
+		const crash = new Error('A plugin failed');
+		build.crash(fake, crash);
+		await started(container);
+		expect(onerror).toHaveBeenCalledWith(crash, { started: true, restarting: true,
+			gaveUp: false, crashes: 1 });
+		expect(fake.destroyed).toBe(true);
+		expect(build.editors).toHaveLength(2);
+		expect(container.querySelector('output')?.textContent).toBe('<p>Kept</p>');
+		expect(container.querySelector('.antilia-ck-editor-error')?.textContent)
+			.toContain('started again');
+	});
+
+	it('leaves CKEditor running after an error without recovery', async () => {
+		setHost({ ...standaloneHost, log: { error: vi.fn() } });
+		const build = fakeBuild();
+		const onerror = vi.fn();
+		const { container } = render(BoundCKEditor, { build, onerror, recovery: false });
+		const fake = await started(container);
+		build.crash(fake, new Error('A plugin failed'));
+		expect(onerror).toHaveBeenCalledWith(expect.any(Error), { started: true,
+			restarting: false, gaveUp: false, crashes: 1 });
+		expect(build.editors).toHaveLength(1);
+		expect(container.querySelector('.antilia-ck-editor-error')).toBeNull();
+	});
+
 	it('tells why CKEditor could not start, without a build', async () => {
 		const error = vi.fn();
 		setHost({ ...standaloneHost, log: { error } });
 		const onerror = vi.fn();
 		const { container } = render(BoundCKEditor, { name: 'notes', onerror });
-		expect(onerror).toHaveBeenCalledWith(expect.any(Error));
+		expect(onerror).toHaveBeenCalledWith(expect.any(Error), { started: false, restarting: false,
+			gaveUp: false, crashes: 0 });
 		expect(error).toHaveBeenCalledWith('CKEditor could not start', expect.any(Error));
 		// the text area shows, to type the text in
 		expect(container.querySelector<HTMLTextAreaElement>('textarea')?.hidden).toBe(false);

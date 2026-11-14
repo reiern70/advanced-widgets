@@ -335,6 +335,69 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 		assertNoErrors();
 	}
 
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void startsCKEditorAgainWithItsTextAndSelectionWhenACommandThrows(SeleniumBrowser browser,
+		String framework)
+	{
+		openEditor(browser, framework);
+		selectWord("oystercatchers");
+		// CKEditor's ids of the items of lists are new each time it reads the text
+		String before = html().replaceAll(" data-list-item-id=\"[^\"]*\"", "");
+		// Bold throws, as a plugin failing would: the error escapes CKEditor, which tells of it
+		script("var editor = arguments[0].ckeditorInstance; editor.antiliaTestCrashed = true;" +
+			"editor.commands.get('bold').on('execute', function () {" +
+			" throw new Error('A test of the editor failing'); }, { priority: 'highest' });",
+			content());
+		tool("Bold").click();
+		wait.until(d -> Boolean.FALSE.equals(script("var content = arguments[0]" +
+			".querySelector('.ck-editor__editable'); return !!(content && content.ckeditorInstance" +
+			" && content.ckeditorInstance.antiliaTestCrashed);", editor())));
+		waitForTheEditor();
+
+		// CKEditor started again with the text and the selection, and says so below the text
+		WebElement line = editor().findElement(By.cssSelector(".antilia-ck-editor-error"));
+		wait.until(d -> line.getText().equals(
+			"Something went wrong in the editor. It started again, with your text."));
+		assertEquals("status", line.getDomAttribute("role"));
+		assertEquals(before, html().replaceAll(" data-list-item-id=\"[^\"]*\"", ""));
+		wait.until(d -> "oystercatchers".equals(script("return getSelection().toString();")));
+		if ("wicket".equals(framework))
+		{
+			// CKEditor's error wrapping the one thrown
+			wait.until(d -> Toasts.latest(d).startsWith("CKEditor ran into an error, which the " +
+				"server heard of and logged: unexpected-error"));
+			assertTrue(Toasts.latest(driver).contains("Original error: Error: A test of the editor " +
+				"failing"), Toasts.latest(driver));
+		}
+
+		// the new CKEditor works, and the line goes with the next change
+		tool("Bold").click();
+		wait.until(d -> !content().findElements(By.xpath(".//strong[contains(., " +
+			"'oystercatchers')]")).isEmpty());
+		wait.until(d -> editor().findElements(By.cssSelector(".antilia-ck-editor-error"))
+			.isEmpty());
+		assertNoPolicyViolations();
+	}
+
+	/**
+	 * Fails on a violation of the Content Security Policy in Chrome's console: the errors of a test
+	 * making CKEditor fail are there on purpose.
+	 */
+	private void assertNoPolicyViolations()
+	{
+		if (browser != SeleniumBrowser.CHROME)
+		{
+			return;
+		}
+		List<String> violations = driver.manage().logs().get("browser").getAll().stream()
+			.map(entry -> entry.getMessage())
+			.filter(message -> message.contains("Content Security Policy") ||
+				message.contains("Content-Security-Policy"))
+			.toList();
+		assertEquals(List.of(), violations, "violations of the policy in the console");
+	}
+
 	private WebElement modes()
 	{
 		return app().findElement(By.cssSelector(".rich-text-demo__modes"));

@@ -317,7 +317,17 @@ defines the global `CKEDITOR` the editor takes by default, or the classes of a b
 (`build`), with CKEditor's style sheet, `ckeditor5.css`, and its translations; and its license key
 (`licenseKey`): `'GPL'` for the open-source distribution, or the key CKSource gave. CKEditor starts
 asynchronously: `ready` resolves once it has, and should it not start, without CKEditor in the page
-or with a key it refuses, the text area shows again and `onError` tells why. The HTML has no style
+or with a key it refuses, the text area shows again and `onError` tells why. CKEditor 49 has no
+Watchdog: after an error escaping it, CKEditor keeps running, maybe in a state of its own. The editor
+hears of the errors of its CKEditor by CKEditor's `onEditorError` (`CKEDITOR.onEditorError`, or
+`ClassicEditor.onEditorError`), tells them to `onError` with what it does about them
+(`CKEditorFailure`), with the event `antilia-ck-editor:error` (`CK_EDITOR_EVENTS.error`) and in the
+log, and starts CKEditor again as the Watchdog did, with the text it last had, which the text area
+holds, and the selection, saying so in a line below the text (`recovery`: after each of 3 crashes,
+then while they come more than 5 s apart on average; `false` to leave CKEditor running). Crashes
+coming more often, it gives up and leaves CKEditor running, the line asking the user to save and
+reload. Wicket's `CKEditor` takes it as `setRecovery(CKEditorRecovery)`, and `CKEditorErrorEvent`
+hears of the errors on the server, logging them. The HTML has no style
 attribute: text aligns by the classes of the Tiptap editor, images have no width or height, for
 which CKEditor writes a style, and the HTML a page gives or the user pastes is made quiet first
 (`quietHtml`), as the Tiptap editor's; what a paste lost, compared with what CKEditor inserts of it

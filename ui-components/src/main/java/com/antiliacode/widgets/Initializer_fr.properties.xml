@@ -322,4 +322,6 @@
 	<entry key="RichTextEditor.pasteTables">tableaux</entry>
 	<entry key="RichTextEditor.pasteLinks">liens</entry>
 	<entry key="RichTextEditor.pasteFormatting">mise en forme</entry>
+	<entry key="RichTextEditor.errorRestarted">Un problème est survenu dans l’éditeur. Il a redémarré avec votre texte.</entry>
+	<entry key="RichTextEditor.errorGaveUp">Des problèmes se répètent dans l’éditeur. Enregistrez votre texte, puis rechargez la page.</entry>
 </properties>
