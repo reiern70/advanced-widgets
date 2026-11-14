@@ -37,7 +37,7 @@
  * to the page (onStorePermanently, see rich-text-stored-images.ts) once they are in the text.
  */
 
-import { Extension, type Editor } from '@tiptap/core';
+import { Extension, type Editor, type JSONContent } from '@tiptap/core';
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
@@ -146,6 +146,15 @@ export function uploadImageTo(url: string, name = 'file'): RichTextUploader {
 }
 
 /**
+ * @returns an uploader posting a file attached to a URL, as uploadImageTo() does an image:
+ *          {"url": "..."} answered, as Wicket's RichTextAttachmentUploadBehavior and RichTextFiles
+ *          answer
+ */
+export function uploadFileTo(url: string, name = 'file'): RichTextUploader {
+	return uploadImageTo(url, name);
+}
+
+/**
  * @returns a function asking a URL to delete images, by their addresses: it posts them as a JSON
  *          array under a name, as Wicket's RichTextImageUploadBehavior and RichTextFiles take
  *          them, which delete those they took alone, and resolves to the addresses deleted, as the
@@ -167,6 +176,16 @@ export function deleteImagesAt(url: string,
 		return Array.isArray(answer.deleted) ? answer.deleted.filter((each): each is string =>
 			typeof each === 'string') : [];
 	};
+}
+
+/**
+ * @returns a function asking a URL to delete files attached, by their addresses, as
+ *          deleteImagesAt() does images: Wicket's RichTextAttachmentUploadBehavior, or
+ *          RichTextFiles at the address of its files attached, deletes those it took alone
+ */
+export function deleteAttachmentsAt(url: string,
+	name = 'removed'): (urls: readonly string[]) => Promise<string[]> {
+	return deleteImagesAt(url, name);
 }
 
 /**
@@ -386,7 +405,19 @@ export async function scaleImage(file: File, max: RichTextImageDimensions,
 	}
 }
 
-/** What the uploads of an editor ask of it. */
+/**
+ * What the uploads of a kind other than images say: the title of the dialog, the zone, the
+ * button inserting the files, and what stands for the name of a file that has none.
+ */
+export interface UploadLabels {
+	title: string;
+	drop: string;
+	choose: string;
+	insert: string;
+	nameless: string;
+}
+
+/** What the uploads of an editor ask of it: those of the images, or of the files attached. */
 export interface UploadHost {
 	/** The editor of Tiptap, whose text gets the images. */
 	editor(): Editor;
@@ -425,6 +456,20 @@ export interface UploadHost {
 	 * @returns the addresses of those stored
 	 */
 	storePermanently(urls: readonly string[]): Promise<string[]>;
+	/**
+	 * What goes into the text for a file uploaded at an address: an image when left out, a file
+	 * attached for the uploads of those.
+	 */
+	content?(src: string, file: File): JSONContent;
+	/** What the uploads say, when not those of the images. */
+	labels?(): UploadLabels;
+}
+
+/**
+ * @returns what goes into the text for a file uploaded, as the host says
+ */
+export function uploadedContent(host: UploadHost, src: string, file: File): JSONContent {
+	return host.content ? host.content(src, file) : { type: 'image', attrs: { src, alt: null } };
 }
 
 /**
@@ -685,7 +730,7 @@ export async function uploadFiles(host: UploadHost, files: readonly File[],
 				return;
 			}
 			// the cursor stays where the user is typing meanwhile
-			current.chain().insertContentAt(where, { type: 'image', attrs: { src, alt: null } },
+			current.chain().insertContentAt(where, uploadedContent(host, src, file),
 				{ updateSelection: false }).command(({ tr }) => {
 				tr.setMeta(KEY, { remove: id, move: { ids: later, position: endOfLastStep(tr,
 					where) } });
@@ -714,10 +759,43 @@ function filesOf(data: DataTransfer | null): File[] {
 }
 
 /**
- * Uploads the files dropped into the text, or pasted without HTML, as a screenshot is, while the
- * page uploads images; otherwise the editor leaves them to the browser, as before.
+ * @returns the files split between the uploads of the images and those of the files attached:
+ *          the images of the types taken to the first, the others to the second, all to the one
+ *          that takes them when the other does not
  */
-export function uploadExtension(host: UploadHost): Extension {
+function split(files: readonly File[], host: UploadHost, attachments: UploadHost | null):
+	[File[], File[]] {
+	const images = host.enabled();
+	if (!attachments?.enabled()) {
+		return [images ? [...files] : [], []];
+	}
+	if (!images) {
+		return [[], [...files]];
+	}
+	const types = host.types().map((type) => type.toLowerCase());
+	const isImage = (file: File) => types.includes((file.type ?? '').toLowerCase());
+	return [files.filter(isImage), files.filter((file) => !isImage(file))];
+}
+
+/**
+ * Uploads the files dropped into the text, or pasted without HTML, as a screenshot is, while the
+ * page uploads images, or files attached: images to the first, the other files to the second;
+ * otherwise the editor leaves them to the browser, as before.
+ *
+ * @param attachments the uploads of the files attached, null for none
+ */
+export function uploadExtension(host: UploadHost,
+	attachments: () => UploadHost | null = () => null): Extension {
+	const upload = (files: readonly File[], position: number) => {
+		const [images, others] = split(files, host, attachments());
+		if (images.length) {
+			void uploadFiles(host, images, position);
+		}
+		if (others.length) {
+			void uploadFiles(attachments()!, others, position);
+		}
+	};
+	const enabled = () => host.enabled() || !!attachments()?.enabled();
 	return Extension.create({
 		name: 'antiliaRichTextUploads',
 
@@ -757,25 +835,25 @@ export function uploadExtension(host: UploadHost): Extension {
 					decorations: (state) => KEY.getState(state),
 					handleDrop: (view, event, _slice, moved) => {
 						const files = filesOf((event as DragEvent).dataTransfer);
-						if (moved || !files.length || !host.enabled()) {
+						if (moved || !files.length || !enabled()) {
 							return false;
 						}
 						event.preventDefault();
 						const drag = event as DragEvent;
 						const at = view.posAtCoords({ left: drag.clientX, top: drag.clientY });
-						void uploadFiles(host, files, at ? at.pos : view.state.selection.from);
+						upload(files, at ? at.pos : view.state.selection.from);
 						return true;
 					},
 					handlePaste: (view, event) => {
 						const data = event.clipboardData;
 						const files = filesOf(data);
-						if (!files.length || !host.enabled() || data!.types.includes('text/html')) {
+						if (!files.length || !enabled() || data!.types.includes('text/html')) {
 							return false;
 						}
 						event.preventDefault();
 						const tr = view.state.tr.deleteSelection();
 						view.dispatch(tr);
-						void uploadFiles(host, files, view.state.selection.from);
+						upload(files, view.state.selection.from);
 						return true;
 					}
 				}

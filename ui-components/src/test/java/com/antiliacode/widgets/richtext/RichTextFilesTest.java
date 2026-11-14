@@ -80,7 +80,8 @@ class RichTextFilesTest extends WicketTestCase
 			protected void init()
 			{
 				super.init();
-				RichTextFiles.mount(this, PATH, new MemoryStore());
+				RichTextFiles.mount(this, PATH, new MemoryStore())
+					.setAttachmentStore(new MemoryAttachments());
 			}
 		};
 	}
@@ -91,6 +92,65 @@ class RichTextFilesTest extends WicketTestCase
 		MemoryStore.FILES.clear();
 		MemoryStore.DELETED.clear();
 		MemoryStore.PERMANENT.clear();
+		MemoryAttachments.FILES.clear();
+		MemoryAttachments.DELETED.clear();
+	}
+
+	@Test
+	void takesFilesAttachedAndServesThemInlineOnlyWhenABrowserMayOpenThem() throws IOException
+	{
+		String attach = PATH + "?" + RichTextFiles.KIND_PARAMETER + "=" + RichTextFiles.ATTACHMENTS;
+		assertEquals(attach, RichTextFiles.get().getAttachmentUploadUrl().substring(ROOT.length()));
+		String text = upload(attach, "table.csv", "a,b\n".getBytes(StandardCharsets.UTF_8),
+			"application/vnd.ms-excel").getString("url");
+		assertEquals(ROOT + PATH + "/f1.csv", text);
+		String pdf = upload(attach, "report.pdf", "%PDF-1.7".getBytes(StandardCharsets.US_ASCII),
+			"application/pdf").getString("url");
+		assertEquals("setup.exe is not a file of a type the editor takes: PDF, DOCX, XLSX, PPTX, " +
+			"ODT, ODS, ZIP, TXT, CSV, Markdown.", upload(attach, "setup.exe", new byte[] { 'M', 'Z',
+				0, 0 }, "application/octet-stream").getString("error"));
+
+		assertEquals(200, get(PATH + "/f1.csv"));
+		assertEquals("text/csv; charset=UTF-8", tester.getLastResponse().getContentType());
+		assertEquals("attachment; filename=\"table.csv\"; filename*=UTF-8''table.csv",
+			tester.getLastResponse().getHeader("Content-Disposition"));
+		assertEquals("sandbox", tester.getLastResponse().getHeader("Content-Security-Policy"));
+		assertEquals(200, get(pdf.substring(ROOT.length())));
+		assertEquals("application/pdf", tester.getLastResponse().getContentType());
+		assertTrue(tester.getLastResponse().getHeader("Content-Disposition").startsWith("inline;"));
+
+		// deleted by the session that took it
+		JSONObject answer = post(attach, RichTextImageUploadBehavior.REMOVED_PARAMETER,
+			new JSONArray(List.of(text)).toString());
+		assertEquals(List.of(text), strings(answer.getJSONArray("deleted")));
+		assertEquals(List.of(text), MemoryAttachments.DELETED);
+	}
+
+	@Test
+	void anEditorAttachesItsFilesWithItsOwnRules() throws IOException
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Hi</p>"));
+		editor.setUploadResource(RichTextFiles.get()).setAttachmentFormats(EnumSet.of(
+			com.antiliacode.widgets.upload.UploadFileFormat.PDF));
+		assertSame(RichTextFiles.get().getAttachmentStore(), editor.getAttachmentStore());
+		assertTrue(editor.getBehaviors(RichTextAttachmentUploadBehavior.class).isEmpty());
+		tester.startPage(new EditorPage(editor));
+		JSONObject options = options(editor);
+		String url = options.getString("attachUrl").substring(ROOT.length());
+		assertTrue(url.startsWith(PATH + "?" + RichTextFiles.KEY_PARAMETER + "="), url);
+		assertTrue(url.endsWith("&" + RichTextFiles.KIND_PARAMETER + "=" +
+			RichTextFiles.ATTACHMENTS), url);
+		assertEquals("[{\"type\":\"application/pdf\",\"extension\":\"pdf\",\"label\":\"PDF\"}]",
+			options.getJSONArray("attachTypes").toString());
+
+		assertEquals("notes.txt is not a file of a type the editor takes: PDF.", upload(url,
+			"notes.txt", "notes".getBytes(StandardCharsets.UTF_8), "text/plain")
+			.getString("error"));
+		String pdf = upload(url, "report.pdf", "%PDF-1.7".getBytes(StandardCharsets.US_ASCII),
+			"application/pdf").getString("url");
+		// saved without it: the editor deletes what it attached
+		editor.deleteRemovedImages();
+		assertEquals(List.of(pdf), MemoryAttachments.DELETED);
 	}
 
 	@Test
@@ -424,6 +484,44 @@ class RichTextFilesTest extends WicketTestCase
 			return PERMANENT.entrySet().stream().filter(each -> each.getValue().contains(query))
 				.map(each -> new RichTextStoredImage(each.getKey(), each.getValue())).limit(max)
 				.toList();
+		}
+
+		@Override
+		public RichTextServedFile open(String name)
+		{
+			Kept kept = FILES.get(name);
+			return kept == null ? null : new RichTextServedFile(kept.type, kept.fileName,
+				kept.bytes.length, Instant.now(), () -> new ByteArrayInputStream(kept.bytes));
+		}
+	}
+
+	/** Keeps the files attached in memory, each named f and a number and its extension. */
+	private static final class MemoryAttachments implements IRichTextAttachmentStore
+	{
+		private static final long serialVersionUID = 1L;
+
+		static final Map<String, Kept> FILES = new ConcurrentHashMap<>();
+
+		static final List<String> DELETED = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+		private static final AtomicInteger COUNT = new AtomicInteger();
+
+		@Override
+		public String store(FileUpload file, IUploadFileFormat format)
+		{
+			if (FILES.isEmpty())
+			{
+				COUNT.set(0);
+			}
+			String name = "f" + COUNT.incrementAndGet() + "." + format.getExtension();
+			FILES.put(name, new Kept(format, file.getClientFileName(), file.getBytes()));
+			return RichTextFiles.get().addressOf(name);
+		}
+
+		@Override
+		public void delete(String url)
+		{
+			DELETED.add(url);
 		}
 
 		@Override

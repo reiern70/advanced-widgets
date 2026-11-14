@@ -21,14 +21,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.wicket.util.io.IClusterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The images taken for an editor and not deleted since, with the names of their files: those of a
- * page, kept by {@link RichTextImageUploadBehavior}, or those of an editor in a session, kept by
+ * The images, or the files attached, taken for an editor and not deleted since, with the names of
+ * their files: those of a page, kept by {@link RichTextImageUploadBehavior} and
+ * {@link RichTextAttachmentUploadBehavior}, or those of an editor in a session, kept by
  * {@link RichTextFiles}. Only these the browser may have deleted or kept permanently: never an
  * address it made up. Safe for requests of one session coming at once.
  */
@@ -130,6 +132,18 @@ final class RichTextUploadedImages implements IClusterable
 	 */
 	Set<String> deleteUploaded(IRichTextImageStore store, Collection<String> urls)
 	{
+		return deleteUploaded(url -> RichTextImageUploads.delete(store, url), urls);
+	}
+
+	/**
+	 * Deletes files taken, and forgets them; leaves the others alone.
+	 *
+	 * @param delete
+	 *            deletes a file by its address, answering whether it did not fail
+	 * @return the addresses of the files deleted
+	 */
+	Set<String> deleteUploaded(Predicate<String> delete, Collection<String> urls)
+	{
 		Set<String> deleted = new LinkedHashSet<>();
 		for (String url : List.copyOf(urls))
 		{
@@ -139,7 +153,7 @@ final class RichTextUploadedImages implements IClusterable
 			{
 				known = address != null && uploaded.remove(address) != null;
 			}
-			if (known && RichTextImageUploads.delete(store, address))
+			if (known && delete.test(address))
 			{
 				deleted.add(address);
 			}

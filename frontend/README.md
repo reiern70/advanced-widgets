@@ -406,6 +406,24 @@ which stores permanently only the images it took on its page, or in the session,
 keeps (`findPermanent(query, max)`); Wicket's `RichTextEditor.setPermanentImages(true)` does it all,
 and never deletes an image its store keeps permanently (`isPermanent(url)`).
 
+With `onAttach(file, options)`, an uploader as `onUpload` is (`uploadFileTo(url)` of
+`rich-text-upload.ts`), the user attaches files that are no images: PDFs, Office documents,
+OpenDocuments, ZIPs, texts (`rich-text-attachments.ts`). The tool `attachment`, "Attach a file", opens
+a zone to drop them on or choose them, or with `attachDialog` a button opening the dialog of the
+uploads; a file dropped or pasted into the text that is no image goes the same way. Each goes in where
+the cursor is as the node `attachment`, a link of its own,
+`<a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">report.pdf</a>`:
+the class of its kind draws its badge and the style sheet shows its size, without a style attribute.
+The browser checks first how many (`attachMaxCount`), the type of each, by its media type or its
+extension (`attachTypes`, each `{ type, extension, label }`, `DEFAULT_RICH_TEXT_ATTACH_TYPES` those of
+the server) and its size (`attachMaxSize`); the server checks them again by the bytes. The tool
+`attachments`, "Files of the text", lists them, each taken out by a button, and
+`onAttachmentsRemoved(urls)`, with the event `attachments-removed`, tells the page of those taken out,
+as for the images: Wicket's editor tells its server with the request of `imagesAjax`, under
+`removedAttachments`; `deleteAttachmentsAt(url)` asks the server to delete them for the React and
+Svelte editors. In Markdown a file is a plain link, `[report.pdf](url)`. React and Svelte take the
+same props (`onAttach` / `onattach`, `onAttachmentsRemoved` / `onattachmentsremoved`).
+
 The text scrolls with the scroll bars of the components (`scrollbar.ts`), in the colors of the theme,
 over the edges of the text, which still scrolls natively: a page renders `scrollbar.css` with the
 editor's style sheet, as Wicket's editor does. `RichTextEditor.attachScrollbar` makes them; a page

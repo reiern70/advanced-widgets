@@ -23,7 +23,8 @@ import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type EditorEven
 	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
 	type RichTextImageFinder, type RichTextImageKeeper, type RichTextProofreader,
-	type RichTextStoredImage, type RichTextSuggester, type RichTextTool, type RichTextUploader,
+	type RichTextAttachmentType, type RichTextStoredImage, type RichTextSuggester,
+	type RichTextTool, type RichTextUploader,
 	type RichTextUploadOptions } from '@antilia/core';
 
 import { useLook } from './Look.js';
@@ -142,6 +143,17 @@ export interface RichTextEditorProps {
 	/** Whether the form of the image opens the dialog of the uploads rather than its own zone. */
 	uploadDialog?: boolean;
 	/**
+	 * The types of the files the user may attach, each a media type, an extension and a label;
+	 * those of the server when left out.
+	 */
+	attachTypes?: readonly RichTextAttachmentType[];
+	/** The largest file the user may attach, in bytes; none when left out. */
+	attachMaxSize?: number | null;
+	/** How many files one drop, choice or paste takes at most; none when left out. */
+	attachMaxCount?: number | null;
+	/** Whether the form of the tool attachment opens the dialog of the uploads. */
+	attachDialog?: boolean;
+	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again; false when left out.
 	 */
@@ -195,6 +207,18 @@ export interface RichTextEditorProps {
 	 * (see deleteImagesAt of the core).
 	 */
 	onImagesRemoved?(urls: string[]): void;
+	/**
+	 * Uploads a file the user attaches, a PDF or a spreadsheet, answering the address it is served
+	 * at (see uploadFileTo of the core): it goes into the text as a link with its name and its
+	 * size. Without it the tools of the files do not show.
+	 */
+	onAttach?(file: File, options?: RichTextUploadOptions): Promise<string>;
+	/**
+	 * Called a moment after the user took files attached out of the text, or uploaded some that
+	 * never went into it, with their addresses, for the page to delete them (see
+	 * deleteAttachmentsAt of the core).
+	 */
+	onAttachmentsRemoved?(urls: string[]): void;
 }
 
 /**
@@ -242,8 +266,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			suggesters, limit, count, resizable, minWidth,
 			minHeight, maxWidth, maxHeight, events, extensions, pasteNotice, texts, highlight,
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
-			uploadMaxCount, uploadDialog, name, id, className } = props;
+			uploadMaxCount, uploadDialog, attachTypes, attachMaxSize, attachMaxCount, attachDialog,
+			name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
+		const attaches = props.onAttach !== undefined;
 		const keeps = props.onStorePermanently !== undefined;
 		const finds = props.onFindImages !== undefined;
 		const element = useRef<HTMLDivElement>(null);
@@ -289,6 +315,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				onUpload: uploaderOf(latest), onStorePermanently: keeperOf(latest),
 				onFindImages: finderOf(latest),
 				onImagesRemoved: (urls) => latest.current.onImagesRemoved?.(urls),
+				attachTypes: current.attachTypes, attachMaxSize: current.attachMaxSize,
+				attachMaxCount: current.attachMaxCount, attachDialog: current.attachDialog,
+				onAttach: attacherOf(latest),
+				onAttachmentsRemoved: (urls) => latest.current.onAttachmentsRemoved?.(urls),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
 				onBlur: (next) => latest.current.onBlur?.(next),
@@ -337,9 +367,13 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
 				uploadScaling: !!uploadScaling, uploadMaxCount: uploadMaxCount ?? null,
 				uploadDialog: !!uploadDialog, onUpload: uploaderOf(latest),
-				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest) });
+				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest),
+				attachTypes, attachMaxSize: attachMaxSize ?? null,
+				attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
+				onAttach: attacherOf(latest) });
 		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
-			uploadScaling, uploadMaxCount, uploadDialog, uploads, keeps, finds]);
+			uploadScaling, uploadMaxCount, uploadDialog, uploads, keeps, finds, attachTypes,
+			attachMaxSize, attachMaxCount, attachDialog, attaches]);
 
 		useLayoutEffect(() => {
 			const editor = instance.current;
@@ -382,6 +416,15 @@ function highlighterOf(highlight: boolean | RichTextHighlighter | undefined):
  */
 function uploaderOf(props: { current: RichTextEditorProps }): RichTextUploader | null {
 	return props.current.onUpload ? (file, options) => props.current.onUpload!(file, options) :
+		null;
+}
+
+/**
+ * @returns the uploader of the files attached of the props, calling the latest onAttach; null
+ *          without one
+ */
+function attacherOf(props: { current: RichTextEditorProps }): RichTextUploader | null {
+	return props.current.onAttach ? (file, options) => props.current.onAttach!(file, options) :
 		null;
 }
 

@@ -38,7 +38,7 @@ import com.antiliacode.widgets.upload.IUploadFileFormat;
 public interface IRichTextImageType extends IUploadFileFormat
 {
 	/** How many of the first bytes of a file {@link #matches(byte[])} is given, at most. */
-	int HEAD = IUploadFileFormat.HEAD;
+	int HEAD = 32;
 
 	/**
 	 * @return the media type the image is served as, {@code image/png} for example, which the

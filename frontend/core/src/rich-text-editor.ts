@@ -123,6 +123,8 @@ import { issuePopoverOf, Proofreading, refreshProofreading,
 import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
 import { checkFiles, DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, refusalOf, uploadExtension,
 	type RichTextUploader, type RichTextUploadOptions, type UploadHost } from './rich-text-upload.js';
+import { attachmentContent, attachmentRefusal, attachmentsIn, attachmentTypes, checkAttachments,
+	type AttachmentLimits, type RichTextAttachmentType } from './rich-text-attachments.js';
 import { askToScale } from './rich-text-upload-dialog.js';
 import type { RichTextImageFinder, RichTextImageKeeper } from './rich-text-stored-images.js';
 import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
@@ -377,6 +379,33 @@ export interface RichTextEditorOptions {
 	 */
 	onFindImages?: RichTextImageFinder | null;
 	/**
+	 * Uploads a file the user attaches, a PDF or a spreadsheet, chosen or dropped in the form of
+	 * the tool attachment, dropped into the text or pasted, answering the address it is served at,
+	 * which must be safe (isSafeUrl): see uploadFileTo(). The file goes into the text as a link with
+	 * its name and its size. None when left out or null: the tools of the files do not show, and a
+	 * file that is no image dropped into the text is refused.
+	 */
+	onAttach?: RichTextUploader | null;
+	/**
+	 * The types of the files the user may attach, each a media type, an extension and a label:
+	 * DEFAULT_RICH_TEXT_ATTACH_TYPES, those of the server, when left out.
+	 */
+	attachTypes?: readonly RichTextAttachmentType[];
+	/** The largest file the user may attach, in bytes; none when left out or null. */
+	attachMaxSize?: number | null;
+	/** How many files one drop, choice or paste takes at most, the first; none when left out. */
+	attachMaxCount?: number | null;
+	/**
+	 * Whether the form of the tool attachment has a button opening the dialog of the uploads,
+	 * rather than a zone of its own; false when left out.
+	 */
+	attachDialog?: boolean;
+	/**
+	 * Called a moment after the user took files attached out of the text, with their addresses, as
+	 * onImagesRemoved is for the images: the page deletes them, at once or once the text is saved.
+	 */
+	onAttachmentsRemoved?: (urls: string[]) => void;
+	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again: "Part of the paste was left out: scripts, images."; false when left out.
 	 */
@@ -562,6 +591,15 @@ export class RichTextEditor {
 	/** The images taken out of the text, to tell of in a moment. */
 	private readonly removed = new Set<string>();
 
+	/** What the uploads of the files attached ask of the editor, made once. */
+	private attachmentUploads: UploadHost | null = null;
+
+	/** The addresses of the files attached to the text, with how many times each is in it. */
+	private attachments = new Map<string, number>();
+
+	/** The files taken out of the text, to tell of in a moment. */
+	private readonly removedAttachments = new Set<string>();
+
 	private removedTimer: ReturnType<typeof setTimeout> | null = null;
 
 	private resizable: Resizable | null = null;
@@ -698,6 +736,7 @@ export class RichTextEditor {
 		this.editor = this.create(given);
 		this.scrollbar = RichTextEditor.attachScrollbar(content, this.look);
 		this.images = imagesIn(this.editor.state.doc);
+		this.attachments = attachmentsIn(this.editor.state.doc);
 		this.value = this.serialize(this.editor.state.doc);
 		this.saved = options.saved !== undefined ? this.canonical(options.saved) :
 			field ? this.canonical(field.defaultValue) : this.value;
@@ -930,8 +969,8 @@ export class RichTextEditor {
 			extensions.push(CodeBlocks.configure({ highlighter: () => this.highlighter(),
 				label: (language) => this.languageLabel(language) }));
 		}
-		if (features.has('image')) {
-			extensions.push(uploadExtension(this.uploadHost()));
+		if (features.has('image') || features.has('attachment')) {
+			extensions.push(uploadExtension(this.uploadHost(), () => this.attachmentHost()));
 		}
 		extensions.push(Suggestions.configure({
 			suggesters: () => this.isReadOnly() ? [] : this.options.suggesters ?? [],
@@ -1102,6 +1141,7 @@ export class RichTextEditor {
 			backgroundColors: () => this.backgroundColors(),
 			codeLanguages: () => this.codeLanguages(),
 			uploads: () => this.uploadHost(),
+			attachments: () => this.attachmentHost(),
 			findImages: () => this.options.onFindImages && this.features().has('image') ?
 				this.options.onFindImages : null,
 			trigger: (name, values) => this.trigger(name, values),
@@ -1209,6 +1249,87 @@ export class RichTextEditor {
 		return this.uploads;
 	}
 
+	/**
+	 * @returns what the uploads of the files attached ask of the editor, null while the page
+	 *          attaches no files
+	 */
+	private attachmentHost(): UploadHost | null {
+		if (!this.options.onAttach || !this.features().has('attachment')) {
+			return null;
+		}
+		if (!this.attachmentUploads) {
+			this.attachmentUploads = {
+				editor: () => this.editor,
+				enabled: () => !!this.options.onAttach && !this.isReadOnly() &&
+					this.features().has('attachment'),
+				types: () => this.attachTypes().flatMap((each) => [each.type, '.' + each.extension]),
+				dialog: () => !!this.options.attachDialog,
+				check: async (files) => checkAttachments(files, this.attachLimits(), this.texts()),
+				uploading: (file) => format(this.texts().attaching, fileNameOf(file,
+					{ theImage: this.texts().theFile })),
+				texts: () => this.texts(),
+				upload: (file, options) => this.attach(file, options),
+				alert: (message) => this.alert(message),
+				discard: (urls) => this.attachmentsRemoved(urls.filter((url) =>
+					!this.attachments.has(url))),
+				permanent: () => false,
+				storePermanently: async () => [],
+				content: (src, file) => attachmentContent(src, file, this.attachTypes()),
+				labels: () => {
+					const texts = this.texts();
+					return { title: texts.attachFilesTitle, drop: texts.dropFiles,
+						choose: texts.chooseFiles, insert: texts.insertFiles, nameless: texts.theFile };
+				}
+			};
+		}
+		return this.attachmentUploads;
+	}
+
+	private attachTypes(): RichTextAttachmentType[] {
+		return attachmentTypes(this.options.attachTypes);
+	}
+
+	/**
+	 * @returns the limits of the files attached, as the options give them
+	 */
+	private attachLimits(): AttachmentLimits {
+		const { attachMaxSize: size, attachMaxCount: count } = this.options;
+		const positive = (value: number | null | undefined) => typeof value === 'number' &&
+			Number.isFinite(value) && value > 0;
+		return { types: this.attachTypes(), maxSize: positive(size) ? size! : null,
+			maxCount: positive(count) ? Math.floor(count!) : null };
+	}
+
+	/**
+	 * Uploads a file attached, by the page.
+	 *
+	 * @returns the address of the file, a safe one; rejected with the message saying why not
+	 */
+	private async attach(file: File, options?: RichTextUploadOptions): Promise<string> {
+		const texts = this.texts();
+		const failed = format(texts.uploadFailed, fileNameOf(file, { theImage: texts.theFile }));
+		const uploader = this.options.onAttach;
+		const refused = attachmentRefusal(file, this.attachLimits(), texts);
+		if (!uploader || refused) {
+			throw new Error(refused ?? failed);
+		}
+		let address: string;
+		try {
+			address = String(await uploader(file, options)).trim();
+		} catch (error) {
+			if (error instanceof Error && error.name === 'AbortError') {
+				throw error;
+			}
+			throw new Error(error instanceof Error && error.message ? error.message : failed);
+		}
+		if (!isSafeUrl(address)) {
+			getHost().log.error('The address of a file attached is not one the editor takes: ' +
+				address);
+			throw new Error(failed);
+		}
+		return address;
+	}
+
 	private uploadTypes(): string[] {
 		return (this.options.uploadTypes ?? DEFAULT_RICH_TEXT_UPLOAD_TYPES).map((type) =>
 			type.trim().toLowerCase()).filter(Boolean);
@@ -1268,6 +1389,9 @@ export class RichTextEditor {
 		const before = this.images;
 		const after = imagesIn(this.editor.state.doc);
 		this.images = after;
+		const attachedBefore = this.attachments;
+		const attached = attachmentsIn(this.editor.state.doc);
+		this.attachments = attached;
 		if (transaction.getMeta(EXTERNAL)) {
 			return;
 		}
@@ -1277,7 +1401,13 @@ export class RichTextEditor {
 			}
 		});
 		after.forEach((_count, src) => this.removed.delete(src));
-		if (this.removed.size && this.removedTimer === null) {
+		attachedBefore.forEach((_count, href) => {
+			if (!attached.has(href)) {
+				this.removedAttachments.add(href);
+			}
+		});
+		attached.forEach((_count, href) => this.removedAttachments.delete(href));
+		if ((this.removed.size || this.removedAttachments.size) && this.removedTimer === null) {
 			this.removedTimer = setTimeout(() => this.flushRemoved(), REMOVED_DELAY);
 		}
 	}
@@ -1293,6 +1423,22 @@ export class RichTextEditor {
 		const urls = Array.from(this.removed).filter((url) => !this.images.has(url));
 		this.removed.clear();
 		this.imagesRemoved(urls);
+		const files = Array.from(this.removedAttachments).filter((url) =>
+			!this.attachments.has(url));
+		this.removedAttachments.clear();
+		this.attachmentsRemoved(files);
+	}
+
+	/**
+	 * Tells the page of files the text no longer holds: onAttachmentsRemoved, then the event
+	 * attachments-removed.
+	 */
+	private attachmentsRemoved(urls: readonly string[]): void {
+		if (!urls.length || this.destroyed) {
+			return;
+		}
+		this.options.onAttachmentsRemoved?.([...urls]);
+		this.trigger(RICH_TEXT_BUILT_IN_EVENTS.attachmentsRemoved, { urls: [...urls] });
 	}
 
 	/**
@@ -2001,7 +2147,9 @@ export class RichTextEditor {
 		if (codeChanged && !rebuilt) {
 			redrawCodeBlocks(this.editor.view);
 		}
-		const finderChanged = !before.onFindImages !== !this.options.onFindImages;
+		// the tools showing while the page finds images, or attaches files
+		const finderChanged = !before.onFindImages !== !this.options.onFindImages ||
+			!before.onAttach !== !this.options.onAttach;
 		if (rebuilt || editableChanged || codeChanged || finderChanged ||
 			changed('toolbar', 'texts')) {
 			this.renderToolbar();

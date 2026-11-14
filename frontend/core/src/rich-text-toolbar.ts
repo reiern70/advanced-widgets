@@ -58,15 +58,16 @@ import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUr
 	type RichTextFeature } from './rich-text-schema.js';
 import { registeredTool, type RichTextMenuItem, type RichTextToolContext,
 	type RichTextTrigger } from './rich-text-features.js';
-import { isAbort, keepPermanently, percentText, uploadFiles,
+import { isAbort, keepPermanently, percentText, uploadedContent, uploadFiles,
 	type UploadHost } from './rich-text-upload.js';
+import { attachmentsOf, removeAttachment } from './rich-text-attachments.js';
 
 /** The tools built in the toolbar. */
 export type RichTextToolName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
 	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
-	'storedImage' | 'images' | 'alignLeft' | 'alignCenter' | 'alignRight' | 'alignJustify' | 'undo' |
-	'redo' | 'clearFormatting';
+	'storedImage' | 'images' | 'attachment' | 'attachments' | 'alignLeft' | 'alignCenter' |
+	'alignRight' | 'alignJustify' | 'undo' | 'redo' | 'clearFormatting';
 
 /**
  * A tool of the toolbar: a built-in one, or one of a feature registered
@@ -78,8 +79,8 @@ export type RichTextTool = RichTextToolName | (string & {});
 export const RICH_TEXT_TOOLS: readonly RichTextToolName[] = Object.freeze(['heading', 'bold', 'italic',
 	'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor', 'textBackground', 'link',
 	'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock', 'horizontalRule', 'table',
-	'image', 'storedImage', 'images', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify',
-	'clearFormatting', 'undo', 'redo']);
+	'image', 'storedImage', 'images', 'attachment', 'attachments', 'alignLeft', 'alignCenter',
+	'alignRight', 'alignJustify', 'clearFormatting', 'undo', 'redo']);
 
 /** The toolbar when the page gives none: the tools in groups. */
 export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[] = Object.freeze([
@@ -89,7 +90,7 @@ export const DEFAULT_RICH_TEXT_TOOLBAR: readonly (readonly RichTextToolName[])[]
 	['link'],
 	['bulletList', 'orderedList', 'taskList'],
 	['blockquote', 'codeBlock', 'horizontalRule'],
-	['table', 'image', 'storedImage', 'images'],
+	['table', 'image', 'storedImage', 'images', 'attachment', 'attachments'],
 	['alignLeft', 'alignCenter', 'alignRight', 'alignJustify'],
 	['clearFormatting'],
 	['undo', 'redo']
@@ -129,6 +130,9 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	image: string;
 	storedImage: string;
 	images: string;
+	/** The tool attaching a file, and the menu of the files of the text. */
+	attachment: string;
+	attachments: string;
 	alignLeft: string;
 	alignCenter: string;
 	alignRight: string;
@@ -199,6 +203,23 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	uploading: string;
 	/** What stands for the name of a file that has none. */
 	theImage: string;
+	/**
+	 * The files attached: the menu when the text has none, the button deleting one ({0}), the zone
+	 * of the form and its button, the button opening the dialog, its title and its button
+	 * inserting, why a file was not taken ({0} its name, {1} the types), what stands for the name
+	 * of a file that has none, and the mark of one uploading ({0} its name).
+	 */
+	noAttachments: string;
+	deleteAttachment: string;
+	dropFiles: string;
+	chooseFiles: string;
+	attachFiles: string;
+	attachFilesTitle: string;
+	insertFiles: string;
+	attachmentType: string;
+	attachTooMany: string;
+	theFile: string;
+	attaching: string;
 	/** Why an image was not uploaded: {0} the name of its file, {1} the largest size, the types. */
 	uploadFailed: string;
 	uploadTooLarge: string;
@@ -270,6 +291,8 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	image: 'Image',
 	storedImage: 'Insert image from store',
 	images: 'Images in the text',
+	attachment: 'Attach a file',
+	attachments: 'Files of the text',
 	alignLeft: 'Align left',
 	alignCenter: 'Center',
 	alignRight: 'Align right',
@@ -325,6 +348,17 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	deleteImage: 'Delete {0}',
 	uploading: 'Uploading {0}…',
 	theImage: 'The image',
+	noAttachments: 'The text has no files.',
+	deleteAttachment: 'Delete {0}',
+	dropFiles: 'Drop files here',
+	chooseFiles: 'Choose files…',
+	attachFiles: 'Attach files…',
+	attachFilesTitle: 'Attach files',
+	insertFiles: 'Insert',
+	attachmentType: '{0} is not a file of a type the editor takes: {1}.',
+	attachTooMany: '{0} files at most at a time: {1} left out.',
+	theFile: 'The file',
+	attaching: 'Attaching {0}…',
 	uploadFailed: '{0} could not be uploaded.',
 	uploadTooLarge: '{0} is larger than {1}.',
 	uploadType: '{0} is not an image of a type the editor takes: {1}.',
@@ -485,6 +519,12 @@ export const RICH_TEXT_ICONS: Readonly<Record<Exclude<RichTextToolName, 'heading
 		images: svg('<rect x="7" y="3" width="14" height="14" rx="2"/>' +
 			'<path d="M3 7v12a2 2 0 0 0 2 2h12"/><circle cx="11.5" cy="7.5" r="1.4"/>' +
 			'<path d="m21 13-4-4-6 6"/>'),
+		// a paper clip
+		attachment: svg('<path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7' +
+			'l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/>'),
+		// a sheet with a folded corner, its lines
+		attachments: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>' +
+			'<path d="M14 3v5h5M9 13h6M9 17h6"/>'),
 		alignLeft: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
 		alignCenter: svg('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
 		alignRight: svg('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
@@ -548,6 +588,22 @@ function deleteImages(editor: Editor, src: string): void {
 		});
 		return found.length > 0;
 	}).run();
+}
+
+/**
+ * Selects the first file attached of an address, and shows it.
+ */
+function selectAttachment(editor: Editor, href: string): void {
+	let found: number | null = null;
+	editor.state.doc.descendants((node, position) => {
+		if (found === null && node.type.name === 'attachment' && node.attrs.href === href) {
+			found = position;
+		}
+		return found === null;
+	});
+	if (found !== null) {
+		editor.chain().focus().setNodeSelection(found).scrollIntoView().run();
+	}
 }
 
 /**
@@ -675,6 +731,10 @@ const SPECS: Readonly<Record<RichTextToolName, ToolSpec>> = {
 	storedImage: { feature: 'image', kind: 'form',
 		enabled: (editor) => editor.can().setImage({ src: '#' }) },
 	images: { feature: 'image', kind: 'menu' },
+	attachment: { feature: 'attachment', kind: 'form',
+		enabled: (editor) => editor.can().insertContent({ type: 'attachment',
+			attrs: { href: '#', name: 'file' } }) },
+	attachments: { feature: 'attachment', kind: 'menu' },
 	alignLeft: align(ALIGNMENTS.alignLeft),
 	alignCenter: align(ALIGNMENTS.alignCenter),
 	alignRight: align(ALIGNMENTS.alignRight),
@@ -781,6 +841,9 @@ interface MenuEntry {
 	checked?: (editor: Editor) => boolean;
 	/** The address of the image of an item of the menu of the images. */
 	src?: string;
+	/** The size and the kind of the file of an item of the menu of the files attached. */
+	size?: string | null;
+	kind?: string | null;
 	enabled: (editor: Editor) => boolean;
 	run: (editor: Editor, context: RichTextToolContext) => void;
 }
@@ -819,6 +882,11 @@ export interface RichTextToolbarContext {
 	codeLanguages?: () => readonly RichTextCodeLanguage[];
 	/** The uploads of the form of an image; none while the page uploads no images. */
 	uploads?: () => UploadHost | null;
+	/**
+	 * The uploads of the files attached, for the tools attachment and attachments; none, the tools
+	 * not showing, while the page attaches no files.
+	 */
+	attachments?: () => UploadHost | null;
 	/**
 	 * Finds the images the page stores permanently, for the tool storedImage; none, the tool not
 	 * showing, while the page finds none.
@@ -976,8 +1044,13 @@ export class RichTextToolbar {
 	 *          to find the images it stores
 	 */
 	private offered(tool: RichTextTool): boolean {
-		return tool !== 'storedImage' || !!toolSpec(tool)?.registered ||
-			!!this.context.findImages?.();
+		if (toolSpec(tool)?.registered) {
+			return true;
+		}
+		if (tool === 'attachment' || tool === 'attachments') {
+			return !!this.context.attachments?.();
+		}
+		return tool !== 'storedImage' || !!this.context.findImages?.();
 	}
 
 	/**
@@ -1068,6 +1141,8 @@ export class RichTextToolbar {
 				this.openLink(drawn.button);
 			} else if (drawn.tool === 'storedImage') {
 				this.openStoredImage(drawn.button);
+			} else if (drawn.tool === 'attachment') {
+				this.openAttachment(drawn.button);
 			} else {
 				this.openImage(drawn.button);
 			}
@@ -1152,7 +1227,7 @@ export class RichTextToolbar {
 		const spec = toolSpec(tool);
 		if (this.kindOf(tool) === 'menu' && (spec?.registered || tool === 'table' ||
 			tool === 'textColor' || tool === 'textBackground' || tool === 'codeBlock' ||
-			tool === 'images')) {
+			tool === 'images' || tool === 'attachments')) {
 			return this.menuLines(this.tools.find((drawn) => drawn.tool === tool) ??
 				{ tool }).some((entry) => entry !== 'separator' && entry.enabled(editor));
 		}
@@ -1303,6 +1378,73 @@ export class RichTextToolbar {
 		});
 	}
 
+	/**
+	 * @returns the items of the menu of the files attached: for each file of the text, one
+	 *          selecting it and one taking it out of the text, every place it is in
+	 */
+	private attachmentEntries(): MenuEntry[] {
+		const texts = this.context.texts();
+		return attachmentsOf(this.editor).flatMap((attachment, index): MenuEntry[] => {
+			const label = attachment.name || attachment.href;
+			return [
+				{ id: 'select-' + index, label, size: attachment.size, kind: attachment.kind,
+					enabled: () => true, run: (editor) => selectAttachment(editor, attachment.href) },
+				{ id: 'delete-' + index, label: format(texts.deleteAttachment, label),
+					enabled: (editor) => editor.isEditable,
+					run: (editor) => removeAttachment(editor, attachment.href) }
+			];
+		});
+	}
+
+	/**
+	 * Draws the menu of the files attached to the text: a line for each, its name and its size
+	 * selecting it, and a button taking it out of the text.
+	 */
+	private renderAttachments(drawn: DrawnTool): void {
+		const menu = drawn.menu!;
+		menu.replaceChildren();
+		this.paletteRows = [];
+		const entries = this.attachmentEntries();
+		if (!entries.length) {
+			const item = document.createElement('li');
+			item.setAttribute('role', 'none');
+			item.className = 'antilia-rich-text-attachments-none';
+			item.textContent = this.context.texts().noAttachments;
+			menu.append(item);
+			return;
+		}
+		for (let index = 0; index < entries.length; index += 2) {
+			const choose = entries[index]!;
+			const remove = entries[index + 1]!;
+			const item = document.createElement('li');
+			item.setAttribute('role', 'none');
+			item.className = 'antilia-rich-text-attachments-item';
+			const select = this.menuButton(choose, this.css('rich-text-menu-item') +
+				' antilia-rich-text-attachments-select');
+			const kind = /^[a-z0-9]{1,10}$/.test(choose.kind ?? '') ? choose.kind! : 'file';
+			const icon = document.createElement('span');
+			icon.className = 'antilia-rich-text-attachments-kind antilia-attachment-' + kind;
+			icon.setAttribute('aria-hidden', 'true');
+			const name = document.createElement('span');
+			name.className = 'antilia-rich-text-attachments-name';
+			name.textContent = choose.label;
+			select.append(icon, name);
+			if (choose.size) {
+				const size = document.createElement('span');
+				size.className = 'antilia-rich-text-attachments-size';
+				size.textContent = choose.size;
+				select.append(size);
+			}
+			const trash = this.menuButton(remove, this.css('rich-text-menu-item') +
+				' antilia-rich-text-attachments-delete');
+			trash.setAttribute('aria-label', remove.label);
+			trash.title = remove.label;
+			trash.insertAdjacentHTML('beforeend', TRASH);
+			item.append(select, trash);
+			menu.append(item);
+		}
+	}
+
 	private menuLines(drawn: Pick<DrawnTool, 'tool'>): MenuLine[] {
 		const spec = toolSpec(drawn.tool);
 		if (spec?.registered) {
@@ -1320,6 +1462,8 @@ export class RichTextToolbar {
 			return this.colorEntries(drawn.tool as 'textColor' | 'textBackground');
 		case 'images':
 			return this.imageEntries();
+		case 'attachments':
+			return this.attachmentEntries();
 		default:
 			return this.tableEntries();
 		}
@@ -1357,6 +1501,10 @@ export class RichTextToolbar {
 		}
 		if (drawn.tool === 'images' && !toolSpec(drawn.tool)?.registered) {
 			this.renderImages(drawn);
+			return;
+		}
+		if (drawn.tool === 'attachments' && !toolSpec(drawn.tool)?.registered) {
+			this.renderAttachments(drawn);
 			return;
 		}
 		const menu = drawn.menu!;
@@ -1916,6 +2064,55 @@ export class RichTextToolbar {
 	}
 
 	/**
+	 * Opens the form attaching files: a zone to drop them on or choose them, each going into the
+	 * text where the cursor is as it uploads, a mark standing for it meanwhile; or, for the dialog
+	 * of the uploads, a button opening it.
+	 */
+	private openAttachment(trigger: HTMLElement): void {
+		const uploads = this.context.attachments?.() ?? null;
+		if (!uploads?.enabled()) {
+			return;
+		}
+		const editor = this.editor;
+		const texts = this.context.texts();
+		const look = this.context.look;
+		const labels = uploads.labels?.();
+		const form = this.form();
+		const box = document.createElement('div');
+		box.className = 'antilia-rich-text-form-upload';
+		let focus: HTMLButtonElement;
+		if (uploads.dialog()) {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = lookClasses(look, 'button', 'button-secondary', 'button-small');
+			button.textContent = texts.attachFiles;
+			button.addEventListener('click', () => {
+				this.closeForm();
+				openUploadDialog(uploads, texts, look, (srcs, files) => {
+					if (!editor.isDestroyed) {
+						editor.chain().focus().insertContent(srcs.map((src, index) =>
+							uploadedContent(uploads, src, files[index]!))).run();
+					} else {
+						uploads.discard(srcs);
+					}
+				});
+			});
+			box.append(button);
+			focus = button;
+		} else {
+			const zone = dropZone(texts, look, uploads.types(), (files) => {
+				this.closeForm();
+				void uploadFiles(uploads, files, editor.state.selection.from);
+			}, labels);
+			box.append(zone.element);
+			focus = zone.button;
+		}
+		form.append(box);
+		form.addEventListener('submit', (event) => event.preventDefault());
+		this.showForm(trigger, texts.attachment, form, focus);
+	}
+
+	/**
 	 * Opens the form of the image from the store: a field finding the images the page stores
 	 * permanently by their names, as the user types, and the list of those found, each with a
 	 * thumbnail; Enter or a click inserts the one chosen where the cursor is, in place of the image
@@ -2029,7 +2226,7 @@ export class RichTextToolbar {
 	}
 
 	private showForm(trigger: HTMLElement, title: string, form: HTMLFormElement,
-		focus: HTMLInputElement, onClose?: () => void): void {
+		focus: HTMLInputElement | HTMLButtonElement, onClose?: () => void): void {
 		this.closeMenu(false);
 		this.closeForm();
 		const texts = this.context.texts();
@@ -2047,7 +2244,9 @@ export class RichTextToolbar {
 		if (popover) {
 			openForm = { popover, toolbar: this };
 			focus.focus();
-			focus.select();
+			if (focus instanceof HTMLInputElement) {
+				focus.select();
+			}
 		}
 	}
 

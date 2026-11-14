@@ -17,7 +17,8 @@ import { useState } from 'react';
 import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
-import { describe, imagesTakenOut, proofreader as proofreaderOf, richText, storedImages,
+import { attachments, describe, filesTakenOut, imagesTakenOut, proofreader as proofreaderOf,
+	richText, storedImages,
 	suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 	type RichTextEditorConfig } from '../rich-text-editor.js';
 
@@ -38,6 +39,8 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const [onUpload] = useState(() => uploader(config));
 	const [stored] = useState(() => storedImages(config));
 	const [articleImages] = useState(() => imagesTakenOut(config));
+	const [articleFiles] = useState(() => filesTakenOut(config));
+	const [attached] = useState(() => attachments(config));
 	const [notesImages] = useState(() => imagesTakenOut(config));
 	const [proofreader] = useState(() => proofreaderOf(config));
 	const [suggesters] = useState(() => suggestersOf(config));
@@ -52,6 +55,7 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 	const saveArticle = () => {
 		setArticle((all) => {
 			articleImages.saved(all.text);
+			articleFiles.saved(all.text);
 			return { ...all, saved: all.text };
 		});
 		setHeard(texts.appSaved);
@@ -93,6 +97,7 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 								toolbar={toolbarOf(toolbar)} bubbleMenu={bubbleMenu} readOnly={readOnly}
 								count={count} texts={config.editor} highlight={highlight} onUpload={onUpload}
 								{...limits} onImagesRemoved={(urls) => articleImages.add(urls)}
+								{...attached} onAttachmentsRemoved={(urls) => articleFiles.add(urls)}
 								proofreader={proofreader} suggesters={suggesters}
 								onChange={(text) => setArticle((all) => ({ ...all, text }))}
 								onStateChange={(state) => setArticle((all) => ({ ...all, state }))}

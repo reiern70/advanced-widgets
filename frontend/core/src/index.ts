@@ -71,8 +71,12 @@ export { CODE_BLOCK_LANGUAGE_ATTRIBUTE, registerRichTextHighlighter,
 export { codeLanguage, RICH_TEXT_CODE_LANGUAGES } from './rich-text-languages.js';
 export type { RichTextHighlighter, RichTextToken } from './rich-text-languages.js';
 export { lezerHighlighter } from './rich-text-highlight.js';
-export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, checkFiles, deleteImagesAt, scaleImage, sizeText,
-	typesText, uploadImageTo } from './rich-text-upload.js';
+export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, checkFiles, deleteAttachmentsAt, deleteImagesAt,
+	scaleImage, sizeText, typesText, uploadFileTo, uploadImageTo } from './rich-text-upload.js';
+export { ATTACHMENT_CLASS, Attachment, DEFAULT_RICH_TEXT_ATTACH_TYPES, attachmentsIn,
+	checkAttachments } from './rich-text-attachments.js';
+export type { AttachmentAttributes, AttachmentLimits,
+	RichTextAttachmentType } from './rich-text-attachments.js';
 export type { Oversize, RichTextUploader, RichTextUploadOptions, UploadCheck,
 	UploadLimits } from './rich-text-upload.js';
 export { findImagesAt, imagePicker, storedImagesOf,

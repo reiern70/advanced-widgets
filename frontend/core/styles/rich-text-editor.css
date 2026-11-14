@@ -630,6 +630,137 @@
 	font-style: italic;
 }
 
+/*
+ * the files attached: a link of its own, the badge of its kind before its name, from its class,
+ * and its size after, from data-size; in the text of the editor and in the view alike
+ */
+.antilia-attachment {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.35em;
+	max-width: 100%;
+	padding: 0.05em 0.5em;
+	border: 1px solid var(--antilia-rich-text-border, currentColor);
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	color: var(--antilia-rich-text-accent, inherit);
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+
+.antilia-attachment:hover {
+	background: var(--antilia-rich-text-hover, transparent);
+}
+
+.antilia-attachment::before,
+.antilia-rich-text-attachments-kind::before {
+	content: "FILE";
+	flex: none;
+	padding: 0 0.3em;
+	border-radius: var(--antilia-look-radius-sm, 0.3em);
+	background: var(--antilia-rich-text-muted, #6b7280);
+	color: var(--antilia-rich-text-background, #fff);
+	font-size: 0.7em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+}
+
+.antilia-attachment-pdf::before {
+	content: "PDF";
+}
+
+.antilia-attachment-docx::before {
+	content: "DOCX";
+}
+
+.antilia-attachment-xlsx::before {
+	content: "XLSX";
+}
+
+.antilia-attachment-pptx::before {
+	content: "PPTX";
+}
+
+.antilia-attachment-odt::before {
+	content: "ODT";
+}
+
+.antilia-attachment-ods::before {
+	content: "ODS";
+}
+
+.antilia-attachment-zip::before {
+	content: "ZIP";
+}
+
+.antilia-attachment-txt::before {
+	content: "TXT";
+}
+
+.antilia-attachment-csv::before {
+	content: "CSV";
+}
+
+.antilia-attachment-md::before {
+	content: "MD";
+}
+
+.antilia-attachment[data-size]::after {
+	content: attr(data-size);
+	color: var(--antilia-rich-text-muted, inherit);
+	font-size: 0.85em;
+	white-space: nowrap;
+}
+
+.ProseMirror .antilia-attachment.ProseMirror-selectednode {
+	outline: 2px solid var(--antilia-rich-text-accent, currentColor);
+	outline-offset: 1px;
+}
+
+/* the menu of the files of the text, as that of the images */
+.antilia-rich-text-attachments-item {
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-attachments-select {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: baseline;
+	gap: 0.5em;
+	min-width: 0;
+	max-width: 20em;
+}
+
+.antilia-rich-text-attachments-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.antilia-rich-text-attachments-size {
+	flex: none;
+	color: var(--antilia-rich-text-muted);
+	font-size: 0.85em;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-attachments-delete {
+	display: inline-flex;
+	flex: none;
+	width: auto;
+	padding: 0.4em;
+	font-size: 1.1em;
+}
+
+.antilia-rich-text-menu-item.antilia-rich-text-attachments-delete:is(:hover, :focus-visible) {
+	color: var(--antilia-theme-error, #c53030);
+}
+
+.antilia-rich-text-attachments-none {
+	padding: 0.4em 0.75em;
+	color: var(--antilia-rich-text-muted);
+	font-style: italic;
+}
+
 .antilia-rich-text-suggestion-status {
 	padding: 0.4em 0.75em;
 	color: var(--antilia-rich-text-muted);

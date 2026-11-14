@@ -13,7 +13,10 @@
  */
 package com.antiliacode.widgets.upload;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
+import java.util.Locale;
 
 import org.apache.wicket.util.io.IClusterable;
 
@@ -24,14 +27,24 @@ import org.apache.wicket.util.io.IClusterable;
  * whether a browser may open a file of it in its window ({@link #isInline()}) or only save it.
  * <p>
  * The images of the rich text editors are of the formats of
- * {@link com.antiliacode.widgets.richtext.IRichTextImageType}, which extends this interface.
+ * {@link com.antiliacode.widgets.richtext.IRichTextImageType}, which extends this interface; the
+ * files attached to their texts of those of {@link UploadFileFormat} and of the application's own.
+ * <p>
+ * A format without a signature in its bytes, a text, matches any head that may be one, and checks
+ * the whole file once uploaded ({@link #accepts(InputStream)}). A file is of the first format with
+ * a signature its head matches; else, of the formats without one it matches, of the one its
+ * extension names, else the first ({@link #detect(byte[], String, Collection)}): the extension only
+ * chooses among the texts the bytes allow, and a PDF named {@code notes.txt} stays a PDF.
  *
  * @since 10.11.0
  */
 public interface IUploadFileFormat extends IClusterable
 {
-	/** How many of the first bytes of a file {@link #matches(byte[])} is given, at most. */
-	int HEAD = 32;
+	/**
+	 * How many of the first bytes of a file {@link #matches(byte[])} is given, at most: enough to
+	 * read the names of the first entries of a ZIP, which tell an Office document from another.
+	 */
+	int HEAD = 4096;
 
 	/**
 	 * @return the media type a file of the format is served as, {@code application/pdf} for
@@ -69,6 +82,78 @@ public interface IUploadFileFormat extends IClusterable
 	default boolean isInline()
 	{
 		return false;
+	}
+
+	/**
+	 * @return whether the format has a signature in its first bytes, as PDF has, rather than
+	 *         taking any head that may be of it, as a text does; {@code true} by default
+	 */
+	default boolean hasSignature()
+	{
+		return true;
+	}
+
+	/**
+	 * Checks the whole file once its head matched, before it is kept: a text checks that it is
+	 * UTF-8 and holds no NUL, for example. Takes any by default.
+	 *
+	 * @param file
+	 *            the file, from its first byte
+	 * @return whether the file is of the format
+	 * @throws IOException
+	 *             when the file could not be read
+	 */
+	default boolean accepts(InputStream file) throws IOException
+	{
+		return true;
+	}
+
+	/**
+	 * @param head
+	 *            the first bytes of a file, up to {@link #HEAD} of them
+	 * @param fileName
+	 *            the name the browser gave the file, not to be trusted: its extension only chooses
+	 *            among the formats the bytes allow; {@code null} for none
+	 * @param formats
+	 *            the formats the file may be of, in their order
+	 * @return the format of the file: the first with a signature its head matches; else, of those
+	 *         without one it matches, the one its extension names, else the first; {@code null}
+	 *         for none
+	 */
+	static <T extends IUploadFileFormat> T detect(byte[] head, String fileName,
+		Collection<T> formats)
+	{
+		if (head == null || formats == null)
+		{
+			return null;
+		}
+		String name = fileName == null ? "" : fileName.trim().toLowerCase(Locale.ROOT);
+		T first = null;
+		for (T format : formats)
+		{
+			if (format != null && format.hasSignature() && format.matches(head))
+			{
+				return format;
+			}
+		}
+		for (T format : formats)
+		{
+			if (format == null || format.hasSignature() || !format.matches(head))
+			{
+				continue;
+			}
+			if (first == null)
+			{
+				first = format;
+			}
+			String extension = format.getExtension();
+			if (extension != null && !extension.isEmpty() &&
+				name.endsWith("." + extension.toLowerCase(Locale.ROOT)))
+			{
+				return format;
+			}
+		}
+		return first;
 	}
 
 	/**

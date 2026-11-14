@@ -15,19 +15,23 @@ package com.antiliacode.widgets.richtext;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.fileupload2.core.FileUploadByteCountLimitException;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.core.FileUploadSizeException;
+import org.apache.wicket.Session;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.protocol.http.servlet.MultipartServletWebRequest;
 import org.apache.wicket.protocol.http.servlet.ServletWebRequest;
@@ -39,6 +43,9 @@ import org.apache.wicket.util.string.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.antiliacode.widgets.upload.IUploadFileFormat;
+import com.antiliacode.widgets.upload.IUploadScanner;
+import com.antiliacode.widgets.upload.UploadScan;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
@@ -90,9 +97,12 @@ final class RichTextImageUploads
 	 *            whether users keep images permanently, and find those kept, now
 	 * @param maxFound
 	 *            how many images kept permanently a search answers at most
+	 * @param scanner
+	 *            what scans each image before the store keeps it, {@code null} for none
 	 */
 	record Rules(Bytes maxSize, Set<IRichTextImageType> types, RichTextImageDimensions maxDimensions,
-		boolean siteOnly, boolean permanent, int maxFound) implements IClusterable
+		boolean siteOnly, boolean permanent, int maxFound, IUploadScanner scanner)
+		implements IClusterable
 	{
 		Rules
 		{
@@ -120,6 +130,14 @@ final class RichTextImageUploads
 		 * @return its translation
 		 */
 		String text(String name);
+
+		/**
+		 * @return the language of the user, for the scanner
+		 */
+		default Locale locale()
+		{
+			return Session.exists() ? Session.get().getLocale() : Locale.ENGLISH;
+		}
 	}
 
 	/**
@@ -333,11 +351,32 @@ final class RichTextImageUploads
 	private static String[] receive(Request request, Rules rules, IRichTextImageStore store,
 		Texts texts) throws Refusal
 	{
+		return receive(request, rules.maxSize(), texts, "theImage", upload -> keep(upload, rules,
+			store, texts));
+	}
+
+	/** Keeps a file uploaded, answering its address. */
+	@FunctionalInterface
+	interface Keeper
+	{
+		String keep(FileUpload upload) throws Refusal;
+	}
+
+	/**
+	 * Takes the file of the request, no larger than allowed, the request cut before reading it,
+	 * and has it kept.
+	 *
+	 * @param theFile
+	 *            the name of the text standing for a file without a name
+	 * @return the address the file is served at, and the name of its file
+	 */
+	static String[] receive(Request request, Bytes maxSize, Texts texts, String theFile,
+		Keeper keeper) throws Refusal
+	{
 		if (!(request instanceof ServletWebRequest servlet))
 		{
-			throw refusal(texts, "uploadFailed", "");
+			throw refusalOf(texts, theFile, "uploadFailed", "");
 		}
-		Bytes maxSize = rules.maxSize();
 		List<FileItem> items = List.of();
 		try
 		{
@@ -352,23 +391,108 @@ final class RichTextImageUploads
 			items = files.getOrDefault(RichTextImageUploadBehavior.FILE_PARAMETER, List.of());
 			if (items.size() != 1 || items.get(0).isFormField())
 			{
-				throw refusal(texts, "uploadFailed", "");
+				throw refusalOf(texts, theFile, "uploadFailed", "");
 			}
 			FileUpload upload = new FileUpload(items.get(0));
-			return new String[] { keep(upload, rules, store, texts), upload.getClientFileName() };
+			return new String[] { keeper.keep(upload), upload.getClientFileName() };
 		}
 		catch (FileUploadSizeException tooLarge)
 		{
-			throw refusal(texts, "uploadTooLarge", fileName(tooLarge), sizeText(maxSize.bytes()));
+			throw refusalOf(texts, theFile, "uploadTooLarge", fileName(tooLarge),
+				sizeText(maxSize.bytes()));
 		}
 		catch (FileUploadException e)
 		{
-			LOG.warn("Could not read an image uploaded", e);
-			throw refusal(texts, "uploadFailed", "");
+			LOG.warn("Could not read a file uploaded", e);
+			throw refusalOf(texts, theFile, "uploadFailed", "");
 		}
 		finally
 		{
 			delete(items);
+		}
+	}
+
+	/**
+	 * Has the scanner, if any, scan a file, checked already.
+	 *
+	 * @param check
+	 *            checks the cleaned copy the scanner answers, as the file was
+	 * @return the file to keep: the one given, or a cleaned copy, a file of its own, which the
+	 *         caller deletes after
+	 */
+	static FileUpload scanned(FileUpload upload, IUploadFileFormat format, IUploadScanner scanner,
+		Texts texts, String theFile, Keeper check) throws Refusal
+	{
+		if (scanner == null)
+		{
+			return upload;
+		}
+		String name = upload.getClientFileName();
+		UploadScan scan;
+		try
+		{
+			scan = scanner.scan(upload, format, texts.locale());
+		}
+		catch (IOException | RuntimeException e)
+		{
+			LOG.warn("Could not scan the file {} uploaded", name, e);
+			throw refusalOf(texts, theFile, "uploadFailed", name);
+		}
+		if (scan == null)
+		{
+			throw refusalOf(texts, theFile, "uploadFailed", name);
+		}
+		if (!scan.isAccepted())
+		{
+			throw new Refusal(scan.getRefusal());
+		}
+		byte[] cleaned = scan.getCleaned();
+		if (cleaned == null)
+		{
+			return upload;
+		}
+		FileUpload copy;
+		try
+		{
+			DiskFileItem item = DiskFileItem.builder()
+				.setFieldName(RichTextImageUploadBehavior.FILE_PARAMETER).setFileName(name)
+				.setContentType(format.getMimeType()).setFormField(false).get();
+			try (OutputStream output = item.getOutputStream())
+			{
+				output.write(cleaned);
+			}
+			copy = new FileUpload(item);
+		}
+		catch (IOException e)
+		{
+			LOG.warn("Could not keep the cleaned copy of the file {} uploaded", name, e);
+			throw refusalOf(texts, theFile, "uploadFailed", name);
+		}
+		try
+		{
+			check.keep(copy);
+		}
+		catch (Refusal | RuntimeException e)
+		{
+			discard(copy);
+			throw e;
+		}
+		return copy;
+	}
+
+	/**
+	 * Deletes the cleaned copy of a file, which the store kept a copy of, or refused.
+	 */
+	static void discard(FileUpload copy)
+	{
+		copy.closeStreams();
+		try
+		{
+			copy.delete();
+		}
+		catch (IOException e)
+		{
+			LOG.warn("Could not delete the cleaned copy of a file uploaded", e);
 		}
 	}
 
@@ -399,6 +523,50 @@ final class RichTextImageUploads
 		Texts texts) throws Refusal
 	{
 		String name = upload.getClientFileName();
+		IRichTextImageType type = check(upload, rules, texts);
+		FileUpload kept = scanned(upload, type, rules.scanner(), texts, "theImage", copy -> {
+			if (check(copy, rules, texts) != type)
+			{
+				throw refusal(texts, "uploadFailed", name);
+			}
+			return null;
+		});
+		String url;
+		try
+		{
+			url = store.store(kept, type);
+		}
+		catch (IOException | RuntimeException e)
+		{
+			LOG.error("Could not keep the image {} uploaded", name, e);
+			throw refusal(texts, "uploadFailed", name);
+		}
+		finally
+		{
+			upload.closeStreams();
+			if (kept != upload)
+			{
+				discard(kept);
+			}
+		}
+		if (!isTaken(url, rules.siteOnly()))
+		{
+			LOG.error("The address {} of the image {} uploaded is not one the editor takes", url,
+				name);
+			throw refusal(texts, "uploadFailed", name);
+		}
+		return url.trim();
+	}
+
+	/**
+	 * Checks an image: its size, its type as its bytes say, and its pixels.
+	 *
+	 * @return its type
+	 */
+	private static IRichTextImageType check(FileUpload upload, Rules rules, Texts texts)
+		throws Refusal
+	{
+		String name = upload.getClientFileName();
 		if (upload.getSize() > rules.maxSize().bytes())
 		{
 			throw refusal(texts, "uploadTooLarge", name, sizeText(rules.maxSize().bytes()));
@@ -420,27 +588,7 @@ final class RichTextImageUploads
 				.map(IRichTextImageType::getLabel).distinct().collect(Collectors.joining(", ")));
 		}
 		checkDimensions(upload, type, name, rules.maxDimensions(), texts);
-		String url;
-		try
-		{
-			url = store.store(upload, type);
-		}
-		catch (IOException | RuntimeException e)
-		{
-			LOG.error("Could not keep the image {} uploaded", name, e);
-			throw refusal(texts, "uploadFailed", name);
-		}
-		finally
-		{
-			upload.closeStreams();
-		}
-		if (!isTaken(url, rules.siteOnly()))
-		{
-			LOG.error("The address {} of the image {} uploaded is not one the editor takes", url,
-				name);
-			throw refusal(texts, "uploadFailed", name);
-		}
-		return url.trim();
+		return type;
 	}
 
 	/**
@@ -500,10 +648,21 @@ final class RichTextImageUploads
 	 */
 	private static Refusal refusal(Texts texts, String key, String... values)
 	{
+		return refusalOf(texts, "theImage", key, values);
+	}
+
+	/**
+	 * @param theFile
+	 *            the name of the text standing for a file without a name
+	 * @return the reason the file was not taken, in the language of the user: one of the texts
+	 *         of the editor, {0}, {1} standing for the values
+	 */
+	static Refusal refusalOf(Texts texts, String theFile, String key, String... values)
+	{
 		String text = texts.text(key);
 		for (int i = 0; i < values.length; i++)
 		{
-			String value = i == 0 && Strings.isEmpty(values[i]) ? texts.text("theImage") :
+			String value = i == 0 && Strings.isEmpty(values[i]) ? texts.text(theFile) :
 				values[i];
 			text = text.replace("{" + i + "}", value);
 		}
@@ -530,8 +689,8 @@ final class RichTextImageUploads
 		return bytes + " B";
 	}
 
-	/** Why an image was not taken, in words for the user. */
-	private static final class Refusal extends Exception
+	/** Why a file was not taken, in words for the user. */
+	static final class Refusal extends Exception
 	{
 		private static final long serialVersionUID = 1L;
 

@@ -595,7 +595,7 @@ class RichTextEditorPageTest
 			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
 
 		form = tester.newFormTester(controls);
-		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 27 }, true);
+		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 29 }, true);
 		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
 		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
 			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());
@@ -729,6 +729,55 @@ class RichTextEditorPageTest
 		assertEquals(404, tester.getLastResponse().getStatus());
 
 		// the article saved, without the image uploaded, which never went into it: it goes
+		tester.startPage(page);
+		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals(404, tester.getLastResponse().getStatus());
+	}
+
+	@Test
+	void attachesFilesWhichTheResourceServesAndDeletesThoseTakenOutOnceSaved() throws IOException
+	{
+		org.apache.wicket.Page page = tester.getLastRenderedPage();
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isAttachmentUploading());
+		assertEquals(RichTextAttachments.get(), editor.getAttachmentStore());
+		String page0 = tester.getLastResponseAsString();
+		int at = page0.indexOf("Wicket.RichTextEditor.attach(\"" + editor.getMarkupId() + "\", ");
+		JSONObject options = (JSONObject)new JSONTokener(page0.substring(page0.indexOf('{', at)))
+			.nextValue();
+		String attachUrl = options.getString("attachUrl");
+		assertTrue(attachUrl.contains("/rich-text-images?" + RichTextFiles.KEY_PARAMETER + "="),
+			attachUrl);
+		assertEquals(RichTextAttachments.MAX_COUNT, options.getInt("attachMaxCount"));
+		// and the apps attach files there too
+		assertEquals(RichTextFiles.get(RichTextImages.PATH).getAttachmentUploadUrl(),
+			((RichTextEditorPage)page).getFrameworkConfig().getString("attachUrl"));
+
+		Path file = Files.createTempFile("report", ".pdf");
+		String url;
+		try
+		{
+			Files.write(file, "%PDF-1.7\n%%EOF".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+			tester.getRequest().setUseMultiPartContentType(true);
+			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+				new org.apache.wicket.util.file.File(file.toFile()), "application/pdf");
+			tester.executeUrl(attachUrl.substring(attachUrl.indexOf("rich-text-images")));
+			url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+		}
+		finally
+		{
+			Files.deleteIfExists(file);
+		}
+		assertTrue(url.matches(".*/rich-text-images/[0-9a-f]{32}\\.pdf"), url);
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals("application/pdf", tester.getLastResponse().getContentType());
+		assertEquals("sandbox", tester.getLastResponse().getHeader("Content-Security-Policy"));
+		assertTrue(tester.getLastResponse().getHeader("Content-Disposition").startsWith(
+			"inline; filename=\"" + file.getFileName()), tester.getLastResponse().getHeader(
+				"Content-Disposition"));
+
+		// the article saved without the file, which never went into it: it goes
 		tester.startPage(page);
 		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
 		getUrl(url.substring(url.indexOf("rich-text-images/")));
