@@ -821,6 +821,30 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	}
 
 	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void showsTheArticleSavedWithItsImageOutsideTheEditor(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		// to the resource of the uploads of the application, not to the page
+		transfer("drop", "dropped.png", "image/png", PNG);
+		wait.until(d -> uploaded().size() == 1);
+		String src = uploaded().get(0).getDomAttribute("src");
+		assertTrue(src.matches(".*/rich-text-images/[0-9a-f]{32}\\.png"), src);
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__view " +
+			"img[src*='/rich-text-images/']")).size() == 1);
+
+		selectCase("View: the texts as saved");
+		WebElement shown = wait.until(d -> app().findElements(By.cssSelector(
+			".rich-text-demo__views .rich-text-demo__view img")).stream()
+			.filter(WebElement::isDisplayed).findFirst().orElse(null));
+		assertEquals(src, shown.getDomAttribute("src"));
+		wait.until(d -> Boolean.TRUE.equals(script("return arguments[0].complete && " +
+			"arguments[0].naturalWidth === 1;", shown)));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void uploadsSeveralImagesOnTheZoneAndDeletesThoseTakenOutOnceSaved(SeleniumBrowser browser,
 		String framework)

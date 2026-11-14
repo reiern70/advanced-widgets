@@ -29,8 +29,10 @@
  * Wicket.RichTextEvents.register(name, { from, init, fire }) plugs in a type of events, shared
  * with CKEditor's script (see rich-text-events.ts).
  *
- * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
- * chooses, drops or pastes there, telling the share sent, and the server answers their addresses;
+ * With uploadUrl, the URL of the editor's upload behavior, or of the resource of the uploads of
+ * the application (RichTextFiles) with the key of the editor's uploads, the editor uploads the
+ * images the user chooses, drops or pastes there, telling the share sent, and the server answers
+ * their addresses;
  * with permanentImages too, the user ticks the images to store permanently, which the editor asks
  * the same behavior to, and the tool storedImage finds those stored there. With imagesAjax, the
  * attributes of the requests of its Ajax behavior hearing of the images taken out of the text,

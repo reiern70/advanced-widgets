@@ -396,6 +396,31 @@ bundle of it. Self-hosted, WProofreader takes the address of its server instead 
 `serviceProtocol`, `serviceHost`, `servicePort`, `servicePath` and `srcUrl`
 (`https://host/wscservice/wscbundle/wscbundle.js`).
 
+### Images of the rich text editor, uploaded and served
+
+With a store of images, a `RichTextEditor` takes the images users drop, paste or choose: a behavior
+of the editor, on its page, checks each, its size, its type by its first bytes and its pixels, and the
+store keeps it. Or the application mounts the resource of the uploads once, not tied to a page,
+which takes the uploads of every editor, Wicket's, React's and Svelte's, with the same checks, and
+serves what the store keeps to the editors and to any page showing a text:
+
+```java
+// WebApplication#init()
+RichTextFiles.mount(this, "rich-text-files", store).setImageMaxSize(Bytes.megabytes(2));
+
+// a page
+editor.setUploadResource(RichTextFiles.get());
+```
+
+The store answers the addresses of the resource (`RichTextFiles.get().addressOf(name)`) and opens an
+image by its name (`IRichTextImageStore.open(name)`), only those the user of the request may see;
+`setReadCheck((name, request) -> ...)` adds the application's own check. A file is served as the
+media type of the format its bytes were found to be, never the one the browser gave, with
+`X-Content-Type-Options: nosniff` and `Content-Security-Policy: sandbox`, inline only when a browser
+may open it, as an attachment otherwise. `setBaseUrl("https://files.example.com/rich-text-files")`
+links the files to a domain of their own. The resource refuses an upload a browser sends from
+another site, and cuts a request larger than the largest image allowed before reading the file.
+
 ## Using the components in React and Svelte
 
 The packages are in `frontend` (`@antilia/core`, `@antilia/react`, `@antilia/svelte`) and not
