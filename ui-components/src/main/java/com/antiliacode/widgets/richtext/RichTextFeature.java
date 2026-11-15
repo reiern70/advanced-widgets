@@ -255,6 +255,26 @@ public enum RichTextFeature implements IRichTextFeature
 		}
 	},
 
+	/**
+	 * Files attached to the text, PDFs or spreadsheets, each a link of its own,
+	 * {@code <a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">
+	 * report.pdf</a>}: the class of its format, the extension, draws its icon, and the size shows
+	 * after its name. Uploaded with {@link RichTextEditor#setAttachmentStore(
+	 * IRichTextAttachmentStore) a store}; in Markdown, a plain link, {@code [report.pdf](url)}.
+	 */
+	ATTACHMENT("attachment")
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			rules.allowElements("a").allowUrl("href", "a")
+				.allowAttribute("class", ATTACHMENT_CLASS, "a")
+				.allowAttribute("data-size", SIZE, "a")
+				.allowAttribute("target", BLANK, "a")
+				.requireRelsOnLinks("noopener", "noreferrer", "nofollow");
+		}
+	},
+
 	/** The alignment of paragraphs, headings and cells, by classes; not in Markdown. */
 	TEXT_ALIGN("textAlign", false)
 	{
@@ -285,6 +305,13 @@ public enum RichTextFeature implements IRichTextFeature
 
 	/** The class of a mention. */
 	private static final Pattern MENTION_CLASS = Pattern.compile(RichTextMention.CLASS);
+
+	/** The classes of a file attached: the link's, and that of its format. */
+	private static final Pattern ATTACHMENT_CLASS = Pattern.compile(
+		"antilia-attachment(?: antilia-attachment-[a-z0-9]{1,10})?");
+
+	/** The size of a file attached, as the editor writes it: 1.2 MB. */
+	private static final Pattern SIZE = Pattern.compile("[0-9]{1,4}(?:\\.[0-9])? (?:B|KB|MB|GB)");
 
 	/** The classes aligning text. */
 	private static final Pattern ALIGN_CLASS = Pattern.compile(

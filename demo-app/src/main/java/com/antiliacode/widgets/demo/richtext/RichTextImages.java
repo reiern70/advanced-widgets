@@ -36,8 +36,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.wicket.markup.html.form.upload.FileUpload;
-import org.apache.wicket.request.Request;
-import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.util.lang.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,12 +44,15 @@ import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.richtext.IRichTextImageStore;
 import com.antiliacode.widgets.richtext.IRichTextImageType;
 import com.antiliacode.widgets.richtext.RichTextImageDimensions;
+import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.richtext.RichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextServedFile;
 import com.antiliacode.widgets.richtext.RichTextStoredImage;
 
 /**
  * Keeps the images users upload into the rich text editors of the demo in a folder, served by
- * {@link RichTextImageResource} at {@value #PATH}: for a day, and at most {@value #MAX_IMAGES} of
+ * the library's resource of the uploads, {@link RichTextFiles}, which the application mounts at
+ * {@value #PATH} and which takes the uploads of the article and of the apps too: for a day, and at most {@value #MAX_IMAGES} of
  * them, the oldest going first, so that the public demo cannot fill the disk. The articles live in
  * the sessions, so an image is not needed for longer. Each user, by the account signed in with or
  * else by the session, keeps at most {@value #MAX_IMAGES_PER_USER}, its own oldest going first:
@@ -69,6 +70,10 @@ import com.antiliacode.widgets.richtext.RichTextStoredImage;
  * deleted when taken out of a text, and found by their names for the tool insert image from store,
  * each user finding its own. Permanently, in the demo, is for {@link #PERMANENT_MAX_AGE} and
  * {@value #MAX_PERMANENT_PER_USER} images of a user, its oldest going first.
+ * <p>
+ * It opens the images for the resource to serve by the names it gave, each as the type of image
+ * its bytes said, which its extension keeps: those of every user, to anyone who may see the demos,
+ * as the texts holding them are shown to anyone in the demo too. Any other name is not found.
  */
 public final class RichTextImages implements IRichTextImageStore
 {
@@ -397,12 +402,29 @@ public final class RichTextImages implements IRichTextImageStore
 	}
 
 	/**
-	 * @return the address an image is served at, from the root of the server
+	 * @return the address an image is served at, from the root of the server: the resource's
 	 */
 	static String addressOf(String name)
 	{
-		Request request = RequestCycle.get().getRequest();
-		return request.getContextPath() + request.getFilterPath() + "/" + PATH + "/" + name;
+		return RichTextFiles.get(PATH).addressOf(name);
+	}
+
+	/**
+	 * Opens an image the store gave the name of, and kept no longer than allowed, for the resource
+	 * to serve, with the name of its file when it is kept permanently.
+	 */
+	@Override
+	public RichTextServedFile open(String name) throws IOException
+	{
+		Path file = find(name);
+		RichTextImageType type = file == null ? null : typeOf(file);
+		if (type == null)
+		{
+			return null;
+		}
+		Path named = file.resolveSibling(file.getFileName() + NAME_EXTENSION);
+		return RichTextServedFile.of(file, type, Files.isRegularFile(named) ?
+			nameOfPermanent(file) : null);
 	}
 
 	/**

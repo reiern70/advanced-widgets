@@ -801,13 +801,15 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 		wait.until(d -> uploaded().size() == 3);
 		assertTrue(editor().findElements(By.cssSelector(".antilia-rich-text-uploading")).isEmpty());
 
-		// a file of another type: refused before uploading, a message saying why
-		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
-			"notes".getBytes(StandardCharsets.UTF_8)));
+		// a file of a type neither the images nor the files attached take: refused before
+		// uploading, a message saying why
+		transfer("drop", "setup.exe", "application/x-msdownload", Base64.getEncoder()
+			.encodeToString(new byte[] { 'M', 'Z', 0, 0 }));
 		WebElement message = wait.until(d -> editor().findElements(By.cssSelector(
 			".antilia-rich-text-message")).stream().findFirst().orElse(null));
 		assertEquals("alert", message.getDomAttribute("role"));
-		assertTrue(message.getText().startsWith("notes.txt is not an image"), message.getText());
+		assertTrue(message.getText().startsWith("setup.exe is not a file of a type"),
+			message.getText());
 		assertEquals(3, uploaded().size());
 
 		if ("wicket".equals(framework))
@@ -817,6 +819,106 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 			wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__view " +
 				"img[src*='/rich-text-images/']")).size() == 3);
 		}
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void attachesFilesDroppedOrChosenAndDeletesThoseTakenOutOnceSaved(SeleniumBrowser browser,
+		String framework) throws IOException
+	{
+		openEditor(browser, framework);
+		// dropped into the text: a file that is no image goes in as a link of its own
+		transfer("drop", "report.pdf", "application/pdf", Base64.getEncoder().encodeToString(
+			"%PDF-1.7\n%%EOF".getBytes(StandardCharsets.US_ASCII)));
+		wait.until(d -> attached().size() == 1);
+		WebElement link = attached().get(0);
+		assertTrue(link.getDomAttribute("class").contains("antilia-attachment-pdf"),
+			link.getDomAttribute("class"));
+		assertEquals("14 B", link.getDomAttribute("data-size"));
+		assertEquals("report.pdf", link.getDomProperty("textContent"));
+
+		// chosen in the form of the tool, where the cursor is
+		Path table = Files.createTempFile(Path.of("target").toAbsolutePath(), "table", ".csv");
+		try
+		{
+			Files.writeString(table, "bird,count\noystercatcher,42\n");
+			clickAtEnd(content().findElement(By.cssSelector("p")));
+			tool("attachment").click();
+			WebElement zone = wait.until(d -> d.findElements(By.cssSelector(
+				".antilia-popover .antilia-rich-text-dropzone")).stream().findFirst().orElse(null));
+			wait.until(d -> "Drop files here".equals(zone.findElement(By.cssSelector(
+				".antilia-rich-text-dropzone-text")).getText()));
+			zone.findElement(By.cssSelector("input[type=file]")).sendKeys(table.toAbsolutePath()
+				.toString());
+			wait.until(d -> attached().size() == 2);
+		}
+		finally
+		{
+			Files.deleteIfExists(table);
+		}
+		assertTrue(attached().stream().anyMatch(each -> each.getDomAttribute("class")
+			.contains("antilia-attachment-csv")));
+
+		// a file of a type the editor takes not: refused before uploading, a message saying why
+		transfer("drop", "setup.exe", "application/x-msdownload", Base64.getEncoder()
+			.encodeToString(new byte[] { 'M', 'Z', 0, 0 }));
+		WebElement message = wait.until(d -> editor().findElements(By.cssSelector(
+			".antilia-rich-text-message")).stream().findFirst().orElse(null));
+		assertTrue(message.getText().startsWith("setup.exe is not a file of a type"),
+			message.getText());
+		assertEquals(2, attached().size());
+
+		// the menu of the files takes one out of the text; saved, the server deletes it
+		String first = attached().get(0).getDomProperty("href");
+		tool("attachments").click();
+		WebElement delete = wait.until(d -> editor().findElements(By.cssSelector(
+			"[role=menu] .antilia-rich-text-attachments-delete")).stream().findFirst().orElse(null));
+		assertTrue(delete.getDomAttribute("aria-label").startsWith("Delete "));
+		delete.click();
+		wait.until(d -> attached().size() == 1);
+		assertEquals(200L, served(first));
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> Long.valueOf(404).equals(served(first)));
+		assertEquals(200L, served(attached().get(0).getDomProperty("href")));
+		if ("wicket".equals(framework))
+		{
+			// the server kept the link through its cleaning
+			wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__view " +
+				"a.antilia-attachment")).size() == 1);
+		}
+		assertNoErrors();
+	}
+
+	/**
+	 * @return the files attached to the text
+	 */
+	private List<WebElement> attached()
+	{
+		return content().findElements(By.cssSelector("a.antilia-attachment"));
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void showsTheArticleSavedWithItsImageOutsideTheEditor(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		// to the resource of the uploads of the application, not to the page
+		transfer("drop", "dropped.png", "image/png", PNG);
+		wait.until(d -> uploaded().size() == 1);
+		String src = uploaded().get(0).getDomAttribute("src");
+		assertTrue(src.matches(".*/rich-text-images/[0-9a-f]{32}\\.png"), src);
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> app().findElements(By.cssSelector(".rich-text-demo__view " +
+			"img[src*='/rich-text-images/']")).size() == 1);
+
+		selectCase("View: the texts as saved");
+		WebElement shown = wait.until(d -> app().findElements(By.cssSelector(
+			".rich-text-demo__views .rich-text-demo__view img")).stream()
+			.filter(WebElement::isDisplayed).findFirst().orElse(null));
+		assertEquals(src, shown.getDomAttribute("src"));
+		wait.until(d -> Boolean.TRUE.equals(script("return arguments[0].complete && " +
+			"arguments[0].naturalWidth === 1;", shown)));
 		assertNoErrors();
 	}
 

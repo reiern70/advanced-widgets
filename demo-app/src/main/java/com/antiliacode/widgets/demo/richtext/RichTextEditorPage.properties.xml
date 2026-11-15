@@ -20,6 +20,8 @@
 	<entry key="notesTitle">Notes in Markdown</entry>
 	<entry key="cleaningTitle">The cleaning on the server</entry>
 	<entry key="writingTitle">Writing: spelling, mentions, completions</entry>
+	<entry key="viewTitle">View: the texts as saved</entry>
+	<entry key="viewExplanation">The texts of the cases as last saved, read only, as any page shows them outside the editors. Their images come from the resource of the uploads of the application, which the editors and any page share.</entry>
 	<entry key="writingLabel">Text</entry>
 	<entry key="writingStart">Not saved yet.</entry>
 	<entry key="writingSaved">Saved.</entry>

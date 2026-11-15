@@ -21,7 +21,8 @@
 	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
-	import { describe, imagesTakenOut, proofreader as proofreaderOf, richText, storedImages,
+	import { attachments, describe, filesTakenOut, imagesTakenOut, proofreader as proofreaderOf,
+		richText, storedImages,
 		suggesters as suggestersOf, toolbarOf, uploader, type RichText,
 		type RichTextEditorConfig } from '../rich-text-editor.js';
 
@@ -40,6 +41,8 @@
 	const onupload = uploader(initial);
 	const stored = storedImages(initial);
 	const articleImages = imagesTakenOut(initial);
+	const articleFiles = filesTakenOut(initial);
+	const attached = attachments(initial);
 	const notesImages = imagesTakenOut(initial);
 	const limits = { uploadTypes: initial.uploadTypes, uploadMaxSize: initial.uploadMaxSize,
 		uploadMaxWidth: initial.uploadMaxWidth, uploadMaxHeight: initial.uploadMaxHeight,
@@ -55,6 +58,7 @@
 
 	function saveArticle() {
 		articleImages.saved(article.text);
+		articleFiles.saved(article.text);
 		article.saved = article.text;
 		heard = texts.appSaved;
 	}
@@ -101,6 +105,9 @@
 							toolbar={toolbarOf(toolbar)} {bubbleMenu} {readOnly} {count} texts={config.editor}
 							{highlight} {onupload} {...limits}
 							onimagesremoved={(urls) => articleImages.add(urls)} {proofreader} {suggesters}
+							onattach={attached.onAttach} attachTypes={attached.attachTypes}
+							attachMaxSize={attached.attachMaxSize} attachMaxCount={attached.attachMaxCount}
+							onattachmentsremoved={(urls) => articleFiles.add(urls)}
 							onsave={saveArticle} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />

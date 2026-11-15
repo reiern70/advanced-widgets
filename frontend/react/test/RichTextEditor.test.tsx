@@ -312,6 +312,39 @@ describe('RichTextEditor', () => {
 		expect(drop()).toBeFalsy();
 	});
 
+	it('attaches the files the user drops, by onAttach, and tells of those taken out', async () => {
+		const onAttach = vi.fn(() => Promise.resolve('/files/r.pdf'));
+		const onAttachmentsRemoved = vi.fn();
+		const onChange = vi.fn();
+		const ref = createRef<RichTextEditorHandle>();
+		const { rerender } = render(<RichTextEditor ref={ref} value="<p>a</p>" onAttach={onAttach}
+			attachMaxSize={1024} attachMaxCount={2} attachDialog onChange={onChange}
+			onAttachmentsRemoved={onAttachmentsRemoved} />);
+		const options = ref.current!.editor!.options;
+		expect([options.attachMaxSize, options.attachMaxCount, options.attachDialog])
+			.toEqual([1024, 2, true]);
+		const view = ref.current!.editor!.editor.view;
+		vi.spyOn(view, 'posAtCoords').mockReturnValue(null);
+		const event = new Event('drop', { cancelable: true });
+		Object.assign(event, { clientX: 0, clientY: 0, dataTransfer: { types: ['Files'],
+			files: [new File([new Uint8Array(4)], 'r.pdf', { type: 'application/pdf' })],
+			getData: () => '' } });
+		act(() => {
+			ref.current!.editor!.editor.commands.setTextSelection(2);
+		});
+		expect(view.someProp('handleDrop', (handle) => handle(view, event as DragEvent,
+			Slice.empty, false))).toBe(true);
+		await tick();
+		expect(onAttach).toHaveBeenCalledTimes(1);
+		expect(onChange).toHaveBeenLastCalledWith('<p>a<a class="antilia-attachment ' +
+			'antilia-attachment-pdf" href="/files/r.pdf" target="_blank" data-size="4 B" ' +
+			'rel="noopener noreferrer nofollow">r.pdf</a></p>');
+		expect(document.querySelector('[data-tool="attachment"]')).not.toBeNull();
+
+		rerender(<RichTextEditor ref={ref} value="<p>a</p>" />);
+		expect(document.querySelector('[data-tool="attachment"]')).toBeNull();
+	});
+
 	it('takes the limits of the uploads, and tells the latest onImagesRemoved of the images taken ' +
 		'out', async () => {
 		const first = vi.fn();

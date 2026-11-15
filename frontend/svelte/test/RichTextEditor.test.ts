@@ -279,6 +279,34 @@ describe('RichTextEditor', () => {
 			expect(onimagesremoved).toHaveBeenCalledWith(['/a.png']);
 		});
 
+	it('attaches the files the user drops, by onattach, and tells of those taken out',
+		async () => {
+			const onattach = vi.fn(() => Promise.resolve('/files/r.pdf'));
+			const onattachmentsremoved = vi.fn();
+			const { container } = render(BoundRichTextEditor, { onattach, attachMaxSize: 1024,
+				onattachmentsremoved });
+			expect(core(container).options.attachMaxSize).toBe(1024);
+			const view = core(container).editor.view;
+			const event = new Event('drop', { cancelable: true });
+			Object.assign(event, { clientX: 0, clientY: 0, dataTransfer: { types: ['Files'],
+				files: [new File(['%PDF'], 'r.pdf', { type: 'application/pdf' })],
+				getData: () => '' } });
+			view.posAtCoords = () => null;
+			core(container).editor.commands.setTextSelection(12);
+			expect(view.someProp('handleDrop', (handle) => handle(view, event as DragEvent,
+				Slice.empty, false))).toBe(true);
+			await tick();
+			flushSync();
+			expect(onattach).toHaveBeenCalledTimes(1);
+			expect(container.querySelector('output')?.textContent).toBe('<p>Hello world<a ' +
+				'class="antilia-attachment antilia-attachment-pdf" href="/files/r.pdf" ' +
+				'target="_blank" data-size="4 B" rel="noopener noreferrer nofollow">r.pdf</a></p>');
+			const editor = core(container).editor;
+			editor.view.dispatch(editor.state.tr.delete(12, 13));
+			await tick(350);
+			expect(onattachmentsremoved).toHaveBeenCalledWith(['/files/r.pdf']);
+		});
+
 	it('uploads the images the user drops, by onupload', async () => {
 		const onupload = vi.fn(() => Promise.resolve('/bird.png'));
 		const { container, rerender } = render(BoundRichTextEditor, { onupload });

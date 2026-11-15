@@ -40,8 +40,8 @@
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
-		type RichTextProofreader, type RichTextStoredImage, type RichTextSuggester,
-		type RichTextTool, type RichTextUploadOptions } from '@antilia/core';
+		type RichTextAttachmentType, type RichTextProofreader, type RichTextStoredImage,
+		type RichTextSuggester, type RichTextTool, type RichTextUploadOptions } from '@antilia/core';
 
 	import { getLook } from './look.js';
 
@@ -159,6 +159,17 @@
 		/** Whether the form of the image opens the dialog of the uploads rather than its own zone. */
 		uploadDialog?: boolean;
 		/**
+		 * The types of the files the user may attach, each a media type, an extension and a label;
+		 * those of the server when left out.
+		 */
+		attachTypes?: readonly RichTextAttachmentType[];
+		/** The largest file the user may attach, in bytes; none when left out. */
+		attachMaxSize?: number | null;
+		/** How many files one drop, choice or paste takes at most; none when left out. */
+		attachMaxCount?: number | null;
+		/** Whether the form of the tool attachment opens the dialog of the uploads. */
+		attachDialog?: boolean;
+		/**
 		 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 		 * again; false when left out.
 		 */
@@ -205,6 +216,17 @@
 		 * core).
 		 */
 		onimagesremoved?: (urls: string[]) => void;
+		/**
+		 * Uploads a file the user attaches, a PDF or a spreadsheet, answering the address it is
+		 * served at (see uploadFileTo of the core): it goes into the text as a link with its name
+		 * and its size. Without it the tools of the files do not show.
+		 */
+		onattach?: (file: File, options?: RichTextUploadOptions) => Promise<string>;
+		/**
+		 * Called a moment after the user took files attached out of the text, with their
+		 * addresses, for the page to delete them (see deleteAttachmentsAt of the core).
+		 */
+		onattachmentsremoved?: (urls: string[]) => void;
 	};
 
 	let {
@@ -250,6 +272,10 @@
 		uploadScaling,
 		uploadMaxCount,
 		uploadDialog,
+		attachTypes,
+		attachMaxSize,
+		attachMaxCount,
+		attachDialog,
 		name,
 		id,
 		class: className = '',
@@ -265,7 +291,9 @@
 		onupload,
 		onstorepermanently,
 		onfindimages,
-		onimagesremoved
+		onimagesremoved,
+		onattach,
+		onattachmentsremoved
 	}: Props = $props();
 
 	/** The highlighter of the prop highlight: the grammars of the code editor for true. */
@@ -275,6 +303,10 @@
 	/** Uploads by the latest onupload, null without one. */
 	const uploader = () => onupload ? (file: File, options?: RichTextUploadOptions) =>
 		onupload!(file, options) : null;
+
+	/** Attaches files by the latest onattach, null without one. */
+	const attacher = () => onattach ? (file: File, options?: RichTextUploadOptions) =>
+		onattach!(file, options) : null;
 
 	/** Stores permanently by the latest onstorepermanently, null without one. */
 	const keeper = () => onstorepermanently ? (urls: string[]) => onstorepermanently!(urls) :
@@ -302,6 +334,8 @@
 			uploadMaxCount, uploadDialog, onUpload: uploader(), onStorePermanently: keeper(),
 			onFindImages: finder(),
 			onImagesRemoved: (urls: string[]) => onimagesremoved?.(urls),
+			attachTypes, attachMaxSize, attachMaxCount, attachDialog, onAttach: attacher(),
+			onAttachmentsRemoved: (urls: string[]) => onattachmentsremoved?.(urls),
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -363,7 +397,10 @@
 			uploadMaxSize: uploadMaxSize ?? null, uploadMaxWidth: uploadMaxWidth ?? null,
 			uploadMaxHeight: uploadMaxHeight ?? null, uploadScaling: !!uploadScaling,
 			uploadMaxCount: uploadMaxCount ?? null, uploadDialog: !!uploadDialog,
-			onUpload: uploader(), onStorePermanently: keeper(), onFindImages: finder() };
+			onUpload: uploader(), onStorePermanently: keeper(), onFindImages: finder(),
+			attachTypes, attachMaxSize: attachMaxSize ?? null,
+			attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
+			onAttach: attacher() };
 		untrack(() => instance?.configure(next));
 	});
 

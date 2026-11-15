@@ -20,6 +20,8 @@
 	<entry key="notesTitle">Notizen in Markdown</entry>
 	<entry key="cleaningTitle">Die Bereinigung auf dem Server</entry>
 	<entry key="writingTitle">Schreiben: Rechtschreibung, Erwähnungen, Ergänzungen</entry>
+	<entry key="viewTitle">Ansicht: die Texte wie gespeichert</entry>
+	<entry key="viewExplanation">Die Texte der Fälle, wie zuletzt gespeichert, schreibgeschützt, wie jede Seite sie außerhalb der Editoren zeigt. Ihre Bilder kommen von der Ressource der Uploads der Anwendung, die die Editoren und jede Seite teilen.</entry>
 	<entry key="writingLabel">Text</entry>
 	<entry key="writingStart">Noch nicht gespeichert.</entry>
 	<entry key="writingSaved">Gespeichert.</entry>

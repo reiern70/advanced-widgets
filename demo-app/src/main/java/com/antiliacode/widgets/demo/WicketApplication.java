@@ -40,6 +40,7 @@ import org.apache.wicket.util.string.Strings;
 import org.springframework.context.ApplicationContext;
 
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
+import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.demo.account.SignInAttempts;
@@ -84,7 +85,8 @@ import com.antiliacode.widgets.demo.split.SplitPanelPage;
 import com.antiliacode.widgets.demo.codeeditor.CodeEditorPage;
 import com.antiliacode.widgets.demo.resizable.ResizablePage;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
-import com.antiliacode.widgets.demo.richtext.RichTextImageResource;
+import com.antiliacode.widgets.demo.richtext.RichTextAttachments;
+import com.antiliacode.widgets.demo.richtext.RichTextImages;
 import com.antiliacode.widgets.demo.popover.PopoversPage;
 import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
 import com.antiliacode.widgets.demo.frameworks.ChoicesResource;
@@ -366,7 +368,14 @@ public class WicketApplication extends WebApplication
 		mountResource(AccessesApiResource.PATH, AccessesApiResource.REFERENCE);
 		mountResource(AccessesApiResource.OLD_PATH, AccessesApiResource.OLD_REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
-		mountResource(RichTextImageResource.PATH, RichTextImageResource.REFERENCE);
+		// the uploads of the rich text editors, mounted once: the images of the article and of
+		// the apps go there, and all of them are served there
+		RichTextFiles.mount(this, RichTextImages.PATH, RichTextImages.get())
+			.setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setPermanentImages(true)
+			// and the files attached to the texts, PDFs, Office documents, texts
+			.setAttachmentStore(RichTextAttachments.get())
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
