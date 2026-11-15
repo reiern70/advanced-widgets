@@ -33,11 +33,13 @@ export type { JsonError, JsonProblem } from './json-error.js';
 export { MARKDOWN_PREVIEW_CLASSES, MarkdownPreview, markdownPreview,
 	renderMarkdown } from './markdown-preview.js';
 export type { MarkdownPreviewOptions } from './markdown-preview.js';
-export { CK_EDITOR_BASE_PLUGINS, CK_EDITOR_CLASSES, CK_EDITOR_FEATURE_PLUGINS, CK_EDITOR_FEATURES,
-	CKEditor, ckEditor, DEFAULT_CK_EDITOR_TEXTS } from './ck-editor.js';
-export type { CKEditorBuild, CKEditorClass, CKEditorEditingView, CKEditorEventDetail,
-	CKEditorFeature, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
-	CKEditorViewWriter } from './ck-editor.js';
+export { CK_EDITOR_BASE_PLUGINS, CK_EDITOR_CLASSES, CK_EDITOR_EVENTS, CK_EDITOR_FEATURE_PLUGINS,
+	CK_EDITOR_FEATURES, CKEditor, ckEditor, DEFAULT_CK_EDITOR_RECOVERY,
+	DEFAULT_CK_EDITOR_TEXTS, uploadProgressClass } from './ck-editor.js';
+export type { CKEditorBuild, CKEditorClass, CKEditorEditingView, CKEditorErrorData,
+	CKEditorErrorDetail, CKEditorEventDetail, CKEditorFailure, CKEditorFeature, CKEditorFileLoader,
+	CKEditorInstance, CKEditorOnEditorError, CKEditorOptions, CKEditorPlugin, CKEditorRecovery,
+	CKEditorTexts, CKEditorUploadAdapter, CKEditorViewWriter } from './ck-editor.js';
 export { canonicalState, sameState, textLanguage } from './rich-text-contract.js';
 export type { RichTextEditorEventKey } from './rich-text-contract.js';
 export { RICH_TEXT_BUILT_IN_EVENTS, RICH_TEXT_EVENT_SOURCES, RICH_TEXT_EVENT_TRIGGER,

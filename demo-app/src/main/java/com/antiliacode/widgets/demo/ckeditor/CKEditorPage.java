@@ -41,6 +41,8 @@ import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.ckeditor.CKEditor;
+import com.antiliacode.widgets.ckeditor.CKEditorErrorEvent;
+import com.antiliacode.widgets.ckeditor.CKEditorFailure;
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.ckeditor.CKEditorPolicy;
 import com.antiliacode.widgets.ckeditor.CKEditorView;
@@ -50,15 +52,19 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.demo.richtext.OutlineEvent;
 import com.antiliacode.widgets.demo.richtext.RichTextCleaningPanel;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
+import com.antiliacode.widgets.demo.richtext.RichTextImages;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
+import com.antiliacode.widgets.notification.Notification;
 import com.antiliacode.widgets.richtext.RichTextEditorChangeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.resizable.ResizableSize;
+import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
 /**
@@ -68,7 +74,10 @@ import com.github.openjson.JSONObject;
  * selected, how far it is scrolled and its size, and cleans before it keeps it; below it, the
  * article as a page shows it, a {@link CKEditorView}, and the HTML the server keeps. Check boxes
  * switch reading only and the count of the words, rendering the editor again via Ajax. Ctrl+S,
- * and the button, save the article.
+ * and the button, save the article. Images chosen, pasted or dropped into the article are uploaded,
+ * kept as those of {@link RichTextEditorPage} are ({@link RichTextImages}). Should CKEditor run
+ * into an error, it starts again with the article, and the server hears of it, logs it and says so
+ * ({@link CKEditorErrorEvent}).
  * <p>
  * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it.
  * <p>
@@ -104,6 +113,9 @@ public class CKEditorPage extends DemoPage
 	private final Component saved;
 
 	private final CKEditor notesEditor;
+
+	/** Where the editors of the React and Svelte apps upload images. */
+	private final RichTextImageUploadBehavior appUploads;
 
 	private final Label notesStatus;
 
@@ -206,6 +218,9 @@ public class CKEditorPage extends DemoPage
 			CKEditorDocument::setSaved));
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
+		// images uploaded, kept as those of the Tiptap editor's demo
+		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
@@ -227,6 +242,8 @@ public class CKEditorPage extends DemoPage
 		editor.addEvent(RichTextEditorSelectedTextEvent.of((text, target) -> hearSelection(target,
 			text)).setDelay(RichTextEditorEvents.TYPING_DELAY));
 		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
+		// CKEditor running into an error, which starts again: logged, and said
+		editor.addEvent(CKEditorErrorEvent.of((failure, target) -> hearError(target, failure)));
 		editorForm.add(editor);
 		// a lambda, not editor::getMarkupId: see CodeEditorPage
 		editorForm.add(new Label("articleName", getString("articleLabel"))
@@ -338,6 +355,10 @@ public class CKEditorPage extends DemoPage
 				target.add(cleaned);
 			}
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
+
+		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
+			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS);
+		add(appUploads);
 	}
 
 	private AjaxFormComponentUpdatingBehavior rerender(Component component)
@@ -461,6 +482,19 @@ public class CKEditorPage extends DemoPage
 	}
 
 	/**
+	 * Says CKEditor ran into an error, and what it said, which the browser sent, in the line of
+	 * what the server heard and in a notification, which the focus coming back to the editor
+	 * started again does not replace: both escape it.
+	 */
+	private void hearError(AjaxRequestTarget target, CKEditorFailure failure)
+	{
+		heardMessage = getString("heardError").replace("{0}", failure.message().isEmpty() ?
+			failure.name() : failure.message());
+		target.add(heard);
+		getNotifications().show(Notification.warning(heardMessage));
+	}
+
+	/**
 	 * Says the size the user resized the article to, which the browser sent with the event.
 	 */
 	private void hearSize(AjaxRequestTarget target, int width, int height)
@@ -505,8 +539,8 @@ public class CKEditorPage extends DemoPage
 	}
 
 	/**
-	 * @return the texts, the article, the notes, and CKEditor's license key and language, as the
-	 *         page has them
+	 * @return the texts, the article, the notes, CKEditor's license key and language, as the page
+	 *         has them, and where the apps upload images, with their limits
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
@@ -520,7 +554,12 @@ public class CKEditorPage extends DemoPage
 				"appArticleTitle", "appHtml", "markdownKept", "appKnown", "appStart", "appSaved",
 				"appNotClean", "appLicense"))
 			.put("editor", CKEditor.texts(this))
-			.put("licenseKey", library.getLicenseKey());
+			.put("licenseKey", library.getLicenseKey())
+			.put("uploadUrl", appUploads.getUploadUrl())
+			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
+			.put("uploadMaxSize", appUploads.getMaxSize().bytes())
+			.put("uploadMaxWidth", RichTextImages.MAX_DIMENSIONS.width())
+			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height());
 		String language = library.getLanguage(getLocale());
 		if (language != null)
 		{

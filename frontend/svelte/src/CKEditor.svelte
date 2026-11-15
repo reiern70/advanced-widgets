@@ -16,7 +16,8 @@
   CKEditor 5 through the core, with the contract of the RichTextEditor: CKEditor's own toolbar,
   balloons and dialogs, in the theme and the look of the page; Ctrl+S calls onsave; it is resizable
   by the bar along its bottom unless told otherwise. Svelte renders its element, the core CKEditor
-  in it, once CKEditor started (onready); should it not, onerror tells why. The text binds both
+  in it, once CKEditor started (onready); should it not, onerror tells why, as it tells of an error
+  escaping CKEditor after it started, which CKEditor starts again after (recovery). The text binds both
   ways (bind:value): it follows the user, and the editor shows the text the page gives it. The
   state, the selection, the scroll position and the size, binds too (bind:state): the editor
   starts in the state given and reports the one the user leaves it in, a moment after; and whether
@@ -33,7 +34,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { CKEditor, type CKEditorBuild, type CKEditorInstance, type CKEditorPlugin,
+	import { CKEditor, type CKEditorBuild, type CKEditorFailure, type CKEditorInstance,
+		type CKEditorPlugin, type CKEditorRecovery, type RichTextUploadOptions,
 		type EditorEvents, type RichTextEditorEventKey,
 		type CKEditorTexts, type HeadingLevel, type ResizableSize, type ResizeAxis,
 		type RichTextCleaningReport, type RichTextEditorSelection, type RichTextEditorState,
@@ -118,6 +120,22 @@
 		 * again; false when left out.
 		 */
 		pasteNotice?: boolean;
+		/**
+		 * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog
+		 * did: after each of 3 crashes, then while they come more than 5 s apart on average, when
+		 * left out; false to leave CKEditor running as it is.
+		 */
+		recovery?: CKEditorRecovery | false;
+		/** The types of the images the user may upload: PNG, JPEG, GIF, WebP and AVIF when left out. */
+		uploadTypes?: readonly string[];
+		/** The largest image the user may upload, in bytes; none when left out. */
+		uploadMaxSize?: number | null;
+		/**
+		 * The widest and the highest picture the user may upload, in pixels, read from the header
+		 * of the file; none when left out. Both, or none.
+		 */
+		uploadMaxWidth?: number | null;
+		uploadMaxHeight?: number | null;
 		/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 		texts?: Partial<CKEditorTexts>;
 		/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -125,8 +143,19 @@
 		id?: string;
 		/** CSS classes of the editor, next to antilia-ck-editor. */
 		class?: string;
+		/**
+		 * Uploads an image the user chose, pasted or dropped, answering the address it is served
+		 * at, or rejecting with the message saying why not: see uploadImageTo of the core. With
+		 * it, the feature image has CKEditor's upload button, and takes images pasted and dropped;
+		 * the latest is called. One coming or going makes CKEditor anew.
+		 */
+		onupload?: (file: File, options?: RichTextUploadOptions) => Promise<string>;
 		onready?: (editor: CKEditorInstance) => void;
-		onerror?: (error: unknown) => void;
+		/**
+		 * Called with what went wrong when CKEditor could not start, or ran into an error after it
+		 * started, and what the editor does about it.
+		 */
+		onerror?: (error: unknown, failure: CKEditorFailure) => void;
 		onchange?: (value: string) => void;
 		onfocus?: () => void;
 		onblur?: (value: string) => void;
@@ -169,10 +198,16 @@
 		modified = $bindable(false),
 		editor = $bindable(null),
 		pasteNotice,
+		recovery,
+		uploadTypes,
+		uploadMaxSize,
+		uploadMaxWidth,
+		uploadMaxHeight,
 		texts,
 		name,
 		id,
 		class: className = '',
+		onupload,
 		onready,
 		onerror,
 		onchange,
@@ -185,6 +220,10 @@
 		onresize,
 		onpastecleaned
 	}: Props = $props();
+
+	/** Uploads by the latest onupload, null without one. */
+	const uploader = () => onupload ? (file: File, options?: RichTextUploadOptions) =>
+		onupload!(file, options) : null;
 
 	let element = $state<HTMLDivElement>();
 	let instance: CKEditor | null = null;
@@ -201,9 +240,10 @@
 			build, licenseKey, language, translations, value, saved, format, features, headingLevels,
 			toolbar, plugins, config, readOnly, placeholder, label, spellcheck, textLanguage, count,
 			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, events, pasteNotice,
-			texts, look,
+			recovery, texts, look, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
+			onUpload: uploader(),
 			onReady: (next: CKEditorInstance) => onready?.(next),
-			onError: (error: unknown) => onerror?.(error),
+			onError: (error: unknown, failure: CKEditorFailure) => onerror?.(error, failure),
 			onChange: (next: string) => {
 				value = next;
 				onchange?.(next);
@@ -239,7 +279,7 @@
 		const next = { licenseKey, language, format, features, headingLevels, toolbar, readOnly,
 			placeholder, label, spellcheck: spellcheck ?? null, textLanguage: textLanguage ?? null,
 			count, resizable, minWidth, minHeight, maxWidth, maxHeight,
-			pasteNotice: !!pasteNotice, texts };
+			pasteNotice: !!pasteNotice, recovery, texts };
 		untrack(() => instance?.configure(next));
 	});
 
@@ -248,6 +288,13 @@
 		if (next !== undefined) {
 			untrack(() => instance?.configure({ events: next }));
 		}
+	});
+
+	$effect(() => {
+		const next = { uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
+			uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
+			onUpload: uploader() };
+		untrack(() => instance?.configure(next));
 	});
 
 	// compared by what they are: another one makes CKEditor anew

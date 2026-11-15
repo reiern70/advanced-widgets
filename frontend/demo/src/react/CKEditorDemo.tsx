@@ -14,6 +14,7 @@
 
 import { useState } from 'react';
 
+import { uploadImageTo } from '@antilia/core';
 import { Button, CKEditor, Tab, Tabs } from '@antilia/react';
 
 import { ckText, describe, type CKEditorConfig, type CKText } from '../ck-editor.js';
@@ -22,7 +23,8 @@ import { ckText, describe, type CKEditorConfig, type CKText } from '../ck-editor
  * The CKEditor demo in React: the editor of the Wicket page, in its markup, with the CKEditor the
  * page loaded and its license key. The app keeps the article and the notes, their texts and the
  * state the user left their editors in. The HTML and the Markdown the editors give show below
- * them, as text: a server keeping the HTML cleans it.
+ * them, as text: a server keeping the HTML cleans it. The images uploaded into the article go to
+ * the page, as those of the Wicket editor go to its own.
  */
 export function CKEditorDemo({ config }: { config: CKEditorConfig }) {
 	const { texts } = config;
@@ -31,6 +33,7 @@ export function CKEditorDemo({ config }: { config: CKEditorConfig }) {
 	const [readOnly, setReadOnly] = useState(false);
 	const [count, setCount] = useState(true);
 	const [heard, setHeard] = useState(texts.appStart);
+	const [onUpload] = useState(() => uploadImageTo(config.uploadUrl));
 	const check = (label: string, checked: boolean, change: (checked: boolean) => void) => (
 		<label className="rich-text-demo__control">
 			<input type="checkbox" checked={checked}
@@ -62,7 +65,10 @@ export function CKEditorDemo({ config }: { config: CKEditorConfig }) {
 							<CKEditor licenseKey={config.licenseKey} language={config.language}
 								value={article.text} saved={article.saved} state={article.state}
 								label={texts.articleLabel} placeholder={texts.placeholder} readOnly={readOnly}
-								count={count} texts={config.editor}
+								count={count} texts={config.editor} onUpload={onUpload}
+								uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
+								uploadMaxWidth={config.uploadMaxWidth}
+								uploadMaxHeight={config.uploadMaxHeight}
 								onChange={(text) => setArticle((all) => ({ ...all, text }))}
 								onStateChange={(state) => setArticle((all) => ({ ...all, state }))}
 								onSave={saveArticle} />
