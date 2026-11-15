@@ -143,9 +143,9 @@ The components are published in two lines, on Maven Central and on GitHub Packag
 
 - for Wicket 10, built from this branch, `line-10.x`, on Wicket 10.11.0, without what needs
   Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery): the release candidates,
-  `10.11.0-RC9` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
+  `10.11.0-RC10` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
   of snapshots;
-- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC2` the last.
+- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC4` the last.
 
 [CHANGES.md](CHANGES.md) tells what each release candidate brings and what an application has to
 change when it upgrades, the request parameters renamed among it.
@@ -202,11 +202,11 @@ or in the `pom.xml`:
 
 ### The release candidates, from Maven Central
 
-The dependency alone, `11.0.0-RC2` instead for Wicket 11, in `build.gradle.kts`:
+The dependency alone, `11.0.0-RC4` instead for Wicket 11, in `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC9")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC10")
 }
 ```
 
@@ -216,7 +216,7 @@ or in the `pom.xml`:
 <dependency>
 	<groupId>com.antiliacode.widgets</groupId>
 	<artifactId>ui-components</artifactId>
-	<version>10.11.0-RC9</version>
+	<version>10.11.0-RC10</version>
 </dependency>
 ```
 
@@ -253,7 +253,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC9")
+    implementation("com.antiliacode.widgets:ui-components:10.11.0-RC10")
 }
 ```
 
@@ -275,7 +275,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC9'
+    implementation 'com.antiliacode.widgets:ui-components:10.11.0-RC10'
 }
 ```
 
@@ -309,7 +309,7 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 	<dependency>
 		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>ui-components</artifactId>
-		<version>10.11.0-RC9</version>
+		<version>10.11.0-RC10</version>
 	</dependency>
 </dependencies>
 ```
