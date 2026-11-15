@@ -31,9 +31,9 @@
  * The colors stay the theme's. In the Bootstrap themes (Theme.BOOTSTRAP and BOOTSTRAP_DARK) they
  * are Bootstrap's; in any other theme this style sheet gives Bootstrap's buttons and the
  * custom properties of Bootstrap the theme's colors, so the components and the page's own
- * Bootstrap markup inside the theme look alike. CSS cannot take a color apart into the channels
- * of Bootstrap's --bs-*-rgb properties, so what Bootstrap draws from those, such as its links and
- * the .text-* and .bg-* utilities, keeps Bootstrap's colors.
+ * Bootstrap markup inside the theme look alike. The theme's --antilia-theme-*-rgb give
+ * Bootstrap's --bs-*-rgb, so what Bootstrap draws from those, such as its links and the .text-*
+ * and .bg-* utilities, takes the theme's colors too.
  */
 
 .antilia-look-bootstrap,
@@ -50,20 +50,32 @@
 
 .antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) {
 	--bs-body-color: var(--antilia-theme-text);
+	--bs-body-color-rgb: var(--antilia-theme-text-rgb);
 	--bs-body-bg: var(--antilia-theme-surface);
+	--bs-body-bg-rgb: var(--antilia-theme-surface-rgb);
+	--bs-emphasis-color: var(--antilia-theme-text);
+	--bs-secondary-color: var(--antilia-theme-muted);
 	--bs-secondary-bg: var(--antilia-theme-hover);
 	--bs-tertiary-bg: var(--antilia-theme-surface-alt);
 	--bs-border-color: var(--antilia-theme-border);
 	--bs-link-color: var(--antilia-theme-accent);
-	--bs-link-hover-color: var(--antilia-theme-primary-dark);
+	--bs-link-color-rgb: var(--antilia-theme-accent-rgb);
+	--bs-link-hover-color: var(--antilia-theme-accent-hover);
+	--bs-link-hover-color-rgb: var(--antilia-theme-accent-hover-rgb);
 	--bs-primary: var(--antilia-theme-primary);
+	--bs-primary-rgb: var(--antilia-theme-primary-rgb);
 	--bs-primary-bg-subtle: var(--antilia-theme-highlight);
 	--bs-primary-border-subtle: var(--antilia-theme-border);
-	--bs-primary-text-emphasis: var(--antilia-theme-primary-dark);
+	--bs-primary-text-emphasis: var(--antilia-theme-primary-text);
 	--bs-success: var(--antilia-theme-success);
+	--bs-success-rgb: var(--antilia-theme-success-rgb);
 	--bs-danger: var(--antilia-theme-error);
+	--bs-danger-rgb: var(--antilia-theme-error-rgb);
 	--bs-warning: var(--antilia-theme-warning);
+	--bs-warning-rgb: var(--antilia-theme-warning-rgb);
 	--bs-info: var(--antilia-theme-info);
+	--bs-info-rgb: var(--antilia-theme-info-rgb);
+	--bs-box-shadow-sm: var(--antilia-theme-shadow);
 	--bs-focus-ring-color: color-mix(in srgb, var(--antilia-theme-accent) 25%, transparent);
 	--bs-form-valid-color: var(--antilia-theme-success);
 	--bs-form-invalid-color: var(--antilia-theme-error);
@@ -129,7 +141,7 @@
 /* what Bootstrap colors with its primary blue written out, not with --bs-primary */
 
 .antilia-look-bootstrap.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) .btn-outline-primary {
-	--bs-btn-color: var(--antilia-theme-primary);
+	--bs-btn-color: var(--antilia-theme-primary-text);
 	--bs-btn-border-color: var(--antilia-theme-primary);
 	--bs-btn-hover-color: var(--antilia-theme-on-primary);
 	--bs-btn-hover-bg: var(--antilia-theme-primary);
@@ -137,7 +149,7 @@
 	--bs-btn-active-color: var(--antilia-theme-on-primary);
 	--bs-btn-active-bg: var(--antilia-theme-primary-dark);
 	--bs-btn-active-border-color: var(--antilia-theme-primary-dark);
-	--bs-btn-disabled-color: var(--antilia-theme-primary);
+	--bs-btn-disabled-color: var(--antilia-theme-primary-text);
 	--bs-btn-disabled-border-color: var(--antilia-theme-primary);
 }
 

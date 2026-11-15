@@ -58,7 +58,11 @@ public class ThemeEditorPanel extends Panel
 	public static final List<String> PROPERTIES = List.of("primary", "primary-dark", "on-primary",
 		"accent", "text", "surface", "surface-alt", "hover", "selected", "highlight", "toolbar",
 		"border", "progress", "progress-dark", "track", "veil", "color-scheme", "success", "error",
-		"warning", "info");
+		"warning", "info", "page", "nav", "primary-soft", "primary-text", "muted", "accent-hover",
+		"shadow", "focus");
+
+	/** The properties written as text, not picked as a color: a color with an alpha, a shadow. */
+	private static final List<String> TEXT_PROPERTIES = List.of("veil", "shadow", "focus");
 
 	/** The script of the editor, {@code Wicket.ThemeEditor}. */
 	public static final ResourceReference JS = new JavaScriptResourceReference(
@@ -127,7 +131,7 @@ public class ThemeEditorPanel extends Panel
 	private Component newInput(String id, String property)
 	{
 		Fragment input;
-		if ("veil".equals(property))
+		if (TEXT_PROPERTIES.contains(property))
 		{
 			input = new Fragment(id, "text", this);
 		}
@@ -146,7 +150,7 @@ public class ThemeEditorPanel extends Panel
 		{
 			field.add(new DropdownBehavior().setFilterThreshold(Integer.MAX_VALUE));
 		}
-		if ("veil".equals(property))
+		if (TEXT_PROPERTIES.contains(property))
 		{
 			field.add(new LookBehavior(LookPart.THEME_EDITOR_FIELD));
 		}
