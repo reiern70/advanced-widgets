@@ -64,13 +64,34 @@
 		return document.getElementById(cfg.preview);
 	}
 
+	/* the colors whose red, green and blue a theme gives too, for colors with an alpha */
+	const RGB = ['primary', 'accent', 'accent-hover', 'text', 'surface', 'success', 'error', 'warning',
+		'info'];
+
+	function channels(value) {
+		const color = hex(value);
+		return [1, 3, 5].map(function (start) {
+			return parseInt(color.substring(start, start + 2), 16);
+		}).join(', ');
+	}
+
 	function css(cfg) {
 		const editor = document.getElementById(cfg.editor);
 		const name = editor.querySelector('.theme-editor-class').value.trim() || 'my-theme';
-		return '/* put the classes "antilia-theme ' + name + '" on a page or a component */\n' +
-			'.' + name + ' {\n' + fields(cfg).map(function (field) {
+		const all = fields(cfg);
+		const lines = all.map(function (field) {
 			return '\t' + field.getAttribute('data-theme-property') + ': ' + field.value + ';';
-		}).join('\n') + '\n}\n';
+		});
+		RGB.forEach(function (property) {
+			const field = all.filter(function (each) {
+				return each.getAttribute('data-theme-property') === '--antilia-theme-' + property;
+			})[0];
+			if (field && field.value) {
+				lines.push('\t--antilia-theme-' + property + '-rgb: ' + channels(field.value) + ';');
+			}
+		});
+		return '/* put the classes "antilia-theme ' + name + '" on a page or a component */\n' +
+			'.' + name + ' {\n' + lines.join('\n') + '\n}\n';
 	}
 
 	function update(cfg) {
