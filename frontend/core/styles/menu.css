@@ -119,9 +119,10 @@
 	cursor: default;
 }
 
+/* the current item in the primary color as text, readable in a dark theme too */
 .antilia-menu-current,
 .antilia-menu-current-parent {
-	color: var(--antilia-theme-primary, #1d4ed8);
+	color: var(--antilia-theme-primary-text, var(--antilia-theme-primary, #1d4ed8));
 }
 
 .antilia-menu-current {
@@ -350,7 +351,7 @@
 .antilia-menu-sidebar .antilia-menu-submenu-link.antilia-menu-current {
 	background: color-mix(in srgb, var(--antilia-theme-primary, #1d4ed8) 12%, transparent);
 	box-shadow: inset 3px 0 0 var(--antilia-theme-primary, #1d4ed8);
-	color: var(--antilia-theme-primary, #1d4ed8);
+	color: var(--antilia-theme-primary-text, var(--antilia-theme-primary, #1d4ed8));
 }
 
 .antilia-menu-sidebar.antilia-menu-horizontal > .antilia-menu-list > .antilia-menu-item >
