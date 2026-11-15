@@ -17,10 +17,13 @@ import org.apache.wicket.util.io.IClusterable;
 
 /**
  * Keeps the {@link ColumnState} of {@link BaseDynamicDataTable}s, so the order, visibility and
- * widths of their columns survive the table: a table loads its state when it is initialized and
- * saves it whenever the user moves, shows, hides or resizes a column. An implementation can keep
- * the states anywhere, for example in a database by user, to have them survive the session and
- * restarts of the server.
+ * widths of their columns, the number of rows per page and the sort the user chose survive the
+ * table: a table loads its state once, when it is first rendered, and saves it whenever the user
+ * moves, shows, hides or resizes a column, chooses the rows per page or sorts the rows by a
+ * column. An implementation can keep the states anywhere, for example in a database by user, to
+ * have them survive the session and restarts of the server; since a table asks for its state only
+ * once, and not on every render or Ajax refresh, such a store is not queried each time the table
+ * is drawn.
  * <p>
  * A table has no store by default; {@link SessionColumnStateStore} keeps the states in the
  * session.

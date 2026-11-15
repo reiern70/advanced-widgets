@@ -19,8 +19,8 @@ import org.apache.wicket.MetaDataKey;
 import org.apache.wicket.Session;
 
 /**
- * Keeps the {@link ColumnState}s of tables in the session, so they survive reloading the page and
- * going back to it, but not the session. This is the store tables use by default.
+ * Keeps the {@link ColumnState}s of tables in the session, their rows per page and sort with
+ * their columns, so they survive reloading the page and going back to it, but not the session.
  *
  * @since 11.0.0
  */

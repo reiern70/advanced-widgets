@@ -133,8 +133,10 @@ import com.github.openjson.JSONObject;
  * {@link #setColumnVisible(IDetachable, boolean)}. The table keeps the order, the visibility and
  * the widths of its columns, re-renders itself when they change and saves them in its
  * {@link #setColumnStateStore(IColumnStateStore) column state store}, if it has one, for example
- * {@link SessionColumnStateStore}, so a table built again, for example after reloading the page,
- * shows its columns as the user left them.
+ * {@link SessionColumnStateStore}, with the number of rows per page the user chose in the
+ * navigation and the column they sorted the rows by, so a table built again, for example after
+ * reloading the page, shows its columns and its rows as the user left them. It reads its state
+ * from the store once, when it is first rendered.
  * <p>
  * With a selection column, the user selects rows with checkboxes. The selection is kept on the
  * server, by key, and survives paging and refreshing, unless the table
@@ -324,6 +326,17 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	private final List<C> initialColumns;
 
 	private IColumnStateStore columnStateStore;
+
+	/** Whether the state was read from the store, which the table does once. */
+	private boolean columnStateLoaded;
+
+	/** The number of rows per page the user chose, {@code null} until they choose one. */
+	private Long chosenItemsPerPage;
+
+	/** The sort property, as text, of the column the user sorted by, {@code null} until they sort. */
+	private String chosenSortProperty;
+
+	private boolean chosenSortAscending;
 
 	private final Set<C> hiddenColumns = Collections
 		.newSetFromMap(new IdentityHashMap<>());
@@ -915,13 +928,19 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 			"bottomSelection").add(new PositionBehavior(false, ToolbarPosition.BOTTOM)));
 		add(checkToolbar(newNavigationToolbar("bottomNavigation", ToolbarPosition.BOTTOM),
 			"bottomNavigation").add(new PositionBehavior(true, ToolbarPosition.BOTTOM)));
-		if (columnStateStore != null)
+	}
+
+	/**
+	 * Reads the state from the store the first time the table is rendered, before its rows and
+	 * toolbars are, and never again by itself.
+	 */
+	@Override
+	protected void onConfigure()
+	{
+		super.onConfigure();
+		if (columnStateLoaded == false)
 		{
-			ColumnState state = columnStateStore.load(getColumnStateKey());
-			if (state != null)
-			{
-				setColumnState(state);
-			}
+			loadColumnState();
 		}
 	}
 
@@ -1439,8 +1458,9 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 
 	/**
 	 * Sets the store keeping the table's {@link ColumnState}. The table loads its state from the
-	 * store when it is initialized, so the store has to be set before, and saves it whenever the
-	 * user moves, shows, hides or resizes a column.
+	 * store once, when it is first rendered, so the store has to be set before, and saves it
+	 * whenever the user moves, shows, hides or resizes a column, chooses the number of rows per
+	 * page or sorts the rows by a column.
 	 *
 	 * @param columnStateStore
 	 *            the store, for example {@link SessionColumnStateStore}; {@code null}, the
@@ -1455,7 +1475,32 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
-	 * @return the order, the visibility and the known widths of the columns
+	 * Reads the state of the table from its {@link #getColumnStateStore() store} and arranges the
+	 * table as it says, with {@link #setColumnState(ColumnState)}. The table does it by itself
+	 * once, when it is first rendered; call it to read the state again, for example after the
+	 * store changed it, and re-render the table for the change to show. Does nothing without a
+	 * store or a state in it.
+	 *
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public BaseDynamicDataTable<T, K, C> loadColumnState()
+	{
+		columnStateLoaded = true;
+		if (columnStateStore != null)
+		{
+			ColumnState state = columnStateStore.load(getColumnStateKey());
+			if (state != null)
+			{
+				setColumnState(state);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * @return the order, the visibility and the known widths of the columns, and the number of
+	 *         rows per page and the sort the user chose, if they did
 	 * @throws IllegalArgumentException
 	 *             if two columns have the same id
 	 * @since 11.0.0
@@ -1480,7 +1525,8 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 				widths.put(id, columnWidths[i]);
 			}
 		}
-		return new ColumnState(order, hidden, widths);
+		return new ColumnState(order, hidden, widths, chosenItemsPerPage, chosenSortProperty,
+			chosenSortAscending);
 	}
 
 	/**
@@ -1489,8 +1535,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 * places of the movable columns, the {@link #isHideable(IDetachable) hideable} ones are
 	 * shown or hidden, and the columns get the widths of the state, which must be positive and at
 	 * most {@value #MAX_COLUMN_WIDTH} pixels. Ids the table does not know are ignored, and columns
-	 * the state does not know keep their places after the known ones. Re-render the table for the
-	 * change to show.
+	 * the state does not know keep their places after the known ones. The table shows the number
+	 * of rows per page of the state if it is one of the {@link #getItemsPerPageOptions() options},
+	 * and sorts the rows as the state says if a column with its sort property is still
+	 * {@link #getSortProperty(IDetachable) sortable} and the provider sorts; else, and when the
+	 * state has none, it keeps its own. Re-render the table for the change to show.
 	 *
 	 * @param state
 	 *            the state
@@ -1549,7 +1598,42 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		{
 			hiddenColumns.clear();
 		}
+		Long rows = state.getItemsPerPage();
+		if (rows != null && itemsPerPageOptions.contains(rows))
+		{
+			setItemsPerPage(rows);
+			chosenItemsPerPage = rows;
+		}
+		C sorted = findSortedColumn(state.getSortProperty());
+		if (sorted != null)
+		{
+			getSortState().setPropertySortOrder(getSortProperty(sorted),
+				state.isSortAscending() ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+			chosenSortProperty = state.getSortProperty();
+			chosenSortAscending = state.isSortAscending();
+			setCurrentPage(0);
+		}
 		return this;
+	}
+
+	/**
+	 * @return the sortable column whose sort property, as text, is the one given, or {@code null}
+	 */
+	private C findSortedColumn(String sortProperty)
+	{
+		if (sortProperty == null || getSortState() == null)
+		{
+			return null;
+		}
+		for (C column : columns)
+		{
+			Object property = getSortProperty(column);
+			if (property != null && sortProperty.equals(String.valueOf(property)))
+			{
+				return column;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1564,9 +1648,10 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
-	 * Called after the user moved, showed or hid columns, before the table is re-rendered. Does
-	 * nothing by default; override to keep the columns' order and visibility elsewhere, such as in
-	 * a user's preferences.
+	 * Called after the user moved, showed or hid columns, chose the number of rows per page or
+	 * sorted the rows by a column, before the table is re-rendered. Does nothing by default;
+	 * override to keep the columns' order and visibility, the rows per page and the sort
+	 * elsewhere, such as in a user's preferences; {@link #getColumnState()} has them all.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -2138,6 +2223,22 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	}
 
 	/**
+	 * Called by the navigation after the user chose another number of rows per page, which the
+	 * table shows already: keeps the choice in the {@link #getColumnState() column state}, saves
+	 * the state in the store, if any, and calls {@link #onColumnsChanged(AjaxRequestTarget)}.
+	 *
+	 * @param target
+	 *            the Ajax request target
+	 * @since 11.0.0
+	 */
+	public void itemsPerPageChosen(AjaxRequestTarget target)
+	{
+		chosenItemsPerPage = itemsPerPage;
+		saveColumnState();
+		onColumnsChanged(target);
+	}
+
+	/**
 	 * Called by the navigation when the user went to another page or chose another number of
 	 * rows per page, before the rows are rendered again: deselects every row when the table
 	 * {@link #isClearSelectionOnNavigation() clears its selection on navigation}.
@@ -2609,10 +2710,14 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		{
 			return;
 		}
-		getSortState().setPropertySortOrder(getSortProperty(column),
-			getSortOrder(column) == SortOrder.ASCENDING ? SortOrder.DESCENDING
-				: SortOrder.ASCENDING);
+		SortOrder order = getSortOrder(column) == SortOrder.ASCENDING ? SortOrder.DESCENDING
+			: SortOrder.ASCENDING;
+		getSortState().setPropertySortOrder(getSortProperty(column), order);
+		chosenSortProperty = String.valueOf(getSortProperty(column));
+		chosenSortAscending = order == SortOrder.ASCENDING;
 		setCurrentPage(0);
+		saveColumnState();
+		onColumnsChanged(target);
 		boolean selected = getSelection().isEmpty() == false;
 		clearSelection();
 		target.add(headersRow);
