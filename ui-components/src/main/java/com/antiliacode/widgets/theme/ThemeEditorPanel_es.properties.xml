@@ -38,4 +38,12 @@
 	<entry key="property.error">el color de lo que salió mal, como una notificación de error</entry>
 	<entry key="property.warning">el color de lo que pide atención, como una advertencia</entry>
 	<entry key="property.info">el color de la información, como una notificación de información</entry>
+	<entry key="property.page">el fondo de la página, alrededor del contenido</entry>
+	<entry key="property.nav">el fondo de la navegación, como una barra lateral</entry>
+	<entry key="property.primary-soft">un tono suave del color primario, detrás del elemento actual de un menú</entry>
+	<entry key="property.primary-text">el color primario como texto, como el elemento actual de un menú</entry>
+	<entry key="property.muted">el texto secundario, como ayudas y etiquetas</entry>
+	<entry key="property.accent-hover">los enlaces bajo el puntero</entry>
+	<entry key="property.shadow">la sombra del contenido elevado, como las tarjetas</entry>
+	<entry key="property.focus">el anillo alrededor de un control con el foco</entry>
 </properties>
