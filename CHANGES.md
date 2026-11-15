@@ -11,6 +11,53 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC4 (2026-11-15)
+
+The components of 10.11.0-RC10 on Wicket 11.0.0.
+
+**Upgrading:** as for 10.11.0-RC10.
+
+## 10.11.0-RC10 (2026-11-15)
+
+- The rich text editors upload to a resource of the library, mounted once by the application
+  and not tied to a page: `RichTextFiles.mount(application, path, store)`, and
+  `RichTextEditor#setUploadResource(files)` (#97). It checks the uploads as the editor's own
+  behavior does, has the store keep them and serves them by name, through
+  `IRichTextImageStore#open(name)`: with the media type their bytes tell, `nosniff` and
+  `Content-Security-Policy: sandbox`, inline only for the formats a browser may open and as
+  attachments otherwise. It refuses uploads from other sites; `setReadCheck`, `setUploadCheck`
+  and `setBaseUrl` let the application decide who sees and sends what, and where the files are
+  served from.
+- The rich text editors attach files that are no images, PDFs, Office documents, OpenDocuments,
+  ZIPs and texts, each a link in the text with its name and size (#99): `setAttachmentStore`,
+  `setAttachmentFormats`, `setAttachmentMaxSize`, `setAttachmentMaxCount`, the tools "Attach a
+  file" and "Files of the text", and `RichTextAttachmentsRemovedEvent` for the files taken out.
+  `IUploadFileFormat` and `UploadFileFormat` tell a format by the bytes of the file;
+  `IUploadScanner` (`setUploadScanner`) accepts, refuses or cleans every upload, images too,
+  before the store keeps it. In Wicket, React and Svelte.
+- CKEditor hears of the errors escaping it after it started, tells them to the page
+  (`onError(error, failure)`, the event `antilia-ck-editor:error`) and to the server
+  (`CKEditorErrorEvent`), and starts again from its last text as the Watchdog did before CKEditor
+  49, a limited number of times: `CKEditor#setRecovery(CKEditorRecovery)`, null for never
+  (#80).
+- CKEditor uploads the images the user chooses, pastes or drops, the Tiptap editor's way, with
+  its checks, its messages and the progress of each upload: `CKEditor#setImageStore` and the
+  limits of its images; `onUpload` in React, `onupload` in Svelte (#79).
+- This file (#109).
+
+**Upgrading:**
+
+- A class of an application's own extending `AbstractRichTextEditor` implements its image
+  methods, now abstract there: `getImageStore`, `setImageStore`, `getImageMaxSize`,
+  `setImageMaxSize`, `getImageTypes`, `setImageTypes`, `getImageMaxDimensions`,
+  `setImageMaxDimensions` and `isImageUploading`. `RichTextEditor` and `CKEditor` have them.
+- A file that is no image, dropped or pasted into a rich text editor taking attachments, is
+  attached instead of refused.
+- CKEditor's `onError` hears of the errors after the start too, not only of a failed start, with
+  a second argument telling what the editor does about it.
+- While CKEditor uploads an image it shows it as a `data:` address: a page uploading with it
+  allows `img-src data:` in its Content Security Policy.
+
 ## 11.0.0-RC2 and 11.0.0-RC3 (2026-11-13)
 
 The components of 10.11.0-RC9 on Wicket 11.0.0. 11.0.0-RC3 is tagged on the same commit as

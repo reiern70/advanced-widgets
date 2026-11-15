@@ -144,10 +144,10 @@ a warning in the log.
 
 The components are published in two lines, on Maven Central and on GitHub Packages too:
 
-- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC2` the last;
+- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC4` the last;
 - for Wicket 10, built from the `line-10.x` branch on Wicket 10.11.0, without what needs Wicket
   11 (uploads to a resource, Wicket's Ajax without jQuery): the release candidates,
-  `10.11.0-RC9` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
+  `10.11.0-RC10` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
   of snapshots.
 
 [CHANGES.md](CHANGES.md) tells what each release candidate brings and what an application has to
@@ -205,11 +205,11 @@ or in the `pom.xml`:
 
 ### The release candidates, from Maven Central
 
-The dependency alone, `10.11.0-RC9` instead for Wicket 10, in `build.gradle.kts`:
+The dependency alone, `10.11.0-RC10` instead for Wicket 10, in `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:11.0.0-RC2")
+    implementation("com.antiliacode.widgets:ui-components:11.0.0-RC4")
 }
 ```
 
@@ -219,7 +219,7 @@ or in the `pom.xml`:
 <dependency>
 	<groupId>com.antiliacode.widgets</groupId>
 	<artifactId>ui-components</artifactId>
-	<version>11.0.0-RC2</version>
+	<version>11.0.0-RC4</version>
 </dependency>
 ```
 
@@ -256,7 +256,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.antiliacode.widgets:ui-components:11.0.0-RC2")
+    implementation("com.antiliacode.widgets:ui-components:11.0.0-RC4")
 }
 ```
 
@@ -278,7 +278,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.antiliacode.widgets:ui-components:11.0.0-RC2'
+    implementation 'com.antiliacode.widgets:ui-components:11.0.0-RC4'
 }
 ```
 
@@ -312,7 +312,7 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 	<dependency>
 		<groupId>com.antiliacode.widgets</groupId>
 		<artifactId>ui-components</artifactId>
-		<version>11.0.0-RC2</version>
+		<version>11.0.0-RC4</version>
 	</dependency>
 </dependencies>
 ```
