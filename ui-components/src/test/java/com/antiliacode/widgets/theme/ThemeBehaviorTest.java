@@ -16,6 +16,11 @@ package com.antiliacode.widgets.theme;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
@@ -72,6 +77,42 @@ class ThemeBehaviorTest extends WicketTestCase
 			assertTrue(Pattern.compile("^\\." + theme.getCssClass() + "\\s*[{,]", Pattern.MULTILINE)
 				.matcher(css)
 				.find(), theme.name());
+		}
+	}
+
+	@Test
+	void everyThemeSetsEveryProperty() throws Exception
+	{
+		String css = new String(Theme.class.getResourceAsStream("antilia-theme.css").readAllBytes(),
+			"UTF-8");
+		List<String> properties = new ArrayList<>(ThemeEditorPanel.PROPERTIES);
+		for (String color : List.of("primary", "accent", "accent-hover", "text", "surface",
+			"success", "error", "warning", "info"))
+		{
+			properties.add(color + "-rgb");
+		}
+		for (Theme theme : Theme.values())
+		{
+			Set<String> set = new HashSet<>();
+			Matcher block = Pattern.compile("^([^{}/*]+)\\{([^}]*)\\}", Pattern.MULTILINE).matcher(css);
+			while (block.find())
+			{
+				if (Pattern.compile("(^|,)\\s*\\." + theme.getCssClass() + "\\s*(,|$)")
+					.matcher(block.group(1).strip())
+					.find())
+				{
+					Matcher property = Pattern.compile("--antilia-theme-([a-z-]+):")
+						.matcher(block.group(2));
+					while (property.find())
+					{
+						set.add(property.group(1));
+					}
+				}
+			}
+			for (String property : properties)
+			{
+				assertTrue(set.contains(property), theme.name() + " sets --antilia-theme-" + property);
+			}
 		}
 	}
 

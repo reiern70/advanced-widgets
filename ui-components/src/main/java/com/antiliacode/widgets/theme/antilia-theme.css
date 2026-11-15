@@ -38,6 +38,23 @@
  *   --antilia-theme-warning          the color of what asks for attention, such as a warning
  *   --antilia-theme-info             the color of information, such as a notification of information
  *
+ * and these, for the page around the components, which an application's own style sheet reads,
+ * and which the Bootstrap look gives Bootstrap (see antilia-look-bootstrap.css):
+ *
+ *   --antilia-theme-page             the page's background, around the content
+ *   --antilia-theme-nav              the background of navigation, such as a side bar
+ *   --antilia-theme-primary-soft     a soft tint of the primary color, behind the current item of a
+ *                                   menu or an icon
+ *   --antilia-theme-primary-text     the primary color as text, readable on the surface and on the
+ *                                   soft tint, such as the current item of a menu
+ *   --antilia-theme-muted            secondary text, such as hints and labels
+ *   --antilia-theme-accent-hover     links under the pointer
+ *   --antilia-theme-shadow           the shadow of raised content, such as cards
+ *   --antilia-theme-focus            the ring around a focused control
+ *   --antilia-theme-*-rgb            the red, green and blue of primary, accent, accent-hover, text,
+ *                                   surface, success, error, warning and info, for colors with an
+ *                                   alpha, as Bootstrap writes them
+ *
  * The shapes are a look's (see antilia-look-bootstrap.css), not a theme's.
  */
 .antilia-theme-default {
@@ -62,6 +79,23 @@
 	--antilia-theme-error: #c53030;
 	--antilia-theme-warning: #d97706;
 	--antilia-theme-info: #2b6cb0;
+	--antilia-theme-page: #f4f2f2;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #f8eae4;
+	--antilia-theme-primary-text: #9a3412;
+	--antilia-theme-muted: #6b6159;
+	--antilia-theme-accent-hover: #8c2f09;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(194, 65, 12, 0.25);
+	--antilia-theme-primary-rgb: 194, 65, 12;
+	--antilia-theme-accent-rgb: 194, 65, 12;
+	--antilia-theme-accent-hover-rgb: 140, 47, 9;
+	--antilia-theme-text-rgb: 43, 29, 18;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 47, 133, 90;
+	--antilia-theme-error-rgb: 197, 48, 48;
+	--antilia-theme-warning-rgb: 217, 119, 6;
+	--antilia-theme-info-rgb: 43, 108, 176;
 }
 
 .antilia-theme-blue {
@@ -86,6 +120,23 @@
 	--antilia-theme-error: #c62828;
 	--antilia-theme-warning: #ef6c00;
 	--antilia-theme-info: #1976d2;
+	--antilia-theme-page: #eff3f7;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #e6f0fa;
+	--antilia-theme-primary-text: #0d47a1;
+	--antilia-theme-muted: #586a7b;
+	--antilia-theme-accent-hover: #125597;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(21, 101, 192, 0.25);
+	--antilia-theme-primary-rgb: 21, 101, 192;
+	--antilia-theme-accent-rgb: 25, 118, 210;
+	--antilia-theme-accent-hover-rgb: 18, 85, 151;
+	--antilia-theme-text-rgb: 16, 42, 67;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 46, 125, 50;
+	--antilia-theme-error-rgb: 198, 40, 40;
+	--antilia-theme-warning-rgb: 239, 108, 0;
+	--antilia-theme-info-rgb: 25, 118, 210;
 }
 
 .antilia-theme-red {
@@ -110,6 +161,23 @@
 	--antilia-theme-error: #b71c1c;
 	--antilia-theme-warning: #ef6c00;
 	--antilia-theme-info: #1565c0;
+	--antilia-theme-page: #f4f0f2;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #f9e7e7;
+	--antilia-theme-primary-text: #7f0000;
+	--antilia-theme-muted: #6b5f5f;
+	--antilia-theme-accent-hover: #8f1d1d;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(183, 28, 28, 0.25);
+	--antilia-theme-primary-rgb: 183, 28, 28;
+	--antilia-theme-accent-rgb: 198, 40, 40;
+	--antilia-theme-accent-hover-rgb: 143, 29, 29;
+	--antilia-theme-text-rgb: 43, 26, 26;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 46, 125, 50;
+	--antilia-theme-error-rgb: 183, 28, 28;
+	--antilia-theme-warning-rgb: 239, 108, 0;
+	--antilia-theme-info-rgb: 21, 101, 192;
 }
 
 .antilia-theme-grey {
@@ -134,6 +202,23 @@
 	--antilia-theme-error: #b23c3c;
 	--antilia-theme-warning: #c27c0e;
 	--antilia-theme-info: #4a6fa5;
+	--antilia-theme-page: #f1f2f4;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #ebedee;
+	--antilia-theme-primary-text: #30363a;
+	--antilia-theme-muted: #677074;
+	--antilia-theme-accent-hover: #324148;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(74, 82, 88, 0.25);
+	--antilia-theme-primary-rgb: 74, 82, 88;
+	--antilia-theme-accent-rgb: 69, 90, 100;
+	--antilia-theme-accent-hover-rgb: 50, 65, 72;
+	--antilia-theme-text-rgb: 38, 50, 56;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 76, 122, 79;
+	--antilia-theme-error-rgb: 178, 60, 60;
+	--antilia-theme-warning-rgb: 194, 124, 14;
+	--antilia-theme-info-rgb: 74, 111, 165;
 }
 
 .antilia-theme-green {
@@ -158,6 +243,23 @@
 	--antilia-theme-error: #c62828;
 	--antilia-theme-warning: #f57c00;
 	--antilia-theme-info: #0277bd;
+	--antilia-theme-page: #f0f3f3;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #e9f3ea;
+	--antilia-theme-primary-text: #1b5e20;
+	--antilia-theme-muted: #5f6d60;
+	--antilia-theme-accent-hover: #28662b;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(46, 125, 50, 0.25);
+	--antilia-theme-primary-rgb: 46, 125, 50;
+	--antilia-theme-accent-rgb: 56, 142, 60;
+	--antilia-theme-accent-hover-rgb: 40, 102, 43;
+	--antilia-theme-text-rgb: 27, 46, 28;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 46, 125, 50;
+	--antilia-theme-error-rgb: 198, 40, 40;
+	--antilia-theme-warning-rgb: 245, 124, 0;
+	--antilia-theme-info-rgb: 2, 119, 189;
 }
 
 .antilia-theme-navy {
@@ -182,6 +284,23 @@
 	--antilia-theme-error: #c53030;
 	--antilia-theme-warning: #d97706;
 	--antilia-theme-info: #1f5fa8;
+	--antilia-theme-page: #f0f1f5;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #e6edf5;
+	--antilia-theme-primary-text: #1f3a68;
+	--antilia-theme-muted: #626970;
+	--antilia-theme-accent-hover: #164479;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(31, 58, 104, 0.25);
+	--antilia-theme-primary-rgb: 31, 58, 104;
+	--antilia-theme-accent-rgb: 31, 95, 168;
+	--antilia-theme-accent-hover-rgb: 22, 68, 121;
+	--antilia-theme-text-rgb: 31, 41, 51;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 47, 133, 90;
+	--antilia-theme-error-rgb: 197, 48, 48;
+	--antilia-theme-warning-rgb: 217, 119, 6;
+	--antilia-theme-info-rgb: 31, 95, 168;
 }
 
 .antilia-theme-light-blue {
@@ -206,6 +325,23 @@
 	--antilia-theme-error: #e53935;
 	--antilia-theme-warning: #fb8c00;
 	--antilia-theme-info: #2f74ad;
+	--antilia-theme-page: #f1f4f8;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #e8f0f6;
+	--antilia-theme-primary-text: #255d8a;
+	--antilia-theme-muted: #5c7080;
+	--antilia-theme-accent-hover: #22547d;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(74, 144, 200, 0.25);
+	--antilia-theme-primary-rgb: 74, 144, 200;
+	--antilia-theme-accent-rgb: 47, 116, 173;
+	--antilia-theme-accent-hover-rgb: 34, 84, 125;
+	--antilia-theme-text-rgb: 22, 50, 74;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 67, 160, 71;
+	--antilia-theme-error-rgb: 229, 57, 53;
+	--antilia-theme-warning-rgb: 251, 140, 0;
+	--antilia-theme-info-rgb: 47, 116, 173;
 }
 
 .antilia-theme-magenta {
@@ -230,6 +366,23 @@
 	--antilia-theme-error: #c62828;
 	--antilia-theme-warning: #d97706;
 	--antilia-theme-info: #1d4ed8;
+	--antilia-theme-page: #f3f0f7;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #f5e6f6;
+	--antilia-theme-primary-text: #86198f;
+	--antilia-theme-muted: #6d5a6e;
+	--antilia-theme-accent-hover: #75147e;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(162, 28, 175, 0.25);
+	--antilia-theme-primary-rgb: 162, 28, 175;
+	--antilia-theme-accent-rgb: 162, 28, 175;
+	--antilia-theme-accent-hover-rgb: 117, 20, 126;
+	--antilia-theme-text-rgb: 46, 19, 48;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 46, 125, 50;
+	--antilia-theme-error-rgb: 198, 40, 40;
+	--antilia-theme-warning-rgb: 217, 119, 6;
+	--antilia-theme-info-rgb: 29, 78, 216;
 }
 
 .antilia-theme-rose {
@@ -254,6 +407,23 @@
 	--antilia-theme-error: #b91c1c;
 	--antilia-theme-warning: #d97706;
 	--antilia-theme-info: #2b6cb0;
+	--antilia-theme-page: #f4f2f5;
+	--antilia-theme-nav: #ffffff;
+	--antilia-theme-primary-soft: #f6e9ed;
+	--antilia-theme-primary-text: #9f3654;
+	--antilia-theme-muted: #756267;
+	--antilia-theme-accent-hover: #7f2a42;
+	--antilia-theme-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+	--antilia-theme-focus: rgba(190, 74, 106, 0.25);
+	--antilia-theme-primary-rgb: 190, 74, 106;
+	--antilia-theme-accent-rgb: 176, 58, 91;
+	--antilia-theme-accent-hover-rgb: 127, 42, 66;
+	--antilia-theme-text-rgb: 58, 30, 38;
+	--antilia-theme-surface-rgb: 255, 255, 255;
+	--antilia-theme-success-rgb: 47, 133, 90;
+	--antilia-theme-error-rgb: 185, 28, 28;
+	--antilia-theme-warning-rgb: 217, 119, 6;
+	--antilia-theme-info-rgb: 43, 108, 176;
 }
 
 .antilia-theme-dark {
@@ -278,6 +448,23 @@
 	--antilia-theme-error: #ff6b6b;
 	--antilia-theme-warning: #fcc419;
 	--antilia-theme-info: #7cb7ff;
+	--antilia-theme-page: #14181e;
+	--antilia-theme-nav: #191e24;
+	--antilia-theme-primary-soft: #2d3c4e;
+	--antilia-theme-primary-text: #aed2ff;
+	--antilia-theme-muted: #9a9fa6;
+	--antilia-theme-accent-hover: #aed2ff;
+	--antilia-theme-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3);
+	--antilia-theme-focus: rgba(124, 183, 255, 0.35);
+	--antilia-theme-primary-rgb: 52, 85, 122;
+	--antilia-theme-accent-rgb: 124, 183, 255;
+	--antilia-theme-accent-hover-rgb: 174, 210, 255;
+	--antilia-theme-text-rgb: 230, 234, 240;
+	--antilia-theme-surface-rgb: 30, 36, 44;
+	--antilia-theme-success-rgb: 81, 207, 102;
+	--antilia-theme-error-rgb: 255, 107, 107;
+	--antilia-theme-warning-rgb: 252, 196, 25;
+	--antilia-theme-info-rgb: 124, 183, 255;
 }
 
 /*
@@ -313,6 +500,23 @@
 	--antilia-theme-error: var(--bs-danger);
 	--antilia-theme-warning: var(--bs-warning);
 	--antilia-theme-info: var(--bs-info);
+	--antilia-theme-page: var(--bs-body-bg);
+	--antilia-theme-nav: var(--bs-tertiary-bg);
+	--antilia-theme-primary-soft: var(--bs-primary-bg-subtle);
+	--antilia-theme-primary-text: var(--bs-primary-text-emphasis);
+	--antilia-theme-muted: var(--bs-secondary-color);
+	--antilia-theme-accent-hover: var(--bs-link-hover-color);
+	--antilia-theme-shadow: var(--bs-box-shadow-sm);
+	--antilia-theme-focus: var(--bs-focus-ring-color);
+	--antilia-theme-primary-rgb: var(--bs-primary-rgb);
+	--antilia-theme-accent-rgb: var(--bs-link-color-rgb);
+	--antilia-theme-accent-hover-rgb: var(--bs-link-hover-color-rgb);
+	--antilia-theme-text-rgb: var(--bs-body-color-rgb);
+	--antilia-theme-surface-rgb: var(--bs-body-bg-rgb);
+	--antilia-theme-success-rgb: var(--bs-success-rgb);
+	--antilia-theme-error-rgb: var(--bs-danger-rgb);
+	--antilia-theme-warning-rgb: var(--bs-warning-rgb);
+	--antilia-theme-info-rgb: var(--bs-info-rgb);
 }
 
 .antilia-theme-bootstrap-dark,

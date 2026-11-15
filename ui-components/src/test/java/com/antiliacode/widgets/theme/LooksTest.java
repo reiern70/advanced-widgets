@@ -188,6 +188,23 @@ class LooksTest extends WicketTestCase
 		assertEquals("modal-dialog-header extra modal-header", tag.getAttribute("class"));
 	}
 
+	@Test
+	void theBootstrapLookGivesBootstrapTheChannelsOfTheTheme() throws Exception
+	{
+		String css = new String(
+			Look.class.getResourceAsStream("antilia-look-bootstrap.css").readAllBytes(), "UTF-8");
+		for (String[] pair : List.of(new String[] { "primary", "primary" },
+			new String[] { "link-color", "accent" }, new String[] { "link-hover-color", "accent-hover" },
+			new String[] { "body-color", "text" }, new String[] { "body-bg", "surface" },
+			new String[] { "success", "success" }, new String[] { "danger", "error" },
+			new String[] { "warning", "warning" }, new String[] { "info", "info" }))
+		{
+			String mapping = "--bs-" + pair[0] + "-rgb: var(--antilia-theme-" + pair[1] + "-rgb);";
+			assertTrue(css.contains(mapping), mapping);
+		}
+		assertTrue(css.contains("--bs-secondary-color: var(--antilia-theme-muted);"));
+	}
+
 	public static class LookedPage extends WebPage implements IMarkupResourceStreamProvider
 	{
 		private static final long serialVersionUID = 1L;
