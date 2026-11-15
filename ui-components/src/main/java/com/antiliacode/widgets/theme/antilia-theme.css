@@ -552,7 +552,7 @@
 
 .antilia-theme .dialog-theme-default .modal-dialog-header {
 	margin: 0;
-	padding: 0.2em 0.6em;
+	padding: 0.4em 0.75em;
 	border-radius: 0;
 	background: var(--antilia-theme-primary);
 	color: var(--antilia-theme-on-primary);
