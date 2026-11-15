@@ -21,10 +21,15 @@
  * (Wicket.CKEditor.stateParameters): by default a moment after the user changed them, as the
  * editor loses the focus and, in a beacon, as the page goes. The core's own handlers sending the
  * state are off.
+ *
+ * With uploadUrl, the URL of the editor's RichTextImageUploadBehavior, the editor uploads the
+ * images the user chooses, pastes or drops there (uploadImageTo), as the Tiptap editor of Wicket
+ * does.
  */
 
 import { CKEditor, type CKEditorOptions } from '../ck-editor.js';
 import { NO_STATE_EVENTS } from '../editor-events.js';
+import { uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
 import { pendingParameters, stateParameters } from './send-state.js';
@@ -35,13 +40,16 @@ const WicketCKEditor = {
 	 * Makes an editor of a text area.
 	 *
 	 * @param id the markup id of the text area
-	 * @param options CKEditor's license key, the text, its format, the features and the state
+	 * @param options CKEditor's license key, the text, its format, the features and the state;
+	 *        uploadUrl, where the images uploaded go
 	 * @returns the editor, null when there is no such element
 	 */
-	attach(id: string, options: CKEditorOptions = {}): CKEditor | null {
+	attach(id: string, options: CKEditorOptions & { uploadUrl?: string } = {}): CKEditor | null {
+		const { uploadUrl, ...rest } = options;
 		// the events of the server send the state
-		return CKEditor.attach(id, { ...options, events: { ...NO_STATE_EVENTS,
-			...options.events } });
+		return CKEditor.attach(id, { ...rest,
+			...(uploadUrl ? { onUpload: uploadImageTo(uploadUrl) } : {}),
+			events: { ...NO_STATE_EVENTS, ...options.events } });
 	},
 
 	/** What the events of the server carry besides: see stateParameters(). */

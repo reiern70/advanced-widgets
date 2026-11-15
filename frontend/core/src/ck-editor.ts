@@ -36,6 +36,15 @@
  * getValue() is the text given. Should it not start, without CKEditor in the page or with a
  * license key it refuses, the text area shows again, to type the text in, and onError tells why.
  *
+ * Since CKEditor 49 has no Watchdog, CKEditor keeps running after an error that escaped it, but
+ * may be left in a state of its own. The editor hears of those of its CKEditor by CKEditor's
+ * onEditorError, when the build has it, and tells them to onError, with the event error of
+ * CK_EDITOR_EVENTS and in the log. Then it starts CKEditor again, as the Watchdog did, with the
+ * text it last had, which the text area holds, and the selection, and says so in a line below the
+ * text (recovery): after each of its first crashes, then as long as they come further apart than
+ * an interval on average; crashes coming more often, it leaves CKEditor running, saying so in that
+ * line.
+ *
  * The text is HTML, or Markdown with CKEditor's Markdown plugin (format). What it may hold are the
  * features of the Tiptap editor (rich-text-schema.ts), each made by CKEditor's plugins
  * (CK_EDITOR_FEATURE_PLUGINS), all of them unless the page leaves some out; the toolbar has their
@@ -47,6 +56,14 @@
  * for which CKEditor writes a style. The HTML a page gives and the user pastes is made quiet
  * before CKEditor reads it (quietHtml), its style attributes moved aside: the browser would
  * report each.
+ *
+ * Given onUpload, the editor uploads the images the user chooses, pastes or drops, as the Tiptap
+ * editor does: CKEditor's ImageUpload, for the feature image, with an upload adapter of the
+ * editor's own calling onUpload, which shows the progress on the image and stops the upload as
+ * the user takes the image out. The editor checks each image first, its type, its size and its
+ * pixels (uploadTypes, uploadMaxSize, uploadMaxWidth and uploadMaxHeight), and tells why it does
+ * not upload one, or why it failed, in a line above the text, as the Tiptap editor does, not in
+ * CKEditor's alert. The bar of the progress has no style attribute either: it grows by classes.
  *
  * As the Tiptap editor, it keeps its state, what is selected, how far the text is scrolled and
  * the size the user gave it, by the bar along its bottom; it tells whether the text has changes
@@ -72,9 +89,14 @@ import { RICH_TEXT_EDITOR_EVENTS, sameState, textLanguage, type RichTextEditorEv
 	type RichTextEditorSelection, type RichTextEditorState,
 	type RichTextEditorStateChange } from './rich-text-contract.js';
 import { RICH_TEXT_BUILT_IN_EVENTS, RichTextEventTypes } from './rich-text-events.js';
-import { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, pasteCleaningReport,
+import { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, isSafeUrl, pasteCleaningReport,
 	pasteNoticeText, quietHtml, RICH_TEXT_ALIGN_CLASSES, RichTextPasteNotice,
 	type RichTextCleaningReport, type RichTextPasteTexts } from './rich-text-html.js';
+import { dimensionsText, fits, readImageDimensions,
+	type RichTextImageDimensions } from './rich-text-image-headers.js';
+import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, isAbort, refusalOf,
+	type RichTextUploader, type RichTextUploadOptions,
+	type UploadCheckTexts } from './rich-text-upload.js';
 import type { HeadingLevel, RichTextFeature } from './rich-text-schema.js';
 
 /* What the glue uses of CKEditor, as its classes have it: no more, so that any build fits. */
@@ -198,9 +220,25 @@ export interface CKEditorViewWriter {
 	removeAttribute(key: string, element: unknown): void;
 }
 
+/** What CKEditor's onEditorError tells of an error that escaped an editor. */
+export interface CKEditorErrorData {
+	/** The error, a CKEditorError. */
+	readonly error: unknown;
+	/** The editor, or the context, the error came from; null when CKEditor cannot tell. */
+	readonly source: unknown;
+}
+
+/**
+ * CKEditor's onEditorError (CKEditor 49 and later): registers a callback for the errors escaping
+ * the editors of the page, and returns a function unregistering it.
+ */
+export type CKEditorOnEditorError = (callback: (data: CKEditorErrorData) => void) => () => void;
+
 /** CKEditor's ClassicEditor: an editor with a toolbar above the text. */
 export interface CKEditorClass {
 	create(element: HTMLElement, config: Record<string, unknown>): Promise<CKEditorInstance>;
+	/** CKEditor's onEditorError, reachable from the class, in CKEditor 49 and later. */
+	readonly onEditorError?: CKEditorOnEditorError;
 }
 
 /**
@@ -209,6 +247,8 @@ export interface CKEditorClass {
  */
 export interface CKEditorBuild {
 	readonly ClassicEditor: CKEditorClass;
+	/** CKEditor's onEditorError, as the browser build of CKEditor 49 and later has it. */
+	readonly onEditorError?: CKEditorOnEditorError;
 	readonly [name: string]: unknown;
 }
 
@@ -306,7 +346,7 @@ const TOOLBAR: readonly (readonly (readonly [CKEditorFeature | null, string])[])
  * What the editor says, its own texts, with the notice telling what a paste lost
  * (RichTextPasteTexts): CKEditor's are translated by CKEditor.
  */
-export interface CKEditorTexts extends RichTextPasteTexts {
+export interface CKEditorTexts extends RichTextPasteTexts, UploadCheckTexts {
 	characters: string;
 	character: string;
 	words: string;
@@ -314,6 +354,10 @@ export interface CKEditorTexts extends RichTextPasteTexts {
 	resize: string;
 	/** The switch of the form of a link opening it in a new tab. */
 	linkNewTab: string;
+	/** The line below the text once CKEditor ran into an error and started again (recovery). */
+	errorRestarted: string;
+	/** The line below the text once CKEditor ran into errors too often to start again. */
+	errorGaveUp: string;
 }
 
 export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
@@ -323,8 +367,76 @@ export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
 	word: '{0} word',
 	resize: 'Drag, or use the arrow keys, to resize the editor',
 	linkNewTab: 'Open in a new tab',
+	errorRestarted: 'Something went wrong in the editor. It started again, with your text.',
+	errorGaveUp: 'Something keeps going wrong in the editor. Save your text, then reload the ' +
+		'page.',
+	theImage: 'The image',
+	uploadFailed: '{0} could not be uploaded.',
+	uploadTooLarge: '{0} is larger than {1}.',
+	uploadType: '{0} is not an image of a type the editor takes: {1}.',
+	uploadTooMany: '{0} images at most at a time: {1} left out.',
+	uploadTooBig: '{0} is {1} pixels, larger than {2}.',
 	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
+
+/**
+ * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog did: after
+ * each of the first crashes, then as long as the crashes come further apart than an interval on
+ * average.
+ */
+export interface CKEditorRecovery {
+	/**
+	 * How many crashes in a row CKEditor starts again after, however close they come: 3 when left
+	 * out, the Watchdog's crashNumberLimit.
+	 */
+	crashes?: number;
+	/**
+	 * After more crashes, CKEditor starts again only while the last of them came further apart than
+	 * this on average, in milliseconds: 5000 when left out, the Watchdog's
+	 * minimumNonErrorTimePeriod.
+	 */
+	interval?: number;
+}
+
+/** What happened as CKEditor failed, which onError and the event error tell. */
+export interface CKEditorFailure {
+	/** Whether CKEditor had started: false when it could not start, the text area shown again. */
+	started: boolean;
+	/** Whether the editor starts CKEditor again, with the text it had. */
+	restarting: boolean;
+	/** Whether the editor gave up starting CKEditor again, the errors coming too often. */
+	gaveUp: boolean;
+	/** How many times CKEditor failed after it started, this time among them. */
+	crashes: number;
+}
+
+/** What the event error of the editor carries, besides the editor. */
+export interface CKEditorErrorDetail extends CKEditorFailure {
+	/** The error. */
+	error: unknown;
+	/** The name of the error, CKEditorError for one of CKEditor. */
+	name: string;
+	/** What the error says. */
+	message: string;
+}
+
+/** The events the editor fires besides those it shares with the Tiptap editor. */
+export const CK_EDITOR_EVENTS = Object.freeze({
+	/**
+	 * CKEditor ran into an error after it started, or could not start: its detail is a
+	 * CKEditorErrorDetail.
+	 */
+	error: 'antilia-ck-editor:error'
+});
+
+/** How the editor starts CKEditor again, unless the options say otherwise. */
+export const DEFAULT_CK_EDITOR_RECOVERY: Readonly<Required<CKEditorRecovery>> = Object.freeze({
+	crashes: 3,
+	interval: 5000
+});
+
+/** The longest message of an error the event error carries, in characters. */
+const MESSAGE_LENGTH = 1000;
 
 /**
  * What an editor holds and shows, and what it lets the user do.
@@ -407,10 +519,36 @@ export interface CKEditorOptions {
 	texts?: Partial<CKEditorTexts>;
 	/** The look of the editor; that of the element it is in when left out (see lookOf). */
 	look?: Look;
+	/**
+	 * Uploads an image the user chose, pasted or dropped, resolving to its address, or rejecting
+	 * with the message telling why not: CKEditor's ImageUpload then, for the feature image, the
+	 * progress shown on the image as told (onProgress) and the upload canceled (signal) as the user
+	 * takes the image out. uploadImageTo(url) posts it to a URL, as Wicket's
+	 * RichTextImageUploadBehavior takes it. None when left out or null: an image is an address
+	 * the user types. One coming or going makes CKEditor anew.
+	 */
+	onUpload?: RichTextUploader | null;
+	/** The media types of the images uploaded: those of DEFAULT_RICH_TEXT_UPLOAD_TYPES when left out. */
+	uploadTypes?: readonly string[];
+	/** The largest image uploaded, in bytes: none when left out or null. */
+	uploadMaxSize?: number | null;
+	/** The widest picture uploaded, in pixels, read from its file: none when left out or null. */
+	uploadMaxWidth?: number | null;
+	/** The highest picture uploaded, in pixels, read from its file: none when left out or null. */
+	uploadMaxHeight?: number | null;
 	/** Called with CKEditor's editor once it started. */
 	onReady?: (editor: CKEditorInstance) => void;
-	/** Called with what went wrong when CKEditor could not start. */
-	onError?: (error: unknown) => void;
+	/**
+	 * How the editor starts CKEditor again after an error escaped it, as CKEditor's Watchdog did:
+	 * DEFAULT_CK_EDITOR_RECOVERY when left out; false to leave CKEditor running as it is, as
+	 * CKEditor 49 does, telling of the errors alone.
+	 */
+	recovery?: CKEditorRecovery | false;
+	/**
+	 * Called with what went wrong when CKEditor could not start, or ran into an error after it
+	 * started, which CKEditor tells by its onEditorError, and what the editor does about it.
+	 */
+	onError?: (error: unknown, failure: CKEditorFailure) => void;
 	/** Called with the text each time the user changed it. */
 	onChange?: (value: string) => void;
 	/** Called when the editor got the focus. */
@@ -461,8 +599,40 @@ export const CK_EDITOR_CLASSES = Object.freeze({
 	loading: 'antilia-ck-editor-loading',
 	readOnly: 'antilia-ck-editor-readonly',
 	disabled: 'antilia-ck-editor-disabled',
-	focused: 'antilia-ck-editor-focused'
+	focused: 'antilia-ck-editor-focused',
+	/** The line below the text telling the user CKEditor ran into an error. */
+	error: 'antilia-ck-editor-error',
+	/** The line above the text telling the user why an image was not uploaded, for a while. */
+	message: 'antilia-ck-editor-message'
 });
+
+/** How long the line telling why an image was not uploaded stays, in milliseconds. */
+const MESSAGE_TIME = 8000;
+
+/** The steps the bar of the progress of an upload grows by, in percent, each a class of its own. */
+const PROGRESS_STEP = 5;
+
+/** The class of the bar of the progress of an upload at a share, in steps of PROGRESS_STEP. */
+export function uploadProgressClass(percent: number): string {
+	const share = Math.min(Math.max(Number.isFinite(percent) ? percent : 0, 0), 100);
+	return 'antilia-ck-upload-' + Math.round(share / PROGRESS_STEP) * PROGRESS_STEP;
+}
+
+/** What CKEditor's FileRepository gives an upload adapter: the file, and the progress to set. */
+export interface CKEditorFileLoader extends CKEditorEmitter {
+	/** The file to upload, null when CKEditor could not read it. */
+	readonly file: Promise<File | null>;
+	/** The bytes sent, which CKEditor shows the progress by. */
+	uploaded: number;
+	/** The bytes of the whole request, null until known. */
+	uploadTotal: number | null;
+}
+
+/** An upload adapter of CKEditor: it uploads a file, and stops as CKEditor aborts it. */
+export interface CKEditorUploadAdapter {
+	upload(): Promise<{ default: string }>;
+	abort(): void;
+}
 
 const DEFAULTS = { resizable: 'vertical' as ResizeAxis, minWidth: 200,
 	minHeight: 96, headingLevels: [1, 2, 3, 4] as readonly HeadingLevel[] };
@@ -472,7 +642,8 @@ const READ_ONLY_LOCK = 'antilia-ck-editor';
 
 /** The options that make CKEditor's configuration: changing one makes it anew. */
 const CONFIG_OPTIONS: readonly (keyof CKEditorOptions)[] = ['format', 'features',
-	'headingLevels', 'toolbar', 'licenseKey', 'language', 'textLanguage', 'placeholder', 'label'];
+	'headingLevels', 'toolbar', 'licenseKey', 'language', 'textLanguage', 'placeholder', 'label',
+	'uploadTypes'];
 
 /** The options compared by what they are, not by their value. */
 const OBJECT_OPTIONS: readonly (keyof CKEditorOptions)[] = ['build', 'plugins', 'config',
@@ -487,6 +658,18 @@ const SIZES = ['width', 'height'];
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
 	return typeof target === 'string' ? document.getElementById(target) : target;
+}
+
+/**
+ * @returns the name and the message of an error, as the event error carries them: what it says
+ *          cut to MESSAGE_LENGTH characters
+ */
+function describeError(error: unknown): { name: string; message: string } {
+	const named = error as { name?: unknown; message?: unknown } | null | undefined;
+	const name = typeof named?.name === 'string' && named.name ? named.name : 'Error';
+	const message = typeof named?.message === 'string' ? named.message :
+		error === undefined || error === null ? '' : String(error);
+	return { name: name.slice(0, 100), message: message.slice(0, MESSAGE_LENGTH) };
 }
 
 /**
@@ -694,6 +877,29 @@ export class CKEditor {
 
 	/** The HTML of a paste, made quiet, until CKEditor inserts what it read of it. */
 	private pasted: string | null = null;
+
+	/** The line above the text telling why an image was not uploaded, while it tells. */
+	private message: HTMLElement | null = null;
+
+	private messageTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** The line below the text telling the user CKEditor ran into an error, while it tells. */
+	private errorLine: HTMLElement | null = null;
+
+	/** What the line telling of an error says: that CKEditor started again, or gave up; none. */
+	private errorShown: 'restarted' | 'gaveUp' | null = null;
+
+	/** How many times CKEditor failed after it started. */
+	private crashCount = 0;
+
+	/** When CKEditor failed last, as many times as the recovery looks back at. */
+	private crashTimes: number[] = [];
+
+	/** Whether the editor gave up starting CKEditor again, the errors coming too often. */
+	private gaveUp = false;
+
+	/** The CKEditor whose errors the editor hears of, and what stops hearing of them. */
+	private hearing: { editor: CKEditorInstance; stop: () => void } | null = null;
 
 	private resizable: Resizable | null = null;
 
@@ -953,6 +1159,10 @@ export class CKEditor {
 	private plugins(build: CKEditorBuild): object[] {
 		const names = [...CK_EDITOR_BASE_PLUGINS];
 		this.features().forEach((feature) => names.push(...CK_EDITOR_FEATURE_PLUGINS[feature]));
+		if (this.uploading()) {
+			// the upload button, pasting and dropping images, and their progress
+			names.push('ImageUpload');
+		}
 		if (this.format() === 'markdown') {
 			names.push('Markdown');
 		}
@@ -1033,6 +1243,11 @@ export class CKEditor {
 			table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] },
 			image: { toolbar: ['imageTextAlternative', 'toggleImageCaption'] }
 		};
+		if (this.uploading()) {
+			// CKEditor's names of the types of images: png for image/png
+			(config.image as Record<string, unknown>).upload = { types: this.uploadTypes()
+				.filter((type) => type.startsWith('image/')).map((type) => type.slice(6)) };
+		}
 		if (!features.has('heading')) {
 			delete config.heading;
 		}
@@ -1099,6 +1314,7 @@ export class CKEditor {
 			return this.ready;
 		}
 		this.editor = editor;
+		this.hearErrors(editor, build);
 		this.setUp(editor);
 		// CKEditor has the selection now
 		if (this.reported === null && this.textReported) {
@@ -1113,9 +1329,181 @@ export class CKEditor {
 	 */
 	private fail(error: unknown): never {
 		getHost().log.error('CKEditor could not start', error);
-		this.options.onError?.(error);
+		this.tellError(error, { started: false, restarting: false, gaveUp: this.gaveUp,
+			crashes: this.crashCount });
 		this.destroy();
 		throw error;
+	}
+
+	/**
+	 * Hears of the errors escaping CKEditor, by CKEditor's onEditorError when the build has it
+	 * (CKEditor 49 and later): those of this CKEditor alone, until it stops.
+	 */
+	private hearErrors(editor: CKEditorInstance, build: CKEditorBuild): void {
+		this.stopHearingErrors();
+		const register = typeof build.onEditorError === 'function' ? build.onEditorError :
+			build.ClassicEditor.onEditorError;
+		if (typeof register !== 'function') {
+			return;
+		}
+		try {
+			const stop = register(({ error, source }) => {
+				if (source === editor && editor === this.editor && !this.destroyed) {
+					this.crashed(editor, error);
+				}
+			});
+			this.hearing = { editor, stop: typeof stop === 'function' ? stop : () => undefined };
+		} catch (error) {
+			getHost().log.error('The editor cannot hear of the errors of CKEditor', error);
+		}
+	}
+
+	/**
+	 * No longer hears of the errors of a CKEditor, or of the one heard of.
+	 */
+	private stopHearingErrors(editor?: CKEditorInstance): void {
+		const hearing = this.hearing;
+		if (!hearing || (editor && hearing.editor !== editor)) {
+			return;
+		}
+		this.hearing = null;
+		try {
+			hearing.stop();
+		} catch (error) {
+			getHost().log.error('The editor could not stop hearing of the errors of CKEditor', error);
+		}
+	}
+
+	/**
+	 * @returns how the editor starts CKEditor again after an error, null for not at all: the
+	 *          option recovery, DEFAULT_CK_EDITOR_RECOVERY for what it leaves out
+	 */
+	private recovery(): Required<CKEditorRecovery> | null {
+		const given = this.options.recovery;
+		if (given === false) {
+			return null;
+		}
+		const crashes = given?.crashes;
+		const interval = given?.interval;
+		return {
+			crashes: typeof crashes === 'number' && Number.isFinite(crashes) && crashes >= 0 ?
+				Math.floor(crashes) : DEFAULT_CK_EDITOR_RECOVERY.crashes,
+			interval: typeof interval === 'number' && Number.isFinite(interval) && interval >= 0 ?
+				interval : DEFAULT_CK_EDITOR_RECOVERY.interval
+		};
+	}
+
+	/**
+	 * @returns whether CKEditor starts again after the crashes it had, as CKEditor's Watchdog
+	 *          decided: after each of the first ones, then while the last of them came further
+	 *          apart than the interval on average
+	 */
+	private mayRestart(recovery: Required<CKEditorRecovery>): boolean {
+		const times = this.crashTimes;
+		if (times.length <= recovery.crashes) {
+			return true;
+		}
+		const last = times[times.length - 1]!;
+		const first = times[times.length - 1 - recovery.crashes]!;
+		return (last - first) / recovery.crashes > recovery.interval;
+	}
+
+	/**
+	 * CKEditor ran into an error after it started: CKEditor starts again with the text it had and
+	 * the selection, unless the recovery is off, or the errors come too often, CKEditor then
+	 * running on as it is. Then the error is told: in the log, to onError and with the event
+	 * error; and to the user, in a line below the text, unless the recovery is off.
+	 */
+	private crashed(editor: CKEditorInstance, error: unknown): void {
+		const recovery = this.recovery();
+		this.crashCount++;
+		if (recovery) {
+			this.crashTimes = [...this.crashTimes, Date.now()].slice(-(recovery.crashes + 1));
+		}
+		const restarting = !!recovery && !this.gaveUp && this.mayRestart(recovery);
+		if (recovery && !restarting) {
+			this.gaveUp = true;
+		}
+		getHost().log.error(restarting ? 'CKEditor ran into an error, and starts again' :
+			this.gaveUp ? 'CKEditor ran into an error again, and runs on as it is' :
+				'CKEditor ran into an error', error);
+		if (restarting) {
+			this.recover(editor);
+		}
+		this.tellError(error, { started: true, restarting, gaveUp: this.gaveUp,
+			crashes: this.crashCount });
+		if (recovery && !this.destroyed) {
+			this.errorShown = restarting ? 'restarted' : 'gaveUp';
+			this.renderErrorLine();
+		}
+	}
+
+	/**
+	 * Starts CKEditor again after it ran into an error, as the Watchdog did: with the text it last
+	 * had, which the text area holds, and the selection, the focus back in it if it was there.
+	 */
+	private recover(editor: CKEditorInstance): void {
+		let selection = this.selected;
+		try {
+			selection = this.selection();
+		} catch (error) {
+			getHost().log.error('CKEditor could not tell what is selected', error);
+		}
+		const focused = this.focused;
+		this.pendingSelection = selection;
+		this.unbindScroller();
+		this.editor = null;
+		this.stop(editor);
+		this.restartWith(this.value);
+		if (focused) {
+			this.ready.then((restarted) => restarted.focus(), () => undefined);
+		}
+	}
+
+	/**
+	 * Tells what went wrong: to onError, then with the event error.
+	 */
+	private tellError(error: unknown, failure: CKEditorFailure): void {
+		try {
+			this.options.onError?.(error, { ...failure });
+		} catch (thrown) {
+			getHost().log.error('onError of the editor failed', thrown);
+		}
+		this.emit(CK_EDITOR_EVENTS.error, { ...failure, error, ...describeError(error) });
+	}
+
+	/**
+	 * Shows the line telling the user CKEditor ran into an error, below the text, before the count
+	 * and the handle resizing the editor; or takes it away, once it tells nothing.
+	 */
+	private renderErrorLine(): void {
+		const shown = this.errorShown;
+		if (!shown || this.destroyed) {
+			this.errorLine?.remove();
+			this.errorLine = null;
+			return;
+		}
+		if (!this.errorLine) {
+			this.errorLine = document.createElement('div');
+			this.errorLine.className = CK_EDITOR_CLASSES.error;
+		}
+		const line = this.errorLine;
+		// polite as CKEditor started again; the user has to act once it gave up
+		line.setAttribute('role', shown === 'gaveUp' ? 'alert' : 'status');
+		line.toggleAttribute('data-gave-up', shown === 'gaveUp');
+		const texts = this.texts();
+		const text = shown === 'gaveUp' ? texts.errorGaveUp : texts.errorRestarted;
+		if (line.textContent !== text) {
+			line.textContent = text;
+		}
+		const next = this.status ?? this.element.querySelector(':scope > .antilia-resizable-handle');
+		if (next) {
+			if (line.nextElementSibling !== next) {
+				next.before(line);
+			}
+		} else if (line.parentElement !== this.element || line.nextElementSibling) {
+			this.element.append(line);
+		}
 	}
 
 	/**
@@ -1157,6 +1545,7 @@ export class CKEditor {
 			}
 		}, { priority: 'highest' });
 		this.hearPastes(editor);
+		this.receiveUploads(editor);
 		takesAway(editor, 'superscript', 'subscript');
 		takesAway(editor, 'subscript', 'superscript');
 		editor.keystrokes.set('Ctrl+S', (_data, cancel) => {
@@ -1241,6 +1630,258 @@ export class CKEditor {
 	}
 
 	/**
+	 * @returns whether the editor uploads images: it has the feature image and onUpload
+	 */
+	private uploading(): boolean {
+		return this.features().has('image') && typeof this.options.onUpload === 'function';
+	}
+
+	/**
+	 * @returns the media types of the images uploaded, lower case
+	 */
+	private uploadTypes(): string[] {
+		return (this.options.uploadTypes ?? DEFAULT_RICH_TEXT_UPLOAD_TYPES).map((type) =>
+			type.trim().toLowerCase()).filter(Boolean);
+	}
+
+	/**
+	 * @returns the widest and the highest picture uploaded, null for no limit
+	 */
+	private uploadMaxDimensions(): RichTextImageDimensions | null {
+		const { uploadMaxWidth: width, uploadMaxHeight: height } = this.options;
+		const positive = (value: number | null | undefined): value is number =>
+			typeof value === 'number' && Number.isFinite(value) && value > 0;
+		return positive(width) && positive(height) ?
+			{ width: Math.floor(width), height: Math.floor(height) } : null;
+	}
+
+	/**
+	 * Lets CKEditor upload the images the user chooses, pastes or drops, by an upload adapter of
+	 * the editor's own calling onUpload; tells why it did not upload one in the line above the
+	 * text, not in CKEditor's alert; tells of files of a type not taken that CKEditor leaves alone;
+	 * and shows the progress of each by classes. Nothing without onUpload or CKEditor's
+	 * FileRepository.
+	 */
+	private receiveUploads(editor: CKEditorInstance): void {
+		const plugins = editor.plugins;
+		if (!this.uploading() || !plugins?.has('FileRepository')) {
+			return;
+		}
+		const repository = plugins.get('FileRepository') as {
+			createUploadAdapter?: (loader: CKEditorFileLoader) => CKEditorUploadAdapter;
+			readonly loaders?: { get(id: unknown): CKEditorFileLoader | null | undefined };
+		};
+		repository.createUploadAdapter = (loader) => this.uploadAdapter(loader);
+		if (plugins.has('Notification')) {
+			// CKEditor's warning that an upload failed, its message the adapter's
+			(plugins.get('Notification') as CKEditorEmitter).on('show:warning:upload',
+				(event: { stop(): void }, data: { message?: unknown } | undefined) => {
+					event.stop();
+					const message = data?.message;
+					if (editor === this.editor && typeof message === 'string' && message) {
+						this.alert(message);
+					}
+				}, { priority: 'high' });
+		}
+		// files pasted or dropped of a type not taken, which CKEditor's ImageUpload leaves alone:
+		// told why, as the Tiptap editor does
+		editor.editing.view.document.on('clipboardInput', (_event, data: {
+			dataTransfer?: { files?: ArrayLike<File>; getData?(type: string): string } }) => {
+			const transfer = data.dataTransfer;
+			const files = Array.from(transfer?.files ?? []);
+			if (!files.length || transfer?.getData?.('text/html') || editor !== this.editor) {
+				return;
+			}
+			const types = this.uploadTypes();
+			const texts = this.texts();
+			const refused = files.map((file) => refusalOf(file, { types, maxSize: null }, texts))
+				.filter((message): message is string => !!message);
+			if (refused.length) {
+				this.alert(refused.join(' '));
+			}
+		}, { priority: 'high' });
+		this.quietUploadProgress(editor, repository);
+	}
+
+	/**
+	 * @returns the upload adapter of a file of CKEditor: checks the file, then uploads it by
+	 *          onUpload, telling CKEditor the progress, and stops it as CKEditor aborts it; rejects
+	 *          with the message telling why not, which CKEditor gives its warning, or with the
+	 *          abort
+	 */
+	private uploadAdapter(loader: CKEditorFileLoader): CKEditorUploadAdapter {
+		const controller = new AbortController();
+		return {
+			upload: async () => {
+				const file = await loader.file;
+				const texts = this.texts();
+				if (!file) {
+					throw format(texts.uploadFailed, texts.theImage);
+				}
+				try {
+					const address = await this.upload(file, { signal: controller.signal,
+						onProgress: (sent, total) => {
+							loader.uploadTotal = total;
+							loader.uploaded = sent;
+						} });
+					return { default: address };
+				} catch (error) {
+					if (isAbort(error)) {
+						throw error;
+					}
+					throw error instanceof Error && error.message ? error.message :
+						format(texts.uploadFailed, fileNameOf(file, texts));
+				}
+			},
+			abort: () => controller.abort()
+		};
+	}
+
+	/**
+	 * Uploads an image by onUpload, once checked: its type, its size and its pixels.
+	 *
+	 * @returns the address of the image, a safe one; rejected with the message saying why not
+	 */
+	private async upload(file: File, options: RichTextUploadOptions): Promise<string> {
+		const texts = this.texts();
+		const name = fileNameOf(file, texts);
+		const failed = format(texts.uploadFailed, name);
+		const uploader = this.options.onUpload;
+		const types = this.uploadTypes();
+		let refused = refusalOf(file, { types, maxSize: this.options.uploadMaxSize ?? null },
+			texts);
+		const max = this.uploadMaxDimensions();
+		if (!refused && max) {
+			const dimensions = await readImageDimensions(file, file.type);
+			if (dimensions && !fits(dimensions, max)) {
+				refused = format(texts.uploadTooBig, name, dimensionsText(dimensions),
+					dimensionsText(max));
+			}
+		}
+		if (!uploader || refused) {
+			throw new Error(refused ?? failed);
+		}
+		let address: string;
+		try {
+			address = String(await uploader(file, options)).trim();
+		} catch (error) {
+			if (isAbort(error)) {
+				throw error;
+			}
+			throw new Error(error instanceof Error && error.message ? error.message : failed);
+		}
+		if (!isSafeUrl(address)) {
+			getHost().log.error('The address of an image uploaded is not one the editor takes: ' +
+				address);
+			throw new Error(failed);
+		}
+		return address;
+	}
+
+	/**
+	 * Shows the progress of the uploads by classes of the bar CKEditor's ImageUploadProgress puts
+	 * on each image uploading, in steps of PROGRESS_STEP: CKEditor would write its width as a
+	 * style attribute, which a Content Security Policy without 'unsafe-inline' blocks. The editor
+	 * hears of the progress first, and CKEditor no more.
+	 */
+	private quietUploadProgress(editor: CKEditorInstance, repository: {
+		readonly loaders?: { get(id: unknown): CKEditorFileLoader | null | undefined } }): void {
+		type ViewElement = { getChildren(): Iterable<ViewElement>;
+			getCustomProperty?(key: string): unknown };
+		const mapper = (editor.editing as { mapper?: { toViewElement(item: unknown): unknown } })
+			.mapper;
+		if (!mapper || !repository.loaders) {
+			return;
+		}
+		const heard = new WeakSet<CKEditorFileLoader>();
+		editor.conversion.for('editingDowncast').add((dispatcher) => IMAGES.forEach((image) =>
+			// after CKEditor's, which puts the bar on the image
+			dispatcher.on(`attribute:uploadStatus:${image}`, (_event, data: {
+				item: { getAttribute(key: string): unknown }; attributeNewValue: unknown }) => {
+				if (data.attributeNewValue !== 'uploading') {
+					return;
+				}
+				const loader = repository.loaders?.get(data.item.getAttribute('uploadId'));
+				const figure = mapper.toViewElement(data.item) as ViewElement | undefined;
+				const bar = figure && Array.from(figure.getChildren()).find((child) =>
+					child.getCustomProperty?.('progressBar'));
+				if (!loader || !bar || heard.has(loader)) {
+					return;
+				}
+				heard.add(loader);
+				let shown: string | null = null;
+				loader.on('change:uploadedPercent', (event: { stop(): void }, _name: string,
+					percent: number) => {
+					// CKEditor's own would write the width as a style
+					event.stop();
+					const step = uploadProgressClass(percent);
+					if (step === shown || editor !== this.editor) {
+						return;
+					}
+					const before = shown;
+					shown = step;
+					editor.editing.view.change((writer) => {
+						const classes = writer as unknown as { addClass(name: string, element: unknown): void;
+							removeClass(name: string, element: unknown): void };
+						if (before) {
+							classes.removeClass(before, bar);
+						}
+						classes.addClass(step, bar);
+					});
+				}, { priority: 'high' });
+			}, { priority: 'low' })));
+	}
+
+	/**
+	 * Tells the user why an image was not uploaded, above the text, for a while, as the Tiptap
+	 * editor does.
+	 */
+	private alert(text: string): void {
+		if (this.destroyed) {
+			return;
+		}
+		if (!this.message) {
+			this.message = document.createElement('div');
+			this.message.className = CK_EDITOR_CLASSES.message;
+			this.message.setAttribute('role', 'alert');
+		}
+		this.message.textContent = text;
+		this.renderMessage();
+		if (this.messageTimer !== null) {
+			clearTimeout(this.messageTimer);
+		}
+		this.messageTimer = setTimeout(() => this.clearMessage(), MESSAGE_TIME);
+	}
+
+	/**
+	 * Puts the line telling why an image was not uploaded above the text, under the toolbar and
+	 * the notice of what a paste lost, in CKEditor's element.
+	 */
+	private renderMessage(): void {
+		const message = this.message;
+		const main = this.editor?.ui.element?.querySelector(':scope > .ck-editor__main');
+		if (!message) {
+			return;
+		}
+		if (main) {
+			if (message.nextElementSibling !== main) {
+				main.before(message);
+			}
+		} else if (!message.isConnected) {
+			this.element.prepend(message);
+		}
+	}
+
+	private clearMessage(): void {
+		if (this.messageTimer !== null) {
+			clearTimeout(this.messageTimer);
+			this.messageTimer = null;
+		}
+		this.message?.remove();
+		this.message = null;
+	}
+
+	/**
 	 * Shows the line telling what a paste lost under CKEditor's toolbar, or takes it away, as the
 	 * options say: in CKEditor's element, before its text, once CKEditor started.
 	 */
@@ -1319,6 +1960,11 @@ export class CKEditor {
 		this.renderStatus();
 		this.dispatch('text');
 		if (!this.external) {
+			// that CKEditor started again is told until the user changes the text
+			if (this.errorShown === 'restarted') {
+				this.errorShown = null;
+				this.renderErrorLine();
+			}
 			this.textReported = false;
 			this.options.onChange?.(value);
 			this.fieldEvent('input');
@@ -1381,13 +2027,14 @@ export class CKEditor {
 			this.status.className = this.css('ck-editor-status');
 			this.status.setAttribute('aria-live', 'polite');
 		}
-		// after CKEditor's, before the handle resizing the editor
+		// after CKEditor's and the line telling of an error, before the handle resizing the editor
 		const handle = this.element.querySelector(':scope > .antilia-resizable-handle');
 		if (handle) {
 			handle.before(this.status);
 		} else {
 			this.element.append(this.status);
 		}
+		this.errorLine?.after(this.status);
 		// counted once CKEditor started, in its model
 		const root = this.editor?.model.document.getRoot();
 		if (!root) {
@@ -1973,7 +2620,9 @@ export class CKEditor {
 		this.render();
 		const restart = changed(...CONFIG_OPTIONS) ||
 			OBJECT_OPTIONS.some((name) => before[name] !== this.options[name]) ||
-			before.texts?.linkNewTab !== this.options.texts?.linkNewTab;
+			before.texts?.linkNewTab !== this.options.texts?.linkNewTab ||
+			// ImageUpload comes or goes
+			!!before.onUpload !== !!this.options.onUpload;
 		if (restart && this.editor) {
 			this.restart(before.format !== this.options.format);
 		} else if (restart) {
@@ -1987,6 +2636,7 @@ export class CKEditor {
 		}
 		this.renderNotice();
 		this.renderStatus();
+		this.renderErrorLine();
 		this.renderResizable();
 		if (before.events !== this.options.events) {
 			this.renderEventHandlers();
@@ -2102,6 +2752,9 @@ export class CKEditor {
 		this.status = null;
 		this.notice?.destroy();
 		this.notice = null;
+		this.errorLine?.remove();
+		this.errorLine = null;
+		this.clearMessage();
 		this.resizable?.destroy();
 		this.resizable = null;
 		const editor = this.editor;
@@ -2109,6 +2762,7 @@ export class CKEditor {
 		if (editor) {
 			this.stop(editor);
 		}
+		this.stopHearingErrors();
 		this.source?.remove();
 		this.source = null;
 		if (instances.get(this.element) === this) {
@@ -2123,9 +2777,15 @@ export class CKEditor {
 	 * Stops a CKEditor: its UI goes at once, CKEditor in a moment.
 	 */
 	private stop(editor: CKEditorInstance): void {
+		this.stopHearingErrors(editor);
 		const ui = editor.ui.element;
-		editor.destroy().catch((error: unknown) =>
-			getHost().log.error('CKEditor could not stop', error));
+		try {
+			Promise.resolve(editor.destroy()).catch((error: unknown) =>
+				getHost().log.error('CKEditor could not stop', error));
+		} catch (error) {
+			// a CKEditor in a state of its own after an error
+			getHost().log.error('CKEditor could not stop', error);
+		}
 		ui?.remove();
 	}
 }

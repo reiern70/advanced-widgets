@@ -14,11 +14,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CK_EDITOR_CLASSES, CKEditor, ckEditor, registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
+import { CK_EDITOR_CLASSES, CK_EDITOR_EVENTS, CKEditor, ckEditor, DEFAULT_CK_EDITOR_TEXTS,
+	registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
 	type CKEditorInstance, type CKEditorViewWriter, type Host } from '../src/index.js';
-import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorModelPosition,
-	type CKEditorModelWriter } from '../src/ck-editor.js';
+import { offsetOfPath, pathOfOffset, uploadProgressClass, type CKEditorModelElement,
+	type CKEditorModelPosition, type CKEditorModelWriter } from '../src/ck-editor.js';
 
 /*
  * A CKEditor of the tests: what the glue uses of CKEditor, as small as it goes. Its model is a
@@ -27,6 +28,62 @@ import { offsetOfPath, pathOfOffset, type CKEditorModelElement, type CKEditorMod
  */
 
 type Callback = (...args: any[]) => void;
+
+/**
+ * An emitter whose listeners may stop an event, by their priorities, as CKEditor's: those of a
+ * higher priority first.
+ */
+class StoppableEmitter {
+	private callbacks: Array<{ event: string; callback: Callback; priority: number }> = [];
+
+	on(event: string, callback: Callback, options?: { priority?: string | number }): void {
+		const priority = options?.priority === 'highest' ? 3 : options?.priority === 'high' ? 2 :
+			options?.priority === 'low' ? -1 : 0;
+		this.callbacks.push({ event, callback, priority });
+		this.callbacks.sort((one, other) => other.priority - one.priority);
+	}
+
+	/** @returns whether a listener stopped the event */
+	fire(event: string, ...args: unknown[]): boolean {
+		let stopped = false;
+		const info = { name: event, stop: () => {
+			stopped = true;
+		} };
+		for (const { event: name, callback } of [...this.callbacks]) {
+			if (name === event) {
+				callback(info, ...args);
+				if (stopped) {
+					break;
+				}
+			}
+		}
+		return stopped;
+	}
+}
+
+/** A file CKEditor's FileRepository hands an upload adapter, with the progress it is told. */
+class FakeLoader extends StoppableEmitter {
+	uploaded = 0;
+	uploadTotal: number | null = null;
+	constructor(readonly file: Promise<File | null>, readonly id = 'u1') {
+		super();
+	}
+}
+
+/** An element of CKEditor's editing view, with its classes. */
+class FakeViewElement {
+	readonly classes = new Set<string>();
+	constructor(readonly children: FakeViewElement[] = [],
+		private readonly properties: Record<string, unknown> = {}) {}
+
+	getChildren(): Iterable<FakeViewElement> {
+		return this.children;
+	}
+
+	getCustomProperty(key: string): unknown {
+		return this.properties[key];
+	}
+}
 
 class Emitter {
 	private callbacks = new Map<string, Callback[]>();
@@ -213,11 +270,21 @@ class FakeEditor implements CKEditorInstance {
 	});
 	/** The dispatchers of the downcast, by their groups. */
 	readonly downcast = new Emitter();
+	readonly editingDowncast = new StoppableEmitter();
+	/** CKEditor's FileRepository, with the adapter the editor gives it and the files uploading. */
+	readonly repository: { createUploadAdapter?: (loader: FakeLoader) => {
+		upload(): Promise<{ default: string }>; abort(): void }; loaders: Map<unknown, FakeLoader> } =
+		{ loaders: new Map() };
+	readonly notification = new StoppableEmitter();
+	/** The figures of the images in the editing view, by the images of the model. */
+	readonly figures = new Map<unknown, FakeViewElement>();
 	readonly conversion = {
 		for: (group: string) => ({
-			add: (helper: (dispatcher: Emitter) => void) => {
+			add: (helper: (dispatcher: Emitter | StoppableEmitter) => void) => {
 				if (group === 'downcast') {
 					helper(this.downcast);
+				} else if (group === 'editingDowncast') {
+					helper(this.editingDowncast);
 				}
 			}
 		})
@@ -274,9 +341,12 @@ class FakeEditor implements CKEditorInstance {
 			document: Object.assign(this.viewDocument, { getRoot: () => this.editable }),
 			change: (callback: (writer: CKEditorViewWriter) => void) => callback({
 				setAttribute: (key, value, element) => (element as HTMLElement).setAttribute(key, value),
-				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key)
-			})
-		}
+				removeAttribute: (key, element) => (element as HTMLElement).removeAttribute(key),
+				addClass: (name: string, element: FakeViewElement) => element.classes.add(name),
+				removeClass: (name: string, element: FakeViewElement) => element.classes.delete(name)
+			} as CKEditorViewWriter)
+		},
+		mapper: { toViewElement: (item: unknown) => this.figures.get(item) }
 	};
 	readonly uiElement = document.createElement('div');
 	readonly editable = document.createElement('div');
@@ -293,9 +363,18 @@ class FakeEditor implements CKEditorInstance {
 	/** The clipboard's pipeline, which fires contentInsertion with what a paste inserts. */
 	readonly pipeline = new Emitter();
 	readonly plugins = {
-		has: (name: string) => name === 'ClipboardPipeline',
-		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline : undefined
+		has: (name: string) => name === 'ClipboardPipeline' || (this.uploads() &&
+			(name === 'FileRepository' || name === 'Notification')),
+		get: (name: string) => name === 'ClipboardPipeline' ? this.pipeline :
+			name === 'FileRepository' && this.uploads() ? this.repository :
+				name === 'Notification' && this.uploads() ? this.notification : undefined
 	};
+
+	/** @returns whether CKEditor was made with ImageUpload, which brings FileRepository */
+	uploads(): boolean {
+		return (this.config.plugins as { pluginName: string }[]).some((plugin) =>
+			plugin.pluginName === 'ImageUpload');
+	}
 
 	constructor(readonly source: HTMLElement, readonly config: Record<string, unknown>) {
 		this.root = rootOf('');
@@ -367,18 +446,33 @@ class FakeEditor implements CKEditorInstance {
 	}
 }
 
-/** A build of the tests, with ClassicEditor, the plugins by their names and the editors made. */
+/**
+ * A build of the tests, with ClassicEditor, the plugins by their names and the editors made, and
+ * CKEditor's onEditorError: crash() tells its callbacks of an error escaping an editor.
+ */
 function fakeBuild(fail?: unknown) {
 	const editors: FakeEditor[] = [];
+	const callbacks = new Set<(data: { error: unknown; source: unknown }) => void>();
 	const plugin = (name: string) => ({ pluginName: name });
 	const names = ['Essentials', 'Paragraph', 'Autoformat', 'PasteFromOffice', 'Heading', 'Bold',
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
-		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight'];
-	const build: CKEditorBuild & { editors: FakeEditor[] } = Object.assign(
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight', 'ImageUpload'];
+	const build: CKEditorBuild & { editors: FakeEditor[]; crash(source: unknown, error: unknown): void;
+		hearing(): number } = Object.assign(
 		Object.fromEntries(names.map((name) => [name, plugin(name)])), {
 			editors,
+			onEditorError: (callback: (data: { error: unknown; source: unknown }) => void) => {
+				const registration = (data: { error: unknown; source: unknown }) => callback(data);
+				callbacks.add(registration);
+				return () => {
+					callbacks.delete(registration);
+				};
+			},
+			crash: (source: unknown, error: unknown) => [...callbacks].forEach((callback) =>
+				callback({ error, source })),
+			hearing: () => callbacks.size,
 			ClassicEditor: {
 				create: async (element: HTMLElement, config: Record<string, unknown>) => {
 					if (fail) {
@@ -597,7 +691,8 @@ describe('CKEditor', () => {
 		const refused = new CKEditor(textArea(), { build: fakeBuild(new Error('license-key-invalid')),
 			onError });
 		await expect(refused.ready).rejects.toThrow('license-key-invalid');
-		expect(onError).toHaveBeenLastCalledWith(new Error('license-key-invalid'));
+		expect(onError).toHaveBeenLastCalledWith(new Error('license-key-invalid'), { started: false,
+			restarting: false, gaveUp: false, crashes: 0 });
 		// gone, it takes no more options: the text area stays shown
 		refused.configure({ readOnly: true });
 		refused.setValue('<p>x</p>');
@@ -909,6 +1004,376 @@ describe('CKEditor', () => {
 		build.editors[0]!.blur();
 		(document.querySelector('label') as HTMLLabelElement).click();
 		expect(build.editors[0]!.focusTracker.isFocused).toBe(true);
+	});
+});
+
+describe('CKEditor running into an error after it started', () => {
+	/** @returns what the editors log, the host logging nothing else */
+	function quietly(): unknown[] {
+		const errors: unknown[] = [];
+		setHost({ ...standaloneHost, log: { error: (message: unknown) => errors.push(message) } } as
+			Host);
+		return errors;
+	}
+
+	it('hears of the errors of its own CKEditor alone, by onEditorError, until it stops',
+		async () => {
+			quietly();
+			const build = fakeBuild();
+			const onError = vi.fn();
+			const one = new CKEditor(textArea(), { build, onError, recovery: false });
+			const element = document.createElement('div');
+			document.body.append(element);
+			const otherError = vi.fn();
+			const other = new CKEditor(element, { build, onError: otherError, recovery: false });
+			await one.ready;
+			await other.ready;
+			expect(build.hearing()).toBe(2);
+
+			const crash = new Error('A command failed');
+			build.crash(build.editors[1], crash);
+			expect(otherError).toHaveBeenCalledWith(crash, { started: true, restarting: false,
+				gaveUp: false, crashes: 1 });
+			expect(onError).not.toHaveBeenCalled();
+			// a context, or another editor of the page
+			build.crash({}, crash);
+			expect(onError).not.toHaveBeenCalled();
+
+			one.destroy();
+			expect(build.hearing()).toBe(1);
+			// made anew for other features: the CKEditor before is no longer heard of
+			other.configure({ features: ['bold'] });
+			await other.ready;
+			expect(build.hearing()).toBe(1);
+			build.crash(build.editors[1], crash);
+			expect(otherError).toHaveBeenCalledTimes(1);
+			build.crash(build.editors[2], crash);
+			expect(otherError).toHaveBeenCalledTimes(2);
+			other.destroy();
+			expect(build.hearing()).toBe(0);
+		});
+
+	it('starts CKEditor again with the text, the selection and the focus it had, and says so',
+		async () => {
+			const errors = quietly();
+			const build = fakeBuild();
+			const field = textArea('<p>Hello</p><p>World</p>');
+			const heard: CustomEvent[] = [];
+			field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+			const onError = vi.fn();
+			const editor = new CKEditor(field, { build, onError, count: true });
+			await editor.ready;
+			const first = build.editors[0]!;
+			first.type(' there');
+			const value = editor.getValue();
+			editor.setState({ selection: { anchor: 3, head: 5 } });
+			const selection = editor.getState().selection;
+			editor.focus();
+
+			const crash = new Error('A command failed');
+			build.crash(first, crash);
+			expect(first.destroyed).toBe(true);
+			expect(editor.editor).toBeNull();
+			await editor.ready;
+			const second = build.editors[1]!;
+			expect(editor.editor).toBe(second);
+			expect(editor.getValue()).toBe(value);
+			expect(field.value).toBe(value);
+			expect(second.getData()).toBe(value);
+			expect(editor.getState().selection).toEqual(selection);
+			expect(second.focusTracker.isFocused).toBe(true);
+
+			expect(onError).toHaveBeenCalledWith(crash, { started: true, restarting: true,
+				gaveUp: false, crashes: 1 });
+			expect(heard).toHaveLength(1);
+			expect(heard[0]!.bubbles).toBe(true);
+			expect(heard[0]!.detail).toMatchObject({ error: crash, name: 'Error',
+				message: 'A command failed', started: true, restarting: true, gaveUp: false,
+				crashes: 1, editor });
+			expect(errors).toContain('CKEditor ran into an error, and starts again');
+
+			// below the text, before the count
+			const line = editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)!;
+			expect(line.textContent).toBe(DEFAULT_CK_EDITOR_TEXTS.errorRestarted);
+			expect(line.getAttribute('role')).toBe('status');
+			expect(line.previousElementSibling).toBe(second.uiElement);
+			expect(line.nextElementSibling?.classList.contains('antilia-ck-editor-status'))
+				.toBe(true);
+			// in the texts of the page
+			editor.configure({ texts: { errorRestarted: 'Neu gestartet.' } });
+			expect(line.textContent).toBe('Neu gestartet.');
+			// told until the user changes the text
+			second.type('!');
+			expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+		});
+
+	it('starts CKEditor again while the crashes come further apart than the interval, then ' +
+		'gives up, CKEditor running on', async () => {
+		quietly();
+		const now = vi.spyOn(Date, 'now');
+		try {
+			const build = fakeBuild();
+			const onError = vi.fn();
+			const editor = new CKEditor(textArea(), { build, onError,
+				recovery: { crashes: 2, interval: 1000 } });
+			await editor.ready;
+			const crashAt = async (time: number) => {
+				now.mockReturnValue(time);
+				build.crash(editor.editor, new Error('at ' + time));
+				await editor.ready;
+			};
+			// the first two, however close
+			await crashAt(10_000);
+			await crashAt(10_100);
+			expect(build.editors).toHaveLength(3);
+			// the last three 2500 ms apart on average
+			await crashAt(15_000);
+			expect(build.editors).toHaveLength(4);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 15000'), { started: true,
+				restarting: true, gaveUp: false, crashes: 3 });
+			// then 600 ms apart: given up, CKEditor runs on as it is
+			await crashAt(15_100);
+			await crashAt(15_200);
+			expect(build.editors).toHaveLength(5);
+			expect(editor.editor).toBe(build.editors[4]);
+			expect(build.editors[4]!.destroyed).toBe(false);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 15200'), { started: true,
+				restarting: false, gaveUp: true, crashes: 5 });
+			const line = editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)!;
+			expect(line.textContent).toBe(DEFAULT_CK_EDITOR_TEXTS.errorGaveUp);
+			expect(line.getAttribute('role')).toBe('alert');
+			// for good, the text changing or not
+			build.editors[4]!.type('!');
+			await crashAt(100_000);
+			expect(build.editors).toHaveLength(5);
+			expect(onError).toHaveBeenLastCalledWith(new Error('at 100000'), { started: true,
+				restarting: false, gaveUp: true, crashes: 6 });
+			expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)?.textContent)
+				.toBe(DEFAULT_CK_EDITOR_TEXTS.errorGaveUp);
+			editor.destroy();
+			expect(document.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+		} finally {
+			now.mockRestore();
+		}
+	});
+
+	it('gives up at the fourth crash in a row by default, as the Watchdog did', async () => {
+		quietly();
+		const build = fakeBuild();
+		const onError = vi.fn();
+		const editor = new CKEditor(textArea(), { build, onError });
+		await editor.ready;
+		for (let crash = 1; crash <= 4; crash++) {
+			build.crash(editor.editor, new Error('again'));
+			await editor.ready;
+		}
+		expect(build.editors).toHaveLength(4);
+		expect(onError).toHaveBeenLastCalledWith(new Error('again'), { started: true,
+			restarting: false, gaveUp: true, crashes: 4 });
+	});
+
+	it('leaves CKEditor running without recovery, telling of the error alone', async () => {
+		const errors = quietly();
+		const build = fakeBuild();
+		const field = textArea();
+		const heard: CustomEvent[] = [];
+		field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+		const onError = vi.fn();
+		const editor = new CKEditor(field, { build, onError, recovery: false });
+		await editor.ready;
+		build.crash(editor.editor, 'not an Error');
+		expect(build.editors).toHaveLength(1);
+		expect(editor.editor).toBe(build.editors[0]);
+		expect(onError).toHaveBeenCalledWith('not an Error', { started: true, restarting: false,
+			gaveUp: false, crashes: 1 });
+		expect(heard[0]!.detail).toMatchObject({ name: 'Error', message: 'not an Error',
+			restarting: false, gaveUp: false });
+		expect(errors).toEqual(['CKEditor ran into an error']);
+		expect(editor.element.querySelector('.' + CK_EDITOR_CLASSES.error)).toBeNull();
+	});
+
+	it('tells why CKEditor could not start with the event error too', async () => {
+		quietly();
+		const field = textArea();
+		const heard: CustomEvent[] = [];
+		field.addEventListener(CK_EDITOR_EVENTS.error, (event) => heard.push(event as CustomEvent));
+		const editor = new CKEditor(field, { build: fakeBuild(new Error('license-key-invalid')) });
+		await expect(editor.ready).rejects.toThrow('license-key-invalid');
+		expect(heard).toHaveLength(1);
+		expect(heard[0]!.detail).toMatchObject({ name: 'Error', message: 'license-key-invalid',
+			started: false, restarting: false, gaveUp: false, crashes: 0 });
+	});
+
+	it('starts without hearing of errors with a build of CKEditor before 49', async () => {
+		const build = fakeBuild();
+		delete (build as { onEditorError?: unknown }).onEditorError;
+		const editor = new CKEditor(textArea(), { build });
+		await editor.ready;
+		expect(editor.editor).toBe(build.editors[0]);
+		editor.destroy();
+	});
+});
+
+describe('images uploaded into CKEditor', () => {
+	/** A PNG of 2 × 3 pixels, as far as its header tells. */
+	function png(name = 'bird.png', width = 2, height = 3, size = 0): File {
+		const bytes = new Uint8Array(Math.max(size, 33));
+		bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44,
+			0x52]);
+		new DataView(bytes.buffer).setUint32(16, width);
+		new DataView(bytes.buffer).setUint32(20, height);
+		return new File([bytes], name, { type: 'image/png' });
+	}
+
+	async function started(options: ConstructorParameters<typeof CKEditor>[1] = {}) {
+		const build = fakeBuild();
+		const editor = new CKEditor(textArea(), { build, ...options });
+		await editor.ready;
+		return { build, editor, fake: build.editors[build.editors.length - 1]! };
+	}
+
+	it('takes ImageUpload and the types of the images with onUpload, for the feature image',
+		async () => {
+			const onUpload = vi.fn(async () => '/images/bird.png');
+			const { build, editor, fake } = await started({ onUpload,
+				uploadTypes: ['image/png', ' IMAGE/SVG+XML'] });
+			expect(pluginNames(fake.config)).toContain('ImageUpload');
+			expect((fake.config.image as { upload: unknown }).upload).toEqual({
+				types: ['png', 'svg+xml'] });
+			expect(fake.repository.createUploadAdapter).toBeTypeOf('function');
+
+			// without the feature image, or without onUpload, none
+			editor.configure({ features: ['bold'] });
+			await editor.ready;
+			expect(pluginNames(build.editors[1]!.config)).not.toContain('ImageUpload');
+			const plain = await started();
+			expect(pluginNames(plain.fake.config)).not.toContain('ImageUpload');
+			expect(plain.fake.config.image).toEqual({ toolbar: ['imageTextAlternative',
+				'toggleImageCaption'] });
+			// onUpload coming makes CKEditor anew with it
+			plain.editor.configure({ onUpload });
+			await plain.editor.ready;
+			expect(pluginNames((plain.editor.editor as unknown as FakeEditor).config))
+				.toContain('ImageUpload');
+			plain.editor.configure({ onUpload: null });
+			await plain.editor.ready;
+			expect(pluginNames((plain.editor.editor as unknown as FakeEditor).config))
+				.not.toContain('ImageUpload');
+		});
+
+	it('uploads by onUpload, telling CKEditor the progress, and stops as CKEditor aborts',
+		async () => {
+			let told: { onProgress?: (sent: number, total: number) => void; signal?: AbortSignal } = {};
+			const onUpload = vi.fn((_file: File, options?: typeof told) => {
+				told = options ?? {};
+				return Promise.resolve('/images/bird.png');
+			});
+			const { fake } = await started({ onUpload });
+			const file = png();
+			const loader = new FakeLoader(Promise.resolve(file));
+			const adapter = fake.repository.createUploadAdapter!(loader);
+			await expect(adapter.upload()).resolves.toEqual({ default: '/images/bird.png' });
+			expect(onUpload).toHaveBeenCalledWith(file, expect.anything());
+			told.onProgress!(40, 100);
+			expect(loader.uploaded).toBe(40);
+			expect(loader.uploadTotal).toBe(100);
+			expect(told.signal!.aborted).toBe(false);
+			adapter.abort();
+			expect(told.signal!.aborted).toBe(true);
+		});
+
+	it('refuses an image too large, too big in pixels or of another type, telling why',
+		async () => {
+			const onUpload = vi.fn(async () => '/images/bird.png');
+			const { fake } = await started({ onUpload, uploadMaxSize: 100, uploadMaxWidth: 2,
+				uploadMaxHeight: 2, texts: { uploadTooBig: '{0}: {1} > {2}' } });
+			const upload = (file: File) => fake.repository.createUploadAdapter!(
+				new FakeLoader(Promise.resolve(file))).upload();
+			await expect(upload(png('big.png', 2, 3, 500))).rejects.toBe(
+				'big.png is larger than 100 B.');
+			await expect(upload(png('tall.png', 2, 3))).rejects.toBe('tall.png: 2 × 3 > 2 × 2');
+			await expect(upload(new File(['x'], 'notes.txt', { type: 'text/plain' }))).rejects.toBe(
+				'notes.txt is not an image of a type the editor takes: PNG, JPEG, GIF, WebP, AVIF.');
+			await expect(upload(new File(['x'], '', { type: 'text/plain' }))).rejects.toMatch(
+				/^The image is not an image/);
+			expect(onUpload).not.toHaveBeenCalled();
+			await expect(fake.repository.createUploadAdapter!(new FakeLoader(Promise.resolve(null)))
+				.upload()).rejects.toBe('The image could not be uploaded.');
+		});
+
+	it('tells why an upload failed: the message of the server, or that it failed', async () => {
+		const errors: unknown[] = [];
+		setHost({ ...standaloneHost, log: { error: (message: unknown) => errors.push(message) } } as
+			Host);
+		const onUpload = vi.fn<(file: File) => Promise<string>>();
+		const { fake } = await started({ onUpload });
+		const upload = () => fake.repository.createUploadAdapter!(new FakeLoader(
+			Promise.resolve(png()))).upload();
+		onUpload.mockRejectedValueOnce(new Error('Not today.'));
+		await expect(upload()).rejects.toBe('Not today.');
+		onUpload.mockRejectedValueOnce(new Error(''));
+		await expect(upload()).rejects.toBe('bird.png could not be uploaded.');
+		onUpload.mockResolvedValueOnce('javascript:alert(1)');
+		await expect(upload()).rejects.toBe('bird.png could not be uploaded.');
+		expect(errors).toEqual(['The address of an image uploaded is not one the editor takes: ' +
+			'javascript:alert(1)']);
+		// canceled: CKEditor hears of the abort, and tells nothing
+		const abort = Object.assign(new Error('The upload was canceled'), { name: 'AbortError' });
+		onUpload.mockRejectedValueOnce(abort);
+		await expect(upload()).rejects.toBe(abort);
+	});
+
+	it('tells in its line above the text, not in CKEditor\'s alert, why an image was not ' +
+		'uploaded, for a while', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		const { editor, fake } = await started({ onUpload: async () => '/images/bird.png' });
+		// CKEditor's warning of a failed upload, its message the adapter's
+		expect(fake.notification.fire('show:warning:upload', { message: 'big.png is larger than ' +
+			'5 MB.', title: 'Upload failed' })).toBe(true);
+		const line = () => editor.element.querySelector<HTMLElement>('.' + CK_EDITOR_CLASSES.message);
+		expect(line()?.textContent).toBe('big.png is larger than 5 MB.');
+		expect(line()?.getAttribute('role')).toBe('alert');
+		// above the text, in CKEditor's element
+		expect(line()?.nextElementSibling?.className).toBe('ck-editor__main');
+		vi.advanceTimersByTime(8000);
+		expect(line()).toBeNull();
+
+		// files pasted or dropped of a type not taken, which CKEditor leaves alone
+		const files = [new File(['x'], 'notes.txt', { type: 'text/plain' }), png()];
+		fake.viewDocument.fire('clipboardInput', { dataTransfer: { files,
+			getData: () => '' } });
+		expect(line()?.textContent).toBe('notes.txt is not an image of a type the editor takes: ' +
+			'PNG, JPEG, GIF, WebP, AVIF.');
+		// with HTML, CKEditor pastes the HTML
+		editor.destroy();
+		expect(document.querySelector('.' + CK_EDITOR_CLASSES.message)).toBeNull();
+	});
+
+	it('shows the progress of an upload by classes, CKEditor writing no style', async () => {
+		const { fake } = await started({ onUpload: async () => '/images/bird.png' });
+		const bar = new FakeViewElement([], { progressBar: true });
+		const image = { getAttribute: (key: string) => key === 'uploadId' ? 'u1' : undefined };
+		fake.figures.set(image, new FakeViewElement([new FakeViewElement(), bar]));
+		const loader = new FakeLoader(Promise.resolve(png()));
+		fake.repository.loaders.set('u1', loader);
+		const styles: number[] = [];
+		// CKEditor's own, which would write the width as a style
+		loader.on('change:uploadedPercent', (_event: unknown, _name: string, percent: number) =>
+			styles.push(percent));
+		fake.editingDowncast.fire('attribute:uploadStatus:imageBlock', { item: image,
+			attributeNewValue: 'uploading' });
+		// once for an image
+		fake.editingDowncast.fire('attribute:uploadStatus:imageBlock', { item: image,
+			attributeNewValue: 'uploading' });
+
+		expect(loader.fire('change:uploadedPercent', 'uploadedPercent', 42)).toBe(true);
+		expect([...bar.classes]).toEqual(['antilia-ck-upload-40']);
+		loader.fire('change:uploadedPercent', 'uploadedPercent', 100);
+		expect([...bar.classes]).toEqual(['antilia-ck-upload-100']);
+		expect(styles).toEqual([]);
+		expect(uploadProgressClass(-3)).toBe('antilia-ck-upload-0');
+		expect(uploadProgressClass(Number.NaN)).toBe('antilia-ck-upload-0');
+		expect(uploadProgressClass(97.6)).toBe('antilia-ck-upload-100');
 	});
 });
 

@@ -176,12 +176,60 @@ describe('CKEditor', () => {
 		expect(fake.destroyed).toBe(true);
 	});
 
+	it('tells onerror of an error after CKEditor started, and starts it again', async () => {
+		setHost({ ...standaloneHost, log: { error: vi.fn() } });
+		const build = fakeBuild();
+		const onerror = vi.fn();
+		const { container } = render(BoundCKEditor, { build, value: '<p>Kept</p>', onerror });
+		const fake = await started(container);
+		const crash = new Error('A plugin failed');
+		build.crash(fake, crash);
+		await started(container);
+		expect(onerror).toHaveBeenCalledWith(crash, { started: true, restarting: true,
+			gaveUp: false, crashes: 1 });
+		expect(fake.destroyed).toBe(true);
+		expect(build.editors).toHaveLength(2);
+		expect(container.querySelector('output')?.textContent).toBe('<p>Kept</p>');
+		expect(container.querySelector('.antilia-ck-editor-error')?.textContent)
+			.toContain('started again');
+	});
+
+	it('leaves CKEditor running after an error without recovery', async () => {
+		setHost({ ...standaloneHost, log: { error: vi.fn() } });
+		const build = fakeBuild();
+		const onerror = vi.fn();
+		const { container } = render(BoundCKEditor, { build, onerror, recovery: false });
+		const fake = await started(container);
+		build.crash(fake, new Error('A plugin failed'));
+		expect(onerror).toHaveBeenCalledWith(expect.any(Error), { started: true,
+			restarting: false, gaveUp: false, crashes: 1 });
+		expect(build.editors).toHaveLength(1);
+		expect(container.querySelector('.antilia-ck-editor-error')).toBeNull();
+	});
+
+	it('uploads images by onupload, with the limits given', async () => {
+		const build = fakeBuild();
+		const onupload = vi.fn(async () => '/bird.png');
+		const { container } = render(BoundCKEditor, { build, onupload, uploadTypes: ['image/png'],
+			uploadMaxSize: 1000 });
+		const fake = await started(container);
+		expect((fake.config.plugins as { pluginName: string }[]).map((each) => each.pluginName))
+			.toContain('ImageUpload');
+		expect((fake.config.image as { upload?: unknown }).upload).toEqual({ types: ['png'] });
+		const core = CKEditor.of(editorOf(container))!;
+		expect(core.options.uploadMaxSize).toBe(1000);
+		const file = new File(['x'], 'bird.png', { type: 'image/png' });
+		await expect(core.options.onUpload!(file)).resolves.toBe('/bird.png');
+		expect(onupload).toHaveBeenCalledWith(file, undefined);
+	});
+
 	it('tells why CKEditor could not start, without a build', async () => {
 		const error = vi.fn();
 		setHost({ ...standaloneHost, log: { error } });
 		const onerror = vi.fn();
 		const { container } = render(BoundCKEditor, { name: 'notes', onerror });
-		expect(onerror).toHaveBeenCalledWith(expect.any(Error));
+		expect(onerror).toHaveBeenCalledWith(expect.any(Error), { started: false, restarting: false,
+			gaveUp: false, crashes: 0 });
 		expect(error).toHaveBeenCalledWith('CKEditor could not start', expect.any(Error));
 		// the text area shows, to type the text in
 		expect(container.querySelector<HTMLTextAreaElement>('textarea')?.hidden).toBe(false);

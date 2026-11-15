@@ -291,6 +291,8 @@ export class FakeEditor {
 /** A build of CKEditor, and the editors it made. */
 export interface FakeBuild extends CKEditorBuild {
 	readonly editors: FakeEditor[];
+	/** Tells the callbacks of onEditorError of an error escaping an editor, as CKEditor does. */
+	crash(editor: FakeEditor, error: unknown): void;
 }
 
 /**
@@ -303,10 +305,20 @@ export function fakeBuild(): FakeBuild {
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
-		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown'];
+		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'ImageUpload'];
+	const callbacks = new Set<(data: { error: unknown; source: unknown }) => void>();
 	return {
 		...Object.fromEntries(names.map((name) => [name, plugin(name)])),
 		editors,
+		onEditorError: (callback: (data: { error: unknown; source: unknown }) => void) => {
+			const registration = (data: { error: unknown; source: unknown }) => callback(data);
+			callbacks.add(registration);
+			return () => {
+				callbacks.delete(registration);
+			};
+		},
+		crash: (editor: FakeEditor, error: unknown) => [...callbacks].forEach((callback) =>
+			callback({ error, source: editor })),
 		ClassicEditor: {
 			create: (element: HTMLElement, config: Record<string, unknown>) => {
 				const editor = new FakeEditor(element, config);
