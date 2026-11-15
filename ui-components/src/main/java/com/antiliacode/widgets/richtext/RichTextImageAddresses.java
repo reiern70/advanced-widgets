@@ -37,6 +37,18 @@ final class RichTextImageAddresses
 		"\\ssrc\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s\"'>]+))", Pattern.CASE_INSENSITIVE);
 
 	/** An image of Markdown: ![text](address "title"), the address in angle brackets or not. */
+	private static final Pattern LINK = Pattern.compile("<a\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern HREF = Pattern.compile(
+		"\\shref\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s\"'>]+))", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern ATTACHMENT_CLASS = Pattern.compile(
+		"\\sclass\\s*=\\s*(?:\"[^\"]*|'[^']*|)\\bantilia-attachment\\b", Pattern.CASE_INSENSITIVE);
+
+	/** A link of Markdown, not an image. */
+	private static final Pattern MARKDOWN_LINK = Pattern.compile(
+		"(?<!!)\\[(?:[^\\]\\\\]|\\\\.)*\\]\\(\\s*(?:<([^>\\n]*)>|([^\\s)]+))(?:\\s+(?:\"[^\"]*\"|'[^']*'))?\\s*\\)");
+
 	private static final Pattern MARKDOWN = Pattern.compile(
 		"!\\[(?:[^\\]\\\\]|\\\\.)*\\]\\(\\s*(?:<([^>\\n]*)>|([^\\s)]+))(?:\\s+(?:\"[^\"]*\"|'[^']*'))?\\s*\\)");
 
@@ -85,6 +97,87 @@ final class RichTextImageAddresses
 			}
 		}
 		return urls;
+	}
+
+	/**
+	 * @param text
+	 *            a text
+	 * @param format
+	 *            its format
+	 * @return the addresses of the files attached to the text, as its format writes them: the
+	 *         links of the feature in HTML and in Tiptap's JSON, every link in Markdown, where a
+	 *         file is a plain link; in their order, each once
+	 */
+	static Set<String> attachmentsOf(String text, RichTextFormat format)
+	{
+		Set<String> urls = new LinkedHashSet<>();
+		if (text == null || text.isBlank())
+		{
+			return urls;
+		}
+		switch (format)
+		{
+			case HTML -> attachments(text, urls);
+			case MARKDOWN -> {
+				Matcher matcher = MARKDOWN_LINK.matcher(text);
+				while (matcher.find())
+				{
+					add(urls, matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
+				}
+				attachments(text, urls);
+			}
+			case JSON -> {
+				try
+				{
+					jsonAttachments(new JSONTokener(text).nextValue(), urls);
+				}
+				catch (JSONException e)
+				{
+					// no JSON: no files
+				}
+			}
+		}
+		return urls;
+	}
+
+	private static void attachments(String text, Set<String> urls)
+	{
+		Matcher link = LINK.matcher(text);
+		while (link.find())
+		{
+			String tag = link.group();
+			Matcher href = HREF.matcher(tag);
+			if (ATTACHMENT_CLASS.matcher(tag).find() && href.find())
+			{
+				String value = href.group(1) != null ? href.group(1) : href.group(2) != null ?
+					href.group(2) : href.group(3);
+				add(urls, decode(value));
+			}
+		}
+	}
+
+	private static void jsonAttachments(Object node, Set<String> urls)
+	{
+		if (node instanceof JSONObject object)
+		{
+			if ("attachment".equals(object.opt("type")) &&
+				object.opt("attrs") instanceof JSONObject attrs &&
+				attrs.opt("href") instanceof String href)
+			{
+				add(urls, href);
+			}
+			if (object.opt("content") instanceof JSONArray content)
+			{
+				jsonAttachments(content, urls);
+			}
+		}
+		else if (node instanceof JSONArray array)
+		{
+			for (int i = 0; i < array.length(); i++)
+			{
+				jsonAttachments(array.opt(i), urls);
+			}
+		}
 	}
 
 	private static void html(String text, Set<String> urls)

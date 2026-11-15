@@ -35,6 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.codeeditor.MarkdownPreview;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.WicketApplication;
@@ -47,6 +48,7 @@ import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.IRichTextSuggester;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
+import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageDeletion;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
@@ -54,6 +56,7 @@ import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
 import com.antiliacode.widgets.richtext.RichTextSuggestBehavior;
 import com.antiliacode.widgets.richtext.RichTextTool;
+import com.antiliacode.widgets.richtext.RichTextView;
 import com.antiliacode.widgets.veil.PageVeilBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
@@ -98,6 +101,28 @@ class RichTextEditorPageTest
 	private RichTextEditor editor(String path)
 	{
 		return (RichTextEditor)tester.getComponentFromLastRenderedPage(path);
+	}
+
+	/**
+	 * Asks for a URL as a browser shows an image: by GET.
+	 */
+	private void getUrl(String url)
+	{
+		tester.getRequest().setMethod("GET");
+		tester.executeUrl(url);
+	}
+
+	/**
+	 * @return the address an editor posts its images to, as the last response attached it with
+	 */
+	private String uploadUrl(RichTextEditor editor)
+	{
+		String page = tester.getLastResponseAsString();
+		int at = page.indexOf("Wicket.RichTextEditor.attach(\"" + editor.getMarkupId() + "\", ");
+		assertTrue(at >= 0, "the editor is attached");
+		JSONObject options = (JSONObject)new JSONTokener(page.substring(page.indexOf('{', at)))
+			.nextValue();
+		return options.getString("uploadUrl");
 	}
 
 	/**
@@ -300,6 +325,26 @@ class RichTextEditorPageTest
 		form.setValue("editor", "<p>Again</p>");
 		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
 		assertEquals("<p>Again</p>", article.getSaved());
+	}
+
+	@Test
+	void showsTheTextsAsSavedOutsideTheEditors()
+	{
+		String views = inCase(RichTextEditorPage.VIEW_CASE, "views");
+		tester.assertComponent(views + ":articleView", RichTextView.class);
+		tester.assertComponent(views + ":notesView", MarkdownPreview.class);
+		tester.assertComponent(views + ":writingView", RichTextView.class);
+		tester.assertContains("View: the texts as saved");
+
+		fire(editor(EDITOR), RichTextEditorEvents.SAVE, "<p>Saved <img src=\"" +
+			"/rich-text-images/x.png\" alt=\"a bird\"></p>");
+		tester.startPage(tester.getLastRenderedPage());
+		RichTextView view = (RichTextView)tester.getComponentFromLastRenderedPage(views +
+			":articleView");
+		assertEquals(editor(EDITOR).getFeatures(), view.getFeatures(), "the editor's features");
+		assertEquals(RichTextEditorPage.article().getSaved(), view.getDefaultModelObject());
+		tester.assertContains("rich-text-demo__view antilia-rich-text-view\"><p>Saved <img " +
+			"src=\"/rich-text-images/x.png\" alt=\"a bird\"");
 	}
 
 	@Test
@@ -550,7 +595,7 @@ class RichTextEditorPageTest
 			"checked=\"checked\" value=\"bold\"[^>]*> Bold</label>");
 
 		form = tester.newFormTester(controls);
-		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 27 }, true);
+		form.selectMultiple("chooser:tools", new int[] { 1, 8, 9, 29 }, true);
 		tester.executeAjaxEvent(controls + ":chooser:tools", "change");
 		assertEquals(List.of(List.of(RichTextTool.BOLD), List.of(RichTextTool.TEXT_COLOR,
 			RichTextTool.TEXT_BACKGROUND), List.of(RichTextTool.REDO)), editor(EDITOR).getToolbar());
@@ -603,17 +648,18 @@ class RichTextEditorPageTest
 		assertEquals("Highlight the code", config.getJSONObject("texts").getString("highlight"));
 		assertTrue(config.getJSONObject("texts").getString("extras").contains("2 MB and 2400 × 2400 " +
 			"pixels at most, 5 at a time"));
-		// the apps upload to the page
-		RichTextImageUploadBehavior uploads = page.getBehaviors(RichTextImageUploadBehavior.class)
-			.get(0);
-		assertEquals(uploads.getUploadUrl(), config.getString("uploadUrl"));
+		// the apps upload to the resource of the uploads of the application, not to the page
+		assertTrue(page.getBehaviors(RichTextImageUploadBehavior.class).isEmpty());
+		RichTextFiles files = RichTextFiles.get(RichTextImages.PATH);
+		assertEquals(files.getUploadUrl(), config.getString("uploadUrl"));
+		assertTrue(config.getString("uploadUrl").endsWith("/rich-text-images"));
 		assertEquals("[\"image/png\",\"image/jpeg\",\"image/gif\",\"image/webp\",\"image/avif\"]",
 			config.getJSONArray("uploadTypes").toString());
 		assertEquals(RichTextImages.MAX_SIZE.bytes(), config.getLong("uploadMaxSize"));
 		assertEquals(2400, config.getInt("uploadMaxWidth"));
 		assertEquals(2400, config.getInt("uploadMaxHeight"));
 		assertEquals(RichTextImages.MAX_COUNT, config.getInt("uploadMaxCount"));
-		assertEquals(RichTextImages.MAX_DIMENSIONS, uploads.getMaxDimensions());
+		assertEquals(RichTextImages.MAX_DIMENSIONS, files.getImageMaxDimensions());
 	}
 
 	@Test
@@ -642,7 +688,13 @@ class RichTextEditorPageTest
 		assertTrue(editor.isImageUploading());
 		assertEquals(RichTextImages.MAX_SIZE, editor.getImageMaxSize());
 		assertTrue(editor(NOTES).isImageUploading());
-		tester.assertContains("\"uploadUrl\":");
+		// the article to the resource of the uploads, the notes to a behavior of their editor
+		assertEquals(RichTextFiles.get(RichTextImages.PATH), editor.getUploadResource());
+		assertTrue(editor.getBehaviors(RichTextImageUploadBehavior.class).isEmpty());
+		assertEquals(1, editor(NOTES).getBehaviors(RichTextImageUploadBehavior.class).size());
+		String uploadUrl = uploadUrl(editor);
+		assertTrue(uploadUrl.contains("/rich-text-images?" + RichTextFiles.KEY_PARAMETER + "="),
+			uploadUrl);
 
 		// a header telling 640 × 480 pixels
 		byte[] png = { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0, 0, 13, 'I', 'H',
@@ -654,7 +706,7 @@ class RichTextEditorPageTest
 			tester.getRequest().setUseMultiPartContentType(true);
 			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
 				new org.apache.wicket.util.file.File(file.toFile()), "image/png");
-			tester.executeBehavior(editor.getBehaviors(RichTextImageUploadBehavior.class).get(0));
+			tester.executeUrl(uploadUrl.substring(uploadUrl.indexOf("rich-text-images")));
 		}
 		finally
 		{
@@ -665,20 +717,70 @@ class RichTextEditorPageTest
 		assertTrue(url.contains("/rich-text-images/" +
 			RichTextImages.markOf("session:" + DemoSession.get().getId())), "the user's");
 
-		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals("image/png", tester.getLastResponse().getContentType());
 		assertEquals("nosniff", tester.getLastResponse().getHeader("X-Content-Type-Options"));
+		assertEquals("sandbox", tester.getLastResponse().getHeader("Content-Security-Policy"));
 		assertArrayEquals(png, tester.getLastResponse().getBinaryContent());
 
-		tester.executeUrl("rich-text-images/../../etc/passwd");
+		getUrl("rich-text-images/../../etc/passwd");
 		assertEquals(404, tester.getLastResponse().getStatus());
-		tester.executeUrl("rich-text-images/" + "0".repeat(32) + ".png");
+		getUrl("rich-text-images/" + "0".repeat(32) + ".png");
 		assertEquals(404, tester.getLastResponse().getStatus());
 
 		// the article saved, without the image uploaded, which never went into it: it goes
 		tester.startPage(page);
 		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
-		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals(404, tester.getLastResponse().getStatus());
+	}
+
+	@Test
+	void attachesFilesWhichTheResourceServesAndDeletesThoseTakenOutOnceSaved() throws IOException
+	{
+		org.apache.wicket.Page page = tester.getLastRenderedPage();
+		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor.isAttachmentUploading());
+		assertEquals(RichTextAttachments.get(), editor.getAttachmentStore());
+		String page0 = tester.getLastResponseAsString();
+		int at = page0.indexOf("Wicket.RichTextEditor.attach(\"" + editor.getMarkupId() + "\", ");
+		JSONObject options = (JSONObject)new JSONTokener(page0.substring(page0.indexOf('{', at)))
+			.nextValue();
+		String attachUrl = options.getString("attachUrl");
+		assertTrue(attachUrl.contains("/rich-text-images?" + RichTextFiles.KEY_PARAMETER + "="),
+			attachUrl);
+		assertEquals(RichTextAttachments.MAX_COUNT, options.getInt("attachMaxCount"));
+		// and the apps attach files there too
+		assertEquals(RichTextFiles.get(RichTextImages.PATH).getAttachmentUploadUrl(),
+			((RichTextEditorPage)page).getFrameworkConfig().getString("attachUrl"));
+
+		Path file = Files.createTempFile("report", ".pdf");
+		String url;
+		try
+		{
+			Files.write(file, "%PDF-1.7\n%%EOF".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+			tester.getRequest().setUseMultiPartContentType(true);
+			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
+				new org.apache.wicket.util.file.File(file.toFile()), "application/pdf");
+			tester.executeUrl(attachUrl.substring(attachUrl.indexOf("rich-text-images")));
+			url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+		}
+		finally
+		{
+			Files.deleteIfExists(file);
+		}
+		assertTrue(url.matches(".*/rich-text-images/[0-9a-f]{32}\\.pdf"), url);
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals("application/pdf", tester.getLastResponse().getContentType());
+		assertEquals("sandbox", tester.getLastResponse().getHeader("Content-Security-Policy"));
+		assertTrue(tester.getLastResponse().getHeader("Content-Disposition").startsWith(
+			"inline; filename=\"" + file.getFileName()), tester.getLastResponse().getHeader(
+				"Content-Disposition"));
+
+		// the article saved without the file, which never went into it: it goes
+		tester.startPage(page);
+		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals(404, tester.getLastResponse().getStatus());
 	}
 
@@ -686,10 +788,11 @@ class RichTextEditorPageTest
 	void keepsTheImagesTickedPermanentlyAndFindsThem() throws IOException
 	{
 		org.apache.wicket.Page page = tester.getLastRenderedPage();
-		RichTextEditor editor = editor(EDITOR);
+		assertTrue(editor(EDITOR).isPermanentImages());
+		RichTextEditor editor = editor(NOTES);
 		assertTrue(editor.isPermanentImages());
-		assertTrue(editor(NOTES).isPermanentImages());
 		tester.assertContains("\"permanentImages\":true");
+		// the notes upload to a behavior of their editor
 		RichTextImageUploadBehavior behavior = editor.getBehaviors(
 			RichTextImageUploadBehavior.class).get(0);
 
@@ -717,10 +820,10 @@ class RichTextEditorPageTest
 		assertEquals("{\"stored\":[\"" + url + "\"]}", tester.getLastResponseAsString());
 		assertTrue(RichTextImages.get().isPermanent(url));
 
-		// the article saved without it: it stays, served at its address
+		// the notes saved without it: it stays, served at its address
 		tester.startPage(page);
-		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
-		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		tester.executeAjaxEvent(inCase("notesTitle", "notesForm:save"), "click");
+		getUrl(url.substring(url.indexOf("rich-text-images/")));
 		assertEquals(200, tester.getLastResponse().getStatus());
 		assertArrayEquals(png, tester.getLastResponse().getBinaryContent());
 

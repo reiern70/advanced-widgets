@@ -23,8 +23,8 @@
  * on Ctrl+Space.
  */
 
-import { deleteImagesAt, findImagesAt, proofreadAt, storePermanentlyAt, suggestAt, uploadImageTo,
-	type RichTextEditorState, type RichTextImageFinder, type RichTextImageKeeper,
+import { deleteAttachmentsAt, deleteImagesAt, findImagesAt, proofreadAt, storePermanentlyAt,
+	suggestAt, uploadFileTo, uploadImageTo, type RichTextAttachmentType, type RichTextEditorState, type RichTextImageFinder, type RichTextImageKeeper,
 	type RichTextUploader,
 	type RichTextEditorTexts, type RichTextProofreader, type RichTextSuggester,
 	type RichTextTool } from '@antilia/core';
@@ -78,6 +78,11 @@ export interface RichTextEditorConfig {
 	uploadMaxWidth: number;
 	uploadMaxHeight: number;
 	uploadMaxCount: number;
+	/** Where the apps attach files: the resource of the uploads, answering their addresses. */
+	attachUrl: string;
+	attachTypes: RichTextAttachmentType[];
+	attachMaxSize: number;
+	attachMaxCount: number;
 	/** Where the apps have their texts checked: the page's own behavior. */
 	proofreadUrl: string;
 	/** Where the apps ask for suggestions, and the suggesters of the page. */
@@ -104,6 +109,24 @@ export function suggesters(config: RichTextEditorConfig): RichTextSuggester[] {
  */
 export function uploader(config: RichTextEditorConfig): RichTextUploader {
 	return uploadImageTo(config.uploadUrl);
+}
+
+/**
+ * @returns what the editors of the apps attach files with, and the limits of the files: to the
+ *          resource of the uploads of the application, as the images
+ */
+export function attachments(config: RichTextEditorConfig): { onAttach: RichTextUploader;
+	attachTypes: RichTextAttachmentType[]; attachMaxSize: number; attachMaxCount: number } {
+	return { onAttach: uploadFileTo(config.attachUrl), attachTypes: config.attachTypes,
+		attachMaxSize: config.attachMaxSize, attachMaxCount: config.attachMaxCount };
+}
+
+/**
+ * @returns what keeps the files taken out of a text of the apps, which the page deletes once the
+ *          app saved it, as the images
+ */
+export function filesTakenOut(config: RichTextEditorConfig): ImagesTakenOut {
+	return new ImagesTakenOut(deleteAttachmentsAt(config.attachUrl));
 }
 
 /**

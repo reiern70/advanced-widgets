@@ -28,7 +28,7 @@ import { ModalDialog, CLOSE_ATTRIBUTE } from './modal.js';
 import { dimensionsText, type RichTextImageDimensions } from './rich-text-image-headers.js';
 import type { RichTextEditorTexts } from './rich-text-toolbar.js';
 import { isAbort, keepPermanently, progressBar, showProgress, type Oversize,
-	type UploadHost } from './rich-text-upload.js';
+	type UploadHost, type UploadLabels } from './rich-text-upload.js';
 
 /** Counts the dialogs, for the ids of their parts. */
 let dialogs = 0;
@@ -53,21 +53,23 @@ function carriesFiles(event: DragEvent): boolean {
 /**
  * @returns a zone to drop images on, with a button choosing them, several at once, by the file
  *          field it opens, hidden
- * @param types the media types of the images taken, which the file field accepts
+ * @param types the media types of the images taken, which the file field accepts, or the media
+ *        types and the extensions of the files attached
  * @param onFiles called with the files dropped or chosen
+ * @param labels what the zone and its button say, when not of images
  */
 export function dropZone(texts: RichTextEditorTexts, look: Look, types: readonly string[],
-	onFiles: (files: File[]) => void): { element: HTMLElement; button: HTMLButtonElement;
-		picker: HTMLInputElement } {
+	onFiles: (files: File[]) => void, labels?: Pick<UploadLabels, 'drop' | 'choose'>):
+	{ element: HTMLElement; button: HTMLButtonElement; picker: HTMLInputElement } {
 	const element = document.createElement('div');
 	element.className = 'antilia-rich-text-dropzone';
 	const text = document.createElement('p');
 	text.className = 'antilia-rich-text-dropzone-text';
-	text.textContent = texts.dropImages;
+	text.textContent = labels?.drop ?? texts.dropImages;
 	const button = document.createElement('button');
 	button.type = 'button';
 	button.className = buttonClasses({ variant: 'secondary', size: 'small', look });
-	button.textContent = texts.chooseImages;
+	button.textContent = labels?.choose ?? texts.chooseImages;
 	const picker = document.createElement('input');
 	picker.type = 'file';
 	picker.multiple = true;
@@ -234,6 +236,8 @@ interface Row {
 	name: string;
 	/** The address of its image, once uploaded. */
 	src: string | null;
+	/** The file it uploads, none for a line telling of files refused. */
+	file: File | null;
 	/** Cancels its upload, while it uploads. */
 	controller: AbortController | null;
 	/** The box to tick storing its image permanently, while the page stores images. */
@@ -249,17 +253,22 @@ interface Row {
  * Escape or closing the dialog puts none, cancels the uploads going on, and tells the page of those
  * uploaded, which the text never got.
  *
- * @param insert puts the images of the addresses into the text
+ * The uploads of the files attached say what their host's labels say.
+ *
+ * @param insert puts the images of the addresses into the text, or the files attached, each the
+ *        file uploaded to the address of the same index
  */
 export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, look: Look,
-	insert: (srcs: readonly string[]) => void): void {
-	const { wrapper, overlay, body, footer } = frame(look, texts.uploadImagesTitle, texts.close,
-		'antilia-rich-text-upload-dialog');
+	insert: (srcs: readonly string[], files: readonly File[]) => void): void {
+	const labels = host.labels?.();
+	const nameless = labels?.nameless ?? texts.theImage;
+	const { wrapper, overlay, body, footer } = frame(look, labels?.title ?? texts.uploadImagesTitle,
+		texts.close, 'antilia-rich-text-upload-dialog');
 	const list = document.createElement('ul');
 	list.className = 'antilia-rich-text-upload-list';
 	list.setAttribute('aria-live', 'polite');
 	const rows: Row[] = [];
-	const ok = footerButton(look, texts.insertImages, 'primary', false);
+	const ok = footerButton(look, labels?.insert ?? texts.insertImages, 'primary', false);
 	const cancel = footerButton(look, texts.cancel, 'secondary', true);
 	const update = () => {
 		ok.disabled = !rows.some((row) => row.state === 'done') ||
@@ -270,7 +279,7 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 	const label = (made: Row) => {
 		const remove = made.element.querySelector<HTMLElement>('.antilia-rich-text-upload-remove')!;
 		const text = fill(made.state === 'uploading' ? texts.cancelUpload : texts.removeFile,
-			made.name || texts.theImage);
+			made.name || nameless);
 		remove.setAttribute('aria-label', text);
 		remove.title = text;
 	};
@@ -302,7 +311,8 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 			' antilia-rich-text-upload-remove';
 		remove.textContent = '×';
 		element.append(named, said);
-		const made: Row = { element, state, name, src: null, controller: null, permanent: null };
+		const made: Row = { element, state, name, src: null, file: null, controller: null,
+			permanent: null };
 		if (state === 'uploading') {
 			element.append(progressBar(status));
 			if (permanent) {
@@ -342,8 +352,9 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		}
 		refused.forEach((message) => row('', message, 'refused'));
 		for (const file of checked) {
-			const name = file.name || texts.theImage;
+			const name = file.name || nameless;
 			const made = row(name, host.uploading(file), 'uploading');
+			made.file = file;
 			const controller = new AbortController();
 			made.controller = controller;
 			update();
@@ -369,7 +380,7 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 		}
 		update();
 	};
-	const zone = dropZone(texts, look, host.types(), (files) => void add(files));
+	const zone = dropZone(texts, look, host.types(), (files) => void add(files), labels);
 	body.append(zone.element, list);
 	footer.append(ok, cancel);
 	update();
@@ -388,7 +399,8 @@ export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, l
 			host.discard(left);
 		}
 		if (srcs.length) {
-			insert(srcs);
+			insert(srcs, srcs.map((src) => rows.find((each) => each.src === src)?.file ??
+				new File([], '')));
 			void keepPermanently(host, rows.filter((each) => each.src && srcs.includes(each.src) &&
 				each.permanent?.checked).map((each) => ({ src: each.src!, name: each.name })));
 		}

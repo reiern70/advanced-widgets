@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
-import org.apache.wicket.util.io.IClusterable;
+import com.antiliacode.widgets.upload.IUploadFileFormat;
 
 /**
  * A type of the images a user uploads into a {@link RichTextEditor}, told by the first bytes of the
@@ -28,11 +28,14 @@ import org.apache.wicket.util.io.IClusterable;
  * <p>
  * Mind what a browser does with a file of the type when it is opened by itself: an SVG is a
  * document running scripts, which is why there is none built in.
+ * <p>
+ * A type is a {@link IUploadFileFormat format of the uploads}, which a browser may open in its
+ * window by default ({@link #isInline()}), as the image it is.
  *
  * @see RichTextImageType
  * @since 10.11.0
  */
-public interface IRichTextImageType extends IClusterable
+public interface IRichTextImageType extends IUploadFileFormat
 {
 	/** How many of the first bytes of a file {@link #matches(byte[])} is given, at most. */
 	int HEAD = 32;
@@ -41,11 +44,13 @@ public interface IRichTextImageType extends IClusterable
 	 * @return the media type the image is served as, {@code image/png} for example, which the
 	 *         editor in the browser checks the files against too
 	 */
+	@Override
 	String getMimeType();
 
 	/**
 	 * @return the extension a file of the type takes, without the dot
 	 */
+	@Override
 	String getExtension();
 
 	/**
@@ -53,6 +58,7 @@ public interface IRichTextImageType extends IClusterable
 	 *         in every language. A type of an application's own may translate it, in the language
 	 *         of the session.
 	 */
+	@Override
 	String getLabel();
 
 	/**
@@ -60,7 +66,18 @@ public interface IRichTextImageType extends IClusterable
 	 *            the first bytes of a file, up to {@link #HEAD} of them: fewer for a shorter file
 	 * @return whether the file is an image of this type
 	 */
+	@Override
 	boolean matches(byte[] head);
+
+	/**
+	 * @return {@code true}: a browser opens an image in its window, as an image, served with
+	 *         {@code nosniff} and in a sandbox
+	 */
+	@Override
+	default boolean isInline()
+	{
+		return true;
+	}
 
 	/**
 	 * Reads the width and the height of an image of this type from the header of its file,

@@ -29,8 +29,12 @@
  * Wicket.RichTextEvents.register(name, { from, init, fire }) plugs in a type of events, shared
  * with CKEditor's script (see rich-text-events.ts).
  *
- * With uploadUrl, the URL of the editor's upload behavior, the editor uploads the images the user
- * chooses, drops or pastes there, telling the share sent, and the server answers their addresses;
+ * With uploadUrl, the URL of the editor's upload behavior, or of the resource of the uploads of
+ * the application (RichTextFiles) with the key of the editor's uploads, the editor uploads the
+ * images the user chooses, drops or pastes there, telling the share sent, and the server answers
+ * their addresses; with attachUrl, that of its behavior of the files attached or of the resource,
+ * the files attached the same way, each going into the text as a link, and those taken out told
+ * of with the images;
  * with permanentImages too, the user ticks the images to store permanently, which the editor asks
  * the same behavior to, and the tool storedImage finds those stored there. With imagesAjax, the
  * attributes of the requests of its Ajax behavior hearing of the images taken out of the text,
@@ -54,7 +58,7 @@ import type { RichTextHighlighter } from '../rich-text-languages.js';
 import { proofreadAt } from '../rich-text-proofreading.js';
 import { suggestAt, type RichTextSuggester } from '../rich-text-suggestions.js';
 import { findImagesAt, storePermanentlyAt } from '../rich-text-stored-images.js';
-import { uploadImageTo } from '../rich-text-upload.js';
+import { uploadFileTo, uploadImageTo } from '../rich-text-upload.js';
 import { useWicketHost, wicket } from './host.js';
 import { useRichTextEvents } from './rich-text-events.js';
 import { type AjaxAttributes, pendingParameters, roundTrip, stateParameters }
@@ -74,6 +78,11 @@ interface WicketRichTextEditorOptions extends Omit<RichTextEditorOptions, 'sugge
 	 * of the text, as the server renders them: its URL, its method, its extra parameters.
 	 */
 	imagesAjax?: AjaxAttributes;
+	/**
+	 * The URL of the behavior taking the files the user attaches, or of the resource of the
+	 * uploads, and answering their addresses.
+	 */
+	attachUrl?: string;
 	/** The URL of the behavior checking the text, and answering its issues. */
 	proofreadUrl?: string;
 	/** The URL of the behavior answering the items of the suggesters. */
@@ -93,8 +102,8 @@ const WicketRichTextEditor = {
 	 * @returns the editor, null when there is no such element
 	 */
 	attach(id: string, options: WicketRichTextEditorOptions = {}): RichTextEditor | null {
-		const { uploadUrl, permanentImages, imagesAjax, proofreadUrl, suggestUrl, suggesters,
-			...rest } = options;
+		const { uploadUrl, permanentImages, imagesAjax, attachUrl, proofreadUrl, suggestUrl,
+			suggesters, ...rest } = options;
 		const onUpload = uploadUrl ? uploadImageTo(uploadUrl) : rest.onUpload;
 		const stored = !!uploadUrl && !!permanentImages;
 		const onStorePermanently = stored ? storePermanentlyAt(uploadUrl) : rest.onStorePermanently;
@@ -103,13 +112,19 @@ const WicketRichTextEditor = {
 			roundTrip(imagesAjax, [{ name: 'removed', value: JSON.stringify(urls) }]);
 			rest.onImagesRemoved?.(urls);
 		} : rest.onImagesRemoved;
+		const onAttach = attachUrl ? uploadFileTo(attachUrl) : rest.onAttach;
+		const onAttachmentsRemoved = imagesAjax ? (urls: string[]) => {
+			roundTrip(imagesAjax, [{ name: 'removedAttachments', value: JSON.stringify(urls) }]);
+			rest.onAttachmentsRemoved?.(urls);
+		} : rest.onAttachmentsRemoved;
 		const proofreader = proofreadUrl ? proofreadAt(proofreadUrl) : rest.proofreader;
 		const asked = suggesters?.map((suggester) => 'items' in suggester ? suggester :
 			suggestUrl ? suggestAt(suggestUrl, suggester) : null)
 			.filter((suggester): suggester is RichTextSuggester => !!suggester);
 		// the events of the server send the state
 		return RichTextEditor.attach(id, { ...rest, events: { ...NO_STATE_EVENTS, ...rest.events },
-			onUpload, onImagesRemoved, onStorePermanently, onFindImages, proofreader,
+			onUpload, onImagesRemoved, onStorePermanently, onFindImages, onAttach,
+			onAttachmentsRemoved, proofreader,
 			suggesters: asked });
 	},
 

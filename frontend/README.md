@@ -373,7 +373,14 @@ file to a URL and reads `{"url": ...}` or `{"error": ...}` from the answer, as W
 `RichTextImageUploadBehavior` answers: a `RichTextEditor` given a `IRichTextImageStore` has one,
 which checks the size and the pixels again, tells the type by the first bytes of the file (an
 `IRichTextImageType` of the application's own too), has the store keep it, and checks the address
-the store answers; a page adds one for its React and Svelte editors.
+the store answers; a page adds one for its React and Svelte editors. Or the uploads go to
+`RichTextFiles`, the library's resource of the uploads, which an application mounts once
+(`RichTextFiles.mount(app, "rich-text-files", store)`), not tied to a page: it takes them with the
+same checks, has the store keep them and serves them by name, as the media type of the format the
+bytes said, with `nosniff` and `Content-Security-Policy: sandbox`, to the editors and to any page
+showing a text. A `RichTextEditor` posts there with `setUploadResource(RichTextFiles.get())`, its own
+rules registered in the session; the React and Svelte editors post to `RichTextFiles.getUploadUrl()`
+under the rules of the resource. A request a browser sends from another site is refused.
 
 The tool `images` lists the images of the text, each with a thumbnail, selected by a click or taken
 out of the text. `onImagesRemoved(urls)`, and the event `images-removed`, tell the page of the images
@@ -384,7 +391,8 @@ saved (`setImageDeletion`, `markSaved`): a round trip of Wicket's Ajax with the 
 server renders as `imagesAjax`, which `updateImagesRemovalAjaxAttributes(attributes)` changes, by
 default as `updateEventAjaxAttributes` does those of the events, so that a page veil leaving the
 events alone leaves this request alone too; `deleteImagesAt(url)` asks a page's
-`RichTextImageUploadBehavior` to delete those it took, for the React and Svelte editors.
+`RichTextImageUploadBehavior`, or `RichTextFiles`, to delete those it took, for the React and Svelte
+editors.
 
 With `onStorePermanently(urls)`, the user ticks the images to store permanently as they upload: a box
 on each line of the dialog, or one under the zone of the form of the image; the editor hands the
@@ -393,10 +401,28 @@ page those ticked once they are in the text, and says which the page did not sto
 toolbar, shows: a form finding the images the page stores by their names as the user types
 (`rich-text-stored-images.ts`), a WAI-ARIA combobox listing each with a thumbnail, which inserts the
 one chosen. `storePermanentlyAt(url)` and `findImagesAt(url)` ask a page's
-`RichTextImageUploadBehavior` with `setPermanentImages(true)`, which stores permanently only the images
-it took on its page, by `IRichTextImageStore.storePermanently(url, name)`, and finds those its store
+`RichTextImageUploadBehavior` with `setPermanentImages(true)`, or `RichTextFiles` with the same,
+which stores permanently only the images it took on its page, or in the session, by `IRichTextImageStore.storePermanently(url, name)`, and finds those its store
 keeps (`findPermanent(query, max)`); Wicket's `RichTextEditor.setPermanentImages(true)` does it all,
 and never deletes an image its store keeps permanently (`isPermanent(url)`).
+
+With `onAttach(file, options)`, an uploader as `onUpload` is (`uploadFileTo(url)` of
+`rich-text-upload.ts`), the user attaches files that are no images: PDFs, Office documents,
+OpenDocuments, ZIPs, texts (`rich-text-attachments.ts`). The tool `attachment`, "Attach a file", opens
+a zone to drop them on or choose them, or with `attachDialog` a button opening the dialog of the
+uploads; a file dropped or pasted into the text that is no image goes the same way. Each goes in where
+the cursor is as the node `attachment`, a link of its own,
+`<a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">report.pdf</a>`:
+the class of its kind draws its badge and the style sheet shows its size, without a style attribute.
+The browser checks first how many (`attachMaxCount`), the type of each, by its media type or its
+extension (`attachTypes`, each `{ type, extension, label }`, `DEFAULT_RICH_TEXT_ATTACH_TYPES` those of
+the server) and its size (`attachMaxSize`); the server checks them again by the bytes. The tool
+`attachments`, "Files of the text", lists them, each taken out by a button, and
+`onAttachmentsRemoved(urls)`, with the event `attachments-removed`, tells the page of those taken out,
+as for the images: Wicket's editor tells its server with the request of `imagesAjax`, under
+`removedAttachments`; `deleteAttachmentsAt(url)` asks the server to delete them for the React and
+Svelte editors. In Markdown a file is a plain link, `[report.pdf](url)`. React and Svelte take the
+same props (`onAttach` / `onattach`, `onAttachmentsRemoved` / `onattachmentsremoved`).
 
 The text scrolls with the scroll bars of the components (`scrollbar.ts`), in the colors of the theme,
 over the edges of the text, which still scrolls natively: a page renders `scrollbar.css` with the

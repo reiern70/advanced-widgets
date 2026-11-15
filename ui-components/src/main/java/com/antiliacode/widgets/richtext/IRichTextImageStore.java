@@ -33,6 +33,12 @@ import org.apache.wicket.util.io.IClusterable;
  * {@link RichTextTool#STORED_IMAGE insert image from store}. The editor never deletes an image
  * kept permanently ({@link #isPermanent(String)}). Which images a user finds is the store's
  * business: those of the user alone, or of everybody.
+ * <p>
+ * {@link RichTextFiles The resource of the uploads}, mounted once by the application, takes the
+ * uploads of the editors, as the editor's own behavior does, and serves the images a store keeps:
+ * the store then answers the addresses the resource gives ({@link RichTextFiles#addressOf(String)})
+ * and opens an image by its name ({@link #open(String)}). Who may see an image is the store's
+ * business there too: it opens only those the user of the request may see.
  *
  * @see RichTextEditor#setImageStore(IRichTextImageStore)
  * @see RichTextImageUploadBehavior
@@ -130,5 +136,25 @@ public interface IRichTextImageStore extends IClusterable
 	default List<RichTextStoredImage> findPermanent(String query, int max) throws IOException
 	{
 		return List.of();
+	}
+
+	/**
+	 * Opens an image for {@link RichTextFiles the resource of the uploads} to serve: one of those
+	 * the store answered {@link RichTextFiles#addressOf(String) an address of the resource} for,
+	 * by the name the address ends with, and that the user of the request may see. None by
+	 * default: the application serves its images itself.
+	 *
+	 * @param name
+	 *            the name of the image, as the address ends, decoded; never a path, the resource
+	 *            takes no slash
+	 * @return the image, with the type it was found to be as it was uploaded; {@code null} for none
+	 *         of that name, or one the user may not see
+	 * @throws IOException
+	 *             when the image could not be read
+	 * @since 10.11.0
+	 */
+	default RichTextServedFile open(String name) throws IOException
+	{
+		return null;
 	}
 }

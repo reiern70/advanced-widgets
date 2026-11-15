@@ -45,6 +45,7 @@ import { StarterKit } from '@tiptap/starter-kit';
 import type { RichTextEditorKit } from './rich-text-editor.js';
 import { featureExtensions, richTextFeature, type RichTextTrigger } from './rich-text-features.js';
 import { Mention } from './rich-text-suggestions.js';
+import { Attachment } from './rich-text-attachments.js';
 import { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, RICH_TEXT_ALIGNMENTS,
 	type RichTextAlignment } from './rich-text-html.js';
 
@@ -55,7 +56,7 @@ export { isSafeUrl, PASTED_STYLE_ATTRIBUTE, quietHtml, RICH_TEXT_ALIGN_CLASSES, 
 export type RichTextFeatureName = 'heading' | 'bold' | 'italic' | 'underline' | 'strike' | 'code' |
 	'superscript' | 'subscript' | 'textColor' | 'textBackground' | 'link' | 'bulletList' |
 	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
-	'textAlign' | 'mention';
+	'attachment' | 'textAlign' | 'mention';
 
 /**
  * What a text may hold: a feature built in the editor, or the name of one registered
@@ -67,7 +68,7 @@ export type RichTextFeature = RichTextFeatureName | (string & {});
 export const RICH_TEXT_FEATURES: readonly RichTextFeatureName[] = Object.freeze(['heading', 'bold',
 	'italic', 'underline', 'strike', 'code', 'superscript', 'subscript', 'textColor',
 	'textBackground', 'link', 'bulletList', 'orderedList', 'taskList', 'blockquote', 'codeBlock',
-	'horizontalRule', 'table', 'image', 'textAlign', 'mention']);
+	'horizontalRule', 'table', 'image', 'attachment', 'textAlign', 'mention']);
 
 /**
  * The features Markdown has no syntax for, which an editor of Markdown leaves out unless told
@@ -525,6 +526,9 @@ export function schemaExtensions(options: RichTextSchemaOptions): AnyExtension[]
 	}
 	if (has('image')) {
 		extensions.push(SafeImage.configure({ inline: false, allowBase64: false }));
+	}
+	if (has('attachment')) {
+		extensions.push(Attachment);
 	}
 	if (has('superscript')) {
 		extensions.push(Superscript);

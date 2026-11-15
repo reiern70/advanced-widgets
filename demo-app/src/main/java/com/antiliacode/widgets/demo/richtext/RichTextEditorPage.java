@@ -49,6 +49,7 @@ import org.danekja.java.util.function.serializable.SerializableFunction;
 
 import com.antiliacode.widgets.button.ButtonBehavior;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
+import com.antiliacode.widgets.codeeditor.MarkdownPreview;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
@@ -59,6 +60,7 @@ import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
+import com.antiliacode.widgets.richtext.IRichTextImageType;
 import com.antiliacode.widgets.richtext.IRichTextTool;
 import com.antiliacode.widgets.richtext.RichTextBackgroundColor;
 import com.antiliacode.widgets.richtext.RichTextColor;
@@ -68,9 +70,9 @@ import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
+import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageDeletion;
-import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.antiliacode.widgets.richtext.RichTextLibrary;
 import com.antiliacode.widgets.richtext.RichTextPolicy;
 import com.antiliacode.widgets.richtext.RichTextProofreadBehavior;
@@ -78,6 +80,7 @@ import com.antiliacode.widgets.richtext.RichTextSuggestBehavior;
 import com.antiliacode.widgets.richtext.RichTextTool;
 import com.antiliacode.widgets.richtext.RichTextView;
 import com.antiliacode.widgets.resizable.ResizableSize;
+import com.antiliacode.widgets.tabs.Tab;
 import com.antiliacode.widgets.veil.PageVeilBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
@@ -131,6 +134,9 @@ public class RichTextEditorPage extends DemoPage
 
 	/** The toolbar chosen tool by tool, with the check boxes of the tools. */
 	static final String CHOSEN = "chosen";
+
+	/** The case showing the documents of the others as last saved, read only. */
+	static final String VIEW_CASE = "viewTitle";
 
 	/** The most characters of the text the user selected the page shows. */
 	public static final int SHOWN_SELECTION = 60;
@@ -193,14 +199,14 @@ public class RichTextEditorPage extends DemoPage
 	private List<RichTextBackgroundColor> backgroundColors = new ArrayList<>(List.of(
 		RichTextBackgroundColor.values()));
 
-	/** Takes the images the editors of the React and Svelte apps upload. */
-	private final RichTextImageUploadBehavior appUploads;
-
 	/** Checks the texts of the editors of the React and Svelte apps, as the writing case does. */
 	private final RichTextProofreadBehavior appProofreading;
 
 	/** Offers the people, the topics and the terms to the editors of the apps. */
 	private final RichTextSuggestBehavior appSuggestions;
+
+	/** The documents of the cases as last saved, which the case {@link #VIEW_CASE} shows. */
+	private final WebMarkupContainer views;
 
 	private String heardMessage;
 
@@ -222,12 +228,27 @@ public class RichTextEditorPage extends DemoPage
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
-		DemoCases cases = new DemoCases("cases", this);
+		DemoCases cases = new DemoCases("cases", this)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSelected(AjaxRequestTarget target, Tab tab)
+			{
+				// the documents as last saved
+				if (VIEW_CASE.equals(tab.getName()))
+				{
+					target.add(views);
+				}
+			}
+		};
 		themed.add(cases);
 		Fragment articleCase = cases.addCase("articleTitle", "articleCase");
 		Fragment notesCase = cases.addCase("notesTitle", "notesCase");
 		Fragment cleaningCase = cases.addCase("cleaningTitle", "cleaningCase");
 		cases.addCase("writingTitle", "writingCase").add(new RichTextWritingPanel("writing"));
+		views = newViews("views");
+		cases.addCase(VIEW_CASE, "viewCase").add(views);
 
 		known = new Label("known", this::describe);
 		known.setOutputMarkupId(true);
@@ -308,9 +329,14 @@ public class RichTextEditorPage extends DemoPage
 		};
 		editor.setSavedModel(LambdaModel.of(article, RichTextDocument::getSaved,
 			RichTextDocument::setSaved));
-		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
+		// the images go to the resource of the uploads of the application, not to the page
+		editor.setUploadResource(RichTextFiles.get(RichTextImages.PATH))
+			.setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
-			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true);
+			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true)
+			// the files attached go to the resource too, which has a store of them
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE)
+			.setAttachmentMaxCount(RichTextAttachments.MAX_COUNT);
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
@@ -556,16 +582,41 @@ public class RichTextEditorPage extends DemoPage
 			}
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
 
-		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
-			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS)
-			.setPermanentImages(true);
-		add(appUploads);
 		appProofreading = new RichTextProofreadBehavior(RichTextWriting.proofreader(
 			getString("misspelled"), getString("repeated"), getString("twoBlanks")));
 		add(appProofreading);
 		appSuggestions = new RichTextSuggestBehavior(RichTextWriting.people(),
 			RichTextWriting.topics(), RichTextWriting.terms());
 		add(appSuggestions);
+	}
+
+	/**
+	 * @return the documents of the cases as last saved, read only, outside the editors: their
+	 *         images served by the resource of the uploads as any page shows them
+	 */
+	private WebMarkupContainer newViews(String id)
+	{
+		WebMarkupContainer container = new WebMarkupContainer(id);
+		container.setOutputMarkupId(true);
+		container.add(new RichTextView("articleView", () -> article().getSaved())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				// the features and the palettes of the editor the HTML comes from
+				setFeatures(editor.getFeatures());
+				setColors(RichTextEditorPage.this.colors);
+				setBackgroundColors(RichTextEditorPage.this.backgroundColors);
+			}
+		});
+		container.add(new MarkdownPreview("notesView", () -> notes().getSaved())
+			.setLabel(Model.of(getString("notesTitle"))));
+		container.add(new RichTextView("writingView",
+			() -> RichTextWritingPanel.writing().getSaved()));
+		return container;
 	}
 
 	/**
@@ -881,15 +932,33 @@ public class RichTextEditorPage extends DemoPage
 			.put("preview", new JSONObject().put("label", getString("MarkdownPreview.label"))
 				.put("placeholder", getString("MarkdownPreview.placeholder")))
 			.put("toolbars", new JSONArray(TOOLBARS))
-			.put("uploadUrl", appUploads.getUploadUrl())
-			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
-			.put("uploadMaxSize", appUploads.getMaxSize().bytes())
+			// the apps upload to the resource of the uploads of the application, by its rules
+			.put("uploadUrl", files().getUploadUrl())
+			.put("uploadTypes", new JSONArray(files().getImageTypes().stream()
+				.map(IRichTextImageType::getMimeType).toList()))
+			.put("uploadMaxSize", files().getImageMaxSize().bytes())
 			.put("uploadMaxWidth", RichTextImages.MAX_DIMENSIONS.width())
 			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height())
 			.put("uploadMaxCount", RichTextImages.MAX_COUNT)
+			// and attach files there
+			.put("attachUrl", files().getAttachmentUploadUrl())
+			.put("attachTypes", new JSONArray(files().getAttachmentFormats().stream()
+				.map(format -> new JSONObject().put("type", format.getMimeType())
+					.put("extension", format.getExtension()).put("label", format.getLabel()))
+				.toList()))
+			.put("attachMaxSize", files().getAttachmentMaxSize().bytes())
+			.put("attachMaxCount", RichTextAttachments.MAX_COUNT)
 			.put("proofreadUrl", appProofreading.getProofreadUrl())
 			.put("suggestUrl", appSuggestions.getSuggestUrl())
 			.put("suggesters", appSuggestions.toJson());
+	}
+
+	/**
+	 * @return the resource of the uploads of the rich text editors of the application
+	 */
+	private static RichTextFiles files()
+	{
+		return RichTextFiles.get(RichTextImages.PATH);
 	}
 
 	@Override

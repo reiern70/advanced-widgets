@@ -724,6 +724,84 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void readsTheAddressesOfTheFilesAttachedToATextInEachFormat()
+	{
+		assertEquals(List.of("/f/a.pdf", "/f/b c.csv"), List.copyOf(RichTextImageAddresses
+			.attachmentsOf("<p><a href=\"/plain\">x</a><a class=\"antilia-attachment " +
+				"antilia-attachment-pdf\" href=\"/f/a.pdf\">a</a><a href='/f/b c.csv' " +
+				"class='antilia-attachment'>b</a></p>", RichTextFormat.HTML)));
+		assertEquals(List.of("/f/a.pdf", "https://example.com"), List.copyOf(RichTextImageAddresses
+			.attachmentsOf("[a.pdf](/f/a.pdf) ![bird](/i/b.png) [site](https://example.com)",
+				RichTextFormat.MARKDOWN)));
+		assertEquals(List.of("/f/a.pdf"), List.copyOf(RichTextImageAddresses.attachmentsOf(
+			"{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":" +
+				"\"attachment\",\"attrs\":{\"href\":\"/f/a.pdf\",\"name\":\"a.pdf\"}}]}]}",
+			RichTextFormat.JSON)));
+	}
+
+	@Test
+	void attachesFilesToItsBehaviorAndDeletesThoseTakenOutOnceSaved()
+	{
+		List<String> deleted = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Hi <a " +
+			"class=\"antilia-attachment\" href=\"/f/old.pdf\">old.pdf</a></p>"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void deleteAttachments(Set<String> urls)
+			{
+				deleted.addAll(urls);
+			}
+		};
+		editor.setAttachmentStore((file, format) -> "/f/new." + format.getExtension())
+			.setAttachmentMaxSize(Bytes.kilobytes(64)).setAttachmentMaxCount(3)
+			.setAttachmentUploadDialog(true);
+		List<RichTextAttachmentsRemovedEvent> heard = new ArrayList<>();
+		TestPage page = new TestPage(editor)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onEvent(IEvent<?> event)
+			{
+				if (event.getPayload() instanceof RichTextAttachmentsRemovedEvent removed)
+				{
+					heard.add(removed);
+				}
+			}
+		};
+		tester.startPage(page);
+		JSONObject options = options(editor);
+		RichTextAttachmentUploadBehavior behavior = editor.getBehaviors(
+			RichTextAttachmentUploadBehavior.class).get(0);
+		assertTrue(options.getString("attachUrl").endsWith(behavior.getUploadUrl().substring(
+			behavior.getUploadUrl().indexOf("page?"))), options.getString("attachUrl"));
+		assertEquals(64 * 1024, options.getLong("attachMaxSize"));
+		assertEquals(3, options.getInt("attachMaxCount"));
+		assertTrue(options.getBoolean("attachDialog"));
+		assertEquals(10, options.getJSONArray("attachTypes").length());
+		assertTrue(options.has("imagesAjax"), "the request telling of the files taken out");
+		tester.assertContains("\"attachment\":\"Attach a file\"");
+
+		// the browser tells of the old file taken out, then the text is saved without it
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextEditor.ATTACHMENTS_REMOVED_PARAMETER, "[\"/f/old.pdf\", \"/f/unknown.pdf\"]");
+		tester.executeBehavior(editor.getImagesRemoval());
+		assertEquals(1, heard.size());
+		assertEquals(Set.of("/f/old.pdf"), heard.get(0).getUrls());
+		assertTrue(deleted.isEmpty(), "once saved");
+		editor.getModel().setObject("<p>Hi</p>");
+		editor.updateModel();
+		editor.deleteRemovedImages();
+		assertEquals(List.of("/f/old.pdf"), deleted);
+
+		editor.setReadOnly(true);
+		tester.startPage(page);
+		assertFalse(options(editor).has("attachUrl"));
+	}
+
+	@Test
 	void readsTheImagesOfHtmlMarkdownAndJson()
 	{
 		assertEquals(List.of("/a.png", "https://example.org/b?x=1&y=2", "c.png"),
