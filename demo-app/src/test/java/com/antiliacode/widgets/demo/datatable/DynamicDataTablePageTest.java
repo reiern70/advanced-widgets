@@ -18,10 +18,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
@@ -39,6 +46,7 @@ import com.antiliacode.widgets.table.ResizableColumnsBehavior;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTester;
+import org.apache.wicket.util.visit.IVisit;
 import org.junit.jupiter.api.AfterEach;
 import com.antiliacode.widgets.demo.WicketApplication;
 import org.junit.jupiter.api.BeforeEach;
@@ -485,6 +493,44 @@ class DynamicDataTablePageTest
 		tester.executeAjaxEvent("settings:language", "change");
 
 		assertEquals("de", tester.getSession().getLocale().getLanguage());
+	}
+
+	@Test
+	void theUsersExportToExcelBesideCsv() throws IOException
+	{
+		Component button = tester.getLastRenderedPage().visitChildren(Component.class,
+			(Component component, IVisit<Component> visit) -> {
+				if (component.getClass().getSimpleName().equals("XlsxExportButton"))
+				{
+					visit.stop(component);
+				}
+			});
+		tester.clickLink(((MarkupContainer)button).get("link"));
+		tester.invokeListener(button, button.getBehaviors()
+			.stream()
+			.filter(behavior -> behavior.getClass().getName().endsWith("$ResourceBehavior"))
+			.findFirst()
+			.orElseThrow());
+
+		assertTrue(tester.getLastResponse().getHeader("Content-Disposition").contains(
+			"users.xlsx"));
+		Map<String, String> parts = new HashMap<>();
+		try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(
+			tester.getLastResponse().getBinaryContent())))
+		{
+			for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry())
+			{
+				parts.put(entry.getName(), new String(zip.readAllBytes(), StandardCharsets.UTF_8));
+			}
+		}
+		String sheet = parts.get("xl/worksheets/sheet1.xml");
+		assertTrue(sheet.contains("<t>ID</t>"), sheet.substring(0, 2000));
+		assertTrue(sheet.contains("state=\"frozen\""));
+		assertTrue(sheet.contains("<autoFilter ref="));
+		// the progress with a percent sign
+		assertTrue(parts.get("xl/styles.xml").contains("formatCode=\"0&quot;%&quot;\""),
+			parts.get("xl/styles.xml"));
+		assertTrue(parts.get("xl/workbook.xml").contains("<sheet name=\"users\""));
 	}
 
 	private static boolean isSaved(User user)

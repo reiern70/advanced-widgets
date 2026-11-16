@@ -60,6 +60,7 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.navigation.paging.IPageableItems;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.markup.repeater.RepeatingView;
+import org.apache.wicket.model.IComponentAssignedModel;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.IRequestParameters;
@@ -1238,7 +1239,7 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	/**
 	 * @param column
 	 *            a column of the table
-	 * @return whether a CSV export writes the column
+	 * @return whether a CSV or an Excel export writes the column
 	 */
 	protected abstract boolean isColumnExportable(C column);
 
@@ -1247,9 +1248,67 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 *            an {@link #isColumnExportable(IDetachable) exportable} column of the table
 	 * @param row
 	 *            a row
-	 * @return the value a CSV export writes for the row in the column
+	 * @return the value a CSV or an Excel export writes for the row in the column
 	 */
 	protected abstract Object getColumnExportValue(C column, T row);
+
+	/**
+	 * Returns the number format an {@link XlsxExportToolbarAction Excel export} gives the cells of
+	 * a column, such as {@code #,##0.00}. Returns {@code null} by default, for Excel's own: the
+	 * numbers as they are and the dates as the computer shows them.
+	 *
+	 * @param column
+	 *            an {@link #isColumnExportable(IDetachable) exportable} column of the table
+	 * @return the format, in the codes of Excel, or {@code null} for none
+	 * @see IDynamicColumn#getExportFormat()
+	 * @see IExportFormatColumn
+	 * @since 11.0.0
+	 */
+	protected String getColumnExportFormat(C column)
+	{
+		return null;
+	}
+
+	/**
+	 * @return the columns an export writes: those shown that are
+	 *         {@link #isColumnExportable(IDetachable) exportable}, in display order
+	 */
+	List<C> getExportColumns()
+	{
+		List<C> columns = new ArrayList<>();
+		for (C column : getVisibleColumns())
+		{
+			if (isColumnExportable(column))
+			{
+				columns.add(column);
+			}
+		}
+		return columns;
+	}
+
+	/**
+	 * @param column
+	 *            a column of the table
+	 * @return the header an export writes over the column: its {@link #getColumnTitle(IDetachable)
+	 *         title}, {@code null} for none
+	 */
+	String getExportHeader(C column)
+	{
+		IModel<String> header = getColumnTitle(column);
+		if (header instanceof IComponentAssignedModel<String> assigned)
+		{
+			IModel<String> wrapped = assigned.wrapOnAssignment(this);
+			try
+			{
+				return wrapped.getObject();
+			}
+			finally
+			{
+				wrapped.detach();
+			}
+		}
+		return header != null ? header.getObject() : null;
+	}
 
 	/**
 	 * @param column
