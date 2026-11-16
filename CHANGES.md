@@ -11,13 +11,13 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 11.0.0-RC4 (2026-11-15)
+## 11.0.0-RC4 (2026-11-16)
 
 The components of 10.11.0-RC10 on Wicket 11.0.0.
 
 **Upgrading:** as for 10.11.0-RC10.
 
-## 10.11.0-RC10 (2026-11-15)
+## 10.11.0-RC10 (2026-11-16)
 
 - The rich text editors upload to a resource of the library, mounted once by the application
   and not tied to a page: `RichTextFiles.mount(application, path, store)`, and
@@ -43,6 +43,17 @@ The components of 10.11.0-RC10 on Wicket 11.0.0.
 - CKEditor uploads the images the user chooses, pastes or drops, the Tiptap editor's way, with
   its checks, its messages and the progress of each upload: `CKEditor#setImageStore` and the
   limits of its images; `onUpload` in React, `onupload` in Svelte (#79).
+- Data tables keep the rows per page and the sort the user chose in their `IColumnStateStore`,
+  with the columns: `ColumnState#getItemsPerPage`, `getSortProperty` and `isSortAscending`
+  (#127). A table reads its state once, when it is first rendered instead of when it is
+  initialized, so a store set after adding the table counts; `loadColumnState()` reads it again.
+- The themes color the page around the components too: each sets `--antilia-theme-page`,
+  `-nav`, `-primary-soft`, `-primary-text`, `-muted`, `-accent-hover`, `-shadow` and `-focus`,
+  and the red, green and blue of its colors, `--antilia-theme-*-rgb` (#122). The Bootstrap look
+  gives these to Bootstrap's `--bs-*-rgb`, so that Bootstrap's links and its `.text-*` and
+  `.bg-*` utilities take the theme's colors; the theme editor edits the new colors.
+- The title bar of the dialogs and the wizards is a little taller in the components' own look
+  (#128).
 - This file (#109).
 
 **Upgrading:**
@@ -57,6 +68,14 @@ The components of 10.11.0-RC10 on Wicket 11.0.0.
   a second argument telling what the editor does about it.
 - While CKEditor uploads an image it shows it as a `data:` address: a page uploading with it
   allows `img-src data:` in its Content Security Policy.
+- A table calls `onColumnsChanged` also when the user chooses the rows per page or sorts the
+  rows. A column state store of an application's own that writes a `ColumnState` field by field
+  writes the three new values too, or the rows per page and the sort are lost with the table, as
+  before.
+- A theme of an application's own sets the new properties too, the `-rgb` ones above all, if it
+  is used with the Bootstrap look: without them Bootstrap's links, its `.text-*` and `.bg-*`
+  utilities and its muted text inside the theme lose their colors. The theme editor writes them
+  in the CSS it gives.
 
 ## 11.0.0-RC2 and 11.0.0-RC3 (2026-11-13)
 
