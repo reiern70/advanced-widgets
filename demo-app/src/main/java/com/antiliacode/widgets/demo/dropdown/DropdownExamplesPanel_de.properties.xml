@@ -20,6 +20,8 @@
 	<entry key="size">Größe</entry>
 	<entry key="country">Land</entry>
 	<entry key="country.none">Land wählen</entry>
+	<entry key="country.common">Am häufigsten gewählt</entry>
+	<entry key="country.others">Alle anderen</entry>
 	<entry key="skills">Kenntnisse</entry>
 	<entry key="languages">Sprachen</entry>
 	<entry key="languages.none">Sprachen wählen</entry>

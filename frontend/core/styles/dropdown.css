@@ -106,13 +106,19 @@
 	transform: rotate(225deg);
 }
 
+/*
+ * The open list: fixed to the window and placed by the script under or above the button, at least
+ * as wide as it (in the top layer where the browser has popovers), so no box around the button
+ * cuts it; up to 32em wide, never wider than the window, its long options wrapped
+ */
 .antilia-dropdown-menu {
-	position: absolute;
-	top: calc(100% + 4px);
-	left: 0;
+	position: fixed;
+	inset: auto;
 	z-index: 1100;
-	min-width: 100%;
-	max-width: max(100%, 24em);
+	box-sizing: border-box;
+	max-width: min(32em, calc(100vw - 16px));
+	margin: 0;
+	overflow: visible;
 	padding: 0.3em;
 	border: 1px solid var(--antilia-theme-border, #c9cfdb);
 	border-radius: var(--antilia-look-radius, 0.5em);
@@ -124,11 +130,6 @@
 
 .antilia-dropdown-menu[hidden] {
 	display: none;
-}
-
-.antilia-dropdown-up > .antilia-dropdown-menu {
-	top: auto;
-	bottom: calc(100% + 4px);
 }
 
 .antilia-dropdown-filter {
@@ -166,7 +167,33 @@
 	padding: 0.35em 0.6em;
 	border-radius: var(--antilia-look-radius, 0.3em);
 	cursor: pointer;
-	white-space: nowrap;
+	white-space: normal;
+}
+
+/* a group of options, an optgroup of the select: its label, then its options */
+.antilia-dropdown-group[hidden] {
+	display: none;
+}
+
+.antilia-dropdown-group + .antilia-dropdown-group,
+.antilia-dropdown-option + .antilia-dropdown-group,
+.antilia-dropdown-group + .antilia-dropdown-option {
+	margin-top: 0.3em;
+	padding-top: 0.3em;
+	border-top: 1px solid var(--antilia-theme-border, #c9cfdb);
+}
+
+.antilia-dropdown-group-label {
+	padding: 0.3em 0.6em 0.15em;
+	font-size: 0.8em;
+	font-weight: 600;
+	color: var(--antilia-theme-muted, #5b6476);
+}
+
+.antilia-dropdown-group-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .antilia-dropdown-option[hidden] {
@@ -227,9 +254,10 @@
 	transform: rotate(45deg);
 }
 
+/* a long option wraps, even a long word of it, rather than being cut */
 .antilia-dropdown-text {
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .antilia-dropdown-empty {

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
@@ -56,6 +57,9 @@ public class DropdownExamplesPanel extends Panel
 
 	/** The sizes of the first example, too few for a filter. */
 	private static final List<String> SIZES = List.of("S", "M", "L", "XL");
+
+	/** The countries chosen most, first in the list of countries, apart from the others. */
+	private static final List<String> COMMON_COUNTRIES = List.of("DE", "ES", "FR", "GB", "US");
 
 	/** The skills of the multiple example. */
 	private static final List<String> SKILLS = List.of("java", "wicket", "javascript", "css",
@@ -100,8 +104,14 @@ public class DropdownExamplesPanel extends Panel
 			SIZES);
 		form.add(reportChanges(sizeChoice, choices));
 
+		// the countries chosen most first, in a group of their own, then all the others
+		IModel<List<String>> countries = Countries.codes()
+			.map(codes -> Stream.concat(codes.stream().filter(COMMON_COUNTRIES::contains),
+				codes.stream().filter(code -> !COMMON_COUNTRIES.contains(code))).toList());
 		Dropdown<String> countryChoice = new Dropdown<>("country",
-			new PropertyModel<>(this, "country"), Countries.codes(), Countries.renderer());
+			new PropertyModel<>(this, "country"), countries, Countries.renderer());
+		countryChoice.setGroup(code -> getString(COMMON_COUNTRIES.contains(code) ?
+			"country.common" : "country.others"));
 		countryChoice.getDropdownBehavior().setPlaceholder(new ResourceModel("country.none"));
 		form.add(reportChanges(countryChoice, choices));
 
