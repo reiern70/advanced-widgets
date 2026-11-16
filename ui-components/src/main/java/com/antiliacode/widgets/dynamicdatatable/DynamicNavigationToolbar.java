@@ -323,6 +323,7 @@ public class DynamicNavigationToolbar<T, K extends Serializable> extends Abstrac
 			protected void onUpdate(AjaxRequestTarget target)
 			{
 				table.onNavigation(target);
+				table.itemsPerPageChosen(target);
 				table.refresh(target);
 			}
 		});
