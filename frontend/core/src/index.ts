@@ -126,7 +126,7 @@ export { Breadcrumb, breadcrumb, BREADCRUMB_CLASSES, BREADCRUMB_COLLAPSED_ATTRIB
 	BREADCRUMB_SEPARATOR_CLASSES, BREADCRUMB_SEPARATORS, collapsedCrumbs,
 	DEFAULT_BREADCRUMB_TEXTS } from './breadcrumb.js';
 export type { BreadcrumbOptions, BreadcrumbSeparator, BreadcrumbTexts } from './breadcrumb.js';
-export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown } from './dropdown.js';
+export { DEFAULT_FILTER_THRESHOLD, Dropdown, dropdown, optionGroups } from './dropdown.js';
 export type { DropdownOptions } from './dropdown.js';
 export { Menu, menu, MENU_CLASSES, MENU_DESIGN_CLASSES, MENU_DESIGNS, MENU_MAX_HEIGHT_PROPERTY,
 	MENU_ORIENTATION_CLASSES, MENU_X_PROPERTY, MENU_Y_PROPERTY } from './menu.js';

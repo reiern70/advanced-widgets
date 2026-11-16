@@ -14,7 +14,8 @@
 
 import { useLayoutEffect, useRef, type ChangeEvent, type SelectHTMLAttributes } from 'react';
 
-import { Dropdown as CoreDropdown, type DropdownOptions, partClasses } from '@antilia/core';
+import { Dropdown as CoreDropdown, type DropdownOptions, optionGroups,
+	partClasses } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
@@ -25,6 +26,8 @@ export interface DropdownOption {
 	value: string;
 	label: string;
 	disabled?: boolean;
+	/** The label of the group of the option: the options next to each other with one go together. */
+	group?: string;
 }
 
 type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>,
@@ -52,6 +55,14 @@ interface MultipleProps extends CommonProps {
 }
 
 export type DropdownProps = SingleProps | MultipleProps;
+
+function renderOption(option: DropdownOption) {
+	return (
+		<option key={option.value} value={option.value} disabled={option.disabled}>
+			{option.label}
+		</option>
+	);
+}
 
 /**
  * A select drawn as the drop-down of the core: React renders the wrapper and the select, the core
@@ -83,7 +94,7 @@ export function Dropdown(props: DropdownProps) {
 
 	// compared by content, so that options made anew on every render leave an open list alone
 	const optionsKey = JSON.stringify(options.map((option) =>
-		[option.value, option.label, Boolean(option.disabled)]));
+		[option.value, option.label, Boolean(option.disabled), option.group ?? null]));
 	useLayoutEffect(() => {
 		instance.current?.refresh();
 	}, [optionsKey]);
@@ -108,11 +119,12 @@ export function Dropdown(props: DropdownProps) {
 			<select {...rest} {...controlled} ref={select} multiple={multiple} onChange={change}
 				className={['antilia-dropdown-native', className].filter(Boolean).join(' ')}
 				tabIndex={-1} aria-hidden="true">
-				{options.map((option) => (
-					<option key={option.value} value={option.value} disabled={option.disabled}>
-						{option.label}
-					</option>
-				))}
+				{optionGroups(options).map((group, index) => group.group === undefined ?
+					group.options.map(renderOption) : (
+						<optgroup key={'group-' + index + '-' + group.group} label={group.group}>
+							{group.options.map(renderOption)}
+						</optgroup>
+					))}
 			</select>
 		</div>
 	);

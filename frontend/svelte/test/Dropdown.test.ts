@@ -49,6 +49,24 @@ describe('Dropdown', () => {
 		expect(items(container).map((item) => item.textContent)).toEqual(['Apple', 'Banana', 'Cherry']);
 	});
 
+	it('draws the options of a group in its optgroup', () => {
+		const options: DropdownOption[] = [
+			{ value: 'month', label: 'Month', group: 'Common' },
+			{ value: 'hour', label: 'Hour', group: 'Common' },
+			{ value: 'carat', label: 'Carat', group: 'Others' },
+			{ value: 'loose', label: 'Loose' }
+		];
+		const { container } = render(Dropdown, { options, value: 'hour' });
+
+		const groups = Array.from(container.querySelectorAll('select > optgroup'));
+		expect(groups.map((group) => group.getAttribute('label'))).toEqual(['Common', 'Others']);
+		expect(groups[0].querySelectorAll('option').length).toBe(2);
+		expect(container.querySelector('select > option')?.textContent).toBe('Loose');
+		expect(Array.from(container.querySelectorAll('.antilia-dropdown-group-label'),
+			(label) => label.textContent)).toEqual(['Common', 'Others']);
+		expect(toggle(container).textContent).toBe('Hour');
+	});
+
 	it('binds the value both ways', () => {
 		const { container } = render(Bound, { options: FRUITS, value: 'apple' });
 

@@ -21,6 +21,8 @@ export interface DropdownOption {
 	value: string;
 	label: string;
 	disabled?: boolean;
+	/** The label of the group of the option: the options next to each other with one go together. */
+	group?: string;
 }
 
 /**

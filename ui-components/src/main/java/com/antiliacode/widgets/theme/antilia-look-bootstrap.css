@@ -477,6 +477,12 @@
 	border-radius: var(--bs-dropdown-item-border-radius, 0);
 }
 
+/* a drop-down's long options and group labels wrap, as without a look, rather than being cut */
+.antilia-look-bootstrap .antilia-dropdown-option.dropdown-item,
+.antilia-look-bootstrap .antilia-dropdown-group-label.dropdown-header {
+	white-space: normal;
+}
+
 /* the option the keys are on, as Bootstrap shows the one with the focus */
 .antilia-look-bootstrap :is(.antilia-dropdown-active, .antilia-autocomplete-active).dropdown-item {
 	background-color: var(--bs-dropdown-link-hover-bg);

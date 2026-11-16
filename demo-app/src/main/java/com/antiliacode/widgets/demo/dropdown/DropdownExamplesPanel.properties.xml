@@ -20,6 +20,8 @@
 	<entry key="size">Size</entry>
 	<entry key="country">Country</entry>
 	<entry key="country.none">Choose a country</entry>
+	<entry key="country.common">Chosen most</entry>
+	<entry key="country.others">All the others</entry>
 	<entry key="skills">Skills</entry>
 	<entry key="languages">Languages</entry>
 	<entry key="languages.none">Choose languages</entry>
