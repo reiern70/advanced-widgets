@@ -461,6 +461,15 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	}
 
 	/**
+	 * @return the column's {@link IDynamicColumn#getExportFormat() export format}
+	 */
+	@Override
+	protected String getColumnExportFormat(IDynamicColumn<T> column)
+	{
+		return column.getExportFormat();
+	}
+
+	/**
 	 * @return the {@link IDynamicColumn#getFooterExportValue(Object) footer export value} of each
 	 *         column with a footer, from the {@link #getFooterData() footer data}, asked for once;
 	 *         {@code null} for the other columns

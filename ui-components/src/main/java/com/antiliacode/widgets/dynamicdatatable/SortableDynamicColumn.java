@@ -141,6 +141,12 @@ public class SortableDynamicColumn<T, S>
 	}
 
 	@Override
+	public String getExportFormat()
+	{
+		return column.getExportFormat();
+	}
+
+	@Override
 	public void renderHead(IHeaderResponse response)
 	{
 		if (column instanceof IHeaderContributor contributor)

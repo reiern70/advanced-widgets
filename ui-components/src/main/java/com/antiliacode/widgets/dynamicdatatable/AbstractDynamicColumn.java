@@ -45,6 +45,8 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 
 	private SerializableFunction<Object, ?> footerExportValue;
 
+	private String exportFormat;
+
 	/**
 	 * @param header
 	 *            the header text, rendered escaped
@@ -143,6 +145,28 @@ public abstract class AbstractDynamicColumn<T> implements IDynamicColumn<T>
 	public Object getExportValue(T row)
 	{
 		return exportValue != null ? exportValue.apply(row) : null;
+	}
+
+	@Override
+	public String getExportFormat()
+	{
+		return exportFormat;
+	}
+
+	/**
+	 * @param exportFormat
+	 *            the number format an {@link XlsxExportToolbarAction Excel export} gives the
+	 *            cells of the column holding numbers or dates, in the codes of Excel, such as
+	 *            {@code #,##0.00} for an amount with two decimals; {@code null}, the default, for
+	 *            Excel's own
+	 * @return {@code this}
+	 * @see IDynamicColumn#getExportFormat()
+	 * @since 11.0.0
+	 */
+	public AbstractDynamicColumn<T> setExportFormat(String exportFormat)
+	{
+		this.exportFormat = exportFormat;
+		return this;
 	}
 
 	/**
