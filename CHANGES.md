@@ -11,13 +11,13 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 11.0.0-RC4 (2026-11-16)
+## 11.0.0-RC4 (2026-11-17)
 
 The components of 10.11.0-RC10 on Wicket 11.0.0.
 
 **Upgrading:** as for 10.11.0-RC10.
 
-## 10.11.0-RC10 (2026-11-16)
+## 10.11.0-RC10 (2026-11-17)
 
 - The rich text editors upload to a resource of the library, mounted once by the application
   and not tied to a page: `RichTextFiles.mount(application, path, store)`, and
@@ -54,6 +54,20 @@ The components of 10.11.0-RC10 on Wicket 11.0.0.
   `.bg-*` utilities take the theme's colors; the theme editor edits the new colors.
 - The title bar of the dialogs and the wizards is a little taller in the components' own look
   (#128).
+- Data tables export to Excel beside CSV: `XlsxExportToolbarAction` writes an `.xlsx` of its
+  own, without Apache POI, its cells typed, the header bold, frozen and filtered, and the rows as
+  they are read (#126).
+- Progress bars can be still, for a bar that shows a figure rather than something under way:
+  `ProgressBar#setStill`, `ProgressBarColumn#setStill`, `BeanProgressBarColumn#setStill`,
+  `ProgressBar.markup(value, still)` and the prop `still` of the React and Svelte bars draw the
+  filled part solid at any percentage, neither striped nor moving (#133). The default stays
+  striped and moving, and an indeterminate bar moves still or not.
+- A request of an editor's events no longer reaches a component the server took away, which
+  answered with a `ComponentNotFoundException` and the internal error page: a tab the user
+  closes leaves the page with its panel, as a desktop window disposed does, by
+  `Wicket.DOM.remove`; the events of an element Wicket's Ajax removes are taken off, those
+  waiting dropped; and `RemovedComponentEventListener`, which the library adds to each
+  application, answers a client event of a component gone with an empty Ajax response (#125).
 - This file (#109).
 
 **Upgrading:**
@@ -76,6 +90,12 @@ The components of 10.11.0-RC10 on Wicket 11.0.0.
   is used with the Bootstrap look: without them Bootstrap's links, its `.text-*` and `.bg-*`
   utilities and its muted text inside the theme lose their colors. The theme editor writes them
   in the CSS it gives.
+- A tab the user closes is taken out of the page in the browser, its panel with it, instead of
+  staying there hidden; it and a desktop window disposed go by `Wicket.DOM.remove`, so the
+  scripts in them hear of it on `/dom/node/removing`.
+- A `ComponentNotFoundException` of a client event's request, one carrying `antilia-event`, no
+  longer reaches the application's exception mapper: the library answers it with an empty Ajax
+  response.
 
 ## 11.0.0-RC2 and 11.0.0-RC3 (2026-11-13)
 
