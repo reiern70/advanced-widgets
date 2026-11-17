@@ -37,6 +37,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColu
 import org.apache.wicket.extensions.markup.html.repeater.util.SortParam;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.resource.IResourceStream;
@@ -159,6 +160,37 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 			.get(0).getAttribute("data-resizable"));
 		assertNull(TagTester.createTagsByAttribute(page, "wicket:id", "headers", false).get(2)
 			.getAttribute("data-resizable"));
+	}
+
+	@Test
+	void theRowsPerPageAndTheSortAreKeptInTheStore()
+	{
+		startWithSessionStore();
+		tester.clickLink("table:headersRow:headers:2:sort");
+		DropDownChoice<?> choice = (DropDownChoice<?>)tester.getComponentFromLastRenderedPage(
+			"table:topNavigation:span:pageSize:itemsPerPage");
+		tester.getRequest().getPostParameters().setParameterValue(choice.getInputName(), "1");
+		tester.executeAjaxEvent(choice, "change");
+
+		ColumnState state = SessionColumnStateStore.INSTANCE.load(table.getColumnStateKey());
+		assertEquals(5L, state.getItemsPerPage());
+		assertEquals("name", state.getSortProperty());
+		assertTrue(state.isSortAscending());
+
+		startWithSessionStore();
+
+		assertEquals(5, table.getItemsPerPage());
+		assertEquals(new SortParam<>("name", true), provider.getSort());
+		assertTrue(tester.getLastResponseAsString().contains("data-key=\"5\""), "one page of 5");
+	}
+
+	private void startWithSessionStore()
+	{
+		provider = new PeopleProvider(5);
+		table = new TestTable(provider);
+		table.setItemsPerPageOptions(2L, 5L);
+		table.setColumnStateStore(SessionColumnStateStore.INSTANCE);
+		tester.startPage(new TablePage(table));
 	}
 
 	@Test

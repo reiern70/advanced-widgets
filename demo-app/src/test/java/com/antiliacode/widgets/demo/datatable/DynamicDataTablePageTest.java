@@ -27,6 +27,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.markup.html.form.DropDownChoice;
+import com.antiliacode.widgets.dynamicdatatable.ColumnState;
 import com.antiliacode.widgets.dynamicdatatable.CompoundDynamicColumn;
 import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightUnits;
 import com.antiliacode.widgets.dynamicdatatable.IDynamicColumn;
@@ -348,6 +349,36 @@ class DynamicDataTablePageTest
 		assertEquals(initial, table.getColumnState().getOrder());
 		assertEquals(shown, table.getVisibleColumns().size());
 		assertNull(table.getColumnWidths());
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void theRowsPerPageAndTheSortAreRememberedInTheSession()
+	{
+		String sort = null;
+		for (int i = 0; sort == null; i++)
+		{
+			String link = TABLE + ":headersRow:headers:" + i + ":sort";
+			if (tester.getComponentFromLastRenderedPage(link).isEnabledInHierarchy())
+			{
+				sort = link;
+			}
+		}
+		tester.clickLink(sort);
+		DropDownChoice<?> rowsPerPage = (DropDownChoice<?>)tester.getComponentFromLastRenderedPage(
+			TABLE + ":topNavigation:span:pageSize:itemsPerPage");
+		tester.getRequest().getPostParameters().setParameterValue(rowsPerPage.getInputName(), "1");
+		tester.executeAjaxEvent(rowsPerPage, "change");
+		ColumnState chosen = table.getColumnState();
+
+		tester.startPage(DynamicDataTablePage.class);
+		table = (JsonBasedDynamicDataTable<User, Long>)tester
+			.getComponentFromLastRenderedPage(TABLE);
+
+		assertEquals(50, table.getItemsPerPage(), "a new page keeps the rows per page");
+		assertEquals(chosen.getSortProperty(), table.getColumnState().getSortProperty());
+		assertTrue(table.getColumnState().isSortAscending());
+		tester.assertContains("aria-sort=\"ascending\"");
 	}
 
 	@Test

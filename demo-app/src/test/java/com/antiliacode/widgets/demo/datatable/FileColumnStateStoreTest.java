@@ -40,4 +40,16 @@ class FileColumnStateStoreTest
 
 		assertEquals(state, new FileColumnStateStore().load(key));
 	}
+
+	@Test
+	void theRowsPerPageAndTheSortAreKept()
+	{
+		String key = "test:" + UUID.randomUUID();
+		ColumnState state = new ColumnState(List.of("0", "1"), List.of(), Map.of(), 50L,
+			"lastName", false);
+
+		FileColumnStateStore.INSTANCE.save(key, state);
+
+		assertEquals(state, new FileColumnStateStore().load(key));
+	}
 }

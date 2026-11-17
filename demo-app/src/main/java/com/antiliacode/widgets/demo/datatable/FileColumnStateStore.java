@@ -33,7 +33,8 @@ import com.github.openjson.JSONObject;
 
 /**
  * Keeps the column states of tables in a properties file in the temporary directory, as JSON, so
- * they survive restarts of the server. A real application would rather keep them in its database,
+ * they survive restarts of the server: the columns, and the rows per page and the sort the user
+ * chose. A real application would rather keep them in its database,
  * by user; this one shares them among everybody using the demos.
  */
 class FileColumnStateStore implements IColumnStateStore
@@ -60,8 +61,12 @@ class FileColumnStateStore implements IColumnStateStore
 		{
 			widths.put(id, widthsObject.getDouble(id));
 		}
+		// the rows per page and the sort are kept since #127; a state saved before has neither
+		Long itemsPerPage = object.has("itemsPerPage") ? object.getLong("itemsPerPage") : null;
+		String sortProperty = object.optString("sortProperty", null);
 		return new ColumnState(strings(object.getJSONArray("order")),
-			strings(object.getJSONArray("hidden")), widths);
+			strings(object.getJSONArray("hidden")), widths, itemsPerPage, sortProperty,
+			object.optBoolean("sortAscending"));
 	}
 
 	@Override
@@ -71,6 +76,15 @@ class FileColumnStateStore implements IColumnStateStore
 		object.put("order", new JSONArray(state.getOrder()));
 		object.put("hidden", new JSONArray(state.getHidden()));
 		object.put("widths", new JSONObject(state.getWidths()));
+		if (state.getItemsPerPage() != null)
+		{
+			object.put("itemsPerPage", state.getItemsPerPage());
+		}
+		if (state.getSortProperty() != null)
+		{
+			object.put("sortProperty", state.getSortProperty());
+			object.put("sortAscending", state.isSortAscending());
+		}
 		Properties properties = read();
 		properties.setProperty(key, object.toString());
 		try (OutputStream out = Files.newOutputStream(FILE.toPath()))
