@@ -29,6 +29,8 @@ import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.theme.Look;
+
 class ProgressBarTest extends WicketTestCase
 {
 	@Test
@@ -95,6 +97,48 @@ class ProgressBarTest extends WicketTestCase
 		assertEquals("<div class=\"antilia-progress-bar\"><progress class=\"antilia-progress-bar-value\" " +
 			"max=\"100\" value=\"{{p}}\">{{p}}%</progress><span class=\"antilia-progress-bar-label\" " +
 			"aria-hidden=\"true\">{{p}}%</span></div>", ProgressBar.markup("{{p}}"));
+	}
+
+	@Test
+	void aStillBarHasTheClassOfIt()
+	{
+		ProgressBar still = new ProgressBar("bar", Model.of(62)).setStill(true);
+		assertTrue(still.isStill());
+		tester.startPage(new BarPage(still));
+
+		assertEquals("progress antilia-progress-bar antilia-progress-bar-still",
+			tester.getTagByWicketId("bar").getAttribute("class"));
+		assertEquals("62", value(), "the value as a moving bar has it");
+
+		tester.startPage(new BarPage(Model.of(62)));
+		assertEquals("progress antilia-progress-bar",
+			tester.getTagByWicketId("bar").getAttribute("class"), "moving by default");
+		assertFalse(((ProgressBar)tester.getComponentFromLastRenderedPage("bar")).isStill());
+	}
+
+	@Test
+	void anIndeterminateBarStillHasTheClassAndNoValue()
+	{
+		tester.startPage(new BarPage(new ProgressBar("bar", Model.of((Integer)null))
+			.setStill(true)));
+
+		TagTester bar = tester.getTagByWicketId("bar");
+		assertTrue(bar.getAttribute("class").contains("antilia-progress-bar-still"));
+		assertNull(bar.getChild("progress").getAttribute("value"),
+			"indeterminate, which the style sheet keeps moving");
+	}
+
+	@Test
+	void markupOfAStillBar()
+	{
+		assertEquals("<div class=\"antilia-progress-bar antilia-progress-bar-still\">" +
+			"<progress class=\"antilia-progress-bar-value\" max=\"100\" value=\"{{p}}\">{{p}}%" +
+			"</progress><span class=\"antilia-progress-bar-label\" aria-hidden=\"true\">{{p}}%" +
+			"</span></div>", ProgressBar.markup("{{p}}", true));
+		assertEquals(ProgressBar.markup("{{p}}"), ProgressBar.markup("{{p}}", false));
+		assertTrue(ProgressBar.markup("{{p}}", Look.BOOTSTRAP, true)
+			.startsWith("<div class=\"antilia-progress-bar progress antilia-progress-bar-still\">"),
+			ProgressBar.markup("{{p}}", Look.BOOTSTRAP, true));
 	}
 
 	@Test

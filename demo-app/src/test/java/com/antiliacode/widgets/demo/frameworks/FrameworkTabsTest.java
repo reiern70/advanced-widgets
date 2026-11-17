@@ -188,6 +188,8 @@ class FrameworkTabsTest
 		JSONObject progress = config(ProgressBarPage.class, "react");
 		assertEquals(0, progress.getInt("progress"));
 		assertEquals("Start", progress.getJSONObject("texts").getString("start"));
+		assertEquals("The same, still, for a figure",
+			progress.getJSONObject("texts").getString("still"));
 	}
 
 	@Test

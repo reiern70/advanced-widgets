@@ -31,6 +31,21 @@ describe('ProgressBar', () => {
 		expect(container.querySelector('progress')?.getAttribute('value')).toBe('100');
 	});
 
+	it('is still when asked, and moving otherwise', () => {
+		const { container, rerender } = render(<ProgressBar value={62} still />);
+
+		expect(container.firstElementChild?.className)
+			.toBe('antilia-progress-bar antilia-progress-bar-still');
+
+		rerender(<ProgressBar value={62} still={false} />);
+		expect(container.firstElementChild?.className).toBe('antilia-progress-bar');
+
+		rerender(<ProgressBar still className="big" />);
+		expect(container.firstElementChild?.className)
+			.toBe('antilia-progress-bar antilia-progress-bar-still big');
+		expect(container.querySelector('progress')?.hasAttribute('value')).toBe(false);
+	});
+
 	it('is indeterminate without a value', () => {
 		const { container } = render(<ProgressBar className="big" />);
 

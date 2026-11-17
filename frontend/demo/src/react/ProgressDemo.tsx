@@ -20,7 +20,7 @@ import { advance, TICK_MILLIS, type ProgressConfig } from '../progress.js';
 
 /**
  * The Progress bar demo in React: the bars of the Wicket page, the first one advanced by a timer of
- * the app.
+ * the app and followed by a still one.
  */
 export function ProgressDemo({ config }: { config: ProgressConfig }) {
 	const { texts } = config;
@@ -60,6 +60,8 @@ export function ProgressDemo({ config }: { config: ProgressConfig }) {
 				{' | '}
 				<a href="#" onClick={reset}>{texts.reset}</a>
 			</p>
+			<h3>{texts.still}</h3>
+			<ProgressBar value={progress} still />
 			<h3>{texts.finished}</h3>
 			<ProgressBar value={100} />
 			<h3>{texts.unknown}</h3>

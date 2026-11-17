@@ -14,7 +14,9 @@
 package com.antiliacode.widgets.demo.progress;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -29,7 +31,8 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 
 /**
  * Drives the React and Svelte apps of {@link ProgressBarPage} in their tabs: the first bar advanced
- * by a timer of the app, paused and reset, a finished one and an indeterminate one. Runs with
+ * by a timer of the app, paused and reset, a still one following it, a finished one and an
+ * indeterminate one. Runs with
  * {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -41,10 +44,13 @@ class ProgressBarAppsBrowserTest extends FrameworkAppsTestCase
 	{
 		open(browser, framework, "progress-bar");
 		List<WebElement> bars = bars();
-		assertEquals(3, bars.size());
+		assertEquals(4, bars.size());
 		assertEquals("0", value(0));
-		assertEquals("100", value(1));
-		assertNull(value(2), "indeterminate");
+		assertEquals("0", value(1));
+		assertFalse(still(0), "moving");
+		assertTrue(still(1));
+		assertEquals("100", value(2));
+		assertNull(value(3), "indeterminate");
 
 		app().findElement(By.linkText("Start")).click();
 		wait.until(d -> Integer.parseInt(value(0)) >= 9);
@@ -52,6 +58,7 @@ class ProgressBarAppsBrowserTest extends FrameworkAppsTestCase
 		String paused = value(0);
 		assertEquals(paused + "%", bars().get(0).findElement(
 			By.cssSelector(".antilia-progress-bar-label")).getText());
+		wait.until(d -> paused.equals(value(1)));
 
 		app().findElement(By.linkText("Reset")).click();
 		wait.until(d -> "0".equals(value(0)));
@@ -62,6 +69,11 @@ class ProgressBarAppsBrowserTest extends FrameworkAppsTestCase
 	private List<WebElement> bars()
 	{
 		return app().findElements(By.cssSelector(".antilia-progress-bar"));
+	}
+
+	private boolean still(int bar)
+	{
+		return bars().get(bar).getDomAttribute("class").contains("antilia-progress-bar-still");
 	}
 
 	private String value(int bar)

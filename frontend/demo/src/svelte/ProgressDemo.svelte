@@ -13,7 +13,7 @@
 -->
 <!--
   The Progress bar demo in Svelte: the bars of the Wicket page, the first one advanced by a timer
-  of the app.
+  of the app and followed by a still one.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -58,6 +58,8 @@
 		<a href="#top" onclick={toggle}>{running ? texts.pause : texts.start}</a> |
 		<a href="#top" onclick={reset}>{texts.reset}</a>
 	</p>
+	<h3>{texts.still}</h3>
+	<ProgressBar value={progress} still />
 	<h3>{texts.finished}</h3>
 	<ProgressBar value={100} />
 	<h3>{texts.unknown}</h3>
