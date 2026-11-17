@@ -34,6 +34,10 @@ import com.antiliacode.widgets.theme.Looks;
  * Content Security Policy. The filled part is striped and the stripes move, unless the user
  * prefers reduced motion; a finished bar, at 100, is solid.
  * <p>
+ * A {@link #setStill(boolean) still} bar is solid at any percentage, neither striped nor moving:
+ * for a bar that shows a figure, such as how much of a month's charges is paid, rather than
+ * something under way, such as an upload.
+ * <p>
  * A bar whose model holds {@code null} is indeterminate: it shows that something is going on
  * without saying how far it got, as moving stripes over the whole bar and without a label.
  * <p>
@@ -65,6 +69,8 @@ public class ProgressBar extends WebComponent
 	private IModel<String> label;
 
 	private IModel<String> accessibleName;
+
+	private boolean still;
 
 	/**
 	 * @param id
@@ -104,8 +110,39 @@ public class ProgressBar extends WebComponent
 	 */
 	public static String markup(String value, ILook look)
 	{
-		return "<div class=\"" + look.getPartClasses(LookPart.PROGRESS) + "\">" +
-			body(value, look) + "</div>";
+		return markup(value, look, false);
+	}
+
+	/**
+	 * Returns the markup of a whole bar, still or moving, as {@link #markup(String)}.
+	 *
+	 * @param value
+	 *            the percentage, or a placeholder for it
+	 * @param still
+	 *            whether the bar is {@link #setStill(boolean) still}
+	 * @return the markup of the bar
+	 */
+	public static String markup(String value, boolean still)
+	{
+		return markup(value, Looks.current(), still);
+	}
+
+	/**
+	 * Returns the markup of a whole bar in a look, still or moving, as {@link #markup(String)}.
+	 *
+	 * @param value
+	 *            the percentage, or a placeholder for it
+	 * @param look
+	 *            the look of the bar
+	 * @param still
+	 *            whether the bar is {@link #setStill(boolean) still}
+	 * @return the markup of the bar
+	 */
+	public static String markup(String value, ILook look, boolean still)
+	{
+		return "<div class=\"" +
+			look.getPartClasses(LookPart.PROGRESS, still ? LookPart.PROGRESS_STILL : null) +
+			"\">" + body(value, look) + "</div>";
 	}
 
 	/**
@@ -176,6 +213,36 @@ public class ProgressBar extends WebComponent
 	}
 
 	/**
+	 * @return whether the bar is still: solid at any percentage, neither striped nor moving
+	 */
+	public boolean isStill()
+	{
+		return still;
+	}
+
+	/**
+	 * Draws the bar still: its filled part solid in the theme's colors at any percentage, as a
+	 * finished bar is, neither striped nor moving. A still bar fits a figure, such as how much of
+	 * a month's charges is paid or how far a goal is reached, where moving stripes would look as if
+	 * the page were still loading and pull the eye from the numbers. Something under way, such as
+	 * an upload, is better shown by the moving stripes of the default.
+	 * <p>
+	 * The bar gets the class {@code antilia-progress-bar-still}, the part
+	 * {@link LookPart#PROGRESS_STILL}. An indeterminate bar keeps moving, still or not, since it
+	 * only tells that something is going on.
+	 *
+	 * @param still
+	 *            whether the bar is still; {@code false}, the default, for moving stripes
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public ProgressBar setStill(boolean still)
+	{
+		this.still = still;
+		return this;
+	}
+
+	/**
 	 * @return the model of the bar's accessible name, or {@code null}
 	 */
 	public IModel<String> getAccessibleName()
@@ -232,7 +299,8 @@ public class ProgressBar extends WebComponent
 	{
 		checkComponentTag(tag, "div");
 		super.onComponentTag(tag);
-		Looks.addClasses(tag, Looks.of(this), LookPart.PROGRESS);
+		Looks.addClasses(tag, Looks.of(this), LookPart.PROGRESS,
+			still ? LookPart.PROGRESS_STILL : null);
 	}
 
 	@Override

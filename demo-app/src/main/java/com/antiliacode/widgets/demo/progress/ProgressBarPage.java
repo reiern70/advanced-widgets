@@ -28,8 +28,8 @@ import com.antiliacode.widgets.progress.ProgressBar;
 import com.github.openjson.JSONObject;
 
 /**
- * {@link ProgressBar}s on their own: one advanced by an Ajax timer, and an indeterminate one, in a
- * theme the user chooses. The React and Svelte tabs show the same bars with their
+ * {@link ProgressBar}s on their own: one advanced by an Ajax timer, a still one following it, a
+ * finished one and an indeterminate one, in a theme the user chooses. The React and Svelte tabs show the same bars with their
  * {@code ProgressBar}, the first one advanced by a timer of the app.
  */
 public class ProgressBarPage extends DemoPage
@@ -51,6 +51,10 @@ public class ProgressBarPage extends DemoPage
 		ProgressBar bar = new ProgressBar("bar", new PropertyModel<>(this, "progress"));
 		bar.setOutputMarkupId(true);
 		themed.add(bar);
+		ProgressBar still = new ProgressBar("still", new PropertyModel<>(this, "progress"))
+			.setStill(true);
+		still.setOutputMarkupId(true);
+		themed.add(still);
 		themed.add(new ProgressBar("finished", Model.of(100)));
 		themed.add(new ProgressBar("indeterminate", Model.of((Integer)null)));
 
@@ -65,7 +69,7 @@ public class ProgressBarPage extends DemoPage
 				{
 					progress = Math.min(100, progress + 3);
 					running = progress < 100;
-					target.add(bar);
+					target.add(bar, still);
 				}
 			}
 		});
@@ -91,7 +95,7 @@ public class ProgressBarPage extends DemoPage
 			{
 				progress = 0;
 				running = false;
-				target.add(bar, themed.get("toggle"));
+				target.add(bar, still, themed.get("toggle"));
 			}
 		});
 	}
@@ -109,8 +113,8 @@ public class ProgressBarPage extends DemoPage
 	protected JSONObject getFrameworkConfig()
 	{
 		return new JSONObject()
-			.put("texts", FrameworkTabs.texts(this, "known", "unknown", "finished", "reset",
-				"start", "pause"))
+			.put("texts", FrameworkTabs.texts(this, "known", "still", "unknown", "finished",
+				"reset", "start", "pause"))
 			.put("progress", progress);
 	}
 }

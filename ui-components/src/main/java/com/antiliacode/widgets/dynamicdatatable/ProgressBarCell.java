@@ -27,10 +27,11 @@ class ProgressBarCell extends Panel
 	private static final long serialVersionUID = 1L;
 
 	ProgressBarCell(String id, IModel<? extends Number> percentage, IModel<String> label,
-		IModel<String> name)
+		IModel<String> name, boolean still)
 	{
 		super(id);
-		add(new ProgressBar("bar", percentage).setLabel(label).setAccessibleName(name));
+		add(new ProgressBar("bar", percentage).setLabel(label).setAccessibleName(name)
+			.setStill(still));
 	}
 
 	/**

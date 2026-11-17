@@ -13,12 +13,14 @@
  */
 
 /*
- * The Progress bar demo: a bar advanced by a timer, a finished one and an indeterminate one.
+ * The Progress bar demo: a bar advanced by a timer, a still one following it, a finished one and an
+ * indeterminate one.
  */
 
 /** The texts of the demo, by the keys of the page's bundle. */
 export interface ProgressTexts {
 	known: string;
+	still: string;
 	unknown: string;
 	finished: string;
 	reset: string;

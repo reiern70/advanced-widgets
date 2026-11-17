@@ -265,6 +265,8 @@ const PARTS = {
 	'progress': ['base', 'antilia-progress-bar', 'progress'],
 	'progress-value': ['base', 'antilia-progress-bar-value', ''],
 	'progress-label': ['base', 'antilia-progress-bar-label', ''],
+	// a bar that shows a figure: its filled part neither striped nor moving
+	'progress-still': ['base', 'antilia-progress-bar-still', ''],
 
 	// uploads: the picker drawn over a file input, as a button or a zone to drop files on, and the
 	// progress of an upload
