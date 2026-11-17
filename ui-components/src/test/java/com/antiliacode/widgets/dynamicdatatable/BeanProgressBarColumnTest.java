@@ -104,6 +104,24 @@ class BeanProgressBarColumnTest extends WicketTestCase
 	}
 
 	@Test
+	void theBarsAreStillWhenAsked()
+	{
+		BeanProgressBarColumn<Task, String> column = new BeanProgressBarColumn<>(Model.of("Done"),
+			Task::getDone);
+		assertFalse(column.isStill());
+		start(column.setStill(true), new Task(1, "Paint", 40));
+
+		assertTrue(column.isStill());
+		TagTester bar = TagTester.createTagByAttribute(rowMarkup("1"), "wicket:id", "bar");
+		assertTrue(bar.getAttribute("class").contains("antilia-progress-bar-still"),
+			bar.getAttribute("class"));
+
+		start(new BeanProgressBarColumn<>(Model.of("Done"), Task::getDone),
+			new Task(1, "Paint", 40));
+		assertFalse(rowMarkup("1").contains("antilia-progress-bar-still"), "moving by default");
+	}
+
+	@Test
 	void readsAPropertyExpression()
 	{
 		start(new BeanProgressBarColumn<>(Model.of("Done"), "done"), new Task(1, "Paint", 33));

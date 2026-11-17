@@ -244,6 +244,7 @@ public enum LookPart
 	PROGRESS(LookAspect.BASE),
 	PROGRESS_VALUE(LookAspect.BASE),
 	PROGRESS_LABEL(LookAspect.BASE),
+	PROGRESS_STILL(LookAspect.BASE),
 
 	// uploads: the picker drawn over a file input, as a button or a zone to drop files on, and the
 	// progress of an upload

@@ -48,6 +48,7 @@ import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.progress.ProgressBar;
 import com.github.openjson.JSONObject;
 
 class DynamicDataTableTest extends WicketTestCase
@@ -487,6 +488,23 @@ class DynamicDataTableTest extends WicketTestCase
 
 		tester.assertContains("antilia-progress-bar.*\\.css");
 		tester.assertContains(Pattern.quote("value=\\\"{{progress}}\\\""));
+		assertFalse(tester.getLastResponseAsString().contains("antilia-progress-bar-still"),
+			"moving by default");
+	}
+
+	@Test
+	void aProgressBarColumnCanDrawItsBarsStill()
+	{
+		ProgressBarColumn<Person> column = new ProgressBarColumn<>(Model.of("Progress"),
+			"progress");
+		assertFalse(column.isStill());
+		JsonBasedDynamicDataTable<Person, String> progress = new JsonBasedDynamicDataTable<>(
+			"table", List.of(column.setStill(true)), new PeopleProvider(), 10);
+		tester.startPage(new TestPage(progress));
+
+		assertTrue(column.isStill());
+		assertEquals(ProgressBar.markup("{{progress}}", true), column.getTemplate());
+		tester.assertContains(Pattern.quote("antilia-progress-bar antilia-progress-bar-still"));
 	}
 
 	@Test
