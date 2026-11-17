@@ -23,6 +23,7 @@
 	<entry key="DynamicDataTable.clearSelection">Clear selection</entry>
 	<entry key="DynamicDataTable.selectedCount">${count} selected</entry>
 	<entry key="DynamicDataTable.exportCsv">Export to CSV</entry>
+	<entry key="DynamicDataTable.exportXlsx">Export to Excel</entry>
 	<entry key="DynamicDataTable.confirm">Confirm</entry>
 	<entry key="DynamicDataTable.cancel">Cancel</entry>
 	<entry key="DynamicDataTable.chooseColumns">Columns</entry>

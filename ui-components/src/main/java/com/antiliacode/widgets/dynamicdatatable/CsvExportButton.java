@@ -87,24 +87,6 @@ class CsvExportButton<T, K extends Serializable, C extends IDetachable> extends 
 			? assigned.wrapOnAssignment(this) : label;
 	}
 
-	private String header(C column)
-	{
-		IModel<String> header = table.getColumnTitle(column);
-		if (header instanceof IComponentAssignedModel<String> assigned)
-		{
-			IModel<String> wrapped = assigned.wrapOnAssignment(table);
-			try
-			{
-				return wrapped.getObject();
-			}
-			finally
-			{
-				wrapped.detach();
-			}
-		}
-		return header != null ? header.getObject() : null;
-	}
-
 	@SuppressWarnings("unchecked")
 	private String format(Object value)
 	{
@@ -134,18 +116,11 @@ class CsvExportButton<T, K extends Serializable, C extends IDetachable> extends 
 
 	private void write(Writer writer) throws IOException
 	{
-		List<C> columns = new ArrayList<>();
-		for (C column : table.getVisibleColumns())
-		{
-			if (table.isColumnExportable(column))
-			{
-				columns.add(column);
-			}
-		}
+		List<C> columns = table.getExportColumns();
 		List<String> fields = new ArrayList<>();
 		for (C column : columns)
 		{
-			fields.add(quote(header(column)));
+			fields.add(quote(table.getExportHeader(column)));
 		}
 		writeLine(writer, fields);
 

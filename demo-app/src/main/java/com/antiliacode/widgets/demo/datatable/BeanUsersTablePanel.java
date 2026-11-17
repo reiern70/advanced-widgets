@@ -43,6 +43,7 @@ import com.antiliacode.widgets.dynamicdatatable.BeanBasedDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.BeanProgressBarColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanRowNumberColumn;
 import com.antiliacode.widgets.dynamicdatatable.BeanSelectionColumn;
+import com.antiliacode.widgets.dynamicdatatable.IExportFormatColumn;
 import com.antiliacode.widgets.dynamicdatatable.IFixedWidthColumn;
 import com.antiliacode.widgets.dynamicdatatable.IFooterColumn;
 import com.antiliacode.widgets.dynamicdatatable.IHideableColumn;
@@ -173,13 +174,23 @@ public class BeanUsersTablePanel extends UsersTablePanel
 	private static class ProgressColumn extends BeanProgressBarColumn<User, String>
 		implements
 			IHideableColumn,
-			IMovableColumn
+			IMovableColumn,
+			IExportFormatColumn
 	{
 		private static final long serialVersionUID = 1L;
 
 		ProgressColumn()
 		{
 			super(new ResourceModel("progress"), User::getProgress);
+		}
+
+		/**
+		 * @return from 0 to 100: a percent sign after it in Excel, without multiplying it by 100
+		 */
+		@Override
+		public String getExportFormat()
+		{
+			return "0\"%\"";
 		}
 	}
 

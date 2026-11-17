@@ -48,6 +48,7 @@ import com.antiliacode.widgets.dynamicdatatable.IAjaxActionColumnContributor;
 import com.antiliacode.widgets.dynamicdatatable.IconBasedRowAction;
 import com.antiliacode.widgets.dynamicdatatable.IconBasedToolbarAction;
 import com.antiliacode.widgets.dynamicdatatable.SelectionCountToolbarAction;
+import com.antiliacode.widgets.dynamicdatatable.XlsxExportToolbarAction;
 import com.antiliacode.widgets.floating.FloatingPanel;
 import com.antiliacode.widgets.icon.FontAwesomeIcon;
 import com.antiliacode.widgets.icon.IIcon;
@@ -125,6 +126,10 @@ public abstract class UsersTablePanel extends Panel
 		// all the users exported end with the footer's line, how many they are and their age
 		table.addToolbarAction(new CsvExportToolbarAction<User, Long>()
 			.setFileName("users.csv")
+			.setExportFooter(true));
+		// and to Excel, with the same rules: numbers, dates and the footer in a sheet
+		table.addToolbarAction(new XlsxExportToolbarAction<User, Long>()
+			.setFileName("users.xlsx")
 			.setExportFooter(true));
 		table.addToolbarAction(selectionCount);
 		// searching, paging, selecting and choosing columns lose nothing when a window of a

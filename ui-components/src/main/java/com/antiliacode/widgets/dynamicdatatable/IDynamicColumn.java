@@ -146,7 +146,8 @@ public interface IDynamicColumn<T> extends IDetachable
 
 	/**
 	 * @return whether the column has a value to export, for example by a
-	 *         {@link CsvExportToolbarAction}; {@code false} by default
+	 *         {@link CsvExportToolbarAction} or an {@link XlsxExportToolbarAction}; {@code false}
+	 *         by default
 	 */
 	default boolean isExportable()
 	{
@@ -160,6 +161,20 @@ public interface IDynamicColumn<T> extends IDetachable
 	 *         {@code null} by default
 	 */
 	default Object getExportValue(T row)
+	{
+		return null;
+	}
+
+	/**
+	 * The number format an {@link XlsxExportToolbarAction Excel export} gives the cells of the
+	 * column holding numbers or dates, in the codes of Excel: {@code #,##0.00} for an amount with
+	 * two decimals, {@code 0.00%} for a rate such as {@code 0.07}, {@code dd/mm/yyyy} for a date.
+	 *
+	 * @return the format, or {@code null} for Excel's own, the default: a number as it is, a date
+	 *         as the computer opening the file shows dates
+	 * @since 11.0.0
+	 */
+	default String getExportFormat()
 	{
 		return null;
 	}

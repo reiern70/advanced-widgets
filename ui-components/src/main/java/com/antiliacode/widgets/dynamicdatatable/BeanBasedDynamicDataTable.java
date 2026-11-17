@@ -40,8 +40,9 @@ import com.github.openjson.JSONObject;
  * row's {@link IDynamicDataProvider#model(Object) model}, the header is
  * {@link IColumn#getHeader(String)}, a column is sortable by its
  * {@link IColumn#getSortProperty() sort property}, styled by {@link IStyledColumn#getCssClass()}
- * and exported to CSV if it is an {@link IExportableColumn}. A column the user must not resize is
- * marked {@link IFixedWidthColumn};
+ * and exported to CSV and Excel if it is an {@link IExportableColumn}, an
+ * {@link IExportFormatColumn} giving its cells a number format in Excel. A column the user must
+ * not resize is marked {@link IFixedWidthColumn};
  * {@link com.antiliacode.widgets.table.IMovableColumn} and
  * {@link IHideableColumn} mark the columns the user can move and hide, and an
  * {@link IFooterColumn} has a value, such as a total, in the footer row under the rows.
@@ -193,6 +194,17 @@ public class BeanBasedDynamicDataTable<T, K extends Serializable, S>
 	protected boolean isColumnExportable(IColumn<T, S> column)
 	{
 		return column instanceof IExportableColumn;
+	}
+
+	/**
+	 * @return the {@link IExportFormatColumn#getExportFormat() export format} of an
+	 *         {@link IExportFormatColumn}, {@code null} for the other columns
+	 */
+	@Override
+	protected String getColumnExportFormat(IColumn<T, S> column)
+	{
+		return column instanceof IExportFormatColumn formatted ? formatted.getExportFormat()
+			: null;
 	}
 
 	/**
