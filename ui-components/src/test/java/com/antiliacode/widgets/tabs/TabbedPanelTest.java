@@ -228,10 +228,18 @@ class TabbedPanelTest extends WicketTestCase
 		tabs.addTab(tab("one", "one").setClosable(true)).addTab(tab("two", "two"))
 			.addTab(tab("three", "three").setClosable(true));
 		tester.startPage(new TestPage(tabs));
+		String header = tabs.getHeaders().get("one").getMarkupId();
+		String item = tabs.getItems().get("one").getMarkupId();
 
 		send(tabs, "close", "one");
 		assertEquals(List.of("two", "three"), names(tabs));
 		assertEquals(List.of("one"), tabs.closed);
+		// out of the page in the browser too, as Wicket's Ajax removes elements: what is in the
+		// panel, an editor, sends nothing more to the components gone
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Wicket.DOM.remove(e);}};r(\"" + header + "\");r(\"" + item +
+			"\");"), response);
+		assertFalse(response.contains(".select("), "the browser selected the next one already");
 		assertEquals("two", tabs.getModelObject(), "the next one is selected, as in the browser");
 		assertNull(tabs.getHeaders().get("one"));
 
@@ -265,7 +273,7 @@ class TabbedPanelTest extends WicketTestCase
 
 		runAjax(tabs, t -> tabs.removeTab(two, t));
 		response = tester.getLastResponseAsString();
-		assertTrue(response.contains(".remove();"));
+		assertTrue(response.contains("Wicket.DOM.remove(e);"), response);
 		assertTrue(response.contains(".select(\"one\")"));
 		assertEquals(List.of("one"), names(tabs));
 		assertEquals("one", tabs.getModelObject());
@@ -392,6 +400,11 @@ class TabbedPanelTest extends WicketTestCase
 		MarkupContainer getHeaders()
 		{
 			return (MarkupContainer)get("element:list:headers");
+		}
+
+		MarkupContainer getItems()
+		{
+			return (MarkupContainer)get("element:panels:items");
 		}
 
 		Component button(String name)

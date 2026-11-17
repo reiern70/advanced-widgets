@@ -38,6 +38,11 @@
  * without ajax stays in the browser: send does nothing. An event telling leaving: true in its
  * detail goes in a beacon instead, which the browser sends even as the page goes.
  *
+ * An element Wicket's Ajax removes or replaces sends nothing more: its events are taken off as
+ * Wicket tells it goes (/dom/node/removing), the events waiting dropped, so that no request of a
+ * component the server took away reaches it. A request already queued behind the one removing it is
+ * dropped by Wicket's own precondition, the element being gone.
+ *
  * Each of the page's other Ajax requests carries what options.pending(component) gives, what the
  * component did not send yet, the state of an editor the user scrolled without focusing it for
  * example, as the parameter antilia-pending:<markup id>, JSON.
@@ -47,7 +52,7 @@
  * a state not sent yet (hasUnsentState()), an editor's; and Wicket.ClientEvents.nothing.
  */
 
-import { getHost } from '../host.js';
+import { getHost, onRemoving } from '../host.js';
 import { onWicketTopic, useWicketHost, wicket } from './host.js';
 import { type AjaxAttributes, asParameters, roundTrip, sendBeacon, STATE_PARAMETER,
 	TEXT_CHANGED_PARAMETER, type Parameter } from './send-state.js';
@@ -459,8 +464,13 @@ export function attachClientEvents(id: string, events: ClientEventOptions[],
 		carryPending();
 	}
 
+	// removed or replaced by Wicket's Ajax: the component may be gone on the server too
+	let stopWatchingRemoval: (() => void) | null = null;
+
 	const handle: AttachedClientEvents = {
 		detach() {
+			stopWatchingRemoval?.();
+			stopWatchingRemoval = null;
 			listeners.forEach(([type, listener]) => element.removeEventListener(type, listener));
 			listeners.length = 0;
 			timers.forEach((timer) => window.clearTimeout(timer));
@@ -474,6 +484,7 @@ export function attachClientEvents(id: string, events: ClientEventOptions[],
 		}
 	};
 	attached.set(element, handle);
+	stopWatchingRemoval = onRemoving(element, () => handle.detach());
 	return handle;
 }
 

@@ -209,6 +209,43 @@ describe('client events', () => {
 		expect(heard).toHaveLength(1);
 	});
 
+	it('sends nothing for an element Wicket\'s Ajax removes, its events waiting dropped', () => {
+		vi.useFakeTimers();
+		const removing: Array<(element: Element) => void> = [];
+		const host: Host = { ...standaloneHost, onNodeRemoving(listener) {
+			removing.push(listener);
+			return () => removing.splice(removing.indexOf(listener), 1);
+		} };
+		setHost(host);
+		const panel = document.createElement('div');
+		document.body.appendChild(panel);
+		panel.appendChild(element);
+		const heard = requests();
+		const events = [{ eventName: 'input', index: 0, ajax: AJAX, delay: 400,
+			eventClientHandlerName: 'Wicket.ClientEvents.send' },
+		{ eventName: 'blur', index: 1, ajax: AJAX,
+			eventClientHandlerName: 'Wicket.ClientEvents.send' }];
+		attachClientEvents('editor', events);
+		expect(removing).toHaveLength(1);
+
+		// the tab closed: its fields put back, then the panel removed, the editor in it
+		element.dispatchEvent(new Event('input'));
+		vi.advanceTimersByTime(100);
+		[...removing].forEach((listener) => listener(panel));
+		element.dispatchEvent(new Event('blur'));
+		vi.advanceTimersByTime(400);
+		expect(heard).toEqual([]);
+		expect(removing).toHaveLength(0);
+
+		// another element removed leaves the events alone; rendered anew, they are attached again
+		attachClientEvents('editor', events);
+		removing.forEach((listener) => listener(document.createElement('div')));
+		element.dispatchEvent(new Event('blur'));
+		expect(heard.map((request) => event(request)[0])).toEqual(['blur']);
+		(window.Wicket?.ClientEvents as { detach(id: string): void }).detach('editor');
+		expect(removing).toHaveLength(0);
+	});
+
 	it('takes off the events it listened to when attached again or detached', () => {
 		const heard = requests();
 		attachClientEvents('editor', [{ eventName: 'focus', index: 0, ajax: AJAX,
