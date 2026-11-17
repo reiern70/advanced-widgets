@@ -357,6 +357,43 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 		assertNoErrors();
 	}
 
+	/**
+	 * Closing a tab with changes puts its text area back as it was rendered, which the editor's
+	 * events took for typing: their request, a moment later, went to the editor the server had
+	 * already taken away with the tab (#125). The tab's panel now leaves the page with its editor.
+	 */
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void closingAFileRightAfterTypingSendsNothingOfItsEditorGone(SeleniumBrowser browser)
+	{
+		openEditor(browser, "wicket");
+		selectCase("Files in tabs");
+		recordRequests();
+		click(fileContent().findElement(By.cssSelector(".cm-line")));
+		fileContent().sendKeys("// not saved");
+		wait.until(d -> sent().contains("antilia-event="));
+		String panel = String.valueOf(script(
+			"return arguments[0].closest('.antilia-tabs-panel').id;", fileContent()));
+
+		fileTab("Order.java").findElement(By.cssSelector(".antilia-tab-close")).click();
+		WebElement confirm = wait.until(d -> d.findElement(By.cssSelector(
+			".antilia-tabs-confirm .modal-dialog")));
+		script("window.sentRequests = [];");
+		confirm.findElement(By.cssSelector("[data-confirm='discard']")).click();
+		wait.until(d -> Boolean.TRUE.equals(script(
+			"return document.getElementById(arguments[0]) === null;", panel)));
+		// longer than the editor's events wait after the text changed
+		sleep(1000);
+
+		String sent = sent();
+		assertTrue(sent.contains("event=close"), sent);
+		assertFalse(sent.contains("antilia-event="), sent);
+		assertTrue(fileTab("words.js").isDisplayed());
+		assertTrue(driver.findElements(By.cssSelector(".code-editor-demo__files")).size() > 0,
+			"still the demo, not the page of an internal error");
+		assertNoErrors();
+	}
+
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void asksBeforeClosingAFileWithChanges(SeleniumBrowser browser, String framework)
@@ -735,6 +772,18 @@ class CodeEditorBrowserTest extends FrameworkAppsTestCase
 	{
 		return app().findElements(By.cssSelector(".antilia-tab")).stream()
 			.filter(tab -> tab.getText().trim().equals(title)).findFirst().orElseThrow();
+	}
+
+	private static void sleep(long millis)
+	{
+		try
+		{
+			Thread.sleep(millis);
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**
