@@ -252,6 +252,24 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 
 	@ParameterizedTest
 	@MethodSource("pages")
+	void theRowsPerPageAreChosenInAListOverTheTable(SeleniumBrowser browser, String page)
+	{
+		open(browser, page);
+
+		WebElement select = driver.findElement(By.cssSelector(".ant-data-table-page-size select"));
+		Dropdowns.open(driver, select);
+		wait.until(d -> Dropdowns.list(select).getHeight() > 0);
+		assertEquals(List.of(), Dropdowns.covered(driver, select), "the list is cut or covered");
+
+		Dropdowns.chooseInOpenList(driver, select, 1);
+		wait.until(d -> driver.findElements(By.cssSelector(ROWS)).size() == 50);
+		awaitNoVeil();
+		assertEquals("50", driver.findElement(By.cssSelector(
+			".ant-data-table-page-size .antilia-dropdown-toggle")).getText());
+	}
+
+	@ParameterizedTest
+	@MethodSource("pages")
 	void theBodyHeightCanBeAPartOfTheWindowOrUnset(SeleniumBrowser browser, String page)
 	{
 		open(browser, page);
