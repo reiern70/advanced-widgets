@@ -43,8 +43,9 @@ import com.antiliacode.widgets.progress.ProgressBar;
  * server; a row whose percentage is {@code null} shows an indeterminate bar. The bar shows its
  * percentage, or the {@link #setLabel(SerializableFunction) label} of the row instead, and is
  * named for screen readers after the column's header, which read its value from the
- * {@code <progress>} element. The column contributes the style sheet of the bar, also to a table
- * without rows yet.
+ * {@code <progress>} element. The bars are striped and moving, for something under way;
+ * {@link #setStill(boolean)} draws them still, for a figure. The column contributes the style
+ * sheet of the bar, also to a table without rows yet.
  * <p>
  * The column is exportable: a CSV export writes the percentage of the row as it is, not rounded
  * nor clamped. It is sortable once it has a {@link #setSortProperty(Object) sort property}.
@@ -67,6 +68,8 @@ public class BeanProgressBarColumn<T, S> extends AbstractColumn<T, S>
 	private S sortProperty;
 
 	private SerializableFunction<? super T, String> label;
+
+	private boolean still;
 
 	/**
 	 * @param header
@@ -130,12 +133,35 @@ public class BeanProgressBarColumn<T, S> extends AbstractColumn<T, S>
 		return this;
 	}
 
+	/**
+	 * @return whether the bars are {@link ProgressBar#setStill(boolean) still}
+	 */
+	public boolean isStill()
+	{
+		return still;
+	}
+
+	/**
+	 * Draws the bars still, solid at any percentage, for a figure such as how much is paid,
+	 * rather than striped and moving, for something under way. See
+	 * {@link ProgressBar#setStill(boolean)}.
+	 *
+	 * @param still
+	 *            whether the bars are still; {@code false}, the default, for moving stripes
+	 * @return {@code this}
+	 */
+	public BeanProgressBarColumn<T, S> setStill(boolean still)
+	{
+		this.still = still;
+		return this;
+	}
+
 	@Override
 	public void populateItem(Item<ICellPopulator<T>> cellItem, String componentId,
 		IModel<T> rowModel)
 	{
 		cellItem.add(new ProgressBarCell(componentId, getDataModel(rowModel),
-			label != null ? rowModel.map(label) : null, getDisplayModel()));
+			label != null ? rowModel.map(label) : null, getDisplayModel(), still));
 	}
 
 	/**

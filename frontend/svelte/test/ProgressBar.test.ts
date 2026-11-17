@@ -34,6 +34,16 @@ describe('ProgressBar', () => {
 		expect(bar.querySelector('progress')?.getAttribute('value')).toBe('0');
 	});
 
+	it('is still when asked, and moving otherwise', async () => {
+		const { container, rerender } = render(ProgressBar, { value: 62, still: true });
+
+		const bar = container.querySelector('.antilia-progress-bar')!;
+		expect(bar.className).toBe('antilia-progress-bar antilia-progress-bar-still');
+
+		await rerender({ value: 62, still: false });
+		expect(bar.className).toBe('antilia-progress-bar');
+	});
+
 	it('is indeterminate without a value', () => {
 		const { container } = render(ProgressBar, { value: null, class: 'big' });
 

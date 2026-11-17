@@ -29,6 +29,9 @@ import com.antiliacode.widgets.theme.Looks;
  * The property has to hold a number from 0 to 100; it is not clamped in the browser. Combined
  * with an {@link UpdateRowMessageType update row} message pushed whenever the value changes, the
  * bar follows the progress without reloading the table.
+ * <p>
+ * The bars are striped and moving, for something under way; {@link #setStill(boolean)} draws
+ * them still, for a figure.
  *
  * @param <T>
  *            the type of the rows
@@ -40,6 +43,8 @@ public class ProgressBarColumn<T> extends AbstractDynamicColumn<T> implements IH
 
 	/** The placeholder of the percentage in the template. */
 	private final String value;
+
+	private boolean still;
 
 	/**
 	 * @param header
@@ -54,10 +59,33 @@ public class ProgressBarColumn<T> extends AbstractDynamicColumn<T> implements IH
 		value = "{{" + Args.notEmpty(path, "path") + "}}";
 	}
 
+	/**
+	 * @return whether the bars are {@link ProgressBar#setStill(boolean) still}
+	 */
+	public boolean isStill()
+	{
+		return still;
+	}
+
+	/**
+	 * Draws the bars still, solid at any percentage, for a figure such as how much is paid,
+	 * rather than striped and moving, for something under way. See
+	 * {@link ProgressBar#setStill(boolean)}.
+	 *
+	 * @param still
+	 *            whether the bars are still; {@code false}, the default, for moving stripes
+	 * @return {@code this}
+	 */
+	public ProgressBarColumn<T> setStill(boolean still)
+	{
+		this.still = still;
+		return this;
+	}
+
 	@Override
 	public String getTemplate()
 	{
-		return ProgressBar.markup(value);
+		return ProgressBar.markup(value, still);
 	}
 
 	/**
@@ -66,7 +94,7 @@ public class ProgressBarColumn<T> extends AbstractDynamicColumn<T> implements IH
 	@Override
 	public String getTemplate(JsonBasedDynamicDataTable<T, ?> table)
 	{
-		return ProgressBar.markup(value, Looks.of(table));
+		return ProgressBar.markup(value, Looks.of(table), still);
 	}
 
 	@Override

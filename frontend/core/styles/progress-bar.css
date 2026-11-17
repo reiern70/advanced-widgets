@@ -74,6 +74,23 @@
 	animation: none;
 }
 
+/*
+ * A still bar, for a figure rather than something under way: the filled part of a full bar at any
+ * percentage, neither striped nor moving. An indeterminate bar moves still or not: its rules below
+ * come later. The Bootstrap look's own fill, being more specific, stays.
+ */
+.antilia-progress-bar-still > .antilia-progress-bar-value::-webkit-progress-value {
+	background-image: linear-gradient(to bottom, var(--antilia-theme-progress, #f97316),
+			var(--antilia-theme-progress-dark, #c2410c));
+	animation: none;
+}
+
+.antilia-progress-bar-still > .antilia-progress-bar-value::-moz-progress-bar {
+	background-image: linear-gradient(to bottom, var(--antilia-theme-progress, #f97316),
+			var(--antilia-theme-progress-dark, #c2410c));
+	animation: none;
+}
+
 .antilia-progress-bar-value:indeterminate {
 	background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.3) 25%, transparent 25%,
 			transparent 50%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.3) 75%,
