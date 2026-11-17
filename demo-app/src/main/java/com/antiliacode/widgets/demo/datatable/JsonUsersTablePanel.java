@@ -267,6 +267,9 @@ public class JsonUsersTablePanel extends UsersTablePanel
 		{
 			super(new ResourceModel("progress"), "progress");
 			setId("progress");
+			// from 0 to 100: a percent sign after it in Excel, without multiplying it by 100
+			setExportValue(User::getProgress);
+			setExportFormat("0\"%\"");
 		}
 	}
 }

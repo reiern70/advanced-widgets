@@ -122,6 +122,7 @@ const PARTS = {
 	'table-action': ['base', 'ant-data-table-action', 'btn btn-sm'],
 	'table-icon-action': ['base', 'ant-data-table-icon-action', ''],
 	'table-export': ['base', 'ant-data-table-export-csv', ''],
+	'table-export-xlsx': ['base', 'ant-data-table-export-xlsx', ''],
 	'table-page-size': ['base', 'ant-data-table-page-size', ''],
 	'table-selection-toolbar': ['base', 'ant-data-table-selection-toolbar', ''],
 	'table-selection-count': ['base', 'ant-data-table-selection-count', ''],
