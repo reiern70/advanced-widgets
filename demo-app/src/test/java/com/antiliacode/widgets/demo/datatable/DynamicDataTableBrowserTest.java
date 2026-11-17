@@ -327,7 +327,7 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 			}
 			return gaps;
 			""");
-		assertEquals(3, gaps.size(), "add, the slow action, columns and CSV export");
+		assertEquals(4, gaps.size(), "add, the slow action, columns, CSV and Excel export");
 		for (Number gap : gaps)
 		{
 			assertAbout(5, gap.doubleValue(), "the gap between two actions " + gaps);
