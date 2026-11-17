@@ -433,6 +433,8 @@ class DesktopTest extends WicketTestCase
 		tester.executeBehavior(behavior);
 		assertEquals(1, desktop.getWindows().size());
 		assertEquals(List.of(opened), desktop.disposed);
+		assertTrue(tester.getLastResponseAsString().contains(
+			"if(window){Wicket.DOM.remove(window);}"), "as Wicket's Ajax removes elements");
 		assertEquals("notes", desktop.getWindowTypes().get(0).getType());
 	}
 
