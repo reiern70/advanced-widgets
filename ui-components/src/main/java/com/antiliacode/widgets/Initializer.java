@@ -16,13 +16,15 @@ package com.antiliacode.widgets;
 import org.apache.wicket.Application;
 import org.apache.wicket.IInitializer;
 
+import com.antiliacode.widgets.event.RemovedComponentEventListener;
 import com.antiliacode.widgets.upload.UploadStatusResource;
 
 /**
  * Registered in {@code META-INF/services/org.apache.wicket.IInitializer}, so that Wicket looks up
  * the default texts of the widgets in {@code Initializer.properties} next to this class, whatever
  * the package of the page they are added to. It shares the resources of the widgets, such as the
- * {@link UploadStatusResource}.
+ * {@link UploadStatusResource}, and answers quietly the events of components gone from the page
+ * ({@link RemovedComponentEventListener}).
  */
 public class Initializer implements IInitializer
 {
@@ -30,6 +32,7 @@ public class Initializer implements IInitializer
 	public void init(Application application)
 	{
 		application.getSharedResources().add(UploadStatusResource.NAME, new UploadStatusResource());
+		application.getRequestCycleListeners().add(new RemovedComponentEventListener());
 	}
 
 	@Override

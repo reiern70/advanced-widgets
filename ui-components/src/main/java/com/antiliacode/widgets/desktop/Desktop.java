@@ -299,8 +299,9 @@ public class Desktop extends Panel
 			if (window.isDisposable() && window.getMarkupId().equals(markupId))
 			{
 				windows.remove(window);
+				// as Wicket's Ajax removes elements: what is in the window hears of it
 				target.appendJavaScript("(function(){var window=document.getElementById(" +
-					ScriptJson.quote(markupId) + ");if(window){window.remove();}})();");
+					ScriptJson.quote(markupId) + ");if(window){Wicket.DOM.remove(window);}})();");
 				onWindowDisposed(target, window);
 				return;
 			}

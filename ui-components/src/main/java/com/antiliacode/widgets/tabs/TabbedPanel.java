@@ -308,18 +308,41 @@ public class TabbedPanel extends Panel
 		{
 			return this;
 		}
-		String header = headers.get(tab.getName()).getMarkupId();
-		String item = items.get(tab.getName()).getMarkupId();
-		removeTab(tab);
-		target.appendJavaScript("(function(){var r=function(i){var e=document.getElementById(i);" +
-			"if(e){e.remove();}};r(" + ScriptJson.quote(header) + ");r(" + ScriptJson.quote(item) +
-			");})();");
+		removeTabAndElements(tab, target);
 		Tab selected = getSelectedTab();
 		if (selected != null)
 		{
 			target.appendJavaScript(script("select(" + ScriptJson.quote(selected.getName()) + ")"));
 		}
 		return this;
+	}
+
+	/**
+	 * Takes a tab away, and its tab and panel out of the page in the browser, as Wicket's Ajax
+	 * removes elements: the components in the panel hear of it, an editor stops sending its events
+	 * to a component gone from the server.
+	 */
+	private void removeTabAndElements(Tab tab, AjaxRequestTarget target)
+	{
+		String header = headers.get(tab.getName()).getMarkupId();
+		String item = items.get(tab.getName()).getMarkupId();
+		removeTab(tab);
+		target.appendJavaScript(removeElements(header, item));
+	}
+
+	/**
+	 * @return the script removing the elements of the ids, if any, by {@code Wicket.DOM.remove}
+	 */
+	static String removeElements(String... ids)
+	{
+		StringBuilder script = new StringBuilder(
+			"(function(){var r=function(i){var e=document.getElementById(i);" +
+				"if(e){Wicket.DOM.remove(e);}};");
+		for (String id : ids)
+		{
+			script.append("r(").append(ScriptJson.quote(id)).append(");");
+		}
+		return script.append("})();").toString();
 	}
 
 	/**
@@ -459,7 +482,8 @@ public class TabbedPanel extends Panel
 		}
 		else if ("close".equals(event) && tab.isClosable())
 		{
-			removeTab(tab);
+			// out of the page too: what is in its panel sends nothing more to components gone
+			removeTabAndElements(tab, target);
 			onClosed(target, tab);
 		}
 	}
@@ -478,8 +502,9 @@ public class TabbedPanel extends Panel
 	}
 
 	/**
-	 * Called when the user has closed a tab, which the tabs have taken away already: gone from the
-	 * browser, it is not rendered again. Does nothing by default.
+	 * Called when the user has closed a tab, which the tabs have taken away already: its tab and
+	 * its panel are taken out of the page in the browser, as Wicket's Ajax removes elements, and
+	 * it is not rendered again. Does nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target
