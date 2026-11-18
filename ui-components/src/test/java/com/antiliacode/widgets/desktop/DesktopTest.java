@@ -198,6 +198,8 @@ class DesktopTest extends WicketTestCase
 		tester.startPage(new TestPage(desktop));
 		tester.assertContains("Wicket.Desktop.attach\\(\"" + desktop.getDesktopMarkupId() +
 			"\", \\{.*\\}, function \\(states,taskbar,expanded,panes,pane\\)");
+		// the states it reports leave a page veil alone
+		tester.assertContains("\\{\"name\":\"wicket_nb\",\"value\":\"true\"\\}");
 
 		JSONObject states = new JSONObject()
 			.put(first.getMarkupId(), new JSONObject().put("x", 40).put("y", 50.4)

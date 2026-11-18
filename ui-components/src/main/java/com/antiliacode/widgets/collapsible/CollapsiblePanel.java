@@ -18,6 +18,7 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -297,6 +298,9 @@ public abstract class CollapsiblePanel extends Panel
 			super.updateAjaxAttributes(attributes);
 			attributes.getDynamicExtraParameters()
 				.add("return {'" + OPEN_PARAMETER + "': Wicket.$(attrs.c).open};");
+			// it reports whether the panel is open, remembered while the user goes on: a page
+			// veil leaves it alone
+			PageVeilBehavior.noVeil(attributes);
 		}
 
 		@Override

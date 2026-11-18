@@ -25,7 +25,9 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
@@ -208,6 +210,14 @@ public class Desktop extends Panel
 		changed = new AbstractDefaultAjaxBehavior()
 		{
 			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				super.updateAjaxAttributes(attributes);
+				// it reports where the user left the windows and the taskbar while the user goes on: a page veil leaves it alone
+				PageVeilBehavior.noVeil(attributes);
+			}
 
 			@Override
 			public boolean isEnabled(Component component)

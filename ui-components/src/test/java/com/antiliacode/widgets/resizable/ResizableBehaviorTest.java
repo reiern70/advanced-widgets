@@ -105,6 +105,8 @@ class ResizableBehaviorTest extends WicketTestCase
 		TestPage page = new TestPage(behavior);
 		tester.startPage(page);
 		tester.assertContains("Wicket.Resizable.attach\\(.*, function \\(width,height\\)");
+		// the size it reports leaves a page veil alone
+		tester.assertContains("\\{\"name\":\"wicket_nb\",\"value\":\"true\"\\}");
 
 		send(behavior, "640", "250.6");
 		assertEquals(ResizableSize.height(251), behavior.getSize());

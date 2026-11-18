@@ -221,6 +221,8 @@ class SplitPanelTest extends WicketTestCase
 		panel.setMax(80).setCollapsible(true).setSendToServer(true);
 		tester.startPage(new TestPage(panel));
 		tester.assertContains("\"onChange\":function ?\\(position,collapsed\\)");
+		// it reports where the user left the divider: a page veil leaves that alone
+		tester.assertContains("\\{\"name\":\"wicket_nb\",\"value\":\"true\"\\}");
 
 		send(panel, "33.5", "");
 		assertEquals(SplitSize.percent(33.5), panel.getPosition());
