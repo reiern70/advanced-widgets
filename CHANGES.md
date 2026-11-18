@@ -11,6 +11,29 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC6 (unreleased)
+
+What 11.0.0-RC5 has, and:
+
+- Wicket's veil, `PageVeilBehavior` and `LocalVeilBehavior`, with three gaps closed by an add-on
+  to its script, `antilia-veil-gaps.js` (`VeilGaps`), which the library's `Initializer` renders
+  wherever a page has Wicket's veil (#141). Enter and Space are dropped under a veil, but where
+  they type, so a key pressed twice on a button no longer sends two requests. A request is veiled
+  from `/ajax/call/init` on, as Wicket's Ajax queues it behind another one, not only once it is
+  sent, so a second click on a button waiting its turn behind a request the veil leaves alone
+  falls on the veil; the veil comes down for the requests that never run: throttled and replaced,
+  dropped by their channel, stopped by their precondition. And the click of a button whose
+  release a veil caught, the veil of a field's change having come up between the press and the
+  release, is given back once the veil is down. `VeilGaps.setEnabled(application, false)` leaves
+  Wicket's veil as it is.
+
+**Upgrading:**
+
+- On a page with Wicket's veil, a request waiting its turn veils the page with a transparent
+  `.antilia-veil-guard` and the wait cursor, until Wicket's veil comes with its spinner as it is
+  sent; a local veil goes up, spinner and all, from the click. Enter and Space under a veil are
+  dropped, but in text fields, text areas and editable content.
+
 ## 11.0.0-RC5 (2026-11-17)
 
 What 11.0.0-RC4 has, and:

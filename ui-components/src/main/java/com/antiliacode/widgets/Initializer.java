@@ -18,13 +18,15 @@ import org.apache.wicket.IInitializer;
 
 import com.antiliacode.widgets.event.RemovedComponentEventListener;
 import com.antiliacode.widgets.upload.UploadStatusResource;
+import com.antiliacode.widgets.veil.VeilGaps;
 
 /**
  * Registered in {@code META-INF/services/org.apache.wicket.IInitializer}, so that Wicket looks up
  * the default texts of the widgets in {@code Initializer.properties} next to this class, whatever
  * the package of the page they are added to. It shares the resources of the widgets, such as the
- * {@link UploadStatusResource}, and answers quietly the events of components gone from the page
- * ({@link RemovedComponentEventListener}).
+ * {@link UploadStatusResource}, answers quietly the events of components gone from the page
+ * ({@link RemovedComponentEventListener}), and closes the gaps of Wicket's veil wherever a page has
+ * it ({@link VeilGaps}).
  */
 public class Initializer implements IInitializer
 {
@@ -33,6 +35,7 @@ public class Initializer implements IInitializer
 	{
 		application.getSharedResources().add(UploadStatusResource.NAME, new UploadStatusResource());
 		application.getRequestCycleListeners().add(new RemovedComponentEventListener());
+		VeilGaps.install(application);
 	}
 
 	@Override
