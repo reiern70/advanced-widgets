@@ -20,7 +20,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { HTMLSelectAttributes } from 'svelte/elements';
-	import { Dropdown, type DropdownOptions, partClasses } from '@antilia/core';
+	import { Dropdown, type DropdownOptions, optionGroups, partClasses } from '@antilia/core';
 	import type { DropdownOption } from './types.js';
 	import { getLook } from './look.js';
 
@@ -80,7 +80,8 @@
 
 	// compared by content, so that options made anew leave an open list alone
 	const optionsKey = $derived(JSON.stringify(options.map((option) =>
-		[option.value, option.label, Boolean(option.disabled)])));
+		[option.value, option.label, Boolean(option.disabled), option.group ?? null])));
+	const groups = $derived(optionGroups(options));
 	$effect(() => {
 		void optionsKey;
 		untrack(() => {
@@ -120,15 +121,35 @@
 	{#if multiple}
 		<select {...rest} multiple bind:value bind:this={select} onchange={changed}
 			class={['antilia-dropdown-native', className]} tabindex="-1" aria-hidden="true">
-			{#each options as option (option.value)}
-				<option value={option.value} disabled={option.disabled}>{option.label}</option>
+			{#each groups as group, index (index + ':' + (group.group ?? ''))}
+				{#if group.group === undefined}
+					{#each group.options as option (option.value)}
+						<option value={option.value} disabled={option.disabled}>{option.label}</option>
+					{/each}
+				{:else}
+					<optgroup label={group.group}>
+						{#each group.options as option (option.value)}
+							<option value={option.value} disabled={option.disabled}>{option.label}</option>
+						{/each}
+					</optgroup>
+				{/if}
 			{/each}
 		</select>
 	{:else}
 		<select {...rest} bind:value bind:this={select} onchange={changed}
 			class={['antilia-dropdown-native', className]} tabindex="-1" aria-hidden="true">
-			{#each options as option (option.value)}
-				<option value={option.value} disabled={option.disabled}>{option.label}</option>
+			{#each groups as group, index (index + ':' + (group.group ?? ''))}
+				{#if group.group === undefined}
+					{#each group.options as option (option.value)}
+						<option value={option.value} disabled={option.disabled}>{option.label}</option>
+					{/each}
+				{:else}
+					<optgroup label={group.group}>
+						{#each group.options as option (option.value)}
+							<option value={option.value} disabled={option.disabled}>{option.label}</option>
+						{/each}
+					</optgroup>
+				{/if}
 			{/each}
 		</select>
 	{/if}

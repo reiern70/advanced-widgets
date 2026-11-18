@@ -69,6 +69,24 @@ class JsonTableAppsBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
+	void choosesTheRowsPerPageInAListOverTheTable(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "dynamic-data-table");
+		wait.until(d -> rows().size() == 25);
+
+		WebElement select = app().findElement(By.cssSelector(".ant-data-table-page-size select"));
+		Dropdowns.open(driver, select);
+		wait.until(d -> Dropdowns.list(select).getHeight() > 0);
+		assertEquals(List.of(), Dropdowns.covered(driver, select), "the list is cut or covered");
+
+		Dropdowns.chooseInOpenList(driver, select, 1);
+		wait.until(d -> rows().size() == 50);
+		assertTrue(label().startsWith("Showing 1 to 50 of"), label());
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#frameworks")
 	void showsTheHiddenColumnsWithTheChooserAndCountsTheSelection(SeleniumBrowser browser,
 		String framework)
 	{

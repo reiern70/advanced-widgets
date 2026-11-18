@@ -53,6 +53,43 @@ class DropdownTest extends WicketTestCase
 	}
 
 	@Test
+	void putsTheChoicesInTheirGroups()
+	{
+		TestPage page = new TestPage();
+		page.single.setChoices(List.of("Apple", "Banana", "Cherry", "Date"));
+		page.single.setGroup(fruit -> switch (fruit)
+		{
+			case "Apple", "Banana" -> "<Common>";
+			case "Cherry" -> "Others";
+			default -> null;
+		});
+		tester.startPage(page);
+
+		String body = tester.getLastResponseAsString();
+		String select = body.substring(body.indexOf("<select"), body.indexOf("</select>"));
+		assertEquals(2, select.split("<optgroup", -1).length - 1, select);
+		assertEquals(2, select.split("</optgroup>", -1).length - 1, select);
+		String option = "\\s*<option[^>]*>";
+		assertTrue(select.matches("(?s).*<optgroup label=\"&lt;Common&gt;\">" + option +
+			"Apple</option>" + option + "Banana</option>\\s*</optgroup>\\s*" +
+			"<optgroup label=\"Others\">" + option + "Cherry</option>\\s*</optgroup>" + option +
+			"Date</option>.*"), select);
+
+		FormTester form = tester.newFormTester("form");
+		form.select("single", 2);
+		form.submit();
+		assertEquals("Cherry", page.single.getModelObject());
+	}
+
+	@Test
+	void hasNoGroupsUnlessGiven()
+	{
+		tester.startPage(new TestPage());
+
+		assertFalse(tester.getLastResponseAsString().contains("optgroup"));
+	}
+
+	@Test
 	void passesTheTextsInTheLocaleOfTheSession()
 	{
 		tester.getSession().setLocale(Locale.GERMAN);
