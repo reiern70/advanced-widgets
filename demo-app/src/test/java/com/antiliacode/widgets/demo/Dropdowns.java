@@ -52,6 +52,22 @@ public final class Dropdowns
 		return covered;
 		""";
 
+	/** The texts of the options of a group the filter leaves shown, by the label of the group. */
+	private static final String GROUP_OPTIONS = """
+		var name = arguments[1];
+		var texts = [];
+		arguments[0].querySelectorAll('.antilia-dropdown-group').forEach(function (group) {
+			var label = group.querySelector('.antilia-dropdown-group-label');
+			if (label.textContent.trim() === name) {
+				group.querySelectorAll('.antilia-dropdown-option:not([hidden])').forEach(
+					function (option) {
+						texts.push(option.textContent.trim());
+					});
+			}
+		});
+		return texts;
+		""";
+
 	private Dropdowns()
 	{
 	}
@@ -141,6 +157,47 @@ public final class Dropdowns
 	public static List<String> covered(WebDriver driver, WebElement select)
 	{
 		return (List<String>)((JavascriptExecutor)driver).executeScript(COVERED, select);
+	}
+
+	/**
+	 * @param select
+	 *            the hidden select
+	 * @return whether the list of the drop-down drawn over it is open
+	 */
+	public static boolean isOpen(WebElement select)
+	{
+		return wrapper(select).getDomAttribute("class").contains("antilia-dropdown-open");
+	}
+
+	/**
+	 * @param select
+	 *            the hidden select
+	 * @return the labels of the groups of the open list of the drop-down drawn over it, in their
+	 *         order, but those the filter hides
+	 */
+	public static List<String> groups(WebElement select)
+	{
+		return wrapper(select).findElements(By.cssSelector(
+			".antilia-dropdown-group:not([hidden]) > .antilia-dropdown-group-label")).stream()
+			.map(WebElement::getText)
+			.toList();
+	}
+
+	/**
+	 * @param driver
+	 *            the driver
+	 * @param select
+	 *            the hidden select
+	 * @param group
+	 *            the label of a group
+	 * @return the texts of the options of a group of the list of the drop-down drawn over it, in
+	 *         their order, but those the filter hides
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<String> groupOptions(WebDriver driver, WebElement select, String group)
+	{
+		return (List<String>)((JavascriptExecutor)driver).executeScript(GROUP_OPTIONS,
+			wrapper(select), group);
 	}
 
 	private static WebElement wrapper(WebElement select)
