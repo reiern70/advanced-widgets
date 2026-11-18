@@ -108,7 +108,10 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * states of all windows each time the user has changed any, with the side of the taskbar and
  * whether the desktop fills the page, and the panes; the windows give their models the new states,
  * the desktop keeps the side, whether it fills the page and the panes, and calls
- * {@link #onChanged(AjaxRequestTarget)}.
+ * {@link #onChanged(AjaxRequestTarget)}. These requests leave the page veil alone
+ * ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user goes on moving the windows
+ * while they run. Those opening a window from the launcher and taking away one closed are veiled,
+ * as what the user does.
  *
  * @since 11.0.0
  */

@@ -76,9 +76,10 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * changes only with {@link #setSendToServer(boolean)}: via Ajax, each time the user has moved the
  * divider, collapsed a pane or restored it. The panel then gives its model the new state, renders
  * it there again when it or its page is rendered again, and calls
- * {@link #onResized(AjaxRequestTarget)} or {@link #onCollapsed(AjaxRequestTarget)}. To keep the
- * state elsewhere, in the session or with the user's preferences, give the panel a model that
- * stores what it is given.
+ * {@link #onResized(AjaxRequestTarget)} or {@link #onCollapsed(AjaxRequestTarget)}. The requests
+ * leave the page veil alone ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user
+ * goes on dragging while they run. To keep the state elsewhere, in the session or with the user's
+ * preferences, give the panel a model that stores what it is given.
  * <p>
  * The panes are the components returned by {@link #newFirstPane(String)} and
  * {@link #newSecondPane(String)}. A vertical split panel needs a height, from the CSS of the page

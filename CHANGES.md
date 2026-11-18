@@ -11,6 +11,37 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (not released yet)
+
+What 10.11.0-RC11 has, and:
+
+- The requests reporting in the background, while the user goes on, leave the page veil,
+  `PageVeilBehavior` of `com.antiliacode.widgets.veil`, alone: they carry
+  `PageVeilBehavior.NO_VEIL_PARAMETER`, `wicket_nb` (#139). So do those telling where the user
+  moved the divider of a `SplitPanel`, the windows' states and the taskbar of a `Desktop`, the
+  size at the end of a `ResizableBehavior`'s resize, the toggle a `CollapsiblePanel` remembers
+  and the widths of `ResizableColumnsBehavior`, and the state the rich text editors, CKEditor and
+  the code editor send as the user types, moves the cursor, scrolls or resizes, the four
+  `SendStateEvent`s they listen to by default. The blur of the editors stays veiled, as do the
+  buttons, opening and taking away a desktop window, a tab chosen, a dialog's close and the
+  tables' actions.
+- `FilterBehavior` leaves the page veil alone as the user types (#138), and
+  `setVeilPage(true)` veils it again. `veil(Component...)` raises the local veils of what the
+  filter fills, a list or the buttons acting on its rows, as its request leaves, and lowers them
+  once it is done: a component without a `LocalVeilBehavior` gets one, and one holding the field
+  itself is refused, its veil covering the field. Both are on `master` too, for 11.0.0-RC6.
+
+**Upgrading:**
+
+- On a page with `PageVeilBehavior`, the requests listed above no longer veil the page: the user
+  goes on dragging, typing and clicking while they run. A filter is veiled again by
+  `setVeilPage(true)`, an editor's built-in event by putting a `SendStateEvent` of the name in
+  its place with `setEvent`; those of `SplitPanel`, `Desktop`, `ResizableBehavior` and
+  `CollapsiblePanel` have no switch.
+- Only the editors' built-in events carry `wicket_nb` by themselves: the events of input,
+  selection or scrolling a page gives an editor are veiled unless the page marks them, as
+  before.
+
 ## 10.11.0-RC11 (2026-11-18)
 
 What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would

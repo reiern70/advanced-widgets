@@ -115,7 +115,11 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * last sent: {@link CodeEditorEvent#INPUT}, {@link CodeEditorEvent#SELECT},
  * {@link CodeEditorEvent#SCROLL} and {@link CodeEditorEvent#RESIZE} a moment after the user paused
  * ({@link SendStateEvent#DEFAULT_DELAY}), {@link CodeEditorEvent#BLUR} at once and
- * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. They are events as any other:
+ * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. The requests of the first four
+ * carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves alone, the user going
+ * on as they run; those of the blur are veiled, the page waiting for the server once the editor
+ * lost the focus. An event the page gives the editor carries the parameter when the page says so.
+ * They are events as any other:
  * {@link #removeEvents(IClientEventName...)} takes those of names away, so that the state goes
  * only as the editor loses the focus for example, {@link #setEvent(IClientEvent)} puts another in
  * their place, {@link #addEvent(IClientEvent)} adds one, of any name. Besides, the page's other

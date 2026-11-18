@@ -60,9 +60,10 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * {@link #setSendToServer(boolean)}: via Ajax, each time the user has resized the element. The
  * behavior then gives its model the new size, which the element takes again when rendered again,
  * also after its component was taken out of the page and put back, and calls
- * {@link #onResized(AjaxRequestTarget, ResizableSize)}. To keep the size elsewhere, in the session
- * or with the user's preferences, give the behavior a model that stores what it is given; to start
- * with a size, give it a model holding one.
+ * {@link #onResized(AjaxRequestTarget, ResizableSize)}. The request leaves the page veil alone
+ * ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user goes on while it runs. To keep
+ * the size elsewhere, in the session or with the user's preferences, give the behavior a model
+ * that stores what it is given; to start with a size, give it a model holding one.
  *
  * @since 11.0.0
  */
