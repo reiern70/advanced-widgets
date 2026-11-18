@@ -146,7 +146,7 @@ The components are published in two lines, on Maven Central and on GitHub Packag
   Wicket 11 (uploads to a resource, Wicket's Ajax without jQuery): the release candidates,
   `10.11.0-RC10` the last, and the snapshots, `10.11.0-SNAPSHOT`, on Maven Central's repository
   of snapshots;
-- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC4` the last.
+- for Wicket 11, built from `master`: the release candidates, `11.0.0-RC5` the last.
 
 [CHANGES.md](CHANGES.md) tells what each release candidate brings and what an application has to
 change when it upgrades, the request parameters renamed among it.
@@ -203,7 +203,7 @@ or in the `pom.xml`:
 
 ### The release candidates, from Maven Central
 
-The dependency alone, `11.0.0-RC4` instead for Wicket 11, in `build.gradle.kts`:
+The dependency alone, `11.0.0-RC5` instead for Wicket 11, in `build.gradle.kts`:
 
 ```kotlin
 dependencies {

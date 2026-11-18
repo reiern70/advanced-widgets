@@ -11,6 +11,30 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC5 (2026-11-17)
+
+What 11.0.0-RC4 has, and:
+
+- Drop-downs open their list above any box that would cut it, such as the body of a dialog that
+  scrolls: in the top layer where the browser has popovers, fixed to the window otherwise,
+  under the button and at least as wide as it, upwards when there is more room above, and
+  shortened when there is room on neither side (#134). The list follows the button as the page
+  or a box around it scrolls. Long options wrap instead of ending in «…», the list being up to
+  32em wide and never wider than the window, and a single drop-down's button has its choice's
+  whole text as its `title`. A select's `<optgroup>`s are drawn as labelled groups, hidden when
+  the filter leaves none of their options: `Dropdown#setGroup(function)` or an overridden
+  `getGroup(choice)` in Wicket, an option's `group` in React and Svelte, and the look parts
+  `dropdown-group`, `dropdown-group-label` and `dropdown-group-list`. They are on `line-10.x`
+  too, for the next 10.11.0 release candidate.
+
+**Upgrading:**
+
+- The open list of a drop-down, `.antilia-dropdown-menu`, is no longer placed by CSS inside the
+  drop-down's wrapper but fixed to the window by the script, in the top layer: CSS of an
+  application's own that placed it, or that put it above the button through
+  `.antilia-dropdown-up > .antilia-dropdown-menu`, no longer counts.
+- Long options wrap onto more lines instead of being cut with an ellipsis.
+
 ## 11.0.0-RC4 (2026-11-17)
 
 The components of 10.11.0-RC10 on Wicket 11.0.0.
