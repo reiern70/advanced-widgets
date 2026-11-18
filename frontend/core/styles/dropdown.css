@@ -84,6 +84,12 @@
 	text-overflow: ellipsis;
 }
 
+/* the choice of a single drop-down is text, not chips: a block, which the ellipsis of a choice too
+   long for the button applies to, as it does not to a flex box */
+.antilia-dropdown:not(.antilia-dropdown-multiple) .antilia-dropdown-value {
+	display: block;
+}
+
 .antilia-dropdown-placeholder {
 	opacity: 0.65;
 }
