@@ -11,6 +11,13 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC11 (2026-11-18)
+
+What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would
+cut them, long options wrapped and option groups (#134).
+
+**Upgrading:** as for 11.0.0-RC5.
+
 ## 11.0.0-RC5 (2026-11-17)
 
 What 11.0.0-RC4 has, and:
@@ -24,8 +31,8 @@ What 11.0.0-RC4 has, and:
   whole text as its `title`. A select's `<optgroup>`s are drawn as labelled groups, hidden when
   the filter leaves none of their options: `Dropdown#setGroup(function)` or an overridden
   `getGroup(choice)` in Wicket, an option's `group` in React and Svelte, and the look parts
-  `dropdown-group`, `dropdown-group-label` and `dropdown-group-list`. They are on `line-10.x`
-  too, for the next 10.11.0 release candidate.
+  `dropdown-group`, `dropdown-group-label` and `dropdown-group-list`. They are in 10.11.0-RC11
+  too.
 
 **Upgrading:**
 
