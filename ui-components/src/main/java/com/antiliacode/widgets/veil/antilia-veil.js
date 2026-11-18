@@ -22,8 +22,10 @@
  * before it throttles the request or queues it behind another one of its channel, so that a click
  * waiting its turn is veiled already; it comes down when the request is done, or once it is plain
  * that it will never run: throttled and replaced by a later one, dropped or ignored by its channel,
- * stopped by its precondition. A request Wicket's Ajax runs without that topic is veiled as it is
- * sent.
+ * stopped by its precondition. Wicket's Ajax publishes no topic as a request waits in the queue of
+ * its channel, nor for one dropped, throttled away or ignored by its channel (apache/wicket#1942,
+ * https://github.com/apache/wicket/issues/1942): the veil reads Wicket's channels and throttler to
+ * tell. A request Wicket's Ajax runs without /ajax/call/init is veiled as it is sent.
  *
  * The veil is transparent and blocks the mouse; while it covers the element a key goes to, Enter
  * and Space are dropped too, but where they type: Space in a text field, Enter in a text area. A
@@ -306,7 +308,8 @@
 
 	// lets down the veils of the requests that will never run: those no channel runs, nor queues,
 	// nor the throttler holds back, and those Wicket's Ajax started but neither sent nor finished,
-	// which it does at once, so that an error stopped them
+	// which it does at once, so that an error stopped them; Wicket's Ajax tells of none of them by
+	// a topic, apache/wicket#1942: Wicket.channelManager and Wicket.Throttler tell instead
 	function reconcile() {
 		reconcileTimer = null;
 		for (const hold of Array.from(holds.values())) {
