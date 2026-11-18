@@ -96,7 +96,7 @@ class DropdownAppsBrowserTest extends FrameworkAppsTestCase
 
 		driver.findElement(By.cssSelector(".demo__step:last-child")).click();
 
-		wait.until(d -> d.getCurrentUrl().contains("/autocomplete"));
+		wait.until(d -> d.getCurrentUrl().contains("/autocomplete") && SeleniumBrowser.isReady(d));
 		wait.until(d -> "true".equals(tab(framework).getDomAttribute("aria-selected")));
 		assertFalse(driver.findElement(By.id("framework-panel-wicket")).isDisplayed());
 		tab("wicket").click();

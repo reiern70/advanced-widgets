@@ -54,6 +54,7 @@ import com.antiliacode.widgets.theme.Theme;
 import com.antiliacode.widgets.theme.ThemeBehavior;
 import com.antiliacode.widgets.theme.ThemeChoice;
 import com.antiliacode.widgets.throttle.ThrottleButton;
+import com.antiliacode.widgets.veil.PageLoadingVeilBehavior;
 
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
@@ -61,8 +62,9 @@ import com.antiliacode.widgets.throttle.ThrottleButton;
  * own, and the links to sign in and to register, or the account signed in with and the link to
  * sign out, and for an administrator the link to the administration; then the footer, and the
  * {@link Notifications} showing the feedback messages of the page, and the dialog telling what runs
- * where, which the link in the footer opens in the browser. Nothing of it keeps a page, so the
- * public pages are stateless. The whole page is in the session's {@link Theme}, its own colors
+ * where, which the link in the footer opens in the browser. Until its scripts have run, the page is
+ * veiled ({@link PageLoadingVeilBehavior}). Nothing of it keeps a page, so the public pages are
+ * stateless. The whole page is in the session's {@link Theme}, its own colors
  * included, and in its look; in the Bootstrap look or a Bootstrap theme the page has the style
  * sheet of Bootstrap, never its script.
  */
@@ -107,6 +109,8 @@ public abstract class BasePage extends WebPage
 
 		TransparentWebMarkupContainer body = new TransparentWebMarkupContainer("body");
 		body.add(new ThemeBehavior(getThemeModel(), Looks.sessionLook()));
+		// no click reaches a component before the scripts of the page have run
+		body.add(new PageLoadingVeilBehavior());
 		add(body);
 
 		add(new BookmarkablePageLink<>("home", HomePage.class));
@@ -373,5 +377,6 @@ public abstract class BasePage extends WebPage
 		}
 		response.render(CssHeaderItem.forReference(STYLE));
 		AccessTimeResource.renderHead(response);
+		SlowScript.renderHead(response);
 	}
 }

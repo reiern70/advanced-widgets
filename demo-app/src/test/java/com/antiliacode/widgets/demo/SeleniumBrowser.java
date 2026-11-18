@@ -17,11 +17,16 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+
+import com.antiliacode.widgets.veil.PageLoadingVeilBehavior;
 
 /**
  * The browsers the Selenium tests of the demos run in, headless unless
@@ -36,9 +41,10 @@ public enum SeleniumBrowser
 	CHROME
 	{
 		@Override
-		WebDriver start(Path downloads)
+		WebDriver start(Path downloads, PageLoadStrategy strategy)
 		{
 			ChromeOptions options = new ChromeOptions();
+			options.setPageLoadStrategy(strategy);
 			if (isHeadless())
 			{
 				options.addArguments("--headless=new");
@@ -58,9 +64,10 @@ public enum SeleniumBrowser
 	FIREFOX
 	{
 		@Override
-		WebDriver start(Path downloads)
+		WebDriver start(Path downloads, PageLoadStrategy strategy)
 		{
 			FirefoxOptions options = new FirefoxOptions();
+			options.setPageLoadStrategy(strategy);
 			if (downloads != null)
 			{
 				options.addPreference("browser.download.folderList", 2);
@@ -93,7 +100,7 @@ public enum SeleniumBrowser
 	 */
 	public WebDriver newDriver(int width, int height)
 	{
-		return newDriver(width, height, null);
+		return newDriver(width, height, null, PageLoadStrategy.NORMAL);
 	}
 
 	/**
@@ -111,12 +118,59 @@ public enum SeleniumBrowser
 	 */
 	public WebDriver newDriver(int width, int height, Path downloads)
 	{
-		WebDriver driver = start(downloads);
+		return newDriver(width, height, downloads, PageLoadStrategy.NORMAL);
+	}
+
+	/**
+	 * Starts the browser, whose commands wait for a page as the strategy says: with
+	 * {@link PageLoadStrategy#NONE}, not at all, for a test acting on a page still loading.
+	 *
+	 * @param width
+	 *            the width of the window
+	 * @param height
+	 *            the height of the window
+	 * @param strategy
+	 *            how long the commands wait for a page to load
+	 * @return the driver of the started browser
+	 */
+	public WebDriver newDriver(int width, int height, PageLoadStrategy strategy)
+	{
+		return newDriver(width, height, null, strategy);
+	}
+
+	private WebDriver newDriver(int width, int height, Path downloads, PageLoadStrategy strategy)
+	{
+		WebDriver driver = start(downloads, strategy);
 		driver.manage().window().setSize(new Dimension(width, height));
 		return driver;
 	}
 
-	abstract WebDriver start(Path downloads);
+	abstract WebDriver start(Path downloads, PageLoadStrategy strategy);
+
+	/**
+	 * Whether the page the browser shows has run its scripts: the veil over it while it loads
+	 * ({@link PageLoadingVeilBehavior}) is gone. A test waits for it before acting on a page the
+	 * browser loaded by itself, after a script sent it there, which Firefox's driver does not wait
+	 * for.
+	 *
+	 * @param driver
+	 *            the driver of the browser
+	 * @return whether the page is ready
+	 */
+	public static boolean isReady(WebDriver driver)
+	{
+		try
+		{
+			return Boolean.TRUE.equals(((JavascriptExecutor)driver).executeScript(
+				"return !!document.body && !document.body.classList.contains(arguments[0]);",
+				PageLoadingVeilBehavior.CSS_CLASS));
+		}
+		catch (WebDriverException leaving)
+		{
+			// the page is being left for the next one
+			return false;
+		}
+	}
 
 	private static boolean isHeadless()
 	{

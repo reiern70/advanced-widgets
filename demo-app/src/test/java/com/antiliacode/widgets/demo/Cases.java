@@ -29,7 +29,9 @@ public final class Cases
 	}
 
 	/**
-	 * Clicks the pill of a case and waits until its panel shows.
+	 * Clicks the pill of a case, once the page has run its scripts
+	 * ({@link SeleniumBrowser#isReady(org.openqa.selenium.WebDriver)}), and waits until its panel
+	 * shows.
 	 *
 	 * @param wait
 	 *            the wait of the driver
@@ -40,9 +42,9 @@ public final class Cases
 	 */
 	public static void select(WebDriverWait wait, SearchContext panel, String title)
 	{
-		WebElement pill = wait.until(d -> panel.findElements(By.cssSelector("[role='tab']"))
-			.stream().filter(tab -> title.equals(tab.getText().trim())).findFirst()
-			.orElse(null));
+		WebElement pill = wait.until(d -> !SeleniumBrowser.isReady(d) ? null :
+			panel.findElements(By.cssSelector("[role='tab']")).stream()
+				.filter(tab -> title.equals(tab.getText().trim())).findFirst().orElse(null));
 		pill.click();
 		wait.until(d -> "true".equals(pill.getDomAttribute("aria-selected")));
 	}

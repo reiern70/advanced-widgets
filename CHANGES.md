@@ -11,6 +11,24 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (not released yet)
+
+What 10.11.0-RC11 has, and:
+
+- A veil over a page while it loads, until its scripts have run, so that no click reaches a
+  component whose script has not run yet, an Ajax link without its handler or a drop-down not
+  built (#140): `PageLoadingVeilBehavior`, on the component of the page's `<body>` or `<html>`.
+  The tag has the class `antilia-page-loading` from the first paint, and a style sheet the
+  browser loads before it paints draws a transparent veil over the window, with the wait cursor,
+  and a spinner once the page takes longer than 300 milliseconds, as the Ajax veil
+  (`PageVeilBehavior`). Its script, loaded deferred, takes the class away once Wicket's domready
+  handlers, which initialize the components, have run, after the ready handlers of jQuery. A
+  script that failed leaves the page veiled for 10 seconds at most, and a browser without scripts
+  has no veil. All of it holds under the strict Content Security Policy, by CSS alone, without
+  inline script or style; `--antilia-page-loading-delay` and `--antilia-page-loading-timeout`
+  change the times. The content is not made `inert`: only a script could take that away again,
+  and it would keep the focus from the page while it loads. It is in 11.0.0-RC6 too.
+
 ## 10.11.0-RC11 (2026-11-18)
 
 What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would

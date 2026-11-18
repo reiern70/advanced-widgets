@@ -19,6 +19,8 @@ export default defineConfig({
 		environment: 'jsdom',
 		globals: true,
 		include: ['test/**/*.test.ts'],
+		// the style sheets a test reads as text (?raw), which Vitest gives as empty otherwise
+		css: { include: [/page-loading-veil/] },
 		// every run measures the coverage of the sources: a summary on the console, the full
 		// report in coverage/ (index.html, and lcov.info for other tools); the run fails when the
 		// coverage drops below the thresholds, a little under what the tests reach today

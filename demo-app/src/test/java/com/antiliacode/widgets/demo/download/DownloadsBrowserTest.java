@@ -398,7 +398,7 @@ class DownloadsBrowserTest extends JettyTestCase
 			"o.text === 'Bootstrap'); s.dispatchEvent(new Event('change', {bubbles: true}));",
 			driver.findElement(By.cssSelector(".topbar__setting select[name$='look']")));
 		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class")
-			.contains("antilia-look-bootstrap"));
+			.contains("antilia-look-bootstrap") && SeleniumBrowser.isReady(d));
 		recordToasts();
 		Dropdowns.chooseByValue(driver, select("answer"), "SLOWLY");
 
