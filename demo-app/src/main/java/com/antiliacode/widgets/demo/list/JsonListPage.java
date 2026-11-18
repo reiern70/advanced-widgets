@@ -103,7 +103,8 @@ public class JsonListPage extends DemoPage
 		WebMarkupContainer themed = newThemedContainer("themed");
 		add(themed);
 
-		themed.add(new UserFilterPanel("filter", new PropertyModel<>(provider, "filter"))
+		UserFilterPanel filterPanel = new UserFilterPanel("filter",
+			new PropertyModel<>(provider, "filter"))
 		{
 			private static final long serialVersionUID = 1L;
 
@@ -112,7 +113,8 @@ public class JsonListPage extends DemoPage
 			{
 				startOver(target);
 			}
-		});
+		};
+		themed.add(filterPanel);
 		themed.add(newSortChoice("sort"));
 		themed.add(new AjaxLink<Void>("add")
 		{
@@ -153,6 +155,8 @@ public class JsonListPage extends DemoPage
 		}));
 		list.addAction(IItemAction.of("delete", this::confirmDeletion));
 		themed.add(list);
+		// the cards cannot be clicked while the filter asks for them again
+		filterPanel.veil(list);
 
 		details = new UserDetailsPanel("details", new PropertyModel<>(this, "selected"));
 		themed.add(details);

@@ -14,7 +14,9 @@
 package com.antiliacode.widgets.filter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,7 +24,10 @@ import java.util.List;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.extensions.ajax.veil.LocalVeilBehavior;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
@@ -118,6 +123,85 @@ class FilterBehaviorTest extends WicketTestCase
 	}
 
 	@Test
+	void leavesThePageVeilAloneUnlessToldOtherwise()
+	{
+		TestPage page = new TestPage();
+		FilterBehavior filter = FilterBehavior.onFilter(target -> {
+		});
+		page.field.add(filter);
+		tester.startPage(page);
+
+		// the extra parameter a page veil leaves a request alone by
+		tester.assertContains("\\{\"name\":\"" + PageVeilBehavior.NO_VEIL_PARAMETER +
+			"\",\"value\":\"true\"\\}");
+		assertFalse(filter.isVeilPage());
+
+		filter.setVeilPage(true);
+		tester.startPage(page);
+		tester.assertContainsNot(PageVeilBehavior.NO_VEIL_PARAMETER);
+	}
+
+	@Test
+	void veilsWhatItFillsWhileItsRequestRuns()
+	{
+		TestPage page = new TestPage();
+		FilterBehavior filter = FilterBehavior.onFilter(target -> {
+		}).veil(page.rows, page.actions);
+		page.field.add(filter);
+		page.actions.add(new LocalVeilBehavior());
+		tester.startPage(page);
+
+		assertEquals(List.of(page.rows, page.actions), filter.getVeiled());
+		// each has a local veil: the one it had, or one the filter gave it
+		assertEquals(1, page.rows.getBehaviors(LocalVeilBehavior.class).size());
+		assertEquals(1, page.actions.getBehaviors(LocalVeilBehavior.class).size());
+		String rows = page.rows.getMarkupId();
+		String actions = page.actions.getMarkupId();
+		String html = tester.getLastResponseAsString();
+		assertTrue(html.contains("Wicket.Veil.local(\"" + rows + "\""), html);
+		// raised as the request leaves, lowered once it is done
+		assertTrue(html.contains("if (Wicket.Veil) {Wicket.Veil.show(\"" + rows +
+			"\");Wicket.Veil.show(\"" + actions + "\");}"), html);
+		assertTrue(html.contains("Wicket.Veil.hide(\"" + rows + "\");"), html);
+		// the field is not veiled: its own request leaves every veil alone
+		tester.assertContains("\\{\"name\":\"" + PageVeilBehavior.NO_VEIL_PARAMETER +
+			"\",\"value\":\"true\"\\}");
+
+		// a second render gives no second veil
+		tester.startPage(page);
+		assertEquals(1, page.rows.getBehaviors(LocalVeilBehavior.class).size());
+	}
+
+	@Test
+	void doesNotVeilTheFieldItself()
+	{
+		TestPage page = new TestPage();
+		page.field.add(FilterBehavior.onFilter(target -> {
+		}).veil(page.get("form")));
+
+		// Wicket wraps what a behavior throws while the page renders
+		Throwable refused = assertThrows(RuntimeException.class, () -> tester.startPage(page));
+		while (!(refused instanceof IllegalStateException) && refused.getCause() != null)
+		{
+			refused = refused.getCause();
+		}
+		assertTrue(refused instanceof IllegalStateException &&
+			refused.getMessage().contains("whose veil would cover it"), String.valueOf(refused));
+	}
+
+	@Test
+	void veilsNothingWithoutComponents()
+	{
+		TestPage page = new TestPage();
+		page.field.add(FilterBehavior.onFilter(target -> {
+		}));
+		tester.startPage(page);
+
+		tester.assertContainsNot("Wicket.Veil.show");
+		assertTrue(page.rows.getBehaviors(LocalVeilBehavior.class).isEmpty());
+	}
+
+	@Test
 	void needsWhatToDo()
 	{
 		assertThrows(IllegalArgumentException.class,
@@ -133,11 +217,16 @@ class FilterBehaviorTest extends WicketTestCase
 
 		final TextField<String> field = new TextField<>("field", Model.of(""));
 
+		final WebMarkupContainer rows = new WebMarkupContainer("rows");
+
+		final WebMarkupContainer actions = new WebMarkupContainer("actions");
+
 		TestPage()
 		{
 			Form<Void> form = new Form<>("form");
 			add(form);
 			form.add(field);
+			add(rows, actions);
 		}
 
 		@Override
@@ -145,7 +234,8 @@ class FilterBehaviorTest extends WicketTestCase
 			Class<?> containerClass)
 		{
 			return new StringResourceStream("<html><head></head><body><form wicket:id=\"form\">" +
-				"<input type=\"text\" wicket:id=\"field\"/></form></body></html>");
+				"<input type=\"text\" wicket:id=\"field\"/></form><div wicket:id=\"rows\"></div>" +
+				"<div wicket:id=\"actions\"></div></body></html>");
 		}
 	}
 }
