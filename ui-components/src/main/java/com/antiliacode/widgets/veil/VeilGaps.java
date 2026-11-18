@@ -46,9 +46,13 @@ import org.apache.wicket.util.lang.Args;
  * page, or the element of the local veil, from {@code /ajax/call/init} on, which Wicket's Ajax
  * publishes within the event's handler, before it throttles or queues the request, until the
  * request is done, or until it is plain that it will never run: a throttled request a later one
- * replaced, one its channel drops or ignores, one whose precondition stops it. While a request
- * waits its turn, the page has a transparent veil of its own, {@code antilia-veil-guard}; the
- * spinner comes with Wicket's veil, once the request is sent.</li>
+ * replaced, one its channel drops or ignores, one whose precondition stops it. Wicket's Ajax
+ * publishes no topic as a request waits in the queue of its channel, nor for one dropped, throttled
+ * away or ignored by its channel
+ * (<a href="https://github.com/apache/wicket/issues/1942">apache/wicket#1942</a>): the script reads
+ * Wicket's channels and throttler to tell. While a request waits its turn, the page has a
+ * transparent veil of its own, {@code antilia-veil-guard}; the spinner comes with Wicket's veil,
+ * once the request is sent.</li>
  * <li><b>The click the veil catches.</b> The mouse goes down on a button while a field's change
  * goes to the server: the veil comes up before the mouse does, and the browser has no click for
  * the button. The script gives the click back to the button once the veil is down, if it is still

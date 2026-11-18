@@ -29,7 +29,10 @@
  * element of a local veil, from /ajax/call/init on, which Wicket's Ajax publishes within the
  * event's handler, before it throttles or queues the request, until the request is done, or until
  * it is plain that it will never run: a throttled request replaced by a later one, one its channel
- * drops or ignores, one whose precondition stops it.
+ * drops or ignores, one whose precondition stops it. Wicket's Ajax publishes no topic as a request
+ * waits in the queue of its channel, nor for one dropped, throttled away or ignored by its channel
+ * (apache/wicket#1942, https://github.com/apache/wicket/issues/1942): this reads Wicket's channels
+ * and throttler to tell.
  *
  * The click the veil catches. The mouse goes down on a button while a field's change goes to the
  * server: the veil comes up between the press and the release, and the browser has no click for
@@ -256,7 +259,8 @@ function end(hold: Hold): void {
 /**
  * Lets down the veils of the requests that will never run: those no channel runs, nor queues,
  * nor the throttler holds back, and those Wicket's Ajax started but neither sent nor finished,
- * which it does at once, so that an error stopped them.
+ * which it does at once, so that an error stopped them. Wicket's Ajax tells of none of them by a
+ * topic, apache/wicket#1942: Wicket.channelManager and Wicket.Throttler tell instead.
  */
 export function reconcile(): void {
 	reconcileTimer = null;
