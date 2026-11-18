@@ -15,7 +15,15 @@
 <html xmlns:wicket="http://wicket.apache.org">
 <body>
 <wicket:extend>
-<div wicket:id="themed" class="dropdown-demo"><div wicket:id="examples"></div></div>
+<div wicket:id="themed" class="dropdown-demo">
+	<div wicket:id="examples"></div>
+	<section class="dropdown-demo__dialog">
+		<h3><wicket:message key="units.title"/></h3>
+		<p wicket:id="unit" class="dropdown-demo__unit">[the unit chosen]</p>
+		<button type="button" wicket:id="chooseUnit"></button>
+	</section>
+</div>
+<div wicket:id="unitDialog"></div>
 </wicket:extend>
 </body>
 </html>

@@ -179,14 +179,15 @@ public class DropdownExamplesPanel extends Panel
 	/**
 	 * @return the configuration of the React and Svelte apps of the drop-downs, {@code dropdown} in
 	 *         the bundles built from {@code frontend/demo}: the texts, the options but the
-	 *         countries, which come from the {@link ChoicesResource}, and the choices as the panel
-	 *         has them
+	 *         countries, which come from the {@link ChoicesResource}, the codes of the countries
+	 *         chosen most, which the apps put first in a group of their own as the panel does, and
+	 *         the choices as the panel has them
 	 */
 	public JSONObject getFrameworkConfig()
 	{
 		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "disabledTitle",
-			"size", "country", "country.none", "skills", "languages", "languages.none", "send",
-			"nothing", "choices", "sent");
+			"size", "country", "country.none", "country.common", "country.others", "skills",
+			"languages", "languages.none", "send", "nothing", "choices", "sent");
 		JSONArray skillChoices = new JSONArray();
 		SKILLS.forEach(skill -> skillChoices.put(choice(skill, skillName(skill))));
 		JSONArray languageChoices = new JSONArray();
@@ -204,6 +205,7 @@ public class DropdownExamplesPanel extends Panel
 			.put("sizes", new JSONArray(SIZES))
 			.put("skills", skillChoices)
 			.put("languages", languageChoices)
+			.put("commonCountries", new JSONArray(COMMON_COUNTRIES))
 			.put("values", values)
 			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE));
 	}
