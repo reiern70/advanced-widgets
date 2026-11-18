@@ -338,4 +338,5 @@
 	<entry key="RichTextEditor.pasteFormatting">formato</entry>
 	<entry key="RichTextEditor.errorRestarted">Algo falló en el editor. Se reinició con su texto.</entry>
 	<entry key="RichTextEditor.errorGaveUp">Algo sigue fallando en el editor. Guarde su texto y vuelva a cargar la página.</entry>
+	<entry key="FormVersionBehavior.alreadySent">Este formulario ya se envió, o cambió mientras lo enviaba. Revíselo y envíelo de nuevo.</entry>
 </properties>
