@@ -15,6 +15,11 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	// the tests of the veil read its script, the copy of Wicket's in ui-components, as the page
+	// loads it
+	server: {
+		fs: { allow: ['..', '../../ui-components/src/main/java/com/antiliacode/widgets/veil'] }
+	},
 	test: {
 		environment: 'jsdom',
 		globals: true,

@@ -44,6 +44,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Downloads via Ajax, an iframe or a new tab, with a busy button | ✓ | |
 | | Uploads in a form, by Ajax or to a resource, with a drop zone and a progress bar | ✓ | |
 | | Forms processed once however many times the browser sends them: a double click, Enter pressed twice or a submit queued behind another one, by a version taken at the click and kept in the session (`DoubleSubmitBulletsProofForm`, `FormVersionBehavior`) | ✓ | |
+| | A page veil, and a veil of one component, while Ajax requests run: Enter and Space held under it, a click veiled as soon as it waits its turn, the click it caught given back once it is down (`PageVeilBehavior`, `LocalVeilBehavior`) | ✓ | |
 | | Code editor (CodeMirror): Java, JavaScript, TypeScript, JSON, Markdown with its preview | ✓ | ✓ |
 | | Rich text editor (Tiptap), with text colors, its HTML cleaned on the server, or Markdown; what a paste lost told to the user, what the server's cleaning removed reported or the text rejected, as configured; spelling and grammar checked on the server, mentions and completions from it | ✓ | ✓ |
 | | CKEditor 5, which the application brings with its license, with the contract of the rich text editor | ✓ | ✓ |

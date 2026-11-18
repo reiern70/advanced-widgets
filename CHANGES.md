@@ -11,6 +11,28 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (unreleased)
+
+What 10.11.0-RC11 has, and:
+
+- The library's veil, `PageVeilBehavior` and `LocalVeilBehavior`, the copy of Wicket 11's, closes
+  three gaps that Wicket 11.0.0's veil has (#141); with Wicket 11, `VeilGaps` adds the same to
+  Wicket's veil, in 11.0.0-RC6. Enter and Space are dropped under a veil, but where they type, so
+  a key pressed twice on a button no longer sends two requests. The veil goes up at
+  `/ajax/call/init`, as Wicket's Ajax queues a request behind another one, not only once it is
+  sent, so a second click on a button waiting its turn behind a request the veil leaves alone
+  falls on the veil; it comes down for the requests that never run: throttled and replaced,
+  dropped by their channel, stopped by their precondition. And the click of a button whose
+  release the veil caught, the veil of a field's change having come up between the press and the
+  release, is given back once the veil is down. `Wicket.Veil.isCovered(element)` tells whether a
+  veil covers an element.
+
+**Upgrading:**
+
+- The veil, the page's and a local one, goes up from the click, spinner and all, while the
+  request still waits its turn behind another one. Enter and Space under a veil are dropped, but
+  in text fields, text areas and editable content.
+
 ## 10.11.0-RC11 (2026-11-18)
 
 What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would
