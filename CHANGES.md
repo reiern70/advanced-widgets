@@ -11,6 +11,13 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (unreleased)
+
+What 10.11.0-RC11 has, and:
+
+- The button of a single drop-down ends a choice too long for it in «…» instead of cutting it
+  off in the middle of a letter; its `title` still has the whole text (#137).
+
 ## 10.11.0-RC11 (2026-11-18)
 
 What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would
