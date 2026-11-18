@@ -338,4 +338,5 @@
 	<entry key="RichTextEditor.pasteFormatting">mise en forme</entry>
 	<entry key="RichTextEditor.errorRestarted">Un problème est survenu dans l’éditeur. Il a redémarré avec votre texte.</entry>
 	<entry key="RichTextEditor.errorGaveUp">Des problèmes se répètent dans l’éditeur. Enregistrez votre texte, puis rechargez la page.</entry>
+	<entry key="FormVersionBehavior.alreadySent">Ce formulaire a déjà été envoyé, ou il a changé pendant l’envoi. Vérifiez-le et envoyez-le de nouveau.</entry>
 </properties>

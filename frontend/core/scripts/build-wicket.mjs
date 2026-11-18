@@ -63,6 +63,7 @@ const SCRIPTS = [
 	['src/wicket/desktop.ts', 'com/antiliacode/widgets/desktop/antilia-desktop.js'],
 	['src/wicket/dropdown.ts', 'com/antiliacode/widgets/dropdown/antilia-dropdown.js'],
 	['src/wicket/floating-panel.ts', 'com/antiliacode/widgets/floating/antilia-floating-panel.js'],
+	['src/wicket/form-version.ts', 'com/antiliacode/widgets/form/antilia-form-version.js'],
 	['src/wicket/handlebars.ts', 'com/antiliacode/widgets/dynamicdatatable/handlebars-adapter.js'],
 	['src/wicket/infinite-list.ts', 'com/antiliacode/widgets/jsonlist/json-infinite-list.js'],
 	['src/wicket/menu.ts', 'com/antiliacode/widgets/menu/antilia-menu.js'],
