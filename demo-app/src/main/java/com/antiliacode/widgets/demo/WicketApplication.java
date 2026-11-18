@@ -65,6 +65,7 @@ import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.Database;
 import com.antiliacode.widgets.demo.datepicker.DatePickerPage;
 import com.antiliacode.widgets.demo.desktop.DesktopPage;
+import com.antiliacode.widgets.demo.doublesubmit.DoubleSubmitPage;
 import com.antiliacode.widgets.demo.download.DownloadsPage;
 import com.antiliacode.widgets.demo.download.DownloadsResource;
 import com.antiliacode.widgets.demo.dropdown.DropdownPage;
@@ -352,6 +353,7 @@ public class WicketApplication extends WebApplication
 		mountPage("menus", MenusPage.class);
 		mountPage("breadcrumbs", BreadcrumbsPage.class);
 		mountPage("wizard", WizardPage.class);
+		mountPage("double-submit", DoubleSubmitPage.class);
 		mountPage("popovers", PopoversPage.class);
 		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);

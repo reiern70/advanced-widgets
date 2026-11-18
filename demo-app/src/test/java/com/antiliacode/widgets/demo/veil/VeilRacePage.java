@@ -33,12 +33,15 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
+import com.antiliacode.widgets.form.FormVersionBehavior;
+
 /**
  * The page of the browser tests of the veil: actions that wait at a gate the test holds
  * ({@link VeilRace}), so that a second click, or a second key, comes while the first request is
  * under way, whatever the speed of the machine.
  * <p>
- * The page parameter {@code veil=on} adds Wicket's {@link PageVeilBehavior}.
+ * The page parameter {@code veil=on} adds Wicket's {@link PageVeilBehavior}; {@code version=on}
+ * gives the form a {@link FormVersionBehavior}.
  * <ul>
  * <li>{@code approve}, a button in a row of a {@link RefreshingView}, with a markup id of its
  * own, as one made from the row's key: its answer renders the rows again, and the view makes the
@@ -55,7 +58,7 @@ public class VeilRacePage extends WebPage
 
 	/**
 	 * @param parameters
-	 *            {@code veil=on} for a page veil
+	 *            {@code veil=on} for a page veil, {@code version=on} for a form version
 	 */
 	public VeilRacePage(PageParameters parameters)
 	{
@@ -66,6 +69,10 @@ public class VeilRacePage extends WebPage
 		}
 
 		Form<Void> form = new Form<>("form");
+		if ("on".equals(parameters.get("version").toOptionalString()))
+		{
+			form.add(new FormVersionBehavior());
+		}
 		add(form);
 
 		FeedbackPanel feedback = new FeedbackPanel("feedback");
