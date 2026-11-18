@@ -38,7 +38,8 @@ import com.github.openjson.JSONObject;
  * // and as the user saves
  * editor.addEvent(new SendStateEvent(RichTextEditorEvents.SAVE));
  * // the page veil leaves the request on blur alone
- * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR).setExtraParameter("_nb", "true"));
+ * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR)
+ * 	.setExtraParameter("wicket_nb", "true"));
  * </pre>
  *
  * Besides, the page's other Ajax requests carry the state the editor did not send yet: the user

@@ -17,6 +17,7 @@ import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -37,6 +38,7 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * Lets the user resize the element of a component: by its bottom edge ({@link ResizeAxis#VERTICAL}),
@@ -336,6 +338,15 @@ public class ResizableBehavior extends AbstractDefaultAjaxBehavior
 	 */
 	protected void onResized(AjaxRequestTarget target, ResizableSize size)
 	{
+	}
+
+	@Override
+	protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+		super.updateAjaxAttributes(attributes);
+		// it reports the size the user left the element at, while the user goes on: a page veil
+		// leaves it alone
+		PageVeilBehavior.noVeil(attributes);
 	}
 
 	@Override

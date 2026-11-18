@@ -58,6 +58,7 @@ import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * A text area shown as a code editor, CodeMirror, in the colors of the
@@ -330,7 +331,9 @@ public class CodeEditor extends TextArea<String>
 		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
 			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
 		{
-			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
+			// they report while the user goes on: a page veil leaves them alone, not the blur
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY)
+				.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		}
 		events.add(new SendStateEvent(CodeEditorEvent.BLUR));
 		events.add(new SendStateEvent(CodeEditorEvent.LEAVE));

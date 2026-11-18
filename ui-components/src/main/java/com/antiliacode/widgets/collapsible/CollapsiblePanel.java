@@ -35,6 +35,7 @@ import com.antiliacode.widgets.icon.IIcon;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * A title and a body the user can expand and collapse, collapsed by default.
@@ -297,6 +298,9 @@ public abstract class CollapsiblePanel extends Panel
 			super.updateAjaxAttributes(attributes);
 			attributes.getDynamicExtraParameters()
 				.add("return {'" + OPEN_PARAMETER + "': Wicket.$(attrs.c).open};");
+			// it reports whether the panel is open, remembered while the user goes on: a page
+			// veil leaves it alone
+			PageVeilBehavior.noVeil(attributes);
 		}
 
 		@Override

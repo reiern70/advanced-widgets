@@ -34,6 +34,7 @@ import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 
 import com.antiliacode.widgets.ScriptJson;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
@@ -102,12 +103,6 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 	public static final double MAX_COLUMN_WIDTH = 100_000;
 
 	private static final String WIDTHS_PARAMETER = "widths";
-
-	/**
-	 * The extra parameter that keeps the veil of wicket-extensions off a request. Reporting the
-	 * widths runs in the background, while the user goes on resizing.
-	 */
-	private static final String NO_VEIL_PARAMETER = "wicket_nb";
 
 	/** The width, in pixels, no column is resized below unless set otherwise. */
 	public static final int DEFAULT_MIN_COLUMN_WIDTH = 80;
@@ -258,7 +253,7 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		attributes.setMethod(Method.POST);
 		// a veil over the table while each step is saved would make Firefox lose the key
 		// presses arriving while it is put on
-		attributes.getExtraParameters().put(NO_VEIL_PARAMETER, "true");
+		PageVeilBehavior.noVeil(attributes);
 	}
 
 	@Override

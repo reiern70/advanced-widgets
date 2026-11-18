@@ -63,11 +63,13 @@ import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxUpdateEvent;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.ClientEventsTester;
+import com.antiliacode.widgets.event.IAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.notification.Notifications;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 class CodeEditorTest extends WicketTestCase
 {
@@ -126,6 +128,29 @@ class CodeEditorTest extends WicketTestCase
 		tester.assertContains("values:function\\(editor\\)\\{return Wicket.CodeEditor\\?" +
 			"Wicket.CodeEditor.stateParameters\\(editor\\):\\{\\};\\}");
 		assertEquals(CodeEditorState.NONE, page.editor.getState());
+	}
+
+	@Test
+	void itsEventsReportingInTheBackgroundLeaveThePageVeilAlone()
+	{
+		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT));
+
+		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
+			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
+		{
+			assertEquals("true", extraParameters(editor.getEvents(name)).get(
+				PageVeilBehavior.NO_VEIL_PARAMETER), name.name());
+		}
+		// the blur is veiled, as what the user does
+		assertFalse(extraParameters(editor.getEvents(CodeEditorEvent.BLUR)).containsKey(
+			PageVeilBehavior.NO_VEIL_PARAMETER));
+	}
+
+	private static Map<String, Object> extraParameters(List<IClientEvent> events)
+	{
+		AjaxRequestAttributes attributes = new AjaxRequestAttributes();
+		events.forEach(event -> ((IAjaxRoundTripEvent)event).updateAjaxAttributes(attributes));
+		return attributes.getExtraParameters();
 	}
 
 	@Test
