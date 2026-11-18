@@ -20,6 +20,8 @@
 	<entry key="size">Talla</entry>
 	<entry key="country">País</entry>
 	<entry key="country.none">Elija un país</entry>
+	<entry key="country.common">Los más elegidos</entry>
+	<entry key="country.others">Todos los demás</entry>
 	<entry key="skills">Conocimientos</entry>
 	<entry key="languages">Idiomas</entry>
 	<entry key="languages.none">Elija idiomas</entry>

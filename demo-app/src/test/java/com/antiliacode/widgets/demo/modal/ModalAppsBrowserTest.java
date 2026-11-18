@@ -29,6 +29,7 @@ import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -36,6 +37,7 @@ import org.openqa.selenium.logging.LogEntry;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.antiliacode.widgets.demo.Dropdowns;
 import com.antiliacode.widgets.demo.SeleniumBrowser;
 import com.antiliacode.widgets.demo.Toasts;
 import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
@@ -217,6 +219,33 @@ class ModalAppsBrowserTest extends FrameworkAppsTestCase
 		dialogTitled("Dialog 1").findElement(By.xpath("./*/*[contains(@class," +
 			"'modal-dialog-footer')]//button[normalize-space()='OK']")).click();
 		wait.until(d -> dialogs().isEmpty());
+		assertNoErrorsButTheInvalidMember();
+	}
+
+	@ParameterizedTest
+	@MethodSource("tabs")
+	void theListOfRolesOpensOverTheFooterOfTheDialog(SeleniumBrowser browser, String tab)
+	{
+		openTab(browser, tab);
+		wait.until(d -> names().contains("Ada Lovelace"));
+		addMember();
+
+		// the body of the dialog scrolls and would cut the list under the footer's buttons
+		WebElement role = dialog().findElement(By.name("role"));
+		Dropdowns.open(driver, role);
+		wait.until(d -> Dropdowns.list(role).getHeight() > 0);
+		Rectangle list = Dropdowns.list(role);
+		Rectangle footer = dialog().findElement(By.cssSelector(".modal-dialog-footer")).getRect();
+		assertTrue(list.getY() + list.getHeight() > footer.getY(),
+			"the list does not reach the footer: " + list.getY() + "+" + list.getHeight() +
+				" and " + footer.getY());
+		assertEquals(List.of(), Dropdowns.covered(driver, role), "the list is cut or covered");
+
+		List<WebElement> options = Dropdowns.options(role);
+		String last = options.get(options.size() - 1).getText();
+		Dropdowns.chooseInOpenList(driver, role, options.size() - 1);
+		wait.until(d -> last.equals(role.findElement(By.xpath(".."))
+			.findElement(By.cssSelector(".antilia-dropdown-toggle")).getText()));
 		assertNoErrorsButTheInvalidMember();
 	}
 

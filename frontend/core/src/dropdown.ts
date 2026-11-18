@@ -24,6 +24,11 @@
  *
  * A framework rendering the select renders the wrapper too, so that the drop-down never moves an
  * element the framework owns: <div class="antilia-dropdown"><select>...</select></div>.
+ *
+ * The open list is drawn above every box that could cut it, such as the body of a dialog that
+ * scrolls: in the top layer where the browser has popovers, fixed to the place of the button
+ * otherwise. It follows the button as the page scrolls, and opens upwards when there is more room
+ * above. The optgroups of the select are drawn as groups, with their label.
  */
 
 import { Chips } from './chips.js';
@@ -58,6 +63,18 @@ const MAX_CHIPS = 3;
 
 /** The number of options from which on the list has a filter, unless set otherwise. */
 export const DEFAULT_FILTER_THRESHOLD = 8;
+
+/** The space between the button and the open list, and between the list and the window's edge. */
+const GAP = 4;
+const MARGIN = 8;
+
+/** The lowest height a list is shortened to when there is little room above and below. */
+const MIN_LIST_HEIGHT = 64;
+
+/** Whether the browser draws popovers in the top layer, above everything else. */
+function hasPopovers(element: HTMLElement): boolean {
+	return typeof element.showPopover === 'function' && typeof element.hidePopover === 'function';
+}
 
 /** The drop-downs by their wrapper. */
 const instances = new WeakMap<Element, Dropdown>();
@@ -110,6 +127,9 @@ export class Dropdown {
 
 	items: HTMLLIElement[] = [];
 
+	/** The groups of the list, one per optgroup of the select. */
+	groups: HTMLLIElement[] = [];
+
 	active: HTMLLIElement | null = null;
 
 	/** Whether the wrapper was made by the drop-down, and is taken away again by destroy(). */
@@ -118,11 +138,14 @@ export class Dropdown {
 	/** The look of the drop-down, whose classes the elements it makes get. */
 	private look!: Look;
 
-	private listeners: Array<[EventTarget, string, EventListener]> = [];
+	private listeners: Array<[EventTarget, string, EventListener, boolean]> = [];
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
 
 	private scrollbar: ScrollbarHandle | undefined = undefined;
+
+	/** Whether the open list is shown as a popover, in the top layer. */
+	private inTopLayer = false;
 
 	/** Gives the list its scroll bars; Wicket gives those of Wicket.Scrollbar, if any. */
 	static attachScrollbar: (list: HTMLElement, look?: Look) => ScrollbarHandle | undefined =
@@ -199,6 +222,9 @@ export class Dropdown {
 
 		this.menu = create('div', this.look, 'dropdown-menu');
 		this.menu.hidden = true;
+		if (hasPopovers(this.menu)) {
+			this.menu.setAttribute('popover', 'manual');
+		}
 		this.list = create('ul', this.look, 'dropdown-list');
 		this.list.id = this.id + '-list';
 		this.list.tabIndex = -1;
@@ -334,8 +360,17 @@ export class Dropdown {
 
 		this.list.textContent = '';
 		this.items = [];
+		this.groups = [];
 		this.active = null;
+		let optgroup: HTMLOptGroupElement | null = null;
+		let parent: HTMLElement = this.list;
 		Array.from(this.select.options).forEach((option, index) => {
+			const group = option.parentElement instanceof HTMLOptGroupElement ?
+				option.parentElement : null;
+			if (group !== optgroup) {
+				optgroup = group;
+				parent = group ? this.renderGroup(group) : this.list;
+			}
 			const item = create('li', this.look, 'dropdown-option');
 			item.id = this.id + '-option-' + index;
 			item.setAttribute('role', 'option');
@@ -344,16 +379,36 @@ export class Dropdown {
 				item.appendChild(create('span', this.look, 'dropdown-check'));
 			}
 			item.appendChild(create('span', this.look, 'dropdown-text', option.text));
-			if (option.disabled) {
+			if (option.disabled || group?.disabled) {
 				item.setAttribute('aria-disabled', 'true');
 			}
 			if (option.value === '' && !this.multiple) {
 				toggleParts(item, this.look, true, 'dropdown-option-none');
 			}
-			this.list.appendChild(item);
+			parent.appendChild(item);
 			this.items.push(item);
 		});
 		this.update();
+	}
+
+	/**
+	 * Draws a group of the list, labelled as its optgroup.
+	 *
+	 * @returns the list its options go into
+	 */
+	private renderGroup(optgroup: HTMLOptGroupElement): HTMLElement {
+		const group = create('li', this.look, 'dropdown-group');
+		group.setAttribute('role', 'group');
+		const label = create('div', this.look, 'dropdown-group-label', optgroup.label);
+		label.id = this.id + '-group-' + this.groups.length;
+		label.setAttribute('role', 'presentation');
+		group.setAttribute('aria-labelledby', label.id);
+		const options = create('ul', this.look, 'dropdown-group-list');
+		options.setAttribute('role', 'none');
+		group.append(label, options);
+		this.list.appendChild(group);
+		this.groups.push(group);
+		return options;
 	}
 
 	private optionOf(item: HTMLElement): HTMLOptionElement {
@@ -384,7 +439,9 @@ export class Dropdown {
 		}
 		toggleParts(this.value, this.look, false, 'dropdown-placeholder');
 		if (!this.multiple) {
+			// the whole text of the choice, when the button is too narrow for it
 			this.value.textContent = chosen[0].text;
+			this.toggle.title = chosen[0].text;
 			return;
 		}
 		const removeLabel = select.disabled ? null : (this.options.remove || 'Remove {0}');
@@ -402,9 +459,13 @@ export class Dropdown {
 	}
 
 	private listen<E extends Event>(target: EventTarget, type: string,
-		listener: (event: E) => void): void {
-		target.addEventListener(type, listener as EventListener);
-		this.listeners.push([target, type, listener as EventListener]);
+		listener: (event: E) => void, capture = false): void {
+		if (capture) {
+			target.addEventListener(type, listener as EventListener, true);
+		} else {
+			target.addEventListener(type, listener as EventListener);
+		}
+		this.listeners.push([target, type, listener as EventListener, capture]);
 	}
 
 	private bind(): void {
@@ -464,14 +525,30 @@ export class Dropdown {
 		};
 		this.listen(document, 'mousedown', outside);
 		this.listen(document, 'focusin', outside);
+		// the open list follows the button when the page or a box around it scrolls, but not when
+		// the list itself scrolls
+		this.listen(window, 'scroll', (event) => {
+			if (this.isOpen() && !this.menu.contains(event.target as Node)) {
+				this.place();
+			}
+		}, true);
+		this.listen(window, 'resize', () => {
+			if (this.isOpen()) {
+				this.place();
+			}
+		});
 	}
 
 	/**
 	 * Stops listening, leaving the elements in place.
 	 */
 	private detach(): void {
-		this.listeners.forEach(([target, type, listener]) => {
-			target.removeEventListener(type, listener);
+		this.listeners.forEach(([target, type, listener, capture]) => {
+			if (capture) {
+				target.removeEventListener(type, listener, true);
+			} else {
+				target.removeEventListener(type, listener);
+			}
 		});
 		this.listeners = [];
 		this.scrollbar?.destroy();
@@ -489,19 +566,17 @@ export class Dropdown {
 			return;
 		}
 		this.menu.hidden = false;
+		if (hasPopovers(this.menu)) {
+			this.menu.showPopover();
+			this.inTopLayer = true;
+		}
 		this.toggle.setAttribute('aria-expanded', 'true');
 		this.wrapper.classList.add('antilia-dropdown-open');
-		// open upwards when there is no room below but there is above
-		this.wrapper.classList.remove('antilia-dropdown-up');
-		const box = this.menu.getBoundingClientRect();
-		const toggle = this.toggle.getBoundingClientRect();
-		if (box.bottom > window.innerHeight && toggle.top > box.height) {
-			this.wrapper.classList.add('antilia-dropdown-up');
-		}
 		if (this.filter) {
 			this.filter.value = '';
 			this.applyFilter();
 		}
+		this.place();
 		const selected = this.items.find((item) => item.getAttribute('aria-selected') === 'true');
 		this.activate(selected || this.visibleItems()[0] || null, true);
 		(this.filter || this.list).focus();
@@ -514,12 +589,45 @@ export class Dropdown {
 		if (!this.isOpen()) {
 			return;
 		}
+		if (this.inTopLayer) {
+			this.menu.hidePopover();
+			this.inTopLayer = false;
+		}
 		this.menu.hidden = true;
 		this.toggle.setAttribute('aria-expanded', 'false');
 		this.wrapper.classList.remove('antilia-dropdown-open', 'antilia-dropdown-up');
 		if (focus) {
 			this.toggle.focus();
 		}
+	}
+
+	/**
+	 * Places the open list under the button, at least as wide as it, or above it when there is
+	 * more room there; a list taller than the room on either side is shortened to fit. The list is
+	 * fixed to the window, so no box around the button cuts it.
+	 */
+	place(): void {
+		const menu = this.menu;
+		const toggle = this.toggle.getBoundingClientRect();
+		menu.style.position = 'fixed';
+		menu.style.minWidth = toggle.width + 'px';
+		menu.style.top = (toggle.bottom + GAP) + 'px';
+		menu.style.left = toggle.left + 'px';
+		this.list.style.maxHeight = '';
+		let box = menu.getBoundingClientRect();
+		const below = window.innerHeight - toggle.bottom - GAP - MARGIN;
+		const above = toggle.top - GAP - MARGIN;
+		const up = box.height > below && above > below;
+		const room = up ? above : below;
+		if (box.height > room) {
+			const list = this.list.getBoundingClientRect().height;
+			this.list.style.maxHeight = Math.max(MIN_LIST_HEIGHT, list - (box.height - room)) + 'px';
+			box = menu.getBoundingClientRect();
+		}
+		menu.style.top = (up ? toggle.top - GAP - box.height : toggle.bottom + GAP) + 'px';
+		menu.style.left = Math.max(MARGIN, Math.min(toggle.left,
+			window.innerWidth - box.width - MARGIN)) + 'px';
+		this.wrapper.classList.toggle('antilia-dropdown-up', up);
 	}
 
 	visibleItems(): HTMLLIElement[] {
@@ -563,8 +671,16 @@ export class Dropdown {
 			}
 		});
 		this.empty.hidden = shown > 0;
+		// a group none of whose options match is hidden with its label
+		this.groups.forEach((group) => {
+			group.hidden = !this.items.some((item) => !item.hidden && group.contains(item));
+		});
 		if (!this.active || this.active.hidden) {
 			this.activate(this.visibleItems()[0] || null, true);
+		}
+		// a shorter list stays next to the button, also when it opened upwards
+		if (this.isOpen()) {
+			this.place();
 		}
 	}
 
@@ -663,6 +779,29 @@ export class Dropdown {
 			this.changed();
 		}
 	}
+}
+
+/**
+ * The options of a framework's drop-down in the groups they are rendered in: the options next to
+ * each other with the same group in one optgroup, those without a group out of any.
+ *
+ * @param options the options, each with the label of its group, if any
+ * @returns the runs of options, each with its group
+ */
+export function optionGroups<T extends { group?: string }>(options: T[]): Array<{
+	group?: string;
+	options: T[];
+}> {
+	const groups: Array<{ group?: string; options: T[] }> = [];
+	options.forEach((option) => {
+		const last = groups[groups.length - 1];
+		if (last && last.group === option.group) {
+			last.options.push(option);
+		} else {
+			groups.push({ group: option.group, options: [option] });
+		}
+	});
+	return groups;
 }
 
 /**

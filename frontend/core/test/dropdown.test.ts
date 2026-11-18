@@ -286,4 +286,129 @@ describe('Dropdown', () => {
 		instance.destroy();
 		expect(Scrollbar.of(instance.list)).toBeUndefined();
 	});
+
+	it('draws the optgroups as labelled groups, and hides those the filter empties', () => {
+		page('<select id="s"><option value="">None</option>' +
+			'<optgroup label="Common"><option>Month</option><option>Hour</option></optgroup>' +
+			'<optgroup label="Others" disabled><option>Carat</option></optgroup>' +
+			'<option>Loose</option></select>');
+		const instance = new Dropdown(document.getElementById('s') as HTMLSelectElement,
+			{ filterThreshold: 0 });
+
+		expect(instance.groups.length).toBe(2);
+		const [common, others] = instance.groups;
+		expect(common.getAttribute('role')).toBe('group');
+		const label = document.getElementById(common.getAttribute('aria-labelledby')!);
+		expect(label?.textContent).toBe('Common');
+		expect(label?.className).toBe('antilia-dropdown-group-label');
+		expect(Array.from(common.querySelectorAll('[role="option"]')).map((item) => item.textContent))
+			.toEqual(['Month', 'Hour']);
+		expect(others.querySelector('[role="option"]')?.getAttribute('aria-disabled')).toBe('true');
+		expect(Array.from(instance.list.children).map((child) => child.className)).toEqual([
+			'antilia-dropdown-option antilia-dropdown-option-none', 'antilia-dropdown-group',
+			'antilia-dropdown-group', 'antilia-dropdown-option']);
+		expect(texts(instance)).toEqual(['None', 'Month', 'Hour', 'Loose']);
+
+		instance.open();
+		instance.filter!.value = 'hou';
+		instance.filter!.dispatchEvent(new Event('input'));
+		expect(common.hidden).toBe(false);
+		expect(others.hidden).toBe(true);
+		expect(texts(instance)).toEqual(['Hour']);
+
+		key(instance.filter!, 'Enter');
+		expect(instance.select.value).toBe('Hour');
+	});
+
+	it('shows the whole text of its choice in the title of its button', () => {
+		const instance = new Dropdown(select(['A very long option that the button cuts', 'B']));
+
+		expect(instance.toggle.title).toBe('A very long option that the button cuts');
+	});
+
+	function box(element: Element, top: number, left: number, width: number, height: number): void {
+		vi.spyOn(element, 'getBoundingClientRect').mockImplementation(() => ({
+			top, left, width, height, bottom: top + height, right: left + width, x: left, y: top,
+			toJSON: () => ({})
+		}) as DOMRect);
+	}
+
+	it('opens fixed under its button, at least as wide, so no box around cuts it', () => {
+		const instance = new Dropdown(select());
+		box(instance.toggle, 100, 50, 200, 30);
+		box(instance.menu, 0, 0, 260, 120);
+
+		instance.open();
+
+		const style = instance.menu.style;
+		expect(style.position).toBe('fixed');
+		expect(style.minWidth).toBe('200px');
+		expect(style.top).toBe('134px');
+		expect(style.left).toBe('50px');
+		expect(instance.wrapper.classList.contains('antilia-dropdown-up')).toBe(false);
+	});
+
+	it('opens upwards when there is more room above, and stays in the window', () => {
+		const instance = new Dropdown(select());
+		box(instance.toggle, window.innerHeight - 60, window.innerWidth - 100, 90, 30);
+		box(instance.menu, 0, 0, 300, 200);
+
+		instance.open();
+
+		expect(instance.wrapper.classList.contains('antilia-dropdown-up')).toBe(true);
+		expect(instance.menu.style.top).toBe((window.innerHeight - 60 - 4 - 200) + 'px');
+		expect(instance.menu.style.left).toBe((window.innerWidth - 300 - 8) + 'px');
+
+		instance.close(false);
+		expect(instance.wrapper.classList.contains('antilia-dropdown-up')).toBe(false);
+	});
+
+	it('shortens its list when there is room for it neither above nor below', () => {
+		const instance = new Dropdown(select());
+		box(instance.toggle, 40, 0, 100, 20);
+		box(instance.menu, 0, 0, 100, window.innerHeight);
+		box(instance.list, 0, 0, 100, window.innerHeight - 10);
+
+		instance.open();
+
+		const room = window.innerHeight - 60 - 4 - 8;
+		expect(instance.list.style.maxHeight).toBe((window.innerHeight - 10 - (window.innerHeight - room))
+			+ 'px');
+	});
+
+	it('follows its button when the page scrolls, not when its list does', () => {
+		const instance = new Dropdown(select());
+		instance.open();
+		const place = vi.spyOn(instance, 'place');
+
+		instance.list.dispatchEvent(new Event('scroll'));
+		expect(place).not.toHaveBeenCalled();
+		document.body.dispatchEvent(new Event('scroll'));
+		window.dispatchEvent(new Event('resize'));
+		expect(place).toHaveBeenCalledTimes(2);
+
+		instance.close(false);
+		document.body.dispatchEvent(new Event('scroll'));
+		expect(place).toHaveBeenCalledTimes(2);
+	});
+
+	it('shows its list as a popover, in the top layer, where the browser has them', () => {
+		const show = vi.fn();
+		const hide = vi.fn();
+		Object.assign(HTMLElement.prototype, { showPopover: show, hidePopover: hide });
+		try {
+			const instance = new Dropdown(select());
+			expect(instance.menu.getAttribute('popover')).toBe('manual');
+
+			instance.open();
+			expect(show).toHaveBeenCalledTimes(1);
+			instance.close(false);
+			expect(hide).toHaveBeenCalledTimes(1);
+			instance.close(false);
+			expect(hide).toHaveBeenCalledTimes(1);
+		} finally {
+			delete (HTMLElement.prototype as Partial<HTMLElement>).showPopover;
+			delete (HTMLElement.prototype as Partial<HTMLElement>).hidePopover;
+		}
+	});
 });
