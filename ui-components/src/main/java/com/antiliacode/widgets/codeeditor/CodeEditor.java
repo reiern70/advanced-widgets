@@ -25,6 +25,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.csp.ContentSecurityPolicySettings;
 import org.apache.wicket.event.IEvent;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.feedback.FeedbackMessage;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -330,7 +331,9 @@ public class CodeEditor extends TextArea<String>
 		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
 			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
 		{
-			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
+			// they report while the user goes on: a page veil leaves them alone, not the blur
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY)
+				.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		}
 		events.add(new SendStateEvent(CodeEditorEvent.BLUR));
 		events.add(new SendStateEvent(CodeEditorEvent.LEAVE));

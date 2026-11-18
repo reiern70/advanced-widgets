@@ -22,6 +22,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes.Method;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -102,12 +103,6 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 	public static final double MAX_COLUMN_WIDTH = 100_000;
 
 	private static final String WIDTHS_PARAMETER = "widths";
-
-	/**
-	 * The extra parameter that keeps the veil of wicket-extensions off a request. Reporting the
-	 * widths runs in the background, while the user goes on resizing.
-	 */
-	private static final String NO_VEIL_PARAMETER = "wicket_nb";
 
 	/** The width, in pixels, no column is resized below unless set otherwise. */
 	public static final int DEFAULT_MIN_COLUMN_WIDTH = 80;
@@ -258,7 +253,7 @@ public class ResizableColumnsBehavior extends AbstractDefaultAjaxBehavior
 		attributes.setMethod(Method.POST);
 		// a veil over the table while each step is saved would make Firefox lose the key
 		// presses arriving while it is put on
-		attributes.getExtraParameters().put(NO_VEIL_PARAMETER, "true");
+		PageVeilBehavior.noVeil(attributes);
 	}
 
 	@Override

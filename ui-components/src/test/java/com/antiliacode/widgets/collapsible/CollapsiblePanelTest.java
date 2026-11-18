@@ -82,6 +82,8 @@ class CollapsiblePanelTest extends WicketTestCase
 		panel.setRememberExpanded(true);
 		tester.startPage(new TestPage(panel));
 		tester.assertContains("\"e\":\"toggle\"");
+		// reported while the user goes on: a page veil leaves it alone
+		tester.assertContains("\\{\"name\":\"wicket_nb\",\"value\":\"true\"\\}");
 
 		tester.getRequest().setParameter("open", "true");
 		tester.executeAjaxEvent(DETAILS, "toggle");

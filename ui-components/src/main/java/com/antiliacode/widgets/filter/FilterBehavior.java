@@ -14,13 +14,23 @@
 package com.antiliacode.widgets.filter;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+import org.apache.wicket.Component;
+import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxCallListener;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.ThrottlingSettings;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
+import org.apache.wicket.extensions.ajax.veil.LocalVeilBehavior;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.util.lang.Args;
 import org.danekja.java.util.function.serializable.SerializableConsumer;
+
+import com.antiliacode.widgets.ScriptJson;
 
 /**
  * Makes a field of a filter, above a grid or a list whose rows come from the server, ask for the
@@ -34,6 +44,16 @@ import org.danekja.java.util.function.serializable.SerializableConsumer;
  * </pre>
  *
  * A filter that works in the browser only, over rows it already has, has no reason to wait.
+ * <p>
+ * The filter's requests leave a page veil alone ({@link PageVeilBehavior#noVeil}), so that the
+ * page stays usable while the user types; {@link #setVeilPage(boolean)} veils it again. What the
+ * filter fills, though, should not be clicked while its rows are stale: the components given to
+ * {@link #veil(Component...)} are veiled while the filter's request runs, by their
+ * {@link LocalVeilBehavior}, which they get if they have none. The field itself stays usable.
+ *
+ * <pre>
+ * field.add(FilterBehavior.onFilter(target -&gt; target.add(table)).veil(table, deleteSelected));
+ * </pre>
  *
  * @since 11.0.0
  */
@@ -48,6 +68,10 @@ public abstract class FilterBehavior extends AjaxFormComponentUpdatingBehavior
 	public static final String DEFAULT_EVENT = "input";
 
 	private Duration delay = DEFAULT_DELAY;
+
+	private boolean veilPage;
+
+	private final List<Component> veiled = new ArrayList<>();
 
 	/**
 	 * A filter on {@link #DEFAULT_EVENT}, for a text.
@@ -86,6 +110,75 @@ public abstract class FilterBehavior extends AjaxFormComponentUpdatingBehavior
 		return this;
 	}
 
+	/**
+	 * @return whether the filter's requests veil the page, as a page veil veils the other requests:
+	 *         not unless set
+	 */
+	public boolean isVeilPage()
+	{
+		return veilPage;
+	}
+
+	/**
+	 * @param veilPage
+	 *            whether the filter's requests veil the page: by default they leave it alone, so
+	 *            that the page stays usable while the user types
+	 * @return {@code this}
+	 */
+	public FilterBehavior setVeilPage(boolean veilPage)
+	{
+		this.veilPage = veilPage;
+		return this;
+	}
+
+	/**
+	 * Veils the components while the filter's request runs: the table or list it fills, and the
+	 * components acting on its rows, such as the buttons acting on the table's selection. Each
+	 * gets a {@link LocalVeilBehavior} unless it has one, as a data table has. None may hold the
+	 * field itself, which its veil would cover: for a filter in a table's toolbar, veil nothing,
+	 * or what the table fills inside.
+	 *
+	 * @param components
+	 *            the components to veil, on the same page as the filter
+	 * @return {@code this}
+	 */
+	public FilterBehavior veil(Component... components)
+	{
+		for (Component component : Args.notNull(components, "components"))
+		{
+			veiled.add(Args.notNull(component, "component"));
+			component.setOutputMarkupId(true);
+		}
+		return this;
+	}
+
+	/**
+	 * @return the components veiled while the filter's request runs
+	 */
+	public List<Component> getVeiled()
+	{
+		return Collections.unmodifiableList(veiled);
+	}
+
+	@Override
+	public void onConfigure(Component component)
+	{
+		super.onConfigure(component);
+		for (Component each : veiled)
+		{
+			if (each instanceof MarkupContainer container && container.contains(component, true))
+			{
+				throw new IllegalStateException("The filter " + component.getPageRelativePath() +
+					" is inside " + each.getPageRelativePath() + ", whose veil would cover it: " +
+					"veil what it fills inside, such as the rows");
+			}
+			if (each.getBehaviors(LocalVeilBehavior.class).isEmpty())
+			{
+				each.add(new LocalVeilBehavior());
+			}
+		}
+	}
+
 	@Override
 	protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
 	{
@@ -95,6 +188,37 @@ public abstract class FilterBehavior extends AjaxFormComponentUpdatingBehavior
 			// each new event postpones the request, until the user paused
 			attributes.setThrottlingSettings(new ThrottlingSettings(delay, true));
 		}
+		if (!veilPage)
+		{
+			PageVeilBehavior.noVeil(attributes);
+		}
+		if (!veiled.isEmpty())
+		{
+			// raised as the request leaves, lowered once it is done, whatever its answer
+			attributes.getAjaxCallListeners()
+				.add(new AjaxCallListener().onBeforeSend(veilScript("show"))
+					.onDone(veilScript("hide")));
+		}
+	}
+
+	/**
+	 * @param function
+	 *            {@code show} or {@code hide}
+	 * @return the script raising or lowering the local veils of the components veiled, by
+	 *         {@code Wicket.Veil} of wicket-extensions; nothing on a page without it
+	 */
+	private CharSequence veilScript(String function)
+	{
+		StringBuilder script = new StringBuilder("if (Wicket.Veil) {");
+		for (Component each : veiled)
+		{
+			script.append("Wicket.Veil.")
+				.append(function)
+				.append('(')
+				.append(ScriptJson.quote(each.getMarkupId()))
+				.append(");");
+		}
+		return script.append('}');
 	}
 
 	@Override
