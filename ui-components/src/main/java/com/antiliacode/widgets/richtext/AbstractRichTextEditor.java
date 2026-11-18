@@ -141,7 +141,11 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * last sent: {@link RichTextEditorEvents#INPUT}, {@link RichTextEditorEvents#SELECT},
  * {@link RichTextEditorEvents#SCROLL} and {@link RichTextEditorEvents#RESIZE} a moment after the
  * user paused ({@link SendStateEvent#DEFAULT_DELAY}), {@link RichTextEditorEvents#BLUR} at once and
- * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. They are events as any other:
+ * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. The requests of the first
+ * four carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves alone, the user
+ * going on as they run; those of the blur are veiled, the page waiting for the server once the
+ * editor lost the focus. An event the page gives the editor carries the parameter when the page
+ * says so. They are events as any other:
  * {@link #removeEvents(IClientEventName...)} takes those of names away,
  * {@link #setEvent(IClientEvent)} puts another in their place, {@link #addEvent(IClientEvent)}
  * adds one, of any name. Besides, the page's other Ajax requests carry the state when the editor

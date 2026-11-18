@@ -37,6 +37,7 @@ import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.core.util.lang.WicketObjects;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
@@ -92,6 +93,39 @@ class CKEditorTest extends WicketTestCase
 	{
 		CKEditorLibrary.set(tester.getApplication(), LIBRARY);
 		tester.getSession().setLocale(Locale.ENGLISH);
+	}
+
+	@Test
+	void itsEventsReportingInTheBackgroundLeaveThePageVeilAlone()
+	{
+		TestPage page = new TestPage(new CKEditor("editor", Model.of(HTML)));
+		tester.startPage(page);
+
+		// the state sent as the user types, moves the cursor, scrolls or resizes, as the rich
+		// text editors share it: the requests carry the parameter, as the browser gets them
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
+		{
+			assertEquals(Map.of(PageVeilBehavior.NO_VEIL_PARAMETER, "true"),
+				((SendStateEvent)page.editor.getEvents(name).get(0)).getExtraParameters(),
+				name.name());
+			tester.assertContains(noVeil(name));
+		}
+		// the blur is veiled, as what the user does
+		assertTrue(((SendStateEvent)page.editor.getEvents(RichTextEditorEvents.BLUR).get(0))
+			.getExtraParameters().isEmpty());
+		tester.assertContainsNot(noVeil(RichTextEditorEvents.BLUR));
+	}
+
+	/**
+	 * @return an event of the name as the browser gets it, whose requests carry the parameter the
+	 *         page veil leaves alone
+	 */
+	private static String noVeil(RichTextEditorEvents name)
+	{
+		return "\\{\"eventName\":\"" + name.getEventName() + "\",\"index\":\\d+,[^{]*\"ajax\":" +
+			"\\{[^}]*\"ep\":\\[\\{\"name\":\"" + PageVeilBehavior.NO_VEIL_PARAMETER +
+			"\",\"value\":\"true\"\\}";
 	}
 
 	@Test
