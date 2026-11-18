@@ -26,6 +26,13 @@ What 10.11.0-RC11 has, and:
   release the veil caught, the veil of a field's change having come up between the press and the
   release, is given back once the veil is down. `Wicket.Veil.isCovered(element)` tells whether a
   veil covers an element.
+- Forms processed once however many times the browser sends them (#143), as in 11.0.0-RC6: a
+  `DoubleSubmitBulletsProofForm`, or a `FormVersionBehavior` on any form, the wizard's too, gives
+  the form a version, kept in the session and written on its tag, which a submit carries as it
+  was at the click: taken at `/ajax/call/init` for an Ajax submit, in a hidden input for a normal
+  one. A second submit from one version is refused with an error,
+  `FormVersionBehavior.alreadySent`, in English, Spanish, German and French; a submit without a
+  version, from a page whose script did not load, is taken.
 
 **Upgrading:**
 

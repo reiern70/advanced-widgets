@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.demo.veil;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.List;
@@ -244,6 +245,51 @@ class VeilRaceBrowserTest extends JettyTestCase
 		awaitQuiet();
 		assertEquals(1, VeilRace.runs("field"));
 		assertEquals(1, VeilRace.runs("save"));
+		assertEquals(List.of(), VeilRace.exceptions());
+	}
+
+	/**
+	 * #143 without a veil: the second click of a double click on a button that stays is sent, with
+	 * the version the form had at the click, which the server already took.
+	 */
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void aDoubleClickOnAVersionedFormRunsOnceWithoutAVeil(SeleniumBrowser browser)
+		throws Exception
+	{
+		open(browser, "veil=off&version=on");
+		VeilRace.close("save");
+		new Actions(driver).doubleClick(button("save")).perform();
+		awaitRuns("save", 1);
+		VeilRace.open("save");
+
+		awaitQuiet();
+		assertEquals(1, VeilRace.runs("save"));
+		assertTrue(driver.findElement(By.cssSelector(".feedbackPanelERROR")).getText()
+			.contains("already sent"));
+		assertEquals(List.of(), VeilRace.exceptions());
+	}
+
+	/**
+	 * #143 without a veil: Enter pressed twice on the focused button.
+	 */
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void enterPressedTwiceOnAVersionedFormRunsOnceWithoutAVeil(SeleniumBrowser browser)
+		throws Exception
+	{
+		open(browser, "veil=off&version=on");
+		script("arguments[0].focus();", button("save"));
+		VeilRace.close("save");
+		new Actions(driver).sendKeys(Keys.ENTER).perform();
+		awaitRuns("save", 1);
+		new Actions(driver).sendKeys(Keys.ENTER).perform();
+		VeilRace.open("save");
+
+		awaitQuiet();
+		assertEquals(1, VeilRace.runs("save"));
+		assertTrue(driver.findElement(By.cssSelector(".feedbackPanelERROR")).getText()
+			.contains("already sent"));
 		assertEquals(List.of(), VeilRace.exceptions());
 	}
 }
