@@ -382,6 +382,8 @@ public class WicketApplication extends WebApplication
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
 		mountResource(DownloadsResource.PATH, DownloadsResource.REFERENCE);
+		// the slow script of the browser tests of the veil over a loading page, never in production
+		SlowScript.mount(this);
 	}
 
 	/**

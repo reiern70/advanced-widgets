@@ -1,0 +1,98 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * The veil over a page while it loads, for Wicket's PageLoadingVeilBehavior: the page's <body> or
+ * <html> has the class antilia-page-loading from the first paint, and this style sheet, which the
+ * browser loads before it paints, draws a veil over the window, transparent, which takes the
+ * clicks and shows the wait cursor, as the veil of Wicket's Ajax does. Past a delay, the page is
+ * whitened a little and a spinner turns in the middle of the window. The page's script
+ * (antilia-page-loading-veil.js) takes the class away once the page's scripts have run.
+ *
+ * Should it never do so, a script having failed or still loading, the veil goes away by itself
+ * after a timeout, so that the page is never locked for good; a browser without scripts takes it
+ * away at once (antilia-page-loading-veil-noscript.css). All of it is CSS from a style sheet: no
+ * inline style and no script, which the strict Content Security Policy would refuse.
+ *
+ * The veil and the spinner are the element's ::before and ::after. A page's own style sheet
+ * changes the delay and the timeout:
+ *
+ *   :root {
+ *     --antilia-page-loading-delay: 500ms;
+ *     --antilia-page-loading-timeout: 20s;
+ *   }
+ */
+
+.antilia-page-loading::before,
+.antilia-page-loading::after {
+	content: "";
+	position: fixed;
+	z-index: 2147483647;
+	cursor: wait;
+}
+
+/* the veil: over the whole window, transparent until the delay is over */
+.antilia-page-loading::before {
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: transparent;
+	animation:
+		antilia-page-loading-busy 0s var(--antilia-page-loading-delay, 300ms) both,
+		antilia-page-loading-timeout 0s var(--antilia-page-loading-timeout, 10s) forwards;
+}
+
+/* the spinner: in the middle of the window, shown once the delay is over */
+.antilia-page-loading::after {
+	top: 50%;
+	left: 50%;
+	box-sizing: border-box;
+	width: 2.5em;
+	height: 2.5em;
+	margin: -1.25em 0 0 -1.25em;
+	border: 0.3em solid rgba(0, 0, 0, 0.15);
+	border-top-color: rgba(0, 0, 0, 0.6);
+	border-radius: 50%;
+	opacity: 0;
+	animation:
+		antilia-page-loading-spinner 0s var(--antilia-page-loading-delay, 300ms) forwards,
+		antilia-page-loading-spin 0.8s linear infinite,
+		antilia-page-loading-timeout 0s var(--antilia-page-loading-timeout, 10s) forwards;
+}
+
+@keyframes antilia-page-loading-busy {
+	to {
+		background-color: rgba(255, 255, 255, 0.5);
+	}
+}
+
+@keyframes antilia-page-loading-spinner {
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes antilia-page-loading-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* hidden, the veil and the spinner take no click any more */
+@keyframes antilia-page-loading-timeout {
+	to {
+		visibility: hidden;
+	}
+}
