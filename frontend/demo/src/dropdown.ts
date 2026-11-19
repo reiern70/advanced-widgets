@@ -13,7 +13,8 @@
  */
 
 /*
- * The Dropdown demo: a size and a country, skills and languages, and a disabled drop-down.
+ * The Dropdown demo: a size and a country, skills and languages, and a disabled drop-down; on the
+ * drop-down page, a unit of measure chosen in a dialog from a long list of long, grouped options.
  */
 
 import { format, labelOf, type Choice, type DropdownTexts } from './data.js';
@@ -26,6 +27,10 @@ export interface DropdownDemoTexts extends DropdownTexts {
 	size: string;
 	country: string;
 	'country.none': string;
+	/** The label of the group of the countries chosen most, first in the list. */
+	'country.common': string;
+	/** The label of the group of the other countries, under them. */
+	'country.others': string;
 	skills: string;
 	languages: string;
 	'languages.none': string;
@@ -46,15 +51,75 @@ export interface DropdownValues {
 	disabled: string;
 }
 
+/** An option in a group, the label of the group with it. */
+export interface GroupedChoice extends Choice {
+	group?: string;
+}
+
+/** The texts of the dialog of the units, by the keys of the page's bundle. */
+export interface UnitsTexts {
+	'units.title': string;
+	/** The unit chosen, {0} standing for it. */
+	'units.chosen': string;
+	'units.choose': string;
+	/** The title of the dialog. */
+	'units.dialog': string;
+	'units.text': string;
+	'units.unit': string;
+	'units.ok': string;
+	'units.cancel': string;
+	/** The label of the close button of the dialog. */
+	'units.close': string;
+}
+
+/** The icons of the buttons of the dialog of the units, inline SVG. */
+export interface UnitsIcons {
+	choose: string;
+	cancel: string;
+	ok: string;
+}
+
+/**
+ * The unit of measure chosen in a dialog, which only the drop-down page has: the units in their
+ * groups, the few used most first, each in words too long for a line of the list.
+ */
+export interface UnitsConfig {
+	texts: UnitsTexts;
+	options: GroupedChoice[];
+	/** The code of the unit chosen at first. */
+	value: string;
+	icons: UnitsIcons;
+}
+
 /** What the page gives the demo. */
 export interface DropdownConfig {
 	texts: DropdownDemoTexts;
 	sizes: string[];
 	skills: Choice[];
 	languages: Choice[];
+	/** The codes of the countries chosen most, first in the list in a group of their own. */
+	commonCountries: string[];
 	values: DropdownValues;
 	/** The URL of the choices resource, which names the countries. */
 	choicesUrl: string;
+	/** The dialog of the units, on the drop-down page only. */
+	units?: UnitsConfig;
+}
+
+/**
+ * @param countries the countries as the choices resource names them, sorted by their names
+ * @returns the countries in two groups, as the Wicket drop-down has them: those chosen most
+ *          first, then all the others
+ */
+export function groupCountries(config: DropdownConfig, countries: Choice[]): GroupedChoice[] {
+	const { texts, commonCountries } = config;
+	const common = (country: Choice) => commonCountries.includes(country.value);
+	return [
+		...countries.filter(common).map((country) => ({ ...country,
+			group: texts['country.common'] })),
+		...countries.filter((country) => !common(country)).map((country) => ({ ...country,
+			group: texts['country.others'] }))
+	];
 }
 
 /**

@@ -12,19 +12,21 @@
   limitations under the License.
 -->
 <!--
-  The Dropdown demo in Svelte: the form of the Wicket page, in its markup, the sentence below it
-  following every choice in the browser. Choices not sent are changes a window of a desktop asks
-  about before it closes, and drops when told to.
+  The Dropdown demo in Svelte: the form of the Wicket page, in its markup, the countries chosen
+  most first in a group of their own, the sentence below it following every choice in the browser.
+  Choices not sent are changes a window of a desktop asks about before it closes, and drops when
+  told to. On the drop-down page, a unit of measure is chosen in a dialog below.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { DESKTOP_DISCARD_EVENT } from '@antilia/core';
 	import { Dropdown } from '@antilia/svelte';
 
-	import { format, loadChoices, type Choice } from '../data.js';
-	import { describe, type DropdownConfig } from '../dropdown.js';
+	import { dropdownTexts, format, loadChoices, type Choice } from '../data.js';
+	import { describe, groupCountries, type DropdownConfig } from '../dropdown.js';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
+	import UnitDialogDemo from './UnitDialogDemo.svelte';
 
 	let { config }: { config: DropdownConfig } = $props();
 
@@ -58,6 +60,7 @@
 	});
 
 	const sizes = $derived(config.sizes.map((value) => ({ value, label: value })));
+	const grouped = $derived(groupCountries(config, countries));
 	const choices = $derived(describe(config, countries, { size, country, skills, languages,
 		disabled: config.values.disabled }));
 
@@ -84,7 +87,7 @@
 			</label>
 			<label class="dropdown-demo__field">
 				{texts.country}
-				<Dropdown name="country" options={countries} bind:value={country}
+				<Dropdown name="country" options={grouped} bind:value={country}
 					placeholder={texts['country.none']} filter={texts.filter} noMatch={texts.noMatch}
 					more={texts.more} remove={texts.remove} />
 			</label>
@@ -117,4 +120,7 @@
 	</form>
 	<p class="dropdown-demo__choices">{choices}</p>
 	<Feedback {messages} />
+	{#if config.units}
+		<UnitDialogDemo config={config.units} dropdown={dropdownTexts(texts)} />
+	{/if}
 </div>

@@ -12,19 +12,21 @@
  * limitations under the License.
  */
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
 import { DESKTOP_DISCARD_EVENT } from '@antilia/core';
 import { Dropdown } from '@antilia/react';
 
-import { format, loadChoices, type Choice } from '../data.js';
-import { describe, type DropdownConfig, type DropdownValues } from '../dropdown.js';
+import { dropdownTexts, format, loadChoices, type Choice } from '../data.js';
+import { describe, groupCountries, type DropdownConfig, type DropdownValues } from '../dropdown.js';
 import { Feedback, type Message } from './Feedback.js';
+import { UnitDialogDemo } from './UnitDialogDemo.js';
 
 /**
- * The Dropdown demo in React: the form of the Wicket page, in its markup, the sentence below it
- * following every choice in the browser. Choices not sent are changes a window of a desktop asks
- * about before it closes, and drops when told to.
+ * The Dropdown demo in React: the form of the Wicket page, in its markup, the countries chosen
+ * most first in a group of their own, the sentence below it following every choice in the
+ * browser. Choices not sent are changes a window of a desktop asks about before it closes, and
+ * drops when told to. On the drop-down page, a unit of measure is chosen in a dialog below.
  */
 export function DropdownDemo({ config }: { config: DropdownConfig }) {
 	const { texts } = config;
@@ -43,8 +45,8 @@ export function DropdownDemo({ config }: { config: DropdownConfig }) {
 	const set = <K extends keyof DropdownValues>(key: K) => (value: DropdownValues[K]) =>
 		setValues((current) => ({ ...current, [key]: value }));
 	const sizes = config.sizes.map((size) => ({ value: size, label: size }));
-	const common = { filter: texts.filter, noMatch: texts.noMatch, more: texts.more,
-		remove: texts.remove };
+	const common = dropdownTexts(texts);
+	const grouped = useMemo(() => groupCountries(config, countries), [config, countries]);
 	const choices = describe(config, countries, values);
 	const send = (event: FormEvent) => {
 		event.preventDefault();
@@ -73,7 +75,7 @@ export function DropdownDemo({ config }: { config: DropdownConfig }) {
 					</label>
 					<label className="dropdown-demo__field">
 						{texts.country}{' '}
-						<Dropdown name="country" options={countries} value={values.country}
+						<Dropdown name="country" options={grouped} value={values.country}
 							onChange={set('country')} placeholder={texts['country.none']}
 							{...common} />
 					</label>
@@ -104,6 +106,7 @@ export function DropdownDemo({ config }: { config: DropdownConfig }) {
 			</form>
 			<p className="dropdown-demo__choices">{choices}</p>
 			<Feedback messages={messages} />
+			{config.units ? <UnitDialogDemo config={config.units} dropdown={common} /> : null}
 		</div>
 	);
 }

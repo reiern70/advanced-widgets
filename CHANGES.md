@@ -30,6 +30,8 @@ What 10.11.0-RC11 has, and:
   filter fills, a list or the buttons acting on its rows, as its request leaves, and lowers them
   once it is done: a component without a `LocalVeilBehavior` gets one, and one holding the field
   itself is refused, its veil covering the field. Both are on `master` too, for 11.0.0-RC6.
+- The button of a single drop-down ends a choice too long for it in «…» instead of cutting it
+  off in the middle of a letter; its `title` still has the whole text (#137).
 
 **Upgrading:**
 
