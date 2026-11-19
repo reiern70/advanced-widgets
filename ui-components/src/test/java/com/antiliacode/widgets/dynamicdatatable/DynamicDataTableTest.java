@@ -86,7 +86,9 @@ class DynamicDataTableTest extends WicketTestCase
 			page);
 		assertTrue(page.contains("<th wicket:id=\"headers\" class=\"actions\""), page);
 		assertFalse(header.hasChildTag("a"), "a header that does not sort is no link");
-		assertTrue(page.contains("<tbody wicket:id=\"body\"></tbody>"), page);
+		// empty until the script fills it, with an id for the rows' own veil
+		assertTrue(page.contains("<tbody wicket:id=\"body\" id=\""
+			+ table.getRowsBody().getMarkupId() + "\"></tbody>"), page);
 		assertTrue(page.contains("new Wicket.DynamicDataTable({"), page);
 		assertFalse(page.contains("\"m\":\"GET\""), "the table posts its requests");
 		assertTrue(page.contains("\"m\":\"POST\""), page);

@@ -53,6 +53,9 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  *
  * <pre>
  * field.add(FilterBehavior.onFilter(target -&gt; target.add(table)).veil(table, deleteSelected));
+ * // a filter in a toolbar of a data table: the rows, the toolbar and the field left usable
+ * field.add(FilterBehavior.onFilter(target -&gt; table.refresh(target))
+ * 	.veil(table.getRowsBody()));
  * </pre>
  *
  * @since 11.0.0
@@ -134,9 +137,9 @@ public abstract class FilterBehavior extends AjaxFormComponentUpdatingBehavior
 	/**
 	 * Veils the components while the filter's request runs: the table or list it fills, and the
 	 * components acting on its rows, such as the buttons acting on the table's selection. Each
-	 * gets a {@link LocalVeilBehavior} unless it has one, as a data table has. None may hold the
-	 * field itself, which its veil would cover: for a filter in a table's toolbar, veil nothing,
-	 * or what the table fills inside.
+	 * gets a {@link LocalVeilBehavior} unless it has one, as a data table and its rows have. None
+	 * may hold the field itself, which its veil would cover: a filter in a toolbar of a data table
+	 * veils the table's rows, {@code table.getRowsBody()}, not the table.
 	 *
 	 * @param components
 	 *            the components to veil, on the same page as the filter
@@ -170,7 +173,7 @@ public abstract class FilterBehavior extends AjaxFormComponentUpdatingBehavior
 			{
 				throw new IllegalStateException("The filter " + component.getPageRelativePath() +
 					" is inside " + each.getPageRelativePath() + ", whose veil would cover it: " +
-					"veil what it fills inside, such as the rows");
+					"veil what it fills inside, such as the rows of a table, table.getRowsBody()");
 			}
 			if (each.getBehaviors(LocalVeilBehavior.class).isEmpty())
 			{

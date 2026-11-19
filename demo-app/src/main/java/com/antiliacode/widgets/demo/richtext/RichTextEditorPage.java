@@ -59,7 +59,6 @@ import com.antiliacode.widgets.event.AbstractAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.AjaxEvent;
 import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEvent;
-import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.IRichTextImageType;
 import com.antiliacode.widgets.richtext.IRichTextTool;
 import com.antiliacode.widgets.richtext.RichTextBackgroundColor;
@@ -109,15 +108,15 @@ import com.github.openjson.JSONObject;
  * frameworks.
  * <p>
  * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those
- * carrying {@link PageVeilBehavior#NO_VEIL_PARAMETER}. The article marks its events one by one,
- * each event going to the server by an Ajax behavior of its own: those going as the user types,
- * moves the cursor, scrolls or resizes carry the parameter, and the page veil leaves them alone;
- * those of blur do not, and the page stays veiled until the server has the text. The other editors
- * mark all their events with {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
- * {@link RichTextEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}, and so the request
- * telling the server of the images taken out of the text, which takes the attributes of the events
- * unless {@link RichTextEditor#updateImagesRemovalAjaxAttributes(AjaxRequestAttributes)} says
- * otherwise, as it does for the article.
+ * carrying {@link PageVeilBehavior#NO_VEIL_PARAMETER}. Each event goes to the server by an Ajax
+ * behavior of its own: the editors leave the veil off those going as the user types, moves the
+ * cursor, scrolls or resizes by themselves ({@link RichTextEditor#isVeiled}), the page's own of
+ * these names too, and {@link OutlineEvent} off the outline, which changes as the user types. The
+ * blur is veiled, and the page waits until the server has the text, as is Ctrl+S in the notes.
+ * The article marks a few events of its own with the parameter besides: the focus, the text
+ * selected, Ctrl+S, the user going on writing as it saves, and, in
+ * {@link RichTextEditor#updateImagesRemovalAjaxAttributes(AjaxRequestAttributes)}, the request
+ * telling the server of the images taken out of the text.
  */
 public class RichTextEditorPage extends DemoPage
 {
@@ -341,35 +340,31 @@ public class RichTextEditorPage extends DemoPage
 		editor.setImagesFromSiteOnly(true);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
-		// the state goes as the user types, moves the cursor, scrolls or resizes, without the veil;
-		// on blur, by the default event left as it is, under the veil
-		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
-			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
-		{
-			editor.setEvent(unveiled(new SendStateEvent(name)
-				.setDelay(SendStateEvent.DEFAULT_DELAY)));
-		}
+		// the state goes as the user types, moves the cursor, scrolls or resizes, by the default
+		// events, without the veil, as the editor leaves them; on blur under the veil
 		editor.addEvent(unveiled(AjaxEvent.of(RichTextEditorEvents.FOCUS,
 			(values, target) -> hear(target, "heardFocus"))));
 		// the text before and the text now, which the model gets, without the rest of the form:
 		// under the veil, the page waiting for the server as the editor loses the focus
 		editor.addEvent(RichTextEditorChangeEvent.of(editor, RichTextEditorEvents.BLUR,
 			(previousText, currentText, target) -> hearBlur(target, previousText, currentText)));
+		// Ctrl+S without the veil, as this page chooses: the user goes on writing as it saves
 		editor.addEvent(unveiled(AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
 			(values, form, target) -> save(target))));
-		// the server follows the text as the user types, a moment after each pause
-		editor.addEvent(unveiled(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+		// the server follows the text as the user types, a moment after each pause, without the
+		// veil, as the editor leaves the events of input whoever gave them
+		editor.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
 			(values, form, target) -> target.add(known))
-			.setDelay(RichTextEditorEvents.TYPING_DELAY)));
+			.setDelay(RichTextEditorEvents.TYPING_DELAY));
 		// the size the user gave the article, which the browser sends once they let go
-		editor.addEvent(unveiled(RichTextEditorResizeEvent.of((width, height,
-			target) -> hearSize(target, width, height))));
+		editor.addEvent(RichTextEditorResizeEvent.of((width, height,
+			target) -> hearSize(target, width, height)));
 		// a built-in type of events of the editors: the text the user selected, once they paused
 		editor.addEvent(unveiled(RichTextEditorSelectedTextEvent.of((text,
 			target) -> hearSelection(target, text)).setDelay(RichTextEditorEvents.TYPING_DELAY)));
-		// a type of events of the page's own, which its script registers: the headings
-		editor.addEvent(unveiled(OutlineEvent.of((headings, target) -> hearOutline(target,
-			headings))));
+		// a type of events of the page's own, which its script registers: the headings, which
+		// leave the veil alone by themselves
+		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
 		// stays in the browser: the title of the page marks the changes not saved
 		editor.addEvent(new ClientEvent(RichTextEditorEvents.MODIFIED,
 			"function(event){var title=document.title.replace(/^\\* /,'');" +
@@ -503,16 +498,7 @@ public class RichTextEditorPage extends DemoPage
 			}), LambdaModel.of(notes, RichTextDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
-			}
-		};
+			}));
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setBubbleMenu(true).setHighlighting(true)
 			.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
@@ -560,17 +546,8 @@ public class RichTextEditorPage extends DemoPage
 		cleanedBox.add(new RichTextView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
-		cleaningCase.add(new RichTextCleaningPanel("modes", (id, model) -> new RichTextEditor(id,
-			model)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
-			}
-		}, "rich-text-demo-unsafe"));
+		cleaningCase.add(new RichTextCleaningPanel("modes",
+			(id, model) -> new RichTextEditor(id, model), "rich-text-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;
@@ -620,8 +597,9 @@ public class RichTextEditorPage extends DemoPage
 	}
 
 	/**
-	 * Marks an event the page veil leaves alone: its requests carry
-	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}, those of the other events of the editor not.
+	 * Marks an event the page veil leaves alone, beyond those of input, selection, scrolling and
+	 * resizing, which the editor leaves alone by itself: its requests carry
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}.
 	 *
 	 * @return the event
 	 */

@@ -33,6 +33,7 @@ import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
 import org.apache.wicket.ajax.json.JSONFunction;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.event.IEvent;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -109,6 +110,10 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * events.add(AjaxEvent.of(RichTextEditorEvents.BLUR, (values, target) -&gt; ...)
  * 	.setExtraParameter("wicket_nb", "true"));
  * </pre>
+ *
+ * Before both, {@link #isVeiled(IAjaxRoundTripEvent)} says whether the requests of an event are
+ * veiled, as what the user does, or leave the veils alone, as those coming while the user goes on:
+ * those of an editor's events as the user types, for example.
  * <p>
  * An event telling {@code leaving: true} in its {@code detail}, as the editors' events as the page
  * goes do, goes to the server in a beacon, which the browser sends even then.
@@ -440,6 +445,43 @@ public class ClientEventsBehavior extends Behavior
 	 */
 	protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
 	{
+	}
+
+	/**
+	 * Says whether the requests of an event going to the server are veiled, as Wicket's veils
+	 * veil a request: by a {@link PageVeilBehavior} over the page, or by the local veil of a
+	 * component the component is in. Those of an event coming while the user goes on, as they
+	 * type, move the cursor or scroll, are not: they carry
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which the veils leave alone, so that the page
+	 * takes the clicks and the keys while they run. Called as the Ajax behavior of the event
+	 * renders its attributes, before {@link #updateAjaxAttributes(AjaxRequestAttributes)} and
+	 * {@link IAjaxRoundTripEvent#updateAjaxAttributes(AjaxRequestAttributes)}, which may still
+	 * change them. Every event is veiled by default, as what the user does; the editors leave the
+	 * veils alone by the events coming as the user types.
+	 *
+	 * @param event
+	 *            an event going to the server
+	 * @return whether its requests are veiled
+	 */
+	protected boolean isVeiled(IAjaxRoundTripEvent event)
+	{
+		return true;
+	}
+
+	/**
+	 * Gives the attributes of the requests of an event what the component and the event say:
+	 * whether the veils leave them alone, then those of all the events of the component, then
+	 * those of the event.
+	 */
+	private void updateEventAttributes(IAjaxRoundTripEvent event,
+		AjaxRequestAttributes attributes)
+	{
+		if (!isVeiled(event))
+		{
+			PageVeilBehavior.noVeil(attributes);
+		}
+		updateAjaxAttributes(attributes);
+		event.updateAjaxAttributes(attributes);
 	}
 
 	/**
@@ -1008,7 +1050,8 @@ public class ClientEventsBehavior extends Behavior
 		}
 
 		/**
-		 * POST, then those of all the events of the component, then those of the event.
+		 * POST, then whether the veils leave the requests alone, those of all the events of the
+		 * component and those of the event.
 		 */
 		@Override
 		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
@@ -1017,8 +1060,7 @@ public class ClientEventsBehavior extends Behavior
 			// in the body: Wicket sends the value of a field with it, a long text for example,
 			// and the values may be long too
 			attributes.setMethod(AjaxRequestAttributes.Method.POST);
-			ClientEventsBehavior.this.updateAjaxAttributes(attributes);
-			event.updateAjaxAttributes(attributes);
+			updateEventAttributes(event, attributes);
 		}
 
 		@Override
@@ -1105,8 +1147,8 @@ public class ClientEventsBehavior extends Behavior
 		}
 
 		/**
-		 * Those of the form, then those of all the events of the component, then those of the
-		 * event.
+		 * Those of the form, then whether the veils leave the requests alone, those of all the
+		 * events of the component and those of the event.
 		 */
 		@Override
 		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
@@ -1114,8 +1156,7 @@ public class ClientEventsBehavior extends Behavior
 			super.updateAjaxAttributes(attributes);
 			// the browser fires no event of it: the handler of the event sends the requests
 			attributes.setEventNames();
-			ClientEventsBehavior.this.updateAjaxAttributes(attributes);
-			event.updateAjaxAttributes(attributes);
+			updateEventAttributes(event, attributes);
 		}
 
 		@Override

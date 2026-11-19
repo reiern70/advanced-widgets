@@ -20,16 +20,23 @@ What 10.11.0-RC11 has, and:
   `PageVeilBehavior.NO_VEIL_PARAMETER`, `wicket_nb` (#139). So do those telling where the user
   moved the divider of a `SplitPanel`, the windows' states and the taskbar of a `Desktop`, the
   size at the end of a `ResizableBehavior`'s resize, the toggle a `CollapsiblePanel` remembers
-  and the widths of `ResizableColumnsBehavior`, and the state the rich text editors, CKEditor and
-  the code editor send as the user types, moves the cursor, scrolls or resizes, the four
-  `SendStateEvent`s they listen to by default. The blur of the editors stays veiled, as do the
-  buttons, opening and taking away a desktop window, a tab chosen, a dialog's close and the
-  tables' actions.
+  and the widths of `ResizableColumnsBehavior`, and the events of the rich text editors, CKEditor
+  and the code editor named as the user types, moves the cursor, scrolls or resizes: input,
+  select, scroll and resize, the four `SendStateEvent`s they listen to by default and the page's
+  own events of these names alike. The editors decide by the event's name, `isVeiled(event)`,
+  which an editor overrides to decide otherwise, as does a `ClientEventsBehavior`;
+  `RichTextEditorEvents#isBackground()` and `CodeEditorEvent#isBackground()` tell the four names.
+  The blur of the editors stays veiled, as do their other events, the buttons, opening and taking
+  away a desktop window, a tab chosen, a dialog's close and the tables' actions.
 - `FilterBehavior` leaves the page veil alone as the user types (#138), and
   `setVeilPage(true)` veils it again. `veil(Component...)` raises the local veils of what the
   filter fills, a list or the buttons acting on its rows, as its request leaves, and lowers them
   once it is done: a component without a `LocalVeilBehavior` gets one, and one holding the field
-  itself is refused, its veil covering the field. Both are on `master` too, for 11.0.0-RC6.
+  itself is refused, its veil covering the field. The rows of a data table, the `<tbody>`, have a
+  local veil of their own (`newRowsVeilBehavior()`), which a filter in a toolbar of the table
+  raises by `veil(table.getRowsBody())`, `getRowsBody()` public now: the rows are veiled while the
+  filter's request runs, the toolbar and its field not. The demo's table filters do. Both are on
+  `master` too, for 11.0.0-RC6.
 - The button of a single drop-down ends a choice too long for it in «…» instead of cutting it
   off in the middle of a letter; its `title` still has the whole text (#137).
 - A veil over a page while it loads, until its scripts have run, so that no click reaches a
@@ -68,12 +75,14 @@ What 10.11.0-RC11 has, and:
 
 - On a page with `PageVeilBehavior`, the requests listed above no longer veil the page: the user
   goes on dragging, typing and clicking while they run. A filter is veiled again by
-  `setVeilPage(true)`, an editor's built-in event by putting a `SendStateEvent` of the name in
-  its place with `setEvent`; those of `SplitPanel`, `Desktop`, `ResizableBehavior` and
-  `CollapsiblePanel` have no switch.
-- Only the editors' built-in events carry `wicket_nb` by themselves: the events of input,
-  selection or scrolling a page gives an editor are veiled unless the page marks them, as
-  before.
+  `setVeilPage(true)`, an editor's event by overriding the editor's `isVeiled(event)`; those of
+  `SplitPanel`, `Desktop`, `ResizableBehavior` and `CollapsiblePanel` have no switch.
+- The events of input, selection, scrolling and resizing a page gives an editor carry
+  `wicket_nb` too, the editor deciding by their name: a page that marked them may stop. Those of
+  the other names, the focus or Ctrl+S, are veiled unless the page marks them, as before.
+- A row action, or a row's check box, veils the rows of a data table alone, their own veil being
+  the nearest, no longer the whole table; the toolbars' actions still veil the table.
+  `newRowsVeilBehavior()` returning `null` veils the rows with the table again.
 - The veil, the page's and a local one, goes up from the click, spinner and all, while the
   request still waits its turn behind another one. Enter and Space under a veil are dropped, but
   in text fields, text areas and editable content.

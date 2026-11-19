@@ -31,7 +31,7 @@ import com.antiliacode.widgets.event.IClientEventName;
 public enum CodeEditorEvent implements IClientEventName
 {
 	/** The user changed the text: each change, as a text area tells. */
-	INPUT("input"),
+	INPUT("input", true),
 
 	/** The text changed, once the editor lost the focus, as a text area tells. */
 	CHANGE("change"),
@@ -43,10 +43,10 @@ public enum CodeEditorEvent implements IClientEventName
 	BLUR("antilia-code-editor:blur"),
 
 	/** The user moved the cursor or selected text. */
-	SELECT("antilia-code-editor:select"),
+	SELECT("antilia-code-editor:select", true),
 
 	/** The user scrolled the text; {@code detail.scroll} has {@code top} and {@code left}. */
-	SCROLL("antilia-code-editor:scroll"),
+	SCROLL("antilia-code-editor:scroll", true),
 
 	/**
 	 * The user pressed Ctrl+S, or Cmd+S, in the editor, or left it with changes not saved or errors
@@ -55,7 +55,7 @@ public enum CodeEditorEvent implements IClientEventName
 	SAVE("antilia-code-editor:save"),
 
 	/** The user resized the editor. */
-	RESIZE("antilia-code-editor:resize"),
+	RESIZE("antilia-code-editor:resize", true),
 
 	/** The text came to have changes not saved, or no longer has. */
 	MODIFIED("antilia-code-editor:modified"),
@@ -88,9 +88,17 @@ public enum CodeEditorEvent implements IClientEventName
 
 	private final String eventName;
 
+	private final boolean background;
+
 	CodeEditorEvent(String eventName)
 	{
+		this(eventName, false);
+	}
+
+	CodeEditorEvent(String eventName, boolean background)
+	{
 		this.eventName = eventName;
+		this.background = background;
 	}
 
 	/**
@@ -100,5 +108,18 @@ public enum CodeEditorEvent implements IClientEventName
 	public String getEventName()
 	{
 		return eventName;
+	}
+
+	/**
+	 * @return whether the events of the name come while the user goes on, as they type, move the
+	 *         cursor, select, scroll or resize the editor: {@link #INPUT}, {@link #SELECT},
+	 *         {@link #SCROLL} and {@link #RESIZE}. The requests of an editor's events of these
+	 *         names leave the page veil alone, unless the editor says otherwise
+	 *         ({@link CodeEditor#isVeiled}); those of the other names, the blur among them, are
+	 *         veiled, as what the user does
+	 */
+	public boolean isBackground()
+	{
+		return background;
 	}
 }

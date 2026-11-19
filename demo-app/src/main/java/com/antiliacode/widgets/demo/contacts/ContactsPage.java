@@ -301,8 +301,8 @@ public class ContactsPage extends DemoPage
 					@Override
 					protected Component newPrefix(String id)
 					{
-						return position == ToolbarPosition.TOP ? newSearch(id)
-							: super.newPrefix(id);
+						return position == ToolbarPosition.TOP ? newSearch(id,
+							getTable().getRowsBody()) : super.newPrefix(id);
 					}
 				};
 			}
@@ -339,14 +339,18 @@ public class ContactsPage extends DemoPage
 	}
 
 	/**
+	 * @param rows
+	 *            the rows of the table, veiled while the search's request runs
 	 * @return the search in front of the top navigation: the contacts whose name or email
 	 *         contains what the user types
 	 */
-	private Component newSearch(String id)
+	private Component newSearch(String id, Component rows)
 	{
 		Fragment search = new Fragment(id, "search", this);
 		TextField<String> text = new TextField<>("text", new PropertyModel<>(filter, "text"));
-		text.add(FilterBehavior.onFilter(target -> onFilterChanged(target, null, false)));
+		// the rows veiled while the search's request runs, the field not
+		text.add(FilterBehavior.onFilter(target -> onFilterChanged(target, null, false))
+			.veil(rows));
 		search.add(text);
 		return search;
 	}
