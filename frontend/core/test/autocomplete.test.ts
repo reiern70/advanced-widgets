@@ -14,8 +14,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ACTION_EVENT, ANTILIA_LOOK, Autocomplete, Scrollbar, type AutocompleteAction,
-	type AutocompleteSuggestion } from '../src/index.js';
+import { ACTION_EVENT, ANTILIA_LOOK, Autocomplete, markMatches, registerHandlebars, Scrollbar,
+	Templates, type AutocompleteAction, type AutocompleteSuggestion } from '../src/index.js';
 
 const FRUITS: AutocompleteSuggestion[] = ['Apple', 'Apricot', 'Banana'].map((label) => ({
 	id: label.toLowerCase(), label, data: { name: label }
@@ -55,7 +55,80 @@ afterEach(() => {
 	document.body.innerHTML = '';
 });
 
+describe('markMatches', () => {
+	const mark = (text: string) => '<mark class="antilia-autocomplete-match">' + text + '</mark>';
+
+	it('marks the words typed, regardless of case and accents', () => {
+		expect(markMatches('Published', 'pub')).toBe(mark('Pub') + 'lished');
+		expect(markMatches('José Pérez', 'jose PE')).toBe(mark('José') + ' ' + mark('Pé') + 'rez');
+		expect(markMatches('Jose\u0301', 'jose')).toBe(mark('Jose\u0301'));
+		expect(markMatches('Ærø', 'ærø')).toBe(mark('Ærø'));
+	});
+
+	it('marks every place a word occurs, joining those that touch', () => {
+		expect(markMatches('Banana', 'an')).toBe('B' + mark('anan') + 'a');
+		expect(markMatches('Gran Canaria', 'can gran')).toBe(mark('Gran') + ' ' + mark('Can') +
+			'aria');
+	});
+
+	it('escapes the label, the parts marked too', () => {
+		expect(markMatches('<b>Tom & Jerry</b>', 'tom &')).toBe('&lt;b&gt;' + mark('Tom') + ' ' +
+			mark('&amp;') + ' Jerry&lt;/b&gt;');
+		expect(markMatches('<b>', 'b')).toBe('&lt;' + mark('b') + '&gt;');
+	});
+
+	it('marks nothing without a term or a match', () => {
+		expect(markMatches('A & B', '')).toBe('A &amp; B');
+		expect(markMatches('A & B', '  ')).toBe('A &amp; B');
+		expect(markMatches('Apple', 'x')).toBe('Apple');
+	});
+});
+
 describe('Autocomplete', () => {
+	it('marks the letters typed in {{@labelMatch}}, the row unless a template is given',
+		async () => {
+			const instance = new Autocomplete(input(), { search, highlightMatch: true });
+
+			await type(instance, 'AP');
+
+			expect(Array.from(instance.list.children, (item) => item.innerHTML))
+				.toEqual(['<mark class="antilia-autocomplete-match">Ap</mark>ple', '<mark class="antilia-autocomplete-match">Ap</mark>ricot']);
+
+			instance.configure({ search, highlightMatch: true,
+				template: '<i>{{@labelMatch}}</i> {{{@labelMatch}}} {{@label}}' });
+			await type(instance, 'ba');
+			expect(instance.list.children[0].innerHTML).toBe('<i><mark class="antilia-autocomplete-match">Ba</mark>nana</i> ' +
+				'<mark class="antilia-autocomplete-match">Ba</mark>nana Banana');
+		});
+
+	it('writes {{@labelMatch}} as the label escaped, without highlightMatch', async () => {
+		const instance = new Autocomplete(input(), {
+			search: () => Promise.resolve([{ id: 1, label: 'Tom & <Jerry>' }]),
+			template: '<i>{{@labelMatch}}</i>'
+		});
+
+		await type(instance, 'tom');
+
+		expect(instance.list.children[0].innerHTML).toBe('<i>Tom &amp; &lt;Jerry&gt;</i>');
+		expect(instance.list.children[0].querySelector('mark')).toBeNull();
+	});
+
+	it('writes {{@labelMatch}} as markup with Handlebars too', async () => {
+		registerHandlebars({
+			compile: (template) => (_data, options) => template.replace('{{@labelMatch}}',
+				// Handlebars' escapeExpression writes what has a toHTML() as it is
+				String(((options?.data as Record<string, { toHTML(): string }>).labelMatch)
+					.toHTML()))
+		}, Templates, 'fake-handlebars');
+		const instance = new Autocomplete(input(), { search, highlightMatch: true,
+			engine: 'fake-handlebars', template: '<i>{{@labelMatch}}</i>' });
+
+		await type(instance, 'apr');
+
+		expect(instance.list.children[0].innerHTML).toBe('<i><mark class="antilia-autocomplete-match">Apr</mark>icot</i>');
+		delete Templates.engines['fake-handlebars'];
+	});
+
 	it('lists the suggestions of search, rendered with the template', async () => {
 		const instance = new Autocomplete(input(), { search, template: '<b>{{name}}</b> {{@id}}' });
 

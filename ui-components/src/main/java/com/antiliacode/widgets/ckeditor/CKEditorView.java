@@ -23,6 +23,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
 import com.antiliacode.widgets.richtext.IRichTextSanitizer;
+import com.antiliacode.widgets.richtext.OwaspHtmlSanitizer;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookPart;
@@ -43,7 +44,8 @@ public class CKEditorView extends WebComponent
 {
 	private static final long serialVersionUID = 1L;
 
-	private IRichTextSanitizer sanitizer = CKEditorPolicy.ALL;
+	/** The sanitizer set, {@code null} for {@link CKEditorPolicy#ALL}. */
+	private IRichTextSanitizer sanitizer;
 
 	private CKEditorLibrary library;
 
@@ -60,11 +62,22 @@ public class CKEditorView extends WebComponent
 	}
 
 	/**
-	 * @return what cleans the HTML before the page shows it
+	 * Fails at once, as the view is added to a page, without the OWASP Java HTML Sanitizer, which
+	 * cleans its HTML: see {@link OwaspHtmlSanitizer}.
+	 */
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		OwaspHtmlSanitizer.require(this);
+	}
+
+	/**
+	 * @return what cleans the HTML before the page shows it, {@link CKEditorPolicy#ALL} unless set
 	 */
 	public IRichTextSanitizer getSanitizer()
 	{
-		return sanitizer;
+		return sanitizer != null ? sanitizer : CKEditorPolicy.ALL;
 	}
 
 	/**
@@ -111,7 +124,7 @@ public class CKEditorView extends WebComponent
 	public String getHtml()
 	{
 		Object html = getDefaultModelObject();
-		String clean = html == null ? null : sanitizer.sanitize(html.toString());
+		String clean = html == null ? null : getSanitizer().sanitize(html.toString());
 		return clean == null ? "" : clean;
 	}
 

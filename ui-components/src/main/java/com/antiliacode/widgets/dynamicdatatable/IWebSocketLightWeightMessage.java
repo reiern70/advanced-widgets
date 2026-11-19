@@ -58,8 +58,8 @@ public interface IWebSocketLightWeightMessage
 	String getTypeId();
 
 	/**
-	 * Sends this message, serialized with Jackson, over the web socket connection of the page the
-	 * component is on.
+	 * Sends this message, serialized by the application's default serializer, over the web socket
+	 * connection of the page the component is on.
 	 * <p>
 	 * The connection is looked up in the current session, so this has to be called in a request
 	 * of the session the page belongs to, not from a background thread.
@@ -83,7 +83,8 @@ public interface IWebSocketLightWeightMessage
 	}
 
 	/**
-	 * Sends this message, serialized with Jackson, over a registered web socket connection.
+	 * Sends this message, serialized by the application's default serializer, over a registered
+	 * web socket connection.
 	 * <p>
 	 * Needs no request, so it can be called from a background thread, with the application,
 	 * session id and key captured when the connection was opened, for example in
@@ -114,17 +115,18 @@ public interface IWebSocketLightWeightMessage
 	}
 
 	/**
-	 * Sends this message, serialized with Jackson.
+	 * Sends this message, serialized by the default serializer of the connection's application,
+	 * {@link JsonSerializers#getDefault(org.apache.wicket.Application)}.
 	 *
 	 * @param connection
 	 *            the connection to the browser showing the table
 	 * @throws IOException
 	 *             if the message cannot be sent
-	 * @see JacksonJsonSerializer
+	 * @see JsonSerializers
 	 */
 	default void send(IWebSocketConnection connection) throws IOException
 	{
-		send(connection, JacksonJsonSerializer.INSTANCE);
+		send(connection, JsonSerializers.getDefault(connection.getApplication()));
 	}
 
 	/**

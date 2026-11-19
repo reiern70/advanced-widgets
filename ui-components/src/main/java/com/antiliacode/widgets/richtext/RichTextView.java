@@ -73,6 +73,17 @@ public class RichTextView extends WebComponent
 	}
 
 	/**
+	 * Fails at once, as the view is added to a page, without the OWASP Java HTML Sanitizer, which
+	 * cleans its HTML: see {@link OwaspHtmlSanitizer}.
+	 */
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		OwaspHtmlSanitizer.require(this);
+	}
+
+	/**
 	 * @return what cleans the HTML as the page shows it: the one set, or the policy of all the
 	 *         features with the palettes of the view
 	 */

@@ -2624,6 +2624,17 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		}
 	}
 
+	/**
+	 * Fails at once, as the editor is added to a page, without the OWASP Java HTML Sanitizer, which
+	 * cleans its HTML: see {@link OwaspHtmlSanitizer}.
+	 */
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		OwaspHtmlSanitizer.require(this);
+	}
+
 	@Override
 	protected void onDetach()
 	{

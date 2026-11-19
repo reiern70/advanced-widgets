@@ -41,8 +41,16 @@
 		/** The chosen values. */
 		value?: AutocompleteValue[];
 		onchange?: (value: AutocompleteValue[]) => void;
-		/** The template of a suggestion's row, rendered from its data; '{{@label}}' by default. */
+		/**
+		 * The template of a suggestion's row, rendered from its data; '{{@label}}' by default,
+		 * '{{@labelMatch}}' with highlightMatch.
+		 */
 		template?: string;
+		/**
+		 * Whether {{@labelMatch}}, the label as markup, marks the parts matching the words typed,
+		 * in a <mark class="antilia-autocomplete-match">, regardless of case and accents.
+		 */
+		highlightMatch?: boolean;
 		engine?: string;
 		/**
 		 * The buttons at the end of every row, their content a template; one with a tooltip
@@ -73,6 +81,7 @@
 		value = $bindable([]),
 		onchange,
 		template,
+		highlightMatch,
 		engine,
 		actions,
 		onaction,
@@ -94,8 +103,8 @@
 		url,
 		search: search || !url ? (term: string) => (search ?? (() => Promise.resolve([])))(term) :
 			undefined,
-		template, engine, actions: $state.snapshot(actions), minLength, disabled, placeholder,
-		noMatch, searching, remove,
+		template, highlightMatch, engine, actions: $state.snapshot(actions), minLength, disabled,
+		placeholder, noMatch, searching, remove,
 		onAction: (action: string, suggestion: AutocompleteSuggestion) => onaction?.(action,
 			suggestion)
 	});

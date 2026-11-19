@@ -119,7 +119,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
 
-	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
+	private IJsonSerializer jsonSerializer;
 
 	private Duration pollInterval;
 
@@ -502,7 +502,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 			data.put("top", true);
 		}
 		putFooter(data);
-		String json = jsonSerializer.toJson(data);
+		String json = getJsonSerializer().toJson(data);
 		onRowsSent(getCurrentPageKeys());
 		return json;
 	}
@@ -522,7 +522,7 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 		data.put("itemCount", getItemCount());
 		data.put("currentPage", getCurrentPage());
 		putFooter(data);
-		String json = jsonSerializer.toJson(data);
+		String json = getJsonSerializer().toJson(data);
 		if (rows.isEmpty() == false)
 		{
 			onRowsSent(getCurrentPageKeys());
@@ -611,7 +611,8 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 
 	/**
 	 * @param jsonSerializer
-	 *            the serializer turning rows into JSON
+	 *            the serializer turning rows into JSON, instead of the application's default,
+	 *            {@link JsonSerializers#getDefault()}
 	 * @return {@code this}
 	 */
 	public JsonBasedDynamicDataTable<T, K> setJsonSerializer(IJsonSerializer jsonSerializer)
@@ -670,11 +671,13 @@ public class JsonBasedDynamicDataTable<T, K extends Serializable>
 	}
 
 	/**
-	 * @return the serializer turning rows into JSON
+	 * @return the serializer turning rows into JSON: the one
+	 *         {@link #setJsonSerializer(IJsonSerializer) set}, or else the application's default,
+	 *         {@link JsonSerializers#getDefault()}
 	 */
 	public IJsonSerializer getJsonSerializer()
 	{
-		return jsonSerializer;
+		return jsonSerializer != null ? jsonSerializer : JsonSerializers.getDefault();
 	}
 
 	@Override

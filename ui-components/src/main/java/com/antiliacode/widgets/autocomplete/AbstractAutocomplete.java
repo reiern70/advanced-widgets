@@ -47,7 +47,7 @@ import com.antiliacode.widgets.chips.Chips;
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
 import com.antiliacode.widgets.dynamicdatatable.ITemplateEngine;
-import com.antiliacode.widgets.dynamicdatatable.JacksonJsonSerializer;
+import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.antiliacode.widgets.template.Templates;
 import com.github.openjson.JSONArray;
@@ -70,9 +70,10 @@ import com.github.openjson.JSONObject;
  * {@link #setJsonSerializer(IJsonSerializer) serializer} writes it, by the
  * {@link #setTemplateEngine(ITemplateEngine) template engine}, just as the cells of a
  * {@link com.antiliacode.widgets.dynamicdatatable.JsonBasedDynamicDataTable}. {@code {{@label}}} is
- * the label of the value. The template is authored by the developer and written into the page as
- * it is; the values are escaped by {@code {{ }}}, and the labels written into the script of the
- * page cannot close it.
+ * the label of the value, {@code {{@labelMatch}}} the label as markup, escaped, which
+ * {@link #setHighlightMatch(boolean)} has mark the parts matching the words the user typed. The
+ * template is authored by the developer and written into the page as it is; the values are escaped
+ * by {@code {{ }}}, and the labels written into the script of the page cannot close it.
  * <p>
  * {@link #addAction(AutocompleteAction) Actions} are buttons at the end of every row, such as an
  * (i) whose tooltip, a template too, tells more about the value; F1 toggles the tooltip of the
@@ -99,6 +100,12 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	/** The template of a row unless set otherwise: the label of the value. */
 	public static final String DEFAULT_TEMPLATE = "{{@label}}";
 
+	/**
+	 * The template of a row unless set otherwise, once the {@link #setHighlightMatch(boolean)
+	 * match is highlighted}: the label with the parts matching the words typed marked.
+	 */
+	public static final String MATCH_TEMPLATE = "{{@labelMatch}}";
+
 	private static final String TERM_PARAMETER = "term";
 
 	private final IAutocompleteProvider<T> provider;
@@ -107,11 +114,14 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 
 	private final List<AutocompleteAction> actions = new ArrayList<>();
 
-	private String template = DEFAULT_TEMPLATE;
+	/** The template set, {@code null} for the default one. */
+	private String template;
+
+	private boolean highlightMatch;
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
 
-	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
+	private IJsonSerializer jsonSerializer;
 
 	private int minLength = 1;
 
@@ -168,17 +178,25 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	}
 
 	/**
-	 * @return the template of a row of the suggestions
+	 * @return the template of a row of the suggestions: the one set, or else
+	 *         {@link #DEFAULT_TEMPLATE}, {@link #MATCH_TEMPLATE} once the match is
+	 *         {@link #setHighlightMatch(boolean) highlighted}
 	 */
 	public String getTemplate()
 	{
-		return template;
+		if (template != null)
+		{
+			return template;
+		}
+		return highlightMatch ? MATCH_TEMPLATE : DEFAULT_TEMPLATE;
 	}
 
 	/**
 	 * @param template
 	 *            the template of a row of the suggestions, evaluated against the value's JSON;
-	 *            {@code {{@label}}} is its label
+	 *            {@code {{@label}}} is its label, {@code {{@labelMatch}}} its label as markup,
+	 *            with the parts matching the words typed marked once the match is
+	 *            {@link #setHighlightMatch(boolean) highlighted}
 	 * @return {@code this}
 	 */
 	public AbstractAutocomplete<T, M> setTemplate(String template)
@@ -199,14 +217,54 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	}
 
 	/**
+	 * @return whether {@code {{@labelMatch}}} marks the parts of a label matching the words typed,
+	 *         {@code false} by default
+	 */
+	public boolean isHighlightMatch()
+	{
+		return highlightMatch;
+	}
+
+	/**
+	 * Marks in each suggestion the parts of its label matching the words the user typed, "Pub" in
+	 * "Published", regardless of case and accents: {@code {{@labelMatch}}} of the template, the
+	 * label escaped, has each in a {@code <mark class="antilia-autocomplete-match">}, which the
+	 * theme colors. The row is {@link #MATCH_TEMPLATE} unless a template is
+	 * {@link #setTemplate(String) set}; one of the developer's writes {@code {{@labelMatch}}}
+	 * where the label goes, in an element of its own inside a flex box, which would make the marks
+	 * and the text around them items apart. The built-in template engine and Handlebars write it as
+	 * markup by {@code {{ }}}, another engine by its way of writing a value unescaped.
+	 *
+	 * @param highlightMatch
+	 *            whether the matching parts are marked
+	 * @return {@code this}
+	 */
+	public AbstractAutocomplete<T, M> setHighlightMatch(boolean highlightMatch)
+	{
+		this.highlightMatch = highlightMatch;
+		return this;
+	}
+
+	/**
 	 * @param jsonSerializer
-	 *            the serializer turning the values into the JSON the template reads
+	 *            the serializer turning the values into the JSON the template reads, instead of
+	 *            the application's default, {@link JsonSerializers#getDefault()}
 	 * @return {@code this}
 	 */
 	public AbstractAutocomplete<T, M> setJsonSerializer(IJsonSerializer jsonSerializer)
 	{
 		this.jsonSerializer = Args.notNull(jsonSerializer, "jsonSerializer");
 		return this;
+	}
+
+	/**
+	 * @return the serializer turning the values into JSON: the one
+	 *         {@link #setJsonSerializer(IJsonSerializer) set}, or else the application's default,
+	 *         {@link JsonSerializers#getDefault()}
+	 */
+	public IJsonSerializer getJsonSerializer()
+	{
+		return jsonSerializer != null ? jsonSerializer : JsonSerializers.getDefault();
 	}
 
 	/**
@@ -405,7 +463,8 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		options.put("url", suggestBehavior.getCallbackUrl().toString());
 		options.put("multiple", isMultiple());
 		options.put("pick", isPick());
-		options.put("template", template);
+		options.put("template", getTemplate());
+		options.put("highlightMatch", highlightMatch);
 		options.put("engine", templateEngine.getName());
 		options.put("minLength", minLength);
 		options.put("disabled", !isEnabledInHierarchy());
@@ -459,7 +518,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 				suggestions.add(suggestion);
 			}
 		}
-		return jsonSerializer.toJson(suggestions);
+		return getJsonSerializer().toJson(suggestions);
 	}
 
 	/**

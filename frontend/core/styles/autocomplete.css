@@ -113,6 +113,15 @@
 	background: var(--antilia-theme-hover, #eef2fb);
 }
 
+/* the parts of a suggestion matching what was typed, {{@labelMatch}} with highlightMatch */
+.antilia-autocomplete-match {
+	padding: 0;
+	border-radius: 0.15em;
+	background: color-mix(in srgb, var(--antilia-theme-accent, #2f5bd3) 22%, transparent);
+	color: inherit;
+	font-weight: 600;
+}
+
 .antilia-autocomplete-status {
 	padding: 0.4em 0.6em;
 	opacity: 0.65;
