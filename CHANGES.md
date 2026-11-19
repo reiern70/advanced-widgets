@@ -11,9 +11,10 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 10.11.0-RC12 (not released yet)
+## 10.11.0-RC11 (2026-11-19)
 
-What 10.11.0-RC11 has, and:
+What 10.11.0-RC10 has, the drop-downs of 11.0.0-RC5 (their lists above any box that would cut
+them, long options wrapped and option groups, #134), and:
 
 - The requests reporting in the background, while the user goes on, leave the page veil,
   `PageVeilBehavior` of `com.antiliacode.widgets.veil`, alone: they carry
@@ -35,8 +36,8 @@ What 10.11.0-RC11 has, and:
   itself is refused, its veil covering the field. The rows of a data table, the `<tbody>`, have a
   local veil of their own (`newRowsVeilBehavior()`), which a filter in a toolbar of the table
   raises by `veil(table.getRowsBody())`, `getRowsBody()` public now: the rows are veiled while the
-  filter's request runs, the toolbar and its field not. The demo's table filters do. Both are on
-  `master` too, for 11.0.0-RC6.
+  filter's request runs, the toolbar and its field not. The demo's table filters do. Both are in
+  11.0.0-RC6 too.
 - The button of a single drop-down ends a choice too long for it in «…» instead of cutting it
   off in the middle of a letter; its `title` still has the whole text (#137).
 - A veil over a page while it loads, until its scripts have run, so that no click reaches a
@@ -86,13 +87,7 @@ What 10.11.0-RC11 has, and:
 - The veil, the page's and a local one, goes up from the click, spinner and all, while the
   request still waits its turn behind another one. Enter and Space under a veil are dropped, but
   in text fields, text areas and editable content.
-
-## 10.11.0-RC11 (2026-11-18)
-
-What 10.11.0-RC10 has, and the drop-downs of 11.0.0-RC5: their lists above any box that would
-cut them, long options wrapped and option groups (#134).
-
-**Upgrading:** as for 11.0.0-RC5.
+- The drop-downs: as for 11.0.0-RC5.
 
 ## 11.0.0-RC5 (2026-11-17)
 
