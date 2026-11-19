@@ -221,7 +221,7 @@ class NotificationsBrowserTest extends FrameworkAppsTestCase
 		js("var s = document.querySelector('select[name=theme]'); s.value = 'DARK';" +
 			"s.dispatchEvent(new Event('change', {bubbles: true}));");
 		wait.until(d -> String.valueOf(d.findElement(By.tagName("body")).getDomAttribute("class"))
-			.contains("antilia-theme-dark"));
+			.contains("antilia-theme-dark") && SeleniumBrowser.isReady(d));
 		tab(framework).click();
 		wait.until(d -> !app().findElements(By.cssSelector(".notifications-demo__show")).isEmpty());
 

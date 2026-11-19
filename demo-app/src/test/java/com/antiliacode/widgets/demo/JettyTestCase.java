@@ -54,10 +54,22 @@ public abstract class JettyTestCase
 		web.setWar((basedir != null ? basedir + "/" : "") + "src/main/webapp");
 		JakartaWebSocketServletContainerInitializer.configure(web,
 			(servletContext, container) -> container.addEndpoint(new WicketServerEndpointConfig()));
+		configure(web);
 		server.setHandler(web);
 
 		server.start();
 		localPort = http.getLocalPort();
+	}
+
+	/**
+	 * Configures the web application before it starts, for a test that gives it init parameters of
+	 * its own, such as {@link SlowScript#PARAMETER}. Nothing by default.
+	 *
+	 * @param web
+	 *            the web application
+	 */
+	protected void configure(WebAppContext web)
+	{
 	}
 
 	@AfterEach
