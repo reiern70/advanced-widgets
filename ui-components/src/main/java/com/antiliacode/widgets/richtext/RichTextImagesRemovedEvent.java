@@ -19,12 +19,13 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * The event of Wicket a {@link RichTextEditor} with a store of images sends, bubbling from the
- * editor to the page, when the browser told it the user took images out of the text: deleted by a
- * key, cut, taken out by the list of the images of the toolbar, or by the code of a page. Only the
- * images the editor knows are told of: those of the text it was shown with, and those uploaded into
- * it since. Whether they are deleted now or once the text is saved is
- * {@link RichTextEditor#getImageDeletion() the editor's mode}.
+ * The event of Wicket a rich text editor with a store of images sends, {@link RichTextEditor} or
+ * {@link com.antiliacode.widgets.ckeditor.CKEditor}, bubbling from the editor to the page, when
+ * the browser told it the user took images out of the text: deleted by a key, cut, taken out by
+ * the list of the images of the toolbar, or by the code of a page. Only the images the editor knows
+ * are told of: those of the text it was shown with, and those uploaded into it since. Whether they
+ * are deleted now or once the text is saved is
+ * {@link AbstractRichTextEditor#getImageDeletion() the editor's mode}.
  *
  * <pre>
  * &#64;Override
@@ -41,7 +42,7 @@ import org.apache.wicket.util.lang.Args;
  */
 public final class RichTextImagesRemovedEvent
 {
-	private final RichTextEditor editor;
+	private final AbstractRichTextEditor<?> editor;
 
 	private final Set<String> urls;
 
@@ -59,8 +60,8 @@ public final class RichTextImagesRemovedEvent
 	 * @param target
 	 *            the Ajax request target
 	 */
-	public RichTextImagesRemovedEvent(RichTextEditor editor, Set<String> urls, boolean deleted,
-		AjaxRequestTarget target)
+	public RichTextImagesRemovedEvent(AbstractRichTextEditor<?> editor, Set<String> urls,
+		boolean deleted, AjaxRequestTarget target)
 	{
 		this.editor = Args.notNull(editor, "editor");
 		this.urls = Set.copyOf(Args.notNull(urls, "urls"));
@@ -71,7 +72,7 @@ public final class RichTextImagesRemovedEvent
 	/**
 	 * @return the editor whose images were taken out
 	 */
-	public RichTextEditor getEditor()
+	public AbstractRichTextEditor<?> getEditor()
 	{
 		return editor;
 	}

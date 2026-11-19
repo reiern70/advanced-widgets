@@ -38,6 +38,26 @@ What 10.11.0-RC11 has, and:
   (`IRichTextAttachmentStore#isStored(url)`, none by default) and those uploaded since the last
   save. A link to one of them, a text of its own, comes back as a file, its size unknown. The
   editors of React and Svelte take `attachmentUrls` too, a list or a test of an address.
+- The uploads of the rich text editors are those of `AbstractRichTextEditor`, which
+  `RichTextEditor` and `CKEditor` share (#123): the stores of the images and of the files attached, their limits,
+  the dialog, the scaling, the permanent images, the resource of the uploads
+  (`setUploadResource(RichTextFiles)`), the scanner, and the deletion of the images and the files
+  the user took out of the text (`setImageDeletion`, `setAttachmentDeletion`,
+  `deleteRemovedImages()`, `onImagesRemoved`, `deleteImages`, `RichTextImagesRemovedEvent`...).
+  `CKEditor` has every method `RichTextEditor` has for them, and both have
+  `getImageUploadBehavior()` and `getAttachmentUploadBehavior()`.
+
+**Upgrading:**
+
+- The methods of the uploads keep their names and their parameters on `RichTextEditor`, but are
+  declared by `AbstractRichTextEditor` now: an application compiled against 10.11.0-RC11 is
+  compiled again, the setters returning the editor's type through its generic parameter.
+- `RichTextImagesRemovedEvent#getEditor()` and `RichTextAttachmentsRemovedEvent#getEditor()`
+  answer an `AbstractRichTextEditor<?>`, `RichTextEditor` or `CKEditor`: cast it where the
+  `RichTextEditor` itself is needed.
+- `CKEditor#markSaved(target)` deletes, by the store, the images uploaded since the text was last
+  saved that it no longer holds, as `RichTextEditor`'s does: a page keeping them overrides
+  `deleteImages(Set)`.
 
 ## 10.11.0-RC11 (2026-11-19)
 
