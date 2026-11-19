@@ -40,7 +40,8 @@
 		type RichTextEditorSelection, type RichTextEditorState,
 		type RichTextEditorStateChange, type RichTextEditorTexts, type RichTextExtension,
 		type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
-		type RichTextAttachmentType, type RichTextProofreader, type RichTextStoredImage,
+		type RichTextAttachmentType, type RichTextAttachmentUrls, type RichTextProofreader,
+		type RichTextStoredImage,
 		type RichTextSuggester, type RichTextTool, type RichTextUploadOptions } from '@antilia/core';
 
 	import { getLook } from './look.js';
@@ -170,6 +171,12 @@
 		/** Whether the form of the tool attachment opens the dialog of the uploads. */
 		attachDialog?: boolean;
 		/**
+		 * The addresses of the files attached to the text, or a test of an address: in Markdown,
+		 * where a file is a plain link, a link to one of them comes back as a file; every link as
+		 * a link when left out.
+		 */
+		attachmentUrls?: RichTextAttachmentUrls | null;
+		/**
 		 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 		 * again; false when left out.
 		 */
@@ -276,6 +283,7 @@
 		attachMaxSize,
 		attachMaxCount,
 		attachDialog,
+		attachmentUrls,
 		name,
 		id,
 		class: className = '',
@@ -334,7 +342,8 @@
 			uploadMaxCount, uploadDialog, onUpload: uploader(), onStorePermanently: keeper(),
 			onFindImages: finder(),
 			onImagesRemoved: (urls: string[]) => onimagesremoved?.(urls),
-			attachTypes, attachMaxSize, attachMaxCount, attachDialog, onAttach: attacher(),
+			attachTypes, attachMaxSize, attachMaxCount, attachDialog, attachmentUrls,
+			onAttach: attacher(),
 			onAttachmentsRemoved: (urls: string[]) => onattachmentsremoved?.(urls),
 			onChange: (next: string) => {
 				value = next;
@@ -400,7 +409,7 @@
 			onUpload: uploader(), onStorePermanently: keeper(), onFindImages: finder(),
 			attachTypes, attachMaxSize: attachMaxSize ?? null,
 			attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
-			onAttach: attacher() };
+			attachmentUrls: attachmentUrls ?? null, onAttach: attacher() };
 		untrack(() => instance?.configure(next));
 	});
 

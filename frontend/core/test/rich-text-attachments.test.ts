@@ -16,8 +16,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Slice } from '@tiptap/pm/model';
 import { TextSelection } from '@tiptap/pm/state';
 
-import { checkAttachments, DEFAULT_RICH_TEXT_ATTACH_TYPES, DEFAULT_RICH_TEXT_EDITOR_TEXTS,
-	Popover, RichTextEditor, setHost, standaloneHost } from '../src/index.js';
+import { attachmentsIn, attachmentUrlTest, checkAttachments, DEFAULT_RICH_TEXT_ATTACH_TYPES,
+	DEFAULT_RICH_TEXT_EDITOR_TEXTS, linksToAttachments, Popover, RichTextEditor, setHost,
+	standaloneHost } from '../src/index.js';
 
 const tick = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -104,6 +105,82 @@ describe('the files attached', () => {
 		editor.editor.commands.insertContent({ type: 'attachment', attrs: { href: '/files/r.pdf',
 			name: 'report [final].pdf', size: '2 MB', kind: 'pdf' } });
 		expect(editor.getValue()).toBe('[report \\[final\\].pdf](/files/r.pdf)');
+	});
+
+	it('come back as files from Markdown when the page tells their addresses', async () => {
+		vi.useFakeTimers();
+		try {
+			const onAttachmentsRemoved = vi.fn();
+			const markdown = 'See [report.pdf](/files/r.pdf), [site](/about) and ' +
+				'[**bold.pdf**](/files/b.pdf)';
+			const editor = new RichTextEditor(textArea(markdown), { format: 'markdown',
+				onAttach: () => Promise.resolve('/f'), onAttachmentsRemoved,
+				attachmentUrls: ['/files/r.pdf', '/files/b.pdf'] });
+			const paragraph = editor.editor.state.doc.firstChild!;
+			expect(paragraph.child(1).type.name).toBe('attachment');
+			expect(paragraph.child(1).attrs).toEqual({ href: '/files/r.pdf', name: 'report.pdf',
+				size: null, kind: 'pdf' });
+			expect(attachmentsIn(editor.editor.state.doc)).toEqual(new Map([['/files/r.pdf', 1]]));
+			// the same Markdown, not modified, nothing to undo
+			expect(editor.getValue()).toBe(markdown);
+			expect(editor.isModified()).toBe(false);
+			expect(editor.editor.can().undo()).toBe(false);
+
+			// a text the page gives too, by a test of the addresses
+			editor.setValue('[a.csv](/files/a.csv?v=2) [b](/files/b)');
+			expect(attachmentsIn(editor.editor.state.doc).size).toBe(0);
+			const tested = new RichTextEditor(textArea('[a.csv](/files/a.csv?v=2) [b](/files/b)'),
+				{ format: 'markdown', onAttach: () => Promise.resolve('/f'), onAttachmentsRemoved,
+					attachmentUrls: (href) => href.startsWith('/files/') });
+			const attrs = tested.editor.state.doc.firstChild!.child(0).attrs;
+			expect(attrs).toEqual({ href: '/files/a.csv?v=2', name: 'a.csv', size: null,
+				kind: 'csv' });
+			expect(tested.editor.state.doc.firstChild!.child(2).attrs.kind).toBeNull();
+			tested.setValue('[r.pdf](/files/r.pdf)');
+			expect(attachmentsIn(tested.editor.state.doc)).toEqual(new Map([['/files/r.pdf', 1]]));
+
+			// taken out, the page hears of it
+			tested.editor.commands.setContent('');
+			await vi.advanceTimersByTimeAsync(300);
+			expect(onAttachmentsRemoved).toHaveBeenCalledWith(['/files/r.pdf']);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('come back as links where no file is told, or the schema has none', () => {
+		const markdown = '[report.pdf](/files/r.pdf)';
+		const none = new RichTextEditor(textArea(markdown), { format: 'markdown',
+			onAttach: () => Promise.resolve('/f') });
+		expect(attachmentsIn(none.editor.state.doc).size).toBe(0);
+		const noFeature = new RichTextEditor(textArea(markdown), { format: 'markdown',
+			attachmentUrls: ['/files/r.pdf'] });
+		expect(noFeature.getValue()).toBe(markdown);
+	});
+
+	it('are links of the JSON turned into files: a text of their own at a safe address', () => {
+		const isFile = (href: string) => href.startsWith('/files/') || href.startsWith('javascript');
+		const link = (text: string, href: string, more: { type: string }[] = []) => ({ type: 'text', text,
+			marks: [{ type: 'link', attrs: { href } }, ...more] });
+		const json = { type: 'doc', content: [{ type: 'bulletList', content: [{ type: 'listItem',
+			content: [{ type: 'paragraph', content: [link('r.pdf', '/files/r.pdf'),
+				link('b.pdf', '/files/b.pdf', [{ type: 'bold' }]), link('x', 'javascript:steal()'),
+				link('site', '/about')] }] }] }] };
+		const converted = linksToAttachments(json, isFile, DEFAULT_RICH_TEXT_ATTACH_TYPES);
+		const content = converted.content![0]!.content![0]!.content![0]!.content!;
+		expect(content[0]).toEqual({ type: 'attachment', attrs: { href: '/files/r.pdf',
+			name: 'r.pdf', size: null, kind: 'pdf' } });
+		expect(content.slice(1)).toEqual(json.content[0]!.content[0]!.content[0]!.content.slice(1));
+		// the JSON given stays as it was
+		expect(json.content[0]!.content[0]!.content[0]!.content[0]!.type).toBe('text');
+		const plain = { type: 'doc', content: [{ type: 'paragraph', content: [link('site', '/a')] }] };
+		expect(linksToAttachments(plain, isFile, [])).toBe(plain);
+		expect(attachmentUrlTest(null)).toBeNull();
+		expect(attachmentUrlTest([])).toBeNull();
+		expect(attachmentUrlTest(['/a'])!('/a')).toBe(true);
+		expect(attachmentUrlTest(() => {
+			throw new Error('no');
+		})!('/a')).toBe(false);
 	});
 
 	it('are checked before they upload: their types, their sizes and how many', () => {

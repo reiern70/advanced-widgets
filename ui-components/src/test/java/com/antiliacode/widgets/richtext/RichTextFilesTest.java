@@ -384,6 +384,30 @@ class RichTextFilesTest extends WicketTestCase
 	}
 
 	@Test
+	void anEditorOfMarkdownTellsTheBrowserTheLinksToTheFilesOfTheResource()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("[a.pdf](" + ROOT + PATH +
+			"/a.pdf) [b](" + ROOT + PATH + "x/b.pdf) [c](/c.pdf)"));
+		editor.setFormat(RichTextFormat.MARKDOWN).setUploadResource(RichTextFiles.get());
+		tester.startPage(new EditorPage(editor));
+		assertEquals("[\"" + ROOT + PATH + "/a.pdf\"]", options(editor).getJSONArray(
+			"attachmentUrls").toString());
+		assertTrue(RichTextFiles.get().isFileUrl(ROOT + PATH + "/a.pdf"));
+		assertFalse(RichTextFiles.get().isFileUrl(ROOT + PATH + "/"));
+		assertFalse(RichTextFiles.get().isFileUrl(null));
+		RichTextFiles.get().setBaseUrl("https://files.example.com/texts");
+		try
+		{
+			assertTrue(RichTextFiles.get().isFileUrl("https://files.example.com/texts/a.pdf"));
+			assertFalse(RichTextFiles.get().isFileUrl(ROOT + PATH + "/a.pdf"));
+		}
+		finally
+		{
+			RichTextFiles.get().setBaseUrl(null);
+		}
+	}
+
+	@Test
 	void mountsOnceAPath()
 	{
 		assertThrows(IllegalStateException.class, () -> RichTextFiles.mount(

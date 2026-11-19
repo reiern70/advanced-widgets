@@ -649,6 +649,18 @@ public final class RichTextFiles
 	}
 
 	/**
+	 * @param url
+	 *            an address
+	 * @return whether it is that of a file of the resource, as {@link #addressOf(String)} answers
+	 *         them: its address, or {@link #setBaseUrl(String) the base one}, a slash and a name
+	 */
+	public boolean isFileUrl(String url)
+	{
+		String prefix = (baseUrl != null ? baseUrl : siteRoot() + path) + "/";
+		return url != null && url.length() > prefix.length() && url.startsWith(prefix);
+	}
+
+	/**
 	 * @return the root of the application on the server, with a slash at its end
 	 */
 	private static String siteRoot()

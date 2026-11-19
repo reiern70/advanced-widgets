@@ -23,7 +23,8 @@ import { lezerHighlighter, RichTextEditor as CoreRichTextEditor, type EditorEven
 	type RichTextExtension,
 	type RichTextFeature, type RichTextFormat, type RichTextHighlighter,
 	type RichTextImageFinder, type RichTextImageKeeper, type RichTextProofreader,
-	type RichTextAttachmentType, type RichTextStoredImage, type RichTextSuggester,
+	type RichTextAttachmentType, type RichTextAttachmentUrls, type RichTextStoredImage,
+	type RichTextSuggester,
 	type RichTextTool, type RichTextUploader,
 	type RichTextUploadOptions } from '@antilia/core';
 
@@ -154,6 +155,12 @@ export interface RichTextEditorProps {
 	/** Whether the form of the tool attachment opens the dialog of the uploads. */
 	attachDialog?: boolean;
 	/**
+	 * The addresses of the files attached to the text, or a test of an address: in Markdown, where
+	 * a file is a plain link, a link to one of them comes back as a file; every link as a link
+	 * when left out.
+	 */
+	attachmentUrls?: RichTextAttachmentUrls | null;
+	/**
 	 * Whether a line under the toolbar tells the user what a paste lost, until the text changes
 	 * again; false when left out.
 	 */
@@ -267,7 +274,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 			minHeight, maxWidth, maxHeight, events, extensions, pasteNotice, texts, highlight,
 			codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
 			uploadMaxCount, uploadDialog, attachTypes, attachMaxSize, attachMaxCount, attachDialog,
-			name, id, className } = props;
+			attachmentUrls, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
 		const attaches = props.onAttach !== undefined;
 		const keeps = props.onStorePermanently !== undefined;
@@ -317,7 +324,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				onImagesRemoved: (urls) => latest.current.onImagesRemoved?.(urls),
 				attachTypes: current.attachTypes, attachMaxSize: current.attachMaxSize,
 				attachMaxCount: current.attachMaxCount, attachDialog: current.attachDialog,
-				onAttach: attacherOf(latest),
+				attachmentUrls: current.attachmentUrls, onAttach: attacherOf(latest),
 				onAttachmentsRemoved: (urls) => latest.current.onAttachmentsRemoved?.(urls),
 				onChange: (next) => latest.current.onChange?.(next),
 				onFocus: () => latest.current.onFocus?.(),
@@ -370,10 +377,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest),
 				attachTypes, attachMaxSize: attachMaxSize ?? null,
 				attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
-				onAttach: attacherOf(latest) });
+				attachmentUrls: attachmentUrls ?? null, onAttach: attacherOf(latest) });
 		}, [highlight, codeLanguages, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
 			uploadScaling, uploadMaxCount, uploadDialog, uploads, keeps, finds, attachTypes,
-			attachMaxSize, attachMaxCount, attachDialog, attaches]);
+			attachMaxSize, attachMaxCount, attachDialog, attachmentUrls, attaches]);
 
 		useLayoutEffect(() => {
 			const editor = instance.current;

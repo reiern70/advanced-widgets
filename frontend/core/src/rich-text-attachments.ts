@@ -21,7 +21,9 @@
  *
  * The class of its kind, the extension of its format, draws its icon, and the style sheet shows its
  * size after its name: no style attribute, which a strict Content Security Policy blocks. In
- * Markdown a file is a plain link, [report.pdf](url), which comes back as a link.
+ * Markdown a file is a plain link, [report.pdf](url), which comes back as a link, unless the page
+ * tells the addresses of its files (the option attachmentUrls): a link to one of them, a text of
+ * its own, comes back as a file, its size unknown.
  *
  * The page uploads the files (the option onAttach, an uploader as onUpload is for the images,
  * uploadFileTo() posting to a URL), within its limits: the types (attachTypes, each a media type,
@@ -30,9 +32,10 @@
  * a browser often leaves out; the server tells it again by the bytes.
  */
 
-import { Node, type Editor } from '@tiptap/core';
+import { Node, type Editor, type JSONContent } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 
+import { getHost } from './host.js';
 import { isSafeUrl } from './rich-text-html.js';
 import { fileNameOf, sizeText, type UploadCheck } from './rich-text-upload.js';
 
@@ -111,6 +114,84 @@ export function attachmentTypeOf(file: File, types: readonly RichTextAttachmentT
 export function attachmentKind(file: File, types: readonly RichTextAttachmentType[]): string {
 	const kind = attachmentTypeOf(file, types)?.extension ?? extensionOf(file.name);
 	return KIND.test(kind) ? kind : 'file';
+}
+
+/**
+ * The addresses of the files attached to a text, which a link to in Markdown is one of: a list of
+ * them, or a test of an address.
+ */
+export type RichTextAttachmentUrls = readonly string[] | ((href: string) => boolean);
+
+/**
+ * @returns a test of the addresses of the files attached, as given; null for none
+ */
+export function attachmentUrlTest(urls: RichTextAttachmentUrls | null | undefined):
+	((href: string) => boolean) | null {
+	if (typeof urls === 'function') {
+		return (href) => {
+			try {
+				return !!urls(href);
+			} catch (error) {
+				getHost().log.error('The test of the addresses of the files attached failed', error);
+				return false;
+			}
+		};
+	}
+	if (!Array.isArray(urls) || !urls.length) {
+		return null;
+	}
+	const known = new Set(urls.filter((each) => typeof each === 'string'));
+	return (href) => known.has(href);
+}
+
+/**
+ * @returns the kind of a file attached known by its link alone: the extension of its name, else
+ *          of its address, of the types given or not; null for none a class may hold
+ */
+function kindOfLink(name: string, href: string, types: readonly RichTextAttachmentType[]):
+	string | null {
+	for (const extension of [extensionOf(name), extensionOf(href.split(/[?#]/)[0] ?? '')]) {
+		const known = types.find((each) => each.extension === extension)?.extension ?? extension;
+		if (known && KIND.test(known)) {
+			return known;
+		}
+	}
+	return null;
+}
+
+/**
+ * Turns the links to files attached back into files attached, in Tiptap's JSON of a text: in
+ * Markdown a file is a plain link, [report.pdf](url), which comes back as a link. A link is a file
+ * when its address is safe and one of the files' (isAttachment), and it is a text of its own, with
+ * no other mark: its text is the file's name, the extension its kind; its size is unknown.
+ *
+ * @returns the JSON, a copy of what changed, the same object when nothing did
+ */
+export function linksToAttachments(json: JSONContent, isAttachment: (href: string) => boolean,
+	types: readonly RichTextAttachmentType[]): JSONContent {
+	const content = json.content;
+	if (!Array.isArray(content)) {
+		return json;
+	}
+	let changed = false;
+	const next = content.map((child): JSONContent => {
+		if (child.type === 'text') {
+			const marks = child.marks ?? [];
+			const href = marks.length === 1 && marks[0]!.type === 'link' ?
+				String(marks[0]!.attrs?.href ?? '') : '';
+			if (!href || !isSafeUrl(href) || !isAttachment(href)) {
+				return child;
+			}
+			changed = true;
+			const name = (child.text ?? '').trim() || href;
+			return { type: 'attachment',
+				attrs: { href, name, size: null, kind: kindOfLink(name, href, types) } };
+		}
+		const converted = linksToAttachments(child, isAttachment, types);
+		changed ||= converted !== child;
+		return converted;
+	});
+	return changed ? { ...json, content: next } : json;
 }
 
 /** The limits of the files attached, as the page gives them. */

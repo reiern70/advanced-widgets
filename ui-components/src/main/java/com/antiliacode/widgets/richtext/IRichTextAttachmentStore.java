@@ -74,6 +74,24 @@ public interface IRichTextAttachmentStore extends IClusterable
 	}
 
 	/**
+	 * Tells whether an address is that of a file the store keeps. A file is a plain link in
+	 * Markdown, {@code [report.pdf](url)}: the editor gives the browser the links of a text whose
+	 * addresses the store keeps, which come back as files there, listed by the tool of the files and
+	 * told of when the user takes them out. None by default: in Markdown, the links of a text read
+	 * again stay links, but for the files uploaded since the text was last saved, and those of
+	 * {@link RichTextFiles the resource of the uploads}.
+	 *
+	 * @param url
+	 *            the address of a link of a text
+	 * @return whether it is that of a file the store keeps
+	 * @since 11.0.0
+	 */
+	default boolean isStored(String url)
+	{
+		return false;
+	}
+
+	/**
 	 * Opens a file for {@link RichTextFiles the resource of the uploads} to serve, by the name its
 	 * address ends with, one the user of the request may see. None by default: the application
 	 * serves its files itself.

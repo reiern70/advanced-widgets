@@ -30,6 +30,14 @@ What 11.0.0-RC6 has, and:
   `RichTextFiles#setBaseUrl`, on a domain of its own, as the site's own (#124): the images
   uploaded there are no longer refused, nor taken out by the cleaning of HTML, Markdown and
   Tiptap's JSON. `RichTextFiles.isOwnUrl(url)` tells.
+- A Markdown text read again knows its files attached (#124): Markdown keeps a file as a plain
+  link, `[report.pdf](url)`, which came back as a link, so that a file taken out of it was never
+  told of in `onAttachmentsRemoved` nor deleted. The editor gives the browser the links whose
+  addresses are those of files, `attachmentUrls`: those of the resource of the uploads
+  (`RichTextFiles#isFileUrl`), those the store says it keeps
+  (`IRichTextAttachmentStore#isStored(url)`, none by default) and those uploaded since the last
+  save. A link to one of them, a text of its own, comes back as a file, its size unknown. The
+  editors of React and Svelte take `attachmentUrls` too, a list or a test of an address.
 
 ## 11.0.0-RC6 (2026-11-19)
 

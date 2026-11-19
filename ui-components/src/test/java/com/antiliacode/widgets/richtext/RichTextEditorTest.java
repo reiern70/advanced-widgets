@@ -77,6 +77,7 @@ import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.upload.IUploadFileFormat;
 
 class RichTextEditorTest extends WicketTestCase
 {
@@ -857,6 +858,39 @@ class RichTextEditorTest extends WicketTestCase
 		editor.setReadOnly(true);
 		tester.startPage(page);
 		assertFalse(options(editor).has("attachUrl"));
+	}
+
+	@Test
+	void tellsTheBrowserTheLinksToTheFilesOfAMarkdownText()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("See [a.pdf](/f/a.pdf), " +
+			"[site](/about) and ![bird](/f/b.png)"));
+		editor.setFormat(RichTextFormat.MARKDOWN).setAttachmentStore(new IRichTextAttachmentStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(FileUpload file, IUploadFileFormat format)
+			{
+				return "/f/new." + format.getExtension();
+			}
+
+			@Override
+			public boolean isStored(String url)
+			{
+				return url.startsWith("/f/");
+			}
+		});
+		tester.startPage(new TestPage(editor));
+		assertEquals("[\"/f/a.pdf\"]", options(editor).getJSONArray("attachmentUrls").toString());
+
+		// a store telling none, or HTML, whose files are of their own
+		editor.setAttachmentStore((file, format) -> "/f/new." + format.getExtension());
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).has("attachmentUrls"));
+		editor.setFormat(RichTextFormat.HTML).getModel().setObject("<p><a href=\"/f/a.pdf\">a</a></p>");
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).has("attachmentUrls"));
 	}
 
 	@Test
