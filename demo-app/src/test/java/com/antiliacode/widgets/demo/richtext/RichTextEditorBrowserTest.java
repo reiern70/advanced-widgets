@@ -313,6 +313,34 @@ class RichTextEditorBrowserTest extends FrameworkAppsTestCase
 	}
 
 	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void showsTheTextsAsSavedInTheView(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		content().sendKeys(" Seen in the view.");
+		editor().findElement(By.xpath("ancestor::form//button[normalize-space() = 'Save']"))
+			.click();
+		selectCase("View: the texts as saved");
+		// the article as saved, and the notes as their Markdown makes them: a heading
+		wait.until(d -> shown("p").stream().anyMatch(each -> each.getText()
+			.contains("Seen in the view.")));
+		wait.until(d -> shown("h1").stream().anyMatch(each -> each.getText()
+			.startsWith("Packing list")));
+		assertTrue(shown("[contenteditable=true]").isEmpty(), "nothing to edit in the view");
+		assertNoErrors();
+	}
+
+	/**
+	 * @return the elements the app shows, of a selector
+	 */
+	private List<WebElement> shown(String selector)
+	{
+		return app().findElements(By.cssSelector(selector)).stream().filter(WebElement::isDisplayed)
+			.toList();
+	}
+
+	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
 	void countsTheCharactersOfTheNotesInTheBrowser(SeleniumBrowser browser)
 	{
