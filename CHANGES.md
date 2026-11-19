@@ -11,7 +11,7 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 11.0.0-RC6 (not released yet)
+## 11.0.0-RC6 (2026-11-19)
 
 What 11.0.0-RC5 has, and:
 
@@ -35,8 +35,8 @@ What 11.0.0-RC5 has, and:
   itself is refused, its veil covering the field. The rows of a data table, the `<tbody>`, have a
   local veil of their own (`newRowsVeilBehavior()`), which a filter in a toolbar of the table
   raises by `veil(table.getRowsBody())`, `getRowsBody()` public now: the rows are veiled while the
-  filter's request runs, the toolbar and its field not. The demo's table filters do. Both are on
-  `line-10.x` too, for 10.11.0-RC12.
+  filter's request runs, the toolbar and its field not. The demo's table filters do. Both are in
+  10.11.0-RC11 too.
 - The button of a single drop-down ends a choice too long for it in «…» instead of cutting it
   off in the middle of a letter; its `title` still has the whole text (#137).
 - A veil over a page while it loads, until its scripts have run, so that no click reaches a
@@ -51,7 +51,7 @@ What 11.0.0-RC5 has, and:
   Policy, by CSS alone, without inline script or style; `--antilia-page-loading-delay` and
   `--antilia-page-loading-timeout` change the times. The content is not made `inert`: only a
   script could take that away again, and it would keep the focus from the page while it loads.
-  It is on `line-10.x` too, for the next 10.11.0 release candidate.
+  It is in 10.11.0-RC11 too.
 - Wicket's veil, `PageVeilBehavior` and `LocalVeilBehavior`, with three gaps closed by an add-on
   to its script, `antilia-veil-gaps.js` (`VeilGaps`), which the library's `Initializer` renders
   wherever a page has Wicket's veil (#141). Enter and Space are dropped under a veil, but where
@@ -101,8 +101,8 @@ What 11.0.0-RC4 has, and:
   whole text as its `title`. A select's `<optgroup>`s are drawn as labelled groups, hidden when
   the filter leaves none of their options: `Dropdown#setGroup(function)` or an overridden
   `getGroup(choice)` in Wicket, an option's `group` in React and Svelte, and the look parts
-  `dropdown-group`, `dropdown-group-label` and `dropdown-group-list`. They are on `line-10.x`
-  too, for the next 10.11.0 release candidate.
+  `dropdown-group`, `dropdown-group-label` and `dropdown-group-list`. They are in 10.11.0-RC11
+  too.
 
 **Upgrading:**
 
