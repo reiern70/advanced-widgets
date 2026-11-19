@@ -321,11 +321,18 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 ### What comes with the components
 
 The dependency brings what the components need: Wicket's core, its extensions and its native
-WebSocket, the OWASP HTML sanitizer, and the Font Awesome Free web jar
-(`org.webjars.npm:fortawesome__fontawesome-free`), whose icons `SvgIcon` reads at run time and
-draws in the components' own buttons, panels and toolbars. The servlet API is the container's.
+WebSocket, and the Font Awesome Free web jar (`org.webjars.npm:fortawesome__fontawesome-free`),
+whose icons `SvgIcon` reads at run time and draws in the components' own buttons, panels and
+toolbars. The servlet API is the container's.
 
-One dependency is optional, and an application using what needs it adds it:
+Two dependencies are optional, and an application using what needs them adds them:
+
+- the OWASP Java HTML Sanitizer,
+  `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer`, for the rich text
+  editors: `RichTextEditor`, `CKEditor`, `RichTextView`, `CKEditorView`, and the classes of
+  their packages cleaning a text on the server (`RichTextPolicy`, `CKEditorPolicy`, the
+  sanitizers of JSON and Markdown). Without it an editor or a view fails as it is added to a
+  page, telling so; nothing else needs it.
 
 - Jackson, 3 (`tools.jackson.core:jackson-databind`) or 2
   (`com.fasterxml.jackson.core:jackson-databind`), for the JSON of `JsonBasedDynamicDataTable`,
