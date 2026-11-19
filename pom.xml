@@ -78,7 +78,7 @@
 		-->
 		<jetty.version>12.1.15</jetty.version>
 		<jackson.version>3.3.0</jackson.version>
-		<!-- Jackson 2, for Jackson2JsonSerializer: the 2.x paired with Jackson 3.2, sharing its annotations -->
+		<!-- Jackson 2, for Jackson2JsonSerializer: the 2.x paired with Jackson 3.3, sharing its annotations -->
 		<jackson2.version>2.23.0</jackson2.version>
 		<!-- cleans the HTML of the rich text editor on the server -->
 		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
