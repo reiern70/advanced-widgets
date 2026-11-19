@@ -921,6 +921,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 		{
 			add(veil);
 		}
+		Behavior rowsVeil = newRowsVeilBehavior();
+		if (rowsVeil != null)
+		{
+			rowsBody.add(rowsVeil);
+		}
 		add(checkToolbar(newNavigationToolbar("topNavigation", ToolbarPosition.TOP),
 			"topNavigation").add(new PositionBehavior(true, ToolbarPosition.TOP)));
 		add(checkToolbar(newSelectionToolbar("topSelection", ToolbarPosition.TOP), "topSelection")
@@ -955,9 +960,11 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	protected abstract Component newRowsBody(String id);
 
 	/**
-	 * @return the component holding the rows, created by {@link #newRowsBody(String)}
+	 * @return the component holding the rows, created by {@link #newRowsBody(String)}: what a
+	 *         filter in a toolbar of the table veils while its request runs,
+	 *         {@code FilterBehavior#veil(getRowsBody())}, the table holding the filter's field
 	 */
-	protected final Component getRowsBody()
+	public final Component getRowsBody()
 	{
 		return rowsBody;
 	}
@@ -972,6 +979,23 @@ public abstract class BaseDynamicDataTable<T, K extends Serializable, C extends 
 	 * @since 11.0.0
 	 */
 	protected Behavior newVeilBehavior()
+	{
+		return new LocalVeilBehavior();
+	}
+
+	/**
+	 * Creates the behavior blocking the rows alone, the {@code <tbody>} of the
+	 * {@link #getRowsBody() rows body}, while a request runs: those of the rows, a row action or a
+	 * row's check box, which the veil nearest to them veils instead of the table's, and the
+	 * request of a filter in a toolbar of the table, which veils the rows by
+	 * {@code FilterBehavior#veil(table.getRowsBody())} while its field stays usable. A
+	 * {@link LocalVeilBehavior} by default; the toolbars' actions keep the table's veil,
+	 * {@link #newVeilBehavior()}.
+	 *
+	 * @return the behavior, or {@code null} for the rows veiled with the table
+	 * @since 11.0.0
+	 */
+	protected Behavior newRowsVeilBehavior()
 	{
 		return new LocalVeilBehavior();
 	}
