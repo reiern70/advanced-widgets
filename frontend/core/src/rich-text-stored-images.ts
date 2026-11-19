@@ -26,7 +26,7 @@
 
 import type { Look } from './look.js';
 import { partClasses } from './look.js';
-import { isSafeUrl } from './rich-text-schema.js';
+import { isSafeUrl } from './rich-text-html.js';
 import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
 
 /** An image the page stores permanently: its address, and the name the user finds it by. */
