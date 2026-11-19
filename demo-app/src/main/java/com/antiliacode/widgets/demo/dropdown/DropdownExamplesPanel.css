@@ -60,3 +60,48 @@
 	border-left: 4px solid var(--accent, var(--primary));
 	background: var(--surface);
 }
+
+/* the unit of measure chosen in a dialog, below the form of the drop-down page */
+.dropdown-demo__dialog {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	margin-top: 16px;
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.dropdown-demo__dialog h3 {
+	flex-basis: 100%;
+	margin: 0;
+	font-size: 16px;
+}
+
+.dropdown-demo__unit {
+	flex: 1 1 20em;
+	margin: 0;
+}
+
+/* the form of the dialog: a text, and the drop-down of the units last, next to the footer */
+.dropdown-demo__unit-form {
+	display: grid;
+	gap: 12px;
+}
+
+.dropdown-demo__unit-form p {
+	margin: 0;
+}
+
+.dropdown-demo__unit-form label {
+	display: grid;
+	gap: 4px;
+	font-weight: 600;
+}
+
+.dropdown-demo__unit-form .antilia-dropdown {
+	width: 100%;
+	font-weight: normal;
+}
