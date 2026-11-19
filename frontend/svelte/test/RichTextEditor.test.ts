@@ -279,6 +279,16 @@ describe('RichTextEditor', () => {
 			expect(onimagesremoved).toHaveBeenCalledWith(['/a.png']);
 		});
 
+	it('takes back as files the links to the addresses of attachmentUrls, in Markdown', () => {
+		const { container } = render(BoundRichTextEditor, { format: 'markdown',
+			value: 'See [r.pdf](/files/r.pdf) and [site](/about)', attachmentUrls: ['/files/r.pdf'],
+			onattach: () => Promise.resolve('/f') });
+		const doc = core(container).editor.state.doc;
+		expect(doc.firstChild!.child(1).type.name).toBe('attachment');
+		expect(doc.firstChild!.child(3).type.name).toBe('text');
+		expect(core(container).getValue()).toBe('See [r.pdf](/files/r.pdf) and [site](/about)');
+	});
+
 	it('attaches the files the user drops, by onattach, and tells of those taken out',
 		async () => {
 			const onattach = vi.fn(() => Promise.resolve('/files/r.pdf'));

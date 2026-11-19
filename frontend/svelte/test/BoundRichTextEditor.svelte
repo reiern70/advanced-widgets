@@ -25,7 +25,7 @@
 		onselectionchange, highlight, codeLanguages, uploadMaxSize, onupload, uploadMaxCount,
 		uploadMaxWidth, uploadMaxHeight, uploadScaling, uploadDialog, onimagesremoved, colors,
 		backgroundColors, spellcheck, textLanguage, proofreader, suggesters, features, pasteNotice,
-		onpastecleaned, onattach, attachMaxSize, onattachmentsremoved }: {
+		onpastecleaned, onattach, attachMaxSize, onattachmentsremoved, attachmentUrls }: {
 		value?: string; state?: RichTextEditorState; saved?: string; name?: string;
 		format?: RichTextFormat; readOnly?: boolean; toolbar?: RichTextTool[][] | false;
 		count?: boolean; className?: string; onsave?: (value: string) => void;
@@ -43,6 +43,7 @@
 		features?: RichTextFeature[]; pasteNotice?: boolean;
 		onpastecleaned?: (report: RichTextCleaningReport) => void;
 		onattach?: (file: File) => Promise<string>; attachMaxSize?: number;
+		attachmentUrls?: readonly string[] | ((href: string) => boolean) | null;
 		onattachmentsremoved?: (urls: string[]) => void } = $props();
 	let modified = $state(false);
 
@@ -59,7 +60,7 @@
 		{uploadMaxHeight} {uploadScaling} {uploadDialog} {onimagesremoved} {colors}
 		{backgroundColors} {spellcheck}
 		{textLanguage} {proofreader} proofreadDelay={0} {suggesters} {features} {pasteNotice}
-		{onpastecleaned} {onattach} {attachMaxSize} {onattachmentsremoved} />
+		{onpastecleaned} {onattach} {attachMaxSize} {onattachmentsremoved} {attachmentUrls} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

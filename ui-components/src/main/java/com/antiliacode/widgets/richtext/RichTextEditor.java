@@ -1043,6 +1043,22 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return whether the address of a link of the text is that of a file attached: one the editor
+	 *         took since it was last saved, one of the resource of the uploads, or one its store
+	 *         keeps ({@link IRichTextAttachmentStore#isStored(String)})
+	 */
+	private boolean isAttachmentUrl(String url)
+	{
+		if (uploadedAttachments().contains(url) ||
+			isAttachmentResource() && getUploadResource().isFileUrl(url))
+		{
+			return true;
+		}
+		IRichTextAttachmentStore store = attachmentStore;
+		return store != null && store.isStored(url);
+	}
+
+	/**
 	 * Forgets files the editor took: they are no longer deleted when the browser asks to.
 	 */
 	private void forgetAttachments(Collection<String> urls)
@@ -2081,6 +2097,16 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			if (!options.has("imagesAjax"))
 			{
 				options.put("imagesAjax", new JSONFunction(imagesRemoval.renderAttributes()));
+			}
+			if (getFormat() == RichTextFormat.MARKDOWN)
+			{
+				// a file is a plain link in Markdown: the links to the files come back as files
+				JSONArray urls = new JSONArray();
+				attachmentsShown.stream().filter(this::isAttachmentUrl).forEach(urls::put);
+				if (urls.length() > 0)
+				{
+					options.put("attachmentUrls", urls);
+				}
 			}
 		}
 		else if (uploadKey != null && isAttachmentResource())
