@@ -13,12 +13,10 @@
  */
 package com.antiliacode.widgets.ckeditor;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -31,7 +29,6 @@ import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
-import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.resource.CoreLibrariesContributor;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.lang.Bytes;
@@ -39,18 +36,19 @@ import org.apache.wicket.util.lang.Bytes;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
+import com.antiliacode.widgets.button.ButtonBehavior;
+import com.antiliacode.widgets.modal.Modal;
 import com.antiliacode.widgets.resizable.ResizableBehavior;
 import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceReference;
 import com.antiliacode.widgets.richtext.AbstractRichTextEditor;
 import com.antiliacode.widgets.richtext.IRichTextImageStore;
-import com.antiliacode.widgets.richtext.IRichTextImageType;
 import com.antiliacode.widgets.richtext.IRichTextSanitizer;
 import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageDimensions;
-import com.antiliacode.widgets.richtext.RichTextImageType;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
+import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 
 /**
  * A text area shown as CKEditor 5, a rich text editor with its own toolbar, balloons and dialogs,
@@ -97,6 +95,21 @@ import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
  * {@link #setImageMaxDimensions(RichTextImageDimensions)}), has the store keep it and answers its
  * address, or why not in the language of the page. The browser checks the image first, and shows
  * the progress on it, without a style attribute.
+ * <p>
+ * The rest of the uploads of {@link RichTextEditor} are CKEditor's too, from
+ * {@link AbstractRichTextEditor}, with tools of the editor's own in CKEditor's toolbar, which a
+ * {@link #setToolbar(List) toolbar of the page's own} names too: how many images one choice or
+ * drop takes, and the pictures too large scaled down when the user ticks them
+ * ({@link #setImageMaxCount(Integer)}, {@link #setImageScaling(boolean)}); the dialog of the
+ * uploads, the tool {@code uploadImages} ({@link #setImageUploadDialog(boolean)}); the images kept
+ * permanently, ticked in that dialog and inserted by the tool {@code storedImage}
+ * ({@link #setPermanentImages(boolean)}); the tool {@code images} listing the images of the text,
+ * and the deletion of those the user took out ({@link #setImageDeletion(
+ * com.antiliacode.widgets.richtext.RichTextImageDeletion)}); the resource of the uploads of the
+ * application ({@link #setUploadResource(com.antiliacode.widgets.richtext.RichTextFiles)}); and the
+ * files attached, {@link CKEditorFeature#ATTACHMENT}, an inline widget, with the tools
+ * {@code attachment} and {@code attachments} ({@link #setAttachmentStore(
+ * com.antiliacode.widgets.richtext.IRichTextAttachmentStore)}).
  * <p>
  * CKEditor 49 has no Watchdog: after an error escaping it, CKEditor keeps running, but may be left
  * in a state of its own. The editor hears of those errors by CKEditor's {@code onEditorError}, and
@@ -150,9 +163,18 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/** The texts of the editor's own, those of {@link RichTextEditor} of the same names. */
 	private static final List<String> TEXTS = List.of("characters", "character", "words", "word",
-		"resize", "linkNewTab", "errorRestarted", "errorGaveUp", "theImage", "uploadFailed",
-		"uploadTooLarge", "uploadType", "uploadTooMany", "uploadTooBig", "pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms",
-		"pasteImages", "pasteTables", "pasteLinks", "pasteFormatting");
+		"resize", "linkNewTab", "errorRestarted", "errorGaveUp", "pasteCleaned", "pasteScripts",
+		"pasteEmbedded", "pasteForms", "pasteImages", "pasteTables", "pasteLinks",
+		"pasteFormatting",
+		// those of the uploads
+		"storedImage", "images", "attachment", "attachments", "uploadImage", "dropImages",
+		"chooseImages", "uploadImagesTitle", "uploadDone", "removeFile", "insertImages", "cancel",
+		"close", "noImages", "deleteImage", "uploading", "theImage", "noAttachments",
+		"deleteAttachment", "dropFiles", "chooseFiles", "attachFiles", "attachFilesTitle",
+		"insertFiles", "attachmentType", "attachTooMany", "theFile", "attaching", "uploadFailed",
+		"uploadTooLarge", "uploadType", "uploadTooMany", "uploadTooBig", "scaleTitle", "scaleText",
+		"scaleDown", "upload", "cancelUpload", "storePermanently", "permanentFailed", "findImages",
+		"findingImages", "noStoredImages");
 
 	/** The features set, {@code null} for those of the format. */
 	private Set<CKEditorFeature> features;
@@ -168,17 +190,6 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/** How CKEditor starts again after an error, {@code null} for not at all. */
 	private CKEditorRecovery recovery = CKEditorRecovery.DEFAULT;
-
-	private IRichTextImageStore imageStore;
-
-	/** The behavior taking the images, made with the first store. */
-	private RichTextImageUploadBehavior imageUpload;
-
-	private Bytes imageMaxSize = RichTextImageUploadBehavior.DEFAULT_MAX_SIZE;
-
-	private Set<IRichTextImageType> imageTypes = new LinkedHashSet<>(RichTextImageType.ALL);
-
-	private RichTextImageDimensions imageMaxDimensions;
 
 	/**
 	 * An editor whose model is inherited, for example from a {@code CompoundPropertyModel}, keeping
@@ -406,165 +417,6 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 		return this;
 	}
 
-	@Override
-	public IRichTextImageStore getImageStore()
-	{
-		return imageStore;
-	}
-
-	/**
-	 * @param imageStore
-	 *            what keeps the images the user uploads, with the feature image, and tells their
-	 *            addresses: CKEditor then has its upload button and takes images pasted and
-	 *            dropped; {@code null} for no uploads, as by default: an image is an address the
-	 *            user types
-	 * @return {@code this}
-	 */
-	@Override
-	public CKEditor setImageStore(IRichTextImageStore imageStore)
-	{
-		this.imageStore = imageStore;
-		if (imageStore != null && imageUpload == null)
-		{
-			imageUpload = new RichTextImageUploadBehavior(new EditorImageStore())
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected boolean isUploadAllowed()
-				{
-					return isImageUploading();
-				}
-			};
-			imageUpload.setMaxSize(imageMaxSize).setTypes(imageTypes)
-				.setMaxDimensions(imageMaxDimensions);
-			add(imageUpload);
-		}
-		return this;
-	}
-
-	/**
-	 * The store of the editor's behavior: the store the editor has now, which the page may change.
-	 */
-	private final class EditorImageStore implements IRichTextImageStore
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public String store(FileUpload image, IRichTextImageType type) throws IOException
-		{
-			if (imageStore == null)
-			{
-				throw new IOException("The editor keeps no images");
-			}
-			return imageStore.store(image, type);
-		}
-	}
-
-	@Override
-	public Bytes getImageMaxSize()
-	{
-		return imageMaxSize;
-	}
-
-	@Override
-	public CKEditor setImageMaxSize(Bytes imageMaxSize)
-	{
-		this.imageMaxSize = Args.notNull(imageMaxSize, "imageMaxSize");
-		if (imageUpload != null)
-		{
-			imageUpload.setMaxSize(imageMaxSize);
-		}
-		return this;
-	}
-
-	@Override
-	public Set<IRichTextImageType> getImageTypes()
-	{
-		return Collections.unmodifiableSet(imageTypes);
-	}
-
-	@Override
-	public CKEditor setImageTypes(Collection<? extends IRichTextImageType> imageTypes)
-	{
-		this.imageTypes = checkedTypes(imageTypes);
-		if (imageUpload != null)
-		{
-			imageUpload.setTypes(this.imageTypes);
-		}
-		return this;
-	}
-
-	/**
-	 * @return the types given, each once, in their order, as {@link RichTextImageUploadBehavior}
-	 *         takes them
-	 * @throws IllegalArgumentException
-	 *             for none, or one missing
-	 */
-	private static Set<IRichTextImageType> checkedTypes(
-		Collection<? extends IRichTextImageType> types)
-	{
-		Args.notEmpty(types, "imageTypes");
-		Set<IRichTextImageType> checked = new LinkedHashSet<>();
-		for (IRichTextImageType type : types)
-		{
-			Args.notNull(type, "type");
-			Args.notEmpty(type.getMimeType(), "type.getMimeType()");
-			checked.add(type);
-		}
-		return checked;
-	}
-
-	@Override
-	public RichTextImageDimensions getImageMaxDimensions()
-	{
-		return imageMaxDimensions;
-	}
-
-	@Override
-	public CKEditor setImageMaxDimensions(RichTextImageDimensions imageMaxDimensions)
-	{
-		this.imageMaxDimensions = imageMaxDimensions;
-		if (imageUpload != null)
-		{
-			imageUpload.setMaxDimensions(imageMaxDimensions);
-		}
-		return this;
-	}
-
-	/**
-	 * @param maxWidth
-	 *            the widest image the user uploads, in pixels
-	 * @param maxHeight
-	 *            the highest image the user uploads, in pixels
-	 * @return {@code this}
-	 * @see #setImageMaxDimensions(RichTextImageDimensions)
-	 */
-	public CKEditor setImageMaxDimensions(int maxWidth, int maxHeight)
-	{
-		return setImageMaxDimensions(new RichTextImageDimensions(maxWidth, maxHeight));
-	}
-
-	/**
-	 * @return whether the user uploads images now: the editor has a store, and is enabled, not read
-	 *         only, with the feature image
-	 */
-	@Override
-	public boolean isImageUploading()
-	{
-		return imageStore != null && !isReadOnly() &&
-			getFeatures().contains(CKEditorFeature.IMAGE) && isEnabledInHierarchy();
-	}
-
-	/**
-	 * @return the behavior taking the images the user uploads, {@code null} until the editor has a
-	 *         store
-	 */
-	public RichTextImageUploadBehavior getImageUploadBehavior()
-	{
-		return imageUpload;
-	}
-
 	/**
 	 * @return how CKEditor starts again in the browser after an error escaped it, {@code null} for
 	 *         not at all
@@ -601,12 +453,16 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 	protected void renderEditorHead(IHeaderResponse response)
 	{
 		renderHeadItems(response, getLibrary(), getLanguage());
+		if (isImageUploading() && isPermanentImages())
+		{
+			// the dialog of the uploads, where the user ticks the images to store permanently
+			response.render(CssHeaderItem.forReference(Modal.CSS));
+		}
 	}
 
 	/**
 	 * Puts the options of CKEditor: the license key, the language, the toolbar, the plugins, the
-	 * configuration of the page's own, the recovery after an error and, while the user uploads
-	 * images, where they go and what is taken.
+	 * configuration of the page's own and the recovery after an error.
 	 */
 	@Override
 	protected void putEditorOptions(JSONObject options)
@@ -630,17 +486,6 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 		if (config != null)
 		{
 			options.put("config", new JSONObject(config));
-		}
-		if (isImageUploading())
-		{
-			options.put("uploadUrl", imageUpload.getUploadUrl());
-			options.put("uploadTypes", new JSONArray(imageUpload.getMimeTypes()));
-			options.put("uploadMaxSize", imageMaxSize.bytes());
-			if (imageMaxDimensions != null)
-			{
-				options.put("uploadMaxWidth", imageMaxDimensions.width());
-				options.put("uploadMaxHeight", imageMaxDimensions.height());
-			}
 		}
 	}
 
@@ -671,9 +516,11 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/**
 	 * Renders what the editor needs in the browser, in this order: Wicket's Ajax, the library's
-	 * style sheet, {@link #CSS} and that of the bar resizing it, {@link ResizableBehavior#CSS}; the
-	 * library's script, the translation of a language, and {@link #JS}. A page with editors of
-	 * React or Svelte renders them too.
+	 * style sheet, {@link #CSS} and that of the bar resizing it, {@link ResizableBehavior#CSS}, and
+	 * those of the uploads, the files attached and the lists and the forms of their tools, which
+	 * are {@link RichTextEditor#CSS} and those of its buttons and scroll bars; the library's script,
+	 * the translation of a language, and {@link #JS}. A page with editors of React or Svelte
+	 * renders them too.
 	 *
 	 * @param response
 	 *            the header response
@@ -690,6 +537,10 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 		CoreLibrariesContributor.contribute(Application.get(), response);
 		response.render(CssHeaderItem.forReference(library.getCss()));
 		response.render(CssHeaderItem.forReference(ResizableBehavior.CSS));
+		// the uploads: the files attached, the lists of the images and of the files, the dialogs
+		response.render(CssHeaderItem.forReference(ButtonBehavior.CSS));
+		response.render(CssHeaderItem.forReference(ScrollbarBehavior.CSS));
+		response.render(CssHeaderItem.forReference(RichTextEditor.CSS));
 		response.render(CssHeaderItem.forReference(CSS));
 		response.render(JavaScriptHeaderItem.forReference(library.getScript()));
 		ResourceReference translation = library.getTranslation(language);

@@ -19,13 +19,14 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.util.lang.Args;
 
 /**
- * The event of Wicket a {@link RichTextEditor} with a store of files attached sends, bubbling from
- * the editor to the page, when the browser told it the user took files out of the text: deleted by
- * a key, cut, taken out by the list of the files of the toolbar, or by the code of a page. Only the
+ * The event of Wicket a rich text editor with a store of files attached sends,
+ * {@link RichTextEditor} or {@link com.antiliacode.widgets.ckeditor.CKEditor}, bubbling from the
+ * editor to the page, when the browser told it the user took files out of the text: deleted by a
+ * key, cut, taken out by the list of the files of the toolbar, or by the code of a page. Only the
  * files the editor knows are told of: those of the text it was shown with, and those uploaded into
  * it since. Whether they are deleted now or once the text is saved is
- * {@link RichTextEditor#getAttachmentDeletion() the editor's mode for the files}, the same as for
- * the images unless set.
+ * {@link AbstractRichTextEditor#getAttachmentDeletion() the editor's mode for the files}, the same
+ * as for the images unless set.
  *
  * <pre>
  * &#64;Override
@@ -42,7 +43,7 @@ import org.apache.wicket.util.lang.Args;
  */
 public final class RichTextAttachmentsRemovedEvent
 {
-	private final RichTextEditor editor;
+	private final AbstractRichTextEditor<?> editor;
 
 	private final Set<String> urls;
 
@@ -60,8 +61,8 @@ public final class RichTextAttachmentsRemovedEvent
 	 * @param target
 	 *            the Ajax request target
 	 */
-	public RichTextAttachmentsRemovedEvent(RichTextEditor editor, Set<String> urls, boolean deleted,
-		AjaxRequestTarget target)
+	public RichTextAttachmentsRemovedEvent(AbstractRichTextEditor<?> editor, Set<String> urls,
+		boolean deleted, AjaxRequestTarget target)
 	{
 		this.editor = Args.notNull(editor, "editor");
 		this.urls = Set.copyOf(Args.notNull(urls, "urls"));
@@ -72,7 +73,7 @@ public final class RichTextAttachmentsRemovedEvent
 	/**
 	 * @return the editor whose files were taken out
 	 */
-	public RichTextEditor getEditor()
+	public AbstractRichTextEditor<?> getEditor()
 	{
 		return editor;
 	}

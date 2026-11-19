@@ -15,14 +15,17 @@
   The CKEditor demo in Svelte: the editor of the Wicket page, in its markup, with the CKEditor the
   page loaded and its license key. The app keeps the article and the notes, their texts and the
   state the user left their editors in, bound. The HTML and the Markdown the editors give show below
-  them, as text: a server keeping the HTML cleans it.
+  them, as text: a server keeping the HTML cleans it. The images and the files of the article and
+  of the notes go to the resource of the uploads of the application, as those of the Wicket editor,
+  with the same limits: those taken out are deleted once the app saved the text.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { uploadImageTo } from '@antilia/core';
 	import { Button, CKEditor, Tabs, type TabItem } from '@antilia/svelte';
 
 	import { ckText, describe, type CKEditorConfig, type CKText } from '../ck-editor.js';
+	import { attachments, filesTakenOut, imagesTakenOut, storedImages,
+		uploader } from '../rich-text-editor.js';
 
 	let { config }: { config: CKEditorConfig } = $props();
 
@@ -33,20 +36,31 @@
 	let notes = $state<CKText>(ckText(initial.notes));
 	let readOnly = $state(false);
 	let count = $state(true);
+	let uploadDialog = $state(false);
 	let heard = $state(initial.texts.appStart);
-	// the images uploaded into the article go to the page
-	const onupload = uploadImageTo(initial.uploadUrl);
+	// the images and the files go to the resource of the uploads of the application
+	const onupload = uploader(initial);
+	const stored = storedImages(initial);
+	const attached = attachments(initial);
+	const articleImages = imagesTakenOut(initial);
+	const articleFiles = filesTakenOut(initial);
+	const notesImages = imagesTakenOut(initial);
+	const notesFiles = filesTakenOut(initial);
 
 	// the cases, one at a time
 	const cases = $derived<TabItem[]>([{ id: 'articleTitle', title: texts.appArticleTitle, modified: false },
 		{ id: 'notesTitle', title: texts.notesTitle, modified: false }]);
 
 	function saveArticle() {
+		articleImages.saved(article.text);
+		articleFiles.saved(article.text);
 		article.saved = article.text;
 		heard = texts.appSaved;
 	}
 
 	function saveNotes() {
+		notesImages.saved(notes.text);
+		notesFiles.saved(notes.text);
 		notes.saved = notes.text;
 	}
 </script>
@@ -64,6 +78,9 @@
 						<label class="rich-text-demo__control">
 							<input type="checkbox" bind:checked={count} /> {texts.count}
 						</label>
+						<label class="rich-text-demo__control">
+							<input type="checkbox" bind:checked={uploadDialog} /> {texts.uploadDialog}
+						</label>
 					</div>
 					<form class="rich-text-demo__editor" onsubmit={(event) => {
 						event.preventDefault();
@@ -75,7 +92,13 @@
 							label={texts.articleLabel} placeholder={texts.placeholder} {readOnly} {count}
 							texts={config.editor} onsave={saveArticle} {onupload}
 							uploadTypes={config.uploadTypes} uploadMaxSize={config.uploadMaxSize}
-							uploadMaxWidth={config.uploadMaxWidth} uploadMaxHeight={config.uploadMaxHeight} />
+							uploadMaxWidth={config.uploadMaxWidth} uploadMaxHeight={config.uploadMaxHeight}
+							uploadMaxCount={config.uploadMaxCount} uploadScaling {uploadDialog}
+							onstorepermanently={stored.keep} onfindimages={stored.find}
+							onattach={attached.onAttach} attachTypes={attached.attachTypes}
+							attachMaxSize={attached.attachMaxSize} attachMaxCount={attached.attachMaxCount}
+							onimagesremoved={(urls) => articleImages.add(urls)}
+							onattachmentsremoved={(urls) => articleFiles.add(urls)} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">
@@ -100,7 +123,13 @@
 						<CKEditor licenseKey={config.licenseKey} language={config.language}
 							bind:value={notes.text} bind:state={notes.state} saved={notes.saved}
 							format="markdown" label={texts.notesLabel} texts={config.editor}
-							onsave={saveNotes} />
+							onsave={saveNotes} {onupload} uploadTypes={config.uploadTypes}
+							uploadMaxSize={config.uploadMaxSize} uploadMaxWidth={config.uploadMaxWidth}
+							uploadMaxHeight={config.uploadMaxHeight} onattach={attached.onAttach}
+							attachTypes={attached.attachTypes} attachMaxSize={attached.attachMaxSize}
+							attachMaxCount={attached.attachMaxCount}
+							onimagesremoved={(urls) => notesImages.add(urls)}
+							onattachmentsremoved={(urls) => notesFiles.add(urls)} />
 						<div class="rich-text-demo__actions">
 							<Button type="submit" label={texts.save} variant="primary" size="small" />
 							<span class="rich-text-demo__heard" role="status">

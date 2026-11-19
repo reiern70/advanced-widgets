@@ -16,6 +16,7 @@ package com.antiliacode.widgets.demo.ckeditor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -44,9 +45,12 @@ import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
+import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.richtext.RichTextFormat;
+import com.antiliacode.widgets.richtext.RichTextImageDeletion;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
 import com.github.openjson.JSONObject;
+import com.github.openjson.JSONTokener;
 
 /**
  * Checks {@link CKEditorPage}: CKEditor as the demo brings it, with the license key of the
@@ -301,19 +305,31 @@ class CKEditorPageTest
 	}
 
 	@Test
-	void uploadsTheImagesOfTheArticle() throws IOException
+	void uploadsImagesAndFilesToTheResourceOfTheApplication() throws IOException
 	{
+		org.apache.wicket.Page page = tester.getLastRenderedPage();
 		CKEditor editor = editor(EDITOR);
 		assertTrue(editor.isImageUploading());
-		// the page renders where the article's images go, with their limits
-		String response = tester.getLastResponseAsString();
-		assertTrue(response.contains("\"uploadUrl\":"), "the address of the uploads");
-		assertTrue(response.contains("\"uploadMaxSize\":" + RichTextImages.MAX_SIZE.bytes()));
-		// the notes, in Markdown, upload nothing
-		assertFalse(editor(NOTES).isImageUploading());
+		assertTrue(editor.isAttachmentUploading());
+		assertTrue(editor.isPermanentImages());
+		assertEquals(RichTextImages.MAX_COUNT, editor.getImageMaxCount());
+		// the article and the notes to the resource of the uploads, as the Tiptap editor's demo
+		assertEquals(RichTextFiles.get(RichTextImages.PATH), editor.getUploadResource());
+		assertNull(editor.getImageUploadBehavior());
+		assertTrue(editor(NOTES).isImageUploading());
+		assertTrue(editor(NOTES).isAttachmentUploading());
+		JSONObject options = options(editor);
+		String uploadUrl = options.getString("uploadUrl");
+		assertTrue(uploadUrl.contains("/rich-text-images?" + RichTextFiles.KEY_PARAMETER + "="),
+			uploadUrl);
+		assertTrue(options.getString("attachUrl").contains("/rich-text-images?"));
+		assertTrue(options.getBoolean("permanentImages"));
+		assertTrue(options.getBoolean("uploadScaling"));
+		assertTrue(options.has("imagesAjax"), "the request telling of the images taken out");
 
 		// an image as CKEditor's adapter posts it, kept as those of the Tiptap editor
 		Path file = Files.createTempFile("bird", ".png");
+		String url;
 		try
 		{
 			Files.write(file, new byte[] { (byte)0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n', 0, 0,
@@ -321,28 +337,51 @@ class CKEditorPageTest
 			tester.getRequest().setUseMultiPartContentType(true);
 			tester.getRequest().addFile(RichTextImageUploadBehavior.FILE_PARAMETER,
 				new org.apache.wicket.util.file.File(file.toFile()), "image/png");
-			tester.executeBehavior(editor.getImageUploadBehavior());
-			String url = new JSONObject(tester.getLastResponseAsString()).getString("url");
+			tester.executeUrl(uploadUrl.substring(uploadUrl.indexOf("rich-text-images")));
+			url = new JSONObject(tester.getLastResponseAsString()).getString("url");
 			assertTrue(url.contains(RichTextImages.PATH + "/"), url);
 		}
 		finally
 		{
 			Files.deleteIfExists(file);
 		}
+		tester.getRequest().setMethod("GET");
+		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals("image/png", tester.getLastResponse().getContentType());
+
+		// the article saved without the image uploaded, which never went into it: it goes
+		tester.startPage(page);
+		tester.executeAjaxEvent(inCase("articleTitle", "editorForm:save"), "click");
+		tester.getRequest().setMethod("GET");
+		tester.executeUrl(url.substring(url.indexOf("rich-text-images/")));
+		assertEquals(404, tester.getLastResponse().getStatus());
+	}
+
+	/**
+	 * @return the options an editor was attached with in the last response
+	 */
+	private JSONObject options(CKEditor editor)
+	{
+		String page = tester.getLastResponseAsString();
+		int at = page.indexOf("Wicket.CKEditor.attach(\"" + editor.getMarkupId() + "\", ");
+		assertTrue(at >= 0, "the editor is attached");
+		return (JSONObject)new JSONTokener(page.substring(page.indexOf('{', at))).nextValue();
 	}
 
 	@Test
 	void switchesTheOptions()
 	{
-		for (String option : new String[] { "readOnly", "count" })
+		for (String option : new String[] { "readOnly", "count", "uploadDialog", "deleteAtOnce" })
 		{
 			FormTester form = tester.newFormTester(inCase("articleTitle", "controls"));
-			form.setValue(option, "readOnly".equals(option));
+			form.setValue(option, !"count".equals(option));
 			tester.executeAjaxEvent(inCase("articleTitle", "controls:" + option), "change");
 		}
 		CKEditor editor = editor(EDITOR);
 		assertTrue(editor.isReadOnly());
 		assertFalse(editor.isCount());
+		assertTrue(editor.isImageUploadDialog());
+		assertEquals(RichTextImageDeletion.AT_ONCE, editor.getImageDeletion());
 		tester.assertContains("\"readOnly\":true");
 	}
 
@@ -391,8 +430,15 @@ class CKEditorPageTest
 		assertFalse(config.has("language"), "English: no translation");
 		assertEquals("Open in a new tab", config.getJSONObject("editor").getString("linkNewTab"));
 		assertEquals("Article", config.getJSONObject("texts").getString("articleLabel"));
-		// the apps upload images to the page, with the limits of the Wicket editor
-		assertTrue(config.getString("uploadUrl").contains("ckeditor"), config.getString("uploadUrl"));
+		// the apps upload images and attach files to the resource of the uploads, with the limits
+		// of the Wicket editor
+		assertEquals(RichTextFiles.get(RichTextImages.PATH).getUploadUrl(),
+			config.getString("uploadUrl"));
+		assertEquals(RichTextFiles.get(RichTextImages.PATH).getAttachmentUploadUrl(),
+			config.getString("attachUrl"));
+		assertEquals(RichTextImages.MAX_COUNT, config.getInt("uploadMaxCount"));
+		assertEquals("Upload images in a dialog", config.getJSONObject("texts")
+			.getString("uploadDialog"));
 		assertEquals(RichTextImages.MAX_SIZE.bytes(), config.getLong("uploadMaxSize"));
 		assertEquals(RichTextImages.MAX_DIMENSIONS.width(), config.getInt("uploadMaxWidth"));
 		assertEquals(RichTextImages.MAX_DIMENSIONS.height(), config.getInt("uploadMaxHeight"));

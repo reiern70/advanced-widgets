@@ -611,7 +611,7 @@ public class RichTextEditorPage extends DemoPage
 	/**
 	 * @return a size as the editor says it: 2 MB
 	 */
-	private static String sizeText(Bytes size)
+	public static String sizeText(Bytes size)
 	{
 		long megabytes = size.bytes() / (1024 * 1024);
 		return megabytes * 1024 * 1024 == size.bytes() ? megabytes + " MB" : size.toString();

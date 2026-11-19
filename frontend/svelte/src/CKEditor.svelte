@@ -26,6 +26,13 @@
   javascript: for example, comes to onpastecleaned and, with pasteNotice, shows in a line under the
   toolbar until the text changes.
 
+  Its uploads are those of the RichTextEditor: images uploaded by onupload within the limits
+  given, scaled down when the user ticks them, in the dialog of the uploads too; the tool images
+  lists them, and onimagesremoved hears of those taken out of the text. With onstorepermanently
+  the user ticks the images to store permanently, and with onfindimages inserts those stored by
+  the tool storedImage; with onattach the user attaches files. Their lists, dialogs and files take
+  the look of rich-text-editor.css, which the page loads too.
+
   The package has no code of CKEditor, which is licensed under the GPL or CKSource's commercial
   terms: the page brings it, its classes (build) or the global CKEDITOR of its browser build, with
   its license key and its style sheet, ckeditor5.css.
@@ -36,6 +43,7 @@
 	import { untrack } from 'svelte';
 	import { CKEditor, type CKEditorBuild, type CKEditorFailure, type CKEditorInstance,
 		type CKEditorPlugin, type CKEditorRecovery, type RichTextUploadOptions,
+		type RichTextAttachmentType, type RichTextAttachmentUrls, type RichTextStoredImage,
 		type EditorEvents, type RichTextEditorEventKey,
 		type CKEditorTexts, type HeadingLevel, type ResizableSize, type ResizeAxis,
 		type RichTextCleaningReport, type RichTextEditorSelection, type RichTextEditorState,
@@ -136,6 +144,34 @@
 		 */
 		uploadMaxWidth?: number | null;
 		uploadMaxHeight?: number | null;
+		/**
+		 * Whether a dialog offers the user to scale down the pictures larger than that, each by a
+		 * box to tick, rather than refusing them; false when left out.
+		 */
+		uploadScaling?: boolean;
+		/** How many images one drop, choice or paste takes at most, the first; none when left out. */
+		uploadMaxCount?: number | null;
+		/**
+		 * Whether the images are uploaded in the dialog of the uploads, the tool uploadImages,
+		 * rather than by CKEditor's own button; false when left out.
+		 */
+		uploadDialog?: boolean;
+		/**
+		 * The types of the files the user may attach, each a media type, an extension and a label:
+		 * those of the server when left out.
+		 */
+		attachTypes?: readonly RichTextAttachmentType[];
+		/** The largest file the user may attach, in bytes; none when left out. */
+		attachMaxSize?: number | null;
+		/** How many files one drop, choice or paste takes at most, the first; none when left out. */
+		attachMaxCount?: number | null;
+		/** Whether the tool attachment opens the dialog of the uploads; false when left out. */
+		attachDialog?: boolean;
+		/**
+		 * The addresses of the files attached to a text in Markdown, or a test of an address: a
+		 * link to one of them comes back as a file attached; none when left out.
+		 */
+		attachmentUrls?: RichTextAttachmentUrls | null;
 		/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 		texts?: Partial<CKEditorTexts>;
 		/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -150,6 +186,28 @@
 		 * the latest is called. One coming or going makes CKEditor anew.
 		 */
 		onupload?: (file: File, options?: RichTextUploadOptions) => Promise<string>;
+		/**
+		 * Stores the images ticked in the dialog of the uploads permanently, resolving to the
+		 * addresses of those stored (storePermanentlyAt of the core); the latest is called. With
+		 * it, the tool uploadImages opens the dialog, whose lines have the box to tick.
+		 */
+		onstorepermanently?: (urls: string[]) => Promise<string[]>;
+		/**
+		 * Finds the images stored permanently for what the user typed, which the tool storedImage,
+		 * "Insert image from store", inserts (findImagesAt of the core); the latest is called.
+		 */
+		onfindimages?: (query: string, signal: AbortSignal) =>
+			Promise<readonly RichTextStoredImage[]>;
+		/** Called a moment after the user took images out of the text, with their addresses. */
+		onimagesremoved?: (urls: string[]) => void;
+		/**
+		 * Uploads a file the user attaches, resolving to its address (uploadFileTo of the core):
+		 * the tools attachment and attachments show, for the feature attachment; the latest is
+		 * called. One coming or going makes CKEditor anew.
+		 */
+		onattach?: (file: File, options?: RichTextUploadOptions) => Promise<string>;
+		/** Called a moment after the user took files attached out of the text, with their addresses. */
+		onattachmentsremoved?: (urls: string[]) => void;
 		onready?: (editor: CKEditorInstance) => void;
 		/**
 		 * Called with what went wrong when CKEditor could not start, or ran into an error after it
@@ -203,11 +261,24 @@
 		uploadMaxSize,
 		uploadMaxWidth,
 		uploadMaxHeight,
+		uploadScaling,
+		uploadMaxCount,
+		uploadDialog,
+		attachTypes,
+		attachMaxSize,
+		attachMaxCount,
+		attachDialog,
+		attachmentUrls,
 		texts,
 		name,
 		id,
 		class: className = '',
 		onupload,
+		onstorepermanently,
+		onfindimages,
+		onimagesremoved,
+		onattach,
+		onattachmentsremoved,
 		onready,
 		onerror,
 		onchange,
@@ -225,6 +296,18 @@
 	const uploader = () => onupload ? (file: File, options?: RichTextUploadOptions) =>
 		onupload!(file, options) : null;
 
+	/** Attaches files by the latest onattach, null without one. */
+	const attacher = () => onattach ? (file: File, options?: RichTextUploadOptions) =>
+		onattach!(file, options) : null;
+
+	/** Stores permanently by the latest onstorepermanently, null without one. */
+	const keeper = () => onstorepermanently ? (urls: string[]) => onstorepermanently!(urls) :
+		null;
+
+	/** Finds the images stored by the latest onfindimages, null without one. */
+	const finder = () => onfindimages ? (query: string, signal: AbortSignal) =>
+		onfindimages!(query, signal) : null;
+
 	let element = $state<HTMLDivElement>();
 	let instance: CKEditor | null = null;
 
@@ -241,7 +324,11 @@
 			toolbar, plugins, config, readOnly, placeholder, label, spellcheck, textLanguage, count,
 			resizable, minWidth, minHeight, maxWidth, maxHeight, state: editorState, events, pasteNotice,
 			recovery, texts, look, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
-			onUpload: uploader(),
+			uploadScaling, uploadMaxCount, uploadDialog, attachTypes, attachMaxSize, attachMaxCount,
+			attachDialog, attachmentUrls, onUpload: uploader(), onStorePermanently: keeper(),
+			onFindImages: finder(), onAttach: attacher(),
+			onImagesRemoved: (urls: string[]) => onimagesremoved?.(urls),
+			onAttachmentsRemoved: (urls: string[]) => onattachmentsremoved?.(urls),
 			onReady: (next: CKEditorInstance) => onready?.(next),
 			onError: (error: unknown, failure: CKEditorFailure) => onerror?.(error, failure),
 			onChange: (next: string) => {
@@ -293,7 +380,11 @@
 	$effect(() => {
 		const next = { uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
 			uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
-			onUpload: uploader() };
+			uploadScaling: !!uploadScaling, uploadMaxCount: uploadMaxCount ?? null,
+			uploadDialog: !!uploadDialog, onUpload: uploader(), onStorePermanently: keeper(),
+			onFindImages: finder(), attachTypes, attachMaxSize: attachMaxSize ?? null,
+			attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
+			attachmentUrls: attachmentUrls ?? null, onAttach: attacher() };
 		untrack(() => instance?.configure(next));
 	});
 

@@ -26,6 +26,9 @@
 	<entry key="placeholder">Escriba el artículo…</entry>
 	<entry key="readOnly">Solo lectura</entry>
 	<entry key="count">Contar las palabras</entry>
+	<entry key="uploadDialog">Subir las imágenes en un diálogo</entry>
+	<entry key="deleteAtOnce">Eliminar al momento las imágenes y los archivos quitados, no al guardar</entry>
+	<entry key="extras">Elija imágenes con la herramienta Insertar imagen de CKEditor, o suéltelas o péguelas en el texto: PNG, JPEG, GIF, WebP o AVIF, de {0} y {1} píxeles como mucho, {2} a la vez; puede reducir una imagen mayor. La herramienta Subir imágenes abre el diálogo de las subidas, que lista las imágenes según se suben, cada una con su casilla Guardar permanentemente: la herramienta Insertar imagen del almacén encuentra las que conservó por su nombre, según escribe. La herramienta Imágenes del texto lista las imágenes, cada una para seleccionarla o eliminarla; una imagen quitada del texto se elimina al guardar, o al momento. Adjunte PDF, documentos de Office, textos o archivos ZIP con la herramienta Adjuntar un archivo, o suéltelos en el texto; la herramienta Archivos del texto los lista.</entry>
 	<entry key="save">Guardar</entry>
 	<entry key="start">Escriba, seleccione, desplace o cambie el tamaño: el servidor lo guarda todo.</entry>
 	<entry key="heardFocus">El servidor supo que entró en el artículo.</entry>

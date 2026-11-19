@@ -404,3 +404,115 @@
 :is(.antilia-ck-editor, .antilia-ck-editor-view) .antilia-text-justify {
 	text-align: justify;
 }
+
+/*
+ * The uploads (ck-editor-uploads.ts): the files attached, in the text and the view, and the lists
+ * and the forms of their tools take the look of the Tiptap editor's, rich-text-editor.css, which
+ * the page loads too, in CKEditor's colors.
+ */
+.antilia-ck-editor,
+.antilia-ck-editor-view,
+.ck-body-wrapper {
+	--antilia-rich-text-text: var(--ck-color-base-text);
+	--antilia-rich-text-background: var(--ck-color-base-background);
+	--antilia-rich-text-border: var(--ck-color-base-border);
+	--antilia-rich-text-accent: var(--antilia-theme-accent, #2f6fde);
+	--antilia-rich-text-muted: var(--ck-color-base-text-light);
+	--antilia-rich-text-hover: var(--antilia-theme-hover, #e8eefc);
+}
+
+/* a file attached, selected in the text: CKEditor's outline of a widget */
+.antilia-ck-editor .ck-content .antilia-attachment.ck-widget {
+	outline-offset: 1px;
+}
+
+/*
+ * The panel of a tool of the uploads, out of CKEditor's reset: the list of the images or of the
+ * files of the text, or the form finding the images stored, scrolled when it holds many.
+ */
+.antilia-ck-editor-panel {
+	box-sizing: border-box;
+	width: max-content;
+	max-width: min(24rem, 90vw);
+	max-height: min(20rem, 60vh);
+	padding: 0.35rem;
+	overflow-x: hidden;
+	overflow-y: auto;
+	color: var(--ck-color-base-text);
+	font: inherit;
+	white-space: normal;
+}
+
+.antilia-ck-editor-panel-storedImage {
+	width: min(22rem, 90vw);
+	overflow: visible;
+}
+
+.antilia-ck-editor-panel-list {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-ck-editor-panel-item {
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.antilia-ck-editor-panel-choose {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 0.5em;
+	min-width: 0;
+	padding: 0.3em 0.5em;
+	border: 0;
+	border-radius: var(--ck-border-radius, 2px);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.antilia-ck-editor-panel-choose:is(:hover, :focus-visible) {
+	background: var(--antilia-rich-text-hover);
+}
+
+.antilia-ck-editor-panel-choose:focus-visible,
+.antilia-ck-editor-panel-delete:focus-visible {
+	outline: 2px solid var(--ck-color-base-focus);
+	outline-offset: -2px;
+}
+
+.antilia-ck-editor-panel-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.antilia-ck-editor-panel-size {
+	flex: none;
+	color: var(--antilia-rich-text-muted);
+	font-size: 0.85em;
+}
+
+.antilia-ck-editor-panel-delete {
+	flex: none;
+}
+
+.antilia-ck-editor-panel-delete:is(:hover, :focus-visible) {
+	color: var(--antilia-theme-error, #c53030);
+}
+
+.antilia-ck-editor-panel-none {
+	margin: 0;
+	padding: 0.4em 0.75em;
+	color: var(--antilia-rich-text-muted);
+	font-style: italic;
+}

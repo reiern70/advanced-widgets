@@ -246,6 +246,122 @@ export interface UploadCheckTexts {
 	uploadFailed: string;
 }
 
+/**
+ * What the uploads of the rich text editors say, Tiptap's and CKEditor's alike: their tools, the
+ * dialogs, the lists of the images and of the files of the text, the form of the images stored and
+ * the messages of the checks.
+ */
+export interface RichTextUploadTexts extends UploadCheckTexts {
+	/** The tools: the image from the store, the images of the text, attaching a file, the files. */
+	storedImage: string;
+	images: string;
+	attachment: string;
+	attachments: string;
+	/** The tool, or the button of the form of the image, opening the dialog of the uploads. */
+	uploadImage: string;
+	/** The zone of the form of an image, and of the dialog of the uploads, and its button. */
+	dropImages: string;
+	chooseImages: string;
+	/** The dialog of the uploads: its title, a file uploaded, the button taking one out ({0}). */
+	uploadImagesTitle: string;
+	uploadDone: string;
+	removeFile: string;
+	insertImages: string;
+	cancel: string;
+	/** The button closing a dialog or a form. */
+	close: string;
+	/** The menu of the images of the text: when it has none, the button deleting one ({0}). */
+	noImages: string;
+	deleteImage: string;
+	/** The mark of an image uploading; {0} the name of its file. */
+	uploading: string;
+	/**
+	 * The files attached: the menu when the text has none, the button deleting one ({0}), the zone
+	 * of the form and its button, the button opening the dialog, its title and its button
+	 * inserting, why a file was not taken ({0} its name, {1} the types), what stands for the name
+	 * of a file that has none, and the mark of one uploading ({0} its name).
+	 */
+	noAttachments: string;
+	deleteAttachment: string;
+	dropFiles: string;
+	chooseFiles: string;
+	attachFiles: string;
+	attachFilesTitle: string;
+	insertFiles: string;
+	attachmentType: string;
+	attachTooMany: string;
+	theFile: string;
+	attaching: string;
+	/**
+	 * The dialog asking which pictures too large to scale down: {0} the most pixels; {0} the name
+	 * of the file, {1} its pixels scaled down.
+	 */
+	scaleTitle: string;
+	scaleText: string;
+	scaleDown: string;
+	upload: string;
+	/** The button of the mark of an image uploading canceling it; {0} the name of its file. */
+	cancelUpload: string;
+	/**
+	 * The box to tick storing the images uploaded permanently, and why one was not; {0} the name
+	 * of its file.
+	 */
+	storePermanently: string;
+	permanentFailed: string;
+	/** The form of the image from the store: the field, while it searches, when it found none. */
+	findImages: string;
+	findingImages: string;
+	noStoredImages: string;
+}
+
+/** What the uploads say, in English. */
+export const DEFAULT_RICH_TEXT_UPLOAD_TEXTS: Readonly<RichTextUploadTexts> = Object.freeze({
+	storedImage: 'Insert image from store',
+	images: 'Images in the text',
+	attachment: 'Attach a file',
+	attachments: 'Files of the text',
+	uploadImage: 'Upload images…',
+	dropImages: 'Drop images here',
+	chooseImages: 'Choose images…',
+	uploadImagesTitle: 'Upload images',
+	uploadDone: 'Uploaded',
+	removeFile: 'Remove {0}',
+	insertImages: 'Insert',
+	cancel: 'Cancel',
+	close: 'Close',
+	noImages: 'The text has no images.',
+	deleteImage: 'Delete {0}',
+	uploading: 'Uploading {0}…',
+	theImage: 'The image',
+	noAttachments: 'The text has no files.',
+	deleteAttachment: 'Delete {0}',
+	dropFiles: 'Drop files here',
+	chooseFiles: 'Choose files…',
+	attachFiles: 'Attach files…',
+	attachFilesTitle: 'Attach files',
+	insertFiles: 'Insert',
+	attachmentType: '{0} is not a file of a type the editor takes: {1}.',
+	attachTooMany: '{0} files at most at a time: {1} left out.',
+	theFile: 'The file',
+	attaching: 'Attaching {0}…',
+	uploadFailed: '{0} could not be uploaded.',
+	uploadTooLarge: '{0} is larger than {1}.',
+	uploadType: '{0} is not an image of a type the editor takes: {1}.',
+	uploadTooMany: '{0} images at most at a time: {1} left out.',
+	uploadTooBig: '{0} is {1} pixels, larger than {2}.',
+	scaleTitle: 'Images too large',
+	scaleText: 'These images are larger than {0} pixels. Tick those to scale down; the others ' +
+		'are left out.',
+	scaleDown: 'Scale {0} down to {1}',
+	upload: 'Upload',
+	cancelUpload: 'Cancel the upload of {0}',
+	storePermanently: 'Store permanently',
+	permanentFailed: '{0} could not be stored permanently.',
+	findImages: 'Name of the image',
+	findingImages: 'Searching…',
+	noStoredImages: 'No stored images found.'
+});
+
 /** A picture too large, which the user may have scaled down. */
 export interface Oversize {
 	file: File;
@@ -417,16 +533,13 @@ export interface UploadLabels {
 	nameless: string;
 }
 
-/** What the uploads of an editor ask of it: those of the images, or of the files attached. */
-export interface UploadHost {
-	/** The editor of Tiptap, whose text gets the images. */
-	editor(): Editor;
-	/** Whether the user may upload images now: the page uploads them, and the text is not read only. */
-	enabled(): boolean;
+/**
+ * What the dialog of the uploads asks of an editor, whichever it is: those of the images, or of the
+ * files attached.
+ */
+export interface UploadDialogHost {
 	/** The types of the images the user may upload. */
 	types(): readonly string[];
-	/** Whether the form of the image opens the dialog of the uploads, rather than a zone of its own. */
-	dialog(): boolean;
 	/**
 	 * Checks files before they are uploaded: how many, their types, sizes and pixels, asking the
 	 * user which pictures too large to scale down while the page allows it.
@@ -443,7 +556,7 @@ export interface UploadHost {
 	/** @returns the text of the mark standing where the image of a file goes */
 	uploading(file: File): string;
 	/** What the editor says. */
-	texts(): RichTextEditorTexts;
+	texts(): RichTextUploadTexts;
 	/** Tells the user something went wrong. */
 	alert(message: string): void;
 	/** Tells the page images were uploaded that never went into the text, or no longer are. */
@@ -456,13 +569,25 @@ export interface UploadHost {
 	 * @returns the addresses of those stored
 	 */
 	storePermanently(urls: readonly string[]): Promise<string[]>;
+	/** What the uploads say, when not those of the images. */
+	labels?(): UploadLabels;
+}
+
+/** What the uploads of Tiptap's editor ask of it: those of the images, or of the files attached. */
+export interface UploadHost extends UploadDialogHost {
+	/** The editor of Tiptap, whose text gets the images. */
+	editor(): Editor;
+	/** Whether the user may upload images now: the page uploads them, and the text is not read only. */
+	enabled(): boolean;
+	/** Whether the form of the image opens the dialog of the uploads, rather than a zone of its own. */
+	dialog(): boolean;
+	/** What the editor says. */
+	texts(): RichTextEditorTexts;
 	/**
 	 * What goes into the text for a file uploaded at an address: an image when left out, a file
 	 * attached for the uploads of those.
 	 */
 	content?(src: string, file: File): JSONContent;
-	/** What the uploads say, when not those of the images. */
-	labels?(): UploadLabels;
 }
 
 /**
@@ -477,7 +602,8 @@ export function uploadedContent(host: UploadHost, src: string, file: File): JSON
  *
  * @param images the address of each image, and the name of its file
  */
-export async function keepPermanently(host: UploadHost,
+export async function keepPermanently(host: Pick<UploadDialogHost, 'storePermanently' | 'texts' |
+	'alert'>,
 	images: readonly { src: string; name: string }[]): Promise<void> {
 	if (!images.length) {
 		return;
