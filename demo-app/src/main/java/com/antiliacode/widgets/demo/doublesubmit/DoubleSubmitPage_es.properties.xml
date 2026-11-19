@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Envíos dobles</entry>
+	<entry key="explanation">&lt;p&gt;Un formulario que emite facturas, en el que el servidor tarda un segundo en cada una. Haga lo que haga el usuario mientras trabaja, un formulario mostrado emite una factura: un doble clic, Intro pulsado dos veces sobre el botón, un segundo clic mientras el primero espera su turno, un clic en el botón justo al dejar el importe, cuyo cambio comprueba el servidor.&lt;/p&gt;&lt;p&gt;&lt;b&gt;El velo&lt;/b&gt;: el PageVeilBehavior de Wicket cubre la página mientras corre una petición, así que un segundo clic cae sobre el velo. La biblioteca lo completa con VeilGaps, un añadido a su script en cada página con un velo de Wicket: Intro y Espacio también quedan retenidos bajo el velo, un clic queda velado en cuanto el Ajax de Wicket lo pone en cola, no solo cuando se envía, y el clic en un botón cuya pulsación hizo que un campo enviara su cambio, que el velo atrapó, llega cuando el velo baja.&lt;/p&gt;&lt;p&gt;&lt;b&gt;La versión del formulario&lt;/b&gt;: un DoubleSubmitBulletsProofForm rechaza un segundo envío desde la misma versión del formulario, por si el velo falla: un script que no cargó, un dispositivo lento. Desactive el velo y haga doble clic en «Emitir factura»: el segundo clic llega al servidor, que lo rechaza con un mensaje.&lt;/p&gt;&lt;p&gt;Con ambos desactivados, un doble clic emite dos facturas.&lt;/p&gt;</entry>
+	<entry key="hint">Emitir una factura le lleva al servidor un segundo, comprobar un importe algo menos. Haga doble clic en «Emitir factura», pulse Intro dos veces sobre él, o cambie el importe y pulse el botón enseguida: cada vez se emite una sola factura. Los interruptores muestran la página de nuevo sin lo que la protege.</entry>
+	<entry key="veil">Velar la página mientras corre una petición (PageVeilBehavior con VeilGaps)</entry>
+	<entry key="version">Rechazar un formulario enviado dos veces (DoubleSubmitBulletsProofForm)</entry>
+	<entry key="customer">Cliente</entry>
+	<entry key="customer.sample">Acme S.L.</entry>
+	<entry key="amount">Importe</entry>
+	<entry key="total">{0} con IVA</entry>
+	<entry key="issue">Emitir factura</entry>
+	<entry key="issued">Facturas emitidas</entry>
+	<entry key="none">Aún no se ha emitido ninguna factura.</entry>
+	<entry key="number">Número</entry>
+</properties>

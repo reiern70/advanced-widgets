@@ -45,6 +45,24 @@ What 11.0.0-RC5 has, and:
   `--antilia-page-loading-timeout` change the times. The content is not made `inert`: only a
   script could take that away again, and it would keep the focus from the page while it loads.
   It is on `line-10.x` too, for the next 10.11.0 release candidate.
+- Wicket's veil, `PageVeilBehavior` and `LocalVeilBehavior`, with three gaps closed by an add-on
+  to its script, `antilia-veil-gaps.js` (`VeilGaps`), which the library's `Initializer` renders
+  wherever a page has Wicket's veil (#141). Enter and Space are dropped under a veil, but where
+  they type, so a key pressed twice on a button no longer sends two requests. A request is veiled
+  from `/ajax/call/init` on, as Wicket's Ajax queues it behind another one, not only once it is
+  sent, so a second click on a button waiting its turn behind a request the veil leaves alone
+  falls on the veil; the veil comes down for the requests that never run: throttled and replaced,
+  dropped by their channel, stopped by their precondition. And the click of a button whose
+  release a veil caught, the veil of a field's change having come up between the press and the
+  release, is given back once the veil is down. `VeilGaps.setEnabled(application, false)` leaves
+  Wicket's veil as it is.
+- Forms processed once however many times the browser sends them (#143): a
+  `DoubleSubmitBulletsProofForm`, or a `FormVersionBehavior` on any form, the wizard's too, gives
+  the form a version, kept in the session and written on its tag, which a submit carries as it
+  was at the click: taken at `/ajax/call/init` for an Ajax submit, in a hidden input for a normal
+  one. A second submit from one version is refused with an error,
+  `FormVersionBehavior.alreadySent`, in English, Spanish, German and French; a submit without a
+  version, from a page whose script did not load, is taken.
 
 **Upgrading:**
 
@@ -56,6 +74,10 @@ What 11.0.0-RC5 has, and:
 - Only the editors' built-in events carry `wicket_nb` by themselves: the events of input,
   selection or scrolling a page gives an editor are veiled unless the page marks them, as
   before.
+- On a page with Wicket's veil, a request waiting its turn veils the page with a transparent
+  `.antilia-veil-guard` and the wait cursor, until Wicket's veil comes with its spinner as it is
+  sent; a local veil goes up, spinner and all, from the click. Enter and Space under a veil are
+  dropped, but in text fields, text areas and editable content.
 
 ## 11.0.0-RC5 (2026-11-17)
 

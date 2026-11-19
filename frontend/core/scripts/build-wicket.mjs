@@ -83,7 +83,8 @@ const SCRIPTS = [
 	['src/wicket/tabs.ts', 'com/antiliacode/widgets/tabs/antilia-tabs.js'],
 	['src/wicket/templates.ts', 'com/antiliacode/widgets/template/antilia-templates.js'],
 	['src/wicket/tree.ts', 'com/antiliacode/widgets/tree/json-tree.js'],
-	['src/wicket/upload.ts', 'com/antiliacode/widgets/upload/antilia-upload.js']
+	['src/wicket/upload.ts', 'com/antiliacode/widgets/upload/antilia-upload.js'],
+	['src/wicket/veil-gaps.ts', 'com/antiliacode/widgets/veil/antilia-veil-gaps.js']
 ];
 
 /** The style sheets and the images they use: their file in styles and their path in ui-components. */
@@ -120,6 +121,7 @@ const STYLES = [
 	['styles/tabs.css', 'com/antiliacode/widgets/tabs/antilia-tabs.css'],
 	['styles/tree.css', 'com/antiliacode/widgets/tree/antilia-tree.css'],
 	['styles/upload.css', 'com/antiliacode/widgets/upload/antilia-upload.css'],
+	['styles/veil-gaps.css', 'com/antiliacode/widgets/veil/antilia-veil-gaps.css'],
 	['styles/wizard.css', 'com/antiliacode/widgets/wizard/antilia-wizard.css']
 ];
 

@@ -1,0 +1,104 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.double-submit-demo__hint {
+	margin: 0 0 16px;
+	color: var(--muted, inherit);
+}
+
+/* the protections, one per line */
+.double-submit-demo__switches {
+	display: grid;
+	gap: 6px;
+	margin-bottom: 20px;
+	font-size: 14px;
+}
+
+/* the form, as a card */
+.double-submit-demo__form {
+	display: grid;
+	gap: 12px;
+	max-width: 34rem;
+	margin-bottom: 24px;
+	padding: 18px 20px;
+	border: 1px solid var(--border, #d6d9e0);
+	border-radius: var(--radius, 8px);
+	background: var(--surface, #fff);
+}
+
+.double-submit-demo__form input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.35em 0.6em;
+	border: 1px solid var(--border, #d6d9e0);
+	border-radius: 0.4em;
+	background: var(--surface, #fff);
+	color: inherit;
+	font: inherit;
+}
+
+.double-submit-demo__form input:focus {
+	outline: none;
+	border-color: var(--accent, var(--primary, #c2410c));
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--primary, #c2410c)) 25%,
+		transparent);
+}
+
+.double-submit-demo__field {
+	display: grid;
+	grid-template-columns: 7rem minmax(8rem, 14rem) auto;
+	gap: 4px 12px;
+	align-items: center;
+	font-size: 14px;
+}
+
+.double-submit-demo__field > label {
+	font-weight: 600;
+}
+
+.double-submit-demo__total {
+	color: var(--muted, inherit);
+}
+
+.double-submit-demo__issued > h3 {
+	margin: 0 0 8px;
+}
+
+.double-submit-demo__none {
+	margin: 0;
+	color: var(--muted, inherit);
+}
+
+.double-submit-demo__invoices {
+	border-collapse: collapse;
+	font-size: 14px;
+}
+
+.double-submit-demo__invoices th,
+.double-submit-demo__invoices td {
+	padding: 4px 16px 4px 0;
+	text-align: left;
+	border-bottom: 1px solid var(--border, #d6d9e0);
+}
+
+.double-submit-demo__invoices .double-submit-demo__money {
+	text-align: right;
+}
+
+/* the field's label above it on a phone */
+@media (max-width: 480px) {
+	.double-submit-demo__field {
+		grid-template-columns: 1fr;
+	}
+}

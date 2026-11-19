@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:extend>
+<div wicket:id="themed" class="double-submit-demo">
+	<p class="double-submit-demo__hint"><wicket:message key="hint"/></p>
+	<form wicket:id="switches" class="double-submit-demo__switches">
+		<label><input type="checkbox" wicket:id="veil"/> <wicket:message key="veil"/></label>
+		<label><input type="checkbox" wicket:id="version"/> <wicket:message key="version"/></label>
+	</form>
+	<form wicket:id="form" class="double-submit-demo__form">
+		<div wicket:id="errors"></div>
+		<div class="double-submit-demo__field"><label wicket:for="customer"><wicket:message key="customer"/></label> <input type="text" wicket:id="customer"/></div>
+		<div class="double-submit-demo__field"><label wicket:for="amount"><wicket:message key="amount"/></label> <input type="number" wicket:id="amount"/> <span wicket:id="total" class="double-submit-demo__total">[the amount with VAT]</span></div>
+		<div class="ant-button-bar"><button wicket:id="issue"><wicket:message key="issue"/></button></div>
+	</form>
+	<section wicket:id="issued" class="double-submit-demo__issued">
+		<h3><wicket:message key="issued"/></h3>
+		<p wicket:id="none" class="double-submit-demo__none"><wicket:message key="none"/></p>
+		<table wicket:id="table" class="double-submit-demo__invoices">
+			<thead>
+				<tr>
+					<th scope="col"><wicket:message key="number"/></th>
+					<th scope="col"><wicket:message key="customer"/></th>
+					<th scope="col"><wicket:message key="amount"/></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr wicket:id="invoices">
+					<td wicket:id="number">[number]</td>
+					<td wicket:id="customer">[customer]</td>
+					<td wicket:id="amount" class="double-submit-demo__money">[amount]</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+</div>
+</wicket:extend>
+</body>
+</html>

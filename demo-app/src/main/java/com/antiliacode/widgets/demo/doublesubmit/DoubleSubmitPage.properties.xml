@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Double submits</entry>
+	<entry key="explanation">&lt;p&gt;A form that issues invoices, where the server takes a second for each. Whatever the user does while it works, one rendered form issues one invoice: a double click, Enter pressed twice on the button, a second click while the first one waits its turn, a click on the button just as the amount, whose change the server checks, is left.&lt;/p&gt;&lt;p&gt;&lt;b&gt;The veil&lt;/b&gt;: Wicket's PageVeilBehavior covers the page while a request runs, so a second click falls on the veil. The library completes it with VeilGaps, an add-on to its script on every page with a Wicket veil: Enter and Space are held under the veil too, a click is veiled as soon as Wicket's Ajax queues it, not only once it is sent, and the click on a button whose press made a field send its change, which the veil caught, comes through once the veil is down.&lt;/p&gt;&lt;p&gt;&lt;b&gt;The form's version&lt;/b&gt;: a DoubleSubmitBulletsProofForm refuses a second submit from the same version of the form, should the veil be missed: a script that did not load, a slow device. Switch the veil off and double-click "Issue invoice": the second click reaches the server, which refuses it with a message.&lt;/p&gt;&lt;p&gt;With both off, a double click issues two invoices.&lt;/p&gt;</entry>
+	<entry key="hint">Issuing an invoice takes the server a second, checking an amount a little less. Double-click "Issue invoice", press Enter twice on it, or change the amount and click the button at once: each issues one invoice. The switches show the page anew without what protects it.</entry>
+	<entry key="veil">Veil the page while a request runs (PageVeilBehavior with VeilGaps)</entry>
+	<entry key="version">Refuse a form sent twice (DoubleSubmitBulletsProofForm)</entry>
+	<entry key="customer">Customer</entry>
+	<entry key="customer.sample">Acme Ltd.</entry>
+	<entry key="amount">Amount</entry>
+	<entry key="total">{0} with VAT</entry>
+	<entry key="issue">Issue invoice</entry>
+	<entry key="issued">Invoices issued</entry>
+	<entry key="none">No invoice issued yet.</entry>
+	<entry key="number">Number</entry>
+</properties>
