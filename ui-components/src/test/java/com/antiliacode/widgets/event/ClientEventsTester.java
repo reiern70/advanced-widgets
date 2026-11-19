@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.wicket.Component;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.tester.BaseWicketTester;
 
@@ -32,6 +33,9 @@ import com.github.openjson.JSONObject;
  * ClientEventsTester.fire(tester, editor, RichTextEditorEvents.SAVE);
  * // the state of an editor, and its text, as the editor sends them with its events
  * ClientEventsTester.sendState(tester, editor, "{\"scrollTop\":40}", true);
+ * // whether the page veil leaves the requests of an event alone, as the page rendered them
+ * ClientEventsTester.leavesTheVeilsAlone(tester, editor,
+ *     editor.getEvents(RichTextEditorEvents.INPUT).get(0));
  * </pre>
  */
 public final class ClientEventsTester
@@ -197,6 +201,82 @@ public final class ClientEventsTester
 			.orElseThrow(() -> new IllegalArgumentException(editor + " sends no state"));
 		fire(tester, editor, event, new JSONObject(), Map.of(SendStateEvent.STATE_PARAMETER,
 			state, SendStateEvent.TEXT_CHANGED_PARAMETER, String.valueOf(textChanged)));
+	}
+
+	/**
+	 * Tells whether the requests of an event, as the tester's last response renders them, leave
+	 * the veils alone: whether their extra parameters have
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}.
+	 *
+	 * @param tester
+	 *            the tester, whose last response rendered the component
+	 * @param component
+	 *            the component listening to the event, with a {@link ClientEventsBehavior}
+	 * @param event
+	 *            the event, going to the server
+	 * @return whether its requests leave the veils alone
+	 * @throws IllegalArgumentException
+	 *             when the component does not listen to the event, or the response does not
+	 *             render it
+	 */
+	public static boolean leavesTheVeilsAlone(BaseWicketTester tester, Component component,
+		IClientEvent event)
+	{
+		Args.notNull(tester, "tester");
+		int index = behaviorOf(component).getEvents().indexOf(event);
+		if (index < 0 || !goesToServer(event))
+		{
+			throw new IllegalArgumentException(component + " has no event " + event +
+				" going to the server");
+		}
+		String document = tester.getLastResponseAsString();
+		String described = "{\"eventName\":" + JSONObject.quote(event.getEventName()) +
+			",\"index\":" + index + ",";
+		int start = document.indexOf(described);
+		if (start < 0)
+		{
+			throw new IllegalArgumentException("the last response does not render " + event);
+		}
+		return objectAt(document, start).contains("{\"name\":\"" +
+			PageVeilBehavior.NO_VEIL_PARAMETER + "\",\"value\":\"true\"}");
+	}
+
+	/**
+	 * @return the object of the script starting at the index, to its closing brace, the braces
+	 *         of its texts left out
+	 */
+	private static String objectAt(String script, int start)
+	{
+		int depth = 0;
+		boolean text = false;
+		for (int index = start; index < script.length(); index++)
+		{
+			char each = script.charAt(index);
+			if (text)
+			{
+				if (each == '\\')
+				{
+					index++;
+				}
+				else if (each == '"')
+				{
+					text = false;
+				}
+			}
+			else if (each == '"')
+			{
+				text = true;
+			}
+			else if (each == '{')
+			{
+				depth++;
+			}
+			else if (each == '}' && --depth == 0)
+			{
+				return script.substring(start, index + 1);
+			}
+		}
+		return script.substring(start);
 	}
 
 	private static boolean goesToServer(IClientEvent event)

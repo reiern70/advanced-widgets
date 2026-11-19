@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -69,7 +71,6 @@ import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.notification.Notifications;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
-import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 class CodeEditorTest extends WicketTestCase
 {
@@ -131,26 +132,56 @@ class CodeEditorTest extends WicketTestCase
 	}
 
 	@Test
-	void itsEventsReportingInTheBackgroundLeaveThePageVeilAlone()
+	void leavesThePageVeilAloneAsTheUserTypesAndVeilsTheBlur()
 	{
+		// the events coming while the user goes on
+		assertEquals(EnumSet.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
+			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE),
+			EnumSet.copyOf(Arrays.stream(CodeEditorEvent.values())
+				.filter(CodeEditorEvent::isBackground).toList()));
+
 		CodeEditor editor = new CodeEditor("editor", Model.of(TEXT));
+		// the page's own events of those names too, not those of the others
+		IClientEvent typing = AjaxUpdateEvent.of(CodeEditorEvent.INPUT, (values, component,
+			target) -> {
+		});
+		IClientEvent focus = AjaxEvent.of(CodeEditorEvent.FOCUS, (values, target) -> {
+		});
+		IClientEvent save = AjaxUpdateEvent.of(CodeEditorEvent.SAVE, (values, component,
+			target) -> {
+		});
+		editor.addEvent(typing).addEvent(focus).addEvent(save);
+		tester.startPage(new TestPage(editor));
 
 		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
 			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
 		{
-			assertEquals("true", extraParameters(editor.getEvents(name)).get(
-				PageVeilBehavior.NO_VEIL_PARAMETER), name.name());
+			assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, editor,
+				editor.getEvents(name).get(0)), name.toString());
 		}
-		// the blur is veiled, as what the user does
-		assertFalse(extraParameters(editor.getEvents(CodeEditorEvent.BLUR)).containsKey(
-			PageVeilBehavior.NO_VEIL_PARAMETER));
-	}
+		assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, editor, typing));
+		// veiled: the blur, the focus and Ctrl+S, as what the user does
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor, focus));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor,
+			editor.getEvents(CodeEditorEvent.BLUR).get(0)));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor, save));
 
-	private static Map<String, Object> extraParameters(List<IClientEvent> events)
-	{
-		AjaxRequestAttributes attributes = new AjaxRequestAttributes();
-		events.forEach(event -> ((IAjaxRoundTripEvent)event).updateAjaxAttributes(attributes));
-		return attributes.getExtraParameters();
+		// an editor deciding otherwise, event by event
+		CodeEditor own = new CodeEditor("editor", Model.of(TEXT))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected boolean isVeiled(IAjaxRoundTripEvent event)
+			{
+				return !CodeEditorEvent.BLUR.getEventName().equals(event.getEventName());
+			}
+		};
+		tester.startPage(new TestPage(own));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, own,
+			own.getEvents(CodeEditorEvent.INPUT).get(0)));
+		assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, own,
+			own.getEvents(CodeEditorEvent.BLUR).get(0)));
 	}
 
 	@Test

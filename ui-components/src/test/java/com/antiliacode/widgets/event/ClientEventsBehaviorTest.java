@@ -40,6 +40,7 @@ import org.apache.wicket.ajax.attributes.AjaxCallListener;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.event.Broadcast;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
@@ -572,6 +573,67 @@ class ClientEventsBehaviorTest extends WicketTestCase
 		// the Ajax events without the form, those submitting it with
 		assertTrue(forms.contains("null"), forms.toString());
 		assertTrue(forms.contains(page.form.getMarkupId()), forms.toString());
+	}
+
+	@Test
+	void leavesTheVeilsAloneByTheEventsTheComponentSaysAreNotVeiled()
+	{
+		List<String> asked = new ArrayList<>();
+		ClientEventsBehavior events = new ClientEventsBehavior()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected boolean isVeiled(IAjaxRoundTripEvent event)
+			{
+				asked.add(event.getEventName());
+				return !"input".equals(event.getEventName());
+			}
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// after it: the component sees the parameter, and may take it away again
+				attributes.getExtraParameters().put("veiled",
+					String.valueOf(!attributes.getExtraParameters()
+						.containsKey(PageVeilBehavior.NO_VEIL_PARAMETER)));
+			}
+		}.add(new SendStateEvent("input")).add(new AjaxSubmitEvent("input")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onEvent(JSONObject values, Form<?> form, AjaxRequestTarget target)
+			{
+			}
+		}).add(new SendStateEvent("blur")).add(new ClientEvent("keydown", "function(){}"))
+			.add(AjaxEvent.of("focus", (values, target) -> {
+			}).setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
+		TestPage page = new TestPage(events);
+		tester.startPage(page);
+		String document = tester.getLastResponseAsString();
+
+		// the events of input, Ajax and submitting the form alike, carry the parameter
+		String noVeil = "{\"name\":\"" + PageVeilBehavior.NO_VEIL_PARAMETER +
+			"\",\"value\":\"true\"}";
+		assertTrue(eventIn(document, 0).contains(noVeil), eventIn(document, 0));
+		assertTrue(eventIn(document, 0).contains("{\"name\":\"veiled\",\"value\":\"false\"}"),
+			eventIn(document, 0));
+		assertTrue(eventIn(document, 1).contains(noVeil), eventIn(document, 1));
+		// blur is veiled, the event staying in the browser has no request, and an event may
+		// leave the veils alone by itself
+		assertFalse(eventIn(document, 2).contains(PageVeilBehavior.NO_VEIL_PARAMETER),
+			eventIn(document, 2));
+		assertTrue(eventIn(document, 2).contains("{\"name\":\"veiled\",\"value\":\"true\"}"),
+			eventIn(document, 2));
+		assertTrue(eventIn(document, 4).contains(noVeil), eventIn(document, 4));
+		// asked for the events going to the server alone
+		assertFalse(asked.contains("keydown"), asked.toString());
+		assertTrue(asked.containsAll(List.of("input", "blur", "focus")), asked.toString());
+
+		// veiled by default
+		tester.startPage(new TestPage(new ClientEventsBehavior().add(new SendStateEvent("input"))));
+		tester.assertContainsNot(PageVeilBehavior.NO_VEIL_PARAMETER);
 	}
 
 	@Test

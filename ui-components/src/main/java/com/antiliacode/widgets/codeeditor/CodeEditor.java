@@ -115,11 +115,11 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * last sent: {@link CodeEditorEvent#INPUT}, {@link CodeEditorEvent#SELECT},
  * {@link CodeEditorEvent#SCROLL} and {@link CodeEditorEvent#RESIZE} a moment after the user paused
  * ({@link SendStateEvent#DEFAULT_DELAY}), {@link CodeEditorEvent#BLUR} at once and
- * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. The requests of the first four
- * carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves alone, the user going
- * on as they run; those of the blur are veiled, the page waiting for the server once the editor
- * lost the focus. An event the page gives the editor carries the parameter when the page says so.
- * They are events as any other:
+ * {@link CodeEditorEvent#LEAVE}, in a beacon, as the page goes. The requests of the events of the
+ * first four names carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves
+ * alone, the user going on as they run, whoever gave the editor the event, the page too; those of
+ * the blur, the focus, Ctrl+S and the other names are veiled, the page waiting for the server once
+ * the editor lost the focus: {@link #isVeiled(IAjaxRoundTripEvent)}. They are events as any other:
  * {@link #removeEvents(IClientEventName...)} takes those of names away, so that the state goes
  * only as the editor loses the focus for example, {@link #setEvent(IClientEvent)} puts another in
  * their place, {@link #addEvent(IClientEvent)} adds one, of any name. Besides, the page's other
@@ -330,14 +330,20 @@ public class CodeEditor extends TextArea<String>
 			{
 				updateEventAjaxAttributes(attributes);
 			}
+
+			@Override
+			protected boolean isVeiled(IAjaxRoundTripEvent event)
+			{
+				return CodeEditor.this.isVeiled(event);
+			}
 		};
 		add(events);
 		for (CodeEditorEvent name : List.of(CodeEditorEvent.INPUT, CodeEditorEvent.SELECT,
 			CodeEditorEvent.SCROLL, CodeEditorEvent.RESIZE))
 		{
-			// they report while the user goes on: a page veil leaves them alone, not the blur
-			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY)
-				.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
+			// they report while the user goes on: the veils leave them alone (isVeiled), not the
+			// blur
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
 		}
 		events.add(new SendStateEvent(CodeEditorEvent.BLUR));
 		events.add(new SendStateEvent(CodeEditorEvent.LEAVE));
@@ -358,6 +364,37 @@ public class CodeEditor extends TextArea<String>
 	 */
 	protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
 	{
+	}
+
+	/**
+	 * Says whether the requests of an event of the editor going to the server are veiled, as
+	 * Wicket's veils veil a request: by a page veil, or by the local veil of a component around the
+	 * editor. Those of the events coming while the user goes on, as they type, move the cursor,
+	 * select, scroll or resize the editor, are not, whoever gave the editor the event
+	 * ({@link CodeEditorEvent#isBackground()}): they carry
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which the veils leave alone, so that the page
+	 * goes on taking the user's clicks and keys. Those of the other events, the blur, the focus,
+	 * Ctrl+S, the events of other names, are veiled, as what the user does: the page waits for the
+	 * server once the editor lost the focus, for example. An editor overriding this decides otherwise,
+	 * event by event; an event leaves the veils alone by
+	 * {@code setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true")} too.
+	 *
+	 * @param event
+	 *            an event of the editor going to the server
+	 * @return whether its requests are veiled
+	 * @see ClientEventsBehavior#isVeiled(IAjaxRoundTripEvent)
+	 */
+	protected boolean isVeiled(IAjaxRoundTripEvent event)
+	{
+		String name = event.getEventName();
+		for (CodeEditorEvent each : CodeEditorEvent.values())
+		{
+			if (each.isBackground() && each.getEventName().equals(name))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

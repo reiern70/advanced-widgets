@@ -22,7 +22,6 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -44,7 +43,6 @@ import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.richtext.RichTextMention;
 import com.antiliacode.widgets.richtext.RichTextView;
-import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * Writing with the rich text editor: the spelling the browser checks, or not, in the language of
@@ -132,13 +130,6 @@ public class RichTextWritingPanel extends Panel
 				setProofreader("demo".equals(proofreading) ? demo :
 					"languagetool".equals(proofreading) && languageTool != null ?
 						new LanguageToolProofreader(URI.create(languageTool)) : null);
-			}
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				// the requests of the events go as the user types: the page veil leaves them alone
-				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		editor.addSuggester(RichTextWriting.people()).addSuggester(RichTextWriting.topics())

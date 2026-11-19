@@ -20,7 +20,6 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -86,9 +85,11 @@ import com.github.openjson.JSONObject;
  * frameworks, with the CKEditor the page loaded.
  * <p>
  * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
- * the editors' events, which go as the user types: the editors mark them with
- * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
- * {@link CKEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
+ * the editors' events going as the user types, moves the cursor, scrolls or resizes, which the
+ * editors leave unveiled by themselves ({@link CKEditor#isVeiled}), those of the outline, which
+ * {@link OutlineEvent} marks, and the focus, the text selected and the error of the article, which
+ * the page marks: the page waits for the server as an editor loses the focus, and as the user
+ * saves.
  */
 public class CKEditorPage extends DemoPage
 {
@@ -206,13 +207,6 @@ public class CKEditorPage extends DemoPage
 			{
 				target.add(known);
 			}
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				// the requests of the events go as the user types: the page veil leaves them alone
-				PageVeilBehavior.noVeil(attributes);
-			}
 		};
 		editor.setSavedModel(LambdaModel.of(article, CKEditorDocument::getSaved,
 			CKEditorDocument::setSaved));
@@ -223,8 +217,11 @@ public class CKEditorPage extends DemoPage
 			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
+		// the focus without the veil, as the page chooses: the editor leaves alone those of input,
+		// selection, scrolling and resizing by itself, not those of other names
 		editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS,
-			(values, target) -> hear(target, "heardFocus")));
+			(values, target) -> hear(target, "heardFocus"))
+			.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		// the text before and the text now, which the model gets, without the rest of the form
 		editor.addEvent(RichTextEditorChangeEvent.of(editor, RichTextEditorEvents.BLUR,
 			(previousText, currentText, target) -> hearBlur(target, previousText, currentText)));
@@ -240,10 +237,13 @@ public class CKEditorPage extends DemoPage
 		// the types of events of the Tiptap editor, which CKEditor fires too: the text the user
 		// selected, built in, and the headings, of the page's own
 		editor.addEvent(RichTextEditorSelectedTextEvent.of((text, target) -> hearSelection(target,
-			text)).setDelay(RichTextEditorEvents.TYPING_DELAY));
+			text)).setDelay(RichTextEditorEvents.TYPING_DELAY)
+			.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		editor.addEvent(OutlineEvent.of((headings, target) -> hearOutline(target, headings)));
-		// CKEditor running into an error, which starts again: logged, and said
-		editor.addEvent(CKEditorErrorEvent.of((failure, target) -> hearError(target, failure)));
+		// CKEditor running into an error, which starts again: logged, and said, without the veil,
+		// for the user goes on in the editor started again
+		editor.addEvent(CKEditorErrorEvent.of((failure, target) -> hearError(target, failure))
+			.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		editorForm.add(editor);
 		// a lambda, not editor::getMarkupId: see CodeEditorPage
 		editorForm.add(new Label("articleName", getString("articleLabel"))
@@ -288,16 +288,7 @@ public class CKEditorPage extends DemoPage
 			}), LambdaModel.of(notes, CKEditorDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
-			}
-		};
+			}));
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setImagesFromSiteOnly(true)
 			.setSavedModel(LambdaModel.of(notes, CKEditorDocument::getSaved,
 				CKEditorDocument::setSaved))
@@ -335,16 +326,8 @@ public class CKEditorPage extends DemoPage
 		cleanedBox.add(new CKEditorView("view", new PropertyModel<>(this, "unsafe")));
 		cleaningCase.add(cleanedBox);
 		cleaned = cleanedBox;
-		cleaningCase.add(new RichTextCleaningPanel("modes", (id, model) -> new CKEditor(id, model)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
-			}
-		}, "ckeditor-demo-unsafe"));
+		cleaningCase.add(new RichTextCleaningPanel("modes", (id, model) -> new CKEditor(id, model),
+			"ckeditor-demo-unsafe"));
 		cleaningForm.add(new AjaxButton("clean")
 		{
 			private static final long serialVersionUID = 1L;
