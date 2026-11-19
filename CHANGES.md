@@ -29,6 +29,12 @@ What 11.0.0-RC6 has, and:
   the one set once by `JsonSerializers.setDefault(application, serializer)`, or else Jackson 3
   when the application has it, or else Jackson 2. With neither, the first JSON written fails
   telling what is missing. The autocompletes have a `getJsonSerializer()`.
+- A `CollapsiblePanel` remembering its state (`setRememberExpanded(true)`) reports a toggle only
+  when the user expands or collapses it (#148). The browser fires `toggle` also as it inserts a
+  `<details open>`, so every panel rendered expanded sent a request as the page loaded and each
+  time Ajax rendered it again, and an `onToggle` rendering the panels again never stopped. The
+  `<details>` now carries the state the server knows, `data-antilia-expanded`, and the request
+  leaves only for another one; the server hands `onToggle` only a change.
 
 **Upgrading:** an application that added the web jar itself for the icons may drop it.
 
