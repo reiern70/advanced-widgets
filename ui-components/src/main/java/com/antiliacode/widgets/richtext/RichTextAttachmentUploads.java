@@ -234,8 +234,9 @@ final class RichTextAttachmentUploads
 		IUploadFileFormat format;
 		try (InputStream input = upload.getInputStream())
 		{
+			// the whole file again for a head that leaves its format open: an Office document
 			format = IUploadFileFormat.detect(input.readNBytes(IUploadFileFormat.HEAD), name,
-				rules.formats());
+				rules.formats(), upload::getInputStream);
 		}
 		catch (IOException e)
 		{

@@ -35,6 +35,11 @@ import org.apache.wicket.util.io.IClusterable;
  * a signature its head matches; else, of the formats without one it matches, of the one its
  * extension names, else the first ({@link #detect(byte[], String, Collection)}): the extension only
  * chooses among the texts the bytes allow, and a PDF named {@code notes.txt} stays a PDF.
+ * <p>
+ * A head may leave the format open ({@link #mayMatch(byte[])}): an Office document is a ZIP whose
+ * first entries, past the head, may not say its kind. The whole file then tells
+ * ({@link #matches(InputStream)}), when the detection may read it
+ * ({@link #detect(byte[], String, Collection, Opener)}).
  *
  * @since 10.11.0
  */
@@ -70,6 +75,36 @@ public interface IUploadFileFormat extends IClusterable
 	 * @return whether the file is of this format
 	 */
 	boolean matches(byte[] head);
+
+	/**
+	 * @param head
+	 *            the first bytes of a file, up to {@link #HEAD} of them, which it did not
+	 *            {@link #matches(byte[]) match}
+	 * @return whether the head leaves it open that the file is of the format, which the whole file
+	 *         then tells ({@link #matches(InputStream)}): a ZIP may be an Office document whose
+	 *         first entries do not say its kind. {@code false} by default.
+	 * @since 11.0.0
+	 */
+	default boolean mayMatch(byte[] head)
+	{
+		return false;
+	}
+
+	/**
+	 * Tells from the whole file whether it is of the format, for a head that left it open
+	 * ({@link #mayMatch(byte[])}). {@code false} by default.
+	 *
+	 * @param file
+	 *            the file, from its first byte
+	 * @return whether the file is of the format
+	 * @throws IOException
+	 *             when the file could not be read
+	 * @since 11.0.0
+	 */
+	default boolean matches(InputStream file) throws IOException
+	{
+		return false;
+	}
 
 	/**
 	 * @return whether a browser may open a file of the format in its window, as an image or a PDF,
@@ -123,6 +158,38 @@ public interface IUploadFileFormat extends IClusterable
 	static <T extends IUploadFileFormat> T detect(byte[] head, String fileName,
 		Collection<T> formats)
 	{
+		try
+		{
+			return detect(head, fileName, formats, null);
+		}
+		catch (IOException e)
+		{
+			// never thrown: no file to read
+			throw new IllegalStateException(e);
+		}
+	}
+
+	/**
+	 * @param head
+	 *            the first bytes of a file, up to {@link #HEAD} of them
+	 * @param fileName
+	 *            the name the browser gave the file, not to be trusted: its extension only chooses
+	 *            among the formats the bytes allow; {@code null} for none
+	 * @param formats
+	 *            the formats the file may be of, in their order
+	 * @param file
+	 *            opens the whole file again, for the formats its head left open
+	 *            ({@link #mayMatch(byte[])}); {@code null} for the head alone
+	 * @return the format of the file: the first with a signature its head matches, or that its
+	 *         head left open and the whole file matches; else, of those without one it matches, the
+	 *         one its extension names, else the first; {@code null} for none
+	 * @throws IOException
+	 *             when the file could not be read
+	 * @since 11.0.0
+	 */
+	static <T extends IUploadFileFormat> T detect(byte[] head, String fileName,
+		Collection<T> formats, Opener file) throws IOException
+	{
 		if (head == null || formats == null)
 		{
 			return null;
@@ -131,9 +198,23 @@ public interface IUploadFileFormat extends IClusterable
 		T first = null;
 		for (T format : formats)
 		{
-			if (format != null && format.hasSignature() && format.matches(head))
+			if (format == null || !format.hasSignature())
+			{
+				continue;
+			}
+			if (format.matches(head))
 			{
 				return format;
+			}
+			if (file != null && format.mayMatch(head))
+			{
+				try (InputStream input = file.open())
+				{
+					if (format.matches(input))
+					{
+						return format;
+					}
+				}
 			}
 		}
 		for (T format : formats)
@@ -177,5 +258,21 @@ public interface IUploadFileFormat extends IClusterable
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Opens a file again, from its first byte: the file a user uploaded, for example.
+	 *
+	 * @since 11.0.0
+	 */
+	@FunctionalInterface
+	interface Opener
+	{
+		/**
+		 * @return the file, from its first byte, which the caller closes
+		 * @throws IOException
+		 *             when the file could not be opened
+		 */
+		InputStream open() throws IOException;
 	}
 }

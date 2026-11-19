@@ -11,6 +11,17 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (not released yet)
+
+What 10.11.0-RC11 has, and:
+
+- An Office document (DOCX, XLSX, PPTX) whose first entries, longer than the 4 KB the format is
+  told by, say nothing of its kind is no longer taken for a ZIP when attached to a text (#124):
+  the names of its other entries tell it, read from the whole file without unpacking anything.
+  A format says its head leaves it open (`IUploadFileFormat#mayMatch(byte[])`), and the whole
+  file then decides (`matches(InputStream)`), which
+  `IUploadFileFormat.detect(head, name, formats, opener)` reads.
+
 ## 10.11.0-RC11 (2026-11-19)
 
 What 10.11.0-RC10 has, the drop-downs of 11.0.0-RC5 (their lists above any box that would cut
