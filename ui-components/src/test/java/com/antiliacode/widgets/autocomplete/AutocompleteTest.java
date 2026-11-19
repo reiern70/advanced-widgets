@@ -16,6 +16,7 @@ package com.antiliacode.widgets.autocomplete;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -42,6 +43,8 @@ import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.dynamicdatatable.Jackson2JsonSerializer;
+import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.github.openjson.JSONArray;
 
 class AutocompleteTest extends WicketTestCase
@@ -85,6 +88,27 @@ class AutocompleteTest extends WicketTestCase
 		assertEquals("banana",
 			suggestions.getJSONObject(0).getJSONObject("data").getString("name"));
 		assertEquals("mango", suggestions.getJSONObject(1).getString("id"));
+	}
+
+	@Test
+	void suggestsAsTheApplicationsDefaultSerializerWrites()
+	{
+		JsonSerializers.setDefault(tester.getApplication(), Jackson2JsonSerializer.INSTANCE);
+		TestPage page = new TestPage();
+		tester.startPage(page);
+
+		suggest(page.single, "an");
+
+		assertSame(Jackson2JsonSerializer.INSTANCE, page.single.getJsonSerializer());
+		JSONArray suggestions = new JSONArray(tester.getLastResponseAsString());
+		assertEquals(2, suggestions.length(), tester.getLastResponseAsString());
+		assertEquals("Banana", suggestions.getJSONObject(0).getString("label"));
+		assertEquals("banana",
+			suggestions.getJSONObject(0).getJSONObject("data").getString("name"));
+
+		page.single.setJsonSerializer(value -> "[]");
+		suggest(page.single, "an");
+		assertEquals("[]", tester.getLastResponseAsString());
 	}
 
 	@Test
