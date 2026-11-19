@@ -18,7 +18,8 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Button, Dropdown, RichTextEditor, Tabs, type TabItem } from '@antilia/svelte';
+	import { Button, Dropdown, MarkdownPreview, RichTextEditor, Tabs,
+		type TabItem } from '@antilia/svelte';
 
 	import { dropdownTexts } from '../data.js';
 	import { attachments, describe, filesTakenOut, imagesTakenOut, proofreader as proofreaderOf,
@@ -54,7 +55,8 @@
 
 	// the cases, one at a time
 	const cases = $derived<TabItem[]>([{ id: 'articleTitle', title: texts.appArticleTitle, modified: false },
-		{ id: 'notesTitle', title: texts.notesTitle, modified: false }]);
+		{ id: 'notesTitle', title: texts.notesTitle, modified: false },
+		{ id: 'viewTitle', title: texts.viewTitle, modified: false }]);
 
 	function saveArticle() {
 		articleImages.saved(article.text);
@@ -145,6 +147,16 @@
 						<h3 class="rich-text-demo__subtitle">{texts.appMarkdown}</h3>
 						<pre><code>{notes.text}</code></pre>
 					</div>
+				</section>
+			{:else if tab.id === 'viewTitle'}
+				<!-- the texts as last saved, outside the editors: the article read only, whose schema
+				keeps what it shows, and the notes as their Markdown makes them -->
+				<section class="rich-text-demo__views">
+					<h3 class="rich-text-demo__subtitle">{texts.appArticleTitle}</h3>
+					<RichTextEditor class="rich-text-demo__view" value={article.saved} readOnly
+						toolbar={false} label={texts.appArticleTitle} texts={config.editor} />
+					<MarkdownPreview class="rich-text-demo__view" value={notes.saved}
+						label={texts.notesTitle} />
 				</section>
 			{/if}
 		{/snippet}

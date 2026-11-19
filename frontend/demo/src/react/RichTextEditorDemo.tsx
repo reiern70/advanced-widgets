@@ -14,7 +14,7 @@
 
 import { useState } from 'react';
 
-import { Button, Dropdown, RichTextEditor, Tab, Tabs } from '@antilia/react';
+import { Button, Dropdown, MarkdownPreview, RichTextEditor, Tab, Tabs } from '@antilia/react';
 
 import { dropdownTexts } from '../data.js';
 import { attachments, describe, filesTakenOut, imagesTakenOut, proofreader as proofreaderOf,
@@ -25,7 +25,9 @@ import { attachments, describe, filesTakenOut, imagesTakenOut, proofreader as pr
 /**
  * The RichTextEditor demo in React: the editor of the Wicket page, in its markup. The app keeps the
  * article and the notes, their texts and the state the user left their editors in. The HTML and
- * the Markdown the editors give show below them, as text: a server keeping the HTML cleans it.
+ * the Markdown the editors give show below them, as text: a server keeping the HTML cleans it. The
+ * case View shows the texts as last saved, outside the editors: the article in an editor read only,
+ * whose schema keeps what it shows, and the notes as their Markdown makes them.
  */
 export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig }) {
 	const { texts } = config;
@@ -142,6 +144,15 @@ export function RichTextEditorDemo({ config }: { config: RichTextEditorConfig })
 							<h3 className="rich-text-demo__subtitle">{texts.appMarkdown}</h3>
 							<pre><code>{notes.text}</code></pre>
 						</div>
+					</section>
+				</Tab>
+				<Tab id="viewTitle" title={texts.viewTitle} modified={false}>
+					<section className="rich-text-demo__views">
+						<h3 className="rich-text-demo__subtitle">{texts.appArticleTitle}</h3>
+						<RichTextEditor className="rich-text-demo__view" value={article.saved}
+							readOnly toolbar={false} label={texts.appArticleTitle} texts={config.editor} />
+						<MarkdownPreview className="rich-text-demo__view" value={notes.saved}
+							label={texts.notesTitle} />
 					</section>
 				</Tab>
 			</Tabs>

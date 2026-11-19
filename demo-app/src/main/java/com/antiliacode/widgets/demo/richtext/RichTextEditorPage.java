@@ -896,7 +896,7 @@ public class RichTextEditorPage extends DemoPage
 	@Override
 	protected JSONObject getFrameworkConfig()
 	{
-		JSONObject texts = FrameworkTabs.texts(this, "cases", "articleTitle", "notesTitle",
+		JSONObject texts = FrameworkTabs.texts(this, "cases", "articleTitle", "notesTitle", "viewTitle",
 			"articleLabel", "notesLabel", "placeholder", "toolbar", "bubbleMenu", "readOnly",
 			"count", "highlight", "save", "unsaved", "allSaved", "appArticleTitle", "appHtml",
 			"appMarkdown", "appKnown", "appSaved", "appNotClean", "appStart");
