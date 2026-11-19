@@ -65,6 +65,18 @@
  * not upload one, or why it failed, in a line above the text, as the Tiptap editor does, not in
  * CKEditor's alert. The bar of the progress has no style attribute either: it grows by classes.
  *
+ * The rest of the uploads of the Tiptap editor are CKEditor's too, under the same options (see
+ * ck-editor-uploads.ts): the images CKEditor is given are checked before it uploads them, how many
+ * (uploadMaxCount) and their pixels, those too large scaled down when the user ticks them
+ * (uploadScaling), and a file of another type chosen in CKEditor's dialog of files is told of; the
+ * dialog of the uploads (uploadDialog) takes the place of CKEditor's own button; the images kept
+ * permanently (onStorePermanently) are ticked in its lines and inserted by the tool storedImage
+ * (onFindImages); the tool images lists the images of the text; the files attached (onAttach) are
+ * an inline widget of the editor's own, written as the Tiptap editor writes them; and the images
+ * and the files the user takes out are told of a moment after (onImagesRemoved,
+ * onAttachmentsRemoved), as the Tiptap editor tells them. The lists, the dialogs and the files
+ * take the look of rich-text-editor.css, which the page loads too.
+ *
  * As the Tiptap editor, it keeps its state, what is selected, how far the text is scrolled and
  * the size the user gave it, by the bar along its bottom; it tells whether the text has changes
  * not saved, as data-modified on its element, which tabs and windows of the desktop show; Ctrl+S
@@ -94,9 +106,19 @@ import { DEFAULT_RICH_TEXT_PASTE_TEXTS, isEmptyCleaningReport, isSafeUrl, pasteC
 	type RichTextCleaningReport, type RichTextPasteTexts } from './rich-text-html.js';
 import { dimensionsText, fits, readImageDimensions,
 	type RichTextImageDimensions } from './rich-text-image-headers.js';
-import { DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, isAbort, refusalOf,
-	type RichTextUploader, type RichTextUploadOptions,
-	type UploadCheckTexts } from './rich-text-upload.js';
+import { checkFiles, DEFAULT_RICH_TEXT_UPLOAD_TEXTS, DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf,
+	isAbort, refusalOf, sizeText, type RichTextUploader, type RichTextUploadOptions,
+	type RichTextUploadTexts, type UploadDialogHost, type UploadLimits } from './rich-text-upload.js';
+import { askToScale, openUploadDialog } from './rich-text-upload-dialog.js';
+import { attachmentKind, attachmentRefusal, attachmentTypes, attachmentUrlTest, checkAttachments,
+	type AttachmentLimits, type RichTextAttachmentType,
+	type RichTextAttachmentUrls } from './rich-text-attachments.js';
+import { imagePicker, type RichTextImageFinder,
+	type RichTextImageKeeper } from './rich-text-stored-images.js';
+import { ckAttachmentConversion, ckAttachmentsIn, ckAttachmentsOf, ckFillList,
+	ckImagesIn, ckImagesOf, ckInsertAttachments, ckRegisterTools, ckRemoveAttachments,
+	ckRemoveImages, ckSelect, type CKButtonTool, type CKPanelTool, type CKUploadsBuild,
+	type CKUploadsEditor } from './ck-editor-uploads.js';
 import type { HeadingLevel, RichTextFeature } from './rich-text-schema.js';
 
 /* What the glue uses of CKEditor, as its classes have it: no more, so that any build fits. */
@@ -259,7 +281,7 @@ export type CKEditorPlugin = string | object;
 export type CKEditorFeature = Extract<RichTextFeature, 'heading' | 'bold' | 'italic' |
 	'underline' | 'strike' | 'code' | 'superscript' | 'subscript' | 'link' | 'bulletList' |
 	'orderedList' | 'taskList' | 'blockquote' | 'codeBlock' | 'horizontalRule' | 'table' | 'image' |
-	'textAlign'>;
+	'attachment' | 'textAlign'>;
 
 /** The plugins of CKEditor making each feature, by their names in the build. */
 export const CK_EDITOR_FEATURE_PLUGINS: Readonly<Record<CKEditorFeature, readonly string[]>> =
@@ -282,6 +304,8 @@ export const CK_EDITOR_FEATURE_PLUGINS: Readonly<Record<CKEditorFeature, readonl
 		table: ['Table', 'TableToolbar'],
 		image: ['Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative', 'ImageInsertViaUrl',
 			'AutoImage'],
+		// an inline widget of the editor's own, the files attached (ck-editor-uploads.ts)
+		attachment: ['Widget'],
 		textAlign: ['Alignment']
 	});
 
@@ -328,25 +352,40 @@ function takesAway(editor: CKEditorInstance, name: string, other: string): void 
 export const CK_EDITOR_BASE_PLUGINS: readonly string[] = Object.freeze(['Essentials', 'Paragraph',
 	'Autoformat', 'PasteFromOffice']);
 
-/** The tools of the default toolbar, in groups, as CKEditor names them, by their features. */
-const TOOLBAR: readonly (readonly (readonly [CKEditorFeature | null, string])[])[] = [
-	[['heading', 'heading']],
-	[['bold', 'bold'], ['italic', 'italic'], ['underline', 'underline'],
-		['strike', 'strikethrough'], ['code', 'code'], ['superscript', 'superscript'],
-		['subscript', 'subscript']],
-	[['link', 'link']],
-	[['bulletList', 'bulletedList'], ['orderedList', 'numberedList'], ['taskList', 'todoList']],
-	[['blockquote', 'blockQuote'], ['codeBlock', 'codeBlock'], ['horizontalRule', 'horizontalLine'],
-		['table', 'insertTable'], ['image', 'insertImage']],
-	[['textAlign', 'alignment']],
-	[[null, 'undo'], [null, 'redo']]
-];
+/**
+ * When a tool of the uploads shows in the default toolbar: while the editor uploads images, while
+ * it opens the dialog of the uploads, while it finds the images the page stores, while it attaches
+ * files.
+ */
+type ToolCondition = 'upload' | 'dialog' | 'find' | 'attach';
+
+/**
+ * The tools of the default toolbar, in groups, as CKEditor names them, by their features: those of
+ * the uploads besides CKEditor's own, the editor's (ck-editor-uploads.ts), on their condition.
+ */
+const TOOLBAR: readonly (readonly (readonly [CKEditorFeature | null, string, ToolCondition?])[])[] =
+	[
+		[['heading', 'heading']],
+		[['bold', 'bold'], ['italic', 'italic'], ['underline', 'underline'],
+			['strike', 'strikethrough'], ['code', 'code'], ['superscript', 'superscript'],
+			['subscript', 'subscript']],
+		[['link', 'link']],
+		[['bulletList', 'bulletedList'], ['orderedList', 'numberedList'], ['taskList', 'todoList']],
+		[['blockquote', 'blockQuote'], ['codeBlock', 'codeBlock'],
+			['horizontalRule', 'horizontalLine'], ['table', 'insertTable'], ['image', 'insertImage'],
+			['image', 'uploadImages', 'dialog'], ['image', 'storedImage', 'find'],
+			['image', 'images', 'upload'], ['attachment', 'attachment', 'attach'],
+			['attachment', 'attachments', 'attach']],
+		[['textAlign', 'alignment']],
+		[[null, 'undo'], [null, 'redo']]
+	];
 
 /**
  * What the editor says, its own texts, with the notice telling what a paste lost
- * (RichTextPasteTexts): CKEditor's are translated by CKEditor.
+ * (RichTextPasteTexts) and what its uploads say, as the Tiptap editor's (RichTextUploadTexts):
+ * CKEditor's are translated by CKEditor.
  */
-export interface CKEditorTexts extends RichTextPasteTexts, UploadCheckTexts {
+export interface CKEditorTexts extends RichTextPasteTexts, RichTextUploadTexts {
 	characters: string;
 	character: string;
 	words: string;
@@ -370,12 +409,7 @@ export const DEFAULT_CK_EDITOR_TEXTS: Readonly<CKEditorTexts> = Object.freeze({
 	errorRestarted: 'Something went wrong in the editor. It started again, with your text.',
 	errorGaveUp: 'Something keeps going wrong in the editor. Save your text, then reload the ' +
 		'page.',
-	theImage: 'The image',
-	uploadFailed: '{0} could not be uploaded.',
-	uploadTooLarge: '{0} is larger than {1}.',
-	uploadType: '{0} is not an image of a type the editor takes: {1}.',
-	uploadTooMany: '{0} images at most at a time: {1} left out.',
-	uploadTooBig: '{0} is {1} pixels, larger than {2}.',
+	...DEFAULT_RICH_TEXT_UPLOAD_TEXTS,
 	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
 
@@ -536,6 +570,76 @@ export interface CKEditorOptions {
 	uploadMaxWidth?: number | null;
 	/** The highest picture uploaded, in pixels, read from its file: none when left out or null. */
 	uploadMaxHeight?: number | null;
+	/**
+	 * Whether a dialog offers the user to scale down the pictures larger than that, each by a box
+	 * to tick, rather than refusing them; false when left out.
+	 */
+	uploadScaling?: boolean;
+	/**
+	 * How many images one drop, choice or paste takes at most, the first, the others left out with
+	 * a message; none when left out or null.
+	 */
+	uploadMaxCount?: number | null;
+	/**
+	 * Whether the images are uploaded in the dialog of the uploads, rather than by CKEditor's own
+	 * button: the tool uploadImages opens it, a zone to drop images on or choose them and the list
+	 * of the files, each with the share of it sent, which the user takes out before the images go
+	 * into the text; false when left out. Pasted and dropped into the text, they upload as before.
+	 */
+	uploadDialog?: boolean;
+	/**
+	 * Called a moment after the user took images out of the text, with their addresses: by a key,
+	 * a cut, the tool images or the page's own code, or uploaded and never put into it; at once as
+	 * the user saves or leaves the editor. The page deletes them, at once or once the text is
+	 * saved: deleteImagesAt() asks Wicket's RichTextImageUploadBehavior to.
+	 */
+	onImagesRemoved?: (urls: string[]) => void;
+	/**
+	 * Stores images the user uploaded permanently, those ticked in the dialog of the uploads, once
+	 * they are in the text: see storePermanentlyAt(). Resolves to the addresses of those stored.
+	 * With it, the tool uploadImages opens the dialog, whose lines have the box to tick. None when
+	 * left out or null.
+	 */
+	onStorePermanently?: RichTextImageKeeper | null;
+	/**
+	 * Finds the images the page stores permanently for what the user typed, which the tool
+	 * storedImage, "Insert image from store", lists and inserts: see findImagesAt(). None when
+	 * left out or null: the tool does not show.
+	 */
+	onFindImages?: RichTextImageFinder | null;
+	/**
+	 * Uploads a file the user attaches, a PDF or a spreadsheet, chosen by the tool attachment,
+	 * dropped into the text or pasted, answering the address it is served at, which must be safe:
+	 * see uploadFileTo(). The file goes into the text as a link with its name and its size, as the
+	 * Tiptap editor writes it, for the feature attachment. None when left out or null: the tools of
+	 * the files do not show, and a file that is no image dropped into the text is refused.
+	 */
+	onAttach?: RichTextUploader | null;
+	/**
+	 * The types of the files the user may attach, each a media type, an extension and a label:
+	 * DEFAULT_RICH_TEXT_ATTACH_TYPES, those of the server, when left out.
+	 */
+	attachTypes?: readonly RichTextAttachmentType[];
+	/** The largest file the user may attach, in bytes; none when left out or null. */
+	attachMaxSize?: number | null;
+	/** How many files one drop, choice or paste takes at most, the first; none when left out. */
+	attachMaxCount?: number | null;
+	/**
+	 * Whether the tool attachment opens the dialog of the uploads, rather than choosing the files
+	 * at once; false when left out.
+	 */
+	attachDialog?: boolean;
+	/**
+	 * The addresses of the files attached to the text, or a test of an address, for Markdown, where
+	 * a file is a plain link: a link to one of them, a text of its own, comes back as a file
+	 * attached. None when left out or null: every link comes back as a link.
+	 */
+	attachmentUrls?: RichTextAttachmentUrls | null;
+	/**
+	 * Called a moment after the user took files attached out of the text, with their addresses, as
+	 * onImagesRemoved is for the images: the page deletes them, at once or once the text is saved.
+	 */
+	onAttachmentsRemoved?: (urls: string[]) => void;
 	/** Called with CKEditor's editor once it started. */
 	onReady?: (editor: CKEditorInstance) => void;
 	/**
@@ -603,7 +707,9 @@ export const CK_EDITOR_CLASSES = Object.freeze({
 	/** The line below the text telling the user CKEditor ran into an error. */
 	error: 'antilia-ck-editor-error',
 	/** The line above the text telling the user why an image was not uploaded, for a while. */
-	message: 'antilia-ck-editor-message'
+	message: 'antilia-ck-editor-message',
+	/** The field of the tool attachment choosing the files, hidden. */
+	attachPicker: 'antilia-ck-editor-attach-picker'
 });
 
 /** How long the line telling why an image was not uploaded stays, in milliseconds. */
@@ -645,6 +751,16 @@ const CONFIG_OPTIONS: readonly (keyof CKEditorOptions)[] = ['format', 'features'
 	'headingLevels', 'toolbar', 'licenseKey', 'language', 'textLanguage', 'placeholder', 'label',
 	'uploadTypes'];
 
+/**
+ * The options of the uploads whose coming or going makes CKEditor anew, the callbacks and the
+ * dialog: its plugins and its tools change.
+ */
+const UPLOAD_SWITCHES: readonly (keyof CKEditorOptions)[] = ['onUpload', 'onStorePermanently',
+	'onFindImages', 'onAttach', 'uploadDialog'];
+
+/** How long after the user took images out of the text the editor tells of them, in ms. */
+const REMOVED_DELAY = 300;
+
 /** The options compared by what they are, not by their value. */
 const OBJECT_OPTIONS: readonly (keyof CKEditorOptions)[] = ['build', 'plugins', 'config',
 	'translations'];
@@ -655,6 +771,62 @@ const LIST_ITEM_ID = / data-list-item-id="[^"]*"/g;
 /** The images of CKEditor's model, and their sizes, for which CKEditor writes a style. */
 const IMAGES = ['imageBlock', 'imageInline'];
 const SIZES = ['width', 'height'];
+
+/**
+ * The icons of the tools of the uploads, when the build has no icon of CKEditor for them: each
+ * line its own fill of none, for CKEditor fills those without one.
+ */
+const ICONS = Object.freeze({
+	// two pictures, one behind the other
+	images: icon('<rect x="7" y="3" width="14" height="14" rx="2" fill="none"/>' +
+		'<path d="M3 7v12a2 2 0 0 0 2 2h12" fill="none"/><circle cx="11.5" cy="7.5" r="1.4" ' +
+		'fill="none"/><path d="m21 13-4-4-6 6" fill="none"/>'),
+	// a picture going up
+	uploadImages: icon('<rect x="3" y="4" width="18" height="16" rx="2" fill="none"/>' +
+		'<path d="M12 16V9M9 12l3-3 3 3" fill="none"/>'),
+	// a picture coming out of a box
+	storedImage: icon('<path d="M3 14v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5" fill="none"/>' +
+		'<path d="M3 14h5l1 2h6l1-2h5" fill="none"/><rect x="7" y="3" width="10" height="8" ' +
+		'rx="1.5" fill="none"/>'),
+	// a paper clip
+	attachment: icon('<path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7' +
+		'l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8" fill="none"/>'),
+	// a sheet with a folded corner, its lines
+	attachments: icon('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" ' +
+		'fill="none"/><path d="M14 3v5h5M9 13h6M9 17h6" fill="none"/>')
+});
+
+/**
+ * @returns an icon of CKEditor's size, its lines drawn in the color of the text
+ */
+function icon(content: string): string {
+	return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" ' +
+		'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + content + '</svg>';
+}
+
+/**
+ * @returns whether a number of the options is a limit: finite, above 0
+ */
+function positive(value: number | null | undefined): value is number {
+	return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+/**
+ * @returns what the list of the images calls an image: its text, else the name of its file, else
+ *          what stands for one without
+ */
+function imageLabel(src: string, alt: string | null, texts: Pick<CKEditorTexts, 'theImage'>):
+	string {
+	if (alt && alt.trim()) {
+		return alt.trim();
+	}
+	const file = src.split(/[?#]/)[0]!.split('/').pop() ?? '';
+	try {
+		return decodeURIComponent(file) || texts.theImage;
+	} catch {
+		return file || texts.theImage;
+	}
+}
 
 function resolve(target: HTMLElement | string): HTMLElement | null {
 	return typeof target === 'string' ? document.getElementById(target) : target;
@@ -882,6 +1054,29 @@ export class CKEditor {
 	private message: HTMLElement | null = null;
 
 	private messageTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** The images of the text, by their addresses, each with how many times it is in it. */
+	private images = new Map<string, number>();
+
+	/** The files attached to the text, by their addresses, as the images. */
+	private attachments = new Map<string, number>();
+
+	/** The images the user took out of the text, to tell of in a moment. */
+	private removed = new Set<string>();
+
+	/** The files the user took out of the text, to tell of in a moment. */
+	private removedAttachments = new Set<string>();
+
+	private removedTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** Whether the editor gives CKEditor's command uploading images the files it checked. */
+	private passing = false;
+
+	/** Why files chosen in CKEditor's dialog of files are of no type taken, to tell. */
+	private typeRefusals: readonly string[] = [];
+
+	/** The field choosing the files to attach, once the tool attachment made it. */
+	private attachPicker: HTMLInputElement | null = null;
 
 	/** The line below the text telling the user CKEditor ran into an error, while it tells. */
 	private errorLine: HTMLElement | null = null;
@@ -1160,8 +1355,10 @@ export class CKEditor {
 		const names = [...CK_EDITOR_BASE_PLUGINS];
 		this.features().forEach((feature) => names.push(...CK_EDITOR_FEATURE_PLUGINS[feature]));
 		if (this.uploading()) {
-			// the upload button, pasting and dropping images, and their progress
-			names.push('ImageUpload');
+			// pasting and dropping images, and their progress; the upload button of CKEditor, unless
+			// the dialog of the uploads takes its place
+			names.push(...(this.options.uploadDialog ? ['ImageUploadEditing', 'ImageUploadProgress'] :
+				['ImageUpload']));
 		}
 		if (this.format() === 'markdown') {
 			names.push('Markdown');
@@ -1178,6 +1375,11 @@ export class CKEditor {
 			}
 		};
 		names.forEach(add);
+		const features = this.features();
+		if (features.has('image') || features.has('attachment')) {
+			// the files attached and the tools of the uploads, the editor's own
+			plugins.push(this.ownPlugin(build));
+		}
 		(this.options.plugins ?? []).forEach(add);
 		return plugins;
 	}
@@ -1196,7 +1398,8 @@ export class CKEditor {
 		const features = this.features();
 		const items: string[] = [];
 		TOOLBAR.forEach((group) => {
-			const tools = group.filter(([feature]) => feature === null || features.has(feature))
+			const tools = group.filter(([feature, , condition]) => (feature === null ||
+				features.has(feature)) && (!condition || this.hasTools(condition)))
 				.map(([, tool]) => tool);
 			if (tools.length) {
 				if (items.length) {
@@ -1546,6 +1749,8 @@ export class CKEditor {
 		}, { priority: 'highest' });
 		this.hearPastes(editor);
 		this.receiveUploads(editor);
+		this.receiveAttachments(editor);
+		this.renderAttachPicker();
 		takesAway(editor, 'superscript', 'subscript');
 		takesAway(editor, 'subscript', 'superscript');
 		editor.keystrokes.set('Ctrl+S', (_data, cancel) => {
@@ -1559,6 +1764,10 @@ export class CKEditor {
 			this.external = false;
 		}
 		this.value = this.read(editor);
+		// the images and the files the text has, which the user takes out from now on
+		const root = editor.model.document.getRoot();
+		this.images = ckImagesIn(root);
+		this.attachments = ckAttachmentsIn(root);
 		if (!this.savedCanonical) {
 			this.saved = this.canonical(this.saved);
 			this.savedCanonical = true;
@@ -1657,10 +1866,11 @@ export class CKEditor {
 
 	/**
 	 * Lets CKEditor upload the images the user chooses, pastes or drops, by an upload adapter of
-	 * the editor's own calling onUpload; tells why it did not upload one in the line above the
-	 * text, not in CKEditor's alert; tells of files of a type not taken that CKEditor leaves alone;
-	 * and shows the progress of each by classes. Nothing without onUpload or CKEditor's
-	 * FileRepository.
+	 * the editor's own calling onUpload, once checked: how many, their types, sizes and pixels,
+	 * those too large scaled down when the user ticks them; tells why it did not upload one in the
+	 * line above the text, not in CKEditor's alert, and of files of a type not taken that CKEditor
+	 * leaves alone; and shows the progress of each by classes. Nothing without onUpload or
+	 * CKEditor's FileRepository.
 	 */
 	private receiveUploads(editor: CKEditorInstance): void {
 		const plugins = editor.plugins;
@@ -1683,24 +1893,600 @@ export class CKEditor {
 					}
 				}, { priority: 'high' });
 		}
-		// files pasted or dropped of a type not taken, which CKEditor's ImageUpload leaves alone:
-		// told why, as the Tiptap editor does
-		editor.editing.view.document.on('clipboardInput', (_event, data: {
-			dataTransfer?: { files?: ArrayLike<File>; getData?(type: string): string } }) => {
+		// the files CKEditor's ImageUpload is given, chosen, pasted or dropped, checked before it
+		// uploads them: how many, their types, sizes and pixels, those too large scaled down when
+		// the user wants it; told why not, the files chosen of another type among them
+		const command = editor.commands?.get('uploadImage');
+		command?.on('execute', (event: { stop(): void }, args: unknown[] = []) => {
+			if (this.passing) {
+				return;
+			}
+			const given = (args[0] as { file?: File | readonly File[] } | undefined)?.file;
+			const files = Array.isArray(given) ? [...given as readonly File[]] :
+				given ? [given as File] : [];
+			const refused = this.typeRefusals;
+			this.typeRefusals = [];
+			if (!files.length) {
+				return;
+			}
+			event.stop();
+			void this.checkUploads(editor, files, refused);
+		}, { priority: 'high' });
+		this.quietUploadProgress(editor, repository);
+	}
+
+	/**
+	 * Checks the images CKEditor's ImageUpload was given before it uploads them, as the Tiptap
+	 * editor checks them: how many one choice or drop takes, their types, sizes and pixels, asking
+	 * the user which pictures too large to scale down while the page allows it. Then CKEditor
+	 * uploads those left, where the selection is; the line above the text tells why not the others.
+	 *
+	 * @param refused why files chosen were of no type taken, which CKEditor left out
+	 */
+	private async checkUploads(editor: CKEditorInstance, files: readonly File[],
+		refused: readonly string[]): Promise<void> {
+		const texts = this.texts();
+		const limits = this.uploadLimits();
+		let checked: File[] = [];
+		const messages = [...refused];
+		try {
+			const check = await checkFiles(files, limits, texts, (oversize) => askToScale(oversize,
+				limits.maxDimensions!, texts, this.look));
+			checked = check.files;
+			messages.push(...check.refused);
+		} catch (error) {
+			getHost().log.error('The editor could not check the images', error);
+			messages.push(...files.map((file) => format(texts.uploadFailed, fileNameOf(file, texts))));
+		}
+		if (messages.length) {
+			this.alert(messages.join(' '));
+		}
+		const command = editor.commands?.get('uploadImage');
+		if (!checked.length || !command || editor !== this.editor || this.destroyed) {
+			return;
+		}
+		this.passing = true;
+		try {
+			command.execute({ file: checked });
+		} finally {
+			this.passing = false;
+		}
+	}
+
+	/**
+	 * Hears of the files pasted or dropped into the text CKEditor leaves alone, those of no type of
+	 * image taken: attached when the editor attaches files, else told why not.
+	 */
+	private receiveAttachments(editor: CKEditorInstance): void {
+		if (!this.uploading() && !this.attaching()) {
+			return;
+		}
+		editor.editing.view.document.on('clipboardInput', (event: { stop(): void }, data: {
+			dataTransfer?: { files?: ArrayLike<File>; getData?(type: string): string };
+			targetRanges?: readonly unknown[] | null }) => {
 			const transfer = data.dataTransfer;
 			const files = Array.from(transfer?.files ?? []);
 			if (!files.length || transfer?.getData?.('text/html') || editor !== this.editor) {
 				return;
 			}
 			const types = this.uploadTypes();
+			const images = this.uploading() ? files.filter((file) =>
+				types.includes(file.type.toLowerCase())) : [];
+			const others = files.filter((file) => !images.includes(file));
+			if (!others.length) {
+				return;
+			}
+			if (this.attaching()) {
+				// where the files dropped go
+				const ranges = data.targetRanges;
+				const mapper = (editor.editing as { mapper?: { toModelRange(range: unknown): unknown }
+					}).mapper;
+				if (ranges?.length && mapper) {
+					editor.model.change((writer) => (writer as unknown as {
+						setSelection(ranges: unknown[]): void }).setSelection(ranges.map((range) =>
+						mapper.toModelRange(range))));
+				}
+				void this.attachFiles(editor, others);
+				if (!images.length) {
+					event.stop();
+				}
+				return;
+			}
+			// of a type not taken, which CKEditor's ImageUpload leaves alone: told why, as the
+			// Tiptap editor does
 			const texts = this.texts();
-			const refused = files.map((file) => refusalOf(file, { types, maxSize: null }, texts))
+			const refused = others.map((file) => refusalOf(file, { types, maxSize: null }, texts))
 				.filter((message): message is string => !!message);
 			if (refused.length) {
 				this.alert(refused.join(' '));
 			}
 		}, { priority: 'high' });
-		this.quietUploadProgress(editor, repository);
+	}
+
+	/**
+	 * @returns whether the tools of a condition show in the default toolbar
+	 */
+	private hasTools(condition: ToolCondition): boolean {
+		switch (condition) {
+			case 'upload':
+				return this.uploading();
+			case 'dialog':
+				return this.uploading() && (!!this.options.uploadDialog ||
+					typeof this.options.onStorePermanently === 'function');
+			case 'find':
+				return this.features().has('image') && typeof this.options.onFindImages === 'function';
+			case 'attach':
+				return this.attaching();
+		}
+	}
+
+	/**
+	 * @returns a plugin of CKEditor of the editor's own, a function CKEditor calls with new as it
+	 *          makes its plugins: the files attached and the tools of the uploads
+	 */
+	private ownPlugin(build: CKEditorBuild): object {
+		const extend = (editor: CKEditorInstance) => this.extend(editor, build);
+		return function AntiliaUploads(editor: CKEditorInstance): void {
+			extend(editor);
+		};
+	}
+
+	/**
+	 * Gives CKEditor, as it starts, the files attached, for the feature attachment, and the tools
+	 * of the uploads, by their names.
+	 */
+	private extend(editor: CKEditorInstance, build: CKEditorBuild): void {
+		const own = editor as unknown as CKUploadsEditor;
+		const kit = build as unknown as CKUploadsBuild;
+		try {
+			if (this.features().has('attachment')) {
+				ckAttachmentConversion(own, kit, () => attachmentUrlTest(this.options.attachmentUrls),
+					() => this.attachTypes());
+			}
+			ckRegisterTools(own, kit, this.tools(editor, build));
+		} catch (error) {
+			getHost().log.error('The editor could not give CKEditor its tools of the uploads', error);
+		}
+	}
+
+	/**
+	 * @returns the tools of the uploads, as CKEditor names them: the images of the text, the
+	 *          dialog of the uploads and the images stored, for the feature image; attaching a file
+	 *          and the files of the text, for the feature attachment while the editor attaches
+	 */
+	private tools(editor: CKEditorInstance, build: CKEditorBuild): (CKButtonTool | CKPanelTool)[] {
+		const texts = this.texts();
+		const features = this.features();
+		const icon = (name: string, own: string) => {
+			const given = build[name];
+			return typeof given === 'string' && given.trim().startsWith('<svg') ? given : own;
+		};
+		const tools: (CKButtonTool | CKPanelTool)[] = [];
+		if (features.has('image')) {
+			tools.push({ name: 'images', label: texts.images, icon: ICONS.images,
+				render: (panel, close) => this.renderImages(editor, panel, close) });
+			if (this.uploading()) {
+				tools.push({ name: 'uploadImages', label: texts.uploadImage,
+					icon: icon('IconImageUpload', ICONS.uploadImages),
+					run: () => this.openImageDialog(editor) });
+			}
+			if (typeof this.options.onFindImages === 'function') {
+				tools.push({ name: 'storedImage', label: texts.storedImage,
+					icon: icon('IconImageAssetManager', ICONS.storedImage),
+					render: (panel, close) => this.renderStoredImages(editor, panel, close) });
+			}
+		}
+		if (this.attaching()) {
+			tools.push({ name: 'attachment', label: texts.attachment,
+				icon: icon('IconPaperClip', ICONS.attachment),
+				run: () => this.chooseAttachments(editor) });
+			tools.push({ name: 'attachments', label: texts.attachments,
+				icon: icon('IconBrowseFiles', ICONS.attachments),
+				render: (panel, close) => this.renderAttachments(editor, panel, close) });
+		}
+		return tools;
+	}
+
+	/**
+	 * Lists the images of the text in the panel of the tool images: each selected by a click, and
+	 * taken out of the text, every place it is in, by its button.
+	 */
+	private renderImages(editor: CKEditorInstance, panel: HTMLElement, close: () => void): void {
+		const own = editor as unknown as CKUploadsEditor;
+		const texts = this.texts();
+		ckFillList(panel, 'images', this.look, ckImagesOf(editor.model.document.getRoot())
+			.map(({ src, alt }) => {
+				const label = imageLabel(src, alt, texts);
+				return { label, thumbnail: src, deleteLabel: format(texts.deleteImage, label),
+					choose: () => {
+						close();
+						ckSelect(own, 'image', src);
+					},
+					remove: () => {
+						close();
+						ckRemoveImages(own, src);
+					} };
+			}), texts.noImages);
+	}
+
+	/**
+	 * Lists the files attached to the text in the panel of the tool attachments, as the images.
+	 */
+	private renderAttachments(editor: CKEditorInstance, panel: HTMLElement,
+		close: () => void): void {
+		const own = editor as unknown as CKUploadsEditor;
+		const texts = this.texts();
+		ckFillList(panel, 'attachments', this.look, ckAttachmentsOf(editor.model.document
+			.getRoot()).map((attachment) => {
+			const label = attachment.name || attachment.href;
+			return { label, size: attachment.size, kind: attachment.kind,
+				deleteLabel: format(texts.deleteAttachment, label),
+				choose: () => {
+					close();
+					ckSelect(own, 'attachment', attachment.href);
+				},
+				remove: () => {
+					close();
+					ckRemoveAttachments(own, attachment.href);
+				} };
+		}), texts.noAttachments);
+	}
+
+	/**
+	 * Puts the form finding the images the page stores in the panel of the tool storedImage: the
+	 * image chosen goes into the text where the selection is.
+	 *
+	 * @returns what stops the form searching
+	 */
+	private renderStoredImages(editor: CKEditorInstance, panel: HTMLElement,
+		close: () => void): () => void {
+		const find = this.options.onFindImages;
+		if (typeof find !== 'function') {
+			return () => undefined;
+		}
+		const picker = imagePicker(this.texts(), this.look, find, (image) => {
+			close();
+			this.insertImages(editor, [image.url]);
+		});
+		picker.input.addEventListener('keydown', (event) => {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				picker.choose();
+			}
+		});
+		panel.append(picker.element);
+		picker.search();
+		// once the drop-down shows its panel
+		setTimeout(() => picker.input.focus());
+		return () => picker.destroy();
+	}
+
+	/**
+	 * Inserts images where the selection is, by CKEditor's command insertImage.
+	 */
+	private insertImages(editor: CKEditorInstance, srcs: readonly string[]): void {
+		const safe = srcs.filter((src) => isSafeUrl(src));
+		const command = editor.commands?.get('insertImage');
+		if (!safe.length || !command || editor !== this.editor || this.destroyed) {
+			return;
+		}
+		command.execute({ source: safe });
+		editor.editing.view.focus();
+	}
+
+	/**
+	 * Opens the dialog of the uploads of the images, which go into the text where the selection is
+	 * as the user inserts them; those the user ticked are stored permanently.
+	 */
+	private openImageDialog(editor: CKEditorInstance): void {
+		openUploadDialog(this.imageDialogHost(), this.texts(), this.look, (srcs) => {
+			if (editor === this.editor && !this.destroyed) {
+				this.insertImages(editor, srcs);
+			} else {
+				this.imagesRemoved(srcs);
+			}
+		});
+	}
+
+	/**
+	 * @returns what the dialog of the uploads of the images asks of the editor
+	 */
+	private imageDialogHost(): UploadDialogHost {
+		return {
+			types: () => this.uploadTypes(),
+			check: (files) => {
+				const limits = this.uploadLimits();
+				return checkFiles(files, limits, this.texts(), (oversize) => askToScale(oversize,
+					limits.maxDimensions!, this.texts(), this.look));
+			},
+			upload: (file, options) => this.upload(file, options ?? {}),
+			uploading: (file) => format(this.texts().uploading, fileNameOf(file, this.texts())),
+			texts: () => this.texts(),
+			alert: (message) => this.alert(message),
+			discard: (urls) => this.imagesRemoved(urls.filter((url) => !this.images.has(url))),
+			permanent: () => typeof this.options.onStorePermanently === 'function',
+			storePermanently: async (urls) => {
+				const keeper = this.options.onStorePermanently;
+				return keeper && urls.length ? keeper([...urls]) : [];
+			}
+		};
+	}
+
+	/**
+	 * @returns what the dialog of the uploads of the files attached asks of the editor
+	 */
+	private attachmentDialogHost(): UploadDialogHost {
+		return {
+			types: () => this.attachAccept(),
+			check: async (files) => checkAttachments(files, this.attachLimits(), this.texts()),
+			upload: (file, options) => this.attachFile(file, options),
+			uploading: (file) => format(this.texts().attaching, fileNameOf(file,
+				{ theImage: this.texts().theFile })),
+			texts: () => this.texts(),
+			alert: (message) => this.alert(message),
+			discard: (urls) => this.attachmentsRemoved(urls.filter((url) =>
+				!this.attachments.has(url))),
+			permanent: () => false,
+			storePermanently: async () => [],
+			labels: () => {
+				const texts = this.texts();
+				return { title: texts.attachFilesTitle, drop: texts.dropFiles,
+					choose: texts.chooseFiles, insert: texts.insertFiles, nameless: texts.theFile };
+			}
+		};
+	}
+
+	/**
+	 * @returns the limits of the uploads of the images, as the options give them
+	 */
+	private uploadLimits(): UploadLimits {
+		const { uploadMaxCount: count, uploadMaxSize: size } = this.options;
+		return { types: this.uploadTypes(), maxSize: size ?? null,
+			maxCount: positive(count) ? Math.floor(count) : null,
+			maxDimensions: this.uploadMaxDimensions(), scaling: !!this.options.uploadScaling };
+	}
+
+	/**
+	 * @returns whether the editor attaches files: it has the feature attachment and onAttach
+	 */
+	private attaching(): boolean {
+		return this.features().has('attachment') && typeof this.options.onAttach === 'function';
+	}
+
+	private attachTypes(): RichTextAttachmentType[] {
+		return attachmentTypes(this.options.attachTypes);
+	}
+
+	/**
+	 * @returns the media types and the extensions of the files attached, as a file field takes them
+	 */
+	private attachAccept(): string[] {
+		return this.attachTypes().flatMap((each) => [each.type, '.' + each.extension]);
+	}
+
+	/**
+	 * @returns the limits of the files attached, as the options give them
+	 */
+	private attachLimits(): AttachmentLimits {
+		const { attachMaxSize: size, attachMaxCount: count } = this.options;
+		return { types: this.attachTypes(), maxSize: positive(size) ? size : null,
+			maxCount: positive(count) ? Math.floor(count) : null };
+	}
+
+	/**
+	 * Lets the user choose files to attach: in the dialog of the uploads when the options want it,
+	 * else by the browser's dialog of files, the files going into the text where the selection is
+	 * once uploaded.
+	 */
+	private chooseAttachments(editor: CKEditorInstance): void {
+		if (this.options.attachDialog) {
+			openUploadDialog(this.attachmentDialogHost(), this.texts(), this.look, (srcs, files) => {
+				if (editor !== this.editor || this.destroyed) {
+					this.attachmentsRemoved(srcs);
+					return;
+				}
+				ckInsertAttachments(editor as unknown as CKUploadsEditor, srcs.map((src, index) =>
+					this.attachmentOf(src, files[index]!)));
+				editor.editing.view.focus();
+			});
+			return;
+		}
+		this.renderAttachPicker()?.click();
+	}
+
+	/**
+	 * Gives the editor the field choosing the files to attach, hidden, while it attaches files, the
+	 * files chosen going where the selection is; or takes it away.
+	 *
+	 * @returns the field, null for none
+	 */
+	private renderAttachPicker(): HTMLInputElement | null {
+		if (!this.attaching() || this.destroyed) {
+			this.attachPicker?.remove();
+			this.attachPicker = null;
+			return null;
+		}
+		if (!this.attachPicker) {
+			const picker = document.createElement('input');
+			picker.type = 'file';
+			picker.multiple = true;
+			picker.hidden = true;
+			picker.tabIndex = -1;
+			picker.className = CK_EDITOR_CLASSES.attachPicker;
+			picker.addEventListener('change', () => {
+				const files = Array.from(picker.files ?? []);
+				picker.value = '';
+				const current = this.editor;
+				if (files.length && current) {
+					void this.attachFiles(current, files);
+				}
+			});
+			this.element.append(picker);
+			this.attachPicker = picker;
+		}
+		this.attachPicker.accept = this.attachAccept().join(',');
+		return this.attachPicker;
+	}
+
+	/**
+	 * @returns what a file attached at an address keeps: its name, its size and its kind
+	 */
+	private attachmentOf(src: string, file: File) {
+		return { href: src, name: file.name || this.texts().theFile, size: sizeText(file.size),
+			kind: attachmentKind(file, this.attachTypes()) };
+	}
+
+	/**
+	 * Attaches files to the text: checks them, uploads them, telling so in the line above the
+	 * text, and inserts them where the selection was, in their order; tells why not the others.
+	 */
+	private async attachFiles(editor: CKEditorInstance, files: readonly File[]): Promise<void> {
+		const texts = this.texts();
+		const { files: checked, refused } = checkAttachments(files, this.attachLimits(), texts);
+		if (!checked.length) {
+			if (refused.length) {
+				this.alert(refused.join(' '));
+			}
+			return;
+		}
+		// where the files go, as the text changes meanwhile
+		const LiveRange = (this.build() as { LiveRange?: { fromRange(range: unknown):
+			{ detach(): void } } } | null)?.LiveRange;
+		const first = (editor.model.document.selection as { getFirstRange?(): unknown })
+			.getFirstRange?.();
+		const at = LiveRange && first ? LiveRange.fromRange(first) : null;
+		this.alert(checked.map((file) => format(texts.attaching, fileNameOf(file,
+			{ theImage: texts.theFile }))).join(' '), 'status');
+		const results = await Promise.allSettled(checked.map((file) => this.attachFile(file)));
+		const attached = results.flatMap((result, index) => result.status === 'fulfilled' ?
+			[this.attachmentOf(result.value, checked[index]!)] : []);
+		const failed = results.flatMap((result, index) => result.status === 'rejected' &&
+			!isAbort(result.reason) ? [result.reason instanceof Error && result.reason.message ?
+				result.reason.message : format(texts.uploadFailed, fileNameOf(checked[index]!,
+					{ theImage: texts.theFile }))] : []);
+		// why the files refused were not attached, and those failing, in place of the status
+		if (refused.length || failed.length) {
+			this.alert([...refused, ...failed].join(' '));
+		} else {
+			this.clearMessage();
+		}
+		if (editor !== this.editor || this.destroyed) {
+			at?.detach();
+			this.attachmentsRemoved(attached.map((each) => each.href));
+			return;
+		}
+		if (at) {
+			editor.model.change((writer) => (writer as unknown as { setSelection(range: unknown):
+				void }).setSelection(at));
+			at.detach();
+		}
+		ckInsertAttachments(editor as unknown as CKUploadsEditor, attached);
+	}
+
+	/**
+	 * Uploads a file attached, by the page.
+	 *
+	 * @returns the address of the file, a safe one; rejected with the message saying why not
+	 */
+	private async attachFile(file: File, options?: RichTextUploadOptions): Promise<string> {
+		const texts = this.texts();
+		const failed = format(texts.uploadFailed, fileNameOf(file, { theImage: texts.theFile }));
+		const uploader = this.options.onAttach;
+		const refused = attachmentRefusal(file, this.attachLimits(), texts);
+		if (!uploader || refused) {
+			throw new Error(refused ?? failed);
+		}
+		let address: string;
+		try {
+			address = String(await uploader(file, options)).trim();
+		} catch (error) {
+			if (isAbort(error)) {
+				throw error;
+			}
+			throw new Error(error instanceof Error && error.message ? error.message : failed);
+		}
+		if (!isSafeUrl(address)) {
+			getHost().log.error('The address of a file attached is not one the editor takes: ' +
+				address);
+			throw new Error(failed);
+		}
+		return address;
+	}
+
+	/**
+	 * Notes the images and the files the text no longer holds, after a change of the user or of
+	 * the page's code, to tell of in a moment; those it holds again by then are not told of. A text
+	 * the page gives tells of nothing.
+	 *
+	 * @param user whether the user changed the text, not the page
+	 */
+	private trackRemovals(editor: CKEditorInstance, user: boolean): void {
+		const root = editor.model.document.getRoot();
+		const before = this.images;
+		const after = ckImagesIn(root);
+		this.images = after;
+		const attachedBefore = this.attachments;
+		const attached = ckAttachmentsIn(root);
+		this.attachments = attached;
+		if (!user) {
+			return;
+		}
+		before.forEach((_count, src) => {
+			if (!after.has(src)) {
+				this.removed.add(src);
+			}
+		});
+		after.forEach((_count, src) => this.removed.delete(src));
+		attachedBefore.forEach((_count, href) => {
+			if (!attached.has(href)) {
+				this.removedAttachments.add(href);
+			}
+		});
+		attached.forEach((_count, href) => this.removedAttachments.delete(href));
+		if ((this.removed.size || this.removedAttachments.size) && this.removedTimer === null) {
+			this.removedTimer = setTimeout(() => this.flushRemoved(), REMOVED_DELAY);
+		}
+	}
+
+	/**
+	 * Tells of the images and the files taken out of the text, those it does not hold again.
+	 */
+	private flushRemoved(): void {
+		if (this.removedTimer !== null) {
+			clearTimeout(this.removedTimer);
+			this.removedTimer = null;
+		}
+		const urls = Array.from(this.removed).filter((url) => !this.images.has(url));
+		this.removed.clear();
+		this.imagesRemoved(urls);
+		const files = Array.from(this.removedAttachments).filter((url) =>
+			!this.attachments.has(url));
+		this.removedAttachments.clear();
+		this.attachmentsRemoved(files);
+	}
+
+	/**
+	 * Tells the page of images the text no longer holds: onImagesRemoved, then the event
+	 * images-removed.
+	 */
+	private imagesRemoved(urls: readonly string[]): void {
+		if (!urls.length || this.destroyed) {
+			return;
+		}
+		this.options.onImagesRemoved?.([...urls]);
+		this.trigger(RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved, { urls: [...urls] });
+	}
+
+	/**
+	 * Tells the page of files the text no longer holds: onAttachmentsRemoved, then the event
+	 * attachments-removed.
+	 */
+	private attachmentsRemoved(urls: readonly string[]): void {
+		if (!urls.length || this.destroyed) {
+			return;
+		}
+		this.options.onAttachmentsRemoved?.([...urls]);
+		this.trigger(RICH_TEXT_BUILT_IN_EVENTS.attachmentsRemoved, { urls: [...urls] });
 	}
 
 	/**
@@ -1724,6 +2510,14 @@ export class CKEditor {
 							loader.uploadTotal = total;
 							loader.uploaded = sent;
 						} });
+					// the user took the image out as it uploaded: the page hears of it, once
+					// CKEditor had its chance to put the address in
+					const editor = this.editor;
+					setTimeout(() => {
+						if (editor && editor === this.editor && !this.images.has(address)) {
+							this.imagesRemoved([address]);
+						}
+					});
 					return { default: address };
 				} catch (error) {
 					if (isAbort(error)) {
@@ -1834,17 +2628,19 @@ export class CKEditor {
 
 	/**
 	 * Tells the user why an image was not uploaded, above the text, for a while, as the Tiptap
-	 * editor does.
+	 * editor does; or, politely, what uploads.
+	 *
+	 * @param role alert for what went wrong, status for what goes on
 	 */
-	private alert(text: string): void {
+	private alert(text: string, role: 'alert' | 'status' = 'alert'): void {
 		if (this.destroyed) {
 			return;
 		}
 		if (!this.message) {
 			this.message = document.createElement('div');
 			this.message.className = CK_EDITOR_CLASSES.message;
-			this.message.setAttribute('role', 'alert');
 		}
+		this.message.setAttribute('role', role);
 		this.message.textContent = text;
 		this.renderMessage();
 		if (this.messageTimer !== null) {
@@ -1952,6 +2748,7 @@ export class CKEditor {
 			// a change of the model alone, an image given its natural size once it loaded
 			return;
 		}
+		this.trackRemovals(editor, !this.external);
 		// what a paste lost is told until the text changes again
 		this.notice?.clear();
 		this.value = value;
@@ -2009,6 +2806,8 @@ export class CKEditor {
 			this.fieldEvent('change');
 		}
 		this.focusValue = null;
+		// the images taken out a moment ago are told of before the page saves
+		this.flushRemoved();
 		this.options.onBlur?.(value);
 		this.dispatch('blur');
 	}
@@ -2126,6 +2925,33 @@ export class CKEditor {
 	}
 
 	private bind(): void {
+		// a file of another type chosen in CKEditor's dialog of files ("All files"), which its
+		// ImageUpload leaves out without a word: told why, with the rest of the files given
+		this.listen<Event>(this.element, 'change', (event) => {
+			const input = event.target;
+			if (!(input instanceof HTMLInputElement) || input.type !== 'file' ||
+				input === this.attachPicker || !this.uploading() ||
+				!this.editor?.ui.element?.contains(input)) {
+				return;
+			}
+			const types = this.uploadTypes();
+			const texts = this.texts();
+			const refused = Array.from(input.files ?? []).map((file) => refusalOf(file,
+				{ types, maxSize: null }, texts)).filter((message): message is string => !!message);
+			if (!refused.length) {
+				return;
+			}
+			this.typeRefusals = refused;
+			// told with the others once CKEditor uploads them, or alone after the event: not in a
+			// microtask, which the browser runs between the listeners of the event, before
+			// CKEditor's own
+			setTimeout(() => {
+				if (this.typeRefusals === refused) {
+					this.typeRefusals = [];
+					this.alert(refused.join(' '));
+				}
+			});
+		}, true);
 		const field = this.field;
 		if (field) {
 			// the page put the text area back as it was, closing a dialog anyway for example
@@ -2587,6 +3413,8 @@ export class CKEditor {
 	 * Tells the page to save the text: onSave and the event save, as Ctrl+S does.
 	 */
 	save(): void {
+		// the images taken out a moment ago are told of before
+		this.flushRemoved();
 		this.options.onSave?.(this.getValue());
 		this.dispatch('save');
 	}
@@ -2621,8 +3449,8 @@ export class CKEditor {
 		const restart = changed(...CONFIG_OPTIONS) ||
 			OBJECT_OPTIONS.some((name) => before[name] !== this.options[name]) ||
 			before.texts?.linkNewTab !== this.options.texts?.linkNewTab ||
-			// ImageUpload comes or goes
-			!!before.onUpload !== !!this.options.onUpload;
+			// ImageUpload, or a tool of the uploads, comes or goes
+			UPLOAD_SWITCHES.some((name) => !!before[name] !== !!this.options[name]);
 		if (restart && this.editor) {
 			this.restart(before.format !== this.options.format);
 		} else if (restart) {
@@ -2737,6 +3565,10 @@ export class CKEditor {
 		if (this.destroyed) {
 			return;
 		}
+		// the images taken out a moment ago are told of still
+		if (this.removedTimer !== null) {
+			this.flushRemoved();
+		}
 		this.destroyed = true;
 		this.generation++;
 		this.handlers?.destroy();
@@ -2755,6 +3587,8 @@ export class CKEditor {
 		this.errorLine?.remove();
 		this.errorLine = null;
 		this.clearMessage();
+		this.attachPicker?.remove();
+		this.attachPicker = null;
 		this.resizable?.destroy();
 		this.resizable = null;
 		const editor = this.editor;

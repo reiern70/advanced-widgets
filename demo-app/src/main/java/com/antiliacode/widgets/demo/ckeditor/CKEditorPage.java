@@ -20,6 +20,7 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -48,6 +49,7 @@ import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.demo.richtext.OutlineEvent;
+import com.antiliacode.widgets.demo.richtext.RichTextAttachments;
 import com.antiliacode.widgets.demo.richtext.RichTextCleaningPanel;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
 import com.antiliacode.widgets.demo.richtext.RichTextImages;
@@ -60,7 +62,9 @@ import com.antiliacode.widgets.richtext.RichTextEditorResizeEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorSelectedTextEvent;
 import com.antiliacode.widgets.richtext.RichTextEditorState;
 import com.antiliacode.widgets.richtext.RichTextFormat;
-import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
+import com.antiliacode.widgets.richtext.IRichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextFiles;
+import com.antiliacode.widgets.richtext.RichTextImageDeletion;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.veil.PageVeilBehavior;
 import com.github.openjson.JSONArray;
@@ -72,13 +76,18 @@ import com.github.openjson.JSONObject;
  * the server keeps in the session with the state of its editor, where the cursor is, what is
  * selected, how far it is scrolled and its size, and cleans before it keeps it; below it, the
  * article as a page shows it, a {@link CKEditorView}, and the HTML the server keeps. Check boxes
- * switch reading only and the count of the words, rendering the editor again via Ajax. Ctrl+S,
- * and the button, save the article. Images chosen, pasted or dropped into the article are uploaded,
- * kept as those of {@link RichTextEditorPage} are ({@link RichTextImages}). Should CKEditor run
+ * switch reading only, the count of the words, the dialog of the uploads and when the images taken
+ * out are deleted, rendering the editor again via Ajax. Ctrl+S, and the button, save the article.
+ * Images chosen, pasted or dropped into the article are uploaded to the resource of the uploads of
+ * the application, kept as those of {@link RichTextEditorPage} are ({@link RichTextImages}), with
+ * the same tools: the images of the text, those stored permanently, and the files attached
+ * ({@link RichTextAttachments}). Should CKEditor run
  * into an error, it starts again with the article, and the server hears of it, logs it and says so
  * ({@link CKEditorErrorEvent}).
  * <p>
- * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it.
+ * Notes in Markdown: the editor keeps Markdown, which shows beside it as the server keeps it; the
+ * images and the files attached to them go to the resource of the uploads too, a file a plain link
+ * of Markdown the editor knows again as a file.
  * <p>
  * The cleaning on the server: HTML from anywhere, with scripts, handlers and styles, and what
  * {@link CKEditorPolicy} leaves of it. The React and Svelte tabs show the editor in those
@@ -115,9 +124,6 @@ public class CKEditorPage extends DemoPage
 
 	private final CKEditor notesEditor;
 
-	/** Where the editors of the React and Svelte apps upload images. */
-	private final RichTextImageUploadBehavior appUploads;
-
 	private final Label notesStatus;
 
 	private final Component notesKept;
@@ -127,6 +133,10 @@ public class CKEditorPage extends DemoPage
 	private boolean readOnly;
 
 	private boolean count = true;
+
+	private boolean uploadDialog;
+
+	private boolean deleteAtOnce;
 
 	private String heardMessage;
 
@@ -200,6 +210,9 @@ public class CKEditorPage extends DemoPage
 				super.onConfigure();
 				setReadOnly(readOnly);
 				setCount(count);
+				setImageUploadDialog(uploadDialog);
+				setImageDeletion(deleteAtOnce ? RichTextImageDeletion.AT_ONCE :
+					RichTextImageDeletion.ON_SAVE);
 			}
 
 			@Override
@@ -207,14 +220,29 @@ public class CKEditorPage extends DemoPage
 			{
 				target.add(known);
 			}
+
+			@Override
+			protected void updateImagesRemovalAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				// the editor tells of the images taken out by itself, after a save: the user goes
+				// on at once
+				PageVeilBehavior.noVeil(attributes);
+			}
 		};
 		editor.setSavedModel(LambdaModel.of(article, CKEditorDocument::getSaved,
 			CKEditorDocument::setSaved));
 		// images of other sites go: they would show the readers to those sites
 		editor.setImagesFromSiteOnly(true);
-		// images uploaded, kept as those of the Tiptap editor's demo
-		editor.setImageStore(RichTextImages.get()).setImageMaxSize(RichTextImages.MAX_SIZE)
-			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS);
+		// images uploaded to the resource of the uploads of the application, as those of the Tiptap
+		// editor's demo, with the same rules: scaled down when too large, five at a time, kept
+		// permanently when ticked
+		editor.setUploadResource(RichTextFiles.get(RichTextImages.PATH))
+			.setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS).setImageScaling(true)
+			.setImageMaxCount(RichTextImages.MAX_COUNT).setPermanentImages(true)
+			// the files attached go to the resource too, which has a store of them
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE)
+			.setAttachmentMaxCount(RichTextAttachments.MAX_COUNT);
 		editor.setPlaceholder(Model.of(getString("placeholder")));
 		editor.setLabel(Model.of(getString("articleLabel")));
 		// the focus without the veil, as the page chooses: the editor leaves alone those of input,
@@ -268,7 +296,8 @@ public class CKEditorPage extends DemoPage
 
 		Form<Void> controls = new Form<>("controls");
 		articleCase.add(controls);
-		for (String option : List.of("readOnly", "count"))
+		articleCase.add(new Label("extras", extras()));
+		for (String option : List.of("readOnly", "count", "uploadDialog", "deleteAtOnce"))
 		{
 			controls.add(new CheckBox(option, new PropertyModel<>(this, option))
 				.add(rerender(editorForm)));
@@ -289,7 +318,13 @@ public class CKEditorPage extends DemoPage
 				document.setState(state);
 				Session.get().dirty();
 			}));
+		// the images and the files of the notes go to the resource of the uploads too: in Markdown
+		// a file is a plain link, which the editor knows again as a file
 		notesEditor.setFormat(RichTextFormat.MARKDOWN).setImagesFromSiteOnly(true)
+			.setUploadResource(RichTextFiles.get(RichTextImages.PATH))
+			.setImageMaxSize(RichTextImages.MAX_SIZE)
+			.setImageMaxDimensions(RichTextImages.MAX_DIMENSIONS)
+			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE)
 			.setSavedModel(LambdaModel.of(notes, CKEditorDocument::getSaved,
 				CKEditorDocument::setSaved))
 			.setLabel(Model.of(getString("notesLabel")));
@@ -338,10 +373,18 @@ public class CKEditorPage extends DemoPage
 				target.add(cleaned);
 			}
 		}.add(new ButtonBehavior(ButtonBehavior.Variant.PRIMARY, ButtonBehavior.Size.SMALL)));
+	}
 
-		appUploads = new RichTextImageUploadBehavior(RichTextImages.get())
-			.setMaxSize(RichTextImages.MAX_SIZE).setMaxDimensions(RichTextImages.MAX_DIMENSIONS);
-		add(appUploads);
+	/**
+	 * @return what the page says of the uploads: the largest image, in bytes and in pixels, and
+	 *         how many at a time
+	 */
+	private String extras()
+	{
+		return getString("extras").replace("{0}",
+			RichTextEditorPage.sizeText(RichTextImages.MAX_SIZE))
+			.replace("{1}", RichTextImages.MAX_DIMENSIONS.toString())
+			.replace("{2}", String.valueOf(RichTextImages.MAX_COUNT));
 	}
 
 	private AjaxFormComponentUpdatingBehavior rerender(Component component)
@@ -523,7 +566,8 @@ public class CKEditorPage extends DemoPage
 
 	/**
 	 * @return the texts, the article, the notes, CKEditor's license key and language, as the page
-	 *         has them, and where the apps upload images, with their limits
+	 *         has them, and where the apps upload images and attach files, with their limits: the
+	 *         resource of the uploads of the application, as the apps of the Tiptap editor
 	 */
 	@Override
 	protected JSONObject getFrameworkConfig()
@@ -533,22 +577,39 @@ public class CKEditorPage extends DemoPage
 			.put("article", CKEditorSamples.ARTICLE)
 			.put("notes", CKEditorSamples.NOTES)
 			.put("texts", FrameworkTabs.texts(this, "cases", "notesTitle", "articleLabel",
-				"notesLabel", "placeholder", "readOnly", "count", "save", "unsaved", "allSaved",
-				"appArticleTitle", "appHtml", "markdownKept", "appKnown", "appStart", "appSaved",
-				"appNotClean", "appLicense"))
+				"notesLabel", "placeholder", "readOnly", "count", "uploadDialog", "save", "unsaved",
+				"allSaved", "appArticleTitle", "appHtml", "markdownKept", "appKnown", "appStart",
+				"appSaved", "appNotClean", "appLicense"))
 			.put("editor", CKEditor.texts(this))
 			.put("licenseKey", library.getLicenseKey())
-			.put("uploadUrl", appUploads.getUploadUrl())
-			.put("uploadTypes", new JSONArray(appUploads.getMimeTypes()))
-			.put("uploadMaxSize", appUploads.getMaxSize().bytes())
+			.put("uploadUrl", files().getUploadUrl())
+			.put("uploadTypes", new JSONArray(files().getImageTypes().stream()
+				.map(IRichTextImageType::getMimeType).toList()))
+			.put("uploadMaxSize", files().getImageMaxSize().bytes())
 			.put("uploadMaxWidth", RichTextImages.MAX_DIMENSIONS.width())
-			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height());
+			.put("uploadMaxHeight", RichTextImages.MAX_DIMENSIONS.height())
+			.put("uploadMaxCount", RichTextImages.MAX_COUNT)
+			.put("attachUrl", files().getAttachmentUploadUrl())
+			.put("attachTypes", new JSONArray(files().getAttachmentFormats().stream()
+				.map(format -> new JSONObject().put("type", format.getMimeType())
+					.put("extension", format.getExtension()).put("label", format.getLabel()))
+				.toList()))
+			.put("attachMaxSize", files().getAttachmentMaxSize().bytes())
+			.put("attachMaxCount", RichTextAttachments.MAX_COUNT);
 		String language = library.getLanguage(getLocale());
 		if (language != null)
 		{
 			config.put("language", language);
 		}
 		return config;
+	}
+
+	/**
+	 * @return the resource of the uploads of the rich text editors of the application
+	 */
+	private static RichTextFiles files()
+	{
+		return RichTextFiles.get(RichTextImages.PATH);
 	}
 
 	@Override
@@ -582,6 +643,26 @@ public class CKEditorPage extends DemoPage
 	public void setCount(boolean count)
 	{
 		this.count = count;
+	}
+
+	public boolean isUploadDialog()
+	{
+		return uploadDialog;
+	}
+
+	public void setUploadDialog(boolean uploadDialog)
+	{
+		this.uploadDialog = uploadDialog;
+	}
+
+	public boolean isDeleteAtOnce()
+	{
+		return deleteAtOnce;
+	}
+
+	public void setDeleteAtOnce(boolean deleteAtOnce)
+	{
+		this.deleteAtOnce = deleteAtOnce;
 	}
 
 	public String getUnsafe()

@@ -93,7 +93,8 @@ class Emitter {
 	}
 
 	fire(event: string, ...args: unknown[]): void {
-		(this.callbacks.get(event) ?? []).forEach((callback) => callback({ name: event }, ...args));
+		(this.callbacks.get(event) ?? []).forEach((callback) => callback({ name: event,
+			stop: () => undefined }, ...args));
 	}
 }
 
@@ -116,8 +117,13 @@ class FakeText {
 class FakeElement extends Emitter implements CKEditorModelElement {
 	children: (FakeElement | FakeText)[] = [];
 
-	constructor(readonly name: string, readonly parent: FakeElement | null) {
+	constructor(readonly name: string, readonly parent: FakeElement | null,
+		readonly attributes: Record<string, string> = {}) {
 		super();
+	}
+
+	getAttribute(key: string): string | undefined {
+		return this.attributes[key];
 	}
 
 	is(type: string): boolean {
@@ -189,8 +195,17 @@ function rootOf(html: string): FakeElement {
 	const root = new FakeElement('$root', null);
 	const template = document.createElement('template');
 	template.innerHTML = html;
-	const blocks = Array.from(template.content.querySelectorAll('p, h1, h2, h3, li, pre'));
+	const blocks = Array.from(template.content.querySelectorAll(
+		'p, h1, h2, h3, li, pre, img, a.antilia-attachment'));
 	blocks.forEach((block) => {
+		// the images and the files attached, blocks of their own here
+		if (block.matches('img, a')) {
+			root.children.push(block.matches('img') ? new FakeElement('imageBlock', root,
+				{ src: block.getAttribute('src') ?? '', alt: block.getAttribute('alt') ?? '' }) :
+				new FakeElement('attachment', root, { href: block.getAttribute('href') ?? '',
+					name: block.textContent ?? '' }));
+			return;
+		}
 		const element = new FakeElement('paragraph', root);
 		const text = block.textContent ?? '';
 		if (text) {
@@ -242,6 +257,18 @@ class FakeCommand {
 	}
 }
 
+/** A command of CKEditor recording what it was given, unless a listener stopped it. */
+class FakeUploadCommand extends StoppableEmitter {
+	readonly value = undefined;
+	readonly given: unknown[] = [];
+
+	execute(...args: unknown[]): void {
+		if (!this.fire('execute', args)) {
+			this.given.push(args[0]);
+		}
+	}
+}
+
 class FakeEditor implements CKEditorInstance {
 	html = '';
 	root: FakeElement;
@@ -254,10 +281,16 @@ class FakeEditor implements CKEditorInstance {
 	private changing = false;
 	readonly superscript = new FakeCommand(this.done, 'superscript');
 	readonly subscript = new FakeCommand(this.done, 'subscript');
+	/** CKEditor's commands of the images, which record what they are given. */
+	readonly uploadImage = new FakeUploadCommand();
+	readonly insertImage = new FakeUploadCommand();
 	readonly commands = {
 		get: (name: string) => name === 'superscript' ? this.superscript :
-			name === 'subscript' ? this.subscript : undefined
+			name === 'subscript' ? this.subscript : name === 'uploadImage' && this.uploads() ?
+				this.uploadImage : name === 'insertImage' ? this.insertImage : undefined
 	};
+	/** The tools registered, by their names, as CKEditor's component factory has them. */
+	readonly components = new Map<string, (locale: unknown) => unknown>();
 	readonly checks: Array<(context: { endsWith(query: string): boolean },
 		attribute: string) => boolean | undefined> = [];
 	readonly selection = Object.assign(new Emitter(), {
@@ -310,11 +343,27 @@ class FakeEditor implements CKEditorInstance {
 			try {
 				callback({
 					setSelection: (range, options) => {
+						if (range instanceof FakeElement) {
+							this.selected = range;
+							return;
+						}
 						this.selection.anchor = options?.backward ? range.end : range.start;
 						this.selection.focus = options?.backward ? range.start : range.end;
 						this.selection.fire('change:range');
+					},
+					remove: (item: FakeElement) => {
+						const parent = item.parent!;
+						parent.children = parent.children.filter((child) => child !== item);
+						this.removedItems++;
 					}
-				});
+				} as CKEditorModelWriter);
+				if (this.removedItems) {
+					this.removedItems = 0;
+					this.html = this.html.replace(/<img[^>]*>/g, (img) => this.root.children.some(
+						(child) => child instanceof FakeElement && img.includes('"' +
+							child.getAttribute('src') + '"')) ? img : '');
+					this.modelDocument.fire('change:data');
+				}
 			} finally {
 				this.changing = !outer;
 			}
@@ -353,8 +402,16 @@ class FakeEditor implements CKEditorInstance {
 	readonly ui = {
 		element: this.uiElement,
 		view: { editable: { element: this.editable } },
-		focusTracker: this.focusTracker
+		focusTracker: this.focusTracker,
+		componentFactory: {
+			add: (name: string, callback: (locale: unknown) => unknown) =>
+				this.components.set(name, callback),
+			has: (name: string) => this.components.has(name)
+		}
 	};
+	/** The element selected whole, an image or a file attached. */
+	selected: FakeElement | null = null;
+	private removedItems = 0;
 	readonly keystrokes = {
 		set: (keystroke: string, callback: (data: unknown, cancel: () => void) => void) => {
 			this.keys.set(keystroke, callback);
@@ -373,7 +430,7 @@ class FakeEditor implements CKEditorInstance {
 	/** @returns whether CKEditor was made with ImageUpload, which brings FileRepository */
 	uploads(): boolean {
 		return (this.config.plugins as { pluginName: string }[]).some((plugin) =>
-			plugin.pluginName === 'ImageUpload');
+			plugin.pluginName === 'ImageUpload' || plugin.pluginName === 'ImageUploadEditing');
 	}
 
 	constructor(readonly source: HTMLElement, readonly config: Record<string, unknown>) {
@@ -458,7 +515,8 @@ function fakeBuild(fail?: unknown) {
 		'Italic', 'Underline', 'Strikethrough', 'Code', 'Superscript', 'Subscript', 'Link',
 		'AutoLink', 'List', 'TodoList', 'BlockQuote', 'CodeBlock', 'HorizontalLine', 'Table',
 		'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageTextAlternative',
-		'ImageInsertViaUrl', 'AutoImage', 'Alignment', 'Markdown', 'Highlight', 'ImageUpload'];
+		'ImageInsertViaUrl', 'AutoImage', 'Widget', 'Alignment', 'Markdown', 'Highlight',
+		'ImageUpload', 'ImageUploadEditing', 'ImageUploadProgress'];
 	const build: CKEditorBuild & { editors: FakeEditor[]; crash(source: unknown, error: unknown): void;
 		hearing(): number } = Object.assign(
 		Object.fromEntries(names.map((name) => [name, plugin(name)])), {
@@ -479,6 +537,12 @@ function fakeBuild(fail?: unknown) {
 						throw fail;
 					}
 					const editor = new FakeEditor(element, config);
+					// the plugins of the editor's own, functions CKEditor makes with new
+					(config.plugins as unknown[]).forEach((plugin) => {
+						if (typeof plugin === 'function') {
+							new (plugin as new (editor: FakeEditor) => unknown)(editor);
+						}
+					});
 					editors.push(editor);
 					return editor;
 				}
@@ -1375,6 +1439,256 @@ describe('images uploaded into CKEditor', () => {
 		expect(uploadProgressClass(Number.NaN)).toBe('antilia-ck-upload-0');
 		expect(uploadProgressClass(97.6)).toBe('antilia-ck-upload-100');
 	});
+});
+
+describe('the uploads CKEditor shares with the Tiptap editor', () => {
+	/** A PNG of a width and a height, as far as its header tells. */
+	function png(name = 'bird.png', width = 2, height = 3): File {
+		const bytes = new Uint8Array(33);
+		bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44,
+			0x52]);
+		new DataView(bytes.buffer).setUint32(16, width);
+		new DataView(bytes.buffer).setUint32(20, height);
+		return new File([bytes], name, { type: 'image/png' });
+	}
+
+	const TEXT = '<p>a</p><img src="/i/a.png" alt="A bird"><img src="/i/b.png">' +
+		'<a class="antilia-attachment" href="/f/a.pdf">a.pdf</a>';
+
+	async function started(options: ConstructorParameters<typeof CKEditor>[1] = {}, html = TEXT) {
+		const build = fakeBuild();
+		Object.assign(build, fakeUi());
+		const editor = new CKEditor(textArea(html), { build, ...options });
+		await editor.ready;
+		return { build, editor, fake: build.editors[build.editors.length - 1]! };
+	}
+
+	/** The line above the text, '' for none. */
+	function line(editor: CKEditor): string {
+		return editor.element.querySelector('.' + CK_EDITOR_CLASSES.message)?.textContent ?? '';
+	}
+
+	/** Changes the text as the user does, the model of the text given. */
+	function userChange(fake: FakeEditor, html: string): void {
+		fake.html = html;
+		fake.root = rootOf(html);
+		fake.modelDocument.fire('change:data');
+	}
+
+	/**
+	 * The classes of CKEditor's UI the tools are made of: a button firing execute, a drop-down
+	 * whose panel holds the views given, opened by isOpen.
+	 */
+	function fakeUi() {
+		class View extends Emitter {
+			element: HTMLElement | null = null;
+			isEnabled = true;
+			set(values: Record<string, unknown>): void {
+				Object.assign(this, values);
+			}
+			setTemplate(template: { tag: string; attributes: { class: string[] } }): void {
+				this.element = document.createElement(template.tag);
+				this.element.className = template.attributes.class.join(' ');
+			}
+		}
+		class Dropdown extends View {
+			readonly buttonView = new View();
+			readonly panelView = { children: { add: (view: View) => {
+				this.element!.append(view.element!);
+			} } };
+			private open = false;
+			constructor() {
+				super();
+				this.element = document.createElement('div');
+			}
+			get isOpen(): boolean {
+				return this.open;
+			}
+			set isOpen(open: boolean) {
+				this.open = open;
+				this.fire('change:isOpen', 'isOpen', open);
+			}
+		}
+		return { ButtonView: View, View, createDropdown: () => new Dropdown() };
+	}
+
+	it('checks the images CKEditor is given before it uploads them: how many, their types and ' +
+		'their pixels', async () => {
+		const onUpload = vi.fn(async () => '/i/new.png');
+		const { editor, fake } = await started({ onUpload, uploadMaxCount: 2, uploadMaxWidth: 2,
+			uploadMaxHeight: 3 });
+		fake.uploadImage.execute({ file: [png('a.png'), png('b.png'), png('c.png')] });
+		expect(fake.uploadImage.given).toEqual([]);
+		await vi.waitFor(() => expect(fake.uploadImage.given).toHaveLength(1));
+		expect((fake.uploadImage.given[0] as { file: File[] }).file.map((file) => file.name))
+			.toEqual(['a.png', 'b.png']);
+		expect(line(editor)).toBe('2 images at most at a time: 1 left out.');
+
+		// too big in pixels, without scaling: refused before CKEditor has it
+		fake.uploadImage.execute({ file: png('tall.png', 2, 4) });
+		await vi.waitFor(() => expect(line(editor)).toBe('tall.png is 2 × 4 pixels, larger ' +
+			'than 2 × 3.'));
+		expect(fake.uploadImage.given).toHaveLength(1);
+	});
+
+	it('tells of a file of another type chosen in CKEditor\'s dialog of files', async () => {
+		const { editor, fake } = await started({ onUpload: async () => '/i/new.png' });
+		const field = (files: File[]) => {
+			const input = document.createElement('input');
+			input.type = 'file';
+			fake.uiElement.append(input);
+			Object.defineProperty(input, 'files', { value: files });
+			// CKEditor's ImageUpload gives its command the images alone
+			input.addEventListener('change', () => {
+				const images = files.filter((file) => file.type === 'image/png');
+				if (images.length) {
+					fake.uploadImage.execute({ file: images });
+				}
+			});
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		};
+		const refused = 'notes.txt is not an image of a type the editor takes: PNG, JPEG, GIF, ' +
+			'WebP, AVIF.';
+		field([new File(['x'], 'notes.txt', { type: 'text/plain' }), png()]);
+		await vi.waitFor(() => expect(fake.uploadImage.given).toHaveLength(1));
+		expect(line(editor)).toBe(refused);
+
+		// alone, CKEditor leaves it out: told still
+		editor.element.querySelector('.' + CK_EDITOR_CLASSES.message)?.remove();
+		field([new File(['x'], 'notes.txt', { type: 'text/plain' })]);
+		await vi.waitFor(() => expect(line(editor)).toBe(refused));
+		expect(fake.uploadImage.given).toHaveLength(1);
+	});
+
+	it('tells the page of the images and the files the user took out, a moment after, or at ' +
+		'once as the editor loses the focus', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		const onImagesRemoved = vi.fn();
+		const onAttachmentsRemoved = vi.fn();
+		const { editor, fake } = await started({ onImagesRemoved, onAttachmentsRemoved });
+		const told: unknown[] = [];
+		editor.field!.addEventListener(RICH_TEXT_BUILT_IN_EVENTS.imagesRemoved, (event) =>
+			told.push((event as CustomEvent).detail.urls));
+
+		userChange(fake, TEXT.replace('<img src="/i/b.png">', ''));
+		expect(onImagesRemoved).not.toHaveBeenCalled();
+		vi.advanceTimersByTime(300);
+		expect(onImagesRemoved).toHaveBeenCalledWith(['/i/b.png']);
+		expect(told).toEqual([['/i/b.png']]);
+
+		// taken out and back by then, as by Ctrl+Z: nothing
+		userChange(fake, TEXT.replace('<img src="/i/a.png" alt="A bird">', ''));
+		userChange(fake, TEXT);
+		vi.advanceTimersByTime(300);
+		expect(onImagesRemoved).toHaveBeenCalledTimes(1);
+
+		// the file, told as the editor loses the focus
+		fake.editing.view.focus();
+		userChange(fake, '<p>a</p>');
+		fake.blur();
+		expect(onAttachmentsRemoved).toHaveBeenCalledWith(['/f/a.pdf']);
+		expect(onImagesRemoved).toHaveBeenLastCalledWith(['/i/a.png', '/i/b.png']);
+
+		// a text the page gives tells of nothing
+		editor.setValue(TEXT);
+		editor.setValue('<p>b</p>');
+		vi.advanceTimersByTime(300);
+		expect(onImagesRemoved).toHaveBeenCalledTimes(2);
+	});
+
+	it('has the tools of the uploads, in the default toolbar as the options allow', async () => {
+		const plain = await started();
+		expect(plain.editor.toolbarItems()).not.toContain('images');
+		expect([...plain.fake.components.keys()]).toEqual(['images']);
+
+		const { editor, fake } = await started({ onUpload: async () => '/i/new.png',
+			onStorePermanently: async (urls) => urls, onFindImages: async () => [],
+			onAttach: async () => '/f/new.pdf' });
+		const items = editor.toolbarItems();
+		expect(items.slice(items.indexOf('insertImage'), items.indexOf('insertImage') + 6))
+			.toEqual(['insertImage', 'uploadImages', 'storedImage', 'images', 'attachment',
+				'attachments']);
+		expect([...fake.components.keys()]).toEqual(['images', 'uploadImages', 'storedImage',
+			'attachment', 'attachments']);
+		expect(pluginNames(fake.config)).toContain('ImageUpload');
+
+		// the dialog in place of CKEditor's own button
+		editor.configure({ uploadDialog: true });
+		await editor.ready;
+		const dialog = editor.editor as unknown as FakeEditor;
+		expect(pluginNames(dialog.config)).toEqual(expect.arrayContaining(['ImageUploadEditing',
+			'ImageUploadProgress']));
+		expect(pluginNames(dialog.config)).not.toContain('ImageUpload');
+	});
+
+	it('lists the images of the text, each selected or taken out by its button', async () => {
+		const { editor, fake } = await started({ onUpload: async () => '/i/new.png' });
+		const dropdown = fake.components.get('images')!({}) as { element: HTMLElement;
+			isOpen: boolean; buttonView: { label: string } };
+		expect(dropdown.buttonView.label).toBe('Images in the text');
+		dropdown.isOpen = true;
+		const lines = () => Array.from(dropdown.element.querySelectorAll(
+			'.antilia-ck-editor-panel-item'));
+		expect(lines().map((each) => each.textContent)).toEqual(['A bird', 'b.png']);
+		expect(lines()[0]!.querySelector('img')?.getAttribute('src')).toBe('/i/a.png');
+		expect(lines()[1]!.querySelector('button:last-child')?.getAttribute('aria-label'))
+			.toBe('Delete b.png');
+
+		lines()[0]!.querySelector('button')!.click();
+		expect(dropdown.isOpen).toBe(false);
+		expect(fake.selected?.getAttribute('src')).toBe('/i/a.png');
+
+		dropdown.isOpen = true;
+		lines()[1]!.querySelector<HTMLButtonElement>('button:last-child')!.click();
+		expect(fake.root.children.map((child) => (child as FakeElement).getAttribute?.('src'))
+			.filter(Boolean)).toEqual(['/i/a.png']);
+		expect(editor.getValue()).not.toContain('/i/b.png');
+
+		// none: said so
+		const empty = await started({ onUpload: async () => '/i/new.png' }, '<p>a</p>');
+		const none = empty.fake.components.get('images')!({}) as { element: HTMLElement;
+			isOpen: boolean };
+		none.isOpen = true;
+		expect(none.element.textContent).toBe('The text has no images.');
+	});
+
+	it('inserts an image stored, found by its name', async () => {
+		const onFindImages = vi.fn(async () => [{ url: '/i/kept.png', name: 'Kept' }]);
+		const { fake } = await started({ onFindImages });
+		const dropdown = fake.components.get('storedImage')!({}) as { element: HTMLElement;
+			isOpen: boolean };
+		dropdown.isOpen = true;
+		await vi.waitFor(() => expect(dropdown.element.querySelectorAll('[role="option"]'))
+			.toHaveLength(1));
+		expect(onFindImages).toHaveBeenCalledWith('', expect.anything());
+		dropdown.element.querySelector<HTMLElement>('[role="option"]')!.click();
+		expect(fake.insertImage.given).toEqual([{ source: ['/i/kept.png'] }]);
+		expect(dropdown.isOpen).toBe(false);
+	});
+
+	it('attaches the files dropped into the text that are no images, and tells why not others',
+		async () => {
+			const onAttach = vi.fn(async (file: File) => '/f/' + file.name);
+			const { editor, fake } = await started({ onUpload: async () => '/i/new.png', onAttach,
+				attachMaxCount: 2 });
+			const inserted: unknown[] = [];
+			(fake.model as { insertContent?: unknown }).insertContent = (element: unknown) =>
+				inserted.push(element);
+			(fake as unknown as { model: { change(callback: (writer: unknown) => void): void } })
+				.model.change = (callback) => callback({
+				createElement: (name: string, attributes: unknown) => ({ name, attributes }),
+				setSelection: () => undefined });
+			const pdf = new File(['%PDF'], 'report.pdf', { type: 'application/pdf' });
+			const exe = new File(['MZ'], 'tool.exe', { type: 'application/x-msdownload' });
+			fake.viewDocument.fire('clipboardInput', { dataTransfer: { files: [pdf, exe],
+				getData: () => '' } });
+			await vi.waitFor(() => expect(inserted).toHaveLength(1));
+			expect(onAttach).toHaveBeenCalledTimes(1);
+			expect(inserted[0]).toEqual({ name: 'attachment', attributes: { href: '/f/report.pdf',
+				name: 'report.pdf', size: '4 B', kind: 'pdf' } });
+			expect(line(editor)).toBe('tool.exe is not a file of a type the editor takes: PDF, ' +
+				'DOCX, XLSX, PPTX, ODT, ODS, ZIP, TXT, CSV, Markdown.');
+		});
 });
 
 describe('the types of events of CKEditor', () => {

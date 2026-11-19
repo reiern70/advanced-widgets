@@ -22,7 +22,8 @@
 	let { build, value = $bindable('<p>Hello world</p>'), state: editorState = $bindable(), saved,
 		name, readOnly, toolbar, plugins, count, className = 'rich', onready, onerror, onsave,
 		onfocus, onblur, onselectionchange, pasteNotice, onpastecleaned, recovery, onupload,
-		uploadTypes, uploadMaxSize }: {
+		uploadTypes, uploadMaxSize, uploadMaxCount, uploadDialog, attachmentUrls, onattach,
+		onimagesremoved, onattachmentsremoved, onstorepermanently, onfindimages }: {
 		build?: CKEditorBuild; value?: string; state?: RichTextEditorState; saved?: string;
 		name?: string; readOnly?: boolean; toolbar?: string[] | false;
 		plugins?: CKEditorPlugin[]; count?: boolean; className?: string;
@@ -30,7 +31,12 @@
 		onerror?: (error: unknown, failure: CKEditorFailure) => void;
 		recovery?: CKEditorRecovery | false;
 		onupload?: (file: File) => Promise<string>; uploadTypes?: string[];
-		uploadMaxSize?: number;
+		uploadMaxSize?: number; uploadMaxCount?: number; uploadDialog?: boolean;
+		attachmentUrls?: string[]; onattach?: (file: File) => Promise<string>;
+		onimagesremoved?: (urls: string[]) => void;
+		onattachmentsremoved?: (urls: string[]) => void;
+		onstorepermanently?: (urls: string[]) => Promise<string[]>;
+		onfindimages?: (query: string) => Promise<{ url: string; name: string }[]>;
 		onsave?: (value: string) => void; onfocus?: () => void; onblur?: (value: string) => void;
 		onselectionchange?: (selection: unknown) => void; pasteNotice?: boolean;
 		onpastecleaned?: (report: RichTextCleaningReport) => void } = $props();
@@ -46,7 +52,8 @@
 		bind:state={editorState} bind:modified {saved} {name} {readOnly} {toolbar} {plugins} {count}
 		events={AT_ONCE} label="Notes" {onready} {onerror} {onsave} {onfocus} {onblur}
 		{onselectionchange} {pasteNotice} {onpastecleaned} {recovery} {onupload} {uploadTypes}
-		{uploadMaxSize} />
+		{uploadMaxSize} {uploadMaxCount} {uploadDialog} {attachmentUrls} {onattach} {onimagesremoved}
+		{onattachmentsremoved} {onstorepermanently} {onfindimages} />
 </form>
 <output>{value}</output>
 <span class="modified">{modified}</span>

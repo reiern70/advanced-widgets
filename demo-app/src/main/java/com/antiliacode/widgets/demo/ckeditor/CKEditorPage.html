@@ -25,7 +25,10 @@
 		<form wicket:id="controls" class="rich-text-demo__controls">
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="readOnly"/> <wicket:message key="readOnly"/></label>
 			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="count"/> <wicket:message key="count"/></label>
+			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="uploadDialog"/> <wicket:message key="uploadDialog"/></label>
+			<label class="rich-text-demo__control"><input type="checkbox" wicket:id="deleteAtOnce"/> <wicket:message key="deleteAtOnce"/></label>
 		</form>
+		<p wicket:id="extras" class="rich-text-demo__status">[the uploads]</p>
 		<form wicket:id="editorForm" class="rich-text-demo__editor">
 			<label wicket:id="articleName" class="rich-text-demo__name">[article]</label>
 			<textarea wicket:id="editor"></textarea>

@@ -26,6 +26,9 @@
 	<entry key="placeholder">Den Artikel schreiben…</entry>
 	<entry key="readOnly">Schreibgeschützt</entry>
 	<entry key="count">Wörter zählen</entry>
+	<entry key="uploadDialog">Bilder in einem Dialog hochladen</entry>
+	<entry key="deleteAtOnce">Herausgenommene Bilder und Dateien sofort löschen, nicht beim Speichern</entry>
+	<entry key="extras">Wählen Sie Bilder mit CKEditors Werkzeug Bild einfügen aus, oder ziehen oder fügen Sie sie in den Text ein: PNG, JPEG, GIF, WebP oder AVIF, höchstens {0} und {1} Pixel, {2} auf einmal; ein größeres Bild können Sie verkleinern. Das Werkzeug Bilder hochladen öffnet den Dialog der Uploads, der die Bilder beim Hochladen auflistet, jedes mit seinem Kästchen Dauerhaft speichern: das Werkzeug Bild aus dem Speicher einfügen findet die behaltenen Bilder beim Tippen nach ihrem Namen. Das Werkzeug Bilder im Text listet die Bilder, jedes zum Auswählen oder Löschen; ein aus dem Text genommenes Bild wird beim Speichern gelöscht, oder sofort. Hängen Sie PDFs, Office-Dokumente, Texte oder ZIP-Dateien mit dem Werkzeug Datei anhängen an, oder ziehen Sie sie in den Text; das Werkzeug Dateien im Text listet sie.</entry>
 	<entry key="save">Speichern</entry>
 	<entry key="start">Tippen, auswählen, scrollen oder die Größe ändern: Der Server behält alles.</entry>
 	<entry key="heardFocus">Der Server hat gehört, dass Sie den Artikel betreten haben.</entry>

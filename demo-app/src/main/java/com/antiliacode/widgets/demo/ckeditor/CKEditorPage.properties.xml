@@ -26,6 +26,9 @@
 	<entry key="placeholder">Write the article…</entry>
 	<entry key="readOnly">Read only</entry>
 	<entry key="count">Count the words</entry>
+	<entry key="uploadDialog">Upload images in a dialog</entry>
+	<entry key="deleteAtOnce">Delete the images and files taken out at once, not when saved</entry>
+	<entry key="extras">Choose images with the tool Insert image of CKEditor, drop or paste them into the text: PNG, JPEG, GIF, WebP or AVIF, {0} and {1} pixels at most, {2} at a time; you may scale down a picture larger. The tool Upload images opens the dialog of the uploads, which lists the images as they upload, each with its box Store permanently: the tool Insert image from store finds those you kept by their names, as you type. The tool Images in the text lists the images, each to select or delete; an image taken out of the text is deleted once you save, or at once. Attach PDFs, Office documents, texts or ZIP files with the tool Attach a file, or drop them into the text; the tool Files of the text lists them.</entry>
 	<entry key="save">Save</entry>
 	<entry key="start">Type, select, scroll or resize: the server keeps it all.</entry>
 	<entry key="heardFocus">The server heard you entered the article.</entry>
