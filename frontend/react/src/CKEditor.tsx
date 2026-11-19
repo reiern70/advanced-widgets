@@ -16,7 +16,8 @@ import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 
 import { CKEditor as CoreCKEditor, type CKEditorBuild, type CKEditorFailure, type CKEditorInstance,
 	type CKEditorRecovery, type EditorEvents, type RichTextUploader, type RichTextUploadOptions,
-	type RichTextEditorEventKey,
+	type RichTextAttachmentType, type RichTextAttachmentUrls, type RichTextImageFinder,
+	type RichTextImageKeeper, type RichTextStoredImage, type RichTextEditorEventKey,
 	type CKEditorPlugin, type CKEditorTexts, type HeadingLevel, type ResizableSize,
 	type ResizeAxis, type RichTextCleaningReport, type RichTextEditorSelection,
 	type RichTextEditorState,
@@ -108,6 +109,34 @@ export interface CKEditorProps {
 	 */
 	uploadMaxWidth?: number | null;
 	uploadMaxHeight?: number | null;
+	/**
+	 * Whether a dialog offers the user to scale down the pictures larger than that, each by a box
+	 * to tick, rather than refusing them; false when left out.
+	 */
+	uploadScaling?: boolean;
+	/** How many images one drop, choice or paste takes at most, the first; none when left out. */
+	uploadMaxCount?: number | null;
+	/**
+	 * Whether the images are uploaded in the dialog of the uploads, the tool uploadImages, rather
+	 * than by CKEditor's own button; false when left out.
+	 */
+	uploadDialog?: boolean;
+	/**
+	 * The types of the files the user may attach, each a media type, an extension and a label:
+	 * those of the server when left out.
+	 */
+	attachTypes?: readonly RichTextAttachmentType[];
+	/** The largest file the user may attach, in bytes; none when left out. */
+	attachMaxSize?: number | null;
+	/** How many files one drop, choice or paste takes at most, the first; none when left out. */
+	attachMaxCount?: number | null;
+	/** Whether the tool attachment opens the dialog of the uploads; false when left out. */
+	attachDialog?: boolean;
+	/**
+	 * The addresses of the files attached to a text in Markdown, or a test of an address: a link
+	 * to one of them comes back as a file attached; none when left out.
+	 */
+	attachmentUrls?: RichTextAttachmentUrls | null;
 	/** What the editor says of its own, in English when left out: CKEditor translates the rest. */
 	texts?: Partial<CKEditorTexts>;
 	/** The name a form posts the text under, in a hidden text area; none when left out. */
@@ -123,6 +152,30 @@ export interface CKEditorProps {
 	 * going makes CKEditor anew.
 	 */
 	onUpload?(file: File, options?: RichTextUploadOptions): Promise<string>;
+	/**
+	 * Stores the images ticked in the dialog of the uploads permanently, resolving to the addresses
+	 * of those stored (storePermanentlyAt(url)); the latest is called. With it, the tool
+	 * uploadImages opens the dialog, whose lines have the box to tick.
+	 */
+	onStorePermanently?(urls: string[]): Promise<string[]>;
+	/**
+	 * Finds the images stored permanently for what the user typed, which the tool storedImage,
+	 * "Insert image from store", inserts (findImagesAt(url)); the latest is called.
+	 */
+	onFindImages?(query: string, signal: AbortSignal): Promise<readonly RichTextStoredImage[]>;
+	/**
+	 * Called a moment after the user took images out of the text, with their addresses, for the
+	 * page to delete them (deleteImagesAt(url)).
+	 */
+	onImagesRemoved?(urls: string[]): void;
+	/**
+	 * Uploads a file the user attaches, a PDF or a spreadsheet, resolving to its address
+	 * (uploadFileTo(url)): the tools attachment and attachments show, for the feature attachment;
+	 * the latest is called. One coming or going makes CKEditor anew.
+	 */
+	onAttach?(file: File, options?: RichTextUploadOptions): Promise<string>;
+	/** Called a moment after the user took files attached out of the text, with their addresses. */
+	onAttachmentsRemoved?(urls: string[]): void;
 	/** Called with CKEditor's editor once it started. */
 	onReady?(editor: CKEditorInstance): void;
 	/**
@@ -184,6 +237,13 @@ export interface CKEditorHandle {
  * it a state to start in, one onStateChange reported, to show it again as the user left it. A ref
  * gets a {@link CKEditorHandle}.
  *
+ * Its uploads are those of the {@link RichTextEditor}: images uploaded by onUpload within the
+ * limits given, scaled down when the user ticks them, in the dialog of the uploads too; the tool
+ * images lists them, and onImagesRemoved hears of those taken out of the text. With
+ * onStorePermanently the user ticks the images to store permanently, and with onFindImages
+ * inserts those stored by the tool storedImage; with onAttach the user attaches files. Their
+ * lists, dialogs and files take the look of rich-text-editor.css, which the page loads too.
+ *
  * The package has no code of CKEditor, which is licensed under the GPL or CKSource's commercial
  * terms: the page brings it, with its license key and its style sheet, ckeditor5.css.
  *
@@ -194,9 +254,13 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 		const { value, saved, build, licenseKey, language, translations, format, features,
 			headingLevels, toolbar, plugins, config, readOnly, placeholder, label, spellcheck,
 			textLanguage, count, resizable, minWidth, minHeight, maxWidth, maxHeight, events,
-			pasteNotice, recovery, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, texts,
-			name, id, className } = props;
+			pasteNotice, recovery, uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight,
+			uploadScaling, uploadMaxCount, uploadDialog, attachTypes, attachMaxSize, attachMaxCount,
+			attachDialog, attachmentUrls, texts, name, id, className } = props;
 		const uploads = props.onUpload !== undefined;
+		const keeps = props.onStorePermanently !== undefined;
+		const finds = props.onFindImages !== undefined;
+		const attaches = props.onAttach !== undefined;
 		const element = useRef<HTMLDivElement>(null);
 		const instance = useRef<CoreCKEditor | null>(null);
 		const look = useLook();
@@ -232,7 +296,14 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 				pasteNotice: current.pasteNotice, recovery: current.recovery, texts: current.texts,
 				uploadTypes: current.uploadTypes, uploadMaxSize: current.uploadMaxSize,
 				uploadMaxWidth: current.uploadMaxWidth, uploadMaxHeight: current.uploadMaxHeight,
-				onUpload: uploaderOf(latest), look,
+				uploadScaling: current.uploadScaling, uploadMaxCount: current.uploadMaxCount,
+				uploadDialog: current.uploadDialog, onUpload: uploaderOf(latest),
+				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest),
+				onImagesRemoved: (urls) => latest.current.onImagesRemoved?.(urls),
+				attachTypes: current.attachTypes, attachMaxSize: current.attachMaxSize,
+				attachMaxCount: current.attachMaxCount, attachDialog: current.attachDialog,
+				attachmentUrls: current.attachmentUrls, onAttach: attacherOf(latest),
+				onAttachmentsRemoved: (urls) => latest.current.onAttachmentsRemoved?.(urls), look,
 				onReady: (next) => latest.current.onReady?.(next),
 				onError: (error, failure) => latest.current.onError?.(error, failure),
 				onChange: (next) => latest.current.onChange?.(next),
@@ -270,8 +341,15 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 		useLayoutEffect(() => {
 			instance.current?.configure({ uploadTypes, uploadMaxSize: uploadMaxSize ?? null,
 				uploadMaxWidth: uploadMaxWidth ?? null, uploadMaxHeight: uploadMaxHeight ?? null,
-				onUpload: uploaderOf(latest) });
-		}, [uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploads]);
+				uploadScaling: !!uploadScaling, uploadMaxCount: uploadMaxCount ?? null,
+				uploadDialog: !!uploadDialog, onUpload: uploaderOf(latest),
+				onStorePermanently: keeperOf(latest), onFindImages: finderOf(latest),
+				attachTypes, attachMaxSize: attachMaxSize ?? null,
+				attachMaxCount: attachMaxCount ?? null, attachDialog: !!attachDialog,
+				attachmentUrls: attachmentUrls ?? null, onAttach: attacherOf(latest) });
+		}, [uploadTypes, uploadMaxSize, uploadMaxWidth, uploadMaxHeight, uploadScaling,
+			uploadMaxCount, uploadDialog, uploads, keeps, finds, attachTypes, attachMaxSize,
+			attachMaxCount, attachDialog, attachmentUrls, attaches]);
 
 		// compared by what they are: another one makes CKEditor anew
 		useLayoutEffect(() => {
@@ -312,4 +390,30 @@ export const CKEditor = forwardRef<CKEditorHandle, CKEditorProps>(
 function uploaderOf(props: { current: CKEditorProps }): RichTextUploader | null {
 	return props.current.onUpload ? (file, options) => props.current.onUpload!(file, options) :
 		null;
+}
+
+/**
+ * @returns the uploader of the files attached of the props, calling the latest onAttach; null
+ *          without one
+ */
+function attacherOf(props: { current: CKEditorProps }): RichTextUploader | null {
+	return props.current.onAttach ? (file, options) => props.current.onAttach!(file, options) :
+		null;
+}
+
+/**
+ * @returns what stores the images permanently, calling the latest onStorePermanently; null
+ *          without one
+ */
+function keeperOf(props: { current: CKEditorProps }): RichTextImageKeeper | null {
+	return props.current.onStorePermanently ? (urls) => props.current.onStorePermanently!(urls) :
+		null;
+}
+
+/**
+ * @returns what finds the images stored, calling the latest onFindImages; null without one
+ */
+function finderOf(props: { current: CKEditorProps }): RichTextImageFinder | null {
+	return props.current.onFindImages ? (query, signal) => props.current.onFindImages!(query,
+		signal) : null;
 }

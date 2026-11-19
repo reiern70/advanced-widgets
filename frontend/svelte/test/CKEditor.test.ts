@@ -223,6 +223,33 @@ describe('CKEditor', () => {
 		expect(onupload).toHaveBeenCalledWith(file, undefined);
 	});
 
+	it('has the uploads of the RichTextEditor: the limits, the dialog, the images stored and ' +
+		'removed, the files attached', async () => {
+		const build = fakeBuild();
+		const onattach = vi.fn(async () => '/f/a.pdf');
+		const onimagesremoved = vi.fn();
+		const onattachmentsremoved = vi.fn();
+		const { container } = render(BoundCKEditor, { build, onupload: async () => '/i/a.png',
+			uploadMaxCount: 3, uploadDialog: true, attachmentUrls: ['/f/a.pdf'], onattach,
+			onimagesremoved, onattachmentsremoved, onstorepermanently: async (urls) => urls,
+			onfindimages: async () => [] });
+		await started(container);
+		const core = CKEditor.of(editorOf(container))!;
+		expect(core.options.uploadMaxCount).toBe(3);
+		expect(core.options.uploadDialog).toBe(true);
+		expect(core.options.attachmentUrls).toEqual(['/f/a.pdf']);
+		expect(core.options.onFindImages).toBeTypeOf('function');
+		await expect(core.options.onStorePermanently!(['/i/a.png'])).resolves.toEqual(['/i/a.png']);
+		const file = new File(['%PDF'], 'a.pdf', { type: 'application/pdf' });
+		await expect(core.options.onAttach!(file)).resolves.toBe('/f/a.pdf');
+		expect(onattach).toHaveBeenCalledWith(file, undefined);
+		core.options.onImagesRemoved!(['/i/a.png']);
+		core.options.onAttachmentsRemoved!(['/f/a.pdf']);
+		expect(onimagesremoved).toHaveBeenCalledWith(['/i/a.png']);
+		expect(onattachmentsremoved).toHaveBeenCalledWith(['/f/a.pdf']);
+		expect(build.editors).toHaveLength(1);
+	});
+
 	it('tells why CKEditor could not start, without a build', async () => {
 		const error = vi.fn();
 		setHost({ ...standaloneHost, log: { error } });
