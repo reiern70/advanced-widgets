@@ -51,9 +51,17 @@
 			<artifactId>owasp-java-html-sanitizer</artifactId>
 		</dependency>
 
-		<!-- JSON DEPENDENCIES (only needed by JacksonJsonSerializer) -->
+		<!--
+		  JSON DEPENDENCIES, both optional: JsonSerializers takes Jackson 3 (JacksonJsonSerializer)
+		  when the application has it, or else Jackson 2 (Jackson2JsonSerializer)
+		-->
 		<dependency>
 			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<optional>true</optional>
 		</dependency>

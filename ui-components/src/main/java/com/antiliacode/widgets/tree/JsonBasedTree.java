@@ -52,7 +52,7 @@ import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.BodyHeightU
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
 import com.antiliacode.widgets.dynamicdatatable.ITemplateEngine;
-import com.antiliacode.widgets.dynamicdatatable.JacksonJsonSerializer;
+import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.antiliacode.widgets.dynamicdatatable.ResourceTemplate;
 import com.antiliacode.widgets.icon.IIcon;
 import com.antiliacode.widgets.jsonlist.IItemAction;
@@ -167,7 +167,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
 
-	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
+	private IJsonSerializer jsonSerializer;
 
 	private IModel<String> label;
 
@@ -355,7 +355,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 		Args.notNull(node, "node");
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".renderNode(" +
 			ScriptJson.quote(getNodeKey(node)) + ", " +
-			ScriptJson.escape(jsonSerializer.toJson(getNodeData(node))) + "); }");
+			ScriptJson.escape(getJsonSerializer().toJson(getNodeData(node))) + "); }");
 	}
 
 	/**
@@ -552,16 +552,19 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 	}
 
 	/**
-	 * @return the serializer turning the data of the nodes into JSON
+	 * @return the serializer turning the data of the nodes into JSON: the one
+	 *         {@link #setJsonSerializer(IJsonSerializer) set}, or else the application's default,
+	 *         {@link JsonSerializers#getDefault()}
 	 */
 	public IJsonSerializer getJsonSerializer()
 	{
-		return jsonSerializer;
+		return jsonSerializer != null ? jsonSerializer : JsonSerializers.getDefault();
 	}
 
 	/**
 	 * @param jsonSerializer
-	 *            the serializer turning the data of the nodes into JSON
+	 *            the serializer turning the data of the nodes into JSON, instead of the
+	 *            application's default, {@link JsonSerializers#getDefault()}
 	 * @return {@code this}
 	 */
 	public JsonBasedTree<T, K> setJsonSerializer(IJsonSerializer jsonSerializer)
@@ -611,7 +614,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 			", key); } }; })(" + send + ")";
 		response.render(OnDomReadyHeaderItem.forScript("new Wicket.JsonTree(" +
 			ScriptJson.of(buildConfig()) + ", " + callbacks + ", " +
-			ScriptJson.escape(jsonSerializer.toJson(toNodes(provider.getRoots()))) + ");"));
+			ScriptJson.escape(getJsonSerializer().toJson(toNodes(provider.getRoots()))) + ");"));
 	}
 
 	/**
@@ -793,7 +796,7 @@ public class JsonBasedTree<T, K extends Serializable> extends WebComponent
 			Map<String, Object> data = new LinkedHashMap<>();
 			data.put("nodes", toNodes(nodes));
 			getComponent().getRequestCycle().scheduleRequestHandlerAfterCurrent(
-				new TextRequestHandler("application/json", "UTF-8", jsonSerializer.toJson(data)));
+				new TextRequestHandler("application/json", "UTF-8", getJsonSerializer().toJson(data)));
 		}
 	}
 

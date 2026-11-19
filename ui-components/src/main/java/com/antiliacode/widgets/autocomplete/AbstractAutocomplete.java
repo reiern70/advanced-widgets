@@ -47,7 +47,7 @@ import com.antiliacode.widgets.chips.Chips;
 import com.antiliacode.widgets.dynamicdatatable.BuiltInTemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
 import com.antiliacode.widgets.dynamicdatatable.ITemplateEngine;
-import com.antiliacode.widgets.dynamicdatatable.JacksonJsonSerializer;
+import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
 import com.antiliacode.widgets.template.Templates;
 import com.github.openjson.JSONArray;
@@ -111,7 +111,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
 
-	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
+	private IJsonSerializer jsonSerializer;
 
 	private int minLength = 1;
 
@@ -200,13 +200,24 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 
 	/**
 	 * @param jsonSerializer
-	 *            the serializer turning the values into the JSON the template reads
+	 *            the serializer turning the values into the JSON the template reads, instead of
+	 *            the application's default, {@link JsonSerializers#getDefault()}
 	 * @return {@code this}
 	 */
 	public AbstractAutocomplete<T, M> setJsonSerializer(IJsonSerializer jsonSerializer)
 	{
 		this.jsonSerializer = Args.notNull(jsonSerializer, "jsonSerializer");
 		return this;
+	}
+
+	/**
+	 * @return the serializer turning the values into JSON: the one
+	 *         {@link #setJsonSerializer(IJsonSerializer) set}, or else the application's default,
+	 *         {@link JsonSerializers#getDefault()}
+	 */
+	public IJsonSerializer getJsonSerializer()
+	{
+		return jsonSerializer != null ? jsonSerializer : JsonSerializers.getDefault();
 	}
 
 	/**
@@ -459,7 +470,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 				suggestions.add(suggestion);
 			}
 		}
-		return jsonSerializer.toJson(suggestions);
+		return getJsonSerializer().toJson(suggestions);
 	}
 
 	/**

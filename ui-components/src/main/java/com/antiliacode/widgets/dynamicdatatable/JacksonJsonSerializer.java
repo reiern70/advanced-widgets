@@ -17,9 +17,11 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Serializes rows with Jackson, which is an optional dependency of ui-components: an
+ * Serializes rows with Jackson 3, which is an optional dependency of ui-components: an
  * application using this serializer has to add {@code tools.jackson.core:jackson-databind}
- * itself. Every property Jackson sees on a row is sent to the browser.
+ * itself. {@link JsonSerializers#getDefault()} picks it when Jackson 3 is on the class path;
+ * {@link Jackson2JsonSerializer} serializes with Jackson 2 instead. Every property Jackson sees on
+ * a row is sent to the browser.
  *
  * @since 11.0.0
  */
@@ -45,8 +47,8 @@ public class JacksonJsonSerializer implements IJsonSerializer
 		catch (NoClassDefFoundError e)
 		{
 			throw new IllegalStateException(
-				"JacksonJsonSerializer needs tools.jackson.core:jackson-databind on the classpath, " +
-					"or set another IJsonSerializer on the JsonBasedDynamicDataTable",
+				"JacksonJsonSerializer needs tools.jackson.core:jackson-databind on the class path, " +
+					"or set another IJsonSerializer, see JsonSerializers",
 				e);
 		}
 	}

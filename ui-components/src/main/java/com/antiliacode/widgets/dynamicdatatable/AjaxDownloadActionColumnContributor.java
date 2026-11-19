@@ -33,9 +33,9 @@ import com.antiliacode.widgets.icon.IIcon;
  * {@link AjaxDownloadBehavior} added to the table.
  * <p>
  * The file holds what the {@link JsonBasedDynamicDataTable#getJsonSerializer() serializer} of a
- * JSON based table, or {@link JacksonJsonSerializer} for another table, produces for the row,
- * looked up again by its key when the download is requested; override {@link #getContent(Object)}
- * and {@link #getContentType()} for another format. The action is shown as a link with the label,
+ * JSON based table, or the application's default, {@link JsonSerializers#getDefault()}, for
+ * another table, produces for the row, looked up again by its key when the download is requested;
+ * override {@link #getContent(Object)} and {@link #getContentType()} for another format. The action is shown as a link with the label,
  * or as an icon button with the label as its tooltip once an {@link #setIcon(IIcon) icon} is set.
  * Every {@link AjaxDownloadBehavior} setting is available: the {@link #setLocation(Location)
  * location} (a blob for modern browsers, an iframe, the same window or a new window) and the
@@ -205,13 +205,14 @@ public class AjaxDownloadActionColumnContributor<T> implements IAjaxActionColumn
 	 *            the row being downloaded
 	 * @return the content of the file, what the {@link
 	 *         JsonBasedDynamicDataTable#getJsonSerializer() serializer} of a JSON based table, or
-	 *         {@link JacksonJsonSerializer} for another table, produces for the row by default
+	 *         the application's default, {@link JsonSerializers#getDefault()}, for another table,
+	 *         produces for the row by default
 	 * @since 11.0.0
 	 */
 	protected String getContent(T row)
 	{
 		IJsonSerializer serializer = table instanceof JsonBasedDynamicDataTable<?, ?> json
-			? json.getJsonSerializer() : JacksonJsonSerializer.INSTANCE;
+			? json.getJsonSerializer() : JsonSerializers.getDefault();
 		return serializer.toJson(row);
 	}
 

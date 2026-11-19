@@ -330,9 +330,19 @@ draws in the components' own buttons, panels and toolbars. The servlet API is th
 
 One dependency is optional, and an application using what needs it adds it:
 
-- Jackson 3, `tools.jackson.core:jackson-databind`: `JacksonJsonSerializer`, which writes the JSON
-  of `JsonBasedDynamicDataTable`, `JsonBasedTree`, `JsonBasedInfiniteList`, `JsonRowsResource`
-  and the autocompletes, unless they are given another `IJsonSerializer`.
+- Jackson, 3 (`tools.jackson.core:jackson-databind`) or 2
+  (`com.fasterxml.jackson.core:jackson-databind`), for the JSON of `JsonBasedDynamicDataTable`,
+  `JsonBasedTree`, `JsonBasedInfiniteList`, `JsonRowsResource` and the autocompletes. Unless given
+  an `IJsonSerializer` of their own, they take the application's default,
+  `JsonSerializers.getDefault()`: `JacksonJsonSerializer` when the application has Jackson 3, or
+  else `Jackson2JsonSerializer`. An application with neither, or with a mapper of its own, sets
+  its serializer once, in `init()`, Gson's for example:
+
+  ```java
+  private static final Gson GSON = new Gson();
+
+  JsonSerializers.setDefault(this, value -> GSON.toJson(value));
+  ```
 
 ### A page
 

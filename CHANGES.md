@@ -20,6 +20,15 @@ What 11.0.0-RC6 has, and:
   application no longer fails with «SvgIcon needs the Font Awesome Free web jar» as a collapsible
   panel, an `AjaxActionButton` with an icon or a data table's toolbar renders. The README tells
   what comes with the components and what is optional.
+- The JSON components work with Jackson 2 as well as Jackson 3 (#147): `Jackson2JsonSerializer`
+  writes with `com.fasterxml.jackson.core:jackson-databind`, an optional dependency as Jackson 3
+  is, registering the modules it finds and writing dates as text, as Jackson 3 does. A
+  `JsonBasedDynamicDataTable`, an autocomplete, a `JsonBasedTree`, a `JsonBasedInfiniteList`, a
+  `JsonRowsResource` and the `IWebSocketLightWeightMessage`s given no serializer of their own
+  take the application's default, `JsonSerializers.getDefault()`, instead of Jackson 3 always:
+  the one set once by `JsonSerializers.setDefault(application, serializer)`, or else Jackson 3
+  when the application has it, or else Jackson 2. With neither, the first JSON written fails
+  telling what is missing. The autocompletes have a `getJsonSerializer()`.
 
 **Upgrading:** an application that added the web jar itself for the icons may drop it.
 
