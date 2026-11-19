@@ -25,6 +25,11 @@ What 10.11.0-RC11 has, and:
   `RichTextEditor#setAttachmentDeletion(RichTextImageDeletion)` (#124): the images deleted at once
   and the files once the text is saved, for example, or the other way round. Unless set, the
   files follow the images' mode, as before.
+- An editor keeping the images of the site alone (`setImagesFromSiteOnly(true)`) takes the
+  addresses below the base address of an upload resource of the application,
+  `RichTextFiles#setBaseUrl`, on a domain of its own, as the site's own (#124): the images
+  uploaded there are no longer refused, nor taken out by the cleaning of HTML, Markdown and
+  Tiptap's JSON. `RichTextFiles.isOwnUrl(url)` tells.
 
 ## 10.11.0-RC11 (2026-11-19)
 

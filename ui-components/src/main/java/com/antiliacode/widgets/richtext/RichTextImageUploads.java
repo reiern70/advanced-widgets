@@ -597,7 +597,7 @@ final class RichTextImageUploads
 	 */
 	static boolean isTaken(String url, boolean siteOnly)
 	{
-		return RichTextPolicy.isSafeUrl(url) && (!siteOnly || RichTextPolicy.isSiteUrl(url));
+		return RichTextPolicy.isSafeUrl(url) && (!siteOnly || RichTextFiles.isOwnUrl(url));
 	}
 
 	/**

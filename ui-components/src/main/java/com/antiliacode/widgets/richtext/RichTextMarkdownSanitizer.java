@@ -345,7 +345,7 @@ public class RichTextMarkdownSanitizer implements IRichTextSanitizer
 	static boolean isSite(String destination)
 	{
 		String address = read(destination);
-		return address.isBlank() || RichTextPolicy.isSiteUrl(address);
+		return address.isBlank() || RichTextFiles.isOwnUrl(address);
 	}
 
 	/**
