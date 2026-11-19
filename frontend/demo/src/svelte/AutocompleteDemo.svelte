@@ -81,7 +81,7 @@
 			<label class="autocomplete-demo__field">
 				{texts.countries}
 				<Autocomplete name="countries" multiple search={searchCountry} bind:value={countries}
-					template={config.countryTemplate} minLength={0}
+					template={config.countryTemplate} highlightMatch minLength={0}
 					placeholder={texts['countries.placeholder']} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>
@@ -107,7 +107,7 @@
 				{texts.visits}
 				<Autocomplete name="visitFind" pick search={unlisted}
 					onpick={(country) => (visits = visits.concat([country]))}
-					template={config.countryTemplate} minLength={0}
+					template={config.countryTemplate} highlightMatch minLength={0}
 					placeholder={texts['visits.placeholder']} noMatch={texts.noMatch}
 					searching={texts.searching} remove={texts.remove} />
 			</label>

@@ -57,6 +57,15 @@ afterEach(() => {
 });
 
 describe('Autocomplete', () => {
+	it('marks the letters typed with highlightMatch', async () => {
+		const { container } = render(<Autocomplete search={search} highlightMatch name="fruit" />);
+
+		await type(container, 'ban');
+
+		expect(options(container).map((option) => option.innerHTML))
+			.toEqual(['<mark class="antilia-autocomplete-match">Ban</mark>ana']);
+	});
+
 	it('suggests with search and reports the chosen values', async () => {
 		function Fruits() {
 			const [fruits, setFruits] = useState<AutocompleteValue[]>([]);

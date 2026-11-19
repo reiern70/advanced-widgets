@@ -112,6 +112,36 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void marksTheLettersTypedInTheCountriesSuggested(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "autocomplete");
+
+		text("visitFind").sendKeys("zeal");
+		wait.until(d -> suggestions("visitFind").size() == 1);
+		WebElement country = suggestions("visitFind").get(0);
+		List<WebElement> marks = country.findElements(By.cssSelector(
+			"mark.antilia-autocomplete-match"));
+		assertEquals(1, marks.size());
+		assertEquals("Zeal", marks.get(0).getText());
+		// in the line of the name, not an item of a flex box apart
+		assertEquals(marks.get(0).getLocation().getY(),
+			country.findElement(By.cssSelector(".ac-flag")).getLocation().getY(), 4);
+		assertTrue(country.getText().endsWith("New Zealand"), country.getText());
+		// the theme colors the mark
+		String background = marks.get(0).getCssValue("background-color");
+		assertTrue(!background.equals("rgba(0, 0, 0, 0)") && !background.equals("transparent"),
+			background);
+
+		// without a term, nothing is marked
+		text("visitFind").sendKeys(Keys.BACK_SPACE, Keys.BACK_SPACE, Keys.BACK_SPACE,
+			Keys.BACK_SPACE);
+		wait.until(d -> suggestions("visitFind").size() == 10);
+		assertTrue(app().findElements(By.cssSelector("mark.antilia-autocomplete-match")).isEmpty());
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void showsTheDetailsOfAUserWithF1AndCallsThemWithoutChoosing(SeleniumBrowser browser,
 		String framework)
 	{

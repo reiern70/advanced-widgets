@@ -92,9 +92,13 @@ public class AutocompletePage extends DemoPage
 	/** The phone at the end of the row of a user, reported to the page. */
 	static final String CALL_TEMPLATE = "<i class=\"fa-solid fa-phone\" aria-hidden=\"true\"></i>";
 
-	/** The row of a country: its flag and name. */
+	/**
+	 * The row of a country: its flag and name, the letters typed marked where the match is
+	 * highlighted. The name has a span of its own: the row is a flex box, which would make the
+	 * marks and the text around them items apart.
+	 */
 	static final String COUNTRY_TEMPLATE = "<span class=\"ac-country\"><span class=\"ac-flag\" " +
-		"aria-hidden=\"true\">{{flag}}</span>{{name}}</span>";
+		"aria-hidden=\"true\">{{flag}}</span><span>{{@labelMatch}}</span></span>";
 
 	private User owner;
 
@@ -187,6 +191,7 @@ public class AutocompletePage extends DemoPage
 		MultiAutocomplete<Country> countriesChoice = new MultiAutocomplete<>("countries",
 			new PropertyModel<>(this, "countries"), new CountriesProvider());
 		countriesChoice.setTemplate(COUNTRY_TEMPLATE)
+			.setHighlightMatch(true)
 			.setMinLength(0)
 			.setPlaceholder(new ResourceModel("countries.placeholder"));
 		form.add(reportChanges(countriesChoice, choices));
@@ -216,6 +221,7 @@ public class AutocompletePage extends DemoPage
 			}
 		};
 		visitFind.setTemplate(COUNTRY_TEMPLATE)
+			.setHighlightMatch(true)
 			.setMinLength(0)
 			.setPlaceholder(new ResourceModel("visits.placeholder"));
 		form.add(visitFind);

@@ -80,7 +80,7 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 						{texts.countries}{' '}
 						<Autocomplete name="countries" multiple search={countries}
 							value={values.countries} onChange={set('countries')}
-							template={config.countryTemplate} minLength={0}
+							template={config.countryTemplate} highlightMatch minLength={0}
 							placeholder={texts['countries.placeholder']} {...common} />
 					</label>
 				</section>
@@ -103,7 +103,7 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 						{texts.visits}{' '}
 						<Autocomplete name="visitFind" pick search={unlisted}
 							onPick={(country) => set('visits')(values.visits.concat([country]))}
-							template={config.countryTemplate} minLength={0}
+							template={config.countryTemplate} highlightMatch minLength={0}
 							placeholder={texts['visits.placeholder']} {...common} />
 					</label>
 					{values.visits.length ? (

@@ -20,8 +20,11 @@
  * it is in already, with the chips of the chosen values, a text field and the list of
  * suggestions. Typing asks options.search, or else options.url, for the suggestions matching the
  * text ([{id, label, data}]); each row is options.template evaluated against its data by the
- * engine options.engine of templates(), {{@label}} being its label. Attaching an input that is in
- * a wrapper already, for example one Ajax put in place of the previous one, rebuilds the rest.
+ * engine options.engine of templates(), {{@label}} being its label. {{@labelMatch}} is the label as
+ * markup, escaped, and with options.highlightMatch the parts matching the words typed in a
+ * <mark class="antilia-autocomplete-match">, regardless of case and accents; the row is
+ * {{@labelMatch}} then unless options.template says otherwise. Attaching an input that is in a
+ * wrapper already, for example one Ajax put in place of the previous one, rebuilds the rest.
  *
  * options.actions are buttons at the end of every row, such as an (i): their content is a template
  * evaluated against the row's data as the row is. One with a tooltip shows it, a template too,
@@ -41,7 +44,7 @@ import { Chips } from './chips.js';
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
 import { lookOf, partClasses, toggleParts, type Look, type LookPart } from './look.js';
 import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
-import { templates, type CompiledTemplate } from './templates.js';
+import { TemplateMarkup, templates, type CompiledTemplate } from './templates.js';
 
 /** A chosen value. */
 export interface AutocompleteValue {
@@ -97,8 +100,16 @@ export interface AutocompleteOptions {
 	 * fires 'change', and the text field is empty again, as in a find bar.
 	 */
 	pick?: boolean;
-	/** The template of a suggestion's row, '{{@label}}' by default. */
+	/**
+	 * The template of a suggestion's row: '{{@label}}' by default, '{{@labelMatch}}' with
+	 * highlightMatch.
+	 */
 	template?: string;
+	/**
+	 * Whether {{@labelMatch}} marks the parts of the label matching the words typed, each in a
+	 * <mark class="antilia-autocomplete-match">, regardless of case and accents.
+	 */
+	highlightMatch?: boolean;
 	/** The name of the template engine, the built-in one by default. */
 	engine?: string;
 	/** The buttons at the end of every row. */
@@ -118,6 +129,90 @@ export interface AutocompleteOptions {
 }
 
 const WRAPPER_CLASS = 'antilia-autocomplete';
+
+/** The class of the <mark> around a part of a label matching what was typed. */
+export const MATCH_CLASS = 'antilia-autocomplete-match';
+
+/** A character of a text, its index there, and what it is compared as: lower case, unaccented. */
+interface FoldedChar {
+	index: number;
+	end: number;
+	folded: string;
+}
+
+/**
+ * @returns the characters of a text, each folded to lower case without its accents ('É' to 'e'):
+ *          a combining accent of its own folds to nothing
+ */
+function foldChars(text: string): FoldedChar[] {
+	const chars: FoldedChar[] = [];
+	for (let index = 0; index < text.length;) {
+		const char = String.fromCodePoint(text.codePointAt(index) as number);
+		chars.push({
+			index,
+			end: index + char.length,
+			folded: char.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+		});
+		index += char.length;
+	}
+	return chars;
+}
+
+/**
+ * Marks where the words of a term occur in a label, regardless of case and accents: 'pub' in
+ * 'Published', 'jose' in 'José'.
+ *
+ * @param label the label
+ * @param term what was typed, its words apart by spaces
+ * @returns the label, escaped, each part matching a word in a <mark class=
+ *          "antilia-autocomplete-match">
+ */
+export function markMatches(label: string, term: string): string {
+	const escape = templates().escapeHtml;
+	const text = String(label ?? '');
+	const chars = foldChars(text);
+	// the folded text, and for each of its characters the character of the label it comes from
+	let folded = '';
+	const source: number[] = [];
+	chars.forEach((char, at) => {
+		folded += char.folded;
+		for (let i = 0; i < char.folded.length; i++) {
+			source.push(at);
+		}
+	});
+	const ranges: Array<[number, number]> = [];
+	(term || '').split(/\s+/).map((word) => foldChars(word).map((char) => char.folded).join(''))
+		.filter((word) => word.length > 0)
+		.forEach((word) => {
+			for (let at = folded.indexOf(word); at >= 0; at = folded.indexOf(word, at + word.length)) {
+				let last = source[at + word.length - 1];
+				// the accents written apart stay with their letter
+				while (last + 1 < chars.length && chars[last + 1].folded === '') {
+					last++;
+				}
+				ranges.push([chars[source[at]].index, chars[last].end]);
+			}
+		});
+	ranges.sort((a, b) => a[0] - b[0]);
+	let html = '';
+	let done = 0;
+	for (const [start, end] of ranges) {
+		if (end <= done) {
+			continue;
+		}
+		const from = Math.max(start, done);
+		html += escape(text.substring(done, from));
+		// a mark touching the one before it continues it
+		if (from === done && html.endsWith('</mark>')) {
+			html = html.substring(0, html.length - '</mark>'.length);
+		} else {
+			html += '<mark class="' + MATCH_CLASS + '">';
+		}
+		html += escape(text.substring(from, end)) + '</mark>';
+		done = end;
+	}
+	return html + escape(text.substring(done));
+}
 
 /** How long typing pauses before the suggestions are asked for, in milliseconds. */
 const DELAY = 200;
@@ -327,7 +422,8 @@ export class Autocomplete {
 		const engine = templates().engine(this.options.engine);
 		const compile = (template: string): CompiledTemplate => engine ?
 			engine.compile(template) : () => '';
-		this.row = engine ? engine.compile(this.options.template || '{{@label}}') :
+		this.row = engine ? engine.compile(this.options.template ||
+			(this.options.highlightMatch ? '{{@labelMatch}}' : '{{@label}}')) :
 			(_data, meta) => templates().escapeHtml(meta?.label);
 		this.actions = (this.options.actions || []).map((action) => ({
 			action,
@@ -540,7 +636,7 @@ export class Autocomplete {
 		return this.find(term).then((suggestions) => {
 			// only the answer to the latest request counts
 			if (request === this.request && this.text.value.trim() === term) {
-				this.show(suggestions);
+				this.show(suggestions, term);
 			}
 		}).catch((error) => {
 			getHost().log.error('Wicket.Autocomplete: searching "' + term + '" failed', error);
@@ -550,8 +646,12 @@ export class Autocomplete {
 
 	/**
 	 * Lists the suggestions not chosen yet.
+	 *
+	 * @param suggestions the suggestions
+	 * @param term what they were found for, which {{@labelMatch}} marks with highlightMatch: the
+	 *            text typed if left out
 	 */
-	show(suggestions: AutocompleteSuggestion[]): void {
+	show(suggestions: AutocompleteSuggestion[], term: string = this.text.value.trim()): void {
 		const chosenIds = this.chosen.map((value) => String(value.id));
 		this.suggestions = (suggestions || []).filter((suggestion) =>
 			chosenIds.indexOf(String(suggestion.id)) < 0);
@@ -564,7 +664,9 @@ export class Autocomplete {
 			item.dataset.index = String(index);
 			item.setAttribute('role', 'option');
 			const data = suggestion.data || {};
-			const meta = { id: suggestion.id, label: suggestion.label, index };
+			const labelMatch = new TemplateMarkup(this.options.highlightMatch ?
+				markMatches(suggestion.label, term) : templates().escapeHtml(suggestion.label ?? ''));
+			const meta = { id: suggestion.id, label: suggestion.label, labelMatch, index };
 			if (this.actions.length) {
 				item.classList.add('antilia-autocomplete-has-actions');
 				const content = create('span', this.css('autocomplete-content'));

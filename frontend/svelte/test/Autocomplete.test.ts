@@ -61,6 +61,15 @@ afterEach(() => {
 });
 
 describe('Autocomplete', () => {
+	it('marks the letters typed with highlightMatch', async () => {
+		const { container } = render(Autocomplete, { search, highlightMatch: true, name: 'fruit' });
+
+		await type(container, 'ban');
+
+		expect(options(container).map((option) => option.innerHTML))
+			.toEqual(['<mark class="antilia-autocomplete-match">Ban</mark>ana']);
+	});
+
 	it('binds the chosen values both ways', async () => {
 		const { container } = render(BoundAutocomplete, { search, multiple: true });
 

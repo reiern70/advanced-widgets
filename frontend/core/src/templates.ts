@@ -18,7 +18,10 @@
  * adds, such as the number of a row, as {{@name}}.
  *
  * The built-in engine replaces {{path}} with the escaped value at the path of the data, and
- * {{{path}}} with the raw value; a path is a dotted chain of properties.
+ * {{{path}}} with the raw value; a path is a dotted chain of properties. A value that is markup
+ * already, a TemplateMarkup or any object with a toHTML() as Handlebars' SafeString, is written as
+ * it is by {{ }} too, as Handlebars does: the meta of a caller holds such values, never the JSON
+ * of the data, which has no functions.
  *
  * The components look the engines up in templates(), the registry set with useTemplates(): in a
  * Wicket page the page's Wicket.Templates, so that every script sees the engines registered there,
@@ -29,6 +32,33 @@ import { getHost } from './host.js';
 
 /** Renders data into markup, meta holding what the caller adds, as {{@name}}. */
 export type CompiledTemplate = (data: unknown, meta?: Record<string, unknown>) => string;
+
+/**
+ * Markup that {{ }} writes as it is, by the built-in engine and by Handlebars, which both call its
+ * toHTML(): for what a component makes into markup itself, its escaping included, such as a label
+ * with the text the user typed marked.
+ */
+export class TemplateMarkup {
+	constructor(readonly html: string) {
+	}
+
+	toHTML(): string {
+		return this.html;
+	}
+
+	toString(): string {
+		return this.html;
+	}
+}
+
+/**
+ * @returns whether a value is markup already: it has a toHTML(), as a TemplateMarkup or
+ *          Handlebars' SafeString
+ */
+function isMarkup(value: unknown): value is { toHTML(): string } {
+	return typeof value === 'object' && value !== null &&
+		typeof (value as { toHTML?: unknown }).toHTML === 'function';
+}
 
 /** A template engine. */
 export interface TemplateEngine {
@@ -83,7 +113,10 @@ const builtinEngine: TemplateEngine = {
 			if (value === null || value === undefined) {
 				return '';
 			}
-			return part.raw ? String(value) : escapeHtml(value);
+			if (part.raw) {
+				return String(value);
+			}
+			return isMarkup(value) ? value.toHTML() : escapeHtml(value);
 		}).join('');
 	}
 };
