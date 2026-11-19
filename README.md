@@ -51,6 +51,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | Feedback | Progress bar | ✓ | ✓ |
 | | Notifications; Wicket's feedback messages become notifications by themselves | ✓ | ✓ |
 | | Popovers | ✓ | ✓ |
+| | A veil over the page while it loads, until its scripts have run: no click reaches a component not ready, a spinner only when it takes a while, by CSS alone under a strict Content Security Policy (`PageLoadingVeilBehavior`) | ✓ | |
 | Layout | Scroll bars in the colors of the theme | ✓ | ✓ |
 | | Split panel, nested, collapsible, its panes one above the other on a phone, its layout remembered by the server | ✓ | ✓ |
 | | Resizable elements | ✓ | ✓ |

@@ -268,7 +268,7 @@ class WizardBrowserTest extends JettyTestCase
 			"new Event('change', {bubbles: true}));",
 			driver.findElement(By.cssSelector(".topbar__setting select[name$='look']")));
 		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class")
-			.contains("antilia-look-bootstrap"));
+			.contains("antilia-look-bootstrap") && SeleniumBrowser.isReady(d));
 		wait.until(d -> d.findElements(By.cssSelector(".antilia-wizard")).size() == 2);
 
 		assertTrue(wizard(true).getDomAttribute("class").contains("card"));

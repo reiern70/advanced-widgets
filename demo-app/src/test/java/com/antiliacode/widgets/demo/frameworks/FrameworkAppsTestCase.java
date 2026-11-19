@@ -101,7 +101,8 @@ public abstract class FrameworkAppsTestCase extends JettyTestCase
 			"new Event('change', {bubbles: true}));",
 			driver.findElement(By.cssSelector(".topbar__setting select[name$='look']")), name);
 		String look = "antilia-look-" + name.toLowerCase(Locale.ROOT);
-		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class").contains(look));
+		wait.until(d -> d.findElement(By.tagName("body")).getDomAttribute("class").contains(look) &&
+			SeleniumBrowser.isReady(d));
 		tab(framework).click();
 		wait.until(d -> app().isDisplayed() && !app().findElements(By.xpath("*")).isEmpty());
 	}
