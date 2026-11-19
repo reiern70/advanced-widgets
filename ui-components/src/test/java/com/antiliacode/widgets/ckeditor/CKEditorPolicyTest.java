@@ -29,6 +29,7 @@ import org.apache.wicket.core.util.lang.WicketObjects;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.richtext.RichTextCleaningReport;
+import com.antiliacode.widgets.richtext.RichTextFormat;
 
 
 /**
@@ -40,6 +41,21 @@ class CKEditorPolicyTest
 	private static String clean(String html)
 	{
 		return CKEditorPolicy.ALL.sanitize(html);
+	}
+
+	@Test
+	void keepsTheFilesAttachedAsTheTiptapEditorWritesThem()
+	{
+		String file = "<p><a class=\"antilia-attachment antilia-attachment-pdf\" href=\"/f/a.pdf\" " +
+			"target=\"_blank\" data-size=\"1.2 MB\" rel=\"noopener noreferrer nofollow\">a.pdf</a></p>";
+		assertEquals(file, CKEditorPolicy.ALL.sanitize(file));
+		assertEquals(CKEditorFeature.ATTACHMENT, CKEditorFeature.of("attachment"));
+		assertTrue(CKEditorFeature.defaults(RichTextFormat.MARKDOWN)
+			.contains(CKEditorFeature.ATTACHMENT), "a plain link in Markdown");
+		// without the feature, a link
+		assertEquals("<p><a href=\"/f/a.pdf\" target=\"_blank\" rel=\"noopener noreferrer " +
+			"nofollow\">a.pdf</a></p>", CKEditorPolicy.of(EnumSet.of(CKEditorFeature.LINK))
+				.sanitize(file));
 	}
 
 	@Test

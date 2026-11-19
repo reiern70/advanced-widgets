@@ -1219,7 +1219,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *            whether the form of the tool attaching files has a button opening a dialog to
 	 *            upload them in, with the list of the files as they upload, which the user takes out
 	 *            before they go into the text; {@code false}, the default, for the zone in the form
-	 *            itself
+	 *            itself. In CKEditor the tool opens the dialog, or else the browser's dialog of
+	 *            files.
 	 * @return {@code this}
 	 * @since 11.0.0
 	 */
@@ -1593,7 +1594,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *            a zone to drop them on or choose them, and the list of the files, each uploading,
 	 *            uploaded or refused and why, which the user takes out before the images go into
 	 *            the text; {@code false}, the default, for the zone in the form itself, each image
-	 *            going into the text as soon as it is uploaded
+	 *            going into the text as soon as it is uploaded. In CKEditor the tool
+	 *            {@code uploadImages} opens the dialog, in place of CKEditor's own button.
 	 * @return {@code this}
 	 * @since 11.0.0
 	 */
@@ -1693,7 +1695,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 *            inserts those kept by the tool {@link RichTextTool#STORED_IMAGE insert image from
 	 *            store}, which {@link IRichTextImageStore#findPermanent(String, int) the store
 	 *            finds}. {@code false} by default. Needs {@link #setImageStore(IRichTextImageStore)
-	 *            a store}.
+	 *            a store}. In CKEditor the box is in the dialog of the uploads, which its tool
+	 *            {@code uploadImages} opens, and the tool {@code storedImage} inserts those kept.
 	 * @return {@code this}
 	 * @since 11.0.0
 	 */

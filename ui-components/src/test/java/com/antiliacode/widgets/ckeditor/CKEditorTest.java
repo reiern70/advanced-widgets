@@ -30,16 +30,20 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.wicket.MarkupContainer;
+import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.core.util.lang.WicketObjects;
+import org.apache.wicket.event.IEvent;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.upload.FileUpload;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.request.Url;
@@ -74,6 +78,13 @@ import com.antiliacode.widgets.richtext.RichTextFormat;
 import com.antiliacode.widgets.richtext.RichTextImageDimensions;
 import com.antiliacode.widgets.richtext.RichTextImageType;
 import com.antiliacode.widgets.richtext.RichTextImageUploadBehavior;
+import com.antiliacode.widgets.richtext.IRichTextAttachmentStore;
+import com.antiliacode.widgets.richtext.IRichTextImageStore;
+import com.antiliacode.widgets.richtext.IRichTextImageType;
+import com.antiliacode.widgets.richtext.RichTextAttachmentsRemovedEvent;
+import com.antiliacode.widgets.richtext.RichTextImageDeletion;
+import com.antiliacode.widgets.richtext.RichTextImagesRemovedEvent;
+import com.antiliacode.widgets.upload.IUploadFileFormat;
 
 class CKEditorTest extends WicketTestCase
 {
@@ -114,8 +125,9 @@ class CKEditorTest extends WicketTestCase
 		tester.assertContains("antilia-ckeditor.*\\.css");
 		tester.assertContains("antilia-resizable.*\\.css");
 		tester.assertContainsNot("de.umd.js");
-		// the names of the events alone
-		tester.assertContainsNot("antilia-rich-text-editor(?!:)");
+		// the names of the events and the style sheet of the uploads alone, no script of Tiptap's
+		tester.assertContainsNot("antilia-rich-text-editor(?![:.]|-\\d|-ver)");
+		tester.assertContainsNot("antilia-rich-text-editor[^\"]*\\.js");
 
 		JSONObject options = options(page.editor);
 		assertEquals("GPL", options.getString("licenseKey"));
@@ -139,7 +151,8 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("{\"selection\":{\"anchor\":0,\"head\":0},\"scrollTop\":0,\"scrollLeft\":0}",
 			options.getJSONObject("state").toString());
 		JSONObject texts = options.getJSONObject("texts");
-		assertEquals(22, texts.length());
+		// its own, those of the paste and those of the uploads
+		assertEquals(59, texts.length());
 		assertEquals("Something went wrong in the editor. It started again, with your text.",
 			texts.getString("errorRestarted"));
 		assertEquals("{0} characters", texts.getString("characters"));
@@ -630,6 +643,125 @@ class CKEditorTest extends WicketTestCase
 		tester.executeBehavior(behavior);
 		assertFalse(new JSONObject(tester.getLastResponseAsString()).has("url"));
 		assertEquals(1, stored.size());
+	}
+
+	private static final String IMAGES = "<p>a</p><figure class=\"image\"><img " +
+		"src=\"/images/old.png\"></figure><figure class=\"image\"><img src=\"/images/kept.png\">" +
+		"</figure><p><a class=\"antilia-attachment antilia-attachment-pdf\" href=\"/f/old.pdf\" " +
+		"target=\"_blank\" data-size=\"1.2 MB\" rel=\"noopener noreferrer nofollow\">old.pdf</a></p>";
+
+	@Test
+	void hasTheUploadsOfTheTiptapEditor()
+	{
+		List<String> deleted = new ArrayList<>();
+		List<String> files = new ArrayList<>();
+		List<RichTextImagesRemovedEvent> images = new ArrayList<>();
+		List<RichTextAttachmentsRemovedEvent> attachments = new ArrayList<>();
+		IModel<String> text = Model.of(IMAGES);
+		CKEditor editor = new CKEditor("editor", text);
+		editor.setImageStore(new IRichTextImageStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(FileUpload image, IRichTextImageType type)
+			{
+				return "/images/new." + type.getExtension();
+			}
+
+			@Override
+			public void delete(String url)
+			{
+				deleted.add(url);
+			}
+		}).setImageMaxCount(3).setImageScaling(true).setImageMaxDimensions(400, 300)
+			.setImageUploadDialog(true).setPermanentImages(true)
+			.setAttachmentStore(new IRichTextAttachmentStore()
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public String store(FileUpload file, IUploadFileFormat format)
+				{
+					return "/f/new." + format.getExtension();
+				}
+
+				@Override
+				public void delete(String url)
+				{
+					files.add(url);
+				}
+			}).setAttachmentMaxCount(2).setAttachmentUploadDialog(true)
+			.setAttachmentDeletion(RichTextImageDeletion.AT_ONCE);
+		TestPage page = new TestPage(editor)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onEvent(IEvent<?> event)
+			{
+				if (event.getPayload() instanceof RichTextImagesRemovedEvent removed)
+				{
+					images.add(removed);
+				}
+				else if (event.getPayload() instanceof RichTextAttachmentsRemovedEvent removed)
+				{
+					attachments.add(removed);
+				}
+			}
+		};
+		tester.startPage(page);
+		assertTrue(editor.getFeatures().contains(CKEditorFeature.ATTACHMENT));
+		assertTrue(editor.isAttachmentUploading());
+		JSONObject options = options(editor);
+		// the options of the uploads, those of the Tiptap editor of the same names
+		assertEquals(3, options.getInt("uploadMaxCount"));
+		assertTrue(options.getBoolean("uploadScaling"));
+		assertTrue(options.getBoolean("uploadDialog"));
+		assertTrue(options.getBoolean("permanentImages"));
+		assertTrue(options.getString("attachUrl").contains("-form-editor"),
+			options.getString("attachUrl"));
+		assertEquals(2, options.getInt("attachMaxCount"));
+		assertTrue(options.getBoolean("attachDialog"));
+		assertTrue(options.getJSONArray("attachTypes").toString().contains("\"extension\":\"pdf\""));
+		// the dialogs, the lists and the files attached in their look; the texts of the uploads
+		tester.assertContains("antilia-modal.*\\.css");
+		tester.assertContains("antilia-rich-text-editor.*\\.css");
+		tester.assertContains("antilia-button.*\\.css");
+		assertEquals("Images in the text", options.getJSONObject("texts").getString("images"));
+		assertEquals("Attach a file", options.getJSONObject("texts").getString("attachment"));
+		assertEquals("Store permanently", options.getJSONObject("texts")
+			.getString("storePermanently"));
+
+		// the browser tells of an image and a file taken out, as the Tiptap editor's script does
+		assertTrue(options.getJSONObject("imagesAjax").getString("u").contains("-form-editor"));
+		AbstractDefaultAjaxBehavior removal = editor.getBehaviors(AbstractDefaultAjaxBehavior.class)
+			.stream().filter(behavior -> "ImagesRemoval".equals(behavior.getClass().getSimpleName()))
+			.findFirst().orElseThrow();
+		tester.getRequest().getPostParameters().setParameterValue("removed",
+			"[\"/images/old.png\", \"/images/elsewhere.png\"]");
+		tester.getRequest().getPostParameters().setParameterValue("removedAttachments",
+			"[\"/f/old.pdf\"]");
+		tester.executeBehavior(removal);
+		assertEquals(1, images.size());
+		assertEquals(Set.of("/images/old.png"), images.get(0).getUrls());
+		assertSame(editor, images.get(0).getEditor());
+		assertFalse(images.get(0).isDeleted());
+		assertTrue(deleted.isEmpty(), "not before the text is saved");
+		// the files at once, as the editor's mode for them says
+		assertEquals(List.of("/f/old.pdf"), files);
+		assertTrue(attachments.get(0).isDeleted());
+
+		FormTester form = tester.newFormTester("form");
+		form.setValue("editor", "<p>a</p><figure class=\"image\"><img src=\"/images/kept.png\">" +
+			"</figure>");
+		form.submit();
+		assertEquals("<p>a</p><figure class=\"image\"><img src=\"/images/kept.png\" /></figure>",
+			text.getObject());
+		assertTrue(deleted.isEmpty(), "the model has the text, which is not saved yet");
+		page.action = target -> editor.markSaved(target);
+		tester.clickLink("act");
+		assertEquals(List.of("/images/old.png"), deleted);
 	}
 
 	@Test

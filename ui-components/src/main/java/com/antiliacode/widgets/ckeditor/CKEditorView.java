@@ -23,6 +23,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.util.lang.Args;
 
 import com.antiliacode.widgets.richtext.IRichTextSanitizer;
+import com.antiliacode.widgets.richtext.RichTextEditor;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookPart;
 
@@ -139,6 +140,8 @@ public class CKEditorView extends WebComponent
 		{
 			response.render(CssHeaderItem.forReference(library.getContentCss()));
 		}
+		// the files attached, as the editors write them
+		response.render(CssHeaderItem.forReference(RichTextEditor.CSS));
 		response.render(CssHeaderItem.forReference(CKEditor.CSS));
 	}
 }

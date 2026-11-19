@@ -226,6 +226,25 @@ public enum CKEditorFeature implements IRichTextFeature
 		}
 	},
 
+	/**
+	 * Files attached to the text, PDFs or spreadsheets, each a link of its own, as
+	 * {@link RichTextFeature#ATTACHMENT} writes them,
+	 * {@code <a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">
+	 * report.pdf</a>}: an inline widget of the editor's own in CKEditor. Uploaded with
+	 * {@link CKEditor#setAttachmentStore(com.antiliacode.widgets.richtext.IRichTextAttachmentStore)
+	 * a store}; in Markdown, a plain link, {@code [report.pdf](url)}.
+	 *
+	 * @since 11.0.0
+	 */
+	ATTACHMENT("attachment")
+	{
+		@Override
+		public void allowHtml(RichTextHtmlRules rules)
+		{
+			RichTextFeature.ATTACHMENT.allowHtml(rules);
+		}
+	},
+
 	/** The alignment of paragraphs, headings and the items of lists, by classes; not in Markdown. */
 	TEXT_ALIGN("textAlign", false)
 	{
