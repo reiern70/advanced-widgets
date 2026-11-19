@@ -325,14 +325,14 @@ public final class RichTextHtmlRules
 	{
 		if (!"srcset".equals(attribute))
 		{
-			return RichTextPolicy.isSiteUrl(value);
+			return RichTextFiles.isOwnUrl(value);
 		}
 		// split at every comma, even one a browser reads as part of an address: a piece more to
 		// check, never one less
 		for (String candidate : CANDIDATES.split(value))
 		{
 			String trimmed = candidate.strip();
-			if (!trimmed.isEmpty() && !RichTextPolicy.isSiteUrl(SPACES.split(trimmed, 2)[0]))
+			if (!trimmed.isEmpty() && !RichTextFiles.isOwnUrl(SPACES.split(trimmed, 2)[0]))
 			{
 				return false;
 			}

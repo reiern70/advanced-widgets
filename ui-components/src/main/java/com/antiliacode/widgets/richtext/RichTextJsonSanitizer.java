@@ -214,7 +214,7 @@ public class RichTextJsonSanitizer implements IRichTextSanitizer
 		for (String name : new String[] { "href", "src" })
 		{
 			if (attributes.opt(name) instanceof String address && !address.isBlank() &&
-				!(imagesFromSiteOnly && name.equals("src") ? RichTextPolicy.isSiteUrl(address) :
+				!(imagesFromSiteOnly && name.equals("src") ? RichTextFiles.isOwnUrl(address) :
 					RichTextPolicy.isSafeUrl(address)))
 			{
 				return false;
