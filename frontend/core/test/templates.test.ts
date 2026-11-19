@@ -14,7 +14,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { setHost, standaloneHost, Templates, templates, useTemplates,
+import { setHost, standaloneHost, TemplateMarkup, Templates, templates, useTemplates,
 	type TemplateRegistry } from '../src/index.js';
 
 afterEach(() => {
@@ -29,6 +29,14 @@ describe('Templates', () => {
 
 		expect(render({ name: { first: '<Ann>' }, html: '<i>x</i>' }, { number: 3 }))
 			.toBe('<b>&lt;Ann&gt;</b> <i>x</i> #3 ');
+	});
+
+	it('writes markup by {{ }} as it is, what has a toHTML(), never a value of the data', () => {
+		const render = Templates.engine()!.compile('{{@marked}} {{{@marked}}} {{toHTML}} {{text}}');
+
+		expect(render({ toHTML: '<b>', text: { toHTML: '<i>' } },
+			{ marked: new TemplateMarkup('<mark>Ap</mark>ple') }))
+			.toBe('<mark>Ap</mark>ple <mark>Ap</mark>ple &lt;b&gt; [object Object]');
 	});
 
 	it('logs an engine that is not registered', () => {

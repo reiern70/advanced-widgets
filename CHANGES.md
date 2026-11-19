@@ -42,6 +42,15 @@ What 11.0.0-RC6 has, and:
   added to a page, telling what to add, rather than when the user saves the text
   (`OwaspHtmlSanitizer`). A `CKEditorView` makes its default sanitizer, `CKEditorPolicy.ALL`,
   only when it first cleans.
+- The autocompletes mark in each suggestion what the user typed (#150):
+  `setHighlightMatch(true)`, or `highlightMatch` in React, Svelte and the core, has
+  `{{@labelMatch}}`, the label escaped, put each part matching a word typed in a
+  `<mark class="antilia-autocomplete-match">`, regardless of case and accents ("pub" in
+  "Published", "jose" in "José"), which the theme colors. The row is `{{@labelMatch}}` then
+  unless a template is set (`AbstractAutocomplete.MATCH_TEMPLATE`); without the option,
+  `{{@labelMatch}}` is the label escaped. The built-in template engine writes a value having a
+  `toHTML()`, as `TemplateMarkup` and Handlebars' `SafeString`, as markup by `{{ }}` too, as
+  Handlebars does. The demo's countries mark what is typed, in Wicket, React and Svelte.
 
 **Upgrading:** an application that added the web jar itself for the icons may drop it. One
 with a rich text editor, CKEditor or their views adds the OWASP Java HTML Sanitizer,

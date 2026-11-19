@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import com.antiliacode.widgets.dynamicdatatable.Jackson2JsonSerializer;
 import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.github.openjson.JSONArray;
+import com.github.openjson.JSONObject;
 
 class AutocompleteTest extends WicketTestCase
 {
@@ -71,6 +72,44 @@ class AutocompleteTest extends WicketTestCase
 		tester.assertContains("antilia-autocomplete.*\\.js");
 		tester.assertContains("antilia-templates.*\\.js");
 		tester.assertContains("antilia-chips.*\\.css");
+	}
+
+	@Test
+	void highlightingTheMatchTakesTheTemplateOfTheMarkedLabel()
+	{
+		TestPage page = new TestPage();
+		assertFalse(page.single.isHighlightMatch());
+		assertEquals(Autocomplete.DEFAULT_TEMPLATE, page.single.getTemplate());
+
+		page.single.setHighlightMatch(true);
+		tester.startPage(page);
+
+		assertTrue(page.single.isHighlightMatch());
+		assertEquals("{{@labelMatch}}", page.single.getTemplate());
+		JSONObject single = options(page.single);
+		assertTrue(single.getBoolean("highlightMatch"));
+		assertEquals("{{@labelMatch}}", single.getString("template"));
+		JSONObject multiple = options(page.multiple);
+		assertFalse(multiple.getBoolean("highlightMatch"));
+		assertEquals("{{@label}}", multiple.getString("template"));
+
+		// a template of the developer's stays
+		page.single.setTemplate("<i>{{@labelMatch}}</i> {{name}}");
+		assertEquals("<i>{{@labelMatch}}</i> {{name}}", page.single.getTemplate());
+		page.single.setHighlightMatch(false);
+		assertEquals("<i>{{@labelMatch}}</i> {{name}}", page.single.getTemplate());
+	}
+
+	/**
+	 * @return the options the page hands Wicket.Autocomplete.attach for the autocomplete
+	 */
+	private JSONObject options(AbstractAutocomplete<?, ?> autocomplete)
+	{
+		String page = tester.getLastResponseAsString();
+		String call = "Wicket.Autocomplete.attach(\"" + autocomplete.getMarkupId() + "\", ";
+		int start = page.indexOf(call) + call.length();
+		assertTrue(start >= call.length(), page);
+		return new JSONObject(page.substring(start, page.indexOf(");", start)));
 	}
 
 	@Test

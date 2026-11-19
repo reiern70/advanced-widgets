@@ -37,8 +37,16 @@ export interface AutocompleteProps {
 	value?: AutocompleteValue[];
 	/** Called with the chosen values after every choice or removal. */
 	onChange?(value: AutocompleteValue[]): void;
-	/** The template of a suggestion's row, rendered from its data; '{{@label}}' by default. */
+	/**
+	 * The template of a suggestion's row, rendered from its data; '{{@label}}' by default,
+	 * '{{@labelMatch}}' with highlightMatch.
+	 */
 	template?: string;
+	/**
+	 * Whether {{@labelMatch}}, the label as markup, marks the parts matching the words typed, in a
+	 * <mark class="antilia-autocomplete-match">, regardless of case and accents.
+	 */
+	highlightMatch?: boolean;
 	/** The name of the template engine, the built-in one by default. */
 	engine?: string;
 	/**
@@ -69,8 +77,8 @@ export interface AutocompleteProps {
  * the hidden input, the core the rest.
  */
 export function Autocomplete({ search, url, multiple = false, pick = false, onPick, value, onChange,
-	template, engine, actions, onAction, minLength, disabled, placeholder, noMatch, searching,
-	remove, name, id, className }: AutocompleteProps) {
+	template, highlightMatch, engine, actions, onAction, minLength, disabled, placeholder, noMatch,
+	searching, remove, name, id, className }: AutocompleteProps) {
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreAutocomplete | null>(null);
 	const look = useLook();
@@ -82,7 +90,8 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 		url,
 		search: latest.current.search || !url ? (term: string) =>
 			(latest.current.search ?? (() => Promise.resolve([])))(term) : undefined,
-		template, engine, actions, minLength, disabled, placeholder, noMatch, searching, remove,
+		template, highlightMatch, engine, actions, minLength, disabled, placeholder, noMatch,
+		searching, remove,
 		onAction: (action: string, suggestion: AutocompleteSuggestion) =>
 			latest.current.onAction?.(action, suggestion)
 	});
@@ -112,8 +121,8 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 	const actionsKey = JSON.stringify(actions ?? []);
 	useLayoutEffect(() => {
 		instance.current?.configure(options());
-	}, [url, Boolean(search), template, engine, actionsKey, minLength, disabled, placeholder,
-		noMatch, searching, remove]);
+	}, [url, Boolean(search), template, highlightMatch, engine, actionsKey, minLength, disabled,
+		placeholder, noMatch, searching, remove]);
 
 	// compared by content, so that values made anew on every render are not drawn again
 	const valueKey = value === undefined ? undefined : JSON.stringify(value.map((chosen) =>

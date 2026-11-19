@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-export { ACTION_EVENT, Autocomplete } from './autocomplete.js';
+export { ACTION_EVENT, Autocomplete, markMatches, MATCH_CLASS } from './autocomplete.js';
 export type { AutocompleteAction, AutocompleteActionDetail, AutocompleteOptions,
 	AutocompleteSuggestion, AutocompleteValue } from './autocomplete.js';
 export { Chips } from './chips.js';
@@ -162,7 +162,7 @@ export { DEFAULT_TABS_TEXTS, Tabs, tabs, TABS_CLASSES, TABS_DISCARD_EVENT, TABS_
 export type { TabsDesign, TabsOptions, TabsOrientation, TabsTexts } from './tabs.js';
 export { askToDiscard, MODIFIED_ATTRIBUTE, modifiedFields } from './unsaved.js';
 export type { DiscardQuestion, DiscardTexts } from './unsaved.js';
-export { Templates, templates, useTemplates } from './templates.js';
+export { TemplateMarkup, Templates, templates, useTemplates } from './templates.js';
 export { JsonTree, TREE_ICONS, TREE_TEXTS } from './tree.js';
 export type { TreeCallbacks, TreeColumn, TreeColumnsRegistry, TreeConfig, TreeIcons, TreeNode,
 	TreeTexts } from './tree.js';
