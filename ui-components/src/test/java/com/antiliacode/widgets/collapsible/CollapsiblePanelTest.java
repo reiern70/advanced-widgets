@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
@@ -96,6 +97,52 @@ class CollapsiblePanelTest extends WicketTestCase
 
 		assertFalse(panel.isExpanded());
 		assertEquals(2, panel.toggles);
+	}
+
+	@Test
+	void tellsTheBrowserTheStateTheServerKnows()
+	{
+		TestPanel panel = new TestPanel();
+		tester.startPage(new TestPage(panel));
+		assertNull(tester.getTagByWicketId("details").getAttribute("data-antilia-expanded"),
+			"nothing to tell without reports");
+
+		panel.setRememberExpanded(true);
+		tester.startPage(new TestPage(panel));
+		assertEquals("false",
+			tester.getTagByWicketId("details").getAttribute("data-antilia-expanded"));
+
+		panel.setExpanded(true);
+		tester.startPage(new TestPage(panel));
+		assertEquals("true",
+			tester.getTagByWicketId("details").getAttribute("data-antilia-expanded"));
+		// the browser reports a state other than the known one alone, and keeps it as known
+		tester.assertContains(Pattern.quote("\"pre\":[function(attrs){var details = " +
+			"Wicket.$(attrs.c); if (!details) { return false; } var known = " +
+			"details.getAttribute('data-antilia-expanded') === 'true'; if (details.open === " +
+			"known) { return false; } details.setAttribute('data-antilia-expanded', " +
+			"String(details.open)); return true;}]"));
+	}
+
+	@Test
+	void aReportOfTheStateTheServerKnowsChangesNothing()
+	{
+		TestPanel panel = new TestPanel();
+		panel.setExpanded(true).setRememberExpanded(true);
+		tester.startPage(new TestPage(panel));
+
+		// the toggle of a <details open> inserted, had the browser sent it
+		tester.getRequest().setParameter("open", "true");
+		tester.executeAjaxEvent(DETAILS, "toggle");
+
+		assertTrue(panel.isExpanded());
+		assertEquals(0, panel.toggles);
+
+		tester.getRequest().setParameter("open", "false");
+		tester.executeAjaxEvent(DETAILS, "toggle");
+
+		assertFalse(panel.isExpanded());
+		assertEquals(1, panel.toggles);
 	}
 
 	@Test

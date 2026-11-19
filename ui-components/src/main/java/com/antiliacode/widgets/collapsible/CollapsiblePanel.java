@@ -17,6 +17,7 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxCallListener;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -53,7 +54,11 @@ import com.antiliacode.widgets.veil.PageVeilBehavior;
  * stateless. With {@link #setRememberExpanded(boolean)} every toggle is reported via Ajax, so the
  * panel keeps the user's choice when it or its page is rendered again, and its page is stateful;
  * the reports leave the page veil alone ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}),
- * the user going on while they run.
+ * the user going on while they run. Only a state other than the one the server knows is reported:
+ * the browser fires {@code toggle} also as it inserts a {@code <details open>}, when the page
+ * loads and each time Ajax renders the panel again, and those are left out, as are the toggles
+ * the server already knows of. The {@code <details>} carries that state in
+ * {@code data-antilia-expanded}.
  * <p>
  * The title is escaped. The body is the component returned by {@link #newBody(String)}, for
  * example a label or a panel.
@@ -81,6 +86,21 @@ public abstract class CollapsiblePanel extends Panel
 
 	private static final String OPEN_PARAMETER = "open";
 
+	/** The attribute of the {@code <details>} holding whether the server knows it expanded. */
+	private static final String EXPANDED_ATTRIBUTE = "data-antilia-expanded";
+
+	/**
+	 * The precondition of a toggle's report: the state the server does not know yet, which the
+	 * attribute then holds. The browser fires {@code toggle} also as it inserts a
+	 * {@code <details open>}, which the server rendered so and needs not hear of again.
+	 */
+	private static final String REPORT_NEW_STATE = "var details = Wicket.$(attrs.c);" +
+		" if (!details) { return false; }" +
+		" var known = details.getAttribute('" + EXPANDED_ATTRIBUTE + "') === 'true';" +
+		" if (details.open === known) { return false; }" +
+		" details.setAttribute('" + EXPANDED_ATTRIBUTE + "', String(details.open));" +
+		" return true;";
+
 	private final WebMarkupContainer details;
 
 	private final Label title;
@@ -106,6 +126,8 @@ public abstract class CollapsiblePanel extends Panel
 		details = new WebMarkupContainer("details");
 		details.setOutputMarkupId(true);
 		details.add(AttributeModifier.replace("open", () -> expanded ? "open" : null));
+		details.add(AttributeModifier.replace(EXPANDED_ATTRIBUTE,
+			() -> rememberExpanded ? String.valueOf(expanded) : null));
 		details.add(new LookBehavior(LookPart.COLLAPSIBLE));
 		add(new LookContainer("frame", LookPart.COLLAPSIBLE_FRAME));
 		add(details);
@@ -254,7 +276,9 @@ public abstract class CollapsiblePanel extends Panel
 
 	/**
 	 * Called when the user expanded or collapsed the panel and {@link #isRememberExpanded()} is
-	 * on. Does nothing by default.
+	 * on, once {@link #isExpanded()} tells the new state. A report of the state the server knows
+	 * already, from a browser that sent it twice, changes nothing and is not handed here. Does
+	 * nothing by default.
 	 *
 	 * @param target
 	 *            the Ajax request target
@@ -300,6 +324,8 @@ public abstract class CollapsiblePanel extends Panel
 			super.updateAjaxAttributes(attributes);
 			attributes.getDynamicExtraParameters()
 				.add("return {'" + OPEN_PARAMETER + "': Wicket.$(attrs.c).open};");
+			attributes.getAjaxCallListeners()
+				.add(new AjaxCallListener().onPrecondition(REPORT_NEW_STATE));
 			// it reports whether the panel is open, remembered while the user goes on: a page
 			// veil leaves it alone
 			PageVeilBehavior.noVeil(attributes);
@@ -308,10 +334,14 @@ public abstract class CollapsiblePanel extends Panel
 		@Override
 		protected void onEvent(AjaxRequestTarget target)
 		{
-			expanded = getRequest().getRequestParameters()
+			boolean open = getRequest().getRequestParameters()
 				.getParameterValue(OPEN_PARAMETER)
 				.toBoolean(expanded);
-			onToggle(target);
+			if (open != expanded)
+			{
+				expanded = open;
+				onToggle(target);
+			}
 		}
 	}
 }
