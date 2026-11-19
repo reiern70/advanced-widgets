@@ -58,8 +58,8 @@ import { DEFAULT_RICH_TEXT_BACKGROUND_COLORS, DEFAULT_RICH_TEXT_COLORS, isSafeUr
 	type RichTextFeature } from './rich-text-schema.js';
 import { registeredTool, type RichTextMenuItem, type RichTextToolContext,
 	type RichTextTrigger } from './rich-text-features.js';
-import { isAbort, keepPermanently, percentText, uploadedContent, uploadFiles,
-	type UploadHost } from './rich-text-upload.js';
+import { DEFAULT_RICH_TEXT_UPLOAD_TEXTS, isAbort, keepPermanently, percentText, uploadedContent,
+	uploadFiles, type RichTextUploadTexts, type UploadHost } from './rich-text-upload.js';
 import { attachmentsOf, removeAttachment } from './rich-text-attachments.js';
 
 /** The tools built in the toolbar. */
@@ -102,9 +102,9 @@ export const RICH_TEXT_BUBBLE_TOOLS: readonly RichTextToolName[] = Object.freeze
 
 /**
  * What the editor says, in the language of the page; with the notice telling what a paste lost
- * (RichTextPasteTexts).
+ * (RichTextPasteTexts), and what its uploads say (RichTextUploadTexts), which CKEditor's say too.
  */
-export interface RichTextEditorTexts extends RichTextPasteTexts {
+export interface RichTextEditorTexts extends RichTextPasteTexts, RichTextUploadTexts {
 	/** The accessible name of the toolbar and of the bubble menu. */
 	toolbar: string;
 	bubble: string;
@@ -128,11 +128,6 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	horizontalRule: string;
 	table: string;
 	image: string;
-	storedImage: string;
-	images: string;
-	/** The tool attaching a file, and the menu of the files of the text. */
-	attachment: string;
-	attachments: string;
 	alignLeft: string;
 	alignCenter: string;
 	alignRight: string;
@@ -161,7 +156,6 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	imageUrl: string;
 	imageAlt: string;
 	apply: string;
-	close: string;
 	/** Said of an address the editor does not take. */
 	invalidUrl: string;
 	/** The item of the menu of the code block for a block without a language. */
@@ -185,67 +179,6 @@ export interface RichTextEditorTexts extends RichTextPasteTexts {
 	colorIndigo: string;
 	colorPurple: string;
 	colorPink: string;
-	/** The button of the form of an image opening the dialog of the uploads. */
-	uploadImage: string;
-	/** The zone of the form of an image, and of the dialog of the uploads, and its button. */
-	dropImages: string;
-	chooseImages: string;
-	/** The dialog of the uploads: its title, a file uploaded, the button taking one out ({0}). */
-	uploadImagesTitle: string;
-	uploadDone: string;
-	removeFile: string;
-	insertImages: string;
-	cancel: string;
-	/** The menu of the images of the text: when it has none, the button deleting one ({0}). */
-	noImages: string;
-	deleteImage: string;
-	/** The mark of an image uploading; {0} the name of its file. */
-	uploading: string;
-	/** What stands for the name of a file that has none. */
-	theImage: string;
-	/**
-	 * The files attached: the menu when the text has none, the button deleting one ({0}), the zone
-	 * of the form and its button, the button opening the dialog, its title and its button
-	 * inserting, why a file was not taken ({0} its name, {1} the types), what stands for the name
-	 * of a file that has none, and the mark of one uploading ({0} its name).
-	 */
-	noAttachments: string;
-	deleteAttachment: string;
-	dropFiles: string;
-	chooseFiles: string;
-	attachFiles: string;
-	attachFilesTitle: string;
-	insertFiles: string;
-	attachmentType: string;
-	attachTooMany: string;
-	theFile: string;
-	attaching: string;
-	/** Why an image was not uploaded: {0} the name of its file, {1} the largest size, the types. */
-	uploadFailed: string;
-	uploadTooLarge: string;
-	uploadType: string;
-	/** {0} the most images at a time, {1} how many were left out. */
-	uploadTooMany: string;
-	/** {0} the name of the file, {1} its pixels, {2} the most: 640 × 480. */
-	uploadTooBig: string;
-	/** The dialog asking which pictures too large to scale down: {0} the most pixels; {0} the name
-	 * of the file, {1} its pixels scaled down. */
-	scaleTitle: string;
-	scaleText: string;
-	scaleDown: string;
-	upload: string;
-	/** The button of the mark of an image uploading canceling it; {0} the name of its file. */
-	cancelUpload: string;
-	/**
-	 * The box to tick storing the images uploaded permanently, and why one was not; {0} the name
-	 * of its file.
-	 */
-	storePermanently: string;
-	permanentFailed: string;
-	/** The form of the image from the store: the field, while it searches, when it found none. */
-	findImages: string;
-	findingImages: string;
-	noStoredImages: string;
 	/** The count: {0} the characters, {1} the limit, {0} the words; one of them alone. */
 	characters: string;
 	character: string;
@@ -289,10 +222,6 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	horizontalRule: 'Horizontal line',
 	table: 'Table',
 	image: 'Image',
-	storedImage: 'Insert image from store',
-	images: 'Images in the text',
-	attachment: 'Attach a file',
-	attachments: 'Files of the text',
 	alignLeft: 'Align left',
 	alignCenter: 'Center',
 	alignRight: 'Align right',
@@ -317,7 +246,6 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	imageUrl: 'Address of the image',
 	imageAlt: 'Text in place of the image',
 	apply: 'Apply',
-	close: 'Close',
 	invalidUrl: 'Give an address starting with http://, https:// or mailto:, or a relative one.',
 	plainText: 'Plain text',
 	defaultColor: 'Default',
@@ -336,45 +264,6 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	colorIndigo: 'Indigo',
 	colorPurple: 'Purple',
 	colorPink: 'Pink',
-	uploadImage: 'Upload images…',
-	dropImages: 'Drop images here',
-	chooseImages: 'Choose images…',
-	uploadImagesTitle: 'Upload images',
-	uploadDone: 'Uploaded',
-	removeFile: 'Remove {0}',
-	insertImages: 'Insert',
-	cancel: 'Cancel',
-	noImages: 'The text has no images.',
-	deleteImage: 'Delete {0}',
-	uploading: 'Uploading {0}…',
-	theImage: 'The image',
-	noAttachments: 'The text has no files.',
-	deleteAttachment: 'Delete {0}',
-	dropFiles: 'Drop files here',
-	chooseFiles: 'Choose files…',
-	attachFiles: 'Attach files…',
-	attachFilesTitle: 'Attach files',
-	insertFiles: 'Insert',
-	attachmentType: '{0} is not a file of a type the editor takes: {1}.',
-	attachTooMany: '{0} files at most at a time: {1} left out.',
-	theFile: 'The file',
-	attaching: 'Attaching {0}…',
-	uploadFailed: '{0} could not be uploaded.',
-	uploadTooLarge: '{0} is larger than {1}.',
-	uploadType: '{0} is not an image of a type the editor takes: {1}.',
-	uploadTooMany: '{0} images at most at a time: {1} left out.',
-	uploadTooBig: '{0} is {1} pixels, larger than {2}.',
-	scaleTitle: 'Images too large',
-	scaleText: 'These images are larger than {0} pixels. Tick those to scale down; the others ' +
-		'are left out.',
-	scaleDown: 'Scale {0} down to {1}',
-	upload: 'Upload',
-	cancelUpload: 'Cancel the upload of {0}',
-	storePermanently: 'Store permanently',
-	permanentFailed: '{0} could not be stored permanently.',
-	findImages: 'Name of the image',
-	findingImages: 'Searching…',
-	noStoredImages: 'No stored images found.',
 	characters: '{0} characters',
 	character: '{0} character',
 	charactersOfLimit: '{0} of {1} characters',
@@ -390,6 +279,7 @@ export const DEFAULT_RICH_TEXT_EDITOR_TEXTS: Readonly<RichTextEditorTexts> = Obj
 	suggestions: 'Suggestions',
 	suggestLoading: 'Searching…',
 	suggestNone: 'Nothing found',
+	...DEFAULT_RICH_TEXT_UPLOAD_TEXTS,
 	...DEFAULT_RICH_TEXT_PASTE_TEXTS
 });
 

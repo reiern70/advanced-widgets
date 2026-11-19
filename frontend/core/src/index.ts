@@ -74,13 +74,14 @@ export { codeLanguage, RICH_TEXT_CODE_LANGUAGES } from './rich-text-languages.js
 export type { RichTextHighlighter, RichTextToken } from './rich-text-languages.js';
 export { lezerHighlighter } from './rich-text-highlight.js';
 export { DEFAULT_RICH_TEXT_UPLOAD_TYPES, checkFiles, deleteAttachmentsAt, deleteImagesAt,
-	scaleImage, sizeText, typesText, uploadFileTo, uploadImageTo } from './rich-text-upload.js';
+	scaleImage, sizeText, typesText, uploadFileTo, uploadImageTo,
+	DEFAULT_RICH_TEXT_UPLOAD_TEXTS } from './rich-text-upload.js';
 export { ATTACHMENT_CLASS, Attachment, DEFAULT_RICH_TEXT_ATTACH_TYPES, attachmentsIn,
 	attachmentUrlTest, checkAttachments, linksToAttachments } from './rich-text-attachments.js';
 export type { AttachmentAttributes, AttachmentLimits, RichTextAttachmentType,
 	RichTextAttachmentUrls } from './rich-text-attachments.js';
-export type { Oversize, RichTextUploader, RichTextUploadOptions, UploadCheck,
-	UploadLimits } from './rich-text-upload.js';
+export type { Oversize, RichTextUploader, RichTextUploadOptions, RichTextUploadTexts,
+	UploadCheck, UploadDialogHost, UploadLimits } from './rich-text-upload.js';
 export { findImagesAt, imagePicker, storedImagesOf,
 	storePermanentlyAt } from './rich-text-stored-images.js';
 export type { ImagePicker, ImagePickerTexts, RichTextImageFinder, RichTextImageKeeper,

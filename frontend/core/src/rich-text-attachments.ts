@@ -145,11 +145,25 @@ export function attachmentUrlTest(urls: RichTextAttachmentUrls | null | undefine
 }
 
 /**
+ * @returns whether a kind of a file may be a class of its link: pdf
+ */
+export function isAttachmentKind(kind: string | null | undefined): kind is string {
+	return !!kind && KIND.test(kind);
+}
+
+/**
+ * @returns whether a size of a file is as its link says it: 1.2 MB
+ */
+export function isAttachmentSize(size: string | null | undefined): size is string {
+	return !!size && SIZE.test(size);
+}
+
+/**
  * @returns the kind of a file attached known by its link alone: the extension of its name, else
  *          of its address, of the types given or not; null for none a class may hold
  */
-function kindOfLink(name: string, href: string, types: readonly RichTextAttachmentType[]):
-	string | null {
+export function attachmentKindOfLink(name: string, href: string,
+	types: readonly RichTextAttachmentType[]): string | null {
 	for (const extension of [extensionOf(name), extensionOf(href.split(/[?#]/)[0] ?? '')]) {
 		const known = types.find((each) => each.extension === extension)?.extension ?? extension;
 		if (known && KIND.test(known)) {
@@ -185,7 +199,7 @@ export function linksToAttachments(json: JSONContent, isAttachment: (href: strin
 			changed = true;
 			const name = (child.text ?? '').trim() || href;
 			return { type: 'attachment',
-				attrs: { href, name, size: null, kind: kindOfLink(name, href, types) } };
+				attrs: { href, name, size: null, kind: attachmentKindOfLink(name, href, types) } };
 		}
 		const converted = linksToAttachments(child, isAttachment, types);
 		changed ||= converted !== child;
@@ -301,8 +315,11 @@ function markdownText(text: string): string {
 	return text.replace(/[\\[\]]/g, (char) => '\\' + char).replace(/\n/g, ' ');
 }
 
-/** A file attached: a link of its own, inline, taken out or moved whole. */
-export const Attachment = Node.create({
+/**
+ * A file attached: a link of its own, inline, taken out or moved whole. Pure: a script using the
+ * checks of the files alone, CKEditor's, holds no Tiptap.
+ */
+export const Attachment = /* @__PURE__ */ Node.create({
 	name: 'attachment',
 	inline: true,
 	group: 'inline',

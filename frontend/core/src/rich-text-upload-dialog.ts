@@ -26,9 +26,8 @@ import { buttonClasses } from './button.js';
 import { partClasses, type Look } from './look.js';
 import { ModalDialog, CLOSE_ATTRIBUTE } from './modal.js';
 import { dimensionsText, type RichTextImageDimensions } from './rich-text-image-headers.js';
-import type { RichTextEditorTexts } from './rich-text-toolbar.js';
 import { isAbort, keepPermanently, progressBar, showProgress, type Oversize,
-	type UploadHost, type UploadLabels } from './rich-text-upload.js';
+	type RichTextUploadTexts, type UploadDialogHost, type UploadLabels } from './rich-text-upload.js';
 
 /** Counts the dialogs, for the ids of their parts. */
 let dialogs = 0;
@@ -58,7 +57,7 @@ function carriesFiles(event: DragEvent): boolean {
  * @param onFiles called with the files dropped or chosen
  * @param labels what the zone and its button say, when not of images
  */
-export function dropZone(texts: RichTextEditorTexts, look: Look, types: readonly string[],
+export function dropZone(texts: RichTextUploadTexts, look: Look, types: readonly string[],
 	onFiles: (files: File[]) => void, labels?: Pick<UploadLabels, 'drop' | 'choose'>):
 	{ element: HTMLElement; button: HTMLButtonElement; picker: HTMLInputElement } {
 	const element = document.createElement('div');
@@ -181,7 +180,7 @@ function footerButton(look: Look, label: string, variant: 'primary' | 'secondary
  * @returns the files of the pictures to scale down
  */
 export function askToScale(oversize: readonly Oversize[], max: RichTextImageDimensions,
-	texts: RichTextEditorTexts, look: Look): Promise<ReadonlySet<File>> {
+	texts: RichTextUploadTexts, look: Look): Promise<ReadonlySet<File>> {
 	return new Promise((resolve) => {
 		const { wrapper, overlay, body, footer } = frame(look, texts.scaleTitle, texts.close,
 			'antilia-rich-text-scale-dialog');
@@ -258,7 +257,7 @@ interface Row {
  * @param insert puts the images of the addresses into the text, or the files attached, each the
  *        file uploaded to the address of the same index
  */
-export function openUploadDialog(host: UploadHost, texts: RichTextEditorTexts, look: Look,
+export function openUploadDialog(host: UploadDialogHost, texts: RichTextUploadTexts, look: Look,
 	insert: (srcs: readonly string[], files: readonly File[]) => void): void {
 	const labels = host.labels?.();
 	const nameless = labels?.nameless ?? texts.theImage;
