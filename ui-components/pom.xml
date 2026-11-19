@@ -45,10 +45,15 @@
 			<artifactId>wicket-native-websocket-core</artifactId>
 		</dependency>
 
-		<!-- cleans the HTML of the rich text editor: RichTextPolicy -->
+		<!--
+		  cleans the HTML of the rich text editors, CKEditor and their views (RichTextPolicy,
+		  CKEditorPolicy), which nothing else uses: optional, an application with the editors adds
+		  it, see OwaspHtmlSanitizer
+		-->
 		<dependency>
 			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
 			<artifactId>owasp-java-html-sanitizer</artifactId>
+			<optional>true</optional>
 		</dependency>
 
 		<!--

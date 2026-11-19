@@ -105,6 +105,12 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
+		<!-- HTML: cleans what the rich text editors and CKEditor send, an optional dependency of ui-components -->
+		<dependency>
+			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+			<artifactId>owasp-java-html-sanitizer</artifactId>
+		</dependency>
+
 		<!-- ICONS: read by SvgIcon and served by FontAwesomeResourceReference -->
 		<dependency>
 			<groupId>org.webjars.npm</groupId>

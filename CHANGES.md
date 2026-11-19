@@ -35,8 +35,18 @@ What 11.0.0-RC6 has, and:
   time Ajax rendered it again, and an `onToggle` rendering the panels again never stopped. The
   `<details>` now carries the state the server knows, `data-antilia-expanded`, and the request
   leaves only for another one; the server hands `onToggle` only a change.
+- The OWASP Java HTML Sanitizer is an optional dependency (#149): only the rich text editors,
+  CKEditor and their views clean HTML with it, so an application without them no longer gets
+  it. One with them adds `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer`;
+  without it, `RichTextEditor`, `CKEditor`, `RichTextView` and `CKEditorView` fail as they are
+  added to a page, telling what to add, rather than when the user saves the text
+  (`OwaspHtmlSanitizer`). A `CKEditorView` makes its default sanitizer, `CKEditorPolicy.ALL`,
+  only when it first cleans.
 
-**Upgrading:** an application that added the web jar itself for the icons may drop it.
+**Upgrading:** an application that added the web jar itself for the icons may drop it. One
+with a rich text editor, CKEditor or their views adds the OWASP Java HTML Sanitizer,
+`com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` (20261011.1), which no
+longer comes with the components.
 
 ## 11.0.0-RC6 (2026-11-19)
 
