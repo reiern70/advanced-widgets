@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,6 +26,9 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
@@ -80,6 +84,20 @@ class RichTextAttachmentUploadBehaviorTest extends WicketTestCase
 		assertEquals("/files/2.csv", upload(page, "table.csv", "a,b\n".getBytes(
 			StandardCharsets.UTF_8)).getString("url"));
 		assertTrue(page.upload.isUploaded("/files/2.csv"));
+
+		// a document of Word whose first entry is longer than the head: its whole file tells
+		ByteArrayOutputStream docx = new ByteArrayOutputStream();
+		try (ZipOutputStream zip = new ZipOutputStream(docx))
+		{
+			zip.setLevel(Deflater.NO_COMPRESSION);
+			zip.putNextEntry(new ZipEntry("docProps/thumbnail.jpeg"));
+			zip.write(new byte[IUploadFileFormat.HEAD * 2]);
+			zip.putNextEntry(new ZipEntry("word/document.xml"));
+			zip.write("<w:document/>".getBytes(StandardCharsets.UTF_8));
+		}
+		assertEquals("/files/3.docx", upload(page, "letter.docx", docx.toByteArray())
+			.getString("url"));
+		assertEquals(UploadFileFormat.DOCX, KEPT.get(2)[1]);
 	}
 
 	@Test

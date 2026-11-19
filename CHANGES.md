@@ -11,6 +11,34 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC12 (not released yet)
+
+What 10.11.0-RC11 has, and:
+
+- An Office document (DOCX, XLSX, PPTX) whose first entries, longer than the 4 KB the format is
+  told by, say nothing of its kind is no longer taken for a ZIP when attached to a text (#124):
+  the names of its other entries tell it, read from the whole file without unpacking anything.
+  A format says its head leaves it open (`IUploadFileFormat#mayMatch(byte[])`), and the whole
+  file then decides (`matches(InputStream)`), which
+  `IUploadFileFormat.detect(head, name, formats, opener)` reads.
+- The files attached to a text have a deletion mode of their own,
+  `RichTextEditor#setAttachmentDeletion(RichTextImageDeletion)` (#124): the images deleted at once
+  and the files once the text is saved, for example, or the other way round. Unless set, the
+  files follow the images' mode, as before.
+- An editor keeping the images of the site alone (`setImagesFromSiteOnly(true)`) takes the
+  addresses below the base address of an upload resource of the application,
+  `RichTextFiles#setBaseUrl`, on a domain of its own, as the site's own (#124): the images
+  uploaded there are no longer refused, nor taken out by the cleaning of HTML, Markdown and
+  Tiptap's JSON. `RichTextFiles.isOwnUrl(url)` tells.
+- A Markdown text read again knows its files attached (#124): Markdown keeps a file as a plain
+  link, `[report.pdf](url)`, which came back as a link, so that a file taken out of it was never
+  told of in `onAttachmentsRemoved` nor deleted. The editor gives the browser the links whose
+  addresses are those of files, `attachmentUrls`: those of the resource of the uploads
+  (`RichTextFiles#isFileUrl`), those the store says it keeps
+  (`IRichTextAttachmentStore#isStored(url)`, none by default) and those uploaded since the last
+  save. A link to one of them, a text of its own, comes back as a file, its size unknown. The
+  editors of React and Svelte take `attachmentUrls` too, a list or a test of an address.
+
 ## 10.11.0-RC11 (2026-11-19)
 
 What 10.11.0-RC10 has, the drop-downs of 11.0.0-RC5 (their lists above any box that would cut

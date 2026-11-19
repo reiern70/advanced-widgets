@@ -312,6 +312,22 @@ describe('RichTextEditor', () => {
 		expect(drop()).toBeFalsy();
 	});
 
+	it('takes back as files the links to the addresses of attachmentUrls, in Markdown', () => {
+		const ref = createRef<RichTextEditorHandle>();
+		const isFile = (href: string) => href.startsWith('/files/');
+		const { rerender } = render(<RichTextEditor ref={ref} format="markdown"
+			value="See [r.pdf](/files/r.pdf) and [site](/about)" onAttach={() => Promise.resolve('/f')}
+			attachmentUrls={['/files/r.pdf']} />);
+		const doc = ref.current!.editor!.editor.state.doc;
+		expect(doc.firstChild!.child(1).type.name).toBe('attachment');
+		expect(doc.firstChild!.child(3).type.name).toBe('text');
+		expect(ref.current!.editor!.getValue()).toBe('See [r.pdf](/files/r.pdf) and [site](/about)');
+		rerender(<RichTextEditor ref={ref} format="markdown"
+			value="See [r.pdf](/files/r.pdf) and [site](/about)" onAttach={() => Promise.resolve('/f')}
+			attachmentUrls={isFile} />);
+		expect(ref.current!.editor!.options.attachmentUrls).toBe(isFile);
+	});
+
 	it('attaches the files the user drops, by onAttach, and tells of those taken out', async () => {
 		const onAttach = vi.fn(() => Promise.resolve('/files/r.pdf'));
 		const onAttachmentsRemoved = vi.fn();

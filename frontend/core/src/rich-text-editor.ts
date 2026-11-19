@@ -92,9 +92,9 @@
 
 import { createDocument, Editor, Extension, getHTMLFromFragment, Mark, markInputRule, markPasteRule,
 	mergeAttributes, Node as TiptapNode, nodeInputRule, textblockTypeInputRule, wrappingInputRule,
-	type AnyExtension } from '@tiptap/core';
+	type AnyExtension, type JSONContent } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/extension-bubble-menu';
-import type { Node as ProseMirrorNode, Slice } from '@tiptap/pm/model';
+import type { Node as ProseMirrorNode, Schema, Slice } from '@tiptap/pm/model';
 import { Plugin, PluginKey, TextSelection, type Transaction } from '@tiptap/pm/state';
 
 import { getHost, onRemoving, type Unsubscribe } from './host.js';
@@ -123,8 +123,9 @@ import { issuePopoverOf, Proofreading, refreshProofreading,
 import { Suggestions, type RichTextSuggester } from './rich-text-suggestions.js';
 import { checkFiles, DEFAULT_RICH_TEXT_UPLOAD_TYPES, fileNameOf, refusalOf, uploadExtension,
 	type RichTextUploader, type RichTextUploadOptions, type UploadHost } from './rich-text-upload.js';
-import { attachmentContent, attachmentRefusal, attachmentsIn, attachmentTypes, checkAttachments,
-	type AttachmentLimits, type RichTextAttachmentType } from './rich-text-attachments.js';
+import { attachmentContent, attachmentRefusal, attachmentsIn, attachmentTypes, attachmentUrlTest,
+	checkAttachments, linksToAttachments, type AttachmentLimits, type RichTextAttachmentType,
+	type RichTextAttachmentUrls } from './rich-text-attachments.js';
 import { askToScale } from './rich-text-upload-dialog.js';
 import type { RichTextImageFinder, RichTextImageKeeper } from './rich-text-stored-images.js';
 import { Scrollbar, type ScrollbarHandle } from './scrollbar.js';
@@ -400,6 +401,13 @@ export interface RichTextEditorOptions {
 	 * rather than a zone of its own; false when left out.
 	 */
 	attachDialog?: boolean;
+	/**
+	 * The addresses of the files attached to the text, or a test of an address, for Markdown, where
+	 * a file is a plain link: a link to one of them, a text of its own, comes back as a file
+	 * attached, which the tools list and whose removal the page hears of. None when left out or
+	 * null: every link comes back as a link.
+	 */
+	attachmentUrls?: RichTextAttachmentUrls | null;
 	/**
 	 * Called a moment after the user took files attached out of the text, with their addresses, as
 	 * onImagesRemoved is for the images: the page deletes them, at once or once the text is saved.
@@ -1023,6 +1031,15 @@ export class RichTextEditor {
 			autofocus: false,
 			editorProps: this.editorProps()
 		});
+		if (textFormat === 'markdown') {
+			// the links to the files attached, files again, before anyone hears of a change
+			const json = editor.getJSON();
+			const converted = this.withAttachments(json, editor.schema);
+			if (converted !== json) {
+				editor.view.dispatch(editor.state.tr.replaceWith(0, editor.state.doc.content.size,
+					editor.schema.nodeFromJSON(converted).content).setMeta('addToHistory', false));
+			}
+		}
 		editor.on('transaction', ({ transaction }) => this.onTransaction(editor, transaction));
 		return editor;
 	}
@@ -1092,7 +1109,7 @@ export class RichTextEditor {
 		const textFormat = this.format();
 		try {
 			if (textFormat === 'markdown' && value.trim() && this.editor.markdown) {
-				const json = this.editor.markdown.parse(value);
+				const json = this.withAttachments(this.editor.markdown.parse(value), schema);
 				if (json.content?.length) {
 					return schema.nodeFromJSON(json);
 				}
@@ -1106,6 +1123,16 @@ export class RichTextEditor {
 			getHost().log.error('The rich text editor could not read the text', error);
 		}
 		return createDocument('', schema);
+	}
+
+	/**
+	 * @returns Tiptap's JSON of a text read from Markdown, the links to the files attached files
+	 *          again (attachmentUrls), when the schema has them; the same object when none changed
+	 */
+	private withAttachments(json: JSONContent, schema: Schema): JSONContent {
+		const test = attachmentUrlTest(this.options.attachmentUrls);
+		return test && schema.nodes.attachment ? linksToAttachments(json, test, this.attachTypes()) :
+			json;
 	}
 
 	/**

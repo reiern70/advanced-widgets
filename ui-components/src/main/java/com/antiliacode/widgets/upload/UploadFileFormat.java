@@ -30,8 +30,10 @@ import java.util.List;
  * open a PDF in its window; the others it saves.
  * <p>
  * An Office document and an OpenDocument are ZIP files, told apart by the names of their first
- * entries, which {@link IUploadFileFormat#HEAD the head} holds: a document whose first entries say
- * nothing of its kind is a ZIP. A text has no signature ({@link #hasSignature()}): any head that is
+ * entries, which {@link IUploadFileFormat#HEAD the head} holds. An Office document whose first
+ * entries, longer than the head, say nothing of its kind is told by the names of the others, read
+ * from the whole file without unpacking anything ({@link #matches(InputStream)}), when the
+ * detection reads it; it is a ZIP otherwise. A text has no signature ({@link #hasSignature()}): any head that is
  * UTF-8 without NUL may be one, a file of another format first, and the whole file is checked once uploaded ({@link #accepts(InputStream)}); its extension
  * chooses among TXT, CSV and Markdown, all served as text.
  *
@@ -57,6 +59,18 @@ public enum UploadFileFormat implements IUploadFileFormat
 		{
 			return isZip(head) && contains(head, ascii("word/"));
 		}
+
+		@Override
+		public boolean mayMatch(byte[] head)
+		{
+			return mayBeOffice(head);
+		}
+
+		@Override
+		public boolean matches(InputStream file) throws IOException
+		{
+			return "word/".equals(officeKind(file));
+		}
 	},
 	/** A workbook of Excel, Office Open XML. */
 	XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx", "XLSX",
@@ -67,6 +81,18 @@ public enum UploadFileFormat implements IUploadFileFormat
 		{
 			return isZip(head) && contains(head, ascii("xl/"));
 		}
+
+		@Override
+		public boolean mayMatch(byte[] head)
+		{
+			return mayBeOffice(head);
+		}
+
+		@Override
+		public boolean matches(InputStream file) throws IOException
+		{
+			return "xl/".equals(officeKind(file));
+		}
 	},
 	/** A presentation of PowerPoint, Office Open XML. */
 	PPTX("application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx",
@@ -76,6 +102,18 @@ public enum UploadFileFormat implements IUploadFileFormat
 		public boolean matches(byte[] head)
 		{
 			return isZip(head) && contains(head, ascii("ppt/"));
+		}
+
+		@Override
+		public boolean mayMatch(byte[] head)
+		{
+			return mayBeOffice(head);
+		}
+
+		@Override
+		public boolean matches(InputStream file) throws IOException
+		{
+			return "ppt/".equals(officeKind(file));
 		}
 	},
 	/** A text of OpenDocument. */
@@ -279,6 +317,108 @@ public enum UploadFileFormat implements IUploadFileFormat
 	{
 		return startsWith(head, new byte[] { 'P', 'K', 3, 4 }) ||
 			startsWith(head, new byte[] { 'P', 'K', 5, 6 });
+	}
+
+	/** The folders naming the kind of an Office document, in Word, Excel and PowerPoint. */
+	private static final List<String> OFFICE_KINDS = List.of("word/", "xl/", "ppt/");
+
+	/** A local file header of a ZIP, before each entry, and an entry of its central directory. */
+	private static final int LOCAL_HEADER = 0x04034b50, CENTRAL_HEADER = 0x02014b50;
+
+	/**
+	 * Reads the names of the entries of a ZIP, as its local headers and its central directory hold
+	 * them, from the raw bytes: nothing is unpacked, so that a ZIP made to unpack into gigabytes
+	 * costs no more than its size.
+	 *
+	 * @param file
+	 *            the file, from its first byte
+	 * @return the folder of the first entry naming an Office document's kind, {@code word/},
+	 *         {@code xl/} or {@code ppt/}: the entries an Office document embeds come after one of
+	 *         its own; {@code null} for none
+	 * @throws IOException
+	 *             when the file could not be read
+	 */
+	static String officeKind(InputStream file) throws IOException
+	{
+		// a signature, the fields up to the name, and as much of the name as tells a kind
+		int keep = 46 + 5;
+		byte[] buffer = new byte[64 * 1024 + keep];
+		int length = 0;
+		int read;
+		boolean end = false;
+		while (!end)
+		{
+			read = file.readNBytes(buffer, length, buffer.length - length);
+			end = read < buffer.length - length;
+			length += read;
+			int last = end ? length - 4 : length - keep;
+			for (int i = 0; i <= last; i++)
+			{
+				if (buffer[i] != 'P' || buffer[i + 1] != 'K')
+				{
+					continue;
+				}
+				int signature = int32(buffer, i);
+				int lengthAt = signature == LOCAL_HEADER ? 26 :
+					signature == CENTRAL_HEADER ? 28 : -1;
+				if (lengthAt < 0)
+				{
+					continue;
+				}
+				int nameAt = lengthAt == 26 ? 30 : 46;
+				if (i + nameAt > length)
+				{
+					continue;
+				}
+				int nameLength = (buffer[i + lengthAt] & 0xff) | (buffer[i + lengthAt + 1] & 0xff) << 8;
+				for (String kind : OFFICE_KINDS)
+				{
+					if (nameLength >= kind.length() && i + nameAt + kind.length() <= length &&
+						startsWith(buffer, i + nameAt, ascii(kind)))
+					{
+						return kind;
+					}
+				}
+			}
+			if (end)
+			{
+				break;
+			}
+			// the bytes a header found at the end of this block needs, again at the start
+			System.arraycopy(buffer, length - keep, buffer, 0, keep);
+			length = keep;
+		}
+		return null;
+	}
+
+	/**
+	 * @return whether the head may be that of an Office document whose first entries do not say
+	 *         its kind: a ZIP longer than the head, whose head names no kind, and no OpenDocument,
+	 *         whose first entry is {@code mimetype}
+	 */
+	static boolean mayBeOffice(byte[] head)
+	{
+		return isZip(head) && head.length >= HEAD &&
+			OFFICE_KINDS.stream().noneMatch(kind -> contains(head, ascii(kind))) &&
+			!(head.length >= 38 && startsWith(head, 30, ascii("mimetype")));
+	}
+
+	private static int int32(byte[] bytes, int at)
+	{
+		return (bytes[at] & 0xff) | (bytes[at + 1] & 0xff) << 8 | (bytes[at + 2] & 0xff) << 16 |
+			(bytes[at + 3] & 0xff) << 24;
+	}
+
+	private static boolean startsWith(byte[] bytes, int at, byte[] prefix)
+	{
+		for (int i = 0; i < prefix.length; i++)
+		{
+			if (bytes[at + i] != prefix[i])
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

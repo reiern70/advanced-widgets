@@ -24,7 +24,7 @@ import com.antiliacode.widgets.upload.IUploadFileFormat;
  * Keeps the files users attach to the texts of a {@link RichTextEditor}, a PDF or a spreadsheet,
  * which go into the text as links, and tells the address each is served at: in a folder, a
  * database or a store of files. It deletes those the users took out of their texts again, if it
- * wants to: the editor tells it which, as {@link RichTextEditor#setImageDeletion(
+ * wants to: the editor tells it which, as {@link RichTextEditor#setAttachmentDeletion(
  * RichTextImageDeletion) its mode} says, at once or once the text is saved.
  * <p>
  * {@link RichTextFiles The resource of the uploads}, mounted once by the application, takes the
@@ -71,6 +71,24 @@ public interface IRichTextAttachmentStore extends IClusterable
 	 */
 	default void delete(String url) throws IOException
 	{
+	}
+
+	/**
+	 * Tells whether an address is that of a file the store keeps. A file is a plain link in
+	 * Markdown, {@code [report.pdf](url)}: the editor gives the browser the links of a text whose
+	 * addresses the store keeps, which come back as files there, listed by the tool of the files and
+	 * told of when the user takes them out. None by default: in Markdown, the links of a text read
+	 * again stay links, but for the files uploaded since the text was last saved, and those of
+	 * {@link RichTextFiles the resource of the uploads}.
+	 *
+	 * @param url
+	 *            the address of a link of a text
+	 * @return whether it is that of a file the store keeps
+	 * @since 11.0.0
+	 */
+	default boolean isStored(String url)
+	{
+		return false;
 	}
 
 	/**

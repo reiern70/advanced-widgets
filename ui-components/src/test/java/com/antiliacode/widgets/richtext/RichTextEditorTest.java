@@ -76,6 +76,7 @@ import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.upload.IUploadFileFormat;
 import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 class RichTextEditorTest extends WicketTestCase
@@ -857,6 +858,81 @@ class RichTextEditorTest extends WicketTestCase
 		editor.setReadOnly(true);
 		tester.startPage(page);
 		assertFalse(options(editor).has("attachUrl"));
+	}
+
+	@Test
+	void tellsTheBrowserTheLinksToTheFilesOfAMarkdownText()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("See [a.pdf](/f/a.pdf), " +
+			"[site](/about) and ![bird](/f/b.png)"));
+		editor.setFormat(RichTextFormat.MARKDOWN).setAttachmentStore(new IRichTextAttachmentStore()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String store(FileUpload file, IUploadFileFormat format)
+			{
+				return "/f/new." + format.getExtension();
+			}
+
+			@Override
+			public boolean isStored(String url)
+			{
+				return url.startsWith("/f/");
+			}
+		});
+		tester.startPage(new TestPage(editor));
+		assertEquals("[\"/f/a.pdf\"]", options(editor).getJSONArray("attachmentUrls").toString());
+
+		// a store telling none, or HTML, whose files are of their own
+		editor.setAttachmentStore((file, format) -> "/f/new." + format.getExtension());
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).has("attachmentUrls"));
+		editor.setFormat(RichTextFormat.HTML).getModel().setObject("<p><a href=\"/f/a.pdf\">a</a></p>");
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).has("attachmentUrls"));
+	}
+
+	@Test
+	void deletesTheFilesTakenOutByAModeOfTheirOwnOrAsTheImages()
+	{
+		List<String> deleted = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Hi <a " +
+			"class=\"antilia-attachment\" href=\"/f/a.pdf\">a.pdf</a> <a " +
+			"class=\"antilia-attachment\" href=\"/f/b.pdf\">b.pdf</a></p>"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void deleteAttachments(Set<String> urls)
+			{
+				deleted.addAll(urls);
+			}
+		};
+		editor.setAttachmentStore((file, format) -> "/f/new." + format.getExtension());
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
+		editor.setImageDeletion(RichTextImageDeletion.AT_ONCE);
+		assertEquals(RichTextImageDeletion.AT_ONCE, editor.getAttachmentDeletion(),
+			"as the images unless set");
+		// the images at once, the files once the text is saved
+		editor.setAttachmentDeletion(RichTextImageDeletion.ON_SAVE);
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
+		tester.startPage(new TestPage(editor));
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextEditor.ATTACHMENTS_REMOVED_PARAMETER, "[\"/f/a.pdf\"]");
+		tester.executeBehavior(editor.getImagesRemoval());
+		assertTrue(deleted.isEmpty(), "once saved");
+
+		// the images once the text is saved, the files at once
+		editor.setImageDeletion(RichTextImageDeletion.ON_SAVE)
+			.setAttachmentDeletion(RichTextImageDeletion.AT_ONCE);
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextEditor.ATTACHMENTS_REMOVED_PARAMETER, "[\"/f/b.pdf\"]");
+		tester.executeBehavior(editor.getImagesRemoval());
+		assertEquals(List.of("/f/b.pdf"), deleted);
+
+		editor.setAttachmentDeletion(null);
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
 	}
 
 	@Test

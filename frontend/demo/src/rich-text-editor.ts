@@ -37,6 +37,8 @@ export interface RichTextEditorDemoTexts extends DropdownTexts {
 	cases: string;
 	articleTitle: string;
 	notesTitle: string;
+	/** The case showing the texts as last saved, outside the editors. */
+	viewTitle: string;
 	articleLabel: string;
 	notesLabel: string;
 	placeholder: string;

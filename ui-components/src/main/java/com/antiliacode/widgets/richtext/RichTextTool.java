@@ -110,7 +110,7 @@ public enum RichTextTool implements IRichTextTool
 	/**
 	 * The files attached to the text, in a menu: each with its name and its size, selected by a
 	 * click, and a button taking it out of the text; the store then deletes it as
-	 * {@link RichTextEditor#setImageDeletion(RichTextImageDeletion) the editor says}.
+	 * {@link RichTextEditor#setAttachmentDeletion(RichTextImageDeletion) the editor says}.
 	 *
 	 * @since 10.11.0
 	 */
