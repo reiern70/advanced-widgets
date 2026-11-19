@@ -51,7 +51,8 @@ abstract class FilteredAdminTable<T> extends BeanBasedDynamicDataTable<T, Long, 
 			@Override
 			protected Component newPrefix(String id)
 			{
-				return newFilter(id);
+				// the rows veiled while a filter's request runs, the toolbar and its fields not
+				return newFilter(id).veil(getRowsBody());
 			}
 		};
 	}

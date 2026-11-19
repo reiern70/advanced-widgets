@@ -115,6 +115,25 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 			attributeFilter: ['class'] });
 		""";
 
+	/**
+	 * Records where each veil goes as it is raised: the tag of its host, {@code page} for one
+	 * over the whole page.
+	 */
+	private static final String RECORD_VEIL_HOSTS = """
+		window.veilHosts = [];
+		new MutationObserver(function (records) {
+			records.forEach(function (record) {
+				record.addedNodes.forEach(function (node) {
+					if (node.classList && (node.classList.contains('wicket-veil') ||
+							node.classList.contains('antilia-veil-guard'))) {
+						window.veilHosts.push(node.parentNode === document.body ? 'page' :
+							node.parentNode.tagName.toLowerCase());
+					}
+				});
+			});
+		}).observe(document.body, { childList: true, subtree: true });
+		""";
+
 	private WebDriver driver;
 
 	private WebDriverWait wait;
@@ -248,6 +267,33 @@ class DynamicDataTableBrowserTest extends JettyTestCase
 		assertAbout(800, number(geometry, "height"), "the height changed " + geometry);
 		assertAbout(number(geometry, "clientHeight"), number(geometry, "scrollHeight"),
 			"an empty page scrolls " + geometry);
+	}
+
+	@ParameterizedTest
+	@MethodSource("pages")
+	void theFilterVeilsTheRowsAndLeavesTheToolbarAndItsFieldAlone(SeleniumBrowser browser,
+		String page)
+	{
+		open(browser, page);
+		js().executeScript(RECORD_VEIL_HOSTS);
+
+		WebElement filter = driver.findElement(By.cssSelector(TABLE + " input[type=search]"));
+		filter.sendKeys("Rossi");
+		wait.until(d -> ((List<?>)js().executeScript("return window.veilHosts;"))
+			.contains("tbody"));
+		awaitNoVeil();
+		wait.until(d -> {
+			List<WebElement> rows = d.findElements(By.cssSelector(ROWS));
+			return !rows.isEmpty() && rows.stream().allMatch(row -> row.getText()
+				.contains("Rossi"));
+		});
+
+		List<?> hosts = (List<?>)js().executeScript("return window.veilHosts;");
+		// the rows alone were veiled, not the table holding the field, nor the page
+		assertTrue(hosts.stream().allMatch("tbody"::equals), "veiled: " + hosts);
+		// the user typed on, in the field, which nothing covered
+		assertEquals("Rossi", filter.getDomProperty("value"));
+		assertEquals(filter, driver.switchTo().activeElement());
 	}
 
 	@ParameterizedTest
