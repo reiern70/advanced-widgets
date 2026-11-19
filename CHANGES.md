@@ -79,6 +79,42 @@ What 11.0.0-RC6 has, and:
   `uploadScaling`, `uploadMaxCount`, `uploadDialog`, `onStorePermanently`, `onFindImages`,
   `onImagesRemoved`, `onAttach`, `attachTypes`, `attachMaxSize`, `attachMaxCount`, `attachDialog`,
   `attachmentUrls` and `onAttachmentsRemoved` (#123), the Svelte ones in lower case.
+- The Font Awesome Free web jar, `org.webjars.npm:fortawesome__fontawesome-free`, comes with the
+  components (#146): the POM declares it for the run time instead of the tests alone, so an
+  application no longer fails with «SvgIcon needs the Font Awesome Free web jar» as a collapsible
+  panel, an `AjaxActionButton` with an icon or a data table's toolbar renders. The README tells
+  what comes with the components and what is optional.
+- The JSON components work with Jackson 2 as well as Jackson 3 (#147): `Jackson2JsonSerializer`
+  writes with `com.fasterxml.jackson.core:jackson-databind`, an optional dependency as Jackson 3
+  is, registering the modules it finds and writing dates as text, as Jackson 3 does. A
+  `JsonBasedDynamicDataTable`, an autocomplete, a `JsonBasedTree`, a `JsonBasedInfiniteList`, a
+  `JsonRowsResource` and the `IWebSocketLightWeightMessage`s given no serializer of their own
+  take the application's default, `JsonSerializers.getDefault()`, instead of Jackson 3 always:
+  the one set once by `JsonSerializers.setDefault(application, serializer)`, or else Jackson 3
+  when the application has it, or else Jackson 2. With neither, the first JSON written fails
+  telling what is missing. The autocompletes have a `getJsonSerializer()`.
+- A `CollapsiblePanel` remembering its state (`setRememberExpanded(true)`) reports a toggle only
+  when the user expands or collapses it (#148). The browser fires `toggle` also as it inserts a
+  `<details open>`, so every panel rendered expanded sent a request as the page loaded and each
+  time Ajax rendered it again, and an `onToggle` rendering the panels again never stopped. The
+  `<details>` now carries the state the server knows, `data-antilia-expanded`, and the request
+  leaves only for another one; the server hands `onToggle` only a change.
+- The OWASP Java HTML Sanitizer is an optional dependency (#149): only the rich text editors,
+  CKEditor and their views clean HTML with it, so an application without them no longer gets
+  it. One with them adds `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer`;
+  without it, `RichTextEditor`, `CKEditor`, `RichTextView` and `CKEditorView` fail as they are
+  added to a page, telling what to add, rather than when the user saves the text
+  (`OwaspHtmlSanitizer`). A `CKEditorView` makes its default sanitizer, `CKEditorPolicy.ALL`,
+  only when it first cleans.
+- The autocompletes mark in each suggestion what the user typed (#150):
+  `setHighlightMatch(true)`, or `highlightMatch` in React, Svelte and the core, has
+  `{{@labelMatch}}`, the label escaped, put each part matching a word typed in a
+  `<mark class="antilia-autocomplete-match">`, regardless of case and accents ("pub" in
+  "Published", "jose" in "José"), which the theme colors. The row is `{{@labelMatch}}` then
+  unless a template is set (`AbstractAutocomplete.MATCH_TEMPLATE`); without the option,
+  `{{@labelMatch}}` is the label escaped. The built-in template engine writes a value having a
+  `toHTML()`, as `TemplateMarkup` and Handlebars' `SafeString`, as markup by `{{ }}` too, as
+  Handlebars does. The demo's countries mark what is typed, in Wicket, React and Svelte.
 
 **Upgrading:**
 
@@ -107,6 +143,10 @@ What 11.0.0-RC6 has, and:
   the command itself gets the checks too.
 - `CKEditor.texts(component)` has the texts of the uploads, those of `RichTextEditor` of the same
   names.
+- An application that added the Font Awesome web jar itself for the icons may drop it (#146).
+- An application with a rich text editor, CKEditor or their views adds the OWASP Java HTML
+  Sanitizer, `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` (20261011.1),
+  which no longer comes with the components (#149).
 
 ## 11.0.0-RC6 (2026-11-19)
 

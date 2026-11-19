@@ -56,7 +56,7 @@ import com.antiliacode.widgets.dynamicdatatable.IJsonSerializer;
 import com.antiliacode.widgets.dynamicdatatable.ITemplateEngine;
 import com.antiliacode.widgets.dynamicdatatable.IWebSocketLightWeightMessage;
 import com.antiliacode.widgets.dynamicdatatable.IWebSocketMessageType;
-import com.antiliacode.widgets.dynamicdatatable.JacksonJsonSerializer;
+import com.antiliacode.widgets.dynamicdatatable.JsonSerializers;
 import com.antiliacode.widgets.dynamicdatatable.JsonBasedDynamicDataTable;
 import com.antiliacode.widgets.dynamicdatatable.RefreshMessageType;
 import com.antiliacode.widgets.dynamicdatatable.ResourceTemplate;
@@ -175,7 +175,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 
 	private ITemplateEngine templateEngine = BuiltInTemplateEngine.INSTANCE;
 
-	private IJsonSerializer jsonSerializer = JacksonJsonSerializer.INSTANCE;
+	private IJsonSerializer jsonSerializer;
 
 	private Duration pollInterval;
 
@@ -353,7 +353,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 		Args.notNull(item, "item");
 		target.appendJavaScript("if (" + getVarName() + ") { " + getVarName() + ".renderItem(" +
 			ScriptJson.quote(getItemKey(item)) + ", " +
-			ScriptJson.escape(jsonSerializer.toJson(item)) + "); }");
+			ScriptJson.escape(getJsonSerializer().toJson(item)) + "); }");
 	}
 
 	/**
@@ -570,16 +570,19 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 	}
 
 	/**
-	 * @return the serializer turning items into JSON
+	 * @return the serializer turning items into JSON: the one
+	 *         {@link #setJsonSerializer(IJsonSerializer) set}, or else the application's default,
+	 *         {@link JsonSerializers#getDefault()}
 	 */
 	public IJsonSerializer getJsonSerializer()
 	{
-		return jsonSerializer;
+		return jsonSerializer != null ? jsonSerializer : JsonSerializers.getDefault();
 	}
 
 	/**
 	 * @param jsonSerializer
-	 *            the serializer turning items into JSON
+	 *            the serializer turning items into JSON, instead of the application's default,
+	 *            {@link JsonSerializers#getDefault()}
 	 * @return {@code this}
 	 */
 	public JsonBasedInfiniteList<T, K> setJsonSerializer(IJsonSerializer jsonSerializer)
@@ -736,7 +739,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 			scrollToTop = false;
 			data.put("top", true);
 		}
-		String json = jsonSerializer.toJson(data);
+		String json = getJsonSerializer().toJson(data);
 		onItemsSent(keysOf(items));
 		return json;
 	}
@@ -760,7 +763,7 @@ public class JsonBasedInfiniteList<T, K extends Serializable> extends WebCompone
 		Map<String, Object> data = new LinkedHashMap<>();
 		data.put("items", toEntries(items, shown + 1));
 		data.put("itemCount", getItemCount());
-		String json = jsonSerializer.toJson(data);
+		String json = getJsonSerializer().toJson(data);
 		if (items.isEmpty() == false)
 		{
 			onItemsSent(keysOf(getShownItems()));

@@ -321,6 +321,36 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 </dependencies>
 ```
 
+### What comes with the components
+
+The dependency brings what the components need: Wicket's core, its extensions and its native
+WebSocket, and the Font Awesome Free web jar (`org.webjars.npm:fortawesome__fontawesome-free`),
+whose icons `SvgIcon` reads at run time and draws in the components' own buttons, panels and
+toolbars. The servlet API is the container's.
+
+Two dependencies are optional, and an application using what needs them adds them:
+
+- the OWASP Java HTML Sanitizer,
+  `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer`, for the rich text
+  editors: `RichTextEditor`, `CKEditor`, `RichTextView`, `CKEditorView`, and the classes of
+  their packages cleaning a text on the server (`RichTextPolicy`, `CKEditorPolicy`, the
+  sanitizers of JSON and Markdown). Without it an editor or a view fails as it is added to a
+  page, telling so; nothing else needs it.
+
+- Jackson, 3 (`tools.jackson.core:jackson-databind`) or 2
+  (`com.fasterxml.jackson.core:jackson-databind`), for the JSON of `JsonBasedDynamicDataTable`,
+  `JsonBasedTree`, `JsonBasedInfiniteList`, `JsonRowsResource` and the autocompletes. Unless given
+  an `IJsonSerializer` of their own, they take the application's default,
+  `JsonSerializers.getDefault()`: `JacksonJsonSerializer` when the application has Jackson 3, or
+  else `Jackson2JsonSerializer`. An application with neither, or with a mapper of its own, sets
+  its serializer once, in `init()`, Gson's for example:
+
+  ```java
+  private static final Gson GSON = new Gson();
+
+  JsonSerializers.setDefault(this, value -> GSON.toJson(value));
+  ```
+
 ### A page
 
 Give the page a theme and use the components as any other Wicket component:

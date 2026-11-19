@@ -125,12 +125,12 @@ public abstract class JsonRowsResource<T, K extends Serializable> extends Abstra
 	protected abstract IDynamicDataProvider<T, K> newProvider(PageParameters parameters);
 
 	/**
-	 * @return the serializer turning the rows into JSON, a {@link JacksonJsonSerializer} by
-	 *         default
+	 * @return the serializer turning the rows into JSON, the application's default by default,
+	 *         {@link JsonSerializers#getDefault()}
 	 */
 	protected IJsonSerializer getJsonSerializer()
 	{
-		return JacksonJsonSerializer.INSTANCE;
+		return JsonSerializers.getDefault();
 	}
 
 	/**

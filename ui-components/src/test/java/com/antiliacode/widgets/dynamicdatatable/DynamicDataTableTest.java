@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.Application;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -553,6 +554,18 @@ class DynamicDataTableTest extends WicketTestCase
 		assertFalse(table.refreshViaWebSockets());
 	}
 
+	@Test
+	void aMessageIsWrittenByTheDefaultSerializerOfTheConnectionsApplication() throws IOException
+	{
+		JsonSerializers.setDefault(tester.getApplication(), value -> "{\"by\": \"default\"}");
+		List<String> sent = new ArrayList<>();
+
+		UpdateRowMessageType.newMessage("table1", "2", PEOPLE.get(1))
+			.send(recordingConnection(sent));
+
+		assertEquals(List.of("{\"by\": \"default\"}"), sent);
+	}
+
 	private static JSONObject send(IWebSocketLightWeightMessage message) throws IOException
 	{
 		List<String> sent = new ArrayList<>();
@@ -570,6 +583,8 @@ class DynamicDataTableTest extends WicketTestCase
 				{
 					case "isOpen" :
 						return true;
+					case "getApplication" :
+						return Application.get();
 					case "sendMessage" :
 						sent.add((String)args[0]);
 						return proxy;

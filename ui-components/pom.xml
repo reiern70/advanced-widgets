@@ -45,17 +45,42 @@
 			<artifactId>wicket-native-websocket-core</artifactId>
 		</dependency>
 
-		<!-- cleans the HTML of the rich text editor: RichTextPolicy -->
+		<!--
+		  cleans the HTML of the rich text editors, CKEditor and their views (RichTextPolicy,
+		  CKEditorPolicy), which nothing else uses: optional, an application with the editors adds
+		  it, see OwaspHtmlSanitizer
+		-->
 		<dependency>
 			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
 			<artifactId>owasp-java-html-sanitizer</artifactId>
+			<optional>true</optional>
 		</dependency>
 
-		<!-- JSON DEPENDENCIES (only needed by JacksonJsonSerializer) -->
+		<!--
+		  JSON DEPENDENCIES, both optional: JsonSerializers takes Jackson 3 (JacksonJsonSerializer)
+		  when the application has it, or else Jackson 2 (Jackson2JsonSerializer)
+		-->
 		<dependency>
 			<groupId>tools.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!--
+		  the icons of SvgIcon, read from the web jar the first time each is rendered: the collapsible
+		  panels' actions, the toolbars of the data tables, AjaxActionButton#setIcon. Nothing
+		  compiles against it, so it is a runtime dependency, which an application gets with the
+		  components.
+		-->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>fortawesome__fontawesome-free</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!-- the container provides it; JsonRowsResource reads the method and body of a request -->
@@ -65,11 +90,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<!-- TEST DEPENDENCIES -->
-		<dependency>
-			<groupId>org.webjars.npm</groupId>
-			<artifactId>fortawesome__fontawesome-free</artifactId>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

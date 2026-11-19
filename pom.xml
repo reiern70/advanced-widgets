@@ -78,6 +78,8 @@
 		-->
 		<jetty.version>12.1.14</jetty.version>
 		<jackson.version>3.2.3</jackson.version>
+		<!-- Jackson 2, for Jackson2JsonSerializer: the 2.x paired with Jackson 3.2, sharing its annotations -->
+		<jackson2.version>2.22.4</jackson2.version>
 		<!-- cleans the HTML of the rich text editor on the server -->
 		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
@@ -154,6 +156,11 @@
 				<groupId>tools.jackson.core</groupId>
 				<artifactId>jackson-databind</artifactId>
 				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson2.version}</version>
 			</dependency>
 
 			<!-- ICONS -->

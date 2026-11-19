@@ -30,11 +30,12 @@ import org.apache.wicket.WicketRuntimeException;
  * one em high, filled with the current text color and hidden from screen readers.
  * <p>
  * Wicket does not ship the icons: they are read from the Font Awesome Free web jar
- * ({@code org.webjars.npm:fortawesome__fontawesome-free}), which the application has to put on
- * its class path, the first time each icon is rendered. The icons are Copyright Fonticons, Inc.
- * and licensed under the Creative Commons Attribution 4.0 International License; the attribution
- * comment of each SVG file is kept in the markup. An application distributing them is
- * responsible for that license's attribution requirements.
+ * ({@code org.webjars.npm:fortawesome__fontawesome-free}) the first time each icon is rendered.
+ * The components depend on the web jar at run time, so an application gets it with them; one
+ * excluding it renders no {@code SvgIcon}, and so none of the components' own icons. The icons
+ * are Copyright Fonticons, Inc. and licensed under the Creative Commons Attribution 4.0
+ * International License; the attribution comment of each SVG file is kept in the markup. An
+ * application distributing them is responsible for that license's attribution requirements.
  * <p>
  * The markup is the content of the web jar's file, written into the page as is.
  *
