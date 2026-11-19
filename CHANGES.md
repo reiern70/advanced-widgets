@@ -39,13 +39,42 @@ What 10.11.0-RC11 has, and:
   save. A link to one of them, a text of its own, comes back as a file, its size unknown. The
   editors of React and Svelte take `attachmentUrls` too, a list or a test of an address.
 - The uploads of the rich text editors are those of `AbstractRichTextEditor`, which
-  `RichTextEditor` and `CKEditor` share (#123): the stores of the images and of the files attached, their limits,
-  the dialog, the scaling, the permanent images, the resource of the uploads
-  (`setUploadResource(RichTextFiles)`), the scanner, and the deletion of the images and the files
-  the user took out of the text (`setImageDeletion`, `setAttachmentDeletion`,
+  `RichTextEditor` and `CKEditor` share (#123): the stores of the images and of the files
+  attached, their limits, the dialog, the scaling, the permanent images, the resource of the
+  uploads (`setUploadResource(RichTextFiles)`), the scanner, and the deletion of the images and
+  the files the user took out of the text (`setImageDeletion`, `setAttachmentDeletion`,
   `deleteRemovedImages()`, `onImagesRemoved`, `deleteImages`, `RichTextImagesRemovedEvent`...).
   `CKEditor` has every method `RichTextEditor` has for them, and both have
   `getImageUploadBehavior()` and `getAttachmentUploadBehavior()`.
+- CKEditor tells the server of the images taken out of the text, which its store deletes, at once
+  or once the text is saved, as the Tiptap editor does (#123): by a key, a cut, the page's code or
+  the new tool `images`, "Images in the text", a drop-down listing them, each selected by a click
+  and taken out by its button. `onImagesRemoved`, `deleteImages(Set)`, `setImageDeletion` and
+  `RichTextImagesRemovedEvent` hear of them; the core's CKEditor takes `onImagesRemoved` and fires
+  the built-in event `images-removed`.
+- CKEditor checks the images it is given before it uploads them, as the Tiptap editor does
+  (#123): how many one choice, drop or paste takes (`setImageMaxCount`), the others left out with
+  a message, and the pictures larger than the limit scaled down in the browser when the user ticks
+  them in a dialog (`setImageScaling`). An image refused gets no placeholder in the text.
+- CKEditor tells why it leaves out a file of another type chosen in its dialog of files, through
+  "All files" (#123), which it dropped without a word: in the line above the text, with the rest
+  of the files chosen.
+- CKEditor uploads its images in the dialog of the uploads, `setImageUploadDialog(true)` (#123):
+  the tool `uploadImages`, "Upload images…", in place of CKEditor's own button, opens the list of
+  the files of one choice or drop with the progress of each, which the user takes out before they
+  go into the text.
+- Permanent images in CKEditor, `setPermanentImages(true)` (#123): the user ticks "Store
+  permanently" in the lines of the dialog of the uploads, which the tool `uploadImages` opens,
+  and inserts the images kept by the tool `storedImage`, "Insert image from store", a drop-down
+  with the combobox finding them by their names.
+- CKEditor uploads to the resource of the uploads of the application,
+  `setUploadResource(RichTextFiles)` (#123), as the Tiptap editor does, with the same rules.
+- Files attached in CKEditor, PDFs or spreadsheets (#123): the feature `CKEditorFeature.ATTACHMENT`,
+  an inline widget of the editor's own written as the Tiptap editor writes them, a link of the class
+  of its kind with its size, and a plain link in Markdown, read again as a file (`attachmentUrls`);
+  the tools `attachment`, "Attach a file", and `attachments`, "Files of the text"; files dropped or
+  pasted that are no images; `setAttachmentStore`, the limits, the dialog and the scanner; deleted
+  as the images, `RichTextAttachmentsRemovedEvent`. `CKEditorPolicy` keeps them.
 
 **Upgrading:**
 
@@ -58,6 +87,22 @@ What 10.11.0-RC11 has, and:
 - `CKEditor#markSaved(target)` deletes, by the store, the images uploaded since the text was last
   saved that it no longer holds, as `RichTextEditor`'s does: a page keeping them overrides
   `deleteImages(Set)`.
+- CKEditor's default toolbar has the tools of the uploads: `images` while the editor uploads
+  images, `uploadImages` with the dialog or permanent images, `storedImage` with permanent images,
+  `attachment` and `attachments` with a store of files. A toolbar of the page's own
+  (`setToolbar`) is unchanged, and may name them.
+- `CKEditorFeature.ATTACHMENT` is among CKEditor's features, all of them by default: the links of
+  the class `antilia-attachment` are files attached, widgets taken out whole, and the default
+  cleaning, `CKEditorPolicy` of the features, keeps their class, their `data-size` and their
+  `target`. A page setting the features keeps its own.
+- CKEditor renders `RichTextEditor.CSS` and the style sheets of the buttons and the scroll bars,
+  for the files attached, the lists and the dialogs of the uploads, and `Modal.CSS` with a dialog;
+  `CKEditorView` renders `RichTextEditor.CSS` too. A page with CKEditor of React or Svelte loads
+  `rich-text-editor.css` beside `ck-editor.css`.
+- CKEditor gives its command `uploadImage` the images it checked, a moment after: a page executing
+  the command itself gets the checks too.
+- `CKEditor.texts(component)` has the texts of the uploads, those of `RichTextEditor` of the same
+  names.
 
 ## 10.11.0-RC11 (2026-11-19)
 
