@@ -21,6 +21,10 @@ What 11.0.0-RC6 has, and:
   A format says its head leaves it open (`IUploadFileFormat#mayMatch(byte[])`), and the whole
   file then decides (`matches(InputStream)`), which
   `IUploadFileFormat.detect(head, name, formats, opener)` reads.
+- The files attached to a text have a deletion mode of their own,
+  `RichTextEditor#setAttachmentDeletion(RichTextImageDeletion)` (#124): the images deleted at once
+  and the files once the text is saved, for example, or the other way round. Unless set, the
+  files follow the images' mode, as before.
 
 ## 11.0.0-RC6 (2026-11-19)
 

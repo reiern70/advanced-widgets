@@ -24,7 +24,8 @@ import org.apache.wicket.util.lang.Args;
  * a key, cut, taken out by the list of the files of the toolbar, or by the code of a page. Only the
  * files the editor knows are told of: those of the text it was shown with, and those uploaded into
  * it since. Whether they are deleted now or once the text is saved is
- * {@link RichTextEditor#getImageDeletion() the editor's mode}, the same as for the images.
+ * {@link RichTextEditor#getAttachmentDeletion() the editor's mode for the files}, the same as for
+ * the images unless set.
  *
  * <pre>
  * &#64;Override
