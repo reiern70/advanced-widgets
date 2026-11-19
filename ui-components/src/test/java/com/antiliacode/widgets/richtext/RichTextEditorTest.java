@@ -860,6 +860,48 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void deletesTheFilesTakenOutByAModeOfTheirOwnOrAsTheImages()
+	{
+		List<String> deleted = new ArrayList<>();
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Hi <a " +
+			"class=\"antilia-attachment\" href=\"/f/a.pdf\">a.pdf</a> <a " +
+			"class=\"antilia-attachment\" href=\"/f/b.pdf\">b.pdf</a></p>"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void deleteAttachments(Set<String> urls)
+			{
+				deleted.addAll(urls);
+			}
+		};
+		editor.setAttachmentStore((file, format) -> "/f/new." + format.getExtension());
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
+		editor.setImageDeletion(RichTextImageDeletion.AT_ONCE);
+		assertEquals(RichTextImageDeletion.AT_ONCE, editor.getAttachmentDeletion(),
+			"as the images unless set");
+		// the images at once, the files once the text is saved
+		editor.setAttachmentDeletion(RichTextImageDeletion.ON_SAVE);
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
+		tester.startPage(new TestPage(editor));
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextEditor.ATTACHMENTS_REMOVED_PARAMETER, "[\"/f/a.pdf\"]");
+		tester.executeBehavior(editor.getImagesRemoval());
+		assertTrue(deleted.isEmpty(), "once saved");
+
+		// the images once the text is saved, the files at once
+		editor.setImageDeletion(RichTextImageDeletion.ON_SAVE)
+			.setAttachmentDeletion(RichTextImageDeletion.AT_ONCE);
+		tester.getRequest().getPostParameters().setParameterValue(
+			RichTextEditor.ATTACHMENTS_REMOVED_PARAMETER, "[\"/f/b.pdf\"]");
+		tester.executeBehavior(editor.getImagesRemoval());
+		assertEquals(List.of("/f/b.pdf"), deleted);
+
+		editor.setAttachmentDeletion(null);
+		assertEquals(RichTextImageDeletion.ON_SAVE, editor.getAttachmentDeletion());
+	}
+
+	@Test
 	void readsTheImagesOfHtmlMarkdownAndJson()
 	{
 		assertEquals(List.of("/a.png", "https://example.org/b?x=1&y=2", "c.png"),

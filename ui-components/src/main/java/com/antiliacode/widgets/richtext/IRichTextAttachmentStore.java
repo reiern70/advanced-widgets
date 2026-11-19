@@ -24,7 +24,7 @@ import com.antiliacode.widgets.upload.IUploadFileFormat;
  * Keeps the files users attach to the texts of a {@link RichTextEditor}, a PDF or a spreadsheet,
  * which go into the text as links, and tells the address each is served at: in a folder, a
  * database or a store of files. It deletes those the users took out of their texts again, if it
- * wants to: the editor tells it which, as {@link RichTextEditor#setImageDeletion(
+ * wants to: the editor tells it which, as {@link RichTextEditor#setAttachmentDeletion(
  * RichTextImageDeletion) its mode} says, at once or once the text is saved.
  * <p>
  * {@link RichTextFiles The resource of the uploads}, mounted once by the application, takes the

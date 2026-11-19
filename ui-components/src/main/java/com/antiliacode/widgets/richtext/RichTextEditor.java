@@ -294,6 +294,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private RichTextImageDeletion imageDeletion = RichTextImageDeletion.ON_SAVE;
 
+	/** When the files taken out are deleted, {@code null} for as the images are. */
+	private RichTextImageDeletion attachmentDeletion;
+
 	private boolean permanentImages;
 
 	/**
@@ -1387,6 +1390,31 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return when the files the user took out of the text are deleted: as
+	 *         {@link #getImageDeletion() the images} unless
+	 *         {@link #setAttachmentDeletion(RichTextImageDeletion) set}
+	 * @since 11.0.0
+	 */
+	public RichTextImageDeletion getAttachmentDeletion()
+	{
+		return attachmentDeletion != null ? attachmentDeletion : imageDeletion;
+	}
+
+	/**
+	 * @param attachmentDeletion
+	 *            when the files the user took out of the text are deleted: at once, or once the
+	 *            text is saved; {@code null} for as {@link #getImageDeletion() the images}, as by
+	 *            default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentDeletion(RichTextImageDeletion attachmentDeletion)
+	{
+		this.attachmentDeletion = attachmentDeletion;
+		return this;
+	}
+
+	/**
 	 * @return whether the user keeps images permanently, and inserts those kept
 	 * @since 10.11.0
 	 */
@@ -1584,7 +1612,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		{
 			return;
 		}
-		boolean now = imageDeletion == RichTextImageDeletion.AT_ONCE;
+		boolean now = getAttachmentDeletion() == RichTextImageDeletion.AT_ONCE;
 		if (now)
 		{
 			deleteAttachments(Collections.unmodifiableSet(removed));
@@ -1617,7 +1645,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * Deletes files the user took out of the text, at once or once the text is saved, as
-	 * {@link #getImageDeletion() the mode} says: each by
+	 * {@link #getAttachmentDeletion() the mode} says: each by
 	 * {@link IRichTextAttachmentStore#delete(String)} by default. A page overrides it to decide
 	 * which, knowing its texts.
 	 *
