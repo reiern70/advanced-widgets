@@ -441,11 +441,12 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 		// no bar of the progress left, which grew by classes
 		wait.until(d -> content().findElements(By.cssSelector(".ck-progress-bar")).isEmpty());
 
-		// a file of another type, and one too large: refused before uploading, saying why
-		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
-			"notes".getBytes(StandardCharsets.UTF_8)), 0);
-		wait.until(d -> message().startsWith("notes.txt is not an image of a type the editor " +
-			"takes: PNG"));
+		// a file of a type neither of the images nor of the files attached, and one too large:
+		// refused before uploading, saying why
+		transfer("drop", "tool.exe", "application/x-msdownload", Base64.getEncoder()
+			.encodeToString("MZ".getBytes(StandardCharsets.UTF_8)), 0);
+		wait.until(d -> message().startsWith("tool.exe is not a file of a type the editor " +
+			"takes: PDF"));
 		assertEquals("alert", editor().findElement(By.cssSelector(".antilia-ck-editor-message"))
 			.getDomAttribute("role"));
 		transfer("drop", "large.png", "image/png", PNG, 3 * 1024 * 1024);
@@ -463,16 +464,316 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 	}
 
 	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void checksTheImagesChosenAndDeletesThoseTakenOutOnceSaved(SeleniumBrowser browser,
+		String framework) throws IOException
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		// six images and a file of another type, chosen in CKEditor's dialog of files ("All
+		// files"): five at most at a time, and the file told of, which CKEditor leaves out
+		List<Path> files = new java.util.ArrayList<>();
+		try
+		{
+			for (int index = 1; index <= 6; index++)
+			{
+				files.add(file("bird" + index + "-", ".png", Base64.getDecoder().decode(PNG)));
+			}
+			files.add(file("notes", ".txt", "notes".getBytes(StandardCharsets.UTF_8)));
+			toolbar().findElement(By.cssSelector("input[type=file]")).sendKeys(String.join("\n",
+				files.stream().map(each -> each.toAbsolutePath().toString()).toList()));
+			wait.until(d -> uploaded().size() == 5);
+		}
+		finally
+		{
+			for (Path each : files)
+			{
+				Files.deleteIfExists(each);
+			}
+		}
+		wait.until(d -> message().contains("5 images at most at a time: 1 left out."));
+		assertTrue(message().startsWith("notes") && message().contains(".txt is not an image of " +
+			"a type the editor takes: PNG"), message());
+
+		// the list of the images takes one out of the text; saved, the page deletes it
+		String first = uploaded().get(0).getDomProperty("src");
+		tool("Images in the text").click();
+		WebElement delete = wait.until(d -> toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-images .antilia-ck-editor-panel-delete")).stream()
+			.findFirst().orElse(null));
+		assertEquals(5, toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-images img.antilia-rich-text-images-thumbnail")).size());
+		assertTrue(delete.getDomAttribute("aria-label").startsWith("Delete "));
+		delete.click();
+		wait.until(d -> uploaded().size() == 4);
+		assertEquals(200L, served(first));
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> Long.valueOf(404).equals(served(first)));
+		assertEquals(200L, served(uploaded().get(0).getDomProperty("src")));
+		assertNoPolicyViolations();
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void scalesDownAPictureTooLargeOnceTicked(SeleniumBrowser browser, String framework)
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		// a picture wider than the page takes, dropped into the text
+		script("var content = arguments[0], target = content.querySelector('p');" +
+			"var canvas = document.createElement('canvas'); canvas.width = 3000; canvas.height = 20;" +
+			"canvas.getContext('2d').fillRect(0, 0, 3000, 20);" +
+			"canvas.toBlob((blob) => { var data = new DataTransfer();" +
+			"  data.items.add(new File([blob], 'wide.png', { type: 'image/png' }));" +
+			"  var rect = target.getBoundingClientRect();" +
+			"  var at = { clientX: rect.left + 4, clientY: rect.top + rect.height / 2 };" +
+			"  for (var type of ['dragenter', 'dragover', 'drop']) {" +
+			"    target.dispatchEvent(new DragEvent(type, Object.assign({ bubbles: true," +
+			"      cancelable: true, dataTransfer: data }, at)));" +
+			"  }" +
+			"}, 'image/png');", content());
+		WebElement scale = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-rich-text-scale-dialog")).stream().findFirst().orElse(null));
+		assertEquals("Scale wide.png down to 2400 × 16 (3000 × 20)", scale.findElement(
+			By.cssSelector("label")).getDomProperty("textContent").trim());
+		scale.findElement(By.cssSelector("input[type=checkbox]")).click();
+		scale.findElement(By.cssSelector(".modal-dialog-footer button")).click();
+		wait.until(d -> uploaded().size() == 1);
+		wait.until(d -> Long.valueOf(2400).equals(script("return arguments[0].naturalWidth;",
+			uploaded().get(0))));
+		assertNoPolicyViolations();
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void uploadsInTheDialogAndInsertsAnImageKeptPermanentlyFromTheStore(SeleniumBrowser browser,
+		String framework)
+	{
+		openEditor(browser, framework);
+		checkBox("Upload images in a dialog").click();
+		// CKEditor made anew, the dialog in place of its own button and its field of files
+		wait.until(d -> !toolbar().findElements(By.cssSelector(".ck-toolbar")).isEmpty() &&
+			toolbar().findElements(By.cssSelector("input[type=file]")).isEmpty());
+		waitForTheEditor();
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("Upload images…").click();
+		WebElement dialog = wait.until(d -> d.findElements(By.cssSelector(
+			".antilia-rich-text-upload-dialog")).stream().findFirst().orElse(null));
+		assertEquals("Upload images", dialog.findElement(By.cssSelector(".modal-dialog-title"))
+			.getText());
+		String name = "kept-" + framework + "-" + browser.name().toLowerCase() + ".png";
+		dropFiles(dialog.findElement(By.cssSelector(".antilia-rich-text-dropzone")), name,
+			"image/png", PNG, "other.png", "image/png", PNG);
+		wait.until(d -> dialog.findElements(By.cssSelector(".antilia-rich-text-upload-done"))
+			.size() == 2);
+		// the first kept permanently, the second taken out of the list
+		WebElement keep = dialog.findElement(By.cssSelector(
+			".antilia-rich-text-upload-done .antilia-rich-text-upload-permanent"));
+		assertEquals("Store permanently", keep.getText().trim());
+		keep.findElement(By.cssSelector("input")).click();
+		dialog.findElements(By.cssSelector(".antilia-rich-text-upload-remove")).get(1).click();
+		dialog.findElement(By.cssSelector(".modal-dialog-footer button")).click();
+		wait.until(d -> d.findElements(By.cssSelector(".antilia-rich-text-upload-dialog"))
+			.isEmpty());
+		wait.until(d -> uploaded().size() == 1);
+		String src = uploaded().get(0).getDomProperty("src");
+
+		// taken out of the text and saved: kept all the same
+		tool("Images in the text").click();
+		wait.until(d -> toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-images .antilia-ck-editor-panel-delete")).stream()
+			.findFirst().orElse(null)).click();
+		wait.until(d -> uploaded().isEmpty());
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+
+		// found by its name, and inserted
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		tool("Insert image from store").click();
+		WebElement field = wait.until(d -> toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-storedImage input[role=combobox]")).stream().findFirst()
+			.orElse(null));
+		wait.until(d -> field.equals(d.switchTo().activeElement()));
+		field.sendKeys(name);
+		wait.until(d -> toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-storedImage [role=option]")).stream()
+			.anyMatch(option -> name.equals(option.getText().trim())));
+		field.sendKeys(Keys.ENTER);
+		wait.until(d -> uploaded().size() == 1);
+		assertEquals(src, uploaded().get(0).getDomProperty("src"));
+		assertEquals(200L, served(src));
+		assertNoPolicyViolations();
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void attachesFilesAndDeletesThoseTakenOutOnceSaved(SeleniumBrowser browser, String framework)
+		throws IOException
+	{
+		openEditor(browser, framework);
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		Path pdf = file("report", ".pdf", "%PDF-1.7\n%%EOF".getBytes(StandardCharsets.US_ASCII));
+		try
+		{
+			// the field of the tool Attach a file, hidden
+			editor().findElement(By.cssSelector("input.antilia-ck-editor-attach-picker")).sendKeys(
+				pdf.toAbsolutePath().toString());
+			wait.until(d -> !attached().isEmpty());
+		}
+		finally
+		{
+			Files.deleteIfExists(pdf);
+		}
+		WebElement file = attached().get(0);
+		assertEquals(pdf.getFileName().toString(), file.getText().trim());
+		assertTrue(file.getDomAttribute("class").contains("antilia-attachment-pdf"));
+		String href = file.getDomProperty("href");
+		assertTrue(html().contains("data-size=\"14 B\""), html());
+
+		// a file dropped of a type the editor takes neither as an image nor as a file
+		transfer("drop", "tool.exe", "application/x-msdownload", Base64.getEncoder()
+			.encodeToString("MZ".getBytes(StandardCharsets.UTF_8)), 0);
+		wait.until(d -> message().startsWith("tool.exe is not a file of a type the editor " +
+			"takes: PDF"));
+
+		// the list of the files takes it out; saved, the page deletes it
+		tool("Files of the text").click();
+		WebElement line = wait.until(d -> toolbar().findElements(By.cssSelector(
+			".antilia-ck-editor-panel-attachments .antilia-ck-editor-panel-item")).stream()
+			.findFirst().orElse(null));
+		assertTrue(line.getText().contains(pdf.getFileName().toString()), line.getText());
+		line.findElement(By.cssSelector(".antilia-ck-editor-panel-delete")).click();
+		wait.until(d -> attached().isEmpty());
+		assertEquals(200L, served(href));
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> Long.valueOf(404).equals(served(href)));
+		assertNoPolicyViolations();
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@EnumSource(SeleniumBrowser.class)
+	void knowsAgainTheFilesOfTheNotesInMarkdown(SeleniumBrowser browser) throws IOException
+	{
+		openEditor(browser, "wicket");
+		pill("Notes in Markdown").click();
+		wait.until(d -> notesKept().contains("Packing"));
+		clickAtEnd(content().findElement(By.cssSelector("p")));
+		Path pdf = file("notes", ".pdf", "%PDF-1.7\n%%EOF".getBytes(StandardCharsets.US_ASCII));
+		try
+		{
+			editor().findElement(By.cssSelector("input.antilia-ck-editor-attach-picker")).sendKeys(
+				pdf.toAbsolutePath().toString());
+			wait.until(d -> !attached().isEmpty());
+		}
+		finally
+		{
+			Files.deleteIfExists(pdf);
+		}
+		// a plain link in Markdown, which the server keeps
+		String name = pdf.getFileName().toString();
+		content().sendKeys(Keys.chord(Keys.CONTROL, "s"));
+		wait.until(d -> notesKept().contains("[" + name + "](") && notesKept().contains(".pdf)"));
+
+		// read again, a file attached, not a link
+		driver.navigate().refresh();
+		waitForTheEditor();
+		pill("Notes in Markdown").click();
+		wait.until(d -> !attached().isEmpty());
+		assertEquals(name, attached().get(0).getText().trim());
+		assertNoPolicyViolations();
+		assertNoErrors();
+	}
+
+	/**
+	 * @return a file of some bytes in the build's folder: Firefox, a snap, cannot read the
+	 *         temporary folder of the system
+	 */
+	private static Path file(String prefix, String suffix, byte[] bytes) throws IOException
+	{
+		Path file = Files.createTempFile(Path.of("target").toAbsolutePath(), prefix, suffix);
+		Files.write(file, bytes);
+		return file;
+	}
+
+	/**
+	 * @return the files attached to the text, their links
+	 */
+	private List<WebElement> attached()
+	{
+		return content().findElements(By.cssSelector("a.antilia-attachment"));
+	}
+
+	/**
+	 * @return the pill of a case of the demo
+	 */
+	private WebElement pill(String title)
+	{
+		return app().findElements(By.xpath(".//*[normalize-space(text())='" + title + "']"))
+			.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow();
+	}
+
+	/**
+	 * @return the Markdown the server keeps of the notes
+	 */
+	private String notesKept()
+	{
+		return app().findElements(By.cssSelector(".rich-text-demo__markdown code")).stream()
+			.map(each -> each.getDomProperty("textContent")).findFirst().orElse("");
+	}
+
+	/**
+	 * Drops files on an element, as the browser does: name, type and base64 of each in turn.
+	 */
+	private void dropFiles(WebElement target, String... files)
+	{
+		script("var target = arguments[0], files = arguments[1], data = new DataTransfer();" +
+			"for (var i = 0; i < files.length; i += 3) {" +
+			"  var bytes = Uint8Array.from(atob(files[i + 2]), (c) => c.charCodeAt(0));" +
+			"  data.items.add(new File([bytes], files[i], { type: files[i + 1] }));" +
+			"}" +
+			"target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true," +
+			"  dataTransfer: data }));" +
+			"target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true," +
+			"  dataTransfer: data }));", target, List.of(files));
+	}
+
+	/**
+	 * @return the status the server answers an address with, asked from here: a 404 in the
+	 *         browser would be an error of its console
+	 */
+	private static Long served(String url)
+	{
+		try
+		{
+			return (long)java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest
+				.newBuilder(java.net.URI.create(url)).GET().build(),
+				java.net.http.HttpResponse.BodyHandlers.discarding()).statusCode();
+		}
+		catch (IOException e)
+		{
+			return -1L;
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
+			return -1L;
+		}
+	}
+
+	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
 	void tellsWhyAnImageIsNotUploadedInTheLanguageOfThePage(SeleniumBrowser browser)
 	{
 		openEditor(browser, "wicket");
 		chooseLanguage("Deutsch");
 		waitForTheEditor();
-		transfer("drop", "notes.txt", "text/plain", Base64.getEncoder().encodeToString(
-			"notes".getBytes(StandardCharsets.UTF_8)), 0);
-		wait.until(d -> message().startsWith("notes.txt ist kein Bild eines Typs, den der Editor " +
-			"annimmt: PNG"));
+		transfer("drop", "tool.exe", "application/x-msdownload", Base64.getEncoder()
+			.encodeToString("MZ".getBytes(StandardCharsets.UTF_8)), 0);
+		wait.until(d -> message().startsWith("tool.exe ist keine Datei eines Typs, den der " +
+			"Editor annimmt: PDF"));
 		transfer("drop", "large.png", "image/png", PNG, 3 * 1024 * 1024);
 		wait.until(d -> message().equals("large.png ist größer als 2 MB."));
 

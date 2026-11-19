@@ -14,12 +14,14 @@
 
 /*
  * The CKEditor demo: an article in HTML, kept by the app with the state the user left its editor
- * in, with check boxes switching reading only and the count of the words, and the HTML the editor
- * gives; notes in Markdown, and the Markdown the editor gives. CKEditor is the global CKEDITOR of
+ * in, with check boxes switching reading only, the count of the words and the dialog of the
+ * uploads, and the HTML the editor gives; notes in Markdown, and the Markdown the editor gives.
+ * The images and the files go to the resource of the uploads, as those of the Tiptap editor's
+ * apps (rich-text-editor.ts), which deletes those taken out once the app saved the text. CKEditor is the global CKEDITOR of
  * its browser build, which the Wicket page loads, with the license key the page gives.
  */
 
-import type { CKEditorTexts, RichTextEditorState } from '@antilia/core';
+import type { CKEditorTexts, RichTextAttachmentType, RichTextEditorState } from '@antilia/core';
 
 import { format } from './data.js';
 
@@ -62,12 +64,22 @@ export interface CKEditorConfig {
 	licenseKey: string;
 	/** The language of CKEditor's texts, whose translations the page loaded; none for English. */
 	language?: string;
-	/** Where the apps upload images: the page's own behavior, answering their addresses. */
+	/**
+	 * Where the apps upload images: the resource of the uploads of the application, answering
+	 * their addresses, as for the apps of the Tiptap editor.
+	 */
 	uploadUrl: string;
 	uploadTypes: string[];
 	uploadMaxSize: number;
+	/** The widest and the highest image, and how many at a time. */
 	uploadMaxWidth: number;
 	uploadMaxHeight: number;
+	uploadMaxCount: number;
+	/** Where the apps attach files: the resource of the uploads, answering their addresses. */
+	attachUrl: string;
+	attachTypes: RichTextAttachmentType[];
+	attachMaxSize: number;
+	attachMaxCount: number;
 }
 
 /** A text the app keeps: the text, the text last saved and the state of its editor. */

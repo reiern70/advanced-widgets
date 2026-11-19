@@ -109,7 +109,7 @@ export function suggesters(config: RichTextEditorConfig): RichTextSuggester[] {
 /**
  * @returns what the editors of the apps upload images with: to the page, telling the progress
  */
-export function uploader(config: RichTextEditorConfig): RichTextUploader {
+export function uploader(config: Pick<RichTextEditorConfig, 'uploadUrl'>): RichTextUploader {
 	return uploadImageTo(config.uploadUrl);
 }
 
@@ -117,7 +117,8 @@ export function uploader(config: RichTextEditorConfig): RichTextUploader {
  * @returns what the editors of the apps attach files with, and the limits of the files: to the
  *          resource of the uploads of the application, as the images
  */
-export function attachments(config: RichTextEditorConfig): { onAttach: RichTextUploader;
+export function attachments(config: Pick<RichTextEditorConfig, 'attachUrl' | 'attachTypes' |
+	'attachMaxSize' | 'attachMaxCount'>): { onAttach: RichTextUploader;
 	attachTypes: RichTextAttachmentType[]; attachMaxSize: number; attachMaxCount: number } {
 	return { onAttach: uploadFileTo(config.attachUrl), attachTypes: config.attachTypes,
 		attachMaxSize: config.attachMaxSize, attachMaxCount: config.attachMaxCount };
@@ -127,7 +128,7 @@ export function attachments(config: RichTextEditorConfig): { onAttach: RichTextU
  * @returns what keeps the files taken out of a text of the apps, which the page deletes once the
  *          app saved it, as the images
  */
-export function filesTakenOut(config: RichTextEditorConfig): ImagesTakenOut {
+export function filesTakenOut(config: Pick<RichTextEditorConfig, 'attachUrl'>): ImagesTakenOut {
 	return new ImagesTakenOut(deleteAttachmentsAt(config.attachUrl));
 }
 
@@ -135,7 +136,8 @@ export function filesTakenOut(config: RichTextEditorConfig): ImagesTakenOut {
  * @returns what the editors of the apps store images permanently with, and find those stored:
  *          the page, which keeps those of each user
  */
-export function storedImages(config: RichTextEditorConfig): { keep: RichTextImageKeeper;
+export function storedImages(config: Pick<RichTextEditorConfig, 'uploadUrl'>): {
+	keep: RichTextImageKeeper;
 	find: RichTextImageFinder } {
 	return { keep: storePermanentlyAt(config.uploadUrl), find: findImagesAt(config.uploadUrl) };
 }
@@ -168,7 +170,7 @@ export class ImagesTakenOut {
 /**
  * @returns what keeps the images taken out of a text of the apps, which the page deletes
  */
-export function imagesTakenOut(config: RichTextEditorConfig): ImagesTakenOut {
+export function imagesTakenOut(config: Pick<RichTextEditorConfig, 'uploadUrl'>): ImagesTakenOut {
 	return new ImagesTakenOut(deleteImagesAt(config.uploadUrl));
 }
 
