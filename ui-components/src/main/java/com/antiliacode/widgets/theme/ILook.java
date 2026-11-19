@@ -26,8 +26,9 @@ import org.apache.wicket.util.io.IClusterable;
  * How the components are drawn, apart from their colors: a {@link Theme} gives the colors, a look
  * the CSS classes of the {@link LookPart parts}. {@link Look#ANTILIA} draws the components with
  * their own style sheets; {@link Look#BOOTSTRAP} gives their parts the classes of Bootstrap too,
- * whose style sheet the page brings, so they look as Bootstrap does in the colors of the theme. The
- * behavior stays the components' own.
+ * whose style sheet the page brings, so they look as Bootstrap does in the colors of the theme, and
+ * {@link Look#DAISYUI} those of daisyUI, the components of Tailwind CSS. The behavior stays the
+ * components' own.
  * <p>
  * A look can be made of others, an {@link LookAspect aspect} from each, by
  * {@link #with(LookAspect, ILook)}: {@code Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA)}

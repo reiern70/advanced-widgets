@@ -739,6 +739,25 @@ take Bootstrap's colors from its `--bs-*` properties, light or in its dark mode 
 in any other theme Bootstrap's components and properties take the theme's colors, so the page's
 own Bootstrap markup in the theme matches the components.
 
+The daisyUI look (`DAISYUI_LOOK`, `Look.DAISYUI`) gives the parts the classes of daisyUI 5, the
+components of Tailwind CSS: `btn btn-primary btn-sm` for a button, `modal-box` and `modal-action`
+for a dialog's content and footer, `table`, `select` for a drop-down's button, `input` around the
+text of a date picker or an autocomplete, `checkbox`, `alert alert-soft alert-error` for a
+notification of an error, `card` for a panel, `tabs tabs-lift` for tabs, `menu` for a menu bar and
+its submenus, `join` and `join-item btn` for Wicket's paging navigator... The page brings daisyUI's
+style sheet, its prebuilt `daisyui.css` for one, which needs no build of Tailwind, and no script.
+daisyUI puts its rules in cascade layers, which give way to the components' own style sheets, so
+`antilia-look-daisyui.css`, which the daisyUI look renders in Wicket, takes daisyUI's shapes
+(`--radius-field`, `--radius-box`, `--depth`) into the look properties above and draws with
+daisyUI's custom properties the parts whose markup is not the one daisyUI styles, such as a
+drop-down's options, which are no items of a `<ul class="menu">`, or the selected tab. Any theme of
+the components gives daisyUI's colors (`--color-primary`, `--color-base-100`...) its own, so the
+page's own daisyUI markup in the theme matches the components; the Bootstrap themes leave daisyUI
+its colors. Bootstrap and daisyUI name their components alike, `btn`, `table` or `card`, so a page
+has the style sheet of one of them only. daisyUI's style sheet resets the page's elements as
+Tailwind does, and its theme sets `--border`, the width of its borders: a page's own custom
+property of that name would take it away.
+
 Each part is of an aspect: what it is, its colors, its size or a state. A look can be made of
 others, an aspect from each: `composeLook(BOOTSTRAP_LOOK, { color: ANTILIA_LOOK, size: ANTILIA_LOOK
 })`, `Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA)` in Java (`CompoundLook`), gives the parts
@@ -754,10 +773,11 @@ model `Looks.sessionLook()` for a `ThemeBehavior` and a `LookChoice`), which eve
 session then has, else the application's default (`Looks.setDefault`). `LookBehavior` gives a
 component's tag the classes of its parts, and `LookContainer` an element of a component's markup.
 A look of one's own, for another framework of CSS, implements `ILook` in Java and is registered in
-the browser with `registerLook()`. The demo's Looks page shows the looks side by side. Bootstrap
-writes some images as `data:` URLs, such as the tick of its check boxes, which a content security
-policy such as Wicket's (`img-src 'self'`) blocks: the bridge serves the x of the close buttons
-itself, and the demo allows `data:` images for Bootstrap's own markup.
+the browser with `registerLook()`. The demo's Looks page shows the looks side by side, those of
+Bootstrap or those of daisyUI. Bootstrap writes some images as `data:` URLs, such as the tick of its
+check boxes, and daisyUI the shapes of its masks, which a content security policy such as Wicket's
+(`img-src 'self'`) blocks: the Bootstrap bridge serves the x of the close buttons itself, and the
+demo allows `data:` images for the frameworks' own markup.
 
 Some core modules are shared state in a page: the template engines (`templates()`, which
 Handlebars registers into) and, for the infinite list and the table, the scroll bars and the

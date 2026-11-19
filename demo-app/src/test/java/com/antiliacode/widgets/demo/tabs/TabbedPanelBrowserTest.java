@@ -290,6 +290,34 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 		assertNoErrors();
 	}
 
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void drawsTheTabsInTheDaisyUiLook(SeleniumBrowser browser, String framework)
+	{
+		openTabs(browser, framework);
+		chooseLook("daisyUI");
+		wait.until(d -> titles(documents()).size() >= 2);
+
+		// tabs, pills and underline are daisyUI's tabs, the other designs the components' own
+		WebElement list = documents().findElement(By.cssSelector(".antilia-tabs-list"));
+		assertTrue(list.getDomAttribute("class").contains("tabs tabs-lift"), list.getDomAttribute(
+			"class"));
+		WebElement first = tab(documents(), titles(documents()).get(0));
+		assertTrue(List.of(first.getDomAttribute("class").split(" ")).contains("tab"));
+		// the corners of daisyUI's fields, its --radius-field
+		assertEquals("4px", ((JavascriptExecutor)driver).executeScript("return getComputedStyle(" +
+			"arguments[0]).borderTopLeftRadius;", first));
+		List<WebElement> closes = documents().findElements(By.cssSelector(".antilia-tab-close"));
+		assertTrue(!closes.isEmpty() && closes.stream().allMatch(each -> each.getDomAttribute(
+			"class").contains("btn btn-xs btn-circle btn-ghost")));
+		assertEquals("antilia-tabs-list", gallery("Folder").findElement(By.cssSelector(
+			".antilia-tabs-list")).getDomAttribute("class"));
+		screenshot("daisyui");
+		selectCase("A gallery of designs");
+		screenshot("daisyui-gallery", gallerySection());
+		assertNoErrors();
+	}
+
 	private WebElement gallerySection()
 	{
 		return app().findElement(By.cssSelector(".tabs-demo__gallery"))

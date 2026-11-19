@@ -115,6 +115,19 @@ What 11.0.0-RC6 has, and:
   `{{@labelMatch}}` is the label escaped. The built-in template engine writes a value having a
   `toHTML()`, as `TemplateMarkup` and Handlebars' `SafeString`, as markup by `{{ }}` too, as
   Handlebars does. The demo's countries mark what is typed, in Wicket, React and Svelte.
+- The components have the look of daisyUI 5, the components of Tailwind CSS (#34): `Look.DAISYUI` in
+  Wicket and `DAISYUI_LOOK` in the core, React and Svelte (`<LookProvider look="daisyui">`,
+  `setLook('daisyui')`) give the parts daisyUI's classes on top of their own:
+  `btn btn-primary btn-sm` for a button, `modal-box` and `modal-action` for a dialog, `table`,
+  `select`, `input`, `checkbox`, `alert alert-soft`, `card`, `tabs tabs-lift`, `menu` and `join`.
+  The page brings daisyUI's style sheet, its prebuilt `daisyui.css` for one, which needs no build of
+  Tailwind, and no script. `antilia-look-daisyui.css` (`Look.DAISYUI_CSS`), which the look renders,
+  gives the components daisyUI's corners and shadows, draws with daisyUI's custom properties the
+  parts daisyUI has no class for, such as the options of a drop-down and the selected tab, and gives
+  daisyUI the colors of any theme of the components but the Bootstrap ones, so the page's own
+  daisyUI markup matches. A look can be made of daisyUI's and another, as
+  `Look.DAISYUI.with(LookAspect.COLOR, Look.ANTILIA)`. Bootstrap and daisyUI name their components
+  alike, `btn`, `table` or `card`, so a page has the style sheet of one of them only.
 
 **Upgrading:**
 
@@ -147,6 +160,9 @@ What 11.0.0-RC6 has, and:
 - An application with a rich text editor, CKEditor or their views adds the OWASP Java HTML
   Sanitizer, `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` (20261011.1),
   which no longer comes with the components (#149).
+- A `LookChoice` made without a list of looks offers every `Look`, daisyUI's now too, whose style
+  sheet the page may lack: give it the looks to offer, as
+  `new LookChoice(id, model, List.of(Look.ANTILIA, Look.BOOTSTRAP))`.
 
 ## 11.0.0-RC6 (2026-11-19)
 

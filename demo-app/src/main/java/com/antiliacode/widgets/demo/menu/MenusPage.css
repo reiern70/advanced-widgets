@@ -24,7 +24,7 @@
 
 .menus-demo section {
 	padding: 16px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: var(--radius);
 	background: var(--surface);
 }
@@ -43,7 +43,7 @@
 .menus-demo__window {
 	display: grid;
 	gap: 0;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: var(--radius);
 	overflow: clip;
 }

@@ -151,7 +151,7 @@
 	position: sticky;
 	top: 16px;
 	padding: 12px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: var(--radius);
 	background: var(--surface);
 	box-shadow: 0 10px 30px rgba(28, 35, 51, .08);
@@ -162,7 +162,7 @@
 	width: 100%;
 	height: auto;
 	aspect-ratio: 16 / 10;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: 6px;
 	object-fit: cover;
 	object-position: top left;

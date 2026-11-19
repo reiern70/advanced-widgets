@@ -180,6 +180,6 @@ export type { FilePickerDesign, FilePickerOptions, FilePickerTexts, GuardedReque
 export { BUTTON_BUSY_CLASS, BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses, guardBusyButtons, isButtonBusy,
 	setButtonBusy } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';
-export { ANTILIA_LOOK, BOOTSTRAP_LOOK, composeLook, LOOK_ASPECTS, LOOK_ATTRIBUTE, LOOK_PARTS,
-	lookClasses, lookNamed, lookOf, partClasses, registerLook, toggleParts } from './look.js';
+export { ANTILIA_LOOK, BOOTSTRAP_LOOK, composeLook, DAISYUI_LOOK, LOOK_ASPECTS, LOOK_ATTRIBUTE,
+	LOOK_PARTS, lookClasses, lookNamed, lookOf, partClasses, registerLook, toggleParts } from './look.js';
 export type { Look, LookAspect, LookPart } from './look.js';

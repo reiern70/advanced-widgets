@@ -15,7 +15,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BOOTSTRAP_LOOK, Button, LOOK_CONTEXT } from '../src/index.js';
+import { BOOTSTRAP_LOOK, Button, DAISYUI_LOOK, LOOK_CONTEXT } from '../src/index.js';
 import LookedButtons from './LookedButtons.svelte';
 
 afterEach(cleanup);
@@ -60,5 +60,17 @@ describe('Button', () => {
 		const mounted = render(Button, { props: { label: 'Go' },
 			context: new Map([[LOOK_CONTEXT, BOOTSTRAP_LOOK]]) });
 		expect(mounted.container.querySelector('button')!.className).toBe('btn btn-secondary');
+	});
+
+	it('has the classes of daisyUI in its look', () => {
+		const { container } = render(LookedButtons, { look: 'daisyui' });
+
+		const [save, undo] = Array.from(container.querySelectorAll('button'));
+		expect(save.className).toBe('btn btn-primary btn-sm');
+		expect(undo.className).toBe('btn btn-ghost btn-square');
+
+		const mounted = render(Button, { props: { label: 'Go', variant: 'danger' },
+			context: new Map([[LOOK_CONTEXT, DAISYUI_LOOK]]) });
+		expect(mounted.container.querySelector('button')!.className).toBe('btn btn-error');
 	});
 });

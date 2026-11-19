@@ -60,7 +60,7 @@
 
 .desktop-demo__keys kbd {
 	padding: 0 4px;
-	border: 1px solid var(--antilia-theme-border, var(--border));
+	border: 1px solid var(--antilia-theme-border, var(--border-color));
 	border-radius: 3px;
 	font: inherit;
 	font-size: 0.9em;
