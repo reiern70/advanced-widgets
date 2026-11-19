@@ -16,4 +16,5 @@
 <properties>
 	<entry key="look.antilia">Antilia</entry>
 	<entry key="look.bootstrap">Bootstrap</entry>
+	<entry key="look.daisyui">daisyUI</entry>
 </properties>

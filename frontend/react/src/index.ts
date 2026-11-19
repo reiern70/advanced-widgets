@@ -98,4 +98,4 @@ export type { PopoverButtonProps } from './PopoverButton.js';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button.js';
 export { LookProvider, useLook } from './Look.js';
 export type { Look, LookPart, LookProviderProps } from './Look.js';
-export { BOOTSTRAP_LOOK, buttonClasses, lookOf, registerLook } from '@antilia/core';
+export { BOOTSTRAP_LOOK, buttonClasses, DAISYUI_LOOK, lookOf, registerLook } from '@antilia/core';

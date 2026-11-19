@@ -15,7 +15,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BOOTSTRAP_LOOK, Button, LookProvider } from '../src/index.js';
+import { BOOTSTRAP_LOOK, Button, DAISYUI_LOOK, LookProvider } from '../src/index.js';
 
 afterEach(cleanup);
 
@@ -58,5 +58,19 @@ describe('Button', () => {
 		expect(save.innerHTML).toBe('<span class="ant-button__icon" aria-hidden="true"><svg></svg>' +
 			'</span><span class="ant-button__label">Save</span>');
 		expect(undo.className).toBe('btn btn-link');
+	});
+
+	it('has the classes of daisyUI in its look', () => {
+		const { container } = render(<LookProvider look="daisyui">
+			<Button label="Save" icon={<svg />} variant="primary" size="small" />
+			<LookProvider look={DAISYUI_LOOK}>
+				<Button label="Undo" variant="ghost" iconOnly />
+			</LookProvider>
+		</LookProvider>);
+
+		const [save, undo] = Array.from(container.querySelectorAll('button'));
+		expect(save.className).toBe('btn btn-primary btn-sm');
+		expect(save.querySelector('.ant-button__label')?.textContent).toBe('Save');
+		expect(undo.className).toBe('btn btn-ghost btn-square');
 	});
 });

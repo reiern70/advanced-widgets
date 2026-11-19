@@ -43,6 +43,8 @@ import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.datatable.DatabaseLocator;
 import com.antiliacode.widgets.demo.error.NotFoundPage;
 import com.antiliacode.widgets.demo.register.RegisterPage;
+import com.antiliacode.widgets.theme.Look;
+import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.theme.Theme;
 
 /**
@@ -53,7 +55,7 @@ class ResourceAuthorizationTest
 {
 	/** What the pages load from the application: its resources, mounted or of packages. */
 	private static final Pattern LOADED = Pattern
-		.compile("(?:href|src)=\"(?:\\./|\\.\\./)*((?:wicket/resource|bootstrap|fontawesome)/[^\"]+)\"");
+		.compile("(?:href|src)=\"(?:\\./|\\.\\./)*((?:wicket/resource|bootstrap|daisyui|fontawesome)/[^\"]+)\"");
 
 	private WicketTester tester;
 
@@ -159,6 +161,31 @@ class ResourceAuthorizationTest
 		{
 			assertEquals(200, status("GET", url), url);
 		}
+		assertFalse(DemoSession.get().isSignedIn());
+	}
+
+	@Test
+	void thePublicPagesInTheDaisyUiLookLoadItsStyleSheet()
+	{
+		tester.startPage(HomePage.class);
+		Looks.setSessionLook(Look.DAISYUI);
+
+		tester.startPage(SignInPage.class);
+		List<String> loaded = new ArrayList<>();
+		Matcher matcher = LOADED.matcher(tester.getLastResponseAsString());
+		while (matcher.find())
+		{
+			loaded.add(matcher.group(1).replace("&amp;", "&"));
+		}
+		assertTrue(loaded.stream().anyMatch(url -> url.startsWith("daisyui/")), loaded.toString());
+		for (String url : loaded)
+		{
+			assertEquals(200, status("GET", url), url);
+		}
+		// another version, or another file, is none of the web jar's
+		assertEquals(404, status("GET", "daisyui/0.0.1/daisyui.css"));
+		assertEquals(404, status("GET", loaded.stream().filter(url -> url.startsWith("daisyui/"))
+			.findFirst().orElseThrow().replace("daisyui.css", "themes.css")));
 		assertFalse(DemoSession.get().isSignedIn());
 	}
 

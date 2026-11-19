@@ -1,0 +1,725 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * The daisyUI look (Look.DAISYUI): the components drawn by the style sheet of daisyUI 5, the
+ * components of Tailwind CSS, which the page brings: its prebuilt daisyui.css needs no build of
+ * Tailwind, and no script. Every part that has a daisyUI counterpart gets its classes (look.ts has
+ * the table): a button btn btn-primary btn-sm, a dialog's content modal-box, a drop-down's field
+ * select, a table table, a panel card, a notification alert alert-error... next to its own
+ * classes, which its script and its style sheet keep finding it by.
+ *
+ * daisyUI puts its rules in cascade layers, which give way to any rule outside a layer, such as
+ * those of the components' own style sheets. So the components keep the layout of their own, and
+ * this style sheet settles where the two meet: it takes daisyUI's shapes through the look
+ * properties the style sheets of the components read, each falling back to the Antilia look,
+ *
+ *   --antilia-look-radius        the corners of fields, menus, dialogs and the like
+ *   --antilia-look-radius-sm     the corners of small things, such as check boxes and chips
+ *   --antilia-look-shadow        the shadow of what floats over the page, such as a menu
+ *   --antilia-look-shadow-lg     the shadow of dialogs and windows
+ *   --antilia-look-focus-ring    the ring of a field with the focus
+ *
+ * from daisyUI's own, --radius-field, --radius-box, --radius-selector and --depth, and draws with
+ * daisyUI's custom properties the parts whose markup is not the one daisyUI styles, such as the
+ * options of a drop-down, which are no items of a <ul class="menu">, or the selected tab, which
+ * the components mark data-selected.
+ *
+ * The colors stay the theme's: any theme of the components gives daisyUI's colors, --color-primary,
+ * --color-base-100 and the others, those of the theme, so daisyUI's components inside it, the
+ * page's own included, look like the components. The Bootstrap themes, which take their colors from
+ * a Bootstrap on the page, leave daisyUI its own.
+ */
+
+.antilia-look-daisyui,
+.antilia-look-daisyui .antilia-theme {
+	--antilia-look-radius: var(--radius-field, 0.25rem);
+	--antilia-look-radius-sm: min(var(--radius-selector, 0.5rem), 0.25rem);
+	--antilia-look-shadow: 0 10px 15px -3px oklch(0% 0 0 / calc(var(--depth, 1) * 0.1)),
+		0 4px 6px -4px oklch(0% 0 0 / calc(var(--depth, 1) * 0.1));
+	--antilia-look-shadow-lg: 0 25px 50px -12px oklch(0% 0 0 / 0.25);
+	--antilia-look-focus-ring: 0 0 0 2px var(--color-base-100, #ffffff),
+		0 0 0 4px var(--color-base-content, currentColor);
+}
+
+/* daisyUI in the colors of a theme of the components' own */
+
+.antilia-look-daisyui.antilia-theme:not(.antilia-theme-bootstrap, .antilia-theme-bootstrap-dark) {
+	--color-base-100: var(--antilia-theme-surface);
+	--color-base-200: var(--antilia-theme-surface-alt);
+	--color-base-300: var(--antilia-theme-hover);
+	--color-base-content: var(--antilia-theme-text);
+	--color-primary: var(--antilia-theme-primary);
+	--color-primary-content: var(--antilia-theme-on-primary);
+	--color-secondary: var(--antilia-theme-primary-dark);
+	--color-secondary-content: var(--antilia-theme-on-primary);
+	--color-accent: var(--antilia-theme-accent);
+	--color-accent-content: var(--antilia-theme-surface);
+	--color-neutral: var(--antilia-theme-text);
+	--color-neutral-content: var(--antilia-theme-surface);
+	--color-info: var(--antilia-theme-info);
+	--color-info-content: var(--antilia-theme-surface);
+	--color-success: var(--antilia-theme-success);
+	--color-success-content: var(--antilia-theme-surface);
+	--color-warning: var(--antilia-theme-warning);
+	--color-warning-content: var(--antilia-theme-surface);
+	--color-error: var(--antilia-theme-error);
+	--color-error-content: var(--antilia-theme-surface);
+	color-scheme: var(--antilia-theme-color-scheme);
+}
+
+/*
+ * Looks made of both (CompoundLook): daisyUI's btn in the colors of Antilia's button classes, and
+ * Antilia's button in the colors of daisyUI's, each through the custom properties of the other. A
+ * secondary button of Antilia has no class of its own, its colors are those of every button.
+ */
+.antilia-look-daisyui .btn.ant-button--secondary {
+	--ant-button-bg: var(--antilia-theme-surface, #ffffff);
+	--ant-button-fg: var(--antilia-theme-text, #2b1d12);
+	--ant-button-border: var(--antilia-theme-border, #c4c9d4);
+	--ant-button-hover: var(--antilia-theme-hover, #eef0f4);
+}
+
+.antilia-look-daisyui .btn:is(.ant-button--primary, .ant-button--secondary, .ant-button--ghost,
+	.ant-button--danger) {
+	--btn-bg: var(--ant-button-bg);
+	--btn-fg: var(--ant-button-fg);
+	--btn-border: var(--ant-button-border);
+	color: var(--ant-button-fg);
+}
+
+.antilia-look-daisyui .btn:is(.ant-button--primary, .ant-button--secondary, .ant-button--ghost,
+	.ant-button--danger):hover {
+	--btn-bg: var(--ant-button-hover);
+}
+
+.antilia-look-daisyui .ant-button:is(.btn-primary, .btn-error) {
+	--ant-button-bg: var(--btn-color);
+	--ant-button-fg: var(--btn-fg);
+	--ant-button-border: color-mix(in oklab, var(--btn-color), #000 calc(var(--depth, 1) * 5%));
+	--ant-button-hover: color-mix(in oklab, var(--btn-color), #000 7%);
+}
+
+.antilia-look-daisyui .ant-button.btn-ghost {
+	--ant-button-bg: transparent;
+	--ant-button-fg: var(--color-base-content);
+	--ant-button-border: transparent;
+	--ant-button-hover: var(--color-base-200);
+}
+
+/*
+ * The dialogs: the content of a dialog is daisyUI's modal-box, which daisyUI shows only in an
+ * open .modal around it, which a dialog of the components has not; the dialog keeps its own size.
+ * The header is no band of color, but the title of daisyUI's dialogs, the close button a small
+ * round ghost button, and the buttons of the footer daisyUI's modal-action.
+ */
+.antilia-look-daisyui .dialog-theme-default .modal-dialog {
+	border-color: transparent;
+	border-radius: var(--radius-box, 0.5rem);
+}
+
+.antilia-look-daisyui .dialog-theme-default .modal-dialog .modal-dialog-content.modal-box {
+	width: auto;
+	max-width: 80vw;
+	max-height: 80vh;
+	padding: 0;
+	border-radius: inherit;
+	opacity: 1;
+	box-shadow: none;
+	scale: 1;
+}
+
+.antilia-look-daisyui .dialog-theme-default .modal-dialog .modal-dialog-header {
+	padding: 1.25rem 1rem 0.25rem 1.5rem;
+	background: transparent;
+	color: inherit;
+	font-size: 1.125rem;
+	font-weight: 700;
+}
+
+.antilia-look-daisyui .dialog-theme-default .modal-dialog .modal-dialog-close.btn {
+	margin: 0;
+	padding: 0;
+	font-size: 1rem;
+	font-weight: 400;
+	opacity: 1;
+}
+
+.antilia-look-daisyui .dialog-theme-default .modal-dialog .modal-dialog-body {
+	padding: 0.75rem 1.5rem;
+}
+
+.antilia-look-daisyui .dialog-theme-default .modal-dialog .modal-dialog-footer.modal-action {
+	margin: 0;
+	padding: 0.75rem 1.5rem 1.5rem;
+	border: 0;
+	background: transparent;
+}
+
+/* the confirmation over the rows of a table, a modal-box too */
+.antilia-look-daisyui .ant-data-table-overlay-window.modal-box {
+	width: auto;
+	max-width: 90%;
+	opacity: 1;
+	scale: 1;
+}
+
+.antilia-look-daisyui .ant-data-table-overlay-buttons.modal-action {
+	margin-top: 1rem;
+}
+
+/*
+ * The fields: a drop-down's button is daisyUI's select, the field of a date picker and of an
+ * autocomplete its input, around their text, as daisyUI's input wraps an <input> and its icons.
+ * They keep the room of their own text, and grow with the chips of an autocomplete.
+ */
+.antilia-look-daisyui .antilia-dropdown-toggle.select {
+	width: 100%;
+	height: auto;
+	min-height: calc(var(--size-field, 0.25rem) * 10);
+	padding-inline: 0.75rem;
+	font-size: 0.875rem;
+}
+
+.antilia-look-daisyui .antilia-datepicker-field.input {
+	align-items: center;
+	gap: 0.25rem;
+	width: 100%;
+	height: auto;
+	min-height: calc(var(--size-field, 0.25rem) * 10);
+	padding: 0 0.25rem 0 0.75rem;
+}
+
+.antilia-look-daisyui .antilia-datepicker-field.input > .antilia-datepicker-text {
+	padding: 0;
+}
+
+.antilia-look-daisyui .antilia-datepicker-toggle.btn {
+	--fontsize: 1rem;
+	align-self: center;
+	border: 0;
+	border-radius: var(--radius-field, 0.25rem);
+}
+
+.antilia-look-daisyui .antilia-autocomplete-field.input {
+	width: 100%;
+	height: auto;
+	min-height: calc(var(--size-field, 0.25rem) * 10);
+	padding: 0.25rem 0.75rem;
+}
+
+/* the chips of the values an autocomplete picked, daisyUI's badges, with their corners */
+.antilia-look-daisyui .antilia-chip.badge {
+	height: auto;
+	border-radius: var(--radius-selector, 0.5rem);
+}
+
+/* the fields of a popup and of a palette as wide as their place, not daisyUI's 20rem */
+.antilia-look-daisyui :is(.antilia-dropdown-filter, .antilia-palette-filter,
+	.antilia-desktop-prompt-input, .antilia-rich-text-form-input).input {
+	width: 100%;
+}
+
+/*
+ * What pops up, the lists of the drop-downs and the autocompletes, the calendar of a date picker,
+ * the menus of a desktop, of a table's columns and of a rich text editor: a box of daisyUI, on
+ * the base color with its corners and shadow. Their items are drawn as those of daisyUI's menu,
+ * which wants them <li>s of a <ul class="menu">: the one under the pointer or the keys tinted.
+ */
+.antilia-look-daisyui :is(.antilia-dropdown-menu, .antilia-autocomplete-menu,
+	.antilia-datepicker-popup, .antilia-desktop-menu, .ant-data-table-column-chooser-menu,
+	.antilia-rich-text-menu).rounded-box {
+	border-color: var(--color-base-300, transparent);
+	border-radius: var(--radius-box, 0.5rem);
+}
+
+.antilia-look-daisyui :is(.antilia-dropdown-option, .antilia-autocomplete-option,
+	.antilia-desktop-menu-item, .antilia-rich-text-menu-item) {
+	padding: 0.375rem 0.75rem;
+	border-radius: var(--radius-field, 0.25rem);
+	font-size: 0.875rem;
+}
+
+.antilia-look-daisyui :is(.antilia-dropdown-option, .antilia-autocomplete-option,
+	.antilia-desktop-menu-item, .antilia-rich-text-menu-item):hover,
+.antilia-look-daisyui :is(.antilia-dropdown-active, .antilia-autocomplete-active) {
+	background-color: color-mix(in oklab, var(--color-base-content) 10%, transparent);
+	color: inherit;
+}
+
+/* the label of a group of options and the heading of a group of a desktop's menu, menu-titles */
+.antilia-look-daisyui :is(.antilia-dropdown-group-label, .antilia-desktop-menu-group-heading).menu-title {
+	padding: 0.5rem 0.75rem 0.25rem;
+	font-size: 0.75rem;
+}
+
+/*
+ * The date picker: its days, months and years small ghost buttons, the one chosen in the primary
+ * color, as daisyUI's calendars show it
+ */
+.antilia-look-daisyui .antilia-datepicker-popup .btn {
+	--fontsize: 0.8125rem;
+	font-weight: 500;
+}
+
+/* the buttons below the calendar ghost buttons too, not pills */
+.antilia-look-daisyui .antilia-datepicker-footer .btn {
+	padding-inline: 0.75rem;
+	border-color: transparent;
+	border-radius: var(--radius-field, 0.25rem);
+	font-size: var(--fontsize, 0.875rem);
+}
+
+.antilia-look-daisyui .antilia-datepicker-popup [aria-pressed="true"].btn,
+.antilia-look-daisyui .antilia-datepicker-popup [aria-selected="true"] > .btn {
+	--btn-bg: var(--color-primary);
+	--btn-border: var(--color-primary);
+	--btn-fg: var(--color-primary-content);
+	color: var(--color-primary-content);
+}
+
+/*
+ * The tables: daisyUI's table, its check boxes daisyUI's, small, in the middle of their cells;
+ * Wicket's paging navigator a join of small buttons, the page shown in the primary color, the
+ * links leading nowhere, such as the first page from it, faded
+ */
+.antilia-look-daisyui .ant-data-table .checkbox {
+	margin: 0;
+	vertical-align: middle;
+}
+
+.antilia-look-daisyui table.ant-data-table .ant-data-table-selection {
+	padding-inline: 0.35rem;
+	overflow: visible;
+	text-overflow: clip;
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .join {
+	gap: 0;
+	margin: 0;
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .join-item.btn {
+	min-width: var(--size);
+	margin: 0 0 0 calc(-1 * var(--border, 1px));
+	padding-inline: 0.5rem;
+	border: var(--border, 1px) solid var(--btn-border);
+	border-radius: 0;
+	background-color: var(--btn-bg);
+	color: var(--btn-fg);
+	font-weight: 500;
+	text-decoration: none;
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .join-item.btn:first-child {
+	margin-left: 0;
+	border-radius: var(--radius-field, 0.25rem) 0 0 var(--radius-field, 0.25rem);
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .join-item.btn:last-child {
+	border-radius: 0 var(--radius-field, 0.25rem) var(--radius-field, 0.25rem) 0;
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .goto .join-item.btn:not([href]) {
+	--btn-bg: var(--color-primary);
+	--btn-border: var(--color-primary);
+	--btn-fg: var(--color-primary-content);
+	position: relative;
+	z-index: 1;
+}
+
+.antilia-look-daisyui .ant-data-table-paging .navigator .join-item.btn:not([href]):not(.goto *) {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/*
+ * The progress bars, as daisyUI's progress: rounded, on a track tinted with the color of the bar,
+ * which is the primary color and plain; an indeterminate bar keeps moving
+ */
+.antilia-look-daisyui .antilia-progress-bar:has(> .progress) {
+	border: 0;
+	border-radius: var(--radius-box, 0.5rem);
+	background: color-mix(in oklab, var(--color-primary) 20%, transparent);
+}
+
+.antilia-look-daisyui .antilia-progress-bar > .antilia-progress-bar-value.progress {
+	height: 100%;
+	border: 0;
+	border-radius: inherit;
+	background-color: transparent;
+}
+
+.antilia-look-daisyui .antilia-progress-bar > .progress:not(:indeterminate)::-webkit-progress-value {
+	background: var(--color-primary);
+	animation: none;
+}
+
+.antilia-look-daisyui .antilia-progress-bar > .progress:not(:indeterminate)::-moz-progress-bar {
+	background: var(--color-primary);
+	animation: none;
+}
+
+.antilia-look-daisyui .antilia-progress-bar:has(> .progress) > .antilia-progress-bar-label {
+	background: transparent;
+	color: var(--color-base-content);
+}
+
+/*
+ * The notifications, daisyUI's soft alerts: tinted with the color of their type, their text in it;
+ * a note, of no type, in the color of the text
+ */
+.antilia-look-daisyui .antilia-notification.alert {
+	display: block;
+	padding: 0;
+	border: var(--border, 1px) solid var(--alert-border-color, color-mix(in oklab,
+		var(--color-base-content) 10%, var(--color-base-100)));
+	border-radius: var(--radius-box, 0.5rem);
+	background: color-mix(in oklab, var(--alert-color, var(--color-base-content)) 8%,
+		var(--color-base-100));
+	color: var(--alert-color, var(--color-base-content));
+	font-size: 0.875rem;
+}
+
+.antilia-look-daisyui .antilia-notification.alert .antilia-notification-header {
+	background: transparent;
+	color: inherit;
+}
+
+.antilia-look-daisyui .antilia-notification.alert .antilia-notification-body {
+	color: inherit;
+}
+
+.antilia-look-daisyui .antilia-notification.alert .antilia-notification-countdown {
+	background: currentColor;
+	opacity: 0.35;
+}
+
+/* the small round close buttons of daisyUI: in the notifications, the panels, the tabs, the popovers */
+.antilia-look-daisyui :is(.antilia-notification-close, .antilia-floating-panel-close,
+	.antilia-tab-close, .antilia-popover-close).btn-circle {
+	flex: none;
+	border-radius: 50%;
+	opacity: 1;
+}
+
+/*
+ * The panels, daisyUI's cards, with the corners of its boxes, on its base color; their border is
+ * that of the fields, which daisyUI's card-border, in the color of the page around, would hide
+ */
+.antilia-look-daisyui :is(.antilia-collapsible-frame, .antilia-floating-panel,
+	.antilia-palette-side, .antilia-window, .antilia-wizard).card {
+	border-radius: var(--radius-box, 0.5rem);
+}
+
+.antilia-look-daisyui :is(.antilia-collapsible-frame, .antilia-floating-panel,
+	.antilia-palette-side, .antilia-window, .antilia-wizard).card-border {
+	border-color: var(--antilia-theme-border, var(--color-base-300));
+}
+
+.antilia-look-daisyui .antilia-wizard.card {
+	overflow: hidden;
+	background-color: var(--color-base-100);
+}
+
+.antilia-look-daisyui .antilia-collapsible-body.card-body {
+	display: block;
+}
+
+/*
+ * Tabs: in the designs tabs, pills and underline their list is daisyUI's tabs, tabs-lift,
+ * tabs-box and tabs-border, each tab daisyUI's tab; the selected one, marked data-selected, is
+ * drawn as daisyUI's active tab. Too many tabs scroll, rather than wrap, as without a look.
+ */
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs {
+	flex-wrap: nowrap;
+	gap: 0;
+	font-size: 0.875rem;
+}
+
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs > .antilia-tab.tab {
+	flex-wrap: nowrap;
+	padding: 0;
+	color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+}
+
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs > .antilia-tab.tab:hover,
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs > .antilia-tab.tab[data-selected] {
+	color: var(--color-base-content);
+}
+
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs > .antilia-tab > .antilia-tab-button {
+	padding: 0 0.75rem;
+	font-weight: inherit;
+}
+
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs >
+	.antilia-tab:has(> .antilia-tab-actions, > .antilia-tab-close) > .antilia-tab-button {
+	padding-inline-end: 0.25rem;
+}
+
+/* tabs: daisyUI's tabs-lift, the selected tab lifted over the line, on the base color */
+
+.antilia-look-daisyui .antilia-tabs-tabs > .antilia-tabs-list.tabs-lift > .antilia-tab.tab:not([data-selected]):hover {
+	background: none;
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list.tabs-lift {
+	border-bottom-color: var(--color-base-300);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list.tabs-lift > .antilia-tab.tab {
+	border-radius: var(--radius-field, 0.25rem) var(--radius-field, 0.25rem) 0 0;
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list.tabs-lift {
+	border-right-color: var(--color-base-300);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list.tabs-lift > .antilia-tab.tab {
+	border-radius: var(--radius-field, 0.25rem) 0 0 var(--radius-field, 0.25rem);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs > .antilia-tabs-list.tabs-lift > .antilia-tab.tab[data-selected] {
+	border-color: var(--color-base-300);
+	background: var(--color-base-100);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-horizontal > .antilia-tabs-list.tabs-lift > .antilia-tab.tab[data-selected] {
+	border-bottom-color: var(--color-base-100);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-vertical > .antilia-tabs-list.tabs-lift > .antilia-tab.tab[data-selected] {
+	border-right-color: var(--color-base-100);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs:has(> .antilia-tabs-list.tabs-lift) > .antilia-tabs-panels {
+	border-color: var(--color-base-300);
+	background: var(--color-base-100);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-horizontal:has(> .antilia-tabs-list.tabs-lift) > .antilia-tabs-panels {
+	border-radius: 0 0 var(--radius-box, 0.5rem) var(--radius-box, 0.5rem);
+}
+
+.antilia-look-daisyui .antilia-tabs-tabs.antilia-tabs-vertical:has(> .antilia-tabs-list.tabs-lift) > .antilia-tabs-panels {
+	border-radius: 0 var(--radius-box, 0.5rem) var(--radius-box, 0.5rem) 0;
+}
+
+/* pills: daisyUI's tabs-box, the tabs in a tinted box, the selected one raised on the base color */
+
+.antilia-look-daisyui .antilia-tabs > .antilia-tabs-list.tabs-box {
+	align-self: flex-start;
+	max-width: 100%;
+	padding: 0.25rem;
+	border-radius: calc(var(--radius-field, 0.25rem) + min(0.25rem, var(--radius-field, 0.25rem)));
+	background-color: var(--color-base-200);
+	box-shadow: 0 -0.5px oklch(100% 0 0 / calc(var(--depth, 1) * 0.1)) inset,
+		0 0.5px oklch(0% 0 0 / calc(var(--depth, 1) * 0.05)) inset;
+}
+
+.antilia-look-daisyui .antilia-tabs-vertical > .antilia-tabs-list.tabs-box {
+	align-self: flex-start;
+}
+
+.antilia-look-daisyui .antilia-tabs-pills > .antilia-tabs-list.tabs-box > .antilia-tab.tab {
+	height: calc(var(--tab-height, 2.5rem) - 0.5rem);
+	border-radius: var(--radius-field, 0.25rem);
+}
+
+.antilia-look-daisyui .antilia-tabs-pills > .antilia-tabs-list.tabs-box > .antilia-tab.tab:not([data-selected]):hover {
+	background: none;
+}
+
+.antilia-look-daisyui .antilia-tabs-pills > .antilia-tabs-list.tabs-box > .antilia-tab.tab[data-selected] {
+	background-color: var(--color-base-100);
+	color: var(--color-base-content);
+	box-shadow: 0 1px oklch(100% 0 0 / calc(var(--depth, 1) * 0.1)) inset,
+		0 1px 1px -1px color-mix(in oklab, var(--color-neutral) calc(var(--depth, 1) * 50%), #0000),
+		0 1px 6px -4px color-mix(in oklab, var(--color-neutral) calc(var(--depth, 1) * 100%), #0000);
+}
+
+.antilia-look-daisyui .antilia-tabs-pills > .antilia-tabs-list.tabs-box > .antilia-tab[data-selected]
+	:is(.antilia-tab-actions button, .antilia-tab-actions a, .antilia-tab-close):hover {
+	background: var(--color-base-200);
+}
+
+/* underline: daisyUI's tabs-border, a bar under the selected tab in the color of its text */
+
+.antilia-look-daisyui .antilia-tabs-underline > .antilia-tabs-list.tabs-border {
+	border-color: var(--color-base-300);
+}
+
+.antilia-look-daisyui .antilia-tabs-underline > .antilia-tabs-list.tabs-border > .antilia-tab.tab:not([data-selected]):hover {
+	border-color: var(--color-base-300);
+}
+
+.antilia-look-daisyui .antilia-tabs-underline > .antilia-tabs-list.tabs-border > .antilia-tab.tab[data-selected] {
+	border-color: currentColor;
+}
+
+/*
+ * The tabs of Wicket's TabbedPanel: the row is daisyUI's tabs; its ul gives way to the li, whose
+ * links, which the panel makes anew each time, look as daisyUI's tabs, the selected one as the
+ * active one
+ */
+.antilia-look-daisyui .tab-row.tabs > ul {
+	display: contents;
+}
+
+.antilia-look-daisyui .tab-row.tabs li {
+	list-style: none;
+}
+
+.antilia-look-daisyui .tab-row.tabs li > a {
+	display: inline-flex;
+	align-items: center;
+	height: calc(var(--size-field, 0.25rem) * 10);
+	padding: 0 0.75rem;
+	border: var(--border, 1px) solid transparent;
+	background: none;
+	color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+	font-size: 0.875rem;
+	font-weight: 400;
+	text-decoration: none;
+}
+
+.antilia-look-daisyui .tab-row.tabs li > a:hover,
+.antilia-look-daisyui .tab-row.tabs li.selected > a {
+	color: var(--color-base-content);
+}
+
+.antilia-look-daisyui .tab-row.tabs-lift {
+	border-bottom: var(--border, 1px) solid var(--color-base-300);
+}
+
+.antilia-look-daisyui .tab-row.tabs-lift li > a {
+	margin-bottom: calc(-1 * var(--border, 1px));
+	border-radius: var(--radius-field, 0.25rem) var(--radius-field, 0.25rem) 0 0;
+}
+
+.antilia-look-daisyui .tab-row.tabs-lift li.selected > a {
+	border-color: var(--color-base-300) var(--color-base-300) var(--color-base-100);
+	background-color: var(--color-base-100);
+}
+
+.antilia-look-daisyui .tab-row.tabs-box {
+	display: inline-flex;
+	padding: 0.25rem;
+	border-radius: calc(var(--radius-field, 0.25rem) + min(0.25rem, var(--radius-field, 0.25rem)));
+	background-color: var(--color-base-200);
+}
+
+.antilia-look-daisyui .tab-row.tabs-box li > a {
+	height: calc(var(--size-field, 0.25rem) * 8);
+	border-radius: var(--radius-field, 0.25rem);
+}
+
+.antilia-look-daisyui .tab-row.tabs-box li.selected > a {
+	background-color: var(--color-base-100);
+	box-shadow: 0 1px 1px -1px color-mix(in oklab, var(--color-neutral) calc(var(--depth, 1) * 50%), #0000),
+		0 1px 6px -4px color-mix(in oklab, var(--color-neutral) calc(var(--depth, 1) * 100%), #0000);
+}
+
+.antilia-look-daisyui .tab-row.tabs-border li > a {
+	border-width: 0 0 3px;
+	border-radius: 0;
+}
+
+.antilia-look-daisyui .tab-row.tabs-border li.selected > a {
+	border-bottom-color: currentColor;
+}
+
+/*
+ * The popovers: the card, the default design, with the corners and the shadow of daisyUI's boxes.
+ * A popover carries its look, antilia-look-daisyui, being in the body of the page.
+ */
+.antilia-popover-card.antilia-look-daisyui {
+	--antilia-popover-radius: var(--radius-box, 0.5rem);
+	--antilia-popover-shadow: var(--antilia-look-shadow);
+	font-size: 0.875rem;
+}
+
+/*
+ * Menus: the bar is daisyUI's menu, which lays its items down a column; a bar across lays them in
+ * a row. A submenu is a menu too, which daisyUI would indent under its item: one that pops up
+ * floats as a box of daisyUI instead, while one opening in place keeps the line on its side.
+ */
+.antilia-look-daisyui .antilia-menu-horizontal > .antilia-menu-list.menu {
+	flex-direction: row;
+	width: auto;
+}
+
+.antilia-look-daisyui .antilia-menu-vertical > .antilia-menu-list.menu {
+	width: auto;
+}
+
+.antilia-look-daisyui .antilia-menu-list.menu.rounded-box {
+	padding: 0.25rem;
+}
+
+.antilia-look-daisyui .antilia-menu:not(.antilia-menu-inline) .antilia-menu-submenu.menu {
+	padding: 0.5rem;
+	border-color: var(--color-base-300, transparent);
+	border-radius: var(--radius-box, 0.5rem);
+}
+
+.antilia-look-daisyui .antilia-menu:not(.antilia-menu-inline) .antilia-menu-submenu.menu::before {
+	content: none;
+}
+
+.antilia-look-daisyui .antilia-menu-inline .antilia-menu-submenu.menu {
+	margin-inline-start: 1rem;
+	padding-inline-start: 0.5rem;
+	background: none;
+}
+
+/*
+ * Breadcrumbs: the list is daisyUI's breadcrumbs, the links its links; the separator stays the one
+ * of the breadcrumb's design, not daisyUI's chevron
+ */
+.antilia-look-daisyui .antilia-breadcrumb.breadcrumbs {
+	margin: 0;
+	padding-block: 0;
+	overflow: visible;
+	font-size: 0.875rem;
+}
+
+.antilia-look-daisyui .breadcrumbs .antilia-breadcrumb-item + .antilia-breadcrumb-item::before {
+	width: auto;
+	height: auto;
+	margin: 0;
+	border: 0;
+	rotate: none;
+	background: none;
+}
+
+/*
+ * Code and rich text editors: daisyUI's textarea, as wide as their place, which their editor
+ * fills without the padding of a field, above the bar resizing them; the focus in the text rings
+ * them as daisyUI's fields
+ */
+.antilia-look-daisyui :is(.antilia-code-editor, .antilia-rich-text-editor).textarea {
+	width: 100%;
+	min-height: 0;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.antilia-look-daisyui .antilia-code-editor.textarea {
+	padding: 0 var(--antilia-code-editor-bar-right, 0) var(--antilia-code-editor-bar-bottom, 0) 0;
+}
+
+.antilia-look-daisyui .antilia-rich-text-editor.textarea {
+	padding: 0 var(--antilia-rich-text-bar-right, 0) var(--antilia-rich-text-bar-bottom, 0) 0;
+}
