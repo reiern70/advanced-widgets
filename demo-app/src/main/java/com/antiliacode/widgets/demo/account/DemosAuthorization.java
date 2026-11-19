@@ -45,7 +45,7 @@ import com.antiliacode.widgets.demo.admin.AccessesApiResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
 import com.antiliacode.widgets.demo.admin.UsersApiResource;
 import com.antiliacode.widgets.demo.datatable.FontAwesomeResourceReference;
-import com.antiliacode.widgets.demo.theme.BootstrapResourceReference;
+import com.antiliacode.widgets.demo.theme.WebJarStyleSheetReference;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -62,8 +62,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * React and Svelte demos at {@code /api/...}, follow the demos: only visitors who signed in get
  * them, unless the demos are open. A visitor who did not is answered 403. The public pages need
  * a few of them, which everybody gets: the scripts, style sheets and images of the components and
- * the pages (package resources), the style sheets of Bootstrap and Font Awesome, the visitor's
- * clock ({@link AccessTimeResource}) and the websocket of the home page ({@link LiveResource}).
+ * the pages (package resources), the style sheets of Bootstrap, daisyUI and Font Awesome, the
+ * visitor's clock ({@link AccessTimeResource}) and the websocket of the home page
+ * ({@link LiveResource}).
  * So does the API of the administration ({@link UsersApiResource}, {@link AccessesApiResource}),
  * which lets in administrators itself, and every resource a component of a page serves, such as
  * the image of a {@link Captcha}: the page was let in already.
@@ -123,7 +124,7 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 		{
 			ResourceReference served = reference.getResourceReference();
 			return served instanceof PackageResourceReference ||
-				served instanceof BootstrapResourceReference ||
+				served instanceof WebJarStyleSheetReference ||
 				served instanceof FontAwesomeResourceReference;
 		}
 		return false;

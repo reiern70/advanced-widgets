@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.demo;
 
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -45,6 +46,8 @@ import com.antiliacode.widgets.demo.register.RegisterPage;
 import com.antiliacode.widgets.dropdown.Dropdown;
 import com.antiliacode.widgets.dropdown.DropdownBehavior;
 import com.antiliacode.widgets.demo.theme.BootstrapResourceReference;
+import com.antiliacode.widgets.demo.theme.DaisyUiResourceReference;
+import com.antiliacode.widgets.demo.theme.WebJarStyleSheetReference;
 import com.antiliacode.widgets.notification.Notifications;
 import com.antiliacode.widgets.theme.ILook;
 import com.antiliacode.widgets.theme.Look;
@@ -67,7 +70,9 @@ import com.antiliacode.widgets.veil.PageLoadingVeilBehavior;
  * veiled ({@link PageLoadingVeilBehavior}). Nothing of it keeps a page, so the public pages are
  * stateless. The whole page is in the session's {@link Theme}, its own colors
  * included, and in its look; in the Bootstrap look or a Bootstrap theme the page has the style
- * sheet of Bootstrap, never its script.
+ * sheet of Bootstrap, never its script, and in the daisyUI look that of daisyUI. Both name their
+ * components alike, btn or table for example, so a page has only one of them: in the daisyUI look
+ * a Bootstrap theme finds no Bootstrap, and the components take the colors they fall back to.
  */
 public abstract class BasePage extends WebPage
 {
@@ -87,7 +92,8 @@ public abstract class BasePage extends WebPage
 	 * sizes.
 	 */
 	private static final List<ILook> LOOKS = List.of(Look.ANTILIA, Look.BOOTSTRAP,
-		Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA));
+		Look.BOOTSTRAP.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE, Look.ANTILIA),
+		Look.DAISYUI);
 
 	private static final List<Locale> LANGUAGES = List.of(Locale.ENGLISH, Locale.GERMAN,
 		Locale.of("es"));
@@ -229,7 +235,7 @@ public abstract class BasePage extends WebPage
 			@Override
 			protected void onLookChanged(AjaxRequestTarget target)
 			{
-				// anew, as the Bootstrap look brings a style sheet the page may lack
+				// anew, as the looks of Bootstrap and daisyUI bring style sheets the page may lack
 				reload();
 			}
 		};
@@ -391,14 +397,33 @@ public abstract class BasePage extends WebPage
 		};
 	}
 
+	/**
+	 * @return the style sheets of the frameworks of CSS the page has: Bootstrap's in the Bootstrap
+	 *         look or a Bootstrap theme, daisyUI's in the daisyUI look, never both, as they name
+	 *         their components alike
+	 */
+	protected List<WebJarStyleSheetReference> getFrameworks()
+	{
+		List<ILook> looks = Looks.current().getLooks();
+		List<WebJarStyleSheetReference> frameworks = new ArrayList<>();
+		if (looks.contains(Look.DAISYUI))
+		{
+			frameworks.add(DaisyUiResourceReference.INSTANCE);
+		}
+		else if (looks.contains(Look.BOOTSTRAP) || DemoSession.get().getTheme().isBootstrap())
+		{
+			frameworks.add(BootstrapResourceReference.INSTANCE);
+		}
+		return frameworks;
+	}
+
 	@Override
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		if (Looks.current().getLooks().contains(Look.BOOTSTRAP) ||
-			DemoSession.get().getTheme().isBootstrap())
+		for (WebJarStyleSheetReference framework : getFrameworks())
 		{
-			response.render(BootstrapResourceReference.styleSheet());
+			response.render(framework.headerItem());
 		}
 		response.render(CssHeaderItem.forReference(STYLE));
 		AccessTimeResource.renderHead(response);

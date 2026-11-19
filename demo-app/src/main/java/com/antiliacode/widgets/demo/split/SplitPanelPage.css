@@ -20,7 +20,7 @@
 
 .split-demo section {
 	padding: 16px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: var(--radius);
 	background: var(--surface);
 }
@@ -58,7 +58,7 @@
 .split-demo__title {
 	flex: none;
 	padding: 6px 10px;
-	border-bottom: 1px solid var(--antilia-theme-border, var(--border));
+	border-bottom: 1px solid var(--antilia-theme-border, var(--border-color));
 	background: var(--antilia-theme-surface-alt, var(--surface));
 	font-size: 13px;
 	font-weight: 600;

@@ -205,6 +205,69 @@ class LooksTest extends WicketTestCase
 		assertTrue(css.contains("--bs-secondary-color: var(--antilia-theme-muted);"));
 	}
 
+	@Test
+	void theDaisyUiLookPutsItsStyleSheetAndItsClassesOnTheElement()
+	{
+		tester.startPage(new LookedPage(Model.of(Theme.DARK), Model.of(Look.DAISYUI)));
+
+		TagTester themed = tester.getTagByWicketId("themed");
+		assertEquals("box antilia-theme antilia-theme-dark antilia-look-daisyui",
+			themed.getAttribute("class"));
+		assertEquals("daisyui", themed.getAttribute("data-antilia-look"));
+		assertNull(themed.getAttribute("data-bs-theme"), "no mode of Bootstrap's");
+		tester.assertContains("antilia-look-daisyui.*\\.css");
+		tester.assertContainsNot("antilia-look-bootstrap.*\\.css");
+		assertEquals("btn btn-ghost btn-sm", tester.getTagByWicketId("inside").getAttribute("class"));
+	}
+
+	@Test
+	void theDaisyUiLookGivesThePartsTheClassesOfDaisyUi()
+	{
+		assertEquals("daisyui", Look.DAISYUI.getName());
+		assertEquals("btn btn-error btn-square", new ButtonBehavior(Variant.DANGER, Size.MEDIUM)
+			.setIconOnly(true).getCssClasses(Look.DAISYUI));
+		assertEquals("btn", new ButtonBehavior(Variant.SECONDARY, Size.MEDIUM).getCssClasses(
+			Look.DAISYUI), "the neutral button of daisyUI");
+		assertEquals("modal-dialog-content modal-box",
+			Look.DAISYUI.getPartClasses(LookPart.DIALOG_CONTENT));
+		assertEquals("ant-data-table table", Look.DAISYUI.getPartClasses(LookPart.TABLE));
+		assertEquals("antilia-dropdown-toggle select",
+			Look.DAISYUI.getPartClasses(LookPart.DROPDOWN_TOGGLE));
+		assertNull(Look.DAISYUI.getCssClass(LookPart.DIALOG_HEADER), "no header in daisyUI");
+		// every part daisyUI gives classes is one of the table, with those of look.ts
+		Properties table = Look.Table.PROPERTIES;
+		for (String name : table.stringPropertyNames())
+		{
+			if (name.startsWith("daisyui."))
+			{
+				assertTrue(table.containsKey("aspect." + name.substring("daisyui.".length())), name);
+			}
+		}
+
+		ILook look = Look.DAISYUI.with(LookAspect.COLOR, Look.ANTILIA).with(LookAspect.SIZE,
+			Look.ANTILIA);
+		assertEquals("daisyui color:antilia size:antilia", look.getName());
+		assertEquals("btn ant-button--primary ant-button--small", new ButtonBehavior(
+			Variant.PRIMARY, Size.SMALL).getCssClasses(look));
+	}
+
+	@Test
+	void theDaisyUiLookGivesDaisyUiTheColorsOfTheTheme() throws Exception
+	{
+		String css = new String(
+			Look.class.getResourceAsStream("antilia-look-daisyui.css").readAllBytes(), "UTF-8");
+		for (String[] pair : List.of(new String[] { "base-100", "surface" },
+			new String[] { "base-200", "surface-alt" }, new String[] { "base-content", "text" },
+			new String[] { "primary", "primary" }, new String[] { "primary-content", "on-primary" },
+			new String[] { "success", "success" }, new String[] { "error", "error" },
+			new String[] { "warning", "warning" }, new String[] { "info", "info" }))
+		{
+			String mapping = "--color-" + pair[0] + ": var(--antilia-theme-" + pair[1] + ");";
+			assertTrue(css.contains(mapping), mapping);
+		}
+		assertTrue(css.contains("--antilia-look-radius: var(--radius-field"), "daisyUI's corners");
+	}
+
 	public static class LookedPage extends WebPage implements IMarkupResourceStreamProvider
 	{
 		private static final long serialVersionUID = 1L;

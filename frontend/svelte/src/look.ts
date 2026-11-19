@@ -23,11 +23,12 @@ import { ANTILIA_LOOK, lookNamed, type Look } from '@antilia/core';
 export const LOOK_CONTEXT = Symbol('antilia-look');
 
 /**
- * Gives the components a component renders a look, such as Bootstrap's, whose classes their parts
- * then get; without one they are in the Antilia look. Called while the component initializes, as
- * Svelte's setContext.
+ * Gives the components a component renders a look, such as Bootstrap's or daisyUI's, whose classes
+ * their parts then get; without one they are in the Antilia look. Called while the component
+ * initializes, as Svelte's setContext.
  *
- * @param look the look, or its name: 'antilia' or 'bootstrap', or that of a look registered
+ * @param look the look, or its name: 'antilia', 'bootstrap' or 'daisyui', or that of a look
+ *        registered
  * @returns the look
  */
 export function setLook(look: Look | string): Look {

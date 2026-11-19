@@ -151,13 +151,13 @@ for (const [file, path] of STYLES) {
  * part, as aspect.<part>, and the classes the looks give it, as <look>.<part>. tsc has built
  * dist/look.js before.
  */
-const { ANTILIA_LOOK, BOOTSTRAP_LOOK, LOOK_PARTS } = await import(
+const { ANTILIA_LOOK, BOOTSTRAP_LOOK, DAISYUI_LOOK, LOOK_PARTS } = await import(
 	pathToFileURL(join(root, 'dist', 'look.js')).href);
 const looks = join(out, 'com/antiliacode/widgets/theme/antilia-looks.properties');
 await mkdir(dirname(looks), { recursive: true });
 await writeFile(looks, ['# Built from frontend/core/src/look.ts, do not edit.',
 	...Object.entries(LOOK_PARTS).map(([part, aspect]) => `aspect.${part}=${aspect}`),
-	...[ANTILIA_LOOK, BOOTSTRAP_LOOK].flatMap((look) => Object.entries(look.classes)
+	...[ANTILIA_LOOK, BOOTSTRAP_LOOK, DAISYUI_LOOK].flatMap((look) => Object.entries(look.classes)
 		.map(([part, classes]) => `${look.name}.${part}=${classes}`))].join('\n') + '\n');
 
 // the library the rich text editor is based on, as the bundle holds it, for the page to tell

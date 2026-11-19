@@ -60,6 +60,7 @@ import com.antiliacode.widgets.demo.datatable.DynamicDataTablePage;
 import com.antiliacode.widgets.demo.datatable.MasterDetailPage;
 import com.antiliacode.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antiliacode.widgets.demo.theme.BootstrapResourceReference;
+import com.antiliacode.widgets.demo.theme.DaisyUiResourceReference;
 import com.antiliacode.widgets.demo.datatable.UsersRowsResource;
 import com.antiliacode.widgets.demo.data.Accesses;
 import com.antiliacode.widgets.demo.data.Database;
@@ -314,8 +315,8 @@ public class WicketApplication extends WebApplication
 		});
 
 		// allow the application stylesheet (BasePage.css) served from this origin, and the images
-		// Bootstrap's style sheet writes as data: URLs, such as the tick of its check boxes, for
-		// the pages in its look
+		// the style sheets of Bootstrap and daisyUI write as data: URLs, such as the tick of
+		// Bootstrap's check boxes or daisyUI's masks, for the pages in their looks
 		getCspSettings().blocking()
 			.add(CSPDirective.STYLE_SRC, CSPDirectiveSrcValue.SELF)
 			.add(CSPDirective.IMG_SRC, new FixedCSPValue("data:"))
@@ -380,6 +381,7 @@ public class WicketApplication extends WebApplication
 			.setAttachmentMaxSize(RichTextAttachments.MAX_SIZE);
 		mountResource(FontAwesomeResourceReference.PATH, FontAwesomeResourceReference.INSTANCE);
 		mountResource(BootstrapResourceReference.PATH, BootstrapResourceReference.INSTANCE);
+		mountResource(DaisyUiResourceReference.PATH, DaisyUiResourceReference.INSTANCE);
 		mountResource(UsersRowsResource.PATH, UsersRowsResource.REFERENCE);
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);

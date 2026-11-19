@@ -14,6 +14,7 @@
 package com.antiliacode.widgets.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 import org.apache.wicket.Page;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
@@ -105,6 +107,33 @@ class ThemedDemosTest extends WicketTestCase
 	}
 
 	@Test
+	void theDaisyUiLookAppliesToTheWholePageWithTheStyleSheetOfDaisyUi()
+	{
+		tester.startPage(ButtonsPage.class);
+		tester.assertContainsNot("daisyui\\.css");
+
+		choose("settings:look", 3);
+
+		assertEquals(Look.DAISYUI, Looks.getSessionLook());
+		tester.startPage(ButtonsPage.class);
+		TagTester body = TagTester.createTagByName(tester.getLastResponseAsString(), "body");
+		assertTrue(bodyClass().contains("antilia-look-daisyui"), bodyClass());
+		assertEquals("daisyui", body.getAttribute("data-antilia-look"));
+		assertNull(body.getAttribute("data-bs-theme"));
+		tester.assertContains("daisyui/5\\.[0-9.]+/daisyui\\.css");
+		tester.assertContains("antilia-look-daisyui.*\\.css");
+		tester.assertContainsNot("bootstrap\\.min\\.css");
+		tester.assertContains("class=\"btn btn-primary btn-sm\"");
+		tester.assertContainsNot("class=\"ant-button ");
+
+		// a Bootstrap theme brings no Bootstrap into the daisyUI look, which names its classes alike
+		DemoSession.get().setTheme(Theme.BOOTSTRAP);
+		tester.startPage(ButtonsPage.class);
+		tester.assertContains("daisyui\\.css");
+		tester.assertContainsNot("bootstrap\\.min\\.css");
+	}
+
+	@Test
 	void thePublicPagesChooseTheThemeTheLookAndTheLanguageButNotTheScriptOfAjax()
 	{
 		tester.startPage(HomePage.class);
@@ -128,6 +157,39 @@ class ThemedDemosTest extends WicketTestCase
 			"the <body> and the Antilia look");
 		tester.assertContains("class=\"btn btn-primary\"");
 		tester.assertContains("class=\"ant-button ant-button--primary ant-button--medium\"");
+	}
+
+	@Test
+	void theLooksOfDaisyUiSideBySideOnAPageWithDaisyUiAlone()
+	{
+		tester.startPage(LooksPage.class, new PageParameters().set(LooksPage.FRAMEWORK, "daisyui"));
+
+		tester.assertContains("daisyui\\.css");
+		tester.assertContainsNot("bootstrap\\.min\\.css");
+		String response = tester.getLastResponseAsString();
+		assertEquals(2, response.split("data-antilia-look=\"daisyui\"", -1).length - 1,
+			"the daisyUI look and daisyUI's own markup");
+		assertEquals(1, response.split("data-antilia-look=\"daisyui color:antilia size:antilia\"",
+			-1).length - 1, "daisyUI's classes with Antilia's colors and sizes");
+		tester.assertContains("class=\"btn btn-primary join-item\"");
+		tester.assertContains("class=\"ant-button ant-button--primary ant-button--medium\"");
+		// the link of the framework shown is that of the current page
+		List<TagTester> links = TagTester.createTagsByAttribute(response, "class",
+			"looks__framework", false);
+		assertEquals(List.of("Bootstrap", "daisyUI"), links.stream().map(TagTester::getValue)
+			.toList());
+		assertNull(links.get(0).getAttribute("aria-current"));
+		assertEquals("page", links.get(1).getAttribute("aria-current"));
+
+		// without the parameter, the framework of the look of the session
+		Looks.setSessionLook(Look.DAISYUI);
+		tester.startPage(LooksPage.class);
+		tester.assertContains("daisyui\\.css");
+		tester.assertContainsNot("bootstrap\\.min\\.css");
+		Looks.setSessionLook(Look.BOOTSTRAP);
+		tester.startPage(LooksPage.class);
+		tester.assertContains("bootstrap\\.min\\.css");
+		tester.assertContainsNot("daisyui\\.css");
 	}
 
 	@Test
