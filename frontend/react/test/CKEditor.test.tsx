@@ -324,6 +324,42 @@ describe('CKEditor', () => {
 			each.pluginName)).not.toContain('ImageUpload');
 	});
 
+	it('has the uploads of the RichTextEditor: the limits, the dialog, the images stored and ' +
+		'removed, the files attached, by the latest callbacks', async () => {
+		const build = fakeBuild();
+		const ref = createRef<CKEditorHandle>();
+		const removed = vi.fn();
+		const first = vi.fn(async () => '/f/first.pdf');
+		const props = { build, onUpload: async () => '/i/a.png', uploadMaxCount: 3,
+			uploadScaling: true, uploadDialog: true, attachMaxCount: 2,
+			attachmentUrls: ['/f/a.pdf'], onFindImages: async () => [],
+			onStorePermanently: async (urls: string[]) => urls };
+		const { rerender } = render(<CKEditor ref={ref} {...props} onAttach={first}
+			onImagesRemoved={removed} />);
+		await started(ref);
+		const options = () => ref.current!.editor!.options;
+		expect(options().uploadMaxCount).toBe(3);
+		expect(options().uploadScaling).toBe(true);
+		expect(options().uploadDialog).toBe(true);
+		expect(options().attachMaxCount).toBe(2);
+		expect(options().attachmentUrls).toEqual(['/f/a.pdf']);
+		await expect(options().onStorePermanently!(['/i/a.png'])).resolves.toEqual(['/i/a.png']);
+		expect(options().onFindImages).toBeTypeOf('function');
+
+		const latest = vi.fn(async () => '/f/latest.pdf');
+		const heard = vi.fn();
+		rerender(<CKEditor ref={ref} {...props} onAttach={latest} onImagesRemoved={heard}
+			onAttachmentsRemoved={heard} />);
+		const file = new File(['%PDF'], 'a.pdf', { type: 'application/pdf' });
+		await expect(options().onAttach!(file)).resolves.toBe('/f/latest.pdf');
+		expect(first).not.toHaveBeenCalled();
+		options().onImagesRemoved!(['/i/a.png']);
+		options().onAttachmentsRemoved!(['/f/a.pdf']);
+		expect(heard).toHaveBeenCalledTimes(2);
+		expect(removed).not.toHaveBeenCalled();
+		expect(build.editors).toHaveLength(1);
+	});
+
 	it('tells what a paste lost, to the latest onPasteCleaned and in a line while asked',
 		async () => {
 			const build = fakeBuild();

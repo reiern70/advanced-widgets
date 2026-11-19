@@ -75,6 +75,10 @@ What 11.0.0-RC6 has, and:
   the tools `attachment`, "Attach a file", and `attachments`, "Files of the text"; files dropped or
   pasted that are no images; `setAttachmentStore`, the limits, the dialog and the scanner; deleted
   as the images, `RichTextAttachmentsRemovedEvent`. `CKEditorPolicy` keeps them.
+- The React and Svelte CKEditor take the props of the uploads of their RichTextEditor:
+  `uploadScaling`, `uploadMaxCount`, `uploadDialog`, `onStorePermanently`, `onFindImages`,
+  `onImagesRemoved`, `onAttach`, `attachTypes`, `attachMaxSize`, `attachMaxCount`, `attachDialog`,
+  `attachmentUrls` and `onAttachmentsRemoved` (#123), the Svelte ones in lower case.
 
 **Upgrading:**
 
