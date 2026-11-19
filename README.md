@@ -61,7 +61,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Breadcrumbs, the middle of a long trail hidden behind a button that shows it | ✓ | ✓ |
 | | Modal dialog that keeps the focus, drags and folds | ✓ | ✓ |
 | | Desktop of floating windows with a taskbar | ✓ | ✓ |
-| Themes | Twelve themes, a theme editor, and a Bootstrap look beside the components' own | ✓ | ✓ |
+| Themes | Twelve themes, a theme editor, and looks of Bootstrap and daisyUI beside the components' own | ✓ | ✓ |
 
 The demo shows each of them, most in Wicket, React and Svelte side by side; the code of every
 demo is in `demo-app` and `frontend/demo`.
@@ -72,9 +72,9 @@ A theme is a CSS class setting the `--antilia-theme-*` custom properties that th
 all components read. `ThemeBehavior` puts one on an element, the page's body for instance, and
 every component inside it follows: `Theme.DEFAULT`, `BLUE`, `RED`, `DARK`, `BOOTSTRAP` and others,
 or a class of your own made with the theme editor of the demo. A look gives the shapes and the
-CSS classes of the parts: the components' own, or Bootstrap's (only its style sheet, never its
-script). Themes and looks switch by class only, so a strict Content Security Policy is no
-obstacle.
+CSS classes of the parts: the components' own, Bootstrap's or daisyUI's (only the framework's
+style sheet, never a script; daisyUI's prebuilt one needs no build of Tailwind). Themes and looks
+switch by class only, so a strict Content Security Policy is no obstacle.
 
 ## Requirements
 

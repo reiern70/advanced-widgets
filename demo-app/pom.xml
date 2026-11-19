@@ -117,6 +117,12 @@
 			<artifactId>bootstrap</artifactId>
 		</dependency>
 
+		<!-- STYLE: the style sheet of daisyUI, served by DaisyUiResourceReference -->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>daisyui</artifactId>
+		</dependency>
+
 		<!-- LOGGING DEPENDENCIES - SLF4J-SIMPLE -->
 		<dependency>
 			<groupId>org.slf4j</groupId>

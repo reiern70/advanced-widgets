@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Rectangle;
@@ -238,6 +240,34 @@ class MenusBrowserTest extends FrameworkAppsTestCase
 		assertTrue(item(menu, "New").getDomAttribute("class").contains("dropdown-item"));
 		assertEquals("fixed", list.getCssValue("position"));
 		screenshot("bootstrap");
+		item(menu, "New").click();
+		wait.until(d -> status().startsWith("You chose File › New"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void drawsItsPartsWithDaisyUisClassesInTheDaisyUiLook(SeleniumBrowser browser,
+		String framework)
+	{
+		openMenus(browser, framework);
+		chooseLook("daisyUI");
+		WebElement menu = application();
+		WebElement bar = menu.findElement(By.cssSelector(".antilia-menu-list"));
+		assertTrue(List.of(bar.getDomAttribute("class").split(" ")).contains("menu"),
+			bar.getDomAttribute("class"));
+		// daisyUI's menu is a column: the bar across lays its items in a row
+		assertEquals("row", bar.getCssValue("flex-direction"));
+		WebElement file = item(menu, "File");
+		file.click();
+		WebElement list = submenuOf(file);
+		wait.until(d -> list.isDisplayed());
+		assertTrue(List.of(list.getDomAttribute("class").split(" ")).contains("menu"));
+		assertEquals("fixed", list.getCssValue("position"));
+		// a submenu popping up is no menu nested in place: no line on its side
+		assertEquals("none", ((JavascriptExecutor)driver).executeScript(
+			"return getComputedStyle(arguments[0], '::before').content;", list));
+		screenshot("daisyui");
 		item(menu, "New").click();
 		wait.until(d -> status().startsWith("You chose File › New"));
 		assertNoErrors();

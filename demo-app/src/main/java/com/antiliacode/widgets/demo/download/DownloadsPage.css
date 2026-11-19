@@ -56,7 +56,7 @@
 	row-gap: 8px;
 	align-items: start;
 	padding: 14px 0;
-	border-top: 1px solid var(--border, #d6d9e0);
+	border-top: 1px solid var(--border-color, #d6d9e0);
 }
 
 .downloads-demo__item:first-child {

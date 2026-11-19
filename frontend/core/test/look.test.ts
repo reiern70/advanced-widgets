@@ -14,9 +14,9 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ANTILIA_LOOK, BOOTSTRAP_LOOK, buttonClasses, composeLook, DESKTOP_CLASSES, Dropdown,
-	LOOK_PARTS, lookClasses, lookNamed, lookOf, MODAL_CLASSES, NOTIFICATION_CLASSES, partClasses,
-	registerLook, toggleParts } from '../src/index.js';
+import { ANTILIA_LOOK, BOOTSTRAP_LOOK, buttonClasses, composeLook, DAISYUI_LOOK, DESKTOP_CLASSES,
+	Dropdown, LOOK_PARTS, lookClasses, lookNamed, lookOf, MODAL_CLASSES, NOTIFICATION_CLASSES,
+	partClasses, registerLook, toggleParts } from '../src/index.js';
 
 afterEach(() => {
 	document.body.innerHTML = '';
@@ -74,7 +74,7 @@ describe('looks', () => {
 		expect([own['window'], own['desktop-taskbar'], own['desktop-menu-item']]).toEqual([
 			DESKTOP_CLASSES.window, DESKTOP_CLASSES.taskbar, DESKTOP_CLASSES.menuItem]);
 		// every part is of an aspect, and every look's part is one of the table
-		for (const look of [ANTILIA_LOOK, BOOTSTRAP_LOOK]) {
+		for (const look of [ANTILIA_LOOK, BOOTSTRAP_LOOK, DAISYUI_LOOK]) {
 			for (const part of Object.keys(look.classes)) {
 				expect(LOOK_PARTS).toHaveProperty([part]);
 			}
@@ -121,5 +121,59 @@ describe('looks', () => {
 			.toBe('antilia-dropdown-menu dropdown-menu');
 		expect(document.querySelector('.antilia-dropdown-option')!.className)
 			.toBe('antilia-dropdown-option dropdown-item');
+	});
+
+	it('gives a button the classes of daisyUI in the daisyUI look', () => {
+		expect(buttonClasses({ look: DAISYUI_LOOK })).toBe('btn');
+		expect(buttonClasses({ look: DAISYUI_LOOK, variant: 'primary', size: 'large' }))
+			.toBe('btn btn-primary btn-lg');
+		expect(buttonClasses({ look: DAISYUI_LOOK, variant: 'ghost', size: 'small',
+			iconOnly: true, className: 'mine' })).toBe('btn btn-ghost btn-sm btn-square mine');
+		expect(buttonClasses({ look: DAISYUI_LOOK, variant: 'danger' })).toBe('btn btn-error');
+	});
+
+	it('gives the parts of the components the classes of daisyUI\'s components', () => {
+		expect(DAISYUI_LOOK.name).toBe('daisyui');
+		expect(partClasses(DAISYUI_LOOK, 'dialog-content')).toBe('modal-dialog-content modal-box');
+		expect(partClasses(DAISYUI_LOOK, 'dialog-footer')).toBe('modal-dialog-footer modal-action');
+		expect(partClasses(DAISYUI_LOOK, 'table')).toBe('ant-data-table table');
+		expect(partClasses(DAISYUI_LOOK, 'table-page-link')).toBe('join-item btn btn-sm');
+		expect(partClasses(DAISYUI_LOOK, 'notification', 'notification-error'))
+			.toBe('antilia-notification alert alert-soft antilia-notification-error alert-error');
+		expect(partClasses(DAISYUI_LOOK, 'tabs-list', 'tabs-list-underline'))
+			.toBe('antilia-tabs-list tabs tabs-border');
+		expect(partClasses(DAISYUI_LOOK, 'menu-list', 'menu-list-bar'))
+			.toBe('antilia-menu-list menu bg-base-200 rounded-box');
+		// none where daisyUI has no class for the markup of the part, such as an option
+		expect(partClasses(DAISYUI_LOOK, 'dropdown-option')).toBe('antilia-dropdown-option');
+		expect(DAISYUI_LOOK.classes['dialog-header']).toBeUndefined();
+	});
+
+	it('finds the daisyUI look by its name, and makes it of others', () => {
+		document.body.innerHTML = '<div data-antilia-look="daisyui"><span id="in"></span></div>' +
+			'<div data-antilia-look="daisyui color:antilia size:antilia">' +
+			'<span id="mixed"></span></div>';
+
+		expect(lookOf(document.getElementById('in'))).toBe(DAISYUI_LOOK);
+		const mixed = lookOf(document.getElementById('mixed'));
+		expect(mixed.name).toBe('daisyui color:antilia size:antilia');
+		expect(buttonClasses({ look: mixed, variant: 'primary', size: 'small' }))
+			.toBe('btn ant-button--primary ant-button--small');
+		expect(buttonClasses({ look: composeLook(ANTILIA_LOOK, { color: DAISYUI_LOOK }),
+			variant: 'danger' })).toBe('ant-button btn-error ant-button--medium');
+	});
+
+	it('draws a dropdown with the classes of the daisyUI look it is in', () => {
+		document.body.innerHTML = '<div data-antilia-look="daisyui"><select id="s">' +
+			'<option value="a">A</option><option value="b">B</option></select></div>';
+
+		new Dropdown(document.getElementById('s') as HTMLSelectElement);
+
+		expect(document.querySelector('.antilia-dropdown-toggle')!.className)
+			.toBe('antilia-dropdown-toggle select');
+		expect(document.querySelector('.antilia-dropdown-menu')!.className)
+			.toBe('antilia-dropdown-menu bg-base-100 rounded-box');
+		expect(document.querySelector('.antilia-dropdown-option')!.className)
+			.toBe('antilia-dropdown-option');
 	});
 });

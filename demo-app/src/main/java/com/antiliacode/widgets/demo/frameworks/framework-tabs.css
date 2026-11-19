@@ -15,7 +15,7 @@
 	display: flex;
 	gap: 4px;
 	margin: 16px 0;
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid var(--border-color);
 }
 
 .framework-tabs__tab {
@@ -35,7 +35,7 @@
 }
 
 .framework-tabs__tab[aria-selected="true"] {
-	border-color: var(--border);
+	border-color: var(--border-color);
 	border-bottom-color: var(--bg);
 	background: var(--bg);
 	color: var(--accent, var(--primary));

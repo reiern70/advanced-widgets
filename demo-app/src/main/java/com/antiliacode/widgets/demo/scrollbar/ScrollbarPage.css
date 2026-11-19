@@ -26,7 +26,7 @@
 	height: 240px;
 	overflow: auto;
 	padding: 0 16px 0 12px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-color);
 	border-radius: var(--radius);
 	background: var(--surface);
 	font-size: 14px;

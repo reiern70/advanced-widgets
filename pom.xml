@@ -80,6 +80,7 @@
 		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
 		<bootstrap.version>5.3.8</bootstrap.version>
+		<daisyui.version>5.7.50</daisyui.version>
 		<junit.version>5.13.4</junit.version>
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
 		<selenium.version>4.51.0</selenium.version>
@@ -172,6 +173,13 @@
 						<artifactId>*</artifactId>
 					</exclusion>
 				</exclusions>
+			</dependency>
+
+			<!-- the prebuilt style sheet of daisyUI, for the daisyUI look of the demo; no Tailwind -->
+			<dependency>
+				<groupId>org.webjars.npm</groupId>
+				<artifactId>daisyui</artifactId>
+				<version>${daisyui.version}</version>
 			</dependency>
 
 			<!-- DATABASE DEPENDENCIES -->

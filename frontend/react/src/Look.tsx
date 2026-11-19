@@ -21,14 +21,14 @@ export type { Look, LookPart } from '@antilia/core';
 const LookContext = createContext<Look>(ANTILIA_LOOK);
 
 export interface LookProviderProps {
-	/** The look, or its name: 'antilia' or 'bootstrap', or that of a look registered. */
+	/** The look, or its name: 'antilia', 'bootstrap' or 'daisyui', or that of a look registered. */
 	look: Look | string;
 	children?: ReactNode;
 }
 
 /**
- * Gives the components inside it a look, such as Bootstrap's, whose classes their parts then get;
- * without one they are in the Antilia look.
+ * Gives the components inside it a look, such as Bootstrap's or daisyUI's, whose classes their parts
+ * then get; without one they are in the Antilia look.
  */
 export function LookProvider({ look, children }: LookProviderProps) {
 	return (

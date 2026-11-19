@@ -60,6 +60,23 @@ public enum Look implements ILook
 				tag.put(Theme.BOOTSTRAP_MODE_ATTRIBUTE, theme.isDark() ? "dark" : "light");
 			}
 		}
+	},
+
+	/**
+	 * daisyUI 5, the components of Tailwind CSS: its classes, such as {@code btn btn-primary btn-sm},
+	 * {@code modal-box} or {@code select}, with {@link #DAISYUI_CSS} bridging them to the components
+	 * and giving daisyUI the colors of the theme. The page brings the style sheet of daisyUI, its
+	 * prebuilt {@code daisyui.css} for one, which needs no build of Tailwind; never a script.
+	 *
+	 * @since 11.0.0
+	 */
+	DAISYUI
+	{
+		@Override
+		public void renderHead(IHeaderResponse response)
+		{
+			response.render(CssHeaderItem.forReference(DAISYUI_CSS));
+		}
 	};
 
 	/**
@@ -74,6 +91,15 @@ public enum Look implements ILook
 	 */
 	public static final ResourceReference BOOTSTRAP_CSS = new CssResourceReference(Look.class,
 		"antilia-look-bootstrap.css");
+
+	/**
+	 * The style sheet of the daisyUI look: daisyUI's shapes for the components, and the colors of
+	 * the theme for daisyUI's components and custom properties.
+	 *
+	 * @since 11.0.0
+	 */
+	public static final ResourceReference DAISYUI_CSS = new CssResourceReference(Look.class,
+		"antilia-look-daisyui.css");
 
 	@Override
 	public String getName()

@@ -42,8 +42,8 @@ export type { BreadcrumbItem, DesktopWindowType, DropdownOption, MenuEntry, Menu
 	TabItem } from './types.js';
 export { getLook, LOOK_CONTEXT, setLook } from './look.js';
 export { BOOTSTRAP_LOOK, breadcrumb, BREADCRUMB_SEPARATORS, buttonClasses, CK_EDITOR_FEATURES, ckEditor,
-	CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, datePicker,
-	desktop, dropdown, FILTER_DELAY, findJsonError, localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover,
+	CODE_EDITOR_EVENTS, CODE_EDITOR_KIT, CODE_EDITOR_LANGUAGES, codeEditor, codeEditorLanguages, DAISYUI_LOOK,
+	datePicker, desktop, dropdown, FILTER_DELAY, findJsonError, localRows, markdownPreview, palette, lookOf, menu, MENU_DESIGNS, Popover,
 	POPOVER_DESIGNS, POPOVER_PLACEMENTS,
 	registerLanguage, registerLook, registerRichTextEvent, registerRichTextExtension,
 	registerRichTextFeature, resizable, RICH_TEXT_BUILT_IN_EVENTS, RICH_TEXT_EVENT_SOURCES,

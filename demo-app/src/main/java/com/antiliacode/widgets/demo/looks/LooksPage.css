@@ -72,3 +72,40 @@
 .looks__native-progress {
 	width: 62%;
 }
+
+/* the links choosing the framework of the looks shown, the one shown marked */
+.looks__frameworks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.looks__framework {
+	padding: 0.3rem 0.85rem;
+	border: 1px solid var(--antilia-theme-border);
+	border-radius: 999px;
+	color: var(--antilia-theme-text);
+	text-decoration: none;
+}
+
+.looks__framework:hover {
+	background: var(--antilia-theme-hover);
+}
+
+.looks__framework[aria-current="page"] {
+	border-color: var(--antilia-theme-primary);
+	background: var(--antilia-theme-primary);
+	color: var(--antilia-theme-on-primary);
+}
+
+/* daisyUI's own links, tabs and items of a menu, in its colors rather than those of the page's links */
+.looks__native.antilia-look-daisyui a {
+	color: revert-layer;
+}
+
+/* the list of daisyUI's own card as wide as the card */
+.looks__native-menu {
+	width: 100%;
+	padding: 0;
+}
