@@ -342,6 +342,72 @@ class RichTextFilesTest extends WicketTestCase
 	}
 
 	@Test
+	void anEditorOfTheSiteImagesAloneTakesThoseBelowTheBaseAddressAsTheSiteOwn() throws IOException
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("<p>Hi</p>"));
+		editor.setUploadResource(RichTextFiles.get()).setImagesFromSiteOnly(true);
+		tester.startPage(new EditorPage(editor));
+		String base = "https://files.example.com/texts";
+		RichTextFiles.get().setBaseUrl(base + "/");
+		try
+		{
+			assertTrue(RichTextFiles.isOwnUrl("/a.png"));
+			assertTrue(RichTextFiles.isOwnUrl(base + "/a.png"));
+			assertFalse(RichTextFiles.isOwnUrl(base));
+			assertFalse(RichTextFiles.isOwnUrl(base + "/"));
+			assertFalse(RichTextFiles.isOwnUrl(base + "x/a.png"));
+			assertFalse(RichTextFiles.isOwnUrl("https://files.example.com.evil.org/texts/a.png"));
+			assertFalse(RichTextFiles.isOwnUrl("https://other.org/a.png"));
+			assertFalse(RichTextFiles.isOwnUrl("javascript:alert(1)//" + base + "/a.png"));
+
+			// the address the resource answers for an upload is taken
+			String relative = options(editor).getString("uploadUrl").substring(ROOT.length());
+			String url = upload(relative, "bird.png", PNG, "image/png").getString("url");
+			assertTrue(url.startsWith(base + "/"), url);
+
+			// and the cleaning of each format keeps it, not one of another site
+			assertEquals("![a](" + url + ") ![b](#)", editor.getMarkdownSanitizer().sanitize(
+				"![a](" + url + ") ![b](https://other.org/b.png)"));
+			String json = "{\"type\":\"doc\",\"content\":[{\"type\":\"image\",\"attrs\":" +
+				"{\"src\":\"" + url + "\"}}]}";
+			assertEquals(json, editor.getJsonSanitizer().sanitize(json));
+			String html = editor.getSanitizer().sanitize("<p><img src=\"" + url + "\"><img " +
+				"src=\"https://other.org/b.png\"></p>");
+			assertTrue(html.contains(url), html);
+			assertFalse(html.contains("other.org"), html);
+		}
+		finally
+		{
+			RichTextFiles.get().setBaseUrl(null);
+		}
+		assertFalse(RichTextFiles.isOwnUrl(base + "/a.png"), "no base address");
+	}
+
+	@Test
+	void anEditorOfMarkdownTellsTheBrowserTheLinksToTheFilesOfTheResource()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of("[a.pdf](" + ROOT + PATH +
+			"/a.pdf) [b](" + ROOT + PATH + "x/b.pdf) [c](/c.pdf)"));
+		editor.setFormat(RichTextFormat.MARKDOWN).setUploadResource(RichTextFiles.get());
+		tester.startPage(new EditorPage(editor));
+		assertEquals("[\"" + ROOT + PATH + "/a.pdf\"]", options(editor).getJSONArray(
+			"attachmentUrls").toString());
+		assertTrue(RichTextFiles.get().isFileUrl(ROOT + PATH + "/a.pdf"));
+		assertFalse(RichTextFiles.get().isFileUrl(ROOT + PATH + "/"));
+		assertFalse(RichTextFiles.get().isFileUrl(null));
+		RichTextFiles.get().setBaseUrl("https://files.example.com/texts");
+		try
+		{
+			assertTrue(RichTextFiles.get().isFileUrl("https://files.example.com/texts/a.pdf"));
+			assertFalse(RichTextFiles.get().isFileUrl(ROOT + PATH + "/a.pdf"));
+		}
+		finally
+		{
+			RichTextFiles.get().setBaseUrl(null);
+		}
+	}
+
+	@Test
 	void mountsOnceAPath()
 	{
 		assertThrows(IllegalStateException.class, () -> RichTextFiles.mount(

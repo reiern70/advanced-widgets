@@ -294,6 +294,9 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	private RichTextImageDeletion imageDeletion = RichTextImageDeletion.ON_SAVE;
 
+	/** When the files taken out are deleted, {@code null} for as the images are. */
+	private RichTextImageDeletion attachmentDeletion;
+
 	private boolean permanentImages;
 
 	/**
@@ -1040,6 +1043,22 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return whether the address of a link of the text is that of a file attached: one the editor
+	 *         took since it was last saved, one of the resource of the uploads, or one its store
+	 *         keeps ({@link IRichTextAttachmentStore#isStored(String)})
+	 */
+	private boolean isAttachmentUrl(String url)
+	{
+		if (uploadedAttachments().contains(url) ||
+			isAttachmentResource() && getUploadResource().isFileUrl(url))
+		{
+			return true;
+		}
+		IRichTextAttachmentStore store = attachmentStore;
+		return store != null && store.isStored(url);
+	}
+
+	/**
 	 * Forgets files the editor took: they are no longer deleted when the browser asks to.
 	 */
 	private void forgetAttachments(Collection<String> urls)
@@ -1387,6 +1406,31 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	}
 
 	/**
+	 * @return when the files the user took out of the text are deleted: as
+	 *         {@link #getImageDeletion() the images} unless
+	 *         {@link #setAttachmentDeletion(RichTextImageDeletion) set}
+	 * @since 11.0.0
+	 */
+	public RichTextImageDeletion getAttachmentDeletion()
+	{
+		return attachmentDeletion != null ? attachmentDeletion : imageDeletion;
+	}
+
+	/**
+	 * @param attachmentDeletion
+	 *            when the files the user took out of the text are deleted: at once, or once the
+	 *            text is saved; {@code null} for as {@link #getImageDeletion() the images}, as by
+	 *            default
+	 * @return {@code this}
+	 * @since 11.0.0
+	 */
+	public RichTextEditor setAttachmentDeletion(RichTextImageDeletion attachmentDeletion)
+	{
+		this.attachmentDeletion = attachmentDeletion;
+		return this;
+	}
+
+	/**
 	 * @return whether the user keeps images permanently, and inserts those kept
 	 * @since 11.0.0
 	 */
@@ -1584,7 +1628,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		{
 			return;
 		}
-		boolean now = imageDeletion == RichTextImageDeletion.AT_ONCE;
+		boolean now = getAttachmentDeletion() == RichTextImageDeletion.AT_ONCE;
 		if (now)
 		{
 			deleteAttachments(Collections.unmodifiableSet(removed));
@@ -1617,7 +1661,7 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 
 	/**
 	 * Deletes files the user took out of the text, at once or once the text is saved, as
-	 * {@link #getImageDeletion() the mode} says: each by
+	 * {@link #getAttachmentDeletion() the mode} says: each by
 	 * {@link IRichTextAttachmentStore#delete(String)} by default. A page overrides it to decide
 	 * which, knowing its texts.
 	 *
@@ -2053,6 +2097,16 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 			if (!options.has("imagesAjax"))
 			{
 				options.put("imagesAjax", new JSONFunction(imagesRemoval.renderAttributes()));
+			}
+			if (getFormat() == RichTextFormat.MARKDOWN)
+			{
+				// a file is a plain link in Markdown: the links to the files come back as files
+				JSONArray urls = new JSONArray();
+				attachmentsShown.stream().filter(this::isAttachmentUrl).forEach(urls::put);
+				if (urls.length() > 0)
+				{
+					options.put("attachmentUrls", urls);
+				}
 			}
 		}
 		else if (uploadKey != null && isAttachmentResource())

@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -90,6 +91,66 @@ class UploadFileFormatTest
 			null));
 		assertEquals(UploadFileFormat.ZIP, UploadFileFormat.detect(head(zip("notes.txt", "a")),
 			"notes.zip"));
+	}
+
+	/**
+	 * @return a text of letters at random, which a ZIP hardly compresses
+	 */
+	private static String noise(int length)
+	{
+		Random random = new Random(length);
+		StringBuilder text = new StringBuilder(length);
+		for (int i = 0; i < length; i++)
+		{
+			text.append((char)('a' + random.nextInt(26)));
+		}
+		return text.toString();
+	}
+
+	private static IUploadFileFormat detect(byte[] file, String name) throws IOException
+	{
+		return IUploadFileFormat.detect(head(file), name, UploadFileFormat.ALL,
+			() -> new ByteArrayInputStream(file));
+	}
+
+	@Test
+	void tellsAnOfficeDocumentByItsWholeFileWhenItsHeadSaysNothingOfItsKind() throws IOException
+	{
+		// a first entry longer than the head: the head names no kind
+		byte[] docx = zip("docProps/thumbnail.txt", noise(20000), "[Content_Types].xml", "<T/>",
+			"word/document.xml", "<w:document/>");
+		assertEquals(UploadFileFormat.ZIP, UploadFileFormat.detect(head(docx), "a.docx"),
+			"the head alone");
+		assertTrue(UploadFileFormat.DOCX.mayMatch(head(docx)));
+		assertEquals(UploadFileFormat.DOCX, detect(docx, "a.zip"), "the bytes, not the name");
+		assertEquals(UploadFileFormat.XLSX, detect(zip("docProps/thumbnail.txt", noise(20000),
+			"xl/workbook.xml", "<workbook/>"), null));
+		assertEquals(UploadFileFormat.PPTX, detect(zip("docProps/thumbnail.txt", noise(20000),
+			"ppt/presentation.xml", "<p/>"), null));
+		assertEquals(UploadFileFormat.ZIP, detect(zip("big.txt", noise(20000), "notes.txt", "a"),
+			null));
+
+		// a head holding the whole file, or naming a kind, or an OpenDocument's: nothing more read
+		assertFalse(UploadFileFormat.DOCX.mayMatch(head(zip("notes.txt", "a"))));
+		assertFalse(UploadFileFormat.DOCX.mayMatch(head(zip("[Content_Types].xml", "<T/>",
+			"xl/workbook.xml", noise(20000)))));
+		assertFalse(UploadFileFormat.DOCX.mayMatch(head(zip("mimetype",
+			"application/vnd.oasis.opendocument.text", "big.txt", noise(20000)))));
+		assertFalse(UploadFileFormat.PDF.mayMatch(head(docx)), "a format of the head alone");
+	}
+
+	@Test
+	void findsTheKindWhereverTheReadsCutTheEntries() throws IOException
+	{
+		// the second entry's header across the end of the first read, 64 KB and some
+		for (int size = 65_450; size < 65_620; size += 3)
+		{
+			byte[] docx = zip("a.bin", "a".repeat(size), "word/document.xml", "<w:document/>");
+			assertEquals("word/", UploadFileFormat.officeKind(new ByteArrayInputStream(docx)),
+				"a first entry of " + size + " bytes");
+		}
+		assertNull(UploadFileFormat.officeKind(new ByteArrayInputStream(new byte[] { 'P', 'K' })));
+		assertNull(UploadFileFormat.officeKind(new ByteArrayInputStream(new byte[0])));
 	}
 
 	@Test

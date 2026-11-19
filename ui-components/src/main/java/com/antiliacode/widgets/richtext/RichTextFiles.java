@@ -125,8 +125,8 @@ import jakarta.servlet.http.HttpServletResponse;
  * {@link #setBaseUrl(String) a base address} they start with that, so that an application serves
  * them from a domain of their own ({@code https://files.example.com/rich-text-files}), the strongest
  * isolation. The editors keeping the images of the site alone
- * ({@link AbstractRichTextEditor#setImagesFromSiteOnly(boolean)}) then refuse them: their addresses
- * are another site's.
+ * ({@link AbstractRichTextEditor#setImagesFromSiteOnly(boolean)}) take the addresses below a base
+ * address of the application's resources as the site's own ({@link #isOwnUrl(String)}).
  *
  * @since 11.0.0
  */
@@ -280,6 +280,44 @@ public final class RichTextFiles
 	 * @throws IllegalStateException
 	 *             when it mounted none, or several: then {@link #get(String)} names it
 	 */
+	/**
+	 * Tells whether an address is the site's own for the editors keeping the images of the site
+	 * alone ({@link AbstractRichTextEditor#setImagesFromSiteOnly(boolean)}):
+	 * {@link RichTextPolicy#isSiteUrl(String) a relative one}, or one below
+	 * {@link #setBaseUrl(String) the base address} of a resource the application of the request
+	 * mounted, its files on a domain of their own, a name following the base and its slash.
+	 *
+	 * @param url
+	 *            an address
+	 * @return whether the address is the site's own
+	 * @since 11.0.0
+	 */
+	public static boolean isOwnUrl(String url)
+	{
+		if (RichTextPolicy.isSiteUrl(url))
+		{
+			return true;
+		}
+		if (url == null || !RichTextPolicy.isSafeUrl(url) || !Application.exists())
+		{
+			return false;
+		}
+		Map<String, RichTextFiles> mounted = Application.get().getMetaData(MOUNTED);
+		if (mounted == null)
+		{
+			return false;
+		}
+		for (RichTextFiles files : mounted.values())
+		{
+			String base = files.baseUrl;
+			if (base != null && url.length() > base.length() + 1 && url.startsWith(base + "/"))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static RichTextFiles get()
 	{
 		Collection<RichTextFiles> all = mounted(Application.get()).values();
@@ -608,6 +646,18 @@ public final class RichTextFiles
 		Args.notEmpty(name, "name");
 		String encoded = UrlEncoder.PATH_INSTANCE.encode(name, StandardCharsets.UTF_8);
 		return (baseUrl != null ? baseUrl : siteRoot() + path) + "/" + encoded;
+	}
+
+	/**
+	 * @param url
+	 *            an address
+	 * @return whether it is that of a file of the resource, as {@link #addressOf(String)} answers
+	 *         them: its address, or {@link #setBaseUrl(String) the base one}, a slash and a name
+	 */
+	public boolean isFileUrl(String url)
+	{
+		String prefix = (baseUrl != null ? baseUrl : siteRoot() + path) + "/";
+		return url != null && url.length() > prefix.length() && url.startsWith(prefix);
 	}
 
 	/**

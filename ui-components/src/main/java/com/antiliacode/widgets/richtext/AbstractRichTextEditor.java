@@ -1131,7 +1131,8 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 * in Markdown ({@link RichTextMarkdownSanitizer#IMAGES_FROM_SITE_ONLY}) and in Tiptap's JSON
 	 * ({@link RichTextJsonSanitizer#IMAGES_FROM_SITE_ONLY}). An image from another site shows who
 	 * reads the text to that site, a pixel tracking the readers for example. Links go to other
-	 * sites as before.
+	 * sites as before. The addresses below the base address of an upload resource of the
+	 * application, on a domain of its own, are the site's own too ({@link RichTextFiles#isOwnUrl}).
 	 * <p>
 	 * A sanitizer {@link #setSanitizer(IRichTextSanitizer) the page sets} cleans as it does; give
 	 * it the same setting. The editor in the browser still takes an image of another site, which
