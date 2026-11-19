@@ -64,7 +64,7 @@ import com.antiliacode.widgets.resizable.ResizableSize;
 public enum RichTextEditorEvents implements IClientEventName
 {
 	/** The user changed the text: each change, as a text area tells. */
-	INPUT("input"),
+	INPUT("input", true),
 
 	/**
 	 * The text changed, once the editor lost the focus, as a text area tells.
@@ -85,13 +85,13 @@ public enum RichTextEditorEvents implements IClientEventName
 	 * The user moved the cursor or selected text; {@code detail.selection} has {@code anchor} and
 	 * {@code head}.
 	 */
-	SELECT("antilia-rich-text-editor:select"),
+	SELECT("antilia-rich-text-editor:select", true),
 
 	/**
 	 * The user scrolled the text; {@code detail.scroll} has {@code top} and {@code left}, in
 	 * pixels.
 	 */
-	SCROLL("antilia-rich-text-editor:scroll"),
+	SCROLL("antilia-rich-text-editor:scroll", true),
 
 	/** The user pressed Ctrl+S, or Cmd+S, in the editor. */
 	SAVE("antilia-rich-text-editor:save"),
@@ -101,7 +101,7 @@ public enum RichTextEditorEvents implements IClientEventName
 	 * and the {@code height}, in pixels, of the dimensions the editor resizes in.
 	 * {@link RichTextEditorResizeEvent} hears of both on the server, as numbers.
 	 */
-	RESIZE("antilia-rich-text-editor:resize"),
+	RESIZE("antilia-rich-text-editor:resize", true),
 
 	/**
 	 * The text came to have changes not saved, or no longer has; {@code detail.modified} tells
@@ -156,15 +156,36 @@ public enum RichTextEditorEvents implements IClientEventName
 
 	private final String eventName;
 
+	private final boolean background;
+
 	RichTextEditorEvents(String eventName)
 	{
+		this(eventName, false);
+	}
+
+	RichTextEditorEvents(String eventName, boolean background)
+	{
 		this.eventName = eventName;
+		this.background = background;
 	}
 
 	@Override
 	public String getEventName()
 	{
 		return eventName;
+	}
+
+	/**
+	 * @return whether the events of the name come while the user goes on, as they type, move the
+	 *         cursor, select, scroll or resize the editor: {@link #INPUT}, {@link #SELECT},
+	 *         {@link #SCROLL} and {@link #RESIZE}. The requests of an editor's events of these
+	 *         names leave the page veil alone, unless the editor says otherwise
+	 *         ({@link AbstractRichTextEditor#isVeiled}); those of the other names, the blur among
+	 *         them, are veiled, as what the user does
+	 */
+	public boolean isBackground()
+	{
+		return background;
 	}
 
 	/**

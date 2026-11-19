@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.extensions.ajax.veil.PageVeilBehavior;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
@@ -43,7 +44,9 @@ import com.antiliacode.widgets.event.AjaxEvent;
  * </pre>
  *
  * The browser sends the headings: the server takes no more than {@link #MAX_HEADINGS}, of
- * {@link #MAX_LENGTH} characters at most, and escapes them where it shows them.
+ * {@link #MAX_LENGTH} characters at most, and escapes them where it shows them. They change as
+ * the user types: the requests carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which the page
+ * veil leaves alone, as the editors' own events coming as the user types do.
  */
 public abstract class OutlineEvent extends AjaxEvent
 {
@@ -84,6 +87,7 @@ public abstract class OutlineEvent extends AjaxEvent
 	protected OutlineEvent()
 	{
 		super(NAME);
+		setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true");
 	}
 
 	/**

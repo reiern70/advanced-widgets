@@ -23,7 +23,6 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
@@ -96,9 +95,11 @@ import com.github.openjson.JSONObject;
  * model of the session. The React and Svelte tabs show the same in those frameworks.
  * <p>
  * Wicket's {@link PageVeilBehavior} veils the page while its Ajax requests run, but for those of
- * the editors' events, which go as the user types: the editors mark them with
- * {@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}, in
- * {@link CodeEditor#updateEventAjaxAttributes(AjaxRequestAttributes)}.
+ * the editors' events going as the user types, moves the cursor, scrolls or resizes, which the
+ * editors leave unveiled by themselves ({@link CodeEditor#isVeiled}), the focus of the first
+ * editor, which the page marks, and those of the split panel and the box the user resizes, which
+ * tell the server what the user did while they go on: the page waits for the server as an editor
+ * loses the focus, and as the user saves.
  */
 public class CodeEditorPage extends DemoPage
 {
@@ -216,20 +217,16 @@ public class CodeEditorPage extends DemoPage
 			{
 				target.add(known);
 			}
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				// the requests of the events go as the user types: the page veil leaves them alone
-				PageVeilBehavior.noVeil(attributes);
-			}
 		};
 		editor.setSavedModel(LambdaModel.of(shown, CodeDocument::getSaved, CodeDocument::setSaved));
 		editor.setLabel(() -> sample().getName());
 		// read only as the check box says, the editor rendered again when it changes
 		editor.setReadOnly(new PropertyModel<>(this, "readOnly"));
+		// the focus without the veil, as the page chooses: the editor leaves alone those of input,
+		// selection, scrolling and resizing by itself, not those of other names
 		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.FOCUS,
-			(values, component, target) -> hear(target, "heardFocus")));
+			(values, component, target) -> hear(target, "heardFocus"))
+			.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.BLUR,
 			(values, component, target) -> hear(target, "heardBlur")));
 		editor.addEvent(AjaxUpdateEvent.of(CodeEditorEvent.SAVE,
@@ -312,16 +309,7 @@ public class CodeEditorPage extends DemoPage
 			}), LambdaModel.of(notes, CodeDocument::getState, (document, state) -> {
 				document.setState(state);
 				Session.get().dirty();
-			}))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
-			}
-		};
+			}));
 		// the editor fills its pane, whose size the split panel and the box give
 		notesEditor.setLanguage(CodeEditorLanguage.MARKDOWN).setLineWrapping(true)
 			.setResizable(null).setSavedModel(LambdaModel.of(notes, CodeDocument::getSaved,
@@ -478,12 +466,6 @@ public class CodeEditorPage extends DemoPage
 			{
 				super.onConfigure();
 				setSaveOnBlur(settings().saveOnBlur);
-			}
-
-			@Override
-			protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				PageVeilBehavior.noVeil(attributes);
 			}
 		};
 		jsonEditor.setLanguage(CodeEditorLanguage.JSON)
@@ -976,16 +958,7 @@ public class CodeEditorPage extends DemoPage
 			Fragment panel = new Fragment(id, "filePanel", CodeEditorPage.this);
 			Form<Void> form = new Form<>("form");
 			panel.add(form);
-			CodeEditor fileEditor = new CodeEditor("editor", new PropertyModel<>(document, "text"))
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
-				{
-					PageVeilBehavior.noVeil(attributes);
-				}
-			};
+			CodeEditor fileEditor = new CodeEditor("editor", new PropertyModel<>(document, "text"));
 			fileEditor.setLanguage(document.getLanguage())
 				.setSavedModel(new PropertyModel<>(document, "saved"))
 				.setLabel(Model.of(document.getName()));

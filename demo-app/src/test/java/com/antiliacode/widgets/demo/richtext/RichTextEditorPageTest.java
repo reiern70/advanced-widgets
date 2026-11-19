@@ -201,9 +201,10 @@ class RichTextEditorPageTest
 
 	/**
 	 * Each event of the article goes to the server by an Ajax behavior of its own, with the
-	 * attributes the page gives it: those going as the user types, moves the cursor, scrolls or
-	 * resizes carry the parameter the page veil leaves alone, those of blur not. The leave goes in
-	 * a beacon, which no veil sees. The notes leave the veil off all their events.
+	 * attributes the editor and the page give it: those going as the user types, moves the cursor,
+	 * scrolls or resizes carry the parameter the page veil leaves alone, by the editor's default,
+	 * Ctrl+S too, by the page's choice; those of blur not. The leave goes in a beacon, which no
+	 * veil sees. The notes have the editor's defaults: their blur and their Ctrl+S are veiled.
 	 */
 	@Test
 	void veilsThePageAsTheArticleLosesTheFocusAlone()
@@ -223,7 +224,11 @@ class RichTextEditorPageTest
 			" veiled"));
 
 		Map<String, List<Boolean>> notes = unveiledEventsOf(editor(NOTES));
-		assertTrue(notes.containsKey(blur), notes.toString());
+		assertEquals(List.of(false), notes.remove(blur), notes.toString());
+		assertEquals(List.of(false), notes.remove(RichTextEditorEvents.LEAVE.getEventName()));
+		assertEquals(List.of(false), notes.remove(RichTextEditorEvents.SAVE.getEventName()));
+		// the state as the user types and the notes followed as they do
+		assertEquals(List.of(true, true), notes.get(RichTextEditorEvents.INPUT.getEventName()));
 		notes.forEach((name, unveiled) -> assertFalse(unveiled.contains(false), name +
 			" veiled"));
 	}
