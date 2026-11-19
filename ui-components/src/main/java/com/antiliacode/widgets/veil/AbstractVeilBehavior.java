@@ -35,14 +35,22 @@ import org.apache.wicket.util.lang.Args;
  * Base class of the behaviors that put a veil over a region of the page while Ajax requests are
  * in flight.
  * <p>
- * The veil appears as soon as a request is sent. It is transparent and swallows mouse clicks, so
- * the user cannot fire further requests or change what the pending one is about. Only if the
- * request is still running after {@link #getSpinnerDelay()} does the veil get the CSS class
- * {@code wicket-veil-busy}, which dims the region and shows a spinner; once shown, the spinner
- * stays for at least {@link #getMinimumSpinnerTime()}, so a response arriving just after it
- * appeared does not make it flicker. Both timings apply to the page veil and to local veils
- * alike, and can be changed per behavior with {@link #setSpinnerDelay(Duration)} and
- * {@link #setMinimumSpinnerTime(Duration)}. The veil does not intercept the keyboard.
+ * The veil appears as soon as the event fires a request, at {@code /ajax/call/init}, which
+ * Wicket's Ajax publishes before it throttles the request or queues it behind another one of its
+ * channel: a click waiting its turn behind a request the veil leaves alone is veiled already. It
+ * comes down when the request is done, or once it is plain that the request will never run:
+ * throttled and replaced by a later one, dropped or ignored by its channel, stopped by its
+ * precondition. It is transparent and swallows mouse clicks, so the user cannot fire further
+ * requests or change what the pending one is about; Enter and Space going to an element under it
+ * are dropped too, but where they type: Space in a text field, Enter in a text area. A press of
+ * the mouse whose release the veil caught, the veil having come up in between, as that of a
+ * field's change does when the press leaves the field for a button, has its click given back once
+ * the veil is down, if its element is still in the page. Only if the request is still running
+ * after {@link #getSpinnerDelay()} does the veil get the CSS class {@code wicket-veil-busy}, which
+ * dims the region and shows a spinner; once shown, the spinner stays for at least
+ * {@link #getMinimumSpinnerTime()}, so a response arriving just after it appeared does not make it
+ * flicker. Both timings apply to the page veil and to local veils alike, and can be changed per
+ * behavior with {@link #setSpinnerDelay(Duration)} and {@link #setMinimumSpinnerTime(Duration)}.
  * <p>
  * The look comes from {@code antilia-veil.css} and can be overridden with the classes
  * {@code wicket-veil}, {@code wicket-veil-busy}, {@code wicket-veil-host} and
@@ -53,7 +61,9 @@ import org.apache.wicket.util.lang.Args;
  *
  * <p>
  * A copy of Wicket 11's {@code org.apache.wicket.extensions.ajax.veil}, which Wicket 10 lacks; with
- * Wicket 11 the components use Wicket's own.
+ * Wicket 11 the components use Wicket's own. The copy goes up at {@code /ajax/call/init}, holds
+ * Enter and Space and gives back the click it caught, which Wicket 11.0.0's veil does not: with
+ * Wicket 11 the library's {@code VeilGaps} adds that to Wicket's.
  *
  * @see PageVeilBehavior
  * @see LocalVeilBehavior

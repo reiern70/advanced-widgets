@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Doppeltes Absenden</entry>
+	<entry key="explanation">&lt;p&gt;Ein Formular, das Rechnungen ausstellt, wobei der Server für jede eine Sekunde braucht. Was der Benutzer auch tut, während er arbeitet, ein angezeigtes Formular stellt eine Rechnung aus: ein Doppelklick, zweimal Enter auf der Schaltfläche, ein zweiter Klick, während der erste auf seine Reihe wartet, ein Klick auf die Schaltfläche, gerade als der Betrag verlassen wird, dessen Änderung der Server prüft.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Der Schleier&lt;/b&gt;: das PageVeilBehavior der Bibliothek, eine Kopie dessen von Wicket 11, bedeckt die Seite, solange eine Anfrage läuft, sodass ein zweiter Klick auf den Schleier fällt. Es tut mehr als das von Wicket 11.0.0: Enter und Leertaste werden unter dem Schleier ebenfalls zurückgehalten, ein Klick wird verschleiert, sobald Wickets Ajax ihn einreiht, nicht erst, wenn er gesendet wird, und der Klick auf eine Schaltfläche, deren Drücken ein Feld seine Änderung senden ließ und den der Schleier abfing, kommt an, sobald der Schleier weg ist.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Die Version des Formulars&lt;/b&gt;: ein DoubleSubmitBulletsProofForm weist ein zweites Absenden aus derselben Version des Formulars zurück, falls der Schleier versagt: ein Skript, das nicht geladen wurde, ein langsames Gerät. Schalten Sie den Schleier aus und doppelklicken Sie auf „Rechnung ausstellen“: der zweite Klick erreicht den Server, der ihn mit einer Meldung zurückweist.&lt;/p&gt;&lt;p&gt;Ist beides aus, stellt ein Doppelklick zwei Rechnungen aus.&lt;/p&gt;</entry>
+	<entry key="hint">Eine Rechnung auszustellen kostet den Server eine Sekunde, einen Betrag zu prüfen etwas weniger. Doppelklicken Sie auf „Rechnung ausstellen“, drücken Sie zweimal Enter darauf oder ändern Sie den Betrag und klicken Sie sofort auf die Schaltfläche: jedes Mal wird eine einzige Rechnung ausgestellt. Die Schalter zeigen die Seite neu ohne das, was sie schützt.</entry>
+	<entry key="veil">Die Seite verschleiern, solange eine Anfrage läuft (PageVeilBehavior)</entry>
+	<entry key="version">Ein zweimal gesendetes Formular zurückweisen (DoubleSubmitBulletsProofForm)</entry>
+	<entry key="customer">Kunde</entry>
+	<entry key="customer.sample">Acme GmbH</entry>
+	<entry key="amount">Betrag</entry>
+	<entry key="total">{0} mit MwSt.</entry>
+	<entry key="issue">Rechnung ausstellen</entry>
+	<entry key="issued">Ausgestellte Rechnungen</entry>
+	<entry key="none">Noch keine Rechnung ausgestellt.</entry>
+	<entry key="number">Nummer</entry>
+</properties>

@@ -45,6 +45,24 @@ What 10.11.0-RC11 has, and:
   inline script or style; `--antilia-page-loading-delay` and `--antilia-page-loading-timeout`
   change the times. The content is not made `inert`: only a script could take that away again,
   and it would keep the focus from the page while it loads. It is in 11.0.0-RC6 too.
+- The library's veil, `PageVeilBehavior` and `LocalVeilBehavior`, the copy of Wicket 11's, closes
+  three gaps that Wicket 11.0.0's veil has (#141); with Wicket 11, `VeilGaps` adds the same to
+  Wicket's veil, in 11.0.0-RC6. Enter and Space are dropped under a veil, but where they type, so
+  a key pressed twice on a button no longer sends two requests. The veil goes up at
+  `/ajax/call/init`, as Wicket's Ajax queues a request behind another one, not only once it is
+  sent, so a second click on a button waiting its turn behind a request the veil leaves alone
+  falls on the veil; it comes down for the requests that never run: throttled and replaced,
+  dropped by their channel, stopped by their precondition. And the click of a button whose
+  release the veil caught, the veil of a field's change having come up between the press and the
+  release, is given back once the veil is down. `Wicket.Veil.isCovered(element)` tells whether a
+  veil covers an element.
+- Forms processed once however many times the browser sends them (#143), as in 11.0.0-RC6: a
+  `DoubleSubmitBulletsProofForm`, or a `FormVersionBehavior` on any form, the wizard's too, gives
+  the form a version, kept in the session and written on its tag, which a submit carries as it
+  was at the click: taken at `/ajax/call/init` for an Ajax submit, in a hidden input for a normal
+  one. A second submit from one version is refused with an error,
+  `FormVersionBehavior.alreadySent`, in English, Spanish, German and French; a submit without a
+  version, from a page whose script did not load, is taken.
 
 **Upgrading:**
 
@@ -56,6 +74,9 @@ What 10.11.0-RC11 has, and:
 - Only the editors' built-in events carry `wicket_nb` by themselves: the events of input,
   selection or scrolling a page gives an editor are veiled unless the page marks them, as
   before.
+- The veil, the page's and a local one, goes up from the click, spinner and all, while the
+  request still waits its turn behind another one. Enter and Space under a veil are dropped, but
+  in text fields, text areas and editable content.
 
 ## 10.11.0-RC11 (2026-11-18)
 

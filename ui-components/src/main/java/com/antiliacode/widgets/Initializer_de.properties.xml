@@ -338,4 +338,5 @@
 	<entry key="RichTextEditor.pasteFormatting">Formatierungen</entry>
 	<entry key="RichTextEditor.errorRestarted">Im Editor ist etwas schiefgegangen. Er wurde mit Ihrem Text neu gestartet.</entry>
 	<entry key="RichTextEditor.errorGaveUp">Im Editor geht immer wieder etwas schief. Speichern Sie Ihren Text und laden Sie die Seite neu.</entry>
+	<entry key="FormVersionBehavior.alreadySent">Dieses Formular wurde bereits gesendet oder hat sich beim Senden geändert. Prüfen Sie es und senden Sie es erneut.</entry>
 </properties>
