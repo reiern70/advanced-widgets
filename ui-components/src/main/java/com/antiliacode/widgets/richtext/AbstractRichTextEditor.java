@@ -141,11 +141,12 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * last sent: {@link RichTextEditorEvents#INPUT}, {@link RichTextEditorEvents#SELECT},
  * {@link RichTextEditorEvents#SCROLL} and {@link RichTextEditorEvents#RESIZE} a moment after the
  * user paused ({@link SendStateEvent#DEFAULT_DELAY}), {@link RichTextEditorEvents#BLUR} at once and
- * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. The requests of the first
- * four carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves alone, the user
- * going on as they run; those of the blur are veiled, the page waiting for the server once the
- * editor lost the focus. An event the page gives the editor carries the parameter when the page
- * says so. They are events as any other:
+ * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. The requests of the events
+ * of the first four names carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil
+ * leaves alone, the user going on as they run, whoever gave the editor the event, the page too;
+ * those of the blur, the focus, Ctrl+S and the other names are veiled, the page waiting for the
+ * server once the editor lost the focus: {@link #isVeiled(IAjaxRoundTripEvent)}. They are events
+ * as any other:
  * {@link #removeEvents(IClientEventName...)} takes those of names away,
  * {@link #setEvent(IClientEvent)} puts another in their place, {@link #addEvent(IClientEvent)}
  * adds one, of any name. Besides, the page's other Ajax requests carry the state when the editor
@@ -341,14 +342,20 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 			{
 				updateEventAjaxAttributes(attributes);
 			}
+
+			@Override
+			protected boolean isVeiled(IAjaxRoundTripEvent event)
+			{
+				return AbstractRichTextEditor.this.isVeiled(event);
+			}
 		};
 		add(events);
 		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
 			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
 		{
-			// they report while the user goes on: a page veil leaves them alone, not the blur
-			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY)
-				.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
+			// they report while the user goes on: the veils leave them alone (isVeiled), not the
+			// blur
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
 		}
 		events.add(new SendStateEvent(RichTextEditorEvents.BLUR));
 		events.add(new SendStateEvent(RichTextEditorEvents.LEAVE));
@@ -422,6 +429,37 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 	 */
 	protected void updateEventAjaxAttributes(AjaxRequestAttributes attributes)
 	{
+	}
+
+	/**
+	 * Says whether the requests of an event of the editor going to the server are veiled, as
+	 * Wicket's veils veil a request: by a page veil, or by the local veil of a component around the
+	 * editor. Those of the events coming while the user goes on, as they type, move the cursor,
+	 * select, scroll or resize the editor, are not, whoever gave the editor the event
+	 * ({@link RichTextEditorEvents#isBackground()}): they carry
+	 * {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which the veils leave alone, so that the page
+	 * goes on taking the user's clicks and keys. Those of the other events, the blur, the focus,
+	 * Ctrl+S, the events of other names, are veiled, as what the user does: the page waits for the
+	 * server once the editor lost the focus, for example. An editor overriding this decides otherwise,
+	 * event by event; an event leaves the veils alone by
+	 * {@code setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true")} too.
+	 *
+	 * @param event
+	 *            an event of the editor going to the server
+	 * @return whether its requests are veiled
+	 * @see ClientEventsBehavior#isVeiled(IAjaxRoundTripEvent)
+	 */
+	protected boolean isVeiled(IAjaxRoundTripEvent event)
+	{
+		String name = event.getEventName();
+		for (RichTextEditorEvents each : RichTextEditorEvents.values())
+		{
+			if (each.isBackground() && each.getEventName().equals(name))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

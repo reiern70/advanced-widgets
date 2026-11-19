@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -353,29 +354,60 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
-	void itsEventsReportingInTheBackgroundLeaveThePageVeilAlone()
+	void leavesThePageVeilAloneAsTheUserTypesAndVeilsTheBlur()
 	{
+		// the events coming while the user goes on
+		assertEquals(EnumSet.of(RichTextEditorEvents.INPUT, RichTextEditorEvents.SELECT,
+			RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE),
+			EnumSet.copyOf(Arrays.stream(RichTextEditorEvents.values())
+				.filter(RichTextEditorEvents::isBackground).toList()));
+
 		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+		// the page's own events of those names too, whatever they are, not those of the others
+		IClientEvent typing = AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+			(values, form, target) -> {
+			});
+		IClientEvent focus = AjaxEvent.of(RichTextEditorEvents.FOCUS, (values, target) -> {
+		});
+		IClientEvent selected = RichTextEditorSelectedTextEvent.of((text, target) -> {
+		});
+		IClientEvent save = AjaxSubmitEvent.of(RichTextEditorEvents.SAVE,
+			(values, form, target) -> {
+			});
+		editor.addEvent(typing).addEvent(focus).addEvent(selected).addEvent(save);
+		tester.startPage(new TestPage(editor));
 
 		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
 			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
 		{
-			assertEquals("true", extraParameters(editor.getEvents(name)).get(
-				PageVeilBehavior.NO_VEIL_PARAMETER), name.name());
+			assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, editor,
+				editor.getEvents(name).get(0)), name.toString());
 		}
-		// the blur is veiled, as what the user does
-		assertFalse(extraParameters(editor.getEvents(RichTextEditorEvents.BLUR)).containsKey(
-			PageVeilBehavior.NO_VEIL_PARAMETER));
-	}
+		assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, editor, typing));
+		// veiled: the blur, the page waiting for the server once the editor lost the focus, the
+		// focus, the text selected and Ctrl+S, as what the user does
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor, focus));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor, selected));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor,
+			editor.getEvents(RichTextEditorEvents.BLUR).get(0)));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, editor, save));
 
-	/**
-	 * @return the extra parameters the requests of the events go with
-	 */
-	static Map<String, Object> extraParameters(List<IClientEvent> events)
-	{
-		AjaxRequestAttributes attributes = new AjaxRequestAttributes();
-		events.forEach(event -> ((IAjaxRoundTripEvent)event).updateAjaxAttributes(attributes));
-		return attributes.getExtraParameters();
+		// an editor deciding otherwise, event by event
+		RichTextEditor own = new RichTextEditor("editor", Model.of(HTML))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected boolean isVeiled(IAjaxRoundTripEvent event)
+			{
+				return !RichTextEditorEvents.BLUR.getEventName().equals(event.getEventName());
+			}
+		};
+		tester.startPage(new TestPage(own));
+		assertFalse(ClientEventsTester.leavesTheVeilsAlone(tester, own,
+			own.getEvents(RichTextEditorEvents.INPUT).get(0)));
+		assertTrue(ClientEventsTester.leavesTheVeilsAlone(tester, own,
+			own.getEvents(RichTextEditorEvents.BLUR).get(0)));
 	}
 
 	@Test

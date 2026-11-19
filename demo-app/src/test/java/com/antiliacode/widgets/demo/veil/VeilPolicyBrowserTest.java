@@ -186,9 +186,18 @@ class VeilPolicyBrowserTest extends JettyTestCase
 		WebElement content = wait.until(d -> d.findElements(By.cssSelector(
 			".veil-policy__rich .ProseMirror")).stream().findFirst().orElse(null));
 		new Actions(driver).click(content).sendKeys(" And the moon.").perform();
-		wait.until(d -> number("requests") >= 1);
+		// the page's own event of input too, which the editor leaves unveiled by its name
+		wait.until(d -> VeilRace.runs("richInput") >= 1);
 
 		assertThePageWasLeftAlone();
+
+		// the page's own event of blur is veiled, as what the user does
+		script("window.pageVeils = 0; window.requests = 0; window.unveiled = 0;");
+		new Actions(driver).click(driver.findElement(By.name("filter"))).perform();
+		wait.until(d -> VeilRace.runs("richBlur") >= 1);
+		awaitQuiet();
+		assertTrue(number("pageVeils") >= 1, "no veil over the blur");
+		assertTrue(number("unveiled") < number("requests"), "the blur left unveiled");
 	}
 
 	@ParameterizedTest

@@ -29,8 +29,11 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import com.antiliacode.widgets.codeeditor.CodeEditor;
 import com.antiliacode.widgets.desktop.Desktop;
 import com.antiliacode.widgets.desktop.DesktopWindow;
+import com.antiliacode.widgets.event.AjaxEvent;
+import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.filter.FilterBehavior;
 import com.antiliacode.widgets.richtext.RichTextEditor;
+import com.antiliacode.widgets.richtext.RichTextEditorEvents;
 import com.antiliacode.widgets.split.SplitPanel;
 
 /**
@@ -57,7 +60,14 @@ public class VeilPolicyPage extends WebPage
 		filter.add(FilterBehavior.onFilter(target -> VeilRace.run("filter")));
 		form.add(filter);
 		form.add(new CodeEditor("code", Model.of("let tide = 'high';")));
-		form.add(new RichTextEditor("rich", Model.of("<p>The tides of the bay.</p>")));
+		RichTextEditor rich = new RichTextEditor("rich", Model.of("<p>The tides of the bay.</p>"));
+		// the page's own events: of input, which the editor leaves unveiled as its own, and of
+		// blur, veiled as what the user does
+		rich.addEvent(AjaxSubmitEvent.of(RichTextEditorEvents.INPUT,
+			(values, submitted, target) -> VeilRace.run("richInput")));
+		rich.addEvent(AjaxEvent.of(RichTextEditorEvents.BLUR,
+			(values, target) -> VeilRace.run("richBlur")));
+		form.add(rich);
 
 		add(new SplitPanel("split")
 		{

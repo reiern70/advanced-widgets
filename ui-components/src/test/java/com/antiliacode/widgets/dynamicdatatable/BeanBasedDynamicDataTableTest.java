@@ -27,9 +27,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.behavior.Behavior;
+import org.apache.wicket.extensions.ajax.veil.LocalVeilBehavior;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import com.antiliacode.widgets.table.IMovableColumn;
@@ -38,6 +41,8 @@ import org.apache.wicket.extensions.markup.html.repeater.util.SortParam;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.DropDownChoice;
+import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.resource.IResourceStream;
@@ -45,6 +50,9 @@ import org.apache.wicket.util.resource.StringResourceStream;
 import org.apache.wicket.util.tester.TagTester;
 import org.apache.wicket.util.tester.WicketTestCase;
 import org.junit.jupiter.api.Test;
+
+import com.antiliacode.widgets.dynamicdatatable.BaseDynamicDataTable.ToolbarPosition;
+import com.antiliacode.widgets.filter.FilterBehavior;
 
 class BeanBasedDynamicDataTableTest extends WicketTestCase
 {
@@ -86,6 +94,59 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 		TagTester body = tester.getTagByWicketId("body");
 		assertEquals("tbody", body.getName());
 		assertEquals(table.getRowsBody().getMarkupId(), body.getAttribute("id"));
+	}
+
+	@Test
+	void theRowsHaveALocalVeilOfTheirOwnWhichAFilterInAToolbarRaises()
+	{
+		provider = new PeopleProvider(5);
+		table = new TestTable(provider)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected AbstractDynamicToolbar newNavigationToolbar(String id,
+				ToolbarPosition position)
+			{
+				return new DynamicNavigationToolbar<>(id, this, position)
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					protected Component newPrefix(String id)
+					{
+						return new FilterPanel(id, getTable().getRowsBody());
+					}
+				};
+			}
+		};
+		tester.startPage(new TablePage(table));
+
+		String page = tester.getLastResponseAsString();
+		String rows = table.getRowsBody().getMarkupId();
+		// the rows' veil, nearest to a row's actions, inside the table's, which its toolbars have
+		assertEquals(1, table.getRowsBody().getBehaviors(LocalVeilBehavior.class).size());
+		assertTrue(page.contains("Wicket.Veil.local(\"" + rows + "\""), page);
+		assertTrue(page.contains("Wicket.Veil.local(\"" + table.getMarkupId() + "\""), page);
+		// raised by the filter in a toolbar while its request runs, the table holding the field
+		assertTrue(page.contains("Wicket.Veil.show(\"" + rows + "\");"), page);
+		assertTrue(page.contains("Wicket.Veil.hide(\"" + rows + "\");"), page);
+
+		// a table whose rows are veiled with it
+		table = new TestTable(provider)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Behavior newRowsVeilBehavior()
+			{
+				return null;
+			}
+		};
+		tester.startPage(new TablePage(table));
+		assertTrue(table.getRowsBody().getBehaviors(LocalVeilBehavior.class).isEmpty());
+		assertFalse(tester.getLastResponseAsString().contains("Wicket.Veil.local(\"" +
+			table.getRowsBody().getMarkupId() + "\""));
 	}
 
 	@Test
@@ -576,6 +637,29 @@ class BeanBasedDynamicDataTableTest extends WicketTestCase
 			Person row)
 		{
 			notFound.add(action + " " + key + " " + (row != null ? row.getName() : null));
+		}
+	}
+
+	/**
+	 * A filter of the table, in front of its navigation, veiling what it is given.
+	 */
+	private static class FilterPanel extends Panel implements IMarkupResourceStreamProvider
+	{
+		private static final long serialVersionUID = 1L;
+
+		FilterPanel(String id, Component veiled)
+		{
+			super(id);
+			add(new TextField<>("filter", Model.of("")).add(FilterBehavior.onFilter(target -> {
+			}).veil(veiled)));
+		}
+
+		@Override
+		public IResourceStream getMarkupResourceStream(MarkupContainer container,
+			Class<?> containerClass)
+		{
+			return new StringResourceStream(
+				"<wicket:panel><input wicket:id=\"filter\"></wicket:panel>");
 		}
 	}
 

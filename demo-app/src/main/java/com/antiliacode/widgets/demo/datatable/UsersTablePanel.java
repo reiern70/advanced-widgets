@@ -229,6 +229,7 @@ public abstract class UsersTablePanel extends Panel
 			@Override
 			protected Component newPrefix(String id)
 			{
+				// the rows veiled while the filter's request runs, the toolbar and its field not
 				return new UserFilterPanel(id, new PropertyModel<>(provider, "filter"))
 				{
 					private static final long serialVersionUID = 1L;
@@ -246,7 +247,7 @@ public abstract class UsersTablePanel extends Panel
 						table.setCurrentPage(0);
 						table.refresh(target);
 					}
-				};
+				}.veil(table.getRowsBody());
 			}
 		};
 	}
