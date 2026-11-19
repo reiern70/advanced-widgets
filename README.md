@@ -321,6 +321,19 @@ and the repository, under the same id, and the dependency into the `pom.xml`:
 </dependencies>
 ```
 
+### What comes with the components
+
+The dependency brings what the components need: Wicket's core, its extensions and its native
+WebSocket, the OWASP HTML sanitizer, and the Font Awesome Free web jar
+(`org.webjars.npm:fortawesome__fontawesome-free`), whose icons `SvgIcon` reads at run time and
+draws in the components' own buttons, panels and toolbars. The servlet API is the container's.
+
+One dependency is optional, and an application using what needs it adds it:
+
+- Jackson 3, `tools.jackson.core:jackson-databind`: `JacksonJsonSerializer`, which writes the JSON
+  of `JsonBasedDynamicDataTable`, `JsonBasedTree`, `JsonBasedInfiniteList`, `JsonRowsResource`
+  and the autocompletes, unless they are given another `IJsonSerializer`.
+
 ### A page
 
 Give the page a theme and use the components as any other Wicket component:

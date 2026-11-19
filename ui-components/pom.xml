@@ -58,6 +58,18 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!--
+		  the icons of SvgIcon, read from the web jar the first time each is rendered: the collapsible
+		  panels' actions, the toolbars of the data tables, AjaxActionButton#setIcon. Nothing
+		  compiles against it, so it is a runtime dependency, which an application gets with the
+		  components.
+		-->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>fortawesome__fontawesome-free</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- the container provides it; JsonRowsResource reads the method and body of a request -->
 		<dependency>
 			<groupId>jakarta.servlet</groupId>
@@ -65,11 +77,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<!-- TEST DEPENDENCIES -->
-		<dependency>
-			<groupId>org.webjars.npm</groupId>
-			<artifactId>fortawesome__fontawesome-free</artifactId>
-			<scope>test</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

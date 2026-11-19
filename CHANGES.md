@@ -11,6 +11,18 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC7 (not released yet)
+
+What 11.0.0-RC6 has, and:
+
+- The Font Awesome Free web jar, `org.webjars.npm:fortawesome__fontawesome-free`, comes with the
+  components (#146): the POM declares it for the run time instead of the tests alone, so an
+  application no longer fails with «SvgIcon needs the Font Awesome Free web jar» as a collapsible
+  panel, an `AjaxActionButton` with an icon or a data table's toolbar renders. The README tells
+  what comes with the components and what is optional.
+
+**Upgrading:** an application that added the web jar itself for the icons may drop it.
+
 ## 11.0.0-RC6 (2026-11-19)
 
 What 11.0.0-RC5 has, and:
