@@ -21,6 +21,7 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -44,6 +45,7 @@ import com.github.openjson.JSONObject;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * Two panes, side by side or one above the other, with a divider between them the user drags, with
@@ -74,9 +76,10 @@ import com.antiliacode.widgets.theme.LookPart;
  * changes only with {@link #setSendToServer(boolean)}: via Ajax, each time the user has moved the
  * divider, collapsed a pane or restored it. The panel then gives its model the new state, renders
  * it there again when it or its page is rendered again, and calls
- * {@link #onResized(AjaxRequestTarget)} or {@link #onCollapsed(AjaxRequestTarget)}. To keep the
- * state elsewhere, in the session or with the user's preferences, give the panel a model that
- * stores what it is given.
+ * {@link #onResized(AjaxRequestTarget)} or {@link #onCollapsed(AjaxRequestTarget)}. The requests
+ * leave the page veil alone ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user
+ * goes on dragging while they run. To keep the state elsewhere, in the session or with the user's
+ * preferences, give the panel a model that stores what it is given.
  * <p>
  * The panes are the components returned by {@link #newFirstPane(String)} and
  * {@link #newSecondPane(String)}. A vertical split panel needs a height, from the CSS of the page
@@ -210,6 +213,14 @@ public abstract class SplitPanel extends Panel
 		changed = new AbstractDefaultAjaxBehavior()
 		{
 			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				super.updateAjaxAttributes(attributes);
+				// it reports where the user left the divider while the user goes on: a page veil leaves it alone
+				PageVeilBehavior.noVeil(attributes);
+			}
 
 			@Override
 			public boolean isEnabled(Component component)

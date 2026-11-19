@@ -35,6 +35,7 @@ import com.antiliacode.widgets.icon.IIcon;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * A title and a body the user can expand and collapse, collapsed by default.
@@ -50,7 +51,9 @@ import com.antiliacode.widgets.theme.LookPart;
  * By default the server does not learn when the user expands or collapses the panel, and renders
  * it again in the state of {@link #setExpanded(boolean)}; the panel then leaves a stateless page
  * stateless. With {@link #setRememberExpanded(boolean)} every toggle is reported via Ajax, so the
- * panel keeps the user's choice when it or its page is rendered again, and its page is stateful.
+ * panel keeps the user's choice when it or its page is rendered again, and its page is stateful;
+ * the reports leave the page veil alone ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}),
+ * the user going on while they run.
  * <p>
  * The title is escaped. The body is the component returned by {@link #newBody(String)}, for
  * example a label or a panel.
@@ -297,6 +300,9 @@ public abstract class CollapsiblePanel extends Panel
 			super.updateAjaxAttributes(attributes);
 			attributes.getDynamicExtraParameters()
 				.add("return {'" + OPEN_PARAMETER + "': Wicket.$(attrs.c).open};");
+			// it reports whether the panel is open, remembered while the user goes on: a page
+			// veil leaves it alone
+			PageVeilBehavior.noVeil(attributes);
 		}
 
 		@Override

@@ -31,7 +31,8 @@ import org.apache.wicket.util.lang.Args;
  *
  * <pre>
  * // the page veil leaves the request sending the state on blur alone, which says when it failed
- * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR).setExtraParameter("_nb", "true")
+ * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR)
+ *     .setExtraParameter("wicket_nb", "true")
  *     .addAjaxCallListener(new AjaxCallListener().onFailure("console.warn('not sent');")));
  * // in the URL, with the time the browser sent it
  * editor.addEvent(AjaxEvent.of(RichTextEditorEvents.FOCUS, (values, target) -&gt; ...)

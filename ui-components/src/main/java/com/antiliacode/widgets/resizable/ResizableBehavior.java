@@ -17,6 +17,7 @@ import org.apache.wicket.Application;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.head.CssHeaderItem;
@@ -37,6 +38,7 @@ import com.github.openjson.JSONObject;
 
 import com.antiliacode.widgets.theme.LookPart;
 import com.antiliacode.widgets.theme.Looks;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * Lets the user resize the element of a component: by its bottom edge ({@link ResizeAxis#VERTICAL}),
@@ -58,9 +60,10 @@ import com.antiliacode.widgets.theme.Looks;
  * {@link #setSendToServer(boolean)}: via Ajax, each time the user has resized the element. The
  * behavior then gives its model the new size, which the element takes again when rendered again,
  * also after its component was taken out of the page and put back, and calls
- * {@link #onResized(AjaxRequestTarget, ResizableSize)}. To keep the size elsewhere, in the session
- * or with the user's preferences, give the behavior a model that stores what it is given; to start
- * with a size, give it a model holding one.
+ * {@link #onResized(AjaxRequestTarget, ResizableSize)}. The request leaves the page veil alone
+ * ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user goes on while it runs. To keep
+ * the size elsewhere, in the session or with the user's preferences, give the behavior a model
+ * that stores what it is given; to start with a size, give it a model holding one.
  *
  * @since 11.0.0
  */
@@ -336,6 +339,15 @@ public class ResizableBehavior extends AbstractDefaultAjaxBehavior
 	 */
 	protected void onResized(AjaxRequestTarget target, ResizableSize size)
 	{
+	}
+
+	@Override
+	protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+	{
+		super.updateAjaxAttributes(attributes);
+		// it reports the size the user left the element at, while the user goes on: a page veil
+		// leaves it alone
+		PageVeilBehavior.noVeil(attributes);
 	}
 
 	@Override

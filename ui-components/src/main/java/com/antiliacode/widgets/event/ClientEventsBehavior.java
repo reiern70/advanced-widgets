@@ -107,7 +107,7 @@ import com.antiliacode.widgets.resource.AlreadyCompressedJavaScriptResourceRefer
  * 	}
  * });
  * events.add(AjaxEvent.of(RichTextEditorEvents.BLUR, (values, target) -&gt; ...)
- * 	.setExtraParameter("_nb", "true"));
+ * 	.setExtraParameter("wicket_nb", "true"));
  * </pre>
  * <p>
  * An event telling {@code leaving: true} in its {@code detail}, as the editors' events as the page

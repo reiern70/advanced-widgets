@@ -51,6 +51,7 @@ import com.antiliacode.widgets.event.IClientEventName;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
 import com.antiliacode.widgets.resizable.ResizeAxis;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * What the rich text editors share, {@link RichTextEditor}, made with Tiptap, and
@@ -140,7 +141,11 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  * last sent: {@link RichTextEditorEvents#INPUT}, {@link RichTextEditorEvents#SELECT},
  * {@link RichTextEditorEvents#SCROLL} and {@link RichTextEditorEvents#RESIZE} a moment after the
  * user paused ({@link SendStateEvent#DEFAULT_DELAY}), {@link RichTextEditorEvents#BLUR} at once and
- * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. They are events as any other:
+ * {@link RichTextEditorEvents#LEAVE}, in a beacon, as the page goes. The requests of the first
+ * four carry {@link PageVeilBehavior#NO_VEIL_PARAMETER}, which a page veil leaves alone, the user
+ * going on as they run; those of the blur are veiled, the page waiting for the server once the
+ * editor lost the focus. An event the page gives the editor carries the parameter when the page
+ * says so. They are events as any other:
  * {@link #removeEvents(IClientEventName...)} takes those of names away,
  * {@link #setEvent(IClientEvent)} puts another in their place, {@link #addEvent(IClientEvent)}
  * adds one, of any name. Besides, the page's other Ajax requests carry the state when the editor
@@ -166,7 +171,8 @@ import com.antiliacode.widgets.resizable.ResizeAxis;
  *
  * <pre>
  * // the page veil leaves the request sending the state on blur alone
- * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR).setExtraParameter("_nb", "true"));
+ * editor.setEvent(new SendStateEvent(RichTextEditorEvents.BLUR)
+ * 	.setExtraParameter("wicket_nb", "true"));
  * </pre>
  *
  * Rendered again, or shown again after the user came back to the page with a state model of the
@@ -340,7 +346,9 @@ public abstract class AbstractRichTextEditor<T extends AbstractRichTextEditor<T>
 		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
 			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
 		{
-			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY));
+			// they report while the user goes on: a page veil leaves them alone, not the blur
+			events.add(new SendStateEvent(name).setDelay(SendStateEvent.DEFAULT_DELAY)
+				.setExtraParameter(PageVeilBehavior.NO_VEIL_PARAMETER, "true"));
 		}
 		events.add(new SendStateEvent(RichTextEditorEvents.BLUR));
 		events.add(new SendStateEvent(RichTextEditorEvents.LEAVE));

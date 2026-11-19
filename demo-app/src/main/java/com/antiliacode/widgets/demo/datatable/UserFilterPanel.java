@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo.datatable;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -28,13 +29,29 @@ public abstract class UserFilterPanel extends Panel
 {
 	private static final long serialVersionUID = 1L;
 
+	private final FilterBehavior filterBehavior;
+
 	public UserFilterPanel(String id, IModel<String> filter)
 	{
 		super(id);
 
 		TextField<String> field = new TextField<>("filter", filter);
-		field.add(FilterBehavior.onFilter(this::onFilter));
+		filterBehavior = FilterBehavior.onFilter(this::onFilter);
+		field.add(filterBehavior);
 		add(field);
+	}
+
+	/**
+	 * Veils the components while the filter's request runs, the field left usable.
+	 *
+	 * @param components
+	 *            what the filter fills, outside this panel
+	 * @return {@code this}
+	 */
+	public UserFilterPanel veil(Component... components)
+	{
+		filterBehavior.veil(components);
+		return this;
 	}
 
 	/**

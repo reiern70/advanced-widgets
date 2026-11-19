@@ -70,6 +70,7 @@ import com.antiliacode.widgets.event.AjaxSubmitEvent;
 import com.antiliacode.widgets.event.ClientEvent;
 import com.antiliacode.widgets.event.ClientEventsBehavior;
 import com.antiliacode.widgets.event.ClientEventsTester;
+import com.antiliacode.widgets.event.IAjaxRoundTripEvent;
 import com.antiliacode.widgets.event.IClientEvent;
 import com.antiliacode.widgets.event.SendStateEvent;
 import com.antiliacode.widgets.resizable.ResizableSize;
@@ -352,6 +353,32 @@ class RichTextEditorTest extends WicketTestCase
 	}
 
 	@Test
+	void itsEventsReportingInTheBackgroundLeaveThePageVeilAlone()
+	{
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(HTML));
+
+		for (RichTextEditorEvents name : List.of(RichTextEditorEvents.INPUT,
+			RichTextEditorEvents.SELECT, RichTextEditorEvents.SCROLL, RichTextEditorEvents.RESIZE))
+		{
+			assertEquals("true", extraParameters(editor.getEvents(name)).get(
+				PageVeilBehavior.NO_VEIL_PARAMETER), name.name());
+		}
+		// the blur is veiled, as what the user does
+		assertFalse(extraParameters(editor.getEvents(RichTextEditorEvents.BLUR)).containsKey(
+			PageVeilBehavior.NO_VEIL_PARAMETER));
+	}
+
+	/**
+	 * @return the extra parameters the requests of the events go with
+	 */
+	static Map<String, Object> extraParameters(List<IClientEvent> events)
+	{
+		AjaxRequestAttributes attributes = new AjaxRequestAttributes();
+		events.forEach(event -> ((IAjaxRoundTripEvent)event).updateAjaxAttributes(attributes));
+		return attributes.getExtraParameters();
+	}
+
+	@Test
 	void tellsOfTheImagesTakenOutWithTheAttributesOfTheEventsOrItsOwn()
 	{
 		// the page veil leaves the requests of the editor's events alone, and so the one telling of
@@ -402,7 +429,6 @@ class RichTextEditorTest extends WicketTestCase
 			own.getMarkupId() + "\",.*\"ep\":\\[\\{\"name\":\"own\",\"value\":\"1\"\\}\\]");
 		tester.assertContains("heardImages = true;");
 		tester.assertContains("var heardImages;");
-		assertFalse(tester.getLastResponseAsString().contains(PageVeilBehavior.NO_VEIL_PARAMETER));
 
 		// the editor still hears of them
 		removeImages(removal(own), "[\"/images/a.png\"]");

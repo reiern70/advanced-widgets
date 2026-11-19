@@ -25,6 +25,7 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
 import org.apache.wicket.ajax.attributes.CallbackParameter;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -51,6 +52,7 @@ import com.github.openjson.JSONObject;
 import com.antiliacode.widgets.theme.LookBehavior;
 import com.antiliacode.widgets.theme.LookContainer;
 import com.antiliacode.widgets.theme.LookPart;
+import com.antiliacode.widgets.veil.PageVeilBehavior;
 
 /**
  * A desktop: {@link DesktopWindow floating windows} that are not modal, many at once, as on the
@@ -106,7 +108,10 @@ import com.antiliacode.widgets.theme.LookPart;
  * states of all windows each time the user has changed any, with the side of the taskbar and
  * whether the desktop fills the page, and the panes; the windows give their models the new states,
  * the desktop keeps the side, whether it fills the page and the panes, and calls
- * {@link #onChanged(AjaxRequestTarget)}.
+ * {@link #onChanged(AjaxRequestTarget)}. These requests leave the page veil alone
+ * ({@link PageVeilBehavior#noVeil(AjaxRequestAttributes)}): the user goes on moving the windows
+ * while they run. Those opening a window from the launcher and taking away one closed are veiled,
+ * as what the user does.
  *
  * @since 11.0.0
  */
@@ -208,6 +213,14 @@ public class Desktop extends Panel
 		changed = new AbstractDefaultAjaxBehavior()
 		{
 			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
+			{
+				super.updateAjaxAttributes(attributes);
+				// it reports where the user left the windows and the taskbar while the user goes on: a page veil leaves it alone
+				PageVeilBehavior.noVeil(attributes);
+			}
 
 			@Override
 			public boolean isEnabled(Component component)
