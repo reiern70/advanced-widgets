@@ -18,7 +18,8 @@ import { CK_EDITOR_CLASSES, CK_EDITOR_EVENTS, CKEditor, ckEditor, DEFAULT_CK_EDI
 	registerRichTextEvent, RICH_TEXT_BUILT_IN_EVENTS,
 	RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EVENT_TRIGGER, setHost, standaloneHost, type CKEditorBuild,
 	type CKEditorInstance, type CKEditorViewWriter, type Host } from '../src/index.js';
-import { offsetOfPath, pathOfOffset, uploadProgressClass, type CKEditorModelElement,
+import { isOwnCKEditorError, offsetOfPath, pathOfOffset, uploadProgressClass,
+	type CKEditorModelElement,
 	type CKEditorModelPosition, type CKEditorModelWriter } from '../src/ck-editor.js';
 
 /*
@@ -1115,6 +1116,57 @@ describe('CKEditor running into an error after it started', () => {
 			expect(otherError).toHaveBeenCalledTimes(2);
 			other.destroy();
 			expect(build.hearing()).toBe(0);
+		});
+
+	it('leaves to another CKEditor its errors CKEditor gives as this one\'s too', async () => {
+		quietly();
+		const build = fakeBuild();
+		const onError = vi.fn();
+		const one = new CKEditor(textArea(), { build, onError, recovery: false });
+		const element = document.createElement('div');
+		document.body.append(element);
+		const otherError = vi.fn();
+		const other = new CKEditor(element, { build, onError: otherError, recovery: false });
+		await one.ready;
+		await other.ready;
+		const [first, second] = build.editors;
+
+		// a command of the other CKEditor fails: CKEditor gives its error as one of both
+		const error = Object.assign(new Error('A command failed'),
+			{ context: { editor: second } });
+		build.crash(first, error);
+		build.crash(second, error);
+		expect(onError).not.toHaveBeenCalled();
+		expect(otherError).toHaveBeenCalledTimes(1);
+		expect(otherError.mock.calls[0]![0]).toBe(error);
+		one.destroy();
+		other.destroy();
+	});
+
+	it('tells the errors of a CKEditor by their context, through what no other CKEditor shares',
+		() => {
+			// a constant of CKEditor's own, which every editor with lists reaches
+			const shared = ['listType', 'listIndent'];
+			const editor = (name: string) => {
+				const made = { name, model: { schema: { listItem: [{ allowAttributes: shared }] } },
+					editing: { view: { document: { name } } }, data: {} };
+				return made;
+			};
+			const one = editor('one');
+			const other = editor('other');
+			const fail = (context: unknown) => Object.assign(new Error('failed'), { context });
+
+			// the editor, or the editor of a command or a plugin
+			expect(isOwnCKEditorError(fail(one), one, [one, other])).toBe(true);
+			expect(isOwnCKEditorError(fail({ editor: one }), one, [one, other])).toBe(true);
+			expect(isOwnCKEditorError(fail({ editor: other }), one, [one, other])).toBe(false);
+			// a part of the editor telling no editor: only one reaches it but by the shared constant
+			const view = other.editing.view;
+			expect(isOwnCKEditorError(fail(view), other, [one, other])).toBe(true);
+			expect(isOwnCKEditorError(fail(view), one, [one, other])).toBe(false);
+			// alone in the page, or without a context, any error CKEditor gives is the editor's
+			expect(isOwnCKEditorError(fail(view), one, [one])).toBe(true);
+			expect(isOwnCKEditorError(new Error('failed'), one, [one, other])).toBe(true);
 		});
 
 	it('starts CKEditor again with the text, the selection and the focus it had, and says so',
