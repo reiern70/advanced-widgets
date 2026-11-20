@@ -69,7 +69,9 @@ import com.github.openjson.JSONObject;
  * the server hears of the tab closed. Each document has an action, before the button closing it,
  * showing what the server knows of it in a popover pointing at the action, and a button opens a new
  * document via Ajax, leaving the others as they are in the browser. A second tabs' orientation and
- * design a check box and a drop-down switch, and the server hears of the tab the user selects. A
+ * design a check box and a drop-down switch, and the server hears of the tab the user selects; the
+ * title of their alerts counts the new ones, rendered again alone via Ajax, and a button adds a
+ * section after the first one. A
  * gallery shows the designs made for tabs along the top and those made for tabs down the side. The
  * React and Svelte tabs show the same in those frameworks.
  */
@@ -84,6 +86,12 @@ public class TabbedPanelPage extends DemoPage
 
 	/** The sections of the settings, the keys of their titles and texts. */
 	static final List<String> SECTIONS = List.of("profile", "alerts", "privacy");
+
+	/** The section a button adds to the settings, after the first one. */
+	static final String ADDED_SECTION = "security";
+
+	/** The section whose title counts the new alerts. */
+	static final String ALERTS = "alerts";
 
 	/** The designs the gallery shows along the top, and the tabs it shows them with. */
 	static final List<TabsDesign> TOP_DESIGNS = List.of(TabsDesign.SEGMENTED, TabsDesign.FOLDER,
@@ -121,6 +129,9 @@ public class TabbedPanelPage extends DemoPage
 	private boolean vertical = true;
 
 	private TabsDesign design = TabsDesign.PILLS;
+
+	/** The alerts not seen yet, which the title of the alerts counts. */
+	private int alerts;
 
 	/**
 	 * Constructor.
@@ -199,24 +210,52 @@ public class TabbedPanelPage extends DemoPage
 			protected void onSelected(AjaxRequestTarget target, Tab tab)
 			{
 				target.add(selected);
+				if (ALERTS.equals(tab.getName()) && alerts > 0)
+				{
+					// seen: the title no longer counts them
+					alerts = 0;
+					updateTab(tab, target);
+				}
 			}
 		};
 		settings.setLabel(new ResourceModel("settings")).setSendToServer(true)
 			.setOutputMarkupId(true);
-		for (String section : SECTIONS)
-		{
-			settings.addTab(new Tab(section, new ResourceModel(section))
-			{
-				private static final long serialVersionUID = 1L;
-
-				@Override
-				protected Component newPanel(String id)
-				{
-					return new Label(id, new ResourceModel(section + ".text"));
-				}
-			});
-		}
+		SECTIONS.forEach(section -> settings.addTab(newSection(section)));
 		settingsCase.add(settings);
+
+		settingsCase.add(new AjaxLink<Void>("newAlert")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				alerts++;
+				// the title of the tab alone, the panels stay as they are
+				settings.updateTab(settings.getTab(ALERTS), target);
+			}
+		}.add(new ButtonBehavior(ButtonBehavior.Variant.SECONDARY, ButtonBehavior.Size.SMALL)));
+		settingsCase.add(new AjaxLink<Void>("addSection")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(settings.getTab(ADDED_SECTION) == null);
+			}
+
+			@Override
+			public void onClick(AjaxRequestTarget target)
+			{
+				// after the first section, rendering it alone
+				Tab added = newSection(ADDED_SECTION);
+				settings.addTab(added, 1, target).select(added, target);
+				target.add(this, selected);
+			}
+		}.setOutputMarkupPlaceholderTag(true)
+			.add(new ButtonBehavior(ButtonBehavior.Variant.SECONDARY, ButtonBehavior.Size.SMALL)));
 
 		Form<Void> form = new Form<>("form");
 		settingsCase.add(form);
@@ -244,6 +283,26 @@ public class TabbedPanelPage extends DemoPage
 			null));
 		galleryCase.add(gallery("sideDesigns", SIDE_DESIGNS, TabsOrientation.VERTICAL, SIDE_TABS,
 			SIDE_SELECTED));
+	}
+
+	/**
+	 * @return the tab of a section of the settings; the title of the alerts counts the new ones
+	 */
+	private Tab newSection(String section)
+	{
+		IModel<String> title = ALERTS.equals(section) ? () -> alerts == 0 ? getString(ALERTS) :
+			getString("alertsCount").replace("{0}", String.valueOf(alerts)) :
+			new ResourceModel(section);
+		return new Tab(section, title)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				return new Label(id, new ResourceModel(section + ".text"));
+			}
+		};
 	}
 
 	/**
@@ -362,12 +421,14 @@ public class TabbedPanelPage extends DemoPage
 		JSONObject texts = FrameworkTabs.texts(this, "cases", "documentsTitle", "documents",
 			"welcome", "welcomeText", "newDocument", "save", "about", "info", "unsaved", "allSaved",
 			"untitled", "closed", "saved", "opened", "start", "settingsTitle", "settings", "vertical",
-			"design", "selected", "galleryTitle", "alongTheTop", "downTheSide");
+			"design", "selected", "galleryTitle", "alongTheTop", "downTheSide", "newAlert",
+			"alertsCount", "addSection");
 		for (TabsDesign each : TabsDesign.values())
 		{
 			texts.put("design." + each.name(), getString("design." + each.name()));
 		}
 		List<String> names = new ArrayList<>(SECTIONS);
+		names.add(ADDED_SECTION);
 		names.addAll(TOP_TABS.keySet());
 		names.addAll(SIDE_TABS.keySet());
 		for (String name : names)
@@ -388,6 +449,7 @@ public class TabbedPanelPage extends DemoPage
 			.put("tabs", tabs)
 			.put("documents", documentsConfig)
 			.put("sections", new JSONArray(SECTIONS))
+			.put("addedSection", ADDED_SECTION)
 			.put("icons", new JSONObject()
 				.put("welcome", WELCOME_ICON.getMarkup())
 				.put("document", DOCUMENT_ICON.getMarkup())

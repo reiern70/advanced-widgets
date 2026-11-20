@@ -15,11 +15,13 @@ package com.antiliacode.widgets.tabs;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
+import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -81,8 +83,11 @@ import com.github.openjson.JSONObject;
  * model is kept in the page, and starts empty for the first tab. With
  * {@link #setSendToServer(boolean)} the browser tells the server each tab the user selects, the
  * model takes its name and the tabs call {@link #onSelected(AjaxRequestTarget, Tab)}. Tabs added or
- * taken away via Ajax, with {@link #addTab(Tab, AjaxRequestTarget)} and
- * {@link #removeTab(Tab, AjaxRequestTarget)}, leave the other panels as they are in the browser.
+ * taken away via Ajax, with {@link #addTab(Tab, AjaxRequestTarget)},
+ * {@link #addTab(Tab, int, AjaxRequestTarget)} at a place among the others, and
+ * {@link #removeTab(Tab, AjaxRequestTarget)}, leave the other panels as they are in the browser;
+ * {@link #updateTab(Tab, AjaxRequestTarget)} renders the icon, the title and the actions of a tab
+ * again, a title counting something for example, and nothing else.
  *
  * @since 11.0.0
  */
@@ -179,14 +184,14 @@ public class TabbedPanel extends Panel
 			}
 		});
 		element.add(list);
-		headers = new RepeatingView("headers");
+		headers = new TabsView("headers");
 		list.add(headers);
 
 		panels = new WebMarkupContainer("panels");
 		panels.setOutputMarkupId(true);
 		panels.add(new LookBehavior(LookPart.TABS_PANELS));
 		element.add(panels);
-		items = new RepeatingView("items");
+		items = new TabsView("items");
 		panels.add(items);
 
 		callback = new AbstractDefaultAjaxBehavior()
@@ -220,7 +225,29 @@ public class TabbedPanel extends Panel
 	 */
 	public TabbedPanel addTab(Tab tab)
 	{
+		return addTab(tab, tabs.size());
+	}
+
+	/**
+	 * Adds a tab at a place among the others; its panel is created now.
+	 *
+	 * @param tab
+	 *            the tab; given a name when it has none
+	 * @param index
+	 *            the place of the tab, from 0 for the first to {@code getTabs().size()} for after
+	 *            the others
+	 * @return {@code this}
+	 * @throws IndexOutOfBoundsException
+	 *             when the index is not one of those places
+	 */
+	public TabbedPanel addTab(Tab tab, int index)
+	{
 		Args.notNull(tab, "tab");
+		if (index < 0 || index > tabs.size())
+		{
+			throw new IndexOutOfBoundsException("The tabs " + getPageRelativePath() + " have " +
+				tabs.size() + " tabs, no place " + index);
+		}
 		if (Strings.isEmpty(tab.getName()))
 		{
 			tab.setName(headers.newChildId());
@@ -230,7 +257,7 @@ public class TabbedPanel extends Panel
 			throw new IllegalArgumentException("The tabs " + getPageRelativePath() +
 				" have a tab named " + tab.getName() + " already");
 		}
-		tabs.add(tab);
+		tabs.add(index, tab);
 		headers.add(newHeader(tab));
 		WebMarkupContainer item = newItem(tab);
 		item.add(tab.newPanel("panel"));
@@ -250,21 +277,81 @@ public class TabbedPanel extends Panel
 	 */
 	public TabbedPanel addTab(Tab tab, AjaxRequestTarget target)
 	{
-		addTab(tab);
+		return addTab(tab, tabs.size(), target);
+	}
+
+	/**
+	 * Adds a tab via Ajax at a place among the others, rendering only it: the panels of the others
+	 * stay as they are in the browser.
+	 *
+	 * @param tab
+	 *            the tab; given a name when it has none
+	 * @param index
+	 *            the place of the tab, from 0 for the first to {@code getTabs().size()} for after
+	 *            the others
+	 * @param target
+	 *            the Ajax request target
+	 * @return {@code this}
+	 * @throws IndexOutOfBoundsException
+	 *             when the index is not one of those places
+	 */
+	public TabbedPanel addTab(Tab tab, int index, AjaxRequestTarget target)
+	{
+		addTab(tab, index);
 		Component header = headers.get(tab.getName());
 		Component item = items.get(tab.getName());
-		// elements for Wicket to replace by those of the tab and its panel
+		Tab next = index + 1 < tabs.size() ? tabs.get(index + 1) : null;
+		// elements for Wicket to replace by those of the tab and its panel, before those of the
+		// tab now after it
 		target.prependJavaScript("(function(){" +
-			placeholder(list.getMarkupId(), header.getMarkupId()) +
-			placeholder(panels.getMarkupId(), item.getMarkupId()) + "})();");
+			placeholder(list.getMarkupId(), header.getMarkupId(),
+				next != null ? headers.get(next.getName()).getMarkupId() : null) +
+			placeholder(panels.getMarkupId(), item.getMarkupId(),
+				next != null ? items.get(next.getName()).getMarkupId() : null) + "})();");
 		target.add(header, item);
 		return this;
 	}
 
-	private static String placeholder(String parent, String id)
+	/**
+	 * @return a script putting an empty element of the id in the parent: before the element of
+	 *         the id before, or at the end when there is none
+	 */
+	private static String placeholder(String parent, String id, String before)
 	{
-		return "var e=document.createElement('div');e.id=" + ScriptJson.quote(id) +
-			";document.getElementById(" + ScriptJson.quote(parent) + ").appendChild(e);";
+		String element = "var e=document.createElement('div');e.id=" + ScriptJson.quote(id) + ";";
+		if (before == null)
+		{
+			return element + "document.getElementById(" + ScriptJson.quote(parent) +
+				").appendChild(e);";
+		}
+		return element + "var p=document.getElementById(" + ScriptJson.quote(parent) +
+			"),b=document.getElementById(" + ScriptJson.quote(before) +
+			");p.insertBefore(e,b&&b.parentNode===p?b:null);";
+	}
+
+	/**
+	 * Renders the header of a tab again via Ajax: its icon, its title and its actions, as the tab
+	 * has them now. A title whose model tells a count, for example, shows the count of now. The tab
+	 * keeps its place, its selection, the focus and what the panel holds; the close button and the
+	 * mark of changes stay.
+	 *
+	 * @param tab
+	 *            the tab
+	 * @param target
+	 *            the Ajax request target
+	 * @return {@code this}
+	 */
+	public TabbedPanel updateTab(Tab tab, AjaxRequestTarget target)
+	{
+		MarkupContainer header = (MarkupContainer)headers.get(tab.getName());
+		if (header == null || !tabs.contains(tab))
+		{
+			return this;
+		}
+		MarkupContainer actions = (MarkupContainer)header.get("actions");
+		actions.replace(newActions(tab));
+		target.add(header.get("button:icon"), header.get("button:title"), actions);
+		return this;
 	}
 
 	/**
@@ -712,6 +799,7 @@ public class TabbedPanel extends Panel
 		button.setOutputMarkupId(true);
 		button.add(new LookBehavior(LookPart.TAB_BUTTON));
 		header.add(button);
+		// the icon, the title and the actions have ids for updateTab to render them again
 		button.add(new Label("icon", () -> tab.getIcon() != null ? tab.getIcon().getMarkup() : null)
 		{
 			private static final long serialVersionUID = 1L;
@@ -722,8 +810,10 @@ public class TabbedPanel extends Panel
 				super.onConfigure();
 				setVisible(tab.getIcon() != null);
 			}
-		}.setEscapeModelStrings(false).add(new LookBehavior(LookPart.TAB_ICON)));
-		button.add(new Label("title", tab.getTitle()).add(new LookBehavior(LookPart.TAB_TITLE)));
+		}.setEscapeModelStrings(false).setOutputMarkupPlaceholderTag(true)
+			.add(new LookBehavior(LookPart.TAB_ICON)));
+		button.add(new Label("title", tab.getTitle()).setOutputMarkupId(true)
+			.add(new LookBehavior(LookPart.TAB_TITLE)));
 
 		WebMarkupContainer actions = new WebMarkupContainer("actions")
 		{
@@ -736,15 +826,24 @@ public class TabbedPanel extends Panel
 				setVisible(!tab.getActions().isEmpty());
 			}
 		};
+		actions.setOutputMarkupPlaceholderTag(true);
 		actions.add(new LookBehavior(LookPart.TAB_ACTIONS));
 		header.add(actions);
+		actions.add(newActions(tab));
+		return header;
+	}
+
+	/**
+	 * @return the buttons of the actions of a tab
+	 */
+	private RepeatingView newActions(Tab tab)
+	{
 		RepeatingView buttons = new RepeatingView("action");
-		actions.add(buttons);
 		for (TabAction action : tab.getActions())
 		{
 			buttons.add(newAction(buttons.newChildId(), tab, action));
 		}
-		return header;
+		return buttons;
 	}
 
 	/**
@@ -810,6 +909,35 @@ public class TabbedPanel extends Panel
 		};
 		item.setOutputMarkupId(true);
 		return item;
+	}
+
+	/**
+	 * The headers or the items of the tabs, rendered in the order of the tabs, which a tab added
+	 * at a place changes.
+	 */
+	private class TabsView extends RepeatingView
+	{
+		private static final long serialVersionUID = 1L;
+
+		TabsView(String id)
+		{
+			super(id);
+		}
+
+		@Override
+		protected Iterator<Component> renderIterator()
+		{
+			List<Component> children = new ArrayList<>();
+			for (Tab tab : tabs)
+			{
+				Component child = get(tab.getName());
+				if (child != null)
+				{
+					children.add(child);
+				}
+			}
+			return children.iterator();
+		}
 	}
 
 	@Override
