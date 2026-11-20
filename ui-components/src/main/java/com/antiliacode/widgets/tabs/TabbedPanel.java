@@ -79,7 +79,9 @@ import com.github.openjson.JSONObject;
  * <p>
  * {@code Wicket.Tabs} from {@link #JS} does all that in the browser. The panels of all tabs are
  * rendered, those not selected hidden, so that switching tabs needs no request and keeps what the
- * user typed in each. Which tab is selected is the model of the tabs, its name; by default the
+ * user typed in each; but those of {@link LazyTab}s, created when their tab is first selected,
+ * which the browser asks the server for via Ajax, and kept or, not caching, dropped when another
+ * tab is selected. Which tab is selected is the model of the tabs, its name; by default the
  * model is kept in the page, and starts empty for the first tab. With
  * {@link #setSendToServer(boolean)} the browser tells the server each tab the user selects, the
  * model takes its name and the tabs call {@link #onSelected(AjaxRequestTarget, Tab)}. Tabs added or
@@ -105,6 +107,9 @@ public class TabbedPanel extends Panel
 	private static final String EVENT_PARAMETER = "event";
 
 	private static final String TAB_PARAMETER = "tab";
+
+	/** The id of the panel of a tab in its item. */
+	private static final String PANEL_ID = "panel";
 
 	/** The texts of the tabs, by their names in the script; their keys are TabbedPanel.name. */
 	private static final String[] TEXTS = { "close", "modified", "closeModifiedTitle",
@@ -260,7 +265,8 @@ public class TabbedPanel extends Panel
 		tabs.add(index, tab);
 		headers.add(newHeader(tab));
 		WebMarkupContainer item = newItem(tab);
-		item.add(tab.newPanel("panel"));
+		// a lazy tab has its panel when it is selected
+		item.add(tab instanceof LazyTab ? new Unloaded() : tab.newPanel(PANEL_ID));
 		items.add(item);
 		return this;
 	}
@@ -514,9 +520,79 @@ public class TabbedPanel extends Panel
 		select(tab);
 		if (tab != null)
 		{
+			loadSelected(tab, target);
 			target.appendJavaScript(script("select(" + ScriptJson.quote(tab.getName()) + ")"));
 		}
 		return this;
+	}
+
+	/**
+	 * @param tab
+	 *            a tab of the tabs
+	 * @return whether the panel of the tab is created: always, but for a {@link LazyTab} not
+	 *         selected yet, or one not caching and not selected
+	 */
+	public boolean isLoaded(Tab tab)
+	{
+		WebMarkupContainer item = tab != null ? (WebMarkupContainer)items.get(tab.getName()) : null;
+		return item != null && !(item.get(PANEL_ID) instanceof Unloaded);
+	}
+
+	/**
+	 * Creates the panel of a lazy tab, unless it is there.
+	 *
+	 * @return whether it was not
+	 */
+	private boolean load(Tab tab)
+	{
+		if (isLoaded(tab) || !tabs.contains(tab))
+		{
+			return false;
+		}
+		((WebMarkupContainer)items.get(tab.getName())).replace(tab.newPanel(PANEL_ID));
+		return true;
+	}
+
+	/**
+	 * Drops the panel of a lazy tab, unless it is not there.
+	 *
+	 * @return whether it was
+	 */
+	private boolean unload(Tab tab)
+	{
+		if (!isLoaded(tab))
+		{
+			return false;
+		}
+		((WebMarkupContainer)items.get(tab.getName())).replace(new Unloaded());
+		return true;
+	}
+
+	/**
+	 * @return whether a lazy tab drops its panel when another tab is selected
+	 */
+	private static boolean isDropping(Tab tab)
+	{
+		return tab instanceof LazyTab lazy && !lazy.isCaching();
+	}
+
+	/**
+	 * Has the panel of the tab selected, creating it for a lazy tab, and drops those of the lazy
+	 * tabs not caching that are not selected, rendering the panels created or dropped via Ajax.
+	 */
+	private void loadSelected(Tab selected, AjaxRequestTarget target)
+	{
+		if (load(selected) && target != null)
+		{
+			target.add(items.get(selected.getName()));
+		}
+		for (Tab tab : tabs)
+		{
+			if (tab != selected && isDropping(tab) && unload(tab) && target != null)
+			{
+				target.add(items.get(tab.getName()));
+			}
+		}
 	}
 
 	/**
@@ -559,19 +635,43 @@ public class TabbedPanel extends Panel
 		{
 			return;
 		}
-		if ("select".equals(event) && sendToServer)
+		if ("load".equals(event))
 		{
-			if (!name.equals(getModelObject()))
+			load(tab);
+			// rendered even when it was there, for the browser waiting for it
+			target.add(items.get(name));
+			if (isToldSelection())
 			{
-				setModelObject(name);
-				onSelected(target, tab);
+				onSelectedInBrowser(target, tab);
 			}
+		}
+		else if ("select".equals(event) && isToldSelection())
+		{
+			onSelectedInBrowser(target, tab);
 		}
 		else if ("close".equals(event) && tab.isClosable())
 		{
 			// out of the page too: what is in its panel sends nothing more to components gone
 			removeTabAndElements(tab, target);
 			onClosed(target, tab);
+		}
+	}
+
+	/**
+	 * Takes the tab the user selected: the model takes its name, the lazy tabs not caching drop
+	 * their panels, and with {@link #isSendToServer()} the tabs call
+	 * {@link #onSelected(AjaxRequestTarget, Tab)}.
+	 */
+	private void onSelectedInBrowser(AjaxRequestTarget target, Tab tab)
+	{
+		loadSelected(tab, target);
+		if (!tab.getName().equals(getModelObject()))
+		{
+			setModelObject(tab.getName());
+			if (sendToServer)
+			{
+				onSelected(target, tab);
+			}
 		}
 	}
 
@@ -672,7 +772,9 @@ public class TabbedPanel extends Panel
 
 	/**
 	 * Whether the browser tells the server via Ajax each tab the user selects, which the model
-	 * takes. The tabs the user closes it tells always.
+	 * takes, calling {@link #onSelected(AjaxRequestTarget, Tab)}. The tabs the user closes it tells
+	 * always, and the tabs selected too while a {@link LazyTab} drops its panel when another tab
+	 * is selected: the model then takes them, without onSelected.
 	 *
 	 * @param sendToServer
 	 *            whether the browser tells the server each tab the user selects
@@ -693,12 +795,39 @@ public class TabbedPanel extends Panel
 	}
 
 	/**
-	 * @return whether the browser calls the server back: to tell the tab the user selects, or one
-	 *         they close
+	 * @return whether the browser calls the server back: to tell the tab the user selects, one
+	 *         they close, or one whose panel it needs
 	 */
 	private boolean isCalledBack()
 	{
-		return sendToServer || tabs.stream().anyMatch(Tab::isClosable);
+		return isToldSelection() || hasLazyTabs() || tabs.stream().anyMatch(Tab::isClosable);
+	}
+
+	/**
+	 * @return whether the browser tells the server each tab the user selects: with
+	 *         {@link #isSendToServer()}, or for lazy tabs not caching to drop their panels
+	 */
+	private boolean isToldSelection()
+	{
+		return sendToServer || tabs.stream().anyMatch(TabbedPanel::isDropping);
+	}
+
+	private boolean hasLazyTabs()
+	{
+		return tabs.stream().anyMatch(LazyTab.class::isInstance);
+	}
+
+	@Override
+	protected void onBeforeRender()
+	{
+		// rendered whole: the panel of the tab selected is there, those of the lazy tabs not
+		// caching that are not selected are not
+		Tab selected = getSelectedTab();
+		if (selected != null)
+		{
+			loadSelected(selected, null);
+		}
+		super.onBeforeRender();
 	}
 
 	@Override
@@ -710,8 +839,12 @@ public class TabbedPanel extends Panel
 			.append(ScriptJson.quote(element.getMarkupId())).append(", ").append(getOptions());
 		if (isCalledBack())
 		{
-			script.append(", ").append(sendToServer ? callbackFor("select") : "null")
+			script.append(", ").append(isToldSelection() ? callbackFor("select") : "null")
 				.append(", ").append(callbackFor("close"));
+			if (hasLazyTabs())
+			{
+				script.append(", ").append(callbackFor("load"));
+			}
 		}
 		response.render(OnDomReadyHeaderItem.forScript(script.append(");").toString()));
 	}
@@ -905,10 +1038,28 @@ public class TabbedPanel extends Panel
 				{
 					tag.put("data-modified", tab.getModified().toString());
 				}
+				if (!isLoaded(tab))
+				{
+					// for the browser to ask for the panel when the tab is selected
+					tag.put("data-load", "");
+				}
 			}
 		};
 		item.setOutputMarkupId(true);
 		return item;
+	}
+
+	/**
+	 * The empty panel of a lazy tab, until it is selected.
+	 */
+	private static class Unloaded extends Label
+	{
+		private static final long serialVersionUID = 1L;
+
+		Unloaded()
+		{
+			super(PANEL_ID, "");
+		}
 	}
 
 	/**

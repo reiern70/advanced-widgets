@@ -14,7 +14,8 @@
 <!--
   @component
   The tabs of the core: a list of tabs, along the top of their panels or down their left side, and
-  the panel of the tab selected. A click or the arrow keys select a tab. A closable tab has a
+  the panel of the tab selected. A click or the arrow keys select a tab; a lazy tab's panel is
+  rendered when it is first selected. A closable tab has a
   button closing it, as do Delete and the middle button; closing one with changes not saved asks
   first, and its tab shows a mark meanwhile. Svelte renders the tabs, from the list tabs, which may
   change, and their panels, the snippet panel given each tab; the snippets icon and actions put an
@@ -90,6 +91,8 @@
 
 	let element = $state<HTMLDivElement>();
 	let instance: Tabs | null = null;
+	// the lazy tabs selected once, whose panels are rendered
+	let loaded = $state<Record<string, true>>({});
 
 	const classes = $derived([partClasses(look, 'tabs', `tabs-${orientation}`, `tabs-${design}`),
 		className].filter(Boolean).join(' '));
@@ -117,6 +120,9 @@
 			onClose: (tab: string) => {
 				selected = core.selected();
 				onclose?.(tab);
+			},
+			onLoad: (tab: string) => {
+				loaded[tab] = true;
 			}
 		})));
 		instance = core;
@@ -137,8 +143,9 @@
 	// the tabs as the page has them now, and the one it selects
 	$effect(() => {
 		const next = selected;
-		void tabs.map((tab) => [tab.id, tab.title, tab.closable, tab.modified, tab.class]);
+		void tabs.map((tab) => [tab.id, tab.title, tab.closable, tab.modified, tab.class, tab.lazy]);
 		void classes;
+		void Object.keys(loaded);
 		untrack(() => {
 			if (!instance) {
 				return;
@@ -202,9 +209,10 @@
 	</div>
 	<div class={partClasses(look, 'tabs-panels')}>
 		{#each tabs as tab (tab.id)}
+			{@const waiting = !!tab.lazy && !loaded[tab.id]}
 			<div class={[partClasses(look, 'tabs-panel'), tab.panelClass].filter(Boolean).join(' ')}
-				data-tab={tab.id} data-modified={flag(tab.modified)}>
-				{@render panel(tab)}
+				data-tab={tab.id} data-modified={flag(tab.modified)} data-load={waiting ? '' : undefined}>
+				{#if !waiting}{@render panel(tab)}{/if}
 			</div>
 		{/each}
 	</div>

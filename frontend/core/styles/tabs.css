@@ -200,6 +200,43 @@
 	display: none;
 }
 
+/* a panel the page renders when its tab is first selected: room for the spinner while it comes */
+.antilia-tabs-panels > .antilia-tabs-panel[data-load] {
+	min-height: 4em;
+}
+
+.antilia-tabs-panels > .antilia-tabs-panel[data-load][aria-busy='true'] {
+	position: relative;
+	cursor: progress;
+}
+
+.antilia-tabs-panels > .antilia-tabs-panel[data-load][aria-busy='true']::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	box-sizing: border-box;
+	width: 1.5em;
+	height: 1.5em;
+	margin: -0.75em 0 0 -0.75em;
+	border: 0.18em solid var(--antilia-theme-primary, currentColor);
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: antilia-tabs-load-spin 0.75s linear infinite;
+}
+
+@keyframes antilia-tabs-load-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.antilia-tabs-panels > .antilia-tabs-panel[data-load][aria-busy='true']::before {
+		animation-duration: 2.5s;
+	}
+}
+
 .antilia-tabs-list > .antilia-tab {
 	display: flex;
 	flex: 0 0 auto;

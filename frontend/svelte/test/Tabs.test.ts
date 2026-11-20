@@ -132,4 +132,20 @@ describe('Tabs', () => {
 		expect(tab(container, 'one').querySelector('.antilia-tab-close')!.className)
 			.toBe('antilia-tab-close btn-close');
 	});
+	it('renders the panel of a lazy tab once it is first selected, then keeps it', async () => {
+		const { container } = render(BoundTabs, { items: [{ id: 'one', title: 'One' },
+			{ id: 'two', title: 'Two', lazy: true }] });
+		expect(panel(container, 'two').hasAttribute('data-load')).toBe(true);
+		expect(panel(container, 'two').textContent).toBe('');
+
+		await fireEvent.click(button(container, 'two'));
+		flushSync();
+		await waitFor(() => expect(panel(container, 'two').textContent).toBe('Panel Two'));
+		expect(panel(container, 'two').hasAttribute('data-load')).toBe(false);
+		await waitFor(() => expect(panel(container, 'two').hasAttribute('aria-busy')).toBe(false));
+
+		await fireEvent.click(button(container, 'one'));
+		flushSync();
+		expect(panel(container, 'two').textContent).toBe('Panel Two');
+	});
 });

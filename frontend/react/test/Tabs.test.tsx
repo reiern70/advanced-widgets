@@ -167,6 +167,26 @@ describe('Tabs', () => {
 		await expect(ref.current!.requestClose('two')).resolves.toBe(true);
 	});
 
+	it('renders the panel of a lazy tab once it is first selected, then keeps it', async () => {
+		const ref = createRef<TabsHandle>();
+		const { container } = render(<Tabs ref={ref}>
+			<Tab id="one" title="One">First</Tab>
+			<Tab id="two" title="Two" lazy><p className="heavy">Second</p></Tab>
+		</Tabs>);
+		expect(panel(container, 'two').hasAttribute('data-load')).toBe(true);
+		expect(container.querySelector('.heavy')).toBeNull();
+
+		fireEvent.click(button(container, 'two'));
+		await waitFor(() => expect(container.querySelector('.heavy')).not.toBeNull());
+		expect(panel(container, 'two').hasAttribute('data-load')).toBe(false);
+		expect(panel(container, 'two').hasAttribute('aria-busy')).toBe(false);
+		expect(panel(container, 'two').hidden).toBe(false);
+
+		fireEvent.click(button(container, 'one'));
+		expect(container.querySelector('.heavy')).not.toBeNull();
+		expect(ref.current!.tabs!.isLoading('two')).toBe(false);
+	});
+
 	it('renders its parts in the look of its provider', () => {
 		const { container } = render(<LookProvider look="bootstrap">
 			<Tabs design="underline">

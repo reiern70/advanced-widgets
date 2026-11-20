@@ -65,6 +65,11 @@ export interface TabItem {
 	class?: string;
 	/** CSS classes of the panel, next to antilia-tabs-panel. */
 	panelClass?: string;
+	/**
+	 * Whether the panel is rendered only once the tab is first selected, then kept; false when left
+	 * out, all panels rendered at once.
+	 */
+	lazy?: boolean;
 }
 
 /**

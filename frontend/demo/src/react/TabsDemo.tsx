@@ -17,8 +17,9 @@ import { useState } from 'react';
 import { Button, Dropdown, Popover, Tab, Tabs, type TabsDesign } from '@antilia/react';
 
 import { dropdownTexts, format } from '../data.js';
-import { ALERTS, documentsOf, newDocument, popoverOf, sectionTitle, withAddedSection,
-	type Document, type GalleryConfig, type TabsConfig } from '../tabs.js';
+import { afterSelecting, ALERTS, documentsOf, LIVE, newDocument, popoverOf, REPORT, sectionTitle,
+	withAddedSection, type CreatedPanels, type Document, type GalleryConfig,
+	type TabsConfig } from '../tabs.js';
 import { Icon } from './DialogOptionsDemo.js';
 
 /**
@@ -37,6 +38,8 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 	const [section, setSection] = useState(config.sections[0]);
 	const [sections, setSections] = useState(config.sections);
 	const [alerts, setAlerts] = useState(0);
+	const [report, setReport] = useState('summary');
+	const [created, setCreated] = useState<CreatedPanels>({ panels: 0, report: 0, live: 0 });
 
 	const update = (id: string, change: Partial<Document>) => setDocuments((all) =>
 		all.map((document) => document.id === id ? { ...document, ...change } : document));
@@ -134,6 +137,26 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 							))}
 						</Tabs>
 						<p className="tabs-demo__status">{format(texts.selected, texts[section])}</p>
+					</section>
+				</Tab>
+				<Tab id="lazyTitle" title={texts.lazyTitle} modified={false}>
+					<section>
+						<Tabs className="tabs-demo__reports" label={texts.reports} texts={config.tabs}
+							selected={report} onSelect={(name) => {
+								setReport(name);
+								setCreated((before) => afterSelecting(before, name));
+							}}>
+							<Tab id="summary" title={texts.summary}>{texts['summary.text']}</Tab>
+							<Tab id={REPORT} title={texts.report} lazy>
+								{format(texts['report.text'], created.report)}
+							</Tab>
+							<Tab id={LIVE} title={texts.live}>
+								{report === LIVE && format(texts['live.text'], created.live)}
+							</Tab>
+						</Tabs>
+						<p className="tabs-demo__status tabs-demo__created" role="status">
+							{format(texts.created, created.panels)}
+						</p>
 					</section>
 				</Tab>
 				<Tab id="galleryTitle" title={texts.galleryTitle} modified={false}>
