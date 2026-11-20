@@ -36,6 +36,14 @@ What 11.0.0-RC7 has, and:
   updated. The core's autocomplete takes `freeText` and `onChoose`, and `submitForm(element)`
   sends a form as Enter does. The `Autocomplete` of React and Svelte takes `freeText`, `text`
   (`bind:text` in Svelte), `onTextChange` and `onChoose`.
+- A table whose columns stretch to the width of its parent (`ResizableColumnsBehavior.Mode.STRETCH`
+  with `setAdjustToParentWidth(true)`) is as wide as its parent when it has borders of its own
+  (#170). Its left and right borders, its padding and its border spacing came on top of the
+  columns, so the table was wider than its parent by them, and a parent with `overflow: auto`
+  showed a horizontal scroll bar. They now come off the width the columns share, measured as
+  browsers lay the table out: with collapsed borders, the halves of the outer borders. A table
+  with separated borders keeps the browsers' border spacing of 2 pixels unless its style says
+  otherwise, so its columns get a few pixels narrower.
 
 ## 11.0.0-RC7 (2026-11-20)
 
