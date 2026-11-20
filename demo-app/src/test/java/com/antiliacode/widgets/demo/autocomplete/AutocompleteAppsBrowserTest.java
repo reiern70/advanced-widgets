@@ -32,7 +32,7 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
 /**
  * Drives the React and Svelte apps of {@link AutocompletePage} in their tabs: the users searched
  * through the users resource, the countries filtered in the browser, the owner required; and the
- * find bar, also in Wicket. Runs with
+ * find bar and the search box, also in Wicket. Runs with
  * {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
@@ -231,6 +231,53 @@ class AutocompleteAppsBrowserTest extends FrameworkAppsTestCase
 		suggestion.click();
 		wait.until(d -> chips(name).contains(label));
 		return label;
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void searchesForTheTextTypedOrForTheSuggestionChosen(SeleniumBrowser browser, String framework)
+	{
+		open(browser, framework, "autocomplete");
+		assertEquals("", searched());
+
+		// Enter sends the text typed, though suggestions are open
+		text("search").sendKeys("an");
+		wait.until(d -> shown("search"));
+		text("search").sendKeys(Keys.ENTER);
+		wait.until(d -> searched().startsWith("Searched for “an”: "));
+		assertEquals("an", text("search").getDomProperty("value"));
+		assertTrue(chips("search").isEmpty());
+
+		// Down puts the name of the user it reaches into the field, Escape the text typed back
+		text("search").sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> shown("search"));
+		text("search").sendKeys(Keys.ARROW_DOWN);
+		String first = suggestions("search").get(0).findElement(By.tagName("b")).getText();
+		assertEquals(first, text("search").getDomProperty("value"));
+		text("search").sendKeys(Keys.ESCAPE);
+		assertEquals("an", text("search").getDomProperty("value"));
+		assertTrue(suggestions("search").stream().noneMatch(WebElement::isDisplayed));
+
+		// Enter on the user Down reached chooses them, and choosing sends the form
+		text("search").sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> shown("search"));
+		text("search").sendKeys(Keys.ARROW_DOWN, Keys.ENTER);
+		wait.until(d -> searched().startsWith("Searched for “" + first + "”: "));
+		assertEquals(first, text("search").getDomProperty("value"));
+		assertNoErrors();
+	}
+
+	/**
+	 * @return whether the suggestions of an autocomplete show
+	 */
+	private boolean shown(String name)
+	{
+		return suggestions(name).stream().anyMatch(WebElement::isDisplayed);
+	}
+
+	private String searched()
+	{
+		return app().findElement(By.cssSelector(".autocomplete-demo__searched")).getText();
 	}
 
 	private void send()

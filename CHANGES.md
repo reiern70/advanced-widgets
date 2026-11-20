@@ -15,6 +15,27 @@ compile time. The pages of the demo and its deployment are left out.
 
 What 11.0.0-RC7 has, and:
 
+- `TabbedPanel#updateTab(tab, target)` renders the header of a tab again via Ajax (#167): its
+  icon, its title and its actions as the tab has them now, a title counting the results of a
+  search for example. The panels, the selection, the focus, the close button and the mark of
+  changes stay as they are; until now only rendering the whole tabs again, panels and all, showed
+  a new title. The icon, the title and the actions of a tab have markup ids for it.
+- `TabbedPanel#addTab(tab, index)` and `addTab(tab, index, target)` put a tab at a place among the
+  others (#167), rather than after them; via Ajax its tab and its panel go before those of the tab
+  at that place, without rendering the others.
+- An autocomplete for search boxes, `SearchAutocomplete` (#165). Its value is the text typed, a
+  `String` that the form sends, and the suggestions only complete it. Up and Down put the label of
+  the suggestion they reach into the field, and Escape brings back the text typed. Enter sends
+  the form by its default button, unless Up or Down reached a suggestion: Enter then chooses it,
+  putting its label into the field. Its rows take the template, the marks of the match and the
+  actions of the other autocompletes, such as an (i) whose tooltip F1 toggles.
+- What follows the choice of a suggestion, in any autocomplete, is plugged in by behaviors
+  (#165). Every choice fires `AbstractAutocomplete.CHOOSE_EVENT` on the hidden input, after
+  `change`. `SubmitOnChooseBehavior` then sends the form as Enter does, and
+  `AjaxChooseBehavior#onChoose(target, value)` gets the value chosen via Ajax, once the model is
+  updated. The core's autocomplete takes `freeText` and `onChoose`, and `submitForm(element)`
+  sends a form as Enter does. The `Autocomplete` of React and Svelte takes `freeText`, `text`
+  (`bind:text` in Svelte), `onTextChange` and `onChoose`.
 - A table whose columns stretch to the width of its parent (`ResizableColumnsBehavior.Mode.STRETCH`
   with `setAdjustToParentWidth(true)`) is as wide as its parent when it has borders of its own
   (#170). Its left and right borders, its padding and its border spacing came on top of the

@@ -31,6 +31,10 @@
 
 <wicket:fragment wicket:id="settingsCase">
 	<section>
+		<div class="tabs-demo__heading">
+			<a wicket:id="newAlert" href="#" class="tabs-demo__alert"><wicket:message key="newAlert"/></a>
+			<a wicket:id="addSection" href="#" class="tabs-demo__add"><wicket:message key="addSection"/></a>
+		</div>
 		<form wicket:id="form" class="tabs-demo__controls">
 			<label class="tabs-demo__control"><input type="checkbox" wicket:id="vertical"/> <wicket:message key="vertical"/></label>
 			<label class="tabs-demo__control"><wicket:message key="design"/> <select wicket:id="design"></select></label>

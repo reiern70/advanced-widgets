@@ -105,6 +105,40 @@ describe('Autocomplete', () => {
 			.toBe('');
 	});
 
+	it('is a search box with freeText, its text given and reported', async () => {
+		const onTextChange = vi.fn();
+		const onChoose = vi.fn();
+		function Search() {
+			const [text, setText] = useState('pear');
+			return <><Autocomplete freeText search={search} text={text} name="q"
+				onTextChange={(next) => {
+					onTextChange(next);
+					setText(next);
+				}} onChoose={onChoose} />
+				<p>{text}</p>
+				<button type="button" onClick={() => setText('lime')}>lime</button></>;
+		}
+		const { container } = render(<StrictMode><Search /></StrictMode>);
+		const field = container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')!;
+		const hidden = container.querySelector<HTMLInputElement>('input[name="q"]')!;
+		expect([field.value, hidden.value]).toEqual(['pear', 'pear']);
+
+		await type(container, 'ap');
+		expect(onTextChange).toHaveBeenLastCalledWith('ap');
+		expect(container.querySelector('p')?.textContent).toBe('ap');
+		// the text the parent gives back, as typed, leaves the suggestions open
+		expect(options(container)).toHaveLength(2);
+
+		act(() => options(container)[1].click());
+		expect([field.value, hidden.value]).toEqual(['Apricot', 'Apricot']);
+		expect(onTextChange).toHaveBeenLastCalledWith('Apricot');
+		expect(onChoose).toHaveBeenCalledWith(FRUITS[1]);
+		expect(chips(container)).toEqual([]);
+
+		act(() => container.querySelector('button')!.click());
+		expect([field.value, hidden.value]).toEqual(['lime', 'lime']);
+	});
+
 	it('shows the values the parent gives', () => {
 		const { container, rerender } = render(<Autocomplete search={search}
 			value={[{ id: 1, label: 'One' }]} />);
