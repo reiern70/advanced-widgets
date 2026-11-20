@@ -31,6 +31,13 @@ What 11.0.0-RC7 has, and:
   Wicket's `AjaxTabbedPanel` does. `TabbedPanel#isLoaded(tab)` tells. The other tabs are as before,
   their panels created when they are added. The script of the tabs asks for a panel marked
   `data-load` with the option `onLoad`, and React's `Tab` and Svelte's tab items take `lazy`.
+- `TabsOverflowMenuBehavior` gives a `TabbedPanel` the menu of all tabs (#169), for more tabs than
+  fit: while the list of tabs overflows, a button at its end, in view as the tabs scroll under it,
+  opens a menu of all the tabs, each with its icon, its title and the mark of changes, the tab
+  selected checked; choosing one selects it and scrolls it into view. An extension, off unless
+  added: the core's `TabsOverflowMenu` (`tabs-overflow-menu.ts`, a `Menu` of `menu.ts`) works on
+  the markup of any tabs, and React's and Svelte's `Tabs` take `overflowMenu`. The button says
+  `TabsOverflowMenuBehavior.label`, "All tabs".
 - An autocomplete for search boxes, `SearchAutocomplete` (#165). Its value is the text typed, a
   `String` that the form sends, and the suggestions only complete it. Up and Down put the label of
   the suggestion they reach into the field, and Escape brings back the text typed. Enter sends

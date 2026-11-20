@@ -200,6 +200,103 @@
 	display: none;
 }
 
+/*
+ * The menu of all tabs (tabs-overflow-menu.ts), at the end of a list of tabs that overflows: it
+ * stays in view as the tabs scroll under it. Its menu is a menu of menu.css.
+ */
+.antilia-tabs-list > .antilia-tabs-overflow {
+	position: sticky;
+	z-index: 1;
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	margin-inline-start: auto;
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-tabs-list > .antilia-tabs-overflow[hidden] {
+	display: none;
+}
+
+.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tabs-overflow {
+	inset-inline-end: 0;
+	align-self: stretch;
+	padding-inline-start: 0.25em;
+}
+
+.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tabs-overflow {
+	bottom: 0;
+	margin-top: auto;
+	padding-top: 0.25em;
+}
+
+/* covering the padding of the list after it too, where the tabs would show scrolling under it */
+.antilia-tabs-list > .antilia-tabs-overflow::after {
+	content: '';
+	position: absolute;
+	background: inherit;
+}
+
+.antilia-tabs-horizontal > .antilia-tabs-list > .antilia-tabs-overflow::after {
+	top: 0;
+	bottom: 0;
+	inset-inline-start: 100%;
+	width: 1em;
+}
+
+.antilia-tabs-vertical > .antilia-tabs-list > .antilia-tabs-overflow::after {
+	top: 100%;
+	right: 0;
+	left: 0;
+	height: 1em;
+}
+
+/* the designs whose list has a background of its own */
+.antilia-tabs-segmented > .antilia-tabs-list > .antilia-tabs-overflow,
+.antilia-tabs-sidebar > .antilia-tabs-list > .antilia-tabs-overflow {
+	background: inherit;
+}
+
+.antilia-tabs-list > .antilia-tabs-overflow > .antilia-menu-list {
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.antilia-tabs-list > .antilia-tabs-overflow .antilia-tabs-overflow-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.35em 0.5em;
+	border: 0;
+	border-radius: var(--antilia-look-radius, 0.4em);
+	background: none;
+	color: var(--antilia-theme-accent, #c2410c);
+	font: inherit;
+	cursor: pointer;
+}
+
+.antilia-tabs-list > .antilia-tabs-overflow .antilia-tabs-overflow-button:hover,
+.antilia-tabs-list > .antilia-tabs-overflow .antilia-tabs-overflow-button[aria-expanded='true'] {
+	background: var(--antilia-theme-hover, #e8edf7);
+}
+
+/* the button has a chevron of its own, rather than the arrow of menu.css */
+.antilia-tabs > .antilia-tabs-list > .antilia-tabs-overflow
+	.antilia-menu-link.antilia-tabs-overflow-button[aria-haspopup]::after {
+	display: none;
+}
+
+.antilia-tabs-overflow .antilia-tabs-overflow-mark {
+	flex: none;
+	width: 0.5em;
+	height: 0.5em;
+	margin-inline-start: auto;
+	border-radius: 50%;
+	background: currentColor;
+}
+
 /* a panel the page renders when its tab is first selected: room for the spinner while it comes */
 .antilia-tabs-panels > .antilia-tabs-panel[data-load] {
 	min-height: 4em;

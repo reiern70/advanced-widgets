@@ -511,6 +511,16 @@ at a place among the others, `updateTab(tab, target)` renders the icon, the titl
 of a tab again, a count in its title for example, keeping its selection, the focus, its close button
 and its mark, and `setModified(tab, modified, target)` marks a tab whose changes the server heard of.
 
+The menu of all tabs (`tabs-overflow-menu.ts`, built as `antilia-tabs-overflow-menu.js` for Wicket's
+`TabsOverflowMenuBehavior`) is an extension of the tabs for more tabs than fit:
+`new TabsOverflowMenu(element, { label })` on the element of the tabs, or `overflowMenu` on React's
+and Svelte's `Tabs`. While the list of tabs overflows, a button at its end, staying in view as the
+tabs scroll under it, opens a menu of all the tabs open, a `Menu` of `menu.ts` (so `menu.css` is
+needed too): each with the icon and the title of its tab and the mark of changes, the tab selected
+`aria-current`. Choosing one clicks its tab, which selects it, tells the page as a click does and
+scrolls it into view. It works on the markup of the tabs alone, and follows the tabs as they come
+and go, change their titles, their marks and the tab selected.
+
 The menus (`menu.ts`, built as `antilia-menu.js` for Wicket's `Menu`) show a bar of items along the
 top of the page (`horizontal`) or down its side (`vertical`), each a link leading somewhere, a
 button doing something, or an item opening a submenu of more items, nested as deep as one likes,

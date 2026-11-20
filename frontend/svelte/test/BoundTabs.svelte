@@ -17,20 +17,21 @@
 	import { Tabs, type TabItem, type TabsDesign, type TabsOrientation } from '../src/index.js';
 
 	let { selected = $bindable(), orientation = 'horizontal', design = 'tabs', onclose,
-		confirmClose, items = [
+		confirmClose, overflowMenu, items = [
 			{ id: 'one', title: 'One', closable: true },
 			{ id: 'two', title: 'Two', closable: true, modified: true },
 			{ id: 'three', title: 'Three' }
 		] }: { selected?: string | null; orientation?: TabsOrientation; design?: TabsDesign;
 			onclose?: (tab: string) => void;
-			confirmClose?: (tab: string, title: string) => boolean; items?: TabItem[] } = $props();
+			confirmClose?: (tab: string, title: string) => boolean; overflowMenu?: boolean | string;
+			items?: TabItem[] } = $props();
 
 	let tabs = $state<TabItem[]>(untrack(() => items));
 	let instance = $state<ReturnType<typeof Tabs>>();
 	let infos = $state(0);
 </script>
 
-<Tabs bind:this={instance} id="t" {tabs} bind:selected {orientation} {design} {confirmClose}
+<Tabs bind:this={instance} id="t" {tabs} bind:selected {orientation} {design} {confirmClose} {overflowMenu}
 	label="Documents" onclose={(tab) => {
 		tabs = tabs.filter((each) => each.id !== tab);
 		onclose?.(tab);

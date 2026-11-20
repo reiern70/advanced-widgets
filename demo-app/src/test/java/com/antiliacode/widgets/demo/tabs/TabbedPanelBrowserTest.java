@@ -42,8 +42,8 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
  * Drives {@link TabbedPanelPage} in Chrome and in Firefox, in Wicket, React and Svelte, Wicket in
  * deployment mode so through the minified script built from frontend/core: selecting tabs with the
  * mouse and the keyboard, the mark of changes, closing tabs with and without asking, the action of
- * a document, new documents, the second tabs switched by the form, and the panels of lazy tabs.
- * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
+ * a document, new documents, the second tabs switched by the form, the panels of lazy tabs and the
+ * menu of all tabs. Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class TabbedPanelBrowserTest extends FrameworkAppsTestCase
@@ -303,6 +303,49 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void choosesATabThatDoesNotFitInTheMenuOfAllTabs(SeleniumBrowser browser, String framework)
+	{
+		openTabs(browser, framework);
+		selectCase("More tabs than fit");
+		WebElement more = wait.until(d -> months().findElement(By.cssSelector(
+			".antilia-tabs-overflow-button")));
+		wait.until(d -> more.isDisplayed());
+		assertEquals("All tabs", more.getDomAttribute("aria-label"));
+		assertEquals("January", selected(months()));
+		assertFalse(inView(button(months(), "September")), "out of view");
+
+		more.click();
+		List<WebElement> items = wait.until(d -> {
+			List<WebElement> shown = months().findElements(By.cssSelector(
+				".antilia-tabs-overflow .antilia-menu-submenu-link"));
+			return !shown.isEmpty() && shown.get(0).isDisplayed() ? shown : null;
+		});
+		assertEquals(12, items.size());
+		assertEquals("January", items.get(0).getText());
+		assertEquals("true", items.get(0).getDomAttribute("aria-current"), "the tab selected");
+		assertTrue(items.get(8).findElement(By.tagName("svg")).isDisplayed(), "its icon");
+		screenshot("overflow");
+
+		items.get(8).click();
+		wait.until(d -> selected(months()).equals("September"));
+		assertTrue(panel(months(), "September").getText().startsWith("The figures of September"));
+		wait.until(d -> inView(button(months(), "September")));
+		assertEquals(button(months(), "September"), driver.switchTo().activeElement());
+		wait.until(d -> months().findElements(By.cssSelector(".antilia-tabs-overflow " +
+			".antilia-menu-submenu-link")).stream().noneMatch(WebElement::isDisplayed));
+
+		// with the keyboard
+		more.sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> driver.switchTo().activeElement().getText().equals("January"));
+		driver.switchTo().activeElement().sendKeys(Keys.END);
+		wait.until(d -> driver.switchTo().activeElement().getText().equals("December"));
+		driver.switchTo().activeElement().sendKeys(Keys.ENTER);
+		wait.until(d -> selected(months()).equals("December"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void showsTheGalleryOfDesigns(SeleniumBrowser browser, String framework)
 	{
 		openTabs(browser, framework);
@@ -456,6 +499,23 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 	{
 		return app().findElement(By.cssSelector(".tabs-demo__documents.antilia-tabs, " +
 			".tabs-demo__documents > .antilia-tabs"));
+	}
+
+	private WebElement months()
+	{
+		return app().findElement(By.cssSelector(".tabs-demo__months.antilia-tabs, " +
+			".tabs-demo__months > .antilia-tabs"));
+	}
+
+	/**
+	 * @return whether the tab of a button is in view in the list of its tabs, not scrolled away
+	 */
+	private boolean inView(WebElement button)
+	{
+		return (Boolean)((JavascriptExecutor)driver).executeScript("var b = arguments[0]" +
+			".getBoundingClientRect(), l = arguments[0].closest('.antilia-tabs-list')" +
+			".getBoundingClientRect(); return b.left >= l.left - 1 && b.right <= l.right + 1;",
+			button);
 	}
 
 	private WebElement reports()

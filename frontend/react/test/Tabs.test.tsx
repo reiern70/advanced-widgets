@@ -187,6 +187,25 @@ describe('Tabs', () => {
 		expect(ref.current!.tabs!.isLoading('two')).toBe(false);
 	});
 
+	it('adds the menu of all tabs when told, its button labelled as told', () => {
+		const { container, rerender, unmount } = render(<Tabs overflowMenu="Every tab">
+			<Tab id="one" title="One">First</Tab>
+			<Tab id="two" title="Two">Second</Tab>
+		</Tabs>);
+		const menu = container.querySelector('.antilia-tabs-list > .antilia-tabs-overflow')!;
+		expect(menu).not.toBeNull();
+		expect(menu.querySelector('.antilia-tabs-overflow-button')!.getAttribute('aria-label'))
+			.toBe('Every tab');
+		expect(menu.querySelectorAll('.antilia-menu-submenu-link')).toHaveLength(2);
+
+		rerender(<Tabs>
+			<Tab id="one" title="One">First</Tab>
+			<Tab id="two" title="Two">Second</Tab>
+		</Tabs>);
+		expect(container.querySelector('.antilia-tabs-overflow')).toBeNull();
+		unmount();
+	});
+
 	it('renders its parts in the look of its provider', () => {
 		const { container } = render(<LookProvider look="bootstrap">
 			<Tabs design="underline">

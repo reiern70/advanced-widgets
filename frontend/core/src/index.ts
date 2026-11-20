@@ -162,6 +162,9 @@ export type { SplitOrientation, SplitPane, SplitPanelOptions, SplitSize } from '
 export { DEFAULT_TABS_TEXTS, Tabs, tabs, TABS_CLASSES, TABS_DISCARD_EVENT, TABS_DESIGN_CLASSES, TABS_DESIGNS,
 	TABS_LOAD_ATTRIBUTE, TABS_ORIENTATION_CLASSES } from './tabs.js';
 export type { TabsDesign, TabsOptions, TabsOrientation, TabsTexts } from './tabs.js';
+export { DEFAULT_TABS_OVERFLOW_LABEL, TABS_OVERFLOW_CLASSES, TabsOverflowMenu,
+	tabsOverflowMenu } from './tabs-overflow-menu.js';
+export type { TabsOverflowMenuOptions } from './tabs-overflow-menu.js';
 export { askToDiscard, MODIFIED_ATTRIBUTE, modifiedFields } from './unsaved.js';
 export type { DiscardQuestion, DiscardTexts } from './unsaved.js';
 export { TemplateMarkup, Templates, templates, useTemplates } from './templates.js';
