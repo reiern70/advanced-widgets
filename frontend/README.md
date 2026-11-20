@@ -502,8 +502,10 @@ a `TabsHandle`; Svelte's `Tabs` takes the list `tabs` and the snippets `panel`, 
 rendered; the name of the tab selected is the model, and with `setSendToServer(true)` the browser
 sends each tab the user selects. The browser always tells the server the tabs the user closes,
 which `Tabs` takes away, calling `onClosed`; `addTab(tab, target)` and `removeTab(tab, target)`
-change the tabs via Ajax without rendering the other panels, and `setModified(tab, modified, target)`
-marks a tab whose changes the server heard of.
+change the tabs via Ajax without rendering the other panels, `addTab(tab, index, target)` puts a tab
+at a place among the others, `updateTab(tab, target)` renders the icon, the title and the actions
+of a tab again, a count in its title for example, keeping its selection, the focus, its close button
+and its mark, and `setModified(tab, modified, target)` marks a tab whose changes the server heard of.
 
 The menus (`menu.ts`, built as `antilia-menu.js` for Wicket's `Menu`) show a bar of items along the
 top of the page (`horizontal`) or down its side (`vertical`), each a link leading somewhere, a

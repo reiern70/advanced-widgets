@@ -15,6 +15,14 @@ compile time. The pages of the demo and its deployment are left out.
 
 What 11.0.0-RC7 has, and:
 
+- `TabbedPanel#updateTab(tab, target)` renders the header of a tab again via Ajax (#167): its
+  icon, its title and its actions as the tab has them now, a title counting the results of a
+  search for example. The panels, the selection, the focus, the close button and the mark of
+  changes stay as they are; until now only rendering the whole tabs again, panels and all, showed
+  a new title. The icon, the title and the actions of a tab have markup ids for it.
+- `TabbedPanel#addTab(tab, index)` and `addTab(tab, index, target)` put a tab at a place among the
+  others (#167), rather than after them; via Ajax its tab and its panel go before those of the tab
+  at that place, without rendering the others.
 - An autocomplete for search boxes, `SearchAutocomplete` (#165). Its value is the text typed, a
   `String` that the form sends, and the suggestions only complete it. Up and Down put the label of
   the suggestion they reach into the field, and Escape brings back the text typed. Enter sends
