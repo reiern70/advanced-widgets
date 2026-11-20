@@ -13,14 +13,15 @@
  */
 
 /*
- * The Autocomplete demo: an owner, a team, countries, a disabled reviewer and markets, and
- * countries to visit found with a find bar. The rows of the users end with an (i), whose tooltip
+ * The Autocomplete demo: an owner, a team, countries, a disabled reviewer and markets,
+ * countries to visit found with a find bar, and a search box sending the text typed, or the name
+ * of the user chosen, in a form of its own. The rows of the users end with an (i), whose tooltip
  * shows their details, and a phone telling whom it calls.
  */
 
 import type { AutocompleteAction, AutocompleteSuggestion, AutocompleteValue } from '@antilia/core';
 
-import { format, loadChoices, type Choice } from './data.js';
+import { format, loadChoices, loadUsers, type Choice } from './data.js';
 
 /** The texts of the demo, by the keys of the page's bundle. */
 export interface AutocompleteDemoTexts {
@@ -58,6 +59,12 @@ export interface AutocompleteDemoTexts {
 	call: string;
 	/** Whom the phone calls: {0} the user, {1} the number. */
 	calling: string;
+	searchTitle: string;
+	search: string;
+	'search.placeholder': string;
+	searchSend: string;
+	/** What the search box sent: {0} the text, {1} how many users match it. */
+	searched: string;
 }
 
 /** The values of the demo, as the page has them. */
@@ -86,6 +93,8 @@ export interface AutocompleteConfig {
 	callTemplate: string;
 	/** The template of a suggested country: its flag and name. */
 	countryTemplate: string;
+	/** The template of a user suggested in the search box: the name, the letters typed marked. */
+	searchTemplate: string;
 	values: AutocompleteValues;
 	/** The users, searched by their first or last name. */
 	usersUrl: string;
@@ -114,6 +123,24 @@ export function calling(texts: AutocompleteDemoTexts, user: AutocompleteSuggesti
 
 /** The number of suggestions, as the Wicket autocomplete has it. */
 export const MAX_SUGGESTIONS = 10;
+
+/**
+ * @returns the action of the rows of the search box: the (i) of the user, as the Wicket page has it
+ */
+export function searchActions(config: AutocompleteConfig): AutocompleteAction[] {
+	return userActions(config).filter((action) => action.name === 'info');
+}
+
+/**
+ * @param config the config of the demo
+ * @param text the text the search box sent
+ * @returns what the search box sent, as the Wicket page says it: the text and how many users
+ *          match it
+ */
+export async function searched(config: AutocompleteConfig, text: string): Promise<string> {
+	const rows = await loadUsers(config.usersUrl, { first: 0, count: 1, filter: text });
+	return format(config.texts.searched, text, String(rows.itemCount));
+}
 
 /**
  * @param code the two letters of a country

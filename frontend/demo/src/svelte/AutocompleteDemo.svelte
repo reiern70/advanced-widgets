@@ -17,11 +17,11 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { AutocompleteSuggestion } from '@antilia/core';
+	import { submitForm, type AutocompleteSuggestion } from '@antilia/core';
 	import { Autocomplete } from '@antilia/svelte';
 
-	import { calling, describe, flag, MAX_SUGGESTIONS, searchCountries, userActions,
-		type AutocompleteConfig } from '../autocomplete.js';
+	import { calling, describe, flag, MAX_SUGGESTIONS, searchActions, searchCountries, searched,
+		userActions, type AutocompleteConfig } from '../autocomplete.js';
 	import { format, searchUsers } from '../data.js';
 	import Feedback from './Feedback.svelte';
 	import type { Message } from './feedback.js';
@@ -39,6 +39,11 @@
 	// whom the phone at the end of a row of a user called last
 	let call = $state('');
 	const actions = $derived(userActions(config));
+	const infoAction = $derived(searchActions(config));
+	// the text of the search box, and what it sent last
+	let query = $state('');
+	let result = $state('');
+	let searchForm = $state<HTMLFormElement>();
 	const onaction = (_action: string, user: AutocompleteSuggestion) => {
 		call = calling(texts, user);
 	};
@@ -54,6 +59,18 @@
 		event.preventDefault();
 		messages = [owner.length ? { level: 'info', text: format(texts.sent, choices) }
 			: { level: 'error', text: texts.required }];
+	}
+
+	// the text the form holds, as a suggestion chosen sends it
+	function search(event: SubmitEvent) {
+		event.preventDefault();
+		const text = String(new FormData(event.currentTarget as HTMLFormElement).get('search') ??
+			'').trim();
+		if (text) {
+			void searched(config, text).then((said) => {
+				result = said;
+			});
+		}
 	}
 </script>
 
@@ -131,6 +148,22 @@
 			{/if}
 		</section>
 		<p><button type="submit" class="autocomplete-demo__send">{texts.send}</button></p>
+	</form>
+	<form bind:this={searchForm} class="autocomplete-demo__form autocomplete-demo__search"
+		onsubmit={search}>
+		<section>
+			<h3>{texts.searchTitle}</h3>
+			<label class="autocomplete-demo__field">
+				{texts.search}
+				<Autocomplete name="search" freeText search={users} bind:text={query}
+					template={config.searchTemplate} highlightMatch minLength={1}
+					actions={infoAction} onchoose={() => submitForm(searchForm!)}
+					placeholder={texts['search.placeholder']} noMatch={texts.noMatch}
+					searching={texts.searching} remove={texts.remove} />
+			</label>
+			<p><button type="submit" class="autocomplete-demo__send">{texts.searchSend}</button></p>
+			<p class="autocomplete-demo__searched" role="status">{result}</p>
+		</section>
 	</form>
 	<p class="autocomplete-demo__choices">{choices}</p>
 	{#if call}

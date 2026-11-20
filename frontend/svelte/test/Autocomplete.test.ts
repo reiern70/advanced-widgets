@@ -114,6 +114,30 @@ describe('Autocomplete', () => {
 			.toBe('');
 	});
 
+	it('is a search box with freeText, its text given and reported', async () => {
+		const ontextchange = vi.fn();
+		const onchoose = vi.fn();
+		const { container, rerender } = render(Autocomplete, { search, freeText: true,
+			text: 'pear', name: 'q', ontextchange, onchoose });
+		const field = container.querySelector<HTMLInputElement>('.antilia-autocomplete-text')!;
+		const hidden = container.querySelector<HTMLInputElement>('input[name="q"]')!;
+		expect([field.value, hidden.value]).toEqual(['pear', 'pear']);
+
+		await type(container, 'ap');
+		flushSync();
+		expect(ontextchange).toHaveBeenLastCalledWith('ap');
+		expect(options(container)).toHaveLength(2);
+
+		click(options(container)[1]);
+		expect([field.value, hidden.value]).toEqual(['Apricot', 'Apricot']);
+		expect(ontextchange).toHaveBeenLastCalledWith('Apricot');
+		expect(onchoose).toHaveBeenCalledWith(FRUITS[1]);
+		expect(chips(container)).toEqual([]);
+
+		await rerender({ text: 'lime' });
+		expect([field.value, hidden.value]).toEqual(['lime', 'lime']);
+	});
+
 	it('leaves nothing behind when unmounted', () => {
 		const { container, unmount } = render(Autocomplete, { search });
 		unmount();
