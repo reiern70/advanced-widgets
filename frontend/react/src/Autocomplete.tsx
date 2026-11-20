@@ -33,6 +33,18 @@ export interface AutocompleteProps {
 	pick?: boolean;
 	/** Called with the value picked, when pick is set. */
 	onPick?(value: AutocompleteValue): void;
+	/**
+	 * Whether it is a search box: its value is the text typed, which the suggestions only
+	 * complete, Up and Down putting their labels into the field; Enter without a suggestion
+	 * reached by them sends the form.
+	 */
+	freeText?: boolean;
+	/** The text of a search box; left out, it keeps the text itself. */
+	text?: string;
+	/** Called with the text of a search box as the user types it, and once a suggestion is chosen. */
+	onTextChange?(text: string): void;
+	/** Called with the suggestion chosen, after onChange, onPick or onTextChange. */
+	onChoose?(suggestion: AutocompleteSuggestion): void;
 	/** The chosen values; left out, the autocomplete keeps them itself. */
 	value?: AutocompleteValue[];
 	/** Called with the chosen values after every choice or removal. */
@@ -64,7 +76,10 @@ export interface AutocompleteProps {
 	searching?: string;
 	/** The label of the x of a chip, '{0}' standing for its text. */
 	remove?: string;
-	/** The name and id of the hidden input holding the ids of the chosen values as JSON. */
+	/**
+	 * The name and id of the hidden input holding the ids of the chosen values as JSON, or the
+	 * text of a search box.
+	 */
 	name?: string;
 	id?: string;
 	/** CSS classes of the div wrapping the autocomplete, next to antilia-autocomplete. */
@@ -76,15 +91,16 @@ export interface AutocompleteProps {
  * template; the chosen values show as chips with an x removing them. React renders the wrapper and
  * the hidden input, the core the rest.
  */
-export function Autocomplete({ search, url, multiple = false, pick = false, onPick, value, onChange,
-	template, highlightMatch, engine, actions, onAction, minLength, disabled, placeholder, noMatch,
-	searching, remove, name, id, className }: AutocompleteProps) {
+export function Autocomplete({ search, url, multiple = false, pick = false, onPick, freeText = false,
+	text, onTextChange, onChoose, value, onChange, template, highlightMatch, engine, actions,
+	onAction, minLength, disabled, placeholder, noMatch, searching, remove, name, id,
+	className }: AutocompleteProps) {
 	const input = useRef<HTMLInputElement>(null);
 	const instance = useRef<CoreAutocomplete | null>(null);
 	const look = useLook();
 	// the latest functions, so that new ones on every render leave an open list alone
-	const latest = useRef({ search, onChange, onPick, onAction });
-	latest.current = { search, onChange, onPick, onAction };
+	const latest = useRef({ search, onChange, onPick, onAction, onTextChange, onChoose });
+	latest.current = { search, onChange, onPick, onAction, onTextChange, onChoose };
 
 	const options = () => ({
 		url,
@@ -93,29 +109,42 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 		template, highlightMatch, engine, actions, minLength, disabled, placeholder, noMatch,
 		searching, remove,
 		onAction: (action: string, suggestion: AutocompleteSuggestion) =>
-			latest.current.onAction?.(action, suggestion)
+			latest.current.onAction?.(action, suggestion),
+		onChoose: (suggestion: AutocompleteSuggestion) => latest.current.onChoose?.(suggestion)
 	});
 
-	// the core reads multiple and pick once, so it starts over when they change
+	// the core reads multiple, pick and freeText once, so it starts over when they change
 	useLayoutEffect(() => {
 		const element = input.current!;
-		const autocomplete = new CoreAutocomplete(element, { ...options(), multiple, pick,
+		// a search box starts with the text its input holds
+		element.value = freeText ? text ?? '' : '';
+		const autocomplete = new CoreAutocomplete(element, { ...options(), multiple, pick, freeText,
 			chosen: value, look });
 		instance.current = autocomplete;
 		const changed = () => {
-			if (!autocomplete.pick) {
+			if (autocomplete.freeText) {
+				latest.current.onTextChange?.(element.value);
+			} else if (!autocomplete.pick) {
 				latest.current.onChange?.(autocomplete.chosen.slice());
 			} else if (autocomplete.picked) {
 				latest.current.onPick?.(autocomplete.picked);
 			}
 		};
+		// what the user types into a search box
+		const typed = () => {
+			if (autocomplete.freeText) {
+				latest.current.onTextChange?.(element.value);
+			}
+		};
 		element.addEventListener('change', changed);
+		element.addEventListener('input', typed);
 		return () => {
 			element.removeEventListener('change', changed);
+			element.removeEventListener('input', typed);
 			autocomplete.destroy();
 			instance.current = null;
 		};
-	}, [multiple, pick, look]);
+	}, [multiple, pick, freeText, look]);
 
 	// compared by content, so that actions made anew on every render leave an open list alone
 	const actionsKey = JSON.stringify(actions ?? []);
@@ -132,6 +161,14 @@ export function Autocomplete({ search, url, multiple = false, pick = false, onPi
 			instance.current?.setChosen(value);
 		}
 	}, [valueKey]);
+
+	// the text passed down, unless it is the one shown already, as the user typed it
+	useLayoutEffect(() => {
+		const current = instance.current;
+		if (text !== undefined && current?.freeText && current.text.value !== text) {
+			current.setText(text);
+		}
+	}, [text]);
 
 	return (
 		<div className={[partClasses(look, 'autocomplete'), className].filter(Boolean).join(' ')}>

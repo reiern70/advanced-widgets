@@ -11,6 +11,24 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC8 (not released yet)
+
+What 11.0.0-RC7 has, and:
+
+- An autocomplete for search boxes, `SearchAutocomplete` (#165). Its value is the text typed, a
+  `String` that the form sends, and the suggestions only complete it. Up and Down put the label of
+  the suggestion they reach into the field, and Escape brings back the text typed. Enter sends
+  the form by its default button, unless Up or Down reached a suggestion: Enter then chooses it,
+  putting its label into the field. Its rows take the template, the marks of the match and the
+  actions of the other autocompletes, such as an (i) whose tooltip F1 toggles.
+- What follows the choice of a suggestion, in any autocomplete, is plugged in by behaviors
+  (#165). Every choice fires `AbstractAutocomplete.CHOOSE_EVENT` on the hidden input, after
+  `change`. `SubmitOnChooseBehavior` then sends the form as Enter does, and
+  `AjaxChooseBehavior#onChoose(target, value)` gets the value chosen via Ajax, once the model is
+  updated. The core's autocomplete takes `freeText` and `onChoose`, and `submitForm(element)`
+  sends a form as Enter does. The `Autocomplete` of React and Svelte takes `freeText`, `text`
+  (`bind:text` in Svelte), `onTextChange` and `onChoose`.
+
 ## 11.0.0-RC7 (2026-11-20)
 
 What 11.0.0-RC6 has, and:
