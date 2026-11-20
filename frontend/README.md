@@ -491,7 +491,10 @@ were rendered and fires `antilia-tabs:discard` on the panel. A panel has changes
 windows do, by its fields or by `data-modified`, and its tab shows a dot meanwhile, which follows the
 user typing and the page changing `data-modified` (`setModified()`). A tab may have actions of the
 page's own, buttons in an element of the class `antilia-tab-actions` after its title, before the
-close button; a click on them does not select the tab. `onSelect` and `onClose` report what the
+close button; a click on them does not select the tab. A panel marked `data-load` is not there yet:
+when its tab is selected the tabs mark it busy (`aria-busy`, a spinner) and call `onLoad`, for the
+page to render it without `data-load`; React's `Tab` and Svelte's tab items take `lazy` for a panel
+rendered once its tab is first selected. `onSelect` and `onClose` report what the
 user did; a closed tab is hidden, with `data-closed`, until the page takes it away or opens it again
 (`open()`). The core works on markup with a list of tabs and the panels, each tab and its panel
 sharing a name in `data-tab`, which React, Svelte and Wicket render, and adds and takes away as
@@ -499,7 +502,8 @@ they please: the tabs find them as they come and go, set their roles and states,
 panels not selected. Tabs go in each other's panels. React has `Tabs` with `Tab` children, its ref
 a `TabsHandle`; Svelte's `Tabs` takes the list `tabs` and the snippets `panel`, `icon` and
 `actions`, and binds `selected`. In Wicket the tabs are `Tab`s with `TabAction`s, all panels
-rendered; the name of the tab selected is the model, and with `setSendToServer(true)` the browser
+rendered but those of `LazyTab`s, created when their tab is first selected and kept, or, with
+`setCaching(false)`, dropped when another tab is selected, as Wicket's `AjaxTabbedPanel` does; the name of the tab selected is the model, and with `setSendToServer(true)` the browser
 sends each tab the user selects. The browser always tells the server the tabs the user closes,
 which `Tabs` takes away, calling `onClosed`; `addTab(tab, target)` and `removeTab(tab, target)`
 change the tabs via Ajax without rendering the other panels, `addTab(tab, index, target)` puts a tab

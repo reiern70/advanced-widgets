@@ -80,6 +80,11 @@
 	align-items: center;
 }
 
+.tabs-demo__reports .antilia-tabs-panel {
+	min-height: 96px;
+	line-height: 1.5;
+}
+
 .tabs-demo__settings .antilia-tabs-panel {
 	min-height: 120px;
 	line-height: 1.5;

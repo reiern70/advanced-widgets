@@ -29,7 +29,7 @@ import com.antiliacode.widgets.icon.IIcon;
  * A tab of {@link TabbedPanel}: its title, maybe with an icon and {@link TabAction actions}, and
  * its panel, the component {@link #newPanel(String)} returns. {@link TabbedPanel#addTab(Tab) Add
  * it} to the tabs, which create its panel then and render it with the others, hidden until the tab
- * is selected.
+ * is selected; a {@link LazyTab} has its panel created when it is first selected instead.
  * <p>
  * The tabs know a tab by its name, which they give it when it has none; one of the page's own
  * suits a page that finds its tabs again by it, the name of a document for example. A name is a

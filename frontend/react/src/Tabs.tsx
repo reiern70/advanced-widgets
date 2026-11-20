@@ -13,7 +13,7 @@
  */
 
 import { Children, forwardRef, isValidElement, useImperativeHandle, useLayoutEffect, useRef,
-	type ReactElement, type ReactNode } from 'react';
+	useState, type ReactElement, type ReactNode } from 'react';
 
 import { LOOK_PARTS, partClasses, Tabs as CoreTabs, type LookPart, type TabsDesign,
 	type TabsOrientation, type TabsTexts } from '@antilia/core';
@@ -44,6 +44,11 @@ export interface TabProps {
 	className?: string;
 	/** CSS classes of the panel, next to antilia-tabs-panel. */
 	panelClassName?: string;
+	/**
+	 * Whether the panel is rendered only once the tab is first selected, then kept; false when left
+	 * out, all panels rendered at once.
+	 */
+	lazy?: boolean;
 	/** The panel of the tab. */
 	children?: ReactNode;
 }
@@ -119,7 +124,8 @@ function flag(value: boolean | undefined): string | undefined {
 
 /**
  * The tabs of the core: a list of tabs, along the top of their panels or down their left side, and
- * the panel of the tab selected. A click or the arrow keys select a tab. A closable tab has a
+ * the panel of the tab selected. A click or the arrow keys select a tab; a lazy tab's panel is
+ * rendered when it is first selected. A closable tab has a
  * button closing it, as do Delete and the middle button; closing one with changes not saved asks
  * first, and its tab shows a mark meanwhile. A tab may have actions of the page's own before the
  * button closing it. React renders the tabs and their panels, the {@link Tab} children, the core
@@ -132,6 +138,8 @@ export const Tabs = forwardRef<TabsHandle, TabsProps>(function Tabs(props, ref) 
 	const look = useLook();
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreTabs | null>(null);
+	// the lazy tabs selected once, whose panels are rendered
+	const [loaded, setLoaded] = useState<ReadonlySet<string>>(() => new Set());
 	const latest = useRef(props);
 	latest.current = props;
 	const tabs = Children.toArray(children).filter((child): child is ReactElement<TabProps> =>
@@ -155,7 +163,8 @@ export const Tabs = forwardRef<TabsHandle, TabsProps>(function Tabs(props, ref) 
 			confirmClose: (tab, title) => latest.current.confirmClose ?
 				latest.current.confirmClose(tab, title) : core.askToClose(title),
 			onSelect: (tab) => latest.current.onSelect?.(tab),
-			onClose: (tab) => latest.current.onClose?.(tab)
+			onClose: (tab) => latest.current.onClose?.(tab),
+			onLoad: (tab) => setLoaded((before) => new Set(before).add(tab))
 		});
 		instance.current = core;
 		return () => {
@@ -200,12 +209,16 @@ export const Tabs = forwardRef<TabsHandle, TabsProps>(function Tabs(props, ref) 
 				))}
 			</div>
 			<div className={partClasses(look, 'tabs-panels')}>
-				{tabs.map((tab) => (
-					<div key={tab.id} className={[partClasses(look, 'tabs-panel'), tab.panelClassName]
-						.filter(Boolean).join(' ')} data-tab={tab.id} data-modified={flag(tab.modified)}>
-						{tab.children}
-					</div>
-				))}
+				{tabs.map((tab) => {
+					const waiting = !!tab.lazy && !loaded.has(tab.id);
+					return (
+						<div key={tab.id} className={[partClasses(look, 'tabs-panel'), tab.panelClassName]
+							.filter(Boolean).join(' ')} data-tab={tab.id} data-modified={flag(tab.modified)}
+							data-load={waiting ? '' : undefined}>
+							{!waiting && tab.children}
+						</div>
+					);
+				})}
 			</div>
 		</div>
 	);

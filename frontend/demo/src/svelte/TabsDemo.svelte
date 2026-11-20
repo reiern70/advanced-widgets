@@ -21,8 +21,9 @@
 	import { Button, Dropdown, Popover, Tabs, type TabItem, type TabsDesign } from '@antilia/svelte';
 
 	import { dropdownTexts, format } from '../data.js';
-	import { ALERTS, documentsOf, newDocument, popoverOf, sectionTitle, withAddedSection,
-		type Document, type GalleryConfig, type TabsConfig } from '../tabs.js';
+	import { afterSelecting, ALERTS, documentsOf, LIVE, newDocument, popoverOf, REPORT,
+		sectionTitle, withAddedSection, type CreatedPanels, type Document, type GalleryConfig,
+		type TabsConfig } from '../tabs.js';
 
 	let { config }: { config: TabsConfig } = $props();
 
@@ -39,15 +40,21 @@
 	let section = $state<string | null>(initial.sections[0]);
 	let sectionNames = $state<string[]>(initial.sections);
 	let alerts = $state(0);
+	let report = $state<string | null>('summary');
+	let created = $state<CreatedPanels>({ panels: 0, report: 0, live: 0 });
 
 	const tabs = $derived<TabItem[]>([{ id: 'welcome', title: texts.welcome },
 		...documents.map((document) => ({ id: document.id, title: document.name, closable: true,
 			modified: document.text !== document.saved }))]);
 	// the cases, one at a time
-	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'galleryTitle']
+	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'lazyTitle', 'galleryTitle']
 		.map((id) => ({ id, title: texts[id], modified: false })));
 	const sections = $derived<TabItem[]>(sectionNames.map((name) => ({ id: name,
 		title: sectionTitle(config, name, alerts) })));
+
+	// the panel of the report is created when first selected, the live one each time
+	const reports = $derived<TabItem[]>([{ id: 'summary', title: texts.summary },
+		{ id: REPORT, title: texts.report, lazy: true }, { id: LIVE, title: texts.live }]);
 
 	const galleryTabs = (part: GalleryConfig): TabItem[] => part.tabs.map((tab) => ({ id: tab.name,
 		title: texts[tab.name] }));
@@ -126,6 +133,23 @@
 						{/snippet}
 					</Tabs>
 					<p class="tabs-demo__status" role="status">{message}</p>
+				</section>
+			{:else if tab.id === 'lazyTitle'}
+				<section>
+					<Tabs class="tabs-demo__reports" label={texts.reports} texts={config.tabs} tabs={reports}
+						bind:selected={report} onselect={(name) => created = afterSelecting(created, name)}>
+						{#snippet panel(tab)}
+							{#if tab.id === REPORT}
+								{format(texts['report.text'], created.report)}
+							{:else if tab.id === LIVE}
+								{#if report === LIVE}{format(texts['live.text'], created.live)}{/if}
+							{:else}
+								{texts['summary.text']}
+							{/if}
+						{/snippet}
+					</Tabs>
+					<p class="tabs-demo__status tabs-demo__created" role="status">{format(texts.created,
+						created.panels)}</p>
 				</section>
 			{:else if tab.id === 'settingsTitle'}
 				<section>
