@@ -21,8 +21,8 @@
 	import { Button, Dropdown, Popover, Tabs, type TabItem, type TabsDesign } from '@antilia/svelte';
 
 	import { dropdownTexts, format } from '../data.js';
-	import { documentsOf, newDocument, popoverOf, type Document, type GalleryConfig,
-		type TabsConfig } from '../tabs.js';
+	import { ALERTS, documentsOf, newDocument, popoverOf, sectionTitle, withAddedSection,
+		type Document, type GalleryConfig, type TabsConfig } from '../tabs.js';
 
 	let { config }: { config: TabsConfig } = $props();
 
@@ -37,6 +37,8 @@
 	let vertical = $state(initial.vertical);
 	let design = $state<TabsDesign>(initial.design);
 	let section = $state<string | null>(initial.sections[0]);
+	let sectionNames = $state<string[]>(initial.sections);
+	let alerts = $state(0);
 
 	const tabs = $derived<TabItem[]>([{ id: 'welcome', title: texts.welcome },
 		...documents.map((document) => ({ id: document.id, title: document.name, closable: true,
@@ -44,8 +46,8 @@
 	// the cases, one at a time
 	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'galleryTitle']
 		.map((id) => ({ id, title: texts[id], modified: false })));
-	const sections = $derived<TabItem[]>(config.sections.map((name) => ({ id: name,
-		title: texts[name] })));
+	const sections = $derived<TabItem[]>(sectionNames.map((name) => ({ id: name,
+		title: sectionTitle(config, name, alerts) })));
 
 	const galleryTabs = (part: GalleryConfig): TabItem[] => part.tabs.map((tab) => ({ id: tab.name,
 		title: texts[tab.name] }));
@@ -67,6 +69,17 @@
 		documents = documents.filter((document) => document.id !== id);
 		if (closed) {
 			message = format(texts.closed, closed.name);
+		}
+	}
+
+	function addSection() {
+		sectionNames = withAddedSection(config, sectionNames);
+		section = config.addedSection;
+	}
+
+	function selectSection(name: string) {
+		if (name === ALERTS) {
+			alerts = 0;
 		}
 	}
 
@@ -116,6 +129,13 @@
 				</section>
 			{:else if tab.id === 'settingsTitle'}
 				<section>
+					<div class="tabs-demo__heading">
+						<Button label={texts.newAlert} size="small" class="tabs-demo__alert"
+							onclick={() => alerts += 1} />
+						{#if !sectionNames.includes(config.addedSection)}
+							<Button label={texts.addSection} size="small" class="tabs-demo__add" onclick={addSection} />
+						{/if}
+					</div>
 					<div class="tabs-demo__controls">
 						<label class="tabs-demo__control">
 							<input type="checkbox" bind:checked={vertical} /> {texts.vertical}
@@ -129,7 +149,8 @@
 						</label>
 					</div>
 					<Tabs class="tabs-demo__settings" label={texts.settings} texts={config.tabs} tabs={sections}
-						orientation={vertical ? 'vertical' : 'horizontal'} {design} bind:selected={section}>
+						orientation={vertical ? 'vertical' : 'horizontal'} {design} bind:selected={section}
+						onselect={selectSection}>
 						{#snippet panel(tab)}{texts[tab.id + '.text']}{/snippet}
 					</Tabs>
 					<p class="tabs-demo__status">{format(texts.selected, texts[section ?? ''] ?? '')}</p>

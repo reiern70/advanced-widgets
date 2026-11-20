@@ -15,7 +15,8 @@
 /*
  * The Tabs demo: documents in closable tabs after a welcome tab that is not, each telling about
  * itself with an action and marked while it has changes not saved, which Save takes away; a button
- * opening new ones; tabs whose orientation and design a check box and a drop-down switch; and a
+ * opening new ones; tabs whose orientation and design a check box and a drop-down switch, whose
+ * alerts count the new ones in their title and to which a button adds a section; and a
  * gallery of the designs made for tabs along the top and of those made for tabs down the side.
  */
 
@@ -49,6 +50,12 @@ export interface TabsDemoTexts extends DropdownTexts {
 	vertical: string;
 	design: string;
 	selected: string;
+	/** The button counting a new alert in the title of the alerts. */
+	newAlert: string;
+	/** The title of the alerts while it counts new ones, {0} how many. */
+	alertsCount: string;
+	/** The button adding a section after the first one. */
+	addSection: string;
 	[key: string]: string;
 }
 
@@ -74,6 +81,8 @@ export interface TabsConfig {
 	documents: DocumentConfig[];
 	/** The sections of the second tabs, the keys of their titles; their texts under key.text. */
 	sections: string[];
+	/** The section a button adds after the first one, the key of its title. */
+	addedSection: string;
 	/** The markup of the icons, as Wicket renders them. */
 	icons: { welcome: string; document: string; info: string };
 	vertical: boolean;
@@ -107,6 +116,25 @@ export function documentsOf(config: TabsConfig): Document[] {
 export function newDocument(config: TabsConfig, number: number): Document {
 	return { id: 'untitled-' + number, name: format(config.texts.untitled, number), text: '',
 		saved: '' };
+}
+
+/** The section whose title counts the new alerts. */
+export const ALERTS = 'alerts';
+
+/**
+ * @returns the title of a section of the second tabs: that of the alerts counts the new ones
+ */
+export function sectionTitle(config: TabsConfig, section: string, alerts: number): string {
+	return section === ALERTS && alerts > 0 ? format(config.texts.alertsCount, alerts) :
+		config.texts[section];
+}
+
+/**
+ * @returns the sections with the one the button adds after the first one
+ */
+export function withAddedSection(config: TabsConfig, sections: string[]): string[] {
+	return sections.includes(config.addedSection) ? sections :
+		[...sections.slice(0, 1), config.addedSection, ...sections.slice(1)];
 }
 
 /**
