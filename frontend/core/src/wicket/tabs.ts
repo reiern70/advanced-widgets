@@ -14,8 +14,9 @@
 
 /*
  * antilia-tabs.js: registers Wicket.Tabs for the Tabs of ui-components, which calls
- * Wicket.Tabs.attach(id, options, onSelect, onClose); onSelect and onClose, when the server is
- * told, send it via Ajax the tab the user selected or closed.
+ * Wicket.Tabs.attach(id, options, onSelect, onClose, onLoad); onSelect and onClose, when the
+ * server is told, send it via Ajax the tab the user selected or closed, and onLoad a tab selected
+ * whose panel the server creates now, which tells the server the tab selected too.
  */
 
 import { Tabs, type TabsOptions } from '../tabs.js';
@@ -30,15 +31,26 @@ const WicketTabs = {
 	 * @param options the orientation, the design, the tab selected and the texts
 	 * @param onSelect the Ajax callback of the server given the name of the tab the user selected
 	 * @param onClose the Ajax callback of the server given the name of the tab the user closed
+	 * @param onLoad the Ajax callback of the server given the name of a tab selected whose panel it
+	 *        renders now
 	 * @returns the tabs, null when there is no such element
 	 */
 	attach(id: string, options: TabsOptions = {}, onSelect?: ((tab: string) => void) | null,
-		onClose?: ((tab: string) => void) | null): Tabs | null {
-		return Tabs.attach(id, {
+		onClose?: ((tab: string) => void) | null,
+		onLoad?: ((tab: string) => void) | null): Tabs | null {
+		const select = onSelect ?? options.onSelect;
+		const tabs: Tabs | null = Tabs.attach(id, {
 			...options,
-			onSelect: onSelect ?? options.onSelect,
-			onClose: onClose ?? options.onClose
+			// a tab loading tells the server it is selected, in the same request
+			onSelect: select && ((tab: string) => {
+				if (!tabs?.isLoading(tab)) {
+					select(tab);
+				}
+			}),
+			onClose: onClose ?? options.onClose,
+			onLoad: onLoad ?? options.onLoad
 		});
+		return tabs;
 	},
 
 	/**

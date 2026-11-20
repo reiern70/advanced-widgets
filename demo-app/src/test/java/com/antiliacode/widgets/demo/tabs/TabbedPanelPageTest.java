@@ -237,6 +237,35 @@ class TabbedPanelPageTest
 	}
 
 	@Test
+	void createsThePanelsOfTheLazyTabsWhenTheyAreSelected()
+	{
+		String reportsPath = inCase("lazyTitle", "reports");
+		TabbedPanel reports = tabs(reportsPath);
+		Tab report = reports.getTab("report");
+		Tab live = reports.getTab("live");
+		assertTrue(reports.isLoaded(reports.getTab("summary")));
+		assertFalse(reports.isLoaded(report));
+		assertFalse(reports.isLoaded(live));
+		tester.assertLabel(inCase("lazyTitle", "created"),
+			"Panels created when their tabs were selected: 0.");
+
+		send(reports, "load", "report");
+		assertTrue(reports.isLoaded(report));
+		tester.assertContains("The report, created when you first selected this tab and kept " +
+			"since: panel 1 created.");
+		tester.assertContains("Panels created when their tabs were selected: 1.");
+
+		send(reports, "load", "live");
+		tester.assertContains("panel 2 created");
+		send(reports, "select", "report");
+		assertFalse(reports.isLoaded(live), "dropped");
+		assertTrue(reports.isLoaded(report), "kept");
+		send(reports, "load", "live");
+		tester.assertContains("panel 3 created");
+		tester.assertContains("Panels created when their tabs were selected: 3.");
+	}
+
+	@Test
 	void showsTheGalleryOfDesigns()
 	{
 		TabbedPanel segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
@@ -279,6 +308,8 @@ class TabbedPanelPageTest
 		assertEquals("security", config.getString("addedSection"));
 		assertEquals("Security", config.getJSONObject("texts").getString("security"));
 		assertEquals("Alerts ({0})", config.getJSONObject("texts").getString("alertsCount"));
+		assertEquals("Live", config.getJSONObject("texts").getString("live"));
+		assertTrue(config.getJSONObject("texts").getString("report.text").contains("{0}"));
 		assertEquals("pills", config.getString("design"));
 	}
 

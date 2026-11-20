@@ -42,8 +42,8 @@ import com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase;
  * Drives {@link TabbedPanelPage} in Chrome and in Firefox, in Wicket, React and Svelte, Wicket in
  * deployment mode so through the minified script built from frontend/core: selecting tabs with the
  * mouse and the keyboard, the mark of changes, closing tabs with and without asking, the action of
- * a document, new documents and the second tabs switched by the form. Runs with
- * {@code -Pselenium}, see {@link SeleniumBrowser}.
+ * a document, new documents, the second tabs switched by the form, and the panels of lazy tabs.
+ * Runs with {@code -Pselenium}, see {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class TabbedPanelBrowserTest extends FrameworkAppsTestCase
@@ -265,6 +265,44 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void createsThePanelsOfLazyTabsWhenTheyAreFirstSelected(SeleniumBrowser browser,
+		String framework)
+	{
+		openTabs(browser, framework);
+		selectCase("Panels created when first selected");
+		assertEquals(List.of("Summary", "Report", "Live"), titles(reports()));
+		assertTrue(panel(reports(), "Summary").getText().startsWith("Rendered with the page"));
+		assertEquals("", panel(reports(), "Report").getDomAttribute("data-load"));
+		assertEquals("", panel(reports(), "Report").getDomProperty("textContent").trim());
+		assertEquals("Panels created when their tabs were selected: 0.", created());
+
+		button(reports(), "Report").click();
+		wait.until(d -> panel(reports(), "Report").getText().endsWith("panel 1 created."));
+		wait.until(d -> created().equals("Panels created when their tabs were selected: 1."));
+		assertTrue(panel(reports(), "Report").isDisplayed());
+		assertEquals(null, panel(reports(), "Report").getDomAttribute("data-load"));
+		assertEquals(null, panel(reports(), "Report").getDomAttribute("aria-busy"));
+
+		button(reports(), "Live").click();
+		wait.until(d -> panel(reports(), "Live").getText().endsWith("panel 2 created."));
+		// kept: back at once, as it was
+		button(reports(), "Report").click();
+		wait.until(d -> panel(reports(), "Report").isDisplayed());
+		assertTrue(panel(reports(), "Report").getText().endsWith("panel 1 created."));
+		// created anew
+		button(reports(), "Live").click();
+		wait.until(d -> panel(reports(), "Live").getText().endsWith("panel 3 created."));
+		wait.until(d -> created().equals("Panels created when their tabs were selected: 3."));
+		screenshot("lazy");
+
+		// the keyboard too
+		button(reports(), "Live").sendKeys(Keys.HOME);
+		wait.until(d -> selected(reports()).equals("Summary"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void showsTheGalleryOfDesigns(SeleniumBrowser browser, String framework)
 	{
 		openTabs(browser, framework);
@@ -418,6 +456,17 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 	{
 		return app().findElement(By.cssSelector(".tabs-demo__documents.antilia-tabs, " +
 			".tabs-demo__documents > .antilia-tabs"));
+	}
+
+	private WebElement reports()
+	{
+		return app().findElement(By.cssSelector(".tabs-demo__reports.antilia-tabs, " +
+			".tabs-demo__reports > .antilia-tabs"));
+	}
+
+	private String created()
+	{
+		return app().findElement(By.cssSelector(".tabs-demo__created")).getText();
 	}
 
 	private WebElement settings()

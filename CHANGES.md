@@ -23,6 +23,14 @@ What 11.0.0-RC7 has, and:
 - `TabbedPanel#addTab(tab, index)` and `addTab(tab, index, target)` put a tab at a place among the
   others (#167), rather than after them; via Ajax its tab and its panel go before those of the tab
   at that place, without rendering the others.
+- A `LazyTab` has its panel created when the tab is first selected (#166), rather than when it is
+  added: a heavy panel, a document, an editor or a large table, costs nothing until the user goes
+  to it. Until then the tabs render an empty panel, which the browser asks the server for via Ajax
+  when the tab is selected, showing a spinner meanwhile. It keeps its panel once created, or, with
+  `setCaching(false)`, drops it when another tab is selected and creates it anew the next time, as
+  Wicket's `AjaxTabbedPanel` does. `TabbedPanel#isLoaded(tab)` tells. The other tabs are as before,
+  their panels created when they are added. The script of the tabs asks for a panel marked
+  `data-load` with the option `onLoad`, and React's `Tab` and Svelte's tab items take `lazy`.
 - An autocomplete for search boxes, `SearchAutocomplete` (#165). Its value is the text typed, a
   `String` that the form sends, and the suggestions only complete it. Up and Down put the label of
   the suggestion they reach into the field, and Escape brings back the text typed. Enter sends

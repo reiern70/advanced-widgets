@@ -472,6 +472,82 @@ describe('Tabs', () => {
 		expect(panel('between').hidden).toBe(false);
 	});
 
+	it('asks the page once for a panel marked data-load when its tab is selected, busy meanwhile',
+		async () => {
+			const onLoad = vi.fn();
+			const onSelect = vi.fn();
+			const tabs = new Tabs(markup({ panelTwo: 'data-load' }), { onLoad, onSelect });
+			expect(onLoad).not.toHaveBeenCalled();
+			expect(panel('two').hasAttribute('aria-busy')).toBe(false);
+
+			button('two').click();
+			expect(onLoad).toHaveBeenCalledWith('two');
+			expect(onSelect).toHaveBeenCalledWith('two');
+			expect(panel('two').getAttribute('aria-busy')).toBe('true');
+			expect(panel('two').hidden).toBe(false);
+			expect(tabs.isLoading('two')).toBe(true);
+
+			// once, until the page renders it
+			button('one').click();
+			button('two').click();
+			expect(onLoad).toHaveBeenCalledTimes(1);
+
+			// as Wicket renders it, in an element of its own
+			panel('two').outerHTML = panelMarkup('two');
+			await settle();
+			expect(panel('two').hasAttribute('aria-busy')).toBe(false);
+			expect(panel('two').hidden).toBe(false);
+			expect(tabs.isLoading('two')).toBe(false);
+			expect(button('two').getAttribute('aria-controls')).toBe(panel('two').id);
+
+			// dropped again, as by a tab not keeping its panel, and asked for anew
+			button('one').click();
+			panel('two').outerHTML = panelMarkup('two', 'data-load');
+			await settle();
+			expect(panel('two').hidden).toBe(true);
+			button('two').click();
+			expect(onLoad).toHaveBeenCalledTimes(2);
+		});
+
+	it('takes a panel rendered in the same element as no longer busy, as React and Svelte do',
+		async () => {
+			const onLoad = vi.fn();
+			// selected at first: asked for at once
+			const tabs = new Tabs(markup({ panelOne: 'data-load' }), { onLoad });
+			expect(onLoad).toHaveBeenCalledWith('one');
+			expect(panel('one').getAttribute('aria-busy')).toBe('true');
+
+			panel('one').removeAttribute('data-load');
+			await settle();
+			expect(panel('one').hasAttribute('aria-busy')).toBe(false);
+			expect(tabs.isLoading('one')).toBe(false);
+		});
+
+	it('leaves a panel marked data-load alone without onLoad', () => {
+		const tabs = new Tabs(markup({ panelTwo: 'data-load' }));
+		button('two').click();
+		expect(panel('two').hasAttribute('aria-busy')).toBe(false);
+		expect(tabs.isLoading('two')).toBe(false);
+	});
+
+	it('tells Wicket a tab loading as selected in the request loading it', async () => {
+		window.Wicket = {};
+		await import('../src/wicket/tabs.js');
+		const wicketTabs = (window.Wicket as unknown as { Tabs: { attach(id: string, options: object,
+			onSelect: ((tab: string) => void) | null, onClose: ((tab: string) => void) | null,
+			onLoad?: ((tab: string) => void) | null): Tabs | null } }).Tabs;
+		markup({ panelTwo: 'data-load' });
+		const onSelect = vi.fn();
+		const onLoad = vi.fn();
+		wicketTabs.attach('t', {}, onSelect, null, onLoad);
+
+		button('two').click();
+		expect(onLoad).toHaveBeenCalledWith('two');
+		expect(onSelect).not.toHaveBeenCalled();
+		button('three').click();
+		expect(onSelect).toHaveBeenCalledWith('three');
+	});
+
 	it('leaves tabs in a panel to themselves', () => {
 		markup();
 		panel('one').innerHTML = '<div id="inner"><div class="antilia-tabs-list">' +

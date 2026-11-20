@@ -50,7 +50,9 @@
  *
  * Each tab and its panel share the name in data-tab. A tab is closable when data-closable is
  * "true", and starts closed with data-closed, which the tabs keep as the user closes them;
- * data-selected marks the tab selected at first, unless the options name one. React, Svelte and
+ * data-selected marks the tab selected at first, unless the options name one. A panel marked
+ * data-load is not there yet: when its tab is selected, the tabs mark it busy (aria-busy, a
+ * spinner in tabs.css) and call onLoad, for the page to render it, without data-load. React, Svelte and
  * Wicket render the tabs and panels, and add and remove them as they please: the tabs find them
  * as they come and go. They set the roles, the ids and the states of the tabs and panels, hide the
  * panels not selected, and add the close buttons and the marks of changes, which they own. Tabs go
@@ -124,6 +126,12 @@ export interface TabsOptions {
 	onSelect?: (tab: string) => void;
 	/** Called with the name of the tab the user closed, once it is closed. */
 	onClose?: (tab: string) => void;
+	/**
+	 * Called with the name of a tab selected whose panel is marked data-load, once, while the
+	 * panel is busy: the page renders the panel, without data-load. A tab created when it is first
+	 * selected, for example.
+	 */
+	onLoad?: (tab: string) => void;
 }
 
 export const DEFAULT_TABS_TEXTS: TabsTexts = {
@@ -170,6 +178,9 @@ export const TABS_DISCARD_EVENT = 'antilia-tabs:discard';
 
 /** The attribute naming a tab and its panel. */
 const NAME_ATTRIBUTE = 'data-tab';
+
+/** The attribute marking a panel that is not there yet, which the page renders on onLoad. */
+export const TABS_LOAD_ATTRIBUTE = 'data-load';
 
 /** The path of the icon of the close button, in a 24 by 24 box. */
 const CLOSE_ICON = 'M6 6l12 12 M18 6L6 18';
@@ -253,6 +264,9 @@ export class Tabs {
 
 	/** The look whose classes the tabs gave their element and its list, when they rendered last. */
 	private applied: Look | null = null;
+
+	/** The panels the tabs asked the page to render, marked busy meanwhile. */
+	private loading = new WeakSet<HTMLElement>();
 
 	/**
 	 * @param element the element of the tabs: a child of the class antilia-tabs-list holds the
@@ -465,6 +479,33 @@ export class Tabs {
 			this.current = this.firstOpen()?.name ?? null;
 		}
 		this.tabs.forEach((tab) => this.renderTab(tab));
+		this.load();
+	}
+
+	/**
+	 * Asks the page for the panel of the tab selected when it is marked data-load, once, marking
+	 * it busy meanwhile.
+	 */
+	private load(): void {
+		const tab = this.tab(this.current);
+		const panel = tab?.panel;
+		if (!tab || !panel || !this.options.onLoad || !panel.hasAttribute(TABS_LOAD_ATTRIBUTE) ||
+			this.loading.has(panel)) {
+			return;
+		}
+		this.loading.add(panel);
+		panel.setAttribute('aria-busy', 'true');
+		this.options.onLoad(tab.name);
+	}
+
+	/**
+	 * Whether the tabs asked the page for the panel of a tab, which it has not rendered yet.
+	 *
+	 * @param name the name of the tab
+	 */
+	isLoading(name: string): boolean {
+		const panel = this.tab(name)?.panel;
+		return !!panel && this.loading.has(panel) && panel.hasAttribute(TABS_LOAD_ATTRIBUTE);
 	}
 
 	private renderTab(tab: Tab): void {
@@ -493,6 +534,11 @@ export class Tabs {
 			panel.setAttribute('role', 'tabpanel');
 			panel.setAttribute('aria-labelledby', button.id);
 			panel.hidden = !selected || closed;
+			// a panel the page rendered in the same element, as React does, is no longer busy
+			if (this.loading.has(panel) && !panel.hasAttribute(TABS_LOAD_ATTRIBUTE)) {
+				this.loading.delete(panel);
+				panel.removeAttribute('aria-busy');
+			}
 		} else {
 			button.removeAttribute('aria-controls');
 		}
@@ -594,7 +640,8 @@ export class Tabs {
 		this.listen<Event>(this.element, 'change', (event) => this.onEdit(event));
 		this.observer = new MutationObserver((records) => this.onMutation(records));
 		this.observer.observe(this.element, { childList: true, subtree: true, attributes: true,
-			attributeFilter: [MODIFIED_ATTRIBUTE, 'data-closable', NAME_ATTRIBUTE] });
+			attributeFilter: [MODIFIED_ATTRIBUTE, 'data-closable', NAME_ATTRIBUTE,
+				TABS_LOAD_ATTRIBUTE] });
 	}
 
 	/**
