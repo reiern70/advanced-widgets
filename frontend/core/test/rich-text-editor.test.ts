@@ -765,9 +765,12 @@ describe('the formats', () => {
 });
 
 describe('the features', () => {
-	it('are all of them by default', () => {
+	it('are all of them by default, the files attached with onAttach alone', () => {
+		expect([...new RichTextEditor(textArea(), { onAttach: () => Promise.resolve('/f') })
+			.features()]).toEqual([...RICH_TEXT_FEATURES]);
 		const editor = new RichTextEditor(textArea());
-		expect([...editor.features()]).toEqual([...RICH_TEXT_FEATURES]);
+		expect([...editor.features()]).toEqual(RICH_TEXT_FEATURES.filter((feature) =>
+			feature !== 'attachment'));
 		const tools = Array.from(editor.element.querySelectorAll<HTMLElement>('[data-tool]'))
 			.map((each) => each.dataset.tool);
 		// the image from the store shows while the page finds the images it stores, the tools of
