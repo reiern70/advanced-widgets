@@ -435,6 +435,43 @@ describe('Tabs', () => {
 		expect(tabs.selected()).toBe('one');
 	});
 
+	it('keeps its parts and the focus when the page renders the title and actions again', async () => {
+		const tabs = new Tabs(markup({ one: 'data-closable="true"', panelOne: 'data-modified' },
+			'<span class="antilia-tab-actions"><button type="button">i</button></span>'));
+		const element = tab('one');
+		button('one').focus();
+		// as Wicket replaces the title and the actions of a tab, by updateTab
+		const title = tab('one').querySelector('.antilia-tab-title')!;
+		title.outerHTML = '<span class="antilia-tab-title">Title one (3)</span>';
+		const actions = tab('one').querySelector('.antilia-tab-actions')!;
+		actions.outerHTML = '<span class="antilia-tab-actions"><button type="button">i</button>' +
+			'<button type="button">j</button></span>';
+		await settle();
+
+		expect(tab('one')).toBe(element);
+		expect(tabs.title('one')).toBe('Title one (3)');
+		expect(document.activeElement).toBe(button('one'));
+		expect(tabs.selected()).toBe('one');
+		expect(tab('one').querySelector('.antilia-tab-mark')).not.toBeNull();
+		expect(close('one')).not.toBeNull();
+		expect(tab('one').lastElementChild).toBe(close('one'));
+		expect(Array.from(tab('one').querySelectorAll<HTMLElement>('.antilia-tab-actions button'))
+			.map((action) => action.tabIndex)).toEqual([0, 0]);
+	});
+
+	it('finds a tab the page puts among the others, in the order of the page', async () => {
+		const tabs = new Tabs(markup());
+		tab('one').insertAdjacentHTML('afterend', tabMarkup('between'));
+		panel('one').insertAdjacentHTML('afterend', panelMarkup('between'));
+		await settle();
+
+		expect(tabs.names()).toEqual(['one', 'between', 'two', 'three']);
+		button('one').focus();
+		key(button('one'), 'ArrowRight');
+		expect(tabs.selected()).toBe('between');
+		expect(panel('between').hidden).toBe(false);
+	});
+
 	it('leaves tabs in a panel to themselves', () => {
 		markup();
 		panel('one').innerHTML = '<div id="inner"><div class="antilia-tabs-list">' +

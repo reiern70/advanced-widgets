@@ -225,6 +225,46 @@ class TabbedPanelBrowserTest extends FrameworkAppsTestCase
 
 	@ParameterizedTest
 	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
+	void countsTheNewAlertsInTheirTitleAndAddsASectionAfterTheFirst(SeleniumBrowser browser,
+		String framework)
+	{
+		openTabs(browser, framework);
+		selectCase("Any design, along the top or down the side");
+		assertEquals(List.of("Profile", "Alerts", "Privacy"), titles(settings()));
+		button(settings(), "Profile").click();
+		WebElement profile = button(settings(), "Profile");
+
+		app().findElement(By.cssSelector(".tabs-demo__alert")).click();
+		wait.until(d -> titles(settings()).equals(List.of("Profile", "Alerts (1)", "Privacy")));
+		app().findElement(By.cssSelector(".tabs-demo__alert")).click();
+		wait.until(d -> titles(settings()).equals(List.of("Profile", "Alerts (2)", "Privacy")));
+		assertEquals("Profile", selected(settings()), "the selection stays");
+		assertEquals(profile, button(settings(), "Profile"), "the other tabs stay as they are");
+
+		button(settings(), "Alerts (2)").click();
+		wait.until(d -> titles(settings()).equals(List.of("Profile", "Alerts", "Privacy")));
+		assertEquals("Alerts", selected(settings()));
+		assertTrue(panel(settings(), "Alerts").isDisplayed());
+
+		app().findElement(By.cssSelector(".tabs-demo__add")).click();
+		wait.until(d -> titles(settings()).equals(List.of("Profile", "Security", "Alerts",
+			"Privacy")));
+		wait.until(d -> selected(settings()).equals("Security"));
+		assertTrue(panel(settings(), "Security").getText().startsWith("Your password"));
+		wait.until(d -> app().findElements(By.cssSelector(".tabs-demo__add")).stream()
+			.noneMatch(WebElement::isDisplayed));
+		screenshot("added");
+
+		// in its place for the keyboard too
+		button(settings(), "Security").sendKeys(Keys.ARROW_DOWN);
+		wait.until(d -> selected(settings()).equals("Alerts"));
+		driver.switchTo().activeElement().sendKeys(Keys.ARROW_UP, Keys.ARROW_UP);
+		wait.until(d -> selected(settings()).equals("Profile"));
+		assertNoErrors();
+	}
+
+	@ParameterizedTest
+	@MethodSource("com.antiliacode.widgets.demo.frameworks.FrameworkAppsTestCase#wicketAndFrameworks")
 	void showsTheGalleryOfDesigns(SeleniumBrowser browser, String framework)
 	{
 		openTabs(browser, framework);

@@ -287,6 +287,109 @@ class TabbedPanelTest extends WicketTestCase
 	}
 
 	@Test
+	void addsATabAtAPlaceRenderedInTheOrderOfTheTabs()
+	{
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		tabs.addTab(tab("one", "one")).addTab(tab("three", "three")).addTab(tab("zero", "zero"), 0)
+			.addTab(tab("two", "two"), 2);
+		assertEquals(List.of("zero", "one", "two", "three"), names(tabs));
+		assertThrows(IndexOutOfBoundsException.class, () -> tabs.addTab(tab("x", "x"), 5));
+		assertThrows(IndexOutOfBoundsException.class, () -> tabs.addTab(tab("x", "x"), -1));
+		tester.startPage(new TestPage(tabs));
+
+		String html = tester.getLastResponseAsString();
+		assertTrue(html.indexOf("Title zero") < html.indexOf("Title one") &&
+			html.indexOf("Title one") < html.indexOf("Title two") &&
+			html.indexOf("Title two") < html.indexOf("Title three"), "the tabs in order");
+		assertTrue(html.indexOf("Panel zero") < html.indexOf("Panel one") &&
+			html.indexOf("Panel one") < html.indexOf("Panel two") &&
+			html.indexOf("Panel two") < html.indexOf("Panel three"), "the panels in order");
+		assertSame(tabs.getTab("zero"), tabs.getSelectedTab(), "the first one");
+	}
+
+	@Test
+	void addsATabViaAjaxBeforeTheOneAtItsPlace()
+	{
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		tabs.addTab(tab("one", "one")).addTab(tab("three", "three"));
+		tester.startPage(new TestPage(tabs));
+		String header = tabs.getHeaders().get("three").getMarkupId();
+		String item = tabs.getItems().get("three").getMarkupId();
+
+		runAjax(tabs, t -> tabs.addTab(tab("two", "two"), 1, t));
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("b=document.getElementById(\"" + header +
+			"\");p.insertBefore(e,b&&b.parentNode===p?b:null);"), response);
+		assertTrue(response.contains("b=document.getElementById(\"" + item + "\");"), response);
+		assertTrue(response.contains("Panel two"));
+		assertFalse(response.contains("Panel one"), "the other panels stay as they are");
+		assertEquals(List.of("one", "two", "three"), names(tabs));
+
+		// after the others, as addTab(tab, target)
+		runAjax(tabs, t -> tabs.addTab(tab("four", "four"), 3, t));
+		assertTrue(tester.getLastResponseAsString().contains(".appendChild(e);"));
+		assertEquals(List.of("one", "two", "three", "four"), names(tabs));
+	}
+
+	@Test
+	void rendersTheHeaderOfATabAgainViaAjax()
+	{
+		List<String> clicks = new ArrayList<>();
+		Model<String> title = Model.of("Inbox");
+		Tab inbox = new Tab("inbox", title)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				return new Label(id, "Panel inbox");
+			}
+		}.setClosable(true);
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		tabs.addTab(inbox).addTab(tab("two", "two"));
+		tester.startPage(new TestPage(tabs));
+		String html = tester.getLastResponseAsString();
+		Component icon = tabs.getHeaders().get("inbox:button:icon");
+		Component actions = tabs.getHeaders().get("inbox:actions");
+		assertTrue(html.contains("id=\"" + icon.getMarkupId() + "\" hidden=\"\""),
+			"a placeholder for an icon to come");
+		assertTrue(html.contains("id=\"" + actions.getMarkupId() + "\" hidden=\"\""),
+			"a placeholder for actions to come");
+
+		title.setObject("Inbox (3)");
+		inbox.setIcon(ICON).addAction(new TabAction(ICON, Model.of("Mark all read"))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onClick(AjaxRequestTarget target, Tab tab, Component button)
+			{
+				clicks.add(tab.getName());
+			}
+		});
+		runAjax(tabs, t -> tabs.updateTab(inbox, t));
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Inbox (3)"), response);
+		assertTrue(response.contains("<svg class=\"icon\"></svg>"));
+		assertTrue(response.contains("title=\"Mark all read\""));
+		assertTrue(response.contains("id=\"" + tabs.getHeaders().get("inbox:button:title")
+			.getMarkupId() + "\""));
+		assertFalse(response.contains("Panel inbox"), "the panel stays as it is");
+		assertFalse(response.contains("id=\"" + tabs.getHeaders().get("inbox").getMarkupId() +
+			"\""), "the tab element stays, with the close button and the mark of the browser");
+		assertFalse(response.contains("Title two"), "the other tabs stay as they are");
+
+		tester.executeAjaxEvent(tabs.getHeaders().get("inbox:actions:action:1"), "click");
+		assertEquals(List.of("inbox"), clicks);
+
+		// a tab the tabs no longer have changes nothing
+		tabs.removeTab(inbox);
+		runAjax(tabs, t -> tabs.updateTab(inbox, t));
+		assertFalse(tester.getLastResponseAsString().contains("Inbox"));
+	}
+
+	@Test
 	void tellsTheBrowserAPanelHasChanges()
 	{
 		TestTabbedPanel tabs = new TestTabbedPanel();
