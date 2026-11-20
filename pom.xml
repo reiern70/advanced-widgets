@@ -81,7 +81,7 @@
 		<!-- Jackson 2, for Jackson2JsonSerializer: the 2.x paired with Jackson 3.3, sharing its annotations -->
 		<jackson2.version>2.23.0</jackson2.version>
 		<!-- cleans the HTML of the rich text editor on the server -->
-		<owasp-html-sanitizer.version>20261011.1</owasp-html-sanitizer.version>
+		<owasp-html-sanitizer.version>20261110.1</owasp-html-sanitizer.version>
 		<fontawesome-free.version>7.3.1</fontawesome-free.version>
 		<bootstrap.version>5.3.9</bootstrap.version>
 		<daisyui.version>5.7.50</daisyui.version>
