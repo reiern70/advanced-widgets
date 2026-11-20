@@ -89,7 +89,7 @@
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
 		<selenium.version>4.52.0</selenium.version>
 		<!-- reads back, in the tests only, the workbooks of the Excel export, which writes them itself -->
-		<poi.version>5.5.1</poi.version>
+		<poi.version>6.0.0</poi.version>
 		<!-- the database of the demo: Spring Data JPA on Hibernate, PostgreSQL in production -->
 		<spring.version>7.0.10</spring.version>
 		<spring-data-jpa.version>4.1.2</spring-data-jpa.version>
