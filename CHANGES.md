@@ -179,9 +179,10 @@ What 10.11.0-RC11 has, and:
   Sanitizer, `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` (20261011.1),
   which no longer comes with the components (#149).
 - An editor without a store of files cleans the links of files into plain links, their class
-  `antilia-attachment` and their `data-size` dropped, as before 10.11.0-RC10 (#145): an application keeping the files of
-  its texts without a store adds `addFeature(RichTextFeature.ATTACHMENT)`, and one that took the
-  feature away to keep files out may leave that. The default cleaning of `RichTextEditor`, the
+  `antilia-attachment` and their `data-size` dropped, as before 10.11.0-RC10 (#145): an
+  application keeping the files of its texts without a store adds
+  `addFeature(RichTextFeature.ATTACHMENT)`, and one that took the feature away to keep files out
+  may leave that. The default cleaning of `RichTextEditor`, the
   policy of `RichTextFeature.defaults`, is no longer `RichTextPolicy.ALL`, nor that of `CKEditor`
   `CKEditorPolicy.ALL`. In React, Svelte and the core, an editor given neither `onAttach` nor its
   features has no files attached.
