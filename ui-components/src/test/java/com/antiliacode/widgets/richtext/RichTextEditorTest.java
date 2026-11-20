@@ -81,6 +81,10 @@ import com.antiliacode.widgets.upload.IUploadFileFormat;
 
 class RichTextEditorTest extends WicketTestCase
 {
+	/** The policy of an editor not told otherwise: all the features but the files attached. */
+	private static final RichTextPolicy DEFAULT_POLICY = RichTextPolicy.of(
+		RichTextFeature.defaults(RichTextFormat.HTML));
+
 	private static final String HTML = "<h2>Title</h2><p>Hello <strong>world</strong></p>";
 
 	@Test
@@ -105,7 +109,10 @@ class RichTextEditorTest extends WicketTestCase
 
 		JSONObject options = options(page.editor);
 		assertEquals("html", options.getString("format"));
-		assertEquals(RichTextFeature.values().length, options.getJSONArray("features").length());
+		// all but the files attached, without a store of files
+		assertEquals(RichTextFeature.values().length - 1,
+			options.getJSONArray("features").length());
+		assertFalse(options.getJSONArray("features").toString().contains("\"attachment\""));
 		assertEquals("heading", options.getJSONArray("features").getString(0));
 		assertEquals("[1,2,3,4]", options.getJSONArray("headingLevels").toString());
 		JSONArray toolbar = options.getJSONArray("toolbar");
@@ -151,7 +158,7 @@ class RichTextEditorTest extends WicketTestCase
 		tester.assertContains("values:function\\(editor\\)\\{return Wicket.RichTextEditor\\?" +
 			"Wicket.RichTextEditor.stateParameters\\(editor\\):\\{\\};\\}");
 		assertEquals(RichTextEditorState.NONE, page.editor.getState());
-		assertSame(RichTextPolicy.ALL, page.editor.getSanitizer());
+		assertEquals(DEFAULT_POLICY, page.editor.getSanitizer());
 	}
 
 	@Test
@@ -242,6 +249,63 @@ class RichTextEditorTest extends WicketTestCase
 		editor.setFeatures(null).setLimit(null);
 		assertEquals(RichTextFeature.defaults(RichTextFormat.MARKDOWN), editor.getFeatures());
 		assertNull(editor.getLimit());
+	}
+
+	/**
+	 * The files attached come with a store of files: without one, the cleaning drops their classes
+	 * and sizes, and the browser gets no feature attachment, to load no code of uploads for (#145).
+	 */
+	@Test
+	void hasTheFilesAttachedWithAStoreOfFilesAlone()
+	{
+		String attached = "<p><a class=\"antilia-attachment antilia-attachment-pdf\" " +
+			"href=\"/files/r.pdf\" data-size=\"1.2 MB\">r.pdf</a></p>";
+		String link = "<p><a href=\"/files/r.pdf\" rel=\"noopener noreferrer nofollow\">r.pdf</a></p>";
+		IRichTextAttachmentStore store = (file, format) -> "/files/new." + format.getExtension();
+
+		RichTextEditor editor = new RichTextEditor("editor", Model.of(""));
+		assertFalse(editor.getFeatures().contains(RichTextFeature.ATTACHMENT));
+		editor.removeFeature(RichTextFeature.IMAGE);
+		assertEquals(link, editor.getSanitizer().sanitize(attached));
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).getJSONArray("features").toString().contains("\"attachment\""));
+		assertFalse(editor.isAttachmentUploading());
+
+		// a store brings them, whether the features changed before or after
+		editor.setAttachmentStore(store);
+		assertTrue(editor.getFeatures().contains(RichTextFeature.ATTACHMENT));
+		assertFalse(editor.getFeatures().contains(RichTextFeature.IMAGE));
+		assertEquals(attached.replace(">r.pdf", " rel=\"noopener noreferrer nofollow\">r.pdf"),
+			editor.getSanitizer().sanitize(attached));
+		tester.startPage(new TestPage(editor));
+		assertTrue(options(editor).getJSONArray("features").toString().contains("\"attachment\""));
+		assertTrue(editor.isAttachmentUploading());
+		editor.removeFeature(RichTextFeature.BOLD);
+		assertTrue(editor.getFeatures().contains(RichTextFeature.ATTACHMENT));
+
+		// taken away, they stay away, the store set before or after
+		editor.removeFeature(RichTextFeature.ATTACHMENT);
+		assertEquals(link, editor.getSanitizer().sanitize(attached));
+		editor.setAttachmentStore(null).setAttachmentStore(store);
+		assertFalse(editor.getFeatures().contains(RichTextFeature.ATTACHMENT));
+		assertFalse(editor.isAttachmentUploading());
+
+		// added, they stay without a store: the links are kept, nothing is uploaded
+		editor.setAttachmentStore(null).addFeature(RichTextFeature.ATTACHMENT);
+		assertTrue(editor.getFeatures().contains(RichTextFeature.ATTACHMENT));
+		assertFalse(editor.isAttachmentUploading());
+
+		// a list set says it, store or not; none, the store does
+		editor.setFeatures(List.of(RichTextFeature.LINK)).setAttachmentStore(store);
+		assertEquals(Set.of(RichTextFeature.LINK), editor.getFeatures());
+		editor.setFeatures(List.of(RichTextFeature.LINK, RichTextFeature.ATTACHMENT))
+			.setAttachmentStore(null);
+		assertEquals(Set.of(RichTextFeature.LINK, RichTextFeature.ATTACHMENT),
+			editor.getFeatures());
+		editor.setFeatures(null);
+		assertEquals(RichTextFeature.defaults(RichTextFormat.HTML), editor.getFeatures());
+		editor.setAttachmentStore(store);
+		assertEquals(EnumSet.allOf(RichTextFeature.class), Set.copyOf(editor.getFeatures()));
 	}
 
 	@Test
@@ -1064,7 +1128,7 @@ class RichTextEditorTest extends WicketTestCase
 		String html = "<p><span class=\"brand-text\">a</span><mark class=\"brand-mark\">b</mark>" +
 			"<span class=\"antilia-color-red\">c</span><mark class=\"antilia-background-red\">d" +
 			"</mark></p>";
-		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+		assertEquals(DEFAULT_POLICY, editor.getSanitizer());
 
 		editor.setColors(List.of(new RichTextViewTest.Brand()));
 		assertEquals("<p><span class=\"brand-text\">a</span><mark>b</mark><span>c</span>" +
@@ -1085,7 +1149,7 @@ class RichTextEditorTest extends WicketTestCase
 			editor.getSanitizer().sanitize(html));
 
 		editor.setColors(RichTextColor.PALETTE).setBackgroundColors(RichTextBackgroundColor.PALETTE);
-		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+		assertEquals(DEFAULT_POLICY, editor.getSanitizer());
 		assertThrows(IllegalArgumentException.class, () -> editor.setColors(List.of(
 			RichTextColor.RED, new RichTextViewTest.Brand(), RichTextColor.RED)));
 		assertThrows(IllegalArgumentException.class, () -> editor.setBackgroundColors(List.of(
@@ -1252,11 +1316,11 @@ class RichTextEditorTest extends WicketTestCase
 		assertFalse(editor.isImagesFromSiteOnly());
 		assertSame(RichTextMarkdownSanitizer.INSTANCE, editor.getMarkdownSanitizer());
 		assertSame(RichTextJsonSanitizer.INSTANCE, editor.getJsonSanitizer());
-		assertSame(RichTextPolicy.ALL, editor.getSanitizer());
+		assertEquals(DEFAULT_POLICY, editor.getSanitizer());
 
 		editor.setImagesFromSiteOnly(true);
 		assertTrue(editor.isImagesFromSiteOnly());
-		assertEquals(RichTextPolicy.ALL.withImagesFromSiteOnly(true), editor.getSanitizer());
+		assertEquals(DEFAULT_POLICY.withImagesFromSiteOnly(true), editor.getSanitizer());
 		assertSame(RichTextMarkdownSanitizer.IMAGES_FROM_SITE_ONLY, editor.getMarkdownSanitizer());
 		assertSame(RichTextJsonSanitizer.IMAGES_FROM_SITE_ONLY, editor.getJsonSanitizer());
 		tester.startPage(new TestPage(editor));
@@ -1830,10 +1894,11 @@ class RichTextEditorTest extends WicketTestCase
 		assertSame(RichTextFeature.TEXT_ALIGN, RichTextTool.ALIGN_CENTER.getFeature());
 		assertNull(RichTextTool.UNDO.getFeature());
 		assertEquals("json", RichTextFormat.JSON.getName());
-		assertEquals(EnumSet.allOf(RichTextFeature.class), RichTextFeature.defaults(
-			RichTextFormat.HTML));
-		assertEquals(EnumSet.allOf(RichTextFeature.class), RichTextFeature.defaults(
-			RichTextFormat.JSON));
+		// the files attached come with a store of files
+		assertEquals(EnumSet.complementOf(EnumSet.of(RichTextFeature.ATTACHMENT)),
+			RichTextFeature.defaults(RichTextFormat.HTML));
+		assertEquals(EnumSet.complementOf(EnumSet.of(RichTextFeature.ATTACHMENT)),
+			RichTextFeature.defaults(RichTextFormat.JSON));
 		assertEquals("superscript", RichTextTool.SUPERSCRIPT.getName());
 		assertSame(RichTextFeature.SUBSCRIPT, RichTextTool.SUBSCRIPT.getFeature());
 		// Markdown has no syntax for them

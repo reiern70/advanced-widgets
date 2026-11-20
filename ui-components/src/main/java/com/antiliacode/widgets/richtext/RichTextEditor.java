@@ -56,7 +56,7 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * text, superscript and subscript, the colors of the text and of its background, links, lists,
  * task lists, quotes, code blocks, rules, tables, images and alignment, the
  * {@link RichTextFeature features}, all of them unless {@link #setFeatures(Collection) told
- * otherwise}. The page chooses the tools of the toolbar, and their groups, with
+ * otherwise}, and the files attached with a store of files. The page chooses the tools of the toolbar, and their groups, with
  * {@link #setToolbar(List)}.
  * The usual keys format too (Ctrl+B, Ctrl+I..., Ctrl+Shift+. raises and Ctrl+Shift+, lowers),
  * Markdown's marks do as the user types (# a heading, - a list, **bold**), Ctrl+K edits the link
@@ -235,8 +235,14 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 		"pasteCleaned", "pasteScripts", "pasteEmbedded", "pasteForms", "pasteImages", "pasteTables",
 		"pasteLinks", "pasteFormatting", "errorRestarted", "errorGaveUp");
 
-	/** The features set, {@code null} for those of the format. */
+	/** The features set, {@code null} for those of the format; never the files attached. */
 	private Set<IRichTextFeature> features;
+
+	/**
+	 * Whether the text holds files attached, {@link RichTextFeature#ATTACHMENT}: {@code null} for
+	 * while the editor has a store of files.
+	 */
+	private Boolean attachments;
 
 	private List<List<IRichTextTool>> toolbar = groups(RichTextTool.DEFAULT_TOOLBAR);
 
@@ -323,18 +329,31 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	/**
 	 * @return what the text may hold: the features set, or those of
 	 *         {@link RichTextFeature#defaults(RichTextFormat) the format}, all the built-in ones for
-	 *         HTML
+	 *         HTML but the files attached; and these, {@link RichTextFeature#ATTACHMENT}, while the
+	 *         editor has a {@link #setAttachmentStore(IRichTextAttachmentStore) store of files},
+	 *         unless taken away, or when added
 	 */
 	@Override
 	public Set<IRichTextFeature> getFeatures()
 	{
-		return features == null ? RichTextFeature.defaults(getFormat()) : features;
+		Set<IRichTextFeature> base = features == null ? RichTextFeature.defaults(getFormat()) :
+			features;
+		if (!(attachments == null ? getAttachmentStore() != null : attachments))
+		{
+			return base;
+		}
+		Set<IRichTextFeature> all = new LinkedHashSet<>(base);
+		all.add(RichTextFeature.ATTACHMENT);
+		return Collections.unmodifiableSet(all);
 	}
 
 	/**
 	 * @param features
 	 *            what the text may hold: built-in {@link RichTextFeature}s and features of the
-	 *            page's own, each by a name of its own; {@code null} for those of the format
+	 *            page's own, each by a name of its own; {@code null} for those of the format, with
+	 *            the files attached while the editor has a store of files. A list set holds the
+	 *            files attached, {@link RichTextFeature#ATTACHMENT}, or keeps them out, store or
+	 *            not.
 	 * @return {@code this}
 	 * @throws IllegalArgumentException
 	 *             for features {@link IRichTextFeature#checked(Collection)} does not take: one
@@ -342,13 +361,23 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public RichTextEditor setFeatures(Collection<? extends IRichTextFeature> features)
 	{
-		this.features = features == null ? null : IRichTextFeature.checked(features);
+		if (features == null)
+		{
+			this.features = null;
+			attachments = null;
+			return this;
+		}
+		Set<IRichTextFeature> checked = IRichTextFeature.checked(features);
+		attachments = checked.contains(RichTextFeature.ATTACHMENT);
+		this.features = withoutAttachments(checked);
 		return this;
 	}
 
 	/**
 	 * Adds a feature to those of the editor, the features of the format until the page sets
-	 * others: its tools show, and the cleaning lets through what it writes.
+	 * others: its tools show, and the cleaning lets through what it writes. The files attached,
+	 * {@link RichTextFeature#ATTACHMENT}, stay then, the editor with a store of files or not:
+	 * their links are kept, and the user attaches files with a store.
 	 *
 	 * @param feature
 	 *            the feature, by a name no other feature of the editor has
@@ -360,13 +389,23 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	{
 		List<IRichTextFeature> all = new ArrayList<>(getFeatures());
 		all.add(feature);
-		return setFeatures(all);
+		Set<IRichTextFeature> checked = IRichTextFeature.checked(all);
+		if (feature == RichTextFeature.ATTACHMENT)
+		{
+			attachments = true;
+		}
+		else
+		{
+			features = withoutAttachments(checked);
+		}
+		return this;
 	}
 
 	/**
 	 * Takes a feature away from those of the editor, the features of the format until the page
 	 * sets others: its tools no longer show, and the cleaning drops what it writes, but for its
-	 * text.
+	 * text. The files attached, {@link RichTextFeature#ATTACHMENT}, go then, the editor with a
+	 * store of files or not.
 	 *
 	 * @param feature
 	 *            the feature
@@ -374,9 +413,31 @@ public class RichTextEditor extends AbstractRichTextEditor<RichTextEditor>
 	 */
 	public RichTextEditor removeFeature(IRichTextFeature feature)
 	{
+		if (feature == RichTextFeature.ATTACHMENT)
+		{
+			attachments = false;
+			return this;
+		}
 		List<IRichTextFeature> all = new ArrayList<>(getFeatures());
 		all.remove(feature);
-		return setFeatures(all);
+		features = withoutAttachments(IRichTextFeature.checked(all));
+		return this;
+	}
+
+	/**
+	 * @param features
+	 *            features, checked
+	 * @return the features, but the files attached, which {@link #attachments} decides
+	 */
+	private static Set<IRichTextFeature> withoutAttachments(Set<IRichTextFeature> features)
+	{
+		if (!features.contains(RichTextFeature.ATTACHMENT))
+		{
+			return features;
+		}
+		Set<IRichTextFeature> without = new LinkedHashSet<>(features);
+		without.remove(RichTextFeature.ATTACHMENT);
+		return Collections.unmodifiableSet(without);
 	}
 
 	/**

@@ -474,6 +474,12 @@ is checked to be UTF-8 without NUL, its extension choosing among TXT, CSV and Ma
 out of the text is deleted at once or once the text is saved, as the images are. The resource serves
 a PDF inline, the others as attachments, each in a sandbox.
 
+The files attached, `RichTextFeature.ATTACHMENT` (`CKEditorFeature.ATTACHMENT` for CKEditor), come
+with the store: an editor without one has none, its cleaning keeping a file as a plain link, and
+loads no code of uploads for them. `addFeature(RichTextFeature.ATTACHMENT)` keeps the files of a
+text without a store, `removeFeature(RichTextFeature.ATTACHMENT)` keeps them out with one. The
+editors of React and Svelte have them with `onAttach`.
+
 ```java
 // an antivirus, or a sanitizer of the application's own, on every upload, images too
 editor.setUploadScanner((file, format, locale) -> clamAv.isClean(file.getInputStream()) ?
