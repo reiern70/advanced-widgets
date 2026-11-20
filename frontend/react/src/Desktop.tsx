@@ -240,7 +240,7 @@ export const Desktop = forwardRef<DesktopHandle, DesktopProps>(function Desktop(
 	}), []);
 
 	useLayoutEffect(() => {
-		const desktop = new CoreDesktop(element.current!, {
+		const desktop: CoreDesktop = new CoreDesktop(element.current!, {
 			look,
 			taskbar: position, tiling, expandable, expanded: filling, movableTaskbar, menu, texts,
 			panes: paneList, activePane: shown, paneSwitcher, editablePanes, windowTypes: coreTypes,
