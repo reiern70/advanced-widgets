@@ -40,7 +40,10 @@ export interface RichTextEditorProps {
 	saved?: string;
 	/** How the editor keeps the text: html when left out, markdown or json. */
 	format?: RichTextFormat;
-	/** What the text may hold: all the features when left out (for Markdown, all it has a syntax for). */
+	/**
+	 * What the text may hold: all the features when left out (for Markdown, all it has a syntax
+	 * for), the files attached with onAttach alone.
+	 */
 	features?: readonly RichTextFeature[];
 	/** The levels of the headings, 1 to 4 when left out. */
 	headingLevels?: readonly HeadingLevel[];

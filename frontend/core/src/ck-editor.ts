@@ -491,9 +491,9 @@ export interface CKEditorOptions {
 	/** How the editor keeps the text: html when left out, or markdown. */
 	format?: 'html' | 'markdown';
 	/**
-	 * What the text may hold: all the features when left out, but for Markdown underlined text,
-	 * superscript, subscript and alignment, which Markdown has no syntax for. Those CKEditor does
-	 * not make are left out. Superscript and subscript take each other away, as in the Tiptap
+	 * What the text may hold: all the features when left out, but the files attached without
+	 * onAttach, and for Markdown underlined text, superscript, subscript and alignment, which
+	 * Markdown has no syntax for. Those CKEditor does not make are left out. Superscript and subscript take each other away, as in the Tiptap
 	 * editor.
 	 */
 	features?: readonly RichTextFeature[];
@@ -1283,15 +1283,17 @@ export class CKEditor {
 	}
 
 	/**
-	 * @returns what the text may hold, among the features CKEditor makes
+	 * @returns what the text may hold, among the features CKEditor makes: those given, or all of
+	 *          the format, the files attached with onAttach alone
 	 */
 	features(): ReadonlySet<CKEditorFeature> {
 		const given = this.options.features;
 		if (given) {
 			return new Set(CK_EDITOR_FEATURES.filter((feature) => given.includes(feature)));
 		}
-		return new Set(this.format() === 'markdown' ? CK_EDITOR_FEATURES.filter((feature) =>
-			!NOT_IN_MARKDOWN.includes(feature)) : CK_EDITOR_FEATURES);
+		return new Set(CK_EDITOR_FEATURES.filter((feature) =>
+			(feature !== 'attachment' || !!this.options.onAttach) &&
+			(this.format() !== 'markdown' || !NOT_IN_MARKDOWN.includes(feature))));
 	}
 
 	private texts(): CKEditorTexts {

@@ -230,9 +230,10 @@ export interface RichTextEditorOptions {
 	format?: RichTextFormat;
 	/**
 	 * What the text may hold: the features built in and those registered
-	 * (registerRichTextFeature), by their names; all the built-in ones when left out, but for
-	 * Markdown underlined text, superscript, subscript, colors and alignment, which Markdown has no
-	 * syntax for. A feature not registered yet comes in as it registers, the editor made anew.
+	 * (registerRichTextFeature), by their names; all the built-in ones when left out, but the files
+	 * attached without onAttach, and for Markdown underlined text, superscript, subscript, colors
+	 * and alignment, which Markdown has no syntax for. A feature not registered yet comes in as it
+	 * registers, the editor made anew.
 	 */
 	features?: readonly RichTextFeature[];
 	/**
@@ -826,8 +827,8 @@ export class RichTextEditor {
 
 	/**
 	 * @returns what the text may hold: the features given, built in or registered, or the built-in
-	 *          ones of the format; the color of the text, or of its background, not without a
-	 *          color in its palette
+	 *          ones of the format, the files attached with onAttach alone; the color of the text,
+	 *          or of its background, not without a color in its palette
 	 */
 	features(): ReadonlySet<RichTextFeature> {
 		const given = this.options.features;
@@ -835,8 +836,9 @@ export class RichTextEditor {
 			(RICH_TEXT_FEATURES as readonly string[]).includes(feature) || !!richTextFeature(feature);
 		this.missing = new Set(given ? given.filter((feature) => !known(feature)) : []);
 		const features = new Set<RichTextFeature>(given ? given.filter(known) :
-			this.format() === 'markdown' ? RICH_TEXT_FEATURES.filter((feature) =>
-				!RICH_TEXT_NOT_IN_MARKDOWN.includes(feature)) : RICH_TEXT_FEATURES);
+			RICH_TEXT_FEATURES.filter((feature) => (feature !== 'attachment' ||
+				!!this.options.onAttach) && (this.format() !== 'markdown' ||
+				!RICH_TEXT_NOT_IN_MARKDOWN.includes(feature))));
 		if (this.colors().length === 0) {
 			features.delete('textColor');
 		}
@@ -2155,7 +2157,9 @@ export class RichTextEditor {
 		const readOnly = this.isReadOnly();
 		// read only now, or no longer: the options, or the text area
 		const editableChanged = this.editor.isEditable === readOnly;
-		const rebuilt = changed(...SCHEMA_OPTIONS) || before.extensions !== this.options.extensions;
+		// the files attached come and go with onAttach, unless the features are given
+		const rebuilt = changed(...SCHEMA_OPTIONS) || before.extensions !== this.options.extensions ||
+			(!this.options.features && !before.onAttach !== !this.options.onAttach);
 		const proofreadChanged = before.proofreader !== this.options.proofreader;
 		if (rebuilt) {
 			this.rebuild(before.format !== this.options.format);

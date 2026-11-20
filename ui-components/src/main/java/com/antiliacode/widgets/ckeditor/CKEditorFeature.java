@@ -232,7 +232,13 @@ public enum CKEditorFeature implements IRichTextFeature
 	 * {@code <a class="antilia-attachment antilia-attachment-pdf" href="..." data-size="1.2 MB">
 	 * report.pdf</a>}: an inline widget of the editor's own in CKEditor. Uploaded with
 	 * {@link CKEditor#setAttachmentStore(com.antiliacode.widgets.richtext.IRichTextAttachmentStore)
-	 * a store}; in Markdown, a plain link, {@code [report.pdf](url)}.
+	 * a store}; in Markdown, a plain link, {@code [report.pdf](url)}. Not one of the
+	 * {@link #defaults(RichTextFormat) defaults}: an editor has it with a store of files, its own
+	 * or {@link CKEditor#setUploadResource(com.antiliacode.widgets.richtext.RichTextFiles) the
+	 * resource of the uploads}, unless {@link CKEditor#removeFeature(CKEditorFeature) taken away}
+	 * or left out of {@link CKEditor#setFeatures(java.util.Collection) the features set}, and
+	 * without one when {@link CKEditor#addFeature(CKEditorFeature) added}, keeping the files of
+	 * its texts.
 	 *
 	 * @since 11.0.0
 	 */
@@ -329,12 +335,13 @@ public enum CKEditorFeature implements IRichTextFeature
 	/**
 	 * @param format
 	 *            how the editor keeps the text
-	 * @return the features of an editor not told otherwise: all of them, but underlined text,
-	 *         superscript, subscript and alignment for Markdown
+	 * @return the features of an editor not told otherwise: all of them but the files attached,
+	 *         which come with a store of files ({@link #ATTACHMENT}), and for Markdown neither
+	 *         underlined text, superscript, subscript nor alignment
 	 */
 	public static Set<CKEditorFeature> defaults(RichTextFormat format)
 	{
-		Set<CKEditorFeature> features = EnumSet.allOf(CKEditorFeature.class);
+		Set<CKEditorFeature> features = EnumSet.complementOf(EnumSet.of(ATTACHMENT));
 		if (format == RichTextFormat.MARKDOWN)
 		{
 			features.removeIf(feature -> !feature.isInMarkdown());

@@ -133,7 +133,8 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("GPL", options.getString("licenseKey"));
 		assertFalse(options.has("language"), "English");
 		assertEquals("html", options.getString("format"));
-		assertEquals(CKEditor.FEATURES.size(), options.getJSONArray("features").length());
+		// all but the files attached, without a store of files
+		assertEquals(CKEditor.FEATURES.size() - 1, options.getJSONArray("features").length());
 		assertEquals("[1,2,3,4]", options.getJSONArray("headingLevels").toString());
 		assertFalse(options.has("toolbar"), "the tools of the features");
 		assertFalse(options.has("plugins"));
@@ -162,7 +163,8 @@ class CKEditorTest extends WicketTestCase
 		assertEquals("Open in a new tab", texts.getString("linkNewTab"));
 		assertEquals("Drag, or use the arrow keys, to resize the editor", texts.getString("resize"));
 		assertFalse(options.has("stateUrl"), "the events send the state");
-		assertSame(CKEditorPolicy.ALL, page.editor.getSanitizer());
+		assertEquals(CKEditorPolicy.of(CKEditorFeature.defaults(RichTextFormat.HTML)),
+			page.editor.getSanitizer());
 		assertSame(LIBRARY, page.editor.getLibrary());
 		assertNull(page.editor.getLanguage());
 	}
@@ -297,11 +299,63 @@ class CKEditorTest extends WicketTestCase
 		assertNull(CKEditorFeature.of(RichTextFeature.TEXT_COLOR.getName()));
 		assertNull(CKEditorFeature.of(RichTextFeature.TEXT_BACKGROUND.getName()));
 		assertEquals(CKEditorFeature.BOLD, CKEditorFeature.of(RichTextFeature.BOLD.getName()));
-		assertEquals(CKEditor.FEATURES, editor.getFeatures());
+		// all but the files attached, without a store of files
+		assertEquals(EnumSet.complementOf(EnumSet.of(CKEditorFeature.ATTACHMENT)),
+			editor.getFeatures());
 		editor.setFeatures(EnumSet.of(CKEditorFeature.BOLD));
 		assertEquals(EnumSet.of(CKEditorFeature.BOLD), editor.getFeatures());
 		tester.startPage(new TestPage(editor));
 		assertEquals("[\"bold\"]", options(editor).getJSONArray("features").toString());
+	}
+
+	/**
+	 * The files attached come with a store of files: without one, the cleaning drops their classes
+	 * and sizes, and CKEditor gets no feature attachment, nor the editor's plugin of uploads for it
+	 * (#145).
+	 */
+	@Test
+	void hasTheFilesAttachedWithAStoreOfFilesAlone()
+	{
+		String attached = "<p><a class=\"antilia-attachment antilia-attachment-pdf\" " +
+			"href=\"/files/r.pdf\" data-size=\"1.2 MB\">r.pdf</a></p>";
+		String link = "<p><a href=\"/files/r.pdf\" rel=\"noopener noreferrer nofollow\">r.pdf</a></p>";
+		IRichTextAttachmentStore store = (file, format) -> "/files/new." + format.getExtension();
+
+		CKEditor editor = new CKEditor("editor", Model.of(""));
+		assertFalse(editor.getFeatures().contains(CKEditorFeature.ATTACHMENT));
+		editor.removeFeature(CKEditorFeature.IMAGE);
+		assertEquals(link, editor.getSanitizer().sanitize(attached));
+		tester.startPage(new TestPage(editor));
+		assertFalse(options(editor).getJSONArray("features").toString().contains("\"attachment\""));
+
+		// a store brings them, whether the features changed before or after
+		editor.setAttachmentStore(store);
+		assertTrue(editor.getFeatures().contains(CKEditorFeature.ATTACHMENT));
+		assertFalse(editor.getFeatures().contains(CKEditorFeature.IMAGE));
+		assertEquals(attached.replace(">r.pdf", " rel=\"noopener noreferrer nofollow\">r.pdf"),
+			editor.getSanitizer().sanitize(attached));
+		tester.startPage(new TestPage(editor));
+		assertTrue(options(editor).getJSONArray("features").toString().contains("\"attachment\""));
+		assertTrue(editor.isAttachmentUploading());
+
+		// taken away, they stay away, the store set before or after
+		editor.removeFeature(CKEditorFeature.ATTACHMENT);
+		editor.setAttachmentStore(null).setAttachmentStore(store);
+		assertFalse(editor.getFeatures().contains(CKEditorFeature.ATTACHMENT));
+		assertEquals(link, editor.getSanitizer().sanitize(attached));
+
+		// added, they stay without a store: the links are kept, nothing is uploaded
+		editor.setAttachmentStore(null).addFeature(CKEditorFeature.ATTACHMENT);
+		assertTrue(editor.getFeatures().contains(CKEditorFeature.ATTACHMENT));
+		assertFalse(editor.isAttachmentUploading());
+
+		// a list set says it, store or not; none, the store does
+		editor.setFeatures(EnumSet.of(CKEditorFeature.LINK)).setAttachmentStore(store);
+		assertEquals(EnumSet.of(CKEditorFeature.LINK), editor.getFeatures());
+		editor.setFeatures(null);
+		assertEquals(CKEditor.FEATURES, editor.getFeatures());
+		editor.setAttachmentStore(null);
+		assertEquals(CKEditorFeature.defaults(RichTextFormat.HTML), editor.getFeatures());
 	}
 
 	@Test
@@ -363,7 +417,8 @@ class CKEditorTest extends WicketTestCase
 	{
 		IModel<String> text = Model.of("");
 		CKEditor editor = new CKEditor("editor", text).setImagesFromSiteOnly(true);
-		assertEquals(CKEditorPolicy.ALL.withImagesFromSiteOnly(true), editor.getSanitizer());
+		assertEquals(CKEditorPolicy.of(CKEditorFeature.defaults(RichTextFormat.HTML))
+			.withImagesFromSiteOnly(true), editor.getSanitizer());
 		tester.startPage(new TestPage(editor));
 
 		FormTester form = tester.newFormTester("form");

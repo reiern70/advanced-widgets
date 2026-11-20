@@ -82,9 +82,12 @@ function message(editor: RichTextEditor): string | null {
 const LINK = '<a class="antilia-attachment antilia-attachment-pdf" href="/files/r.pdf" ' +
 	'target="_blank" data-size="1.5 KB" rel="noopener noreferrer nofollow">report.pdf</a>';
 
+/** The features of an editor keeping the files attached, without attaching any. */
+const ATTACHMENTS = { features: ['link', 'attachment'] };
+
 describe('the files attached', () => {
 	it('are links of their own, their kind in their class and their size in data-size', () => {
-		const editor = new RichTextEditor(textArea('<p>See ' + LINK + ' now</p>'));
+		const editor = new RichTextEditor(textArea('<p>See ' + LINK + ' now</p>'), ATTACHMENTS);
 		expect(editor.getValue()).toBe('<p>See ' + LINK + ' now</p>');
 		const node = editor.editor.state.doc.firstChild!.child(1);
 		expect(node.type.name).toBe('attachment');
@@ -95,13 +98,31 @@ describe('the files attached', () => {
 	it('take no unsafe address, nor a size or a kind the editor does not write', () => {
 		const editor = new RichTextEditor(textArea('<p><a class="antilia-attachment" ' +
 			'href="javascript:steal()">x</a> <a class="antilia-attachment antilia-attachment-Bad!" ' +
-			'href="/f" data-size="huge">y</a></p>'));
+			'href="/f" data-size="huge">y</a></p>'), ATTACHMENTS);
 		expect(editor.getValue()).toBe('<p>x <a class="antilia-attachment" href="/f" ' +
 			'target="_blank" rel="noopener noreferrer nofollow">y</a></p>');
 	});
 
+	it('are plain links where the page attaches none, unless its features name them', () => {
+		const editor = new RichTextEditor(textArea('<p>See ' + LINK + ' now</p>'));
+		expect(editor.features().has('attachment')).toBe(false);
+		expect(editor.editor.schema.nodes.attachment).toBeUndefined();
+		// a link, without its size
+		expect(editor.getValue()).not.toContain('data-size');
+		expect(editor.getValue()).toContain('href="/files/r.pdf">report.pdf</a>');
+
+		// the page attaching files now: the editor made anew has them
+		editor.configure({ onAttach: () => Promise.resolve('/f') });
+		expect(editor.features().has('attachment')).toBe(true);
+		expect(editor.editor.schema.nodes.attachment).toBeDefined();
+		editor.configure({ onAttach: null });
+		expect(editor.editor.schema.nodes.attachment).toBeUndefined();
+		editor.configure({ ...ATTACHMENTS });
+		expect(editor.editor.schema.nodes.attachment).toBeDefined();
+	});
+
 	it('are plain links in Markdown', () => {
-		const editor = new RichTextEditor(textArea(''), { format: 'markdown' });
+		const editor = new RichTextEditor(textArea(''), { format: 'markdown', ...ATTACHMENTS });
 		editor.editor.commands.insertContent({ type: 'attachment', attrs: { href: '/files/r.pdf',
 			name: 'report [final].pdf', size: '2 MB', kind: 'pdf' } });
 		expect(editor.getValue()).toBe('[report \\[final\\].pdf](/files/r.pdf)');
