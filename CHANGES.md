@@ -11,7 +11,7 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 10.11.0-RC13 (not released yet)
+## 10.11.0-RC13 (2026-11-20)
 
 What 10.11.0-RC12 has, and:
 
