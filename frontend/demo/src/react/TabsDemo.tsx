@@ -159,6 +159,19 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 						</p>
 					</section>
 				</Tab>
+				<Tab id="monthsTitle" title={texts.monthsTitle} modified={false}>
+					<section>
+						<Tabs className="tabs-demo__months" label={texts.months} texts={config.tabs}
+							overflowMenu={config.overflowLabel}>
+							{config.months.map((month, index) => (
+								<Tab key={index} id={'month-' + index} title={month}
+									icon={<Icon markup={icons.month} />}>
+									{format(texts['month.text'], month)}
+								</Tab>
+							))}
+						</Tabs>
+					</section>
+				</Tab>
 				<Tab id="galleryTitle" title={texts.galleryTitle} modified={false}>
 					<section>
 						<h4 className="tabs-demo__group">{texts.alongTheTop}</h4>

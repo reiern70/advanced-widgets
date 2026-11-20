@@ -36,6 +36,7 @@ import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.tabs.TabbedPanelPage.Document;
 import com.antiliacode.widgets.tabs.Tab;
 import com.antiliacode.widgets.tabs.TabbedPanel;
+import com.antiliacode.widgets.tabs.TabsOverflowMenuBehavior;
 import com.antiliacode.widgets.tabs.TabsOrientation;
 import com.antiliacode.widgets.tabs.TabsDesign;
 import com.github.openjson.JSONObject;
@@ -266,6 +267,23 @@ class TabbedPanelPageTest
 	}
 
 	@Test
+	void givesTheMonthsTheMenuOfAllTabs()
+	{
+		TabbedPanel months = tabs(inCase("monthsTitle", "months"));
+		assertEquals(12, months.getTabs().size());
+		assertEquals("January", months.getTabs().get(0).getTitle().getObject());
+		assertEquals(1, months.getBehaviors(TabsOverflowMenuBehavior.class).size());
+		tester.assertContains("Wicket.TabsOverflowMenu.attach\\(\"" + months.getTabsMarkupId() +
+			"\", \\{\"label\":\"All tabs\"\\}\\);");
+
+		tester.getSession().setLocale(Locale.of("es"));
+		tester.startPage(TabbedPanelPage.class);
+		months = tabs(inCase("monthsTitle", "months"));
+		assertEquals("Septiembre", months.getTabs().get(8).getTitle().getObject());
+		tester.assertContains("\\{\"label\":\"Todas las pestañas\"\\}");
+	}
+
+	@Test
 	void showsTheGalleryOfDesigns()
 	{
 		TabbedPanel segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
@@ -309,6 +327,10 @@ class TabbedPanelPageTest
 		assertEquals("Security", config.getJSONObject("texts").getString("security"));
 		assertEquals("Alerts ({0})", config.getJSONObject("texts").getString("alertsCount"));
 		assertEquals("Live", config.getJSONObject("texts").getString("live"));
+		assertEquals(12, config.getJSONArray("months").length());
+		assertEquals("December", config.getJSONArray("months").getString(11));
+		assertEquals("All tabs", config.getString("overflowLabel"));
+		assertTrue(config.getJSONObject("icons").getString("month").contains("<svg"));
 		assertTrue(config.getJSONObject("texts").getString("report.text").contains("{0}"));
 		assertEquals("pills", config.getString("design"));
 	}
