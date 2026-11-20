@@ -11,6 +11,15 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC14 (2026-11-20)
+
+What 10.11.0-RC13 has, built with newer dependencies; an application changes nothing:
+
+- The scripts of the components are built from newer packages (#157): Tiptap 3.34, and the latest
+  CodeMirror 6 and Lezer 1.
+- The components are built and tested with the OWASP Java HTML Sanitizer 20261110.1 (#163), which
+  an application with a rich text editor may add instead of 20261011.1 (see 10.11.0-RC12).
+
 ## 10.11.0-RC13 (2026-11-20)
 
 What 10.11.0-RC12 has, and:
