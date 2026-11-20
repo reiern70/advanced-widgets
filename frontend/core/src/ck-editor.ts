@@ -38,7 +38,8 @@
  *
  * Since CKEditor 49 has no Watchdog, CKEditor keeps running after an error that escaped it, but
  * may be left in a state of its own. The editor hears of those of its CKEditor by CKEditor's
- * onEditorError, when the build has it, and tells them to onError, with the event error of
+ * onEditorError, when the build has it, and not those of another CKEditor of the page CKEditor
+ * gives as its own too (isOwnCKEditorError), and tells them to onError, with the event error of
  * CK_EDITOR_EVENTS and in the log. Then it starts CKEditor again, as the Watchdog did, with the
  * text it last had, which the text area holds, and the selection, and says so in a line below the
  * text (recovery): after each of its first crashes, then as long as they come further apart than
@@ -1008,6 +1009,109 @@ const instances = new WeakMap<Element, CKEditor>();
 /** What editors the page took away go on with, by the id of their text area or element. */
 const continuations = new Map<string, Continuation>();
 
+/** The CKEditors of the page whose errors an editor hears of. */
+const heardEditors = new Set<CKEditorInstance>();
+
+/**
+ * @returns whether an object is one CKEditor's error attribution walks through: no value, function,
+ *          date, expression, module, DOM node or event, nor one excluded, as CKEditor leaves out
+ */
+function walked(node: unknown): node is object {
+	if (node === null || typeof node !== 'object') {
+		return false;
+	}
+	const type = Object.prototype.toString.call(node);
+	return type !== '[object Date]' && type !== '[object RegExp]' && type !== '[object Module]' &&
+		!(node as { _watchdogExcluded?: unknown })._watchdogExcluded &&
+		!(typeof EventTarget === 'function' && node instanceof EventTarget) &&
+		!(typeof Event === 'function' && node instanceof Event);
+}
+
+/**
+ * @returns the objects reachable from one through its properties and what it iterates, those left
+ *          out excepted, as CKEditor's error attribution reaches them
+ */
+function reachable(head: unknown, excluded: ReadonlySet<unknown>): Set<object> {
+	const found = new Set<object>();
+	const nodes: unknown[] = [head];
+	for (let index = 0; index < nodes.length; index++) {
+		const node = nodes[index];
+		if (!walked(node) || found.has(node) || excluded.has(node)) {
+			continue;
+		}
+		found.add(node);
+		try {
+			if (Symbol.iterator in node) {
+				for (const each of node as Iterable<unknown>) {
+					nodes.push(each);
+				}
+			} else {
+				for (const key in node) {
+					if (key !== 'defaultValue') {
+						nodes.push((node as Record<string, unknown>)[key]);
+					}
+				}
+			}
+		} catch {
+			// a getter or an iterator failing: what it holds is not reached
+		}
+	}
+	return found;
+}
+
+/**
+ * @returns whether an object is a CKEditor, by what every editor has
+ */
+function isCKEditor(value: unknown): value is CKEditorInstance {
+	const editor = value as Partial<CKEditorInstance> | null;
+	return typeof value === 'object' && value !== null && typeof editor?.model === 'object' &&
+		typeof editor.editing === 'object' && typeof editor.data === 'object';
+}
+
+/**
+ * Whether an error CKEditor's onEditorError gives as one of a CKEditor is the CKEditor's own.
+ * CKEditor tells the editors of an error by the object it came from, its context: the editor
+ * itself, or else every editor sharing any object with the context, through their properties. Two
+ * CKEditors share objects, a constant of CKEditor's own as the attributes of the items of lists, so
+ * CKEditor gives the error of one as an error of the other too. The error is the CKEditor's when
+ * its context is the CKEditor, or the editor of its context is (that of a command or a plugin); for
+ * a context telling no editor, when the context shares with the CKEditor an object that no other
+ * CKEditor heard of reaches.
+ *
+ * @param error
+ *            the error, a CKEditorError, its context the object it came from
+ * @param editor
+ *            the CKEditor CKEditor gave the error as one of
+ * @param others
+ *            the other CKEditors of the page
+ */
+export function isOwnCKEditorError(error: unknown, editor: object,
+	others: Iterable<object>): boolean {
+	const context = (error as { context?: unknown } | null | undefined)?.context;
+	if (context === editor || !walked(context)) {
+		return true;
+	}
+	const named = (context as { editor?: unknown }).editor;
+	if (isCKEditor(named)) {
+		return named === editor;
+	}
+	const rest = [...others].filter((other) => other !== editor);
+	if (!rest.length) {
+		return true;
+	}
+	const exclusions = (editor as { _errorExclusions?: unknown })._errorExclusions;
+	const excluded: ReadonlySet<unknown> = exclusions instanceof Set ? exclusions : new Set();
+	const fromContext = reachable(context, excluded);
+	const elsewhere = new Set<object>();
+	rest.forEach((other) => reachable(other, excluded).forEach((node) => elsewhere.add(node)));
+	for (const node of reachable(editor, excluded)) {
+		if (fromContext.has(node) && !elsewhere.has(node)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export class CKEditor {
 	/** The element of the editor, holding the text area, if any, and CKEditor's. */
 	readonly element: HTMLElement;
@@ -1542,7 +1646,8 @@ export class CKEditor {
 
 	/**
 	 * Hears of the errors escaping CKEditor, by CKEditor's onEditorError when the build has it
-	 * (CKEditor 49 and later): those of this CKEditor alone, until it stops.
+	 * (CKEditor 49 and later): those of this CKEditor alone, until it stops, and not those of
+	 * another CKEditor of the page CKEditor gives as this one's too (isOwnCKEditorError).
 	 */
 	private hearErrors(editor: CKEditorInstance, build: CKEditorBuild): void {
 		this.stopHearingErrors();
@@ -1553,11 +1658,13 @@ export class CKEditor {
 		}
 		try {
 			const stop = register(({ error, source }) => {
-				if (source === editor && editor === this.editor && !this.destroyed) {
+				if (source === editor && editor === this.editor && !this.destroyed &&
+					isOwnCKEditorError(error, editor, heardEditors)) {
 					this.crashed(editor, error);
 				}
 			});
 			this.hearing = { editor, stop: typeof stop === 'function' ? stop : () => undefined };
+			heardEditors.add(editor);
 		} catch (error) {
 			getHost().log.error('The editor cannot hear of the errors of CKEditor', error);
 		}
@@ -1572,6 +1679,7 @@ export class CKEditor {
 			return;
 		}
 		this.hearing = null;
+		heardEditors.delete(hearing.editor);
 		try {
 			hearing.stop();
 		} catch (error) {
