@@ -11,7 +11,7 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
-## 11.0.0-RC8 (not released yet)
+## 11.0.0-RC8 (2026-11-20)
 
 What 11.0.0-RC7 has, and:
 
