@@ -11,6 +11,15 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC9 (2026-11-20)
+
+What 11.0.0-RC8 has, built with newer dependencies; an application changes nothing:
+
+- The scripts of the components are built from newer packages (#157): Tiptap 3.34, and the latest
+  CodeMirror 6 and Lezer 1.
+- The components are built and tested with the OWASP Java HTML Sanitizer 20261110.1 (#163), which
+  an application with a rich text editor may add instead of 20261011.1 (see 11.0.0-RC7).
+
 ## 11.0.0-RC8 (2026-11-20)
 
 What 11.0.0-RC7 has, and:
