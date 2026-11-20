@@ -193,6 +193,8 @@ export class ResizableColumns {
 
 	private skippedWidth = 0;
 
+	private overheadWidth = 0;
+
 	private drag: Drag | undefined = undefined;
 
 	private readonly onPointerDown = (event: PointerEvent) => this.pointerDown(event);
@@ -482,6 +484,23 @@ export class ResizableColumns {
 		return this.skippedWidth;
 	}
 
+	/**
+	 * @returns the pixels the table takes beside its columns: with separated borders its own left
+	 *          and right borders and padding and the border spacing around the columns, with
+	 *          collapsed borders the halves of the outer borders that lie outside the columns. It
+	 *          is measured, the width of the table less that of the cells of its header row, as
+	 *          browsers tell; the last known one while it cannot be, for example while the table
+	 *          is hidden.
+	 */
+	overhead(): number {
+		const table = this.table.getBoundingClientRect().width;
+		const cells = this.headerRowCells().map(ResizableColumns.measure);
+		if (table > 0 && cells.length > 0 && cells.every((width) => width > 0)) {
+			this.overheadWidth = Math.max(0, table - sum(cells));
+		}
+		return this.overheadWidth;
+	}
+
 	private headerRowCells(): HTMLTableCellElement[] {
 		const rows = this.table.tHead ? this.table.tHead.rows : [];
 		for (let i = rows.length - 1; i >= 0; i--) {
@@ -579,7 +598,9 @@ export class ResizableColumns {
 	 *          the parent if the table adjusts to it, and proportions scaled to the width the table
 	 *          has, no column narrower than its data-min-width. Columns given one take what they
 	 *          need from the others, which get no narrower for it than they would anyway, nor
-	 *          than the narrowest the user can resize a column to.
+	 *          than the narrowest the user can resize a column to. The table's own borders,
+	 *          padding and border spacing, its overhead(), come off the width the columns share,
+	 *          so that the table, columns and all, is as wide as the parent.
 	 */
 	layout(base: number[]): number[] {
 		if (this.mode !== 'stretch') {
@@ -591,7 +612,7 @@ export class ResizableColumns {
 		} else if (this.proportions) {
 			total = this.table.getBoundingClientRect().width;
 		}
-		total -= this.skipped();
+		total -= this.skipped() + this.overhead();
 		const minimums = this.minimums();
 		if (total <= 0) {
 			return base.map((width, index) => Math.max(width, minimums[index] ?? 0));
@@ -635,7 +656,8 @@ export class ResizableColumns {
 	 */
 	private markWider(): void {
 		const parent = this.mode === 'stretch' && this.widths ? this.parentWidth() : 0;
-		const wider = parent > 0 && sum(this.widths!) + this.skipped() > parent + 0.5;
+		const wider = parent > 0 &&
+			sum(this.widths!) + this.skipped() + this.overhead() > parent + 0.5;
 		this.table.classList.toggle(RESIZABLE_COLUMNS_WIDER_CLASS, wider);
 		if (wider) {
 			this.table.style.setProperty(RESIZABLE_COLUMNS_PARENT_WIDTH_PROPERTY,
@@ -693,7 +715,8 @@ export class ResizableColumns {
 
 	/**
 	 * Sets the widths of the columns: as shares of the table in 'fit' mode, in pixels in 'stretch'
-	 * mode, where the table takes their sum.
+	 * mode, where the table takes their sum and its overhead(), its own borders, padding and
+	 * border spacing.
 	 */
 	apply(widths: number[]): void {
 		this.widths = widths.slice();
@@ -714,7 +737,7 @@ export class ResizableColumns {
 				col.style.width = (width / total * 100) + '%';
 			}
 		});
-		this.table.style.width = fit ? '100%' : (total + skipped) + 'px';
+		this.table.style.width = fit ? '100%' : (total + skipped + this.overhead()) + 'px';
 		this.table.classList.add(LAID_OUT_CLASS);
 		this.markWider();
 	}

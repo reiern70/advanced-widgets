@@ -318,6 +318,47 @@ describe('ResizableColumns', () => {
 			.toBe('');
 	});
 
+	it('takes the table\'s own borders, padding and spacing off the width its columns share', () => {
+		const element = table(['A', 'B']);
+		const parent = element.parentElement!;
+		let width = 400;
+		vi.spyOn(parent, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+		// the browser gives the columns the widths of their cols, and the table 10 pixels more:
+		// its borders of 1 pixel and the border spacing of 2 pixels around and between the columns
+		let shown = true;
+		const cells = Array.from(element.tHead!.rows[0].cells);
+		const cellWidth = (cell: HTMLTableCellElement) => !shown ? 0 :
+			parseFloat(element.querySelectorAll('col')[cell.cellIndex]?.style.width ?? '') || 100;
+		cells.forEach((cell) => vi.spyOn(cell, 'getBoundingClientRect').mockImplementation(() =>
+			({ width: cellWidth(cell) }) as DOMRect));
+		vi.spyOn(element, 'getBoundingClientRect').mockImplementation(() =>
+			({ width: shown ? cells.reduce((total, cell) => total + cellWidth(cell), 10) : 0 }) as DOMRect);
+		const widths = () => Array.from(element.querySelectorAll('col'), (col) => col.style.width);
+
+		ResizableColumns.attach('t', { mode: 'stretch', adjustToParent: true,
+			proportions: [1, 3] });
+
+		expect(ResizableColumns.instances.t.overhead()).toBe(10);
+		expect(widths()).toEqual(['97.5px', '292.5px']);
+		// as wide as its parent, borders and all: not wider, so its parent does not scroll
+		expect(element.style.width).toBe('400px');
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(false);
+
+		// hidden, the table keeps the overhead it had
+		shown = false;
+		width = 800;
+		ResizableColumns.instances.t.refit();
+		expect(ResizableColumns.instances.t.overhead()).toBe(10);
+		expect(widths()).toEqual(['197.5px', '592.5px']);
+
+		// a parent narrower than the columns and the overhead: the table is wider
+		shown = true;
+		width = 400;
+		ResizableColumns.instances.t.apply([300, 95]);
+		expect(element.style.width).toBe('405px');
+		expect(element.classList.contains('antilia-resizable-columns-wider')).toBe(true);
+	});
+
 	it('marks a table the user stretched wider than its parent, until it is restored', () => {
 		const element = table(['A', 'B']);
 		const parent = element.parentElement!;
