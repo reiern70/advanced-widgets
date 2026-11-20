@@ -17,7 +17,9 @@
   template, with the buttons of the actions at the end of every row; the chosen values show as
   chips with an x removing them. The values bind both ways
   (bind:value); onchange is called with them after every choice or removal. With pick it is a
-  find bar: a choice is handed to onpick, not kept, and the text field is empty again.
+  find bar: a choice is handed to onpick, not kept, and the text field is empty again. With
+  freeText it is a search box: its value is the text typed (bind:text), which the suggestions
+  only complete, and Enter without a suggestion reached by Up or Down sends the form.
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
@@ -38,6 +40,17 @@
 		pick?: boolean;
 		/** Called with the value picked, when pick is set. */
 		onpick?: (value: AutocompleteValue) => void;
+		/**
+		 * Whether it is a search box: its value is the text typed, which the suggestions only
+		 * complete, Up and Down putting their labels into the field.
+		 */
+		freeText?: boolean;
+		/** The text of a search box. */
+		text?: string;
+		/** Called with the text of a search box as the user types it, and once one is chosen. */
+		ontextchange?: (text: string) => void;
+		/** Called with the suggestion chosen, after onchange, onpick or ontextchange. */
+		onchoose?: (suggestion: AutocompleteSuggestion) => void;
 		/** The chosen values. */
 		value?: AutocompleteValue[];
 		onchange?: (value: AutocompleteValue[]) => void;
@@ -66,7 +79,10 @@
 		searching?: string;
 		/** The label of the x of a chip, '{0}' standing for its text. */
 		remove?: string;
-		/** The name and id of the hidden input holding the ids of the chosen values as JSON. */
+		/**
+		 * The name and id of the hidden input holding the ids of the chosen values as JSON, or
+		 * the text of a search box.
+		 */
 		name?: string;
 		id?: string;
 		class?: string;
@@ -78,6 +94,10 @@
 		multiple = false,
 		pick = false,
 		onpick,
+		freeText = false,
+		text = $bindable(''),
+		ontextchange,
+		onchoose,
 		value = $bindable([]),
 		onchange,
 		template,
@@ -106,7 +126,8 @@
 		template, highlightMatch, engine, actions: $state.snapshot(actions), minLength, disabled,
 		placeholder, noMatch, searching, remove,
 		onAction: (action: string, suggestion: AutocompleteSuggestion) => onaction?.(action,
-			suggestion)
+			suggestion),
+		onChoose: (suggestion: AutocompleteSuggestion) => onchoose?.(suggestion)
 	});
 
 	$effect(() => {
@@ -114,10 +135,24 @@
 		if (!element) {
 			return;
 		}
-		const autocomplete = untrack(() => new Autocomplete(element, { ...options(), multiple,
-			pick, chosen: $state.snapshot(value), look }));
+		const autocomplete = untrack(() => {
+			// a search box starts with the text its input holds
+			element.value = freeText ? text ?? '' : '';
+			return new Autocomplete(element, { ...options(), multiple, pick, freeText,
+				chosen: $state.snapshot(value), look });
+		});
 		instance = autocomplete;
+		const typed = () => {
+			if (autocomplete.freeText) {
+				text = element.value;
+				ontextchange?.(element.value);
+			}
+		};
 		const changed = () => {
+			if (autocomplete.freeText) {
+				typed();
+				return;
+			}
 			if (autocomplete.pick) {
 				if (autocomplete.picked) {
 					onpick?.(autocomplete.picked);
@@ -128,8 +163,10 @@
 			onchange?.(autocomplete.chosen.slice());
 		};
 		element.addEventListener('change', changed);
+		element.addEventListener('input', typed);
 		return () => {
 			element.removeEventListener('change', changed);
+			element.removeEventListener('input', typed);
 			autocomplete.destroy();
 			instance = null;
 		};
@@ -153,10 +190,20 @@
 			}
 		});
 	});
+
+	// the text passed down, unless it is the one shown already, as the user typed it
+	$effect(() => {
+		const next = text ?? '';
+		untrack(() => {
+			if (instance?.freeText && instance.text.value !== next) {
+				instance.setText(next);
+			}
+		});
+	});
 </script>
 
 <div class={[partClasses(look, 'autocomplete'), className]}>
-	{#key [multiple, pick].join()}
+	{#key [multiple, pick, freeText].join()}
 		<input bind:this={input} type="hidden" {name} {id} />
 	{/key}
 </div>

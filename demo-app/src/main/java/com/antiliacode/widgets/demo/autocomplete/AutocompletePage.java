@@ -27,6 +27,7 @@ import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -48,6 +49,8 @@ import com.antiliacode.widgets.autocomplete.AutocompleteAction;
 import com.antiliacode.widgets.autocomplete.FindAutocomplete;
 import com.antiliacode.widgets.autocomplete.IAutocompleteProvider;
 import com.antiliacode.widgets.autocomplete.MultiAutocomplete;
+import com.antiliacode.widgets.autocomplete.SearchAutocomplete;
+import com.antiliacode.widgets.autocomplete.SubmitOnChooseBehavior;
 import com.antiliacode.widgets.demo.Countries;
 import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.datatable.DatabaseLocator;
@@ -65,7 +68,9 @@ import com.github.openjson.JSONObject;
  * countries suggested as the user types, each row rendered in the browser from a template, the
  * chosen values shown as chips with an x. The choices are shown below the form as Ajax reports
  * them, and again when the form is sent. A {@link FindAutocomplete} adds the countries it finds to
- * a list below it instead of keeping them as chips. The rows of the users end with two actions: an
+ * a list below it instead of keeping them as chips. A {@link SearchAutocomplete} is a search box:
+ * the text typed is what its own form sends, by Enter or by choosing a suggestion
+ * ({@link SubmitOnChooseBehavior}), and the page tells how many users match it. The rows of the users end with two actions: an
  * (i) whose tooltip, a template too, shows their address, phones and birthday, toggled by F1 for
  * the active row, and a phone reported to the page via Ajax. The React and Svelte tabs show the same form
  * in those frameworks, the users searched through the {@link UsersRowsResource}, the countries
@@ -115,6 +120,13 @@ public class AutocompletePage extends DemoPage
 
 	/** The countries found with the find bar, in the order they were found. */
 	private final List<Country> visits = new ArrayList<>();
+
+	/** The text the search box sent last, {@code null} before it sent one. */
+	private String query;
+
+	/** The row of a user in the search box: the name with the letters typed marked. */
+	static final String SEARCH_TEMPLATE = "<span class=\"ac-user\"><b>{{@labelMatch}}</b>" +
+		"<small>{{city}}, {{countryName}}</small></span>";
 
 	/**
 	 * Constructor.
@@ -260,6 +272,57 @@ public class AutocompletePage extends DemoPage
 				setVisible(visits.isEmpty());
 			}
 		});
+
+		themed.add(newSearchForm("searchForm"));
+	}
+
+	/**
+	 * A search box in a form of its own: Enter sends the text typed by the default button, and
+	 * choosing a suggestion sends its name; the page says how many users match.
+	 */
+	private Form<Void> newSearchForm(String id)
+	{
+		Form<Void> searchForm = new Form<>(id);
+		SearchAutocomplete<User> search = new SearchAutocomplete<>("search",
+			new PropertyModel<>(this, "query"), new UsersAutocompleteProvider());
+		search.setTemplate(SEARCH_TEMPLATE)
+			.setHighlightMatch(true)
+			.setPlaceholder(new ResourceModel("search.placeholder"))
+			.addAction(new AutocompleteAction("info", INFO_TEMPLATE).setTooltip(USER_TOOLTIP)
+				.setLabel(new ResourceModel("info")));
+		// choosing a suggestion sends the form, as Enter does
+		search.add(new SubmitOnChooseBehavior());
+		searchForm.add(search);
+
+		Label searched = new Label("searched", () -> query == null ? "" :
+			new StringResourceModel("searched", this).setParameters(query,
+				String.valueOf(matching(query))).getString());
+		searched.setOutputMarkupId(true);
+		searchForm.add(searched);
+
+		AjaxButton button = new AjaxButton("searchSend")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onSubmit(AjaxRequestTarget target)
+			{
+				target.add(searched);
+			}
+		};
+		searchForm.add(button);
+		searchForm.setDefaultButton(button);
+		return searchForm;
+	}
+
+	/**
+	 * @return how many users have the text in their first or last name
+	 */
+	private static long matching(String text)
+	{
+		UsersProvider provider = new UsersProvider();
+		provider.setFilter(text);
+		return provider.size();
 	}
 
 	/**
@@ -341,7 +404,8 @@ public class AutocompletePage extends DemoPage
 		JSONObject texts = FrameworkTabs.texts(this, "single", "multiple", "owner",
 			"owner.placeholder", "team", "team.placeholder", "countries", "countries.placeholder",
 			"find", "visits", "visits.placeholder", "visits.none", "disabledTitle", "reviewer",
-			"markets", "send", "nothing", "choices", "sent", "info", "call", "calling");
+			"markets", "send", "nothing", "choices", "sent", "info", "call", "calling",
+			"searchTitle", "search", "search.placeholder", "searchSend", "searched");
 		texts.put("required", getString("Required", Model.ofMap(Map.of("label",
 			getString("owner")))));
 		texts.put("noMatch", getString("Autocomplete.noMatch", null, "No matches"));
@@ -372,6 +436,7 @@ public class AutocompletePage extends DemoPage
 			.put("userTooltip", USER_TOOLTIP)
 			.put("callTemplate", CALL_TEMPLATE)
 			.put("countryTemplate", COUNTRY_TEMPLATE)
+			.put("searchTemplate", SEARCH_TEMPLATE)
 			.put("values", values)
 			.put("usersUrl", FrameworkTabs.urlOf(this, UsersRowsResource.REFERENCE))
 			.put("choicesUrl", FrameworkTabs.urlOf(this, ChoicesResource.REFERENCE));

@@ -14,8 +14,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ACTION_EVENT, ANTILIA_LOOK, Autocomplete, markMatches, registerHandlebars, Scrollbar,
-	Templates, type AutocompleteAction, type AutocompleteSuggestion } from '../src/index.js';
+import { ACTION_EVENT, ANTILIA_LOOK, Autocomplete, CHOOSE_EVENT, markMatches, registerHandlebars,
+	Scrollbar, submitForm, Templates, type AutocompleteAction, type AutocompleteSuggestion } from
+	'../src/index.js';
 
 const FRUITS: AutocompleteSuggestion[] = ['Apple', 'Apricot', 'Banana'].map((label) => ({
 	id: label.toLowerCase(), label, data: { name: label }
@@ -221,6 +222,184 @@ describe('Autocomplete', () => {
 		instance.setChosen([{ id: 'x', label: 'X' }]);
 		expect(picked).toHaveLength(2);
 		expect(chips(instance)).toEqual([]);
+	});
+
+	it('is a search box with freeText: it holds the text typed, which Up and Down complete',
+		async () => {
+			const element = input();
+			element.value = 'pear';
+			const instance = new Autocomplete(element, { search, freeText: true, multiple: true,
+				pick: true, placeholder: 'Search' });
+			const inputs: string[] = [];
+			element.addEventListener('input', () => inputs.push(element.value));
+
+			expect(instance.text.value).toBe('pear');
+			expect(instance.multiple).toBe(false);
+			expect(instance.pick).toBe(false);
+			expect(instance.wrapper.classList.contains('antilia-autocomplete-free-text')).toBe(true);
+			expect(instance.text.placeholder).toBe('Search');
+
+			await type(instance, 'ap');
+			expect(element.value).toBe('ap');
+			expect(inputs).toEqual(['ap']);
+			expect(instance.isOpen()).toBe(true);
+			// no row active until the keys reach one: Enter sends the text typed
+			expect(instance.active).toBeNull();
+
+			const shown = () => [instance.text.value, element.value];
+			key(instance.text, 'ArrowDown');
+			expect(shown()).toEqual(['Apple', 'Apple']);
+			key(instance.text, 'ArrowDown');
+			expect(shown()).toEqual(['Apricot', 'Apricot']);
+			key(instance.text, 'ArrowUp');
+			expect(shown()).toEqual(['Apple', 'Apple']);
+			// above the first row, the text typed
+			key(instance.text, 'ArrowUp');
+			expect(shown()).toEqual(['ap', 'ap']);
+			expect(instance.active).toBeNull();
+			key(instance.text, 'ArrowDown');
+			key(instance.text, 'Escape');
+			expect(shown()).toEqual(['ap', 'ap']);
+			expect(instance.isOpen()).toBe(false);
+
+			// the rows the keys reach ask for no suggestions, and are no input of the user
+			expect(inputs).toEqual(['ap']);
+			expect(chips(instance)).toEqual([]);
+		});
+
+	it('puts a suggestion chosen into the search box, firing change and the choose event',
+		async () => {
+			const element = input();
+			const onChoose = vi.fn();
+			const instance = new Autocomplete(element, { search, freeText: true, onChoose });
+			const events: string[] = [];
+			element.addEventListener('change', () => events.push('change ' + element.value));
+			element.addEventListener(CHOOSE_EVENT, (event) => events.push('choose ' +
+				JSON.stringify((event as CustomEvent).detail)));
+
+			await type(instance, 'ap');
+			key(instance.text, 'ArrowDown');
+			key(instance.text, 'ArrowDown');
+			key(instance.text, 'Enter');
+
+			expect([instance.text.value, element.value, instance.typed])
+				.toEqual(['Apricot', 'Apricot', 'Apricot']);
+			expect(events).toEqual(['change Apricot', 'choose {"id":"apricot","label":"Apricot"}']);
+			expect(onChoose).toHaveBeenCalledWith(FRUITS[1]);
+			expect(instance.isOpen()).toBe(false);
+
+			await type(instance, 'b');
+			(instance.list.children[0] as HTMLElement).click();
+			expect(element.value).toBe('Banana');
+			expect(events.slice(2)).toEqual(['change Banana',
+				'choose {"id":"banana","label":"Banana"}']);
+		});
+
+	it('leaves Enter to the browser in a search box, unless the keys reached a row', async () => {
+		const enter = (target: Element) => {
+			const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true,
+				cancelable: true });
+			target.dispatchEvent(event);
+			return event.defaultPrevented;
+		};
+		const instance = new Autocomplete(input(), { search, freeText: true });
+
+		await type(instance, 'ap');
+		// the row under the mouse is active, but not the one Enter chooses
+		instance.list.children[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+		expect(instance.active).toBe(instance.list.children[1]);
+		expect(enter(instance.text)).toBe(false);
+		expect(instance.text.value).toBe('ap');
+		expect(instance.isOpen()).toBe(false);
+
+		await type(instance, 'ap');
+		key(instance.text, 'ArrowDown');
+		expect(enter(instance.text)).toBe(true);
+		expect(instance.text.value).toBe('Apple');
+
+		// the other autocompletes never send the form by Enter
+		document.body.innerHTML = '';
+		const other = new Autocomplete(input(), { search });
+		expect(enter(other.text)).toBe(true);
+		await type(other, 'zz');
+		expect(enter(other.text)).toBe(true);
+	});
+
+	it('tells a search box\'s text the user leaves changed, and shows a text passed down',
+		async () => {
+			const element = input();
+			const instance = new Autocomplete(element, { search, freeText: true });
+			const changes: string[] = [];
+			element.addEventListener('change', () => changes.push(element.value));
+
+			await type(instance, 'kiwi');
+			instance.text.dispatchEvent(new Event('change'));
+			expect(changes).toEqual(['kiwi']);
+			// told once: leaving the field after a choice tells nothing new
+			await type(instance, 'ba');
+			key(instance.text, 'ArrowDown');
+			key(instance.text, 'Enter');
+			instance.text.dispatchEvent(new Event('change'));
+			expect(changes).toEqual(['kiwi', 'Banana']);
+
+			instance.setText('lime');
+			instance.setChosen([{ id: 'x', label: 'X' }]);
+			expect([instance.text.value, element.value, instance.typed])
+				.toEqual(['lime', 'lime', 'lime']);
+			expect(chips(instance)).toEqual([]);
+			expect(changes).toEqual(['kiwi', 'Banana']);
+
+			// the others have no text of their own to show
+			document.body.innerHTML = '';
+			const other = new Autocomplete(input(), { chosen: [{ id: 1, label: 'One' }] });
+			other.setText('two');
+			expect(other.input.value).toBe('[1]');
+		});
+
+	it('sends a form as Enter does: by its default button, unless that one is disabled', () => {
+		document.body.innerHTML = '<form id="a"><input id="t"><button type="button">-</button>' +
+			'<button id="go">Go</button><input type="submit" value="Later"></form>' +
+			'<form id="b"><input id="u"><input type="submit" disabled><button>Go</button></form>' +
+			'<form id="c"><input id="v"></form><input id="w">';
+		const clicked: string[] = [];
+		document.querySelectorAll('form').forEach((form) => form.addEventListener('submit',
+			(event) => {
+				event.preventDefault();
+				clicked.push(form.id + ' ' + ((event as SubmitEvent).submitter?.id ?? ''));
+			}));
+		const requestSubmit = vi.spyOn(HTMLFormElement.prototype, 'requestSubmit')
+			.mockImplementation(function (this: HTMLFormElement) {
+				clicked.push(this.id + ' requestSubmit');
+			});
+
+		expect(submitForm(document.getElementById('t')!)).toBe(true);
+		expect(submitForm(document.getElementById('u')!)).toBe(false);
+		expect(submitForm(document.getElementById('v')!)).toBe(true);
+		expect(submitForm(document.getElementById('w')!)).toBe(false);
+
+		expect(clicked).toEqual(['a go', 'c requestSubmit']);
+		requestSubmit.mockRestore();
+	});
+
+	it('sends the form when a suggestion is chosen, with submitOnChoose', async () => {
+		document.body.innerHTML = '<form><input type="hidden" id="f"><button>Go</button></form>';
+		const element = document.getElementById('f') as HTMLInputElement;
+		const sent: string[] = [];
+		document.querySelector('form')!.addEventListener('submit', (event) => {
+			event.preventDefault();
+			sent.push(element.value);
+		});
+		Autocomplete.submitOnChoose('f');
+		// once only, however often a page asks
+		Autocomplete.submitOnChoose(element);
+		Autocomplete.submitOnChoose('missing');
+		const instance = new Autocomplete(element, { search, freeText: true });
+
+		await type(instance, 'ba');
+		key(instance.text, 'ArrowDown');
+		key(instance.text, 'Enter');
+
+		expect(sent).toEqual(['Banana']);
 	});
 
 	it('asks the url with the term when no search is given', async () => {
