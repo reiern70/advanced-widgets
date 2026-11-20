@@ -11,6 +11,19 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 10.11.0-RC13 (not released yet)
+
+What 10.11.0-RC12 has, and:
+
+- A table whose columns stretch to the width of its parent (`ResizableColumnsBehavior.Mode.STRETCH`
+  with `setAdjustToParentWidth(true)`) is as wide as its parent when it has borders of its own
+  (#170). Its left and right borders, its padding and its border spacing came on top of the
+  columns, so the table was wider than its parent by them, and a parent with `overflow: auto`
+  showed a horizontal scroll bar. They now come off the width the columns share, measured as
+  browsers lay the table out: with collapsed borders, the halves of the outer borders. A table
+  with separated borders keeps the browsers' border spacing of 2 pixels unless its style says
+  otherwise, so its columns get a few pixels narrower.
+
 ## 10.11.0-RC12 (2026-11-20)
 
 What 10.11.0-RC11 has, and:
