@@ -50,8 +50,10 @@ class CKEditorPolicyTest
 			"target=\"_blank\" data-size=\"1.2 MB\" rel=\"noopener noreferrer nofollow\">a.pdf</a></p>";
 		assertEquals(file, CKEditorPolicy.ALL.sanitize(file));
 		assertEquals(CKEditorFeature.ATTACHMENT, CKEditorFeature.of("attachment"));
-		assertTrue(CKEditorFeature.defaults(RichTextFormat.MARKDOWN)
-			.contains(CKEditorFeature.ATTACHMENT), "a plain link in Markdown");
+		assertTrue(CKEditorFeature.ATTACHMENT.isInMarkdown(), "a plain link in Markdown");
+		// with a store of files alone
+		assertFalse(CKEditorFeature.defaults(RichTextFormat.HTML)
+			.contains(CKEditorFeature.ATTACHMENT));
 		// without the feature, a link
 		assertEquals("<p><a href=\"/f/a.pdf\" target=\"_blank\" rel=\"noopener noreferrer " +
 			"nofollow\">a.pdf</a></p>", CKEditorPolicy.of(EnumSet.of(CKEditorFeature.LINK))

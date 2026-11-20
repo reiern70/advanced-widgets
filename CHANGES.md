@@ -128,6 +128,17 @@ What 10.11.0-RC11 has, and:
   daisyUI markup matches. A look can be made of daisyUI's and another, as
   `Look.DAISYUI.with(LookAspect.COLOR, Look.ANTILIA)`. Bootstrap and daisyUI name their components
   alike, `btn`, `table` or `card`, so a page has the style sheet of one of them only.
+- The files attached to a text come with a store of files (#145): an editor without one, neither
+  its own (`setAttachmentStore`) nor that of the resource of the uploads (`setUploadResource`),
+  no longer keeps the links of files as files, with their class `antilia-attachment` and their
+  `data-size`, and no longer sends the browser the feature `attachment`, which loaded the code of
+  the uploads, also with `RichTextFeature.IMAGE` taken away. `RichTextFeature.ATTACHMENT` and
+  `CKEditorFeature.ATTACHMENT` are no longer among the features by default
+  (`RichTextFeature.defaults`, `CKEditorFeature.defaults`): a store brings them, whether the
+  features changed before or after, unless `removeFeature` takes them away or a list set by
+  `setFeatures` leaves them out; `addFeature` keeps them without a store, the links kept and
+  nothing uploaded. The editors of React, Svelte and the core have them with `onAttach` alone,
+  unless given the features.
 
 **Upgrading:**
 
@@ -144,10 +155,10 @@ What 10.11.0-RC11 has, and:
   images, `uploadImages` with the dialog or permanent images, `storedImage` with permanent images,
   `attachment` and `attachments` with a store of files. A toolbar of the page's own
   (`setToolbar`) is unchanged, and may name them.
-- `CKEditorFeature.ATTACHMENT` is among CKEditor's features, all of them by default: the links of
-  the class `antilia-attachment` are files attached, widgets taken out whole, and the default
-  cleaning, `CKEditorPolicy` of the features, keeps their class, their `data-size` and their
-  `target`. A page setting the features keeps its own.
+- `CKEditorFeature.ATTACHMENT` is among CKEditor's features, with a store of files (#145): the
+  links of the class `antilia-attachment` are files attached, widgets taken out whole, and the
+  default cleaning, `CKEditorPolicy` of the features, keeps their class, their `data-size` and
+  their `target`. A page setting the features keeps its own.
 - CKEditor renders `RichTextEditor.CSS` and the style sheets of the buttons and the scroll bars,
   for the files attached, the lists and the dialogs of the uploads, and `Modal.CSS` with a dialog;
   `CKEditorView` renders `RichTextEditor.CSS` too. A page with CKEditor of React or Svelte loads
@@ -160,6 +171,13 @@ What 10.11.0-RC11 has, and:
 - An application with a rich text editor, CKEditor or their views adds the OWASP Java HTML
   Sanitizer, `com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer` (20261011.1),
   which no longer comes with the components (#149).
+- An editor without a store of files cleans the links of files into plain links, their class
+  `antilia-attachment` and their `data-size` dropped, as before 10.11.0-RC10 (#145): an application keeping the files of
+  its texts without a store adds `addFeature(RichTextFeature.ATTACHMENT)`, and one that took the
+  feature away to keep files out may leave that. The default cleaning of `RichTextEditor`, the
+  policy of `RichTextFeature.defaults`, is no longer `RichTextPolicy.ALL`, nor that of `CKEditor`
+  `CKEditorPolicy.ALL`. In React, Svelte and the core, an editor given neither `onAttach` nor its
+  features has no files attached.
 - A `LookChoice` made without a list of looks offers every `Look`, daisyUI's now too, whose style
   sheet the page may lack: give it the looks to offer, as
   `new LookChoice(id, model, List.of(Look.ANTILIA, Look.BOOTSTRAP))`.

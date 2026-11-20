@@ -54,7 +54,8 @@ import com.antiliacode.widgets.scrollbar.ScrollbarBehavior;
  * A text area shown as CKEditor 5, a rich text editor with its own toolbar, balloons and dialogs,
  * in the colors of the {@link com.antiliacode.widgets.theme.Theme theme} it is in: the
  * {@link CKEditorFeature features} of the text, all of them ({@link #FEATURES}) unless
- * {@link #setFeatures(Collection) told otherwise}, are CKEditor's plugins, and its
+ * {@link #setFeatures(Collection) told otherwise}, the files attached with a store of files alone,
+ * are CKEditor's plugins, and its
  * toolbar has their tools unless {@link #setToolbar(List) set otherwise}. Attach it to a
  * {@code <textarea>}.
  * <p>
@@ -176,8 +177,14 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 		"scaleDown", "upload", "cancelUpload", "storePermanently", "permanentFailed", "findImages",
 		"findingImages", "noStoredImages");
 
-	/** The features set, {@code null} for those of the format. */
+	/** The features set, {@code null} for those of the format; never the files attached. */
 	private Set<CKEditorFeature> features;
+
+	/**
+	 * Whether the text holds files attached, {@link CKEditorFeature#ATTACHMENT}: {@code null} for
+	 * while the editor has a store of files.
+	 */
+	private Boolean attachments;
 
 	private CKEditorLibrary library;
 
@@ -250,53 +257,97 @@ public class CKEditor extends AbstractRichTextEditor<CKEditor>
 
 	/**
 	 * @return what the text may hold: the features set, or
-	 *         {@link CKEditorFeature#defaults(RichTextFormat) those of the format}
+	 *         {@link CKEditorFeature#defaults(RichTextFormat) those of the format}, all of them for
+	 *         HTML but the files attached; and these, {@link CKEditorFeature#ATTACHMENT}, while the
+	 *         editor has a {@link #setAttachmentStore(
+	 *         com.antiliacode.widgets.richtext.IRichTextAttachmentStore) store of files}, unless
+	 *         taken away, or when added
 	 */
 	@Override
 	public Set<CKEditorFeature> getFeatures()
 	{
-		return features == null ? CKEditorFeature.defaults(getFormat()) :
-			Collections.unmodifiableSet(features);
+		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
+		all.addAll(features == null ? CKEditorFeature.defaults(getFormat()) : features);
+		if (attachments == null ? getAttachmentStore() != null : attachments)
+		{
+			all.add(CKEditorFeature.ATTACHMENT);
+		}
+		return Collections.unmodifiableSet(all);
 	}
 
 	/**
 	 * @param features
 	 *            what the text may hold; {@code null} for the features of the format, all of them
-	 *            for HTML. {@link CKEditorFeature#of(String)} gives CKEditor's feature of the name
-	 *            of one of {@link RichTextEditor}.
+	 *            for HTML, with the files attached while the editor has a store of files. A list
+	 *            set holds the files attached, {@link CKEditorFeature#ATTACHMENT}, or keeps them
+	 *            out, store or not. {@link CKEditorFeature#of(String)} gives CKEditor's feature of
+	 *            the name of one of {@link RichTextEditor}.
 	 * @return {@code this}
 	 */
 	public CKEditor setFeatures(Collection<CKEditorFeature> features)
 	{
-		this.features = features == null ? null : features.isEmpty() ?
-			EnumSet.noneOf(CKEditorFeature.class) : EnumSet.copyOf(features);
+		if (features == null)
+		{
+			this.features = null;
+			attachments = null;
+			return this;
+		}
+		this.features = EnumSet.noneOf(CKEditorFeature.class);
+		this.features.addAll(features);
+		attachments = this.features.remove(CKEditorFeature.ATTACHMENT);
 		return this;
 	}
 
 	/**
 	 * @param feature
-	 *            a feature the editor gets, besides those of the format until the page sets others
+	 *            a feature the editor gets, besides those of the format until the page sets
+	 *            others; the files attached, {@link CKEditorFeature#ATTACHMENT}, stay then, the
+	 *            editor with a store of files or not: their links are kept, and the user attaches
+	 *            files with a store
 	 * @return {@code this}
 	 */
 	public CKEditor addFeature(CKEditorFeature feature)
 	{
-		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
-		all.addAll(getFeatures());
-		all.add(Args.notNull(feature, "feature"));
-		return setFeatures(all);
+		Args.notNull(feature, "feature");
+		if (feature == CKEditorFeature.ATTACHMENT)
+		{
+			attachments = true;
+			return this;
+		}
+		Set<CKEditorFeature> all = withoutAttachments();
+		all.add(feature);
+		features = all;
+		return this;
 	}
 
 	/**
 	 * @param feature
-	 *            a feature the editor no longer has
+	 *            a feature the editor no longer has; the files attached,
+	 *            {@link CKEditorFeature#ATTACHMENT}, go then, the editor with a store of files or not
 	 * @return {@code this}
 	 */
 	public CKEditor removeFeature(CKEditorFeature feature)
 	{
-		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
-		all.addAll(getFeatures());
+		if (feature == CKEditorFeature.ATTACHMENT)
+		{
+			attachments = false;
+			return this;
+		}
+		Set<CKEditorFeature> all = withoutAttachments();
 		all.remove(feature);
-		return setFeatures(all);
+		features = all;
+		return this;
+	}
+
+	/**
+	 * @return the features of the editor but the files attached, which {@link #attachments}
+	 *         decides: a set of the editor's to change
+	 */
+	private Set<CKEditorFeature> withoutAttachments()
+	{
+		Set<CKEditorFeature> all = EnumSet.noneOf(CKEditorFeature.class);
+		all.addAll(features == null ? CKEditorFeature.defaults(getFormat()) : features);
+		return all;
 	}
 
 	/**

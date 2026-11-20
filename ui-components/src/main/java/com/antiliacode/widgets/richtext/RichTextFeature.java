@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 
 /**
  * The features of the text of a {@link RichTextEditor} built in its script: those of an editor not
- * told otherwise ({@link #defaults(RichTextFormat)}). A feature left out is not in the editor's
+ * told otherwise ({@link #defaults(RichTextFormat)}), and the files attached when it has a store of
+ * files ({@link #ATTACHMENT}). A feature left out is not in the editor's
  * schema, nor let through the {@link RichTextPolicy cleaning} of its HTML: pasting it brings its
  * text alone, and its tools do not show. Each lets through the HTML Tiptap writes for it; a page
  * adds features of its own, {@link IRichTextFeature}.
@@ -261,6 +262,12 @@ public enum RichTextFeature implements IRichTextFeature
 	 * report.pdf</a>}: the class of its format, the extension, draws its icon, and the size shows
 	 * after its name. Uploaded with {@link RichTextEditor#setAttachmentStore(
 	 * IRichTextAttachmentStore) a store}; in Markdown, a plain link, {@code [report.pdf](url)}.
+	 * Not one of the {@link #defaults(RichTextFormat) defaults}: an editor has it with a store of
+	 * files, its own or {@link RichTextEditor#setUploadResource(RichTextFiles) the resource of the
+	 * uploads}, unless {@link RichTextEditor#removeFeature(IRichTextFeature) taken away} or
+	 * left out of {@link RichTextEditor#setFeatures(java.util.Collection) the features set}, and
+	 * without one when {@link RichTextEditor#addFeature(IRichTextFeature) added}, keeping the
+	 * files of its texts.
 	 */
 	ATTACHMENT("attachment")
 	{
@@ -362,15 +369,17 @@ public enum RichTextFeature implements IRichTextFeature
 	/**
 	 * @param format
 	 *            how the editor keeps the text
-	 * @return the features of an editor not told otherwise: all of them, but underlined text,
-	 *         superscript, subscript, colors and alignment for Markdown
+	 * @return the features of an editor not told otherwise: all of them but the files attached,
+	 *         which come with a store of files ({@link #ATTACHMENT}), and for Markdown neither
+	 *         underlined text, superscript, subscript, colors nor alignment
 	 */
 	public static Set<IRichTextFeature> defaults(RichTextFormat format)
 	{
 		Set<IRichTextFeature> features = new LinkedHashSet<>();
 		for (RichTextFeature feature : values())
 		{
-			if (format != RichTextFormat.MARKDOWN || feature.isInMarkdown())
+			if (feature != ATTACHMENT &&
+				(format != RichTextFormat.MARKDOWN || feature.isInMarkdown()))
 			{
 				features.add(feature);
 			}
