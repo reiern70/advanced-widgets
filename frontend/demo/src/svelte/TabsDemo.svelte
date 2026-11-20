@@ -47,7 +47,8 @@
 		...documents.map((document) => ({ id: document.id, title: document.name, closable: true,
 			modified: document.text !== document.saved }))]);
 	// the cases, one at a time
-	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'lazyTitle', 'galleryTitle']
+	const cases = $derived<TabItem[]>(['documentsTitle', 'settingsTitle', 'lazyTitle', 'monthsTitle',
+		'galleryTitle']
 		.map((id) => ({ id, title: texts[id], modified: false })));
 	const sections = $derived<TabItem[]>(sectionNames.map((name) => ({ id: name,
 		title: sectionTitle(config, name, alerts) })));
@@ -55,6 +56,10 @@
 	// the panel of the report is created when first selected, the live one each time
 	const reports = $derived<TabItem[]>([{ id: 'summary', title: texts.summary },
 		{ id: REPORT, title: texts.report, lazy: true }, { id: LIVE, title: texts.live }]);
+
+	// more tabs than fit, with the menu of all tabs
+	const months = $derived<TabItem[]>(config.months.map((month, index) => ({ id: 'month-' + index,
+		title: month })));
 
 	const galleryTabs = (part: GalleryConfig): TabItem[] => part.tabs.map((tab) => ({ id: tab.name,
 		title: texts[tab.name] }));
@@ -150,6 +155,14 @@
 					</Tabs>
 					<p class="tabs-demo__status tabs-demo__created" role="status">{format(texts.created,
 						created.panels)}</p>
+				</section>
+			{:else if tab.id === 'monthsTitle'}
+				<section>
+					<Tabs class="tabs-demo__months" label={texts.months} texts={config.tabs} tabs={months}
+						overflowMenu={config.overflowLabel}>
+						{#snippet icon()}<span class="tabs-demo__icon">{@html icons.month}</span>{/snippet}
+						{#snippet panel(tab)}{format(texts['month.text'], tab.title)}{/snippet}
+					</Tabs>
 				</section>
 			{:else if tab.id === 'settingsTitle'}
 				<section>

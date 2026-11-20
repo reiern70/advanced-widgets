@@ -148,4 +148,13 @@ describe('Tabs', () => {
 		flushSync();
 		expect(panel(container, 'two').textContent).toBe('Panel Two');
 	});
+	it('adds the menu of all tabs when told, its button labelled as told', async () => {
+		const { container } = render(BoundTabs, { overflowMenu: 'Every tab' });
+		await waitFor(() => expect(container.querySelector(
+			'.antilia-tabs-list > .antilia-tabs-overflow')).not.toBeNull());
+		expect(container.querySelector('.antilia-tabs-overflow-button')!.getAttribute('aria-label'))
+			.toBe('Every tab');
+		expect(container.querySelectorAll('.antilia-tabs-overflow .antilia-menu-submenu-link'))
+			.toHaveLength(3);
+	});
 });

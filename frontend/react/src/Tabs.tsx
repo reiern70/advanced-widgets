@@ -15,8 +15,8 @@
 import { Children, forwardRef, isValidElement, useImperativeHandle, useLayoutEffect, useRef,
 	useState, type ReactElement, type ReactNode } from 'react';
 
-import { LOOK_PARTS, partClasses, Tabs as CoreTabs, type LookPart, type TabsDesign,
-	type TabsOrientation, type TabsTexts } from '@antilia/core';
+import { LOOK_PARTS, partClasses, Tabs as CoreTabs, TabsOverflowMenu, type LookPart,
+	type TabsDesign, type TabsOrientation, type TabsTexts } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
@@ -79,6 +79,11 @@ export interface TabsProps {
 	/** What the tabs say, in English when left out. */
 	texts?: Partial<TabsTexts>;
 	/**
+	 * A menu of all tabs, at the end of the list while they do not fit (tabs-overflow-menu.ts):
+	 * true, or the label of its button, "All tabs" when true; none when left out.
+	 */
+	overflowMenu?: boolean | string;
+	/**
 	 * Asked before the user closes a tab with changes not saved, instead of the dialog of the tabs;
 	 * resolving to true closes it.
 	 */
@@ -134,7 +139,7 @@ function flag(value: boolean | undefined): string | undefined {
  */
 export const Tabs = forwardRef<TabsHandle, TabsProps>(function Tabs(props, ref) {
 	const { children, selected, orientation = 'horizontal', design = 'tabs', label, texts, id,
-		className } = props;
+		className, overflowMenu } = props;
 	const look = useLook();
 	const element = useRef<HTMLDivElement>(null);
 	const instance = useRef<CoreTabs | null>(null);
@@ -172,6 +177,16 @@ export const Tabs = forwardRef<TabsHandle, TabsProps>(function Tabs(props, ref) 
 			instance.current = null;
 		};
 	}, []);
+
+	// the menu of all tabs, after the tabs
+	useLayoutEffect(() => {
+		if (!overflowMenu) {
+			return;
+		}
+		const menu = new TabsOverflowMenu(element.current!, { look,
+			label: typeof overflowMenu === 'string' ? overflowMenu : undefined });
+		return () => menu.destroy();
+	}, [overflowMenu, look]);
 
 	const textsKey = JSON.stringify(texts ?? {});
 	useLayoutEffect(() => {

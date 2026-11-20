@@ -25,8 +25,8 @@
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
-	import { LOOK_PARTS, partClasses, Tabs, type LookPart, type TabsDesign, type TabsOrientation,
-		type TabsTexts } from '@antilia/core';
+	import { LOOK_PARTS, partClasses, Tabs, TabsOverflowMenu, type LookPart, type TabsDesign,
+		type TabsOrientation, type TabsTexts } from '@antilia/core';
 
 	import { getLook } from './look.js';
 	import type { TabItem } from './types.js';
@@ -56,6 +56,11 @@
 		/** What the tabs say, in English when left out. */
 		texts?: Partial<TabsTexts>;
 		/**
+		 * A menu of all tabs, at the end of the list while they do not fit (tabs-overflow-menu.ts):
+		 * true, or the label of its button, "All tabs" when true; none when left out.
+		 */
+		overflowMenu?: boolean | string;
+		/**
 		 * Asked before the user closes a tab with changes not saved, instead of the dialog of the
 		 * tabs; resolving to true closes it.
 		 */
@@ -82,6 +87,7 @@
 		design = 'tabs',
 		label,
 		texts,
+		overflowMenu,
 		confirmClose,
 		id,
 		class: className = '',
@@ -133,6 +139,16 @@
 			core.destroy();
 			instance = null;
 		};
+	});
+
+	// the menu of all tabs, after the tabs
+	$effect(() => {
+		if (!element || !overflowMenu) {
+			return;
+		}
+		const menu = new TabsOverflowMenu(element, { look,
+			label: typeof overflowMenu === 'string' ? overflowMenu : undefined });
+		return () => menu.destroy();
 	});
 
 	$effect(() => {
