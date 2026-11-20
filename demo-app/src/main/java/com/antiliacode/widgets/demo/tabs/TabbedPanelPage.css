@@ -27,6 +27,8 @@
 
 .tabs-demo__heading {
 	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 	justify-content: flex-end;
 	margin-bottom: 12px;
 }

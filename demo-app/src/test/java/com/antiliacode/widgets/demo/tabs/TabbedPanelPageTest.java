@@ -102,7 +102,7 @@ class TabbedPanelPageTest
 	{
 		TabbedPanel documents = tabs(DOCUMENTS);
 		assertEquals(3, documents.getTabs().size());
-		tester.assertContains("class=\"antilia-tab-title\">Welcome</span>");
+		tester.assertContains("class=\"antilia-tab-title\" id=\"[^\"]+\">Welcome</span>");
 		assertEquals(List.of("notes.txt", "todo.txt"), page.getDocuments().stream()
 			.map(Document::getName).toList());
 		assertFalse(documents.getTabs().get(0).isClosable());
@@ -205,6 +205,38 @@ class TabbedPanelPageTest
 	}
 
 	@Test
+	void countsTheNewAlertsInTheirTitleAndAddsASectionAfterTheFirst()
+	{
+		TabbedPanel settings = tabs(SETTINGS);
+		Tab alerts = settings.getTab("alerts");
+		String title = ((MarkupContainer)settings.get("element:list:headers:alerts"))
+			.get("button:title").getMarkupId();
+
+		tester.clickLink(inCase("settingsTitle", "newAlert"));
+		tester.clickLink(inCase("settingsTitle", "newAlert"));
+		assertEquals("Alerts (2)", alerts.getTitle().getObject());
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("id=\"" + title + "\">Alerts (2)</span>"), response);
+		assertFalse(response.contains("Your name, your picture"), "the panels stay as they are");
+
+		send(settings, "select", "alerts");
+		assertEquals("Alerts", alerts.getTitle().getObject(), "seen");
+		assertTrue(tester.getLastResponseAsString().contains(">Alerts</span>"));
+
+		tester.clickLink(inCase("settingsTitle", "addSection"));
+		assertEquals(List.of("profile", "security", "alerts", "privacy"), settings.getTabs().stream()
+			.map(Tab::getName).toList());
+		assertEquals("security", settings.getModelObject());
+		tester.assertContains("Your password, the devices");
+		tester.assertContains("insertBefore");
+		tester.assertContains(".select\\(\"security\"\\)");
+		tester.assertLabel(inCase("settingsTitle", "selected"),
+			"The server knows the tab selected: Security.");
+		// once
+		tester.assertInvisible(inCase("settingsTitle", "addSection"));
+	}
+
+	@Test
 	void showsTheGalleryOfDesigns()
 	{
 		TabbedPanel segmented = tabs(inCase("galleryTitle", "topDesigns:0:tabs"));
@@ -244,6 +276,9 @@ class TabbedPanelPageTest
 			.getString("selected"));
 		assertEquals("Steps", config.getJSONObject("texts").getString("design.STEPS"));
 		assertEquals("Shipping", config.getJSONObject("texts").getString("shipping"));
+		assertEquals("security", config.getString("addedSection"));
+		assertEquals("Security", config.getJSONObject("texts").getString("security"));
+		assertEquals("Alerts ({0})", config.getJSONObject("texts").getString("alertsCount"));
 		assertEquals("pills", config.getString("design"));
 	}
 
