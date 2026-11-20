@@ -353,6 +353,16 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 		selectWord("oystercatchers");
 		// CKEditor's ids of the items of lists are new each time it reads the text
 		String before = html().replaceAll(" data-list-item-id=\"[^\"]*\"", "");
+		// the Wicket editor of the hidden tab, which CKEditor gives the error as one of too (#144)
+		WebElement wicket = driver.findElement(By.cssSelector("#framework-panel-wicket " +
+			".rich-text-demo__editor .antilia-ck-editor"));
+		if (!"wicket".equals(framework))
+		{
+			script("var editor = arguments[0], content = editor.querySelector('.ck-editor__editable');" +
+				"content.ckeditorInstance.antiliaTestKept = true; window.antiliaTestErrors = 0;" +
+				"editor.addEventListener('antilia-ck-editor:error', function () {" +
+				" window.antiliaTestErrors++; });", wicket);
+		}
 		// Bold throws, as a plugin failing would: the error escapes CKEditor, which tells of it
 		script("var editor = arguments[0].ckeditorInstance; editor.antiliaTestCrashed = true;" +
 			"editor.commands.get('bold').on('execute', function () {" +
@@ -378,6 +388,15 @@ class CKEditorBrowserTest extends FrameworkAppsTestCase
 				"server heard of and logged: unexpected-error"));
 			assertTrue(Toasts.latest(driver).contains("Original error: Error: A test of the editor " +
 				"failing"), Toasts.latest(driver));
+		}
+		else
+		{
+			// the Wicket editor neither told of the error nor started its CKEditor again
+			assertEquals(0L, script("return window.antiliaTestErrors;"));
+			assertEquals(Boolean.TRUE, script("var content = arguments[0]" +
+				".querySelector('.ck-editor__editable'); return !!(content &&" +
+				" content.ckeditorInstance && content.ckeditorInstance.antiliaTestKept);", wicket));
+			assertTrue(wicket.findElements(By.cssSelector(".antilia-ck-editor-error")).isEmpty());
 		}
 
 		// the new CKEditor works, and the line goes with the next change

@@ -128,6 +128,13 @@ What 11.0.0-RC6 has, and:
   daisyUI markup matches. A look can be made of daisyUI's and another, as
   `Look.DAISYUI.with(LookAspect.COLOR, Look.ANTILIA)`. Bootstrap and daisyUI name their components
   alike, `btn`, `table` or `card`, so a page has the style sheet of one of them only.
+- A CKEditor no longer takes the error of another CKEditor of the page as its own (#144), which it
+  told of, to `onError`, by the event `antilia-ck-editor:error` and to the server
+  (`CKEditorErrorEvent`), and started again after, losing its selection: CKEditor 49 gives an error
+  as one of every editor sharing any object with the one it came from, and two editors with lists
+  share a constant of CKEditor's own. An editor takes an error as its own when it came from its
+  CKEditor, or from a command or a plugin of it, or else from an object sharing with it one that
+  no other CKEditor of the page reaches.
 
 **Upgrading:**
 
