@@ -115,6 +115,7 @@
 	<entry key="TabbedPanel.closeModified">Los cambios en {0} no se han guardado. ¿Cerrar la pestaña y perderlos?</entry>
 	<entry key="TabbedPanel.discard">Cerrar y perderlos</entry>
 	<entry key="TabbedPanel.keep">Dejarla abierta</entry>
+	<entry key="TabsOverflowMenuBehavior.label">Todas las pestañas</entry>
 	<entry key="Breadcrumb.label">Ruta de navegación</entry>
 	<entry key="Breadcrumb.more">Mostrar toda la ruta ({0} más)</entry>
 	<entry key="Wizard.steps">Pasos</entry>

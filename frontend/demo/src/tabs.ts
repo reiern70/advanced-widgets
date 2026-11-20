@@ -17,7 +17,8 @@
  * itself with an action and marked while it has changes not saved, which Save takes away; a button
  * opening new ones; tabs whose orientation and design a check box and a drop-down switch, whose
  * alerts count the new ones in their title and to which a button adds a section; tabs whose panels
- * are created when first selected, one kept and one created each time; and a
+ * are created when first selected, one kept and one created each time; the months, more tabs
+ * than fit, with the menu of all tabs; and a
  * gallery of the designs made for tabs along the top and of those made for tabs down the side.
  */
 
@@ -65,6 +66,9 @@ export interface TabsDemoTexts extends DropdownTexts {
 	summary: string;
 	report: string;
 	live: string;
+	monthsTitle: string;
+	/** The accessible name of the tabs of the months. */
+	months: string;
 	[key: string]: string;
 }
 
@@ -93,7 +97,11 @@ export interface TabsConfig {
 	/** The section a button adds after the first one, the key of its title. */
 	addedSection: string;
 	/** The markup of the icons, as Wicket renders them. */
-	icons: { welcome: string; document: string; info: string };
+	icons: { welcome: string; document: string; info: string; month: string };
+	/** The names of the months, more tabs than fit, in the language of the page. */
+	months: string[];
+	/** The label of the button opening the menu of all tabs. */
+	overflowLabel: string;
 	vertical: boolean;
 	design: TabsDesign;
 	/** Every design, in the order of the drop-down. */

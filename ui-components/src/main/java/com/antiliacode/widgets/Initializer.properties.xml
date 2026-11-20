@@ -115,6 +115,7 @@
 	<entry key="TabbedPanel.closeModified">The changes in {0} are not saved. Close the tab and lose them?</entry>
 	<entry key="TabbedPanel.discard">Close and lose them</entry>
 	<entry key="TabbedPanel.keep">Keep it open</entry>
+	<entry key="TabsOverflowMenuBehavior.label">All tabs</entry>
 	<entry key="Breadcrumb.label">Breadcrumb</entry>
 	<entry key="Breadcrumb.more">Show the whole path ({0} more)</entry>
 	<entry key="Wizard.steps">Steps</entry>

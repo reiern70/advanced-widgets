@@ -14,11 +14,14 @@
 package com.antiliacode.widgets.demo.tabs;
 
 import java.io.Serializable;
+import java.time.Month;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.wicket.Component;
@@ -59,6 +62,7 @@ import com.antiliacode.widgets.tabs.LazyTab;
 import com.antiliacode.widgets.tabs.Tab;
 import com.antiliacode.widgets.tabs.TabAction;
 import com.antiliacode.widgets.tabs.TabbedPanel;
+import com.antiliacode.widgets.tabs.TabsOverflowMenuBehavior;
 import com.antiliacode.widgets.tabs.TabsOrientation;
 import com.antiliacode.widgets.tabs.TabsDesign;
 import com.github.openjson.JSONArray;
@@ -74,7 +78,8 @@ import com.github.openjson.JSONObject;
  * design a check box and a drop-down switch, and the server hears of the tab the user selects; the
  * title of their alerts counts the new ones, rendered again alone via Ajax, and a button adds a
  * section after the first one. Lazy tabs create their panels when they are first selected, one
- * keeping it and one creating it anew each time, numbered as the server creates them. A
+ * keeping it and one creating it anew each time, numbered as the server creates them. The months,
+ * more tabs than fit, have the menu of all tabs. A
  * gallery shows the designs made for tabs along the top and those made for tabs down the side. The
  * React and Svelte tabs show the same in those frameworks.
  */
@@ -126,6 +131,8 @@ public class TabbedPanelPage extends DemoPage
 
 	static final IIcon INFO_ICON = SvgIcon.CIRCLE_INFO;
 
+	static final IIcon MONTH_ICON = SvgIcon.CALENDAR_DAYS;
+
 	private final TabbedPanel documents;
 
 	private final Label status;
@@ -159,6 +166,7 @@ public class TabbedPanelPage extends DemoPage
 		Fragment documentsCase = cases.addCase("documentsTitle", "documentsCase");
 		Fragment settingsCase = cases.addCase("settingsTitle", "settingsCase");
 		Fragment lazyCase = cases.addCase("lazyTitle", "lazyCase");
+		Fragment monthsCase = cases.addCase("monthsTitle", "monthsCase");
 		Fragment galleryCase = cases.addCase("galleryTitle", "galleryCase");
 
 		status = new Label("status", () -> message != null ? message : getString("start"));
@@ -313,10 +321,40 @@ public class TabbedPanelPage extends DemoPage
 		reports.addTab(newReport(LIVE, created).setCaching(false));
 		lazyCase.add(reports);
 
+		TabbedPanel months = new TabbedPanel("months");
+		months.setLabel(new ResourceModel("months"));
+		for (Month month : Month.values())
+		{
+			months.addTab(new Tab(month.name().toLowerCase(Locale.ROOT), () -> monthName(month))
+			{
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected Component newPanel(String id)
+				{
+					return new Label(id, () -> getString("month.text").replace("{0}",
+						monthName(month)));
+				}
+			}.setIcon(MONTH_ICON));
+		}
+		// the menu of all tabs, while they do not fit
+		months.add(new TabsOverflowMenuBehavior());
+		monthsCase.add(months);
+
 		galleryCase.add(gallery("topDesigns", TOP_DESIGNS, TabsOrientation.HORIZONTAL, TOP_TABS,
 			null));
 		galleryCase.add(gallery("sideDesigns", SIDE_DESIGNS, TabsOrientation.VERTICAL, SIDE_TABS,
 			SIDE_SELECTED));
+	}
+
+	/**
+	 * @return the name of a month in the language of the page, capitalized
+	 */
+	String monthName(Month month)
+	{
+		Locale locale = getLocale();
+		String name = month.getDisplayName(TextStyle.FULL_STANDALONE, locale);
+		return name.substring(0, 1).toUpperCase(locale) + name.substring(1);
 	}
 
 	/**
@@ -478,7 +516,7 @@ public class TabbedPanelPage extends DemoPage
 			"untitled", "closed", "saved", "opened", "start", "settingsTitle", "settings", "vertical",
 			"design", "selected", "galleryTitle", "alongTheTop", "downTheSide", "newAlert",
 			"alertsCount", "addSection", "lazyTitle", "reports", "created", SUMMARY, SUMMARY + ".text",
-			REPORT, REPORT + ".text", LIVE, LIVE + ".text");
+			REPORT, REPORT + ".text", LIVE, LIVE + ".text", "monthsTitle", "months", "month.text");
 		for (TabsDesign each : TabsDesign.values())
 		{
 			texts.put("design." + each.name(), getString("design." + each.name()));
@@ -509,7 +547,11 @@ public class TabbedPanelPage extends DemoPage
 			.put("icons", new JSONObject()
 				.put("welcome", WELCOME_ICON.getMarkup())
 				.put("document", DOCUMENT_ICON.getMarkup())
-				.put("info", INFO_ICON.getMarkup()))
+				.put("info", INFO_ICON.getMarkup())
+				.put("month", MONTH_ICON.getMarkup()))
+			.put("months", new JSONArray(Arrays.stream(Month.values()).map(this::monthName)
+				.toList()))
+			.put("overflowLabel", getString("TabsOverflowMenuBehavior.label"))
 			.put("vertical", vertical)
 			.put("design", design.cssName())
 			.put("designs", new JSONArray(Arrays.stream(TabsDesign.values()).map(TabsDesign::cssName)

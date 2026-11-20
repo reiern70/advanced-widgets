@@ -80,6 +80,16 @@
 	align-items: center;
 }
 
+/* narrower than the twelve months, which then do not fit */
+.tabs-demo__months {
+	max-width: 36em;
+}
+
+.tabs-demo__months .antilia-tabs-panel {
+	min-height: 64px;
+	line-height: 1.5;
+}
+
 .tabs-demo__reports .antilia-tabs-panel {
 	min-height: 96px;
 	line-height: 1.5;

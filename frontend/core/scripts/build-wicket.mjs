@@ -81,6 +81,7 @@ const SCRIPTS = [
 	['src/wicket/scrollbar.ts', 'com/antiliacode/widgets/scrollbar/antilia-scrollbar.js'],
 	['src/wicket/split-panel.ts', 'com/antiliacode/widgets/split/antilia-split-panel.js'],
 	['src/wicket/tabs.ts', 'com/antiliacode/widgets/tabs/antilia-tabs.js'],
+	['src/wicket/tabs-overflow-menu.ts', 'com/antiliacode/widgets/tabs/antilia-tabs-overflow-menu.js'],
 	['src/wicket/templates.ts', 'com/antiliacode/widgets/template/antilia-templates.js'],
 	['src/wicket/tree.ts', 'com/antiliacode/widgets/tree/json-tree.js'],
 	['src/wicket/upload.ts', 'com/antiliacode/widgets/upload/antilia-upload.js'],
