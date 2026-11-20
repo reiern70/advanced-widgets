@@ -55,7 +55,8 @@
 	cursor: pointer;
 }
 
-.autocomplete-demo__choices {
+.autocomplete-demo__choices,
+.autocomplete-demo__searched {
 	padding: 12px 16px;
 	border-left: 4px solid var(--accent, var(--primary));
 	background: var(--surface);
@@ -146,5 +147,15 @@
 }
 
 .autocomplete-demo__calling[hidden] {
+	display: none;
+}
+
+/* the search box, in a form of its own below the others */
+.autocomplete-demo__search {
+	margin-top: 16px;
+}
+
+/* what the search box sent, once it sent something */
+.autocomplete-demo__searched:empty {
 	display: none;
 }

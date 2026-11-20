@@ -43,6 +43,14 @@
 		</section>
 		<p><button type="submit" class="autocomplete-demo__send"><wicket:message key="send"/></button></p>
 	</form>
+	<form wicket:id="searchForm" class="autocomplete-demo__form autocomplete-demo__search">
+		<section>
+			<h3><wicket:message key="searchTitle"/></h3>
+			<label class="autocomplete-demo__field"><wicket:message key="search"/> <input type="hidden" wicket:id="search"/></label>
+			<p><button type="submit" class="autocomplete-demo__send" wicket:id="searchSend"><wicket:message key="searchSend"/></button></p>
+			<p wicket:id="searched" class="autocomplete-demo__searched" role="status">[searched]</p>
+		</section>
+	</form>
 	<p wicket:id="choices" class="autocomplete-demo__choices">[choices]</p>
 	<p wicket:id="calling" class="autocomplete-demo__calling" role="status">[calling]</p>
 </div>

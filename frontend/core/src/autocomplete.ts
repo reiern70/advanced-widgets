@@ -38,6 +38,18 @@
  * With options.pick it is a find bar: a choice is not kept as a chip, the text field is emptied
  * for the next one, and the input holds the id of the value last picked ([id]) when it fires
  * 'change', for the page to add it to a list of its own.
+ *
+ * With options.freeText it is a search box: its value is the text typed, which the input holds
+ * and the form sends, and the suggestions only complete it. Up and Down put the label of the row
+ * they reach into the text field, Up above the first row and Escape the text typed back; choosing
+ * a row, by Enter or a click, puts its label there. No row is active until Up or Down reaches one,
+ * and Enter without one is left to the browser, which sends the form by its default button.
+ * The text field fires 'change' on the input when the text changes, as a text field does when
+ * the user leaves it, and 'input' as the user types.
+ *
+ * Every choice fires an 'antilia-autocomplete-choose' event on the input, after 'change', whose
+ * detail is {id, label}, and calls options.onChoose: what follows a choice is the page's own, for
+ * example sending the form, which submitForm() does as Enter does, or telling the server.
  */
 
 import { Chips } from './chips.js';
@@ -83,6 +95,9 @@ export interface AutocompleteActionDetail extends AutocompleteValue {
 /** The event the input fires when an action of a row is clicked. */
 export const ACTION_EVENT = 'antilia-autocomplete-action';
 
+/** The event the input fires when a suggestion is chosen; its detail is {id, label}. */
+export const CHOOSE_EVENT = 'antilia-autocomplete-choose';
+
 /**
  * Where the suggestions come from, how they are shown, and the texts.
  */
@@ -100,6 +115,14 @@ export interface AutocompleteOptions {
 	 * fires 'change', and the text field is empty again, as in a find bar.
 	 */
 	pick?: boolean;
+	/**
+	 * Whether it is a search box: the input holds the text typed, which a suggestion only
+	 * completes, and Enter without an active suggestion sends the form. The text the input holds
+	 * when the autocomplete is attached is the one shown.
+	 */
+	freeText?: boolean;
+	/** Called after a suggestion was chosen, with it; after 'change' and the choose event. */
+	onChoose?: (suggestion: AutocompleteSuggestion) => void;
 	/**
 	 * The template of a suggestion's row: '{{@label}}' by default, '{{@labelMatch}}' with
 	 * highlightMatch.
@@ -220,6 +243,38 @@ const DELAY = 200;
 /** The autocompletes by their wrapper. */
 const instances = new WeakMap<Element, Autocomplete>();
 
+/** The inputs whose form is sent when a suggestion is chosen. */
+const submittingOnChoose = new WeakSet<HTMLInputElement>();
+
+/**
+ * Sends the form an element is in as Enter in one of its fields does: by a click on its default
+ * button, the first of its submit buttons, unless that one is disabled; without one, by
+ * requestSubmit(). Wicket's form with a default button renders a hidden one first, which clicks
+ * it, Ajax or not.
+ *
+ * @param element an element of the form
+ * @returns whether the form is sent
+ */
+export function submitForm(element: Element): boolean {
+	const form = (element as HTMLInputElement).form ?? element.closest('form');
+	if (!form) {
+		return false;
+	}
+	const button = Array.from(form.elements).find((field) =>
+		(field instanceof HTMLButtonElement && field.type === 'submit') ||
+		(field instanceof HTMLInputElement && (field.type === 'submit' || field.type === 'image'))) as
+		HTMLButtonElement | HTMLInputElement | undefined;
+	if (button) {
+		if (button.disabled) {
+			return false;
+		}
+		button.click();
+		return true;
+	}
+	form.requestSubmit();
+	return true;
+}
+
 let counter = 0;
 
 function create<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string,
@@ -246,6 +301,18 @@ export class Autocomplete {
 
 	/** Whether a choice is only reported, not kept. */
 	readonly pick: boolean;
+
+	/** Whether the value is the text typed, which the suggestions complete. */
+	readonly freeText: boolean;
+
+	/** The text typed, which Up and Down leave and Escape brings back, with freeText. */
+	typed = '';
+
+	/** Whether Up or Down reached the active row, rather than the mouse. */
+	private keyed = false;
+
+	/** The text a search box told by its last 'change', which it does not tell again. */
+	private told = '';
 
 	chosen: AutocompleteValue[];
 
@@ -309,9 +376,10 @@ export class Autocomplete {
 	constructor(input: HTMLInputElement, options?: AutocompleteOptions) {
 		this.input = input;
 		this.options = { ...options };
-		this.pick = !!this.options.pick;
-		this.multiple = !!this.options.multiple && !this.pick;
-		this.chosen = this.pick ? [] : (this.options.chosen || []).slice();
+		this.freeText = !!this.options.freeText;
+		this.pick = !!this.options.pick && !this.freeText;
+		this.multiple = !!this.options.multiple && !this.pick && !this.freeText;
+		this.chosen = this.pick || this.freeText ? [] : (this.options.chosen || []).slice();
 		this.attach();
 	}
 
@@ -367,6 +435,7 @@ export class Autocomplete {
 		this.id = input.id || ('antilia-autocomplete-' + (++counter));
 		wrapper.classList.toggle('antilia-autocomplete-multiple', this.multiple);
 		wrapper.classList.toggle('antilia-autocomplete-pick', this.pick);
+		wrapper.classList.toggle('antilia-autocomplete-free-text', this.freeText);
 
 		this.field = create('div', this.css('autocomplete-field'));
 		this.chips = create('span', this.css('autocomplete-chips'));
@@ -383,6 +452,9 @@ export class Autocomplete {
 			this.text.setAttribute('aria-label', label);
 		}
 		this.field.appendChild(this.text);
+		if (this.freeText) {
+			this.text.value = this.typed = this.told = input.value;
+		}
 		wrapper.appendChild(this.field);
 
 		this.menu = create('div', this.css('autocomplete-menu'));
@@ -418,7 +490,8 @@ export class Autocomplete {
 	 * @param options where the suggestions come from, how they are shown, and the texts
 	 */
 	configure(options?: AutocompleteOptions): void {
-		this.options = { ...options, multiple: this.multiple, pick: this.pick };
+		this.options = { ...options, multiple: this.multiple, pick: this.pick,
+			freeText: this.freeText };
 		const engine = templates().engine(this.options.engine);
 		const compile = (template: string): CompiledTemplate => engine ?
 			engine.compile(template) : () => '';
@@ -442,11 +515,25 @@ export class Autocomplete {
 	 * @param chosen the chosen values
 	 */
 	setChosen(chosen: AutocompleteValue[]): void {
-		if (this.pick) {
+		if (this.pick || this.freeText) {
 			return;
 		}
 		this.chosen = (chosen || []).slice();
 		this.renderChosen();
+	}
+
+	/**
+	 * Shows another text in a search box, without firing a change: for a framework passing it down.
+	 *
+	 * @param text the text
+	 */
+	setText(text: string): void {
+		if (!this.freeText) {
+			return;
+		}
+		this.close();
+		this.text.value = this.typed = this.told = text ?? '';
+		this.input.value = this.text.value;
 	}
 
 	/**
@@ -458,7 +545,8 @@ export class Autocomplete {
 		this.field.remove();
 		this.menu.remove();
 		this.wrapper.classList.remove('antilia-autocomplete-multiple', 'antilia-autocomplete-pick',
-			'antilia-autocomplete-disabled', 'antilia-autocomplete-open');
+			'antilia-autocomplete-free-text', 'antilia-autocomplete-disabled',
+			'antilia-autocomplete-open');
 		if (instances.get(this.wrapper) === this) {
 			instances.delete(this.wrapper);
 		}
@@ -493,6 +581,12 @@ export class Autocomplete {
 	 */
 	private renderChosen(): void {
 		this.chips.textContent = '';
+		if (this.freeText) {
+			this.text.hidden = false;
+			this.text.placeholder = this.options.placeholder || '';
+			this.input.value = this.text.value;
+			return;
+		}
 		const removeLabel = this.options.disabled ? null : (this.options.remove || 'Remove {0}');
 		this.chosen.forEach((value) => {
 			const chip = Chips.create(value.label, removeLabel, this.look);
@@ -526,7 +620,21 @@ export class Autocomplete {
 				this.text.focus();
 			}
 		});
-		this.listen(this.text, 'input', () => this.schedule());
+		this.listen(this.text, 'input', () => {
+			if (this.freeText) {
+				this.typed = this.text.value;
+				this.input.value = this.text.value;
+				this.input.dispatchEvent(new Event('input', { bubbles: true }));
+			}
+			this.schedule();
+		});
+		// the text the user leaves changed, as a text field tells
+		this.listen(this.text, 'change', () => {
+			if (this.freeText && this.input.value !== this.told) {
+				this.told = this.input.value;
+				this.input.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
 		this.listen<KeyboardEvent>(this.text, 'keydown', (event) => this.onKey(event));
 		// keeps the focus in the text field
 		this.listen(this.list, 'mousedown', (event) => event.preventDefault());
@@ -684,7 +792,10 @@ export class Autocomplete {
 		}
 		this.status.hidden = true;
 		this.open();
-		this.activate(this.list.firstElementChild as HTMLElement, true);
+		// in a search box, Enter sends the text typed until Up or Down reaches a row
+		if (!this.freeText) {
+			this.activate(this.list.firstElementChild as HTMLElement, true);
+		}
 	}
 
 	/**
@@ -834,6 +945,7 @@ export class Autocomplete {
 	}
 
 	private activate(item: HTMLElement | null, scroll: boolean): void {
+		this.keyed = false;
 		if (this.active) {
 			toggleParts(this.active, this.look, false, 'autocomplete-option-active');
 		}
@@ -865,7 +977,7 @@ export class Autocomplete {
 			case 'ArrowDown':
 				event.preventDefault();
 				if (open) {
-					this.activate(items[Math.min(index + 1, items.length - 1)], true);
+					this.activateByKey(items[Math.min(index + 1, items.length - 1)]);
 				} else {
 					this.schedule();
 				}
@@ -873,14 +985,22 @@ export class Autocomplete {
 			case 'ArrowUp':
 				if (open) {
 					event.preventDefault();
-					this.activate(items[Math.max(index - 1, 0)], true);
+					// in a search box, above the first row is the text typed
+					this.activateByKey(this.freeText && index <= 0 ? null :
+						items[Math.max(index - 1, 0)]);
 				}
 				break;
 			case 'Enter':
-				// never sends the form: the text is not a value until it is chosen
-				event.preventDefault();
-				if (open && this.active) {
+				// in a search box, the row Up or Down reached: one under the mouse is not chosen
+				if (open && this.active && (this.keyed || !this.freeText)) {
+					event.preventDefault();
 					this.choose(Number(this.active.dataset.index));
+				} else if (this.freeText) {
+					// the browser sends the form with the text typed
+					this.close();
+				} else {
+					// never sends the form: the text is not a value until it is chosen
+					event.preventDefault();
 				}
 				break;
 			case 'F1':
@@ -903,6 +1023,9 @@ export class Autocomplete {
 				} else if (!this.menu.hidden) {
 					event.preventDefault();
 					event.stopPropagation();
+					if (this.freeText && this.text.value !== this.typed) {
+						this.showText(this.typed);
+					}
 					this.close();
 				}
 				break;
@@ -920,8 +1043,31 @@ export class Autocomplete {
 	}
 
 	/**
+	 * Activates a row reached by Up or Down; in a search box its label goes into the text field,
+	 * and no row brings the text typed back.
+	 */
+	private activateByKey(item: HTMLElement | null): void {
+		this.activate(item, true);
+		this.keyed = !!item;
+		if (this.freeText) {
+			const suggestion = item ? this.suggestions[Number(item.dataset.index)] : undefined;
+			this.showText(suggestion ? suggestion.label : this.typed);
+		}
+	}
+
+	/**
+	 * Shows a text in the text field of a search box, which the input holds then, without asking
+	 * for suggestions.
+	 */
+	private showText(text: string): void {
+		this.text.value = text;
+		this.input.value = text;
+	}
+
+	/**
 	 * Chooses a suggestion: a single autocomplete takes it instead of its value, a multiple one
-	 * adds it, and one only reporting choices tells it and is empty again.
+	 * adds it, one only reporting choices tells it and is empty again, and a search box takes its
+	 * label as its text.
 	 */
 	choose(index: number): void {
 		const suggestion = this.suggestions[index];
@@ -929,18 +1075,40 @@ export class Autocomplete {
 			return;
 		}
 		const value = { id: suggestion.id, label: suggestion.label };
-		if (this.pick) {
-			this.picked = value;
+		if (this.freeText) {
+			this.text.value = this.typed = String(suggestion.label ?? '');
 		} else {
-			this.chosen = this.multiple ? this.chosen.concat([value]) : [value];
+			if (this.pick) {
+				this.picked = value;
+			} else {
+				this.chosen = this.multiple ? this.chosen.concat([value]) : [value];
+			}
+			this.text.value = '';
 		}
-		this.text.value = '';
 		this.close();
 		this.renderChosen();
 		this.changed();
 		if (!this.text.hidden) {
 			this.text.focus();
 		}
+		this.input.dispatchEvent(new CustomEvent<AutocompleteValue>(CHOOSE_EVENT, {
+			bubbles: true, detail: value }));
+		this.options.onChoose?.(suggestion);
+	}
+
+	/**
+	 * Sends the form of an input when one of its suggestions is chosen, as Enter in a field of the
+	 * form does: see submitForm().
+	 *
+	 * @param input the input or its id
+	 */
+	static submitOnChoose(input: HTMLInputElement | string): void {
+		const element = typeof input === 'string' ? document.getElementById(input) : input;
+		if (!(element instanceof HTMLInputElement) || submittingOnChoose.has(element)) {
+			return;
+		}
+		submittingOnChoose.add(element);
+		element.addEventListener(CHOOSE_EVENT, () => submitForm(element));
 	}
 
 	/**
@@ -961,6 +1129,7 @@ export class Autocomplete {
 	}
 
 	private changed(): void {
+		this.told = this.input.value;
 		this.input.dispatchEvent(new Event('input', { bubbles: true }));
 		this.input.dispatchEvent(new Event('change', { bubbles: true }));
 	}
