@@ -17,8 +17,8 @@ import { useState } from 'react';
 import { Button, Dropdown, Popover, Tab, Tabs, type TabsDesign } from '@antilia/react';
 
 import { dropdownTexts, format } from '../data.js';
-import { documentsOf, newDocument, popoverOf, type Document, type GalleryConfig,
-	type TabsConfig } from '../tabs.js';
+import { ALERTS, documentsOf, newDocument, popoverOf, sectionTitle, withAddedSection,
+	type Document, type GalleryConfig, type TabsConfig } from '../tabs.js';
 import { Icon } from './DialogOptionsDemo.js';
 
 /**
@@ -35,6 +35,8 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 	const [vertical, setVertical] = useState(config.vertical);
 	const [design, setDesign] = useState<TabsDesign>(config.design);
 	const [section, setSection] = useState(config.sections[0]);
+	const [sections, setSections] = useState(config.sections);
+	const [alerts, setAlerts] = useState(0);
 
 	const update = (id: string, change: Partial<Document>) => setDocuments((all) =>
 		all.map((document) => document.id === id ? { ...document, ...change } : document));
@@ -93,6 +95,16 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 				</Tab>
 				<Tab id="settingsTitle" title={texts.settingsTitle} modified={false}>
 					<section>
+						<div className="tabs-demo__heading">
+							<Button label={texts.newAlert} size="small" className="tabs-demo__alert"
+								onClick={() => setAlerts(alerts + 1)} />
+							{!sections.includes(config.addedSection) &&
+								<Button label={texts.addSection} size="small" className="tabs-demo__add"
+									onClick={() => {
+										setSections(withAddedSection(config, sections));
+										setSection(config.addedSection);
+									}} />}
+						</div>
 						<div className="tabs-demo__controls">
 							<label className="tabs-demo__control">
 								<input type="checkbox" checked={vertical}
@@ -109,9 +121,16 @@ export function TabsDemo({ config }: { config: TabsConfig }) {
 						</div>
 						<Tabs className="tabs-demo__settings" label={texts.settings} texts={config.tabs}
 							orientation={vertical ? 'vertical' : 'horizontal'} design={design} selected={section}
-							onSelect={setSection}>
-							{config.sections.map((name) => (
-								<Tab key={name} id={name} title={texts[name]}>{texts[name + '.text']}</Tab>
+							onSelect={(name) => {
+								setSection(name);
+								if (name === ALERTS) {
+									setAlerts(0);
+								}
+							}}>
+							{sections.map((name) => (
+								<Tab key={name} id={name} title={sectionTitle(config, name, alerts)}>
+									{texts[name + '.text']}
+								</Tab>
 							))}
 						</Tabs>
 						<p className="tabs-demo__status">{format(texts.selected, texts[section])}</p>
