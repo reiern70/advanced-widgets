@@ -389,6 +389,158 @@ class TabbedPanelTest extends WicketTestCase
 		assertFalse(tester.getLastResponseAsString().contains("Inbox"));
 	}
 
+	/** The panels the lazy tabs of a test created, by the names of their tabs. */
+	private static final List<String> CREATED = new ArrayList<>();
+
+	private static LazyTab lazy(String name)
+	{
+		return new LazyTab(name, Model.of("Title " + name))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				CREATED.add(getName());
+				return new Label(id, "Panel " + getName() + " " + CREATED.size());
+			}
+		};
+	}
+
+	@Test
+	void createsThePanelOfALazyTabWhenItIsFirstSelectedAndKeepsIt()
+	{
+		CREATED.clear();
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		LazyTab report = lazy("report");
+		tabs.addTab(tab("one", "one")).addTab(report);
+		assertTrue(CREATED.isEmpty(), "not when added");
+		assertFalse(tabs.isLoaded(report));
+		assertTrue(tabs.isLoaded(tabs.getTab("one")));
+		tester.startPage(new TestPage(tabs));
+
+		String html = tester.getLastResponseAsString();
+		TagTester panel = tagOf(html, "id", tabs.getItems().get("report").getMarkupId());
+		assertEquals("", panel.getAttribute("data-load"));
+		assertFalse(panel.getValue().contains("Panel"), "empty");
+		assertNull(tagOf(html, "id", tabs.getItems().get("one").getMarkupId())
+			.getAttribute("data-load"));
+		// no select callback, the load one after that of closing
+		tester.assertContains("(?s)Wicket.Tabs.attach\\(\"" + tabs.getTabsMarkupId() +
+			"\", \\{[^\\n]*\\}, null, function.*\"close\".*\"load\"");
+
+		send(tabs, "load", "report");
+		assertEquals(List.of("report"), CREATED);
+		assertTrue(tabs.isLoaded(report));
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Panel report 1"), response);
+		assertFalse(response.contains("data-load"), "rendered");
+		assertFalse(response.contains("Panel one"), "the other panels stay as they are");
+		assertNull(tabs.getModelObject(), "the server is not told the tab selected");
+		assertTrue(tabs.selected.isEmpty());
+
+		// kept, without a request for it, and rendered with the others
+		send(tabs, "load", "report");
+		assertEquals(List.of("report"), CREATED, "created once");
+		tester.startPage(tester.getLastRenderedPage());
+		assertTrue(tester.getLastResponseAsString().contains("Panel report 1"));
+		assertEquals(List.of("report"), CREATED);
+	}
+
+	@Test
+	void createsThePanelOfALazyTabSelectedAtOnce()
+	{
+		CREATED.clear();
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		LazyTab first = lazy("first");
+		LazyTab other = lazy("other");
+		tabs.addTab(first).addTab(other).addTab(tab("plain", "plain"));
+		tester.startPage(new TestPage(tabs));
+		assertEquals(List.of("first"), CREATED, "the tab selected");
+		assertTrue(tester.getLastResponseAsString().contains("Panel first 1"));
+
+		// selected via Ajax: created in the same request
+		runAjax(tabs, t -> tabs.select(other, t));
+		assertEquals(List.of("first", "other"), CREATED);
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("Panel other 2"), response);
+		assertTrue(response.contains(".select(\"other\")"));
+		assertTrue(response.indexOf("Panel other 2") < response.indexOf(".select(\"other\")"),
+			"the panel first");
+
+		// added via Ajax and selected
+		LazyTab added = lazy("added");
+		runAjax(tabs, t -> tabs.addTab(added, t).select(added, t));
+		assertTrue(tester.getLastResponseAsString().contains("Panel added 3"));
+		assertTrue(tabs.isLoaded(first), "kept");
+	}
+
+	@Test
+	void dropsThePanelOfALazyTabNotCachingWhenAnotherIsSelected()
+	{
+		CREATED.clear();
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		LazyTab live = lazy("live").setCaching(false);
+		tabs.addTab(tab("one", "one")).addTab(live).addTab(lazy("kept"));
+		assertFalse(live.isCaching());
+		tester.startPage(new TestPage(tabs));
+		// the browser tells the tabs selected, to drop the panel
+		tester.assertContains("(?s)Wicket.Tabs.attach\\(\"" + tabs.getTabsMarkupId() +
+			"\", \\{[^\\n]*\\}, function.*\"select\".*\"close\".*\"load\"");
+
+		send(tabs, "load", "live");
+		assertEquals(List.of("live"), CREATED);
+		assertEquals("live", tabs.getModelObject(), "told the tab selected");
+		assertTrue(tabs.selected.isEmpty(), "onSelected only with setSendToServer");
+
+		send(tabs, "select", "one");
+		assertFalse(tabs.isLoaded(live));
+		String response = tester.getLastResponseAsString();
+		assertTrue(response.contains("data-load"), response);
+		assertEquals("one", tabs.getModelObject());
+
+		send(tabs, "load", "kept");
+		send(tabs, "load", "live");
+		assertEquals(List.of("live", "kept", "live"), CREATED, "anew");
+		assertTrue(tester.getLastResponseAsString().contains("Panel live 3"));
+		send(tabs, "select", "kept");
+		assertFalse(tabs.isLoaded(live));
+		assertTrue(tabs.isLoaded(tabs.getTab("kept")));
+
+		// rendered whole on another tab: not there
+		send(tabs, "load", "live");
+		assertTrue(tabs.isLoaded(live));
+		tabs.select(tabs.getTab("one"));
+		tester.startPage(tester.getLastRenderedPage());
+		assertFalse(tabs.isLoaded(live));
+	}
+
+	@Test
+	void tellsTheServerTheTabSelectedWithTheLoadOfItsPanel()
+	{
+		CREATED.clear();
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		tabs.setSendToServer(true);
+		tabs.addTab(tab("one", "one")).addTab(lazy("report"));
+		tester.startPage(new TestPage(tabs));
+
+		send(tabs, "load", "report");
+		assertEquals(List.of("report"), tabs.selected);
+		assertEquals("report", tabs.getModelObject());
+		send(tabs, "select", "report");
+		assertEquals(List.of("report"), tabs.selected, "once");
+	}
+
+	@Test
+	void callsBackForLoadingOnlyWithLazyTabs()
+	{
+		TestTabbedPanel tabs = new TestTabbedPanel();
+		tabs.addTab(tab("one", "one").setClosable(true));
+		tester.startPage(new TestPage(tabs));
+		assertFalse(tester.getLastResponseAsString().contains("\"load\""));
+		assertFalse(tester.getLastResponseAsString().contains("data-load"));
+	}
+
 	@Test
 	void tellsTheBrowserAPanelHasChanges()
 	{

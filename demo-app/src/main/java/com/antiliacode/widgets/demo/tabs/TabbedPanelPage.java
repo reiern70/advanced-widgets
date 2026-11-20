@@ -42,6 +42,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.CssResourceReference;
 
 import com.antiliacode.widgets.button.ButtonBehavior;
@@ -54,6 +55,7 @@ import com.antiliacode.widgets.icon.SvgIcon;
 import com.antiliacode.widgets.popover.Popover;
 import com.antiliacode.widgets.popover.PopoverPlacement;
 import com.antiliacode.widgets.popover.PopoverVariant;
+import com.antiliacode.widgets.tabs.LazyTab;
 import com.antiliacode.widgets.tabs.Tab;
 import com.antiliacode.widgets.tabs.TabAction;
 import com.antiliacode.widgets.tabs.TabbedPanel;
@@ -71,7 +73,8 @@ import com.github.openjson.JSONObject;
  * document via Ajax, leaving the others as they are in the browser. A second tabs' orientation and
  * design a check box and a drop-down switch, and the server hears of the tab the user selects; the
  * title of their alerts counts the new ones, rendered again alone via Ajax, and a button adds a
- * section after the first one. A
+ * section after the first one. Lazy tabs create their panels when they are first selected, one
+ * keeping it and one creating it anew each time, numbered as the server creates them. A
  * gallery shows the designs made for tabs along the top and those made for tabs down the side. The
  * React and Svelte tabs show the same in those frameworks.
  */
@@ -92,6 +95,13 @@ public class TabbedPanelPage extends DemoPage
 
 	/** The section whose title counts the new alerts. */
 	static final String ALERTS = "alerts";
+
+	/** The tabs of the lazy panels: rendered with the page, created once, created each time. */
+	static final String SUMMARY = "summary";
+
+	static final String REPORT = "report";
+
+	static final String LIVE = "live";
 
 	/** The designs the gallery shows along the top, and the tabs it shows them with. */
 	static final List<TabsDesign> TOP_DESIGNS = List.of(TabsDesign.SEGMENTED, TabsDesign.FOLDER,
@@ -133,6 +143,9 @@ public class TabbedPanelPage extends DemoPage
 	/** The alerts not seen yet, which the title of the alerts counts. */
 	private int alerts;
 
+	/** The panels the lazy tabs created. */
+	private int panels;
+
 	/**
 	 * Constructor.
 	 */
@@ -145,6 +158,7 @@ public class TabbedPanelPage extends DemoPage
 		themed.add(cases);
 		Fragment documentsCase = cases.addCase("documentsTitle", "documentsCase");
 		Fragment settingsCase = cases.addCase("settingsTitle", "settingsCase");
+		Fragment lazyCase = cases.addCase("lazyTitle", "lazyCase");
 		Fragment galleryCase = cases.addCase("galleryTitle", "galleryCase");
 
 		status = new Label("status", () -> message != null ? message : getString("start"));
@@ -279,10 +293,51 @@ public class TabbedPanelPage extends DemoPage
 				}
 			}).setRequired(true).add(rerender(settings)));
 
+		Label created = new Label("created", () -> getString("created")
+			.replace("{0}", String.valueOf(panels)));
+		created.setOutputMarkupId(true);
+		lazyCase.add(created);
+		TabbedPanel reports = new TabbedPanel("reports");
+		reports.setLabel(new ResourceModel("reports"));
+		reports.addTab(new Tab(SUMMARY, new ResourceModel(SUMMARY))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				return new Label(id, new ResourceModel(SUMMARY + ".text"));
+			}
+		});
+		reports.addTab(newReport(REPORT, created));
+		reports.addTab(newReport(LIVE, created).setCaching(false));
+		lazyCase.add(reports);
+
 		galleryCase.add(gallery("topDesigns", TOP_DESIGNS, TabsOrientation.HORIZONTAL, TOP_TABS,
 			null));
 		galleryCase.add(gallery("sideDesigns", SIDE_DESIGNS, TabsOrientation.VERTICAL, SIDE_TABS,
 			SIDE_SELECTED));
+	}
+
+	/**
+	 * @return a lazy tab, its panel numbered as the server creates it, telling the page so
+	 */
+	private LazyTab newReport(String name, Component created)
+	{
+		return new LazyTab(name, new ResourceModel(name))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Component newPanel(String id)
+			{
+				panels++;
+				RequestCycle.get().find(AjaxRequestTarget.class).ifPresent(target ->
+					target.add(created));
+				return new Label(id, getString(name + ".text").replace("{0}",
+					String.valueOf(panels)));
+			}
+		};
 	}
 
 	/**
@@ -422,7 +477,8 @@ public class TabbedPanelPage extends DemoPage
 			"welcome", "welcomeText", "newDocument", "save", "about", "info", "unsaved", "allSaved",
 			"untitled", "closed", "saved", "opened", "start", "settingsTitle", "settings", "vertical",
 			"design", "selected", "galleryTitle", "alongTheTop", "downTheSide", "newAlert",
-			"alertsCount", "addSection");
+			"alertsCount", "addSection", "lazyTitle", "reports", "created", SUMMARY, SUMMARY + ".text",
+			REPORT, REPORT + ".text", LIVE, LIVE + ".text");
 		for (TabsDesign each : TabsDesign.values())
 		{
 			texts.put("design." + each.name(), getString("design." + each.name()));

@@ -16,7 +16,8 @@
  * The Tabs demo: documents in closable tabs after a welcome tab that is not, each telling about
  * itself with an action and marked while it has changes not saved, which Save takes away; a button
  * opening new ones; tabs whose orientation and design a check box and a drop-down switch, whose
- * alerts count the new ones in their title and to which a button adds a section; and a
+ * alerts count the new ones in their title and to which a button adds a section; tabs whose panels
+ * are created when first selected, one kept and one created each time; and a
  * gallery of the designs made for tabs along the top and of those made for tabs down the side.
  */
 
@@ -56,6 +57,14 @@ export interface TabsDemoTexts extends DropdownTexts {
 	alertsCount: string;
 	/** The button adding a section after the first one. */
 	addSection: string;
+	lazyTitle: string;
+	/** The accessible name of the tabs whose panels are created when first selected. */
+	reports: string;
+	/** How many panels were created, {0}. */
+	created: string;
+	summary: string;
+	report: string;
+	live: string;
 	[key: string]: string;
 }
 
@@ -135,6 +144,34 @@ export function sectionTitle(config: TabsConfig, section: string, alerts: number
 export function withAddedSection(config: TabsConfig, sections: string[]): string[] {
 	return sections.includes(config.addedSection) ? sections :
 		[...sections.slice(0, 1), config.addedSection, ...sections.slice(1)];
+}
+
+/** The tabs whose panels are created when first selected: kept, and created each time. */
+export const REPORT = 'report';
+export const LIVE = 'live';
+
+/** The numbers of the panels created, as the Wicket page numbers them. */
+export interface CreatedPanels {
+	/** How many panels were created. */
+	panels: number;
+	/** The number of the panel of the report, 0 before it is created. */
+	report: number;
+	/** The number of the panel of the live figures created last. */
+	live: number;
+}
+
+/**
+ * @returns the numbers of the panels after a tab is selected: the report's panel is created the
+ *          first time, the live one each time
+ */
+export function afterSelecting(created: CreatedPanels, tab: string): CreatedPanels {
+	if (tab === REPORT && created.report === 0) {
+		return { ...created, panels: created.panels + 1, report: created.panels + 1 };
+	}
+	if (tab === LIVE) {
+		return { ...created, panels: created.panels + 1, live: created.panels + 1 };
+	}
+	return created;
 }
 
 /**
