@@ -12,7 +12,8 @@
  * limitations under the License.
  */
 
-export { ACTION_EVENT, Autocomplete, markMatches, MATCH_CLASS } from './autocomplete.js';
+export { ACTION_EVENT, Autocomplete, CHOOSE_EVENT, markMatches, MATCH_CLASS, submitForm } from
+	'./autocomplete.js';
 export type { AutocompleteAction, AutocompleteActionDetail, AutocompleteOptions,
 	AutocompleteSuggestion, AutocompleteValue } from './autocomplete.js';
 export { Chips } from './chips.js';
