@@ -14,11 +14,11 @@
 
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 
-import type { AutocompleteSuggestion } from '@antilia/core';
+import { submitForm, type AutocompleteSuggestion } from '@antilia/core';
 import { Autocomplete } from '@antilia/react';
 
-import { calling, describe, flag, MAX_SUGGESTIONS, searchCountries, userActions,
-	type AutocompleteConfig, type AutocompleteValues } from '../autocomplete.js';
+import { calling, describe, flag, MAX_SUGGESTIONS, searchActions, searchCountries, searched,
+	userActions, type AutocompleteConfig, type AutocompleteValues } from '../autocomplete.js';
 import { format, searchUsers } from '../data.js';
 import { Feedback, type Message } from './Feedback.js';
 
@@ -33,6 +33,11 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 	// whom the phone at the end of a row of a user called last
 	const [call, setCall] = useState('');
 	const actions = useMemo(() => userActions(config), [config]);
+	const infoAction = useMemo(() => searchActions(config), [config]);
+	// the text of the search box, and what it sent last
+	const [query, setQuery] = useState('');
+	const [result, setResult] = useState('');
+	const searchForm = useRef<HTMLFormElement>(null);
 	const onAction = (_action: string, user: AutocompleteSuggestion) =>
 		setCall(calling(texts, user));
 	const users = useMemo(() => searchUsers(config.usersUrl, MAX_SUGGESTIONS),
@@ -52,6 +57,14 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 		event.preventDefault();
 		setMessages([values.owner.length ? { level: 'info', text: format(texts.sent, choices) }
 			: { level: 'error', text: texts.required }]);
+	};
+	// the text the form holds: a suggestion chosen sends it before React has rendered it
+	const search = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const text = String(new FormData(event.currentTarget).get('search') ?? '').trim();
+		if (text) {
+			void searched(config, text).then(setResult);
+		}
 	};
 
 	return (
@@ -126,6 +139,22 @@ export function AutocompleteDemo({ config }: { config: AutocompleteConfig }) {
 					) : <p className="autocomplete-demo__none">{texts['visits.none']}</p>}
 				</section>
 				<p><button type="submit" className="autocomplete-demo__send">{texts.send}</button></p>
+			</form>
+			<form ref={searchForm} className="autocomplete-demo__form autocomplete-demo__search"
+				onSubmit={search}>
+				<section>
+					<h3>{texts.searchTitle}</h3>
+					<label className="autocomplete-demo__field">
+						{texts.search}{' '}
+						<Autocomplete name="search" freeText search={users} text={query}
+							onTextChange={setQuery} template={config.searchTemplate} highlightMatch
+							minLength={1} actions={infoAction}
+							onChoose={() => submitForm(searchForm.current!)}
+							placeholder={texts['search.placeholder']} {...common} />
+					</label>
+					<p><button type="submit" className="autocomplete-demo__send">{texts.searchSend}</button></p>
+					<p className="autocomplete-demo__searched" role="status">{result}</p>
+				</section>
 			</form>
 			<p className="autocomplete-demo__choices">{choices}</p>
 			{call && <p className="autocomplete-demo__calling" role="status">{call}</p>}

@@ -55,7 +55,8 @@ import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
 
 /**
- * What {@link Autocomplete}, {@link MultiAutocomplete} and {@link FindAutocomplete} share: a text field suggesting values
+ * What {@link Autocomplete}, {@link MultiAutocomplete}, {@link FindAutocomplete} and
+ * {@link SearchAutocomplete} share: a text field suggesting values
  * as the user types, whose chosen values are shown as {@link Chips chips} with an x removing
  * them, as in a multiple {@link com.antiliacode.widgets.dropdown.Dropdown drop-down}.
  * <p>
@@ -78,6 +79,10 @@ import com.github.openjson.JSONObject;
  * {@link #addAction(AutocompleteAction) Actions} are buttons at the end of every row, such as an
  * (i) whose tooltip, a template too, tells more about the value; F1 toggles the tooltip of the
  * active row. Up and Down move from row to row, Enter chooses the active one.
+ * <p>
+ * A choice fires {@link #CHOOSE_EVENT} on the hidden input, after {@code change}: what follows
+ * it is plugged in by behaviors, {@link SubmitOnChooseBehavior} sending the form and
+ * {@link AjaxChooseBehavior} telling the server the value chosen.
  *
  * @param <T>
  *            the type of the values
@@ -105,6 +110,14 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	 * match is highlighted}: the label with the parts matching the words typed marked.
 	 */
 	public static final String MATCH_TEMPLATE = "{{@labelMatch}}";
+
+	/**
+	 * The event the hidden input fires when the user chose a suggestion, after {@code change}:
+	 * {@link SubmitOnChooseBehavior} and {@link AjaxChooseBehavior} hear it, and so does an
+	 * {@link org.apache.wicket.ajax.AjaxEventBehavior} of it. The detail of the event is
+	 * {@code {id, label}}.
+	 */
+	public static final String CHOOSE_EVENT = "antilia-autocomplete-choose";
 
 	private static final String TERM_PARAMETER = "term";
 
@@ -155,6 +168,16 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 	 * @return whether a choice is only reported, not kept as a chip, as in a find bar
 	 */
 	protected boolean isPick()
+	{
+		return false;
+	}
+
+	/**
+	 * @return whether the value is the text typed, which the suggestions only complete, as in a
+	 *         search box
+	 * @see SearchAutocomplete
+	 */
+	protected boolean isFreeText()
 	{
 		return false;
 	}
@@ -463,6 +486,7 @@ public abstract class AbstractAutocomplete<T, M> extends FormComponent<M>
 		options.put("url", suggestBehavior.getCallbackUrl().toString());
 		options.put("multiple", isMultiple());
 		options.put("pick", isPick());
+		options.put("freeText", isFreeText());
 		options.put("template", getTemplate());
 		options.put("highlightMatch", highlightMatch);
 		options.put("engine", templateEngine.getName());
