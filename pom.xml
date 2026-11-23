@@ -86,7 +86,7 @@
 		<daisyui.version>5.7.50</daisyui.version>
 		<junit.version>6.1.3</junit.version>
 		<jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
-		<selenium.version>4.52.0</selenium.version>
+		<selenium.version>4.53.0</selenium.version>
 		<!-- reads back, in the tests only, the workbooks of the Excel export, which writes them itself -->
 		<poi.version>6.0.0</poi.version>
 		<!-- the least test coverage `mvn verify` accepts, see jacoco-maven-plugin; set per module -->
