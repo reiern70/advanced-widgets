@@ -196,9 +196,10 @@ public class Captcha extends Panel
 
 	/**
 	 * @return what solves the captcha: the letters of the image, or the number answering the
-	 *         question
+	 *         question; for the tests of the pages asking it, which check it with
+	 *         {@link #isSolved()}
 	 */
-	String getSolution()
+	public String getSolution()
 	{
 		return question == null ? letters.getObject() : String.valueOf(question.answer());
 	}

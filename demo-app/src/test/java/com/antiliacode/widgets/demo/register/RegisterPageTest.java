@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.core.util.lang.WicketObjects;
@@ -32,22 +33,24 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.antiliacode.widgets.demo.Countries;
 import com.antiliacode.widgets.demo.DemoSession;
-import com.antiliacode.widgets.demo.RecordingMailer;
+import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.TestClock;
 import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.SignInPage;
+import com.antiliacode.widgets.demo.account.SignedInUsers;
 import com.antiliacode.widgets.demo.data.JobRole;
 import com.antiliacode.widgets.demo.data.Language;
+import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.data.User;
-import com.antiliacode.widgets.demo.mail.LogMailer;
-import com.antiliacode.widgets.demo.mail.Mail;
 
 /**
  * Registers on {@link RegisterPage}, as a person and as robots.
@@ -68,12 +71,9 @@ class RegisterPageTest
 
 	private Accounts accounts;
 
-	private RecordingMailer mailer;
-
 	@BeforeEach
 	void startPage()
 	{
-		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
 		TestDatabase.clear();
 		RegistrationLimits limits = new RegistrationLimits(limitsClock);
 		WicketApplication application = new WicketApplication()
@@ -85,7 +85,7 @@ class RegisterPageTest
 			}
 		};
 		tester = new WicketTester(application);
-		mailer = RecordingMailer.install(application);
+		tester.getSession().setLocale(Locale.ENGLISH);
 		accounts = Accounts.get();
 		page = tester.startPage(new RegisterPage(clock));
 	}
@@ -98,31 +98,8 @@ class RegisterPageTest
 	}
 
 	@Test
-	void registeringIsClosedWhenNoEmailIsDelivered()
+	void registeringIsOpenWithoutAnyMailServer()
 	{
-		System.clearProperty(RegisterPage.OPEN_PROPERTY);
-		((WicketApplication)tester.getApplication()).setMailer(new LogMailer());
-		page = tester.startPage(new RegisterPage(clock));
-
-		tester.assertVisible("closed");
-		tester.assertContains("Registering is closed for now.");
-		tester.assertDisabled("form:submit");
-		tester.assertDisabled("form:email");
-
-		// a request sent all the same is rejected, and makes no account
-		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
-		assertThrows(ListenerInvocationNotAllowedException.class, form::submit);
-		assertFalse(DemoSession.get().isSignedIn());
-		assertFalse(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
-	}
-
-	@Test
-	void registeringIsOpenWhenTheEmailsAreDelivered()
-	{
-		System.clearProperty(RegisterPage.OPEN_PROPERTY);
-		page = tester.startPage(new RegisterPage(clock));
-
 		tester.assertInvisible("closed");
 		tester.assertEnabled("form:submit");
 	}
@@ -134,53 +111,65 @@ class RegisterPageTest
 		page = tester.startPage(new RegisterPage(clock));
 
 		tester.assertVisible("closed");
-	}
+		tester.assertContains("Registering is closed for now.");
+		tester.assertDisabled("form:submit");
+		tester.assertDisabled("form:email");
 
-	@Test
-	void anOpenRegistrationSaysNothingOfIt()
-	{
-		tester.assertInvisible("closed");
-		tester.assertEnabled("form:submit");
-	}
-
-	@Test
-	void aPersonIsSentToTheEmailConfirmation()
-	{
+		// a request sent all the same is rejected, and makes no account
 		clock.advance(Duration.ofSeconds(20));
-		fillIn(page.getExpectedAnswer()).submit();
-
-		tester.assertRenderedPage(EmailConfirmationPage.class);
-		tester.assertContains("ada@example.com");
-
-		Mail mail = mailer.last();
-		assertEquals("ada@example.com", mail.to());
-		assertEquals("Confirm your email for Antilia Widgets", mail.subject());
-		assertTrue(mail.text().contains("Hello,"), mail.text());
-		// nothing the visitor typed, not even the name
-		assertFalse(mail.html().contains("Ada"), mail.html());
-		assertTrue(mail.text().contains("validate-email?token=" + mailer.lastToken()));
-		assertTrue(mail.html().contains("href=\"http://localhost/context/servlet/validate-email?token=" +
-			mailer.lastToken() + "\""), mail.html());
-	}
-
-	@Test
-	void aPersonGetsAnAccountWhoseEmailIsNotConfirmedYet()
-	{
-		clock.advance(Duration.ofSeconds(20));
-		fillIn(page.getExpectedAnswer()).submit();
-
+		FormTester form = fillIn();
+		assertThrows(ListenerInvocationNotAllowedException.class, form::submit);
 		assertFalse(DemoSession.get().isSignedIn());
+		assertFalse(accounts.find("ada@example.com").isPresent());
+	}
+
+	@Test
+	void thePageSaysWhatIsDoneWithTheData()
+	{
+		tester.assertContains("We keep your account and the pages you visit here for 6 months, " +
+			"then delete them. We never use your email or anything else you give us to contact " +
+			"you: only to count how many people use the components and which demos interest them.");
+		// the captcha is asked of everybody here, not after failed attempts as on the sign-in page
+		tester.assertContains("To show you are a person, type the letters of the image.");
+		assertFalse(tester.getLastResponseAsString().contains("Too many failed attempts"));
+	}
+
+	@Test
+	void aPersonIsSignedInAtOnceWithAnAccountThatExpiresInSixMonths()
+	{
+		Instant before = Instant.now();
+		clock.advance(Duration.ofSeconds(20));
+		fillIn().submit();
+
+		tester.assertRenderedPage(HomePage.class);
+		assertEquals("ada@example.com", DemoSession.get().getAccount());
 		User ada = accounts.authenticate("Ada@Example.com", PASSWORD).orElseThrow();
-		assertFalse(ada.isValidated());
+		assertTrue(ada.isValidated());
+		assertEquals(Role.USER, ada.getRole());
 		assertEquals("Ada", ada.getFirstName());
 		assertEquals("Lovelace", ada.getLastName());
 		assertEquals("ES", ada.getCountry());
 		assertEquals(Language.ENGLISH, ada.getLanguage());
 		assertEquals(JobRole.DEVELOPER, ada.getJobRole());
 		assertNull(ada.getJobRoleOther());
-		// only salted hashes are kept: of the password and of the token of the link
+		assertFalse(ada.isConfigured());
+		// six months on
+		Instant sixMonths = before.atZone(ZoneOffset.UTC).plusMonths(6).toInstant();
+		assertFalse(ada.getExpires().isBefore(sixMonths), ada.getExpires().toString());
+		assertTrue(ada.getExpires().isBefore(sixMonths.plus(Duration.ofMinutes(1))));
+		// only a salted hash of the password is kept
 		assertFalse(ada.getPasswordHash().contains(PASSWORD));
-		assertFalse(mailer.lastToken().equals(ada.getValidationToken()));
+	}
+
+	@Test
+	void theAccountTakesTheLanguageOfThePage()
+	{
+		tester.getSession().setLocale(Locale.GERMAN);
+		page = tester.startPage(new RegisterPage(clock));
+		clock.advance(Duration.ofSeconds(20));
+		fillIn().submit();
+
+		assertEquals(Language.GERMAN, accounts.find("ada@example.com").orElseThrow().getLanguage());
 	}
 
 	@Test
@@ -194,19 +183,19 @@ class RegisterPageTest
 
 		// required then
 		clock.advance(Duration.ofSeconds(20));
-		form = fillIn(page.getExpectedAnswer());
+		form = fillIn();
 		form.select("jobRole", JobRole.OTHER.ordinal());
 		form.submit();
 		tester.assertRenderedPage(RegisterPage.class);
 		tester.assertErrorMessages("Your role is required.");
 
 		clock.advance(Duration.ofSeconds(20));
-		form = fillIn(page.getExpectedAnswer());
+		form = fillIn();
 		form.select("jobRole", JobRole.OTHER.ordinal());
 		form.setValue("other:jobRoleOther", " Mathematician ");
 		form.submit();
 
-		tester.assertRenderedPage(EmailConfirmationPage.class);
+		tester.assertRenderedPage(HomePage.class);
 		User ada = accounts.find("ada@example.com").orElseThrow();
 		assertEquals(JobRole.OTHER, ada.getJobRole());
 		assertEquals("Mathematician", ada.getJobRoleOther());
@@ -216,7 +205,7 @@ class RegisterPageTest
 	void theRoleIsRequired()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
+		FormTester form = fillIn();
 		form.setValue("jobRole", "");
 		form.submit();
 
@@ -225,95 +214,78 @@ class RegisterPageTest
 	}
 
 	@Test
-	void theEmailIsInTheLanguageChosen()
-	{
-		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
-		form.select("language", Language.GERMAN.ordinal());
-		form.submit();
-
-		assertEquals(Language.GERMAN, accounts.find("ada@example.com").orElseThrow().getLanguage());
-		Mail mail = mailer.last();
-		assertEquals("Bestätigen Sie Ihre E-Mail-Adresse für Antilia Widgets", mail.subject());
-		assertTrue(mail.text().contains("Hallo,"), mail.text());
-	}
-
-	@Test
-	void anEmailRegisteredAlreadyGetsTheSameAnswerAndItsOwnerAnEmail()
-	{
-		accounts.register("ada@example.com", "another-password",
-			user -> user.setLanguage(Language.GERMAN));
-		clock.advance(Duration.ofSeconds(20));
-		fillIn(page.getExpectedAnswer()).submit();
-
-		// as for a new account
-		tester.assertRenderedPage(EmailConfirmationPage.class);
-		tester.assertContains("ada@example.com");
-		assertFalse(DemoSession.get().isSignedIn());
-		// the account is as it was
-		assertTrue(accounts.authenticate("ada@example.com", "another-password").isPresent());
-		assertFalse(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
-		assertNull(accounts.find("ada@example.com").orElseThrow().getFirstName());
-
-		// its owner learns that it exists, in the language of the account
-		Mail mail = mailer.last();
-		assertEquals(1, mailer.getMails().size());
-		assertEquals("ada@example.com", mail.to());
-		assertEquals("Ihr Konto bei Antilia Widgets", mail.subject());
-		assertTrue(mail.text().contains("Sie haben schon ein Konto"), mail.text());
-		assertTrue(mail.html().contains("href=\"http://localhost/context/servlet/sign-in\""),
-			mail.html());
-		assertFalse(mail.text().contains("token="), mail.text());
-		assertFalse(mail.html().contains("Ada"), mail.html());
-	}
-
-	@Test
-	void theEmailOfAnAccountRegisteredAgainIsInTheLanguageChosenWithoutOneOfItsOwn()
+	void anEmailRegisteredAlreadyIsToldAndTheAccountStaysAsItWas()
 	{
 		accounts.register("ada@example.com", "another-password", user -> {});
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
-		form.select("language", Language.SPANISH.ordinal());
-		form.submit();
+		fillIn().submit();
 
-		assertEquals("Su cuenta en Antilia Widgets", mailer.last().subject());
+		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertErrorMessages(page.getString("exists"));
+		assertFalse(DemoSession.get().isSignedIn());
+		assertTrue(accounts.authenticate("ada@example.com", "another-password").isPresent());
+		assertFalse(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
+		assertNull(accounts.find("ada@example.com").orElseThrow().getFirstName());
+	}
+
+	@Test
+	void whenTooManyUsersAreSignedInTheAccountWaitsOnTheSignInPage()
+	{
+		SignedInUsers users = SignedInUsers.get();
+		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
+		{
+			String id = "session-" + i;
+			assertTrue(users.signIn("user" + i, Role.USER, () -> id));
+		}
+		clock.advance(Duration.ofSeconds(20));
+		fillIn().submit();
+
+		tester.assertRenderedPage(SignInPage.class);
+		assertFalse(DemoSession.get().isSignedIn());
+		assertTrue(accounts.authenticate("ada@example.com", PASSWORD).isPresent());
+		tester.assertContains(page.getString("registeredFull"));
 	}
 
 	@Test
 	void aFormSentOnceIsNotTakenAgain()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		// the page as the browser has it, which it may send again
+		// the page as the browser has it, which it may send again, captcha and all
 		RegisterPage sent = WicketObjects.cloneObject(page);
-		fillIn(page.getExpectedAnswer()).submit();
-		tester.assertRenderedPage(EmailConfirmationPage.class);
+		String solution = page.getCaptcha().getSolution();
+		fillIn().submit();
+		tester.assertRenderedPage(HomePage.class);
+		DemoSession.get().signOut();
 
-		// the same form with the same sum, for another email
+		// the same form with the same captcha, for another email
 		tester.startPage(sent);
-		FormTester form = fillIn(sent.getExpectedAnswer());
+		FormTester form = fillIn(solution);
 		form.setValue("email", "grace@example.com");
 		form.submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
 		tester.assertErrorMessages(sent.getString("robot"));
 		assertFalse(accounts.find("grace@example.com").isPresent());
-		assertEquals(1, mailer.getMails().size());
 	}
 
 	@Test
-	void eachSubmitAsksANewSum()
+	void eachSubmitAsksANewCaptcha()
 	{
 		clock.advance(Duration.ofSeconds(20));
 		String challenge = page.getChallenge();
-		FormTester form = fillIn(page.getExpectedAnswer());
+		String letters = page.getCaptcha().getSolution();
+		FormTester form = fillIn();
 		form.setValue("repeatedPassword", "something else");
 		form.submit();
-		assertFalse(challenge.equals(page.getChallenge()));
+		assertNotEquals(challenge, page.getChallenge());
+		assertNotEquals(letters, page.getCaptcha().getSolution());
 
 		challenge = page.getChallenge();
+		letters = page.getCaptcha().getSolution();
 		clock.advance(Duration.ofSeconds(20));
-		fillIn(page.getExpectedAnswer() + 1).submit();
-		assertFalse(challenge.equals(page.getChallenge()));
+		fillIn("WRONG").submit();
+		assertNotEquals(challenge, page.getChallenge());
+		assertNotEquals(letters, page.getCaptcha().getSolution());
 	}
 
 	@Test
@@ -322,7 +294,8 @@ class RegisterPageTest
 		for (int i = 0; i < RegistrationLimits.REGISTRATIONS_PER_ADDRESS; i++)
 		{
 			registerAs("person" + i + "@example.com");
-			tester.assertRenderedPage(EmailConfirmationPage.class);
+			tester.assertRenderedPage(HomePage.class);
+			DemoSession.get().signOut();
 		}
 
 		registerAs("one-more@example.com");
@@ -332,14 +305,14 @@ class RegisterPageTest
 
 		limitsClock.advance(RegistrationLimits.WINDOW);
 		registerAs("one-more@example.com");
-		tester.assertRenderedPage(EmailConfirmationPage.class);
+		tester.assertRenderedPage(HomePage.class);
 	}
 
 	private void registerAs(String email)
 	{
 		page = tester.startPage(new RegisterPage(clock));
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
+		FormTester form = fillIn();
 		form.setValue("email", email);
 		form.submit();
 	}
@@ -348,7 +321,7 @@ class RegisterPageTest
 	void thePasswordsMustBeTheSame()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
+		FormTester form = fillIn();
 		form.setValue("repeatedPassword", PASSWORD + "s");
 		form.submit();
 
@@ -364,7 +337,7 @@ class RegisterPageTest
 			"ANALYTICAL-ENGINE-1843", "Analytical-Engine", "AnalyticalEngine1843" })
 		{
 			clock.advance(Duration.ofSeconds(20));
-			FormTester form = fillIn(page.getExpectedAnswer());
+			FormTester form = fillIn();
 			form.setValue("password", weak);
 			form.setValue("repeatedPassword", weak);
 			form.submit();
@@ -374,14 +347,14 @@ class RegisterPageTest
 				"a lower case letter, a digit and a symbol.");
 			tester.clearFeedbackMessages();
 		}
-		assertTrue(mailer.getMails().isEmpty());
+		assertFalse(accounts.find("ada@example.com").isPresent());
 	}
 
 	@Test
 	void thePasswordMustNotContainTheEmail()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
+		FormTester form = fillIn();
 		form.setValue("password", "Ada@example.com-1");
 		form.setValue("repeatedPassword", "Ada@example.com-1");
 		form.submit();
@@ -394,33 +367,59 @@ class RegisterPageTest
 	void aRobotFillingInTheHoneypotIsTurnedAway()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		FormTester form = fillIn(page.getExpectedAnswer());
+		FormTester form = fillIn();
 		form.setValue("website", "https://spam.example.com");
 		form.submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
 		tester.assertErrorMessages(page.getString("robot"));
+		assertFalse(accounts.find("ada@example.com").isPresent());
 	}
 
 	@Test
 	void aRobotSendingTheFormAtOnceIsTurnedAway()
 	{
 		clock.advance(Duration.ofSeconds(1));
-		fillIn(page.getExpectedAnswer()).submit();
+		fillIn().submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
 		tester.assertErrorMessages(page.getString("robot"));
+		assertFalse(accounts.find("ada@example.com").isPresent());
 	}
 
 	@Test
-	void aWrongSumIsTurnedAwayAndANewOneAsked()
+	void aWrongCaptchaIsTurnedAwayAndANewOneAsked()
 	{
 		clock.advance(Duration.ofSeconds(20));
-		int expected = page.getExpectedAnswer();
-		fillIn(expected + 1).submit();
+		fillIn("WRONG").submit();
 
 		tester.assertRenderedPage(RegisterPage.class);
-		tester.assertErrorMessages(page.getString("robot"));
+		tester.assertErrorMessages(page.getCaptcha().getWrongMessage());
+		assertFalse(accounts.find("ada@example.com").isPresent());
+		assertFalse(DemoSession.get().isSignedIn());
+	}
+
+	@Test
+	void theCaptchaTakesTheLettersInLowerCaseToo()
+	{
+		clock.advance(Duration.ofSeconds(20));
+		fillIn(page.getCaptcha().getSolution().toLowerCase(Locale.ROOT)).submit();
+
+		tester.assertRenderedPage(HomePage.class);
+	}
+
+	@Test
+	void whoCannotReadTheImageAnswersAQuestionInstead()
+	{
+		tester.clickLink("form:captcha:other");
+		tester.assertRenderedPage(RegisterPage.class);
+		String answer = page.getCaptcha().getSolution();
+		assertTrue(answer.matches("\\d+"), answer);
+
+		clock.advance(Duration.ofSeconds(20));
+		fillIn(answer).submit();
+
+		tester.assertRenderedPage(HomePage.class);
 	}
 
 	@Test
@@ -435,24 +434,27 @@ class RegisterPageTest
 		int previous = -1;
 		for (String message : List.of("First name is required.", "Last name is required.",
 			"Email is required.", "Password is required.", "Password again is required.",
-			"Country is required.", "Role is required.", "The sum is required."))
+			"Country is required.", "Role is required.", "The letters of the image is required."))
 		{
 			int at = response.indexOf(message);
 			assertTrue(at > previous, message + " after the one before it");
 			previous = at;
 		}
 		assertFalse(response.contains("Wicket.Notifications.show"), response);
-		// the fields in error say so; the language, chosen already, is right
-		for (String field : List.of("firstName", "email", "password", "country", "answer"))
+		// the fields in error say so
+		for (String field : List.of("firstName", "email", "password", "country", "captcha:answer"))
 		{
 			assertEquals("true", TagTester.createTagByAttribute(response, "name", field)
 				.getAttribute("aria-invalid"), field);
 		}
-		assertNull(TagTester.createTagByAttribute(response, "name", "language")
-			.getAttribute("aria-invalid"));
 	}
 
-	private FormTester fillIn(int answer)
+	private FormTester fillIn()
+	{
+		return fillIn(page.getCaptcha().getSolution());
+	}
+
+	private FormTester fillIn(String captcha)
 	{
 		FormTester form = tester.newFormTester("form");
 		form.setValue("firstName", "Ada");
@@ -461,9 +463,8 @@ class RegisterPageTest
 		form.setValue("password", PASSWORD);
 		form.setValue("repeatedPassword", PASSWORD);
 		form.select("country", countryIndex("ES"));
-		form.select("language", Language.ENGLISH.ordinal());
 		form.select("jobRole", JobRole.DEVELOPER.ordinal());
-		form.setValue("answer", String.valueOf(answer));
+		form.setValue("captcha:answer", captcha);
 		return form;
 	}
 

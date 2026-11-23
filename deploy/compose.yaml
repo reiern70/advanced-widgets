@@ -40,13 +40,8 @@ services:
       ANTILIA_WIDGETS_ADMIN_PASSWORD: ${ANTILIA_WIDGETS_ADMIN_PASSWORD:-}
       ANTILIA_WIDGETS_SEMEDY_PASSWORD: ${ANTILIA_WIDGETS_SEMEDY_PASSWORD:-}
       ANTILIA_WIDGETS_WICKET_PASSWORD: ${ANTILIA_WIDGETS_WICKET_PASSWORD:-}
-      # the emails confirming a registration; without SMTP_HOST registering is closed
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-}
-      # where the links of the emails point: Jetty only sees the requests Caddy passes on
+      # the address of the site, whose pages the websockets connect from: Jetty only sees the
+      # requests Caddy passes on
       SITE_URL: https://${DOMAIN}
     volumes:
       - page-store:/var/lib/antilia-widgets

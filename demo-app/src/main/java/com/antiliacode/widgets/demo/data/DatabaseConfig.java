@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo.data;
 
+import java.time.Clock;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.ExpiredAccounts;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -106,6 +108,15 @@ public class DatabaseConfig
 	 * @return what runs the nightly tasks, on a thread that keeps neither the JVM nor the server
 	 *         from stopping
 	 */
+	@Bean
+	public ExpiredAccounts expiredAccounts(IUserRepository users, IAccessRepository accesses,
+		IOldAccessRepository oldAccesses, IFormerAccountRepository formerAccounts,
+		JpaTransactionManager transactionManager)
+	{
+		return new ExpiredAccounts(users, accesses, oldAccesses, formerAccounts,
+			new TransactionTemplate(transactionManager), Clock.systemUTC());
+	}
+
 	@Bean
 	public ThreadPoolTaskScheduler taskScheduler()
 	{

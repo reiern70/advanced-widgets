@@ -50,9 +50,8 @@ final class UserColumns
 			new AdminColumn<User>("userLanguage", "language", user -> language(context, user)),
 			new AdminColumn<User>("role", "role",
 				user -> context.getString("role." + user.getRole())),
-			new AdminColumn<User>("validated", "validated",
-				user -> context.getString(user.isValidated() ? "yes" : "no")),
-			new AdminColumn<>("created", "created", user -> AdminTables.format(user.getCreated())));
+			new AdminColumn<>("created", "created", user -> AdminTables.format(user.getCreated())),
+			new AdminColumn<>("expires", "expires", user -> AdminTables.format(user.getExpires())));
 	}
 
 	/**

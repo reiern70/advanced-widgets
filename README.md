@@ -123,7 +123,8 @@ in Jetty 12, in its Jakarta EE 10 environment (ee10), as production does. Locall
 
 - every session is signed in as `admin`, the account the password above creates; to sign in
   yourself instead, add `-Dantilia-widgets.sign-in-as=`;
-- registering is open, and the confirmation emails go to the log;
+- registering is open, as everywhere: no email is sent, and an account registered is deleted 6
+  months later (see `deploy/README.md`, section Registering);
 - users and accesses are kept in an H2 database in a file under the system's temporary folder,
   or under `-Dantilia-widgets.data-folder=<folder>`. With `DATABASE_URL`, `DATABASE_USER` and
   `DATABASE_PASSWORD` the demo uses PostgreSQL instead, as in production;
@@ -138,8 +139,8 @@ shows the branch and the commit in the footer.
 
 `jetty:run` runs in development mode, where the demos are open to everybody. The WAR runs in
 deployment mode, as its `web.xml` says, and so does `jetty:run -Dwicket.configuration=deployment`:
-there `antilia-widgets.sign-in-as` and `antilia-widgets.open-registration=true` are ignored, with
-a warning in the log.
+there `antilia-widgets.sign-in-as` and `antilia-widgets.open-demos` are ignored, with a warning in
+the log.
 
 ## Using the components in a Wicket application
 

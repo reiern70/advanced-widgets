@@ -31,9 +31,8 @@ import jakarta.persistence.Table;
 /**
  * An account that may open the demos: its name, a salted hash of its password, its
  * {@link Role} and an email, which a configured account may lack. A visitor who registered has the
- * email as name too, tells the first and last name, the country, the {@link JobRole} and the
- * {@link Language} of the emails, and opens the demos once the email is
- * {@link #isValidated() validated}.
+ * email as name too, tells the first and last name, the country and the {@link JobRole}, takes the
+ * {@link Language} of the page, and {@link #getExpires() expires} 6 months later.
  */
 @Entity
 @Table(name = "users")
@@ -90,12 +89,9 @@ public class User implements Serializable, IIdentifiable<Long>
 	@Column(nullable = false)
 	private boolean configured;
 
-	/** The SHA-256 of the token in the link of the confirmation email, in hex. */
-	@Column(name = "validation_token", length = 64)
-	private String validationToken;
-
-	@Column(name = "validation_expires")
-	private Instant validationExpires;
+	/** When the account is deleted, {@code null} if never. */
+	@Column
+	private Instant expires;
 
 	protected User()
 	{
@@ -239,7 +235,8 @@ public class User implements Serializable, IIdentifiable<Long>
 	}
 
 	/**
-	 * @return whether the email was confirmed, or the account was not registered by a visitor
+	 * @return whether the account opens the demos: all do but those registered with an email to
+	 *         confirm, which earlier versions asked for
 	 */
 	public boolean isValidated()
 	{
@@ -265,26 +262,18 @@ public class User implements Serializable, IIdentifiable<Long>
 		this.configured = configured;
 	}
 
-	public String getValidationToken()
-	{
-		return validationToken;
-	}
-
-	public Instant getValidationExpires()
-	{
-		return validationExpires;
-	}
-
 	/**
-	 * @param validationToken
-	 *            the SHA-256 of the token in the link of the confirmation email, in hex;
-	 *            {@code null} once there is none
-	 * @param validationExpires
-	 *            until when the link works
+	 * @return when the account is deleted with its accesses, see
+	 *         {@link com.antiliacode.widgets.demo.account.ExpiredAccounts}; {@code null} if it
+	 *         never is
 	 */
-	public void setValidation(String validationToken, Instant validationExpires)
+	public Instant getExpires()
 	{
-		this.validationToken = validationToken;
-		this.validationExpires = validationExpires;
+		return expires;
+	}
+
+	public void setExpires(Instant expires)
+	{
+		this.expires = expires;
 	}
 }

@@ -30,10 +30,8 @@
 	<entry key="role">Zugang</entry>
 	<entry key="role.USER">Benutzer</entry>
 	<entry key="role.ADMIN">Administrator</entry>
-	<entry key="validated">E-Mail bestätigt</entry>
 	<entry key="created">Erstellt</entry>
-	<entry key="yes">Ja</entry>
-	<entry key="no">Nein</entry>
+	<entry key="expires">Läuft ab</entry>
 	<entry key="filter.name">Name</entry>
 	<entry key="filter.name.placeholder">Konto oder Name</entry>
 	<entry key="filter.email">E-Mail</entry>
