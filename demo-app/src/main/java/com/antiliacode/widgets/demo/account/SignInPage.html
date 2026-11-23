@@ -17,15 +17,16 @@
 	<div class="register__card register__card--narrow">
 		<h1><wicket:message key="title"/></h1>
 		<p class="register__lead"><wicket:message key="lead"/></p>
+		<p class="register__shared"><span><wicket:message key="name"/>: <code wicket:id="user">user</code></span> <span><wicket:message key="password"/>: <code wicket:id="userPassword">[password]</code></span></p>
+		<p wicket:id="inUse" class="register__hint">[3 of 10 sessions in use]</p>
 		<form wicket:id="form" class="register__form register__form--single" novalidate="novalidate">
 			<div wicket:id="errors" class="register__errors" role="alert"></div>
-			<label class="register__field register__field--wide"><span><wicket:message key="name"/></span> <input type="text" wicket:id="name" autocomplete="username"/></label>
+			<label class="register__field register__field--wide"><span><wicket:message key="name"/></span> <input type="text" wicket:id="name" autocomplete="username" autocapitalize="none"/></label>
 			<label class="register__field register__field--wide"><span><wicket:message key="password"/></span> <input type="password" wicket:id="password" autocomplete="current-password"/></label>
 			<div wicket:id="captcha" class="register__captcha register__field--wide"></div>
 			<p class="register__actions"><button type="submit" class="register__submit"><wicket:message key="submit"/></button></p>
 		</form>
-		<p class="register__hint"><wicket:message key="noAccount"/> <a wicket:id="registerInstead"><wicket:message key="register"/></a></p>
-		<p wicket:id="kept" class="register__hint">[accounts are kept 6 months]</p>
+		<p class="register__hint"><wicket:message key="noRecord"/></p>
 	</div>
 </main>
 </wicket:extend>

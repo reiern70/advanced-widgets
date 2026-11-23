@@ -18,7 +18,6 @@
 	<entry key="look">Look</entry>
 	<entry key="look.bootstrap color:antilia size:antilia">Bootstrap + Antilia</entry>
 	<entry key="language">Language</entry>
-	<entry key="register">Register</entry>
 	<entry key="signIn">Sign in</entry>
 	<entry key="signOut">Sign out</entry>
 	<entry key="showPassword">Show password</entry>

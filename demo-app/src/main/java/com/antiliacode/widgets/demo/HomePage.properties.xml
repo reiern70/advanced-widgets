@@ -18,10 +18,11 @@
 	<entry key="webSocket">WebSocket connection</entry>
 	<entry key="connecting">Connecting</entry>
 	<entry key="live">Live</entry>
-	<entry key="signInHint">The demos are for registered visitors.</entry>
+	<entry key="signInHint">The demos are for visitors who sign in.</entry>
 	<entry key="hint.signIn">Sign in</entry>
-	<entry key="hint.or">or</entry>
-	<entry key="hint.register">register</entry>
+	<entry key="hint.account">as {0}, password {1}.</entry>
+	<entry key="inUse">{0} of {1} sessions in use.</entry>
+	<entry key="noRecord">We keep no record of the people who visit this site.</entry>
 	<entry key="browse">Browse the demos</entry>
 	<entry key="indexTitle">Every demo, by category</entry>
 	<entry key="indexLead">Point at a demo to preview it, click it to open it.</entry>

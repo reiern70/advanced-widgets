@@ -23,6 +23,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.demo.account.Role;
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.dropdown.DropdownPage;
 
 /**
@@ -39,7 +41,6 @@ class CrossSiteRequestsTest
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -49,7 +50,7 @@ class CrossSiteRequestsTest
 			}
 		});
 		tester.startPage(HomePage.class);
-		DemoSession.get().signIn("wicket");
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 		tester.startPage(DropdownPage.class);
 	}
 

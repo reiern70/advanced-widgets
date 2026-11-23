@@ -39,6 +39,16 @@
 		<param-value>deployment</param-value>
 	</context-param>
 
+	<!-- robots do not wear the site out: too many requests from one address get 429, see RequestLimitFilter -->
+	<filter>
+		<filter-name>request-limit</filter-name>
+		<filter-class>com.antiliacode.widgets.demo.RequestLimitFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>request-limit</filter-name>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
 	<filter>
 		<filter-name>wicket.demo-app</filter-name>
 		<!-- JavaxWebSocketFilter is a WicketFilter that also handles websocket upgrade requests -->

@@ -37,6 +37,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.antiliacode.widgets.demo.account.Role;
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.DemoCases;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.Demos;
@@ -246,7 +248,7 @@ class UploadPageTest
 	@Test
 	void signingOutUndoesTheSlowingDown()
 	{
-		DemoSession.get().signIn("wicket");
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 		Throttle.setAjaxDelay(tester.getRequest(), AjaxDelay.FIVE_SECONDS);
 		Throttle.setUploadSpeed(tester.getRequest(), UploadSpeed.SLOW);
 

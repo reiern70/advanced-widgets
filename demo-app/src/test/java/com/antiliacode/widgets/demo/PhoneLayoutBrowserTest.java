@@ -105,25 +105,6 @@ class PhoneLayoutBrowserTest extends JettyTestCase
 		assertWithinThePhone(phone);
 	}
 
-	@ParameterizedTest
-	@EnumSource(SeleniumBrowser.class)
-	void theAdministrationKeepsItsColumnsReadableOnAPhone(SeleniumBrowser browser)
-	{
-		open(browser);
-		driver.get(base() + "sign-in");
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-		wait.until(d -> !d.findElements(By.cssSelector("input[autocomplete='username']")).isEmpty());
-		driver.findElement(By.cssSelector("input[autocomplete='username']")).sendKeys("admin");
-		driver.findElement(By.cssSelector("input[autocomplete='current-password']"))
-			.sendKeys(TestDatabase.ADMIN_PASSWORD);
-		driver.findElement(By.cssSelector(".register__submit")).click();
-		wait.until(d -> !d.getCurrentUrl().contains("sign-in"));
-
-		JSONObject phone = measure("admin");
-
-		assertWithinThePhone(phone);
-	}
-
 	private void open(SeleniumBrowser browser)
 	{
 		driver = browser.newDriver(1300, 1000);

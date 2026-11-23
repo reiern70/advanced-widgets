@@ -21,17 +21,15 @@ import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.protocol.ws.api.BaseWebSocketBehavior;
 import org.apache.wicket.util.string.Strings;
 
-import com.antiliacode.widgets.demo.admin.AccessTimeResource;
-
 /**
  * Connects the page to the {@link LiveResource} and turns the component it is added to, the
  * status, live when the resource pushes back: its text becomes the one of its
  * {@code data-live} attribute. Stateless, unlike a {@code WebSocketBehavior}: the connection
  * goes to the shared resource, not to the page.
  * <p>
- * Like {@link DemoWebSocketBehavior} it sets up the websocket without jQuery.
- *
- * @see AccessTimeResource
+ * Like {@link DemoWebSocketBehavior} it sets up the websocket without jQuery. Wicket's websocket
+ * needs an HTTP session, which a visitor who only looks never gets: the home page shows the status
+ * only to a session there is, one that signed in or chose a theme.
  */
 public class LiveStatusBehavior extends BaseWebSocketBehavior
 {
@@ -64,19 +62,14 @@ public class LiveStatusBehavior extends BaseWebSocketBehavior
 	}
 
 	/**
-	 * Wicket's websocket needs an HTTP session, which a visitor of the stateless home page does
-	 * not have yet: the script of {@link AccessTimeResource} makes one and leaves the promise of
-	 * it in {@code window.antiliaSession}. So the websocket connects once the scripts of the page
-	 * ran and that promise settled.
+	 * Connects once the scripts of the page ran.
 	 */
 	@Override
 	protected String getWebSocketSetupScript(Map<String, Object> parameters)
 	{
 		String setup = super.getWebSocketSetupScript(parameters).replace("jQuery.extend(",
 			"Object.assign(");
-		return "setTimeout(function() {" +
-			"(window.antiliaSession || Promise.resolve()).then(function() {" + setup + "});" +
-			"}, 0);";
+		return "setTimeout(function() {" + setup + "}, 0);";
 	}
 
 	@Override

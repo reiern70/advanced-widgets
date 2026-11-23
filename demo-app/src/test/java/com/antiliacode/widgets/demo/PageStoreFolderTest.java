@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.antiliacode.widgets.demo.admin.AdminPage;
-import com.antiliacode.widgets.demo.data.Role;
+import com.antiliacode.widgets.demo.account.Role;
 
 /**
  * The folder of the page store comes from outside, so production can keep it on a volume. The

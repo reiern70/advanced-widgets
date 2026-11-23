@@ -15,119 +15,95 @@ package com.antiliacode.widgets.demo.account;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.regex.Pattern;
 
-import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
-import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
-import org.apache.wicket.markup.html.form.Form;
-import org.apache.wicket.markup.html.form.FormComponent;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
-import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.link.BookmarkablePageLink;
+import org.apache.wicket.markup.html.form.StatelessForm;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
+import org.apache.wicket.request.flow.RedirectToUrlException;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antiliacode.widgets.demo.BasePage;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.FormErrors;
 import com.antiliacode.widgets.demo.HomePage;
-import com.antiliacode.widgets.demo.WicketApplication;
-import com.antiliacode.widgets.demo.data.User;
-import com.antiliacode.widgets.demo.register.RegisterPage;
-import com.github.openjson.JSONObject;
 
 /**
- * Signs a visitor in with the name of an account and its password, while fewer than
- * {@value SignedInUsers#MAXIMUM} other registered accounts are signed in, the accounts the demo
- * always has and those the server is started with signing in whenever (see
- * {@link SignedInUsers}), or while one of them has been signed in for longer than
- * {@link SignedInUsers#PLACE_TIME}, whose place it then takes; then goes on to the demo the
- * visitor wanted to see, or to the {@link HomePage}. After {@value SignInAttempts#BEFORE_CAPTCHA} failed attempts in the session,
- * or on the account, it asks for a {@link Captcha} too: an attempt
- * without it, from a session that has not seen it yet, is turned away and shown the captcha,
- * without checking the password. While the account or the address waits after too many failures
- * (see {@link SignInAttempts}), attempts are turned away and told how long to wait.
- * Next to the link to the {@link RegisterPage} it says that accounts are kept
- * {@link Accounts#KEPT} and never used to contact anybody.
+ * Signs a visitor in, as {@value Accounts#USER}, whose password the page shows, or as the
+ * administrator. Stateless: a visitor who does not sign in gets no session. Every attempt asks the
+ * {@link Captcha}. After {@value SignInAttempts#MAXIMUM_FAILURES} failures, of the captcha or of
+ * the password, the address is blocked for {@link SignInAttempts#BLOCKED} and told how long is
+ * left (see {@link SignInAttempts}). At most {@value SignedInUsers#MAXIMUM} sessions are signed in
+ * as {@value Accounts#USER} at once, and the page says how many are now; the administrator always
+ * signs in (see {@link SignedInUsers}). Then it goes on to the demo the visitor wanted to see, the
+ * page parameter {@value #TO}, or to the {@link HomePage}.
  * <p>
- * The form is sent via Ajax, so that what went wrong shows without drawing the field of the
- * password again: what was typed in it stays, unless the password was wrong or missing. Without
- * scripts the form is sent as any other, and the password has to be typed again.
+ * It says that the site keeps no record of the people who visit it.
  */
 public class SignInPage extends BasePage
 {
 	private static final long serialVersionUID = 1L;
 
-	private final Model<String> name = Model.of();
+	/** The page parameter naming the page to go on to, as a path of the site. */
+	public static final String TO = "to";
 
-	private final FormErrors errors;
-
-	private final FormComponent<String> nameField;
-
-	private final PasswordTextField passwordField;
+	/** A path of the site to go on to: relative, of the site's own pages, nothing else. */
+	private static final Pattern LOCAL_PATH = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._~/-]{0,199}");
 
 	private final Captcha captcha;
 
 	/**
-	 * The field of what turned the last attempt away, the password or the answer of the captcha,
-	 * which then has the focus; {@code null} if nothing did.
+	 * @param parameters
+	 *            the page parameters: {@value #TO}, the path of the page to go on to
 	 */
-	private FormComponent<?> wrong;
-
-	public SignInPage()
+	public SignInPage(PageParameters parameters)
 	{
+		super(parameters);
+		Model<String> name = Model.of();
 		Model<String> password = Model.of();
+		captcha = new Captcha("captcha");
 
-		Form<Void> form = new Form<>("form")
+		StatelessForm<Void> form = new StatelessForm<>("form")
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected void onSubmit()
 			{
-				wrong = null;
-				SignInAttempts attempts = attempts();
-				DemoSession session = DemoSession.get();
-				String typed = name.getObject();
+				SignInAttempts attempts = SignInAttempts.get();
 				String address = SignInAttempts.address();
-				Duration wait = attempts.retryAfter(typed, address);
+				Duration wait = attempts.retryAfter(address);
 				if (wait.isPositive())
 				{
-					// the password is not checked while the account or the address waits
+					// neither the captcha nor the password is checked while the address is blocked
 					error(waitMessage(wait));
-					return;
-				}
-				if (isCaptchaNeeded() && !captcha.isVisibleInHierarchy())
-				{
-					// a session that did not see the captcha yet, a new one say, is asked it now
-					error(getString("captchaNeeded"));
-					wrong = captcha.getAnswerField();
-					return;
-				}
-				if (captcha.isVisibleInHierarchy() && !captcha.isSolved())
-				{
-					session.failedSignIn();
-					error(captcha.getWrongMessage());
 					captcha.renew();
-					wrong = captcha.getAnswerField();
 					return;
 				}
-				Accounts accounts = Accounts.get();
-				Optional<User> user = accounts.authenticate(typed, password.getObject());
-				if (user.isEmpty())
+				boolean solved = captcha.isSolved();
+				String wrongCaptcha = captcha.getWrongMessage();
+				captcha.renew();
+				if (!solved)
 				{
-					session.failedSignIn();
-					attempts.failed(typed, address, accounts.find(typed).isPresent());
+					attempts.failed(address);
+					error(wrongCaptcha);
+					return;
+				}
+				Optional<Role> role = Accounts.get().authenticate(name.getObject(),
+					password.getObject());
+				if (role.isEmpty())
+				{
+					attempts.failed(address);
 					error(getString("wrong"));
-					captcha.renew();
-					wrong = passwordField;
 					return;
 				}
-				attempts.succeeded(typed);
-				if (!session.signIn(user.get().getName(), user.get().getRole()))
+				attempts.succeeded(address);
+				String account = role.get() == Role.ADMIN ? Accounts.ADMIN : Accounts.USER;
+				if (!DemoSession.get().signIn(account, role.get()))
 				{
 					Duration untilRoom = SignedInUsers.get().untilRoom();
 					error(new StringResourceModel("full", SignInPage.this)
@@ -136,69 +112,33 @@ public class SignInPage extends BasePage
 						.getString());
 					return;
 				}
-				continueToOriginalDestination();
-				setResponsePage(HomePage.class);
+				goOn();
+			}
+
+			@Override
+			protected void onError()
+			{
+				captcha.renew();
 			}
 		};
 		add(form);
-		form.add(new AjaxFormSubmitBehavior("submit")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-			{
-				super.updateAjaxAttributes(attributes);
-				// the Ajax request sends the form, the browser does not
-				attributes.setPreventDefault(true);
-			}
-
-			@Override
-			protected void onAfterSubmit(AjaxRequestTarget target)
-			{
-				show(target);
-			}
-
-			@Override
-			protected void onError(AjaxRequestTarget target)
-			{
-				wrong = null;
-				show(target);
-			}
-		});
-
-		errors = new FormErrors("errors");
-		form.add(errors.setOutputMarkupPlaceholderTag(true));
-
-		nameField = new RequiredTextField<>("name", name);
-		form.add(nameField.setLabel(new ResourceModel("name")).setOutputMarkupId(true));
-		passwordField = new PasswordTextField("password", password);
-		form.add(passwordField.setLabel(new ResourceModel("password"))
+		form.add(new FormErrors("errors"));
+		form.add(new RequiredTextField<>("name", name).setLabel(new ResourceModel("name")));
+		form.add(new PasswordTextField("password", password).setLabel(new ResourceModel("password"))
 			.add(new ShowPasswordBehavior()));
-
-		captcha = new Captcha("captcha")
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setVisible(isCaptchaNeeded());
-			}
-		};
 		form.add(captcha);
 
-		add(new BookmarkablePageLink<>("registerInstead", RegisterPage.class));
-		add(new Label("kept", new StringResourceModel("kept", this)
-			.setParameters(Accounts.KEPT.toTotalMonths())));
+		add(new Label("user", Accounts.USER));
+		add(new Label("userPassword", Accounts.USER_PASSWORD));
+		add(new Label("inUse", () -> new StringResourceModel("inUse", this)
+			.setParameters(SignedInUsers.get().count(), SignedInUsers.MAXIMUM).getString()));
 	}
 
 	@Override
 	protected void onInitialize()
 	{
 		super.onInitialize();
-		if (DemoSession.get().tellPlaceLost())
+		if (!getSession().isTemporary() && DemoSession.get().tellPlaceLost())
 		{
 			error(new StringResourceModel("placeLost", this)
 				.setParameters(SignedInUsers.PLACE_TIME.toMinutes(), SignedInUsers.MAXIMUM)
@@ -207,44 +147,22 @@ public class SignInPage extends BasePage
 	}
 
 	/**
-	 * Shows what an attempt sent via Ajax changed: the errors, the fields marked as wrong, and the
-	 * captcha, asked or renewed. The field of the password is drawn again, empty, only when the
-	 * password was wrong or missing; otherwise what was typed in it stays. The focus goes to the
-	 * first field in error, or to the field of what turned the attempt away.
+	 * Goes on to the page the visitor wanted to see, if it is a path of the site, or else to the
+	 * home page.
 	 */
-	private void show(AjaxRequestTarget target)
+	private void goOn()
 	{
-		target.add(errors, nameField, captcha);
-		if (wrong == passwordField || !passwordField.isValid())
+		String to = getPageParameters().get(TO).toOptionalString();
+		if (to != null && LOCAL_PATH.matcher(to).matches() && !to.contains(".."))
 		{
-			target.add(passwordField);
+			throw new RedirectToUrlException(getRequestCycle().getUrlRenderer()
+				.renderContextRelativeUrl(to));
 		}
-		else
-		{
-			// what was typed stays, without the mark of the error it had while it was empty
-			target.appendJavaScript("document.getElementById(" +
-				JSONObject.quote(passwordField.getMarkupId()) +
-				").removeAttribute('aria-invalid');");
-		}
-		Stream.<FormComponent<?>> of(nameField, passwordField, captcha.getAnswerField())
-			.filter(field -> field.isVisibleInHierarchy() && !field.isValid())
-			.findFirst()
-			.or(() -> Optional.ofNullable(wrong))
-			.ifPresent(target::focusComponent);
+		setResponsePage(HomePage.class);
 	}
 
 	/**
-	 * @return whether the visitor has to solve a captcha: after failing to sign in too often, in
-	 *         the session or on the account typed
-	 */
-	boolean isCaptchaNeeded()
-	{
-		return DemoSession.get().getFailedSignIns() >= SignInAttempts.BEFORE_CAPTCHA ||
-			attempts().needsCaptcha(name.getObject());
-	}
-
-	/**
-	 * @return the message telling how long to wait before trying again, in seconds or, from two
+	 * @return the message telling how long the address is still blocked, in seconds or, from two
 	 *         minutes on, in minutes, rounded up
 	 */
 	private String waitMessage(Duration wait)
@@ -259,24 +177,11 @@ public class SignInPage extends BasePage
 	}
 
 	/**
-	 * @return what solves the captcha, for tests
-	 */
-	String getChallenge()
-	{
-		return captcha.getSolution();
-	}
-
-	/**
 	 * @return the captcha, for tests
 	 */
 	Captcha getCaptcha()
 	{
 		return captcha;
-	}
-
-	private static SignInAttempts attempts()
-	{
-		return ((WicketApplication)WicketApplication.get()).getSignInAttempts();
 	}
 
 	@Override

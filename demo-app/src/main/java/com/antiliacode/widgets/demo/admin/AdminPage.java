@@ -13,62 +13,75 @@
  */
 package com.antiliacode.widgets.demo.admin;
 
-import java.util.List;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
-import org.apache.wicket.extensions.ajax.markup.html.tabs.AjaxTabbedPanel;
-import org.apache.wicket.extensions.markup.html.tabs.AbstractTab;
-import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.html.WebMarkupContainer;
-import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.list.ListItem;
+import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.StringResourceModel;
 
 import com.antiliacode.widgets.demo.BasePage;
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
-import com.antiliacode.widgets.tabs.TabsStyle;
-import com.antiliacode.widgets.tabs.TabsStyleBehavior;
+import com.antiliacode.widgets.demo.account.SignedInUsers;
+import com.antiliacode.widgets.demo.account.SignedInUsers.Place;
 
 /**
- * The administration, a tab on top for each section: the {@link UsersPanel registered users}, the
- * recent {@link AccessesPanel accesses} and the old ones. Only for administrators, see
- * {@link DemosAuthorization}.
+ * The administration: how many of the {@value SignedInUsers#MAXIMUM} sessions of
+ * {@value Accounts#USER} are signed in, and since when each one, when it made its last request and
+ * until when it is sure of its place. Nothing tells who is behind a session: the site keeps no
+ * record of the people who visit it. Only for administrators, see {@link DemosAuthorization}.
  */
 public class AdminPage extends BasePage
 {
 	private static final long serialVersionUID = 1L;
 
-	/** The rows on a page of the tables at first. */
-	static final int ROWS_PER_PAGE = 25;
+	/** How the times are shown: in UTC, to the second. */
+	static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+		.withZone(ZoneOffset.UTC);
 
 	public AdminPage()
 	{
-		List<ITab> tabs = List.of(new AbstractTab(new ResourceModel("tab.users"))
+		add(new Label("lead", () -> new StringResourceModel("lead", this)
+			.setParameters(SignedInUsers.get().count(), SignedInUsers.MAXIMUM, Accounts.USER)
+			.getString()));
+		WebMarkupContainer table = new WebMarkupContainer("table")
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public WebMarkupContainer getPanel(String panelId)
+			protected void onConfigure()
 			{
-				return new UsersPanel(panelId);
+				super.onConfigure();
+				setVisible(SignedInUsers.get().count() > 0);
 			}
-		}, new AbstractTab(new ResourceModel("tab.accesses"))
+		};
+		add(table);
+		table.add(new ListView<Place>("places", () -> SignedInUsers.get().places())
 		{
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public WebMarkupContainer getPanel(String panelId)
+			protected void populateItem(ListItem<Place> item)
 			{
-				return new AccessesPanel(panelId, false);
-			}
-		}, new AbstractTab(new ResourceModel("tab.oldAccesses"))
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public WebMarkupContainer getPanel(String panelId)
-			{
-				return new AccessesPanel(panelId, true);
+				Place place = item.getModelObject();
+				item.add(new Label("number", item.getIndex() + 1));
+				item.add(new Label("since", format(place.since())));
+				item.add(new Label("seen", format(place.seen())));
+				item.add(new Label("sureUntil", format(place.since().plus(SignedInUsers.PLACE_TIME))));
 			}
 		});
-		add(new AjaxTabbedPanel<>("tabs", tabs).add(new TabsStyleBehavior(TabsStyle.TABS)));
+	}
+
+	/**
+	 * @return the time as the page shows it
+	 */
+	static String format(Instant instant)
+	{
+		return TIME.format(instant);
 	}
 
 	@Override
