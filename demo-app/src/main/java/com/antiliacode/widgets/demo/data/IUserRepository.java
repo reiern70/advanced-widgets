@@ -13,6 +13,7 @@
  */
 package com.antiliacode.widgets.demo.data;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,14 +40,14 @@ public interface IUserRepository extends JpaRepository<User, Long>, JpaSpecifica
 	boolean existsByName(String name);
 
 	/**
-	 * @param validationToken
-	 *            the SHA-256 of the token in the link of a confirmation email, in hex
-	 * @return the account the link confirms
-	 */
-	Optional<User> findByValidationToken(String validationToken);
-
-	/**
 	 * @return the accounts the server is started with, or was before
 	 */
 	List<User> findByConfiguredTrue();
+
+	/**
+	 * @param now
+	 *            the time on the server's clock
+	 * @return the accounts that expired before it
+	 */
+	List<User> findByExpiresBefore(Instant now);
 }

@@ -15,6 +15,9 @@ package com.antiliacode.widgets.demo.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * The {@link OldAccess}es in the table {@code old_accesses}, also filtered, see
@@ -25,4 +28,28 @@ public interface IOldAccessRepository
 		JpaRepository<OldAccess, Long>,
 		JpaSpecificationExecutor<OldAccess>
 {
+	/**
+	 * @param userName
+	 *            the name of an account
+	 * @return how many of these accesses are the account's
+	 */
+	long countByUserName(String userName);
+
+	/**
+	 * @param userName
+	 *            the name of an account
+	 * @return how many of these accesses are the account's and opened the demos
+	 */
+	long countByUserNameAndPrivatePartTrue(String userName);
+
+	/**
+	 * Removes the accesses of an account, when it is deleted for good.
+	 *
+	 * @param userName
+	 *            the name of the account
+	 * @return how many were removed
+	 */
+	@Modifying
+	@Query("DELETE FROM OldAccess a WHERE a.userName = :userName")
+	int removeByUserName(@Param("userName") String userName);
 }

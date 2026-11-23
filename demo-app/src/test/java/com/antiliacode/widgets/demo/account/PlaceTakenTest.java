@@ -68,9 +68,8 @@ class PlaceTakenTest
 			}
 		});
 		Accounts accounts = Accounts.get();
-		ada = accounts.validate(accounts
-			.register("ada@example.com", "Analytical-Engine-1843", user -> {})
-			.orElseThrow()).orElseThrow().getName();
+		ada = accounts.register("ada@example.com", "Analytical-Engine-1843", user -> {})
+			.orElseThrow().getName();
 
 		tester.startPage(HomePage.class);
 		assertTrue(DemoSession.get().signIn(ada, Role.USER));

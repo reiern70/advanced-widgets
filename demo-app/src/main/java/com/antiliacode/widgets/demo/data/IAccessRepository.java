@@ -58,4 +58,29 @@ public interface IAccessRepository
 	@Query(nativeQuery = true, value = "DELETE FROM accesses WHERE accessed < :before " +
 		"AND id IN (SELECT id FROM old_accesses)")
 	int removeCopiedToOldAccesses(@Param("before") Instant before);
+
+	/**
+	 * @param userName
+	 *            the name of an account
+	 * @return how many of these accesses are the account's
+	 */
+	long countByUserName(String userName);
+
+	/**
+	 * @param userName
+	 *            the name of an account
+	 * @return how many of these accesses are the account's and opened the demos
+	 */
+	long countByUserNameAndPrivatePartTrue(String userName);
+
+	/**
+	 * Removes the accesses of an account, when it is deleted for good.
+	 *
+	 * @param userName
+	 *            the name of the account
+	 * @return how many were removed
+	 */
+	@Modifying
+	@Query("DELETE FROM Access a WHERE a.userName = :userName")
+	int removeByUserName(@Param("userName") String userName);
 }

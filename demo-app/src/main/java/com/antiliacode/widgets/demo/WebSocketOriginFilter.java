@@ -22,15 +22,13 @@ import org.apache.wicket.protocol.ws.api.IWebSocketConnectionFilter;
 import org.apache.wicket.protocol.ws.api.WebSocketConnectionOriginFilter;
 import org.apache.wicket.util.string.Strings;
 
-import com.antiliacode.widgets.demo.register.ConfirmationMail;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Lets a websocket connect only from a page of the site, as the browser tells with the
  * {@code Origin} of the handshake: its host is the host the handshake went to, by its
  * {@code Host}, or that of the address of the site
- * ({@value ConfirmationMail#SITE_URL_ENVIRONMENT_VARIABLE}). The host the handshake went to is
+ * ({@value #SITE_URL_ENVIRONMENT_VARIABLE}). The host the handshake went to is
  * the one the browser asked for, also behind the proxy, which passes it on:
  * so the site connects from its own address, from {@code localhost} and from the address of the
  * machine in the local network alike, on any port. A handshake without an {@code Origin}, or from
@@ -38,6 +36,12 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 public class WebSocketOriginFilter implements IWebSocketConnectionFilter
 {
+	/** The system property holding the address of the site, as {@code https://example.com}. */
+	public static final String SITE_URL_PROPERTY = "antilia-widgets.site-url";
+
+	/** The environment variable holding the address of the site, like the property. */
+	public static final String SITE_URL_ENVIRONMENT_VARIABLE = "SITE_URL";
+
 	@Override
 	public ConnectionRejected doFilter(HttpServletRequest request)
 	{
@@ -106,13 +110,11 @@ public class WebSocketOriginFilter implements IWebSocketConnectionFilter
 	}
 
 	/**
-	 * @return the address of the site, as the confirmation emails have it; {@code null} if it is
-	 *         not set
+	 * @return the address of the site; {@code null} if it is not set
 	 */
 	private static String siteUrl()
 	{
-		String site = System.getProperty(ConfirmationMail.SITE_URL_PROPERTY);
-		return Strings.isEmpty(site) ? System.getenv(ConfirmationMail.SITE_URL_ENVIRONMENT_VARIABLE)
-			: site;
+		String site = System.getProperty(SITE_URL_PROPERTY);
+		return Strings.isEmpty(site) ? System.getenv(SITE_URL_ENVIRONMENT_VARIABLE) : site;
 	}
 }

@@ -96,8 +96,7 @@ instance, checks it before touching anything, without printing any of its values
   `wicket.configuration`: in DEVELOPMENT mode every demo is open to anonymous visitors and errors
   show their stack traces;
 - they set `-Dantilia-widgets.sign-in-as` (every visitor signed in as that account) or
-  `-Dantilia-widgets.open-demos`, or `-Dantilia-widgets.open-registration` to anything but
-  `false`: switches for a developer's machine.
+  `-Dantilia-widgets.open-demos`: switches for a developer's machine.
 
 Logs: `ssh ubuntu@<ip> 'cd /opt/antilia-widgets && docker compose logs -f app'`.
 
@@ -146,8 +145,8 @@ most), so such a body never reaches Jetty. A JVM that runs out of memory ends
 (`-XX:+ExitOnOutOfMemoryError`, set by the image in `JDK_JAVA_OPTIONS` whatever `JAVA_OPTIONS`
 say), and Docker starts it again (`restart: unless-stopped`) instead of leaving it up but broken.
 
-The demos are private: visitors sign in to open them, the home page is public. Registering is
-open once an SMTP server sends the confirmation emails, see section 5. The accounts are in the table `users`.
+The demos are private: visitors sign in to open them, the home page is public. Visitors register
+on `/register`, see section 5. The accounts are in the table `users`.
 The demo always has `semedy`, `wicket` and `admin` (the administrator, who sees the users and the accesses on
 `/admin`), with the passwords `.env` gives them in `ANTILIA_WIDGETS_SEMEDY_PASSWORD`,
 `ANTILIA_WIDGETS_WICKET_PASSWORD` and `ANTILIA_WIDGETS_ADMIN_PASSWORD`: at every start an account is added when
@@ -338,23 +337,23 @@ export DATABASE_URL=jdbc:postgresql://localhost:5432/widgets DATABASE_USER=widge
 mvn -pl demo-app jetty:run -Dwicket.configuration=deployment -Dwicket.demo=true
 ```
 
-## 5. Email
+## 5. Registering
 
-Visitors who register get an email with a link confirming their address, and open the demos only
-after following it. The emails go over SMTP; without an SMTP server registering stays closed,
-unless `-Dantilia-widgets.open-registration=true` opens it (locally `jetty:run` does, and the
-emails go to the log, where the link is taken from). Set in `.env`:
+Visitors register on `/register` and open the demos at once, signed in: the site sends no email,
+so it needs no mail server. The email is not checked; it is the name of the account. The page
+says that the account is kept 6 months and never used to contact anybody, only to count who uses
+the widgets. An account registered there gets the time it expires, 6 months later
+(`users.expires`); every night at a quarter to four, UTC, the application deletes the accounts
+that expired, with their accesses, and keeps for each a row without personal data in
+`former_accounts`: the month of registering, the country, the language, the role, and how many
+accesses it had and how many of them opened the demos. Accounts without that time never expire:
+the administrators, those of `.env`, those made through the API and those registered before
+issue #173.
 
-| Environment variable | System property | |
-|---|---|---|
-| `SMTP_HOST` | `antilia-widgets.smtp.host` | The SMTP server, e.g. `email-smtp.eu-central-1.amazonaws.com` (Amazon SES) |
-| `SMTP_PORT` | `antilia-widgets.smtp.port` | 587 (STARTTLS) if not set, or 465 (TLS) |
-| `SMTP_USER` | `antilia-widgets.smtp.user` | The SMTP user, if the server asks for one |
-| `SMTP_PASSWORD` | `antilia-widgets.smtp.password` | Its password |
-| `MAIL_FROM` | `antilia-widgets.mail.from` | The sender, e.g. `Antilia Widgets <no-reply@antiliacode.com>`; the user if not set |
-| `SITE_URL` | `antilia-widgets.site-url` | The address the links point at; `compose.yaml` sets `https://${DOMAIN}` |
+`-Dantilia-widgets.open-registration=false` in `JAVA_OPTIONS` closes registering.
 
-`-Dantilia-widgets.open-registration=false` closes registering even with a server.
+`SITE_URL` (`antilia-widgets.site-url`, set by `compose.yaml` to `https://${DOMAIN}`) is the
+address of the site, whose pages the websockets connect from.
 
 ## 6. One-time steps on the existing server
 
@@ -363,7 +362,7 @@ before or while deploying again:
 
 1. **`.env`**: `JAVA_OPTIONS` must hold `-Dwicket.configuration=deployment`, and should hold
    `-XX:+ExitOnOutOfMemoryError` (the image sets it anyway); no
-   `-Dantilia-widgets.sign-in-as`, `open-demos` or `open-registration` (but `=false`); no value
+   `-Dantilia-widgets.sign-in-as` or `open-demos`; no value
    `change-me` (an `ANTILIA_WIDGETS_ACCOUNTS=client:change-me` from the old example has to go, or
    get a real password). `start.sh` refuses to deploy otherwise.
 
