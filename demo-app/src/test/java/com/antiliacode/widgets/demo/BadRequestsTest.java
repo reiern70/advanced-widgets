@@ -30,6 +30,9 @@ import com.github.openjson.JSONException;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.Role;
+
 /**
  * A request whose parameters or body cannot be read is answered 400, not 500, see
  * {@link BadRequests}.
@@ -41,7 +44,6 @@ class BadRequestsTest
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -51,7 +53,7 @@ class BadRequestsTest
 			}
 		});
 		tester.startPage(HomePage.class);
-		DemoSession.get().signIn("wicket");
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 	}
 
 	@AfterEach

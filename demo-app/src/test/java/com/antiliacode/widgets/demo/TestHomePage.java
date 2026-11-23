@@ -28,6 +28,8 @@ import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.Role;
 import com.antiliacode.widgets.theme.Theme;
 
 /**
@@ -109,6 +111,9 @@ public class TestHomePage
 	public void wicketsAjaxRunsOnPlainJavaScriptByDefault()
 	{
 		tester.startPage(HomePage.class);
+		// the websocket of the status, for a session there is
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
+		tester.startPage(HomePage.class);
 
 		tester.assertContains("res/js/wicket-ajax-ver-");
 		String page = tester.getLastResponseAsString();
@@ -188,9 +193,19 @@ public class TestHomePage
 		tester.startPage(HomePage.class);
 
 		assertTrue(tester.getLastRenderedPage().isPageStateless());
-		// nothing to keep, so no session either
+		// nothing to keep, so no session either, and no websocket, which needs one
 		assertTrue(tester.getSession().isTemporary());
-		// the websocket of the status goes to the shared resource, not to the page
+		assertFalse(tester.getLastResponseAsString().contains("resourceName: 'live'"));
+	}
+
+	@Test
+	public void forASessionThereIsTheStatusOfTheWebsocketGoesToTheSharedResource()
+	{
+		tester.startPage(HomePage.class);
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
+		tester.startPage(HomePage.class);
+
+		assertTrue(tester.getLastRenderedPage().isPageStateless());
 		tester.assertContains("resourceName: 'live'");
 	}
 

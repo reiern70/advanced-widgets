@@ -28,14 +28,12 @@ import org.junit.jupiter.api.Test;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.TestClock;
-import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
-import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.dropdown.DropdownPage;
 
 /**
- * A registered account keeps its place for {@link SignedInUsers#PLACE_TIME}; once another account
- * takes it, the session is signed out at its next request and the sign-in page tells why, once.
+ * A session signed in as {@value Accounts#USER} keeps its place for {@link SignedInUsers#PLACE_TIME};
+ * once another session takes it, the session is signed out at its next request and the sign-in page tells why, once.
  */
 class PlaceTakenTest
 {
@@ -45,14 +43,11 @@ class PlaceTakenTest
 
 	private WicketTester tester;
 
-	private String ada;
-
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		users = new SignedInUsers(clock, WicketApplication.SESSION_TIMEOUT,
-			SignedInUsers.PLACE_TIME, account -> Accounts.get().isAlwaysSignedIn(account));
+			SignedInUsers.PLACE_TIME);
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -67,18 +62,14 @@ class PlaceTakenTest
 				return users;
 			}
 		});
-		Accounts accounts = Accounts.get();
-		ada = accounts.register("ada@example.com", "Analytical-Engine-1843", user -> {})
-			.orElseThrow().getName();
-
 		tester.startPage(HomePage.class);
-		assertTrue(DemoSession.get().signIn(ada, Role.USER));
-		// the four other places are taken a minute later
+		assertTrue(DemoSession.get().signIn(Accounts.USER, Role.USER));
+		// the nine other places are taken a minute later
 		clock.advance(Duration.ofMinutes(1));
 		for (int i = 2; i <= SignedInUsers.MAXIMUM; i++)
 		{
 			String id = "other-" + i;
-			assertTrue(users.signIn("user" + i, Role.USER, () -> id));
+			assertTrue(users.signIn(Role.USER, () -> id));
 		}
 	}
 
@@ -109,10 +100,10 @@ class PlaceTakenTest
 	{
 		keepActive(Duration.ofMinutes(28));
 
-		assertFalse(users.signIn("newcomer", Role.USER, () -> "newcomer-session"));
+		assertFalse(users.signIn(Role.USER, () -> "newcomer-session"));
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
-		assertEquals(ada, DemoSession.get().getAccount());
+		assertEquals(Accounts.USER, DemoSession.get().getAccount());
 	}
 
 	@Test
@@ -120,15 +111,15 @@ class PlaceTakenTest
 	{
 		keepActive(Duration.ofMinutes(32));
 		// still signed in: nobody needed the place
-		assertEquals(ada, DemoSession.get().getAccount());
+		assertEquals(Accounts.USER, DemoSession.get().getAccount());
 
-		assertTrue(users.signIn("newcomer", Role.USER, () -> "newcomer-session"));
+		assertTrue(users.signIn(Role.USER, () -> "newcomer-session"));
 
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(SignInPage.class);
 		assertFalse(DemoSession.get().isSignedIn());
-		tester.assertErrorMessages("Another user took your place: each user keeps it for 30 " +
-			"minutes for sure, and at most 5 are signed in at once. Sign in again to go on, " +
+		tester.assertErrorMessages("Another visitor took your place: each session keeps it for 30 " +
+			"minutes for sure, and at most 10 are signed in at once. Sign in again to go on, " +
 			"when there is room.");
 
 		// told once

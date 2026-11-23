@@ -13,10 +13,10 @@
  */
 package com.antiliacode.widgets.demo;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -26,14 +26,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import com.antiliacode.widgets.demo.data.Access;
-import com.antiliacode.widgets.demo.data.IAccessRepository;
-
 /**
- * A visitor of the stateless home page, in Chrome and in Firefox: its script posts the visitor's
- * clock, which makes the session and records the access, under the name the visitor told, and
- * the websocket of the page then connects and says that the site is live. Runs with
- * {@code -Pselenium}, see {@link SeleniumBrowser}.
+ * A visitor of the stateless home page, in Chrome and in Firefox, gets no session: no cookie, and
+ * no status of the websocket, which needs one. Runs with {@code -Pselenium}, see
+ * {@link SeleniumBrowser}.
  */
 @EnabledIfSystemProperty(named = "wicket.selenium", matches = "true")
 class LiveStatusBrowserTest extends JettyTestCase
@@ -53,19 +49,25 @@ class LiveStatusBrowserTest extends JettyTestCase
 
 	@ParameterizedTest
 	@EnumSource(SeleniumBrowser.class)
-	void theHomePageRecordsTheVisitAndGoesLive(SeleniumBrowser browser)
+	void aVisitorWhoOnlyLooksGetsNoSession(SeleniumBrowser browser) throws InterruptedException
 	{
-		String visitor = "live-" + browser.name().toLowerCase();
 		driver = browser.newDriver(1200, 900);
-		driver.get("http://localhost:" + localPort + "/?" + DemoSession.VISITOR_PARAMETER + "=" +
-			visitor);
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+		driver.get("http://localhost:" + localPort + "/");
+		wait.until(d -> !d.findElements(By.cssSelector(".index__title")).isEmpty());
+		// the scripts of the page ran and asked what they ask
+		Thread.sleep(1000);
 
-		new WebDriverWait(driver, Duration.ofSeconds(15)).until(d -> d
-			.findElement(By.cssSelector(".ws-status"))
-			.getDomAttribute("class")
-			.contains("ws-status--live"));
-		List<Access> accesses = TestDatabase.context().getBean(IAccessRepository.class).findAll();
-		assertTrue(accesses.stream().anyMatch(access -> access.getUserName()
-			.equals("user-" + visitor) && access.getTimeZone() != null), accesses.toString());
+		assertNull(driver.manage().getCookieNamed("JSESSIONID"),
+			driver.manage().getCookies().toString());
+		assertTrue(driver.findElements(By.cssSelector(".ws-status")).isEmpty());
+
+		// nor does the sign-in page make one, which says how many sessions are in use
+		driver.get("http://localhost:" + localPort + "/sign-in");
+		wait.until(d -> !d.findElements(By.cssSelector(".register__captcha-image img")).isEmpty());
+		Thread.sleep(1000);
+		assertNull(driver.manage().getCookieNamed("JSESSIONID"),
+			driver.manage().getCookies().toString());
+		assertTrue(driver.getPageSource().contains("of 10 sessions in use"));
 	}
 }

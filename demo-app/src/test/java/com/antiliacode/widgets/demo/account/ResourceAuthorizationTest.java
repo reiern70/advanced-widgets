@@ -38,11 +38,9 @@ import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
-import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.datatable.DatabaseLocator;
 import com.antiliacode.widgets.demo.error.NotFoundPage;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 import com.antiliacode.widgets.theme.Look;
 import com.antiliacode.widgets.theme.Looks;
 import com.antiliacode.widgets.theme.Theme;
@@ -62,7 +60,6 @@ class ResourceAuthorizationTest
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -122,7 +119,7 @@ class ResourceAuthorizationTest
 		assertEquals(users, DatabaseLocator.getLargeDatabase().getCount());
 
 		tester.startPage(HomePage.class);
-		DemoSession.get().signIn("wicket");
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 		assertEquals(200, status("GET", "api/users"));
 	}
 
@@ -130,7 +127,7 @@ class ResourceAuthorizationTest
 	void aUserWhoSignedInGetsThem()
 	{
 		tester.startPage(HomePage.class);
-		DemoSession.get().signIn("wicket");
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 
 		assertEquals(200, status("GET", "api/users"));
 		assertTrue(tester.getLastResponseAsString().contains("\"itemCount\""));
@@ -147,7 +144,7 @@ class ResourceAuthorizationTest
 
 		List<String> loaded = new ArrayList<>();
 		for (Class<? extends WebPage> page : List.of(HomePage.class, SignInPage.class,
-			RegisterPage.class, NotFoundPage.class))
+			NotFoundPage.class))
 		{
 			tester.startPage(page);
 			Matcher matcher = LOADED.matcher(tester.getLastResponseAsString());
@@ -192,12 +189,13 @@ class ResourceAuthorizationTest
 	}
 
 	@Test
-	void theClockOfTheVisitorAndTheApiOfTheAdministrationAreForEverybody()
+	void theImageOfTheCaptchaIsForEverybody()
 	{
-		// the API lets in administrators itself
-		assertEquals(401, status("GET", "api/admin/users"));
-		// the clock is posted
-		assertEquals(405, status("GET", "api/access-time"));
+		String token = CaptchaToken.issue(java.time.Instant.now());
+		assertEquals(200, status("GET", "captcha?t=" + token));
+		// a token that is none has no image
+		assertEquals(404, status("GET", "captcha?t=made-up"));
+		assertTrue(tester.getSession().isTemporary());
 	}
 
 	@Test

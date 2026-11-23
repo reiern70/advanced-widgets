@@ -375,12 +375,13 @@ public final class RichTextImages implements IRichTextImageStore
 	}
 
 	/**
-	 * @return who uploads an image: the account signed in with, else the session
+	 * @return who uploads an image: the administrator, else the session, as everybody else shares one
+	 *         account
 	 */
 	private static String user()
 	{
 		DemoSession session = DemoSession.get();
-		return session.isSignedIn() ? "account:" + session.getAccount()
+		return session.isAdmin() ? "account:" + session.getAccount()
 			: "session:" + session.getId();
 	}
 

@@ -41,7 +41,8 @@ class ErrorPagesTest extends JettyTestCase
 		String body = response.body();
 		assertTrue(body.contains("Page not found"), body);
 		assertTrue(body.contains("Antilia's Advanced Widgets"), body);
-		assertFalse(body.contains("Powered by"), body);
+		// not Jetty's own page
+		assertFalse(body.contains("Powered by Jetty"), body);
 	}
 
 	@Test

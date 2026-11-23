@@ -21,7 +21,6 @@
 	<entry key="ajaxEngine">Ajax</entry>
 	<entry key="AjaxEngine.JQUERY">jQuery</entry>
 	<entry key="AjaxEngine.PLAIN_JAVASCRIPT">Reines JavaScript</entry>
-	<entry key="register">Registrieren</entry>
 	<entry key="signIn">Anmelden</entry>
 	<entry key="signOut">Abmelden</entry>
 	<entry key="showPassword">Passwort anzeigen</entry>

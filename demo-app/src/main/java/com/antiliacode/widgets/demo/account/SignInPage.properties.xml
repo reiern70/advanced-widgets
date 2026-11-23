@@ -15,18 +15,16 @@
 -->
 <properties>
 	<entry key="title">Sign in</entry>
-	<entry key="lead">Sign in to try the demos of the components.</entry>
-	<entry key="name">Email or account</entry>
+	<entry key="lead">Sign in with the account below to try the demos of the components.</entry>
+	<entry key="name">Account</entry>
 	<entry key="password">Password</entry>
 	<entry key="submit">Sign in</entry>
 	<entry key="wrong">The account or the password is wrong.</entry>
-	<entry key="full">Too many users are signed in right now: at most {0} at once. Please try again in {1,choice,1#a minute|1&lt;{1} minutes}.</entry>
-	<entry key="placeLost">Another user took your place: each user keeps it for {0} minutes for sure, and at most {1} are signed in at once. Sign in again to go on, when there is room.</entry>
-	<entry key="noAccount">No account yet?</entry>
-	<entry key="register">Register</entry>
+	<entry key="inUse">{0} of {1} sessions in use.</entry>
+	<entry key="full">All {0} sessions are in use right now. Please try again in {1,choice,1#a minute|1&lt;{1} minutes}.</entry>
+	<entry key="placeLost">Another visitor took your place: each session keeps it for {0} minutes for sure, and at most {1} are signed in at once. Sign in again to go on, when there is room.</entry>
+	<entry key="noRecord">We keep no record of the people who visit this site.</entry>
 	<entry key="Required">${label} is required.</entry>
-	<entry key="captchaNeeded">Too many failed attempts: please solve the check below too.</entry>
 	<entry key="waitSeconds">Too many failed attempts: please try again in {0,choice,1#a second|1&lt;{0} seconds}.</entry>
 	<entry key="waitMinutes">Too many failed attempts: please try again in {0} minutes.</entry>
-	<entry key="kept">Accounts are kept {0} months, then deleted, and never used to contact anybody.</entry>
 </properties>

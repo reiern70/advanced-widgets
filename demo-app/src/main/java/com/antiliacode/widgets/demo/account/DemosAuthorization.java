@@ -15,7 +15,6 @@ package com.antiliacode.widgets.demo.account;
 
 import org.apache.wicket.Application;
 import org.apache.wicket.Component;
-import org.apache.wicket.RestartResponseAtInterceptPageException;
 import org.apache.wicket.RestartResponseException;
 import org.apache.wicket.RuntimeConfigurationType;
 import org.apache.wicket.authorization.Action;
@@ -40,10 +39,7 @@ import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.DevelopmentSwitches;
 import com.antiliacode.widgets.demo.LiveResource;
-import com.antiliacode.widgets.demo.admin.AccessTimeResource;
-import com.antiliacode.widgets.demo.admin.AccessesApiResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
-import com.antiliacode.widgets.demo.admin.UsersApiResource;
 import com.antiliacode.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antiliacode.widgets.demo.theme.WebJarStyleSheetReference;
 
@@ -51,7 +47,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Keeps the demos, the private part of the application, for the visitors who signed in: anybody
- * else opening one is sent to the {@link SignInPage} and back to the demo after signing in. The
+ * else opening one is sent to the {@link SignInPage}, the demo in its parameter
+ * {@value SignInPage#TO} rather than in a session, and back to the demo after signing in. The
  * other pages, the home page with what the components are and do among them, are public, but
  * for the {@link AdminPage}, which only administrators see, also in development. An
  * administration opened before the session stopped being an administrator's, by signing out say,
@@ -63,11 +60,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * them, unless the demos are open. A visitor who did not is answered 403. The public pages need
  * a few of them, which everybody gets: the scripts, style sheets and images of the components and
  * the pages (package resources), the style sheets of Bootstrap, daisyUI and Font Awesome, the
- * visitor's clock ({@link AccessTimeResource}) and the websocket of the home page
- * ({@link LiveResource}).
- * So does the API of the administration ({@link UsersApiResource}, {@link AccessesApiResource}),
- * which lets in administrators itself, and every resource a component of a page serves, such as
- * the image of a {@link Captcha}: the page was let in already.
+ * image of the {@link Captcha} of the sign-in page ({@link CaptchaImage}) and the websocket of the
+ * home page ({@link LiveResource}). So does every resource a component of a page serves: the page
+ * was let in already.
  * <p>
  * The demos are open to everybody in development, and when the web application has the init
  * parameter {@value #OPEN_PARAMETER} set to {@code true}, as the browser tests have it: they run
@@ -112,9 +107,8 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 	 */
 	private static boolean isPublic(IResource resource)
 	{
-		if (resource instanceof PackageResource || resource instanceof AccessTimeResource ||
-			resource instanceof LiveResource || resource instanceof UsersApiResource ||
-			resource instanceof AccessesApiResource)
+		if (resource instanceof PackageResource || resource instanceof LiveResource ||
+			resource instanceof CaptchaImage)
 		{
 			return true;
 		}
@@ -179,7 +173,16 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 			throw new RestartResponseException(
 				Application.get().getApplicationSettings().getAccessDeniedPage());
 		}
-		throw new RestartResponseAtInterceptPageException(SignInPage.class);
+		// the page asked for goes in a parameter, not in the session, which a visitor who does
+		// not sign in never gets
+		PageParameters parameters = new PageParameters();
+		RequestCycle cycle = RequestCycle.get();
+		String path = cycle == null ? "" : cycle.getRequest().getUrl().getPath();
+		if (!path.isEmpty())
+		{
+			parameters.add(SignInPage.TO, path);
+		}
+		throw new RestartResponseException(SignInPage.class, parameters);
 	}
 
 	/**

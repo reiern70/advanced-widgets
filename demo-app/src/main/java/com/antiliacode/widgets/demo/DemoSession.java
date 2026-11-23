@@ -13,11 +13,6 @@
  */
 package com.antiliacode.widgets.demo;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.function.Consumer;
-import java.util.regex.Pattern;
-
 import org.apache.wicket.Session;
 import org.apache.wicket.protocol.http.WebSession;
 import org.apache.wicket.request.Request;
@@ -26,11 +21,8 @@ import org.apache.wicket.util.lang.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.Role;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
-import com.antiliacode.widgets.demo.data.Access;
-import com.antiliacode.widgets.demo.data.Accesses;
-import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.modal.TeamStore;
 import com.antiliacode.widgets.theme.Theme;
 import com.antiliacode.widgets.throttle.Throttle;
@@ -38,36 +30,18 @@ import com.antiliacode.widgets.throttle.Throttle;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * The session of the demo application: remembers the {@link Theme} and the
- * {@link AjaxEngine} the user chose for every page, the account the user signed in with, the failed attempts to sign in,
- * who a visitor who does not sign in told it is (see {@link #VISITOR_PARAMETER}) and the
- * {@link Access} recording the session, whose user is the account, the visitor, a robot or
- * unknown.
+ * The session of the demo application: remembers the {@link Theme} and the {@link AjaxEngine} the
+ * user chose for every page, the team of the modal demo and the account the user signed in with.
+ * It records nothing about the visitor.
  * <p>
- * The home page is stateless, so a session is only kept once there is something to keep: a
- * choice, an account or an access; the setters bind it.
+ * The public pages are stateless, so a session is only kept once there is something to keep: a
+ * choice or an account; the setters bind it. A visitor who only looks gets none.
  */
 public class DemoSession extends WebSession
 {
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * The query parameter with which a visitor who does not sign in, such as a script checking
-	 * the site, tells who it is: {@code ?visitor=claude-dev} on any page records the access of the
-	 * session as {@code user-claude-dev}. It changes a session there is already; a visitor without
-	 * one gets it from the script of the page, which passes the name on, see
-	 * {@link com.antiliacode.widgets.demo.admin.AccessTimeResource}.
-	 */
-	public static final String VISITOR_PARAMETER = "visitor";
-
-	/** What a visitor may tell it is: a few letters, digits, dots and dashes. */
-	private static final Pattern VISITOR = Pattern.compile("[a-z0-9][a-z0-9.-]{0,39}");
-
-	/**
-	 * How long a session signed in goes at most without looking at its account, see
-	 * {@link #checkAccount()}.
-	 */
-	public static final Duration ACCOUNT_CHECK = Duration.ofSeconds(5);
+	private static final Logger LOG = LoggerFactory.getLogger(DemoSession.class);
 
 	private Theme theme = Theme.DEFAULT;
 
@@ -75,44 +49,22 @@ public class DemoSession extends WebSession
 
 	private TeamStore team;
 
-	private static final Logger LOG = LoggerFactory.getLogger(DemoSession.class);
-
 	private String account;
 
 	private Role role;
 
-	private int failedSignIns;
-
-	/** Who the visitor told it is, see {@link #VISITOR_PARAMETER}; {@code null} if it did not. */
-	private String visitor;
-
-	/** The id of the {@link Access} recording this session, {@code null} until there is one. */
-	private Long accessId;
-
-	/** Whether the access knows the visitor's clock. */
-	private boolean localTimeRecorded;
-
-	/** Whether the access knows that the session opened the private part. */
-	private boolean privatePartRecorded;
-
-	/**
-	 * When the account was last found as the session signed in with it, in milliseconds, see
-	 * {@link #checkAccount()}.
-	 */
-	private transient long accountChecked;
-
-	/** The {@link Accounts#changes()} then. */
-	private transient long accountChanges;
-
-	/**
-	 * Whether the session took one of the places of {@link SignedInUsers} when it signed in, which
-	 * another account may take later.
-	 */
+	/** Whether the session holds one of the places of {@link SignedInUsers}. */
 	private boolean placeHeld;
 
-	/** Whether the session was signed out as another account took its place, until told. */
+	/** Whether the session was signed out because another one took its place, not told yet. */
 	private boolean placeLost;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param request
+	 *            the request
+	 */
 	public DemoSession(Request request)
 	{
 		super(request);
@@ -163,8 +115,7 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * @return the team of the modal dialog example, which this visitor edits in Wicket, React and
-	 *         Svelte; marks the session changed, as the team may change
+	 * @return the team of the modal demo, made the first time
 	 */
 	public synchronized TeamStore getTeam()
 	{
@@ -193,7 +144,7 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * @return whether the user signed in with an account that sees the accesses
+	 * @return whether the user signed in as the administrator
 	 */
 	public boolean isAdmin()
 	{
@@ -201,23 +152,10 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * Signs the user in with an account that opens the demos.
-	 *
-	 * @param account
-	 *            the name of the account
-	 * @return whether the user signed in
-	 * @see #signIn(String, Role)
-	 */
-	public boolean signIn(String account)
-	{
-		return signIn(account, Role.USER);
-	}
-
-	/**
 	 * Signs the user in, under a new session id so that the old one is of no use, unless
-	 * {@value SignedInUsers#MAXIMUM} other users are signed in already, none of them for longer
-	 * than {@link SignedInUsers#PLACE_TIME} (see {@link SignedInUsers}); the demo the user was
-	 * going to stays in the session. The access of the session gets the account.
+	 * {@value SignedInUsers#MAXIMUM} other sessions are signed in already, none of them for
+	 * longer than {@link SignedInUsers#PLACE_TIME} (see {@link SignedInUsers}); the administrator
+	 * always signs in.
 	 *
 	 * @param account
 	 *            the name of the account
@@ -229,14 +167,11 @@ public class DemoSession extends WebSession
 	{
 		Args.notEmpty(account, "account");
 		Args.notNull(role, "role");
-		boolean signedIn = SignedInUsers.get().signIn(account, role, () -> {
+		boolean signedIn = SignedInUsers.get().signIn(role, () -> {
 			bind();
 			changeSessionId();
 			this.account = account;
 			this.role = role;
-			failedSignIns = 0;
-			accountChecked = System.currentTimeMillis();
-			accountChanges = Accounts.changes();
 			placeLost = false;
 			dirty();
 			return getId();
@@ -244,10 +179,6 @@ public class DemoSession extends WebSession
 		if (signedIn)
 		{
 			placeHeld = SignedInUsers.get().holdsPlace(getId());
-			recordAccess(access -> {
-				access.setSessionId(getId());
-				access.setUserName(account);
-			});
 		}
 		return signedIn;
 	}
@@ -269,45 +200,20 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * Signs the user out when another account took the place of the session (see
-	 * {@link SignedInUsers}), or when the account was removed or locked, or has another role than
-	 * when the user signed in with it, so that the session does not outlive the account. It looks
-	 * at the place at every request, and at the account at the first request after accounts were
-	 * removed or locked, else at most every {@link #ACCOUNT_CHECK}.
+	 * Signs the session out if another session took its place.
 	 */
-	public void checkAccount()
+	public void checkPlace()
 	{
-		if (account == null)
+		if (account != null && placeHeld && !SignedInUsers.get().holdsPlace(getId()))
 		{
-			return;
-		}
-		if (placeHeld && !SignedInUsers.get().holdsPlace(getId()))
-		{
-			LOG.info("Another account took the place of {}: session {} is signed out", account,
-				getId());
+			LOG.info("Another session took the place of session {}: it is signed out", getId());
 			signOut();
 			placeLost = true;
-			return;
-		}
-		long now = System.currentTimeMillis();
-		long changes = Accounts.changes();
-		if (changes == accountChanges && now - accountChecked < ACCOUNT_CHECK.toMillis())
-		{
-			return;
-		}
-		accountChecked = now;
-		accountChanges = changes;
-		if (!Accounts.get().isStillSignedIn(account, role))
-		{
-			LOG.info("The account {} is gone, locked or changed: session {} is signed out",
-				account, getId());
-			signOut();
 		}
 	}
 
 	/**
-	 * Signs the user out, keeping the theme and the other choices, but for those of the
-	 * {@link Throttle}, which are for the demos.
+	 * Signs the user out, giving the place back.
 	 */
 	public void signOut()
 	{
@@ -328,9 +234,8 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * @return whether the session was signed out as another account took its place (see
-	 *         {@link SignedInUsers#PLACE_TIME}); answers {@code true} once, so that the user is
-	 *         told once
+	 * @return whether the session was signed out because another one took its place, once: the
+	 *         sign-in page tells it, then it is forgotten
 	 */
 	public boolean tellPlaceLost()
 	{
@@ -344,119 +249,6 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * @param name
-	 *            what a visitor tells it is
-	 * @return whether it is a name a visitor may tell: a few letters, digits, dots and dashes
-	 */
-	public static boolean isVisitorName(String name)
-	{
-		return name != null && VISITOR.matcher(name).matches();
-	}
-
-	/**
-	 * Records the access of the session as the visitor's, unless somebody signed in: the
-	 * visitor tells who it is with {@link #VISITOR_PARAMETER}. A name with other characters than
-	 * letters, digits, dots and dashes is ignored.
-	 *
-	 * @param name
-	 *            what the visitor tells it is, such as {@code claude-dev}
-	 */
-	public void identify(String name)
-	{
-		if (!isVisitorName(name) || ("user-" + name).equals(visitor))
-		{
-			return;
-		}
-		visitor = "user-" + name;
-		recordAccess(access -> {
-			if (account == null)
-			{
-				access.setUserName(visitor);
-			}
-		});
-	}
-
-	/**
-	 * @return who the visitor told it is, as the accesses show it, such as
-	 *         {@code user-claude-dev}; {@code null} if it did not
-	 */
-	public String getVisitor()
-	{
-		return visitor;
-	}
-
-	/**
-	 * @return how often the user failed to sign in since signing in last
-	 */
-	public int getFailedSignIns()
-	{
-		return failedSignIns;
-	}
-
-	/**
-	 * Counts a failed attempt to sign in.
-	 */
-	public void failedSignIn()
-	{
-		failedSignIns++;
-		keep();
-	}
-
-	/**
-	 * @return whether the access recording the session lacks the visitor's clock, which the
-	 *         browser sends once
-	 */
-	public boolean needsLocalTime()
-	{
-		return !localTimeRecorded;
-	}
-
-	/**
-	 * Records the visitor's clock in the access of the session.
-	 *
-	 * @param change
-	 *            sets the time zone and the local time
-	 */
-	public void recordLocalTime(Consumer<Access> change)
-	{
-		localTimeRecorded = true;
-		recordAccess(change);
-	}
-
-	/**
-	 * Records in the access of the session that it opened the private part, the demos; once.
-	 */
-	public void recordPrivatePart()
-	{
-		if (!privatePartRecorded)
-		{
-			privatePartRecorded = true;
-			recordAccess(access -> access.setPrivatePart(true));
-		}
-	}
-
-	/**
-	 * Changes the access recording this session, made first if there is none. A failing database
-	 * is logged in a line, without the stack, and does not fail the request.
-	 *
-	 * @param change
-	 *            the change
-	 */
-	public synchronized void recordAccess(Consumer<Access> change)
-	{
-		keep();
-		try
-		{
-			Access access = Accesses.get().record(accessId, this::newAccess, change);
-			accessId = access.getId();
-		}
-		catch (RuntimeException e)
-		{
-			LOG.warn("Cannot record the access of session {}: {}", getId(), firstLine(e));
-		}
-	}
-
-	/**
 	 * @return what went wrong, in a short line
 	 */
 	static String firstLine(Throwable e)
@@ -467,41 +259,7 @@ public class DemoSession extends WebSession
 	}
 
 	/**
-	 * @return the id of the access recording this session, {@code null} until there is one
-	 */
-	public Long getAccessId()
-	{
-		return accessId;
-	}
-
-	private Access newAccess()
-	{
-		String address = null;
-		String userAgent = null;
-		RequestCycle cycle = RequestCycle.get();
-		if (cycle != null && cycle.getRequest().getContainerRequest() instanceof HttpServletRequest request)
-		{
-			address = request.getRemoteAddr();
-			userAgent = request.getHeader("User-Agent");
-		}
-		Access access = new Access(getId(), address, userAgent, Instant.now());
-		if (account != null)
-		{
-			access.setUserName(account);
-		}
-		else if (visitor != null)
-		{
-			access.setUserName(visitor);
-		}
-		else if (Access.isRobot(userAgent))
-		{
-			access.setUserName(Access.ROBOT);
-		}
-		return access;
-	}
-
-	/**
-	 * Keeps the session: binds it, so that it outlives a stateless page, and marks it changed.
+	 * Keeps the session: binds it if it is temporary, so that what was set lasts.
 	 */
 	private void keep()
 	{

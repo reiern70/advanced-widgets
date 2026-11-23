@@ -5,12 +5,9 @@
 # What every answer carries, the redirects of www too: HTTPS only from now on, for the subdomains
 # too; no guessing of types; the address of a page to other sites only as its origin; no framing
 # by other sites; none of the browser's features the site does not use (it writes to the
-# clipboard, which stays allowed to its own pages); no names of servers. And an access log on the
-# standard output, which the logging limits of compose.yaml rotate.
+# clipboard, which stays allowed to its own pages); no names of servers. No access log: the site
+# keeps no record of the people who visit it.
 (common) {
-	log {
-		output stdout
-	}
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"

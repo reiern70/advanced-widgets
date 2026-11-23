@@ -26,13 +26,15 @@ import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.lang.ref.SoftReference;
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.time.Clock;
+import java.util.Optional;
 import java.util.Random;
 
-import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.DynamicImageResource;
+import org.apache.wicket.request.resource.IResource;
+import org.apache.wicket.request.resource.ResourceReference;
 
 /**
  * The image of the letters of a captcha, drawn to be read at the first try: large bold letters,
@@ -42,10 +44,37 @@ import org.apache.wicket.request.resource.DynamicImageResource;
  * the letters are dark, or light in a dark theme. Drawn at twice the size it is shown in
  * ({@value #WIDTH} by {@value #HEIGHT} pixels), so that it stays sharp on screens of a high
  * density.
+ * <p>
+ * Served at {@value #PATH} to anybody, with no session: the letters come from the
+ * {@link CaptchaToken} in the parameter {@value #TOKEN}, which only the server reads, and the
+ * parameter {@value #DARK} draws them light. A token that is not one, or that expired, gets a 404.
+ * Never cached, so that each token is drawn anew.
  */
 public class CaptchaImage extends DynamicImageResource
 {
 	private static final long serialVersionUID = 1L;
+
+	/** The path the images are served at. */
+	public static final String PATH = "captcha";
+
+	/** The parameter holding the token of the letters. */
+	public static final String TOKEN = "t";
+
+	/** The parameter telling that the page is in a dark theme. */
+	public static final String DARK = "dark";
+
+	/** The reference the images are served by. */
+	public static final ResourceReference REFERENCE = new ResourceReference(CaptchaImage.class,
+		PATH)
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public IResource getResource()
+		{
+			return new CaptchaImage(Clock.systemUTC());
+		}
+	};
 
 	/** The width the image is shown in, in CSS pixels. */
 	public static final int WIDTH = 240;
@@ -64,42 +93,50 @@ public class CaptchaImage extends DynamicImageResource
 
 	private static final Random RANDOM = new SecureRandom();
 
-	private final IModel<String> letters;
-
-	private final IModel<Boolean> dark;
-
-	/** The image last drawn, kept until the letters or the theme change. */
-	private transient SoftReference<byte[]> drawn;
-
-	/** The letters and the theme the image last drawn is for. */
-	private String drawnFor;
+	private final Clock clock;
 
 	/**
-	 * @param letters
-	 *            the letters to draw
+	 * @param clock
+	 *            the clock telling whether a token expired
+	 */
+	CaptchaImage(Clock clock)
+	{
+		this.clock = clock;
+	}
+
+	/**
+	 * @param token
+	 *            a token of letters, see {@link CaptchaToken}
 	 * @param dark
 	 *            whether the page is in a dark theme
+	 * @return the parameters of the image of the letters
 	 */
-	public CaptchaImage(IModel<String> letters, IModel<Boolean> dark)
+	public static PageParameters parameters(String token, boolean dark)
 	{
-		this.letters = letters;
-		this.dark = dark;
+		PageParameters parameters = new PageParameters().add(TOKEN, token);
+		if (dark)
+		{
+			parameters.add(DARK, "1");
+		}
+		return parameters;
 	}
 
 	@Override
 	protected byte[] getImageData(Attributes attributes)
 	{
-		boolean inDark = Boolean.TRUE.equals(dark.getObject());
-		String key = letters.getObject() + (inDark ? "/dark" : "/light");
-		byte[] data = drawn == null || !key.equals(drawnFor) ? null : drawn.get();
-		if (data == null)
-		{
-			data = toImageData(draw(letters.getObject(), inDark));
-			drawn = new SoftReference<>(data);
-			drawnFor = key;
-			setLastModifiedTime(Instant.now());
-		}
-		return data;
+		PageParameters parameters = attributes.getParameters();
+		Optional<String> letters = CaptchaToken.letters(
+			parameters.get(TOKEN).toOptionalString(), clock.instant());
+		// no letters, no image: DynamicImageResource answers 404
+		return letters.map(text -> toImageData(draw(text, !parameters.get(DARK).isEmpty())))
+			.orElse(null);
+	}
+
+	@Override
+	protected void configureResponse(ResourceResponse response, Attributes attributes)
+	{
+		super.configureResponse(response, attributes);
+		response.disableCaching();
 	}
 
 	/**
