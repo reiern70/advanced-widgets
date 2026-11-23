@@ -26,7 +26,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 
 /**
  * The system properties of a development machine count in development only, and the application
@@ -44,12 +43,10 @@ class DevelopmentSwitchesTest
 			tester.destroy();
 		}
 		DevelopmentSwitches.PROPERTIES.forEach(System::clearProperty);
-		System.clearProperty(RegisterPage.OPEN_PROPERTY);
 	}
 
 	private WicketApplication start(RuntimeConfigurationType configuration)
 	{
-		TestDatabase.clear();
 		WicketApplication application = new WicketApplication()
 		{
 			@Override
@@ -73,7 +70,6 @@ class DevelopmentSwitchesTest
 		tester.assertVisible("signIn");
 		assertFalse(DemoSession.get().isSignedIn());
 		assertFalse(DemosAuthorization.isOpen());
-		assertTrue(RegisterPage.isOpen(), "registering is open everywhere");
 		assertEquals(2, DevelopmentSwitches.warnOfIgnored(application));
 	}
 
@@ -85,20 +81,9 @@ class DevelopmentSwitchesTest
 
 		tester.startPage(HomePage.class);
 		assertTrue(DemoSession.get().isAdmin());
-		assertTrue(RegisterPage.isOpen());
 		assertEquals(0, DevelopmentSwitches.warnOfIgnored(application));
 	}
 
-	@Test
-	void closingTheRegistrationCountsEverywhere()
-	{
-		System.setProperty(RegisterPage.OPEN_PROPERTY, "false");
-		WicketApplication application = start(RuntimeConfigurationType.DEPLOYMENT);
-
-		tester.startPage(HomePage.class);
-		assertFalse(RegisterPage.isOpen());
-		assertEquals(0, DevelopmentSwitches.warnOfIgnored(application));
-	}
 
 	@Test
 	void theApplicationRunsInDeploymentUnlessToldOtherwise() throws Exception

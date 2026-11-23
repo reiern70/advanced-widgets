@@ -11,13 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.antiliacode.widgets.demo.data;
-
-import org.springframework.data.jpa.repository.JpaRepository;
+package com.antiliacode.widgets.demo.account;
 
 /**
- * The {@link FormerAccount}s in the table {@code former_accounts}.
+ * What an account may do, see {@link Accounts}: open the demos, or see the sessions signed in too.
  */
-public interface IFormerAccountRepository extends JpaRepository<FormerAccount, Long>
+public enum Role
 {
+	/** Opens the demos. */
+	USER,
+
+	/** Opens the demos, sees the sessions signed in and takes no place among them. */
+	ADMIN
 }

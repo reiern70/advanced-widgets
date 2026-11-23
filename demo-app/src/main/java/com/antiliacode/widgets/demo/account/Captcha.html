@@ -13,8 +13,8 @@
   limitations under the License.
 -->
 <wicket:panel xmlns:wicket="http://wicket.apache.org">
-	<p wicket:id="lead" class="register__captcha-lead"></p>
-	<p wicket:id="pictured" class="register__captcha-image"><img wicket:id="image" alt="" width="240" height="80" wicket:message="alt:captchaImage"/> <a wicket:id="another"><wicket:message key="captchaAnother"/></a></p>
-	<label class="register__field register__field--wide"><span wicket:id="label"></span> <input type="text" wicket:id="answer" autocomplete="off" spellcheck="false"/></label>
-	<p class="register__captcha-other"><a wicket:id="other"><span wicket:id="label"></span></a></p>
+	<p class="register__captcha-lead"><wicket:message key="captchaLead"/></p>
+	<input type="hidden" wicket:id="token"/>
+	<p class="register__captcha-image"><img wicket:id="image" alt="" width="240" height="80" wicket:message="alt:captchaImage"/> <a wicket:id="another"><wicket:message key="captchaAnother"/></a></p>
+	<label class="register__field register__field--wide"><span><wicket:message key="captchaLetters"/></span> <input type="text" wicket:id="answer" autocomplete="off" spellcheck="false" autocapitalize="characters"/></label>
 </wicket:panel>

@@ -15,33 +15,30 @@ package com.antiliacode.widgets.demo.account;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
+
 import org.apache.wicket.RuntimeConfigurationType;
-import org.apache.wicket.core.request.handler.ListenerInvocationNotAllowedException;
 import org.apache.wicket.core.request.handler.PageProvider;
 import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.protocol.http.mock.MockServletContext;
 import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
-import org.apache.wicket.util.tester.WicketTesterHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
-import com.antiliacode.widgets.demo.TestDatabase;
+import com.antiliacode.widgets.demo.TestAccounts;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.admin.AdminPage;
-import com.antiliacode.widgets.demo.data.Role;
 import com.antiliacode.widgets.demo.dropdown.DropdownPage;
 import com.antiliacode.widgets.demo.error.AccessDeniedPage;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 
 /**
- * Keeps the demos for the visitors who signed in, and opens them to everybody in development.
+ * Keeps the demos for the visitors who signed in, and opens them to everybody in development; a
+ * visitor who does not sign in gets no session on the way.
  */
 class DemosAuthorizationTest
 {
@@ -57,7 +54,6 @@ class DemosAuthorizationTest
 
 	private void start(RuntimeConfigurationType configuration)
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -66,11 +62,10 @@ class DemosAuthorizationTest
 				return configuration;
 			}
 		});
-		Accounts.get().addConfigured("client:secret-one");
 	}
 
 	@Test
-	void theHomePageAndTheRegistrationArePublic()
+	void theHomePageAndTheSignInArePublicAndKeepNoSession()
 	{
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
@@ -79,10 +74,15 @@ class DemosAuthorizationTest
 		tester.assertVisible("signInHint");
 		tester.assertVisible("signIn");
 		tester.assertInvisible("signOut");
-		// the invitation's words do not take the place of the top bar's
-		tester.assertContains("topbar__register-label\">Register<");
-		tester.startPage(RegisterPage.class);
-		tester.assertRenderedPage(RegisterPage.class);
+		tester.assertLabel("signInHint:account", "as user, password $Amigo_MEllon_Friend_4321.");
+		tester.assertLabel("signInHint:inUse", "0 of 10 sessions in use.");
+		tester.assertContains("We keep no record of the people who visit this site.");
+		// no websocket, which would need a session
+		tester.assertInvisible("webSocketStatus");
+		assertTrue(tester.getSession().isTemporary());
+		tester.startPage(SignInPage.class);
+		tester.assertRenderedPage(SignInPage.class);
+		assertTrue(tester.getSession().isTemporary());
 	}
 
 	@Test
@@ -92,34 +92,18 @@ class DemosAuthorizationTest
 
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(SignInPage.class);
+		// the demo is a parameter of the page, not something kept in a session
+		assertEquals("dropdown", tester.getLastRenderedPage().getPageParameters()
+			.get(SignInPage.TO).toString());
+		assertTrue(tester.getSession().isTemporary());
 
-		FormTester form = tester.newFormTester("form");
-		form.setValue("name", "Client");
-		form.setValue("password", "secret-one");
-		form.submit();
+		signIn("User", Accounts.USER_PASSWORD);
 
 		tester.assertRenderedPage(DropdownPage.class);
-		assertEquals("client", DemoSession.get().getAccount());
+		assertEquals("user", DemoSession.get().getAccount());
 		tester.assertVisible("signOut");
-		tester.assertLabel("signOut:account", "client");
+		tester.assertLabel("signOut:account", "user");
 		tester.assertInvisible("signIn");
-		tester.assertInvisible("register");
-	}
-
-	@Test
-	void aWrongPasswordIsTurnedAway()
-	{
-		start(RuntimeConfigurationType.DEPLOYMENT);
-
-		tester.startPage(SignInPage.class);
-		FormTester form = tester.newFormTester("form");
-		form.setValue("name", "client");
-		form.setValue("password", "secret-two");
-		form.submit();
-
-		tester.assertRenderedPage(SignInPage.class);
-		tester.assertErrorMessages("The account or the password is wrong.");
-		assertFalse(DemoSession.get().isSignedIn());
 	}
 
 	@Test
@@ -128,10 +112,7 @@ class DemosAuthorizationTest
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
 		tester.startPage(SignInPage.class);
-		FormTester form = tester.newFormTester("form");
-		form.setValue("name", "client");
-		form.setValue("password", "secret-one");
-		form.submit();
+		signIn("user", Accounts.USER_PASSWORD);
 
 		tester.assertRenderedPage(HomePage.class);
 		tester.assertInvisible("signInHint");
@@ -141,7 +122,8 @@ class DemosAuthorizationTest
 	void signingOutClosesTheDemosAgain()
 	{
 		start(RuntimeConfigurationType.DEPLOYMENT);
-		DemoSession.get().signIn("client");
+		tester.startPage(HomePage.class);
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(DropdownPage.class);
 
@@ -149,6 +131,7 @@ class DemosAuthorizationTest
 
 		tester.assertRenderedPage(HomePage.class);
 		assertFalse(DemoSession.get().isSignedIn());
+		assertEquals(0, SignedInUsers.get().count());
 		tester.startPage(DropdownPage.class);
 		tester.assertRenderedPage(SignInPage.class);
 	}
@@ -180,122 +163,7 @@ class DemosAuthorizationTest
 	}
 
 	@Test
-	void aCaptchaIsAskedAfterThreeFailedAttempts()
-	{
-		start(RuntimeConfigurationType.DEPLOYMENT);
-
-		tester.startPage(SignInPage.class);
-		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
-		{
-			tester.assertInvisible("form:captcha");
-			signIn("client", "wrong-" + attempt);
-			tester.assertErrorMessages("The account or the password is wrong.");
-		}
-		tester.assertVisible("form:captcha");
-
-		// the right password alone is not enough any more
-		signIn("client", "secret-one");
-		tester.assertRenderedPage(SignInPage.class);
-		assertFalse(DemoSession.get().isSignedIn());
-
-		// wrong letters neither
-		FormTester form = tester.newFormTester("form");
-		form.setValue("name", "client");
-		form.setValue("password", "secret-one");
-		form.setValue("captcha:answer", "nope");
-		form.submit();
-		tester.assertErrorMessages("The letters are not those of the image. Try the new ones.");
-		assertFalse(DemoSession.get().isSignedIn());
-
-		SignInPage page = (SignInPage)tester.getLastRenderedPage();
-		form = tester.newFormTester("form");
-		form.setValue("name", "client");
-		form.setValue("password", "secret-one");
-		form.setValue("captcha:answer", page.getChallenge().toLowerCase());
-		form.submit();
-		tester.assertRenderedPage(HomePage.class);
-		assertEquals("client", DemoSession.get().getAccount());
-	}
-
-	@Test
-	void aCaptchaIsAskedForAnAccountGuessedFromNewSessions()
-	{
-		start(RuntimeConfigurationType.DEPLOYMENT);
-
-		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
-		{
-			tester.startPage(SignInPage.class);
-			signIn("client", "wrong-" + attempt);
-			// a robot starts each attempt in a new session
-			tester.getSession().invalidateNow();
-		}
-		tester.startPage(SignInPage.class);
-		signIn("client", "secret-one");
-		assertFalse(DemoSession.get().isSignedIn());
-		tester.assertVisible("form:captcha");
-	}
-
-	@Test
-	void theCaptchaShowsOtherLetters()
-	{
-		start(RuntimeConfigurationType.DEPLOYMENT);
-		tester.startPage(SignInPage.class);
-		for (int attempt = 0; attempt < SignInAttempts.BEFORE_CAPTCHA; attempt++)
-		{
-			signIn("nobody", "wrong");
-		}
-		SignInPage page = (SignInPage)tester.getLastRenderedPage();
-		String first = page.getChallenge();
-
-		tester.clickLink("form:captcha:pictured:another");
-
-		tester.assertVisible("form:captcha");
-		assertNotEquals(first, ((SignInPage)tester.getLastRenderedPage()).getChallenge());
-	}
-
-	@Test
-	void atMostFiveRegisteredAccountsAreSignedInAtOnce()
-	{
-		start(RuntimeConfigurationType.DEPLOYMENT);
-		Accounts.get().register("ada@example.com", "Analytical-Engine-1843", user -> {})
-			.orElseThrow();
-		SignedInUsers users = SignedInUsers.get();
-		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
-		{
-			String id = "session-" + i;
-			assertTrue(users.signIn("user" + i, Role.USER, () -> id));
-		}
-
-		tester.startPage(SignInPage.class);
-		signIn("ada@example.com", "Analytical-Engine-1843");
-		tester.assertRenderedPage(SignInPage.class);
-		tester.assertErrorMessages("Too many users are signed in right now: at most 5 at once. " +
-			"Please try again in 30 minutes.");
-		assertFalse(DemoSession.get().isSignedIn());
-
-		// an administrator, an account the demo always has and one the server is started with
-		// always sign in, and take no place
-		for (String[] account : new String[][] { { "admin", TestDatabase.ADMIN_PASSWORD },
-			{ "wicket", TestDatabase.WICKET_PASSWORD }, { "client", "secret-one" } })
-		{
-			tester.startPage(SignInPage.class);
-			signIn(account[0], account[1]);
-			tester.assertRenderedPage(HomePage.class);
-			assertEquals(account[0], DemoSession.get().getAccount());
-			DemoSession.get().signOut();
-		}
-		assertEquals(SignedInUsers.MAXIMUM, users.count());
-
-		// a user signing out makes room
-		users.signedOut("session-1");
-		tester.startPage(SignInPage.class);
-		signIn("ada@example.com", "Analytical-Engine-1843");
-		tester.assertRenderedPage(HomePage.class);
-		assertEquals(SignedInUsers.MAXIMUM, users.count());
-	}
-
-	@Test
-	void onlyAnAdministratorSeesTheAdministration()
+	void onlyTheAdministratorSeesTheAdministration()
 	{
 		start(RuntimeConfigurationType.DEVELOPMENT);
 
@@ -303,18 +171,17 @@ class DemosAuthorizationTest
 		tester.startPage(AdminPage.class);
 		tester.assertRenderedPage(SignInPage.class);
 
-		// a user who is not an administrator is turned away
-		signIn("wicket", TestDatabase.WICKET_PASSWORD);
+		// user is turned away
+		signIn("user", Accounts.USER_PASSWORD);
 		tester.assertRenderedPage(AccessDeniedPage.class);
 		tester.startPage(HomePage.class);
 		tester.assertInvisible("admin");
 
 		DemoSession.get().signOut();
 		tester.startPage(AdminPage.class);
-		signIn("admin", TestDatabase.ADMIN_PASSWORD);
+		signIn("admin", TestAccounts.ADMIN_PASSWORD);
 		tester.assertRenderedPage(AdminPage.class);
 		tester.assertVisible("admin");
-		tester.assertContains("admin");
 	}
 
 	@Test
@@ -323,27 +190,18 @@ class DemosAuthorizationTest
 		start(RuntimeConfigurationType.DEPLOYMENT);
 
 		tester.startPage(AdminPage.class);
-		signIn("admin", TestDatabase.ADMIN_PASSWORD);
+		signIn("admin", TestAccounts.ADMIN_PASSWORD);
 		tester.assertRenderedPage(AdminPage.class);
 		String url = tester.urlFor(new RenderPageRequestHandler(
 			new PageProvider(tester.getLastRenderedPage()))).toString();
-		String accessesTab = WicketTesterHelper.findAjaxEventBehavior(
-			tester.getComponentFromLastRenderedPage("tabs:tabs-container:tabs:1:link"), "click")
-			.getCallbackUrl()
-			.toString();
 		DemoSession.get().signOut();
 
-		// the page the administrator had open does not answer: its tab of the accesses stays shut
-		tester.getRequest().setHeader("Wicket-Ajax", "true");
-		tester.getRequest().setHeader("Wicket-Ajax-BaseURL", url);
-		assertThrows(ListenerInvocationNotAllowedException.class,
-			() -> tester.executeUrl(accessesTab));
-		// nor is it shown again
+		// the page the administrator had open is not shown again
 		tester.executeUrl(url);
 		tester.assertRenderedPage(SignInPage.class);
 
-		// nor to a user who signs in in the same browser
-		signIn("wicket", TestDatabase.WICKET_PASSWORD);
+		// nor to user, signing in in the same browser
+		signIn("user", Accounts.USER_PASSWORD);
 		tester.executeUrl(url);
 		tester.assertRenderedPage(AccessDeniedPage.class);
 	}
@@ -364,11 +222,16 @@ class DemosAuthorizationTest
 		tester.assertRenderedPage(DropdownPage.class);
 	}
 
+	/**
+	 * Signs in on the sign-in page shown last, the letters of its captcha typed right.
+	 */
 	private void signIn(String name, String password)
 	{
+		String token = ((SignInPage)tester.getLastRenderedPage()).getCaptcha().getToken();
 		FormTester form = tester.newFormTester("form");
 		form.setValue("name", name);
 		form.setValue("password", password);
+		form.setValue("captcha:answer", CaptchaToken.letters(token, Instant.now()).orElseThrow());
 		form.submit();
 	}
 }

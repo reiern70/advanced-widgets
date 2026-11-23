@@ -126,18 +126,4 @@ class ShowPasswordBrowserTest extends FrameworkAppsTestCase
 		assertEquals("Show password", eye().getDomAttribute("aria-label"));
 		assertNoErrors();
 	}
-
-	@ParameterizedTest
-	@EnumSource(SeleniumBrowser.class)
-	void bothPasswordsOfTheRegistrationHaveTheirEye(SeleniumBrowser browser)
-	{
-		open(browser, "register");
-		wait.until(d -> d.findElements(By.cssSelector(".show-password__button")).size() == 2);
-
-		driver.findElements(By.cssSelector(".show-password__button")).get(1).click();
-		assertEquals("password", password().getDomProperty("type"));
-		assertEquals("text", driver.findElement(By.name("repeatedPassword"))
-			.getDomProperty("type"));
-		assertNoErrors();
-	}
 }

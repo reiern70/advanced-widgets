@@ -40,14 +40,9 @@ updates:
       interval: weekly
     open-pull-requests-limit: 3
 
-  # image: postgres:...@sha256:... and caddy of compose.yaml
+  # image: caddy:...@sha256:... of compose.yaml
   - package-ecosystem: docker-compose
     directory: /deploy
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
-    ignore:
-      # a new major version of PostgreSQL cannot open the data of the old one: it is a move of its
-      # own, with a dump or pg_upgrade, never a new tag alone
-      - dependency-name: postgres
-        update-types: [version-update:semver-major]

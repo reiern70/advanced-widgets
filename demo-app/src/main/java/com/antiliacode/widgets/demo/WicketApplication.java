@@ -34,18 +34,15 @@ import org.apache.wicket.request.cycle.IRequestCycleListener;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.settings.StoreSettings;
 import org.apache.wicket.util.string.Strings;
-import org.springframework.context.ApplicationContext;
 
 import com.antiliacode.widgets.ckeditor.CKEditorLibrary;
 import com.antiliacode.widgets.richtext.RichTextFiles;
 import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.CaptchaImage;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.demo.account.SignInAttempts;
 import com.antiliacode.widgets.demo.account.SignInPage;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
-import com.antiliacode.widgets.demo.admin.AccessTimeResource;
-import com.antiliacode.widgets.demo.admin.AccessesApiResource;
-import com.antiliacode.widgets.demo.admin.UsersApiResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
 import com.antiliacode.widgets.demo.autocomplete.AutocompletePage;
 import com.antiliacode.widgets.demo.button.ButtonsPage;
@@ -59,8 +56,6 @@ import com.antiliacode.widgets.demo.datatable.FontAwesomeResourceReference;
 import com.antiliacode.widgets.demo.theme.BootstrapResourceReference;
 import com.antiliacode.widgets.demo.theme.DaisyUiResourceReference;
 import com.antiliacode.widgets.demo.datatable.UsersRowsResource;
-import com.antiliacode.widgets.demo.data.Accesses;
-import com.antiliacode.widgets.demo.data.Database;
 import com.antiliacode.widgets.demo.datepicker.DatePickerPage;
 import com.antiliacode.widgets.demo.desktop.DesktopPage;
 import com.antiliacode.widgets.demo.doublesubmit.DoubleSubmitPage;
@@ -89,8 +84,6 @@ import com.antiliacode.widgets.demo.popover.PopoversPage;
 import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
 import com.antiliacode.widgets.demo.frameworks.ChoicesResource;
 import com.antiliacode.widgets.demo.progress.ProgressBarPage;
-import com.antiliacode.widgets.demo.register.RegisterPage;
-import com.antiliacode.widgets.demo.register.RegistrationLimits;
 import com.antiliacode.widgets.demo.scrollbar.ScrollbarPage;
 import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
@@ -132,13 +125,9 @@ public class WicketApplication extends WebApplication
 
 	private Accounts accounts;
 
-	private Accesses accesses;
-
 	private final SignInAttempts signInAttempts = new SignInAttempts();
 
 	private final SignedInUsers signedInUsers = new SignedInUsers();
-
-	private final RegistrationLimits registrationLimits = new RegistrationLimits();
 
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
@@ -156,8 +145,7 @@ public class WicketApplication extends WebApplication
 		String account = DevelopmentSwitches.get(SIGN_IN_AS_PROPERTY);
 		if (!Strings.isEmpty(account))
 		{
-			accounts.find(account)
-				.ifPresent(user -> session.signedInLocally(user.getName(), user.getRole()));
+			accounts.find(account).ifPresent(role -> session.signedInLocally(account, role));
 		}
 		return session;
 	}
@@ -171,14 +159,9 @@ public class WicketApplication extends WebApplication
 		super.init();
 		DevelopmentSwitches.warnOfIgnored(this);
 
-		// the users and the accesses are in the database; the accounts the demo always has and the
-		// other accounts the server is started with get the passwords it is started with, and those
-		// no longer listed are locked
-		ApplicationContext database = newDatabase();
-		accounts = database.getBean(Accounts.class);
-		accesses = database.getBean(Accesses.class);
-		accounts.addDefaults();
-		accounts.addFromSettings();
+		// two accounts, in memory: user, shared by everybody, and the administrator, whose password
+		// the server is given; nothing about anybody is stored
+		accounts = newAccounts();
 
 		// a client keeping no cookies gets its pages instead of redirects for good, and the error
 		// pages keep their status
@@ -192,8 +175,7 @@ public class WicketApplication extends WebApplication
 		// the fields that failed their validation say so, to assistive technologies and the eye
 		getComponentInitializationListeners().add(InvalidFieldMarker::install);
 
-		// a session does not outlive its account: removed, locked or given another role, it is
-		// signed out
+		// a session whose place another one took is signed out
 		getRequestCycleListeners().add(new IRequestCycleListener()
 		{
 			@Override
@@ -201,7 +183,7 @@ public class WicketApplication extends WebApplication
 			{
 				if (Session.exists() && DemoSession.get().isSignedIn())
 				{
-					DemoSession.get().checkAccount();
+					DemoSession.get().checkPlace();
 				}
 			}
 		});
@@ -209,24 +191,8 @@ public class WicketApplication extends WebApplication
 		// a parameter or a body that cannot be read is the client's mistake: 400, not 500
 		getRequestCycleListeners().add(new BadRequests());
 
-		// a visitor who does not sign in, such as a script checking the site, tells who it is with
-		// ?visitor=, which the accesses show: it names the session there is, a request alone
-		// makes none
 		getRequestCycleListeners().add(new IRequestCycleListener()
 		{
-			@Override
-			public void onBeginRequest(RequestCycle cycle)
-			{
-				String visitor = cycle.getRequest()
-					.getQueryParameters()
-					.getParameterValue(DemoSession.VISITOR_PARAMETER)
-					.toOptionalString();
-				if (visitor != null && !DemoSession.get().isTemporary())
-				{
-					DemoSession.get().identify(visitor);
-				}
-			}
-
 			@Override
 			public void onEndRequest(RequestCycle cycle)
 			{
@@ -337,16 +303,11 @@ public class WicketApplication extends WebApplication
 		mountPage("desktop", DesktopPage.class);
 		mountPage("modal-dialog", ModalDialogPage.class);
 		mountPage("notifications", NotificationsPage.class);
-		mountPage("register", RegisterPage.class);
 		mountPage("sign-in", SignInPage.class);
 		mountPage("admin", AdminPage.class);
 		mountPage("not-found", NotFoundPage.class);
-		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
-		// the API of the administration: the users and the accesses, recent and old, for
-		// administrators only
-		mountResource(UsersApiResource.PATH, UsersApiResource.REFERENCE);
-		mountResource(AccessesApiResource.PATH, AccessesApiResource.REFERENCE);
-		mountResource(AccessesApiResource.OLD_PATH, AccessesApiResource.OLD_REFERENCE);
+		// the image of the captcha of the sign-in page, drawn from the token in its URL
+		mountResource(CaptchaImage.PATH, CaptchaImage.REFERENCE);
 		mountResource(ChoicesResource.PATH, ChoicesResource.REFERENCE);
 		// the uploads of the rich text editors, mounted once: the images of the article and of
 		// the apps go there, and all of them are served there
@@ -376,14 +337,6 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return who accessed the site
-	 */
-	public Accesses getAccesses()
-	{
-		return accesses;
-	}
-
-	/**
 	 * @return the users signed in now
 	 */
 	public SignedInUsers getSignedInUsers()
@@ -392,7 +345,7 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return the failed attempts to sign in, by account
+	 * @return the failed attempts to sign in, by address
 	 */
 	public SignInAttempts getSignInAttempts()
 	{
@@ -400,20 +353,12 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return the limits of registering
+	 * @return the accounts, with the administrator's password from the system property or the
+	 *         environment variable; tests give one of their own
 	 */
-	public RegistrationLimits getRegistrationLimits()
+	protected Accounts newAccounts()
 	{
-		return registrationLimits;
-	}
-
-	/**
-	 * @return the Spring context of the database set by the system properties or the environment
-	 * @see Database#fromSettings()
-	 */
-	protected ApplicationContext newDatabase()
-	{
-		return Database.context(Database.fromSettings());
+		return new Accounts();
 	}
 
 	/**

@@ -230,12 +230,13 @@ public final class RichTextAttachments implements IRichTextAttachmentStore
 	}
 
 	/**
-	 * @return who attaches a file: the account signed in with, else the session
+	 * @return who attaches a file: the administrator, else the session, as everybody else shares one
+	 *         account
 	 */
 	private static String user()
 	{
 		DemoSession session = DemoSession.get();
-		return session.isSignedIn() ? "account:" + session.getAccount()
+		return session.isAdmin() ? "account:" + session.getAccount()
 			: "session:" + session.getId();
 	}
 

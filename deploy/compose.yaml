@@ -1,6 +1,6 @@
 # The production site: Caddy terminates HTTPS (Let's Encrypt certificates, renewed by itself)
-# and passes everything, websockets included, to Jetty; PostgreSQL keeps the users and the
-# accesses. Settings come from .env, see .env.example. The images are pinned by their digests, the
+# and passes everything, websockets included, to Jetty. No database: the site keeps no record of
+# the people who visit it. Settings come from .env, see .env.example. The images are pinned by their digests, the
 # tag kept to be read; Dependabot proposes the next ones (see .github/dependabot.yml), and deploy.sh
 # pulls them.
 
@@ -13,7 +13,7 @@ x-logging: &logging
 
 # Every container runs on a read-only file system, writing only into its volumes and tmpfs, with
 # no capabilities of Linux beyond those it needs, gains no privileges (no setuid), and has a limit
-# of memory, the three together fitting the 2 GB instance.
+# of memory, the two together fitting the 2 GB instance.
 
 services:
   app:
@@ -30,16 +30,8 @@ services:
       - /run/jetty:size=1m,mode=1777
     environment:
       JAVA_OPTIONS: ${JAVA_OPTIONS}
-      # the PostgreSQL of this file, unless .env names another one (a managed database), with
-      # the role of the application, which is no superuser (see database-role.sql)
-      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://db:5432/widgets}
-      DATABASE_USER: ${DATABASE_APP_USER:-widgets_app}
-      DATABASE_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
-      ANTILIA_WIDGETS_ACCOUNTS: ${ANTILIA_WIDGETS_ACCOUNTS:-}
-      # the passwords of the accounts the demo always has; one without a password is not added
+      # the administrator's password; without one there is no administrator
       ANTILIA_WIDGETS_ADMIN_PASSWORD: ${ANTILIA_WIDGETS_ADMIN_PASSWORD:-}
-      ANTILIA_WIDGETS_SEMEDY_PASSWORD: ${ANTILIA_WIDGETS_SEMEDY_PASSWORD:-}
-      ANTILIA_WIDGETS_WICKET_PASSWORD: ${ANTILIA_WIDGETS_WICKET_PASSWORD:-}
       # the address of the site, whose pages the websockets connect from: Jetty only sees the
       # requests Caddy passes on
       SITE_URL: https://${DOMAIN}
@@ -51,63 +43,6 @@ services:
     expose:
       - "8080"
     logging: *logging
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # PostgreSQL on the instance's SSD; only the app reaches it, no port is published. Sized for
-  # the 2 GB instance next to a JVM of 1 GB: the pool of the app uses 5 connections at most.
-  # Backed up every night by backup.sh, see README.md.
-  db:
-    image: postgres:17.11@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
-    restart: unless-stopped
-    # as the user postgres from the start, who owns the data: the image's script needs no root
-    # then, nor the capabilities to change owners and users
-    user: postgres
-    read_only: true
-    cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
-    # shared_buffers of 192 MB, 20 connections at most
-    mem_limit: 512m
-    tmpfs:
-      - /var/run/postgresql:size=1m,mode=1777
-      - /tmp:size=16m,mode=1777
-    command:
-      - postgres
-      - -c
-      - shared_buffers=192MB
-      - -c
-      - effective_cache_size=512MB
-      - -c
-      - work_mem=4MB
-      - -c
-      - maintenance_work_mem=64MB
-      - -c
-      - max_connections=20
-      - -c
-      - wal_compression=on
-      # queries slower than a second go to the log
-      - -c
-      - log_min_duration_statement=1000
-    shm_size: 256mb
-    logging: *logging
-    environment:
-      POSTGRES_DB: widgets
-      # the superuser, who keeps the database, makes the backups and the role of the application
-      POSTGRES_USER: ${DATABASE_USER:-widgets}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
-      # the role of the application, made by database-role.sql when the database is created and
-      # again by start.sh before every start of the application
-      DATABASE_APP_USER: ${DATABASE_APP_USER:-widgets_app}
-      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD in .env, see README.md}
-    volumes:
-      - database:/var/lib/postgresql/data
-      - ./database-role.sql:/docker-entrypoint-initdb.d/database-role.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d widgets"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
 
   caddy:
     image: caddy:2.11.9@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b
@@ -137,7 +72,6 @@ services:
       - app
 
 volumes:
-  database:
   page-store:
   temporary:
   caddy-data:

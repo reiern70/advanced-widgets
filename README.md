@@ -123,16 +123,11 @@ in Jetty 12, in its Jakarta EE 10 environment (ee10), as production does. Locall
 
 - every session is signed in as `admin`, the account the password above creates; to sign in
   yourself instead, add `-Dantilia-widgets.sign-in-as=`;
-- registering is open, as everywhere: no email is sent, and an account registered is deleted 6
-  months later (see `deploy/README.md`, section Registering);
-- users and accesses are kept in an H2 database in a file under the system's temporary folder,
-  or under `-Dantilia-widgets.data-folder=<folder>`. With `DATABASE_URL`, `DATABASE_USER` and
-  `DATABASE_PASSWORD` the demo uses PostgreSQL instead, as in production;
-  `deploy/postgres-local.yaml` starts one with Docker;
-- the demo's own accounts, `admin`, `semedy` and `wicket`, get their passwords from the system
-  properties `antilia-widgets.<account>.password` or the environment variables
-  `ANTILIA_WIDGETS_<ACCOUNT>_PASSWORD`; the source holds none, and an account without one is not
-  created.
+- there are two accounts, in memory: `user`, shared by everybody, whose password is in the source
+  and shown on the sign-in page, and `admin`, whose password comes from the system property
+  `antilia-widgets.admin.password` or the environment variable `ANTILIA_WIDGETS_ADMIN_PASSWORD`;
+  without one there is no administrator. There is no database: the demo keeps no record of the
+  people who visit it.
 
 `-Djetty.port=<port>` and `-Djetty.https.port=<port>` change the ports, and `-Dwicket.demo=true`
 shows the branch and the commit in the footer.
@@ -521,9 +516,9 @@ GitHub Actions builds and tests every pull request and push to `master`, against
 | Folder | What it holds |
 |---|---|
 | `ui-components` | The Wicket components (`com.antiliacode.widgets.*`), with the scripts and style sheets built from `frontend/core` |
-| `demo-app` | The demo application, a WAR: the pages of every component, sign-in and registration, the database |
+| `demo-app` | The demo application, a WAR: the pages of every component, the sign-in and the administration |
 | `frontend` | The TypeScript core, the React and Svelte packages and the React and Svelte pages of the demo |
-| `deploy` | How the demo site runs: Docker, Caddy and PostgreSQL on Amazon Lightsail, see [`deploy/README.md`](deploy/README.md) |
+| `deploy` | How the demo site runs: Docker and Caddy on Amazon Lightsail, see [`deploy/README.md`](deploy/README.md) |
 
 ## Problems and ideas
 

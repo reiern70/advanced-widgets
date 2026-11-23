@@ -54,14 +54,8 @@ class WebSocketOriginTest extends JettyTestCase
 	 */
 	private String connect(String origin) throws Exception
 	{
-		// a session, as the page has, from a page that keeps one
-		String cookie = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" +
-			localPort + "/sign-in")).build(), HttpResponse.BodyHandlers.discarding())
-			.headers().allValues("Set-Cookie").stream()
-			.filter(each -> each.startsWith("JSESSIONID="))
-			.findFirst()
-			.orElseThrow()
-			.split(";")[0];
+		// a session, as the page has: signed in
+		String cookie = HttpSignIn.cookie(localPort);
 		CompletableFuture<String> first = new CompletableFuture<>();
 		WebSocket socket = client.newWebSocketBuilder()
 			.header("Cookie", cookie)

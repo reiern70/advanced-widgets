@@ -14,378 +14,82 @@
 package com.antiliacode.widgets.demo.account;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.Optional;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import com.antiliacode.widgets.demo.TestDatabase;
-import com.antiliacode.widgets.demo.data.IUserRepository;
-import com.antiliacode.widgets.demo.data.Role;
-import com.antiliacode.widgets.demo.data.User;
 
 /**
- * Registers and authenticates {@link Accounts}, kept in the table {@code users}.
+ * Two accounts, in memory: {@value Accounts#USER}, whose password is in the source, and the
+ * administrator, whose password the server is given; see {@link Accounts}.
  */
 class AccountsTest
 {
-	private Accounts accounts;
-
-	@BeforeEach
-	void clear()
+	@Test
+	void everybodySignsInAsUserWithThePasswordOfTheSource()
 	{
-		TestDatabase.clear();
-		accounts = TestDatabase.accounts();
+		Accounts accounts = new Accounts("admin-secret");
+
+		assertEquals(Optional.of(Role.USER),
+			accounts.authenticate("user", "$Amigo_MEllon_Friend_4321"));
+		assertEquals(Optional.of(Role.USER),
+			accounts.authenticate(" User ", Accounts.USER_PASSWORD));
+		assertTrue(accounts.authenticate("user", "$amigo_mellon_friend_4321").isEmpty());
+		assertTrue(accounts.authenticate("user", "admin-secret").isEmpty());
 	}
 
 	@Test
-	void theDemoAlwaysHasItsAccounts()
+	void theAdministratorSignsInWithThePasswordOfTheServer()
 	{
-		assertEquals(Role.USER, accounts.authenticate("semedy", TestDatabase.SEMEDY_PASSWORD)
-			.map(User::getRole).orElseThrow());
-		assertEquals(Role.USER, accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD)
-			.map(User::getRole).orElseThrow());
-		assertEquals(Role.ADMIN, accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD)
-			.map(User::getRole).orElseThrow());
-		assertFalse(accounts.authenticate("admin", TestDatabase.WICKET_PASSWORD).isPresent());
+		Accounts accounts = new Accounts("admin-secret");
 
-		// adding them again changes nothing
-		String hash = accounts.find("admin").orElseThrow().getPasswordHash();
-		accounts.addDefaults();
-		assertEquals(3, TestDatabase.users().size());
-		assertEquals(hash, accounts.find("admin").orElseThrow().getPasswordHash());
+		assertEquals(Optional.of(Role.ADMIN), accounts.authenticate("admin", "admin-secret"));
+		assertEquals(Optional.of(Role.ADMIN), accounts.authenticate("ADMIN", "admin-secret"));
+		assertTrue(accounts.authenticate("admin", Accounts.USER_PASSWORD).isEmpty());
+		assertEquals(Optional.of(Role.ADMIN), accounts.find("admin"));
 	}
 
 	@Test
-	void theAccountsTheDemoAlwaysHasTakeTheirPasswordsFromTheServer()
+	void withoutAPasswordThereIsNoAdministrator()
 	{
-		// another password replaces the one before
-		accounts.addDefault("wicket", Role.USER, "another-test-password");
-		assertTrue(accounts.authenticate("wicket", "another-test-password").isPresent());
-		assertFalse(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
-
-		// without a password, a missing account is not added
-		accounts.remove(accounts.find("semedy").orElseThrow());
-		accounts.addDefault("semedy", Role.USER, "");
-		assertFalse(accounts.find("semedy").isPresent());
-	}
-
-	@Test
-	void anAccountHoldingAPasswordTheSourceOnceGaveIsLocked()
-	{
-		// the hash V4__wicket_password.sql gives the account wicket
-		User wicket = accounts.find("wicket").orElseThrow();
-		wicket.setPasswordHash("6Fi23jr/izCqXM4Bn7yKxQ==:sLba9BDFyxARONbZ1H5Vi2KadTleKeMw/qqtJwg728M=");
-		TestDatabase.context().getBean(IUserRepository.class).save(wicket);
-
-		accounts.addDefault("wicket", Role.USER, "");
-		assertEquals(Accounts.LOCKED, accounts.find("wicket").orElseThrow().getPasswordHash());
-
-		// a password from the server opens it again
-		accounts.addDefault("wicket", Role.USER, TestDatabase.WICKET_PASSWORD);
-		assertTrue(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
-	}
-
-	@Test
-	void theFirstHashTheSourceGaveSemedyIsLockedToo()
-	{
-		User semedy = accounts.find("semedy").orElseThrow();
-		semedy.setPasswordHash("hELprMaIQq0bDQ2M6SVwew==:vf4iUqtFpmVE2d7tdUOD5uNzEZTkSsUXWduC60JFYcs=");
-		TestDatabase.context().getBean(IUserRepository.class).save(semedy);
-
-		accounts.addDefault("semedy", Role.USER, "");
-
-		assertEquals(Accounts.LOCKED, accounts.find("semedy").orElseThrow().getPasswordHash());
-	}
-
-	@Test
-	void configuredAccountsTakeThePasswordsOfTheSettingAtEveryStart()
-	{
-		accounts.addConfigured("client:secret-one");
-		assertTrue(accounts.find("client").orElseThrow().isConfigured());
-
-		accounts.addConfigured("client:secret-two");
-
-		assertTrue(accounts.authenticate("client", "secret-two").isPresent());
-		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
-		String hash = accounts.find("client").orElseThrow().getPasswordHash();
-		// the same password keeps its hash
-		accounts.addConfigured("client:secret-two");
-		assertEquals(hash, accounts.find("client").orElseThrow().getPasswordHash());
-	}
-
-	@Test
-	void anAccountNoLongerConfiguredIsLockedNotDeleted()
-	{
-		accounts.addConfigured("client:secret-one, other:secret-two");
-
-		accounts.addConfigured("other:secret-two");
-
-		User client = accounts.find("client").orElseThrow();
-		assertEquals(Accounts.LOCKED, client.getPasswordHash());
-		assertFalse(accounts.authenticate("client", "secret-one").isPresent());
-		assertTrue(accounts.authenticate("other", "secret-two").isPresent());
-
-		// none configured: every one is locked, none deleted
-		accounts.addConfigured("");
-		assertEquals(Accounts.LOCKED, accounts.find("other").orElseThrow().getPasswordHash());
-		assertEquals(5, TestDatabase.users().size());
-
-		// listed again, it opens again
-		accounts.addConfigured("client:secret-three");
-		assertTrue(accounts.authenticate("client", "secret-three").isPresent());
-		assertEquals(client.getId(), accounts.find("client").orElseThrow().getId());
-	}
-
-	@Test
-	void theOtherAccountsAreNotTouchedByTheSetting()
-	{
-		accounts.register("ada@example.com", "analytical-engine", user -> {});
-		accounts.create("grace", "compiler-1952", Role.USER, user -> {});
-
-		accounts.addConfigured("");
-
-		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
-		assertTrue(accounts.authenticate("grace", "compiler-1952").isPresent());
-		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
-	}
-
-	@Test
-	void theSettingDoesNotSetThePasswordsOfTheAccountsTheDemoAlwaysHas()
-	{
-		accounts.addConfigured("admin:taken-over, client:secret-one");
-
-		assertTrue(accounts.authenticate("admin", TestDatabase.ADMIN_PASSWORD).isPresent());
-		assertFalse(accounts.authenticate("admin", "taken-over").isPresent());
-		assertFalse(accounts.find("admin").orElseThrow().isConfigured());
-		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
-	}
-
-	@Test
-	void aConfiguredAccountRemovedComesBackAtTheNextStart()
-	{
-		accounts.addConfigured("client:secret-one");
-		accounts.remove(accounts.find("client").orElseThrow());
-
-		accounts.addConfigured("client:secret-one");
-
-		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
-	}
-
-	@Test
-	void configuredAccountsSignInWithTheirPasswords()
-	{
-		accounts.addConfigured("client:secret-one, other:secret-two");
-
-		assertEquals("client", accounts.authenticate("Client ", "secret-one").orElseThrow()
-			.getName());
-		assertEquals("other", accounts.authenticate("other", "secret-two").orElseThrow()
-			.getName());
-		assertFalse(accounts.authenticate("client", "secret-two").isPresent());
-		assertFalse(accounts.authenticate("nobody", "secret-one").isPresent());
-		assertFalse(accounts.authenticate("client", "").isPresent());
-		assertFalse(accounts.authenticate(null, null).isPresent());
-	}
-
-	@Test
-	void registeredAccountsAreKeptHashed()
-	{
-		assertTrue(accounts.register("Ada@Example.com", "analytical-engine", user -> {}).isPresent());
-
-		User ada = TestDatabase.users().stream()
-			.filter(user -> user.getName().equals("ada@example.com"))
-			.findFirst()
-			.orElseThrow();
-		assertFalse(ada.getPasswordHash().contains("analytical-engine"));
-		assertEquals(Role.USER, ada.getRole());
-		// the email is the name of the account, and kept apart too
-		assertEquals("ada@example.com", ada.getEmail());
-		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
-		assertFalse(accounts.authenticate("ada@example.com", "difference-engine").isPresent());
-	}
-
-	@Test
-	void aNameOfNoAccountTakesAsLongAsAWrongPassword()
-	{
-		accounts.authenticate("wicket", "warming-up");
-		long wrongPassword = fastest(() -> accounts.authenticate("wicket", "wrong-password"));
-		long noAccount = fastest(() -> accounts.authenticate("nobody", "wrong-password"));
-		long locked = fastest(() -> {
-			User wicket = accounts.find("wicket").orElseThrow();
-			wicket.setPasswordHash(Accounts.LOCKED);
-			TestDatabase.context().getBean(IUserRepository.class).save(wicket);
-			accounts.authenticate("wicket", "wrong-password");
-		});
-
-		// both hash the password: without hashing a name of no account took a fraction of it
-		assertTrue(noAccount * 2 > wrongPassword, noAccount + " ms for no account, " +
-			wrongPassword + " ms for a wrong password");
-		assertTrue(locked * 2 > wrongPassword, locked + " ms for a locked account, " +
-			wrongPassword + " ms for a wrong password");
-	}
-
-	@Test
-	void registeringAnEmailRegisteredAlreadyTakesAsLongAsANewOne()
-	{
-		accounts.register("ada@example.com", "warming-up", user -> {});
-		long registered = fastest(() -> accounts.register("ada@example.com", "again", user -> {}));
-		int[] next = { 0 };
-		long fresh = fastest(() -> accounts.register("new-" + next[0]++ + "@example.com", "again",
-			user -> {}));
-
-		assertTrue(registered * 2 > fresh, registered + " ms registered already, " + fresh +
-			" ms new");
-	}
-
-	/**
-	 * @return the fewest milliseconds the task took in five runs, which a pause of the JVM in one
-	 *         of them does not change
-	 */
-	private static long fastest(Runnable task)
-	{
-		long fastest = Long.MAX_VALUE;
-		for (int run = 0; run < 5; run++)
+		for (String none : new String[] { null, "" })
 		{
-			long start = System.nanoTime();
-			task.run();
-			fastest = Math.min(fastest, (System.nanoTime() - start) / 1_000_000);
+			Accounts accounts = new Accounts(none);
+
+			assertTrue(accounts.authenticate("admin", "").isEmpty());
+			assertTrue(accounts.authenticate("admin", "anything").isEmpty());
+			assertTrue(accounts.find("admin").isEmpty());
+			assertEquals(Optional.of(Role.USER), accounts.find("user"));
 		}
-		return fastest;
 	}
 
 	@Test
-	void anAccountIsRegisteredOnlyOnce()
+	void thereAreNoOtherAccounts()
 	{
-		accounts.addConfigured("client:secret-one");
+		Accounts accounts = new Accounts("admin-secret");
 
-		assertTrue(accounts.register("ada@example.com", "analytical-engine", user -> {}).isPresent());
-		assertFalse(accounts.register(" ADA@example.com", "difference-engine", user -> {}).isPresent());
-		assertFalse(accounts.register("client", "taken-over", user -> {}).isPresent());
-		assertFalse(accounts.register("admin", "taken-over", user -> {}).isPresent());
-		assertTrue(accounts.authenticate("client", "secret-one").isPresent());
-		assertFalse(accounts.authenticate("client", "taken-over").isPresent());
+		for (String name : new String[] { "semedy", "wicket", "client", "", null })
+		{
+			assertTrue(accounts.authenticate(name, Accounts.USER_PASSWORD).isEmpty(), name);
+			assertTrue(accounts.authenticate(name, "admin-secret").isEmpty(), name);
+			assertTrue(accounts.find(name).isEmpty(), name);
+		}
+		assertTrue(accounts.authenticate("user", null).isEmpty());
 	}
 
 	@Test
-	void theAccountsOfEarlierVersionsAreImported(@TempDir Path folder) throws Exception
+	void theAdministratorsPasswordComesFromTheSystemProperty()
 	{
-		File file = new File(folder.toFile(), "antilia-widgets-accounts.properties");
-		Files.writeString(file.toPath(), "grace@example.com=" +
-			legacyHash("compiler").replace(":", "\\:").replace("=", "\\=") + "\n");
-
-		accounts.importFile(file);
-		accounts.importFile(new File(folder.toFile(), "missing.properties"));
-
-		assertTrue(accounts.authenticate("grace@example.com", "compiler").isPresent());
-	}
-
-	@Test
-	void hashesAreSalted()
-	{
-		String once = Accounts.hash("same password");
-		String twice = Accounts.hash("same password");
-
-		assertFalse(once.equals(twice));
-		assertTrue(Accounts.matches("same password", once));
-		assertTrue(Accounts.matches("same password", twice));
-		assertFalse(Accounts.matches("other password", once));
-		assertFalse(Accounts.matches("same password", "not a hash"));
-		assertFalse(Accounts.matches("same password", Accounts.LOCKED));
-		assertFalse(Accounts.matches("same password", null));
-	}
-
-	@Test
-	void hashesNameTheirAlgorithmAndIterations()
-	{
-		String hash = Accounts.hash("same password");
-
-		String[] parts = hash.split("\\$");
-		assertEquals(4, parts.length, hash);
-		assertEquals("pbkdf2-sha256", parts[0]);
-		assertEquals("600000", parts[1]);
-		assertEquals(16, Base64.getDecoder().decode(parts[2]).length);
-		assertEquals(32, Base64.getDecoder().decode(parts[3]).length);
-		assertFalse(Accounts.isOutdated(hash));
-		// the column password_hash holds it
-		assertTrue(hash.length() <= 200, hash);
-
-		// a hash naming iterations it cannot have matches nothing
-		assertFalse(Accounts.matches("same password", "pbkdf2-sha256$0$" + parts[2] + "$" +
-			parts[3]));
-		assertFalse(Accounts.matches("same password", "pbkdf2-sha256$x$" + parts[2] + "$" +
-			parts[3]));
-	}
-
-	@Test
-	void aHashOfAnEarlierVersionSignsInAndIsMadeAnew()
-	{
-		String legacy = legacyHash("analytical-engine");
-		assertTrue(Accounts.matches("analytical-engine", legacy));
-		assertFalse(Accounts.matches("difference-engine", legacy));
-		assertTrue(Accounts.isOutdated(legacy));
-
-		User ada = accounts.create("ada@example.com", "analytical-engine", Role.USER, user -> {})
-			.orElseThrow();
-		ada.setPasswordHash(legacy);
-		TestDatabase.context().getBean(IUserRepository.class).save(ada);
-
-		// a wrong password changes nothing
-		assertFalse(accounts.authenticate("ada@example.com", "difference-engine").isPresent());
-		assertEquals(legacy, accounts.find("ada@example.com").orElseThrow().getPasswordHash());
-
-		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
-		String renewed = accounts.find("ada@example.com").orElseThrow().getPasswordHash();
-		assertTrue(renewed.startsWith("pbkdf2-sha256$600000$"), renewed);
-		assertTrue(accounts.authenticate("ada@example.com", "analytical-engine").isPresent());
-		assertEquals(renewed, accounts.find("ada@example.com").orElseThrow().getPasswordHash());
-	}
-
-	@Test
-	void theAccountsTheDemoAlwaysHasGetHashesOfToday()
-	{
-		User wicket = accounts.find("wicket").orElseThrow();
-		wicket.setPasswordHash(legacyHash(TestDatabase.WICKET_PASSWORD));
-		TestDatabase.context().getBean(IUserRepository.class).save(wicket);
-
-		accounts.addDefaults();
-
-		String hash = accounts.find("wicket").orElseThrow().getPasswordHash();
-		assertTrue(hash.startsWith("pbkdf2-sha256$600000$"), hash);
-		assertTrue(accounts.authenticate("wicket", TestDatabase.WICKET_PASSWORD).isPresent());
-	}
-
-	/**
-	 * @return a hash as earlier versions made it: PBKDF2-HMAC-SHA256 with 210,000 iterations, as
-	 *         {@code <salt>:<hash>} in Base64
-	 */
-	private static String legacyHash(String password)
-	{
-		byte[] salt = new byte[16];
-		new SecureRandom().nextBytes(salt);
-		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 210_000, 256);
+		System.setProperty(Accounts.ADMIN_PASSWORD_PROPERTY, "from-the-property");
 		try
 		{
-			byte[] hash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-				.generateSecret(spec)
-				.getEncoded();
-			Base64.Encoder base64 = Base64.getEncoder();
-			return base64.encodeToString(salt) + ":" + base64.encodeToString(hash);
+			assertEquals(Optional.of(Role.ADMIN),
+				new Accounts().authenticate("admin", "from-the-property"));
 		}
-		catch (GeneralSecurityException e)
+		finally
 		{
-			throw new AssertionError(e);
+			System.setProperty(Accounts.ADMIN_PASSWORD_PROPERTY, "admin-test-password");
 		}
 	}
 }
