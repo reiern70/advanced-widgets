@@ -65,41 +65,6 @@ class RegistrationLimitsTest
 	}
 
 	@Test
-	void aRecipientGetsAFewEmailsAnHour()
-	{
-		for (int i = 0; i < RegistrationLimits.MAILS_PER_RECIPIENT; i++)
-		{
-			assertTrue(limits.mail("203.0.113." + i, "ada@example.com"));
-		}
-		assertFalse(limits.mail("198.51.100.1", "Ada@Example.com"));
-		assertTrue(limits.mail("198.51.100.1", "grace@example.com"));
-	}
-
-	@Test
-	void anAddressAsksForAFewEmailsAnHour()
-	{
-		for (int i = 0; i < RegistrationLimits.MAILS_PER_ADDRESS; i++)
-		{
-			assertTrue(limits.mail("203.0.113.7", "person" + i + "@example.com"));
-		}
-		assertFalse(limits.mail("203.0.113.7", "another@example.com"));
-		assertTrue(limits.mail("198.51.100.1", "another@example.com"));
-	}
-
-	@Test
-	void everybodyGetsSomeEmailsAnHour()
-	{
-		for (int i = 0; i < RegistrationLimits.MAILS; i++)
-		{
-			assertTrue(limits.mail(null, "person" + i + "@example.com"));
-		}
-		assertFalse(limits.mail("198.51.100.1", "another@example.com"));
-
-		clock.advance(RegistrationLimits.WINDOW);
-		assertTrue(limits.mail("198.51.100.1", "another@example.com"));
-	}
-
-	@Test
 	void aChallengeAnswersOnce()
 	{
 		String challenge = limits.newChallenge();

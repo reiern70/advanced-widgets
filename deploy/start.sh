@@ -45,14 +45,10 @@ if printf '%s\n' "$JAVA_OPTIONS_LINE" | grep -Eo -- '-Dwicket\.configuration=[^[
 	fail "JAVA_OPTIONS in .env must set no other -Dwicket.configuration than deployment"
 fi
 
-# the switches of a developer's machine: everybody signed in as an account, the demos open to
-# everybody, or registering open without the emails confirming it; closing registering is fine
+# the switches of a developer's machine: everybody signed in as an account, or the demos open to
+# everybody
 if settings | grep -Eq -- '-Dantilia-widgets\.(sign-in-as|open-demos)([=[:space:]"'\'']|$)'; then
 	fail ".env must not set -Dantilia-widgets.sign-in-as or -Dantilia-widgets.open-demos"
-fi
-if settings | grep -Eo -- '-Dantilia-widgets\.open-registration(=[^[:space:]"'\'']*)?' \
-	| grep -qvx -- '-Dantilia-widgets.open-registration=false'; then
-	fail ".env must not set -Dantilia-widgets.open-registration, unless to false"
 fi
 
 # the database as it is before the migrations of the new version

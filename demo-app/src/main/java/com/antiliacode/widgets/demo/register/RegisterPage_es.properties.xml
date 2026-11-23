@@ -15,23 +15,20 @@
 -->
 <properties>
 	<entry key="title">Registrarse</entry>
-	<entry key="lead">Regístrese para probar las demos de los componentes. Le enviaremos un enlace para confirmar su correo.</entry>
+	<entry key="lead">Regístrese para probar las demos de los componentes.</entry>
 	<entry key="firstName">Nombre</entry>
 	<entry key="lastName">Apellido</entry>
 	<entry key="email">Correo electrónico</entry>
 	<entry key="country">País</entry>
 	<entry key="website">Sitio web</entry>
-	<entry key="question">¿Cuánto es {0} + {1}?</entry>
-	<entry key="answer">La suma</entry>
 	<entry key="submit">Registrarse</entry>
-	<entry key="robot">Eso no parecía una persona rellenando el formulario. Calcule la nueva suma y vuelva a enviarlo.</entry>
+	<entry key="robot">Eso no parecía una persona rellenando el formulario. Resuelva la nueva comprobación y vuelva a enviarlo.</entry>
 	<entry key="Required">El campo «${label}» es obligatorio.</entry>
 	<entry key="EmailAddressValidator">${label} no es una dirección de correo válida.</entry>
 	<entry key="password">Contraseña</entry>
 	<entry key="repeatedPassword">Repita la contraseña</entry>
 	<entry key="EqualPasswordInputValidator">Las contraseñas no coinciden.</entry>
 	<entry key="closed">El registro está cerrado por ahora. Vuelva más tarde, o inicie sesión si ya tiene una cuenta.</entry>
-	<entry key="emailLanguage">Idioma de los correos</entry>
 	<entry key="passwordHint">Al menos 10 caracteres, con mayúsculas y minúsculas, un dígito y un símbolo.</entry>
 	<entry key="StrongPasswordValidator">${label} necesita de ${minimum} a ${maximum} caracteres, con una mayúscula, una minúscula, un dígito y un símbolo.</entry>
 	<entry key="PasswordNotEmailValidator">La contraseña no debe contener su correo.</entry>
@@ -44,4 +41,10 @@
 	<entry key="JobRole.STUDENT">Estudiante</entry>
 	<entry key="JobRole.OTHER">Otra</entry>
 	<entry key="tooMany">Hay demasiados registros en este momento. Vuelva a intentarlo dentro de una hora.</entry>
+	<entry key="notice">Guardamos su cuenta y las páginas que visite aquí durante {0} meses, y luego las borramos. Nunca usaremos su correo ni nada de lo que nos dé para contactarle: solo para contar cuántas personas usan los componentes y qué demos les interesan.</entry>
+	<entry key="exists">Ya hay una cuenta con este correo: inicie sesión con ella, o regístrese con otro correo.</entry>
+	<entry key="registered">Le damos la bienvenida: su cuenta está lista.</entry>
+	<entry key="registeredFull">Su cuenta está lista, pero ahora hay demasiados usuarios conectados. Inicie sesión dentro de unos minutos.</entry>
+	<entry key="captchaLead">Para mostrar que es una persona, escriba las letras de la imagen.</entry>
+	<entry key="captchaQuestionLead">Para mostrar que es una persona, responda a la pregunta.</entry>
 </properties>

@@ -11,22 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.antiliacode.widgets.demo.mail;
+package com.antiliacode.widgets.demo.data;
 
-import java.io.Serializable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * An email, in HTML and in plain text for the programs that do not show HTML.
- *
- * @param to
- *            the address it goes to
- * @param subject
- *            the subject
- * @param text
- *            the plain text
- * @param html
- *            the HTML
+ * The {@link FormerAccount}s in the table {@code former_accounts}.
  */
-public record Mail(String to, String subject, String text, String html) implements Serializable
+public interface IFormerAccountRepository extends JpaRepository<FormerAccount, Long>
 {
 }

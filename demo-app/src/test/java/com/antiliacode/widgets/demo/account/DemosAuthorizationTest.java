@@ -257,9 +257,8 @@ class DemosAuthorizationTest
 	void atMostFiveRegisteredAccountsAreSignedInAtOnce()
 	{
 		start(RuntimeConfigurationType.DEPLOYMENT);
-		Accounts.get().validate(Accounts.get()
-			.register("ada@example.com", "Analytical-Engine-1843", user -> {})
-			.orElseThrow());
+		Accounts.get().register("ada@example.com", "Analytical-Engine-1843", user -> {})
+			.orElseThrow();
 		SignedInUsers users = SignedInUsers.get();
 		for (int i = 1; i <= SignedInUsers.MAXIMUM; i++)
 		{

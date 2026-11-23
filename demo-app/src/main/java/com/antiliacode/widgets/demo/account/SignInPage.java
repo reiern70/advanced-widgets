@@ -24,6 +24,7 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
@@ -35,7 +36,6 @@ import com.antiliacode.widgets.demo.FormErrors;
 import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.data.User;
-import com.antiliacode.widgets.demo.register.ConfirmationMail;
 import com.antiliacode.widgets.demo.register.RegisterPage;
 import com.github.openjson.JSONObject;
 
@@ -50,8 +50,8 @@ import com.github.openjson.JSONObject;
  * without it, from a session that has not seen it yet, is turned away and shown the captcha,
  * without checking the password. While the account or the address waits after too many failures
  * (see {@link SignInAttempts}), attempts are turned away and told how long to wait.
- * A visitor who registered signs in only once the email is confirmed; until then signing in
- * sends a new {@link ConfirmationMail} when the last one is {@link Accounts#RESEND_AFTER} old.
+ * Next to the link to the {@link RegisterPage} it says that accounts are kept
+ * {@link Accounts#KEPT} and never used to contact anybody.
  * <p>
  * The form is sent via Ajax, so that what went wrong shows without drawing the field of the
  * password again: what was typed in it stays, unless the password was wrong or missing. Without
@@ -127,11 +127,6 @@ public class SignInPage extends BasePage
 					return;
 				}
 				attempts.succeeded(typed);
-				if (!user.get().isValidated())
-				{
-					notValidated(user.get());
-					return;
-				}
 				if (!session.signIn(user.get().getName(), user.get().getRole()))
 				{
 					Duration untilRoom = SignedInUsers.get().untilRoom();
@@ -143,20 +138,6 @@ public class SignInPage extends BasePage
 				}
 				continueToOriginalDestination();
 				setResponsePage(HomePage.class);
-			}
-
-			/**
-			 * Turns away an account whose email is not confirmed, sending a new link if the
-			 * last one is old enough.
-			 */
-			private void notValidated(User user)
-			{
-				if (Accounts.get().isValidationResent(user))
-				{
-					ConfirmationMail.resend(user);
-				}
-				error(new StringResourceModel("notValidated", SignInPage.this)
-					.setParameters(user.getName()).getString());
 			}
 		};
 		add(form);
@@ -209,6 +190,8 @@ public class SignInPage extends BasePage
 		form.add(captcha);
 
 		add(new BookmarkablePageLink<>("registerInstead", RegisterPage.class));
+		add(new Label("kept", new StringResourceModel("kept", this)
+			.setParameters(Accounts.KEPT.toTotalMonths())));
 	}
 
 	@Override
