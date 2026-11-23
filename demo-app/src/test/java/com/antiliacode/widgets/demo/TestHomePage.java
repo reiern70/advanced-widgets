@@ -174,6 +174,15 @@ public class TestHomePage
 	}
 
 	@Test
+	public void theFooterSaysItIsPoweredByApacheWicketWithALinkToItsSite()
+	{
+		tester.startPage(HomePage.class);
+
+		tester.assertContains(Pattern.quote("Powered by <a class=\"footer__link\" " +
+			"href=\"https://wicket.apache.org/\">Apache Wicket</a>"));
+	}
+
+	@Test
 	public void homepageIsStateless()
 	{
 		tester.startPage(HomePage.class);

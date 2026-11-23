@@ -27,7 +27,7 @@
 	<entry key="showPassword">Show password</entry>
 	<entry key="hidePassword">Hide password</entry>
 	<entry key="license">Licensed under the Apache License, Version 2.0.</entry>
-	<entry key="builtWith">Built with Apache Wicket</entry>
+	<entry key="poweredBy">Powered by</entry>
 	<entry key="category.examples">Examples</entry>
 	<entry key="category.data">Data</entry>
 	<entry key="category.feedback">Feedback</entry>
