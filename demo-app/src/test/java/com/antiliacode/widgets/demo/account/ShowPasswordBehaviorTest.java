@@ -24,9 +24,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 
 /**
  * The password fields of the sign-in and the registration get the button showing the password:
@@ -39,7 +37,6 @@ class ShowPasswordBehaviorTest
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication());
 	}
 
@@ -70,21 +67,15 @@ class ShowPasswordBehaviorTest
 	}
 
 	@Test
-	void theRegistrationShowsBothPasswordsInGerman()
+	void german()
 	{
 		tester.getSession().setLocale(Locale.GERMAN);
-		tester.startPage(RegisterPage.class);
+		tester.startPage(SignInPage.class);
 
-		for (String name : new String[] { "password", "repeatedPassword" })
-		{
-			TagTester password = field(name);
-			assertEquals("Passwort anzeigen",
-				password.getAttribute(ShowPasswordBehavior.SHOW_ATTRIBUTE), name);
-			assertEquals("Passwort verbergen",
-				password.getAttribute(ShowPasswordBehavior.HIDE_ATTRIBUTE), name);
-			assertTrue(tester.getLastResponseAsString().contains(
-				"AntiliaShowPassword.attach(\"" + password.getAttribute("id") + "\");"), name);
-		}
+		TagTester password = field("password");
+		assertEquals("Passwort anzeigen", password.getAttribute(ShowPasswordBehavior.SHOW_ATTRIBUTE));
+		assertEquals("Passwort verbergen",
+			password.getAttribute(ShowPasswordBehavior.HIDE_ATTRIBUTE));
 	}
 
 	@Test

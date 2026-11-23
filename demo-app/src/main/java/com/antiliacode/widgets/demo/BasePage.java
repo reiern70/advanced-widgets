@@ -40,9 +40,7 @@ import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import com.antiliacode.widgets.demo.account.SignInPage;
-import com.antiliacode.widgets.demo.admin.AccessTimeResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 import com.antiliacode.widgets.dropdown.Dropdown;
 import com.antiliacode.widgets.dropdown.DropdownBehavior;
 import com.antiliacode.widgets.demo.theme.BootstrapResourceReference;
@@ -63,7 +61,7 @@ import com.antiliacode.widgets.veil.PageLoadingVeilBehavior;
 /**
  * The layout of every page: the top bar with the logo linking to the {@link HomePage}, the
  * drop-downs choosing the theme, the {@link Look}, the language and the {@link AjaxEngine} of the
- * session, each on its own, and the links to sign in and to register, or the account signed in with and the link to
+ * session, each on its own, and the link to sign in, or the account signed in with and the link to
  * sign out, and for an administrator the link to the administration; then the footer, and the
  * {@link Notifications} showing the feedback messages of the page, and the dialog telling what runs
  * where, which the link in the footer opens in the browser. Until its scripts have run, the page is
@@ -145,17 +143,6 @@ public abstract class BasePage extends WebPage
 		add(this instanceof DemoPage ? new ThrottleButton("throttle")
 			: new WebMarkupContainer("throttle").setVisible(false));
 
-		add(new BookmarkablePageLink<>("register", RegisterPage.class)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected void onConfigure()
-			{
-				super.onConfigure();
-				setVisible(!DemoSession.get().isSignedIn());
-			}
-		});
 		add(new BookmarkablePageLink<>("signIn", SignInPage.class)
 		{
 			private static final long serialVersionUID = 1L;
@@ -426,7 +413,6 @@ public abstract class BasePage extends WebPage
 			response.render(framework.headerItem());
 		}
 		response.render(CssHeaderItem.forReference(STYLE));
-		AccessTimeResource.renderHead(response);
 		SlowScript.renderHead(response);
 	}
 }

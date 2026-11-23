@@ -13,27 +13,31 @@
  */
 package com.antiliacode.widgets.demo.account;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import javax.imageio.ImageIO;
 
-import org.apache.wicket.model.Model;
+import org.apache.wicket.mock.MockWebRequest;
+import org.apache.wicket.mock.MockWebResponse;
+import org.apache.wicket.request.Url;
+import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.request.resource.IResource;
 import org.junit.jupiter.api.Test;
 
 /**
  * The image of the letters of the captcha: twice the size it is shown in, transparent around
- * letters of one color, dark or light after the theme, and drawn again only when the letters or
- * the theme change.
+ * letters of one color, dark or light after the theme, drawn from the letters of a token that
+ * is one and has not expired.
  */
 class CaptchaImageTest
 {
@@ -101,26 +105,38 @@ class CaptchaImageTest
 	}
 
 	@Test
-	void theImageIsDrawnAgainOnlyForOtherLettersOrAnotherTheme() throws IOException
+	void theImageOfATokenIsDrawnFromTheLettersItHolds() throws IOException
 	{
-		Model<String> letters = Model.of("A9ECY");
-		Model<Boolean> dark = Model.of(false);
-		CaptchaImage image = new CaptchaImage(letters, dark);
+		Instant now = Instant.parse("2026-11-23T10:00:00Z");
+		CaptchaImage image = new CaptchaImage(Clock.fixed(now, ZoneOffset.UTC));
+		String token = CaptchaToken.issue("A9ECY", now);
 
-		byte[] first = image.getImageData(null);
-		assertSame(first, image.getImageData(null));
-		BufferedImage png = ImageIO.read(new ByteArrayInputStream(first));
+		byte[] light = image.getImageData(attributes(CaptchaImage.parameters(token, false)));
+		BufferedImage png = ImageIO.read(new ByteArrayInputStream(light));
 		assertEquals(CaptchaImage.WIDTH * CaptchaImage.SCALE, png.getWidth());
 		assertInk(CaptchaImage.DARK_INK, png);
 
-		dark.setObject(true);
-		byte[] inDark = image.getImageData(null);
-		assertFalse(Arrays.equals(first, inDark));
-		assertInk(CaptchaImage.LIGHT_INK, ImageIO.read(new ByteArrayInputStream(inDark)));
+		byte[] dark = image.getImageData(attributes(CaptchaImage.parameters(token, true)));
+		assertInk(CaptchaImage.LIGHT_INK, ImageIO.read(new ByteArrayInputStream(dark)));
+	}
 
-		letters.setObject("UJ4NF");
-		byte[] other = image.getImageData(null);
-		assertFalse(Arrays.equals(inDark, other));
-		assertArrayEquals(other, image.getImageData(null));
+	@Test
+	void aTokenThatIsNoneOrExpiredHasNoImage()
+	{
+		Instant now = Instant.parse("2026-11-23T10:00:00Z");
+		String token = CaptchaToken.issue("A9ECY", now);
+		CaptchaImage later = new CaptchaImage(
+			Clock.fixed(now.plus(CaptchaToken.VALID), ZoneOffset.UTC));
+		CaptchaImage image = new CaptchaImage(Clock.fixed(now, ZoneOffset.UTC));
+
+		assertNull(later.getImageData(attributes(CaptchaImage.parameters(token, false))));
+		assertNull(image.getImageData(attributes(CaptchaImage.parameters("made-up", false))));
+		assertNull(image.getImageData(attributes(new PageParameters())));
+	}
+
+	private static IResource.Attributes attributes(PageParameters parameters)
+	{
+		return new IResource.Attributes(new MockWebRequest(Url.parse("captcha")),
+			new MockWebResponse(), parameters);
 	}
 }

@@ -11,34 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.antiliacode.widgets.demo.data;
+package com.antiliacode.widgets.demo;
 
-import java.time.Instant;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.antiliacode.widgets.demo.account.Accounts;
 
 /**
- * An {@link Access} older than {@link Accesses#KEPT}, moved out of the table of the accesses by
- * {@link Accesses#archive(Instant)} with its id.
+ * The accounts of the tests: {@value Accounts#USER} with the password of the source, and the
+ * administrator with the password the build gives it (see the surefire configuration of the pom).
  */
-@Entity
-@Table(name = "old_accesses")
-public class OldAccess extends AbstractAccess
+public final class TestAccounts
 {
-	private static final long serialVersionUID = 1L;
+	/** The administrator's password in the tests. */
+	public static final String ADMIN_PASSWORD = "admin-test-password";
 
-	@Id
-	private Long id;
-
-	protected OldAccess()
+	private TestAccounts()
 	{
-	}
-
-	@Override
-	public Long getId()
-	{
-		return id;
 	}
 }

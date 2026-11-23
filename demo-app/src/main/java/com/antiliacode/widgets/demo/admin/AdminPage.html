@@ -15,6 +15,14 @@
 <wicket:extend xmlns:wicket="http://wicket.apache.org">
 <main class="container admin">
 	<h1><wicket:message key="title"/></h1>
-	<div wicket:id="tabs" class="admin__tabs"></div>
+	<p wicket:id="lead" class="admin__lead">[3 of 10 sessions are signed in as user.]</p>
+	<table wicket:id="table" class="admin__sessions">
+		<thead>
+			<tr><th>#</th><th><wicket:message key="since"/></th><th><wicket:message key="seen"/></th><th><wicket:message key="sureUntil"/></th></tr>
+		</thead>
+		<tbody>
+			<tr wicket:id="places"><td wicket:id="number">1</td><td wicket:id="since">[since]</td><td wicket:id="seen">[seen]</td><td wicket:id="sureUntil">[sure until]</td></tr>
+		</tbody>
+	</table>
 </main>
 </wicket:extend>

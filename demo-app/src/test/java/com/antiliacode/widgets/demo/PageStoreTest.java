@@ -30,8 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.antiliacode.widgets.demo.Demos.Demo;
 import com.antiliacode.widgets.demo.account.SignInPage;
 import com.antiliacode.widgets.demo.admin.AdminPage;
-import com.antiliacode.widgets.demo.data.Role;
-import com.antiliacode.widgets.demo.register.RegisterPage;
+import com.antiliacode.widgets.demo.account.Role;
 
 /**
  * Every page survives the page store: Wicket serializes the pages of a session and reads them
@@ -60,7 +59,6 @@ class PageStoreTest
 		pages.add(HomePage.class);
 		Demos.all().stream().map(Demo::page).forEach(pages::add);
 		pages.add(SignInPage.class);
-		pages.add(RegisterPage.class);
 		pages.add(AdminPage.class);
 		return pages;
 	}

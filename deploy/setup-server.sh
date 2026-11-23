@@ -1,7 +1,7 @@
 #!/bin/sh
 # Prepares a fresh Lightsail Ubuntu instance: Docker, a swap file, the folder of the site, a
-# firewall, SSH with keys only, security updates that restart the instance when they need to, and
-# age for the backups. Run it on the instance: ssh ubuntu@<static-ip> 'sh -s' < deploy/setup-server.sh
+# firewall, SSH with keys only, and security updates that restart the instance when they need to.
+# Run it on the instance: ssh ubuntu@<static-ip> 'sh -s' < deploy/setup-server.sh
 # Every step checks what is there first, so it runs again on an instance set up before.
 set -eu
 
@@ -20,14 +20,13 @@ if [ ! -f /swapfile ]; then
 	echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 fi
 
-# security updates install by themselves; age encrypts the backups (see backup.sh); ufw is the
-# firewall
+# security updates install by themselves; ufw is the firewall
 sudo apt-get update
-sudo apt-get install -y unattended-upgrades rsync age ufw
+sudo apt-get install -y unattended-upgrades rsync ufw
 
 # The security updates are looked for and installed every day, and when one needs a restart of
-# the instance (a new kernel), it restarts at 04:00 UTC, the server's clock, after the backup of
-# 03:30 and when the site is quietest; the containers start again by themselves.
+# the instance (a new kernel), it restarts at 04:00 UTC, the server's clock, when the site is
+# quietest; the containers start again by themselves.
 sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";

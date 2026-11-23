@@ -19,65 +19,60 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.wicket.Application;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.util.string.Strings;
+
+import com.antiliacode.widgets.demo.WicketApplication;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * The failed attempts to sign in, by account and by the address they came from, on the site and
- * on the administration's API alike, even from sessions that start anew each time. They ask for
- * a captcha after {@value #BEFORE_CAPTCHA} failures on an account; from
- * {@value #BEFORE_WAITING} failures on, the account waits before the next attempt, a second at
- * first, then twice as long after each failure, {@link #LONGEST_WAIT} at most; an address waits
- * likewise from {@value #BEFORE_ADDRESS_WAITING} failures on, whatever the accounts tried. While
- * an account or an address waits, attempts are turned away without checking the password; nobody
- * is locked out for longer than {@link #LONGEST_WAIT}.
+ * The failed attempts to sign in, by the address they came from, whatever the account tried:
+ * after {@value #MAXIMUM_FAILURES} failures an address is blocked for {@link #BLOCKED}, and its
+ * attempts are turned away without checking the password. Not by account: everybody shares
+ * {@value Accounts#USER}, which a robot could otherwise lock for everybody.
  * <p>
- * The names of accounts that do not exist are counted apart, so that a flood of them never pushes
- * out the failures of a real account, and they get a captcha and wait as accounts do, so that
- * neither tells whether an account exists. The failures of an account are forgotten
- * {@link #ACCOUNT_MEMORY} after the last one, or when it signs in, those of an address
- * {@link #ADDRESS_MEMORY} after the last one; at most {@value #MAXIMUM_ENTRIES} accounts, names and
- * addresses each are remembered, the ones seen least recently going first. Kept in memory: a
- * restart forgets them.
+ * The failures of an address are forgotten {@link #BLOCKED} after the last one, or once its block
+ * is over; at most {@value #MAXIMUM_ADDRESSES} addresses are remembered, the ones seen least
+ * recently going first. Kept in memory only: nothing is written anywhere, and a restart forgets
+ * them.
  */
 public class SignInAttempts
 {
-	/** The failed attempts on an account before a captcha is asked. */
-	public static final int BEFORE_CAPTCHA = 3;
+	/** The failed attempts from an address that block it. */
+	public static final int MAXIMUM_FAILURES = 10;
 
-	/** The failed attempts on an account before it waits. */
-	public static final int BEFORE_WAITING = 5;
+	/** How long an address stays blocked, and how long its failures are remembered. */
+	public static final Duration BLOCKED = Duration.ofMinutes(30);
 
-	/** The failed attempts from an address before it waits. */
-	public static final int BEFORE_ADDRESS_WAITING = 20;
+	/** The most addresses remembered. */
+	static final int MAXIMUM_ADDRESSES = 10_000;
 
-	/** The first wait, which doubles at each failure after it. */
-	public static final Duration FIRST_WAIT = Duration.ofSeconds(1);
+	/**
+	 * The failures of an address.
+	 *
+	 * @param count
+	 *            how many
+	 * @param last
+	 *            when the last one was
+	 */
+	private record Failures(int count, Instant last)
+	{
+	}
 
-	/** The longest wait. */
-	public static final Duration LONGEST_WAIT = Duration.ofMinutes(15);
+	private final Map<String, Failures> addresses = new LinkedHashMap<>(16, 0.75f, true)
+	{
+		private static final long serialVersionUID = 1L;
 
-	/** How long the failures on an account are remembered after the last one. */
-	static final Duration ACCOUNT_MEMORY = Duration.ofHours(24);
-
-	/** How long the failures from an address are remembered after the last one. */
-	static final Duration ADDRESS_MEMORY = Duration.ofHours(1);
-
-	/** The most accounts, names or addresses remembered each; a robot cannot fill the memory. */
-	static final int MAXIMUM_ENTRIES = 10_000;
+		@Override
+		protected boolean removeEldestEntry(Map.Entry<String, Failures> eldest)
+		{
+			return size() > MAXIMUM_ADDRESSES;
+		}
+	};
 
 	private final Clock clock;
-
-	/** The failures on the accounts that exist, by name. */
-	private final Failures accounts = new Failures(BEFORE_WAITING, ACCOUNT_MEMORY);
-
-	/** The failures on names that are no account. */
-	private final Failures unknownNames = new Failures(BEFORE_WAITING, ACCOUNT_MEMORY);
-
-	/** The failures by the address they came from. */
-	private final Failures addresses = new Failures(BEFORE_ADDRESS_WAITING, ADDRESS_MEMORY);
 
 	public SignInAttempts()
 	{
@@ -91,6 +86,14 @@ public class SignInAttempts
 	public SignInAttempts(Clock clock)
 	{
 		this.clock = clock;
+	}
+
+	/**
+	 * @return the attempts of the running application
+	 */
+	public static SignInAttempts get()
+	{
+		return ((WicketApplication)Application.get()).getSignInAttempts();
 	}
 
 	/**
@@ -109,176 +112,75 @@ public class SignInAttempts
 	}
 
 	/**
-	 * Counts a failed attempt to sign in to an account.
+	 * Counts a failed attempt to sign in.
 	 *
-	 * @param name
-	 *            the account as typed
 	 * @param address
-	 *            the address the attempt came from, {@code null} if unknown
-	 * @param known
-	 *            whether there is an account by that name
+	 *            the address it came from, {@code null} if unknown
 	 */
-	public synchronized void failed(String name, String address, boolean known)
+	public synchronized void failed(String address)
 	{
-		Instant now = clock.instant();
-		if (!Strings.isEmpty(name))
+		if (Strings.isEmpty(address))
 		{
-			(known ? accounts : unknownNames).failed(Accounts.accountName(name), now);
+			return;
 		}
+		Instant now = clock.instant();
+		Failures before = current(address, now);
+		addresses.put(address, new Failures(before == null ? 1 : before.count() + 1, now));
+	}
+
+	/**
+	 * Forgets the failures of an address that signed in.
+	 *
+	 * @param address
+	 *            the address, {@code null} if unknown
+	 */
+	public synchronized void succeeded(String address)
+	{
 		if (!Strings.isEmpty(address))
 		{
-			addresses.failed(address, now);
+			addresses.remove(address);
 		}
 	}
 
 	/**
-	 * Forgets the failures of an account, which was signed in to. Those of the address stay.
-	 *
-	 * @param name
-	 *            the account
-	 */
-	public synchronized void succeeded(String name)
-	{
-		if (!Strings.isEmpty(name))
-		{
-			accounts.forget(Accounts.accountName(name));
-		}
-	}
-
-	/**
-	 * @param name
-	 *            the account as typed
-	 * @return whether signing in to the account asks for a captcha
-	 */
-	public synchronized boolean needsCaptcha(String name)
-	{
-		if (Strings.isEmpty(name))
-		{
-			return false;
-		}
-		String key = Accounts.accountName(name);
-		Instant now = clock.instant();
-		return Math.max(accounts.count(key, now), unknownNames.count(key, now)) >= BEFORE_CAPTCHA;
-	}
-
-	/**
-	 * @param name
-	 *            the account as typed
 	 * @param address
-	 *            the address the attempt comes from, {@code null} if unknown
-	 * @return how long the account or the address still waits before the next attempt; zero if
-	 *         it may try now
+	 *            the address an attempt comes from, {@code null} if unknown
+	 * @return how long the address is still blocked; zero if it may try now
 	 */
-	public synchronized Duration retryAfter(String name, String address)
+	public synchronized Duration retryAfter(String address)
 	{
-		Instant now = clock.instant();
-		Instant until = now;
-		if (!Strings.isEmpty(name))
-		{
-			String key = Accounts.accountName(name);
-			until = latest(until, accounts.waitsUntil(key, now));
-			until = latest(until, unknownNames.waitsUntil(key, now));
-		}
-		if (!Strings.isEmpty(address))
-		{
-			until = latest(until, addresses.waitsUntil(address, now));
-		}
-		return Duration.between(now, until);
-	}
-
-	private static Instant latest(Instant one, Instant other)
-	{
-		return other.isAfter(one) ? other : one;
-	}
-
-	/**
-	 * How long to wait after a failure.
-	 *
-	 * @param failures
-	 *            the failures so far, this one included
-	 * @param before
-	 *            the failures before waiting
-	 * @return the wait, zero before waiting
-	 */
-	static Duration waitAfter(int failures, int before)
-	{
-		if (failures < before)
+		if (Strings.isEmpty(address))
 		{
 			return Duration.ZERO;
 		}
-		int doublings = Math.min(failures - before, 30);
-		Duration wait = FIRST_WAIT.multipliedBy(1L << doublings);
-		return wait.compareTo(LONGEST_WAIT) > 0 ? LONGEST_WAIT : wait;
+		Instant now = clock.instant();
+		Failures failures = current(address, now);
+		if (failures == null || failures.count() < MAXIMUM_FAILURES)
+		{
+			return Duration.ZERO;
+		}
+		return Duration.between(now, failures.last().plus(BLOCKED));
 	}
 
 	/**
-	 * The failures by one kind of key, accounts, names or addresses: how many, the last one, and
-	 * until when the key waits. The keys seen least recently go first once there are
-	 * {@value SignInAttempts#MAXIMUM_ENTRIES}.
+	 * @return how many addresses are remembered, for tests
 	 */
-	private static class Failures
+	synchronized int size()
 	{
-		private record Tally(int count, Instant last, Instant waitsUntil)
+		return addresses.size();
+	}
+
+	/**
+	 * @return the failures of an address that are not forgotten yet, {@code null} if none
+	 */
+	private Failures current(String address, Instant now)
+	{
+		Failures failures = addresses.get(address);
+		if (failures != null && !failures.last().plus(BLOCKED).isAfter(now))
 		{
+			addresses.remove(address);
+			return null;
 		}
-
-		private final int beforeWaiting;
-
-		private final Duration memory;
-
-		private final Map<String, Tally> entries = new LinkedHashMap<>(16, 0.75f, true)
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected boolean removeEldestEntry(Map.Entry<String, Tally> eldest)
-			{
-				return size() > MAXIMUM_ENTRIES;
-			}
-		};
-
-		Failures(int beforeWaiting, Duration memory)
-		{
-			this.beforeWaiting = beforeWaiting;
-			this.memory = memory;
-		}
-
-		void failed(String key, Instant now)
-		{
-			Tally entry = current(key, now);
-			int count = entry == null ? 1 : entry.count() + 1;
-			entries.put(key, new Tally(count, now, now.plus(waitAfter(count, beforeWaiting))));
-		}
-
-		void forget(String key)
-		{
-			entries.remove(key);
-		}
-
-		int count(String key, Instant now)
-		{
-			Tally entry = current(key, now);
-			return entry == null ? 0 : entry.count();
-		}
-
-		Instant waitsUntil(String key, Instant now)
-		{
-			Tally entry = current(key, now);
-			return entry == null ? now : entry.waitsUntil();
-		}
-
-		/**
-		 * @return the failures of the key, {@code null} if there are none or they are forgotten
-		 */
-		private Tally current(String key, Instant now)
-		{
-			Tally entry = entries.get(key);
-			if (entry != null && entry.last().plus(memory).isBefore(now))
-			{
-				entries.remove(key);
-				return null;
-			}
-			return entry;
-		}
+		return failures;
 	}
 }

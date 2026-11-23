@@ -29,6 +29,7 @@ import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.model.ResourceModel;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.CssResourceReference;
@@ -36,9 +37,10 @@ import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
 import com.antiliacode.widgets.demo.Demos.Demo;
+import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.demo.account.SignInPage;
-import com.antiliacode.widgets.demo.register.RegisterPage;
+import com.antiliacode.widgets.demo.account.SignedInUsers;
 import com.antiliacode.widgets.theme.Theme;
 
 /**
@@ -60,8 +62,19 @@ public class HomePage extends BasePage {
 	public HomePage(final PageParameters parameters) {
 		super(parameters);
 
+		// Wicket's websocket needs a session: only for a session there is, never for a visitor
+		// who only looks, who gets none
 		add(new Label("webSocketStatus", new ResourceModel("connecting"))
-			.add(AttributeModifier.replace("data-live", new ResourceModel("live")))
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!getSession().isTemporary());
+			}
+		}.add(AttributeModifier.replace("data-live", new ResourceModel("live")))
 			.add(new LiveStatusBehavior()));
 
 		add(newSignInHint("signInHint"));
@@ -132,8 +145,10 @@ public class HomePage extends BasePage {
 	}
 
 	/**
-	 * @return the invitation to sign in or register to try the demos, shown to visitors who have
-	 *         not signed in while the demos are private
+	 * @return the invitation to sign in to try the demos, with the account and the password of
+	 *         {@value Accounts#USER}, how many sessions are in use and that nothing is recorded
+	 *         about the visitors, shown to visitors who have not signed in while the demos are
+	 *         private
 	 */
 	private static Component newSignInHint(String id) {
 		WebMarkupContainer hint = new WebMarkupContainer(id) {
@@ -146,7 +161,10 @@ public class HomePage extends BasePage {
 			}
 		};
 		hint.add(new BookmarkablePageLink<>("signIn", SignInPage.class));
-		hint.add(new BookmarkablePageLink<>("register", RegisterPage.class));
+		hint.add(new Label("account", new StringResourceModel("hint.account", hint)
+			.setParameters(Accounts.USER, Accounts.USER_PASSWORD)));
+		hint.add(new Label("inUse", () -> new StringResourceModel("inUse", hint)
+			.setParameters(SignedInUsers.get().count(), SignedInUsers.MAXIMUM).getString()));
 		return hint;
 	}
 

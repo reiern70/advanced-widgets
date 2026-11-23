@@ -29,12 +29,6 @@ if settings | grep -q 'change-me'; then
 	fail ".env still holds a value change-me: make each one up, e.g. with openssl rand -hex 24"
 fi
 
-# the password of the application's own role in PostgreSQL, see database-role.sql
-if ! settings | grep -Eq '^[[:space:]]*DATABASE_APP_PASSWORD=[^[:space:]]'; then
-	fail "set DATABASE_APP_PASSWORD in .env, the password of the application's own role in \
-PostgreSQL: echo DATABASE_APP_PASSWORD=\$(openssl rand -hex 24) >> $(pwd)/.env (see README.md)"
-fi
-
 # DEPLOYMENT mode, in the JAVA_OPTIONS Docker Compose takes, the last ones of .env
 JAVA_OPTIONS_LINE=$(settings | grep -E '^[[:space:]]*JAVA_OPTIONS=' | tail -n 1)
 if ! printf '%s\n' "$JAVA_OPTIONS_LINE" | grep -q -- '-Dwicket.configuration=deployment'; then
@@ -51,29 +45,32 @@ if settings | grep -Eq -- '-Dantilia-widgets\.(sign-in-as|open-demos)([=[:space:
 	fail ".env must not set -Dantilia-widgets.sign-in-as or -Dantilia-widgets.open-demos"
 fi
 
-# the database as it is before the migrations of the new version
-if docker compose ps --status running --services | grep -qx db; then
-	./backup.sh
-fi
-
 # the image running before, to go back to (see README.md)
 if docker image inspect antilia-widgets:latest > /dev/null 2>&1; then
 	docker tag antilia-widgets:latest antilia-widgets:previous
 fi
 
 # the images pinned in compose.yaml and the Dockerfile, pulled again
-docker compose pull --quiet db caddy
+docker compose pull --quiet caddy
 docker compose build --pull app
 
-# the database first, then the application's own role in it: made when missing, with the password
-# of .env, and the owner of the schema public, its tables and sequences (database-role.sql); the
-# file goes in through the standard input, as the one the container sees may be an older copy
-docker compose up -d --wait db
-docker compose exec -T db sh -c \
-	'psql -v ON_ERROR_STOP=1 -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -' < database-role.sql
+# the application and Caddy; the database container of earlier versions, which compose.yaml no
+# longer has, goes
+docker compose up -d --remove-orphans
 
-# then the application, as that role, and Caddy
-docker compose up -d
+# Earlier versions kept the users and the accesses in PostgreSQL, dumped every night: since issue
+# #174 the site keeps no record of anybody, so what they left is deleted, once, for good: the
+# database's volume, the dumps with their nightly job, and the files they ran on.
+if docker volume inspect antilia-widgets_database > /dev/null 2>&1; then
+	docker volume rm antilia-widgets_database
+	echo "start.sh: deleted the database of earlier versions"
+fi
+if [ -e /etc/cron.d/antilia-widgets ] || [ -e /var/backups/antilia-widgets ]; then
+	sudo rm -f /etc/cron.d/antilia-widgets
+	sudo rm -rf /var/backups/antilia-widgets
+	echo "start.sh: deleted the dumps of the database and their nightly job"
+fi
+rm -f backup.sh database-role.sql
 
 # Caddy sees its Caddyfile through a bind mount of the file, which rsync replaces by a new one:
 # when the Caddyfile Caddy sees is not the one copied, the new one is validated in a container of

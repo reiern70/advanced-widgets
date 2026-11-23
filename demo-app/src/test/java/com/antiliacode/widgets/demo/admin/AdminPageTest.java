@@ -13,9 +13,11 @@
  */
 package com.antiliacode.widgets.demo.admin;
 
-import org.apache.wicket.Component;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Instant;
+
 import org.apache.wicket.RuntimeConfigurationType;
-import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,17 +25,15 @@ import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.HomePage;
-import com.antiliacode.widgets.demo.TestDatabase;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.account.Accounts;
-import com.antiliacode.widgets.demo.data.JobRole;
-import com.antiliacode.widgets.demo.data.Language;
-import com.antiliacode.widgets.demo.data.Role;
-import com.antiliacode.widgets.demo.dropdown.DropdownPage;
+import com.antiliacode.widgets.demo.account.Role;
+import com.antiliacode.widgets.demo.account.SignInPage;
+import com.antiliacode.widgets.demo.account.SignedInUsers;
 
 /**
- * The {@link AdminPage}: the accounts in a table filtered by country, name and email, and tabs
- * with the recent accesses and the old ones.
+ * The {@link AdminPage}: how many sessions are signed in as {@value Accounts#USER}, and since when,
+ * nothing telling who is behind one; for the administrator only.
  */
 class AdminPageTest
 {
@@ -42,7 +42,6 @@ class AdminPageTest
 	@BeforeEach
 	void start()
 	{
-		TestDatabase.clear();
 		tester = new WicketTester(new WicketApplication()
 		{
 			@Override
@@ -51,11 +50,7 @@ class AdminPageTest
 				return RuntimeConfigurationType.DEPLOYMENT;
 			}
 		});
-		register("ada@example.com", "Ada", "Lovelace", "GB");
-		register("grace@example.org", "Grace", "Hopper", "US");
 		tester.startPage(HomePage.class);
-		DemoSession.get().signIn("admin", Role.ADMIN);
-		tester.startPage(AdminPage.class);
 	}
 
 	@AfterEach
@@ -65,100 +60,51 @@ class AdminPageTest
 	}
 
 	@Test
-	void theUsersAreTheFirstTab()
+	void theAdministratorSeesTheSessionsSignedIn()
 	{
-		tester.assertRenderedPage(AdminPage.class);
-		tester.assertComponent("tabs:panel", UsersPanel.class);
-		tester.assertLabel("tabs:panel:count", "5");
-		tester.assertContains("ada@example.com");
-		tester.assertContains(">Account<");
-		tester.assertContains(">Email<");
-		tester.assertContains("Lovelace");
-		tester.assertContains("Hopper");
-		tester.assertContains("United States");
-		tester.assertContains(">Administrator<");
-		tester.assertContains("Other: Mathematician");
-		// on a phone, the columns keep a width to read them by, the table scrolling sideways
-		tester.assertContains("<th [^>]*data-min-width=\"170\"");
-		tester.assertContains("<div class=\"admin__table\"><table ");
-	}
+		SignedInUsers.get().signIn(Role.USER, () -> "session-1");
+		SignedInUsers.get().signIn(Role.USER, () -> "session-2");
+		DemoSession.get().signIn(Accounts.ADMIN, Role.ADMIN);
 
-	@Test
-	void theUsersAreFiltered()
-	{
-		filter("country", "US", "change");
-		tester.assertLabel("tabs:panel:count", "1");
-		tester.assertContains("grace@example.org");
-		tester.assertContainsNot("ada@example.com");
-
-		filter("country", "", "change");
-		filter("name", "love", "input");
-		tester.assertLabel("tabs:panel:count", "1");
-		tester.assertContains("ada@example.com");
-
-		// the name of the account too, which the accounts the demo always has have alone
-		filter("name", "wicket", "input");
-		tester.assertLabel("tabs:panel:count", "1");
-
-		// the email, which these accounts lack
-		filter("name", "", "input");
-		filter("email", "example", "input");
-		tester.assertLabel("tabs:panel:count", "2");
-		filter("email", "wicket", "input");
-		tester.assertLabel("tabs:panel:count", "0");
-	}
-
-	@Test
-	void theAccessesAreTheSecondTab()
-	{
-		tester.clickLink("tabs:tabs-container:tabs:1:link");
-
-		tester.assertComponent("tabs:panel", AccessesPanel.class);
-		// the private part at first, which the administrator did not open yet
-		tester.assertLabel("tabs:panel:count", "0");
-		tester.startPage(DropdownPage.class);
 		tester.startPage(AdminPage.class);
-		tester.clickLink("tabs:tabs-container:tabs:1:link");
-		tester.assertLabel("tabs:panel:count", "1");
-		tester.assertContains(">admin<");
+
+		tester.assertRenderedPage(AdminPage.class);
+		tester.assertContains("2 of 10 sessions are signed in as user.");
+		tester.assertVisible("table");
+		String since = AdminPage.format(SignedInUsers.get().places().get(0).since());
+		tester.assertLabel("table:places:0:since", since);
+		tester.assertLabel("table:places:0:sureUntil", AdminPage.format(
+			SignedInUsers.get().places().get(0).since().plus(SignedInUsers.PLACE_TIME)));
+		// nothing about who is behind a session, not even its id
+		assertTrue(!tester.getLastResponseAsString().contains("session-1"));
 	}
 
 	@Test
-	void theOldAccessesAreTheThirdTab()
+	void withoutSessionsThereIsNoTable()
 	{
-		tester.clickLink("tabs:tabs-container:tabs:2:link");
+		DemoSession.get().signIn(Accounts.ADMIN, Role.ADMIN);
 
-		tester.assertComponent("tabs:panel", AccessesPanel.class);
-		tester.assertContains("Old accesses");
-		tester.assertContains("<th [^>]*data-min-width=\"200\"");
-		tester.assertLabel("tabs:panel:count", "0");
+		tester.startPage(AdminPage.class);
+
+		tester.assertContains("0 of 10 sessions are signed in as user.");
+		tester.assertInvisible("table");
 	}
 
-	private void filter(String field, String value, String event)
+	@Test
+	void everybodyElseIsTurnedAway()
 	{
-		FormComponent<?> component = find(field);
-		tester.getRequest().getPostParameters().setParameterValue(component.getInputName(), value);
-		tester.executeAjaxEvent(component, event);
+		tester.startPage(AdminPage.class);
+		tester.assertRenderedPage(SignInPage.class);
+
+		DemoSession.get().signIn(Accounts.USER, Role.USER);
+		tester.startPage(AdminPage.class);
+		tester.assertRenderedPage(com.antiliacode.widgets.demo.error.AccessDeniedPage.class);
 	}
 
-	private FormComponent<?> find(String field)
+	@Test
+	void theTimesAreInUtc()
 	{
-		UsersFilterPanel panel = tester.getLastRenderedPage().visitChildren(UsersFilterPanel.class,
-			(Component component, org.apache.wicket.util.visit.IVisit<UsersFilterPanel> visit) -> visit
-				.stop((UsersFilterPanel)component));
-		return (FormComponent<?>)panel.get(field);
-	}
-
-	private static void register(String email, String firstName, String lastName, String country)
-	{
-		Accounts accounts = TestDatabase.accounts();
-		accounts.register(email, "Analytical-Engine-1843", user -> {
-			user.setFirstName(firstName);
-			user.setLastName(lastName);
-			user.setCountry(country);
-			user.setLanguage(Language.ENGLISH);
-			user.setJobRole(JobRole.OTHER);
-			user.setJobRoleOther("Mathematician");
-		});
+		assertTrue(AdminPage.format(Instant.parse("2026-11-23T10:15:30Z"))
+			.equals("2026-11-23 10:15:30 UTC"));
 	}
 }
