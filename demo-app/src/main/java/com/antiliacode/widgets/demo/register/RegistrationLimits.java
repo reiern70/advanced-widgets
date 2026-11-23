@@ -21,7 +21,6 @@ import java.util.ArrayDeque;
 import java.util.Base64;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.apache.wicket.Application;
@@ -30,16 +29,14 @@ import org.apache.wicket.util.string.Strings;
 import com.antiliacode.widgets.demo.WicketApplication;
 
 /**
- * Limits what registering costs the site, and how often the site mails anybody: at most
- * {@value #REGISTRATIONS_PER_ADDRESS} registrations from one address and
- * {@value #REGISTRATIONS} from everybody in the last {@link #WINDOW}, and at most
- * {@value #MAILS_PER_ADDRESS} emails asked from one address, {@value #MAILS_PER_RECIPIENT} to one
- * recipient and {@value #MAILS} to everybody in the last {@link #WINDOW}. It also hands out the
- * challenges of the {@link RegisterPage}, each of which answers once, so that one form solved
- * cannot be sent again and again.
+ * Limits what registering costs the site: at most {@value #REGISTRATIONS_PER_ADDRESS}
+ * registrations from one address and {@value #REGISTRATIONS} from everybody in the last
+ * {@link #WINDOW}. It also hands out the challenges of the {@link RegisterPage}, each of which
+ * answers once, so that one form solved, captcha and all, cannot be sent again and again, not even
+ * from an earlier version of the page.
  * <p>
- * Kept in memory, at most {@value #MAXIMUM_KEYS} addresses, recipients and challenges each, the
- * ones seen least recently going first: a restart forgets them.
+ * Kept in memory, at most {@value #MAXIMUM_KEYS} addresses and challenges each, the ones seen
+ * least recently going first: a restart forgets them.
  */
 public class RegistrationLimits
 {
@@ -52,19 +49,10 @@ public class RegistrationLimits
 	/** The most registrations from everybody in the {@link #WINDOW}. */
 	public static final int REGISTRATIONS = 30;
 
-	/** The most emails asked from one address in the {@link #WINDOW}. */
-	public static final int MAILS_PER_ADDRESS = 5;
-
-	/** The most emails to one recipient in the {@link #WINDOW}. */
-	public static final int MAILS_PER_RECIPIENT = 3;
-
-	/** The most emails to everybody in the {@link #WINDOW}. */
-	public static final int MAILS = 50;
-
 	/** How long a challenge of the register page may be answered. */
 	public static final Duration CHALLENGE_TIME = Duration.ofHours(1);
 
-	/** The most addresses, recipients and challenges remembered each. */
+	/** The most addresses and challenges remembered each. */
 	static final int MAXIMUM_KEYS = 10_000;
 
 	/** The key of the limits of everybody. */
@@ -77,12 +65,6 @@ public class RegistrationLimits
 	private final Window registrationsByAddress = new Window(REGISTRATIONS_PER_ADDRESS);
 
 	private final Window registrations = new Window(REGISTRATIONS);
-
-	private final Window mailsByAddress = new Window(MAILS_PER_ADDRESS);
-
-	private final Window mailsByRecipient = new Window(MAILS_PER_RECIPIENT);
-
-	private final Window mails = new Window(MAILS);
 
 	/** The challenges handed out and not answered yet, and when. */
 	private final Map<String, Instant> challenges = new Bounded<>();
@@ -128,33 +110,6 @@ public class RegistrationLimits
 		if (!Strings.isEmpty(address))
 		{
 			registrationsByAddress.add(address, now);
-		}
-		return true;
-	}
-
-	/**
-	 * Counts an email, if the limits let it through.
-	 *
-	 * @param address
-	 *            the address of the request that sends it, {@code null} if unknown
-	 * @param recipient
-	 *            whom it goes to
-	 * @return whether it may be sent
-	 */
-	public synchronized boolean mail(String address, String recipient)
-	{
-		Instant now = clock.instant();
-		String to = Strings.isEmpty(recipient) ? EVERYBODY : recipient.toLowerCase(Locale.ROOT);
-		if (!mails.allows(EVERYBODY, now) || !mailsByRecipient.allows(to, now) ||
-			!Strings.isEmpty(address) && !mailsByAddress.allows(address, now))
-		{
-			return false;
-		}
-		mails.add(EVERYBODY, now);
-		mailsByRecipient.add(to, now);
-		if (!Strings.isEmpty(address))
-		{
-			mailsByAddress.add(address, now);
 		}
 		return true;
 	}

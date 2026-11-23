@@ -30,10 +30,8 @@
 	<entry key="role">Acceso</entry>
 	<entry key="role.USER">Usuario</entry>
 	<entry key="role.ADMIN">Administrador</entry>
-	<entry key="validated">Correo confirmado</entry>
 	<entry key="created">Creada</entry>
-	<entry key="yes">Sí</entry>
-	<entry key="no">No</entry>
+	<entry key="expires">Caduca</entry>
 	<entry key="filter.name">Nombre</entry>
 	<entry key="filter.name.placeholder">Cuenta o nombre</entry>
 	<entry key="filter.email">Correo</entry>

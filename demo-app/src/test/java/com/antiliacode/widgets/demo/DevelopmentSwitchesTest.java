@@ -26,7 +26,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
-import com.antiliacode.widgets.demo.mail.LogMailer;
 import com.antiliacode.widgets.demo.register.RegisterPage;
 
 /**
@@ -45,6 +44,7 @@ class DevelopmentSwitchesTest
 			tester.destroy();
 		}
 		DevelopmentSwitches.PROPERTIES.forEach(System::clearProperty);
+		System.clearProperty(RegisterPage.OPEN_PROPERTY);
 	}
 
 	private WicketApplication start(RuntimeConfigurationType configuration)
@@ -59,7 +59,6 @@ class DevelopmentSwitchesTest
 			}
 		};
 		tester = new WicketTester(application);
-		application.setMailer(new LogMailer());
 		return application;
 	}
 
@@ -68,22 +67,20 @@ class DevelopmentSwitchesTest
 	{
 		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
 		System.setProperty(DemosAuthorization.OPEN_PARAMETER, "true");
-		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
 		WicketApplication application = start(RuntimeConfigurationType.DEPLOYMENT);
 
 		tester.startPage(HomePage.class);
 		tester.assertVisible("signIn");
 		assertFalse(DemoSession.get().isSignedIn());
 		assertFalse(DemosAuthorization.isOpen());
-		assertFalse(RegisterPage.isOpen(), "no emails, no registering");
-		assertEquals(3, DevelopmentSwitches.warnOfIgnored(application));
+		assertTrue(RegisterPage.isOpen(), "registering is open everywhere");
+		assertEquals(2, DevelopmentSwitches.warnOfIgnored(application));
 	}
 
 	@Test
 	void inDevelopmentTheyCount()
 	{
 		System.setProperty(WicketApplication.SIGN_IN_AS_PROPERTY, "admin");
-		System.setProperty(RegisterPage.OPEN_PROPERTY, "true");
 		WicketApplication application = start(RuntimeConfigurationType.DEVELOPMENT);
 
 		tester.startPage(HomePage.class);
@@ -97,7 +94,6 @@ class DevelopmentSwitchesTest
 	{
 		System.setProperty(RegisterPage.OPEN_PROPERTY, "false");
 		WicketApplication application = start(RuntimeConfigurationType.DEPLOYMENT);
-		RecordingMailer.install(application);
 
 		tester.startPage(HomePage.class);
 		assertFalse(RegisterPage.isOpen());

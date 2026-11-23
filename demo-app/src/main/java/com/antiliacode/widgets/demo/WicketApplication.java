@@ -76,7 +76,6 @@ import com.antiliacode.widgets.demo.error.NotFoundPage;
 import com.antiliacode.widgets.demo.error.PageExpiredPage;
 import com.antiliacode.widgets.demo.list.JsonListPage;
 import com.antiliacode.widgets.demo.looks.LooksPage;
-import com.antiliacode.widgets.demo.mail.IMailer;
 import com.antiliacode.widgets.demo.breadcrumb.BreadcrumbsPage;
 import com.antiliacode.widgets.demo.menu.MenusPage;
 import com.antiliacode.widgets.demo.modal.ModalDialogPage;
@@ -93,7 +92,6 @@ import com.antiliacode.widgets.demo.popover.PopoversPage;
 import com.antiliacode.widgets.demo.tabs.TabbedPanelPage;
 import com.antiliacode.widgets.demo.frameworks.ChoicesResource;
 import com.antiliacode.widgets.demo.progress.ProgressBarPage;
-import com.antiliacode.widgets.demo.register.EmailValidationPage;
 import com.antiliacode.widgets.demo.register.RegisterPage;
 import com.antiliacode.widgets.demo.register.RegistrationLimits;
 import com.antiliacode.widgets.demo.scrollbar.ScrollbarPage;
@@ -145,8 +143,6 @@ public class WicketApplication extends WebApplication
 	private final SignedInUsers signedInUsers = new SignedInUsers();
 
 	private final RegistrationLimits registrationLimits = new RegistrationLimits();
-
-	private IMailer mailer = IMailer.fromSettings();
 
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
@@ -361,7 +357,6 @@ public class WicketApplication extends WebApplication
 		mountPage("notifications", NotificationsPage.class);
 		mountPage("register", RegisterPage.class);
 		mountPage("sign-in", SignInPage.class);
-		mountPage("validate-email", EmailValidationPage.class);
 		mountPage("admin", AdminPage.class);
 		mountPage("not-found", NotFoundPage.class);
 		mountResource(AccessTimeResource.PATH, AccessTimeResource.REFERENCE);
@@ -407,23 +402,6 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return what sends the emails confirming a registration
-	 */
-	public IMailer getMailer()
-	{
-		return mailer;
-	}
-
-	/**
-	 * @param mailer
-	 *            what sends the emails confirming a registration, for tests
-	 */
-	public void setMailer(IMailer mailer)
-	{
-		this.mailer = mailer;
-	}
-
-	/**
 	 * @return the users signed in now
 	 */
 	public SignedInUsers getSignedInUsers()
@@ -440,7 +418,7 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
-	 * @return the limits of registering and of the emails sent
+	 * @return the limits of registering
 	 */
 	public RegistrationLimits getRegistrationLimits()
 	{

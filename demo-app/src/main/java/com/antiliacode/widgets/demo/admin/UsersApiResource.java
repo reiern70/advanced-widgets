@@ -52,7 +52,7 @@ import com.github.openjson.JSONObject;
  * Its accesses are kept; the accounts the demo always has come back when it starts.</li>
  * </ul>
  * An account is {@code {"id", "name", "email", "role", "firstName", "lastName", "country",
- * "language", "jobRole", "validated", "created"}}, never with its password.
+ * "language", "jobRole", "validated", "created", "expires"}}, never with its password.
  */
 public class UsersApiResource extends AdminApiResource
 {
@@ -254,6 +254,7 @@ public class UsersApiResource extends AdminApiResource
 			.put("language", json(user.getLanguage() == null ? null : user.getLanguage().getCode()))
 			.put("jobRole", json(user.getJobRole()))
 			.put("validated", user.isValidated())
-			.put("created", json(user.getCreated()));
+			.put("created", json(user.getCreated()))
+			.put("expires", json(user.getExpires()));
 	}
 }

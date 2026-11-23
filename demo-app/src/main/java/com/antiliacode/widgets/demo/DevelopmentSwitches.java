@@ -21,15 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
-import com.antiliacode.widgets.demo.register.RegisterPage;
 
 /**
- * The system properties that spare a development machine signing in and confirming emails:
- * {@value WicketApplication#SIGN_IN_AS_PROPERTY}, {@value DemosAuthorization#OPEN_PARAMETER} and
- * {@value RegisterPage#OPEN_PROPERTY}. On a server they would let anybody in, so they count in
- * development only: in deployment they are ignored, and the application warns of each one set
- * when it starts. Only closing the registration with
- * {@code -D}{@value RegisterPage#OPEN_PROPERTY}{@code =false} counts everywhere.
+ * The system properties that spare a development machine signing in:
+ * {@value WicketApplication#SIGN_IN_AS_PROPERTY} and {@value DemosAuthorization#OPEN_PARAMETER}.
+ * On a server they would let anybody in, so they count in development only: in deployment they
+ * are ignored, and the application warns of each one set when it starts.
  */
 public final class DevelopmentSwitches
 {
@@ -37,7 +34,7 @@ public final class DevelopmentSwitches
 
 	/** The system properties counting in development only. */
 	static final List<String> PROPERTIES = List.of(WicketApplication.SIGN_IN_AS_PROPERTY,
-		DemosAuthorization.OPEN_PARAMETER, RegisterPage.OPEN_PROPERTY);
+		DemosAuthorization.OPEN_PARAMETER);
 
 	private DevelopmentSwitches()
 	{
@@ -71,9 +68,7 @@ public final class DevelopmentSwitches
 		for (String property : PROPERTIES)
 		{
 			String value = System.getProperty(property);
-			boolean closing = RegisterPage.OPEN_PROPERTY.equals(property) &&
-				!Boolean.parseBoolean(value);
-			if (!Strings.isEmpty(value) && !closing)
+			if (!Strings.isEmpty(value))
 			{
 				LOG.warn("-D{} is set, but ignored: it counts in development only", property);
 				ignored++;

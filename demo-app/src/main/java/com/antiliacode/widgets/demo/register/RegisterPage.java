@@ -20,59 +20,59 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.wicket.Application;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Button;
-import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.EmailTextField;
 import org.apache.wicket.markup.html.form.EnumChoiceRenderer;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.FormComponent;
-import org.apache.wicket.markup.html.form.NumberTextField;
 import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.form.validation.AbstractFormValidator;
 import org.apache.wicket.markup.html.form.validation.EqualPasswordInputValidator;
 import org.apache.wicket.model.CompoundPropertyModel;
-import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
-import org.apache.wicket.util.string.Strings;
 import org.apache.wicket.validation.validator.StringValidator;
 
 import com.antiliacode.widgets.demo.BasePage;
 import com.antiliacode.widgets.demo.Countries;
+import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.FormErrors;
-import com.antiliacode.widgets.demo.WicketApplication;
+import com.antiliacode.widgets.demo.HomePage;
 import com.antiliacode.widgets.demo.account.Accounts;
+import com.antiliacode.widgets.demo.account.Captcha;
 import com.antiliacode.widgets.demo.account.ShowPasswordBehavior;
 import com.antiliacode.widgets.demo.account.SignInAttempts;
+import com.antiliacode.widgets.demo.account.SignInPage;
 import com.antiliacode.widgets.demo.data.JobRole;
 import com.antiliacode.widgets.demo.data.Language;
+import com.antiliacode.widgets.demo.data.User;
 import com.antiliacode.widgets.dropdown.Dropdown;
 
 /**
- * Lets a visitor register, once registering is open (see {@link #isOpen()}); until then it says
- * that registering is closed and the form is disabled. A visitor registers with: first and last
- * name, email, a strong password typed twice (see {@link StrongPasswordValidator}), country, what
- * the visitor does (a {@link JobRole}, in words with Other) and the language of the emails. On
- * success the account is made, but opens the demos only once the visitor followed the link of the
- * {@link ConfirmationMail} to the {@link EmailValidationPage}; the visitor is sent to the
- * {@link EmailConfirmationPage}, which says so. An email that has an account already gets the
- * same answer, so that the page does not tell which emails have one, and the
- * {@link AccountExistsMail} instead.
+ * Lets a visitor register, unless registering is closed (see {@link #isOpen()}): then it says so
+ * and the form is disabled. A visitor registers with: first and last name, email, a strong
+ * password typed twice (see {@link StrongPasswordValidator}), country and what the visitor does (a
+ * {@link JobRole}, in words with Other); the account takes the language of the page. Above the
+ * button the page says what is done with the data: the account is kept {@link Accounts#KEPT} and
+ * then deleted, and never used to contact anybody, only to count who uses the widgets. On success
+ * the account opens the demos at once and the visitor is signed in. No email is sent, so the email
+ * is not checked: it is the name of the account. As no email can answer in its place, the page
+ * says when an email has an account already.
  * <p>
- * It keeps robots out in three ways, none needing an outside service: a field hidden from people
- * that robots fill in (a honeypot), a minimum time between showing the form and sending it, and
- * a small sum to work out, a new one after every submit, as the form sent once is not taken again.
- * Registrations are limited too, from one address and from everybody (see
+ * It keeps robots out in four ways, none needing an outside service: a field hidden from people
+ * that robots fill in (a honeypot), a minimum time between showing the form and sending it, the
+ * {@link Captcha} of the sign-in page, letters drawn on noise, or for those who cannot read them a
+ * question in words, and a challenge that answers once, so that the form sent is not taken again,
+ * not even from an earlier version of the page. The captcha and the challenge are new after every
+ * submit. Registrations are limited too, from one address and from everybody (see
  * {@link RegistrationLimits}).
  */
 public class RegisterPage extends BasePage
@@ -80,11 +80,8 @@ public class RegisterPage extends BasePage
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * The system property opening ({@code true}) or closing ({@code false}) the registration;
-	 * when it is not set registering is open if the confirmation emails are delivered, see
-	 * {@link com.antiliacode.widgets.demo.mail.SmtpMailer}. It opens the registration in
-	 * development only, see {@link com.antiliacode.widgets.demo.DevelopmentSwitches}; it closes
-	 * it everywhere.
+	 * The system property closing the registration, set to {@code false}; registering is open
+	 * otherwise.
 	 */
 	public static final String OPEN_PROPERTY = "antilia-widgets.open-registration";
 
@@ -95,12 +92,10 @@ public class RegisterPage extends BasePage
 
 	private Instant shownAt;
 
-	private int first;
-
-	private int second;
-
-	/** The challenge of the sum asked, which answers once, see {@link RegistrationLimits}. */
+	/** The challenge of the form shown, which answers once, see {@link RegistrationLimits}. */
 	private String challenge;
+
+	private final Captcha captcha;
 
 	private final Registration registration = new Registration();
 
@@ -119,8 +114,8 @@ public class RegisterPage extends BasePage
 	RegisterPage(Clock clock)
 	{
 		this.clock = clock;
+		captcha = new Captcha("captcha");
 		newChallenge();
-		registration.setLanguage(Language.of(getLocale()));
 
 		Form<Registration> form = new Form<>("form", new CompoundPropertyModel<>(registration))
 		{
@@ -134,12 +129,18 @@ public class RegisterPage extends BasePage
 					return;
 				}
 				boolean robot = isRobot();
-				// a new sum after every submit: the form sent cannot be sent again
+				boolean solved = captcha.isSolved();
+				String wrongCaptcha = captcha.getWrongMessage();
+				// a new captcha and challenge after every submit: the form sent is not taken again
 				newChallenge();
-				registration.setAnswer(null);
 				if (robot)
 				{
 					error(getString("robot"));
+					return;
+				}
+				if (!solved)
+				{
+					error(wrongCaptcha);
 					return;
 				}
 				if (!RegistrationLimits.get().register(SignInAttempts.address()))
@@ -147,22 +148,26 @@ public class RegisterPage extends BasePage
 					error(getString("tooMany"));
 					return;
 				}
-				// the same answer whether the email has an account or not: only its owner learns
-				String email = Accounts.accountName(registration.getEmail());
-				Optional<String> token = Accounts.get().register(email,
-					registration.getPassword(), registration::fill);
+				registration.setLanguage(Language.of(getLocale()));
+				Optional<User> user = Accounts.get().register(
+					Accounts.accountName(registration.getEmail()), registration.getPassword(),
+					registration::fill);
 				registration.setPassword(null);
-				Accounts.get().find(email).ifPresent(user -> {
-					if (token.isPresent())
-					{
-						ConfirmationMail.send(user, token.get());
-					}
-					else
-					{
-						AccountExistsMail.send(user, registration.getLanguage());
-					}
-				});
-				setResponsePage(new EmailConfirmationPage(email));
+				if (user.isEmpty())
+				{
+					error(getString("exists"));
+					return;
+				}
+				if (!DemoSession.get().signIn(user.get().getName(), user.get().getRole()))
+				{
+					// too many users are signed in: the account waits for the visitor to sign in
+					getSession().info(getString("registeredFull"));
+					setResponsePage(SignInPage.class);
+					return;
+				}
+				getSession().success(getString("registered"));
+				continueToOriginalDestination();
+				setResponsePage(HomePage.class);
 			}
 
 			@Override
@@ -201,10 +206,6 @@ public class RegisterPage extends BasePage
 		form.add(new Dropdown<>("country", Countries.codes(), Countries.renderer())
 			.setRequired(true)
 			.setLabel(new ResourceModel("country")));
-		form.add(new Dropdown<>("language", Arrays.asList(Language.values()),
-			new LanguageRenderer())
-			.setRequired(true)
-			.setLabel(new ResourceModel("emailLanguage")));
 
 		// what the visitor does; with Other, in words
 		WebMarkupContainer other = new WebMarkupContainer("other")
@@ -241,11 +242,9 @@ public class RegisterPage extends BasePage
 		// the honeypot: hidden from people by the style sheet, filled in by robots
 		form.add(new TextField<String>("website"));
 
-		form.add(new Label("question", new StringResourceModel("question", this)
-			.setParameters((IModel<Integer>)() -> first, (IModel<Integer>)() -> second)));
-		form.add(new NumberTextField<Integer>("answer", Integer.class)
-			.setRequired(true)
-			.setLabel(new ResourceModel("answer")));
+		form.add(captcha);
+		form.add(new Label("notice", new StringResourceModel("notice", this)
+			.setParameters(Accounts.KEPT.toTotalMonths())));
 		form.add(new Button("submit"));
 	}
 
@@ -256,23 +255,18 @@ public class RegisterPage extends BasePage
 	}
 
 	/**
-	 * @return whether visitors may register: as the system property {@value #OPEN_PROPERTY}
-	 *         says, opening it in development only, or else if the confirmation emails reach them
+	 * @return whether visitors may register: unless the system property {@value #OPEN_PROPERTY}
+	 *         is {@code false}
 	 */
 	public static boolean isOpen()
 	{
 		String open = System.getProperty(OPEN_PROPERTY);
-		if (!Strings.isEmpty(open) && (!Boolean.parseBoolean(open) ||
-			Application.get().usesDevelopmentConfig()))
-		{
-			return Boolean.parseBoolean(open);
-		}
-		return ((WicketApplication)Application.get()).getMailer().isDelivering();
+		return open == null || !"false".equalsIgnoreCase(open.strip());
 	}
 
 	/**
 	 * @return whether the form was sent by a robot: it filled in the honeypot, sent the form too
-	 *         soon, got the sum wrong or answered a sum already answered
+	 *         soon or sent a form whose challenge answered already
 	 */
 	boolean isRobot()
 	{
@@ -282,62 +276,36 @@ public class RegisterPage extends BasePage
 		boolean filledHoneypot = website != null && !website.isBlank();
 		boolean tooSoon = Duration.between(shownAt, clock.instant())
 			.compareTo(MINIMUM_FILL_TIME) < 0;
-		Integer answer = registration.getAnswer();
-		boolean wrongSum = answer == null || answer != first + second;
-		return answeredBefore || filledHoneypot || tooSoon || wrongSum;
+		return answeredBefore || filledHoneypot || tooSoon;
 	}
 
 	/**
-	 * Asks a new sum, with a new challenge, and starts timing anew; the challenge before answers
-	 * no more.
+	 * Asks a new captcha, with a new challenge, and starts timing anew; the challenge before
+	 * answers no more.
 	 */
 	private void newChallenge()
 	{
 		RegistrationLimits limits = RegistrationLimits.get();
 		limits.answer(challenge);
 		challenge = limits.newChallenge();
-		ThreadLocalRandom random = ThreadLocalRandom.current();
-		first = random.nextInt(1, 10);
-		second = random.nextInt(1, 10);
+		captcha.renew();
 		shownAt = clock.instant();
 	}
 
 	/**
-	 * @return the sum asked, for tests
+	 * @return the captcha asked, for tests
 	 */
-	int getExpectedAnswer()
+	Captcha getCaptcha()
 	{
-		return first + second;
+		return captcha;
 	}
 
 	/**
-	 * @return the challenge of the sum asked, for tests
+	 * @return the challenge of the form shown, for tests
 	 */
 	String getChallenge()
 	{
 		return challenge;
-	}
-
-	/**
-	 * Shows a language by its name in that language: English, Español, Deutsch.
-	 */
-	private static class LanguageRenderer extends ChoiceRenderer<Language>
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public Object getDisplayValue(Language language)
-		{
-			Locale locale = language.getLocale();
-			String name = locale.getDisplayLanguage(locale);
-			return name.substring(0, 1).toUpperCase(locale) + name.substring(1);
-		}
-
-		@Override
-		public String getIdValue(Language language, int index)
-		{
-			return language.getCode();
-		}
 	}
 
 	/**
@@ -411,8 +379,6 @@ public class RegisterPage extends BasePage
 		private String password;
 
 		private String website;
-
-		private Integer answer;
 
 		public String getFirstName()
 		{
@@ -518,16 +484,6 @@ public class RegisterPage extends BasePage
 		public void setWebsite(String website)
 		{
 			this.website = website;
-		}
-
-		public Integer getAnswer()
-		{
-			return answer;
-		}
-
-		public void setAnswer(Integer answer)
-		{
-			this.answer = answer;
 		}
 	}
 }

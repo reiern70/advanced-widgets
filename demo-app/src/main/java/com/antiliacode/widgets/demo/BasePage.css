@@ -556,9 +556,9 @@ a.brand { color: inherit; text-decoration: none; }
 }
 .register__submit:hover { background: var(--primary-dark); }
 .register__card--done { text-align: center; }
-.register__mail { color: var(--primary); }
 .register__hint { color: var(--muted); font-size: 14px; }
 .register__password-hint { grid-column: 1 / -1; margin: -6px 0 0; font-size: 13px; }
+.register__notice { grid-column: 1 / -1; margin: 0; }
 @media (max-width: 600px) {
 	.register__form { grid-template-columns: 1fr; }
 	.register__card { padding: 20px; }
