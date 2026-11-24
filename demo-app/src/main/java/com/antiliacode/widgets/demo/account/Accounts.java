@@ -45,7 +45,7 @@ public class Accounts
 	public static final String USER = "user";
 
 	/** The password of {@value #USER}, which the sign-in page shows. */
-	public static final String USER_PASSWORD = "$Amigo_MEllon_Friend_4321";
+	public static final String USER_PASSWORD = "$Amigo_Mellon_Friend_4_3_2_1";
 
 	/** The administrator's account. */
 	public static final String ADMIN = "admin";

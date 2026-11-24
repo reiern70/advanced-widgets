@@ -74,7 +74,7 @@ class DemosAuthorizationTest
 		tester.assertVisible("signInHint");
 		tester.assertVisible("signIn");
 		tester.assertInvisible("signOut");
-		tester.assertLabel("signInHint:account", "as user, password $Amigo_MEllon_Friend_4321.");
+		tester.assertLabel("signInHint:account", "as user, password $Amigo_Mellon_Friend_4_3_2_1.");
 		tester.assertLabel("signInHint:inUse", "0 of 10 sessions in use.");
 		tester.assertContains("We keep no record of the people who visit this site.");
 		// no websocket, which would need a session

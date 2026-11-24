@@ -116,7 +116,7 @@ class SignInPageTest
 	void thePageShowsTheAccountTheSessionsInUseAndThatNothingIsRecorded()
 	{
 		tester.assertLabel("user", "user");
-		tester.assertLabel("userPassword", "$Amigo_MEllon_Friend_4321");
+		tester.assertLabel("userPassword", "$Amigo_Mellon_Friend_4_3_2_1");
 		tester.assertLabel("inUse", "0 of 10 sessions in use.");
 		tester.assertContains("We keep no record of the people who visit this site.");
 		// the captcha always, an image drawn from the token in its address

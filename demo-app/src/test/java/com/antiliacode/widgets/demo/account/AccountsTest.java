@@ -32,7 +32,7 @@ class AccountsTest
 		Accounts accounts = new Accounts("admin-secret");
 
 		assertEquals(Optional.of(Role.USER),
-			accounts.authenticate("user", "$Amigo_MEllon_Friend_4321"));
+			accounts.authenticate("user", "$Amigo_Mellon_Friend_4_3_2_1"));
 		assertEquals(Optional.of(Role.USER),
 			accounts.authenticate(" User ", Accounts.USER_PASSWORD));
 		assertTrue(accounts.authenticate("user", "$amigo_mellon_friend_4321").isEmpty());
