@@ -34,6 +34,12 @@
  * callback how an upload ended by POST: as uploadConnectionLost when no answer came, which the
  * progress tells too, and as uploadFailed a failure it has no words of its own for.
  *
+ * A ResumableUploadField draws its uploader with Wicket.Upload.resumable(id, settings, attributes)
+ * around the input of Wicket's ResumableUploadToResourceField: the ResumableUploader of the core,
+ * sending the files in chunks over tus to Wicket's ResumableUploadResourceReference with the signed
+ * query of the field, and telling the field's callback how each upload ended, as Wicket's own
+ * script of the field does: the file stored, its failure or its cancellation.
+ *
  * The uploads of forms are told as well: a multipart form posted the usual way, whose progress the
  * server tells, and one sent by Ajax, with its request where Wicket's Ajax gives it to
  * /ajax/call/beforeSend (the plain JavaScript engine does; jQuery's gives its own object, and the
@@ -52,6 +58,8 @@ import { type AjaxAttributes as RenderedAttributes, asParameters, roundTrip }
 import { FilePicker, UploadGuard, type UploadGuardHandle, type UploadGuardOptions,
 	type UploadOutcome, type UploadProblemKind, uploadProblems, UploadProgress, uploadEnded,
 	uploadRefused, uploadStarted } from '../upload.js';
+import { ResumableUploader, type ResumableUploaderOptions, type TusError }
+	from '../resumable-upload.js';
 
 /** What Wicket's Ajax tells of a request, as far as uploads need it. */
 interface AjaxAttributes {
@@ -407,11 +415,132 @@ function endFormUploadAfter(form: string, request: unknown): void {
 	}
 }
 
+/**
+ * The settings of Wicket's ResumableUploadToResourceField, with the options of the uploader the
+ * ResumableUploadField adds.
+ */
+interface ResumableFieldSettings extends Omit<ResumableUploaderOptions, 'endpoint'> {
+	inputName: string;
+	resourceUrl: string;
+	ajaxCallBackUrl: string;
+	maxSize: number;
+	fileCountMax?: number;
+	uploadToken: string;
+	parallelUploads?: number;
+	remembering?: boolean;
+}
+
+/** A question of the uploader, as Wicket's ResumableUploadToResourceField asks it of the page. */
+interface WicketQuestion {
+	reason: 'reconnected' | 'recalled';
+	files: Array<{ name: string; size: number; sent: number }>;
+	resume(): void;
+	cancel(): void;
+}
+
+/** The error a canceled upload is told with, as Wicket's field knows it. */
+const UPLOAD_CANCELED = 'upload.canceled';
+
+/** The error of an upload the server no longer has, as Wicket's resumable field knows it. */
+const UPLOAD_LOST = 'resumableUploadLost';
+
+/**
+ * @returns the query Wicket's FileUploadToResourceField adds to the requests of its uploads
+ */
+function queryOf(settings: ResumableFieldSettings): string {
+	const parameters: Array<[string, unknown]> = [['uploadId', settings.inputName],
+		['maxSize', settings.maxSize]];
+	if (settings.fileMaxSize != null) {
+		parameters.push(['fileMaxSize', settings.fileMaxSize]);
+	}
+	if (settings.fileCountMax != null) {
+		parameters.push(['fileCountMax', settings.fileCountMax]);
+	}
+	parameters.push(['uploadToken', settings.uploadToken]);
+	return parameters.map(([name, value]) => name + '=' + encodeURIComponent(String(value)))
+		.join('&');
+}
+
+/**
+ * @returns the key of the error of a failed upload, as Wicket's field words them
+ */
+function errorKeyOf(error: TusError): string {
+	if (error.key) {
+		return error.key;
+	}
+	return error.kind === 'network' ? CONNECTION_LOST : error.kind === 'gone' ? UPLOAD_LOST
+		: FAILED;
+}
+
+/**
+ * Draws the uploader of a ResumableUploadField around the input of Wicket's
+ * ResumableUploadToResourceField, which it takes into its element. A new rendering of the field
+ * puts its input in place of the old one and draws the uploader anew: the files being sent stop.
+ * The end of each upload is told to the callback of Wicket's field, by POST with the attributes:
+ * the name the file was stored under, or the key of its error, or its cancellation.
+ *
+ * @param id the id of the input
+ * @param settings those of Wicket's field and the options of the uploader, as the server renders
+ *        them
+ * @param attributes those of the requests telling the field's callback, as the server renders them
+ * @param askUser the field's getClientSideResumeQuestionCallBack(): asks the user whether to go on
+ *        with uploads, given the reason, the files, each with its name, size and the bytes sent,
+ *        resume() and cancel(); returns true when it did, else the uploader asks
+ * @returns the uploader, null when there is no such input
+ */
+function resumable(id: string, settings: ResumableFieldSettings,
+	attributes?: RenderedAttributes, askUser?: (question: WicketQuestion) => unknown):
+	ResumableUploader | null {
+	const input = document.getElementById(id);
+	if (!(input instanceof HTMLInputElement)) {
+		return null;
+	}
+	let host = input.closest<HTMLElement>('[data-antilia-resumable-upload]');
+	if (host) {
+		host.before(input);
+		ResumableUploader.of(host)?.destroy();
+	} else {
+		host = document.createElement('div');
+		host.id = id + '-uploader';
+		host.setAttribute('data-antilia-resumable-upload', '');
+		input.before(host);
+	}
+	const tell = (parameters: Record<string, unknown>) => roundTrip({ ...attributes,
+		u: settings.ajaxCallBackUrl, m: 'POST' }, asParameters(parameters));
+	const uploader = ResumableUploader.attach(host, { ...settings, endpoint: settings.resourceUrl,
+		query: queryOf(settings), parallel: settings.parallelUploads ?? settings.parallel,
+		remember: settings.remembering ?? settings.remember, input,
+		onComplete: (item) => tell(item.storedName ? {
+			error: false, filesInfo: JSON.stringify([{ fileName: item.storedName,
+				clientFileName: item.name,
+				contentType: item.file?.type || 'application/octet-stream' }])
+		} : { error: true, errorMessage: UPLOAD_LOST }),
+		onError: (_item, error) => tell({ error: true, errorMessage: errorKeyOf(error) }),
+		onCancel: () => tell({ error: true, errorMessage: UPLOAD_CANCELED }),
+		onQuestion: (question) => typeof askUser === 'function' && askUser({
+			reason: question.reason,
+			files: question.items.map((item) => ({ name: item.name, size: item.size, sent: item.sent })),
+			resume: () => question.resume(),
+			cancel: () => question.cancel()
+		}) === true });
+	if (uploader) {
+		// what the field's startUpload(), cancelUpload(), pauseUpload() and resumeUpload() call
+		const timers = (wicket().Timer ??= {}) as Record<string, unknown>;
+		timers[id] = {
+			upload: () => uploader.resumeAll(),
+			cancel: () => void uploader.cancelAll(),
+			pause: () => uploader.pauseAll(),
+			resume: () => uploader.resumeAll()
+		};
+	}
+	return uploader;
+}
+
 const Wicket = wicket();
 if (Wicket.Upload === undefined) {
 	useWicketHost();
-	Wicket.Upload = { FilePicker, UploadProgress, UploadGuard, guard, field, upload, started, ended,
-		failed, precondition };
+	Wicket.Upload = { FilePicker, UploadProgress, UploadGuard, ResumableUploader, guard, field, upload,
+		started, ended, failed, precondition, resumable };
 
 	const events = Wicket.Event as WicketEvents | undefined;
 	if (events?.subscribe) {

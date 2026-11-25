@@ -11,6 +11,47 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC10 (not released yet)
+
+What 11.0.0-RC9 has, and:
+
+- Resumable uploads over tus, the open protocol (#181): large files sent in chunks, each paused,
+  resumed or canceled by the user, going on after a broken connection or a reload of the page
+  without sending again what the server holds. Wicket 11.0 has no server side for them: the
+  widgets bring the one proposed for Wicket 11.1 and 12 (apache/wicket#2011 and #2010), with the
+  same names in `com.antiliacode.widgets.upload`. The application mounts a
+  `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole files go to, and
+  `ResumableUploadField`, a `FileUploadToResourceField`, draws the picker of the theme and a row of
+  each file, its bar and its buttons, over the field's `<input type="file">`. It hears of the files
+  as any `FileUploadToResourceField`, `onUploadSuccess(target, infos)`, under the names the file
+  manager stored them under, and words the refusals of the resource in English, German, Spanish
+  and French. Moving to Wicket 11.1, an application imports the reference from Wicket's
+  `org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable` instead. The core's
+  `TusUpload` (one file) and `ResumableUploader` (the widget, `resumable-upload.ts`, built into
+  `antilia-upload.js`), and React's and Svelte's `ResumableUploader`, work with any tus server,
+  tusd among them: with the resource of the widgets they send its signed `query`, and tell the name
+  it stored each file under (`item.storedName`).
+  Once the connection is lost for longer than the tries take, a VPN down for example, the files
+  wait for it and the uploader asks, once the server answers again, whether to resume or cancel
+  them (`askingToResume`, `onQuestion`, the field's `getClientSideResumeQuestionCallBack()`,
+  and after how long: `retryTimeout`, the field's `setRetryTimeout`, 40 seconds by default);
+  after a reload it lists the uploads the same place left unfinished and asks whether to go on with
+  them, which they do once their files are chosen again (`rememberedAs`). With the
+  reference's `getCurrentOwner()` an application may keep the uploads for the signed-in user,
+  beyond the session.
+- The field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and `resumeUpload()` reach
+  the uploader of the theme.
+- The timings and limits of the resumable uploads can be set: the field's
+  `setReconnectCheckInterval` (how often it looks whether the server answers again, 30 seconds),
+  `setStallTimeout` (how long a request may get nothing, 30 seconds), `setRecalling` (whether it
+  lists the uploads of an earlier visit) and `setInUseTimeout` (how long another page leaves an
+  upload alone, 20 seconds); the resource's `setOwnerExpiry` (for uploads of a user rather than a
+  session), `setExpiryCheckInterval`, `setLockTimeout` and `setMaxMetadataLength`. The core's
+  uploader takes `probeDelays`, `stallMillis`, `recalling` and `inUseMillis`.
+- The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
+- A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
+  design it had.
+
 ## 11.0.0-RC9 (2026-11-20)
 
 What 11.0.0-RC8 has, built with newer dependencies; an application changes nothing:

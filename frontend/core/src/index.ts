@@ -181,6 +181,15 @@ export type { FilePickerDesign, FilePickerOptions, FilePickerTexts, GuardedReque
 	UploadGuardHandle, UploadGuardOptions, UploadOutcome, UploadProblem, UploadProblemKind,
 	UploadProgressOptions, UploadProgressTexts, UploadRefusedDetail, UploadStartDetail }
 	from './upload.js';
+export { absoluteUrl, DEFAULT_CHUNK_SIZE, DEFAULT_PROBE_DELAYS, DEFAULT_RESUMABLE_UPLOADER_TEXTS,
+	DEFAULT_IN_USE_MILLIS, DEFAULT_RETRY_DELAYS, DEFAULT_RETRY_TIMEOUT, DEFAULT_STALL_MILLIS,
+	encodeMetadata,
+	ERROR_KEY_HEADER, fingerprintOf, probe, reachable, ResumableUploader, resumableUploader,
+	retryDelaysFor, STORED_NAME_HEADER, terminate,
+	TUS_RESUMABLE, TusError, TusStorage, TusUpload, withQuery } from './resumable-upload.js';
+export type { ResumableItem, ResumableItemState, ResumableQuestion, ResumableUploaderOptions,
+	ResumableUploaderTexts, StoredUpload, TusErrorKind, TusRequestOptions, TusState,
+	TusUploadOptions } from './resumable-upload.js';
 export { BUTTON_BUSY_CLASS, BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses, guardBusyButtons, isButtonBusy,
 	setButtonBusy } from './button.js';
 export type { ButtonSize, ButtonVariant } from './button.js';

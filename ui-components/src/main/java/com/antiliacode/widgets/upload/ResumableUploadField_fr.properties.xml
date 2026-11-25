@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The words of the errors of the uploads of a ResumableUploadField, which it looks for with the
+  limits of the field and of its resource:
+  ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
+  them as well, by the keys the server tells.
+-->
+<properties>
+	<entry key="wicket.no.files.selected">Rien à importer&#160;: aucun fichier n’a été choisi.</entry>
+	<entry key="uploadSingleFileTooLarge">Un fichier pèse plus de ${fileMaxSize}, le maximum pour un fichier.</entry>
+	<entry key="uploadToResourceFailed">L’importation a échoué.</entry>
+	<entry key="uploadConnectionLost">La connexion au serveur a été interrompue pendant l’importation.</entry>
+	<entry key="resumableUploadTooLarge">Plus de ${fileMaxSize}, le maximum pour un fichier.</entry>
+	<entry key="resumableUploadTooMany">${maxUploadsPerSession} importations à la fois au plus&#160;: terminez-en ou annulez-en une d’abord.</entry>
+	<entry key="resumableUploadTooMuch">Les importations pas encore terminées pèseraient plus de ${maxBytesPerSession} ensemble.</entry>
+	<entry key="resumableUploadNoRoom">Le serveur n’a pas de place pour le fichier en ce moment&#160;: réessayez plus tard.</entry>
+	<entry key="resumableUploadLost">Le serveur n’a plus l’importation&#160;: choisissez à nouveau le fichier.</entry>
+</properties>

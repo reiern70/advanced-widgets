@@ -92,6 +92,9 @@ import com.antiliacode.widgets.demo.theme.ThemeEditorPage;
 import com.antiliacode.widgets.demo.tree.TreePage;
 import com.antiliacode.widgets.demo.tree.TreeGridPage;
 import com.antiliacode.widgets.demo.tree.TreeOfLifeResource;
+import com.antiliacode.widgets.demo.resumable.DemoResumableUploads;
+import com.antiliacode.widgets.demo.resumable.ReceiptsResource;
+import com.antiliacode.widgets.demo.resumable.ResumableUploadPage;
 import com.antiliacode.widgets.demo.upload.DemoUploadsFileManager;
 import com.antiliacode.widgets.demo.upload.UploadPage;
 import com.antiliacode.widgets.demo.wizard.WizardPage;
@@ -257,6 +260,11 @@ public class WicketApplication extends WebApplication
 		getApplicationSettings().setUploadProgressUpdatesEnabled(true);
 		mountResource("uploads", FileUploadResourceReference.createNewInstance(
 			new DemoUploadsFileManager(DemoUploadsFileManager.defaultFolder())));
+		// the resumable upload demo: files sent in chunks over tus, in a folder of their own only
+		// until the page took them, or 30 minutes after the browser last sent something
+		mountResource(DemoResumableUploads.PATH, new DemoResumableUploads(
+			DemoResumableUploads.defaultFolder()));
+		mountResource(ReceiptsResource.PATH, ReceiptsResource.REFERENCE);
 		// the session that asks for it waits before its Ajax requests and sends files slowly, to
 		// see the demos as on a slow network: the button of the top bar of a demo opens the
 		// settings, which the upload demo shows too
@@ -306,6 +314,7 @@ public class WicketApplication extends WebApplication
 		mountPage("buttons", ButtonsPage.class);
 		mountPage("downloads", DownloadsPage.class);
 		mountPage("upload", UploadPage.class);
+		mountPage("resumable-upload", ResumableUploadPage.class);
 		mountPage("code-editor", CodeEditorPage.class);
 		mountPage("rich-text-editor", RichTextEditorPage.class);
 		mountPage("ckeditor", CKEditorPage.class);

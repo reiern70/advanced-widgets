@@ -16,11 +16,8 @@ package com.antiliacode.widgets.upload;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.wicket.Component;
-import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.attributes.AjaxRequestAttributes;
-import org.apache.wicket.ajax.attributes.AjaxAttributeName;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.OnDomReadyHeaderItem;
 import org.apache.wicket.markup.html.form.Form;
@@ -82,7 +79,7 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 
 	private boolean blockingRequests;
 
-	private final CallbackAttributes callbackAttributes;
+	private final FieldCallbackAttributes callbackAttributes;
 
 	/**
 	 * @param id
@@ -91,7 +88,7 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 	public UploadToResourceField(String id)
 	{
 		super(id);
-		callbackAttributes = new CallbackAttributes();
+		callbackAttributes = new FieldCallbackAttributes(this::updateCallbackAjaxAttributes);
 		add(callbackAttributes);
 	}
 
@@ -183,52 +180,6 @@ public abstract class UploadToResourceField extends FileUploadToResourceField
 	 */
 	protected void updateCallbackAjaxAttributes(AjaxRequestAttributes attributes)
 	{
-	}
-
-	/**
-	 * Renders the attributes of the requests to the callback of Wicket's field, whose URL its
-	 * script knows: it hears of no request of its own.
-	 */
-	private final class CallbackAttributes extends AbstractDefaultAjaxBehavior
-	{
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		protected void updateAjaxAttributes(AjaxRequestAttributes attributes)
-		{
-			super.updateAjaxAttributes(attributes);
-			attributes.setMethod(AjaxRequestAttributes.Method.POST);
-			updateCallbackAjaxAttributes(attributes);
-		}
-
-		@Override
-		protected void postprocessConfiguration(JSONObject attributesJson, Component component)
-		{
-			super.postprocessConfiguration(attributesJson, component);
-			// the URL is the callback's, and Wicket's field sends no field with the requests
-			attributesJson.remove(AjaxAttributeName.URL.jsonName());
-			attributesJson.remove(AjaxAttributeName.MARKUP_ID.jsonName());
-		}
-
-		/**
-		 * @return the attributes, as the script of the field takes them
-		 */
-		CharSequence renderAttributes()
-		{
-			return renderAjaxAttributes(getComponent());
-		}
-
-		@Override
-		public boolean canCallListener(Component component)
-		{
-			// the requests go to the callback of Wicket's field
-			return false;
-		}
-
-		@Override
-		protected void respond(AjaxRequestTarget target)
-		{
-		}
 	}
 
 	/**
