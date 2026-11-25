@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Subida reanudable</entry>
+	<entry key="explanation">&lt;p&gt;Un archivo grande en una red lenta o inestable, un móvil que cambia de antena por ejemplo, ya no vuelve a empezar desde su primer byte. Un ResumableUploadField envía cada archivo en trozos a un recurso que monta la aplicación, ResumableUploadResourceReference, el de Wicket 11.1 para Wicket 10, por tus, el protocolo abierto de las subidas reanudables: el navegador crea la subida, envía los trozos y, tras una pausa, una conexión cortada o una recarga, pregunta al servidor cuántos bytes tiene y envía solo el resto.&lt;/p&gt;&lt;p&gt;Cada archivo tiene su fila: su barra de progreso, lo enviado, a qué velocidad y cuánto falta, y sus botones para pausarlo, reanudarlo y cancelarlo. Aquí se envían dos archivos a la vez; los demás esperan su turno. Una conexión cortada se reintenta sola, preguntando antes al servidor dónde se quedó; sin conexión, la subida espera a que vuelva la red. Si la conexión sigue perdida más tiempo, una VPN que se cayó por ejemplo, los archivos esperan a que el servidor responda de nuevo, y entonces el campo pregunta si reanudarlos o cancelarlos. Marque la casilla bajo la zona y el servidor cortará un trozo de vez en cuando: vea cómo siguen las filas.&lt;/p&gt;&lt;p&gt;Recargue la página mientras se envía un archivo: el campo muestra las subidas sin terminar, hasta dónde llegó cada una, y pregunta si seguir con ellas; Continuar abre el diálogo, y el mismo archivo elegido otra vez sigue desde ahí. El navegador guarda la dirección de cada subida sin terminar en su localStorage; el servidor guarda los bytes 30 minutos tras el último trozo, solo para la sesión que los envió. Una aplicación cuyos usuarios inician sesión puede guardarlos para el usuario, más allá de la sesión, y el usuario sigue tras volver a iniciar sesión.&lt;/p&gt;&lt;p&gt;En cuanto el servidor tiene un archivo entero, onUploadSuccess() del campo lo recibe: la demo calcula su SHA-256, para compararlo con el del archivo enviado, y lo borra. Las aplicaciones de React y Svelte usan el mismo cargador del núcleo y entregan cada archivo a un recurso de la demo que hace lo mismo. Al ser tus, funcionan con cualquier servidor tus, tusd o tus-java-server entre ellos, y cualquier cliente tus funciona con el recurso de Wicket.&lt;/p&gt;&lt;p&gt;Los ajustes bajo la zona ralentizan el servidor para esta sesión, para ver los trozos en una red rápida. Un archivo mayor de lo que un proxy deja llevar a una petición pasa igualmente, en trozos más pequeños.&lt;/p&gt;</entry>
+	<entry key="hint">Elija o arrastre archivos grandes: páuselos, reanúdelos, recargue la página y siga con ellos.</entry>
+	<entry key="limits">Archivos de {0} como mucho, enviados en trozos de {1}, {2} a la vez como mucho. El servidor borra lo recibido {3} minutos después del último trozo.</entry>
+	<entry key="breaking">El servidor corta un trozo de vez en cuando</entry>
+	<entry key="received">Lo que recibió el servidor</entry>
+	<entry key="received.name">Archivo</entry>
+	<entry key="received.size">Tamaño</entry>
+	<entry key="received.sha256">SHA-256</entry>
+	<entry key="received.none">Nada aún: el servidor lista aquí cada archivo que recibió entero, y luego lo borra.</entry>
+	<entry key="received.failed">El servidor no tomó el archivo</entry>
+</properties>

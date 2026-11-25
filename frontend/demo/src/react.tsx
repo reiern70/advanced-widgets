@@ -39,6 +39,7 @@ import { NotificationsDemo } from './react/NotificationsDemo.js';
 import { PaletteDemo } from './react/PaletteDemo.js';
 import { ProgressDemo } from './react/ProgressDemo.js';
 import { ResizableDemo } from './react/ResizableDemo.js';
+import { ResumableUploadDemo } from './react/ResumableUploadDemo.js';
 import { RichTextEditorDemo } from './react/RichTextEditorDemo.js';
 import { ScrollbarDemo } from './react/ScrollbarDemo.js';
 import { SplitPanelDemo } from './react/SplitPanelDemo.js';
@@ -80,6 +81,7 @@ startApps('react', {
 	tree: app(TreeDemo),
 	treeGrid: app(TreeGridDemo),
 	progressBar: app(ProgressDemo),
+	resumableUpload: app(ResumableUploadDemo),
 	scrollbar: app(ScrollbarDemo),
 	modalDialog: app(ModalDemo),
 	notifications: app(NotificationsDemo)

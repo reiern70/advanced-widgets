@@ -57,7 +57,7 @@ const CLOUD_ICON = 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.
 	'5 5h-3z';
 
 /** An x, for the button clearing the files chosen. */
-const CLEAR_ICON = 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 ' +
+export const CLEAR_ICON = 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 ' +
 	'17.59 19 19 17.59 13.41 12z';
 
 /** Fired at the element whose upload starts, see uploadStarted(). */
@@ -243,7 +243,10 @@ export function accepts(accept: string | null | undefined, file: { name: string;
 	});
 }
 
-function create<K extends keyof HTMLElementTagNameMap>(tag: K, look: Look, part: LookPart,
+/**
+ * @returns an element of a part of the look, with a text if given; for the uploads' own scripts
+ */
+export function create<K extends keyof HTMLElementTagNameMap>(tag: K, look: Look, part: LookPart,
 	text?: string): HTMLElementTagNameMap[K] {
 	const element = document.createElement(tag);
 	element.className = partClasses(look, part);
@@ -269,7 +272,7 @@ function icon(path: string, classes: string): SVGSVGElement {
 /**
  * @returns a button of the theme with an icon, a text or both
  */
-function button(look: Look, part: LookPart, variant: ButtonVariant, size: ButtonSize,
+export function button(look: Look, part: LookPart, variant: ButtonVariant, size: ButtonSize,
 	iconPath: string | null, text: string, iconOnly = false): HTMLButtonElement {
 	const element = document.createElement('button');
 	element.type = 'button';
@@ -456,6 +459,8 @@ export class FilePicker {
 
 		this.element = create('div', look, 'file-picker');
 		this.element.classList.add('antilia-file-picker-' + design);
+		// a picker configured again in another design has no zone
+		this.zone = null;
 		const choose = this.multiple ? this.texts.chooseMany : this.texts.choose;
 		this.summary = create('span', look, 'file-picker-summary');
 		this.summary.id = id + '-summary';
