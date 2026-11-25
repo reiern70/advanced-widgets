@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
-import org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable.ResumableUploadResourceReference;
+import com.antiliacode.widgets.upload.ResumableUploadResourceReference;
 import org.apache.wicket.markup.html.form.FormComponent;
 import org.apache.wicket.request.http.WebRequest;
 import org.apache.wicket.util.tester.WicketTester;
@@ -202,8 +202,11 @@ class ResumableUploadPageTest
 
 		// back on the page, whose uploader tells the field of the file
 		tester.startPage(page);
+		// the callback of the field itself, rather than that of Wicket's field it extends
 		AbstractDefaultAjaxBehavior callback = tester.getComponentFromLastRenderedPage(
-			"themed:uploads").getBehaviors(AbstractDefaultAjaxBehavior.class).get(0);
+			"themed:uploads").getBehaviors(AbstractDefaultAjaxBehavior.class).stream()
+			.filter(behavior -> behavior.getClass().getName().endsWith("$Callback"))
+			.findFirst().orElseThrow();
 		tester.getRequest().setParameter("error", "false");
 		tester.getRequest().setParameter("filesInfo", new JSONArray().put(new JSONObject()
 			.put("fileName", name).put("clientFileName", "hello.txt")

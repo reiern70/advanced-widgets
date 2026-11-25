@@ -29,7 +29,6 @@ import java.util.Locale;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable.ResumableUploadResourceReference;
 import org.apache.wicket.markup.IMarkupResourceStreamProvider;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.form.upload.FileUpload;
@@ -51,7 +50,7 @@ import com.github.openjson.JSONObject;
 import com.github.openjson.JSONTokener;
 
 /**
- * Tests {@link ResumableUploadField}: the uploader of the theme over Wicket's resumable field.
+ * Tests {@link ResumableUploadField}: the uploader of the theme, its settings and its callback.
  */
 class ResumableUploadFieldTest extends WicketTestCase
 {
@@ -185,11 +184,15 @@ class ResumableUploadFieldTest extends WicketTestCase
 	}
 
 	/**
-	 * @return the callback of Wicket's field, the first behavior it adds
+	 * @return the callback of the field itself, rather than that of Wicket's field it extends
 	 */
-	private static AbstractDefaultAjaxBehavior callbackOf(TestField field)
+	static AbstractDefaultAjaxBehavior callbackOf(ResumableUploadField field)
 	{
-		return field.getBehaviors(AbstractDefaultAjaxBehavior.class).get(0);
+		return field.getBehaviors(AbstractDefaultAjaxBehavior.class)
+			.stream()
+			.filter(behavior -> behavior.getClass().getName().endsWith("ResumableUploadField$Callback"))
+			.findFirst()
+			.orElseThrow();
 	}
 
 	private static class TestField extends ResumableUploadField

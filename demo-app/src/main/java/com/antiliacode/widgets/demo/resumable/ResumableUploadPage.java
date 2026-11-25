@@ -38,9 +38,9 @@ import com.antiliacode.widgets.upload.ResumableUploadField;
 import com.github.openjson.JSONObject;
 
 /**
- * The demo of the resumable uploads: a {@link ResumableUploadField}, over Wicket's
- * ResumableUploadToResourceField, sends large files in chunks over the tus protocol to the
- * {@link DemoResumableUploads} of the application, Wicket's resource of them, each paused, resumed
+ * The demo of the resumable uploads: a {@link ResumableUploadField} sends large files in chunks
+ * over the tus protocol to the {@link DemoResumableUploads} of the application, the resource of
+ * the widgets for them, each paused, resumed
  * and canceled by the user, going on after a broken connection, which the server makes now and
  * then when asked to, and after a reload of the page. The {@link ThrottlePanel} slows the chunks
  * down, to watch them on a fast network. The server tells what it received, the SHA-256 of each

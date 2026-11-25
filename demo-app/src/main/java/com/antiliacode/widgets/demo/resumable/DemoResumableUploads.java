@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 
 import org.apache.wicket.MetaDataKey;
 import org.apache.wicket.Session;
-import org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable.ResumableUpload;
-import org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable.ResumableUploadResourceReference;
+import com.antiliacode.widgets.upload.ResumableUpload;
+import com.antiliacode.widgets.upload.ResumableUploadResourceReference;
 import org.apache.wicket.markup.html.form.upload.resource.FolderUploadsFileManager;
 import org.apache.wicket.util.file.File;
 import org.apache.wicket.util.lang.Bytes;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The resumable uploads of the demo, Wicket's resource of them: files of 100 MB at most, five at
+ * The resumable uploads of the demo, the resource of the widgets for them: files of 100 MB at most, five at
  * once and 300 MB together of a session, 1 GB of all sessions, each deleted 30 minutes after the
  * browser last sent something. The whole files go to a folder, from which the page deletes each
  * once it told what it received. For a session that asks for it, the server breaks off a chunk now

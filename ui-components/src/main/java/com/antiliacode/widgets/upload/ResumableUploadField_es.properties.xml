@@ -13,8 +13,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  The words of the errors of the uploads of a ResumableUploadField, which Wicket's
-  ResumableUploadToResourceField looks for with the limits of the field and of its resource:
+  The words of the errors of the uploads of a ResumableUploadField, which it looks for with the
+  limits of the field and of its resource:
   ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
   them as well, by the keys the server tells.
 -->

@@ -730,7 +730,7 @@ an upload to a resource with the guard, and zones to drop files on, and slows th
 reading the files to watch the progress on a fast network.
 
 The resumable uploads (`resumable-upload.ts`, built into `antilia-upload.js` and `antilia-upload.css`
-for Wicket's `ResumableUploadField`) speak tus 1.0, the open protocol of resumable uploads
+for `ResumableUploadField`) speak tus 1.0, the open protocol of resumable uploads
 (<https://tus.io/protocols/resumable-upload>), with any tus server. `TusUpload` sends one file:
 `POST` creates the upload with `Upload-Length` and `Upload-Metadata` (its name and type), `PATCH`
 sends the chunks (`chunkSize`, 8 MiB by default), `HEAD` asks how many bytes the server holds
@@ -751,7 +751,7 @@ it belongs to, and with when it was last being sent, so that another page leaves
 page still sends. With `pollMillis` it asks the server how many bytes it
 holds while a chunk is being sent, for the progress, rather than trusting what the browser handed to
 the network, which may be megabytes ahead: only for servers answering `HEAD` while a `PATCH` runs,
-as Wicket's `ResumableUploadResourceReference` does. `query` is added to every request, the signed
+as `ResumableUploadResourceReference` does. `query` is added to every request, the signed
 grant that resource wants, and `storedName` is the name it stored a whole file under
 (`Wicket-Upload-File-Name`); a refusal tells its key (`TusError#key`, from `Wicket-Upload-Error`),
 which `errorTexts` words. `ResumableUploader` draws, into an element the framework renders empty, the `FilePicker` of the theme (a zone by default), the buttons pausing and resuming
@@ -774,15 +774,15 @@ whole, with its address (`item.url`) and the name it was stored under, `onError`
 page is left while files are being sent, unless `keepingOnPage` is false. React's and Svelte's
 `ResumableUploader` wrap it, the core's `resumableUploader` works as a Svelte action, and
 `wicket/upload.ts` adds `Wicket.Upload.resumable(id, settings, attributes, askUser)`, which draws the
-uploader around the input of Wicket's `ResumableUploadToResourceField` with the field's settings and
-tells the field's callback how each upload ended, as Wicket's own script does, the field's
+uploader around the input of `ResumableUploadField` with the field's settings and tells the
+field's callback how each upload ended, the field's
 `askingToResume`, `rememberedAs` (the class of the page and the path of the field), the
 `retryDelays` of `setRetryTimeout(Duration)`, the `probeDelays` of `setReconnectCheckInterval`, the
 `stallMillis` of `setStallTimeout`, the `recalling` of `setRecalling`, the `inUseMillis` of
 `setInUseTimeout` and `getClientSideResumeQuestionCallBack()` included;
 `Wicket.Timer[id]` takes the field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and
-`resumeUpload()`. On the server, Wicket's
-`ResumableUploadResourceReference` is the tus resource, whose `getCurrentOwner()` may make the
+`resumeUpload()`. On the server, the widgets' `ResumableUploadResourceReference`, that of Wicket
+11.1 for Wicket 11.0, is the tus resource, whose `getCurrentOwner()` may make the
 uploads the signed-in user's rather than the session's, so that they outlive it, kept for
 `setOwnerExpiry` rather than `setExpiry`; `setExpiryCheckInterval`, `setLockTimeout` and
 `setMaxMetadataLength` set its other timings and limits; and

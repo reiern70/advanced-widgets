@@ -17,24 +17,28 @@ What 11.0.0-RC9 has, and:
 
 - Resumable uploads over tus, the open protocol (#181): large files sent in chunks, each paused,
   resumed or canceled by the user, going on after a broken connection or a reload of the page
-  without sending again what the server holds. The server side is Wicket's, proposed for
-  wicket-extensions in apache/wicket#2010 (12.x) and #2011 (11.x), so this needs Wicket 11.1.0: the
-  application mounts a `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole
-  files go to, and `ResumableUploadField` is Wicket's `ResumableUploadToResourceField` with the
-  picker of the theme and a row of each file, its bar and its buttons, over the field's
-  `<input type="file">`. It hears of the files as any `FileUploadToResourceField`,
-  `onUploadSuccess(target, infos)`, and words the refusals of the resource in English, German,
-  Spanish and French. The core's `TusUpload` (one file) and `ResumableUploader` (the widget,
-  `resumable-upload.ts`, built into `antilia-upload.js`), and React's and Svelte's
-  `ResumableUploader`, work with any tus server, tusd among them: with Wicket's resource they send
-  its signed `query`, and tell the name it stored each file under (`item.storedName`).
+  without sending again what the server holds. Wicket 11.0 has no server side for them: the
+  widgets bring the one proposed for Wicket 11.1 and 12 (apache/wicket#2011 and #2010), with the
+  same names in `com.antiliacode.widgets.upload`. The application mounts a
+  `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole files go to, and
+  `ResumableUploadField`, a `FileUploadToResourceField`, draws the picker of the theme and a row of
+  each file, its bar and its buttons, over the field's `<input type="file">`. It hears of the files
+  as any `FileUploadToResourceField`, `onUploadSuccess(target, infos)`, under the names the file
+  manager stored them under, and words the refusals of the resource in English, German, Spanish
+  and French. Moving to Wicket 11.1, an application imports the reference from Wicket's
+  `org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable` instead. The core's
+  `TusUpload` (one file) and `ResumableUploader` (the widget, `resumable-upload.ts`, built into
+  `antilia-upload.js`), and React's and Svelte's `ResumableUploader`, work with any tus server,
+  tusd among them: with the resource of the widgets they send its signed `query`, and tell the name
+  it stored each file under (`item.storedName`).
   Once the connection is lost for longer than the tries take, a VPN down for example, the files
   wait for it and the uploader asks, once the server answers again, whether to resume or cancel
   them (`askingToResume`, `onQuestion`, the field's `getClientSideResumeQuestionCallBack()`,
   and after how long: `retryTimeout`, the field's `setRetryTimeout`, 40 seconds by default);
   after a reload it lists the uploads the same place left unfinished and asks whether to go on with
-  them, which they do once their files are chosen again (`rememberedAs`). With Wicket's
-  `getCurrentOwner()` an application may keep the uploads for the signed-in user, beyond the session.
+  them, which they do once their files are chosen again (`rememberedAs`). With the
+  reference's `getCurrentOwner()` an application may keep the uploads for the signed-in user,
+  beyond the session.
 - The field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and `resumeUpload()` reach
   the uploader of the theme.
 - The timings and limits of the resumable uploads can be set: the field's
