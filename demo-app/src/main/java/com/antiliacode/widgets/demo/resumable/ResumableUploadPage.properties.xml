@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<properties>
+	<entry key="title">Resumable upload</entry>
+	<entry key="explanation">&lt;p&gt;A large file on a slow or unsteady network, a phone moving between cells for example, no longer starts again from its first byte. A ResumableUploadField sends each file in chunks to a resource the application mounts, ResumableUploads, over tus, the open protocol of resumable uploads: the browser creates the upload, sends the chunks, and after a pause, a broken connection or a reload asks the server how many bytes it holds and sends the rest only.&lt;/p&gt;&lt;p&gt;Each file has its row: its progress bar, what was sent, how fast and how long it still takes, and its buttons pausing, resuming and canceling it. Two files are sent at once here; the others wait for their turn. A broken connection is tried again by itself, the server asked first where it stopped; offline, the upload waits until the network is back. Tick the box below the zone and the server breaks off a chunk now and then: watch the rows go on.&lt;/p&gt;&lt;p&gt;Reload the page while a file is being sent: the row stays, telling how far it got, and the same file chosen again goes on from there. The browser keeps the address of each upload not finished in its localStorage; the server keeps the bytes for 30 minutes after the last chunk, for the session that sent them only.&lt;/p&gt;&lt;p&gt;Once the server holds a whole file, onUploadCompleted() of the field gets it: the demo reads its SHA-256, to compare with that of the file sent, and deletes it. The React and Svelte apps use the same uploader of the core, and hand each file over to a resource of the demo that does the same. Being tus, they work with any tus server, tusd or tus-java-server among them, and any tus client works with the Wicket resource.&lt;/p&gt;&lt;p&gt;The settings below the zone slow the server down for this session, to watch the chunks on a fast network. A file larger than a proxy lets a request carry goes through all the same, in chunks smaller than that.&lt;/p&gt;</entry>
+	<entry key="hint">Choose or drop large files: pause them, resume them, reload the page and choose the same file again.</entry>
+	<entry key="limits">Files of {0} at most, sent in chunks of {1}, {2} at once at most. The server deletes what it got {3} minutes after the last chunk.</entry>
+	<entry key="breaking">The server breaks off a chunk now and then</entry>
+	<entry key="received">What the server received</entry>
+	<entry key="received.name">File</entry>
+	<entry key="received.size">Size</entry>
+	<entry key="received.sha256">SHA-256</entry>
+	<entry key="received.none">Nothing yet: the server lists here each file it received whole, then deletes it.</entry>
+	<entry key="received.failed">The server did not take the file</entry>
+</properties>

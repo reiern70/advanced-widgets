@@ -126,6 +126,42 @@ class ThrottleTest extends WicketTestCase
 	}
 
 	@Test
+	void slowsDownTheChunksOfResumableUploadsToo()
+	{
+		HttpServletRequest chunk = typed("PATCH", "application/offset+octet-stream");
+		assertTrue(Throttle.isUpload(chunk));
+		assertTrue(Throttle.isUpload(typed("POST", "application/offset+octet-stream")),
+			"a chunk overriding its method");
+		assertTrue(Throttle.isUpload(typed("POST", "multipart/form-data; boundary=x")));
+		assertFalse(Throttle.isUpload(typed("PATCH", "application/json")));
+		assertFalse(Throttle.isUpload(typed("PUT", "application/offset+octet-stream")));
+		assertFalse(Throttle.isUpload(typed("PATCH", null)));
+		Throttle.setUploadSpeed(tester.getRequest(), UploadSpeed.SLOW);
+		assertInstanceOf(UploadSpeed.SlowRequest.class, Throttle.slowDown(chunk));
+	}
+
+	/**
+	 * @return the request of the test, with a method and a content type of its own
+	 */
+	private HttpServletRequest typed(String method, String type)
+	{
+		return new jakarta.servlet.http.HttpServletRequestWrapper(tester.getRequest())
+		{
+			@Override
+			public String getMethod()
+			{
+				return method;
+			}
+
+			@Override
+			public String getContentType()
+			{
+				return type;
+			}
+		};
+	}
+
+	@Test
 	void readsTheBodyAtTheSpeedOfTheSession() throws IOException
 	{
 		MockHttpServletRequest request = multipart();

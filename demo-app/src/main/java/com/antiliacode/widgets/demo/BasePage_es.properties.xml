@@ -68,6 +68,8 @@
 	<entry key="demo.downloads.description">Archivos de todo tipo desde los botones del tema: por Ajax en el navegador, a través de un iframe oculto, en una pestaña nueva o en la misma ventana, ocupados mientras llegan; enlaces, una URL para compartir y el informe que describe un formulario.</entry>
 	<entry key="demo.upload">Subida de archivos</entry>
 	<entry key="demo.upload.description">Archivos enviados en un formulario, por Ajax o a un recurso, elegidos con un botón del tema o soltados sobre una zona, con una barra de progreso del tema, una guarda que mantiene al usuario en la página y una forma de ralentizar las subidas.</entry>
+	<entry key="demo.resumableUpload">Subida reanudable</entry>
+	<entry key="demo.resumableUpload.description">Archivos grandes enviados en trozos por tus, el protocolo abierto: cada uno se pausa, se reanuda o se cancela, y sigue tras una conexión cortada o una recarga sin volver a enviar lo que el servidor ya tiene, en Wicket, React y Svelte.</entry>
 	<entry key="demo.codeEditor">Editor de código</entry>
 	<entry key="demo.codeEditor.description">Código en Java, JavaScript, TypeScript, JSON, Markdown o una gramática propia, resaltado en los colores del tema: el servidor guarda el texto, el cursor, la selección y el tamaño, y las pestañas en las que está saben de sus cambios sin guardar. El Markdown se muestra junto a su vista previa en vivo.</entry>
 	<entry key="demo.richTextEditor">Editor de texto enriquecido</entry>

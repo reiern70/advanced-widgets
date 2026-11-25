@@ -28,7 +28,7 @@ and `ButtonDownloadBehavior`), and the looks of Wicket's `TabbedPanel` that `Tab
 (in `tabs.css`, built as `antilia-tabs.css`). React and Svelte have `Dropdown`, `Palette`, `Autocomplete`, `DatePicker`,
 `DateTimePicker`, `InfiniteList`, `Scrollable`, `SplitPanel`, `Tabs`, `Menu`, `Breadcrumb`, `Notifications`, `Desktop` with its
 `DesktopWindow`, `ProgressBar`, `Button`, `PopoverButton`, `Resizable`, `CodeEditor`, `MarkdownPreview`,
-`RichTextEditor`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
+`RichTextEditor`, `ResumableUploader`, `DataTable`, `Tree` and `TreeGrid`, and export the core's `Popover`; the core's `dropdown`,
 `palette`, `datePicker`, `scrollbar`, `splitPanel`, `tabs`, `menu`, `breadcrumb`, `desktop`, `resizable`, `codeEditor`,
 `markdownPreview` and `richTextEditor` also work as Svelte actions, and `FloatingPanel.install()`
 makes the floating panel markup work in any page. An element carrying `data-antilia-copy` copies
@@ -728,6 +728,42 @@ a page veil leaving them alone, for example. The server tells the progress with
 `setUploadProgressUpdatesEnabled(true)`. The demo's Upload page shows a form posted or sent by Ajax,
 an upload to a resource with the guard, and zones to drop files on, and slows the server down
 reading the files to watch the progress on a fast network.
+
+The resumable uploads (`resumable-upload.ts`, built into `antilia-upload.js` and `antilia-upload.css`
+for Wicket's `ResumableUploadField`) speak tus 1.0, the open protocol of resumable uploads
+(<https://tus.io/protocols/resumable-upload>), with any tus server. `TusUpload` sends one file:
+`POST` creates the upload with `Upload-Length` and `Upload-Metadata` (its name and type), `PATCH`
+sends the chunks (`chunkSize`, 8 MiB by default), `HEAD` asks how many bytes the server holds
+before going on, `DELETE` deletes it (`cancel()`, `terminate(url)`). `pause()` stops the chunk being
+sent, whose bytes the server keeps, and asks how far it got; `start()` goes on from there. A broken
+connection, an answer 5xx, 409, 423 or 429, or a chunk without progress for `stallMillis` is tried
+again after `retryDelays`; offline, the upload waits for the browser to be online. The address of
+each upload not finished is kept in `localStorage` (`TusStorage`) by the fingerprint of its file, its
+name, size, type and date, so that the same file chosen again after a reload goes on where it
+stopped; `remember: false` keeps nothing. With `pollMillis` it asks the server how many bytes it
+holds while a chunk is being sent, for the progress, rather than trusting what the browser handed to
+the network, which may be megabytes ahead: only for servers answering `HEAD` while a `PATCH` runs,
+as Wicket's `ResumableUploadResourceReference` does. `query` is added to every request, the signed
+grant that resource wants, and `storedName` is the name it stored a whole file under
+(`Wicket-Upload-File-Name`); a refusal tells its key (`TusError#key`, from `Wicket-Upload-Error`),
+which `errorTexts` words. `ResumableUploader` draws, into an element the framework renders empty, the `FilePicker` of the theme (a zone by default), the buttons pausing and resuming
+all, and a row of each file, its bar, what was sent, how fast and how long it still takes, and its
+buttons pausing, resuming, canceling and taking it out of the list; `parallel` files are sent at once,
+the others waiting for their turn, `autoStart: false` gives each a start button, and `fileMaxSize`
+fails a larger file at once. The uploads left unfinished by an earlier visit show too, how far each
+got, until the file is chosen again or canceled. `onComplete(item)` tells each file the server holds
+whole, with its address (`item.url`) and the name it was stored under, `onError`, `onCancel` and
+`onChange` the rest; given an `input`, it takes that one into its element rather than making its own; the guard asks before the
+page is left while files are being sent, unless `keepingOnPage` is false. React's and Svelte's
+`ResumableUploader` wrap it, the core's `resumableUploader` works as a Svelte action, and
+`wicket/upload.ts` adds `Wicket.Upload.resumable(id, settings, attributes)`, which draws the
+uploader around the input of Wicket's `ResumableUploadToResourceField` with the field's settings and
+tells the field's callback how each upload ended, as Wicket's own script does. On the server, Wicket's
+`ResumableUploadResourceReference` is the tus resource, and `ResumableUploadField#onUploadSuccess`
+takes the files of the field; `newQuery(id, ...)` signs the requests of the React and Svelte apps,
+whose files are found in the file manager by that id and the stored name. The demo's Resumable
+upload page sends large files in Wicket, React and Svelte, breaks off a chunk now and then when
+asked to, and lists the SHA-256 of each file the server received.
 
 The trees (`tree.ts`, built as `json-tree.js` for `JsonBasedTree` and `JsonBasedTreeGrid`) render
 their nodes from JSON with a template, as a WAI-ARIA tree or, given columns, a treegrid, loading

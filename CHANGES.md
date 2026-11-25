@@ -11,6 +11,27 @@ change when it moves to that release candidate from the one before: what was ren
 gone and what the browser now sends under other names, which fails at run time rather than at
 compile time. The pages of the demo and its deployment are left out.
 
+## 11.0.0-RC10 (not released yet)
+
+What 11.0.0-RC9 has, and:
+
+- Resumable uploads over tus, the open protocol (#181): large files sent in chunks, each paused,
+  resumed or canceled by the user, going on after a broken connection or a reload of the page
+  without sending again what the server holds. The server side is Wicket's, proposed for
+  wicket-extensions in apache/wicket#2010 (12.x) and #2011 (11.x), so this needs Wicket 11.1.0: the
+  application mounts a `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole
+  files go to, and `ResumableUploadField` is Wicket's `ResumableUploadToResourceField` with the
+  picker of the theme and a row of each file, its bar and its buttons, over the field's
+  `<input type="file">`. It hears of the files as any `FileUploadToResourceField`,
+  `onUploadSuccess(target, infos)`, and words the refusals of the resource in English, German,
+  Spanish and French. The core's `TusUpload` (one file) and `ResumableUploader` (the widget,
+  `resumable-upload.ts`, built into `antilia-upload.js`), and React's and Svelte's
+  `ResumableUploader`, work with any tus server, tusd among them: with Wicket's resource they send
+  its signed `query`, and tell the name it stored each file under (`item.storedName`).
+- The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
+- A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
+  design it had.
+
 ## 11.0.0-RC9 (2026-11-20)
 
 What 11.0.0-RC8 has, built with newer dependencies; an application changes nothing:

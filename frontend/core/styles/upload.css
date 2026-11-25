@@ -225,6 +225,109 @@
 	color: var(--antilia-theme-error, #b91c1c);
 }
 
+/* resumable uploads: the picker, the buttons pausing and resuming all, then a row of each file
+   with its name, its size, its buttons, its bar and what it says */
+.antilia-resumable-upload {
+	display: grid;
+	gap: 0.75em;
+	max-width: 100%;
+	color: var(--antilia-theme-text, #2b1d12);
+}
+
+.antilia-resumable-upload [hidden] {
+	display: none !important;
+}
+
+/* the files chosen go into the rows at once: the picker tells nothing of them */
+.antilia-resumable-upload .antilia-file-picker-summary,
+.antilia-resumable-upload .antilia-file-picker-clear,
+.antilia-resumable-upload .antilia-file-picker-files,
+.antilia-resumable-upload .antilia-file-picker-status {
+	display: none !important;
+}
+
+.antilia-resumable-upload-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5em;
+}
+
+.antilia-resumable-upload .antilia-resumable-upload-list {
+	display: grid;
+	gap: 0.5em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.antilia-resumable-upload .antilia-resumable-upload-item {
+	display: grid;
+	gap: 0.35em;
+	min-width: 0;
+	padding: 0.6em 0.75em;
+	border: 1px solid var(--antilia-theme-border, #c4c9d4);
+	border-radius: var(--antilia-look-radius-sm, 0.375rem);
+	background: var(--antilia-theme-surface, #ffffff);
+}
+
+.antilia-resumable-upload .antilia-resumable-upload-item.antilia-resumable-upload-item-paused {
+	border-style: dashed;
+}
+
+.antilia-resumable-upload .antilia-resumable-upload-item.antilia-resumable-upload-item-done {
+	border-color: var(--antilia-theme-success, #15803d);
+}
+
+.antilia-resumable-upload .antilia-resumable-upload-item.antilia-resumable-upload-item-failed {
+	border-color: var(--antilia-theme-error, #b91c1c);
+}
+
+.antilia-resumable-upload-head {
+	display: flex;
+	align-items: center;
+	gap: 0.25em 0.75em;
+	min-width: 0;
+}
+
+.antilia-resumable-upload-name {
+	flex: 1;
+	min-width: 0;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.antilia-resumable-upload-size {
+	flex: none;
+	font-size: 0.875em;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	opacity: 0.8;
+}
+
+.antilia-resumable-upload-actions {
+	display: inline-flex;
+	flex: none;
+	gap: 0.15em;
+}
+
+.antilia-resumable-upload-actions button {
+	color: inherit;
+}
+
+.antilia-resumable-upload-announcer {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
 /* an element whose request the guard stopped while an upload runs, for a moment */
 [data-antilia-upload-blocked] {
 	outline: 2px solid var(--antilia-theme-warning, #d97706);

@@ -38,6 +38,7 @@ import NotificationsDemo from './svelte/NotificationsDemo.svelte';
 import PaletteDemo from './svelte/PaletteDemo.svelte';
 import ProgressDemo from './svelte/ProgressDemo.svelte';
 import ResizableDemo from './svelte/ResizableDemo.svelte';
+import ResumableUploadDemo from './svelte/ResumableUploadDemo.svelte';
 import RichTextEditorDemo from './svelte/RichTextEditorDemo.svelte';
 import ScrollbarDemo from './svelte/ScrollbarDemo.svelte';
 import SplitPanelDemo from './svelte/SplitPanelDemo.svelte';
@@ -81,6 +82,7 @@ startApps('svelte', {
 	tree: app(TreeDemo),
 	treeGrid: app(TreeGridDemo),
 	progressBar: app(ProgressDemo),
+	resumableUpload: app(ResumableUploadDemo),
 	scrollbar: app(ScrollbarDemo),
 	modalDialog: app(ModalDemo),
 	notifications: app(NotificationsDemo)

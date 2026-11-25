@@ -314,11 +314,22 @@ public final class Throttle
 		return false;
 	}
 
-	private static boolean isUpload(HttpServletRequest request)
+	/**
+	 * @return whether a request sends files: a multipart {@code POST}, or a chunk of a resumable
+	 *         upload, by {@code PATCH} or by {@code POST} overriding its method
+	 */
+	static boolean isUpload(HttpServletRequest request)
 	{
 		String type = request.getContentType();
-		return "POST".equals(request.getMethod()) && type != null &&
-			type.toLowerCase(Locale.ROOT).startsWith("multipart/");
+		if (type == null)
+		{
+			return false;
+		}
+		String lower = type.toLowerCase(Locale.ROOT);
+		String method = request.getMethod();
+		return ("POST".equals(method) && lower.startsWith("multipart/")) ||
+			(("PATCH".equals(method) || "POST".equals(method)) &&
+				lower.startsWith("application/offset+octet-stream"));
 	}
 
 	/**

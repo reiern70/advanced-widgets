@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The words of the errors of the uploads of a ResumableUploadField, which Wicket's
+  ResumableUploadToResourceField looks for with the limits of the field and of its resource:
+  ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
+  them as well, by the keys the server tells.
+-->
+<properties>
+	<entry key="wicket.no.files.selected">Nada que subir: no se eligieron archivos.</entry>
+	<entry key="uploadSingleFileTooLarge">Un archivo pesa más de ${fileMaxSize}, lo máximo por archivo.</entry>
+	<entry key="uploadToResourceFailed">La subida falló.</entry>
+	<entry key="uploadConnectionLost">Se cortó la conexión con el servidor durante la subida.</entry>
+	<entry key="resumableUploadTooLarge">Mayor que ${fileMaxSize}, el máximo para un archivo.</entry>
+	<entry key="resumableUploadTooMany">Como mucho ${maxUploadsPerSession} subidas a la vez: termine o cancele una antes.</entry>
+	<entry key="resumableUploadTooMuch">Las subidas aún sin terminar pesarían más de ${maxBytesPerSession} juntas.</entry>
+	<entry key="resumableUploadNoRoom">El servidor no tiene sitio para el archivo ahora: inténtelo más tarde.</entry>
+	<entry key="resumableUploadLost">El servidor ya no tiene la subida: elija el archivo otra vez.</entry>
+</properties>

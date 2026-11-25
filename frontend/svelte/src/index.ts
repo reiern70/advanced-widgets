@@ -31,6 +31,7 @@ export { default as Notifications } from './Notifications.svelte';
 export { default as Palette } from './Palette.svelte';
 export { default as ProgressBar } from './ProgressBar.svelte';
 export { default as Resizable } from './Resizable.svelte';
+export { default as ResumableUploader } from './ResumableUploader.svelte';
 export { default as RichTextEditor } from './RichTextEditor.svelte';
 export { default as Scrollable } from './Scrollable.svelte';
 export { default as PopoverButton } from './PopoverButton.svelte';
@@ -52,7 +53,8 @@ export { BOOTSTRAP_LOOK, breadcrumb, BREADCRUMB_SEPARATORS, buttonClasses, CK_ED
 	DEFAULT_RICH_TEXT_COLORS,
 	DEFAULT_RICH_TEXT_TOOLBAR,
 	isSafeUrl, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RICH_TEXT_TOOLS,
-	richTextEditor, scrollbar, splitPanel, tabs } from '@antilia/core';
+	richTextEditor, scrollbar, splitPanel, tabs, DEFAULT_RESUMABLE_UPLOADER_TEXTS, probe,
+	resumableUploader, terminate, TusError, TusStorage, TusUpload } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, BreadcrumbOptions, BreadcrumbSeparator,
 	BreadcrumbTexts, ButtonSize, ButtonVariant,
 	CKEditorBuild, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
@@ -64,7 +66,8 @@ export type { AutocompleteSuggestion, AutocompleteValue, BreadcrumbOptions, Brea
 	InfiniteListData, Look, LookPart, MarkdownPreviewOptions, MenuDesign, MenuOptions, MenuOrientation, ModalOptions, ModalSize, NotificationCloseReason, NotificationHandle,
 	NotificationOptions, NotificationPosition, NotificationType, PaletteChoice, PaletteOptions,
 	PaletteTexts, PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide, PopoverVariant,
-	ResizableOptions, ResizableSize, ResizeAxis, HeadingLevel, RichTextBackgroundColor, RichTextColor,
+	ResizableOptions, ResizableSize, ResizeAxis, ResumableItem, ResumableItemState,
+	ResumableUploaderOptions, ResumableUploaderTexts, TusState, TusUploadOptions, HeadingLevel, RichTextBackgroundColor, RichTextColor,
 	RichTextEditorKit,
 	RichTextEditorOptions,
 	RichTextEditorSelection, RichTextEditorState, RichTextEditorStateChange, RichTextEditorTexts,
