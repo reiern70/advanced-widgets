@@ -54,7 +54,7 @@ export { BOOTSTRAP_LOOK, breadcrumb, BREADCRUMB_SEPARATORS, buttonClasses, CK_ED
 	DEFAULT_RICH_TEXT_TOOLBAR,
 	isSafeUrl, RICH_TEXT_EDITOR_EVENTS, RICH_TEXT_EDITOR_KIT, RICH_TEXT_FEATURES, RICH_TEXT_TOOLS,
 	richTextEditor, scrollbar, splitPanel, tabs, DEFAULT_RESUMABLE_UPLOADER_TEXTS, probe,
-	resumableUploader, terminate, TusError, TusStorage, TusUpload } from '@antilia/core';
+	reachable, resumableUploader, terminate, TusError, TusStorage, TusUpload } from '@antilia/core';
 export type { AutocompleteSuggestion, AutocompleteValue, BreadcrumbOptions, BreadcrumbSeparator,
 	BreadcrumbTexts, ButtonSize, ButtonVariant,
 	CKEditorBuild, CKEditorInstance, CKEditorOptions, CKEditorPlugin, CKEditorTexts,
@@ -67,7 +67,7 @@ export type { AutocompleteSuggestion, AutocompleteValue, BreadcrumbOptions, Brea
 	NotificationOptions, NotificationPosition, NotificationType, PaletteChoice, PaletteOptions,
 	PaletteTexts, PopoverDesign, PopoverOptions, PopoverPlacement, PopoverSide, PopoverVariant,
 	ResizableOptions, ResizableSize, ResizeAxis, ResumableItem, ResumableItemState,
-	ResumableUploaderOptions, ResumableUploaderTexts, TusState, TusUploadOptions, HeadingLevel, RichTextBackgroundColor, RichTextColor,
+	ResumableQuestion, ResumableUploaderOptions, ResumableUploaderTexts, TusState, TusUploadOptions, HeadingLevel, RichTextBackgroundColor, RichTextColor,
 	RichTextEditorKit,
 	RichTextEditorOptions,
 	RichTextEditorSelection, RichTextEditorState, RichTextEditorStateChange, RichTextEditorTexts,

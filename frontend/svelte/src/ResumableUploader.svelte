@@ -22,15 +22,15 @@
 -->
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ResumableUploader, type ResumableItem, type ResumableUploaderOptions,
-		type TusError } from '@antilia/core';
+	import { ResumableUploader, type ResumableItem, type ResumableQuestion,
+		type ResumableUploaderOptions, type TusError } from '@antilia/core';
 
 	import { getLook } from './look.js';
 
 	const look = getLook();
 
 	type Props = Omit<ResumableUploaderOptions, 'look' | 'onComplete' | 'onError' | 'onChange' |
-		'metadata'> & {
+		'onQuestion' | 'metadata'> & {
 		/** What the server is told of a file besides its name and type. */
 		metadata?: (file: File) => Record<string, string>;
 		/** Called once the server holds the whole of a file: its address tells the server which. */
@@ -39,13 +39,18 @@
 		onerror?: (item: ResumableItem, error: TusError) => void;
 		/** Called when a file is added, taken out or changes state, with all files. */
 		onchange?: (items: ResumableItem[]) => void;
+		/**
+		 * Asks the user whether to go on with uploads, in a dialog of the page's own: returns true
+		 * when it did, and answers by resume() or cancel(); else the uploader asks above its list.
+		 */
+		onquestion?: (question: ResumableQuestion) => boolean | void;
 		id?: string;
 		/** CSS classes of the element the uploader draws into. */
 		class?: string;
 	};
 
-	let { id, class: className, metadata, oncomplete, onerror, onchange, ...settings }: Props =
-		$props();
+	let { id, class: className, metadata, oncomplete, onerror, onchange, onquestion,
+		...settings }: Props = $props();
 
 	let element = $state<HTMLDivElement>();
 	let instance: ResumableUploader | null = null;
@@ -54,7 +59,8 @@
 		metadata: metadata && ((file: File) => metadata?.(file) ?? {}),
 		onComplete: (item) => oncomplete?.(item),
 		onError: (item, error) => onerror?.(item, error),
-		onChange: (items) => onchange?.(items) });
+		onChange: (items) => onchange?.(items),
+		onQuestion: (question) => onquestion?.(question) });
 
 	// a value: the uploader is made again only when the endpoint changes, not with other props
 	const endpoint = $derived(settings.endpoint);

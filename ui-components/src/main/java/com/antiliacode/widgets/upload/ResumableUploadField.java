@@ -57,9 +57,18 @@ import com.github.openjson.JSONObject;
  * });
  * </pre>
  *
- * The browser keeps the address of each upload not finished in its {@code localStorage}: after a
- * reload, the page shows them, how far each got, and the same file chosen again goes on where it
- * stopped; {@link #setRemembering(boolean)} turns that off. A field rendered again via Ajax stops
+ * After a broken connection a file goes on by itself; once the connection is lost for longer, a VPN
+ * that went down for example, the field waits for the server to answer again and then asks above
+ * its rows whether to resume the files or cancel them, unless it is not
+ * {@link #setAskingToResume(boolean) asking}.
+ * <p>
+ * The browser keeps the address of each upload not finished in its {@code localStorage}, with the
+ * place of the field: after a reload, the field in the same place shows them, how far each got,
+ * and asks whether to go on with them, which they do once their files are chosen again;
+ * {@link #setRemembering(boolean)} turns that off. With the uploads belonging to the user rather
+ * than the session, see {@link ResumableUploadResourceReference#getCurrentOwner()}, that holds after
+ * the session expired too. {@link #getClientSideResumeQuestionCallBack()} lets the page ask in a
+ * dialog of its own. A field rendered again via Ajax stops
  * the files it was sending: render it once, and update the components around it. The guard of the
  * uploads asks before the page is left while files are being sent, unless
  * {@link #setKeepingOnPage(boolean)} says otherwise.
@@ -78,9 +87,10 @@ public abstract class ResumableUploadField extends ResumableUploadToResourceFiel
 
 	/** The texts of the uploader, under {@code ResumableUploader.} in the Initializer's bundles. */
 	static final String[] TEXTS = { "list", "ready", "queued", "starting", "sent", "rate",
-			"remaining", "paused", "retrying", "offline", "interrupted", "done", "failed", "lost",
-			"serverError", "canceled", "tooLarge", "start", "pause", "resume", "cancel", "remove",
-			"pauseAll", "resumeAll", "clearFinished" };
+			"remaining", "paused", "retrying", "offline", "interrupted", "disconnected", "done",
+			"failed", "lost", "serverError", "canceled", "tooLarge", "start", "pause", "resume",
+			"cancel", "remove", "pauseAll", "resumeAll", "clearFinished", "reconnected", "recalled",
+			"resumeUploads", "cancelUploads", "continueUploads", "discardUploads", "continueFile" };
 
 	/** The texts of the picker, under {@code FilePicker.}. */
 	static final String[] PICKER_TEXTS = { "choose", "chooseMany", "drop", "dropMany", "browse",
@@ -261,7 +271,8 @@ public abstract class ResumableUploadField extends ResumableUploadToResourceFiel
 		// the uploader of the theme rather than the script of Wicket's field
 		response.render(OnDomReadyHeaderItem.forScript("Wicket.Upload.resumable(" +
 			ScriptJson.quote(getMarkupId()) + ", " + ScriptJson.of(newClientSettings()) + ", " +
-			callbackAttributes.renderAttributes() + ");"));
+			callbackAttributes.renderAttributes() + ", " + getClientSideResumeQuestionCallBack() +
+			");"));
 	}
 
 	/**

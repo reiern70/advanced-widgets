@@ -112,6 +112,19 @@ class ResumableUploadFieldTest extends WicketTestCase
 		assertEquals("button", settings.getString("design"));
 		assertEquals("Pause {0}", settings.getJSONObject("texts").getString("pause"));
 		assertEquals(ResumableUploadField.TEXTS.length, settings.getJSONObject("texts").length());
+		assertEquals("The connection is back. Resume the uploads?",
+			settings.getJSONObject("texts").getString("reconnected"));
+		assertTrue(settings.getBoolean("askingToResume"));
+		assertEquals("[0,1000,3000,5000,10000,20000,1000]",
+			settings.getJSONArray("retryDelays").toString(), "40 seconds of tries again");
+		assertEquals("[5000,10000,20000,30000]", settings.getJSONArray("probeDelays").toString());
+		assertEquals(30000, settings.getLong("stallMillis"));
+		assertTrue(settings.getBoolean("recalling"));
+		assertEquals(20000, settings.getLong("inUseMillis"));
+		assertTrue(settings.getString("rememberedAs").endsWith(":" + field.getPageRelativePath()),
+			"the place of the field, the same on every page");
+		assertTrue(page.contains(", function (question) { return false; });"),
+			"the question callback of Wicket's field, last");
 		assertEquals("Choose a file…", settings.getJSONObject("pickerTexts").getString("choose"));
 		assertEquals("Larger than 100 bytes, the most for a file.",
 			settings.getJSONObject("errorTexts").getString("resumableUploadTooLarge"));
@@ -125,11 +138,13 @@ class ResumableUploadFieldTest extends WicketTestCase
 		tester.getSession().setLocale(Locale.GERMAN);
 		TestField field = new TestField("files");
 		tester.startPage(new TestPage(field));
-		JSONObject errors = settings(tester.getLastResponseAsString(), field.getMarkupId())
-			.getJSONObject("errorTexts");
+		JSONObject settings = settings(tester.getLastResponseAsString(), field.getMarkupId());
+		JSONObject errors = settings.getJSONObject("errorTexts");
 		assertEquals("Höchstens 10 Uploads zugleich: beenden oder brechen Sie zuerst einen ab.",
 			errors.getString("resumableUploadTooMany"));
 		assertEquals(ResumableUploadField.ERROR_KEYS.length, errors.length());
+		assertEquals("Die Verbindung ist wieder da. Die Uploads fortsetzen?",
+			settings.getJSONObject("texts").getString("reconnected"));
 	}
 
 	@Test

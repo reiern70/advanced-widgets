@@ -350,6 +350,14 @@ const PARTS = {
 	'resumable-upload-stop': ['base', 'antilia-resumable-upload-stop', '', ''],
 	'resumable-upload-announcer': ['base', 'antilia-resumable-upload-announcer', 'visually-hidden',
 		'sr-only'],
+	// the question whether to go on with uploads, above the list
+	'resumable-upload-question': ['base', 'antilia-resumable-upload-question',
+		'alert alert-warning', 'alert alert-warning'],
+	'resumable-upload-question-text': ['base', 'antilia-resumable-upload-question-text', '', ''],
+	'resumable-upload-question-actions': ['base', 'antilia-resumable-upload-question-actions', '',
+		''],
+	'resumable-upload-question-resume': ['base', 'antilia-resumable-upload-question-resume', '', ''],
+	'resumable-upload-question-cancel': ['base', 'antilia-resumable-upload-question-cancel', '', ''],
 
 	// collapsible panels
 	'collapsible-frame': ['base', 'antilia-collapsible-frame', 'card',

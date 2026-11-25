@@ -192,6 +192,14 @@
 	<entry key="ResumableUploader.pauseAll">Alle anhalten</entry>
 	<entry key="ResumableUploader.resumeAll">Alle fortsetzen</entry>
 	<entry key="ResumableUploader.clearFinished">Beendete entfernen</entry>
+	<entry key="ResumableUploader.disconnected">Verbindung verloren bei {0} von {1}: wartet auf sie</entry>
+	<entry key="ResumableUploader.reconnected">Die Verbindung ist wieder da. Die Uploads fortsetzen?</entry>
+	<entry key="ResumableUploader.recalled">Früher begonnene Uploads sind nicht fertig geworden. Fortsetzen? Wählen Sie ihre Dateien erneut.</entry>
+	<entry key="ResumableUploader.resumeUploads">Fortsetzen</entry>
+	<entry key="ResumableUploader.cancelUploads">Abbrechen</entry>
+	<entry key="ResumableUploader.continueUploads">Weiter</entry>
+	<entry key="ResumableUploader.discardUploads">Verwerfen</entry>
+	<entry key="ResumableUploader.continueFile">{0} fortsetzen: erneut wählen</entry>
 	<entry key="Resizable.handle">Ziehen oder die Pfeiltasten benutzen, um die Größe anzupassen</entry>
 	<entry key="CodeEditor.resize">Ziehen oder die Pfeiltasten benutzen, um die Größe des Editors anzupassen</entry>
 	<entry key="CodeEditor.find">Suchen</entry>

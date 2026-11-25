@@ -246,6 +246,32 @@
 	display: none !important;
 }
 
+/* whether to go on with uploads: the connection is back, or an earlier visit left some */
+.antilia-resumable-upload .antilia-resumable-upload-question {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5em 1em;
+	margin: 0;
+	padding: 0.6em 0.75em;
+	border: 1px solid var(--antilia-theme-warning, #b45309);
+	border-left-width: 4px;
+	border-radius: var(--antilia-look-radius-sm, 0.375rem);
+	background: var(--antilia-theme-surface-alt, #fdf6ec);
+}
+
+.antilia-resumable-upload-question-text {
+	flex: 1 1 16em;
+	font-weight: 600;
+}
+
+.antilia-resumable-upload-question-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+}
+
 .antilia-resumable-upload-toolbar {
 	display: flex;
 	flex-wrap: wrap;

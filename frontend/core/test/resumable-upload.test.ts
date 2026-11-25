@@ -14,9 +14,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BOOTSTRAP_LOOK, encodeMetadata, fingerprintOf, probe, ResumableUploader,
-	resumableUploader, terminate, TusError, TusStorage, TusUpload, UploadGuard, withQuery,
-	type ResumableItem, type TusState } from '../src/index.js';
+import { BOOTSTRAP_LOOK, DEFAULT_RETRY_DELAYS, encodeMetadata, fingerprintOf, probe,
+	ResumableUploader, resumableUploader, retryDelaysFor, terminate, TusError, TusStorage, TusUpload,
+	UploadGuard, withQuery,
+	type ResumableItem, type ResumableQuestion, type TusState } from '../src/index.js';
 
 /** A request the fake server got. */
 interface Received {
@@ -454,6 +455,58 @@ describe('the tus client', () => {
 		expect(other.error!.message).toContain('Upload-Offset');
 	});
 
+	it('takes the connection for lost once the tries get no answer, and goes on when started again',
+		async () => {
+			server.plan('PATCH', (request) => request.xhr.fail());
+			const errors = vi.fn();
+			const upload = new TusUpload(file(8), { endpoint: ENDPOINT, retryDelays: [],
+				onError: errors });
+			upload.start();
+			await settle();
+			expect(upload.state).toBe('lost');
+			expect(errors).not.toHaveBeenCalled();
+			upload.start();
+			await settle();
+			expect(upload.state).toBe('done');
+		});
+
+	it('tries again for as long as told, waiting longer each time', async () => {
+		expect(DEFAULT_RETRY_DELAYS).toEqual([0, 1000, 3000, 5000, 10000, 20000, 1000]);
+		expect(retryDelaysFor(5000)).toEqual([0, 1000, 3000, 1000]);
+		expect(retryDelaysFor(100000)).toEqual([0, 1000, 3000, 5000, 10000, 20000, 30000, 30000,
+			1000]);
+		expect(retryDelaysFor(0)).toEqual([]);
+
+		vi.useFakeTimers();
+		server.plan('PATCH', (request) => request.xhr.fail());
+		server.plan('HEAD', (request) => request.xhr.fail());
+		server.plan('HEAD', (request) => request.xhr.fail());
+		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, retryTimeout: 1000 });
+		upload.start();
+		await settle();
+		expect([upload.state, upload.retryDelay]).toEqual(['retrying', 0]);
+		await vi.advanceTimersByTimeAsync(0);
+		await settle();
+		expect([upload.state, upload.retryDelay]).toEqual(['retrying', 1000]);
+		await vi.advanceTimersByTimeAsync(1000);
+		await settle();
+		expect(upload.state).toBe('lost');
+	});
+
+	it('takes the connection for lost once offline for longer than the tries take', async () => {
+		vi.useFakeTimers();
+		vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+		server.plan('PATCH', (request) => request.xhr.fail());
+		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, retryDelays: [500, 500] });
+		upload.start();
+		await settle();
+		expect(upload.state).toBe('offline');
+		await vi.advanceTimersByTimeAsync(999);
+		expect(upload.state).toBe('offline');
+		await vi.advanceTimersByTimeAsync(1);
+		expect(upload.state).toBe('lost');
+	});
+
 	it('waits while offline and goes on once online again', async () => {
 		const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
 		server.plan('PATCH', (request) => request.xhr.fail());
@@ -515,15 +568,35 @@ describe('the tus client', () => {
 		expect(server.of('HEAD')).toHaveLength(2);
 	});
 
-	it('takes a chunk handed whole to the network for sent, however long the server takes', async () => {
+	it('takes a chunk handed whole to the network for sent, as long as the server answers', async () => {
 		vi.useFakeTimers();
 		server.holding = true;
-		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, stallMillis: 1000 });
+		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, stallMillis: 1000,
+			retryDelays: [0] });
 		upload.start();
 		await settle();
 		server.held[0].xhr.progress(8);
 		await vi.advanceTimersByTimeAsync(5000);
 		expect(upload.state).toBe('uploading');
+		expect(server.of('HEAD').length).toBeGreaterThanOrEqual(4);
+
+		// the server no longer answers: the chunk is lost
+		server.plan('HEAD', (request) => request.xhr.fail());
+		await vi.advanceTimersByTimeAsync(1000);
+		await settle();
+		expect(upload.state).toBe('retrying');
+		expect(upload.error!.message).toBe('The upload stalled');
+	});
+
+	it('takes a request without an answer for lost', async () => {
+		vi.useFakeTimers();
+		server.plan('POST', () => undefined);
+		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, stallMillis: 1000,
+			retryDelays: [] });
+		upload.start();
+		await vi.advanceTimersByTimeAsync(1000);
+		await settle();
+		expect(upload.state).toBe('lost');
 	});
 
 	it('sends PATCH as POST when proxies refuse it', async () => {
@@ -781,10 +854,103 @@ describe('the resumable uploader', () => {
 		expect(uploader.items[0].state).toBe('done');
 
 		server.plan('PATCH', (request) => request.xhr.fail());
-		const other = new ResumableUploader(host(), { endpoint: ENDPOINT, retryDelays: [] });
+		const other = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+			retryDelays: [] });
 		other.add([file(8, 'b')]);
 		await settle();
-		expect(other.items[0].error).toBe('The connection to the server broke off');
+		expect(other.items[0].state).toBe('lost');
+		expect(other.items[0].error).toBeNull();
+		expect(rowOf(other, 0).querySelector('.antilia-upload-status')!.textContent)
+			.toBe('Connection lost at 0 byte of 8 byte: waiting for it');
+	});
+
+	it('asks whether to resume once the server answers again after the connection was lost',
+		async () => {
+			vi.useFakeTimers();
+			server.plan('PATCH', (request) => {
+				server.uploads.get('u1')!.offset = 3;
+				request.xhr.fail();
+			});
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+				retryDelays: [], probeDelays: [1000] });
+			uploader.add([file(8, 'a'), file(8, 'b')]);
+			await settle();
+			expect(uploader.items.map((item) => item.state)).toEqual(['lost', 'lost']);
+			expect(uploader.questionElement.hidden).toBe(true);
+			const requests = server.received.length;
+
+			// the first look gets no answer, the second one does
+			server.plan('HEAD', (request) => request.xhr.fail());
+			await vi.advanceTimersByTimeAsync(1000);
+			await settle();
+			expect(server.received.length).toBe(requests + 1);
+			expect(uploader.questionElement.hidden).toBe(true);
+			await vi.advanceTimersByTimeAsync(1000);
+			await settle();
+			expect(server.of('HEAD').at(-1)!.url).toBe(ENDPOINT + '/u1');
+			expect(uploader.questionElement.hidden).toBe(false);
+			expect(uploader.questionElement.textContent)
+				.toContain('The connection is back. Resume the uploads?');
+			await vi.advanceTimersByTimeAsync(5000);
+			expect(server.received.length, 'nothing sent before the answer').toBe(requests + 2);
+
+			uploader.questionElement.querySelector<HTMLButtonElement>(
+				'.antilia-resumable-upload-question-resume')!.click();
+			await settle();
+			expect(uploader.items.map((item) => item.state)).toEqual(['done', 'done']);
+			expect(server.of('PATCH')[1].headers['upload-offset']).toBe('3');
+			expect(uploader.questionElement.hidden).toBe(true);
+		});
+
+	it('cancels the uploads instead when the user says so, or goes on by itself when not asking',
+		async () => {
+			vi.useFakeTimers();
+			server.plan('PATCH', (request) => request.xhr.fail());
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT,
+				retryDelays: [], probeDelays: [10] });
+			uploader.add([file(8, 'a')]);
+			await settle();
+			await vi.advanceTimersByTimeAsync(10);
+			await settle();
+			uploader.questionElement.querySelector<HTMLButtonElement>(
+				'.antilia-resumable-upload-question-cancel')!.click();
+			await settle();
+			expect(uploader.items[0].state).toBe('canceled');
+			expect(server.of('DELETE')).toHaveLength(1);
+
+			server.plan('PATCH', (request) => request.xhr.fail());
+			const other = new ResumableUploader(host(), { endpoint: ENDPOINT,
+				retryDelays: [], probeDelays: [10], askingToResume: false });
+			other.add([file(8, 'b')]);
+			await settle();
+			expect(other.items[0].state).toBe('lost');
+			await vi.advanceTimersByTimeAsync(10);
+			await settle();
+			expect(other.items[0].state).toBe('done');
+			expect(other.questionElement.hidden).toBe(true);
+		});
+
+	it('lets the page ask instead of the uploader', async () => {
+		vi.useFakeTimers();
+		server.plan('PATCH', (request) => request.xhr.fail());
+		const questions: ResumableQuestion[] = [];
+		const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, retryDelays: [],
+			probeDelays: [10], onQuestion: (question) => {
+				questions.push(question);
+				return true;
+			} });
+		uploader.add([file(8, 'a')]);
+		await settle();
+		await vi.advanceTimersByTimeAsync(10);
+		await settle();
+		expect(questions).toHaveLength(1);
+		expect(questions[0].reason).toBe('reconnected');
+		expect(questions[0].items.map((item: ResumableItem) => [item.name, item.state]))
+			.toEqual([['a', 'lost']]);
+		expect(uploader.questionElement.hidden).toBe(true);
+		questions[0].resume();
+		await settle();
+		expect(uploader.items[0].state).toBe('done');
 	});
 
 	it('cancels a file, deleting it on the server, and takes it out of the list', async () => {
@@ -842,7 +1008,15 @@ describe('the resumable uploader', () => {
 		expect(row.querySelector('.antilia-upload-status')!.textContent)
 			.toBe('Stopped at 4 byte of 10 byte: choose the file again to go on');
 		expect(buttonsOf(row).map((button) => button.getAttribute('aria-label')))
-			.toEqual(['Cancel film.mp4']);
+			.toEqual(['Continue film.mp4: choose it again', 'Cancel film.mp4']);
+		expect(uploader.questionElement.hidden).toBe(false);
+		expect(uploader.questionElement.textContent).toContain(
+			'Uploads you started earlier did not end. Continue them? Choose their files again.');
+		const opened = vi.spyOn(uploader.input, 'click').mockImplementation(() => undefined);
+		uploader.questionElement.querySelector<HTMLButtonElement>(
+			'.antilia-resumable-upload-question-resume')!.click();
+		buttonsOf(row)[0].click();
+		expect(opened).toHaveBeenCalledTimes(2);
 
 		uploader.add([file(10, 'film.mp4')]);
 		await settle();
@@ -851,6 +1025,53 @@ describe('the resumable uploader', () => {
 		expect(server.of('POST')).toHaveLength(0);
 		expect(server.of('PATCH')[0].headers['upload-offset']).toBe('4');
 	});
+
+	it('offers only the uploads of its place an earlier page left, not those another page sends',
+		async () => {
+			['mine', 'elsewhere', 'sending'].forEach((name) =>
+				server.uploads.set(name, { length: 10, offset: 4, metadata: '' }));
+			const keep = (name: string, rememberedAs: string, alive = 0) => TusStorage.save({
+				fingerprint: name, url: ENDPOINT + '/' + name, endpoint: ENDPOINT, name,
+				size: 10, type: '', lastModified: 1, stored: 1, rememberedAs, alive });
+			keep('mine', 'Page:field');
+			keep('elsewhere', 'Other:field');
+			keep('sending', 'Page:field', Date.now());
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT,
+				rememberedAs: 'Page:field' });
+			await settle();
+			expect(uploader.items.map((item) => item.name)).toEqual(['mine']);
+
+			uploader.questionElement.querySelector<HTMLButtonElement>(
+				'.antilia-resumable-upload-question-cancel')!.click();
+			await settle();
+			expect(uploader.items).toHaveLength(0);
+			expect(server.uploads.has('mine')).toBe(false);
+			expect(TusStorage.find('mine')).toBeNull();
+			expect(uploader.questionElement.hidden).toBe(true);
+		});
+
+	it('lists nothing of an earlier visit when not recalling, and takes another window of use',
+		async () => {
+			server.uploads.set('kept', { length: 10, offset: 4, metadata: '' });
+			TusStorage.save({ fingerprint: 'f', url: ENDPOINT + '/kept', endpoint: ENDPOINT,
+				name: 'film.mp4', size: 10, type: '', lastModified: 1, stored: 1,
+				alive: Date.now() - 30000 });
+			const quiet = new ResumableUploader(host(), { endpoint: ENDPOINT, recalling: false });
+			await settle();
+			expect(quiet.items).toHaveLength(0);
+			expect(server.of('HEAD')).toHaveLength(0);
+			quiet.destroy();
+
+			const patient = new ResumableUploader(host(), { endpoint: ENDPOINT, inUseMillis: 60000 });
+			await settle();
+			expect(patient.items, 'in use by another page for a minute').toHaveLength(0);
+			patient.destroy();
+
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT });
+			await settle();
+			expect(uploader.items.map((item) => item.state), 'no longer in use after 20 seconds')
+				.toEqual(['interrupted']);
+		});
 
 	it('cancels an upload an earlier visit left', async () => {
 		server.uploads.set('kept', { length: 10, offset: 4, metadata: '' });
@@ -975,6 +1196,57 @@ describe('Wicket.Upload.resumable', () => {
 		await settle();
 		expect(heard[1].ep).toEqual([{ name: 'error', value: 'true' },
 			{ name: 'errorMessage', value: 'upload.canceled' }]);
+	});
+
+	it('lets the page ask whether to go on, with the place of the field', async () => {
+		vi.useFakeTimers();
+		const upload = await glue([]);
+		document.body.innerHTML = '<input type="file" id="field"/>';
+		const asked: Array<{ reason: string; files: unknown[]; resume(): void }> = [];
+		const resumable = upload.resumable as (id: string, settings: object, attributes: object,
+			ask: (question: { reason: string; files: unknown[]; resume(): void }) => boolean) =>
+			ResumableUploader;
+		const uploader = resumable('field', { ...SETTINGS, rememberedAs: 'Page:field',
+			retryDelays: [], probeDelays: [10] }, {}, (question) => {
+			asked.push(question);
+			return true;
+		});
+		server.plan('PATCH', (request) => request.xhr.fail());
+		uploader.add([file(8)]);
+		await settle();
+		expect(TusStorage.list(ENDPOINT)[0].rememberedAs).toBe('Page:field');
+		await vi.advanceTimersByTimeAsync(10);
+		await settle();
+		expect(asked.map((question) => [question.reason, question.files])).toEqual([
+			['reconnected', [{ name: 'film.mp4', size: 8, sent: 0 }]]]);
+		expect(uploader.questionElement.hidden).toBe(true);
+		asked[0].resume();
+		await settle();
+		expect(uploader.items[0].state).toBe('done');
+	});
+
+	it('lets the field start, cancel, pause and resume its files from the server', async () => {
+		const heard: unknown[] = [];
+		const upload = await glue(heard);
+		document.body.innerHTML = '<input type="file" id="field"/>';
+		const uploader = upload.resumable('field', { ...SETTINGS, autoStart: false })!;
+		const timer = (window.Wicket!.Timer as Record<string, Record<string, () => void>>).field;
+		uploader.add([file(8, 'a'), file(8, 'b')]);
+		expect(uploader.items.map((item) => item.state)).toEqual(['ready', 'ready']);
+		server.holding = true;
+		timer.upload();
+		await settle();
+		expect(uploader.items.map((item) => item.state)).toEqual(['uploading', 'uploading']);
+		timer.pause();
+		await settle();
+		expect(uploader.items.map((item) => item.state)).toEqual(['paused', 'paused']);
+		timer.resume();
+		await settle();
+		expect(uploader.items.map((item) => item.state)).toEqual(['uploading', 'uploading']);
+		timer.cancel();
+		await settle();
+		expect(uploader.items.map((item) => item.state)).toEqual(['canceled', 'canceled']);
+		expect(server.of('DELETE')).toHaveLength(2);
 	});
 
 	it('takes the input of a new rendering of the field in place of the old one', async () => {

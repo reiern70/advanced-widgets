@@ -430,6 +430,14 @@ interface ResumableFieldSettings extends Omit<ResumableUploaderOptions, 'endpoin
 	remembering?: boolean;
 }
 
+/** A question of the uploader, as Wicket's ResumableUploadToResourceField asks it of the page. */
+interface WicketQuestion {
+	reason: 'reconnected' | 'recalled';
+	files: Array<{ name: string; size: number; sent: number }>;
+	resume(): void;
+	cancel(): void;
+}
+
 /** The error a canceled upload is told with, as Wicket's field knows it. */
 const UPLOAD_CANCELED = 'upload.canceled';
 
@@ -475,10 +483,14 @@ function errorKeyOf(error: TusError): string {
  * @param settings those of Wicket's field and the options of the uploader, as the server renders
  *        them
  * @param attributes those of the requests telling the field's callback, as the server renders them
+ * @param askUser the field's getClientSideResumeQuestionCallBack(): asks the user whether to go on
+ *        with uploads, given the reason, the files, each with its name, size and the bytes sent,
+ *        resume() and cancel(); returns true when it did, else the uploader asks
  * @returns the uploader, null when there is no such input
  */
 function resumable(id: string, settings: ResumableFieldSettings,
-	attributes?: RenderedAttributes): ResumableUploader | null {
+	attributes?: RenderedAttributes, askUser?: (question: WicketQuestion) => unknown):
+	ResumableUploader | null {
 	const input = document.getElementById(id);
 	if (!(input instanceof HTMLInputElement)) {
 		return null;
@@ -495,7 +507,7 @@ function resumable(id: string, settings: ResumableFieldSettings,
 	}
 	const tell = (parameters: Record<string, unknown>) => roundTrip({ ...attributes,
 		u: settings.ajaxCallBackUrl, m: 'POST' }, asParameters(parameters));
-	return ResumableUploader.attach(host, { ...settings, endpoint: settings.resourceUrl,
+	const uploader = ResumableUploader.attach(host, { ...settings, endpoint: settings.resourceUrl,
 		query: queryOf(settings), parallel: settings.parallelUploads ?? settings.parallel,
 		remember: settings.remembering ?? settings.remember, input,
 		onComplete: (item) => tell(item.storedName ? {
@@ -504,7 +516,24 @@ function resumable(id: string, settings: ResumableFieldSettings,
 				contentType: item.file?.type || 'application/octet-stream' }])
 		} : { error: true, errorMessage: UPLOAD_LOST }),
 		onError: (_item, error) => tell({ error: true, errorMessage: errorKeyOf(error) }),
-		onCancel: () => tell({ error: true, errorMessage: UPLOAD_CANCELED }) });
+		onCancel: () => tell({ error: true, errorMessage: UPLOAD_CANCELED }),
+		onQuestion: (question) => typeof askUser === 'function' && askUser({
+			reason: question.reason,
+			files: question.items.map((item) => ({ name: item.name, size: item.size, sent: item.sent })),
+			resume: () => question.resume(),
+			cancel: () => question.cancel()
+		}) === true });
+	if (uploader) {
+		// what the field's startUpload(), cancelUpload(), pauseUpload() and resumeUpload() call
+		const timers = (wicket().Timer ??= {}) as Record<string, unknown>;
+		timers[id] = {
+			upload: () => uploader.resumeAll(),
+			cancel: () => void uploader.cancelAll(),
+			pause: () => uploader.pauseAll(),
+			resume: () => uploader.resumeAll()
+		};
+	}
+	return uploader;
 }
 
 const Wicket = wicket();

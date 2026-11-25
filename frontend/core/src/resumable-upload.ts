@@ -46,12 +46,50 @@ export const TUS_RESUMABLE = '1.0.0';
 /** The bytes sent by a request when the options give no chunk size: 8 MiB. */
 export const DEFAULT_CHUNK_SIZE = 8 * 1024 * 1024;
 
-/** How long to wait before each try after a failure, in milliseconds. */
-export const DEFAULT_RETRY_DELAYS: readonly number[] = Object.freeze([0, 1000, 3000, 5000, 10000,
-	20000]);
+/** How long an upload tries again by itself by default, in milliseconds, see retryTimeout. */
+export const DEFAULT_RETRY_TIMEOUT = 40000;
 
-/** How long a request sending a chunk may go without progress before it is taken for lost. */
+/** The waits before the tries again, in milliseconds, the last one again and again. */
+const RETRY_STEPS: readonly number[] = [0, 1000, 3000, 5000, 10000, 20000, 30000];
+
+/**
+ * @param timeout how long to try again, in milliseconds
+ * @returns the waits before the tries again, at once, then after 1, 3, 5, 10, 20 and then 30
+ * seconds, which together take the timeout; none for 0, as Wicket's
+ * ResumableUploadToResourceField#setRetryTimeout() makes them
+ */
+export function retryDelaysFor(timeout: number): number[] {
+	const delays: number[] = [];
+	let left = Math.max(0, timeout);
+	for (let step = 0; left > 0; step++) {
+		const delay = Math.min(RETRY_STEPS[Math.min(step, RETRY_STEPS.length - 1)], left);
+		delays.push(delay);
+		left -= delay;
+	}
+	return delays;
+}
+
+/** How long to wait before each try after a failure, in milliseconds: 40 seconds together. */
+export const DEFAULT_RETRY_DELAYS: readonly number[] = Object.freeze(
+	retryDelaysFor(DEFAULT_RETRY_TIMEOUT));
+
+/**
+ * How long a request may go without progress, or without an answer, before it is taken for lost;
+ * once all of a chunk left the browser, as long as the server answers a HEAD meanwhile, it waits on.
+ */
 export const DEFAULT_STALL_MILLIS = 30000;
+
+/**
+ * How long to wait before each look whether the server answers again, once the connection is lost,
+ * the last one again and again.
+ */
+export const DEFAULT_PROBE_DELAYS: readonly number[] = Object.freeze([5000, 10000, 20000, 30000]);
+
+/**
+ * How long after it last sent something an upload counts as in use by another page, which leaves
+ * it alone, by default; a page sending it tells so four times as often.
+ */
+export const DEFAULT_IN_USE_MILLIS = 20000;
 
 /** The content type of the chunks, as tus wants it. */
 const CHUNK_TYPE = 'application/offset+octet-stream';
@@ -68,9 +106,12 @@ export const ERROR_KEY_HEADER = 'Wicket-Upload-Error';
 /** Where TusStorage keeps the addresses of the uploads, before their fingerprints. */
 const STORAGE_PREFIX = 'antilia-tus::';
 
-/** Where an upload is. */
+/**
+ * Where an upload is. Lost: the server did not answer through all the tries, or the browser stayed
+ * offline as long, the connection lost, a VPN down for example; start() goes on once it answers.
+ */
 export type TusState = 'idle' | 'starting' | 'uploading' | 'paused' | 'retrying' | 'offline' |
-	'done' | 'failed' | 'canceled';
+	'lost' | 'done' | 'failed' | 'canceled';
 
 /**
  * What went wrong: no answer (network), an upload the server no longer has (gone), an answer
@@ -127,19 +168,38 @@ export interface TusUploadOptions {
 	query?: string;
 	/** Whether the requests to another origin carry its cookies. */
 	withCredentials?: boolean;
-	/** How long to wait before each try after a failure; DEFAULT_RETRY_DELAYS when left out. */
+	/**
+	 * How long to wait before each try after a failure; when left out, those retryDelaysFor()
+	 * makes of retryTimeout. Together they are how long the upload tries again by itself, and
+	 * waits to be online again, before it takes the connection for lost.
+	 */
 	retryDelays?: readonly number[];
+	/**
+	 * How long the upload tries again by itself, in milliseconds, unless retryDelays tells;
+	 * DEFAULT_RETRY_TIMEOUT when left out, 0 to take the connection for lost at once.
+	 */
+	retryTimeout?: number;
 	/** How long a chunk may go without progress before it is taken for lost; 0 never. */
 	stallMillis?: number;
 	/**
 	 * How often to ask the server how many bytes it holds while a chunk is being sent, its answer
 	 * being the progress then, rather than what the browser handed to the network; 0, the default,
-	 * never. Only for servers answering HEAD while a PATCH runs, as the ResumableUploads of the
-	 * widgets do: tusd locks the upload instead.
+	 * never. Only for servers answering HEAD while a PATCH runs, as Wicket's
+	 * ResumableUploadResourceReference does: tusd locks the upload instead.
 	 */
 	pollMillis?: number;
 	/** Whether the address of the upload is kept to go on after a reload, true by default. */
 	remember?: boolean;
+	/**
+	 * What the address is kept with, besides the fingerprint of the file: the place of the uploader
+	 * it belongs to, for the one in the same place of a later page to offer to go on with it.
+	 */
+	rememberedAs?: string;
+	/**
+	 * How long after it last sent something the upload counts as in use for other pages, which
+	 * leave it alone; DEFAULT_IN_USE_MILLIS when left out. It tells so four times as often.
+	 */
+	inUseMillis?: number;
 	/** Whether to send PATCH as POST with X-HTTP-Method-Override, for proxies refusing PATCH. */
 	overridePatchMethod?: boolean;
 	/** Called as bytes go: those the server holds or is being sent, of all. */
@@ -148,7 +208,7 @@ export interface TusUploadOptions {
 	onState?(state: TusState, upload: TusUpload): void;
 	/** Called once the server holds the whole file. */
 	onSuccess?(upload: TusUpload): void;
-	/** Called once the upload failed for good. */
+	/** Called once the upload failed for good; a lost connection is no failure, see TusState. */
 	onError?(error: TusError, upload: TusUpload): void;
 }
 
@@ -247,6 +307,10 @@ export interface StoredUpload {
 	lastModified: number;
 	/** When it was kept, in milliseconds since the epoch. */
 	stored: number;
+	/** What it was kept with: the place of its uploader, see TusUploadOptions.rememberedAs. */
+	rememberedAs?: string;
+	/** When it was last being sent, in milliseconds since the epoch; 0 once its page was left. */
+	alive?: number;
 }
 
 function storage(): Storage | null {
@@ -299,6 +363,15 @@ export const TusStorage = {
 	},
 
 	/**
+	 * @param upload a kept upload
+	 * @param inUseMillis how long after it last sent something it counts as in use
+	 * @returns whether another page sends a kept upload now
+	 */
+	sending(upload: StoredUpload, inUseMillis = DEFAULT_IN_USE_MILLIS): boolean {
+		return Date.now() - (upload.alive ?? 0) < inUseMillis;
+	},
+
+	/**
 	 * @returns the uploads not finished yet to a tus server, the oldest first
 	 */
 	list(endpoint: string): StoredUpload[] {
@@ -336,8 +409,10 @@ function request(method: string, url: string, options: TusRequestOptions | undef
 		xhr.withCredentials = !!options?.withCredentials;
 		Object.entries({ ...options?.headers, 'Tus-Resumable': TUS_RESUMABLE })
 			.forEach(([name, value]) => xhr.setRequestHeader(name, value));
+		// a connection gone without a word answers never
+		xhr.timeout = DEFAULT_STALL_MILLIS;
 		xhr.onload = () => resolve(answerOf(xhr));
-		xhr.onerror = () => resolve({ status: 0, header: () => null, text: '' });
+		xhr.onerror = xhr.ontimeout = () => resolve({ status: 0, header: () => null, text: '' });
 		xhr.send(null);
 	});
 }
@@ -351,6 +426,13 @@ export async function terminate(url: string, options?: TusRequestOptions): Promi
 	const answer = await request('DELETE', url, options);
 	return answer.status === 204 || answer.status === 200 || answer.status === 404 ||
 		answer.status === 410;
+}
+
+/**
+ * @returns whether the server answers a HEAD at an address, whatever it answers
+ */
+export async function reachable(url: string, options?: TusRequestOptions): Promise<boolean> {
+	return (await request('HEAD', url, options)).status !== 0;
 }
 
 /**
@@ -411,6 +493,9 @@ export class TusUpload {
 	/** Whether the offset is the server's, rather than one to ask it for. */
 	private offsetKnown = false;
 
+	/** When the upload last told it is being sent. */
+	private alive = 0;
+
 	/**
 	 * @param file the file, or any blob
 	 * @param options where it goes and what it tells
@@ -437,8 +522,8 @@ export class TusUpload {
 	}
 
 	/**
-	 * Starts sending the file, or goes on after a pause or a failure: asks the server first where it
-	 * stopped. Does nothing while it runs, once done or canceled.
+	 * Starts sending the file, or goes on after a pause, a failure or a lost connection: asks the
+	 * server first where it stopped. Does nothing while it runs, once done or canceled.
 	 */
 	start(): void {
 		if (this.running || this.state === 'done' || this.state === 'canceled') {
@@ -519,14 +604,38 @@ export class TusUpload {
 		this.options.onProgress?.(Math.min(sent, this.size), this.size, this);
 	}
 
-	private remember(): void {
+	/**
+	 * Keeps the address of the upload, and when it was last being sent.
+	 *
+	 * @param alive when it was last being sent: now by default, 0 once the page is left
+	 */
+	private remember(alive = Date.now()): void {
 		if (this.options.remember === false || !this.url) {
 			return;
 		}
 		const named = this.file as Partial<File>;
+		this.alive = alive;
 		TusStorage.save({ fingerprint: this.fingerprint, url: this.url,
 			endpoint: absoluteUrl(this.options.endpoint), name: named.name ?? '', size: this.size,
-			type: this.file.type, lastModified: named.lastModified ?? 0, stored: Date.now() });
+			type: this.file.type, lastModified: named.lastModified ?? 0, stored: Date.now(),
+			rememberedAs: this.options.rememberedAs, alive });
+	}
+
+	/** Tells now and then that the upload is being sent, for other pages to leave it alone. */
+	private keepAlive(): void {
+		if (Date.now() - this.alive >= (this.options.inUseMillis ?? DEFAULT_IN_USE_MILLIS) / 4) {
+			this.remember();
+		}
+	}
+
+	/**
+	 * Tells that the page sending the upload is left, unless it is done: the next page offers to
+	 * go on with it at once.
+	 */
+	leave(): void {
+		if (this.url && this.state !== 'done' && this.state !== 'canceled') {
+			this.remember(0);
+		}
 	}
 
 	private forget(): void {
@@ -561,8 +670,12 @@ export class TusUpload {
 				try {
 					answer = await this.send(run, 'PATCH', this.url!, {
 						'Upload-Offset': String(start), 'Content-Type': CHUNK_TYPE
-					}, this.file.slice(start, end), polling ? undefined
-						: (loaded) => this.progress(start + loaded));
+					}, this.file.slice(start, end), (loaded) => {
+						this.keepAlive();
+						if (!polling) {
+							this.progress(start + loaded);
+						}
+					});
 				} finally {
 					stopPolling();
 				}
@@ -673,9 +786,10 @@ export class TusUpload {
 			this.forget();
 			this.url = null;
 		}
-		const delays = this.options.retryDelays ?? DEFAULT_RETRY_DELAYS;
+		const delays = this.options.retryDelays ?? (this.options.retryTimeout === undefined
+			? DEFAULT_RETRY_DELAYS : retryDelaysFor(this.options.retryTimeout));
 		if (error.retryable && typeof navigator !== 'undefined' && navigator.onLine === false) {
-			this.waitOnline(run);
+			this.waitOnline(run, delays.reduce((sum, delay) => sum + delay, 0));
 			return;
 		}
 		if (error.retryable && this.attempts < delays.length) {
@@ -688,19 +802,34 @@ export class TusUpload {
 			}, this.retryDelay);
 			return;
 		}
+		if (error.kind === 'network') {
+			this.setState('lost');
+			return;
+		}
 		this.setState('failed');
 		this.options.onError?.(error, this);
 	}
 
-	private waitOnline(run: number): void {
+	/**
+	 * Goes on once the browser is online again; offline for longer than the tries take, the
+	 * connection is lost.
+	 */
+	private waitOnline(run: number, most: number): void {
 		this.stopWaitingOnline();
 		this.online = () => {
 			this.stopWaitingOnline();
+			window.clearTimeout(this.timer);
 			if (run === this.run) {
 				void this.go(run);
 			}
 		};
 		window.addEventListener('online', this.online);
+		this.timer = window.setTimeout(() => {
+			this.stopWaitingOnline();
+			if (run === this.run) {
+				this.setState('lost');
+			}
+		}, most);
 		this.setState('offline');
 	}
 
@@ -731,29 +860,43 @@ export class TusUpload {
 			Object.entries(all).forEach(([name, value]) => xhr.setRequestHeader(name, value));
 			const stallMillis = this.options.stallMillis ?? DEFAULT_STALL_MILLIS;
 			let stalled = false;
+			let sentAll = false;
+			let ended = false;
 			let stall: number | undefined = undefined;
+			const giveUp = () => {
+				stalled = true;
+				xhr.abort();
+			};
 			const watch = () => {
 				window.clearTimeout(stall);
-				if (body && stallMillis > 0) {
+				if (stallMillis > 0 && !ended) {
 					stall = window.setTimeout(() => {
-						stalled = true;
-						xhr.abort();
+						if (!sentAll) {
+							giveUp();
+							return;
+						}
+						// all handed to the network: the answer may still come, as long as the
+						// server answers
+						void reachable(url, this.options).then((answers) => {
+							if (answers) {
+								watch();
+							} else if (!ended) {
+								giveUp();
+							}
+						});
 					}, stallMillis);
 				}
 			};
 			const done = () => {
+				ended = true;
 				window.clearTimeout(stall);
 				if (this.xhr === xhr) {
 					this.xhr = null;
 				}
 			};
 			xhr.upload.addEventListener('progress', (event) => {
-				if (body && event.loaded >= body.size) {
-					// all handed to the network: the server's answer, or an error, tells the rest
-					window.clearTimeout(stall);
-				} else {
-					watch();
-				}
+				sentAll = !!body && event.loaded >= body.size;
+				watch();
 				onProgress?.(event.loaded);
 			});
 			xhr.onload = () => {
@@ -776,9 +919,12 @@ export class TusUpload {
 	}
 }
 
-/** Where a file of a ResumableUploader is. */
+/**
+ * Where a file of a ResumableUploader is. Interrupted: left unfinished by an earlier page, until
+ * the file is chosen again. Lost: waiting for the connection, see TusState.
+ */
 export type ResumableItemState = 'interrupted' | 'ready' | 'queued' | 'starting' | 'uploading' |
-	'paused' | 'retrying' | 'offline' | 'done' | 'failed' | 'canceled';
+	'paused' | 'retrying' | 'offline' | 'lost' | 'done' | 'failed' | 'canceled';
 
 /** A file of a ResumableUploader, as its callbacks tell it. */
 export interface ResumableItem {
@@ -825,6 +971,8 @@ export interface ResumableUploaderTexts {
 	offline: string;
 	/** An upload of an earlier visit: what the server holds of how much. */
 	interrupted: string;
+	/** An upload waiting for the connection: what the server holds of how much. */
+	disconnected: string;
 	/** Once the server holds the whole file: its size. */
 	done: string;
 	/** Once the upload failed, unless the server tells why. */
@@ -853,6 +1001,20 @@ export interface ResumableUploaderTexts {
 	resumeAll: string;
 	/** The button taking the finished files out of the list. */
 	clearFinished: string;
+	/** The question once the server answers again after the connection was lost. */
+	reconnected: string;
+	/** The question about the uploads an earlier visit left unfinished. */
+	recalled: string;
+	/** The button of the question resuming the uploads. */
+	resumeUploads: string;
+	/** The button of the question canceling the uploads. */
+	cancelUploads: string;
+	/** The button of the question choosing the files of an earlier visit again. */
+	continueUploads: string;
+	/** The button of the question forgetting the uploads of an earlier visit. */
+	discardUploads: string;
+	/** The button choosing again the file of an upload of an earlier visit: its name. */
+	continueFile: string;
 }
 
 /** The texts of a resumable uploader when the page gives none. */
@@ -868,6 +1030,7 @@ export const DEFAULT_RESUMABLE_UPLOADER_TEXTS: ResumableUploaderTexts = {
 	retrying: 'The connection broke off, trying again in {0}',
 	offline: 'Offline: goes on once the network is back',
 	interrupted: 'Stopped at {0} of {1}: choose the file again to go on',
+	disconnected: 'Connection lost at {0} of {1}: waiting for it',
 	done: 'Uploaded {0}',
 	failed: 'The upload failed',
 	lost: 'The connection to the server broke off',
@@ -881,8 +1044,33 @@ export const DEFAULT_RESUMABLE_UPLOADER_TEXTS: ResumableUploaderTexts = {
 	remove: 'Remove {0} from the list',
 	pauseAll: 'Pause all',
 	resumeAll: 'Resume all',
-	clearFinished: 'Clear finished'
+	clearFinished: 'Clear finished',
+	reconnected: 'The connection is back. Resume the uploads?',
+	recalled: 'Uploads you started earlier did not end. Continue them? Choose their files again.',
+	resumeUploads: 'Resume',
+	cancelUploads: 'Cancel',
+	continueUploads: 'Continue',
+	discardUploads: 'Discard',
+	continueFile: 'Continue {0}: choose it again'
 };
+
+/**
+ * What a resumable uploader asks the user: whether to go on with uploads once the server answers
+ * again after the connection was lost (reconnected), or with those an earlier visit left unfinished
+ * (recalled).
+ */
+export interface ResumableQuestion {
+	readonly reason: 'reconnected' | 'recalled';
+	/** The files it is about. */
+	readonly items: ResumableItem[];
+	/**
+	 * Goes on with them; for recalled ones by opening the dialog to choose their files again, which
+	 * only works while the user clicks.
+	 */
+	resume(): void;
+	/** Cancels them, deleting them on the server. */
+	cancel(): void;
+}
 
 /**
  * Where a resumable uploader sends its files, how, and what it says.
@@ -904,12 +1092,44 @@ export interface ResumableUploaderOptions {
 	autoStart?: boolean;
 	/** Whether uploads go on after a reload, by their addresses in localStorage; true by default. */
 	remember?: boolean;
+	/**
+	 * What the uploads are remembered with, for the uploader in the same place of a later page to
+	 * offer to go on with them: the class of the page and the path of the field, for example. Only
+	 * the uploads remembered with the same are offered.
+	 */
+	rememberedAs?: string;
+	/**
+	 * Whether the uploader lists, as it starts, the uploads an earlier visit left unfinished and asks
+	 * whether to go on with them; true by default. Without, an upload still goes on once its file is
+	 * chosen again, as long as remember is.
+	 */
+	recalling?: boolean;
+	/**
+	 * How long after it last sent something an upload counts as in use by another page, which
+	 * leaves it alone rather than offering to go on with it; DEFAULT_IN_USE_MILLIS when left out.
+	 */
+	inUseMillis?: number;
+	/**
+	 * Whether to ask the user before resuming the uploads, once the server answers again after the
+	 * connection was lost; true by default, else they go on by themselves.
+	 */
+	askingToResume?: boolean;
+	/**
+	 * How long to wait before each look whether the server answers again, once the connection is
+	 * lost; DEFAULT_PROBE_DELAYS when left out.
+	 */
+	probeDelays?: readonly number[];
 	/** Whether to ask before the page is left while files are being sent, true by default. */
 	keepingOnPage?: boolean;
 	/** The design of the picker, a zone to drop files on by default. */
 	design?: FilePickerDesign;
-	/** How long to wait before each try after a failure; DEFAULT_RETRY_DELAYS when left out. */
+	/** How long to wait before each try after a failure, see TusUploadOptions.retryDelays. */
 	retryDelays?: readonly number[];
+	/**
+	 * How long a file tries again by itself before the connection counts as lost and the uploader
+	 * asks, in milliseconds, see TusUploadOptions.retryTimeout; 40 seconds by default.
+	 */
+	retryTimeout?: number;
 	/** How long a chunk may go without progress before it is taken for lost; 0 never. */
 	stallMillis?: number;
 	/**
@@ -953,6 +1173,11 @@ export interface ResumableUploaderOptions {
 	onCancel?(item: ResumableItem): void;
 	/** Called when a file is added, taken out or changes state, with all files. */
 	onChange?(items: ResumableItem[]): void;
+	/**
+	 * Asks the user a question in a way of the page's own, a dialog for example: returns true when
+	 * it did, and answers by resume() or cancel(); else the uploader asks above its list.
+	 */
+	onQuestion?(question: ResumableQuestion): boolean | void;
 }
 
 /** The states in which a file is being sent, or about to be. */
@@ -992,6 +1217,22 @@ interface Row {
 	play: HTMLButtonElement;
 	pause: HTMLButtonElement;
 	stop: HTMLButtonElement;
+}
+
+/** A question of the uploader: about which files, and whether it asks it above its list. */
+interface Question {
+	reason: ResumableQuestion['reason'];
+	rows: Row[];
+	/** The state its files are in while they wait for the answer. */
+	waitsFor: ResumableItemState;
+	inUploader: boolean;
+}
+
+/** A look whether the server answers again: how many so far, the next one, and one under way. */
+interface Probe {
+	attempt: number;
+	timer: number | undefined;
+	asking: boolean;
 }
 
 /** The uploaders by their element. */
@@ -1043,6 +1284,21 @@ export class ResumableUploader {
 	private listeners: Array<[EventTarget, string, EventListener]> = [];
 
 	private stopWatchingRemoval: Unsubscribe | null = null;
+
+	/** What the uploader asks, and of which files, while one of them waits for the answer. */
+	private question: Question | null = null;
+
+	/** The question above the list, when the uploader asks it. */
+	questionElement!: HTMLDivElement;
+
+	/** The question the element shows. */
+	private shownQuestion: Question | null = null;
+
+	/** The look whether the server answers again, while files wait for the connection. */
+	private probe: Probe | null = null;
+
+	/** Stops listening for the moments to look whether the server answers again. */
+	private unlistenProbe: (() => void) | null = null;
 
 	/**
 	 * @param host the element to draw into, which the framework renders empty
@@ -1102,6 +1358,8 @@ export class ResumableUploader {
 		this.clearButton = button(look, 'resumable-upload-clear', 'ghost', 'small', CLEAR_ICON,
 			this.texts.clearFinished);
 		this.toolbar.append(this.pauseAllButton, this.resumeAllButton, this.clearButton);
+		this.questionElement = create('div', look, 'resumable-upload-question');
+		this.questionElement.hidden = true;
 		this.list = create('ul', look, 'resumable-upload-list');
 		this.list.setAttribute('aria-label', this.texts.list);
 		this.announcer = create('div', look, 'resumable-upload-announcer');
@@ -1109,7 +1367,7 @@ export class ResumableUploader {
 		this.host.append(this.element);
 		this.configureInput();
 		this.picker = new FilePicker(this.input, this.pickerOptions());
-		this.element.append(this.toolbar, this.list, this.announcer);
+		this.element.append(this.questionElement, this.toolbar, this.list, this.announcer);
 
 		this.listen(this.input, 'change', () => {
 			const files = Array.from(this.input.files ?? []);
@@ -1121,6 +1379,8 @@ export class ResumableUploader {
 		this.listen(this.pauseAllButton, 'click', () => this.pauseAll());
 		this.listen(this.resumeAllButton, 'click', () => this.resumeAll());
 		this.listen(this.clearButton, 'click', () => this.clearFinished());
+		// once the page is left, the next one offers to go on with what is being sent
+		this.listen(window, 'pagehide', () => this.rows.forEach((row) => row.upload?.leave()));
 		this.stopWatchingRemoval = onRemoving(this.host, () => this.destroy());
 		this.rows.forEach((row) => this.list.append(row.element));
 		this.renderToolbar();
@@ -1167,6 +1427,9 @@ export class ResumableUploader {
 		this.list.setAttribute('aria-label', this.texts.list);
 		this.rows.forEach((row) => this.render(row));
 		this.renderToolbar();
+		// in the new texts and look
+		this.shownQuestion = null;
+		this.renderQuestion();
 		this.updateGuard();
 	}
 
@@ -1263,9 +1526,11 @@ export class ResumableUploader {
 		const upload = new TusUpload(file, { endpoint: options.endpoint,
 			chunkSize: options.chunkSize, metadata: options.metadata?.(file),
 			headers: options.headers, query: options.query, withCredentials: options.withCredentials,
-			retryDelays: options.retryDelays, stallMillis: options.stallMillis,
-			pollMillis: options.pollMillis,
-			remember: options.remember, overridePatchMethod: options.overridePatchMethod,
+			retryDelays: options.retryDelays, retryTimeout: options.retryTimeout,
+			stallMillis: options.stallMillis,
+			pollMillis: options.pollMillis, remember: options.remember,
+			rememberedAs: options.rememberedAs, inUseMillis: options.inUseMillis,
+			overridePatchMethod: options.overridePatchMethod,
 			onProgress: (sent) => {
 				if (row.upload === upload) {
 					this.onProgress(row, sent);
@@ -1304,7 +1569,7 @@ export class ResumableUploader {
 			row.samples = [];
 			row.error = null;
 		}
-		if (state === 'paused' || state === 'retrying' || state === 'offline') {
+		if (state === 'paused' || state === 'retrying' || state === 'offline' || state === 'lost') {
 			row.sent = upload.offset;
 		}
 		if (state === 'failed') {
@@ -1324,9 +1589,199 @@ export class ResumableUploader {
 		} else if (state === 'canceled') {
 			this.options.onCancel?.(itemOf(row));
 		}
+		if (state === 'lost') {
+			this.lost();
+		}
 		if (state === 'paused' || state === 'done' || state === 'failed' || state === 'canceled') {
 			this.pump();
 		}
+		this.changed();
+	}
+
+	/**
+	 * A file lost the connection: those waiting for their turn wait for it too, while the uploader
+	 * looks whether the server answers again.
+	 */
+	private lost(): void {
+		this.rows.filter((row) => row.state === 'queued').forEach((row) => {
+			row.state = 'lost';
+			this.render(row);
+		});
+		this.renderQuestion();
+		this.watch();
+	}
+
+	/**
+	 * Looks whether the server answers again while files wait for the connection: after a while,
+	 * longer each time, and whenever the browser is online again or the page looked at again.
+	 */
+	private watch(): void {
+		if (this.probe || this.destroyed) {
+			return;
+		}
+		const probe: Probe = { attempt: 0, timer: undefined, asking: false };
+		this.probe = probe;
+		const later = () => {
+			const delays = this.options.probeDelays ?? DEFAULT_PROBE_DELAYS;
+			probe.timer = window.setTimeout(check,
+				delays[Math.min(probe.attempt++, delays.length - 1)]);
+		};
+		const check = () => {
+			if (this.probe !== probe || probe.asking) {
+				return;
+			}
+			const lost = this.rows.filter((row) => row.state === 'lost');
+			if (!lost.length) {
+				this.unwatch();
+				return;
+			}
+			window.clearTimeout(probe.timer);
+			probe.asking = true;
+			const url = lost.find((row) => row.url)?.url ?? absoluteUrl(this.options.endpoint);
+			void reachable(url, this.options).then((answers) => {
+				probe.asking = false;
+				if (this.probe !== probe) {
+					return;
+				}
+				if (answers) {
+					this.unwatch();
+					this.reconnected();
+				} else {
+					later();
+				}
+			});
+		};
+		const listener = () => check();
+		this.listen(window, 'online', listener);
+		this.listen(window, 'focus', listener);
+		this.listen(document, 'visibilitychange', listener);
+		this.unlistenProbe = () => {
+			this.listeners.filter(([, , each]) => each === listener).forEach(([target, type]) =>
+				target.removeEventListener(type, listener));
+			this.listeners = this.listeners.filter(([, , each]) => each !== listener);
+		};
+		later();
+	}
+
+	/** Stops looking whether the server answers again. */
+	private unwatch(): void {
+		if (this.probe) {
+			window.clearTimeout(this.probe.timer);
+			this.probe = null;
+		}
+		this.unlistenProbe?.();
+		this.unlistenProbe = null;
+	}
+
+	/**
+	 * Goes on with the files that waited for the connection, now that the server answers again, or
+	 * asks the user first.
+	 */
+	private reconnected(): void {
+		const lost = this.rows.filter((row) => row.state === 'lost');
+		if (!lost.length) {
+			return;
+		}
+		if (this.options.askingToResume === false) {
+			this.resumeRows(lost);
+		} else {
+			this.ask('reconnected', lost);
+		}
+	}
+
+	/**
+	 * Asks the user whether to go on with files: through onQuestion, else above the list until
+	 * the user answers.
+	 */
+	private ask(reason: ResumableQuestion['reason'], rows: Row[]): void {
+		const question: Question = { reason, rows,
+			waitsFor: reason === 'recalled' ? 'interrupted' : 'lost', inUploader: true };
+		this.question = question;
+		const asked = this.options.onQuestion?.({
+			reason, items: rows.map((row) => itemOf(row)),
+			resume: () => this.answer(question, true),
+			cancel: () => this.answer(question, false)
+		});
+		question.inUploader = asked !== true;
+		this.renderQuestion();
+		if (question.inUploader) {
+			this.announcer.textContent = this.questionText();
+		}
+	}
+
+	/**
+	 * Answers a question: goes on with its files, or cancels them.
+	 */
+	private answer(question: Question, resume: boolean): void {
+		const rows = question.rows.filter((row) => this.rows.includes(row) &&
+			row.state === question.waitsFor);
+		if (question.reason === 'recalled') {
+			if (resume) {
+				this.input.click();
+			} else {
+				rows.forEach((row) => this.remove(row.id));
+			}
+		} else if (resume) {
+			this.resumeRows(rows);
+		} else {
+			rows.forEach((row) => void this.cancel(row.id));
+		}
+		this.renderQuestion();
+	}
+
+	private questionText(): string {
+		return this.question?.reason === 'recalled' ? this.texts.recalled : this.texts.reconnected;
+	}
+
+	/**
+	 * Shows the question above the list, while a file it is about waits for the answer.
+	 */
+	private renderQuestion(): void {
+		const question = this.question;
+		if (question && !this.rows.some((row) => question.rows.includes(row) &&
+			row.state === question.waitsFor)) {
+			this.question = null;
+		}
+		const element = this.questionElement;
+		const shown = !!this.question?.inUploader && !this.destroyed;
+		if (!shown) {
+			element.hidden = true;
+			element.replaceChildren();
+			this.shownQuestion = null;
+			return;
+		}
+		const current = this.question!;
+		if (this.shownQuestion === current) {
+			return;
+		}
+		this.shownQuestion = current;
+		const look = this.look;
+		const recalled = current.reason === 'recalled';
+		const text = create('span', look, 'resumable-upload-question-text', this.questionText());
+		const actions = create('span', look, 'resumable-upload-question-actions');
+		const yes = button(look, 'resumable-upload-question-resume', 'primary', 'small',
+			PLAY_ICON, recalled ? this.texts.continueUploads : this.texts.resumeUploads);
+		const no = button(look, 'resumable-upload-question-cancel', 'secondary', 'small',
+			CLEAR_ICON, recalled ? this.texts.discardUploads : this.texts.cancelUploads);
+		yes.addEventListener('click', () => this.answer(current, true));
+		no.addEventListener('click', () => this.answer(current, false));
+		actions.append(yes, no);
+		element.replaceChildren(text, actions);
+		element.dataset.reason = current.reason;
+		element.hidden = false;
+	}
+
+	/**
+	 * Lets files that waited for the connection wait for their turn again.
+	 */
+	private resumeRows(rows: Row[]): void {
+		rows.filter((row) => row.upload && ['lost', 'paused', 'failed', 'ready'].includes(row.state))
+			.forEach((row) => {
+				row.state = 'queued';
+				this.render(row);
+			});
+		this.pump();
+		this.renderQuestion();
 		this.changed();
 	}
 
@@ -1371,18 +1826,22 @@ export class ResumableUploader {
 	}
 
 	/**
-	 * Starts a file waiting for its start button, or resumes one paused or failed: it waits for its
-	 * turn if as many as are sent at once are being sent.
+	 * Starts a file waiting for its start button, or resumes one paused, failed or waiting for the
+	 * connection: it waits for its turn if as many as are sent at once are being sent. A file of an
+	 * earlier visit goes on once chosen again: this opens the dialog to choose it, which only works
+	 * while the user clicks.
 	 */
 	resume(id: string): void {
 		const row = this.find(id);
-		if (!row?.upload || !['ready', 'paused', 'failed'].includes(row.state)) {
+		if (row?.state === 'interrupted') {
+			// an upload of an earlier visit goes on once its file is chosen again
+			this.input.click();
 			return;
 		}
-		row.state = 'queued';
-		this.render(row);
-		this.pump();
-		this.changed();
+		if (!row?.upload || !['ready', 'paused', 'failed', 'lost'].includes(row.state)) {
+			return;
+		}
+		this.resumeRows([row]);
 	}
 
 	/** Starts a file waiting for its start button: resume() does. */
@@ -1398,7 +1857,7 @@ export class ResumableUploader {
 		if (!row) {
 			return;
 		}
-		if (row.state === 'queued') {
+		if (row.state === 'queued' || row.state === 'lost') {
 			row.state = 'paused';
 			this.render(row);
 			this.announce(row);
@@ -1457,21 +1916,25 @@ export class ResumableUploader {
 			: this.picker.button)?.focus();
 	}
 
-	/** Pauses every file being sent or waiting for its turn. */
+	/** Pauses every file being sent, waiting for its turn or for the connection. */
 	pauseAll(): void {
-		this.rows.filter((row) => row.state === 'queued' || ACTIVE.includes(row.state))
-			.forEach((row) => this.pause(row.id));
+		this.rows.filter((row) => row.state === 'queued' || row.state === 'lost' ||
+			ACTIVE.includes(row.state)).forEach((row) => this.pause(row.id));
 	}
 
-	/** Starts or resumes every file waiting for its start button, paused or failed. */
+	/**
+	 * Starts or resumes every file waiting for its start button or for the connection, paused or
+	 * failed.
+	 */
 	resumeAll(): void {
-		this.rows.filter((row) => row.upload && ['ready', 'paused', 'failed'].includes(row.state))
-			.forEach((row) => {
-				row.state = 'queued';
-				this.render(row);
-			});
-		this.pump();
-		this.changed();
+		this.resumeRows(this.rows.filter((row) => row.upload &&
+			['ready', 'paused', 'failed', 'lost'].includes(row.state)));
+	}
+
+	/** Cancels every file not finished, deleting it on the server. */
+	async cancelAll(): Promise<void> {
+		await Promise.all(this.rows.filter((row) => !FINISHED.includes(row.state))
+			.map((row) => this.cancel(row.id)));
 	}
 
 	/** Takes the files done, failed or canceled out of the list. */
@@ -1487,22 +1950,27 @@ export class ResumableUploader {
 	}
 
 	/**
-	 * Shows the uploads to the endpoint left unfinished by an earlier visit, once the server told
-	 * how far each got; those it no longer has are forgotten.
+	 * Shows the uploads to the endpoint an earlier visit left unfinished, remembered with the same
+	 * place as this uploader, once the server told how far each got, and asks whether to go on
+	 * with them; those it no longer has are forgotten. Those another page is sending are left alone.
 	 */
 	private restore(): void {
-		if (this.options.remember === false || !this.options.endpoint) {
+		if (this.options.remember === false || this.options.recalling === false ||
+			!this.options.endpoint) {
 			return;
 		}
-		TusStorage.list(this.options.endpoint).forEach((stored) => {
-			if (this.rows.some((row) => row.fingerprint === stored.fingerprint)) {
-				return;
+		const place = this.options.rememberedAs ?? null;
+		const asked = TusStorage.list(this.options.endpoint).map((stored) => {
+			if ((stored.rememberedAs ?? null) !== place ||
+				TusStorage.sending(stored, this.options.inUseMillis) ||
+				this.rows.some((row) => row.fingerprint === stored.fingerprint)) {
+				return Promise.resolve();
 			}
 			const row = this.newRow(stored.name, stored.size, stored.fingerprint);
 			row.state = 'interrupted';
 			row.url = stored.url;
 			this.render(row);
-			void probe(stored.url, this.options).then((found) => {
+			return probe(stored.url, this.options).then((found) => {
 				if (row.state !== 'interrupted' || this.destroyed) {
 					return;
 				}
@@ -1521,6 +1989,12 @@ export class ResumableUploader {
 			});
 		});
 		this.renderToolbar();
+		void Promise.all(asked).then(() => {
+			const interrupted = this.rows.filter((row) => row.state === 'interrupted');
+			if (interrupted.length && !this.destroyed) {
+				this.ask('recalled', interrupted);
+			}
+		});
 	}
 
 	private statusOf(row: Row): string {
@@ -1543,6 +2017,8 @@ export class ResumableUploader {
 					locale));
 			case 'offline':
 				return texts.offline;
+			case 'lost':
+				return format(texts.disconnected, ...of());
 			case 'done':
 				return format(texts.done, formatBytes(row.size, locale));
 			case 'failed':
@@ -1579,8 +2055,8 @@ export class ResumableUploader {
 		toggleParts(row.element, look, state === 'done', 'resumable-upload-item-done');
 		toggleParts(row.element, look, state === 'failed' || state === 'canceled',
 			'resumable-upload-item-failed');
-		toggleParts(row.element, look, state === 'paused' || state === 'interrupted',
-			'resumable-upload-item-paused');
+		toggleParts(row.element, look, state === 'paused' || state === 'interrupted' ||
+			state === 'lost', 'resumable-upload-item-paused');
 		const percent = state === 'done' ? 100
 			: row.size > 0 ? Math.floor(row.sent * 100 / row.size) : 0;
 		if (state === 'starting' && row.sent === 0) {
@@ -1604,8 +2080,10 @@ export class ResumableUploader {
 			element.setAttribute('aria-label', text);
 			element.title = text;
 		};
-		row.play.hidden = !(row.upload && ['ready', 'paused', 'failed'].includes(state));
-		label(row.play, format(state === 'ready' ? this.texts.start : this.texts.resume, name));
+		row.play.hidden = !(state === 'interrupted' ||
+			(row.upload && ['ready', 'paused', 'failed', 'lost'].includes(state)));
+		label(row.play, format(state === 'ready' ? this.texts.start
+			: state === 'interrupted' ? this.texts.continueFile : this.texts.resume, name));
 		row.pause.hidden = !(state === 'queued' || ACTIVE.includes(state));
 		label(row.pause, format(this.texts.pause, name));
 		const finished = FINISHED.includes(state);
@@ -1620,7 +2098,7 @@ export class ResumableUploader {
 		this.pauseAllButton.hidden = !rows.some((row) => row.state === 'queued' ||
 			ACTIVE.includes(row.state));
 		this.resumeAllButton.hidden = !rows.some((row) => row.upload &&
-			['ready', 'paused', 'failed'].includes(row.state));
+			['ready', 'paused', 'failed', 'lost'].includes(row.state));
 		this.clearButton.hidden = !rows.some((row) => FINISHED.includes(row.state));
 		this.list.toggleAttribute('aria-busy', rows.some((row) => ACTIVE.includes(row.state)));
 	}
@@ -1642,6 +2120,7 @@ export class ResumableUploader {
 
 	private changed(): void {
 		if (!this.destroyed) {
+			this.renderQuestion();
 			this.options.onChange?.(this.items);
 		}
 	}
@@ -1654,6 +2133,7 @@ export class ResumableUploader {
 			return;
 		}
 		this.destroyed = true;
+		this.unwatch();
 		this.rows.forEach((row) => row.upload?.abort());
 		this.guard?.end();
 		this.guard = null;

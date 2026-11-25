@@ -28,6 +28,22 @@ What 11.0.0-RC9 has, and:
   `resumable-upload.ts`, built into `antilia-upload.js`), and React's and Svelte's
   `ResumableUploader`, work with any tus server, tusd among them: with Wicket's resource they send
   its signed `query`, and tell the name it stored each file under (`item.storedName`).
+  Once the connection is lost for longer than the tries take, a VPN down for example, the files
+  wait for it and the uploader asks, once the server answers again, whether to resume or cancel
+  them (`askingToResume`, `onQuestion`, the field's `getClientSideResumeQuestionCallBack()`,
+  and after how long: `retryTimeout`, the field's `setRetryTimeout`, 40 seconds by default);
+  after a reload it lists the uploads the same place left unfinished and asks whether to go on with
+  them, which they do once their files are chosen again (`rememberedAs`). With Wicket's
+  `getCurrentOwner()` an application may keep the uploads for the signed-in user, beyond the session.
+- The field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and `resumeUpload()` reach
+  the uploader of the theme.
+- The timings and limits of the resumable uploads can be set: the field's
+  `setReconnectCheckInterval` (how often it looks whether the server answers again, 30 seconds),
+  `setStallTimeout` (how long a request may get nothing, 30 seconds), `setRecalling` (whether it
+  lists the uploads of an earlier visit) and `setInUseTimeout` (how long another page leaves an
+  upload alone, 20 seconds); the resource's `setOwnerExpiry` (for uploads of a user rather than a
+  session), `setExpiryCheckInterval`, `setLockTimeout` and `setMaxMetadataLength`. The core's
+  uploader takes `probeDelays`, `stallMillis`, `recalling` and `inUseMillis`.
 - The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
 - A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
   design it had.

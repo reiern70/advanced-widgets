@@ -192,6 +192,14 @@
 	<entry key="ResumableUploader.pauseAll">Pause all</entry>
 	<entry key="ResumableUploader.resumeAll">Resume all</entry>
 	<entry key="ResumableUploader.clearFinished">Clear finished</entry>
+	<entry key="ResumableUploader.disconnected">Connection lost at {0} of {1}: waiting for it</entry>
+	<entry key="ResumableUploader.reconnected">The connection is back. Resume the uploads?</entry>
+	<entry key="ResumableUploader.recalled">Uploads you started earlier did not end. Continue them? Choose their files again.</entry>
+	<entry key="ResumableUploader.resumeUploads">Resume</entry>
+	<entry key="ResumableUploader.cancelUploads">Cancel</entry>
+	<entry key="ResumableUploader.continueUploads">Continue</entry>
+	<entry key="ResumableUploader.discardUploads">Discard</entry>
+	<entry key="ResumableUploader.continueFile">Continue {0}: choose it again</entry>
 	<entry key="Resizable.handle">Drag, or use the arrow keys, to resize</entry>
 	<entry key="CodeEditor.resize">Drag, or use the arrow keys, to resize the editor</entry>
 	<entry key="CodeEditor.find">Find</entry>

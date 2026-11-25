@@ -192,6 +192,14 @@
 	<entry key="ResumableUploader.pauseAll">Pausar todo</entry>
 	<entry key="ResumableUploader.resumeAll">Reanudar todo</entry>
 	<entry key="ResumableUploader.clearFinished">Quitar los terminados</entry>
+	<entry key="ResumableUploader.disconnected">Conexión perdida en {0} de {1}: esperando a que vuelva</entry>
+	<entry key="ResumableUploader.reconnected">La conexión ha vuelto. ¿Reanudar las subidas?</entry>
+	<entry key="ResumableUploader.recalled">Las subidas que empezó antes no terminaron. ¿Continuarlas? Elija otra vez sus archivos.</entry>
+	<entry key="ResumableUploader.resumeUploads">Reanudar</entry>
+	<entry key="ResumableUploader.cancelUploads">Cancelar</entry>
+	<entry key="ResumableUploader.continueUploads">Continuar</entry>
+	<entry key="ResumableUploader.discardUploads">Descartar</entry>
+	<entry key="ResumableUploader.continueFile">Continuar {0}: elíjalo otra vez</entry>
 	<entry key="Resizable.handle">Arrastre o use las flechas para cambiar el tamaño</entry>
 	<entry key="CodeEditor.resize">Arrastre o use las flechas para cambiar el tamaño del editor</entry>
 	<entry key="CodeEditor.find">Buscar</entry>

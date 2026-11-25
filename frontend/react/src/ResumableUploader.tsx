@@ -14,13 +14,13 @@
 
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 
-import { ResumableUploader as CoreResumableUploader, type ResumableItem,
+import { ResumableUploader as CoreResumableUploader, type ResumableItem, type ResumableQuestion,
 	type ResumableUploaderOptions, type TusError } from '@antilia/core';
 
 import { useLook } from './Look.js';
 
 export interface ResumableUploaderProps extends Omit<ResumableUploaderOptions,
-	'look' | 'onComplete' | 'onError' | 'onChange' | 'metadata'> {
+	'look' | 'onComplete' | 'onError' | 'onChange' | 'onQuestion' | 'metadata'> {
 	/** What the server is told of a file besides its name and type. */
 	metadata?(file: File): Record<string, string>;
 	/** Called once the server holds the whole of a file: its address tells the server which. */
@@ -29,6 +29,11 @@ export interface ResumableUploaderProps extends Omit<ResumableUploaderOptions,
 	onError?(item: ResumableItem, error: TusError): void;
 	/** Called when a file is added, taken out or changes state, with all files. */
 	onChange?(items: ResumableItem[]): void;
+	/**
+	 * Asks the user whether to go on with uploads, in a dialog of the page's own: returns true when
+	 * it did, and answers by resume() or cancel(); else the uploader asks above its list.
+	 */
+	onQuestion?(question: ResumableQuestion): boolean | void;
 	id?: string;
 	/** CSS classes of the element the uploader draws into. */
 	className?: string;
@@ -67,12 +72,13 @@ export const ResumableUploader = forwardRef<ResumableUploaderHandle, ResumableUp
 
 		const options = (): ResumableUploaderOptions => {
 			const { id: _id, className: _className, metadata, onComplete, onError, onChange,
-				...rest } = latest.current;
+				onQuestion: _onQuestion, ...rest } = latest.current;
 			return { ...rest, look,
 				metadata: metadata && ((file) => latest.current.metadata?.(file) ?? {}),
 				onComplete: (item) => latest.current.onComplete?.(item),
 				onError: (item, error) => latest.current.onError?.(item, error),
-				onChange: (items) => latest.current.onChange?.(items) };
+				onChange: (items) => latest.current.onChange?.(items),
+				onQuestion: (question) => latest.current.onQuestion?.(question) };
 		};
 
 		useImperativeHandle(ref, () => ({
@@ -94,7 +100,7 @@ export const ResumableUploader = forwardRef<ResumableUploaderHandle, ResumableUp
 		}, [endpoint]);
 
 		const { metadata: _metadata, onComplete: _onComplete, onError: _onError,
-			onChange: _onChange, ...settings } = props;
+			onChange: _onChange, onQuestion: _onQuestionProp, ...settings } = props;
 		const key = JSON.stringify(settings);
 		const configured = useRef(key + look.name);
 		useLayoutEffect(() => {
