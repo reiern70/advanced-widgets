@@ -70,6 +70,12 @@ export { Palette } from './Palette.js';
 export type { PaletteProps } from './Palette.js';
 export type { PaletteChoice, PaletteTexts } from '@antilia/core';
 export { ProgressBar } from './ProgressBar.js';
+export { ResumableUploader } from './ResumableUploader.js';
+export type { ResumableUploaderHandle, ResumableUploaderProps } from './ResumableUploader.js';
+export { DEFAULT_RESUMABLE_UPLOADER_TEXTS, probe, reachable, terminate, TusError, TusStorage,
+	TusUpload } from '@antilia/core';
+export type { ResumableItem, ResumableItemState, ResumableQuestion, ResumableUploaderTexts,
+	TusState, TusUploadOptions } from '@antilia/core';
 export type { ProgressBarProps } from './ProgressBar.js';
 export { Menu } from './Menu.js';
 export type { MenuEntry, MenuHandle, MenuItem, MenuProps, MenuSeparator } from './Menu.js';
