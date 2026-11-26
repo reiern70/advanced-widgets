@@ -352,9 +352,19 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	}
 
 	/**
-	 * @return what the uploads of the field are remembered with, for the field in the same place of
-	 *         a later page to offer to go on with them: by default the class of the page and the
-	 *         path of the field in it, since the id of the field is a new one on every page
+	 * Names the place the uploads of the field are remembered for: the field in the same place of a
+	 * later page offers to go on with them. By default it is the class of the page and the path of
+	 * the field in it, since the id of the field is a new one on every page.
+	 * <p>
+	 * A page that edits one of several records, a document for example, adds the record, as
+	 * {@code "document:" + id}, so that an upload started for one document is not offered on the
+	 * page of another, where its file would go to the wrong record. Where what the file was for does
+	 * not come back, the unsaved steps of an Ajax wizard after its session ended for example, the
+	 * uploads should belong to the session, see
+	 * {@link ResumableUploadResourceReference#getCurrentOwner()}, or not be
+	 * {@link #setRecalling(boolean) recalled}.
+	 *
+	 * @return the place of the field
 	 */
 	protected String getRememberedAs()
 	{
