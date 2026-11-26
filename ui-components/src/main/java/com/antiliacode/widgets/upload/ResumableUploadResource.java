@@ -138,21 +138,33 @@ class ResumableUploadResource implements IResource
 		{
 			return answer.header("Tus-Version", VERSION).status(412);
 		}
+		String owner = reference.getCurrentOwner();
 		// the query only: the body of a chunk is no form
-		UploadGrant grant = UploadGrant.of(webRequest.getQueryParameters());
+		UploadGrant grant = UploadGrant.of(webRequest.getQueryParameters(),
+			reference.getGrantSigner(), owner);
 		if (grant == null)
 		{
-			return answer.refuse(403, ResumableUploadField.UPLOAD_FAILED_RESOURCE_KEY);
+			return answer.refuse(403, ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY);
 		}
 		reference.deleteExpired(false);
-		String owner = reference.getCurrentOwner();
+		boolean expired = grant.isExpired(reference.now());
 		String id = attributes.getParameters().get(0).toOptionalString();
 		if (id == null || id.isEmpty())
 		{
-			return "POST".equals(method) ? create(grant, request, owner, answer)
-				: answer.header("Allow", "POST, OPTIONS").status(405);
+			if (!"POST".equals(method))
+			{
+				return answer.header("Allow", "POST, OPTIONS").status(405);
+			}
+			return expired
+				? answer.refuse(403, ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY)
+				: create(grant, request, owner, answer);
 		}
 		ResumableUpload upload = reference.find(id, owner);
+		if (upload == null && expired)
+		{
+			// an expired grant goes on with the uploads the server keeps, and starts no others
+			return answer.refuse(403, ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY);
+		}
 		return switch (method)
 		{
 			case "HEAD" -> head(grant, upload, answer);

@@ -443,11 +443,29 @@ export async function reachable(url: string, options?: TusRequestOptions): Promi
  */
 export async function probe(url: string, options?: TusRequestOptions):
 	Promise<{ offset: number; length: number | null } | null> {
+	const found = await headOf(url, options);
+	return found === 'gone' ? null : found;
+}
+
+/**
+ * Asks the server how far an upload got, telling apart an upload it does not have from an answer
+ * that tells nothing.
+ *
+ * @returns the bytes it holds and those of the file; 'gone' when the server does not have the
+ * upload; null when it did not answer, or refused to tell, as for a grant too old
+ */
+async function headOf(url: string, options?: TusRequestOptions):
+	Promise<{ offset: number; length: number | null } | 'gone' | null> {
 	const answer = await request('HEAD', url, options);
-	const offset = Number(answer.header('Upload-Offset'));
-	if (answer.status < 200 || answer.status >= 300 || answer.header('Upload-Offset') === null ||
-		!Number.isFinite(offset)) {
+	if (answer.status === 404 || answer.status === 410) {
+		return 'gone';
+	}
+	if (answer.status < 200 || answer.status >= 300) {
 		return null;
+	}
+	const offset = Number(answer.header('Upload-Offset'));
+	if (answer.header('Upload-Offset') === null || !Number.isFinite(offset)) {
+		return 'gone';
 	}
 	const length = answer.header('Upload-Length');
 	return { offset, length: length === null ? null : Number(length) };
@@ -705,11 +723,12 @@ export class TusUpload {
 
 	/**
 	 * Asks the server how many bytes of the upload it holds; one it no longer has, or of another
-	 * file, is forgotten, to be created again.
+	 * file, is forgotten, to be created again. A refusal, of a grant too old for example, fails the
+	 * upload and keeps it for a page loaded again.
 	 */
 	private async ask(run: number): Promise<void> {
 		const answer = await this.send(run, 'HEAD', this.url!, {});
-		if (answer.status === 403 || answer.status === 404 || answer.status === 410) {
+		if (answer.status === 404 || answer.status === 410) {
 			this.forget();
 			this.url = null;
 			return;
@@ -1970,13 +1989,16 @@ export class ResumableUploader {
 			row.state = 'interrupted';
 			row.url = stored.url;
 			this.render(row);
-			return probe(stored.url, this.options).then((found) => {
+			return headOf(stored.url, this.options).then((found) => {
 				if (row.state !== 'interrupted' || this.destroyed) {
 					return;
 				}
-				if (!found || found.offset >= stored.size ||
+				if (found === null || found === 'gone' || found.offset >= stored.size ||
 					(found.length !== null && found.length !== stored.size)) {
-					TusStorage.remove(stored.fingerprint);
+					// no answer, or a refusal: kept for a page that gets one
+					if (found !== null) {
+						TusStorage.remove(stored.fingerprint);
+					}
 					row.element.remove();
 					this.rows = this.rows.filter((other) => other !== row);
 					this.renderToolbar();

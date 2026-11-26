@@ -28,4 +28,5 @@
 	<entry key="resumableUploadTooMuch">Las subidas aún sin terminar pesarían más de ${maxBytesPerSession} juntas.</entry>
 	<entry key="resumableUploadNoRoom">El servidor no tiene sitio para el archivo ahora: inténtelo más tarde.</entry>
 	<entry key="resumableUploadLost">El servidor ya no tiene la subida: elija el archivo otra vez.</entry>
+	<entry key="resumableUploadGrantRefused">Esta página es demasiado antigua para continuar la subida: vuelva a cargarla.</entry>
 </properties>

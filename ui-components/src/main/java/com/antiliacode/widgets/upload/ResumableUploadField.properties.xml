@@ -28,4 +28,5 @@
 	<entry key="resumableUploadTooMuch">The uploads not finished yet would weigh more than ${maxBytesPerSession} together.</entry>
 	<entry key="resumableUploadNoRoom">The server has no room for the file now: try again later.</entry>
 	<entry key="resumableUploadLost">The server no longer has the upload: choose the file again.</entry>
+	<entry key="resumableUploadGrantRefused">This page is too old to continue the upload: reload it.</entry>
 </properties>
