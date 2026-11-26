@@ -91,7 +91,11 @@ import com.github.openjson.JSONObject;
  * them, how far each got, and asks whether to go on with them, which they do once their files are
  * chosen again; {@link #setRemembering(boolean)} turns that off. With the uploads belonging to the
  * user rather than the session, see {@link ResumableUploadResourceReference#getCurrentOwner()},
- * that holds after the session expired too. {@link #getClientSideResumeQuestionCallBack()} lets
+ * that holds after the session expired too. Whether a page rendered before the session ended can
+ * go on with them depends on the key that signs the grant of the field, see
+ * {@link ResumableUploadResourceReference#setGrantSigner(IUploadGrantSigner)}: when the server
+ * refuses the grant, the field tells the user to load the page again, and the page loaded offers
+ * to go on with the uploads. {@link #getClientSideResumeQuestionCallBack()} lets
  * the page ask in a dialog of its own. A field rendered again via Ajax stops the files it was
  * sending: render it once, and update the components around it. The guard of the uploads asks
  * before the page is left while files are being sent, unless {@link #setKeepingOnPage(boolean)}
@@ -153,6 +157,13 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	/** The resource key of the text of an upload the server no longer has. */
 	public static final String UPLOAD_LOST_RESOURCE_KEY = "resumableUploadLost";
 
+	/**
+	 * The resource key of the text of a grant the server refuses: one signed with a key it no
+	 * longer has, that of an ended session for example, expired, or made for another owner. The
+	 * page has to be loaded again.
+	 */
+	public static final String GRANT_REFUSED_RESOURCE_KEY = "resumableUploadGrantRefused";
+
 	/** The resource key of the text of an upload that failed, for no reason the browser knows. */
 	public static final String UPLOAD_FAILED_RESOURCE_KEY = "uploadToResourceFailed";
 
@@ -167,7 +178,7 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 
 	private static final Set<String> RESUMABLE_ERROR_KEYS = Set.of(UPLOAD_TOO_LARGE_RESOURCE_KEY,
 		TOO_MANY_UPLOADS_RESOURCE_KEY, TOO_MUCH_RESOURCE_KEY, NO_ROOM_RESOURCE_KEY,
-		UPLOAD_LOST_RESOURCE_KEY);
+		UPLOAD_LOST_RESOURCE_KEY, GRANT_REFUSED_RESOURCE_KEY);
 
 	private static final Set<String> ERROR_RESOURCE_KEYS = Set.of(NO_FILE_SELECTED_RESOURCE_KEY,
 		CONNECTION_LOST_RESOURCE_KEY, Form.UPLOAD_TOO_LARGE_RESOURCE_KEY,
@@ -187,7 +198,7 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	/** The errors the server tells by their keys, which the rows of the files word. */
 	static final String[] ERROR_KEYS = { UPLOAD_TOO_LARGE_RESOURCE_KEY,
 			TOO_MANY_UPLOADS_RESOURCE_KEY, TOO_MUCH_RESOURCE_KEY, NO_ROOM_RESOURCE_KEY,
-			UPLOAD_LOST_RESOURCE_KEY, UPLOAD_FAILED_RESOURCE_KEY };
+			UPLOAD_LOST_RESOURCE_KEY, GRANT_REFUSED_RESOURCE_KEY, UPLOAD_FAILED_RESOURCE_KEY };
 
 	private Bytes chunkSize = DEFAULT_CHUNK_SIZE;
 
@@ -716,15 +727,19 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	}
 
 	/**
-	 * Creates the settings of the script of the field: where the files go, the signed limits of
-	 * the field and how the files go, the picker and the texts.
+	 * Creates the settings of the script of the field: where the files go, the limits of the field
+	 * in its grant, signed by the reference's
+	 * {@link ResumableUploadResourceReference#getGrantSigner() signer} for the
+	 * {@link ResumableUploadResourceReference#getCurrentOwner() current owner}, with
+	 * {@code grantExpires}, when the grant expires, in milliseconds since the epoch, how the files
+	 * go, the picker and the texts.
 	 *
 	 * @return the settings
 	 */
 	protected JSONObject newClientSettings()
 	{
 		ResumableUploadResourceReference reference = getResumableUploadResourceReference();
-		UploadGrant grant = UploadGrant.of(getMarkupId(), getMaxSize(), getFileMaxSize(),
+		UploadGrant grant = reference.newGrant(getMarkupId(), getMaxSize(), getFileMaxSize(),
 			getFileCountMax());
 		JSONObject settings = new JSONObject();
 		settings.put("inputName", getMarkupId());
@@ -734,7 +749,9 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 		settings.put("maxSize", grant.maxSize());
 		settings.put("fileMaxSize", grant.fileMaxSize());
 		settings.put("fileCountMax", grant.fileCountMax());
-		settings.put("uploadToken", grant.token());
+		settings.put("uploadToken",
+			grant.token(reference.getGrantSigner(), reference.getCurrentOwner()));
+		settings.put("grantExpires", grant.expires());
 		settings.put("chunkSize",
 			Math.min(chunkSize.bytes(), reference.getMaxChunkSize().bytes()));
 		settings.put("parallelUploads", parallelUploads);
