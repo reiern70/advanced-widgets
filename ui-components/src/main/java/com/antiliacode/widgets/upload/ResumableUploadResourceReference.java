@@ -677,6 +677,12 @@ public class ResumableUploadResourceReference extends ResourceReference
 	 * once the browser sent it nothing for {@link #setOwnerExpiry(Duration)}, which such an
 	 * application may want to set to longer than {@link #setExpiry(Duration)}.
 	 * <p>
+	 * An upload that outlives its session is worth going on with only where its file still has a
+	 * purpose: the field offers it in the same place of a later page, see
+	 * {@link ResumableUploadField#getRememberedAs()}, which by default does not tell apart the
+	 * records a page edits. Where the work of the page ends with the session, the unsaved steps of
+	 * an Ajax wizard for example, the session is the right owner: its uploads end with it.
+	 * <p>
 	 * The owner must not come from the browser.
 	 * <p>
 	 * The grant of a field is made for the owner of the request that renders its page, and the
