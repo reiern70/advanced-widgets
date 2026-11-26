@@ -426,6 +426,8 @@ interface ResumableFieldSettings extends Omit<ResumableUploaderOptions, 'endpoin
 	maxSize: number;
 	fileCountMax?: number;
 	uploadToken: string;
+	/** When the grant of the field expires, in milliseconds since the epoch; signed with it. */
+	grantExpires?: number;
 	parallelUploads?: number;
 	remembering?: boolean;
 }
@@ -457,6 +459,9 @@ function queryOf(settings: ResumableFieldSettings): string {
 		parameters.push(['fileCountMax', settings.fileCountMax]);
 	}
 	parameters.push(['uploadToken', settings.uploadToken]);
+	if (settings.grantExpires != null) {
+		parameters.push(['grantExpires', settings.grantExpires]);
+	}
 	return parameters.map(([name, value]) => name + '=' + encodeURIComponent(String(value)))
 		.join('&');
 }

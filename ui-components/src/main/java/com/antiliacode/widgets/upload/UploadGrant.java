@@ -15,9 +15,8 @@ package com.antiliacode.widgets.upload;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.time.Instant;
 
-import org.apache.wicket.Application;
 import org.apache.wicket.markup.html.form.upload.resource.AbstractFileUploadResource;
 import org.apache.wicket.request.IRequestParameters;
 import org.apache.wicket.util.lang.Bytes;
@@ -26,7 +25,11 @@ import org.apache.wicket.util.string.StringValueConversionException;
 /**
  * The id of an upload field and the limits of its uploads, which the field signs and its script
  * sends along with every request, as the query parameters of
- * {@link org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField} are.
+ * {@link org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField} are. The
+ * signature also covers when the grant expires, which is sent along, and who it was made for,
+ * {@link ResumableUploadResourceReference#getCurrentOwner()}, which is not: the server puts in the
+ * owner of each request when it checks the signature, so the grant of one owner never works for
+ * another, and no id of a session ends up in the page.
  *
  * @param uploadFieldId
  *            the unique id of the field
@@ -36,9 +39,15 @@ import org.apache.wicket.util.string.StringValueConversionException;
  *            the size of a file at most, in bytes, -1 for none
  * @param fileCountMax
  *            the number of files sent at once at most, -1 for any
+ * @param expires
+ *            when the grant expires, in milliseconds since the epoch
  */
-record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fileCountMax)
+record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fileCountMax,
+	long expires)
 {
+	/** The query parameter of when the grant expires. */
+	static final String EXPIRES = "grantExpires";
+
 	/** Keeps the tokens of these fields apart from those of other uploads. */
 	private static final String PURPOSE = "resumable-upload";
 
@@ -50,11 +59,11 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 	 *         back as it got them
 	 */
 	static UploadGrant of(String uploadFieldId, Bytes maxSize, Bytes fileMaxSize,
-		long fileCountMax)
+		long fileCountMax, Instant expires)
 	{
 		return new UploadGrant(uploadFieldId, Math.min(maxSize.bytes(), MAX_SAFE_INTEGER),
 			fileMaxSize != null ? Math.min(fileMaxSize.bytes(), MAX_SAFE_INTEGER) : -1,
-			fileCountMax);
+			fileCountMax, expires.toEpochMilli());
 	}
 
 	/**
@@ -66,29 +75,44 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 	}
 
 	/**
-	 * @return the grant signed, for the browser to send it back
+	 * @param now
+	 *            the current time
+	 * @return whether the grant has expired
 	 */
-	String token()
+	boolean isExpired(Instant now)
 	{
-		return Application.get()
-			.getSecuritySettings()
-			.getCryptFactory()
-			.newCrypt()
-			.encryptUrlSafe(serialized());
+		return now.toEpochMilli() >= expires;
 	}
 
 	/**
+	 * @param signer
+	 *            the signer of the grants
+	 * @param owner
+	 *            whom the grant is for, {@code null} for nobody
+	 * @return the grant signed, for the browser to send it back
+	 */
+	String token(IUploadGrantSigner signer, String owner)
+	{
+		return signer.sign(serialized(owner));
+	}
+
+	/**
+	 * @param signer
+	 *            the signer of the grants
+	 * @param owner
+	 *            whom the grant is for, {@code null} for nobody
 	 * @return the query of the grant, as the script of
 	 *         {@link org.apache.wicket.markup.html.form.upload.resource.FileUploadToResourceField}
-	 *         writes it
+	 *         writes it, with when it expires
 	 */
-	String query()
+	String query(IUploadGrantSigner signer, String owner)
 	{
 		return AbstractFileUploadResource.UPLOAD_ID + '=' + encoded(uploadFieldId) + '&' +
 			AbstractFileUploadResource.MAX_SIZE + '=' + maxSize + '&' +
 			AbstractFileUploadResource.FILE_MAX_SIZE + '=' + fileMaxSize + '&' +
 			AbstractFileUploadResource.FILE_COUNT_MAX + '=' + fileCountMax + '&' +
-			AbstractFileUploadResource.UPLOAD_TOKEN + '=' + encoded(token());
+			AbstractFileUploadResource.UPLOAD_TOKEN + '=' + encoded(token(signer, owner)) + '&' +
+			EXPIRES + '=' + expires;
 	}
 
 	private static String encoded(String value)
@@ -96,19 +120,24 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 		return URLEncoder.encode(value, StandardCharsets.UTF_8);
 	}
 
-	private String serialized()
+	private String serialized(String owner)
 	{
 		return PURPOSE + '\n' + uploadFieldId + '\n' + maxSize + '\n' + fileMaxSize + '\n' +
-			fileCountMax;
+			fileCountMax + '\n' + expires + '\n' + (owner != null ? owner : "");
 	}
 
 	/**
 	 * @param parameters
 	 *            the query parameters of a request
+	 * @param signer
+	 *            the signer of the grants
+	 * @param owner
+	 *            the owner of the request
 	 * @return the grant the parameters carry, {@code null} when they carry none, or one whose
-	 *         token does not match
+	 *         token was not made for them and the owner with the signer's key; whether it expired
+	 *         is not checked
 	 */
-	static UploadGrant of(IRequestParameters parameters)
+	static UploadGrant of(IRequestParameters parameters, IUploadGrantSigner signer, String owner)
 	{
 		String token = parameters.getParameterValue(AbstractFileUploadResource.UPLOAD_TOKEN)
 			.toOptionalString();
@@ -124,23 +153,13 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 			grant = new UploadGrant(uploadFieldId,
 				parameters.getParameterValue(AbstractFileUploadResource.MAX_SIZE).toLong(),
 				parameters.getParameterValue(AbstractFileUploadResource.FILE_MAX_SIZE).toLong(-1),
-				parameters.getParameterValue(AbstractFileUploadResource.FILE_COUNT_MAX).toLong(-1));
+				parameters.getParameterValue(AbstractFileUploadResource.FILE_COUNT_MAX).toLong(-1),
+				parameters.getParameterValue(EXPIRES).toLong());
 		}
 		catch (StringValueConversionException e)
 		{
 			return null;
 		}
-		String decrypted = Application.get()
-			.getSecuritySettings()
-			.getCryptFactory()
-			.newCrypt()
-			.decryptUrlSafe(token);
-		if (decrypted == null || !MessageDigest.isEqual(
-			grant.serialized().getBytes(StandardCharsets.UTF_8),
-			decrypted.getBytes(StandardCharsets.UTF_8)))
-		{
-			return null;
-		}
-		return grant;
+		return signer.verify(grant.serialized(owner), token) ? grant : null;
 	}
 }

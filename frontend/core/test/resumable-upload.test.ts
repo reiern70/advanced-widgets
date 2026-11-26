@@ -358,6 +358,23 @@ describe('the tus client', () => {
 		expect(upload.state).toBe('done');
 	});
 
+	it('fails an upload whose grant the server refuses, keeping it for a page loaded again',
+		async () => {
+			const fingerprint = fingerprintOf(file(10), ENDPOINT);
+			TusStorage.save({ fingerprint, url: ENDPOINT + '/old', endpoint: ENDPOINT,
+				name: 'film.mp4', size: 10, type: 'video/mp4', lastModified: 1, stored: 1 });
+			server.plan('HEAD', (request) => request.xhr.respond(403,
+				{ 'Wicket-Upload-Error': 'resumableUploadGrantRefused' }));
+			const upload = new TusUpload(file(10), { endpoint: ENDPOINT });
+			upload.start();
+			await settle();
+			expect(upload.state).toBe('failed');
+			expect(upload.error).toMatchObject({ status: 403, kind: 'refused',
+				key: 'resumableUploadGrantRefused' });
+			expect(server.of('POST')).toHaveLength(0);
+			expect(TusStorage.find(fingerprint)!.url).toBe(ENDPOINT + '/old');
+		});
+
 	it('creates the upload again when the server keeps one of another length', async () => {
 		server.uploads.set('other', { length: 99, offset: 5, metadata: '' });
 		TusStorage.save({ fingerprint: fingerprintOf(file(10), ENDPOINT),
@@ -1026,6 +1043,24 @@ describe('the resumable uploader', () => {
 		expect(server.of('PATCH')[0].headers['upload-offset']).toBe('4');
 	});
 
+	it('keeps the uploads of an earlier visit the server did not tell about, without showing them',
+		async () => {
+			TusStorage.save({ fingerprint: 'refused', url: ENDPOINT + '/refused', endpoint: ENDPOINT,
+				name: 'refused.mp4', size: 10, type: '', lastModified: 1, stored: 1 });
+			TusStorage.save({ fingerprint: 'unanswered', url: ENDPOINT + '/unanswered',
+				endpoint: ENDPOINT, name: 'unanswered.mp4', size: 10, type: '', lastModified: 1,
+				stored: 2 });
+			server.plan('HEAD', (request) => request.xhr.respond(403,
+				{ 'Wicket-Upload-Error': 'resumableUploadGrantRefused' }));
+			server.plan('HEAD', (request) => request.xhr.fail());
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en' });
+			await settle();
+			expect(uploader.items).toHaveLength(0);
+			expect(uploader.questionElement.hidden).toBe(true);
+			expect(TusStorage.find('refused')).not.toBeNull();
+			expect(TusStorage.find('unanswered')).not.toBeNull();
+		});
+
 	it('offers only the uploads of its place an earlier page left, not those another page sends',
 		async () => {
 			['mine', 'elsewhere', 'sending'].forEach((name) =>
@@ -1135,7 +1170,7 @@ describe('the resumable uploader', () => {
 describe('Wicket.Upload.resumable', () => {
 	const SETTINGS = { inputName: 'field', resourceUrl: ENDPOINT, ajaxCallBackUrl: 'callback',
 		maxSize: 100, fileMaxSize: 50, fileCountMax: -1, uploadToken: 'to ken',
-		parallelUploads: 2, remembering: true };
+		grantExpires: 1767225600000, parallelUploads: 2, remembering: true };
 
 	async function glue(heard: unknown[]): Promise<{ resumable(id: string, settings: object,
 		attributes?: object): ResumableUploader | null }> {
@@ -1165,7 +1200,8 @@ describe('Wicket.Upload.resumable', () => {
 			server.storing = 'stored-1';
 			uploader.add([file(8)]);
 			await settle();
-			const query = '?uploadId=field&maxSize=100&fileMaxSize=50&fileCountMax=-1&uploadToken=to%20ken';
+			const query = '?uploadId=field&maxSize=100&fileMaxSize=50&fileCountMax=-1' +
+				'&uploadToken=to%20ken&grantExpires=1767225600000';
 			expect(server.of('POST')[0].url).toBe(ENDPOINT + query);
 			expect(server.of('PATCH')[0].url).toBe(ENDPOINT + '/u1' + query);
 			expect(heard).toEqual([{ c: 'x', u: 'callback', m: 'POST', ep: [{ name: 'veil',

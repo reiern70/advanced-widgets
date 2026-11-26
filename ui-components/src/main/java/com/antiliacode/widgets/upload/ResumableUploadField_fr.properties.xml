@@ -28,4 +28,5 @@
 	<entry key="resumableUploadTooMuch">Les importations pas encore terminées pèseraient plus de ${maxBytesPerSession} ensemble.</entry>
 	<entry key="resumableUploadNoRoom">Le serveur n’a pas de place pour le fichier en ce moment&#160;: réessayez plus tard.</entry>
 	<entry key="resumableUploadLost">Le serveur n’a plus l’importation&#160;: choisissez à nouveau le fichier.</entry>
+	<entry key="resumableUploadGrantRefused">Cette page est trop ancienne pour poursuivre l’importation&#160;: rechargez-la.</entry>
 </properties>

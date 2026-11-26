@@ -155,6 +155,27 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		query = queryOf(settings());
 	}
 
+	/**
+	 * Renders the field again, on a new page, and takes the query of its grant.
+	 */
+	private void renderAgain()
+	{
+		field = new TestField("files");
+		tester.startPage(new TestPage(field));
+		query = queryOf(settings());
+	}
+
+	/**
+	 * Ends the session, and renders the field again in a new one, as after signing in again.
+	 */
+	private void newSession()
+	{
+		String session = tester.getSession().getId();
+		tester.getSession().invalidateNow();
+		renderAgain();
+		assertNotEquals(session, tester.getSession().getId());
+	}
+
 	private static ResumableUploadResourceReference reference()
 	{
 		return ResumableUploadResourceReference.getInstance();
@@ -183,6 +204,7 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		parameters.put("fileMaxSize", settings.get("fileMaxSize"));
 		parameters.put("fileCountMax", settings.get("fileCountMax"));
 		parameters.put("uploadToken", settings.getString("uploadToken"));
+		parameters.put("grantExpires", settings.get("grantExpires"));
 		StringBuilder query = new StringBuilder();
 		parameters.forEach((name, value) -> query.append(query.isEmpty() ? "" : "&")
 			.append(name)
@@ -291,6 +313,8 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		assertEquals(30000, settings.getLong("stallMillis"));
 		assertTrue(settings.getBoolean("recalling"));
 		assertEquals(20000, settings.getLong("inUseMillis"));
+		assertEquals(Instant.parse("2026-11-24T10:30:00Z").toEpochMilli(),
+			settings.getLong("grantExpires"), "the expiry of the uploads after the rendering");
 		assertEquals(TestPage.class.getName() + ":" + field.getPageRelativePath(),
 			settings.getString("rememberedAs"), "the same on every page, unlike the id");
 		assertEquals("Pause {0}", settings.getJSONObject("texts").getString("pause"));
@@ -386,7 +410,8 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		assertEquals("1.0.0", header("Tus-Version"));
 
 		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "10"), null, null));
-		assertEquals("uploadToResourceFailed", header(ResumableUploadResource.ERROR_HEADER));
+		assertEquals(ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY,
+			header(ResumableUploadResource.ERROR_HEADER));
 		String raised = query.replace("maxSize=", "maxSize=1");
 		assertEquals(403,
 			send("POST", PATH + "?" + raised, Map.of("Upload-Length", "10"), null, null));
@@ -478,7 +503,12 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		assertEquals(507, send("POST", PATH, Map.of("Upload-Length", "30"), null));
 		assertEquals(ResumableUploadField.NO_ROOM_RESOURCE_KEY,
 			header(ResumableUploadResource.ERROR_HEADER));
-		reference().setMaxTotalBytes(Bytes.MAX);
+		reference().setMaxTotalBytes(null);
+		assertEquals(4000, reference().getMaxTotalBytes().bytes(),
+			"ten times what an owner may have");
+		reference().setMaxBytesPerSession(Bytes.bytes(50));
+		assertEquals(500, reference().getMaxTotalBytes().bytes());
+		reference().setMaxBytesPerSession(null);
 
 		reference().setMaxUploadsPerSession(2);
 		create(1, "b");
@@ -592,6 +622,7 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		reference().setOwnerExpiry(Duration.ofDays(1));
 		String ofSession = create(10, "a.txt");
 		owner = "user-1";
+		renderAgain();
 		String ofUser = create(10, "b.txt");
 		assertEquals("Wed, 25 Nov 2026 10:00:00 GMT", header("Upload-Expires"));
 		clock.add(Duration.ofHours(2));
@@ -676,6 +707,7 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 	void keepsTheUploadsOfAnOwnerBeyondItsSession()
 	{
 		owner = "user-1";
+		renderAgain();
 		String url = create(10, "a.txt");
 		assertEquals(204, patch(url, 0, bytes(4, 0)));
 		String session = tester.getSession().getId();
@@ -698,11 +730,139 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		assertEquals(200, send("HEAD", url, Map.of(), null));
 		assertEquals("4", header("Upload-Offset"));
 		owner = "user-2";
-		assertEquals(404, send("HEAD", url, Map.of(), null), "nor does another user find it");
+		assertEquals(403, send("HEAD", url, Map.of(), null), "the grant of another user");
 		owner = "user-1";
 		assertEquals(204, patch(url, 4, bytes(6, 4)));
 		String fileName = header(ResumableUploadResource.FILE_NAME_HEADER);
 		assertTrue(reference().getFileManager().getFile(field.getMarkupId(), fileName).isFile());
+
+		// the upload of the first user is not one of the second, though both know its address
+		String other = create(10, "b.txt");
+		owner = "user-2";
+		renderAgain();
+		assertEquals(404, send("HEAD", other, Map.of(), null), "another user does not find it");
+	}
+
+	@Test
+	void refusesTheGrantOfAnEndedSessionByDefault()
+	{
+		owner = "user-1";
+		renderAgain();
+		String url = create(10, "a.txt");
+		String before = query;
+		newSession();
+		query = before;
+		assertEquals(403, send("HEAD", url, Map.of(), null),
+			"signed with the key of the old session");
+		assertEquals(ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY,
+			header(ResumableUploadResource.ERROR_HEADER));
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null));
+	}
+
+	@Test
+	void takesTheGrantOfAnEndedSessionSignedWithAKeyOfTheApplication()
+	{
+		reference().setGrantSigner(HmacGrantSigner.random());
+		owner = "user-1";
+		renderAgain();
+		String url = create(10, "a.txt");
+		assertEquals(204, patch(url, 0, bytes(4, 0)));
+		String before = query;
+		newSession();
+		query = before;
+		assertEquals(200, send("HEAD", url, Map.of(), null), "the page of the ended session");
+		assertEquals("4", header("Upload-Offset"));
+		assertEquals(204, patch(url, 4, bytes(6, 4)));
+		assertNotNull(header(ResumableUploadResource.FILE_NAME_HEADER));
+		String other = create(5, "b.txt");
+
+		owner = "user-2";
+		assertEquals(403, send("HEAD", other, Map.of(), null), "the grant of another owner");
+		assertEquals(ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY,
+			header(ResumableUploadResource.ERROR_HEADER));
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null));
+	}
+
+	@Test
+	void refusesAGrantChangedOrSignedWithAnotherKey()
+	{
+		reference().setGrantSigner(HmacGrantSigner.random());
+		renderAgain();
+		String signed = query;
+		query = signed.replace("maxSize=", "maxSize=1");
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null), "a larger size");
+		query = signed.replaceAll("grantExpires=\\d+", "grantExpires=" + Long.MAX_VALUE);
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null), "a later expiry");
+		query = signed.replaceAll("&grantExpires=\\d+", "");
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null), "no expiry");
+		query = signed.replace("uploadToken=", "uploadToken=A");
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null), "another token");
+		reference().setGrantSigner(HmacGrantSigner.random());
+		query = signed;
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null), "another key");
+		assertEquals(0, reference().size());
+	}
+
+	@Test
+	void startsNoUploadOnceTheGrantExpired()
+	{
+		reference().setGrantExpiry(Duration.ofMinutes(5));
+		renderAgain();
+		String url = create(10, "a.txt");
+		clock.add(Duration.ofMinutes(6));
+		assertEquals(403, send("POST", PATH, Map.of("Upload-Length", "1"), null));
+		assertEquals(ResumableUploadField.GRANT_REFUSED_RESOURCE_KEY,
+			header(ResumableUploadResource.ERROR_HEADER));
+		assertEquals(200, send("HEAD", url, Map.of(), null), "the upload started goes on");
+		assertEquals(204, patch(url, 0, bytes(10, 0)));
+		assertNotNull(header(ResumableUploadResource.FILE_NAME_HEADER));
+		assertEquals(403, send("HEAD", PATH + "/0123456789abcdef0123456789abcdef", Map.of(), null),
+			"not told whether the server has another one");
+
+		assertEquals(Duration.ofMinutes(5), reference().getGrantExpiry());
+		reference().setGrantExpiry(null);
+		assertEquals(reference().getOwnerExpiry(), reference().getGrantExpiry());
+		reference().setOwnerExpiry(Duration.ofDays(1));
+		assertEquals(Duration.ofDays(1), reference().getGrantExpiry());
+		assertThrows(IllegalArgumentException.class,
+			() -> reference().setGrantExpiry(Duration.ZERO));
+	}
+
+	@Test
+	void signsWithAKeyOfAtLeast32Bytes()
+	{
+		HmacGrantSigner signer = HmacGrantSigner.random();
+		String signature = signer.sign("a text");
+		assertTrue(signer.verify("a text", signature));
+		assertFalse(signer.verify("another text", signature));
+		assertFalse(signer.verify("a text", signature + "A"));
+		assertFalse(signer.verify("a text", "not base64!"));
+		assertFalse(signer.verify("a text", null));
+		assertFalse(HmacGrantSigner.random().verify("a text", signature), "another key");
+		byte[] key = new byte[32];
+		assertEquals(new HmacGrantSigner(() -> key).sign("a text"),
+			new HmacGrantSigner(() -> key.clone()).sign("a text"),
+			"the same key, the same signature");
+		assertThrows(IllegalStateException.class,
+			() -> new HmacGrantSigner(() -> new byte[31]).sign("a text"));
+		assertThrows(IllegalArgumentException.class, () -> new HmacGrantSigner(null));
+	}
+
+	@Test
+	void signsWithTheKeyOfTheSession()
+	{
+		IUploadGrantSigner signer = HmacGrantSigner.inSession();
+		String signature = signer.sign("a text");
+		assertTrue(signer.verify("a text", signature));
+		assertEquals(signature, signer.sign("a text"), "the key is made once");
+		assertFalse(signer.verify("another text", signature));
+		assertFalse(signer.verify("a text", "garbage"));
+		newSession();
+		assertFalse(signer.verify("a text", signature), "the key of another session");
+		assertNotEquals(signature, signer.sign("a text"), "the key of another session");
+		assertTrue(reference().getGrantSigner() instanceof HmacGrantSigner,
+			"a key of the session by default");
+		assertThrows(IllegalArgumentException.class, () -> reference().setGrantSigner(null));
 	}
 
 	@Test
