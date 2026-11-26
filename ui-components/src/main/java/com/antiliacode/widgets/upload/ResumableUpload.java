@@ -42,6 +42,8 @@ public final class ResumableUpload
 
 	private final String owner;
 
+	private final String context;
+
 	private final boolean endingWithSession;
 
 	private final String uploadFieldId;
@@ -65,11 +67,12 @@ public final class ResumableUpload
 
 	private volatile String storedFieldId;
 
-	ResumableUpload(String id, String owner, boolean endingWithSession, String uploadFieldId,
-		long length, Map<String, String> metadata, Path file, Instant created)
+	ResumableUpload(String id, String owner, String context, boolean endingWithSession,
+		String uploadFieldId, long length, Map<String, String> metadata, Path file, Instant created)
 	{
 		this.id = id;
 		this.owner = owner;
+		this.context = context;
 		this.endingWithSession = endingWithSession;
 		this.uploadFieldId = uploadFieldId;
 		this.length = length;
@@ -94,6 +97,15 @@ public final class ResumableUpload
 	String getOwner()
 	{
 		return owner;
+	}
+
+	/**
+	 * @return the part of the application the upload belongs to, as the grant of its field tells,
+	 *         {@code null} for none
+	 */
+	String getContext()
+	{
+		return context;
 	}
 
 	/**

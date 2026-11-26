@@ -188,7 +188,7 @@ export { absoluteUrl, DEFAULT_CHUNK_SIZE, DEFAULT_PROBE_DELAYS, DEFAULT_RESUMABL
 	retryDelaysFor, STORED_NAME_HEADER, terminate,
 	TUS_RESUMABLE, TusError, TusStorage, TusUpload, withQuery } from './resumable-upload.js';
 export type { ResumableItem, ResumableItemState, ResumableQuestion, ResumableUploaderOptions,
-	ResumableUploaderTexts, StoredUpload, TusErrorKind, TusRequestOptions, TusState,
+	RecalledUpload, ResumableUploaderTexts, StoredUpload, TusErrorKind, TusRequestOptions, TusState,
 	TusUploadOptions } from './resumable-upload.js';
 export { BUTTON_BUSY_CLASS, BUTTON_SIZES, BUTTON_VARIANTS, buttonClasses, guardBusyButtons, isButtonBusy,
 	setButtonBusy } from './button.js';
