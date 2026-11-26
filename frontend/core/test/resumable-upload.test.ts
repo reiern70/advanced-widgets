@@ -270,7 +270,7 @@ describe('the tus client', () => {
 		expect(create.headers['upload-length']).toBe('10');
 		expect(create.headers['x-custom']).toBe('yes');
 		expect(create.headers['upload-metadata']).toBe(encodeMetadata({ filename: 'film.mp4',
-			filetype: 'video/mp4', album: 'Été' }));
+			filetype: 'video/mp4', lastmodified: '1', album: 'Été' }));
 		const patches = server.of('PATCH');
 		expect(patches.map((patch) => patch.headers['upload-offset'])).toEqual(['0', '4', '8']);
 		expect(patches.map((patch) => patch.body?.size)).toEqual([4, 4, 2]);
@@ -1061,6 +1061,46 @@ describe('the resumable uploader', () => {
 			expect(TusStorage.find('unanswered')).not.toBeNull();
 		});
 
+	it('offers the uploads the server keeps for it, and goes on with one once its file is chosen',
+		async () => {
+			server.uploads.set('kept', { length: 10, offset: 4, metadata: '' });
+			const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+				rememberedAs: 'page:files', recalled: [{ id: 'kept', name: 'film.mp4', size: 10,
+					type: 'video/mp4', lastModified: 1, sent: 4 }] });
+			await settle();
+			expect(uploader.items.map((item) => item.state)).toEqual(['interrupted']);
+			expect(TusStorage.list(ENDPOINT)[0]).toMatchObject({ url: ENDPOINT + '/kept',
+				rememberedAs: 'page:files' });
+			uploader.add([file(10, 'film.mp4')]);
+			await settle();
+			expect(uploader.items[0].state).toBe('done');
+			expect(server.of('POST')).toHaveLength(0);
+			expect(server.of('PATCH')[0].headers['upload-offset']).toBe('4');
+		});
+
+	it('keeps an upload the server offers once, without the id of a session in its address', () => {
+		TusStorage.save({ fingerprint: fingerprintOf(file(10), ENDPOINT), url: ENDPOINT + '/kept',
+			endpoint: ENDPOINT, name: 'film.mp4', size: 10, type: 'video/mp4', lastModified: 1,
+			stored: 1 });
+		const recalled = [{ id: 'kept', name: 'film.mp4', size: 10, type: 'video/mp4',
+			lastModified: 1, sent: 4 }];
+		new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en', recalled });
+		expect(TusStorage.list(ENDPOINT)).toHaveLength(1);
+		new ResumableUploader(host(), { endpoint: ENDPOINT + ';jsessionid=abc', locale: 'en',
+			recalled: [{ ...recalled[0], id: 'other' }] });
+		expect(TusStorage.list(ENDPOINT + ';jsessionid=abc').map((stored) => stored.url))
+			.toEqual([ENDPOINT + '/other']);
+	});
+
+	it('tells the server the place of the uploader and the date of the file', async () => {
+		const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+			rememberedAs: 'page:files' });
+		uploader.add([file(8)]);
+		await settle();
+		expect(server.of('POST')[0].headers['upload-metadata']).toBe(encodeMetadata({
+			filename: 'film.mp4', filetype: 'video/mp4', lastmodified: '1', place: 'page:files' }));
+	});
+
 	it('offers only the uploads of its place an earlier page left, not those another page sends',
 		async () => {
 			['mine', 'elsewhere', 'sending'].forEach((name) =>
@@ -1210,6 +1250,15 @@ describe('Wicket.Upload.resumable', () => {
 					contentType: 'video/mp4' }]) }] }]);
 			expect(upload.resumable('missing', SETTINGS)).toBeNull();
 		});
+
+	it('sends the context of the field with its grant', async () => {
+		const upload = await glue([]);
+		document.body.innerHTML = '<input type="file" id="field"/>';
+		const uploader = upload.resumable('field', { ...SETTINGS, uploadContext: 'videos' })!;
+		uploader.add([file(8)]);
+		await settle();
+		expect(server.of('POST')[0].url).toContain('&grantExpires=1767225600000&uploadContext=videos');
+	});
 
 	it('tells the callback the key of a refusal, and a cancellation', async () => {
 		const heard: Array<{ ep: Array<{ name: string; value: string }> }> = [];

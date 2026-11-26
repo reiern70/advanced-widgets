@@ -52,6 +52,19 @@ What 11.0.0-RC9 has, and:
   offers to go on with it; the uploader forgets only an upload the server says it does not have. The
   uploads of all sessions together take at most ten times those of a session by default
   (`setMaxTotalBytes`).
+- An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2010 and #2011: the
+  reference, `setUploadsTracker` with one tracker for the whole application, tells it of each upload
+  created, of its bytes, of its file stored and of its end, each with its context, the part of the
+  application the field sets (`setUploadContext`, signed with the grant), and the tracker lists
+  those of an owner in a context (`getUploads`) and deletes one (`delete`; the reference's
+  `deleteUpload`), and is destroyed with the application (`destroy()`). The field offers, besides
+  those `localStorage` remembers, the unfinished uploads the tracker lists (`getRecalledUploads()`):
+  with a context those of the same context wherever they started, else those of its place; with an
+  owner beyond the session, in the next session or from another browser. By default the tracker
+  lists the uploads the reference holds in memory. The core's `ResumableUploader` takes them as
+  `recalled`, and tells the server the date of each file and the place of the uploader. The demo
+  lists the unfinished uploads of the session in its context, each with a button discarding it; it
+  keeps nothing of its visitors beyond the session.
 - The timings and limits of the resumable uploads can be set: the field's
   `setReconnectCheckInterval` (how often it looks whether the server answers again, 30 seconds),
   `setStallTimeout` (how long a request may get nothing, 30 seconds), `setRecalling` (whether it

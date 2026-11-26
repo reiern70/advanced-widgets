@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxCheckBox;
 import org.apache.wicket.markup.head.CssHeaderItem;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -28,6 +29,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.LambdaModel;
+import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.request.resource.CssResourceReference;
 
@@ -35,6 +37,7 @@ import com.antiliacode.widgets.demo.DemoPage;
 import com.antiliacode.widgets.demo.frameworks.FrameworkTabs;
 import com.antiliacode.widgets.throttle.ThrottlePanel;
 import com.antiliacode.widgets.upload.ResumableUploadField;
+import com.antiliacode.widgets.upload.TrackedUpload;
 import com.github.openjson.JSONObject;
 
 /**
@@ -54,9 +57,14 @@ public class ResumableUploadPage extends DemoPage
 	/** The files received the page lists, the latest first. */
 	private static final int RECEIVED_MAX = 12;
 
+	/** The part of the application the uploads of the demo belong to. */
+	static final String CONTEXT = "resumable-demo";
+
 	private final List<Receipt> received = new ArrayList<>();
 
 	private final WebMarkupContainer receivedBox;
+
+	private final WebMarkupContainer trackedBox;
 
 	/**
 	 * Constructor.
@@ -81,6 +89,8 @@ public class ResumableUploadPage extends DemoPage
 		receivedBox = new WebMarkupContainer("received");
 		receivedBox.setOutputMarkupId(true);
 		themed.add(receivedBox);
+		trackedBox = newTrackedBox("tracked");
+		themed.add(trackedBox);
 		themed.add(new ResumableUploadField("uploads")
 		{
 			private static final long serialVersionUID = 1L;
@@ -108,9 +118,9 @@ public class ResumableUploadPage extends DemoPage
 				{
 					received.remove(received.size() - 1);
 				}
-				target.add(receivedBox);
+				target.add(receivedBox, trackedBox);
 			}
-		}.setParallelUploads(2));
+		}.setUploadContext(CONTEXT).setParallelUploads(2));
 
 		WebMarkupContainer table = new WebMarkupContainer("table")
 		{
@@ -148,6 +158,55 @@ public class ResumableUploadPage extends DemoPage
 				setVisible(received.isEmpty());
 			}
 		});
+	}
+
+	/**
+	 * @return the list of the unfinished uploads the server keeps track of for the session, in the
+	 *         context of the demo, each with a button discarding it
+	 */
+	private WebMarkupContainer newTrackedBox(String id)
+	{
+		WebMarkupContainer box = new WebMarkupContainer(id);
+		box.setOutputMarkupId(true);
+		LoadableDetachableModel<List<TrackedUpload>> uploads = LoadableDetachableModel
+			.of(() -> DemoResumableUploads.get().unfinishedUploads(CONTEXT));
+		box.add(new ListView<>("uploads", uploads)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<TrackedUpload> item)
+			{
+				TrackedUpload upload = item.getModelObject();
+				item.add(new Label("name", upload.clientFileName()));
+				item.add(new Label("progress", new StringResourceModel("tracked.progress",
+					ResumableUploadPage.this).setParameters(sizeOf(upload.offset(), getLocale()),
+						sizeOf(upload.length(), getLocale()))));
+				item.add(new AjaxLink<Void>("discard")
+				{
+					private static final long serialVersionUID = 1L;
+
+					@Override
+					public void onClick(AjaxRequestTarget target)
+					{
+						DemoResumableUploads.get().discard(CONTEXT, upload.id());
+						target.add(box);
+					}
+				});
+			}
+		});
+		box.add(new WebMarkupContainer("none")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(uploads.getObject().isEmpty());
+			}
+		});
+		return box;
 	}
 
 	/**

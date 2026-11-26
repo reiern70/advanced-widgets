@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
@@ -28,6 +29,7 @@ import org.apache.wicket.MetaDataKey;
 import org.apache.wicket.Session;
 import com.antiliacode.widgets.upload.ResumableUpload;
 import com.antiliacode.widgets.upload.ResumableUploadResourceReference;
+import com.antiliacode.widgets.upload.TrackedUpload;
 import org.apache.wicket.markup.html.form.upload.resource.FolderUploadsFileManager;
 import org.apache.wicket.util.file.File;
 import org.apache.wicket.util.lang.Bytes;
@@ -81,6 +83,39 @@ public class DemoResumableUploads extends ResumableUploadResourceReference
 		setMaxBytesPerSession(Bytes.megabytes(300));
 		setMaxTotalBytes(Bytes.gigabytes(1));
 		setExpiry(Duration.ofMinutes(30));
+	}
+
+	/**
+	 * @param context
+	 *            the context of the uploads
+	 * @return the unfinished uploads of the current session in the context, as the tracker of the
+	 *         uploads lists them: the demo keeps nothing of its visitors beyond the session
+	 */
+	public List<TrackedUpload> unfinishedUploads(String context)
+	{
+		String owner = getCurrentOwner();
+		return owner == null ? List.of()
+			: getUploadsTracker().getUploads(context, owner)
+				.stream()
+				.filter(upload -> !upload.isStored())
+				.toList();
+	}
+
+	/**
+	 * Discards an upload of the current session, its bytes with it.
+	 *
+	 * @param context
+	 *            the context of the upload
+	 * @param uploadId
+	 *            the id of the upload
+	 */
+	public void discard(String context, String uploadId)
+	{
+		String owner = getCurrentOwner();
+		if (owner != null)
+		{
+			getUploadsTracker().delete(context, owner, uploadId);
+		}
 	}
 
 	/**

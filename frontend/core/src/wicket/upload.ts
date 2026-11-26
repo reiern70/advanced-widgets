@@ -428,6 +428,8 @@ interface ResumableFieldSettings extends Omit<ResumableUploaderOptions, 'endpoin
 	uploadToken: string;
 	/** When the grant of the field expires, in milliseconds since the epoch; signed with it. */
 	grantExpires?: number;
+	/** The part of the application the uploads belong to, signed with the grant. */
+	uploadContext?: string;
 	parallelUploads?: number;
 	remembering?: boolean;
 }
@@ -461,6 +463,9 @@ function queryOf(settings: ResumableFieldSettings): string {
 	parameters.push(['uploadToken', settings.uploadToken]);
 	if (settings.grantExpires != null) {
 		parameters.push(['grantExpires', settings.grantExpires]);
+	}
+	if (settings.uploadContext) {
+		parameters.push(['uploadContext', settings.uploadContext]);
 	}
 	return parameters.map(([name, value]) => name + '=' + encodeURIComponent(String(value)))
 		.join('&');

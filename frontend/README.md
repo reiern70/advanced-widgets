@@ -787,7 +787,10 @@ uploads the signed-in user's rather than the session's, so that they outlive it,
 `setOwnerExpiry` rather than `setExpiry`; `setExpiryCheckInterval`, `setLockTimeout` and
 `setMaxMetadataLength` set its other timings and limits; `setGrantSigner` and `setGrantExpiry`
 decide how long the grant of a page holds, which the field sends as `uploadToken` and
-`grantExpires`: a refused one fails the upload and keeps it for the page loaded again; and
+`grantExpires`: a refused one fails the upload and keeps it for the page loaded again;
+`setUploadsTracker` registers an `IUploadsTracker` that hears of each upload with its context,
+`ResumableUploadField#setUploadContext`, and lists those of an owner, which the field hands the
+uploader as `recalled` to offer them, wherever they started; and
 `ResumableUploadField#onUploadSuccess` takes the files of the field; `newQuery(id, ...)` signs the requests of the React and Svelte apps,
 whose files are found in the file manager by that id and the stored name. The demo's Resumable
 upload page sends large files in Wicket, React and Svelte, breaks off a chunk now and then when

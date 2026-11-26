@@ -33,6 +33,9 @@ import org.apache.wicket.util.string.StringValueConversionException;
  *
  * @param uploadFieldId
  *            the unique id of the field
+ * @param context
+ *            the part of the application the uploads belong to, see
+ *            {@link ResumableUploadField#setUploadContext(String)}, {@code null} for none
  * @param maxSize
  *            the size of the files sent at once at most, in bytes
  * @param fileMaxSize
@@ -42,11 +45,14 @@ import org.apache.wicket.util.string.StringValueConversionException;
  * @param expires
  *            when the grant expires, in milliseconds since the epoch
  */
-record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fileCountMax,
-	long expires)
+record UploadGrant(String uploadFieldId, String context, long maxSize, long fileMaxSize,
+	long fileCountMax, long expires)
 {
 	/** The query parameter of when the grant expires. */
 	static final String EXPIRES = "grantExpires";
+
+	/** The query parameter of the context of the uploads. */
+	static final String CONTEXT = "uploadContext";
 
 	/** Keeps the tokens of these fields apart from those of other uploads. */
 	private static final String PURPOSE = "resumable-upload";
@@ -58,10 +64,10 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 	 * @return the grant of a field, its sizes no larger than a script holds exactly: it sends them
 	 *         back as it got them
 	 */
-	static UploadGrant of(String uploadFieldId, Bytes maxSize, Bytes fileMaxSize,
+	static UploadGrant of(String uploadFieldId, String context, Bytes maxSize, Bytes fileMaxSize,
 		long fileCountMax, Instant expires)
 	{
-		return new UploadGrant(uploadFieldId, Math.min(maxSize.bytes(), MAX_SAFE_INTEGER),
+		return new UploadGrant(uploadFieldId, context, Math.min(maxSize.bytes(), MAX_SAFE_INTEGER),
 			fileMaxSize != null ? Math.min(fileMaxSize.bytes(), MAX_SAFE_INTEGER) : -1,
 			fileCountMax, expires.toEpochMilli());
 	}
@@ -112,7 +118,16 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 			AbstractFileUploadResource.FILE_MAX_SIZE + '=' + fileMaxSize + '&' +
 			AbstractFileUploadResource.FILE_COUNT_MAX + '=' + fileCountMax + '&' +
 			AbstractFileUploadResource.UPLOAD_TOKEN + '=' + encoded(token(signer, owner)) + '&' +
-			EXPIRES + '=' + expires;
+			EXPIRES + '=' + expires + (context != null ? '&' + CONTEXT + '=' + encoded(context) : "");
+	}
+
+	/**
+	 * @return whether a text can be a line of the signed grant: one with a line break could stand
+	 *         for others
+	 */
+	static boolean isLine(String text)
+	{
+		return text == null || (text.indexOf('\n') < 0 && text.indexOf('\r') < 0);
 	}
 
 	private static String encoded(String value)
@@ -122,7 +137,8 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 
 	private String serialized(String owner)
 	{
-		return PURPOSE + '\n' + uploadFieldId + '\n' + maxSize + '\n' + fileMaxSize + '\n' +
+		return PURPOSE + '\n' + uploadFieldId + '\n' + (context != null ? context : "") + '\n' +
+			maxSize + '\n' + fileMaxSize + '\n' +
 			fileCountMax + '\n' + expires + '\n' + (owner != null ? owner : "");
 	}
 
@@ -143,14 +159,15 @@ record UploadGrant(String uploadFieldId, long maxSize, long fileMaxSize, long fi
 			.toOptionalString();
 		String uploadFieldId = parameters.getParameterValue(AbstractFileUploadResource.UPLOAD_ID)
 			.toOptionalString();
-		if (token == null || uploadFieldId == null)
+		String context = parameters.getParameterValue(CONTEXT).toOptionalString();
+		if (token == null || uploadFieldId == null || !isLine(uploadFieldId) || !isLine(context))
 		{
 			return null;
 		}
 		UploadGrant grant;
 		try
 		{
-			grant = new UploadGrant(uploadFieldId,
+			grant = new UploadGrant(uploadFieldId, context,
 				parameters.getParameterValue(AbstractFileUploadResource.MAX_SIZE).toLong(),
 				parameters.getParameterValue(AbstractFileUploadResource.FILE_MAX_SIZE).toLong(-1),
 				parameters.getParameterValue(AbstractFileUploadResource.FILE_COUNT_MAX).toLong(-1),
