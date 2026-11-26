@@ -25,6 +25,15 @@
 		<label class="resumable-demo__check"><input type="checkbox" wicket:id="breaking"/> <wicket:message key="breaking"/></label>
 		<div wicket:id="speed">[the speed of the uploads]</div>
 	</section>
+	<section wicket:id="tracked" class="resumable-demo__received">
+		<h3><wicket:message key="tracked"/></h3>
+		<ul class="resumable-demo__tracked">
+			<li wicket:id="uploads"><span wicket:id="name">[name]</span>
+				<span wicket:id="progress" class="resumable-demo__number">[progress]</span>
+				<button type="button" wicket:id="discard"><wicket:message key="tracked.discard"/></button></li>
+		</ul>
+		<p wicket:id="none" class="resumable-demo__hint"><wicket:message key="tracked.none"/></p>
+	</section>
 	<section wicket:id="received" class="resumable-demo__received">
 		<h3><wicket:message key="received"/></h3>
 		<table wicket:id="table" class="resumable-demo__table">

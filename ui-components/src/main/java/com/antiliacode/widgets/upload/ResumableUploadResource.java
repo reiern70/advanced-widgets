@@ -197,6 +197,7 @@ class ResumableUploadResource implements IResource
 		try
 		{
 			upload = reference.create(owner, grant, length, metadata);
+			reference.track(upload, IUploadsTracker::onCreated);
 		}
 		catch (ResumableUploadResourceReference.Refusal refusal)
 		{
@@ -292,8 +293,13 @@ class ResumableUploadResource implements IResource
 			{
 				return answer.status(400);
 			}
+			long before = upload.getOffset();
 			boolean broken = !append(upload, request,
 				Math.min(maxChunk, upload.getLength() - offset));
+			if (upload.getOffset() > before)
+			{
+				reference.track(upload, IUploadsTracker::onProgress);
+			}
 			answer.header("Upload-Offset", String.valueOf(upload.getOffset()));
 			if (upload.isComplete())
 			{

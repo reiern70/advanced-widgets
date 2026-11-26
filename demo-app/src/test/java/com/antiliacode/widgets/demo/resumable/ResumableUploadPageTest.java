@@ -110,7 +110,8 @@ class ResumableUploadPageTest
 			settings.getLong("maxSize") + "&fileMaxSize=" + settings.getLong("fileMaxSize") +
 			"&fileCountMax=" + settings.getLong("fileCountMax") + "&uploadToken=" +
 			encoded(settings.getString("uploadToken")) + "&grantExpires=" +
-			settings.getLong("grantExpires");
+			settings.getLong("grantExpires") + "&uploadContext=" +
+			encoded(settings.getString("uploadContext"));
 	}
 
 	private static String encoded(String value)
