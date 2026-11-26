@@ -41,6 +41,17 @@ What 11.0.0-RC9 has, and:
   beyond the session.
 - The field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and `resumeUpload()` reach
   the uploader of the theme.
+- The grants of the resumable uploads, the id of a field and its limits, are signed for the owner
+  the page was rendered for, and expire (`setGrantExpiry`, `getOwnerExpiry()` by default), as in
+  apache/wicket#2010 and #2011. An `IUploadGrantSigner` signs them (`setGrantSigner`): by default
+  `CryptFactoryGrantSigner`, the application's crypt, whose key is in the session, or
+  `HmacGrantSigner`, HMAC-SHA256 with a key of at least 32 bytes that the application supplies,
+  `HmacGrantSigner.random()` one kept in memory, so that a page rendered before the session ended
+  goes on with the uploads of its user. A grant the server refuses fails the upload with "This page
+  is too old to continue the upload: reload it." and keeps it for the page loaded again, which
+  offers to go on with it; the uploader forgets only an upload the server says it does not have. The
+  uploads of all sessions together take at most ten times those of a session by default
+  (`setMaxTotalBytes`).
 - The timings and limits of the resumable uploads can be set: the field's
   `setReconnectCheckInterval` (how often it looks whether the server answers again, 30 seconds),
   `setStallTimeout` (how long a request may get nothing, 30 seconds), `setRecalling` (whether it

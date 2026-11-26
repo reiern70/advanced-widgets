@@ -785,7 +785,9 @@ field's callback how each upload ended, the field's
 11.1 for Wicket 11.0, is the tus resource, whose `getCurrentOwner()` may make the
 uploads the signed-in user's rather than the session's, so that they outlive it, kept for
 `setOwnerExpiry` rather than `setExpiry`; `setExpiryCheckInterval`, `setLockTimeout` and
-`setMaxMetadataLength` set its other timings and limits; and
+`setMaxMetadataLength` set its other timings and limits; `setGrantSigner` and `setGrantExpiry`
+decide how long the grant of a page holds, which the field sends as `uploadToken` and
+`grantExpires`: a refused one fails the upload and keeps it for the page loaded again; and
 `ResumableUploadField#onUploadSuccess` takes the files of the field; `newQuery(id, ...)` signs the requests of the React and Svelte apps,
 whose files are found in the file manager by that id and the stored name. The demo's Resumable
 upload page sends large files in Wicket, React and Svelte, breaks off a chunk now and then when

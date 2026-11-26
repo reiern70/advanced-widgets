@@ -109,7 +109,8 @@ class ResumableUploadPageTest
 		return "uploadId=" + encoded(settings.getString("inputName")) + "&maxSize=" +
 			settings.getLong("maxSize") + "&fileMaxSize=" + settings.getLong("fileMaxSize") +
 			"&fileCountMax=" + settings.getLong("fileCountMax") + "&uploadToken=" +
-			encoded(settings.getString("uploadToken"));
+			encoded(settings.getString("uploadToken")) + "&grantExpires=" +
+			settings.getLong("grantExpires");
 	}
 
 	private static String encoded(String value)

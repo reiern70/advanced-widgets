@@ -71,15 +71,19 @@ import org.slf4j.LoggerFactory;
  * a folder, {@link #getFolder()}, until the file is whole. What the server knows of the uploads is
  * kept in memory.
  * <p>
- * Every request carries the id of the upload field and the limits of its uploads, signed by the
- * field with the {@link org.apache.wicket.settings.SecuritySettings#getCryptFactory() crypt} of
- * the application, so the browser cannot raise them. An upload belongs to an owner,
- * {@link #getCurrentOwner()}: by default the HTTP session that created it, so that the requests of
- * another session are told there is no such upload, and a request without a session creates none.
- * An application whose users sign in can make an upload belong to its user instead, and outlive
- * the session: once the user is back, in a new session, the field offers to go on with it. A
- * request without the header {@code Tus-Resumable} is refused, which a form of another site cannot
- * send without asking the browser first.
+ * Every request carries the id of the upload field and the limits of its uploads, its grant,
+ * signed by the field with the {@link #setGrantSigner(IUploadGrantSigner) signer of the grants},
+ * so the browser cannot raise them. An upload belongs to an owner, {@link #getCurrentOwner()}: by
+ * default the HTTP session that created it, so that the requests of another session are told there
+ * is no such upload, and a request without a session creates none. The grant is made for the owner
+ * of the page that rendered it, and refused to any other. An application whose users sign in can
+ * make an upload belong to its user instead, and outlive the session: once the user is back, in a
+ * new session, the field offers to go on with it. The signer's key decides whether a page rendered
+ * in the earlier session can go on too: by default the key is one of the session, so the page has
+ * to be loaded again; with a key of the application, {@link HmacGrantSigner}, the page goes on as
+ * long as its grant has not {@link #setGrantExpiry(Duration) expired}. A request without the
+ * header {@code Tus-Resumable} is refused, which a form of another site cannot send without asking
+ * the browser first.
  * <p>
  * The server keeps no more than it is allowed to:
  * <ul>
@@ -172,7 +176,7 @@ public class ResumableUploadResourceReference extends ResourceReference
 
 	private Bytes maxBytesPerSession;
 
-	private Bytes maxTotalBytes = Bytes.MAX;
+	private Bytes maxTotalBytes;
 
 	private Bytes minFreeSpace = DEFAULT_MIN_FREE_SPACE;
 
@@ -185,6 +189,10 @@ public class ResumableUploadResourceReference extends ResourceReference
 	private Duration lockTimeout = DEFAULT_LOCK_TIMEOUT;
 
 	private int maxMetadataLength = DEFAULT_MAX_METADATA_LENGTH;
+
+	private IUploadGrantSigner grantSigner = new CryptFactoryGrantSigner();
+
+	private Duration grantExpiry;
 
 	private Clock clock = Clock.systemUTC();
 
@@ -267,13 +275,14 @@ public class ResumableUploadResourceReference extends ResourceReference
 
 	/**
 	 * Creates the query that a client other than {@link ResumableUploadField}, any tus
-	 * client, adds to the URL of each of its requests: the id its
-	 * files are stored under and their limits, signed with the
-	 * {@link org.apache.wicket.settings.SecuritySettings#getCryptFactory() crypt} of the
-	 * application, so the client cannot change them. Once a file is whole, the answer tells the
-	 * name it was stored under in the header {@value #FILE_NAME_HEADER}, which the client hands
-	 * back to the application, for it to find the file with
-	 * {@code getFileManager().getFile(uploadFieldId, name)}.
+	 * client, adds to the URL of each of its requests: the id its files are stored under and their
+	 * limits, signed with the {@link #setGrantSigner(IUploadGrantSigner) signer of the grants} for
+	 * the {@link #getCurrentOwner() current owner}, so the client cannot change them, nor hand them
+	 * to another owner, and valid for {@link #getGrantExpiry()}. Once a file is whole, the answer
+	 * tells the name it was stored under in the header {@value #FILE_NAME_HEADER}, which the
+	 * client hands back to the application, for it to find the file with
+	 * {@code getFileManager().getFile(uploadFieldId, name)}. Create the query in a request of the
+	 * owner, as for a page.
 	 * <p>
 	 * The id has to be unique in the application and must not come from the browser. The name the
 	 * client hands back does: the application has to check that the id is one it gave the
@@ -294,7 +303,8 @@ public class ResumableUploadResourceReference extends ResourceReference
 	{
 		Args.notEmpty(uploadFieldId, "uploadFieldId");
 		Args.notNull(maxSize, "maxSize");
-		return UploadGrant.of(uploadFieldId, maxSize, fileMaxSize, fileCountMax).query();
+		return newGrant(uploadFieldId, maxSize, fileMaxSize, fileCountMax).query(getGrantSigner(),
+			getCurrentOwner());
 	}
 
 	/**
@@ -406,18 +416,23 @@ public class ResumableUploadResourceReference extends ResourceReference
 	 */
 	public Bytes getMaxTotalBytes()
 	{
-		return maxTotalBytes;
+		return maxTotalBytes != null ? maxTotalBytes
+			: Bytes.bytes(Math.min(Long.MAX_VALUE / 10, getMaxBytesPerSession().bytes()) * 10);
 	}
 
 	/**
+	 * Sets the size of the unfinished uploads of all owners together at most, so that many
+	 * sessions together cannot take all the disk, short of {@link #getMinFreeSpace()}, from the
+	 * uploads of the others. {@link Bytes#MAX} sets no limit.
+	 *
 	 * @param maxTotalBytes
-	 *            the size of the unfinished uploads of all owners together at most, no limit by
-	 *            default
+	 *            the size; ten times {@link #getMaxBytesPerSession()} by default, which
+	 *            {@code null} restores
 	 * @return {@code this}
 	 */
 	public ResumableUploadResourceReference setMaxTotalBytes(Bytes maxTotalBytes)
 	{
-		this.maxTotalBytes = Args.notNull(maxTotalBytes, "maxTotalBytes");
+		this.maxTotalBytes = maxTotalBytes;
 		return this;
 	}
 
@@ -487,6 +502,64 @@ public class ResumableUploadResourceReference extends ResourceReference
 		Args.isTrue(ownerExpiry == null || (!ownerExpiry.isNegative() && !ownerExpiry.isZero()),
 			"ownerExpiry must be positive");
 		this.ownerExpiry = ownerExpiry;
+		return this;
+	}
+
+	/**
+	 * @return what signs the grants of the fields and checks those the browser sends
+	 */
+	public IUploadGrantSigner getGrantSigner()
+	{
+		return grantSigner;
+	}
+
+	/**
+	 * Sets what signs the grants of the fields, the id of a field and the limits of its uploads,
+	 * and checks those the browser sends with each request. By default it is a
+	 * {@link CryptFactoryGrantSigner}, the crypt of the application, whose key is one of the HTTP
+	 * session unless the application configured another: a page can go on with its uploads as long
+	 * as its session lives. An application whose uploads outlive the
+	 * session, see {@link #getCurrentOwner()}, may sign with a key of its own, an
+	 * {@link HmacGrantSigner}, so that a page rendered in an earlier session goes on with the
+	 * uploads of its owner without being loaded again.
+	 * <p>
+	 * The uploads themselves are kept in memory and their bytes are deleted when the application
+	 * stops: a key that outlives a restart does not let an upload outlive it.
+	 *
+	 * @param grantSigner
+	 *            the signer
+	 * @return {@code this}
+	 */
+	public ResumableUploadResourceReference setGrantSigner(IUploadGrantSigner grantSigner)
+	{
+		this.grantSigner = Args.notNull(grantSigner, "grantSigner");
+		return this;
+	}
+
+	/**
+	 * @return how long after a page rendered the grant of its field lets the browser start uploads
+	 */
+	public Duration getGrantExpiry()
+	{
+		return grantExpiry != null ? grantExpiry : getOwnerExpiry();
+	}
+
+	/**
+	 * Sets how long after a page rendered the grant of its field lets the browser start uploads,
+	 * and ask about those the server no longer has. An upload started goes on for as long as the
+	 * server keeps it, see {@link #setExpiry(Duration)}, however long ago its page rendered: a
+	 * long upload does not end with the grant. Once the grant has expired, the page has to be
+	 * loaded again for new uploads. The expiry is sent along with the grant and signed with it.
+	 *
+	 * @param grantExpiry
+	 *            the expiry, {@code null} by default for {@link #getOwnerExpiry()}
+	 * @return {@code this}
+	 */
+	public ResumableUploadResourceReference setGrantExpiry(Duration grantExpiry)
+	{
+		Args.isTrue(grantExpiry == null || (!grantExpiry.isNegative() && !grantExpiry.isZero()),
+			"grantExpiry must be positive");
+		this.grantExpiry = grantExpiry;
 		return this;
 	}
 
@@ -605,6 +678,10 @@ public class ResumableUploadResourceReference extends ResourceReference
 	 * application may want to set to longer than {@link #setExpiry(Duration)}.
 	 * <p>
 	 * The owner must not come from the browser.
+	 * <p>
+	 * The grant of a field is made for the owner of the request that renders its page, and the
+	 * server refuses it to any other: once the owner of the page changes, as the user signs in for
+	 * example, the field has to be rendered again to upload.
 	 *
 	 * @return the owner, {@code null} when the current request may not upload
 	 */
@@ -624,6 +701,15 @@ public class ResumableUploadResourceReference extends ResourceReference
 		}
 		Session session = Session.get();
 		return session.isTemporary() ? null : session.getId();
+	}
+
+	/**
+	 * @return the grant of a field, which expires after {@link #getGrantExpiry()}
+	 */
+	UploadGrant newGrant(String uploadFieldId, Bytes maxSize, Bytes fileMaxSize, long fileCountMax)
+	{
+		return UploadGrant.of(uploadFieldId, maxSize, fileMaxSize, fileCountMax,
+			now().plus(getGrantExpiry()));
 	}
 
 	/**
@@ -680,7 +766,7 @@ public class ResumableUploadResourceReference extends ResourceReference
 			.filter(upload -> !upload.isStored())
 			.mapToLong(ResumableUpload::getLength)
 			.sum();
-		if (allBytes + length > maxTotalBytes.bytes() || !hasRoom(length))
+		if (allBytes + length > getMaxTotalBytes().bytes() || !hasRoom(length))
 		{
 			throw new Refusal(507, ResumableUploadField.NO_ROOM_RESOURCE_KEY);
 		}
