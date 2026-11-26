@@ -240,8 +240,16 @@ export function absoluteUrl(url: string): string {
  */
 export function fingerprintOf(file: Blob, endpoint: string): string {
 	const named = file as Partial<File>;
-	return [absoluteUrl(endpoint), named.name ?? '', file.size, file.type,
-		named.lastModified ?? 0].join('::');
+	return fingerprintFor(endpoint, named.name ?? '', file.size, file.type, named.lastModified ?? 0);
+}
+
+/**
+ * @returns the fingerprint of a file of a name, size, type and date sent to a tus server, as
+ * fingerprintOf() makes it
+ */
+function fingerprintFor(endpoint: string, name: string, size: number, type: string,
+	lastModified: number): string {
+	return [absoluteUrl(endpoint), name, size, type, lastModified].join('::');
 }
 
 function base64(value: string): string {
@@ -294,6 +302,19 @@ export function withQuery(url: string, query: string | undefined): string {
 }
 
 /** An upload kept in localStorage, to go on with after a reload. */
+/** An upload the server keeps, for an uploader to offer, as Wicket's ResumableUploadField lists it. */
+export interface RecalledUpload {
+	/** Its id: the last segment of its address, below the endpoint. */
+	id: string;
+	name: string;
+	size: number;
+	type: string;
+	/** When the file was last modified, as the browser told the server; 0 when it did not. */
+	lastModified: number;
+	/** The bytes the server holds. */
+	sent: number;
+}
+
 export interface StoredUpload {
 	/** The fingerprint of the file, see fingerprintOf(). */
 	fingerprint: string;
@@ -751,7 +772,7 @@ export class TusUpload {
 	private async create(run: number): Promise<void> {
 		const named = this.file as Partial<File>;
 		const metadata = { filename: named.name ?? '', filetype: this.file.type,
-			...this.options.metadata };
+			lastmodified: String(named.lastModified ?? 0), ...this.options.metadata };
 		const answer = await this.send(run, 'POST', absoluteUrl(this.options.endpoint), {
 			'Upload-Length': String(this.size), 'Upload-Metadata': encodeMetadata(metadata)
 		});
@@ -1123,6 +1144,13 @@ export interface ResumableUploaderOptions {
 	 * chosen again, as long as remember is.
 	 */
 	recalling?: boolean;
+	/**
+	 * The uploads the server keeps for the uploader to offer as it starts, besides those
+	 * localStorage remembers: those of the user started in another browser, or in another part of
+	 * the application, as Wicket's ResumableUploadField lists them. They go on once a file of the
+	 * same name, size, type and date is chosen.
+	 */
+	recalled?: readonly RecalledUpload[];
 	/**
 	 * How long after it last sent something an upload counts as in use by another page, which
 	 * leaves it alone rather than offering to go on with it; DEFAULT_IN_USE_MILLIS when left out.
@@ -1542,8 +1570,11 @@ export class ResumableUploader {
 
 	private newUpload(row: Row, file: File): TusUpload {
 		const options = this.options;
+		// the server keeps the place of an upload, for a later page in the same place to offer it
+		const place: Record<string, string> = options.rememberedAs ? { place: options.rememberedAs }
+			: {};
 		const upload = new TusUpload(file, { endpoint: options.endpoint,
-			chunkSize: options.chunkSize, metadata: options.metadata?.(file),
+			chunkSize: options.chunkSize, metadata: { ...place, ...options.metadata?.(file) },
 			headers: options.headers, query: options.query, withCredentials: options.withCredentials,
 			retryDelays: options.retryDelays, retryTimeout: options.retryTimeout,
 			stallMillis: options.stallMillis,
@@ -1969,6 +2000,28 @@ export class ResumableUploader {
 	}
 
 	/**
+	 * Keeps the uploads the server offers, options.recalled, as localStorage would have them, unless
+	 * it does already: the uploader then offers them as those of an earlier visit, and goes on with
+	 * one once its file is chosen.
+	 */
+	private keepRecalled(place: string | null): void {
+		const endpoint = this.options.endpoint!;
+		// without the id of a session in the path, as the server tells the address of an upload
+		const base = endpoint.replace(/;[^/]*$/, '');
+		const kept = TusStorage.list(endpoint).map((stored) => absoluteUrl(stored.url));
+		(this.options.recalled ?? []).forEach((upload) => {
+			const url = absoluteUrl(base + '/' + encodeURIComponent(upload.id));
+			if (!kept.includes(url)) {
+				TusStorage.save({ fingerprint: fingerprintFor(endpoint, upload.name, upload.size,
+					upload.type, upload.lastModified), url, endpoint: absoluteUrl(endpoint),
+					name: upload.name, size: upload.size, type: upload.type,
+					lastModified: upload.lastModified, stored: Date.now(),
+					rememberedAs: place ?? undefined, alive: 0 });
+			}
+		});
+	}
+
+	/**
 	 * Shows the uploads to the endpoint an earlier visit left unfinished, remembered with the same
 	 * place as this uploader, once the server told how far each got, and asks whether to go on
 	 * with them; those it no longer has are forgotten. Those another page is sending are left alone.
@@ -1979,6 +2032,7 @@ export class ResumableUploader {
 			return;
 		}
 		const place = this.options.rememberedAs ?? null;
+		this.keepRecalled(place);
 		const asked = TusStorage.list(this.options.endpoint).map((stored) => {
 			if ((stored.rememberedAs ?? null) !== place ||
 				TusStorage.sending(stored, this.options.inUseMillis) ||

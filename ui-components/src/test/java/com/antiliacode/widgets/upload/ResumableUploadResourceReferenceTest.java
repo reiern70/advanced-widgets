@@ -41,6 +41,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
@@ -205,6 +206,10 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		parameters.put("fileCountMax", settings.get("fileCountMax"));
 		parameters.put("uploadToken", settings.getString("uploadToken"));
 		parameters.put("grantExpires", settings.get("grantExpires"));
+		if (settings.has("uploadContext"))
+		{
+			parameters.put("uploadContext", settings.getString("uploadContext"));
+		}
 		StringBuilder query = new StringBuilder();
 		parameters.forEach((name, value) -> query.append(query.isEmpty() ? "" : "&")
 			.append(name)
@@ -255,6 +260,23 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		String location = header("Location");
 		assertTrue(location.startsWith(ROOT + PATH + "/"), location);
 		return location.substring(ROOT.length());
+	}
+
+	/**
+	 * Creates an upload as the field does, telling the place of the field and the date of the file.
+	 *
+	 * @return the path of the upload
+	 */
+	private String createAt(long length, String name, String place, long lastModified)
+	{
+		Base64.Encoder base64 = Base64.getEncoder();
+		String metadata = "filename " + base64.encodeToString(name.getBytes(StandardCharsets.UTF_8)) +
+			",filetype dGV4dC9wbGFpbg==,lastmodified " +
+			base64.encodeToString(String.valueOf(lastModified).getBytes(StandardCharsets.UTF_8)) +
+			",place " + base64.encodeToString(place.getBytes(StandardCharsets.UTF_8));
+		assertEquals(201, send("POST", PATH, Map.of("Upload-Length", String.valueOf(length),
+			"Upload-Metadata", metadata), null));
+		return header("Location").substring(ROOT.length());
 	}
 
 	private int patch(String url, long offset, byte[] bytes)
@@ -881,6 +903,246 @@ class ResumableUploadResourceReferenceTest extends WicketTestCase
 		assertNull(find(url));
 		assertFalse(Files.exists(upload.getFile()));
 		assertThrows(IllegalArgumentException.class, () -> reference().setExpiry(Duration.ZERO));
+	}
+
+	@Test
+	void tellsItsTrackerOfTheUploads()
+	{
+		List<String> events = new ArrayList<>();
+		reference().setUploadsTracker(new IUploadsTracker()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onCreated(String context, TrackedUpload upload)
+			{
+				events.add("created " + upload.clientFileName() + " " + upload.offset());
+			}
+
+			@Override
+			public void onProgress(String context, TrackedUpload upload)
+			{
+				events.add("progress " + upload.offset());
+			}
+
+			@Override
+			public void onStored(String context, TrackedUpload upload)
+			{
+				events.add("stored " + upload.clientFileName() + " for the field " +
+					upload.storedFieldId().equals(field.getMarkupId()));
+			}
+
+			@Override
+			public void onDeleted(String context, TrackedUpload upload)
+			{
+				events.add("deleted " + upload.clientFileName());
+			}
+
+			@Override
+			public void destroy()
+			{
+				events.add("destroyed");
+			}
+
+			@Override
+			public List<TrackedUpload> getUploads(String context, String owner)
+			{
+				return List.of();
+			}
+
+			@Override
+			public void delete(String context, String owner, String uploadId)
+			{
+			}
+		});
+		String url = create(10, "a.txt");
+		assertEquals(204, patch(url, 0, bytes(4, 0)));
+		assertEquals(204, patch(url, 4, bytes(6, 4)));
+		assertEquals(List.of("created a.txt 0", "progress 4", "progress 10",
+			"stored a.txt for the field true"), events);
+
+		events.clear();
+		String other = create(10, "b.txt");
+		assertEquals(204, send("DELETE", other, Map.of(), null));
+		assertEquals(List.of("created b.txt 0", "deleted b.txt"), events);
+
+		events.clear();
+		String expiring = create(10, "c.txt");
+		clock.add(Duration.ofHours(1));
+		reference().deleteExpired(true);
+		assertNull(find(expiring));
+		assertEquals(Set.of("created c.txt 0", "deleted a.txt", "deleted c.txt"), Set.copyOf(events),
+			"the stored upload expires too, its file stays with the file manager");
+
+		events.clear();
+		renderAgain();
+		create(10, "d.txt");
+		tester.getApplication()
+			.getApplicationListeners()
+			.onBeforeDestroyed(tester.getApplication());
+		assertEquals(List.of("created d.txt 0", "deleted d.txt", "destroyed"), events,
+			"the uploads deleted, then the tracker destroyed");
+	}
+
+	@Test
+	void destroysItsTrackerWhenTheApplicationStops()
+	{
+		List<String> events = new ArrayList<>();
+		reference().setUploadsTracker(new IUploadsTracker()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public List<TrackedUpload> getUploads(String context, String owner)
+			{
+				return List.of();
+			}
+
+			@Override
+			public void delete(String context, String owner, String uploadId)
+			{
+			}
+
+			@Override
+			public void destroy()
+			{
+				events.add("destroyed");
+			}
+		});
+		tester.getApplication()
+			.getApplicationListeners()
+			.onBeforeDestroyed(tester.getApplication());
+		assertEquals(List.of("destroyed"), events, "though no upload came");
+	}
+
+	@Test
+	void goesOnWhenItsTrackerFails()
+	{
+		reference().setUploadsTracker(new IUploadsTracker()
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void onCreated(String context, TrackedUpload upload)
+			{
+				throw new IllegalStateException("the database is down");
+			}
+
+			@Override
+			public void onProgress(String context, TrackedUpload upload)
+			{
+				throw new IllegalStateException("the database is down");
+			}
+
+			@Override
+			public List<TrackedUpload> getUploads(String context, String owner)
+			{
+				return List.of();
+			}
+
+			@Override
+			public void delete(String context, String owner, String uploadId)
+			{
+			}
+		});
+		String url = create(10, "a.txt");
+		assertEquals(204, patch(url, 0, bytes(10, 0)));
+		assertNotNull(header(ResumableUploadResource.FILE_NAME_HEADER));
+		assertThrows(IllegalArgumentException.class, () -> reference().setUploadsTracker(null));
+	}
+
+	@Test
+	void offersTheUploadsTheServerKeepsForThePlaceOfTheField()
+	{
+		String place = field.getRememberedAs();
+		String url = createAt(10, "a.txt", place, 1000);
+		assertEquals(204, patch(url, 0, bytes(4, 0)));
+		clock.add(Duration.ofMillis(1));
+		createAt(10, "b.txt", "another place", 1000);
+		clock.add(Duration.ofMillis(1));
+		String whole = createAt(5, "c.txt", place, 1000);
+		assertEquals(204, patch(whole, 0, bytes(5, 0)));
+
+		List<TrackedUpload> uploads = reference().getUploads(null, tester.getSession().getId());
+		assertEquals(List.of("a.txt", "b.txt", "c.txt"),
+			uploads.stream().map(TrackedUpload::clientFileName).toList(), "the oldest first");
+		TrackedUpload first = uploads.get(0);
+		assertEquals(place, first.place());
+		assertEquals(1000, first.lastModified());
+		assertEquals(4, first.offset());
+		assertFalse(first.isStored());
+		assertTrue(uploads.get(2).isStored());
+		assertEquals(List.of(), reference().getUploads(null, "another owner"));
+		assertTrue(reference().getUploadsTracker().getUploads(null, tester.getSession().getId())
+			.stream().anyMatch(upload -> upload.id().equals(first.id())), "the tracker by default");
+
+		field = new TestField("files");
+		field.setRemembering(true);
+		tester.startPage(new TestPage(field));
+		JSONArray recalled = settings().getJSONArray("recalled");
+		assertEquals(1, recalled.length(), "unfinished, and started in the place of the field");
+		JSONObject offered = recalled.getJSONObject(0);
+		assertEquals(url.substring(url.lastIndexOf('/') + 1), offered.getString("id"));
+		assertEquals("a.txt", offered.getString("name"));
+		assertEquals(10, offered.getLong("size"));
+		assertEquals(1000, offered.getLong("lastModified"));
+		assertEquals("text/plain", offered.getString("type"));
+		assertEquals(4, offered.getLong("sent"));
+
+		field = new TestField("files");
+		field.setRemembering(true);
+		field.setRecalling(false);
+		tester.startPage(new TestPage(field));
+		assertEquals(0, settings().getJSONArray("recalled").length(), "when not recalling");
+	}
+
+	@Test
+	void keepsTheUploadsOfEachContextApart()
+	{
+		field = new TestField("files");
+		field.setUploadContext("videos");
+		tester.startPage(new TestPage(field));
+		query = queryOf(settings());
+		assertTrue(query.contains("uploadContext=videos"), query);
+		String video = createAt(10, "film.mp4", "a page", 1000);
+		assertEquals(403, send("POST", PATH + "?" + query.replace("uploadContext=videos",
+			"uploadContext=attachments"), Map.of("Upload-Length", "1"), null, null),
+			"a context the grant does not sign");
+		assertEquals(403, send("POST", PATH + "?" + query.replace("&uploadContext=videos", ""),
+			Map.of("Upload-Length", "1"), null, null), "no context");
+
+		String session = tester.getSession().getId();
+		assertEquals(List.of("videos"), reference().getUploads("videos", session)
+			.stream()
+			.map(TrackedUpload::context)
+			.toList());
+		assertEquals(List.of(), reference().getUploads("attachments", session));
+		renderAgain();
+		String attachment = create(5, "a.txt");
+		assertNull(reference().getUploads(null, session)
+			.stream()
+			.filter(upload -> upload.id().equals(idOf(attachment)))
+			.findFirst()
+			.orElseThrow()
+			.context(), "a field without");
+		assertEquals(2, reference().getUploads(null, session).size(), "every context");
+
+		field = new TestField("files");
+		field.setRemembering(true);
+		field.setUploadContext("videos");
+		tester.startPage(new TestPage(field));
+		JSONArray recalled = settings().getJSONArray("recalled");
+		assertEquals(1, recalled.length(), "the video, started elsewhere");
+		assertEquals("film.mp4", recalled.getJSONObject(0).getString("name"));
+		assertEquals("videos", settings().getString("uploadContext"));
+
+		reference().getUploadsTracker().delete("videos", session, idOf(video));
+		assertNull(find(video), "deleted by the tracker by default");
+		assertFalse(reference().deleteUpload(session, idOf(video)), "deleted already");
+		assertFalse(reference().deleteUpload("another owner", idOf(attachment)), "of another owner");
+		assertTrue(reference().deleteUpload(session, idOf(attachment)));
+		assertNull(find(attachment));
+		assertThrows(IllegalArgumentException.class, () -> field.setUploadContext("two\nlines"));
 	}
 
 	@Test

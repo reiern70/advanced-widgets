@@ -86,6 +86,11 @@ import org.slf4j.LoggerFactory;
  * header {@code Tus-Resumable} is refused, which a form of another site cannot send without asking
  * the browser first.
  * <p>
+ * An {@link #setUploadsTracker(IUploadsTracker) uploads tracker} hears of each upload created, of
+ * its bytes, of its file stored and of its end, and lists the uploads of an owner: a field offers
+ * those to go on with in a later session, on a page of their own or in a step of a wizard, wherever
+ * they started.
+ * <p>
  * The server keeps no more than it is allowed to:
  * <ul>
  * <li>a file larger than the field allows, or larger than {@link #setMaxFileSize(Bytes)}, is
@@ -194,6 +199,8 @@ public class ResumableUploadResourceReference extends ResourceReference
 	private IUploadGrantSigner grantSigner = HmacGrantSigner.inSession();
 
 	private Duration grantExpiry;
+
+	private IUploadsTracker uploadsTracker = new HeldUploads();
 
 	private Clock clock = Clock.systemUTC();
 
@@ -304,7 +311,31 @@ public class ResumableUploadResourceReference extends ResourceReference
 	{
 		Args.notEmpty(uploadFieldId, "uploadFieldId");
 		Args.notNull(maxSize, "maxSize");
-		return newGrant(uploadFieldId, maxSize, fileMaxSize, fileCountMax).query(getGrantSigner(),
+		return newQuery(uploadFieldId, null, maxSize, fileMaxSize, fileCountMax);
+	}
+
+	/**
+	 * Creates the query of {@link #newQuery(String, Bytes, Bytes, long)}, for the uploads of a
+	 * context, see {@link ResumableUploadField#setUploadContext(String)}.
+	 *
+	 * @param uploadFieldId
+	 *            the id the files are stored under
+	 * @param context
+	 *            the part of the application the uploads belong to, {@code null} for none
+	 * @param maxSize
+	 *            the size of the files sent at once, and of each file, at most
+	 * @param fileMaxSize
+	 *            the size of each file at most, {@code null} for {@code maxSize}
+	 * @param fileCountMax
+	 *            the number of files sent at once at most, -1 for any
+	 * @return the query, without its {@code ?}
+	 */
+	public String newQuery(String uploadFieldId, String context, Bytes maxSize, Bytes fileMaxSize,
+		long fileCountMax)
+	{
+		Args.notEmpty(uploadFieldId, "uploadFieldId");
+		Args.notNull(maxSize, "maxSize");
+		return newGrant(uploadFieldId, context, maxSize, fileMaxSize, fileCountMax).query(getGrantSigner(),
 			getCurrentOwner());
 	}
 
@@ -564,6 +595,103 @@ public class ResumableUploadResourceReference extends ResourceReference
 	}
 
 	/**
+	 * @return what keeps track of the uploads, and lists those of an owner
+	 */
+	public IUploadsTracker getUploadsTracker()
+	{
+		return uploadsTracker;
+	}
+
+	/**
+	 * Sets what keeps track of the uploads, one for the whole application: it hears of each upload
+	 * created, of the bytes of each request, of each file stored and of each upload the server no
+	 * longer has, each with its context, and lists the uploads of an owner in a context, for a field
+	 * to offer to go on with them, see {@link ResumableUploadField#getRecalledUploads()}.
+	 * By default it keeps nothing and lists the uploads the reference holds,
+	 * {@link #getUploads(String, String)}. One that keeps them, in a database for example, lets an
+	 * application list them beyond the uploads, and the files they stored, for the user to choose
+	 * one in a later session. Its {@link IUploadsTracker#destroy()} is called once the application
+	 * stops.
+	 *
+	 * @param uploadsTracker
+	 *            the tracker
+	 * @return {@code this}
+	 */
+	public ResumableUploadResourceReference setUploadsTracker(IUploadsTracker uploadsTracker)
+	{
+		this.uploadsTracker = Args.notNull(uploadsTracker, "uploadsTracker");
+		if (Application.exists())
+		{
+			// destroyed with the application, whether an upload came or not
+			listen();
+		}
+		return this;
+	}
+
+	/**
+	 * @param context
+	 *            a context, see {@link ResumableUploadField#setUploadContext(String)},
+	 *            {@code null} for every context
+	 * @param owner
+	 *            an owner, see {@link #getCurrentOwner()}
+	 * @return the uploads of the owner in the context the reference holds, finished or not, the
+	 *         oldest first
+	 */
+	public List<TrackedUpload> getUploads(String context, String owner)
+	{
+		Args.notNull(owner, "owner");
+		return uploads.values()
+			.stream()
+			.filter(upload -> upload.getOwner().equals(owner) &&
+				(context == null || context.equals(upload.getContext())))
+			.sorted((one, other) -> one.getCreated().compareTo(other.getCreated()))
+			.map(TrackedUpload::of)
+			.toList();
+	}
+
+	/**
+	 * Deletes an upload the reference holds, and its bytes, unless a request writes them: the user
+	 * discarded it, or the application took the file it stored, which stays with the file manager.
+	 * The tracker hears of it, {@link IUploadsTracker#onDeleted(String, TrackedUpload)}.
+	 *
+	 * @param owner
+	 *            the owner of the upload
+	 * @param uploadId
+	 *            the id of the upload
+	 * @return whether the reference deleted it: not when it holds no such upload of the owner, or
+	 *         a request keeps writing it
+	 */
+	public boolean deleteUpload(String owner, String uploadId)
+	{
+		ResumableUpload upload = find(uploadId, owner);
+		return upload != null && delete(upload);
+	}
+
+	/**
+	 * An event of an upload, for the tracker.
+	 */
+	@FunctionalInterface
+	interface UploadEvent
+	{
+		void tell(IUploadsTracker tracker, String context, TrackedUpload upload);
+	}
+
+	/**
+	 * Tells the tracker of an event of an upload, logging what it throws.
+	 */
+	void track(ResumableUpload upload, UploadEvent event)
+	{
+		try
+		{
+			event.tell(uploadsTracker, upload.getContext(), TrackedUpload.of(upload));
+		}
+		catch (RuntimeException e)
+		{
+			LOG.warn("The tracker of the uploads failed on {}", upload, e);
+		}
+	}
+
+	/**
 	 * @return how often, at most, the requests look for uploads that expired
 	 */
 	public Duration getExpiryCheckInterval()
@@ -679,9 +807,9 @@ public class ResumableUploadResourceReference extends ResourceReference
 	 * <p>
 	 * An upload that outlives its session is worth going on with only where its file still has a
 	 * purpose: the field offers it in the same place of a later page, see
-	 * {@link ResumableUploadField#getRememberedAs()}, which by default does not tell apart the
-	 * records a page edits. Where the work of the page ends with the session, the unsaved steps of
-	 * an Ajax wizard for example, the session is the right owner: its uploads end with it.
+	 * {@link ResumableUploadField#getRememberedAs()}, which by default does not tell
+	 * apart the records a page edits. Where the work of the page ends with the session, the unsaved
+	 * steps of an Ajax wizard for example, the session is the right owner: its uploads end with it.
 	 * <p>
 	 * The owner must not come from the browser.
 	 * <p>
@@ -712,9 +840,12 @@ public class ResumableUploadResourceReference extends ResourceReference
 	/**
 	 * @return the grant of a field, which expires after {@link #getGrantExpiry()}
 	 */
-	UploadGrant newGrant(String uploadFieldId, Bytes maxSize, Bytes fileMaxSize, long fileCountMax)
+	UploadGrant newGrant(String uploadFieldId, String context, Bytes maxSize, Bytes fileMaxSize,
+		long fileCountMax)
 	{
-		return UploadGrant.of(uploadFieldId, maxSize, fileMaxSize, fileCountMax,
+		Args.isTrue(UploadGrant.isLine(uploadFieldId), "uploadFieldId must be a single line");
+		Args.isTrue(UploadGrant.isLine(context), "context must be a single line");
+		return UploadGrant.of(uploadFieldId, context, maxSize, fileMaxSize, fileCountMax,
 			now().plus(getGrantExpiry()));
 	}
 
@@ -782,7 +913,7 @@ public class ResumableUploadResourceReference extends ResourceReference
 		try
 		{
 			Path file = Files.createFile(folder.toPath().resolve(id));
-			ResumableUpload upload = new ResumableUpload(id, owner,
+			ResumableUpload upload = new ResumableUpload(id, owner, grant.context(),
 				owner.equals(currentSessionId()), grant.uploadFieldId(), length, metadata, file,
 				now());
 			uploads.put(id, upload);
@@ -834,6 +965,7 @@ public class ResumableUploadResourceReference extends ResourceReference
 		fileManager.save(file, uploadFieldId);
 		upload.deleteFile();
 		upload.stored(uploadFieldId, name, now());
+		track(upload, IUploadsTracker::onStored);
 	}
 
 	/**
@@ -869,7 +1001,10 @@ public class ResumableUploadResourceReference extends ResourceReference
 
 	private void forget(ResumableUpload upload)
 	{
-		uploads.remove(upload.getId(), upload);
+		if (uploads.remove(upload.getId(), upload))
+		{
+			track(upload, IUploadsTracker::onDeleted);
+		}
 		upload.deleteFile();
 	}
 
@@ -944,11 +1079,19 @@ public class ResumableUploadResourceReference extends ResourceReference
 			@Override
 			public void onBeforeDestroyed(Application destroyed)
 			{
-				uploads.clear();
+				new ArrayList<>(uploads.values()).forEach(upload -> forget(upload));
 				deleteFiles();
 				if (ownFolder && !folder.delete())
 				{
 					LOG.debug("Could not delete the folder of resumable uploads {}", folder);
+				}
+				try
+				{
+					uploadsTracker.destroy();
+				}
+				catch (RuntimeException e)
+				{
+					LOG.warn("The tracker of the uploads failed as the application stopped", e);
 				}
 			}
 		});
@@ -974,6 +1117,27 @@ public class ResumableUploadResourceReference extends ResourceReference
 		catch (IOException e)
 		{
 			LOG.warn("Could not delete the files of resumable uploads in {}", folder, e);
+		}
+	}
+
+	/**
+	 * The tracker by default: it keeps nothing, and lists and deletes the uploads the reference
+	 * holds.
+	 */
+	private final class HeldUploads implements IUploadsTracker
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public List<TrackedUpload> getUploads(String context, String owner)
+		{
+			return ResumableUploadResourceReference.this.getUploads(context, owner);
+		}
+
+		@Override
+		public void delete(String context, String owner, String uploadId)
+		{
+			deleteUpload(owner, uploadId);
 		}
 	}
 

@@ -218,6 +218,8 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 
 	private boolean recalling = true;
 
+	private String uploadContext;
+
 	private Duration inUseTimeout = DEFAULT_IN_USE_TIMEOUT;
 
 	private boolean multiple = true;
@@ -525,6 +527,95 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	}
 
 	/**
+	 * Lists the uploads the server keeps that the field offers to go on with as the page loads,
+	 * besides those the browser remembers: with the uploads belonging to the user, see
+	 * {@link ResumableUploadResourceReference#getCurrentOwner()}, those started in another browser,
+	 * or, overridden, those started anywhere else, on a page listing the unfinished uploads of the
+	 * user or in a step of a wizard for example. The user goes on with one by choosing its file again,
+	 * which has to have the same name, size and date. The field asks only while it is
+	 * {@link #setRemembering(boolean) remembering} and {@link #setRecalling(boolean) recalling}.
+	 * <p>
+	 * By default these are the unfinished uploads of the current owner in the
+	 * {@link #setUploadContext(String) context} of the field, wherever they started, or, without a
+	 * context, those a field in the same place started, {@link #getRememberedAs()}, as the
+	 * {@link ResumableUploadResourceReference#getUploadsTracker() tracker of the uploads} lists them.
+	 *
+	 * @return the uploads to offer
+	 */
+	protected List<TrackedUpload> getRecalledUploads()
+	{
+		ResumableUploadResourceReference reference = getResumableUploadResourceReference();
+		String owner = reference.getCurrentOwner();
+		if (owner == null)
+		{
+			return List.of();
+		}
+		String place = getRememberedAs();
+		return reference.getUploadsTracker()
+			.getUploads(uploadContext, owner)
+			.stream()
+			.filter(upload -> !upload.isStored() && !upload.isComplete() &&
+				(uploadContext != null || place.equals(upload.place())))
+			.toList();
+	}
+
+	/**
+	 * @return the part of the application the uploads of the field belong to, {@code null} for
+	 *         none
+	 */
+	public String getUploadContext()
+	{
+		return uploadContext;
+	}
+
+	/**
+	 * Sets the part of the application the uploads of the field belong to: the attachments of a
+	 * process, videos, and so on. The grant of the field signs it, and the
+	 * {@link ResumableUploadResourceReference#getUploadsTracker() tracker of the uploads} hears of
+	 * each upload with it, so that the application keeps the uploads of each part apart, or not. A
+	 * field with a context offers to go on with the unfinished uploads of its owner in the same
+	 * context, wherever they started, see {@link #getRecalledUploads()}.
+	 *
+	 * @param uploadContext
+	 *            the context, a single line, {@code null} by default for none
+	 * @return {@code this}
+	 */
+	public ResumableUploadField setUploadContext(String uploadContext)
+	{
+		Args.isTrue(UploadGrant.isLine(uploadContext), "uploadContext must be a single line");
+		this.uploadContext = uploadContext;
+		return this;
+	}
+
+	/**
+	 * @return the uploads to offer, as the script of the field takes them
+	 */
+	private JSONArray recalledSettings()
+	{
+		JSONArray recalled = new JSONArray();
+		if (!remembering || !recalling)
+		{
+			return recalled;
+		}
+		for (TrackedUpload upload : getRecalledUploads())
+		{
+			if (upload.isStored() || upload.isComplete())
+			{
+				continue;
+			}
+			JSONObject each = new JSONObject();
+			each.put("id", upload.id());
+			each.put("name", upload.clientFileName());
+			each.put("size", upload.length());
+			each.put("lastModified", upload.lastModified());
+			each.put("type", upload.contentType());
+			each.put("sent", upload.offset());
+			recalled.put(each);
+		}
+		return recalled;
+	}
+
+	/**
 	 * @return how long after an upload last sent something another page takes it for in use
 	 */
 	public Duration getInUseTimeout()
@@ -751,7 +842,8 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	protected JSONObject newClientSettings()
 	{
 		ResumableUploadResourceReference reference = getResumableUploadResourceReference();
-		UploadGrant grant = reference.newGrant(getMarkupId(), getMaxSize(), getFileMaxSize(),
+		UploadGrant grant = reference.newGrant(getMarkupId(), uploadContext, getMaxSize(),
+			getFileMaxSize(),
 			getFileCountMax());
 		JSONObject settings = new JSONObject();
 		settings.put("inputName", getMarkupId());
@@ -775,6 +867,11 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 			new JSONArray(reconnectCheckDelaysOf(reconnectCheckInterval)));
 		settings.put("stallMillis", stallTimeout.toMillis());
 		settings.put("recalling", recalling);
+		settings.put("recalled", recalledSettings());
+		if (uploadContext != null)
+		{
+			settings.put("uploadContext", uploadContext);
+		}
 		settings.put("inUseMillis", inUseTimeout.toMillis());
 		settings.put("multiple", multiple);
 		if (accept != null)
