@@ -24,5 +24,24 @@
 			<tr wicket:id="places"><td wicket:id="number">1</td><td wicket:id="since">[since]</td><td wicket:id="seen">[seen]</td><td wicket:id="sureUntil">[sure until]</td></tr>
 		</tbody>
 	</table>
+	<h2><wicket:message key="visitsTitle"/></h2>
+	<p wicket:id="visitsLead" class="admin__lead">[12 people opened a page or signed in in the last 30 days.]</p>
+	<p class="admin__lead"><span wicket:id="visitsKept">[Counted since 2026-11-27.]</span> <a wicket:id="json" href="#"><wicket:message key="json"/></a></p>
+	<table wicket:id="pagesTable" class="admin__sessions">
+		<thead>
+			<tr><th><wicket:message key="page"/></th><th><wicket:message key="views"/></th><th><wicket:message key="people"/></th></tr>
+		</thead>
+		<tbody>
+			<tr wicket:id="pages"><td wicket:id="page">/</td><td wicket:id="views">1</td><td wicket:id="people">1</td></tr>
+		</tbody>
+	</table>
+	<table wicket:id="daysTable" class="admin__sessions">
+		<thead>
+			<tr><th><wicket:message key="date"/></th><th><wicket:message key="people"/></th><th><wicket:message key="newPeople"/></th><th><wicket:message key="signedInPeople"/></th><th><wicket:message key="signIns"/></th><th><wicket:message key="views"/></th></tr>
+		</thead>
+		<tbody>
+			<tr wicket:id="days"><td wicket:id="date">2026-11-27</td><td wicket:id="people">1</td><td wicket:id="newPeople">1</td><td wicket:id="signedInPeople">1</td><td wicket:id="signIns">1</td><td wicket:id="views">1</td></tr>
+		</tbody>
+	</table>
 </main>
 </wicket:extend>

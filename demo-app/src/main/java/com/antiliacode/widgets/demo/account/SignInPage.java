@@ -31,6 +31,8 @@ import com.antiliacode.widgets.demo.BasePage;
 import com.antiliacode.widgets.demo.DemoSession;
 import com.antiliacode.widgets.demo.FormErrors;
 import com.antiliacode.widgets.demo.HomePage;
+import com.antiliacode.widgets.demo.stats.VisitorCookie;
+import com.antiliacode.widgets.demo.stats.Visits;
 
 /**
  * Signs a visitor in, as {@value Accounts#USER}, whose password the page shows, or as the
@@ -42,7 +44,7 @@ import com.antiliacode.widgets.demo.HomePage;
  * signs in (see {@link SignedInUsers}). Then it goes on to the demo the visitor wanted to see, the
  * page parameter {@value #TO}, or to the {@link HomePage}.
  * <p>
- * It says that the site keeps no record of the people who visit it.
+ * It says what the site counts of its visitors, see {@link com.antiliacode.widgets.demo.stats.Visits}.
  */
 public class SignInPage extends BasePage
 {
@@ -112,6 +114,7 @@ public class SignInPage extends BasePage
 						.getString());
 					return;
 				}
+				Visits.get().signedIn(VisitorCookie.read(), role.get());
 				goOn();
 			}
 

@@ -78,6 +78,9 @@ import com.antiliacode.widgets.demo.notification.NotificationsPage;
 import com.antiliacode.widgets.demo.modal.TeamResource;
 import com.antiliacode.widgets.demo.palette.PalettePage;
 import com.antiliacode.widgets.demo.split.SplitPanelPage;
+import com.antiliacode.widgets.demo.stats.PageViews;
+import com.antiliacode.widgets.demo.stats.StatsResource;
+import com.antiliacode.widgets.demo.stats.Visits;
 import com.antiliacode.widgets.demo.codeeditor.CodeEditorPage;
 import com.antiliacode.widgets.demo.resizable.ResizablePage;
 import com.antiliacode.widgets.demo.richtext.RichTextEditorPage;
@@ -136,6 +139,8 @@ public class WicketApplication extends WebApplication
 
 	private final SignedInUsers signedInUsers = new SignedInUsers();
 
+	private Visits visits;
+
 	/**
 	 * @see org.apache.wicket.Application#getHomePage()
 	 */
@@ -167,8 +172,13 @@ public class WicketApplication extends WebApplication
 		DevelopmentSwitches.warnOfIgnored(this);
 
 		// two accounts, in memory: user, shared by everybody, and the administrator, whose password
-		// the server is given; nothing about anybody is stored
+		// the server is given
 		accounts = newAccounts();
+
+		// the visits, counted for the administrator in a file a day: a cookie with a random number
+		// tells one browser from another, and the pages it opens are noted, nothing else
+		visits = newVisits();
+		getComponentOnAfterRenderListeners().add(new PageViews());
 
 		// a client keeping no cookies gets its pages instead of redirects for good, and the error
 		// pages keep their status
@@ -351,6 +361,8 @@ public class WicketApplication extends WebApplication
 		mountResource(TreeOfLifeResource.PATH, TreeOfLifeResource.REFERENCE);
 		mountResource(TeamResource.PATH, TeamResource.REFERENCE);
 		mountResource(DownloadsResource.PATH, DownloadsResource.REFERENCE);
+		// the visits as JSON, for the administrator
+		mountResource(StatsResource.PATH, StatsResource.REFERENCE);
 		// the slow script of the browser tests of the veil over a loading page, never in production
 		SlowScript.mount(this);
 	}
@@ -372,6 +384,14 @@ public class WicketApplication extends WebApplication
 	}
 
 	/**
+	 * @return the visits counted
+	 */
+	public Visits getVisits()
+	{
+		return visits;
+	}
+
+	/**
 	 * @return the failed attempts to sign in, by address
 	 */
 	public SignInAttempts getSignInAttempts()
@@ -386,6 +406,15 @@ public class WicketApplication extends WebApplication
 	protected Accounts newAccounts()
 	{
 		return new Accounts();
+	}
+
+	/**
+	 * @return the visits, in the folder of {@link Visits#defaultFolder()}; tests may count them
+	 *         in memory
+	 */
+	protected Visits newVisits()
+	{
+		return new Visits();
 	}
 
 	/**

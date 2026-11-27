@@ -19,4 +19,16 @@
 	<entry key="since">Signed in</entry>
 	<entry key="seen">Last request</entry>
 	<entry key="sureUntil">Sure of its place until</entry>
+	<entry key="visitsTitle">Visits</entry>
+	<entry key="visitsLead">{0} people opened a page or signed in in the last {1} days, {2} of them for the first time; {3} signed in, {4} times. {5} pages were shown, {6} of them without the cookie: the first page of a browser, or a client keeping no cookies, such as a robot.</entry>
+	<entry key="visitsKept">Counted since {0} and kept for 13 months, the browsers that signed in as the administrator left out.</entry>
+	<entry key="visitsNone">Nothing counted yet.</entry>
+	<entry key="json">As JSON</entry>
+	<entry key="page">Page</entry>
+	<entry key="views">Views</entry>
+	<entry key="people">People</entry>
+	<entry key="date">Day (UTC)</entry>
+	<entry key="newPeople">New</entry>
+	<entry key="signedInPeople">Signed in</entry>
+	<entry key="signIns">Sign-ins</entry>
 </properties>

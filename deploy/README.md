@@ -2,8 +2,8 @@
 
 The demo site runs on **Amazon Lightsail**: one Linux instance with Docker, where Caddy serves
 HTTPS and passes the requests, websockets included, to Jetty 12 with the WAR. There is no
-database: the site keeps no record of the people who visit it. The domain is registered in
-Lightsail too.
+database: the site counts its visits in a text file a day, see section 4. The domain is
+registered in Lightsail too.
 
 | File | What it does |
 |---|---|
@@ -155,10 +155,20 @@ second; beyond, the application answers 429 with `Retry-After` (`RequestLimitFil
 failures of the sign-in and the buckets of the requests are kept in memory only, by address, and
 forgotten within 30 minutes.
 
-## 4. Nothing kept
+## 4. What is kept
 
-The site keeps no record of the people who visit it: no database, no registrations, no visits
-recorded, no access log. Earlier versions kept the users and the accesses in PostgreSQL, dumped
+No database, no registrations, no access log, no addresses. The site counts its visits for the
+administrator (issue #184): each browser gets a cookie `visitor` holding a random number, nothing
+else, with its first page, for 13 months; a browser sending it back is a person. Each page shown,
+and each sign-in, is a line of the file of its day, `/var/lib/antilia-widgets/stats/visits-<day>.tsv`
+on the volume `page-store`: the time, the number or `-`, the mount path of the page or the account.
+The files older than 13 months are deleted. The browsers that signed in as `admin` are left out.
+`/admin` shows the last 30 days; `/api/stats?days=30` (or `?from=2026-11-01&to=2026-11-15`) gives
+them as JSON to the administrator's session or with `Authorization: Bearer <token>`, the token
+`ANTILIA_WIDGETS_STATS_TOKEN` of `.env`, which `start.sh` makes when missing and `deploy.sh` copies
+once to `~/.config/antilia-widgets/stats-token`.
+
+Earlier versions kept the users and the accesses in PostgreSQL, dumped
 every night to `/var/backups/antilia-widgets`. The first deployment of issue #174 deleted them for
 good: `start.sh` removes the database's container (`docker compose up --remove-orphans`), its
 volume `antilia-widgets_database`, the dumps with their nightly job (`/etc/cron.d/antilia-widgets`)

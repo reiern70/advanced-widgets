@@ -23,7 +23,7 @@
 	<entry key="inUse">{0} de {1} sesiones en uso.</entry>
 	<entry key="full">Las {0} sesiones están en uso ahora mismo. Vuelva a intentarlo dentro de {1,choice,1#un minuto|1&lt;{1} minutos}.</entry>
 	<entry key="placeLost">Otro visitante ocupó su lugar: cada sesión lo conserva {0} minutos con seguridad, y como mucho hay {1} a la vez. Inicie sesión de nuevo para seguir, cuando haya sitio.</entry>
-	<entry key="noRecord">No guardamos ningún registro de las personas que visitan este sitio.</entry>
+	<entry key="whatWeCount">Contamos las visitas sin saber quién las hace: una cookie con un número al azar distingue un navegador de otro, y anotamos durante 13 meses qué páginas abre. Ninguna dirección, ningún nombre, nada más.</entry>
 	<entry key="Required">El campo «${label}» es obligatorio.</entry>
 	<entry key="waitSeconds">Demasiados intentos fallidos: vuelva a intentarlo dentro de {0,choice,1#un segundo|1&lt;{0} segundos}.</entry>
 	<entry key="waitMinutes">Demasiados intentos fallidos: vuelva a intentarlo dentro de {0} minutos.</entry>

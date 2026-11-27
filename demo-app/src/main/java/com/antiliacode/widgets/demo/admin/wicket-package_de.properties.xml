@@ -19,4 +19,16 @@
 	<entry key="since">Angemeldet</entry>
 	<entry key="seen">Letzte Anfrage</entry>
 	<entry key="sureUntil">Platz sicher bis</entry>
+	<entry key="visitsTitle">Besuche</entry>
+	<entry key="visitsLead">In den letzten {1} Tagen haben {0} Personen eine Seite geöffnet oder sich angemeldet, {2} davon zum ersten Mal; {3} haben sich angemeldet, {4}-mal. {5} Seiten wurden gezeigt, {6} davon ohne das Cookie: die erste Seite eines Browsers oder ein Client, der keine Cookies behält, etwa ein Robot.</entry>
+	<entry key="visitsKept">Gezählt seit {0} und 13 Monate lang aufbewahrt, ohne die Browser, die sich als Administrator angemeldet haben.</entry>
+	<entry key="visitsNone">Noch nichts gezählt.</entry>
+	<entry key="json">Als JSON</entry>
+	<entry key="page">Seite</entry>
+	<entry key="views">Aufrufe</entry>
+	<entry key="people">Personen</entry>
+	<entry key="date">Tag (UTC)</entry>
+	<entry key="newPeople">Neu</entry>
+	<entry key="signedInPeople">Angemeldet</entry>
+	<entry key="signIns">Anmeldungen</entry>
 </properties>
