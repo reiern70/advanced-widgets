@@ -87,7 +87,10 @@ What 10.11.0-RC14 has, and:
   The `Location` of a new upload is relative to the endpoint, and the uploader keeps the address of
   an upload without the id of a session, adding the endpoint's as it sends a request. The uploader
   remembers an upload for its `context`, the field's `setUploadContext`, else for its place, and
-  goes on only with those. The reference's `newQuery` takes the size of each file at most.
+  goes on only with those. The reference's `newQuery` takes the size of each file at most. A paused
+  upload is remembered as no longer sending, so that another uploader of the same context or place
+  offers it at once, and the reference reads its limits and timings through its getters, which a
+  subclass may override.
 - The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
 - A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
   design it had.
