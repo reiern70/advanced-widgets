@@ -218,7 +218,7 @@ public class ResumableUploadPage extends DemoPage
 		Locale locale = getLocale();
 		return new StringResourceModel("limits", this).setParameters(
 			sizeOf(uploads.getMaxFileSize().bytes(), locale),
-			sizeOf(uploads.getMaxChunkSize().bytes(), locale), uploads.getMaxUploadsPerSession(),
+			sizeOf(uploads.getMaxChunkSize().bytes(), locale), uploads.getMaxUploadsPerOwner(),
 			uploads.getExpiry().toMinutes());
 	}
 
@@ -262,7 +262,7 @@ public class ResumableUploadPage extends DemoPage
 		return new JSONObject()
 			.put("endpoint", urlFor(uploads, null).toString().replaceAll("/+$", ""))
 			.put("query", uploads.newQuery(DemoResumableUploads.clientId(),
-				uploads.getMaxFileSize(), null, -1))
+				uploads.getMaxFileSize()))
 			.put("receiptsUrl", urlFor(ReceiptsResource.REFERENCE, null).toString())
 			.put("fileMaxSize", uploads.getMaxFileSize().bytes())
 			.put("chunkSize", uploads.getMaxChunkSize().bytes())

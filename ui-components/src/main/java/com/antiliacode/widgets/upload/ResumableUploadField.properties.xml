@@ -15,7 +15,7 @@
 
   The words of the errors of the uploads of a ResumableUploadField, which it looks for with the
   limits of the field and of its resource:
-  ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
+  ${fileMaxSize}, ${maxUploadsPerOwner} and ${maxBytesPerOwner}. The rows of the files show
   them as well, by the keys the server tells.
 -->
 <properties>
@@ -24,8 +24,8 @@
 	<entry key="uploadToResourceFailed">The upload failed.</entry>
 	<entry key="uploadConnectionLost">The connection to the server broke off during the upload.</entry>
 	<entry key="resumableUploadTooLarge">Larger than ${fileMaxSize}, the most for a file.</entry>
-	<entry key="resumableUploadTooMany">${maxUploadsPerSession} uploads at once at most: finish or cancel one first.</entry>
-	<entry key="resumableUploadTooMuch">The uploads not finished yet would weigh more than ${maxBytesPerSession} together.</entry>
+	<entry key="resumableUploadTooMany">${maxUploadsPerOwner} uploads at once at most: finish or cancel one first.</entry>
+	<entry key="resumableUploadTooMuch">The uploads not finished yet would weigh more than ${maxBytesPerOwner} together.</entry>
 	<entry key="resumableUploadNoRoom">The server has no room for the file now: try again later.</entry>
 	<entry key="resumableUploadLost">The server no longer has the upload: choose the file again.</entry>
 	<entry key="resumableUploadGrantRefused">This page is too old to continue the upload: reload it.</entry>
