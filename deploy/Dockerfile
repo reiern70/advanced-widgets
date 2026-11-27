@@ -3,7 +3,7 @@
 # the WAR on the developer's machine and copies it next to this file as ROOT.war. Jetty 12.1 comes
 # with a JDK only, there is no image of it with a JRE. The image is pinned by its digest, so a
 # build takes the same one until Dependabot proposes the next (see .github/dependabot.yml).
-FROM jetty:12.1.15-jdk21@sha256:fe52928bbddac1bf31b0227dff3864cacdcc2e31686c3674f652d98a4041d68b AS base
+FROM jetty:12.1.15-jdk21@sha256:c437c4c8b7e0a77895846f994cd1dc598494ab59d38534bf14ba91df492d6203 AS base
 
 # The WAR unpacked here, so that Jetty serves the web application from a folder of the image it
 # cannot change, rather than unpacking it into the temporary folder at every start
