@@ -18,8 +18,9 @@ What 10.11.0-RC14 has, and:
 - Resumable uploads over tus, the open protocol (#181): large files sent in chunks, each paused,
   resumed or canceled by the user, going on after a broken connection or a reload of the page
   without sending again what the server holds. Wicket 10 has no server side for them: the widgets
-  bring the one proposed for Wicket 11.1 and 12 (apache/wicket#2010 and #2011), with the same
-  names in `com.antiliacode.widgets.upload`. The application mounts a
+  bring the one proposed for Wicket 12, as its experimental module `wicket-resumable-upload`
+  (apache/wicket#2010), with the same names in `com.antiliacode.widgets.upload`. The application
+  mounts a
   `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole files go to, and
   `ResumableUploadField`, a `FileUploadToResourceField`, draws the picker of the theme and a row of
   each file, its bar and its buttons, over the field's `<input type="file">`. It hears of the files
@@ -30,8 +31,9 @@ What 10.11.0-RC14 has, and:
   (`setAskingToResume`, `getClientSideResumeQuestionCallBack()`); after a reload it lists the
   uploads the same place left unfinished and asks whether to go on with them, which they do once
   their files are chosen again. `getCurrentOwner()` of the reference may keep the uploads for the
-  signed-in user, beyond the session. Moving to 11.x, an application imports them from Wicket's
-  `org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable` instead. The core's
+  signed-in user, beyond the session. The 11.x line of the widgets has the same, so moving to it
+  changes nothing here; moving to Wicket 12, an application may import the reference from Wicket's
+  experimental `org.apache.wicket.upload.resumable` instead. The core's
   `TusUpload` (one file) and `ResumableUploader` (the widget, `resumable-upload.ts`, built into
   `antilia-upload.js`), and React's and Svelte's `ResumableUploader`, work with any tus server,
   tusd among them: with the resource of the widgets they send its signed `query`, and tell the name
@@ -40,7 +42,7 @@ What 10.11.0-RC14 has, and:
   the uploader of the theme.
 - The grants of the resumable uploads, the id of a field, the context of its uploads and the size
   of each file at most, are signed for the owner the page was rendered for, as in
-  apache/wicket#2016, and every request for an upload is held to its grant: the upload has to be of
+  apache/wicket#2010, and every request for an upload is held to its grant: the upload has to be of
   its context, its file no larger than it allows. The size of the files chosen at once and their
   number are checked in the browser only. A grant expires (`setGrantExpiry`) after
   `getOwnerExpiry()` by default, unless the key of its signer ends with the session
@@ -56,7 +58,7 @@ What 10.11.0-RC14 has, and:
   times what an owner may have by default (`setMaxTotalBytes`), counted as they arrive: an upload
   created and never sent takes no room, and a chunk that does not fit is refused while its upload
   keeps what arrived.
-- An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2016: the
+- An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2010: the
   reference, `setUploadsTracker` with one tracker for the whole application, tells it of each upload
   created, of its bytes, of its file stored and of its end, each with its context, the part of the
   application the field sets (`setUploadContext`, signed with the grant), and the tracker lists
@@ -76,7 +78,7 @@ What 10.11.0-RC14 has, and:
   upload alone, 20 seconds); the resource's `setOwnerExpiry` (for uploads of a user rather than a
   session), `setExpiryCheckInterval`, `setLockTimeout` and `setMaxMetadataLength`. The core's
   uploader takes `probeDelays`, `stallMillis`, `recalling` and `inUseMillis`.
-- The resumable uploads follow the review of apache/wicket#2010 and #2016: a refusal naming its
+- The resumable uploads follow the review of apache/wicket#2010: a refusal naming its
   error (`Wicket-Upload-Error`) is final for the uploader, and an upload starts over at most twice
   after the server lost it, until it is started again. The limits of an owner are
   `setMaxUploadsPerOwner` and `setMaxBytesPerOwner`. An upload that holds no bytes, none sent yet or
