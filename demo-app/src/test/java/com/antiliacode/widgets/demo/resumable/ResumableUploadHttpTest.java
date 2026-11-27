@@ -101,6 +101,15 @@ class ResumableUploadHttpTest extends JettyTestCase
 		return response.headers().firstValue(name).orElse(null);
 	}
 
+	/**
+	 * @return the path of the upload an answer created, its Location resolved against the endpoint
+	 *         as a tus client does
+	 */
+	private String locationOf(HttpResponse<?> created)
+	{
+		return uri("/" + DemoResumableUploads.PATH).resolve(header(created, "Location")).getPath();
+	}
+
 	@Test
 	void sendsAFileInChunksThroughJettyAndHandsItOver() throws Exception
 	{
@@ -116,8 +125,10 @@ class ResumableUploadHttpTest extends JettyTestCase
 			.header("Upload-Length", "11").header("Upload-Metadata", metadata)
 			.POST(BodyPublishers.noBody()));
 		assertEquals(201, created.statusCode(), created.body());
-		String location = header(created, "Location");
-		assertTrue(location.startsWith("/" + DemoResumableUploads.PATH + "/"), location);
+		assertTrue(header(created, "Location").matches(DemoResumableUploads.PATH + "/[0-9a-f]{32}"),
+			"relative to the endpoint, whatever path a proxy maps the application to: " +
+				header(created, "Location"));
+		String location = locationOf(created);
 
 		HttpResponse<String> first = send(tus(location).header("Upload-Offset", "0")
 			.header("Content-Type", "application/offset+octet-stream")
@@ -164,7 +175,7 @@ class ResumableUploadHttpTest extends JettyTestCase
 			header(large, ResumableUploadResourceReference.ERROR_HEADER));
 
 		String signed = query;
-		query = signed.replace("maxSize=", "maxSize=9");
+		query = signed.replace("fileMaxSize=", "fileMaxSize=9");
 		HttpResponse<String> raised = send(tus("/" + DemoResumableUploads.PATH)
 			.header("Upload-Length", "1").POST(BodyPublishers.noBody()));
 		assertEquals(403, raised.statusCode(), "a query the page did not sign");
@@ -181,7 +192,7 @@ class ResumableUploadHttpTest extends JettyTestCase
 	{
 		HttpResponse<String> created = send(tus("/" + DemoResumableUploads.PATH)
 			.header("Upload-Length", "5").POST(BodyPublishers.noBody()));
-		String location = header(created, "Location");
+		String location = locationOf(created);
 
 		String mine = cookie;
 		String signed = query;

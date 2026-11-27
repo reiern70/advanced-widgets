@@ -41,17 +41,23 @@ What 11.0.0-RC9 has, and:
   beyond the session.
 - The field's `startUpload()`, `cancelUpload()`, `pauseUpload()` and `resumeUpload()` reach
   the uploader of the theme.
-- The grants of the resumable uploads, the id of a field and its limits, are signed for the owner
-  the page was rendered for, and expire (`setGrantExpiry`, `getOwnerExpiry()` by default), as in
-  apache/wicket#2010 and #2011. An `IUploadGrantSigner` signs them (`setGrantSigner`): by default
+- The grants of the resumable uploads, the id of a field, the context of its uploads and the size
+  of each file at most, are signed for the owner the page was rendered for, as in
+  apache/wicket#2010 and #2011, and every request for an upload is held to its grant: the upload
+  has to be of its context, its file no larger than it allows. The size of the files chosen at once
+  and their number are checked in the browser only. A grant expires (`setGrantExpiry`) after
+  `getOwnerExpiry()` by default, unless the key of its signer ends with the session
+  (`IUploadGrantSigner.isBoundToSession()`), as the default one's does: then it holds as long as
+  the session. An `IUploadGrantSigner` signs them (`setGrantSigner`): by default
   `CryptFactoryGrantSigner`, the application's crypt, whose key is in the session, or
   `HmacGrantSigner`, HMAC-SHA256 with a key of at least 32 bytes that the application supplies,
   `HmacGrantSigner.random()` one kept in memory, so that a page rendered before the session ended
   goes on with the uploads of its user. A grant the server refuses fails the upload with "This page
   is too old to continue the upload: reload it." and keeps it for the page loaded again, which
   offers to go on with it; the uploader forgets only an upload the server says it does not have. The
-  uploads of all sessions together take at most ten times those of a session by default
-  (`setMaxTotalBytes`).
+  bytes received of the uploads of all owners together are at most ten times what an owner may
+  have by default (`setMaxTotalBytes`), counted as they arrive: an upload created and never sent
+  takes no room, and a chunk that does not fit is refused while its upload keeps what arrived.
 - An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2010 and #2011: the
   reference, `setUploadsTracker` with one tracker for the whole application, tells it of each upload
   created, of its bytes, of its file stored and of its end, each with its context, the part of the
@@ -61,10 +67,10 @@ What 11.0.0-RC9 has, and:
   those `localStorage` remembers, the unfinished uploads the tracker lists (`getRecalledUploads()`):
   with a context those of the same context wherever they started, else those of its place; with an
   owner beyond the session, in the next session or from another browser. By default the tracker
-  lists the uploads the reference holds in memory. The core's `ResumableUploader` takes them as
-  `recalled`, and tells the server the date of each file and the place of the uploader. The demo
-  lists the unfinished uploads of the session in its context, each with a button discarding it; it
-  keeps nothing of its visitors beyond the session.
+  lists the unfinished uploads the reference holds in memory. The core's `ResumableUploader` takes
+  them as `recalled`, and tells the server the date of each file and the place of the uploader. The
+  demo lists the unfinished uploads of the session in its context, each with a button discarding it;
+  it keeps nothing of its visitors beyond the session.
 - The timings and limits of the resumable uploads can be set: the field's
   `setReconnectCheckInterval` (how often it looks whether the server answers again, 30 seconds),
   `setStallTimeout` (how long a request may get nothing, 30 seconds), `setRecalling` (whether it
@@ -72,6 +78,18 @@ What 11.0.0-RC9 has, and:
   upload alone, 20 seconds); the resource's `setOwnerExpiry` (for uploads of a user rather than a
   session), `setExpiryCheckInterval`, `setLockTimeout` and `setMaxMetadataLength`. The core's
   uploader takes `probeDelays`, `stallMillis`, `recalling` and `inUseMillis`.
+- The resumable uploads follow the review of apache/wicket#2010: a refusal naming its error
+  (`Wicket-Upload-Error`) is final for the uploader, and an upload starts over at most twice after
+  the server lost it, until it is started again. The limits of an owner are
+  `setMaxUploadsPerOwner` and `setMaxBytesPerOwner`. An upload that holds no bytes, none sent yet or
+  its file stored, expires after `setEmptyExpiry` (5 minutes), and an owner keeps as many stored
+  uploads as it may run at once. A `HEAD` while the file is being stored answers 423. The end of a
+  session or of the application deletes an upload once no request writes it. A canceled upload is
+  deleted again while the server is busy with it (`terminate` takes the waits between the tries).
+  The `Location` of a new upload is relative to the endpoint, and the uploader keeps the address of
+  an upload without the id of a session, adding the endpoint's as it sends a request. The uploader
+  remembers an upload for its `context`, the field's `setUploadContext`, else for its place, and
+  goes on only with those. The reference's `newQuery` takes the size of each file at most.
 - The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
 - A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
   design it had.

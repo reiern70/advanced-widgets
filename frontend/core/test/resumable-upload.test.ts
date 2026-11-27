@@ -136,9 +136,9 @@ class TusServer {
 
 let server: TusServer;
 
-/** The name of an upload in its address, without the query. */
+/** The name of an upload in its address, without the query and the path parameters. */
 function idOf(url: string): string {
-	return url.split('?')[0].split('/files/')[1];
+	return url.split('?')[0].split('/files/')[1]?.replace(/;.*$/, '');
 }
 
 /** An XMLHttpRequest talking to the fake server, answering in a microtask. */
@@ -435,6 +435,111 @@ describe('the tus client', () => {
 		await settle();
 		expect(upload.state).toBe('done');
 	});
+
+	it('takes a refusal naming its error as final, though its status is one tried again',
+		async () => {
+			server.plan('PATCH', (request) => request.xhr.respond(500,
+				{ 'wicket-upload-error': 'uploadFailed' }));
+			const upload = new TusUpload(file(8), { endpoint: ENDPOINT, retryDelays: [0, 0] });
+			upload.start();
+			await settle();
+			expect(upload.state).toBe('failed');
+			expect(upload.error).toMatchObject({ status: 500, kind: 'refused', key: 'uploadFailed' });
+			expect(server.received.map((request) => request.method)).toEqual(['POST', 'PATCH']);
+		});
+
+	it('starts an upload over at most twice after the server lost it, until started again',
+		async () => {
+			vi.useFakeTimers();
+			const lose = (request: Received) => {
+				server.uploads.delete(idOf(request.url));
+				request.xhr.respond(404);
+			};
+			[1, 2, 3].forEach(() => server.plan('PATCH', lose));
+			const upload = new TusUpload(file(8), { endpoint: ENDPOINT,
+				retryDelays: [10, 10, 10, 10, 10, 10] });
+			upload.start();
+			for (let tries = 0; tries < 6; tries++) {
+				await settle();
+				await vi.advanceTimersByTimeAsync(10);
+			}
+			expect(server.of('POST')).toHaveLength(3);
+			expect(upload.state).toBe('failed');
+			expect(upload.error).toMatchObject({ kind: 'refused', key: 'resumableUploadLost' });
+
+			upload.start();
+			await settle();
+			expect(server.of('POST')).toHaveLength(4);
+			expect(upload.state).toBe('done');
+		});
+
+	it('deletes a canceled upload again while the server is busy with it', async () => {
+		vi.useFakeTimers();
+		server.holding = true;
+		server.plan('DELETE', (request) => request.xhr.respond(423));
+		const upload = new TusUpload(file(8), { endpoint: ENDPOINT, retryDelays: [100] });
+		upload.start();
+		await settle();
+		const canceled = upload.cancel();
+		await settle();
+		await vi.advanceTimersByTimeAsync(100);
+		await canceled;
+		expect(server.of('DELETE')).toHaveLength(2);
+		expect(server.uploads.size).toBe(0);
+		server.plan('DELETE', (request) => request.xhr.respond(403,
+			{ 'wicket-upload-error': 'resumableUploadGrantRefused' }));
+		expect(await terminate(ENDPOINT + '/u7', {}, [100])).toBe(false);
+		expect(server.of('DELETE')).toHaveLength(3);
+	});
+
+	it('keeps the address of an upload without the id of a session, and adds it as it sends',
+		async () => {
+			const endpoint = ENDPOINT + ';jsessionid=abc';
+			server.plan('POST', (request) => {
+				server.uploads.set('u9', { length: 8, offset: 0, metadata: '' });
+				request.xhr.respond(201, { location: 'files/u9;jsessionid=abc' });
+			});
+			server.holding = true;
+			const upload = new TusUpload(file(8), { endpoint });
+			upload.start();
+			await settle();
+			expect(server.of('POST')[0].url).toBe(endpoint);
+			expect(upload.url).toBe(ENDPOINT + '/u9');
+			expect(server.held[0].url).toBe(ENDPOINT + '/u9;jsessionid=abc');
+			expect(TusStorage.list(endpoint).map((stored) => stored.url)).toEqual([ENDPOINT + '/u9']);
+			expect(await probe(ENDPOINT + '/u9', { endpoint })).toEqual({ offset: 0, length: 8 });
+			expect(server.received.slice(-1)[0].url).toBe(ENDPOINT + '/u9;jsessionid=abc');
+			upload.abort();
+		});
+
+	it('goes on only with an upload kept for its context, or for its place without one',
+		async () => {
+			server.uploads.set('v', { length: 10, offset: 4, metadata: '' });
+			TusStorage.save({ fingerprint: fingerprintOf(file(10), ENDPOINT, 'context:videos'),
+				url: ENDPOINT + '/v', endpoint: ENDPOINT, name: 'film.mp4', size: 10,
+				type: 'video/mp4', lastModified: 1, stored: 1, rememberedAs: 'Other:place',
+				context: 'videos' });
+			server.holding = true;
+			const videos = new TusUpload(file(10), { endpoint: ENDPOINT, context: 'videos',
+				rememberedAs: 'Page:field' });
+			videos.start();
+			await settle();
+			expect(server.of('HEAD').map((request) => request.url)).toEqual([ENDPOINT + '/v']);
+			videos.abort();
+
+			const attachments = new TusUpload(file(10), { endpoint: ENDPOINT,
+				context: 'attachments' });
+			attachments.start();
+			await settle();
+			const placed = new TusUpload(file(10), { endpoint: ENDPOINT, rememberedAs: 'Other:place' });
+			placed.start();
+			await settle();
+			expect(server.of('HEAD')).toHaveLength(1);
+			// another context, and a place without one
+			expect(server.of('POST')).toHaveLength(2);
+			attachments.abort();
+			placed.abort();
+		});
 
 	it('does not try again what the server refused', async () => {
 		server.plan('POST', (request) => request.xhr.respond(413,
@@ -1240,8 +1345,9 @@ describe('Wicket.Upload.resumable', () => {
 			server.storing = 'stored-1';
 			uploader.add([file(8)]);
 			await settle();
-			const query = '?uploadId=field&maxSize=100&fileMaxSize=50&fileCountMax=-1' +
-				'&uploadToken=to%20ken&grantExpires=1767225600000';
+			// the grant of the field: the size of each file is the only limit the server holds
+			const query = '?uploadId=field&fileMaxSize=50&uploadToken=to%20ken' +
+				'&grantExpires=1767225600000';
 			expect(server.of('POST')[0].url).toBe(ENDPOINT + query);
 			expect(server.of('PATCH')[0].url).toBe(ENDPOINT + '/u1' + query);
 			expect(heard).toEqual([{ c: 'x', u: 'callback', m: 'POST', ep: [{ name: 'veil',
