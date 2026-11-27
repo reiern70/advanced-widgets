@@ -80,16 +80,19 @@ What 11.0.0-RC9 has, and:
   uploader takes `probeDelays`, `stallMillis`, `recalling` and `inUseMillis`.
 - The resumable uploads follow the review of apache/wicket#2010: a refusal naming its error
   (`Wicket-Upload-Error`) is final for the uploader, and an upload starts over at most twice after
-  the server lost it, until it is started again. The limits of an owner are
-  `setMaxUploadsPerOwner` and `setMaxBytesPerOwner`. An upload that holds no bytes, none sent yet or
-  its file stored, expires after `setEmptyExpiry` (5 minutes), and an owner keeps as many stored
-  uploads as it may run at once. A `HEAD` while the file is being stored answers 423. The end of a
-  session or of the application deletes an upload once no request writes it. A canceled upload is
-  deleted again while the server is busy with it (`terminate` takes the waits between the tries).
-  The `Location` of a new upload is relative to the endpoint, and the uploader keeps the address of
-  an upload without the id of a session, adding the endpoint's as it sends a request. The uploader
-  remembers an upload for its `context`, the field's `setUploadContext`, else for its place, and
-  goes on only with those. The reference's `newQuery` takes the size of each file at most.
+  the server lost it, until it is started again. The limits of an owner are `setMaxUploadsPerOwner`
+  and `setMaxBytesPerOwner`. An upload that holds no bytes, none sent yet or its file stored,
+  expires after `setEmptyExpiry` (5 minutes), and an owner keeps as many stored uploads as it may
+  run at once. A `HEAD` while the file is being stored answers 423. The end of a session or of the
+  application deletes an upload once no request writes it. A canceled upload is deleted again while
+  the server is busy with it (`terminate` takes the waits between the tries). The `Location` of a
+  new upload is relative to the endpoint, and the uploader keeps the address of an upload without
+  the id of a session, adding the endpoint's as it sends a request. The uploader remembers an upload
+  for its `context`, the field's `setUploadContext`, else for its place, and goes on only with
+  those. The reference's `newQuery` takes the size of each file at most. A paused upload is
+  remembered as no longer sending, so that another uploader of the same context or place offers it
+  at once, and the reference reads its limits and timings through its getters, which a subclass may
+  override.
 - The throttle slows the chunks of resumable uploads down too, as it does multipart uploads.
 - A `FilePicker` configured again in the button design no longer keeps the zone of the drop-zone
   design it had.
