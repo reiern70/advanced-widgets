@@ -103,6 +103,12 @@ export const STORED_NAME_HEADER = 'Wicket-Upload-File-Name';
 /** The header in which Wicket's ResumableUploadResourceReference tells the key of a refusal. */
 export const ERROR_KEY_HEADER = 'Wicket-Upload-Error';
 
+/** The key a lost upload fails with, as Wicket's ResumableUploadField words it. */
+export const LOST_KEY = 'resumableUploadLost';
+
+/** How often an upload starts over at most, after the server lost it, until it is started again. */
+const MAX_RESTARTS = 2;
+
 /** Where TusStorage keeps the addresses of the uploads, before their fingerprints. */
 const STORAGE_PREFIX = 'antilia-tus::';
 
@@ -196,6 +202,12 @@ export interface TusUploadOptions {
 	 */
 	rememberedAs?: string;
 	/**
+	 * The part of the application the upload belongs to, as Wicket's ResumableUploadField tells
+	 * it: the address is kept for it rather than for the place, and an uploader of the same context
+	 * anywhere goes on with the upload.
+	 */
+	context?: string;
+	/**
 	 * How long after it last sent something the upload counts as in use for other pages, which
 	 * leave it alone; DEFAULT_IN_USE_MILLIS when left out. It tells so four times as often.
 	 */
@@ -235,12 +247,53 @@ export function absoluteUrl(url: string): string {
 }
 
 /**
- * @returns the fingerprint of a file sent to a tus server: the same file chosen again, to the same
- * server, has the same one
+ * @returns how long to wait before each try after a failure: the retryDelays of options, else those
+ * retryDelaysFor() makes of their retryTimeout
  */
-export function fingerprintOf(file: Blob, endpoint: string): string {
+function retryDelaysOf(options: { retryDelays?: readonly number[]; retryTimeout?: number }):
+	readonly number[] {
+	return options.retryDelays ?? (options.retryTimeout === undefined
+		? DEFAULT_RETRY_DELAYS : retryDelaysFor(options.retryTimeout));
+}
+
+/**
+ * @returns an address without the path parameters of its last segment, the id of a session a
+ * server without cookies puts there for example
+ */
+export function withoutPathParameters(url: string): string {
+	return url.replace(/;[^/?#]*(?=[?#]|$)/, '');
+}
+
+/**
+ * @returns an address with the path parameters of the endpoint, unless it has some: the id of a
+ * session is added to the address of an upload as a request is sent, and never kept with it
+ */
+function withPathParametersOf(url: string, endpoint: string | undefined): string {
+	const parameters = endpoint ? /;[^/?#]*(?=[?#]|$)/.exec(endpoint) : null;
+	if (!parameters || /;[^/?#]*(?=[?#]|$)/.test(url)) {
+		return url;
+	}
+	const end = url.search(/[?#]/);
+	return end < 0 ? url + parameters[0] : url.slice(0, end) + parameters[0] + url.slice(end);
+}
+
+/**
+ * @returns what the address of an upload is kept for: the context of its uploader, else its place;
+ * undefined for neither
+ */
+function scopeOf(options: { context?: string; rememberedAs?: string }): string | undefined {
+	return options.context ? 'context:' + options.context
+		: options.rememberedAs ? 'place:' + options.rememberedAs : undefined;
+}
+
+/**
+ * @returns the fingerprint of a file sent to a tus server: the same file chosen again, to the same
+ * server, for the same scope, see TusUploadOptions.context, has the same one
+ */
+export function fingerprintOf(file: Blob, endpoint: string, scope?: string): string {
 	const named = file as Partial<File>;
-	return fingerprintFor(endpoint, named.name ?? '', file.size, file.type, named.lastModified ?? 0);
+	return fingerprintFor(endpoint, named.name ?? '', file.size, file.type, named.lastModified ?? 0,
+		scope);
 }
 
 /**
@@ -248,8 +301,10 @@ export function fingerprintOf(file: Blob, endpoint: string): string {
  * fingerprintOf() makes it
  */
 function fingerprintFor(endpoint: string, name: string, size: number, type: string,
-	lastModified: number): string {
-	return [absoluteUrl(endpoint), name, size, type, lastModified].join('::');
+	lastModified: number, scope?: string): string {
+	const parts: (string | number)[] = [absoluteUrl(withoutPathParameters(endpoint)), name, size,
+		type, lastModified];
+	return (scope ? [...parts, scope] : parts).join('::');
 }
 
 function base64(value: string): string {
@@ -284,14 +339,16 @@ function answerOf(xhr: XMLHttpRequest): Answer {
  */
 function errorOf(answer: Answer): TusError {
 	const status = answer.status;
+	const key = answer.header(ERROR_KEY_HEADER);
+	// a refusal naming its error is final, whatever its status
 	const kind: TusErrorKind = status === 0 ? 'network'
-		: status === 404 || status === 410 ? 'gone'
-			: status === 409 || status === 423 || status === 429 || (status >= 500 && status !== 501)
-				? 'server' : 'refused';
+		: key !== null ? 'refused'
+			: status === 404 || status === 410 ? 'gone'
+				: status === 409 || status === 423 || status === 429 ||
+					(status >= 500 && status !== 501) ? 'server' : 'refused';
 	const plain = (answer.header('Content-Type') ?? '').toLowerCase().startsWith('text/plain');
 	const text = plain && answer.text.length < 500 ? answer.text.trim() : '';
-	return new TusError(text || `The server answered ${status}`, status, kind,
-		answer.header(ERROR_KEY_HEADER));
+	return new TusError(text || `The server answered ${status}`, status, kind, key);
 }
 
 /**
@@ -330,6 +387,8 @@ export interface StoredUpload {
 	stored: number;
 	/** What it was kept with: the place of its uploader, see TusUploadOptions.rememberedAs. */
 	rememberedAs?: string;
+	/** The context of its uploader, see TusUploadOptions.context. */
+	context?: string;
 	/** When it was last being sent, in milliseconds since the epoch; 0 once its page was left. */
 	alive?: number;
 }
@@ -400,7 +459,7 @@ export const TusStorage = {
 		if (!store) {
 			return [];
 		}
-		const absolute = absoluteUrl(endpoint);
+		const absolute = absoluteUrl(withoutPathParameters(endpoint));
 		const found: StoredUpload[] = [];
 		try {
 			for (let index = 0; index < store.length; index++) {
@@ -419,14 +478,19 @@ export const TusStorage = {
 	}
 };
 
-/** The options of a request outside an upload: its headers and credentials. */
-export type TusRequestOptions = Pick<TusUploadOptions, 'headers' | 'withCredentials' | 'query'>;
+/**
+ * The options of a request outside an upload: its headers and credentials, and the endpoint whose
+ * path parameters an address of an upload gets.
+ */
+export type TusRequestOptions = Pick<TusUploadOptions, 'headers' | 'withCredentials' | 'query'> &
+	{ endpoint?: string };
 
 function request(method: string, url: string, options: TusRequestOptions | undefined):
 	Promise<Answer> {
 	return new Promise((resolve) => {
 		const xhr = new XMLHttpRequest();
-		xhr.open(method, withQuery(url, options?.query), true);
+		xhr.open(method, withQuery(withPathParametersOf(url, options?.endpoint), options?.query),
+			true);
 		xhr.withCredentials = !!options?.withCredentials;
 		Object.entries({ ...options?.headers, 'Tus-Resumable': TUS_RESUMABLE })
 			.forEach(([name, value]) => xhr.setRequestHeader(name, value));
@@ -439,14 +503,25 @@ function request(method: string, url: string, options: TusRequestOptions | undef
 }
 
 /**
- * Deletes an upload on the server, finished or not (the termination extension of tus).
+ * Deletes an upload on the server, finished or not (the termination extension of tus), trying
+ * again while the server is busy with it, a request just aborted still writing it for example.
  *
+ * @param retryDelays how long to wait before each try again; none by default
  * @returns whether the server deleted it, or did not have it
  */
-export async function terminate(url: string, options?: TusRequestOptions): Promise<boolean> {
-	const answer = await request('DELETE', url, options);
-	return answer.status === 204 || answer.status === 200 || answer.status === 404 ||
-		answer.status === 410;
+export async function terminate(url: string, options?: TusRequestOptions,
+	retryDelays: readonly number[] = []): Promise<boolean> {
+	for (let attempt = 0; ; attempt++) {
+		const answer = await request('DELETE', url, options);
+		if (answer.status === 204 || answer.status === 200 || answer.status === 404 ||
+			answer.status === 410) {
+			return true;
+		}
+		if (attempt >= retryDelays.length || !errorOf(answer).retryable) {
+			return false;
+		}
+		await new Promise((resolve) => window.setTimeout(resolve, retryDelays[attempt]));
+	}
 }
 
 /**
@@ -520,6 +595,9 @@ export class TusUpload {
 	/** The tries since the last chunk that went through. */
 	private attempts = 0;
 
+	/** The uploads created since the last start(): more than one, the server lost one. */
+	private creations = 0;
+
 	/** The run going on: a pause, a cancellation or a start begin another one. */
 	private run = 0;
 
@@ -551,7 +629,7 @@ export class TusUpload {
 
 	/** The fingerprint of the file, by which its address is kept. */
 	get fingerprint(): string {
-		return fingerprintOf(this.file, this.options.endpoint);
+		return fingerprintOf(this.file, this.options.endpoint, scopeOf(this.options));
 	}
 
 	/** Whether it is being sent, or about to be after a failure. */
@@ -569,6 +647,7 @@ export class TusUpload {
 			return;
 		}
 		this.attempts = 0;
+		this.creations = 0;
 		this.error = null;
 		void this.go(++this.run);
 	}
@@ -609,8 +688,13 @@ export class TusUpload {
 		this.url = null;
 		this.setState('canceled');
 		if (url) {
-			await terminate(url, this.options).catch(() => false);
+			await terminate(url, this.options, this.retryDelays()).catch(() => false);
 		}
+	}
+
+	/** How long to wait before each try after a failure. */
+	retryDelays(): readonly number[] {
+		return retryDelaysOf(this.options);
 	}
 
 	/**
@@ -655,9 +739,10 @@ export class TusUpload {
 		const named = this.file as Partial<File>;
 		this.alive = alive;
 		TusStorage.save({ fingerprint: this.fingerprint, url: this.url,
-			endpoint: absoluteUrl(this.options.endpoint), name: named.name ?? '', size: this.size,
-			type: this.file.type, lastModified: named.lastModified ?? 0, stored: Date.now(),
-			rememberedAs: this.options.rememberedAs, alive });
+			endpoint: absoluteUrl(withoutPathParameters(this.options.endpoint)),
+			name: named.name ?? '', size: this.size, type: this.file.type,
+			lastModified: named.lastModified ?? 0, stored: Date.now(),
+			rememberedAs: this.options.rememberedAs, context: this.options.context, alive });
 	}
 
 	/** Tells now and then that the upload is being sent, for other pages to leave it alone. */
@@ -770,6 +855,9 @@ export class TusUpload {
 	}
 
 	private async create(run: number): Promise<void> {
+		if (++this.creations > 1 + MAX_RESTARTS) {
+			throw new TusError('The server lost the upload again', 410, 'refused', LOST_KEY);
+		}
 		const named = this.file as Partial<File>;
 		const metadata = { filename: named.name ?? '', filetype: this.file.type,
 			lastmodified: String(named.lastModified ?? 0), ...this.options.metadata };
@@ -786,7 +874,8 @@ export class TusUpload {
 		if (!location) {
 			throw new TusError('The server told no Location', answer.status, 'protocol');
 		}
-		this.url = new URL(location, absoluteUrl(this.options.endpoint)).href;
+		// behind a proxy the path the server sees may not be the browser's: relative to the endpoint
+		this.url = withoutPathParameters(new URL(location, absoluteUrl(this.options.endpoint)).href);
 		this.offset = 0;
 		this.storedName = answer.header(STORED_NAME_HEADER);
 		this.remember();
@@ -826,8 +915,7 @@ export class TusUpload {
 			this.forget();
 			this.url = null;
 		}
-		const delays = this.options.retryDelays ?? (this.options.retryTimeout === undefined
-			? DEFAULT_RETRY_DELAYS : retryDelaysFor(this.options.retryTimeout));
+		const delays = this.retryDelays();
 		if (error.retryable && typeof navigator !== 'undefined' && navigator.onLine === false) {
 			this.waitOnline(run, delays.reduce((sum, delay) => sum + delay, 0));
 			return;
@@ -895,7 +983,8 @@ export class TusUpload {
 				verb = 'POST';
 				all['X-HTTP-Method-Override'] = 'PATCH';
 			}
-			xhr.open(verb, withQuery(url, this.options.query), true);
+			xhr.open(verb, withQuery(withPathParametersOf(url, this.options.endpoint),
+				this.options.query), true);
 			xhr.withCredentials = !!this.options.withCredentials;
 			Object.entries(all).forEach(([name, value]) => xhr.setRequestHeader(name, value));
 			const stallMillis = this.options.stallMillis ?? DEFAULT_STALL_MILLIS;
@@ -1138,6 +1227,12 @@ export interface ResumableUploaderOptions {
 	 * the uploads remembered with the same are offered.
 	 */
 	rememberedAs?: string;
+	/**
+	 * The part of the application the uploads belong to, see TusUploadOptions.context: with one, the
+	 * uploads are remembered for it, and offered and gone on with by any uploader of the same
+	 * context, rather than by the one in the same place only.
+	 */
+	context?: string;
 	/**
 	 * Whether the uploader lists, as it starts, the uploads an earlier visit left unfinished and asks
 	 * whether to go on with them; true by default. Without, an upload still goes on once its file is
@@ -1501,7 +1596,7 @@ export class ResumableUploader {
 	add(files: readonly File[]): void {
 		const taken = this.options.multiple === false ? files.slice(0, 1) : files;
 		taken.forEach((file) => {
-			const fingerprint = fingerprintOf(file, this.options.endpoint);
+			const fingerprint = fingerprintOf(file, this.options.endpoint, scopeOf(this.options));
 			const same = this.rows.find((row) => row.fingerprint === fingerprint &&
 				!FINISHED.includes(row.state));
 			if (same && same.state !== 'interrupted') {
@@ -1579,8 +1674,8 @@ export class ResumableUploader {
 			retryDelays: options.retryDelays, retryTimeout: options.retryTimeout,
 			stallMillis: options.stallMillis,
 			pollMillis: options.pollMillis, remember: options.remember,
-			rememberedAs: options.rememberedAs, inUseMillis: options.inUseMillis,
-			overridePatchMethod: options.overridePatchMethod,
+			rememberedAs: options.rememberedAs, context: options.context,
+			inUseMillis: options.inUseMillis, overridePatchMethod: options.overridePatchMethod,
 			onProgress: (sent) => {
 				if (row.upload === upload) {
 					this.onProgress(row, sent);
@@ -1941,7 +2036,7 @@ export class ResumableUploader {
 		this.pump();
 		this.changed();
 		if (url) {
-			await terminate(url, this.options).catch(() => false);
+			await terminate(url, this.options, retryDelaysOf(this.options)).catch(() => false);
 		}
 	}
 
@@ -2006,19 +2101,28 @@ export class ResumableUploader {
 	 */
 	private keepRecalled(place: string | null): void {
 		const endpoint = this.options.endpoint!;
-		// without the id of a session in the path, as the server tells the address of an upload
-		const base = endpoint.replace(/;[^/]*$/, '');
-		const kept = TusStorage.list(endpoint).map((stored) => absoluteUrl(stored.url));
+		const base = withoutPathParameters(endpoint);
+		const kept = TusStorage.list(endpoint).filter((stored) => this.belongs(stored))
+			.map((stored) => absoluteUrl(stored.url));
 		(this.options.recalled ?? []).forEach((upload) => {
 			const url = absoluteUrl(base + '/' + encodeURIComponent(upload.id));
 			if (!kept.includes(url)) {
 				TusStorage.save({ fingerprint: fingerprintFor(endpoint, upload.name, upload.size,
-					upload.type, upload.lastModified), url, endpoint: absoluteUrl(endpoint),
-					name: upload.name, size: upload.size, type: upload.type,
-					lastModified: upload.lastModified, stored: Date.now(),
-					rememberedAs: place ?? undefined, alive: 0 });
+					upload.type, upload.lastModified, scopeOf(this.options)), url,
+					endpoint: absoluteUrl(base), name: upload.name, size: upload.size,
+					type: upload.type, lastModified: upload.lastModified, stored: Date.now(),
+					rememberedAs: place ?? undefined, context: this.options.context, alive: 0 });
 			}
 		});
+	}
+
+	/**
+	 * @returns whether the uploader goes on with a kept upload: one of its context, else one of its
+	 * place
+	 */
+	private belongs(stored: StoredUpload): boolean {
+		return this.options.context ? stored.context === this.options.context
+			: !stored.context && (stored.rememberedAs ?? null) === (this.options.rememberedAs ?? null);
 	}
 
 	/**
@@ -2034,7 +2138,7 @@ export class ResumableUploader {
 		const place = this.options.rememberedAs ?? null;
 		this.keepRecalled(place);
 		const asked = TusStorage.list(this.options.endpoint).map((stored) => {
-			if ((stored.rememberedAs ?? null) !== place ||
+			if (!this.belongs(stored) ||
 				TusStorage.sending(stored, this.options.inUseMillis) ||
 				this.rows.some((row) => row.fingerprint === stored.fingerprint)) {
 				return Promise.resolve();

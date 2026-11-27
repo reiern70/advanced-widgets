@@ -15,7 +15,7 @@
 
   The words of the errors of the uploads of a ResumableUploadField, which it looks for with the
   limits of the field and of its resource:
-  ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
+  ${fileMaxSize}, ${maxUploadsPerOwner} and ${maxBytesPerOwner}. The rows of the files show
   them as well, by the keys the server tells.
 -->
 <properties>
@@ -24,8 +24,8 @@
 	<entry key="uploadToResourceFailed">Der Upload ist fehlgeschlagen.</entry>
 	<entry key="uploadConnectionLost">Die Verbindung zum Server ist beim Upload abgebrochen.</entry>
 	<entry key="resumableUploadTooLarge">Größer als ${fileMaxSize}, das Maximum für eine Datei.</entry>
-	<entry key="resumableUploadTooMany">Höchstens ${maxUploadsPerSession} Uploads zugleich: beenden oder brechen Sie zuerst einen ab.</entry>
-	<entry key="resumableUploadTooMuch">Die noch nicht fertigen Uploads wären zusammen größer als ${maxBytesPerSession}.</entry>
+	<entry key="resumableUploadTooMany">Höchstens ${maxUploadsPerOwner} Uploads zugleich: beenden oder brechen Sie zuerst einen ab.</entry>
+	<entry key="resumableUploadTooMuch">Die noch nicht fertigen Uploads wären zusammen größer als ${maxBytesPerOwner}.</entry>
 	<entry key="resumableUploadNoRoom">Der Server hat gerade keinen Platz für die Datei: versuchen Sie es später erneut.</entry>
 	<entry key="resumableUploadLost">Der Server hat den Upload nicht mehr: wählen Sie die Datei erneut.</entry>
 	<entry key="resumableUploadGrantRefused">Diese Seite ist zu alt, um den Upload fortzusetzen: laden Sie sie neu.</entry>

@@ -79,8 +79,8 @@ public class DemoResumableUploads extends ResumableUploadResourceReference
 		setMaxFileSize(Bytes.megabytes(100));
 		// less than the proxy before production lets a request carry
 		setMaxChunkSize(Bytes.megabytes(8));
-		setMaxUploadsPerSession(5);
-		setMaxBytesPerSession(Bytes.megabytes(300));
+		setMaxUploadsPerOwner(5);
+		setMaxBytesPerOwner(Bytes.megabytes(300));
 		setMaxTotalBytes(Bytes.gigabytes(1));
 		setExpiry(Duration.ofMinutes(30));
 	}

@@ -538,7 +538,8 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	 * By default these are the unfinished uploads of the current owner in the
 	 * {@link #setUploadContext(String) context} of the field, wherever they started, or, without a
 	 * context, those a field in the same place started, {@link #getRememberedAs()}, as the
-	 * {@link ResumableUploadResourceReference#getUploadsTracker() tracker of the uploads} lists them.
+	 * {@link ResumableUploadResourceReference#getUploadsTracker() tracker of the uploads} lists them,
+	 * whose files are no larger than the field takes.
 	 *
 	 * @return the uploads to offer
 	 */
@@ -551,10 +552,12 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 			return List.of();
 		}
 		String place = getRememberedAs();
+		long fileMaxSize = getFileMaxSize().bytes();
 		return reference.getUploadsTracker()
 			.getUploads(uploadContext, owner)
 			.stream()
 			.filter(upload -> !upload.isStored() && !upload.isComplete() &&
+				upload.length() <= fileMaxSize &&
 				(uploadContext != null || place.equals(upload.place())))
 			.toList();
 	}
@@ -834,25 +837,26 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 	 * in its grant, signed by the reference's
 	 * {@link ResumableUploadResourceReference#getGrantSigner() signer} for the
 	 * {@link ResumableUploadResourceReference#getCurrentOwner() current owner}, with
-	 * {@code grantExpires}, when the grant expires, in milliseconds since the epoch, how the files
-	 * go, the picker and the texts.
+	 * {@code grantExpires}, when the grant expires, in milliseconds since the epoch, -1 for never,
+	 * how the files go, the picker and the texts. The grant signs the size of each file at most,
+	 * the only limit the server holds a request to: the size of the files chosen at once and their
+	 * number are checked in the browser only, every file being an upload of its own.
 	 *
 	 * @return the settings
 	 */
 	protected JSONObject newClientSettings()
 	{
 		ResumableUploadResourceReference reference = getResumableUploadResourceReference();
-		UploadGrant grant = reference.newGrant(getMarkupId(), uploadContext, getMaxSize(),
-			getFileMaxSize(),
-			getFileCountMax());
+		UploadGrant grant = reference.newGrant(getMarkupId(), uploadContext, getFileMaxSize());
 		JSONObject settings = new JSONObject();
 		settings.put("inputName", getMarkupId());
 		settings.put("resourceUrl", Strings.stripEnding(
 			urlFor(reference, new PageParameters()).toString(), "/"));
 		settings.put("ajaxCallBackUrl", callback.getCallbackUrl());
-		settings.put("maxSize", grant.maxSize());
+		// as large as a script holds exactly
+		settings.put("maxSize", Math.min(getMaxSize().bytes(), UploadGrant.MAX_SAFE_INTEGER));
 		settings.put("fileMaxSize", grant.fileMaxSize());
-		settings.put("fileCountMax", grant.fileCountMax());
+		settings.put("fileCountMax", getFileCountMax());
 		settings.put("uploadToken",
 			grant.token(reference.getGrantSigner(), reference.getCurrentOwner()));
 		settings.put("grantExpires", grant.expires());
@@ -913,8 +917,8 @@ public abstract class ResumableUploadField extends FileUploadToResourceField
 		if (errorKey != null && RESUMABLE_ERROR_KEYS.contains(errorKey))
 		{
 			ResumableUploadResourceReference reference = getResumableUploadResourceReference();
-			model.put("maxUploadsPerSession", reference.getMaxUploadsPerSession());
-			model.put("maxBytesPerSession", reference.getMaxBytesPerSession());
+			model.put("maxUploadsPerOwner", reference.getMaxUploadsPerOwner());
+			model.put("maxBytesPerOwner", reference.getMaxBytesPerOwner());
 			return getString(errorKey, Model.ofMap(model));
 		}
 		String key = errorKey != null && ERROR_RESOURCE_KEYS.contains(errorKey) ? errorKey

@@ -426,7 +426,10 @@ interface ResumableFieldSettings extends Omit<ResumableUploaderOptions, 'endpoin
 	maxSize: number;
 	fileCountMax?: number;
 	uploadToken: string;
-	/** When the grant of the field expires, in milliseconds since the epoch; signed with it. */
+	/**
+	 * When the grant of the field expires, in milliseconds since the epoch, -1 for never; signed
+	 * with it.
+	 */
 	grantExpires?: number;
 	/** The part of the application the uploads belong to, signed with the grant. */
 	uploadContext?: string;
@@ -449,18 +452,12 @@ const UPLOAD_CANCELED = 'upload.canceled';
 const UPLOAD_LOST = 'resumableUploadLost';
 
 /**
- * @returns the query Wicket's FileUploadToResourceField adds to the requests of its uploads
+ * @returns the query the field's uploads send with each request: its grant, which signs the size of
+ * each file at most, the only limit the server holds a request to
  */
 function queryOf(settings: ResumableFieldSettings): string {
 	const parameters: Array<[string, unknown]> = [['uploadId', settings.inputName],
-		['maxSize', settings.maxSize]];
-	if (settings.fileMaxSize != null) {
-		parameters.push(['fileMaxSize', settings.fileMaxSize]);
-	}
-	if (settings.fileCountMax != null) {
-		parameters.push(['fileCountMax', settings.fileCountMax]);
-	}
-	parameters.push(['uploadToken', settings.uploadToken]);
+		['fileMaxSize', settings.fileMaxSize], ['uploadToken', settings.uploadToken]];
 	if (settings.grantExpires != null) {
 		parameters.push(['grantExpires', settings.grantExpires]);
 	}
@@ -518,7 +515,7 @@ function resumable(id: string, settings: ResumableFieldSettings,
 	const tell = (parameters: Record<string, unknown>) => roundTrip({ ...attributes,
 		u: settings.ajaxCallBackUrl, m: 'POST' }, asParameters(parameters));
 	const uploader = ResumableUploader.attach(host, { ...settings, endpoint: settings.resourceUrl,
-		query: queryOf(settings), parallel: settings.parallelUploads ?? settings.parallel,
+		query: queryOf(settings), context: settings.uploadContext, parallel: settings.parallelUploads ?? settings.parallel,
 		remember: settings.remembering ?? settings.remember, input,
 		onComplete: (item) => tell(item.storedName ? {
 			error: false, filesInfo: JSON.stringify([{ fileName: item.storedName,

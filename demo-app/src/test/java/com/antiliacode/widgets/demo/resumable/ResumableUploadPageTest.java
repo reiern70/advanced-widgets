@@ -97,8 +97,7 @@ class ResumableUploadPageTest
 	}
 
 	/**
-	 * @return the query the uploader of the field sends with its requests, as the script of
-	 *         Wicket's field writes it
+	 * @return the query the uploader of the field sends with its requests, its grant
 	 */
 	private String fieldQuery()
 	{
@@ -106,9 +105,8 @@ class ResumableUploadPageTest
 			.getComponentFromLastRenderedPage("themed:uploads");
 		JSONObject settings = argument(tester.getLastResponseAsString(),
 			"Wicket.Upload.resumable(\"" + field.getMarkupId() + "\", ");
-		return "uploadId=" + encoded(settings.getString("inputName")) + "&maxSize=" +
-			settings.getLong("maxSize") + "&fileMaxSize=" + settings.getLong("fileMaxSize") +
-			"&fileCountMax=" + settings.getLong("fileCountMax") + "&uploadToken=" +
+		return "uploadId=" + encoded(settings.getString("inputName")) + "&fileMaxSize=" +
+			settings.getLong("fileMaxSize") + "&uploadToken=" +
 			encoded(settings.getString("uploadToken")) + "&grantExpires=" +
 			settings.getLong("grantExpires") + "&uploadContext=" +
 			encoded(settings.getString("uploadContext"));

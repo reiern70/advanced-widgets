@@ -15,7 +15,7 @@
 
   The words of the errors of the uploads of a ResumableUploadField, which it looks for with the
   limits of the field and of its resource:
-  ${fileMaxSize}, ${maxUploadsPerSession} and ${maxBytesPerSession}. The rows of the files show
+  ${fileMaxSize}, ${maxUploadsPerOwner} and ${maxBytesPerOwner}. The rows of the files show
   them as well, by the keys the server tells.
 -->
 <properties>
@@ -24,8 +24,8 @@
 	<entry key="uploadToResourceFailed">L’importation a échoué.</entry>
 	<entry key="uploadConnectionLost">La connexion au serveur a été interrompue pendant l’importation.</entry>
 	<entry key="resumableUploadTooLarge">Plus de ${fileMaxSize}, le maximum pour un fichier.</entry>
-	<entry key="resumableUploadTooMany">${maxUploadsPerSession} importations à la fois au plus&#160;: terminez-en ou annulez-en une d’abord.</entry>
-	<entry key="resumableUploadTooMuch">Les importations pas encore terminées pèseraient plus de ${maxBytesPerSession} ensemble.</entry>
+	<entry key="resumableUploadTooMany">${maxUploadsPerOwner} importations à la fois au plus&#160;: terminez-en ou annulez-en une d’abord.</entry>
+	<entry key="resumableUploadTooMuch">Les importations pas encore terminées pèseraient plus de ${maxBytesPerOwner} ensemble.</entry>
 	<entry key="resumableUploadNoRoom">Le serveur n’a pas de place pour le fichier en ce moment&#160;: réessayez plus tard.</entry>
 	<entry key="resumableUploadLost">Le serveur n’a plus l’importation&#160;: choisissez à nouveau le fichier.</entry>
 	<entry key="resumableUploadGrantRefused">Cette page est trop ancienne pour poursuivre l’importation&#160;: rechargez-la.</entry>
