@@ -661,6 +661,8 @@ export class TusUpload {
 		}
 		this.stop();
 		this.setState('paused');
+		// no longer sending: another page may go on with it at once
+		this.remember(0);
 		// the server keeps what it got of the chunk stopped: tell how far it got
 		const url = this.url;
 		const run = this.run;
