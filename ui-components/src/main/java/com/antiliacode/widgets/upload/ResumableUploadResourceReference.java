@@ -60,9 +60,10 @@ import org.slf4j.LoggerFactory;
  * the field hears of it as of those. As Wicket 10 does, the file manager keeps the file under the
  * name the browser reported: a second file of the same name for the same field replaces the first.
  * <p>
- * Wicket 10 has no resumable upload: this is the one of Wicket 11.1 and 12, in wicket-extensions,
- * with the same names. Moving to Wicket 11.1, an application imports it from
- * {@code org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable} instead.
+ * Wicket 10 has no resumable upload: this is the one proposed for Wicket 12, in its experimental
+ * module wicket-resumable-upload, with the same names. The 11.x line of the widgets has it as
+ * well. Moving to Wicket 12, an application may import it from
+ * {@code org.apache.wicket.upload.resumable} instead.
  * <p>
  * The application mounts it once, in {@code init()}:
  *

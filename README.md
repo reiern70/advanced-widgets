@@ -43,7 +43,7 @@ so a grid of thousands of rows is one light component rather than thousands of W
 | | Buttons, also turning any link or form button into one | ✓ | ✓ |
 | | Downloads via Ajax, an iframe or a new tab, with a busy button | ✓ | |
 | | Uploads in a form, by Ajax or to a resource, with a drop zone and a progress bar | ✓ | |
-| | Resumable uploads over tus, the open protocol: large files in chunks, paused, resumed or canceled, going on after a broken connection or a reload without sending again what the server holds; over a `ResumableUploadResourceReference` of the widgets, that of Wicket 11.1 for Wicket 10, with clients that work with any tus server | ✓ | ✓ |
+| | Resumable uploads over tus, the open protocol: large files in chunks, paused, resumed or canceled, going on after a broken connection or a reload without sending again what the server holds; over a `ResumableUploadResourceReference` of the widgets, the one proposed for the experimental `wicket-resumable-upload` of Wicket 12, with clients that work with any tus server | ✓ | ✓ |
 | | Forms processed once however many times the browser sends them: a double click, Enter pressed twice or a submit queued behind another one, by a version taken at the click and kept in the session (`DoubleSubmitBulletsProofForm`, `FormVersionBehavior`) | ✓ | |
 | | A page veil, and a veil of one component, while Ajax requests run: Enter and Space held under it, a click veiled as soon as it waits its turn, the click it caught given back once it is down (`PageVeilBehavior`, `LocalVeilBehavior`) | ✓ | |
 | | Code editor (CodeMirror): Java, JavaScript, TypeScript, JSON, Markdown with its preview | ✓ | ✓ |
