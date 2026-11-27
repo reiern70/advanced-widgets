@@ -57,10 +57,10 @@ import com.github.openjson.JSONObject;
  * sent, how fast and how long it still takes, and its buttons pausing, resuming and canceling it;
  * then buttons pausing and resuming all.
  * <p>
- * Wicket 11.0 has no resumable upload: this field and the reference are those of Wicket 11.1 and
- * 12, {@code ResumableUploadToResourceField} in wicket-extensions, with the same names and
- * settings. Moving to Wicket 11.1, an application keeps this field, whose widgets build on
- * Wicket's there, and imports the reference from Wicket.
+ * Wicket 11 has no resumable upload: this field and the reference are those proposed for Wicket
+ * 12, {@code ResumableUploadToResourceField} in its experimental module wicket-resumable-upload,
+ * with the same names and settings. Moving to Wicket 12, an application keeps this field, whose
+ * widgets build on Wicket's there, and may import the reference from Wicket.
  * <p>
  * The application mounts the reference in its {@code init()}, with the
  * {@link IUploadsFileManager} the whole files go to, and its limits; the field tells the browser
