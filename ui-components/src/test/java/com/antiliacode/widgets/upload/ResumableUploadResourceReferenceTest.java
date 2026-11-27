@@ -73,7 +73,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 
 /**
  * Tests the tus protocol of {@link ResumableUploadResourceReference} and how
- * {@link ResumableUploadField} hears of its uploads: those of Wicket 11.1 and 12, for Wicket 11.0.
+ * {@link ResumableUploadField} hears of its uploads: those proposed for Wicket 12, for Wicket 11.
  */
 class ResumableUploadResourceReferenceTest extends WicketTestCase
 {

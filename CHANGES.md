@@ -17,16 +17,17 @@ What 11.0.0-RC9 has, and:
 
 - Resumable uploads over tus, the open protocol (#181): large files sent in chunks, each paused,
   resumed or canceled by the user, going on after a broken connection or a reload of the page
-  without sending again what the server holds. Wicket 11.0 has no server side for them: the
-  widgets bring the one proposed for Wicket 11.1 and 12 (apache/wicket#2011 and #2010), with the
-  same names in `com.antiliacode.widgets.upload`. The application mounts a
+  without sending again what the server holds. Wicket 11 has no server side for them: the widgets
+  bring the one proposed for Wicket 12, as its experimental module `wicket-resumable-upload`
+  (apache/wicket#2010), with the same names in `com.antiliacode.widgets.upload`. The 10.x line of
+  the widgets has them too. The application mounts a
   `ResumableUploadResourceReference` with the `IUploadsFileManager` the whole files go to, and
   `ResumableUploadField`, a `FileUploadToResourceField`, draws the picker of the theme and a row of
   each file, its bar and its buttons, over the field's `<input type="file">`. It hears of the files
   as any `FileUploadToResourceField`, `onUploadSuccess(target, infos)`, under the names the file
   manager stored them under, and words the refusals of the resource in English, German, Spanish
-  and French. Moving to Wicket 11.1, an application imports the reference from Wicket's
-  `org.apache.wicket.extensions.ajax.markup.html.form.upload.resumable` instead. The core's
+  and French. Moving to Wicket 12, an application may import the reference from Wicket's
+  experimental `org.apache.wicket.upload.resumable` instead. The core's
   `TusUpload` (one file) and `ResumableUploader` (the widget, `resumable-upload.ts`, built into
   `antilia-upload.js`), and React's and Svelte's `ResumableUploader`, work with any tus server,
   tusd among them: with the resource of the widgets they send its signed `query`, and tell the name
@@ -43,7 +44,7 @@ What 11.0.0-RC9 has, and:
   the uploader of the theme.
 - The grants of the resumable uploads, the id of a field, the context of its uploads and the size
   of each file at most, are signed for the owner the page was rendered for, as in
-  apache/wicket#2010 and #2011, and every request for an upload is held to its grant: the upload
+  apache/wicket#2010, and every request for an upload is held to its grant: the upload
   has to be of its context, its file no larger than it allows. The size of the files chosen at once
   and their number are checked in the browser only. A grant expires (`setGrantExpiry`) after
   `getOwnerExpiry()` by default, unless the key of its signer ends with the session
@@ -58,7 +59,7 @@ What 11.0.0-RC9 has, and:
   bytes received of the uploads of all owners together are at most ten times what an owner may
   have by default (`setMaxTotalBytes`), counted as they arrive: an upload created and never sent
   takes no room, and a chunk that does not fit is refused while its upload keeps what arrived.
-- An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2010 and #2011: the
+- An `IUploadsTracker` keeps track of the resumable uploads, as in apache/wicket#2010: the
   reference, `setUploadsTracker` with one tracker for the whole application, tells it of each upload
   created, of its bytes, of its file stored and of its end, each with its context, the part of the
   application the field sets (`setUploadContext`, signed with the grant), and the tracker lists
