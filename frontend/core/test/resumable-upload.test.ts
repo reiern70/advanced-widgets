@@ -1230,6 +1230,24 @@ describe('the resumable uploader', () => {
 			expect(uploader.questionElement.hidden).toBe(true);
 		});
 
+	it('lets another uploader go on at once with an upload it paused', async () => {
+		server.holding = true;
+		const uploader = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+			rememberedAs: 'Page:field' });
+		uploader.add([file(10)]);
+		await settle();
+		server.held[0].xhr.progress(2);
+		uploader.pause(uploader.items[0].id);
+		await settle();
+		const kept = TusStorage.list(ENDPOINT);
+		expect(kept).toHaveLength(1);
+		expect(TusStorage.sending(kept[0])).toBe(false);
+		const other = new ResumableUploader(host(), { endpoint: ENDPOINT, locale: 'en',
+			rememberedAs: 'Page:field' });
+		await settle();
+		expect(other.items.map((item) => item.name)).toEqual(['film.mp4']);
+	});
+
 	it('lists nothing of an earlier visit when not recalling, and takes another window of use',
 		async () => {
 			server.uploads.set('kept', { length: 10, offset: 4, metadata: '' });
