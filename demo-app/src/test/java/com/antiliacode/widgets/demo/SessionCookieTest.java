@@ -25,6 +25,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.antiliacode.widgets.demo.stats.VisitorCookie;
+
 /**
  * A visitor who only looks gets no session, so no cookie; signing in makes one, which lives in a
  * cookie only, out of reach of the scripts of the page: the session id never shows in a URL, where
@@ -43,6 +45,15 @@ class SessionCookieTest extends JettyTestCase
 			assertEquals(200, response.statusCode(), path);
 			assertTrue(response.headers().allValues("Set-Cookie").stream()
 				.noneMatch(cookie -> cookie.startsWith("JSESSIONID=")), path);
+			// but the cookie of the visits, a random number out of reach of the scripts
+			String visitor = response.headers().allValues("Set-Cookie").stream()
+				.filter(cookie -> cookie.startsWith(VisitorCookie.NAME + "="))
+				.findFirst().orElseThrow(() -> new AssertionError(response.headers()));
+			assertTrue(visitor.matches(VisitorCookie.NAME + "=[A-Za-z0-9_-]{22};.*"), visitor);
+			assertTrue(visitor.toLowerCase().contains("; httponly"), visitor);
+			assertTrue(visitor.toLowerCase().contains("; samesite=lax"), visitor);
+			assertTrue(visitor.toLowerCase().contains("max-age=34128000"), visitor);
+			assertTrue(visitor.contains("Path=/"), visitor);
 			assertFalse(response.body().toLowerCase().contains("jsessionid"), path);
 		}
 	}

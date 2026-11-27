@@ -21,19 +21,19 @@ RUN java -jar "$JETTY_HOME/start.jar" --add-modules=ee11-deploy,ee11-websocket-j
 
 # Jetty's base and the web application belong to root, so that the user jetty, which runs Jetty,
 # can change neither the configuration nor the code; compose.yaml makes the whole file system
-# read-only besides. The Wicket page store and the accounts registered to the demos are on a
-# volume of their own on the instance's SSD (see compose.yaml); the page store is emptied at
-# every start, its pages last as long as the sessions, which Jetty keeps in memory (no
+# read-only besides. The Wicket page store and the visits counted (a file a day, kept 13 months)
+# are on a volume of their own on the instance's SSD (see compose.yaml); the page store is emptied
+# at every start, its pages last as long as the sessions, which Jetty keeps in memory (no
 # session-store module). The command line Jetty starts with, jetty.start, is made at every start
 # from JAVA_OPTIONS, in /run/jetty, a tmpfs in compose.yaml.
 USER root
 RUN chown -R root:root "$JETTY_BASE" && chmod -R go-w "$JETTY_BASE" \
-	&& mkdir -p /var/lib/antilia-widgets/page-store /var/lib/antilia-widgets/accounts /run/jetty \
+	&& mkdir -p /var/lib/antilia-widgets/page-store /var/lib/antilia-widgets/stats /run/jetty \
 	&& chown -R jetty:jetty /var/lib/antilia-widgets /run/jetty
 COPY --from=unpacked /tmp/ROOT /var/lib/jetty/webapps/ROOT
 USER jetty
 ENV ANTILIA_WIDGETS_PAGE_STORE=/var/lib/antilia-widgets/page-store
-ENV ANTILIA_WIDGETS_ACCOUNTS_FOLDER=/var/lib/antilia-widgets/accounts
+ENV ANTILIA_WIDGETS_STATS_FOLDER=/var/lib/antilia-widgets/stats
 ENV JETTY_START=/run/jetty/jetty.start
 # a JVM out of memory ends, whatever JAVA_OPTIONS of .env say, so that Docker starts it again
 # (restart: unless-stopped) instead of leaving it up but broken; the java launcher reads this

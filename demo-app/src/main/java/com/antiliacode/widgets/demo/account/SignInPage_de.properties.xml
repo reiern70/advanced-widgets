@@ -23,7 +23,7 @@
 	<entry key="inUse">{0} von {1} Sitzungen in Gebrauch.</entry>
 	<entry key="full">Gerade sind alle {0} Sitzungen in Gebrauch. Bitte versuchen Sie es in {1,choice,1#einer Minute|1&lt;{1} Minuten} erneut.</entry>
 	<entry key="placeLost">Ein anderer Besucher hat Ihren Platz übernommen: Jede Sitzung behält ihn sicher {0} Minuten lang, und höchstens {1} sind gleichzeitig angemeldet. Melden Sie sich erneut an, sobald Platz ist.</entry>
-	<entry key="noRecord">Wir speichern nichts über die Menschen, die diese Seite besuchen.</entry>
+	<entry key="whatWeCount">Wir zählen Besuche, ohne zu wissen, wer sie macht: Ein Cookie mit einer Zufallszahl unterscheidet einen Browser vom anderen, und wir notieren 13 Monate lang, welche Seiten er öffnet. Keine Adresse, kein Name, sonst nichts.</entry>
 	<entry key="Required">${label} ist ein Pflichtfeld.</entry>
 	<entry key="waitSeconds">Zu viele Fehlversuche: Bitte versuchen Sie es in {0,choice,1#einer Sekunde|1&lt;{0} Sekunden} noch einmal.</entry>
 	<entry key="waitMinutes">Zu viele Fehlversuche: Bitte versuchen Sie es in {0} Minuten noch einmal.</entry>

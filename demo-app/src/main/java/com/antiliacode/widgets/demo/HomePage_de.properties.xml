@@ -22,7 +22,7 @@
 	<entry key="hint.signIn">Melden Sie sich an</entry>
 	<entry key="hint.account">als {0}, Passwort {1}.</entry>
 	<entry key="inUse">{0} von {1} Sitzungen in Gebrauch.</entry>
-	<entry key="noRecord">Wir speichern nichts über die Menschen, die diese Seite besuchen.</entry>
+	<entry key="whatWeCount">Wir zählen Besuche, ohne zu wissen, wer sie macht: Ein Cookie mit einer Zufallszahl unterscheidet einen Browser vom anderen, und wir notieren 13 Monate lang, welche Seiten er öffnet. Keine Adresse, kein Name, sonst nichts.</entry>
 	<entry key="browse">Die Demos ansehen</entry>
 	<entry key="indexTitle">Alle Demos, nach Kategorie</entry>
 	<entry key="indexLead">Zeigen Sie auf eine Demo für eine Vorschau, klicken Sie, um sie zu öffnen.</entry>

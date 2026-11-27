@@ -16,11 +16,15 @@ package com.antiliacode.widgets.demo.admin;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.link.ResourceLink;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.StringResourceModel;
 
 import com.antiliacode.widgets.demo.BasePage;
@@ -28,12 +32,19 @@ import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.DemosAuthorization;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
 import com.antiliacode.widgets.demo.account.SignedInUsers.Place;
+import com.antiliacode.widgets.demo.stats.StatsResource;
+import com.antiliacode.widgets.demo.stats.Visits;
+import com.antiliacode.widgets.demo.stats.Visits.DayCount;
+import com.antiliacode.widgets.demo.stats.Visits.PageCount;
+import com.antiliacode.widgets.demo.stats.Visits.Report;
 
 /**
  * The administration: how many of the {@value SignedInUsers#MAXIMUM} sessions of
  * {@value Accounts#USER} are signed in, and since when each one, when it made its last request and
- * until when it is sure of its place. Nothing tells who is behind a session: the site keeps no
- * record of the people who visit it. Only for administrators, see {@link DemosAuthorization}.
+ * until when it is sure of its place; nothing tells who is behind a session. Then the
+ * {@link Visits} of the last {@value StatsResource#DEFAULT_DAYS} days: how many people came and
+ * signed in, the pages they opened and the days, which {@link StatsResource} gives as JSON too.
+ * Only for administrators, see {@link DemosAuthorization}.
  */
 public class AdminPage extends BasePage
 {
@@ -42,6 +53,10 @@ public class AdminPage extends BasePage
 	/** How the times are shown: in UTC, to the second. */
 	static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
 		.withZone(ZoneOffset.UTC);
+
+	/** The visits of the last days, counted again at each render. */
+	private final IModel<Report> visits = LoadableDetachableModel
+		.of(() -> Visits.get().report(StatsResource.DEFAULT_DAYS));
 
 	public AdminPage()
 	{
@@ -74,6 +89,86 @@ public class AdminPage extends BasePage
 				item.add(new Label("sureUntil", format(place.since().plus(SignedInUsers.PLACE_TIME))));
 			}
 		});
+		addVisits();
+	}
+
+	/**
+	 * Adds the visits of the last {@value StatsResource#DEFAULT_DAYS} days.
+	 */
+	private void addVisits()
+	{
+		IModel<Report> report = visits;
+		add(new Label("visitsLead", () -> {
+			Report counted = report.getObject();
+			return new StringResourceModel("visitsLead", this)
+				.setParameters(counted.people(), StatsResource.DEFAULT_DAYS, counted.newPeople(),
+					counted.signedInPeople(), counted.signIns(), counted.views(),
+					counted.viewsWithoutCookie())
+				.getString();
+		}));
+		add(new Label("visitsKept", () -> report.getObject().firstDay() == null
+			? getString("visitsNone")
+			: new StringResourceModel("visitsKept", this)
+				.setParameters(report.getObject().firstDay().toString()).getString()));
+		add(new ResourceLink<>("json", StatsResource.REFERENCE));
+
+		WebMarkupContainer pagesTable = new WebMarkupContainer("pagesTable")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!report.getObject().pages().isEmpty());
+			}
+		};
+		add(pagesTable);
+		pagesTable.add(new ListView<PageCount>("pages", () -> report.getObject().pages())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<PageCount> item)
+			{
+				PageCount page = item.getModelObject();
+				item.add(new Label("page", page.page()));
+				item.add(new Label("views", page.views()));
+				item.add(new Label("people", page.people()));
+			}
+		});
+
+		IModel<List<DayCount>> activeDays = () -> report.getObject().days().stream()
+			.filter(day -> day.views() > 0 || day.signIns() > 0)
+			.toList();
+		WebMarkupContainer daysTable = new WebMarkupContainer("daysTable")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!activeDays.getObject().isEmpty());
+			}
+		};
+		add(daysTable);
+		daysTable.add(new ListView<DayCount>("days", activeDays)
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<DayCount> item)
+			{
+				DayCount day = item.getModelObject();
+				item.add(new Label("date", day.date().toString()));
+				item.add(new Label("people", day.people()));
+				item.add(new Label("newPeople", day.newPeople()));
+				item.add(new Label("signedInPeople", day.signedInPeople()));
+				item.add(new Label("signIns", day.signIns()));
+				item.add(new Label("views", day.views()));
+			}
+		});
 	}
 
 	/**
@@ -94,6 +189,13 @@ public class AdminPage extends BasePage
 		{
 			DemosAuthorization.turnAway();
 		}
+	}
+
+	@Override
+	protected void onDetach()
+	{
+		visits.detach();
+		super.onDetach();
 	}
 
 	@Override

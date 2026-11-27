@@ -45,6 +45,18 @@ if settings | grep -Eq -- '-Dantilia-widgets\.(sign-in-as|open-demos)([=[:space:
 	fail ".env must not set -Dantilia-widgets.sign-in-as or -Dantilia-widgets.open-demos"
 fi
 
+# the token of the visits as JSON, /api/stats: made once, 64 hexadecimal digits, never printed;
+# deploy.sh copies it to the developer's machine
+if ! settings | grep -Eq '^[[:space:]]*ANTILIA_WIDGETS_STATS_TOKEN=[0-9a-f]{64}[[:space:]]*$'; then
+	sed -i '/^[[:space:]]*ANTILIA_WIDGETS_STATS_TOKEN=/d' .env
+	# on a line of its own, also after a last line without its newline
+	if [ -n "$(tail -c 1 .env)" ]; then
+		echo >> .env
+	fi
+	printf 'ANTILIA_WIDGETS_STATS_TOKEN=%s\n' "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d ' \n')" >> .env
+	echo "start.sh: made the token of /api/stats in .env"
+fi
+
 # the image running before, to go back to (see README.md)
 if docker image inspect antilia-widgets:latest > /dev/null 2>&1; then
 	docker tag antilia-widgets:latest antilia-widgets:previous
@@ -59,7 +71,7 @@ docker compose build --pull app
 docker compose up -d --remove-orphans
 
 # Earlier versions kept the users and the accesses in PostgreSQL, dumped every night: since issue
-# #174 the site keeps no record of anybody, so what they left is deleted, once, for good: the
+# #174 there is no database, so what they left is deleted, once, for good: the
 # database's volume, the dumps with their nightly job, and the files they ran on.
 if docker volume inspect antilia-widgets_database > /dev/null 2>&1; then
 	docker volume rm antilia-widgets_database

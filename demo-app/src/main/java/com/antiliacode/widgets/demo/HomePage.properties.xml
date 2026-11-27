@@ -22,7 +22,7 @@
 	<entry key="hint.signIn">Sign in</entry>
 	<entry key="hint.account">as {0}, password {1}.</entry>
 	<entry key="inUse">{0} of {1} sessions in use.</entry>
-	<entry key="noRecord">We keep no record of the people who visit this site.</entry>
+	<entry key="whatWeCount">We count visits without knowing who makes them: a cookie holding a random number tells one browser from another, and we note which pages it opens, for 13 months. No address, no name, nothing else.</entry>
 	<entry key="browse">Browse the demos</entry>
 	<entry key="indexTitle">Every demo, by category</entry>
 	<entry key="indexLead">Point at a demo to preview it, click it to open it.</entry>

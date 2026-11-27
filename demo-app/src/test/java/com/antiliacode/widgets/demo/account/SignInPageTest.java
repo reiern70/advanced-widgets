@@ -35,6 +35,7 @@ import com.antiliacode.widgets.demo.TestAccounts;
 import com.antiliacode.widgets.demo.TestClock;
 import com.antiliacode.widgets.demo.WicketApplication;
 import com.antiliacode.widgets.demo.dropdown.DropdownPage;
+import com.antiliacode.widgets.demo.stats.Visits;
 
 /**
  * Signs in on the stateless {@link SignInPage}: as {@value Accounts#USER}, whose password the page
@@ -59,6 +60,12 @@ class SignInPageTest
 			public SignInAttempts getSignInAttempts()
 			{
 				return attempts;
+			}
+
+			@Override
+			protected Visits newVisits()
+			{
+				return new Visits(null, clock);
 			}
 		});
 		tester.getSession().setLocale(Locale.ENGLISH);
@@ -113,12 +120,12 @@ class SignInPageTest
 	}
 
 	@Test
-	void thePageShowsTheAccountTheSessionsInUseAndThatNothingIsRecorded()
+	void thePageShowsTheAccountTheSessionsInUseAndWhatIsCounted()
 	{
 		tester.assertLabel("user", "user");
 		tester.assertLabel("userPassword", "$Amigo_Mellon_Friend_4_3_2_1");
 		tester.assertLabel("inUse", "0 of 10 sessions in use.");
-		tester.assertContains("We keep no record of the people who visit this site.");
+		tester.assertContains("We count visits without knowing who makes them");
 		// the captcha always, an image drawn from the token in its address
 		tester.assertVisible("form:captcha");
 		tester.assertContains(Pattern.quote("captcha?t="));
@@ -134,6 +141,11 @@ class SignInPageTest
 		assertEquals("user", DemoSession.get().getAccount());
 		assertFalse(DemoSession.get().isAdmin());
 		assertEquals(1, SignedInUsers.get().count());
+		// counted, by the cookie the sign-in page gave
+		Visits.Report visits = Visits.get().report(1);
+		assertEquals(1, visits.signIns());
+		assertEquals(1, visits.signedInPeople());
+		assertEquals(1, visits.people());
 	}
 
 	@Test
@@ -144,6 +156,10 @@ class SignInPageTest
 		tester.assertRenderedPage(HomePage.class);
 		assertTrue(DemoSession.get().isAdmin());
 		assertEquals(0, SignedInUsers.get().count());
+		// the administrator's browser is left out, the sign-in page it saw before too
+		Visits.Report visits = Visits.get().report(1);
+		assertEquals(0, visits.signIns());
+		assertEquals(0, visits.people());
 	}
 
 	@Test

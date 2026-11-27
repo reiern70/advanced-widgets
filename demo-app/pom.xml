@@ -294,6 +294,8 @@
 				<configuration>
 					<systemPropertyVariables>
 						<antilia-widgets.admin.password>admin-test-password</antilia-widgets.admin.password>
+						<!-- the visits of the tests, in a folder of the build -->
+						<antilia-widgets.stats-folder>${project.build.directory}/stats</antilia-widgets.stats-folder>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>

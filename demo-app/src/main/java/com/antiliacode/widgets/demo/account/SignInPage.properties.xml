@@ -23,7 +23,7 @@
 	<entry key="inUse">{0} of {1} sessions in use.</entry>
 	<entry key="full">All {0} sessions are in use right now. Please try again in {1,choice,1#a minute|1&lt;{1} minutes}.</entry>
 	<entry key="placeLost">Another visitor took your place: each session keeps it for {0} minutes for sure, and at most {1} are signed in at once. Sign in again to go on, when there is room.</entry>
-	<entry key="noRecord">We keep no record of the people who visit this site.</entry>
+	<entry key="whatWeCount">We count visits without knowing who makes them: a cookie holding a random number tells one browser from another, and we note which pages it opens, for 13 months. No address, no name, nothing else.</entry>
 	<entry key="Required">${label} is required.</entry>
 	<entry key="waitSeconds">Too many failed attempts: please try again in {0,choice,1#a second|1&lt;{0} seconds}.</entry>
 	<entry key="waitMinutes">Too many failed attempts: please try again in {0} minutes.</entry>

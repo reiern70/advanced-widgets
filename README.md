@@ -130,8 +130,10 @@ as production does. Locally:
 - there are two accounts, in memory: `user`, shared by everybody, whose password is in the source
   and shown on the sign-in page, and `admin`, whose password comes from the system property
   `antilia-widgets.admin.password` or the environment variable `ANTILIA_WIDGETS_ADMIN_PASSWORD`;
-  without one there is no administrator. There is no database: the demo keeps no record of the
-  people who visit it.
+  without one there is no administrator. There is no database: the demo counts its visits in a
+  text file a day, by a cookie holding a random number, in `antilia-widgets-stats` of the
+  temporary folder or in `antilia-widgets.stats-folder` (`ANTILIA_WIDGETS_STATS_FOLDER`); `/admin`
+  shows them, and `/api/stats` gives them as JSON (see `StatsResource`).
 
 `-Djetty.port=<port>` and `-Djetty.https.port=<port>` change the ports, and `-Dwicket.demo=true`
 shows the branch and the commit in the footer.

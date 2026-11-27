@@ -19,4 +19,16 @@
 	<entry key="since">Inició sesión</entry>
 	<entry key="seen">Última petición</entry>
 	<entry key="sureUntil">Lugar asegurado hasta</entry>
+	<entry key="visitsTitle">Visitas</entry>
+	<entry key="visitsLead">En los últimos {1} días, {0} personas abrieron una página o iniciaron sesión, {2} de ellas por primera vez; {3} iniciaron sesión, {4} veces. Se mostraron {5} páginas, {6} de ellas sin la cookie: la primera página de un navegador, o un cliente que no guarda cookies, como un robot.</entry>
+	<entry key="visitsKept">Contado desde el {0} y guardado durante 13 meses, sin los navegadores que iniciaron sesión como administrador.</entry>
+	<entry key="visitsNone">Nada contado todavía.</entry>
+	<entry key="json">En JSON</entry>
+	<entry key="page">Página</entry>
+	<entry key="views">Vistas</entry>
+	<entry key="people">Personas</entry>
+	<entry key="date">Día (UTC)</entry>
+	<entry key="newPeople">Nuevas</entry>
+	<entry key="signedInPeople">Con sesión</entry>
+	<entry key="signIns">Inicios de sesión</entry>
 </properties>

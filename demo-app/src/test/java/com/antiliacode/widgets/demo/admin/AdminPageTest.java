@@ -15,6 +15,7 @@ package com.antiliacode.widgets.demo.admin;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import org.apache.wicket.RuntimeConfigurationType;
@@ -30,6 +31,9 @@ import com.antiliacode.widgets.demo.account.Accounts;
 import com.antiliacode.widgets.demo.account.Role;
 import com.antiliacode.widgets.demo.account.SignInPage;
 import com.antiliacode.widgets.demo.account.SignedInUsers;
+import com.antiliacode.widgets.demo.stats.StatsResource;
+import com.antiliacode.widgets.demo.stats.VisitorCookie;
+import com.antiliacode.widgets.demo.stats.Visits;
 
 /**
  * The {@link AdminPage}: how many sessions are signed in as {@value Accounts#USER}, and since when,
@@ -48,6 +52,12 @@ class AdminPageTest
 			public RuntimeConfigurationType getConfigurationType()
 			{
 				return RuntimeConfigurationType.DEPLOYMENT;
+			}
+
+			@Override
+			protected Visits newVisits()
+			{
+				return new Visits(null, Clock.systemUTC());
 			}
 		});
 		tester.startPage(HomePage.class);
@@ -88,6 +98,29 @@ class AdminPageTest
 
 		tester.assertContains("0 of 10 sessions are signed in as user.");
 		tester.assertInvisible("table");
+	}
+
+	@Test
+	void theAdministratorSeesTheVisits()
+	{
+		String ann = VisitorCookie.newNumber();
+		Visits.get().viewed("/tree", ann);
+		Visits.get().viewed("/tree", null);
+		Visits.get().signedIn(ann, Role.USER);
+		DemoSession.get().signIn(Accounts.ADMIN, Role.ADMIN);
+
+		tester.startPage(AdminPage.class);
+
+		// the home page of start() counted too, to nobody
+		tester.assertContains("1 people opened a page or signed in in the last 30 days, 1 of them " +
+			"for the first time; 1 signed in, 1 times. 3 pages were shown, 2 of them without the " +
+			"cookie");
+		tester.assertContains("Counted since " + Visits.get().today());
+		tester.assertLabel("pagesTable:pages:0:page", "/tree");
+		tester.assertLabel("pagesTable:pages:0:views", "2");
+		tester.assertLabel("pagesTable:pages:0:people", "1");
+		tester.assertLabel("daysTable:days:0:signIns", "1");
+		tester.assertContains(StatsResource.PATH);
 	}
 
 	@Test

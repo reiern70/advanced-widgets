@@ -41,6 +41,7 @@ import com.antiliacode.widgets.demo.DevelopmentSwitches;
 import com.antiliacode.widgets.demo.LiveResource;
 import com.antiliacode.widgets.demo.admin.AdminPage;
 import com.antiliacode.widgets.demo.datatable.FontAwesomeResourceReference;
+import com.antiliacode.widgets.demo.stats.StatsResource;
 import com.antiliacode.widgets.demo.theme.WebJarStyleSheetReference;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -61,7 +62,8 @@ import jakarta.servlet.http.HttpServletResponse;
  * a few of them, which everybody gets: the scripts, style sheets and images of the components and
  * the pages (package resources), the style sheets of Bootstrap, daisyUI and Font Awesome, the
  * image of the {@link Captcha} of the sign-in page ({@link CaptchaImage}) and the websocket of the
- * home page ({@link LiveResource}). So does every resource a component of a page serves: the page
+ * home page ({@link LiveResource}). The visits as JSON ({@link StatsResource}) let in the
+ * administrator themselves, also with a token and no session. So does every resource a component of a page serves: the page
  * was let in already.
  * <p>
  * The demos are open to everybody in development, and when the web application has the init
@@ -108,7 +110,7 @@ public class DemosAuthorization extends IAuthorizationStrategy.AllowAllAuthoriza
 	private static boolean isPublic(IResource resource)
 	{
 		if (resource instanceof PackageResource || resource instanceof LiveResource ||
-			resource instanceof CaptchaImage)
+			resource instanceof CaptchaImage || resource instanceof StatsResource)
 		{
 			return true;
 		}
