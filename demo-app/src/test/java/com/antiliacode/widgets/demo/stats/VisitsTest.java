@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -33,6 +34,7 @@ import com.antiliacode.widgets.demo.account.Role;
 import com.antiliacode.widgets.demo.stats.Visits.DayCount;
 import com.antiliacode.widgets.demo.stats.Visits.PageCount;
 import com.antiliacode.widgets.demo.stats.Visits.Report;
+import com.antiliacode.widgets.demo.stats.Visits.VisitorCount;
 
 /**
  * The {@link Visits}: people told apart by the number of their cookie, the pages they open, the
@@ -139,6 +141,43 @@ class VisitsTest
 		assertEquals(1, report.people());
 		assertEquals(2, report.views());
 		assertEquals(0, report.signIns());
+	}
+
+	@Test
+	void eachVisitorIsListedTheOneSeenLastFirst()
+	{
+		Visits visits = new Visits(folder, clock);
+		visits.viewed("/", ANN);
+		clock.advance(Duration.ofDays(1));
+		visits.viewed("/tree", ANN);
+		visits.viewed("/tree", ANN);
+		visits.signedIn(ANN, Role.USER);
+		clock.advance(Duration.ofMinutes(5));
+		visits.viewed("/", BOB);
+		visits.viewed("/", null);
+
+		List<VisitorCount> visitors = visits.report(2).visitors();
+
+		assertEquals(2, visitors.size());
+		VisitorCount bob = visitors.get(0);
+		assertEquals(BOB.substring(0, Visits.SHORT), bob.visitor());
+		assertEquals(Instant.parse("2026-10-16T10:05:00Z"), bob.firstSeen());
+		assertEquals(Instant.parse("2026-10-16T10:05:00Z"), bob.lastSeen());
+		VisitorCount ann = visitors.get(1);
+		assertEquals(ANN.substring(0, Visits.SHORT), ann.visitor());
+		assertEquals(Instant.parse("2026-10-15T10:00:00Z"), ann.firstSeen());
+		assertEquals(Instant.parse("2026-10-16T10:00:00Z"), ann.lastSeen());
+		assertEquals(2, ann.days());
+		assertEquals(3, ann.views());
+		assertEquals(1, ann.signIns());
+		assertEquals(List.of("/tree", "/"), List.copyOf(ann.pages().keySet()));
+		assertEquals(2, ann.pages().get("/tree"));
+
+		// the span counts, but the first time is of all the site remembers, also read again
+		VisitorCount today = new Visits(folder, clock).report(1).visitors().get(1);
+		assertEquals(1, today.days());
+		assertEquals(2, today.views());
+		assertEquals(Instant.parse("2026-10-15T10:00:00Z"), today.firstSeen());
 	}
 
 	@Test

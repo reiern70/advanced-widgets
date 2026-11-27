@@ -31,4 +31,11 @@
 	<entry key="newPeople">Nuevas</entry>
 	<entry key="signedInPeople">Con sesión</entry>
 	<entry key="signIns">Inicios de sesión</entry>
+	<entry key="visitorsTitle">Visitantes</entry>
+	<entry key="visitorsLead">Cada uno es un navegador, reconocido por el principio del número al azar de su cookie; el último visto primero, {0} de {1}.</entry>
+	<entry key="visitor">Visitante</entry>
+	<entry key="firstSeen">Visto primero</entry>
+	<entry key="lastSeen">Visto por última vez</entry>
+	<entry key="activeDays">Días</entry>
+	<entry key="pagesOpened">Páginas</entry>
 </properties>

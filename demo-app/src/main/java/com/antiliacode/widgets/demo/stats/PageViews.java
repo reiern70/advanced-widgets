@@ -25,7 +25,8 @@ import com.antiliacode.widgets.demo.DemoSession;
 /**
  * Counts each page shown whole, not its Ajax updates, in the {@link Visits}, and gives the
  * browser its {@link VisitorCookie} with the first one. The pages of the administrator's sessions
- * are not counted.
+ * are not counted, nor those asked for with the token of {@link StatsResource}, by the tools of
+ * the administrator checking the site.
  */
 public class PageViews implements IComponentOnAfterRenderListener
 {
@@ -43,7 +44,9 @@ public class PageViews implements IComponentOnAfterRenderListener
 		}
 		String visitor = VisitorCookie.read(cycle.getRequest());
 		VisitorCookie.give(cycle);
-		if (!DemoSession.get().isAdmin())
+		// neither the administrator's sessions nor the tools sending the token of the statistics,
+		// which check the site
+		if (!DemoSession.get().isAdmin() && !StatsResource.hasToken(cycle.getRequest()))
 		{
 			Visits.get().viewed(pathOf(cycle, page.getClass()), visitor);
 		}

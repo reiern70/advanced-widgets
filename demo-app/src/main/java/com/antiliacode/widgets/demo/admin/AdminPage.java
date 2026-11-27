@@ -37,6 +37,7 @@ import com.antiliacode.widgets.demo.stats.Visits;
 import com.antiliacode.widgets.demo.stats.Visits.DayCount;
 import com.antiliacode.widgets.demo.stats.Visits.PageCount;
 import com.antiliacode.widgets.demo.stats.Visits.Report;
+import com.antiliacode.widgets.demo.stats.Visits.VisitorCount;
 
 /**
  * The administration: how many of the {@value SignedInUsers#MAXIMUM} sessions of
@@ -53,6 +54,9 @@ public class AdminPage extends BasePage
 	/** How the times are shown: in UTC, to the second. */
 	static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
 		.withZone(ZoneOffset.UTC);
+
+	/** The most visitors listed, the ones seen last. */
+	static final int MAXIMUM_VISITORS = 50;
 
 	/** The visits of the last days, counted again at each render. */
 	private final IModel<Report> visits = LoadableDetachableModel
@@ -135,6 +139,46 @@ public class AdminPage extends BasePage
 				item.add(new Label("page", page.page()));
 				item.add(new Label("views", page.views()));
 				item.add(new Label("people", page.people()));
+			}
+		});
+
+		WebMarkupContainer visitorsTable = new WebMarkupContainer("visitorsTable")
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				setVisible(!report.getObject().visitors().isEmpty());
+			}
+		};
+		add(visitorsTable);
+		visitorsTable.add(new Label("visitorsLead", () -> new StringResourceModel("visitorsLead",
+			this).setParameters(Math.min(MAXIMUM_VISITORS, report.getObject().visitors().size()),
+				report.getObject().visitors().size())
+			.getString()));
+		visitorsTable.add(new ListView<VisitorCount>("visitors", () -> report.getObject()
+			.visitors().stream().limit(MAXIMUM_VISITORS).toList())
+		{
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void populateItem(ListItem<VisitorCount> item)
+			{
+				VisitorCount visitor = item.getModelObject();
+				item.add(new Label("visitor", visitor.visitor()));
+				item.add(new Label("firstSeen", visitor.firstSeen() == null ? ""
+					: format(visitor.firstSeen())));
+				item.add(new Label("lastSeen", visitor.lastSeen() == null ? ""
+					: format(visitor.lastSeen())));
+				item.add(new Label("days", visitor.days()));
+				item.add(new Label("views", visitor.views()));
+				item.add(new Label("signIns", visitor.signIns()));
+				StringBuilder pages = new StringBuilder();
+				visitor.pages().forEach((page, views) -> pages
+					.append(pages.isEmpty() ? "" : " · ").append(page).append(' ').append(views));
+				item.add(new Label("pages", pages.toString()));
 			}
 		});
 

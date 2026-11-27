@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 
+import org.apache.wicket.request.Request;
 import org.apache.wicket.request.http.WebRequest;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.request.resource.AbstractResource;
@@ -51,7 +52,9 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * The days are in UTC. The answer holds the {@link Visits.Report}: how many people opened a page
  * or signed in, how many of them for the first time, how many signed in and how often, how many
- * pages were shown and how many of them to nobody, then each page and each day.
+ * pages were shown and how many of them to nobody, then each page, each day and each visitor, a
+ * browser told by the first characters of the number of its cookie, with when it came first and
+ * last, on how many days, and the pages it opened.
  */
 public class StatsResource extends AbstractResource
 {
@@ -168,16 +171,32 @@ public class StatsResource extends AbstractResource
 	 */
 	private boolean isAllowed(Attributes attributes)
 	{
-		if (token != null && attributes.getRequest() instanceof WebRequest request)
+		return hasToken(token, attributes.getRequest()) || DemoSession.get().isAdmin();
+	}
+
+	/**
+	 * @param request
+	 *            a request
+	 * @return whether it carries the token of {@value #TOKEN_PROPERTY} or
+	 *         {@value #TOKEN_ENVIRONMENT_VARIABLE}, as the administrator's tools send it: the
+	 *         pages it asks for are not counted
+	 */
+	public static boolean hasToken(Request request)
+	{
+		String token = token();
+		return token != null && token.length() >= MINIMUM_TOKEN &&
+			hasToken(sha256(token), request);
+	}
+
+	private static boolean hasToken(byte[] token, Request request)
+	{
+		if (token == null || !(request instanceof WebRequest web))
 		{
-			String authorization = request.getHeader("Authorization");
-			if (authorization != null && authorization.startsWith("Bearer ") &&
-				MessageDigest.isEqual(token, sha256(authorization.substring(7).trim())))
-			{
-				return true;
-			}
+			return false;
 		}
-		return DemoSession.get().isAdmin();
+		String authorization = web.getHeader("Authorization");
+		return authorization != null && authorization.startsWith("Bearer ") &&
+			MessageDigest.isEqual(token, sha256(authorization.substring(7).trim()));
 	}
 
 	/**
@@ -220,6 +239,22 @@ public class StatsResource extends AbstractResource
 			days.put(item);
 		}
 		json.put("days", days);
+		JSONArray visitors = new JSONArray();
+		for (Visits.VisitorCount visitor : report.visitors())
+		{
+			JSONObject item = new JSONObject();
+			item.put("visitor", visitor.visitor());
+			item.put("firstSeen", String.valueOf(visitor.firstSeen()));
+			item.put("lastSeen", String.valueOf(visitor.lastSeen()));
+			item.put("days", visitor.days());
+			item.put("views", visitor.views());
+			item.put("signIns", visitor.signIns());
+			JSONObject opened = new JSONObject();
+			visitor.pages().forEach(opened::put);
+			item.put("pages", opened);
+			visitors.put(item);
+		}
+		json.put("visitors", visitors);
 		return json;
 	}
 

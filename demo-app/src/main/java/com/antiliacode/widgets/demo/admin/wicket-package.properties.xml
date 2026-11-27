@@ -31,4 +31,11 @@
 	<entry key="newPeople">New</entry>
 	<entry key="signedInPeople">Signed in</entry>
 	<entry key="signIns">Sign-ins</entry>
+	<entry key="visitorsTitle">Visitors</entry>
+	<entry key="visitorsLead">Each one is a browser, told by the start of the random number of its cookie; the one seen last first, {0} of {1}.</entry>
+	<entry key="visitor">Visitor</entry>
+	<entry key="firstSeen">First seen</entry>
+	<entry key="lastSeen">Last seen</entry>
+	<entry key="activeDays">Days</entry>
+	<entry key="pagesOpened">Pages</entry>
 </properties>

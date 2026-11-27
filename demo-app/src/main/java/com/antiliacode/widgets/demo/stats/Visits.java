@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +86,23 @@ public class Visits
 	/** The visitor of a request without the cookie. */
 	private static final String NOBODY = "-";
 
+	/** How many characters of the number of a visitor the reports show. */
+	static final int SHORT = 8;
+
+	/** What a visitor did in the span of a report, while it is made. */
+	private static final class Visitor
+	{
+		int days;
+
+		int views;
+
+		int signIns;
+
+		Instant lastSeen;
+
+		final Map<String, Integer> pages = new HashMap<>();
+	}
+
 	/** The name of the file of a day. */
 	private static final Pattern FILE = Pattern.compile("visits-(\\d{4}-\\d{2}-\\d{2})\\.tsv");
 
@@ -99,6 +117,9 @@ public class Visits
 
 		/** The sign-ins as {@link Role#USER}, by visitor. */
 		final Map<String, Integer> signIns = new HashMap<>();
+
+		/** When each visitor came first and last on the day, the requests without one left out. */
+		final Map<String, Instant[]> times = new HashMap<>();
 	}
 
 	/**
@@ -137,6 +158,30 @@ public class Visits
 	}
 
 	/**
+	 * What a visitor, a browser, did in a span of days.
+	 *
+	 * @param visitor
+	 *            the first {@value Visits#SHORT} characters of the number of its cookie, enough
+	 *            to tell it from the others
+	 * @param firstSeen
+	 *            when it came first, of all the site remembers
+	 * @param lastSeen
+	 *            when it came last in the span
+	 * @param days
+	 *            on how many days of the span it came
+	 * @param views
+	 *            how many pages it opened
+	 * @param signIns
+	 *            how many times it signed in
+	 * @param pages
+	 *            how many times it opened each page, the one opened most first
+	 */
+	public record VisitorCount(String visitor, Instant firstSeen, Instant lastSeen, int days,
+		int views, int signIns, Map<String, Integer> pages) implements Serializable
+	{
+	}
+
+	/**
 	 * The visits of a span of days.
 	 *
 	 * @param from
@@ -162,10 +207,13 @@ public class Visits
 	 *            the pages shown, the one shown most first
 	 * @param days
 	 *            each day, the last one first
+	 * @param visitors
+	 *            each person, the one seen last first
 	 */
 	public record Report(LocalDate from, LocalDate to, LocalDate firstDay, int people,
 		int newPeople, int signedInPeople, int signIns, int views, int viewsWithoutCookie,
-		List<PageCount> pages, List<DayCount> days) implements Serializable
+		List<PageCount> pages, List<DayCount> days, List<VisitorCount> visitors)
+		implements Serializable
 	{
 	}
 
@@ -273,13 +321,16 @@ public class Visits
 	public synchronized Report report(LocalDate from, LocalDate to)
 	{
 		forgetOld();
-		// the first day of each visitor the site remembers
+		// the first day and the first time of each visitor the site remembers
 		Map<String, LocalDate> firstSeen = new HashMap<>();
+		Map<String, Instant> firstTime = new HashMap<>();
 		days.forEach((date, day) -> {
 			day.views.values().forEach(visitors -> visitors.keySet()
 				.forEach(visitor -> firstSeen.putIfAbsent(visitor, date)));
 			day.signIns.keySet().forEach(visitor -> firstSeen.putIfAbsent(visitor, date));
+			day.times.forEach((visitor, times) -> firstTime.putIfAbsent(visitor, times[0]));
 		});
+		Map<String, Visitor> visitors = new HashMap<>();
 
 		Set<String> people = new HashSet<>();
 		Set<String> signedInPeople = new HashSet<>();
@@ -319,6 +370,9 @@ public class Visits
 							dayPeople.add(id);
 							pagePeople.computeIfAbsent(page.getKey(), key -> new HashSet<>())
 								.add(id);
+							Visitor counted = visitors.computeIfAbsent(id, key -> new Visitor());
+							counted.views += count;
+							counted.pages.merge(page.getKey(), count, Integer::sum);
 						}
 					}
 				}
@@ -334,6 +388,19 @@ public class Visits
 					{
 						dayPeople.add(id);
 						daySignedIn.add(id);
+						visitors.computeIfAbsent(id, key -> new Visitor()).signIns +=
+							visitor.getValue();
+					}
+				}
+				for (String id : dayPeople)
+				{
+					Visitor counted = visitors.get(id);
+					counted.days++;
+					Instant[] times = day.times.get(id);
+					if (times != null &&
+						(counted.lastSeen == null || times[1].isAfter(counted.lastSeen)))
+					{
+						counted.lastSeen = times[1];
 					}
 				}
 			}
@@ -355,9 +422,30 @@ public class Visits
 			.sorted(Comparator.comparingInt(PageCount::views).reversed()
 				.thenComparing(PageCount::page))
 			.toList();
+		List<VisitorCount> visitorCounts = visitors.entrySet().stream()
+			.map(visitor -> visitorCount(visitor.getKey(), visitor.getValue(),
+				firstTime.get(visitor.getKey())))
+			.sorted(Comparator.comparing(VisitorCount::lastSeen,
+				Comparator.nullsLast(Comparator.reverseOrder()))
+				.thenComparing(VisitorCount::visitor))
+			.toList();
 		return new Report(from, to, days.isEmpty() ? null : days.firstKey(), people.size(),
 			newPeople, signedInPeople.size(), signIns, views, viewsWithoutCookie, pages,
-			List.copyOf(dayCounts));
+			List.copyOf(dayCounts), visitorCounts);
+	}
+
+	/**
+	 * @return what a visitor did, its pages the one opened most first
+	 */
+	private static VisitorCount visitorCount(String id, Visitor visitor, Instant firstSeen)
+	{
+		Map<String, Integer> pages = new LinkedHashMap<>();
+		visitor.pages.entrySet().stream()
+			.sorted(Map.Entry.<String, Integer> comparingByValue().reversed()
+				.thenComparing(Map.Entry.comparingByKey()))
+			.forEach(page -> pages.put(page.getKey(), page.getValue()));
+		return new VisitorCount(id.substring(0, Math.min(SHORT, id.length())), firstSeen,
+			visitor.lastSeen, visitor.days, visitor.views, visitor.signIns, pages);
 	}
 
 	/**
@@ -393,20 +481,21 @@ public class Visits
 		Instant now = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 		String id = VisitorCookie.isValid(visitor) ? visitor : NOBODY;
 		LocalDate date = LocalDate.ofInstant(now, ZoneOffset.UTC);
-		count(date, what, id, detail);
+		count(date, now, what, id, detail);
 		write(date, now + "\t" + what + "\t" + id + "\t" + detail + "\n");
 	}
 
 	/**
 	 * Counts an event in memory.
 	 */
-	private void count(LocalDate date, String what, String visitor, String detail)
+	private void count(LocalDate date, Instant time, String what, String visitor, String detail)
 	{
 		if (VIEW.equals(what))
 		{
 			days.computeIfAbsent(date, key -> new Day()).views
 				.computeIfAbsent(detail, key -> new HashMap<>())
 				.merge(visitor, 1, Integer::sum);
+			seen(date, time, visitor);
 		}
 		else if (SIGN_IN.equals(what))
 		{
@@ -421,7 +510,29 @@ public class Visits
 			{
 				days.computeIfAbsent(date, key -> new Day()).signIns.merge(visitor, 1,
 					Integer::sum);
+				seen(date, time, visitor);
 			}
+		}
+	}
+
+	/**
+	 * Notes when a visitor came, its first and last time of the day.
+	 */
+	private void seen(LocalDate date, Instant time, String visitor)
+	{
+		if (NOBODY.equals(visitor))
+		{
+			return;
+		}
+		Instant[] times = days.get(date).times.computeIfAbsent(visitor,
+			key -> new Instant[] { time, time });
+		if (time.isBefore(times[0]))
+		{
+			times[0] = time;
+		}
+		if (time.isAfter(times[1]))
+		{
+			times[1] = time;
 		}
 	}
 
@@ -475,7 +586,7 @@ public class Visits
 							SIGN_IN.equals(fields[1]) &&
 								("user".equals(fields[3]) || "admin".equals(fields[3]))))
 					{
-						count(date, fields[1], fields[2], fields[3]);
+						count(date, timeOf(fields[0], date), fields[1], fields[2], fields[3]);
 					}
 				}
 			}
@@ -556,6 +667,26 @@ public class Visits
 	static String fileName(LocalDate date)
 	{
 		return "visits-" + date + ".tsv";
+	}
+
+	/**
+	 * @return the time of a line, the start of its day if it holds none
+	 */
+	private static Instant timeOf(String field, LocalDate date)
+	{
+		try
+		{
+			Instant time = Instant.parse(field);
+			if (date.equals(LocalDate.ofInstant(time, ZoneOffset.UTC)))
+			{
+				return time;
+			}
+		}
+		catch (DateTimeParseException e)
+		{
+			// none
+		}
+		return date.atStartOfDay(ZoneOffset.UTC).toInstant();
 	}
 
 	/**
