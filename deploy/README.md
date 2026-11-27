@@ -162,8 +162,10 @@ administrator (issue #184): each browser gets a cookie `visitor` holding a rando
 else, with its first page, for 13 months; a browser sending it back is a person. Each page shown,
 and each sign-in, is a line of the file of its day, `/var/lib/antilia-widgets/stats/visits-<day>.tsv`
 on the volume `page-store`: the time, the number or `-`, the mount path of the page or the account.
-The files older than 13 months are deleted. The browsers that signed in as `admin` are left out.
-`/admin` shows the last 30 days; `/api/stats?days=30` (or `?from=2026-11-01&to=2026-11-15`) gives
+The files older than 13 months are deleted. The browsers that signed in as `admin` are left out,
+and so are the pages asked for with the token below, by the administrator's tools checking the
+site. `/admin` shows the last 30 days, the pages, the days and each visitor (the first 8
+characters of its number, when it came first and last, its pages); `/api/stats?days=30` (or `?from=2026-11-01&to=2026-11-15`) gives
 them as JSON to the administrator's session or with `Authorization: Bearer <token>`, the token
 `ANTILIA_WIDGETS_STATS_TOKEN` of `.env`, which `start.sh` makes when missing and `deploy.sh` copies
 once to `~/.config/antilia-widgets/stats-token`.

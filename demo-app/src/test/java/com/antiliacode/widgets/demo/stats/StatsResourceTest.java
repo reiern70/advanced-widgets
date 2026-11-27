@@ -116,6 +116,11 @@ class StatsResourceTest
 		assertEquals("/", json.getJSONArray("pages").getJSONObject(0).getString("page"));
 		assertEquals(30, json.getJSONArray("days").length());
 		assertEquals(2, json.getJSONArray("days").getJSONObject(0).getInt("views"));
+		assertEquals(1, json.getJSONArray("visitors").length());
+		JSONObject visitor = json.getJSONArray("visitors").getJSONObject(0);
+		assertEquals(Visits.SHORT, visitor.getString("visitor").length());
+		assertEquals("2026-10-15T10:00:00Z", visitor.getString("firstSeen"));
+		assertEquals(1, visitor.getJSONObject("pages").getInt("/"));
 	}
 
 	@Test
@@ -140,6 +145,15 @@ class StatsResourceTest
 		tester.getRequest().setHeader("Authorization", "Bearer " + TOKEN);
 		tester.executeUrl(StatsResource.PATH + "?" + query);
 		assertEquals(400, tester.getLastResponse().getStatus());
+	}
+
+	@Test
+	void thePagesAskedForWithTheTokenAreNotCounted()
+	{
+		tester.getRequest().setHeader("Authorization", "Bearer " + TOKEN);
+		tester.startPage(com.antiliacode.widgets.demo.HomePage.class);
+
+		assertEquals(2, Visits.get().report(1).views());
 	}
 
 	@Test

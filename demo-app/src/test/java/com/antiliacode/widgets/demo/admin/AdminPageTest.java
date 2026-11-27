@@ -120,6 +120,11 @@ class AdminPageTest
 		tester.assertLabel("pagesTable:pages:0:views", "2");
 		tester.assertLabel("pagesTable:pages:0:people", "1");
 		tester.assertLabel("daysTable:days:0:signIns", "1");
+		tester.assertLabel("visitorsTable:visitors:0:visitor", ann.substring(0, 8));
+		tester.assertLabel("visitorsTable:visitors:0:views", "1");
+		tester.assertLabel("visitorsTable:visitors:0:signIns", "1");
+		tester.assertLabel("visitorsTable:visitors:0:pages", "/tree 1");
+		assertTrue(!tester.getLastResponseAsString().contains(ann));
 		tester.assertContains(StatsResource.PATH);
 	}
 

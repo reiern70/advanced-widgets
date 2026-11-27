@@ -43,5 +43,17 @@
 			<tr wicket:id="days"><td wicket:id="date">2026-11-27</td><td wicket:id="people">1</td><td wicket:id="newPeople">1</td><td wicket:id="signedInPeople">1</td><td wicket:id="signIns">1</td><td wicket:id="views">1</td></tr>
 		</tbody>
 	</table>
+	<div wicket:id="visitorsTable">
+		<h2><wicket:message key="visitorsTitle"/></h2>
+		<p wicket:id="visitorsLead" class="admin__lead">[Each one a browser.]</p>
+		<table class="admin__sessions">
+			<thead>
+				<tr><th><wicket:message key="visitor"/></th><th><wicket:message key="firstSeen"/></th><th><wicket:message key="lastSeen"/></th><th><wicket:message key="activeDays"/></th><th><wicket:message key="views"/></th><th><wicket:message key="signIns"/></th><th><wicket:message key="pagesOpened"/></th></tr>
+			</thead>
+			<tbody>
+				<tr wicket:id="visitors"><td wicket:id="visitor">a1b2c3d4</td><td wicket:id="firstSeen">[first]</td><td wicket:id="lastSeen">[last]</td><td wicket:id="days">1</td><td wicket:id="views">2</td><td wicket:id="signIns">0</td><td wicket:id="pages" class="admin__pages">/ 2</td></tr>
+			</tbody>
+		</table>
+	</div>
 </main>
 </wicket:extend>
